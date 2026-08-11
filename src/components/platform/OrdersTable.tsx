@@ -66,7 +66,7 @@ export default function OrdersTable() {
     const openOrders = orders.filter((order) => order.status === 'OPEN');
     const closedOrders = orders.filter((order) => order.status === 'CLOSED');
     return {
-      openCount: openOrders.length,
+      openCount: new Set(openOrders.map(o => o.tickerSymbol)).size,
       closedCount: closedOrders.length,
       unrealized: openOrders.reduce((sum, order) => sum + order.profitLoss, 0),
       realized: closedOrders.reduce((sum, order) => sum + order.profitLoss, 0),
