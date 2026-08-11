@@ -18,7 +18,7 @@ export default function SidebarNav() {
     <div className="w-16 h-full flex flex-col items-center py-4 bg-tv-base border-r border-tv-border">
       {/* Brand Logo */}
       <Link href="/dashboard" className="mb-6 w-8 h-8 rounded-tv-lg overflow-hidden relative shadow-[0_0_15px_rgba(255,255,255,0.1)] flex-shrink-0 group transition-shadow hover:shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-        <Image src="/logo.jpg" alt="QuantEGX" fill className="object-cover" />
+        <Image src="/logo.svg" alt="QuantEGX" fill className="object-cover" />
       </Link>
 
       <div className="flex-1 flex flex-col space-y-4 w-full items-center">

@@ -47,7 +47,7 @@ export default function TopBar({
             onClick={() => setIsSearchOpen(true)}
           >
             <div className="hidden md:block relative w-6 h-6 rounded overflow-hidden mr-1 shadow-[0_0_8px_rgba(255,255,255,0.1)]">
-              <Image src="/logo.jpg" alt="QuantEGX" fill className="object-cover" />
+              <Image src="/logo.svg" alt="QuantEGX" fill className="object-cover" />
             </div>
             <span className="text-tv-text text-sm font-weight-medium">{displaySymbol}</span>
             <span className="text-tv-muted font-weight-light text-xs md:text-sm hidden sm:inline">EGX</span>
