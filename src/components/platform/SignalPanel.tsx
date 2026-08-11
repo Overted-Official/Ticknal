@@ -76,7 +76,7 @@ export default function SignalPanel({
   const reason = visibleSignalData?.entryReason || visibleSignalData?.exitReason || 'PSI';
 
   return (
-    <div className="absolute bottom-6 left-16 z-10 w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
+    <div className="absolute top-4 left-4 z-10 w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
       {/* Header / Main Signal */}
       <div 
         className="p-4 cursor-pointer hover:bg-tv-hover transition-colors flex items-center justify-between"

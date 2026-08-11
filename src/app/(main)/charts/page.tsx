@@ -1,5 +1,5 @@
 import TopBar from '@/components/platform/TopBar';
-import LeftToolbar from '@/components/platform/LeftToolbar';
+
 import RightSidebar, { WatchlistItem } from '@/components/platform/RightSidebar';
 import BottomToolbar from '@/components/platform/BottomToolbar';
 import ChartReplayWorkspace from '@/components/platform/ChartReplayWorkspace';
@@ -142,9 +142,9 @@ export default async function PlatformPage(props: PlatformPageProps) {
 
   return (
     <div className="flex-1 h-full w-full flex flex-col bg-tv-base text-tv-text overflow-hidden">
-      <TopBar symbol={selectedSymbol} timeframe={timeframe} replay={initialReplayMode} />
+      <TopBar symbol={selectedSymbol} timeframe={timeframe} replay={initialReplayMode} watchlist={watchlist} />
       <div className="flex-1 flex overflow-hidden">
-        <LeftToolbar />
+
         <div className="flex-1 flex flex-col min-w-0 relative">
           <ChartReplayWorkspace
             key={`${selectedSymbol}-${timeframe}-${initialReplayMode ? 'replay' : 'live'}`}
@@ -154,7 +154,9 @@ export default async function PlatformPage(props: PlatformPageProps) {
           />
           <BottomToolbar />
         </div>
-        <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} />
+        <div className="hidden lg:flex">
+          <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} />
+        </div>
       </div>
     </div>
   );
