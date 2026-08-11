@@ -130,6 +130,54 @@ export async function dispatchSignalNotifications(options: {
   return result;
 }
 
+export async function dispatchTestNotification(): Promise<DispatchNotificationsResult> {
+  const result: DispatchNotificationsResult = {
+    configured: isPushConfigured(),
+    checkedSymbols: 0,
+    sent: 0,
+    skipped: 0,
+    expiredSubscriptions: 0,
+    messages: [],
+  };
+
+  if (!result.configured) {
+    result.messages.push('Web Push is not configured. Set NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.');
+    return result;
+  }
+
+  configureWebPush();
+
+  const subscriptionRows = await db.select().from(pushSubscriptions);
+  if (subscriptionRows.length === 0) {
+    result.messages.push('No active push subscriptions found.');
+    return result;
+  }
+
+  const payload = JSON.stringify({
+    title: 'Test Notification',
+    body: 'This is a mock push notification to test the alert feature.',
+    url: '/dashboard',
+    tag: `test-notification-${Date.now()}`,
+    symbol: 'TEST',
+    signal: 'TEST',
+    price: '0.00',
+  });
+
+  for (const subscription of subscriptionRows) {
+    const sent = await sendToSubscription(subscription, payload);
+    if (sent === 'expired') {
+      result.expiredSubscriptions += 1;
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
+    } else if (sent === 'sent') {
+      result.sent += 1;
+    } else {
+      result.skipped += 1;
+    }
+  }
+
+  return result;
+}
+
 function configureWebPush() {
   const publicKey = getVapidPublicKey();
   const privateKey = process.env.VAPID_PRIVATE_KEY;

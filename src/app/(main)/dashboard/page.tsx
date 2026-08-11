@@ -6,6 +6,7 @@ import { dailyPrices, orders, tickerAlerts, tickers } from '@/db/schema';
 import { resolvePsiParamsFromStore } from '@/lib/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/lib/psiStrategy';
 import OpportunityTable from '@/components/platform/OpportunityTable';
+import TestNotificationButton from '@/components/platform/TestNotificationButton';
 
 type DashboardOrder = {
   id: number;
@@ -48,12 +49,15 @@ export default async function DashboardPage() {
             <h1 className="text-xl font-weight-medium">Dashboard</h1>
             <p className="mt-1 text-xs text-tv-muted">Portfolio performance and fresh PSI opportunities</p>
           </div>
-          <Link
-            href="/charts"
-            className="rounded-tv-sm border border-tv-border px-3 py-2 text-xs text-tv-muted transition-colors hover:border-tv-border-highlight hover:text-tv-text"
-          >
-            Open Charts
-          </Link>
+          <div className="flex items-center gap-3">
+            <TestNotificationButton />
+            <Link
+              href="/charts"
+              className="rounded-tv-sm border border-tv-border px-3 py-2 text-xs text-tv-muted transition-colors hover:border-tv-border-highlight hover:text-tv-text"
+            >
+              Open Charts
+            </Link>
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
@@ -87,8 +91,8 @@ export default async function DashboardPage() {
                       <div className="max-w-40 truncate text-[11px] text-tv-muted">{order.companyName}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-medium">{formatPrice(order.currentPrice)}</div>
-                      <div className={`flex items-center justify-end text-xs font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                      <div className="text-sm font-medium">{formatPrice(order.currentPrice * order.quantity)}</div>
+                      <div className={`flex items-center justify-end text-[11px] font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
                         {formatMoney(order.profitLoss, true)} ({order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
                       </div>
                     </div>
@@ -103,7 +107,7 @@ export default async function DashboardPage() {
                 <thead className="bg-tv-surface text-[0.65rem] uppercase text-tv-muted">
                   <tr>
                     <th className="border-b border-tv-border px-3 py-2">Ticker</th>
-                    <th className="border-b border-tv-border px-3 py-2 text-right">Current</th>
+                    <th className="border-b border-tv-border px-3 py-2 text-right">Position Value</th>
                     <th className="border-b border-tv-border px-3 py-2 text-right">P/L</th>
                   </tr>
                 </thead>
@@ -121,10 +125,10 @@ export default async function DashboardPage() {
                           </Link>
                           <div className="max-w-48 truncate text-[11px] text-tv-muted">{order.companyName}</div>
                         </td>
-                        <td className="px-3 py-2 text-right">{formatPrice(order.currentPrice)}</td>
+                        <td className="px-3 py-2 text-right font-weight-medium">{formatPrice(order.currentPrice * order.quantity)}</td>
                         <td className={`px-3 py-2 text-right font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
                           {formatMoney(order.profitLoss, true)}
-                          <div className="text-[11px]">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
+                          <div className="text-[11px] opacity-90">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
                         </td>
                       </tr>
                     ))
