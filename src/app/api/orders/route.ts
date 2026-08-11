@@ -136,6 +136,15 @@ export async function PATCH(request: Request) {
       if (exitPrice !== null) setValues.exitPrice = exitPrice.toString();
     }
     if (typeof body.notes === 'string') setValues.notes = body.notes;
+    
+    // Support editing core order fields
+    if (typeof body.entryDate === 'string' && body.entryDate) {
+      setValues.entryDate = body.entryDate.split('T')[0];
+    }
+    const editEntryPrice = toNullableNumber(body.entryPrice);
+    if (editEntryPrice !== null) setValues.entryPrice = editEntryPrice.toString();
+    const editQuantity = toNullableNumber(body.quantity);
+    if (editQuantity !== null) setValues.quantity = editQuantity.toString();
 
     const [updatedOrder] = await db
       .update(orders)

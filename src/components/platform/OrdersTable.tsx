@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle, LineChart, Trash2 } from '@/components/ui/icons';
+import { CheckCircle, LineChart, Trash2, Pencil } from '@/components/ui/icons';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
+import EditOrderModal from '@/components/platform/EditOrderModal';
 
 type OrderRow = {
   id: number;
@@ -30,6 +31,7 @@ export default function OrdersTable() {
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
   const [isAddingOrder, setIsAddingOrder] = useState(false);
   const [orderToClose, setOrderToClose] = useState<OrderRow | null>(null);
+  const [orderToEdit, setOrderToEdit] = useState<OrderRow | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -66,6 +68,10 @@ export default function OrdersTable() {
 
   async function closeOrder(order: OrderRow) {
     setOrderToClose(order);
+  }
+
+  function editOrder(order: OrderRow) {
+    setOrderToEdit(order);
   }
 
   async function deleteOrder(order: OrderRow) {
@@ -270,6 +276,13 @@ export default function OrdersTable() {
                         </button>
                       )}
                       <button
+                        title="Edit Order"
+                        onClick={() => editOrder(order)}
+                        className="p-1.5 rounded-tv-sm bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors border border-tv-border"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
                         title="Delete Record"
                         onClick={() => deleteOrder(order)}
                         className="p-1.5 rounded-tv-sm bg-tv-surface text-tv-down hover:bg-red-900/20 transition-colors border border-tv-border"
@@ -297,6 +310,13 @@ export default function OrdersTable() {
         onClose={() => setOrderToClose(null)}
         onSuccess={() => fetchOrders()}
         order={orderToClose}
+      />
+
+      <EditOrderModal
+        isOpen={!!orderToEdit}
+        onClose={() => setOrderToEdit(null)}
+        onSuccess={() => fetchOrders()}
+        order={orderToEdit}
       />
     </div>
   );
