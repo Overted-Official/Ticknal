@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle, LineChart, Trash2, Pencil } from '@/components/ui/icons';
+import { CheckCircle, LineChart, Trash2, Pencil, Search } from '@/components/ui/icons';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
@@ -29,6 +29,7 @@ export default function OrdersTable() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isAddingOrder, setIsAddingOrder] = useState(false);
   const [orderToClose, setOrderToClose] = useState<OrderRow | null>(null);
   const [orderToEdit, setOrderToEdit] = useState<OrderRow | null>(null);
@@ -51,8 +52,14 @@ export default function OrdersTable() {
   }, [fetchOrders]);
 
   const filteredOrders = useMemo(
-    () => orders.filter((order) => (filter === 'ALL' ? true : order.status === filter)),
-    [filter, orders],
+    () => orders.filter((order) => {
+      const matchesFilter = filter === 'ALL' ? true : order.status === filter;
+      const matchesSearch = 
+        order.tickerSymbol.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        order.companyName.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesFilter && matchesSearch;
+    }),
+    [filter, orders, searchQuery],
   );
 
   const totals = useMemo(() => {
@@ -87,7 +94,19 @@ export default function OrdersTable() {
             <h1 className="text-xl font-weight-medium">Orders</h1>
             <p className="mt-1 text-xs text-tv-muted">Tracked long positions from chart candle clicks</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-tv-muted">
+                <Search size={14} />
+              </div>
+              <input
+                type="text"
+                placeholder="Search ticker or company..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 w-48 rounded-tv-sm border border-tv-border bg-tv-surface pl-8 pr-3 text-xs text-tv-text placeholder:text-tv-muted focus:border-tv-accent focus:outline-none transition-colors"
+              />
+            </div>
             <button
               type="button"
               onClick={() => setIsAddingOrder(true)}
