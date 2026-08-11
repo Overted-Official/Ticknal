@@ -160,7 +160,7 @@ export default function ChartWidget({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(PLAYBACK_SPEEDS[0].delay);
 
-  const [strategyStartDate, setStrategyStartDate] = useState<string>('');
+  const [strategyStartDate, setStrategyStartDate] = useState<string>('2020-01-01');
   const [strategyEndDate, setStrategyEndDate] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -980,12 +980,12 @@ export default function ChartWidget({
                 <div className="pt-1 flex justify-end">
                   <button 
                     onClick={() => {
-                      setStrategyStartDate('');
+                      setStrategyStartDate('2020-01-01');
                       setStrategyEndDate('');
                     }}
                     className="text-[10px] text-tv-muted hover:text-tv-text transition-colors"
                   >
-                    Clear Dates
+                    Reset Dates
                   </button>
                 </div>
               </div>
