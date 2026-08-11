@@ -70,6 +70,7 @@ export default function OrdersTable() {
       closedCount: closedOrders.length,
       unrealized: openOrders.reduce((sum, order) => sum + order.profitLoss, 0),
       realized: closedOrders.reduce((sum, order) => sum + order.profitLoss, 0),
+      netWorth: openOrders.reduce((sum, order) => sum + (order.currentPrice * order.quantity), 0),
     };
   }, [orders]);
 
@@ -131,7 +132,8 @@ export default function OrdersTable() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+          <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-tv-accent" />
           <Metric label="Open" value={String(totals.openCount)} />
           <Metric label="Closed" value={String(totals.closedCount)} />
           <Metric label="Unrealized P/L" value={formatMoney(totals.unrealized)} valueClass={totals.unrealized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
