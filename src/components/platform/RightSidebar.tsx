@@ -1,12 +1,14 @@
 'use client';
-import { Plus, MoreHorizontal, Settings, Search } from '@/components/ui/icons';
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { Bell, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, Settings } from '@/components/ui/icons';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useAlerts } from './AlertProvider';
 
 export interface WatchlistItem {
   symbol: string;
   companyName: string;
   website?: string;
+  sector: string;
   price: string;
   change: string;
   isUp: boolean;
@@ -21,6 +23,9 @@ interface RightSidebarProps {
 export default function RightSidebar({ watchlist, selectedSymbol, timeframe }: RightSidebarProps) {
   const [liveData, setLiveData] = useState<{ price: string, change: string, isUp: boolean } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [collapsedSectors, setCollapsedSectors] = useState<Set<string>>(new Set());
+  const router = useRouter();
+  const { isAlerted, toggleAlert } = useAlerts();
   
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
@@ -44,7 +49,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe }: R
           change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
           isUp: change >= 0
         });
-      } catch (e) {}
+      } catch {}
     };
 
     fetchLive();
@@ -62,8 +67,35 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe }: R
 
   const filteredWatchlist = watchlist.filter(item => 
     item.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item.companyName.toLowerCase().includes(searchQuery.toLowerCase())
+    item.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.sector.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const groupedWatchlist = useMemo(() => {
+    const groups = new Map<string, WatchlistItem[]>();
+
+    for (const item of filteredWatchlist) {
+      const sector = item.sector || 'Unclassified';
+      const items = groups.get(sector) ?? [];
+      items.push(item);
+      groups.set(sector, items);
+    }
+
+    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredWatchlist]);
+
+  const toggleSector = (sector: string) => {
+    setCollapsedSectors((current) => {
+      const next = new Set(current);
+      if (next.has(sector)) next.delete(sector);
+      else next.add(sector);
+      return next;
+    });
+  };
+
+  const openTicker = (symbol: string) => {
+    router.push(`?ticker=${symbol}&timeframe=${timeframe}`);
+  };
 
   return (
     <div className="w-80 bg-tv-base border-l border-tv-border flex flex-col select-none">
@@ -100,28 +132,72 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe }: R
 
       {/* Watchlist Items */}
       <div className="flex-1 overflow-y-auto">
-        {filteredWatchlist.map((item) => (
-          <Link href={`?ticker=${item.symbol}&timeframe=${timeframe}`} key={item.symbol} className={`flex px-3 py-1.5 hover:bg-tv-hover cursor-pointer transition-colors group ${item.symbol === selectedSymbol ? 'bg-tv-hover' : ''}`}>
-            <div className="flex-1 font-weight-medium flex items-center space-x-2">
-              {item.website ? (
-                <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="w-5 h-5 rounded-tv-full bg-tv-surface border border-tv-border object-cover" />
-              ) : (
-                <div className="w-5 h-5 rounded-tv-full bg-tv-surface flex items-center justify-center font-weight-medium text-tv-text border border-tv-border text-[0.5rem]">
-                  {item.symbol.substring(0, 2)}
-                </div>
-              )}
-              <span className={item.symbol === selectedSymbol ? 'text-tv-accent' : 'text-tv-text'}>
-                {item.symbol.replace('.CA', '')}
-              </span>
+        {groupedWatchlist.map(([sector, items]) => {
+          const collapsed = collapsedSectors.has(sector) && searchQuery.length === 0;
+          return (
+            <div key={sector}>
+              <button
+                type="button"
+                onClick={() => toggleSector(sector)}
+                className="flex w-full items-center gap-1 border-b border-tv-border bg-tv-base px-3 py-1.5 text-left text-[0.65rem] uppercase text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text"
+              >
+                {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                <span className="min-w-0 flex-1 truncate">{sector}</span>
+                <span>{items.length}</span>
+              </button>
+
+              {!collapsed && items.map((item) => {
+                const alertEnabled = isAlerted(item.symbol);
+                return (
+                  <div
+                    key={item.symbol}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openTicker(item.symbol)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') openTicker(item.symbol);
+                    }}
+                    className={`flex cursor-pointer px-3 py-1.5 transition-colors hover:bg-tv-hover group ${item.symbol === selectedSymbol ? 'bg-tv-hover' : ''}`}
+                  >
+                    <div className="flex min-w-0 flex-1 items-center space-x-2 font-weight-medium">
+                      {item.website ? (
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-5 w-5 rounded-tv-full border border-tv-border bg-tv-surface object-cover" />
+                      ) : (
+                        <div className="flex h-5 w-5 items-center justify-center rounded-tv-full border border-tv-border bg-tv-surface text-[0.5rem] font-weight-medium text-tv-text">
+                          {item.symbol.substring(0, 2)}
+                        </div>
+                      )}
+                      <span className={`truncate ${item.symbol === selectedSymbol ? 'text-tv-accent' : 'text-tv-text'}`}>
+                        {item.symbol.replace('.CA', '')}
+                      </span>
+                      <button
+                        type="button"
+                        title={alertEnabled ? 'Disable alert' : 'Enable alert'}
+                        aria-label={alertEnabled ? `Disable ${item.symbol} alert` : `Enable ${item.symbol} alert`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          toggleAlert(item.symbol);
+                        }}
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-tv-sm transition-colors hover:bg-tv-surface ${
+                          alertEnabled ? 'text-tv-accent opacity-100' : 'text-tv-muted opacity-0 group-hover:opacity-100'
+                        }`}
+                      >
+                        <Bell size={13} fill={alertEnabled ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
+                    <div className={`w-20 text-right font-weight-medium ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                      {item.price}
+                    </div>
+                    <div className={`w-20 text-right font-weight-medium ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                      {item.change}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className={`w-20 text-right font-weight-medium ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
-              {item.price}
-            </div>
-            <div className={`w-20 text-right font-weight-medium ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
-              {item.change}
-            </div>
-          </Link>
-        ))}
+          );
+        })}
       </div>
 
       {/* Details Panel */}

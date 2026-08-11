@@ -5,6 +5,7 @@ import { Search, BarChart2, Bell, RotateCcw, Layout, Settings, Maximize, Camera,
 import Link from 'next/link';
 import { WatchlistItem } from './RightSidebar';
 import { useRouter } from 'next/navigation';
+import { useAlerts } from './AlertProvider';
 
 export default function TopBar({ 
   symbol, 
@@ -20,10 +21,12 @@ export default function TopBar({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const { isAlerted, statusMessage, toggleAlert } = useAlerts();
   
   const timeframes = ['D', 'W', 'M'];
   const displaySymbol = symbol.replace('.CA', '');
   const replayQuery = replay ? '&replay=1' : '';
+  const alertEnabled = isAlerted(symbol);
 
   const filteredWatchlist = watchlist.filter(item => 
     item.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -71,8 +74,14 @@ export default function TopBar({
               <BarChart2 size={16} />
               <span className="hidden md:inline">Indicators</span>
             </button>
-            <button className="flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors text-tv-text">
-              <Bell size={16} />
+            <button
+              type="button"
+              onClick={() => toggleAlert(symbol)}
+              className={`flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors ${
+                alertEnabled ? 'text-tv-accent' : 'text-tv-text'
+              }`}
+            >
+              <Bell size={16} fill={alertEnabled ? 'currentColor' : 'none'} />
               <span className="hidden md:inline">Alert</span>
             </button>
             <Link
@@ -105,6 +114,12 @@ export default function TopBar({
             Publish
           </button>
         </div>
+
+        {statusMessage && (
+          <div className="absolute left-3 top-12 z-50 rounded-tv-sm border border-tv-border bg-tv-surface px-3 py-2 text-xs text-tv-text shadow-lg">
+            {statusMessage}
+          </div>
+        )}
       </div>
 
       {/* Mobile Search Modal */}
@@ -138,10 +153,25 @@ export default function TopBar({
                   <div className="font-weight-medium text-tv-text">{item.symbol.replace('.CA', '')}</div>
                   <div className="text-xs text-tv-muted">{item.companyName}</div>
                 </div>
-                <div className="text-right">
-                  <div className="font-weight-medium text-tv-text">{item.price}</div>
-                  <div className={`text-xs ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
-                    {item.change}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    aria-label={isAlerted(item.symbol) ? `Disable ${item.symbol} alert` : `Enable ${item.symbol} alert`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleAlert(item.symbol);
+                    }}
+                    className={`flex h-9 w-9 items-center justify-center rounded-tv-sm border border-tv-border ${
+                      isAlerted(item.symbol) ? 'text-tv-accent' : 'text-tv-muted'
+                    }`}
+                  >
+                    <Bell size={16} fill={isAlerted(item.symbol) ? 'currentColor' : 'none'} />
+                  </button>
+                  <div className="text-right">
+                    <div className="font-weight-medium text-tv-text">{item.price}</div>
+                    <div className={`text-xs ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                      {item.change}
+                    </div>
                   </div>
                 </div>
               </div>

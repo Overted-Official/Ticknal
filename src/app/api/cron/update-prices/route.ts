@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { tickers, dailyPrices } from '@/db/schema';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
+import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 
 // Helper to fetch data for one symbol using a promise
 function fetchSymbolData(client: TradingViewClient, symbol: string): Promise<TradingViewPeriod | null> {
@@ -63,6 +64,7 @@ export async function GET(req: Request) {
 
     const client = new TradingView.Client();
     const results: Array<{ symbol: string; status: string; date?: string; message?: string }> = [];
+    const updatedSymbols: string[] = [];
 
     for (const t of allTickers) {
       try {
@@ -93,6 +95,7 @@ export async function GET(req: Request) {
             });
             
           results.push({ symbol: t.symbol, status: 'updated', date: dateStr });
+          updatedSymbols.push(t.symbol);
         } else {
           results.push({ symbol: t.symbol, status: 'no_data' });
         }
@@ -105,7 +108,15 @@ export async function GET(req: Request) {
     }
     
     client.end();
-    return NextResponse.json({ message: 'Daily price update completed', results }, { status: 200 });
+
+    let notificationResult = null;
+    try {
+      notificationResult = await dispatchSignalNotifications({ symbols: updatedSymbols, lookbackBars: 1 });
+    } catch (notificationError) {
+      console.error('Error dispatching signal notifications:', notificationError);
+    }
+
+    return NextResponse.json({ message: 'Daily price update completed', results, notificationResult }, { status: 200 });
 
   } catch (error) {
     console.error('Error updating prices:', error);

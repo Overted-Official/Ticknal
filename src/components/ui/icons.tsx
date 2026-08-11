@@ -35,5 +35,7 @@ export {
   SkipForward,
   StepBack,
   StepForward,
-  X
+  X,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';

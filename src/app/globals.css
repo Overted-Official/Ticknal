@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  /* TradingView Exact Color Palette */
-  --bg-base: #000000;
-  --bg-surface: #1E222D;
-  --bg-chart: #131722;
-  --bg-hover: #2A2E39;
+  /* Moonlit Plum palette. Candle colors stay separate below. */
+  --bg-base: #0B0405;
+  --bg-surface: #201332;
+  --bg-chart: #201332;
+  --bg-hover: #432257;
   
-  --text-primary: #D1D4DC;
-  --text-secondary: #787B86;
+  --text-primary: #F4ECFA;
+  --text-secondary: #9E83BE;
   
-  --accent-blue: #2962FF;
-  --accent-blue-hover: #1e4dbf;
+  --accent-blue: #A26DB8;
+  --accent-blue-hover: #9E83BE;
   
   --up-color: #089981;
   --down-color: #F23645;
   
-  --border-color: #2A2E39;
-  --border-highlight: #363A45;
+  --border-color: #432257;
+  --border-highlight: #A26DB8;
 
   /* Typography */
   --font-tv-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -31,7 +31,7 @@
   --radius-lg: 0.5rem;
   --radius-full: 9999px;
   
-  --glass-bg: rgba(30, 34, 45, 0.75);
+  --glass-bg: rgba(32, 19, 50, 0.78);
 }
 
 @theme inline {

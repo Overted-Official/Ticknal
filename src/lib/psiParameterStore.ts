@@ -23,10 +23,17 @@ type OptimizedParams = {
   source: string;
 };
 
+type CachedRows = {
+  cacheKey: string;
+  rows: CsvRow[];
+};
+
 export type PsiParamsResolution = {
   params: PsiStrategyParams;
   parameterSource: string;
 };
+
+const optimizedParamRowsCache = new Map<string, CachedRows>();
 
 export function resolvePsiParamsFromStore(
   symbol: string,
@@ -50,10 +57,9 @@ function readOptimizedParams(symbol: string): OptimizedParams | null {
   const ticker = normalizeTickerSymbol(symbol);
 
   for (const filePath of BEST_COMBINATION_FILES) {
-    const csvText = readCsvFile(filePath);
-    if (!csvText) continue;
+    const rows = readCsvRows(filePath);
+    if (!rows) continue;
 
-    const rows = parseCsvText(csvText);
     const row = rows.find((candidate) => normalizeTickerSymbol(candidate.ticker_id ?? "") === ticker);
     if (row) {
       return {
@@ -66,9 +72,17 @@ function readOptimizedParams(symbol: string): OptimizedParams | null {
   return null;
 }
 
-function readCsvFile(filePath: string): string | null {
+function readCsvRows(filePath: string): CsvRow[] | null {
   try {
-    return fs.readFileSync(/*turbopackIgnore: true*/ filePath, "utf8");
+    const stats = fs.statSync(filePath);
+    const cacheKey = `${stats.size}:${stats.mtimeMs}`;
+    const cached = optimizedParamRowsCache.get(filePath);
+    if (cached?.cacheKey === cacheKey) return cached.rows;
+
+    const csvText = fs.readFileSync(/*turbopackIgnore: true*/ filePath, "utf8");
+    const rows = parseCsvText(csvText);
+    optimizedParamRowsCache.set(filePath, { cacheKey, rows });
+    return rows;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") return null;

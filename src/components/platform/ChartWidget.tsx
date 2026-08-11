@@ -1,21 +1,24 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createChart,
   ColorType,
   CandlestickSeries,
   HistogramSeries,
+  LineStyle,
   createSeriesMarkers,
   type CandlestickData,
   type HistogramData,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
+  type MouseEventParams,
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward } from '@/components/ui/icons';
+import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X } from '@/components/ui/icons';
 
 export interface ChartData {
   time: string;
@@ -29,11 +32,74 @@ export interface ChartData {
 interface StrategySignal {
   date: string;
   signal: string;
+  price?: number;
+  entryReason?: string;
+  exitReason?: string;
 }
 
 interface SignalsResponse {
   signals?: StrategySignal[];
 }
+
+type StrategyLevelsResponse = {
+  targetPrice: number | null;
+  stopPrice: number | null;
+  targetLabel: string | null;
+  stopLabel: string | null;
+};
+
+type ChartOrder = {
+  id: number;
+  tickerSymbol: string;
+  status: string;
+  entryDate: string;
+  entryPrice: number;
+  quantity: number;
+  targetPrice: number | null;
+  stopPrice: number | null;
+  currentPrice: number;
+  profitLoss: number;
+  profitLossPct: number;
+};
+
+type OrderDraft = {
+  date: string;
+  entryPrice: string;
+  quantity: string;
+  targetPrice: string;
+  stopPrice: string;
+  targetLabel: string | null;
+  stopLabel: string | null;
+  x: number;
+  y: number;
+  loadingLevels: boolean;
+};
+
+type OrderOverlay = {
+  id: number;
+  left: number;
+  width: number;
+  entryTop: number;
+  targetTop: number | null;
+  stopTop: number | null;
+  targetHeight: number;
+  stopHeight: number;
+  targetPrice: number | null;
+  stopPrice: number | null;
+  entryPrice: number;
+  profitLossPct: number;
+};
+
+type SignalBadge = {
+  id: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  label: string;
+  detail: string;
+  kind: 'buy' | 'sell';
+};
 
 interface LiveQuote {
   date: string;
@@ -63,6 +129,7 @@ const PLAYBACK_SPEEDS = [
   { label: '2x', delay: 450 },
   { label: '4x', delay: 180 },
 ];
+const MAX_VISIBLE_SIGNAL_BADGES = 7;
 
 export default function ChartWidget({
   data,
@@ -75,8 +142,16 @@ export default function ChartWidget({
   const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const markerApiRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const orderPriceLineRefs = useRef<Map<number, IPriceLine[]>>(new Map());
 
   const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
+  const [orders, setOrders] = useState<ChartOrder[]>([]);
+  const [orderDraft, setOrderDraft] = useState<OrderDraft | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [orderOverlays, setOrderOverlays] = useState<OrderOverlay[]>([]);
+  const [chartSignals, setChartSignals] = useState<StrategySignal[]>([]);
+  const [signalBadges, setSignalBadges] = useState<SignalBadge[]>([]);
   const [replayMode, setReplayMode] = useState(initialReplayMode);
   const [replayIndex, setReplayIndex] = useState(() =>
     initialReplayMode ? getDefaultReplayIndex(data) : Math.max(0, data.length - 1),
@@ -92,6 +167,18 @@ export default function ChartWidget({
   );
   const hasReplayRoom = data.length > 1;
 
+  const clearOrderPriceLines = useCallback(() => {
+    const candlestickSeries = candlestickSeriesRef.current;
+    if (candlestickSeries) {
+      for (const lines of orderPriceLineRefs.current.values()) {
+        for (const line of lines) {
+          candlestickSeries.removePriceLine(line);
+        }
+      }
+    }
+    orderPriceLineRefs.current.clear();
+  }, []);
+
   useEffect(() => {
     onReplayStateChange?.({
       active: replayMode,
@@ -104,7 +191,7 @@ export default function ChartWidget({
     if (!chartContainerRef.current) return;
 
     const computedStyle = getComputedStyle(document.documentElement);
-    const bgBase = '#131722';
+    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#201332';
     const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#787b86';
     const borderColor = computedStyle.getPropertyValue('--border-color').trim() || '#2a2e39';
     const upColor = '#089981';
@@ -173,13 +260,14 @@ export default function ChartWidget({
 
     return () => {
       markerApiRef.current?.detach();
+      clearOrderPriceLines();
       markerApiRef.current = null;
       candlestickSeriesRef.current = null;
       volumeSeriesRef.current = null;
       chartRef.current = null;
       chart.remove();
     };
-  }, [symbol]);
+  }, [clearOrderPriceLines, symbol]);
 
   useEffect(() => {
     const candlestickSeries = candlestickSeriesRef.current;
@@ -210,7 +298,174 @@ export default function ChartWidget({
   }, [visibleData]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    const recenterChart = () => {
+      chartRef.current?.priceScale('right').applyOptions({ autoScale: true });
+      chartRef.current?.timeScale().scrollToRealTime();
+    };
+
+    window.addEventListener('quantegx:chart-recenter', recenterChart);
+    return () => window.removeEventListener('quantegx:chart-recenter', recenterChart);
+  }, []);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const candlestickSeries = candlestickSeriesRef.current;
+    if (!chart || !candlestickSeries) return;
+
+    const handleChartClick = (param: MouseEventParams<Time>) => {
+      if (!param.point || !param.time) return;
+      const seriesData = param.seriesData.get(candlestickSeries) as CandlestickData<Time> | undefined;
+      const candle = seriesData ?? visibleData.find((item) => item.time === String(param.time));
+      if (!candle || !('close' in candle)) return;
+
+      const containerWidth = chartContainerRef.current?.clientWidth ?? 0;
+      const containerHeight = chartContainerRef.current?.clientHeight ?? 0;
+      const date = String(candle.time);
+      const entryPrice = Number(candle.close);
+      const x = Math.min(Math.max(param.point.x, 12), Math.max(12, containerWidth - 300));
+      const y = Math.min(Math.max(param.point.y, 12), Math.max(12, containerHeight - 210));
+      const entryPriceText = entryPrice.toFixed(2);
+
+      setOrderError(null);
+      setOrderDraft({
+        date,
+        entryPrice: entryPriceText,
+        quantity: '1',
+        targetPrice: '',
+        stopPrice: '',
+        targetLabel: null,
+        stopLabel: null,
+        x,
+        y,
+        loadingLevels: true,
+      });
+
+      fetch(`/api/strategy-levels?symbol=${encodeURIComponent(symbol)}&date=${date}&entryPrice=${entryPrice}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((levels: StrategyLevelsResponse | null) => {
+          if (!levels) return;
+          setOrderDraft((current) => {
+            if (!current || current.date !== date || current.entryPrice !== entryPriceText) return current;
+            return {
+              ...current,
+              targetPrice: levels.targetPrice === null ? '' : levels.targetPrice.toFixed(2),
+              stopPrice: levels.stopPrice === null ? '' : levels.stopPrice.toFixed(2),
+              targetLabel: levels.targetLabel,
+              stopLabel: levels.stopLabel,
+              loadingLevels: false,
+            };
+          });
+        })
+        .catch((error) => {
+          console.error('Failed to derive strategy order levels:', error);
+          setOrderDraft((current) => (current?.date === date ? { ...current, loadingLevels: false } : current));
+        });
+    };
+
+    chart.subscribeClick(handleChartClick);
+    return () => chart.unsubscribeClick(handleChartClick);
+  }, [symbol, visibleData]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function fetchOrders() {
+      try {
+        const res = await fetch(`/api/orders?symbol=${encodeURIComponent(symbol)}&status=OPEN`);
+        if (!res.ok || !isActive) return;
+        const json = await res.json();
+        if (isActive) setOrders(json.orders ?? []);
+      } catch (error) {
+        if (isActive) {
+          console.error('Failed to fetch chart orders', error);
+        }
+      }
+    }
+
+    void fetchOrders();
+    return () => {
+      isActive = false;
+    };
+  }, [symbol]);
+
+  useEffect(() => {
+    const candlestickSeries = candlestickSeriesRef.current;
+    if (!candlestickSeries) return;
+
+    clearOrderPriceLines();
+
+    for (const order of orders) {
+      const lines: IPriceLine[] = [
+        candlestickSeries.createPriceLine({
+          price: order.entryPrice,
+          color: '#A26DB8',
+          lineWidth: 2,
+          lineStyle: LineStyle.Solid,
+          axisLabelVisible: true,
+          title: `${order.tickerSymbol} entry`,
+        }),
+      ];
+
+      if (order.targetPrice !== null) {
+        lines.push(
+          candlestickSeries.createPriceLine({
+            price: order.targetPrice,
+            color: '#9E83BE',
+            lineWidth: 1,
+            lineStyle: LineStyle.Dashed,
+            axisLabelVisible: true,
+            title: 'target',
+          }),
+        );
+      }
+
+      if (order.stopPrice !== null) {
+        lines.push(
+          candlestickSeries.createPriceLine({
+            price: order.stopPrice,
+            color: '#F23645',
+            lineWidth: 1,
+            lineStyle: LineStyle.Dashed,
+            axisLabelVisible: true,
+            title: 'stop',
+          }),
+        );
+      }
+
+      orderPriceLineRefs.current.set(order.id, lines);
+    }
+
+    return clearOrderPriceLines;
+  }, [clearOrderPriceLines, orders]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const candlestickSeries = candlestickSeriesRef.current;
+    const container = chartContainerRef.current;
+    if (!chart || !candlestickSeries || !container) return;
+
+    const updateOverlays = () => {
+      const nextOrderOverlays = orders
+        .map((order) => buildOrderOverlay(order, chart, candlestickSeries, container))
+        .filter((overlay): overlay is OrderOverlay => overlay !== null);
+      const nextSignalBadges = arrangeSignalBadges(chartSignals, visibleData, chart, candlestickSeries, container);
+
+      setOrderOverlays(nextOrderOverlays);
+      setSignalBadges(nextSignalBadges);
+    };
+
+    updateOverlays();
+    chart.timeScale().subscribeVisibleTimeRangeChange(updateOverlays);
+    window.addEventListener('resize', updateOverlays);
+
+    return () => {
+      chart.timeScale().unsubscribeVisibleTimeRangeChange(updateOverlays);
+      window.removeEventListener('resize', updateOverlays);
+    };
+  }, [chartSignals, orders, visibleData]);
+
+  useEffect(() => {
+    let isActive = true;
 
     async function fetchMetrics() {
       try {
@@ -220,24 +475,26 @@ export default function ChartWidget({
           params.set('end', replayDate);
         }
 
-        const res = await fetch(`/api/metrics?${params.toString()}`, { signal: controller.signal });
-        if (res.ok) {
+        const res = await fetch(`/api/metrics?${params.toString()}`);
+        if (res.ok && isActive) {
           const json = await res.json();
-          if (json.metrics) setMetrics(json.metrics);
+          if (isActive && json.metrics) setMetrics(json.metrics);
         }
       } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
+        if (isActive) {
           console.error('Failed to fetch metrics', error);
         }
       }
     }
 
-    fetchMetrics();
-    return () => controller.abort();
+    void fetchMetrics();
+    return () => {
+      isActive = false;
+    };
   }, [data, replayDate, replayMode, replayStartDate, symbol]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let isActive = true;
 
     async function fetchSignals() {
       try {
@@ -247,21 +504,28 @@ export default function ChartWidget({
           params.set('end', replayDate);
         }
 
-        const res = await fetch(`/api/signals?${params.toString()}`, { signal: controller.signal });
-        if (!res.ok) return;
+        const res = await fetch(`/api/signals?${params.toString()}`);
+        if (!res.ok || !isActive) return;
 
         const signalResponse = (await res.json()) as SignalsResponse;
-        markerApiRef.current?.setMarkers(buildMarkers(signalResponse.signals ?? []));
+        const signals = signalResponse.signals ?? [];
+        if (!isActive) return;
+        markerApiRef.current?.setMarkers(buildMarkers(signals));
+        setChartSignals(signals);
       } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
+        if (isActive) {
           console.error('Failed to fetch signals', error);
         }
       }
     }
 
     markerApiRef.current?.setMarkers([]);
-    fetchSignals();
-    return () => controller.abort();
+    const resetSignalsTimeout = window.setTimeout(() => setChartSignals([]), 0);
+    void fetchSignals();
+    return () => {
+      isActive = false;
+      window.clearTimeout(resetSignalsTimeout);
+    };
   }, [data, replayDate, replayMode, replayStartDate, symbol]);
 
   useEffect(() => {
@@ -350,6 +614,52 @@ export default function ChartWidget({
     setReplayIndex(findIndexAtOrBefore(data, value));
   };
 
+  const saveOrderDraft = async () => {
+    if (!orderDraft) return;
+
+    const entryPrice = Number(orderDraft.entryPrice);
+    const quantity = Number(orderDraft.quantity);
+    const targetPrice = parseOptionalNumber(orderDraft.targetPrice);
+    const stopPrice = parseOptionalNumber(orderDraft.stopPrice);
+
+    if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+      setOrderError('Entry price must be greater than zero.');
+      return;
+    }
+
+    setSavingOrder(true);
+    setOrderError(null);
+
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol,
+          entryDate: orderDraft.date,
+          entryPrice,
+          quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+          targetPrice,
+          stopPrice,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setOrderError(json.error ?? 'Could not save the order.');
+        return;
+      }
+
+      setOrders((current) => [json.order, ...current.filter((order) => order.id !== json.order.id)]);
+      setOrderDraft(null);
+    } catch (error) {
+      console.error('Failed to save order:', error);
+      setOrderError('Could not save the order.');
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
   const formatColor = (valStr: string) => {
     if (!valStr) return '';
     const val = parseFloat(valStr);
@@ -365,8 +675,145 @@ export default function ChartWidget({
   };
 
   return (
-    <div className="flex-1 w-full h-full relative bg-[#131722]">
+    <div className="flex-1 w-full h-full relative bg-tv-chart">
       <div className="absolute inset-0" ref={chartContainerRef} />
+
+      {orderOverlays.map((overlay) => (
+        <div key={overlay.id} className="pointer-events-none absolute inset-0 z-20">
+          {overlay.targetTop !== null && (
+            <div
+              className="absolute rounded-tv-sm border border-[#9E83BE]/60 bg-[#9E83BE]/15"
+              style={{
+                left: overlay.left,
+                width: overlay.width,
+                top: overlay.targetTop,
+                height: overlay.targetHeight,
+              }}
+            />
+          )}
+          {overlay.stopTop !== null && (
+            <div
+              className="absolute rounded-tv-sm border border-[#F23645]/60 bg-[#F23645]/15"
+              style={{
+                left: overlay.left,
+                width: overlay.width,
+                top: overlay.entryTop,
+                height: overlay.stopHeight,
+              }}
+            />
+          )}
+          <div
+            className="absolute flex -translate-y-1/2 items-center gap-2 rounded-tv-sm border border-[#A26DB8]/70 bg-[#201332]/95 px-2 py-1 text-[11px] text-white shadow-lg"
+            style={{ left: overlay.left, top: overlay.entryTop }}
+          >
+            <span className="font-weight-medium">LONG</span>
+            <span className={overlay.profitLossPct >= 0 ? 'text-tv-up' : 'text-tv-down'}>
+              {overlay.profitLossPct >= 0 ? '+' : ''}{overlay.profitLossPct.toFixed(2)}%
+            </span>
+          </div>
+        </div>
+      ))}
+
+      {signalBadges.map((badge) => (
+        <div
+          key={badge.id}
+          className={`pointer-events-none absolute z-30 -translate-x-1/2 rounded-tv-sm border px-2 py-1 text-[11px] shadow-lg backdrop-blur-sm ${
+            badge.kind === 'buy'
+              ? 'border-[#A26DB8]/80 bg-[#A26DB8]/95 text-[#0B0405]'
+              : 'border-[#A26DB8]/60 bg-[#432257]/95 text-white'
+          }`}
+          style={{ left: badge.left, top: badge.top, width: badge.width }}
+        >
+          <div className="truncate font-weight-medium leading-none">{badge.label}</div>
+          <div className={`mt-1 truncate leading-none ${badge.kind === 'buy' ? 'text-[#201332]' : 'text-[#E8D8F3]'}`}>
+            {badge.detail}
+          </div>
+        </div>
+      ))}
+
+      {orderDraft && (
+        <div
+          className="absolute z-[70] w-72 rounded-tv-lg border border-[#A26DB8]/60 bg-[#201332]/95 p-3 text-xs text-white shadow-2xl backdrop-blur-md"
+          style={{ left: orderDraft.x, top: orderDraft.y }}
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <div className="font-weight-medium">Open Long Position</div>
+              <div className="mt-0.5 text-[11px] text-[#9E83BE]">{symbol} · {orderDraft.date}</div>
+            </div>
+            <button
+              type="button"
+              aria-label="Close order popover"
+              onClick={() => setOrderDraft(null)}
+              className="flex h-7 w-7 items-center justify-center rounded-tv-sm text-[#9E83BE] transition-colors hover:bg-[#432257] hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[11px] text-[#9E83BE]">
+              Entry
+              <input
+                type="number"
+                step="0.01"
+                value={orderDraft.entryPrice}
+                onChange={(event) => setOrderDraft((current) => current ? { ...current, entryPrice: event.target.value } : current)}
+                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none focus:border-[#A26DB8]"
+              />
+            </label>
+            <label className="text-[11px] text-[#9E83BE]">
+              Quantity
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={orderDraft.quantity}
+                onChange={(event) => setOrderDraft((current) => current ? { ...current, quantity: event.target.value } : current)}
+                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none focus:border-[#A26DB8]"
+              />
+            </label>
+            <label className="text-[11px] text-[#9E83BE]">
+              Target
+              <input
+                type="number"
+                step="0.01"
+                value={orderDraft.targetPrice}
+                placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
+                onChange={(event) => setOrderDraft((current) => current ? { ...current, targetPrice: event.target.value } : current)}
+                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none placeholder:text-[#9E83BE]/60 focus:border-[#A26DB8]"
+              />
+            </label>
+            <label className="text-[11px] text-[#9E83BE]">
+              Stop
+              <input
+                type="number"
+                step="0.01"
+                value={orderDraft.stopPrice}
+                placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
+                onChange={(event) => setOrderDraft((current) => current ? { ...current, stopPrice: event.target.value } : current)}
+                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none placeholder:text-[#9E83BE]/60 focus:border-[#A26DB8]"
+              />
+            </label>
+          </div>
+
+          {(orderDraft.targetLabel || orderDraft.stopLabel || orderError) && (
+            <div className="mt-2 text-[11px] text-[#E8D8F3]">
+              {[orderDraft.targetLabel, orderDraft.stopLabel].filter(Boolean).join(' · ')}
+              {orderError && <div className="mt-1 text-tv-down">{orderError}</div>}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={saveOrderDraft}
+            disabled={savingOrder}
+            className="mt-3 h-9 w-full rounded-tv-sm bg-[#A26DB8] text-sm font-weight-medium text-[#0B0405] transition-colors hover:bg-[#9E83BE] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {savingOrder ? 'Saving' : 'Save Position'}
+          </button>
+        </div>
+      )}
 
       {!replayMode ? (
         <div className="absolute left-4 top-4 z-50">
@@ -550,9 +997,10 @@ function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
       markers.push({
         time: signal.date as Time,
         position: 'belowBar',
-        color: '#22c55e',
+        color: '#A26DB8',
         shape: 'arrowUp',
         text: 'BUY',
+        size: 1.25,
       });
     } else if (currentPosition === 'LONG' && signal.signal.startsWith('SELL')) {
       currentPosition = 'CASH';
@@ -563,6 +1011,7 @@ function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
         color: exitMarker.color,
         shape: 'arrowDown',
         text: exitMarker.text,
+        size: 1.25,
       });
     }
   }
@@ -570,11 +1019,157 @@ function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
   return markers;
 }
 
+function buildOrderOverlay(
+  order: ChartOrder,
+  chart: IChartApi,
+  candlestickSeries: ISeriesApi<'Candlestick'>,
+  container: HTMLDivElement,
+): OrderOverlay | null {
+  const left = chart.timeScale().timeToCoordinate(order.entryDate as Time);
+  const entryTop = candlestickSeries.priceToCoordinate(order.entryPrice);
+  if (left === null || entryTop === null) return null;
+
+  const targetTop = order.targetPrice === null ? null : candlestickSeries.priceToCoordinate(order.targetPrice);
+  const stopTop = order.stopPrice === null ? null : candlestickSeries.priceToCoordinate(order.stopPrice);
+  const clampedLeft = clampNumber(left, 8, Math.max(8, container.clientWidth - 120));
+  const width = Math.max(96, container.clientWidth - clampedLeft - 76);
+  const validTargetTop = targetTop !== null && targetTop < entryTop ? clampNumber(targetTop, 8, container.clientHeight - 8) : null;
+  const validStopTop = stopTop !== null && stopTop > entryTop ? clampNumber(stopTop, 8, container.clientHeight - 8) : null;
+
+  return {
+    id: order.id,
+    left: clampedLeft,
+    width,
+    entryTop: clampNumber(entryTop, 8, container.clientHeight - 8),
+    targetTop: validTargetTop,
+    stopTop: validStopTop,
+    targetHeight: validTargetTop === null ? 0 : Math.max(6, entryTop - validTargetTop),
+    stopHeight: validStopTop === null ? 0 : Math.max(6, validStopTop - entryTop),
+    targetPrice: order.targetPrice,
+    stopPrice: order.stopPrice,
+    entryPrice: order.entryPrice,
+    profitLossPct: order.profitLossPct,
+  };
+}
+
+function arrangeSignalBadges(
+  signals: StrategySignal[],
+  visibleData: ChartData[],
+  chart: IChartApi,
+  candlestickSeries: ISeriesApi<'Candlestick'>,
+  container: HTMLDivElement,
+): SignalBadge[] {
+  const reservedRects: Rect[] = [];
+  if (container.clientWidth >= 560) {
+    reservedRects.push({
+      left: Math.max(0, container.clientWidth - 330),
+      top: 8,
+      right: container.clientWidth - 56,
+      bottom: 300,
+    });
+  }
+
+  const placedRects = [...reservedRects];
+  const selected: SignalBadge[] = [];
+  const candidates = signals.filter((signal) => signal.signal !== 'HOLD').slice().reverse();
+
+  for (const signal of candidates) {
+    const badge = buildSignalBadge(signal, visibleData, chart, candlestickSeries, container);
+    if (!badge) continue;
+
+    const rect = getSignalBadgeRect(badge);
+    if (placedRects.some((placedRect) => rectsOverlap(rect, placedRect))) continue;
+
+    selected.push(badge);
+    placedRects.push(rect);
+
+    if (selected.length >= MAX_VISIBLE_SIGNAL_BADGES) break;
+  }
+
+  return selected.sort((a, b) => a.left - b.left);
+}
+
+function buildSignalBadge(
+  signal: StrategySignal,
+  visibleData: ChartData[],
+  chart: IChartApi,
+  candlestickSeries: ISeriesApi<'Candlestick'>,
+  container: HTMLDivElement,
+): SignalBadge | null {
+  if (signal.signal === 'HOLD') return null;
+
+  const x = chart.timeScale().timeToCoordinate(signal.date as Time);
+  const candle = visibleData.find((item) => item.time === signal.date);
+  const signalPrice = Number(signal.price ?? candle?.close);
+  if (x === null || !Number.isFinite(signalPrice)) return null;
+  if (x < -80 || x > container.clientWidth + 80) return null;
+
+  const priceTop = candlestickSeries.priceToCoordinate(signalPrice);
+  if (priceTop === null) return null;
+
+  const kind = signal.signal === 'BUY' ? 'buy' : 'sell';
+  const width = kind === 'buy' ? 104 : 112;
+  const height = 36;
+  const y = kind === 'buy' ? priceTop + 18 : priceTop - 46;
+  const priceDetail = signalPrice.toFixed(2);
+  const reason = signal.entryReason ?? signal.exitReason;
+
+  return {
+    id: `${signal.date}-${signal.signal}`,
+    left: clampNumber(x, width / 2 + 8, container.clientWidth - width / 2 - 8),
+    top: clampNumber(y, 48, container.clientHeight - height - 8),
+    width,
+    height,
+    label: formatSignalLabel(signal.signal),
+    detail: reason ? `${reason} · ${priceDetail}` : priceDetail,
+    kind,
+  };
+}
+
+type Rect = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
+function getSignalBadgeRect(badge: SignalBadge): Rect {
+  return {
+    left: badge.left - badge.width / 2 - 6,
+    top: badge.top - 6,
+    right: badge.left + badge.width / 2 + 6,
+    bottom: badge.top + badge.height + 6,
+  };
+}
+
+function rectsOverlap(a: Rect, b: Rect): boolean {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+function parseOptionalNumber(value: string): number | null {
+  if (!value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function formatSignalLabel(signal: string): string {
+  if (signal === 'BUY') return 'BUY';
+  if (signal === 'SELL_TP') return 'TP';
+  if (signal === 'SELL_TRAIL') return 'TRAIL';
+  if (signal === 'SELL_SL') return 'STOP';
+  if (signal === 'SELL_STRUCT') return 'STRUCT';
+  return 'EXIT';
+}
+
 function getExitMarker(signal: string): { text: string; color: string } {
-  if (signal === 'SELL_TP') return { text: 'TAKE PROFIT', color: '#3b82f6' };
-  if (signal === 'SELL_TRAIL') return { text: 'TRAIL STOP', color: '#f59e0b' };
-  if (signal === 'SELL_SL') return { text: 'STOP LOSS', color: '#ef4444' };
-  if (signal === 'SELL_STRUCT') return { text: 'STRUCT STOP', color: '#ef4444' };
+  if (signal === 'SELL_TP') return { text: 'TP', color: '#9E83BE' };
+  if (signal === 'SELL_TRAIL') return { text: 'TRAIL', color: '#A26DB8' };
+  if (signal === 'SELL_SL') return { text: 'STOP', color: '#ef4444' };
+  if (signal === 'SELL_STRUCT') return { text: 'STRUCT', color: '#ef4444' };
   return { text: 'EXIT', color: '#ef4444' };
 }
 

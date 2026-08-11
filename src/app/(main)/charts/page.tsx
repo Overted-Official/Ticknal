@@ -60,6 +60,7 @@ export default async function PlatformPage(props: PlatformPageProps) {
       symbol: t.symbol,
       companyName: t.companyName || t.symbol,
       website: t.website || undefined,
+      sector: t.sector || 'Unclassified',
       price: lastPrice.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
       isUp: change >= 0
