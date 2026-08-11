@@ -204,6 +204,14 @@ export default function OrdersTable() {
                     </button>
                   )}
                   <button
+                    title="Edit Order"
+                    onClick={() => editOrder(order)}
+                    className="p-1.5 rounded bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors flex items-center justify-center border border-tv-border"
+                  >
+                    <Pencil size={14} className="mr-1" />
+                    <span className="text-[11px]">Edit</span>
+                  </button>
+                  <button
                     title="Delete Record"
                     onClick={() => deleteOrder(order)}
                     className="p-1.5 rounded bg-tv-surface text-tv-down hover:bg-red-900/20 transition-colors flex items-center justify-center border border-tv-border"
