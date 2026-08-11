@@ -43,8 +43,11 @@ next-env.d.ts
 # Custom ignores  
 scratch*  
 scratch/  
-Data/  
+Data/*  
 *.csv  
+!Data/psi_best_combinations.csv
+!Data/psi_egx30_best_combinations.csv
+!Data/psi_comi_best_combination.csv
 *.mp4  
 quant_engine/__pycache__/  
 quant_engine/.pytest_cache/  

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { dailyPrices } from "@/db/schema";
-import { resolvePsiParamsFromStore } from "@/lib/psiParameterStore";
+import { resolvePsiParamsWithSource } from "@/lib/psiParameterStore";
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from "@/lib/psiStrategy";
 
 export async function GET(request: Request) {
@@ -41,7 +41,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ signals: [], latestMasterIndex: null, latestMasterIndexAdjusted: null });
     }
 
-    const result = runPsiStrategy(bars, resolvePsiParamsFromStore(ticker, { startDate, endDate }));
+    const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+    const result = runPsiStrategy(bars, parameterResolution.params);
     const signals =
       limit && limit > 0
         ? [...result.signals].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, limit)
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
       signals,
       latestMasterIndex: result.latestMasterIndex,
       latestMasterIndexAdjusted: result.latestMasterIndexAdjusted,
+      parameterSource: parameterResolution.parameterSource,
     });
   } catch (error) {
     console.error("Error computing PSI signals:", error);

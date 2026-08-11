@@ -4,6 +4,24 @@ import * as schema from './schema';
 
 const connectionString = process.env.DATABASE_URL!;
 
-// Disable prefetch as it is not supported for "Transaction" pool mode
-const client = postgres(connectionString, { prepare: false });
+type PostgresClient = ReturnType<typeof postgres>;
+
+const globalForPostgres = globalThis as typeof globalThis & {
+  postgresClient?: PostgresClient;
+};
+
+// Reuse the same small pool across Next dev reloads; session-mode databases
+// otherwise accumulate pools until they reject metrics/signals requests.
+const client =
+  globalForPostgres.postgresClient ??
+  postgres(connectionString, {
+    prepare: false,
+    max: Number(process.env.POSTGRES_POOL_SIZE ?? 3),
+    idle_timeout: 20,
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPostgres.postgresClient = client;
+}
+
 export const db = drizzle(client, { schema });

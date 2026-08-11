@@ -18,15 +18,35 @@ const ENTRY_LEVEL_COLUMNS: Array<[keyof CsvRow, number]> = [
 
 type CsvRow = Record<string, string | undefined>;
 
+type OptimizedParams = {
+  params: Partial<PsiStrategyParams>;
+  source: string;
+};
+
+export type PsiParamsResolution = {
+  params: PsiStrategyParams;
+  parameterSource: string;
+};
+
 export function resolvePsiParamsFromStore(
   symbol: string,
   overrides: Partial<PsiStrategyParams> = {},
 ): PsiStrategyParams {
-  const optimizedParams = readOptimizedParams(symbol);
-  return resolvePsiParams(symbol, { ...(optimizedParams ?? {}), ...overrides });
+  return resolvePsiParamsWithSource(symbol, overrides).params;
 }
 
-function readOptimizedParams(symbol: string): Partial<PsiStrategyParams> | null {
+export function resolvePsiParamsWithSource(
+  symbol: string,
+  overrides: Partial<PsiStrategyParams> = {},
+): PsiParamsResolution {
+  const optimizedParams = readOptimizedParams(symbol);
+  return {
+    params: resolvePsiParams(symbol, { ...(optimizedParams?.params ?? {}), ...overrides }),
+    parameterSource: optimizedParams?.source ?? "ticker-preset-or-default",
+  };
+}
+
+function readOptimizedParams(symbol: string): OptimizedParams | null {
   const ticker = normalizeTickerSymbol(symbol);
 
   for (const filePath of BEST_COMBINATION_FILES) {
@@ -35,7 +55,12 @@ function readOptimizedParams(symbol: string): Partial<PsiStrategyParams> | null 
 
     const rows = parseCsvText(csvText);
     const row = rows.find((candidate) => normalizeTickerSymbol(candidate.ticker_id ?? "") === ticker);
-    if (row) return rowToParams(row);
+    if (row) {
+      return {
+        params: rowToParams(row),
+        source: path.relative(process.cwd(), filePath).replaceAll("\\", "/"),
+      };
+    }
   }
 
   return null;

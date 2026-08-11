@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { dailyPrices } from "@/db/schema";
-import { resolvePsiParamsFromStore } from "@/lib/psiParameterStore";
+import { resolvePsiParamsWithSource } from "@/lib/psiParameterStore";
 import {
   formatMetricsForApi,
   normalizeTickerSymbol,
@@ -43,8 +43,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Insufficient price history" }, { status: 404 });
     }
 
-    const result = runPsiStrategy(bars, resolvePsiParamsFromStore(ticker, { startDate, endDate }));
-    return NextResponse.json({ metrics: formatMetricsForApi(result.metrics) });
+    const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+    const result = runPsiStrategy(bars, parameterResolution.params);
+    return NextResponse.json({
+      metrics: formatMetricsForApi(result.metrics),
+      parameterSource: parameterResolution.parameterSource,
+    });
   } catch (error) {
     console.error("Error computing PSI metrics:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

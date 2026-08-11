@@ -114,6 +114,7 @@ export default function ChartWidget({
       layout: {
         background: { type: ColorType.Solid, color: bgBase },
         textColor: textMuted,
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: borderColor },

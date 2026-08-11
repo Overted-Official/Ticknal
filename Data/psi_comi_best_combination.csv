@@ -1,0 +1,2 @@
+ticker_id,Max Slots,L-14.6,L-23.6,L-38.2,L-50.0,L-61.8,Slots L-14.6,Slots L-23.6,Slots L-38.2,Slots L-50.0,Slots L-61.8,Use Smrt Index Exit,Exit Level,Use AYM,AYM TP Multiplier,AYM Limit,Use ATR,ATR Distance,Use Stoploss,Stoploss Level,Sys ROI,B&H ROI,ROI Margin,# of Trades,Win Rate,Max Drawdown,Avg. Adverse Excursion,Avg. Favorable Excursion,Annual CAGR,Avg. Return/Trade,Avg Bars/Trade
+COMI,1,FALSE,TRUE,FALSE,FALSE,FALSE,null,1,null,null,null,FALSE,null,TRUE,3,78.6,TRUE,2,TRUE,6,1196.06,269.07,926.99,30,83.33,21.05,-5.57,15.69,47.35,10.34,29.5
