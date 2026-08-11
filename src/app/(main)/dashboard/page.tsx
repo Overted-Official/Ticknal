@@ -36,8 +36,9 @@ export default async function DashboardPage() {
     getRecentOpportunities(),
     getActiveAlertCount(),
   ]);
+  const openPositionTickers = new Set(orderStats.openOrders.map(o => o.tickerSymbol));
   const buyOpportunities = opportunities.filter((item) => item.signal.signal === 'BUY').slice(0, 12);
-  const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY').slice(0, 8);
+  const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text">
