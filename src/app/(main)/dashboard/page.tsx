@@ -173,23 +173,38 @@ async function getOrderStats() {
   const latestPrices = await getLatestPriceMap();
   const tickerMap = await getTickerMap();
 
-  const openOrders: DashboardOrder[] = openRows.map((order) => {
+  const openOrdersMap = new Map<string, DashboardOrder>();
+  for (const order of openRows) {
     const entryPrice = Number(order.entryPrice);
     const quantity = Number(order.quantity);
     const currentPrice = latestPrices[order.tickerSymbol] ?? entryPrice;
     const profitLoss = (currentPrice - entryPrice) * quantity;
-    return {
-      id: order.id,
-      tickerSymbol: order.tickerSymbol,
-      companyName: tickerMap[order.tickerSymbol]?.companyName ?? order.tickerSymbol,
-      entryDate: order.entryDate,
-      entryPrice,
-      quantity,
-      currentPrice,
-      profitLoss,
-      profitLossPct: entryPrice > 0 ? ((currentPrice - entryPrice) / entryPrice) * 100 : 0,
-    };
-  });
+
+    if (openOrdersMap.has(order.tickerSymbol)) {
+      const existing = openOrdersMap.get(order.tickerSymbol)!;
+      const totalCost = (existing.entryPrice * existing.quantity) + (entryPrice * quantity);
+      const newQuantity = existing.quantity + quantity;
+      const avgEntryPrice = totalCost / newQuantity;
+      
+      existing.quantity = newQuantity;
+      existing.entryPrice = avgEntryPrice;
+      existing.profitLoss += profitLoss;
+      existing.profitLossPct = avgEntryPrice > 0 ? ((currentPrice - avgEntryPrice) / avgEntryPrice) * 100 : 0;
+    } else {
+      openOrdersMap.set(order.tickerSymbol, {
+        id: order.id, // Using first order ID as aggregate ID
+        tickerSymbol: order.tickerSymbol,
+        companyName: tickerMap[order.tickerSymbol]?.companyName ?? order.tickerSymbol,
+        entryDate: order.entryDate,
+        entryPrice,
+        quantity,
+        currentPrice,
+        profitLoss,
+        profitLossPct: entryPrice > 0 ? ((currentPrice - entryPrice) / entryPrice) * 100 : 0,
+      });
+    }
+  }
+  const openOrders = Array.from(openOrdersMap.values());
 
   const realized = closedRows.reduce((sum, order) => {
     const entryPrice = Number(order.entryPrice);
