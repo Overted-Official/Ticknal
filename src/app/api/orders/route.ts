@@ -85,9 +85,46 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'A valid order id is required' }, { status: 400 });
     }
 
+    const [existingOrder] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!existingOrder) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
     const status = typeof body.status === 'string' ? body.status.toUpperCase() : undefined;
     const exitPrice = toNullableNumber(body.exitPrice);
     const exitDate = typeof body.exitDate === 'string' && body.exitDate ? body.exitDate.split('T')[0] : null;
+    const quantityToClose = toNullableNumber(body.quantityToClose);
+
+    if (status === 'CLOSED' && quantityToClose !== null && quantityToClose > 0 && quantityToClose < Number(existingOrder.quantity)) {
+      // Partial close
+      const remainingQty = Number(existingOrder.quantity) - quantityToClose;
+
+      // 1. Update original order's quantity (it stays OPEN)
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({ quantity: remainingQty.toString(), updatedAt: new Date() })
+        .where(eq(orders.id, id))
+        .returning();
+
+      // 2. Insert new CLOSED order for the partial amount
+      await db.insert(orders).values({
+        tickerSymbol: existingOrder.tickerSymbol,
+        status: 'CLOSED',
+        side: existingOrder.side,
+        entryDate: existingOrder.entryDate,
+        entryPrice: existingOrder.entryPrice,
+        quantity: quantityToClose.toString(),
+        targetPrice: existingOrder.targetPrice,
+        stopPrice: existingOrder.stopPrice,
+        exitDate: exitDate ?? new Date().toISOString().split('T')[0],
+        exitPrice: exitPrice !== null ? exitPrice.toString() : null,
+        notes: typeof body.notes === 'string' ? body.notes : existingOrder.notes,
+        createdAt: existingOrder.createdAt,
+      });
+
+      const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
+      return NextResponse.json({ order: formatOrder(updatedOrder, priceMap, tickerMap) });
+    }
 
     const setValues: Partial<typeof orders.$inferInsert> = {
       updatedAt: new Date(),
@@ -105,10 +142,6 @@ export async function PATCH(request: Request) {
       .set(setValues)
       .where(eq(orders.id, id))
       .returning();
-
-    if (!updatedOrder) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
 
     const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
     return NextResponse.json({ order: formatOrder(updatedOrder, priceMap, tickerMap) });

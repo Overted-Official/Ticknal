@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle, LineChart, Trash2 } from '@/components/ui/icons';
 import AddOrderModal from '@/components/platform/AddOrderModal';
+import CloseOrderModal from '@/components/platform/CloseOrderModal';
 
 type OrderRow = {
   id: number;
@@ -28,6 +29,7 @@ export default function OrdersTable() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
   const [isAddingOrder, setIsAddingOrder] = useState(false);
+  const [orderToClose, setOrderToClose] = useState<OrderRow | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -63,17 +65,7 @@ export default function OrdersTable() {
   }, [orders]);
 
   async function closeOrder(order: OrderRow) {
-    const res = await fetch('/api/orders', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: order.id,
-        status: 'CLOSED',
-        exitDate: new Date().toISOString().split('T')[0],
-        exitPrice: order.currentPrice,
-      }),
-    });
-    if (res.ok) fetchOrders();
+    setOrderToClose(order);
   }
 
   async function deleteOrder(order: OrderRow) {
@@ -298,6 +290,13 @@ export default function OrdersTable() {
         isOpen={isAddingOrder} 
         onClose={() => setIsAddingOrder(false)} 
         onSuccess={() => fetchOrders()} 
+      />
+      
+      <CloseOrderModal
+        isOpen={!!orderToClose}
+        onClose={() => setOrderToClose(null)}
+        onSuccess={() => fetchOrders()}
+        order={orderToClose}
       />
     </div>
   );
