@@ -18,7 +18,7 @@ import {
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown } from '@/components/ui/icons';
+import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Settings } from '@/components/ui/icons';
 
 export interface ChartData {
   time: string; // "YYYY-MM-DD"
@@ -159,6 +159,10 @@ export default function ChartWidget({
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(PLAYBACK_SPEEDS[0].delay);
+
+  const [strategyStartDate, setStrategyStartDate] = useState<string>('');
+  const [strategyEndDate, setStrategyEndDate] = useState<string>('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const replayDate = replayMode ? data[replayIndex]?.time ?? null : null;
   const replayStartDate = replayMode ? data[0]?.time ?? null : null;
@@ -472,6 +476,9 @@ export default function ChartWidget({
         if (replayMode && replayDate) {
           params.set('start', replayStartDate ?? data[0]?.time ?? replayDate);
           params.set('end', replayDate);
+        } else {
+          if (strategyStartDate) params.set('start', strategyStartDate);
+          if (strategyEndDate) params.set('end', strategyEndDate);
         }
 
         const res = await fetch(`/api/metrics?${params.toString()}`);
@@ -490,7 +497,7 @@ export default function ChartWidget({
     return () => {
       isActive = false;
     };
-  }, [data, replayDate, replayMode, replayStartDate, symbol]);
+  }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate]);
 
   useEffect(() => {
     let isActive = true;
@@ -501,6 +508,9 @@ export default function ChartWidget({
         if (replayMode && replayDate) {
           params.set('start', replayStartDate ?? data[0]?.time ?? replayDate);
           params.set('end', replayDate);
+        } else {
+          if (strategyStartDate) params.set('start', strategyStartDate);
+          if (strategyEndDate) params.set('end', strategyEndDate);
         }
 
         const res = await fetch(`/api/signals?${params.toString()}`);
@@ -525,7 +535,7 @@ export default function ChartWidget({
       isActive = false;
       window.clearTimeout(resetSignalsTimeout);
     };
-  }, [data, replayDate, replayMode, replayStartDate, symbol]);
+  }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate]);
 
   useEffect(() => {
     if (replayMode) return;
@@ -931,10 +941,56 @@ export default function ChartWidget({
               <ChevronDown size={12} className={`transition-transform duration-200 ${isMetricsExpanded ? 'rotate-180' : ''}`} />
               Performance Metrics
             </span>
-            <span className={`font-medium ${formatColor(metrics['Sys ROI'])}`}>
-              {formatPlus(metrics['Sys ROI'])}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className={`font-medium ${formatColor(metrics['Sys ROI'])}`}>
+                {formatPlus(metrics['Sys ROI'])}
+              </span>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
+                className={`p-1 rounded transition-colors ${isSettingsOpen ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-muted hover:text-tv-accent hover:bg-tv-hover'}`}
+              >
+                <Settings size={14} />
+              </button>
+            </div>
           </div>
+
+          {/* Settings Popover */}
+          {isSettingsOpen && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-tv-surface border border-tv-border rounded-tv-sm p-3 shadow-xl z-[60]">
+              <div className="mb-2 text-tv-text font-medium text-xs">Strategy Settings</div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-tv-muted text-[10px] mb-1">Start Date</label>
+                  <input 
+                    type="date" 
+                    className="w-full bg-tv-base border border-tv-border rounded-tv-sm px-2 py-1 text-tv-text text-xs focus:outline-none focus:border-tv-accent"
+                    value={strategyStartDate}
+                    onChange={(e) => setStrategyStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-tv-muted text-[10px] mb-1">End Date</label>
+                  <input 
+                    type="date" 
+                    className="w-full bg-tv-base border border-tv-border rounded-tv-sm px-2 py-1 text-tv-text text-xs focus:outline-none focus:border-tv-accent"
+                    value={strategyEndDate}
+                    onChange={(e) => setStrategyEndDate(e.target.value)}
+                  />
+                </div>
+                <div className="pt-1 flex justify-end">
+                  <button 
+                    onClick={() => {
+                      setStrategyStartDate('');
+                      setStrategyEndDate('');
+                    }}
+                    className="text-[10px] text-tv-muted hover:text-tv-text transition-colors"
+                  >
+                    Clear Dates
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Expanded Table */}
           {isMetricsExpanded && (

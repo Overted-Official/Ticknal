@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, BarChart2, Bell, RotateCcw, Layout, Settings, Maximize, Camera, X } from '@/components/ui/icons';
 import Link from 'next/link';
+import Image from 'next/image';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import { WatchlistItem } from './RightSidebar';
 import { useRouter } from 'next/navigation';
@@ -45,7 +46,9 @@ export default function TopBar({
             className="flex items-center space-x-1 md:space-x-2 cursor-pointer hover:bg-tv-hover p-1.5 rounded-tv-md transition-colors"
             onClick={() => setIsSearchOpen(true)}
           >
-            <div className="text-tv-accent hidden md:block">Q</div>
+            <div className="hidden md:block relative w-6 h-6 rounded overflow-hidden mr-1 shadow-[0_0_8px_rgba(255,255,255,0.1)]">
+              <Image src="/logo.jpg" alt="QuantEGX" fill className="object-cover" />
+            </div>
             <span className="text-tv-text text-sm font-weight-medium">{displaySymbol}</span>
             <span className="text-tv-muted font-weight-light text-xs md:text-sm hidden sm:inline">EGX</span>
             <Search size={14} className="text-tv-muted ml-1 md:ml-2" />
@@ -68,23 +71,25 @@ export default function TopBar({
             ))}
           </div>
 
-          <div className="h-5 w-px bg-tv-border shrink-0 hidden sm:block" />
+          <div className="h-5 w-px bg-tv-border shrink-0 hidden sm:block mx-1" />
+
+          {/* Bell Icon visible on mobile */}
+          <button
+            type="button"
+            onClick={() => toggleAlert(symbol)}
+            className={`flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors text-xs ${
+              alertEnabled ? 'text-tv-accent' : 'text-tv-text'
+            }`}
+          >
+            <Bell size={16} fill={alertEnabled ? 'currentColor' : 'none'} />
+            <span className="hidden md:inline">Alert</span>
+          </button>
 
           {/* Indicators & Tools - hidden on small mobile, visible on sm and up */}
-          <div className="hidden sm:flex items-center space-x-2">
+          <div className="hidden sm:flex items-center space-x-2 ml-1">
             <button className="flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors text-tv-text text-xs">
               <BarChart2 size={16} />
               <span className="hidden md:inline">Indicators</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => toggleAlert(symbol)}
-              className={`flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors text-xs ${
-                alertEnabled ? 'text-tv-accent' : 'text-tv-text'
-              }`}
-            >
-              <Bell size={16} fill={alertEnabled ? 'currentColor' : 'none'} />
-              <span className="hidden md:inline">Alert</span>
             </button>
             <Link
               href={`?ticker=${symbol}&timeframe=${timeframe}&replay=1`}
@@ -121,7 +126,7 @@ export default function TopBar({
         </div>
 
         {statusMessage && (
-          <div className="absolute left-3 top-12 z-50 rounded-tv-sm border border-tv-border bg-tv-surface px-3 py-2 text-xs text-tv-text shadow-lg">
+          <div className="absolute left-3 top-12 z-50 rounded-tv-sm border border-tv-border bg-tv-surface px-3 py-2 text-xs text-tv-text shadow-lg hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -162,9 +167,22 @@ export default function TopBar({
                       <div className="font-weight-medium text-tv-text">{item.symbol.replace('.CA', '')}</div>
                       <div className="text-xs text-tv-muted mt-1">{item.companyName}</div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs text-tv-muted">{item.sector}</div>
-                      <div className="text-xs font-weight-medium text-tv-text mt-1">{item.price ? Number(item.price).toFixed(2) : ''} {item.price ? 'EGP' : ''}</div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <div className="text-xs text-tv-muted">{item.sector}</div>
+                        <div className="text-xs font-weight-medium text-tv-text mt-1">{item.price ? Number(item.price).toFixed(2) : ''} {item.price ? 'EGP' : ''}</div>
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleAlert(item.symbol);
+                        }}
+                        className={`p-2 rounded-full transition-colors ${
+                          isAlerted(item.symbol) ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-muted hover:text-tv-accent hover:bg-tv-border'
+                        }`}
+                      >
+                         <Bell size={18} fill={isAlerted(item.symbol) ? 'currentColor' : 'none'} />
+                      </button>
                     </div>
                   </div>
                 ))
