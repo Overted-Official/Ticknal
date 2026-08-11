@@ -11,7 +11,7 @@ export type Opportunity = {
   sector: string;
   signal: {
     signal: string;
-    level: string;
+    level?: string;
     date: string;
     price: number;
     reasoning?: string;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X } from '@/components/ui/icons';
+import { useState, useEffect, useRef } from 'react';
+import { X, Search } from '@/components/ui/icons';
 
 export type InitialOrderData = {
   symbol: string;
@@ -10,6 +10,8 @@ export type InitialOrderData = {
   price?: number;
   date?: string;
 };
+
+type Ticker = { symbol: string; companyName: string };
 
 export default function AddOrderModal({ 
   isOpen, 
@@ -29,7 +31,23 @@ export default function AddOrderModal({
     quantity: '100' 
   });
 
-  // Sync initialData when modal opens
+  const [tickers, setTickers] = useState<Ticker[]>([]);
+  const [filteredTickers, setFilteredTickers] = useState<Ticker[]>([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Sync initialData when modal opens, and fetch tickers if manual entry
   useEffect(() => {
     if (isOpen) {
       setNewOrderForm({
@@ -38,8 +56,34 @@ export default function AddOrderModal({
         entryPrice: initialData?.price ? initialData.price.toString() : '',
         quantity: '100'
       });
+      setIsSearchOpen(false);
+
+      if (!initialData?.symbol) {
+        fetch('/api/tickers')
+          .then(res => res.json())
+          .then((data: Ticker[]) => {
+            setTickers(data);
+            setFilteredTickers(data.slice(0, 50));
+          })
+          .catch(console.error);
+      }
     }
   }, [isOpen, initialData]);
+
+  const handleSymbolChange = (val: string) => {
+    setNewOrderForm({ ...newOrderForm, symbol: val.toUpperCase() });
+    const filtered = tickers.filter(t => 
+      t.symbol.toLowerCase().includes(val.toLowerCase()) || 
+      t.companyName.toLowerCase().includes(val.toLowerCase())
+    ).slice(0, 50);
+    setFilteredTickers(filtered);
+    setIsSearchOpen(true);
+  };
+
+  const handleSelectTicker = (ticker: Ticker) => {
+    setNewOrderForm({ ...newOrderForm, symbol: ticker.symbol });
+    setIsSearchOpen(false);
+  };
 
   const handleAddOrder = async () => {
     if (!newOrderForm.symbol || !newOrderForm.entryPrice) return;
@@ -68,7 +112,8 @@ export default function AddOrderModal({
 
   if (!isOpen) return null;
 
-  const isBuy = initialData?.signal === 'BUY';
+  // The user requested that manual orders explicitly say "Long Position"
+  const isBuy = initialData?.signal === 'BUY' || !initialData?.signal;
   const isSell = initialData?.signal === 'SELL' || initialData?.signal?.startsWith('SELL_');
   const title = isBuy ? 'Long Position' : isSell ? 'Short Position' : 'New Order';
 
@@ -77,7 +122,7 @@ export default function AddOrderModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-in fade-in duration-200">
-      <div className="bg-tv-base border border-tv-border rounded-tv-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+      <div className="bg-tv-base border border-tv-border rounded-tv-lg shadow-2xl w-full max-w-sm overflow-visible animate-in zoom-in-95 duration-200 flex flex-col">
         
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-tv-border bg-tv-surface shrink-0">
@@ -88,24 +133,49 @@ export default function AddOrderModal({
         </div>
         
         {/* Body */}
-        <div className="p-5 space-y-5 overflow-y-auto max-h-[80vh]">
+        <div className="p-5 space-y-5 overflow-visible max-h-[80vh]">
           {/* Ticker Section */}
-          <div className="flex justify-between items-end border-b border-tv-border pb-3">
+          <div className="flex justify-between items-end border-b border-tv-border pb-3 relative" ref={searchRef}>
             {initialData?.companyName ? (
               <div>
                 <h3 className="text-xl font-weight-medium text-tv-text">{initialData.symbol}</h3>
                 <p className="text-xs text-tv-muted truncate max-w-[200px]">{initialData.companyName}</p>
               </div>
             ) : (
-              <div className="w-full">
+              <div className="w-full relative">
                 <label className="block text-[10px] uppercase text-tv-muted mb-1.5">Ticker Symbol</label>
-                <input
-                  type="text"
-                  placeholder="e.g. CIEB"
-                  value={newOrderForm.symbol}
-                  onChange={(e) => setNewOrderForm({ ...newOrderForm, symbol: e.target.value.toUpperCase() })}
-                  className="w-full bg-tv-surface border border-tv-border rounded-tv-sm px-3 py-2 text-sm text-tv-text font-weight-medium focus:outline-none focus:border-tv-accent transition-colors"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search size={14} className="text-tv-muted" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search tickers..."
+                    value={newOrderForm.symbol}
+                    onChange={(e) => handleSymbolChange(e.target.value)}
+                    onFocus={() => setIsSearchOpen(true)}
+                    className="w-full bg-tv-surface border border-tv-border rounded-tv-sm pl-9 pr-3 py-2 text-sm text-tv-text font-weight-medium focus:outline-none focus:border-tv-accent transition-colors"
+                  />
+                </div>
+                {/* Search Dropdown */}
+                {isSearchOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-tv-surface border border-tv-border rounded-tv-sm shadow-xl z-50 max-h-48 overflow-y-auto">
+                    {filteredTickers.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-tv-muted text-center">No tickers found</div>
+                    ) : (
+                      filteredTickers.map((t) => (
+                        <div 
+                          key={t.symbol} 
+                          className="px-3 py-2 hover:bg-tv-hover cursor-pointer border-b border-tv-border last:border-b-0"
+                          onClick={() => handleSelectTicker(t)}
+                        >
+                          <div className="font-weight-medium text-sm text-tv-text">{t.symbol}</div>
+                          <div className="text-[10px] text-tv-muted truncate">{t.companyName}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

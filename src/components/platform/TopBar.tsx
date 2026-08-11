@@ -114,7 +114,7 @@ export default function TopBar({
           </button>
           <button 
             onClick={() => setIsAddOrderOpen(true)}
-            className="bg-tv-accent hover:bg-tv-accent/90 text-white px-4 py-1.5 rounded-tv-sm font-weight-medium ml-2 transition-colors shadow-[0_0_10px_rgba(41,98,255,0.3)]"
+            className="rounded-tv-sm border border-tv-border px-3 py-1.5 text-xs text-tv-muted transition-colors hover:border-tv-border-highlight hover:text-tv-text ml-2"
           >
             + Add Order
           </button>

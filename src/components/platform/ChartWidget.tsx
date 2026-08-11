@@ -21,12 +21,23 @@ import {
 import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown } from '@/components/ui/icons';
 
 export interface ChartData {
-  time: string;
+  time: string; // "YYYY-MM-DD"
   open: number;
   high: number;
   low: number;
   close: number;
   volume: number;
+}
+
+interface SignalBadge {
+  id: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  label: string;
+  detail: string;
+  kind: 'buy' | 'sell';
 }
 
 interface StrategySignal {

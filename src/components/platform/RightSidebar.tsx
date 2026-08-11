@@ -11,6 +11,7 @@ export interface WatchlistItem {
   website?: string;
   sector: string;
   price: string;
+  change?: string;
   isUp: boolean;
   hasOpenPosition?: boolean;
 }
@@ -313,10 +314,10 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
             <span className="text-tv-muted font-weight-medium text-xs relative top-[-10px] left-[-4px] text-orange-500">D</span>
             <span className="text-tv-muted font-weight-medium text-xs">EGP</span>
             <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
-              {selectedItem.change.split(' ')[0]}
+              {selectedItem.change ? selectedItem.change.split(' ')[0] : ''}
             </span>
             <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
-              {selectedItem.change.split(' ')[1]}
+              {selectedItem.change ? selectedItem.change.split(' ')[1] : ''}
             </span>
           </div>
 
