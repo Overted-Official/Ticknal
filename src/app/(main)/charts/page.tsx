@@ -4,7 +4,7 @@ import RightSidebar, { WatchlistItem } from '@/components/platform/RightSidebar'
 import BottomToolbar from '@/components/platform/BottomToolbar';
 import ChartReplayWorkspace from '@/components/platform/ChartReplayWorkspace';
 import { db } from '@/db';
-import { dailyPrices, tickers } from '@/db/schema';
+import { dailyPrices, tickers, orders } from '@/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/lib/psiStrategy';
 
@@ -20,6 +20,11 @@ export default async function PlatformPage(props: PlatformPageProps) {
 
   // Fetch all tickers to build the watchlist
   const allTickers = await db.select().from(tickers);
+
+  // Fetch open positions
+  const openOrdersRows = await db.select({ tickerSymbol: orders.tickerSymbol }).from(orders).where(eq(orders.status, 'OPEN'));
+  const openPositionsSet = new Set(openOrdersRows.map(o => o.tickerSymbol));
+
   
   // Calculate watchlist items by fetching the last 2 prices for each ticker
   // Using a Window Function to eliminate the N+1 query problem that caused connection exhaustion and 7s load times
@@ -63,7 +68,8 @@ export default async function PlatformPage(props: PlatformPageProps) {
       sector: t.sector || 'Unclassified',
       price: lastPrice.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
-      isUp: change >= 0
+      isUp: change >= 0,
+      hasOpenPosition: openPositionsSet.has(t.symbol)
     };
   });
 
@@ -71,6 +77,30 @@ export default async function PlatformPage(props: PlatformPageProps) {
   const dbData = await db.select().from(dailyPrices)
     .where(eq(dailyPrices.tickerSymbol, selectedSymbol))
     .orderBy(asc(dailyPrices.date));
+
+  let dayHigh = 0;
+  let dayLow = 0;
+  let yearHigh = 0;
+  let yearLow = 0;
+
+  if (dbData.length > 0) {
+    const lastDay = dbData[dbData.length - 1];
+    dayHigh = Number(lastDay.high);
+    dayLow = Number(lastDay.low);
+
+    const lastDate = typeof lastDay.date === 'string' ? new Date(lastDay.date) : lastDay.date as Date;
+    const oneYearAgo = new Date(lastDate);
+    oneYearAgo.setFullYear(lastDate.getFullYear() - 1);
+
+    const yearData = dbData.filter(d => {
+      const dDate = typeof d.date === 'string' ? new Date(d.date) : d.date as Date;
+      return dDate >= oneYearAgo;
+    });
+    
+    yearHigh = Math.max(...yearData.map(d => Number(d.high)));
+    yearLow = Math.min(...yearData.map(d => Number(d.low)));
+  }
+  const rangeData = { dayHigh, dayLow, yearHigh, yearLow };
 
   let chartData = dbData
     .filter(record => Number(record.volume) > 0)
@@ -156,7 +186,7 @@ export default async function PlatformPage(props: PlatformPageProps) {
           <BottomToolbar />
         </div>
         <div className="hidden lg:flex">
-          <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} />
+          <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} rangeData={rangeData} />
         </div>
       </div>
     </div>

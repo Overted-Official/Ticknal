@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  /* Moonlit Plum palette. Candle colors stay separate below. */
-  --bg-base: #0B0405;
-  --bg-surface: #201332;
-  --bg-chart: #201332;
-  --bg-hover: #432257;
+  /* Trading Platform Palette (Nansen Theme) */
+  --bg-base: #06101A;
+  --bg-surface: #121C26;
+  --bg-chart: #06101A;
+  --bg-hover: #1F2833;
   
-  --text-primary: #F4ECFA;
-  --text-secondary: #9E83BE;
+  --text-primary: #F2F4F5;
+  --text-secondary: #8B949E; /* Muted gray for secondary text */
   
-  --accent-blue: #A26DB8;
-  --accent-blue-hover: #9E83BE;
+  --accent-blue: #00FFA7;
+  --accent-blue-hover: #00CC85; /* Slightly darker mint for hover */
   
-  --up-color: #089981;
-  --down-color: #F23645;
+  --up-color: #34CF82;
+  --down-color: #FF4242;
   
-  --border-color: #432257;
-  --border-highlight: #A26DB8;
+  --border-color: #1F2833;
+  --border-highlight: #00FFA7;
 
   /* Typography */
   --font-tv-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -31,7 +31,7 @@
   --radius-lg: 0.5rem;
   --radius-full: 9999px;
   
-  --glass-bg: rgba(32, 19, 50, 0.78);
+  --glass-bg: rgba(18, 28, 38, 0.8);
 }
 
 @theme inline {

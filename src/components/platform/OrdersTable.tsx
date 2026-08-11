@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle, LineChart, Trash2 } from '@/components/ui/icons';
+import AddOrderModal from '@/components/platform/AddOrderModal';
 
 type OrderRow = {
   id: number;
@@ -26,6 +27,7 @@ export default function OrdersTable() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
+  const [isAddingOrder, setIsAddingOrder] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -88,6 +90,13 @@ export default function OrdersTable() {
             <p className="mt-1 text-xs text-tv-muted">Tracked long positions from chart candle clicks</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAddingOrder(true)}
+              className="h-8 rounded-tv-sm bg-tv-accent text-white px-3 text-xs font-weight-medium hover:bg-tv-accent/90 transition-colors shadow-[0_0_10px_rgba(41,98,255,0.3)]"
+            >
+              + Add Order
+            </button>
             {(['ALL', 'OPEN', 'CLOSED'] as const).map((value) => (
               <button
                 key={value}
@@ -114,78 +123,166 @@ export default function OrdersTable() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[980px] border-collapse text-left text-xs">
-          <thead className="sticky top-0 z-10 bg-tv-surface text-[0.65rem] uppercase text-tv-muted">
+        {/* Mobile View (Cards) */}
+        <div className="md:hidden flex flex-col space-y-3 p-3">
+          {loading ? (
+            <div className="p-8 text-center text-tv-muted">Loading orders</div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="p-8 text-center text-tv-muted">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
+          ) : (
+            filteredOrders.map((order) => (
+              <div key={order.id} className="bg-tv-base border border-tv-border rounded-tv-lg p-3 shadow-sm">
+                <div className="flex justify-between items-start border-b border-tv-border pb-2 mb-2">
+                  <div>
+                    <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent text-sm flex items-center gap-1">
+                      {order.tickerSymbol}
+                      <span className="text-[10px] text-tv-muted font-normal">({order.sector})</span>
+                    </Link>
+                    <div className="text-[11px] text-tv-muted truncate max-w-[150px]">{order.companyName}</div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-sm text-[10px] font-weight-medium ${
+                    order.status === 'OPEN' ? 'bg-[#2962FF]/10 text-tv-accent' : 'bg-tv-surface text-tv-muted'
+                  }`}>
+                    {order.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3 text-xs mb-3">
+                  <div>
+                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">Entry</span>
+                    <span className="text-tv-text font-weight-medium">{formatPrice(order.entryPrice)}</span>
+                    <span className="text-tv-muted text-[10px] block">{order.entryDate}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">Current</span>
+                    <span className="text-tv-text font-weight-medium">{formatPrice(order.currentPrice)}</span>
+                    <span className="text-tv-muted text-[10px] block">Qty: {formatQuantity(order.quantity)}</span>
+                  </div>
+
+                  <div>
+                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">Target/Stop</span>
+                    <span className="text-tv-text">{order.targetPrice ? order.targetPrice.toFixed(2) : '-'} / {order.stopPrice ? order.stopPrice.toFixed(2) : '-'}</span>
+                  </div>
+                  
+                  <div className="text-right">
+                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">P/L</span>
+                    <div className={`font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                      {formatMoney(order.profitLoss)}
+                      <span className="text-[10px] ml-1 opacity-80">({(order.profitLossPct * 100).toFixed(2)}%)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-tv-border">
+                  {order.status === 'OPEN' && (
+                    <button
+                      title="Close Position"
+                      onClick={() => closeOrder(order)}
+                      className="p-1.5 rounded bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors flex items-center justify-center border border-tv-border"
+                    >
+                      <CheckCircle size={14} className="mr-1" />
+                      <span className="text-[11px]">Close</span>
+                    </button>
+                  )}
+                  <button
+                    title="Delete Record"
+                    onClick={() => deleteOrder(order)}
+                    className="p-1.5 rounded bg-tv-surface text-tv-down hover:bg-red-900/20 transition-colors flex items-center justify-center border border-tv-border"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View (Table) */}
+        <div className="hidden md:block">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-tv-surface sticky top-0 z-10 border-b border-tv-border text-xs uppercase text-tv-muted">
             <tr>
-              <th className="border-b border-tv-border px-4 py-2">Ticker</th>
-              <th className="border-b border-tv-border px-4 py-2">Status</th>
-              <th className="border-b border-tv-border px-4 py-2">Entry Date</th>
-              <th className="border-b border-tv-border px-4 py-2 text-right">Entry</th>
-              <th className="border-b border-tv-border px-4 py-2 text-right">Current</th>
-              <th className="border-b border-tv-border px-4 py-2 text-right">Qty</th>
-              <th className="border-b border-tv-border px-4 py-2 text-right">Target</th>
-              <th className="border-b border-tv-border px-4 py-2 text-right">Stop</th>
-              <th className="border-b border-tv-border px-4 py-2 text-right">P/L</th>
-              <th className="border-b border-tv-border px-4 py-2 text-right">Actions</th>
+              <th className="px-5 py-3 font-weight-medium">Ticker</th>
+              <th className="px-5 py-3 font-weight-medium">Status</th>
+              <th className="px-5 py-3 font-weight-medium">Entry</th>
+              <th className="px-5 py-3 font-weight-medium text-right">Target / Stop</th>
+              <th className="px-5 py-3 font-weight-medium text-right">Quantity</th>
+              <th className="px-5 py-3 font-weight-medium text-right">Current</th>
+              <th className="px-5 py-3 font-weight-medium text-right">P/L</th>
+              <th className="px-5 py-3 font-weight-medium"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-tv-border bg-tv-base">
             {loading ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-tv-muted">Loading orders</td>
+                <td colSpan={8} className="px-5 py-8 text-center text-tv-muted">
+                  Loading orders...
+                </td>
               </tr>
             ) : filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-tv-muted">No orders match this view</td>
+                <td colSpan={8} className="px-5 py-8 text-center text-tv-muted">
+                  No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found
+                </td>
               </tr>
             ) : (
               filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b border-tv-border transition-colors hover:bg-tv-hover">
-                  <td className="px-4 py-2">
-                    <div className="font-weight-medium text-tv-text">{order.tickerSymbol}</div>
-                    <div className="mt-0.5 max-w-48 truncate text-[11px] text-tv-muted">{order.companyName}</div>
+                <tr key={order.id} className="hover:bg-tv-hover transition-colors group">
+                  <td className="px-5 py-3 whitespace-nowrap">
+                    <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text group-hover:text-tv-accent transition-colors flex items-center gap-2">
+                      <LineChart size={16} className="text-tv-muted" />
+                      {order.tickerSymbol}
+                    </Link>
+                    <div className="text-xs text-tv-muted truncate max-w-[200px] mt-0.5">{order.companyName}</div>
                   </td>
-                  <td className="px-4 py-2">
-                    <span className={`rounded-tv-sm border px-2 py-1 text-[11px] ${order.status === 'OPEN' ? 'border-tv-accent text-tv-accent' : 'border-tv-border text-tv-muted'}`}>
+                  <td className="px-5 py-3 whitespace-nowrap">
+                    <span
+                      className={`inline-block rounded-sm px-2 py-0.5 text-xs font-weight-medium ${
+                        order.status === 'OPEN' ? 'bg-[#2962FF]/10 text-tv-accent' : 'bg-tv-surface text-tv-muted'
+                      }`}
+                    >
                       {order.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-tv-muted">{order.entryDate}</td>
-                  <td className="px-4 py-2 text-right">{formatPrice(order.entryPrice)}</td>
-                  <td className="px-4 py-2 text-right">{formatPrice(order.currentPrice)}</td>
-                  <td className="px-4 py-2 text-right">{formatQuantity(order.quantity)}</td>
-                  <td className="px-4 py-2 text-right text-tv-muted">{order.targetPrice === null ? '-' : formatPrice(order.targetPrice)}</td>
-                  <td className="px-4 py-2 text-right text-tv-muted">{order.stopPrice === null ? '-' : formatPrice(order.stopPrice)}</td>
-                  <td className={`px-4 py-2 text-right font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
-                    {formatMoney(order.profitLoss)}
-                    <div className="text-[11px]">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
+                  <td className="px-5 py-3 whitespace-nowrap">
+                    <div className="text-tv-text font-weight-medium">{formatPrice(order.entryPrice)}</div>
+                    <div className="text-xs text-tv-muted mt-0.5">{order.entryDate}</div>
                   </td>
-                  <td className="px-4 py-2">
-                    <div className="flex justify-end gap-1">
-                      <Link
-                        href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`}
-                        className="flex h-8 w-8 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-surface hover:text-tv-text"
-                        title="Open chart"
-                      >
-                        <LineChart className="h-4 w-4" />
-                      </Link>
+                  <td className="px-5 py-3 whitespace-nowrap text-right">
+                    <div className="text-tv-up">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
+                    <div className="text-tv-down mt-0.5">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap text-right font-weight-medium text-tv-text">
+                    {formatQuantity(order.quantity)}
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap text-right text-tv-text font-weight-medium">
+                    {formatPrice(order.currentPrice)}
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap text-right">
+                    <div className={`font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                      {formatMoney(order.profitLoss)}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${order.profitLossPct >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                      {(order.profitLossPct * 100).toFixed(2)}%
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap text-right">
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {order.status === 'OPEN' && (
                         <button
-                          type="button"
+                          title="Close Position"
                           onClick={() => closeOrder(order)}
-                          className="flex h-8 w-8 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-surface hover:text-tv-up"
-                          title="Close order"
+                          className="p-1.5 rounded-tv-sm bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors border border-tv-border"
                         >
-                          <CheckCircle className="h-4 w-4" />
+                          <CheckCircle size={16} />
                         </button>
                       )}
                       <button
-                        type="button"
+                        title="Delete Record"
                         onClick={() => deleteOrder(order)}
-                        className="flex h-8 w-8 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-surface hover:text-tv-down"
-                        title="Delete order"
+                        className="p-1.5 rounded-tv-sm bg-tv-surface text-tv-down hover:bg-red-900/20 transition-colors border border-tv-border"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
@@ -194,7 +291,14 @@ export default function OrdersTable() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
+
+      <AddOrderModal 
+        isOpen={isAddingOrder} 
+        onClose={() => setIsAddingOrder(false)} 
+        onSuccess={() => fetchOrders()} 
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { dailyPrices, orders, tickerAlerts, tickers } from '@/db/schema';
 import { resolvePsiParamsFromStore } from '@/lib/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/lib/psiStrategy';
+import OpportunityTable from '@/components/platform/OpportunityTable';
 
 type DashboardOrder = {
   id: number;
@@ -64,7 +65,77 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[1.25fr_0.75fr]">
+        {/* Open Positions */}
         <section>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-weight-medium">Open Positions</h2>
+            <Link href="/orders" className="text-[11px] text-tv-muted hover:text-tv-text">Orders</Link>
+          </div>
+          <div className="overflow-hidden rounded-tv-lg border border-tv-border">
+            {/* Mobile View (Cards) */}
+            <div className="md:hidden flex flex-col space-y-2 p-2">
+              {orderStats.openOrders.length === 0 ? (
+                <div className="p-4 text-center text-tv-muted">No open positions</div>
+              ) : (
+                orderStats.openOrders.slice(0, 10).map((order) => (
+                  <div key={order.id} className="bg-tv-base rounded-tv-lg border border-tv-border p-3 flex justify-between items-center">
+                    <div>
+                      <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent text-sm">
+                        {order.tickerSymbol}
+                      </Link>
+                      <div className="max-w-40 truncate text-[11px] text-tv-muted">{order.companyName}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">{formatPrice(order.currentPrice)}</div>
+                      <div className={`flex items-center justify-end text-xs font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                        {formatMoney(order.profitLoss, true)} ({order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View (Table) */}
+            <div className="hidden md:block">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead className="bg-tv-surface text-[0.65rem] uppercase text-tv-muted">
+                  <tr>
+                    <th className="border-b border-tv-border px-3 py-2">Ticker</th>
+                    <th className="border-b border-tv-border px-3 py-2 text-right">Current</th>
+                    <th className="border-b border-tv-border px-3 py-2 text-right">P/L</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orderStats.openOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-3 py-6 text-center text-tv-muted">No open positions</td>
+                    </tr>
+                  ) : (
+                    orderStats.openOrders.slice(0, 10).map((order) => (
+                      <tr key={order.id} className="border-b border-tv-border last:border-b-0 hover:bg-tv-hover">
+                        <td className="px-3 py-2">
+                          <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent">
+                            {order.tickerSymbol}
+                          </Link>
+                          <div className="max-w-48 truncate text-[11px] text-tv-muted">{order.companyName}</div>
+                        </td>
+                        <td className="px-3 py-2 text-right">{formatPrice(order.currentPrice)}</td>
+                        <td className={`px-3 py-2 text-right font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                          {formatMoney(order.profitLoss, true)}
+                          <div className="text-[11px]">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          {/* Buy Opportunities */}
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-sm font-weight-medium">Buy Opportunities</h2>
             <span className="text-[11px] text-tv-muted">Last 5 bars</span>
@@ -72,48 +143,8 @@ export default async function DashboardPage() {
           <div className="overflow-hidden rounded-tv-lg border border-tv-border">
             <OpportunityTable opportunities={buyOpportunities} emptyText="No buy opportunities in the last 5 bars" />
           </div>
-        </section>
 
-        <section>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium">Open Positions</h2>
-            <Link href="/orders" className="text-[11px] text-tv-muted hover:text-tv-text">Orders</Link>
-          </div>
-          <div className="overflow-hidden rounded-tv-lg border border-tv-border">
-            <table className="w-full border-collapse text-left text-xs">
-              <thead className="bg-tv-surface text-[0.65rem] uppercase text-tv-muted">
-                <tr>
-                  <th className="border-b border-tv-border px-3 py-2">Ticker</th>
-                  <th className="border-b border-tv-border px-3 py-2 text-right">Current</th>
-                  <th className="border-b border-tv-border px-3 py-2 text-right">P/L</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderStats.openOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="px-3 py-6 text-center text-tv-muted">No open positions</td>
-                  </tr>
-                ) : (
-                  orderStats.openOrders.slice(0, 10).map((order) => (
-                    <tr key={order.id} className="border-b border-tv-border last:border-b-0 hover:bg-tv-hover">
-                      <td className="px-3 py-2">
-                        <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent">
-                          {order.tickerSymbol}
-                        </Link>
-                        <div className="max-w-48 truncate text-[11px] text-tv-muted">{order.companyName}</div>
-                      </td>
-                      <td className="px-3 py-2 text-right">{formatPrice(order.currentPrice)}</td>
-                      <td className={`px-3 py-2 text-right font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
-                        {formatMoney(order.profitLoss, true)}
-                        <div className="text-[11px]">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
+          {/* Exit Signals */}
           <div className="mt-4 mb-2 flex items-center justify-between">
             <h2 className="text-sm font-weight-medium">Exit Signals</h2>
             <span className="text-[11px] text-tv-muted">Last 5 bars</span>
@@ -133,56 +164,6 @@ function Metric({ label, value, valueClass = 'text-tv-text' }: { label: string; 
       <div className="text-[11px] uppercase text-tv-muted">{label}</div>
       <div className={`mt-1 text-lg font-weight-medium ${valueClass}`}>{value}</div>
     </div>
-  );
-}
-
-function OpportunityTable({
-  opportunities,
-  emptyText,
-  compact = false,
-}: {
-  opportunities: Opportunity[];
-  emptyText: string;
-  compact?: boolean;
-}) {
-  return (
-    <table className="w-full border-collapse text-left text-xs">
-      <thead className="bg-tv-surface text-[0.65rem] uppercase text-tv-muted">
-        <tr>
-          <th className="border-b border-tv-border px-3 py-2">Ticker</th>
-          {!compact && <th className="border-b border-tv-border px-3 py-2">Sector</th>}
-          <th className="border-b border-tv-border px-3 py-2">Signal</th>
-          <th className="border-b border-tv-border px-3 py-2 text-right">Price</th>
-          <th className="border-b border-tv-border px-3 py-2 text-right">Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        {opportunities.length === 0 ? (
-          <tr>
-            <td colSpan={compact ? 4 : 5} className="px-3 py-6 text-center text-tv-muted">{emptyText}</td>
-          </tr>
-        ) : (
-          opportunities.map((item) => (
-            <tr key={`${item.symbol}-${item.signal.date}-${item.signal.signal}`} className="border-b border-tv-border last:border-b-0 hover:bg-tv-hover">
-              <td className="px-3 py-2">
-                <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent">
-                  {item.symbol}
-                </Link>
-                {!compact && <div className="max-w-48 truncate text-[11px] text-tv-muted">{item.companyName}</div>}
-              </td>
-              {!compact && <td className="px-3 py-2 text-tv-muted">{item.sector}</td>}
-              <td className="px-3 py-2">
-                <span className={`rounded-tv-sm border px-2 py-1 text-[11px] ${item.signal.signal === 'BUY' ? 'border-tv-accent text-tv-accent' : 'border-tv-down text-tv-down'}`}>
-                  {formatSignal(item.signal.signal)}
-                </span>
-              </td>
-              <td className="px-3 py-2 text-right">{formatPrice(item.signal.price)}</td>
-              <td className="px-3 py-2 text-right text-tv-muted">{item.signal.date}</td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
   );
 }
 

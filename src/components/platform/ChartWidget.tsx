@@ -18,7 +18,7 @@ import {
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X } from '@/components/ui/icons';
+import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown } from '@/components/ui/icons';
 
 export interface ChartData {
   time: string;
@@ -90,16 +90,6 @@ type OrderOverlay = {
   profitLossPct: number;
 };
 
-type SignalBadge = {
-  id: string;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  label: string;
-  detail: string;
-  kind: 'buy' | 'sell';
-};
 
 interface LiveQuote {
   date: string;
@@ -145,13 +135,13 @@ export default function ChartWidget({
   const orderPriceLineRefs = useRef<Map<number, IPriceLine[]>>(new Map());
 
   const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
+  const [isMetricsExpanded, setIsMetricsExpanded] = useState(false);
   const [orders, setOrders] = useState<ChartOrder[]>([]);
   const [orderDraft, setOrderDraft] = useState<OrderDraft | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderOverlays, setOrderOverlays] = useState<OrderOverlay[]>([]);
   const [chartSignals, setChartSignals] = useState<StrategySignal[]>([]);
-  const [signalBadges, setSignalBadges] = useState<SignalBadge[]>([]);
   const [replayMode, setReplayMode] = useState(initialReplayMode);
   const [replayIndex, setReplayIndex] = useState(() =>
     initialReplayMode ? getDefaultReplayIndex(data) : Math.max(0, data.length - 1),
@@ -191,11 +181,11 @@ export default function ChartWidget({
     if (!chartContainerRef.current) return;
 
     const computedStyle = getComputedStyle(document.documentElement);
-    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#201332';
-    const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#787b86';
-    const borderColor = computedStyle.getPropertyValue('--border-color').trim() || '#2a2e39';
-    const upColor = '#089981';
-    const downColor = '#f23645';
+    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#06101A';
+    const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#8B949E';
+    const borderColor = computedStyle.getPropertyValue('--border-color').trim() || '#1F2833';
+    const upColor = computedStyle.getPropertyValue('--up-color').trim() || '#34CF82';
+    const downColor = computedStyle.getPropertyValue('--down-color').trim() || '#FF4242';
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -204,8 +194,8 @@ export default function ChartWidget({
         attributionLogo: false,
       },
       grid: {
-        vertLines: { color: borderColor },
-        horzLines: { color: borderColor },
+        vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+        horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
       },
       autoSize: true,
       timeScale: {
@@ -241,7 +231,7 @@ export default function ChartWidget({
     });
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
-      color: '#26a69a',
+      color: '#6A2CFF',
       priceFormat: { type: 'volume' },
       priceScaleId: '',
     });
@@ -398,7 +388,7 @@ export default function ChartWidget({
       const lines: IPriceLine[] = [
         candlestickSeries.createPriceLine({
           price: order.entryPrice,
-          color: '#A26DB8',
+          color: '#6A2CFF',
           lineWidth: 2,
           lineStyle: LineStyle.Solid,
           axisLabelVisible: true,
@@ -410,7 +400,7 @@ export default function ChartWidget({
         lines.push(
           candlestickSeries.createPriceLine({
             price: order.targetPrice,
-            color: '#9E83BE',
+            color: '#B36BFF',
             lineWidth: 1,
             lineStyle: LineStyle.Dashed,
             axisLabelVisible: true,
@@ -448,10 +438,8 @@ export default function ChartWidget({
       const nextOrderOverlays = orders
         .map((order) => buildOrderOverlay(order, chart, candlestickSeries, container))
         .filter((overlay): overlay is OrderOverlay => overlay !== null);
-      const nextSignalBadges = arrangeSignalBadges(chartSignals, visibleData, chart, candlestickSeries, container);
 
       setOrderOverlays(nextOrderOverlays);
-      setSignalBadges(nextSignalBadges);
     };
 
     updateOverlays();
@@ -664,7 +652,7 @@ export default function ChartWidget({
     if (!valStr) return '';
     const val = parseFloat(valStr);
     if (isNaN(val)) return 'text-tv-text';
-    return val > 0 ? 'text-[#089981]' : val < 0 ? 'text-[#f23645]' : 'text-tv-text';
+    return val > 0 ? 'text-tv-up' : val < 0 ? 'text-tv-down' : 'text-tv-text';
   };
 
   const formatPlus = (valStr: string) => {
@@ -682,7 +670,7 @@ export default function ChartWidget({
         <div key={overlay.id} className="pointer-events-none absolute inset-0 z-20">
           {overlay.targetTop !== null && (
             <div
-              className="absolute rounded-tv-sm border border-[#9E83BE]/60 bg-[#9E83BE]/15"
+              className="absolute rounded-tv-sm border border-tv-accent-hover/60 bg-tv-accent-hover/15"
               style={{
                 left: overlay.left,
                 width: overlay.width,
@@ -693,7 +681,7 @@ export default function ChartWidget({
           )}
           {overlay.stopTop !== null && (
             <div
-              className="absolute rounded-tv-sm border border-[#F23645]/60 bg-[#F23645]/15"
+              className="absolute rounded-tv-sm border border-tv-down/60 bg-tv-down/15"
               style={{
                 left: overlay.left,
                 width: overlay.width,
@@ -703,7 +691,7 @@ export default function ChartWidget({
             />
           )}
           <div
-            className="absolute flex -translate-y-1/2 items-center gap-2 rounded-tv-sm border border-[#A26DB8]/70 bg-[#201332]/95 px-2 py-1 text-[11px] text-white shadow-lg"
+            className="absolute flex -translate-y-1/2 items-center gap-2 rounded-tv-sm border border-tv-highlight/70 bg-tv-surface/95 px-2 py-1 text-[11px] text-tv-text shadow-lg"
             style={{ left: overlay.left, top: overlay.entryTop }}
           >
             <span className="font-weight-medium">LONG</span>
@@ -714,55 +702,40 @@ export default function ChartWidget({
         </div>
       ))}
 
-      {signalBadges.map((badge) => (
-        <div
-          key={badge.id}
-          className={`pointer-events-none absolute z-30 -translate-x-1/2 rounded-tv-sm border px-2 py-1 text-[11px] shadow-lg backdrop-blur-sm ${
-            badge.kind === 'buy'
-              ? 'border-[#A26DB8]/80 bg-[#A26DB8]/95 text-[#0B0405]'
-              : 'border-[#A26DB8]/60 bg-[#432257]/95 text-white'
-          }`}
-          style={{ left: badge.left, top: badge.top, width: badge.width }}
-        >
-          <div className="truncate font-weight-medium leading-none">{badge.label}</div>
-          <div className={`mt-1 truncate leading-none ${badge.kind === 'buy' ? 'text-[#201332]' : 'text-[#E8D8F3]'}`}>
-            {badge.detail}
-          </div>
-        </div>
-      ))}
+
 
       {orderDraft && (
         <div
-          className="absolute z-[70] w-72 rounded-tv-lg border border-[#A26DB8]/60 bg-[#201332]/95 p-3 text-xs text-white shadow-2xl backdrop-blur-md"
+          className="absolute z-[70] w-72 rounded-tv-lg border border-tv-highlight/60 bg-tv-surface/95 p-3 text-xs text-tv-text shadow-2xl backdrop-blur-md"
           style={{ left: orderDraft.x, top: orderDraft.y }}
         >
           <div className="mb-3 flex items-center justify-between">
             <div>
               <div className="font-weight-medium">Open Long Position</div>
-              <div className="mt-0.5 text-[11px] text-[#9E83BE]">{symbol} · {orderDraft.date}</div>
+              <div className="mt-0.5 text-[11px] text-tv-muted">{symbol} · {orderDraft.date}</div>
             </div>
             <button
               type="button"
               aria-label="Close order popover"
               onClick={() => setOrderDraft(null)}
-              className="flex h-7 w-7 items-center justify-center rounded-tv-sm text-[#9E83BE] transition-colors hover:bg-[#432257] hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-[11px] text-[#9E83BE]">
+            <label className="text-[11px] text-tv-muted">
               Entry
               <input
                 type="number"
                 step="0.01"
                 value={orderDraft.entryPrice}
                 onChange={(event) => setOrderDraft((current) => current ? { ...current, entryPrice: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none focus:border-[#A26DB8]"
+                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none focus:border-tv-highlight"
               />
             </label>
-            <label className="text-[11px] text-[#9E83BE]">
+            <label className="text-[11px] text-tv-muted">
               Quantity
               <input
                 type="number"
@@ -770,10 +743,10 @@ export default function ChartWidget({
                 min="0"
                 value={orderDraft.quantity}
                 onChange={(event) => setOrderDraft((current) => current ? { ...current, quantity: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none focus:border-[#A26DB8]"
+                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none focus:border-tv-highlight"
               />
             </label>
-            <label className="text-[11px] text-[#9E83BE]">
+            <label className="text-[11px] text-tv-muted">
               Target
               <input
                 type="number"
@@ -781,10 +754,10 @@ export default function ChartWidget({
                 value={orderDraft.targetPrice}
                 placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
                 onChange={(event) => setOrderDraft((current) => current ? { ...current, targetPrice: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none placeholder:text-[#9E83BE]/60 focus:border-[#A26DB8]"
+                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none placeholder:text-tv-muted/60 focus:border-tv-highlight"
               />
             </label>
-            <label className="text-[11px] text-[#9E83BE]">
+            <label className="text-[11px] text-tv-muted">
               Stop
               <input
                 type="number"
@@ -792,13 +765,13 @@ export default function ChartWidget({
                 value={orderDraft.stopPrice}
                 placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
                 onChange={(event) => setOrderDraft((current) => current ? { ...current, stopPrice: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-[#432257] bg-[#0B0405] px-2 text-sm text-white outline-none placeholder:text-[#9E83BE]/60 focus:border-[#A26DB8]"
+                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none placeholder:text-tv-muted/60 focus:border-tv-highlight"
               />
             </label>
           </div>
 
           {(orderDraft.targetLabel || orderDraft.stopLabel || orderError) && (
-            <div className="mt-2 text-[11px] text-[#E8D8F3]">
+            <div className="mt-2 text-[11px] text-tv-muted">
               {[orderDraft.targetLabel, orderDraft.stopLabel].filter(Boolean).join(' · ')}
               {orderError && <div className="mt-1 text-tv-down">{orderError}</div>}
             </div>
@@ -808,7 +781,7 @@ export default function ChartWidget({
             type="button"
             onClick={saveOrderDraft}
             disabled={savingOrder}
-            className="mt-3 h-9 w-full rounded-tv-sm bg-[#A26DB8] text-sm font-weight-medium text-[#0B0405] transition-colors hover:bg-[#9E83BE] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 h-9 w-full rounded-tv-sm bg-tv-accent text-sm font-weight-medium text-tv-base transition-colors hover:bg-tv-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {savingOrder ? 'Saving' : 'Save Position'}
           </button>
@@ -816,7 +789,7 @@ export default function ChartWidget({
       )}
 
       {!replayMode ? (
-        <div className="absolute left-4 top-4 z-50">
+        <div className="absolute bottom-4 left-4 z-50">
           <button
             type="button"
             title="Bar Replay"
@@ -832,7 +805,7 @@ export default function ChartWidget({
           </button>
         </div>
       ) : (
-        <div className="absolute left-4 top-4 z-50 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1 rounded-tv-sm border border-tv-border bg-tv-surface p-1 text-xs text-tv-text shadow-lg">
+        <div className="absolute bottom-4 left-4 z-50 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1 rounded-tv-sm border border-tv-border bg-tv-surface p-1 text-xs text-tv-text shadow-lg">
           <button
             type="button"
             title="Reset replay point"
@@ -858,7 +831,7 @@ export default function ChartWidget({
             aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
             disabled={replayIndex >= data.length - 1}
             onClick={() => setIsPlaying((value) => !value)}
-            className="flex h-8 w-8 items-center justify-center rounded-tv-sm bg-tv-accent text-white transition-colors hover:bg-tv-accent-hover disabled:opacity-40"
+            className="flex h-8 w-8 items-center justify-center rounded-tv-sm bg-tv-accent text-tv-text transition-colors hover:bg-tv-accent-hover disabled:opacity-40"
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </button>
@@ -902,7 +875,7 @@ export default function ChartWidget({
             max={Math.max(0, data.length - 1)}
             value={replayIndex}
             onChange={(event) => handleDateChange(data[Number(event.target.value)]?.time ?? replayDate ?? '')}
-            className="h-8 w-32 accent-[#2962FF]"
+            className="h-8 w-32 accent-tv-accent"
           />
           <select
             title="Replay speed"
@@ -935,49 +908,68 @@ export default function ChartWidget({
 
       {metrics && (
         <div
-          className="z-50 bg-tv-surface border border-tv-border rounded shadow-lg text-xs opacity-95 pointer-events-none w-64"
-          style={{ position: 'absolute', top: '16px', right: '65px' }}
+          className="absolute z-50 rounded-tv-sm border border-tv-border bg-tv-glass backdrop-blur-md shadow-lg text-[11px] transition-all"
+          style={{ top: '16px', right: '65px' }}
         >
-          <table className="w-full text-right border-collapse">
-            <tbody>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">System Total ROI</td>
-                <td className={`py-1 px-2 ${formatColor(metrics['Sys ROI'])}`}>{formatPlus(metrics['Sys ROI'])}</td>
-              </tr>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">Buy & Hold ROI</td>
-                <td className="py-1 px-2 text-tv-text">{metrics['B&H ROI']}%</td>
-              </tr>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">ROI Margin</td>
-                <td className={`py-1 px-2 ${formatColor(metrics['ROI Margin'])}`}>{formatPlus(metrics['ROI Margin'])}</td>
-              </tr>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">Win Rate</td>
-                <td className="py-1 px-2 text-tv-text">{metrics['Win Rate']}%</td>
-              </tr>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">Max Drawdown</td>
-                <td className="py-1 px-2 text-[#f23645]">{metrics['Max Drawdown']}%</td>
-              </tr>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">Max Adverse Excursion</td>
-                <td className={`py-1 px-2 ${formatColor(metrics['Max Adverse Excursion'])}`}>{formatPlus(metrics['Max Adverse Excursion'])}</td>
-              </tr>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">Avg Bars/Trade</td>
-                <td className="py-1 px-2 text-tv-text">{metrics['Avg Bars/Trade']}</td>
-              </tr>
-              <tr className="border-b border-tv-border">
-                <td className="py-1 px-2 text-tv-text font-medium text-left">Avg Return / Trade</td>
-                <td className={`py-1 px-2 ${formatColor(metrics['Avg. Return/Trade'])}`}>{formatPlus(metrics['Avg. Return/Trade'])}</td>
-              </tr>
-              <tr>
-                <td className="py-1 px-2 text-tv-text font-medium text-left">Annual CAGR</td>
-                <td className={`py-1 px-2 ${formatColor(metrics['Annual CAGR'])}`}>{formatPlus(metrics['Annual CAGR'])}</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Summary Badge */}
+          <div 
+            className={`flex items-center justify-between gap-4 px-3 py-1.5 cursor-pointer border-b transition-colors ${isMetricsExpanded ? 'border-tv-border bg-tv-surface' : 'border-transparent hover:bg-tv-hover/50'}`}
+            onClick={() => setIsMetricsExpanded(!isMetricsExpanded)}
+          >
+            <span className="text-tv-muted font-medium flex items-center gap-1.5">
+              <ChevronDown size={12} className={`transition-transform duration-200 ${isMetricsExpanded ? 'rotate-180' : ''}`} />
+              Performance Metrics
+            </span>
+            <span className={`font-medium ${formatColor(metrics['Sys ROI'])}`}>
+              {formatPlus(metrics['Sys ROI'])}
+            </span>
+          </div>
+
+          {/* Expanded Table */}
+          {isMetricsExpanded && (
+            <div className="w-64 bg-tv-surface">
+              <table className="w-full text-right border-collapse">
+                <tbody>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">System Total ROI</td>
+                    <td className={`py-1 px-3 ${formatColor(metrics['Sys ROI'])}`}>{formatPlus(metrics['Sys ROI'])}</td>
+                  </tr>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Buy & Hold ROI</td>
+                    <td className="py-1 px-3 text-tv-text">{metrics['B&H ROI']}%</td>
+                  </tr>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">ROI Margin</td>
+                    <td className={`py-1 px-3 ${formatColor(metrics['ROI Margin'])}`}>{formatPlus(metrics['ROI Margin'])}</td>
+                  </tr>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Win Rate</td>
+                    <td className="py-1 px-3 text-tv-text">{metrics['Win Rate']}%</td>
+                  </tr>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Max Drawdown</td>
+                    <td className="py-1 px-3 text-tv-down">{metrics['Max Drawdown']}%</td>
+                  </tr>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Max Adverse Excursion</td>
+                    <td className={`py-1 px-3 ${formatColor(metrics['Max Adverse Excursion'])}`}>{formatPlus(metrics['Max Adverse Excursion'])}</td>
+                  </tr>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Avg Bars/Trade</td>
+                    <td className="py-1 px-3 text-tv-text">{metrics['Avg Bars/Trade']}</td>
+                  </tr>
+                  <tr className="border-b border-tv-border">
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Avg Return / Trade</td>
+                    <td className={`py-1 px-3 ${formatColor(metrics['Avg. Return/Trade'])}`}>{formatPlus(metrics['Avg. Return/Trade'])}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Annual CAGR</td>
+                    <td className={`py-1 px-3 ${formatColor(metrics['Annual CAGR'])}`}>{formatPlus(metrics['Annual CAGR'])}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -997,7 +989,7 @@ function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
       markers.push({
         time: signal.date as Time,
         position: 'belowBar',
-        color: '#A26DB8',
+        color: '#22c55e',
         shape: 'arrowUp',
         text: 'BUY',
         size: 1.25,
@@ -1166,8 +1158,8 @@ function formatSignalLabel(signal: string): string {
 }
 
 function getExitMarker(signal: string): { text: string; color: string } {
-  if (signal === 'SELL_TP') return { text: 'TP', color: '#9E83BE' };
-  if (signal === 'SELL_TRAIL') return { text: 'TRAIL', color: '#A26DB8' };
+  if (signal === 'SELL_TP') return { text: 'TP', color: '#3b82f6' };
+  if (signal === 'SELL_TRAIL') return { text: 'TRAIL', color: '#f59e0b' };
   if (signal === 'SELL_SL') return { text: 'STOP', color: '#ef4444' };
   if (signal === 'SELL_STRUCT') return { text: 'STRUCT', color: '#ef4444' };
   return { text: 'EXIT', color: '#ef4444' };
