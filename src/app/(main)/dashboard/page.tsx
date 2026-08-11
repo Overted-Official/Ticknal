@@ -7,11 +7,14 @@ import { resolvePsiParamsFromStore } from '@/lib/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/lib/psiStrategy';
 import OpportunityTable from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
+import SectorDonutChart, { type SectorDataItem } from '@/components/platform/SectorDonutChart';
+import MonthlyInvestmentChart, { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 
 type DashboardOrder = {
   id: number;
   tickerSymbol: string;
   companyName: string;
+  sector: string;
   entryDate: string;
   entryPrice: number;
   quantity: number;
@@ -61,11 +64,36 @@ export default async function DashboardPage() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
-          <Metric label="Portfolio Value" value={formatMoney(orderStats.openMarketValue, false)} />
+          <Metric label="Net Worth" value={formatMoney(orderStats.openMarketValue, false)} />
           <Metric label="Unrealized P/L" value={formatMoney(orderStats.unrealized, true)} valueClass={orderStats.unrealized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
           <Metric label="Realized P/L" value={formatMoney(orderStats.realized, true)} valueClass={orderStats.realized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
           <Metric label="Open Positions" value={String(orderStats.openOrders.length)} />
           <Metric label="Active Alerts" value={String(activeAlertCount)} />
+        </div>
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 gap-4 px-4 pt-4 md:grid-cols-2">
+        {/* Sector Distribution Donut */}
+        <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-weight-medium">Sector Allocation</h2>
+            <span className="text-[11px] text-tv-muted">by current value</span>
+          </div>
+          <div style={{ height: 240 }}>
+            <SectorDonutChart data={orderStats.sectorData} />
+          </div>
+        </div>
+
+        {/* Monthly Investment Bar Chart */}
+        <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-weight-medium">Monthly Investment</h2>
+            <span className="text-[11px] text-tv-muted">cost basis per month</span>
+          </div>
+          <div style={{ height: 240 }}>
+            <MonthlyInvestmentChart data={orderStats.monthlyData} />
+          </div>
         </div>
       </div>
 
@@ -191,16 +219,17 @@ async function getOrderStats() {
       const totalCost = (existing.entryPrice * existing.quantity) + (entryPrice * quantity);
       const newQuantity = existing.quantity + quantity;
       const avgEntryPrice = totalCost / newQuantity;
-      
+
       existing.quantity = newQuantity;
       existing.entryPrice = avgEntryPrice;
       existing.profitLoss += profitLoss;
       existing.profitLossPct = avgEntryPrice > 0 ? ((currentPrice - avgEntryPrice) / avgEntryPrice) * 100 : 0;
     } else {
       openOrdersMap.set(symbol, {
-        id: order.id, 
+        id: order.id,
         tickerSymbol: symbol,
         companyName: tickerMap[symbol]?.companyName ?? symbol,
+        sector: tickerMap[symbol]?.sector ?? 'Unclassified',
         entryDate: order.entryDate,
         entryPrice,
         quantity,
@@ -212,6 +241,41 @@ async function getOrderStats() {
   }
   const openOrders = Array.from(openOrdersMap.values());
 
+  // --- Sector Distribution ---
+  const sectorMap = new Map<string, number>();
+  for (const order of openOrders) {
+    const sectorValue = order.currentPrice * order.quantity;
+    sectorMap.set(order.sector, (sectorMap.get(order.sector) ?? 0) + sectorValue);
+  }
+  const totalMarketValue = openOrders.reduce((sum, o) => sum + o.currentPrice * o.quantity, 0);
+  const sectorData: SectorDataItem[] = Array.from(sectorMap.entries())
+    .map(([sector, value]) => ({
+      sector,
+      value,
+      percentage: totalMarketValue > 0 ? (value / totalMarketValue) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  // --- Monthly Investment (cost basis per month, from all OPEN orders raw rows) ---
+  const monthlyMap = new Map<string, number>();
+  for (const order of openRows) {
+    const date = typeof order.entryDate === 'string' ? order.entryDate : new Date(order.entryDate as unknown as string).toISOString().split('T')[0];
+    const [year, month] = date.split('-');
+    const label = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(month) - 1]} '${year.slice(2)}`;
+    const cost = Number(order.entryPrice) * Number(order.quantity);
+    monthlyMap.set(label, (monthlyMap.get(label) ?? 0) + cost);
+  }
+  // Sort chronologically
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthlyData: MonthlyDataItem[] = Array.from(monthlyMap.entries())
+    .sort((a, b) => {
+      const [aM, aY] = [a[0].slice(0, 3), a[0].slice(-2)];
+      const [bM, bY] = [b[0].slice(0, 3), b[0].slice(-2)];
+      if (aY !== bY) return Number(aY) - Number(bY);
+      return monthOrder.indexOf(aM) - monthOrder.indexOf(bM);
+    })
+    .map(([month, invested]) => ({ month, invested, orders: 1 }));
+
   const realized = closedRows.reduce((sum, order) => {
     const entryPrice = Number(order.entryPrice);
     const exitPrice = Number(order.exitPrice ?? entryPrice);
@@ -221,9 +285,12 @@ async function getOrderStats() {
 
   return {
     openOrders,
-    openMarketValue: openOrders.reduce((sum, order) => sum + order.currentPrice * order.quantity, 0),
+    // Net Worth = current market value of all open positions
+    openMarketValue: totalMarketValue,
     unrealized: openOrders.reduce((sum, order) => sum + order.profitLoss, 0),
     realized,
+    sectorData,
+    monthlyData,
   };
 }
 
@@ -313,11 +380,14 @@ async function getLatestPriceMap(): Promise<Record<string, number>> {
   return priceMap;
 }
 
-async function getTickerMap(): Promise<Record<string, { companyName: string }>> {
+async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string }>> {
   const rows = await db.select().from(tickers);
-  const tickerMap: Record<string, { companyName: string }> = {};
+  const tickerMap: Record<string, { companyName: string; sector: string }> = {};
   for (const ticker of rows) {
-    tickerMap[ticker.symbol] = { companyName: ticker.companyName ?? ticker.symbol };
+    tickerMap[ticker.symbol] = {
+      companyName: ticker.companyName ?? ticker.symbol,
+      sector: ticker.sector ?? 'Unclassified',
+    };
   }
   return tickerMap;
 }
