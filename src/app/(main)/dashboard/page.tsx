@@ -176,13 +176,14 @@ async function getOrderStats() {
 
   const openOrdersMap = new Map<string, DashboardOrder>();
   for (const order of openRows) {
+    const symbol = order.tickerSymbol.trim().toUpperCase();
     const entryPrice = Number(order.entryPrice);
     const quantity = Number(order.quantity);
-    const currentPrice = latestPrices[order.tickerSymbol] ?? entryPrice;
+    const currentPrice = latestPrices[symbol] ?? entryPrice;
     const profitLoss = (currentPrice - entryPrice) * quantity;
 
-    if (openOrdersMap.has(order.tickerSymbol)) {
-      const existing = openOrdersMap.get(order.tickerSymbol)!;
+    if (openOrdersMap.has(symbol)) {
+      const existing = openOrdersMap.get(symbol)!;
       const totalCost = (existing.entryPrice * existing.quantity) + (entryPrice * quantity);
       const newQuantity = existing.quantity + quantity;
       const avgEntryPrice = totalCost / newQuantity;
@@ -192,10 +193,10 @@ async function getOrderStats() {
       existing.profitLoss += profitLoss;
       existing.profitLossPct = avgEntryPrice > 0 ? ((currentPrice - avgEntryPrice) / avgEntryPrice) * 100 : 0;
     } else {
-      openOrdersMap.set(order.tickerSymbol, {
-        id: order.id, // Using first order ID as aggregate ID
-        tickerSymbol: order.tickerSymbol,
-        companyName: tickerMap[order.tickerSymbol]?.companyName ?? order.tickerSymbol,
+      openOrdersMap.set(symbol, {
+        id: order.id, 
+        tickerSymbol: symbol,
+        companyName: tickerMap[symbol]?.companyName ?? symbol,
         entryDate: order.entryDate,
         entryPrice,
         quantity,
