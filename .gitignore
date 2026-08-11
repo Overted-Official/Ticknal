@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+  
+# Custom ignores  
+scratch*  
+scratch/  
+Data/  
+*.csv  
+*.mp4  
+quant_engine/__pycache__/  
+quant_engine/.pytest_cache/  
+quant_engine/artifacts/  
+quant_engine/*.txt  
+quant_engine/*.json  
+_cosine_similarity_strategy/ 

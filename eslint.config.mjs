@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "scratch/**",
+    "scratch_borsa/**",
+    "_cosine_similarity_strategy/**",
+    "scripts/**",
+    "src/scripts/**",
+    "scratch_*",
   ]),
 ]);
 
