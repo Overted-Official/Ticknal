@@ -48,8 +48,8 @@ export default async function DashboardContent() {
   const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text">
-      <div className="border-b border-tv-border px-5 py-4">
+    <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text pb-6">
+      <div className="border-b border-tv-border px-4 py-5 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-xl font-weight-medium">Dashboard</h1>
@@ -66,7 +66,7 @@ export default async function DashboardContent() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
+        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
           <div className="col-span-2 lg:col-span-1">
             <Metric
               label="Net Worth"
@@ -83,7 +83,7 @@ export default async function DashboardContent() {
       </div>
 
       {/* Analytics Charts */}
-      <div className="grid grid-cols-1 gap-4 px-4 pt-4 md:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 lg:grid-cols-2">
         {/* Sector Distribution Donut */}
         <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4">
           <SectorDonutChart data={orderStats.sectorData} />
@@ -101,7 +101,7 @@ export default async function DashboardContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[1.25fr_0.75fr]">
+      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 xl:grid-cols-[1.25fr_0.75fr]">
         {/* Open Positions */}
         <section>
           <div className="mb-2 flex items-center justify-between">
