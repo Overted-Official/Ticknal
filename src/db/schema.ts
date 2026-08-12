@@ -7,6 +7,7 @@ export const tickers = pgTable('tickers', {
   exchange: varchar('exchange', { length: 50 }).default('EGX'),
   sector: varchar('sector', { length: 100 }),
   industry: varchar('industry', { length: 100 }),
+  logoUrl: varchar('logo_url', { length: 255 }),
 });
 
 export const dailyPrices = pgTable('daily_prices', {

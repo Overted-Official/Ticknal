@@ -29,11 +29,13 @@ export default function CloseOrderModal({
 
   useEffect(() => {
     if (isOpen && order) {
-      setForm({
-        exitDate: new Date().toISOString().split('T')[0],
-        exitPrice: order.currentPrice ? order.currentPrice.toString() : '',
-        quantityToClose: order.quantity ? order.quantity.toString() : '1'
-      });
+      setTimeout(() => {
+        setForm({
+          exitDate: new Date().toISOString().split('T')[0],
+          exitPrice: order.currentPrice ? order.currentPrice.toString() : '',
+          quantityToClose: order.quantity ? order.quantity.toString() : '1'
+        });
+      }, 0);
     }
   }, [isOpen, order]);
 

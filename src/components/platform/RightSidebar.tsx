@@ -8,12 +8,13 @@ import { useAlerts } from './AlertProvider';
 export interface WatchlistItem {
   symbol: string;
   companyName: string;
-  website?: string;
+  website?: string | null;
   sector: string;
   price: string;
   change?: string;
   isUp: boolean;
   hasOpenPosition?: boolean;
+  logoUrl?: string | null;
 }
 
 interface RightSidebarProps {
@@ -226,7 +227,9 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                     className={`flex items-center cursor-pointer px-3 py-1.5 transition-colors hover:bg-tv-hover group text-[11px] ${item.symbol === selectedSymbol ? 'bg-tv-hover' : ''}`}
                   >
                     <div className="flex min-w-0 flex-1 items-center space-x-2 font-weight-medium">
-                      {item.website ? (
+                      {item.logoUrl ? (
+                        <img src={item.logoUrl} alt={item.symbol} className="h-5 w-5 rounded-tv-full bg-white object-contain p-[1px]" />
+                      ) : item.website ? (
                         <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-5 w-5 rounded-tv-full border border-tv-border bg-tv-surface object-cover" />
                       ) : (
                         <div className="flex h-5 w-5 items-center justify-center rounded-tv-full border border-tv-border bg-tv-surface text-[0.5rem] font-weight-medium text-tv-text">
@@ -280,7 +283,9 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
           <div className="flex items-center justify-between mb-3 mt-1">
             <div className="flex items-center space-x-2">
-              {selectedItem.website ? (
+              {selectedItem.logoUrl ? (
+                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-white border border-tv-border object-contain p-[2px]" />
+              ) : selectedItem.website ? (
                 <img src={`https://logo.clearbit.com/${selectedItem.website}`} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-tv-surface border border-tv-border object-cover" />
               ) : (
                 <div className="w-7 h-7 rounded-tv-full bg-tv-surface flex items-center justify-center font-weight-medium text-tv-text border border-tv-border text-xs">

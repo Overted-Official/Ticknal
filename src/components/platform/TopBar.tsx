@@ -31,6 +31,13 @@ export default function TopBar({
   const replayQuery = replay ? '&replay=1' : '';
   const alertEnabled = isAlerted(symbol);
 
+  const currentTicker = watchlist.find(item => item.symbol === symbol) || {
+    symbol,
+    companyName: displaySymbol,
+    logoUrl: null,
+    website: null
+  };
+
   const filteredWatchlist = watchlist.filter(item => 
     item.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || 
     item.companyName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -43,15 +50,29 @@ export default function TopBar({
         <div className="flex items-center space-x-2 md:space-x-4 overflow-x-auto no-scrollbar whitespace-nowrap">
           {/* Logo / Symbol */}
           <div 
-            className="flex items-center space-x-1 md:space-x-2 cursor-pointer hover:bg-tv-hover p-1.5 rounded-tv-md transition-colors"
+            className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:bg-tv-hover p-1.5 rounded-tv-md transition-colors"
             onClick={() => setIsSearchOpen(true)}
           >
-            <div className="hidden md:block relative w-6 h-6 rounded overflow-hidden mr-1 shadow-[0_0_8px_rgba(255,255,255,0.1)]">
-              <Image src="/logo.svg" alt="QuantEGX" fill className="object-cover" />
+            <div className="hidden md:flex items-center justify-center shrink-0 w-8 h-8 rounded-tv-full bg-tv-surface border border-tv-border overflow-hidden p-[2px]">
+              {currentTicker.logoUrl ? (
+                <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-tv-full bg-white" />
+              ) : currentTicker.website ? (
+                <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="w-full h-full object-cover rounded-tv-full" />
+              ) : (
+                <span className="text-[10px] font-weight-medium text-tv-text">{displaySymbol.substring(0, 2)}</span>
+              )}
             </div>
-            <span className="text-tv-text text-sm font-weight-medium">{displaySymbol}</span>
-            <span className="text-tv-muted font-weight-light text-xs md:text-sm hidden sm:inline">EGX</span>
-            <Search size={14} className="text-tv-muted ml-1 md:ml-2" />
+            
+            <div className="flex flex-col justify-center min-w-0 max-w-[200px]">
+              <span className="text-tv-text text-sm font-weight-medium truncate">{currentTicker.companyName}</span>
+              <div className="flex items-center space-x-1 text-tv-muted font-weight-light text-xs truncate">
+                <span>{displaySymbol}</span>
+                <span className="text-[10px]">•</span>
+                <span>EGX</span>
+              </div>
+            </div>
+            
+            <Search size={14} className="text-tv-muted ml-1 md:ml-2 shrink-0" />
           </div>
 
           <div className="h-5 w-px bg-tv-border shrink-0" />
@@ -163,9 +184,20 @@ export default function TopBar({
                       router.push(`?ticker=${item.symbol}&timeframe=${timeframe}${replayQuery}`);
                     }}
                   >
-                    <div>
-                      <div className="font-weight-medium text-tv-text">{item.symbol.replace('.CA', '')}</div>
-                      <div className="text-xs text-tv-muted mt-1">{item.companyName}</div>
+                    <div className="flex items-center space-x-3">
+                      {item.logoUrl ? (
+                        <img src={item.logoUrl} alt={item.symbol} className="h-8 w-8 rounded-tv-full bg-white object-contain p-[2px]" />
+                      ) : item.website ? (
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-8 w-8 rounded-tv-full border border-tv-border bg-tv-surface object-cover" />
+                      ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-tv-full border border-tv-border bg-tv-surface text-xs font-weight-medium text-tv-text">
+                          {item.symbol.substring(0, 2)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-weight-medium text-tv-text">{item.symbol.replace('.CA', '')}</div>
+                        <div className="text-xs text-tv-muted mt-1">{item.companyName}</div>
+                      </div>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">

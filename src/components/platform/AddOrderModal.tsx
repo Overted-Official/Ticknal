@@ -50,12 +50,14 @@ export default function AddOrderModal({
   // Sync initialData when modal opens, and fetch tickers if manual entry
   useEffect(() => {
     if (isOpen) {
-      setNewOrderForm({
-        symbol: initialData?.symbol || '',
-        entryDate: initialData?.date || new Date().toISOString().split('T')[0],
-        entryPrice: initialData?.price ? initialData.price.toString() : '',
-        quantity: '100'
-      });
+      setTimeout(() => {
+        setNewOrderForm({
+          symbol: initialData?.symbol || '',
+          entryDate: initialData?.date || new Date().toISOString().split('T')[0],
+          entryPrice: initialData?.price ? initialData.price.toString() : '',
+          quantity: '100'
+        });
+      }, 0);
       setIsSearchOpen(false);
 
       if (!initialData?.symbol) {

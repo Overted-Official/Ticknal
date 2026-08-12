@@ -6,12 +6,6 @@ import { useState, useEffect } from 'react';
 export default function TestNotificationButton() {
   const { ensurePushSubscription, permission, statusMessage } = useAlerts();
   const [loading, setLoading] = useState(false);
-  const [latestStatus, setLatestStatus] = useState<string | null>(null);
-
-  // Keep track of the latest status message to show in the alert
-  useEffect(() => {
-    if (statusMessage) setLatestStatus(statusMessage);
-  }, [statusMessage]);
 
   const handleTestNotification = async () => {
     try {

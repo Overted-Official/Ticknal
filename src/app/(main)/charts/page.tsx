@@ -81,7 +81,8 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
       price: lastPrice.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
       isUp: change >= 0,
-      hasOpenPosition: openPositionsSet.has(t.symbol)
+      hasOpenPosition: openPositionsSet.has(t.symbol),
+      logoUrl: t.logoUrl,
     };
   });
 

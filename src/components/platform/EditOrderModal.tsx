@@ -30,11 +30,13 @@ export default function EditOrderModal({
 
   useEffect(() => {
     if (isOpen && order) {
-      setForm({
-        entryDate: order.entryDate || new Date().toISOString().split('T')[0],
-        entryPrice: order.entryPrice ? order.entryPrice.toString() : '',
-        quantity: order.quantity ? order.quantity.toString() : ''
-      });
+      setTimeout(() => {
+        setForm({
+          entryDate: order.entryDate || new Date().toISOString().split('T')[0],
+          entryPrice: order.entryPrice ? order.entryPrice.toString() : '',
+          quantity: order.quantity ? order.quantity.toString() : ''
+        });
+      }, 0);
     }
   }, [isOpen, order]);
 

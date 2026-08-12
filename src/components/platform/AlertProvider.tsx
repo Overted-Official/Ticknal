@@ -111,10 +111,10 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
       setStatusMessage(null);
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Push subscription failed:', err);
       setStatusMessage('Failed to subscribe to push manager.');
-      return { success: false, error: err.message || 'PushManager subscription failed' };
+      return { success: false, error: err instanceof Error ? err.message : 'PushManager subscription failed' };
     }
   }, [deviceId]);
 
