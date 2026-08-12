@@ -60,15 +60,15 @@ interface CustomLegendProps {
 function CustomLegend({ payload }: CustomLegendProps) {
   if (!payload) return null;
   return (
-    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-2">
+    <div className="flex flex-col justify-center gap-y-2.5 h-full pl-2">
       {payload.map((entry) => (
-        <div key={entry.value} className="flex items-center gap-1.5 text-[10px] text-[#8899aa]">
+        <div key={entry.value} className="flex items-center gap-2 text-[11px] text-[#8899aa]">
           <span
-            className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+            className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="truncate max-w-[80px]">{entry.value}</span>
-          <span className="text-[#aabbcc]">{entry.payload.percentage.toFixed(0)}%</span>
+          <span className="truncate max-w-[110px]" title={entry.value}>{entry.value}</span>
+          <span className="text-[#aabbcc] ml-auto font-medium">{entry.payload.percentage.toFixed(0)}%</span>
         </div>
       ))}
     </div>
@@ -160,10 +160,10 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
             <PieChart>
               <Pie
                 data={data}
-                cx="50%"
-                cy="45%"
-                innerRadius="52%"
-                outerRadius="72%"
+                cx="35%"
+                cy="50%"
+                innerRadius="58%"
+                outerRadius="80%"
                 paddingAngle={2}
                 dataKey="value"
                 nameKey="sector"
@@ -178,7 +178,13 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
-              <Legend content={<CustomLegend />} />
+              <Legend 
+                layout="vertical" 
+                verticalAlign="middle" 
+                align="right" 
+                wrapperStyle={{ width: '45%', right: 0 }}
+                content={<CustomLegend />} 
+              />
             </PieChart>
           </ResponsiveContainer>
         ) : (
