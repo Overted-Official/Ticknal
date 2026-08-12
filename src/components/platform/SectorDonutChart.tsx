@@ -189,6 +189,7 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
               aspectRatio={4 / 3}
               stroke="#fff"
               fill="#8884d8"
+              isAnimationActive={false}
               content={<CustomizedTreemapContent />}
             >
               <Tooltip content={<CustomTooltip />} />

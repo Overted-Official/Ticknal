@@ -8,8 +8,9 @@ import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } 
 import { getRecentOpportunities } from '@/lib/opportunities';
 import OpportunityTable from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
-import SectorDonutChart, { type SectorDataItem } from '@/components/platform/SectorDonutChart';
-import MonthlyInvestmentChart, { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
+import DashboardCharts from '@/components/platform/DashboardCharts';
+import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
+import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 
 type DashboardOrder = {
   id: number;
@@ -83,23 +84,7 @@ export default async function DashboardContent() {
       </div>
 
       {/* Analytics Charts */}
-      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 lg:grid-cols-2">
-        {/* Sector Distribution Donut */}
-        <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4">
-          <SectorDonutChart data={orderStats.sectorData} />
-        </div>
-
-        {/* Monthly Investment Bar Chart */}
-        <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium">Monthly Investment</h2>
-            <span className="text-[11px] text-tv-muted">cost basis per month</span>
-          </div>
-          <div style={{ height: 240 }}>
-            <MonthlyInvestmentChart data={orderStats.monthlyData} />
-          </div>
-        </div>
-      </div>
+      <DashboardCharts sectorData={orderStats.sectorData} monthlyData={orderStats.monthlyData} />
 
       <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 xl:grid-cols-2">
         {/* Open Positions */}
