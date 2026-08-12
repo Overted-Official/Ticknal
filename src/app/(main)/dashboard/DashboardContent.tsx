@@ -81,6 +81,28 @@ export default async function DashboardContent() {
           <Metric label="Open Positions" value={String(orderStats.openOrders.length)} />
           <Metric label="Active Alerts" value={String(activeAlertCount)} />
         </div>
+
+        {/* Extended Portfolio Stats */}
+        <div className="mt-4 rounded-tv-lg border border-tv-border bg-tv-surface p-4 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-tv-border gap-4 md:gap-0">
+          <div className="flex-1 md:px-4 first:px-0 flex flex-col justify-center">
+            <div className="text-[11px] uppercase text-tv-muted mb-1">Win Rate</div>
+            <div className="text-lg font-weight-medium text-tv-text">{orderStats.winRate.toFixed(1)}%</div>
+          </div>
+          <div className="flex-1 md:px-4 flex flex-col justify-center">
+            <div className="text-[11px] uppercase text-tv-muted mb-1">Avg. Bars / Trade</div>
+            <div className="text-lg font-weight-medium text-tv-text">{Math.round(orderStats.avgBarsPerTrade)}</div>
+          </div>
+          <div className="flex-1 md:px-4 flex flex-col justify-center">
+            <div className="text-[11px] uppercase text-tv-muted mb-1">Avg. Adverse Excursion</div>
+            <div className="text-lg font-weight-medium text-tv-muted">N/A</div>
+          </div>
+          <div className="flex-1 md:px-4 last:pr-0 flex flex-col justify-center">
+            <div className="text-[11px] uppercase text-tv-muted mb-1">Max Trade Loss</div>
+            <div className={`text-lg font-weight-medium ${orderStats.maxDrawdownPct < 0 ? 'text-tv-down' : 'text-tv-text'}`}>
+              {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Analytics Charts */}
@@ -291,12 +313,35 @@ async function getOrderStats() {
     })
     .map(([month, invested]) => ({ month, invested, orders: 1 }));
 
+  let winningTrades = 0;
+  let totalHoldDays = 0;
+  let maxDrawdownPct = 0;
+
   const realized = closedRows.reduce((sum, order) => {
     const entryPrice = Number(order.entryPrice);
     const exitPrice = Number(order.exitPrice ?? entryPrice);
     const quantity = Number(order.quantity);
+    
+    if (exitPrice > entryPrice) {
+      winningTrades++;
+    }
+
+    const tradePct = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 : 0;
+    if (tradePct < maxDrawdownPct) maxDrawdownPct = tradePct;
+
+    if (order.exitDate) {
+      const t1 = new Date(order.entryDate).getTime();
+      const t2 = new Date(order.exitDate).getTime();
+      const days = (t2 - t1) / (1000 * 3600 * 24);
+      totalHoldDays += Math.max(0, days);
+    }
+
     return sum + (exitPrice - entryPrice) * quantity;
   }, 0);
+
+  const closedCount = closedRows.length;
+  const winRate = closedCount > 0 ? (winningTrades / closedCount) * 100 : 0;
+  const avgBarsPerTrade = closedCount > 0 ? (totalHoldDays / closedCount) * (5/7) : 0;
 
   const totalCostBasis = openRows.reduce((sum, order) => sum + Number(order.entryPrice) * Number(order.quantity), 0);
   const unrealized = openOrders.reduce((sum, order) => sum + order.profitLoss, 0);
@@ -311,6 +356,9 @@ async function getOrderStats() {
     totalRoi,
     sectorData,
     monthlyData,
+    winRate,
+    avgBarsPerTrade,
+    maxDrawdownPct,
   };
 }
 
