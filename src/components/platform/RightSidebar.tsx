@@ -3,7 +3,10 @@ import { Bell, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, Settings
 import { ExternalLink, Grid, Edit3, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import useSWR from 'swr';
 import { useAlerts } from './AlertProvider';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export interface WatchlistItem {
   symbol: string;
@@ -26,7 +29,25 @@ interface RightSidebarProps {
 }
 
 export default function RightSidebar({ watchlist, selectedSymbol, timeframe, rangeData }: RightSidebarProps) {
-  const [liveData, setLiveData] = useState<{ price: string, change: string, isUp: boolean } | null>(null);
+  const { data: quoteData } = useSWR(
+    selectedSymbol ? `/api/quote?symbol=${selectedSymbol}` : null,
+    fetcher,
+    { refreshInterval: 15000 }
+  );
+
+  const liveData = useMemo(() => {
+    if (!quoteData) return null;
+    const change = quoteData.close - quoteData.previousClose;
+    const changePct = quoteData.previousClose ? (change / quoteData.previousClose) * 100 : 0;
+    
+    return {
+      price: Number(quoteData.close).toFixed(2),
+      change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
+      isUp: change >= 0
+    };
+  }, [quoteData]);
+
+  // Merge live data with base data
   const [searchQuery, setSearchQuery] = useState("");
   const [listFilter, setListFilter] = useState<'ALL' | 'OPEN' | 'OPPORTUNITIES'>('ALL');
   const [sidebarWidth, setSidebarWidth] = useState(320);
@@ -75,35 +96,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchLive = async () => {
-      try {
-        const res = await fetch(`/api/quote?symbol=${selectedSymbol}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        
-        if (!isMounted) return;
-        
-        const change = data.close - data.previousClose;
-        const changePct = data.previousClose ? (change / data.previousClose) * 100 : 0;
-        
-        setLiveData({
-          price: Number(data.close).toFixed(2),
-          change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
-          isUp: change >= 0
-        });
-      } catch {}
-    };
 
-    fetchLive();
-    const intervalId = setInterval(fetchLive, 15000);
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-    };
-  }, [selectedSymbol]);
 
   // Merge live data with base data
   const selectedItem = liveData 

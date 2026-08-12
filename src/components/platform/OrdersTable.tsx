@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import useSWR from 'swr';
 import { CheckCircle, LineChart, Trash2, Pencil, Search } from '@/components/ui/icons';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
@@ -26,31 +27,18 @@ type OrderRow = {
   profitLossPct: number;
 };
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function OrdersTable() {
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingOrder, setIsAddingOrder] = useState(false);
   const [orderToClose, setOrderToClose] = useState<OrderRow | null>(null);
   const [orderToEdit, setOrderToEdit] = useState<OrderRow | null>(null);
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/orders');
-      if (!res.ok) return;
-      const data = await res.json();
-      setOrders(data.orders ?? []);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(fetchOrders, 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [fetchOrders]);
+  const { data, isLoading, mutate } = useSWR<{ orders: OrderRow[] }>('/api/orders', fetcher);
+  const orders = data?.orders ?? [];
+  const loading = isLoading;
 
   const filteredOrders = useMemo(
     () => orders.filter((order) => {
@@ -85,7 +73,9 @@ export default function OrdersTable() {
 
   async function deleteOrder(order: OrderRow) {
     const res = await fetch(`/api/orders?id=${order.id}`, { method: 'DELETE' });
-    if (res.ok) setOrders((current) => current.filter((item) => item.id !== order.id));
+    if (res.ok) {
+      mutate({ orders: orders.filter((item) => item.id !== order.id) }, { revalidate: false });
+    }
   }
 
   return (
@@ -328,20 +318,20 @@ export default function OrdersTable() {
       <AddOrderModal 
         isOpen={isAddingOrder} 
         onClose={() => setIsAddingOrder(false)} 
-        onSuccess={() => fetchOrders()} 
+        onSuccess={() => mutate()} 
       />
       
       <CloseOrderModal
         isOpen={!!orderToClose}
         onClose={() => setOrderToClose(null)}
-        onSuccess={() => fetchOrders()}
+        onSuccess={() => mutate()}
         order={orderToClose}
       />
 
       <EditOrderModal
         isOpen={!!orderToEdit}
         onClose={() => setOrderToEdit(null)}
-        onSuccess={() => fetchOrders()}
+        onSuccess={() => mutate()}
         order={orderToEdit}
       />
     </div>
