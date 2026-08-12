@@ -32,6 +32,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
   const [isResizing, setIsResizing] = useState(false);
   const [panelHeight, setPanelHeight] = useState(380);
   const [isResizingPanel, setIsResizingPanel] = useState(false);
+  const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(false);
 
   useEffect(() => {
     if (!isResizingPanel) return;
@@ -272,14 +273,16 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       {/* Details Panel */}
       {selectedItem && (
         <div 
-          className="border-t border-tv-border bg-tv-base p-4 flex flex-col shrink-0 relative overflow-hidden"
-          style={{ height: `${panelHeight}px` }}
+          className="border-t border-tv-border bg-tv-base p-4 flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
+          style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {/* Vertical Resizer */}
-          <div 
-            className="absolute top-0 left-0 right-0 h-1.5 cursor-row-resize hover:bg-tv-accent/50 active:bg-tv-accent z-50 transition-colors"
-            onMouseDown={() => setIsResizingPanel(true)}
-          />
+          {!isDetailsCollapsed && (
+            <div 
+              className="absolute top-0 left-0 right-0 h-1.5 cursor-row-resize hover:bg-tv-accent/50 active:bg-tv-accent z-50 transition-colors"
+              onMouseDown={() => setIsResizingPanel(true)}
+            />
+          )}
 
           <div className="flex items-center justify-between mb-3 mt-1">
             <div className="flex items-center space-x-2">
@@ -298,89 +301,98 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               <button className="hover:text-tv-accent transition-colors"><Grid size={16} /></button>
               <button className="hover:text-tv-accent transition-colors"><Edit3 size={16} /></button>
               <button className="hover:text-tv-accent transition-colors"><MoreHorizontal size={16} /></button>
+              <button 
+                onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
+                className="hover:text-tv-accent transition-colors ml-1"
+              >
+                <ChevronDown size={18} className={`transition-transform ${isDetailsCollapsed ? 'rotate-180' : ''}`} />
+              </button>
             </div>
           </div>
 
-          <div className="text-tv-text mb-1 flex items-center text-sm font-weight-medium">
-            {selectedItem.companyName}
-            <ExternalLink size={12} className="ml-1 text-tv-muted hover:text-tv-text cursor-pointer" />
-            <span className="text-tv-muted font-weight-light mx-1">•</span>
-            <span className="text-tv-text">EGX</span>
-          </div>
-          
-          <div className="text-tv-muted font-weight-light text-xs mb-4">
-            Finance • {selectedItem.sector}
-          </div>
-
-          <div className="flex items-baseline space-x-2 mb-1">
-            <span className="text-3xl font-weight-medium text-tv-text tracking-tight">
-              {selectedItem.price}
-            </span>
-            <span className="text-tv-muted font-weight-medium text-xs relative top-[-10px] left-[-4px] text-orange-500">D</span>
-            <span className="text-tv-muted font-weight-medium text-xs">EGP</span>
-            <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
-              {selectedItem.change ? selectedItem.change.split(' ')[0] : ''}
-            </span>
-            <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
-              {selectedItem.change ? selectedItem.change.split(' ')[1] : ''}
-            </span>
-          </div>
-
-          <div className="flex items-center text-tv-muted text-xs mb-1">
-            <div className="w-2 h-1 bg-tv-muted rounded-full mr-2" />
-            Market closed
-          </div>
-          <div className="text-tv-muted text-xs mb-4">
-            Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:26 GMT+3
-          </div>
-
-          {rangeData && (
-            <>
-              {/* Range Bars */}
-              <div className="mb-4 mt-2">
-                <div className="flex justify-between text-[11px] mb-1.5">
-                  <span className="text-tv-text font-medium">{rangeData.dayLow.toFixed(2)}</span>
-                  <span className="text-tv-muted text-[10px] uppercase">Day&apos;s Range</span>
-                  <span className="text-tv-text font-medium">{rangeData.dayHigh.toFixed(2)}</span>
-                </div>
-                <div className="h-1 bg-tv-border rounded-tv-full relative mx-1">
-                  <div 
-                    className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-tv-up' : 'bg-tv-down'}`}
-                    style={{ 
-                      width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%`, 
-                      left: 0 
-                    }} 
-                  />
-                  <div 
-                    className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-tv-text"
-                    style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%` }}
-                  />
-                </div>
+          {!isDetailsCollapsed && (
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <div className="text-tv-text mb-1 flex items-center text-sm font-weight-medium">
+                {selectedItem.companyName}
+                <ExternalLink size={12} className="ml-1 text-tv-muted hover:text-tv-text cursor-pointer" />
+                <span className="text-tv-muted font-weight-light mx-1">•</span>
+                <span className="text-tv-text">EGX</span>
+              </div>
+              
+              <div className="text-tv-muted font-weight-light text-xs mb-4">
+                Finance • {selectedItem.sector}
               </div>
 
-              <div className="mb-2">
-                <div className="flex justify-between text-[11px] mb-1.5">
-                  <span className="text-tv-text font-medium">{rangeData.yearLow.toFixed(2)}</span>
-                  <span className="text-tv-muted text-[10px] uppercase">52Wk Range</span>
-                  <span className="text-tv-text font-medium">{rangeData.yearHigh.toFixed(2)}</span>
-                </div>
-                <div className="h-1 bg-tv-border rounded-tv-full relative mx-1">
-                  <div 
-                    className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-tv-up' : 'bg-tv-down'}`}
-                    style={{ 
-                      width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%`, 
-                      left: 0 
-                    }} 
-                  />
-                  <div 
-                    className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-tv-text"
-                    style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%` }}
-                  />
-                </div>
+              <div className="flex items-baseline space-x-2 mb-1">
+                <span className="text-3xl font-weight-medium text-tv-text tracking-tight">
+                  {selectedItem.price}
+                </span>
+                <span className="text-tv-muted font-weight-medium text-xs relative top-[-10px] left-[-4px] text-orange-500">D</span>
+                <span className="text-tv-muted font-weight-medium text-xs">EGP</span>
+                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                  {selectedItem.change ? selectedItem.change.split(' ')[0] : ''}
+                </span>
+                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                  {selectedItem.change ? selectedItem.change.split(' ')[1] : ''}
+                </span>
               </div>
-            </>
+
+              <div className="flex items-center text-tv-muted text-xs mb-1">
+                <div className="w-2 h-1 bg-tv-muted rounded-full mr-2" />
+                Market closed
+              </div>
+              <div className="text-tv-muted text-xs mb-4">
+                Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:26 GMT+3
+              </div>
+
+              {rangeData && (
+                <>
+                  {/* Range Bars */}
+                  <div className="mb-4 mt-2">
+                    <div className="flex justify-between text-[11px] mb-1.5">
+                      <span className="text-tv-text font-medium">{rangeData.dayLow.toFixed(2)}</span>
+                      <span className="text-tv-muted text-[10px] uppercase">Day&apos;s Range</span>
+                      <span className="text-tv-text font-medium">{rangeData.dayHigh.toFixed(2)}</span>
+                    </div>
+                    <div className="h-1 bg-tv-border rounded-tv-full relative mx-1">
+                      <div 
+                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-tv-up' : 'bg-tv-down'}`}
+                        style={{ 
+                          width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%`, 
+                          left: 0 
+                        }} 
+                      />
+                      <div 
+                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-tv-text"
+                        style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-2">
+                    <div className="flex justify-between text-[11px] mb-1.5">
+                      <span className="text-tv-text font-medium">{rangeData.yearLow.toFixed(2)}</span>
+                      <span className="text-tv-muted text-[10px] uppercase">52Wk Range</span>
+                      <span className="text-tv-text font-medium">{rangeData.yearHigh.toFixed(2)}</span>
+                    </div>
+                    <div className="h-1 bg-tv-border rounded-tv-full relative mx-1">
+                      <div 
+                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-tv-up' : 'bg-tv-down'}`}
+                        style={{ 
+                          width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%`, 
+                          left: 0 
+                        }} 
+                      />
+                      <div 
+                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-tv-text"
+                        style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           )}
-
         </div>
       )}
     </div>
