@@ -67,7 +67,14 @@ export default async function DashboardPage() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
-          <Metric label="Net Worth" value={formatMoney(orderStats.openMarketValue, false)} />
+          <div className="col-span-2 lg:col-span-1">
+            <Metric
+              label="Net Worth"
+              value={formatMoney(orderStats.openMarketValue, false)}
+              subtitle={`Total ROI ${orderStats.totalRoi >= 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
+              subtitleClass={orderStats.totalRoi >= 0 ? 'text-tv-up' : 'text-tv-down'}
+            />
+          </div>
           <Metric label="Unrealized P/L" value={formatMoney(orderStats.unrealized, true)} valueClass={orderStats.unrealized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
           <Metric label="Realized P/L" value={formatMoney(orderStats.realized, true)} valueClass={orderStats.realized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
           <Metric label="Open Positions" value={String(orderStats.openOrders.length)} />
@@ -218,11 +225,12 @@ export default async function DashboardPage() {
   );
 }
 
-function Metric({ label, value, valueClass = 'text-tv-text' }: { label: string; value: string; valueClass?: string }) {
+function Metric({ label, value, valueClass = 'text-tv-text', subtitle, subtitleClass = 'text-tv-muted' }: { label: string; value: string; valueClass?: string; subtitle?: string; subtitleClass?: string }) {
   return (
     <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-3">
       <div className="text-[11px] uppercase text-tv-muted">{label}</div>
       <div className={`mt-1 text-lg font-weight-medium ${valueClass}`}>{value}</div>
+      {subtitle && <div className={`text-[11px] mt-0.5 font-weight-medium ${subtitleClass}`}>{subtitle}</div>}
     </div>
   );
 }
@@ -311,12 +319,17 @@ async function getOrderStats() {
     return sum + (exitPrice - entryPrice) * quantity;
   }, 0);
 
+  const totalCostBasis = openRows.reduce((sum, order) => sum + Number(order.entryPrice) * Number(order.quantity), 0);
+  const unrealized = openOrders.reduce((sum, order) => sum + order.profitLoss, 0);
+  const totalRoi = totalCostBasis > 0 ? ((unrealized + realized) / totalCostBasis) * 100 : 0;
+
   return {
     openOrders,
     // Net Worth = current market value of all open positions
     openMarketValue: totalMarketValue,
-    unrealized: openOrders.reduce((sum, order) => sum + order.profitLoss, 0),
+    unrealized,
     realized,
+    totalRoi,
     sectorData,
     monthlyData,
   };
