@@ -28,7 +28,7 @@ interface RightSidebarProps {
 export default function RightSidebar({ watchlist, selectedSymbol, timeframe, rangeData }: RightSidebarProps) {
   const [liveData, setLiveData] = useState<{ price: string, change: string, isUp: boolean } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [listFilter, setListFilter] = useState<'ALL' | 'OPEN'>('ALL');
+  const [listFilter, setListFilter] = useState<'ALL' | 'OPEN' | 'OPPORTUNITIES'>('ALL');
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const [panelHeight, setPanelHeight] = useState(380);
@@ -112,6 +112,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
   const filteredWatchlist = watchlist.filter(item => {
     if (listFilter === 'OPEN' && !item.hasOpenPosition) return false;
+    if (listFilter === 'OPPORTUNITIES' && !item.recentBuyOpportunity) return false;
     const q = searchQuery.toLowerCase();
     return (
       item.symbol.toLowerCase().includes(q) || 
@@ -156,25 +157,27 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
         onMouseDown={() => setIsResizing(true)}
       />
       {/* Header */}
-      <div className="flex items-center justify-between p-2 border-b border-tv-border">
-        <div className="flex bg-tv-surface rounded-tv-sm p-0.5">
+      <div className="flex items-center p-2 border-b border-tv-border">
+        <div className="flex w-full bg-tv-surface rounded-tv-sm p-0.5">
           <button 
-            className={`px-3 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'ALL' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
+            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'ALL' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
             onClick={() => setListFilter('ALL')}
           >
-            All Tickers
+            All
           </button>
           <button 
-            className={`px-3 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPEN' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
+            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPEN' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
             onClick={() => setListFilter('OPEN')}
           >
-            Open Positions
+            Positions
           </button>
-        </div>
-        <div className="flex space-x-2 text-tv-muted">
-          <button className="hover:text-tv-text transition-colors"><Plus size={18} /></button>
-          <button className="hover:text-tv-text transition-colors"><Settings size={18} /></button>
-          <button className="hover:text-tv-text transition-colors"><MoreHorizontal size={18} /></button>
+          <button 
+            className={`flex-1 px-2 py-1 flex items-center justify-center rounded-tv-sm transition-colors ${listFilter === 'OPPORTUNITIES' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
+            onClick={() => setListFilter('OPPORTUNITIES')}
+            title="Buy Opportunities"
+          >
+            <Zap size={14} className={listFilter === 'OPPORTUNITIES' ? "text-tv-accent" : ""} />
+          </button>
         </div>
       </div>
 
