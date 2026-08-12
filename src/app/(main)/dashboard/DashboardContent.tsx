@@ -50,7 +50,7 @@ export default async function DashboardContent() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text pb-6">
-      <div className="border-b border-tv-border px-4 py-5 md:px-6">
+      <div className="px-4 py-5 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-xl font-weight-medium">Dashboard</h1>
@@ -106,7 +106,9 @@ export default async function DashboardContent() {
       </div>
 
       {/* Analytics Charts */}
-      <DashboardCharts sectorData={orderStats.sectorData} monthlyData={orderStats.monthlyData} />
+      <div className="border-b border-tv-border pb-5">
+        <DashboardCharts sectorData={orderStats.sectorData} monthlyData={orderStats.monthlyData} />
+      </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 xl:grid-cols-2">
         {/* Open Positions */}
