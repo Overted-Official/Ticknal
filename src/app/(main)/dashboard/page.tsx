@@ -86,13 +86,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 px-4 pt-4 md:grid-cols-2">
         {/* Sector Distribution Donut */}
         <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium">Sector Allocation</h2>
-            <span className="text-[11px] text-tv-muted">by current value</span>
-          </div>
-          <div style={{ height: 240 }}>
-            <SectorDonutChart data={orderStats.sectorData} />
-          </div>
+          <SectorDonutChart data={orderStats.sectorData} />
         </div>
 
         {/* Monthly Investment Bar Chart */}

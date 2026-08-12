@@ -1,6 +1,8 @@
 'use client';
 
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useState } from 'react';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Treemap } from 'recharts';
+import { PieChart as PieChartIcon, Grid } from 'lucide-react';
 
 export type SectorDataItem = {
   sector: string;
@@ -39,7 +41,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="rounded-lg border border-[#1e2d3d] bg-[#121C26] px-3 py-2 text-xs shadow-xl">
+    <div className="rounded-lg border border-[#1e2d3d] bg-[#121C26] px-3 py-2 text-xs shadow-xl z-50">
       <div className="font-medium text-white">{item.sector}</div>
       <div className="mt-1 text-[#00FFA7]">{formatEGP(item.value)}</div>
       <div className="text-[#8899aa]">{item.percentage.toFixed(1)}%</div>
@@ -73,40 +75,127 @@ function CustomLegend({ payload }: CustomLegendProps) {
   );
 }
 
-export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
-  if (!data.length) {
+// Custom content for Treemap
+function CustomizedTreemapContent(props: any) {
+  const { root, depth, x, y, width, height, index, name, value } = props;
+
+  // Don't render text if the block is too small
+  const isLargeEnough = width > 40 && height > 30;
+  
+  // recharts treemap passes the data in a nested way, but since ours is flat, we get depth=1
+  // If it's a leaf node, render it
+  if (depth === 1) {
+    const item = root.children[index];
+    const color = SECTOR_COLORS[index % SECTOR_COLORS.length];
+    
     return (
-      <div className="flex h-full items-center justify-center text-xs text-[#8899aa]">
-        No open positions
-      </div>
+      <g>
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          style={{
+            fill: color,
+            stroke: '#121C26',
+            strokeWidth: 2,
+            strokeOpacity: 1,
+            opacity: 0.9,
+          }}
+        />
+        {isLargeEnough && (
+          <>
+            <text x={x + 4} y={y + 16} fill="#fff" fontSize={11} fontWeight="bold" className="pointer-events-none">
+              {name.length > (width / 6) ? name.substring(0, Math.floor(width / 6)) + '...' : name}
+            </text>
+            <text x={x + 4} y={y + 30} fill="#ffffffcc" fontSize={10} className="pointer-events-none">
+              {item.percentage ? item.percentage.toFixed(1) + '%' : ''}
+            </text>
+          </>
+        )}
+      </g>
     );
   }
+  
+  return null;
+}
+
+export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
+  const [view, setView] = useState<'donut' | 'treemap'>('donut');
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="45%"
-          innerRadius="52%"
-          outerRadius="72%"
-          paddingAngle={2}
-          dataKey="value"
-          nameKey="sector"
-          strokeWidth={0}
-        >
-          {data.map((_, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={SECTOR_COLORS[index % SECTOR_COLORS.length]}
-              opacity={0.9}
-            />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-        <Legend content={<CustomLegend />} />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="flex h-full flex-col">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-weight-medium">Sector Allocation</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-tv-muted hidden sm:inline">by current value</span>
+          <div className="flex bg-tv-base rounded-md p-0.5 border border-tv-border">
+            <button
+              type="button"
+              onClick={() => setView('donut')}
+              className={`p-1 rounded-sm transition-colors ${view === 'donut' ? 'bg-tv-surface text-tv-accent shadow-sm' : 'text-tv-muted hover:text-tv-text'}`}
+              title="Donut View"
+            >
+              <PieChartIcon size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('treemap')}
+              className={`p-1 rounded-sm transition-colors ${view === 'treemap' ? 'bg-tv-surface text-tv-accent shadow-sm' : 'text-tv-muted hover:text-tv-text'}`}
+              title="Treemap View"
+            >
+              <Grid size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div style={{ height: 240 }} className="relative">
+        {!data.length ? (
+          <div className="flex h-full items-center justify-center text-xs text-[#8899aa]">
+            No open positions
+          </div>
+        ) : view === 'donut' ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="45%"
+                innerRadius="52%"
+                outerRadius="72%"
+                paddingAngle={2}
+                dataKey="value"
+                nameKey="sector"
+                strokeWidth={0}
+              >
+                {data.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={SECTOR_COLORS[index % SECTOR_COLORS.length]}
+                    opacity={0.9}
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend content={<CustomLegend />} />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <Treemap
+              data={data.map(item => ({ ...item, name: item.sector, size: item.value }))}
+              dataKey="size"
+              aspectRatio={4 / 3}
+              stroke="#fff"
+              fill="#8884d8"
+              content={<CustomizedTreemapContent />}
+            >
+              <Tooltip content={<CustomTooltip />} />
+            </Treemap>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
   );
 }
