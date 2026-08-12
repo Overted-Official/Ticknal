@@ -9,7 +9,7 @@ type AlertContextValue = {
   ready: boolean;
   isAlerted: (symbol: string) => boolean;
   toggleAlert: (symbol: string) => Promise<boolean>;
-  ensurePushSubscription: () => Promise<boolean>;
+  ensurePushSubscription: () => Promise<{ success: boolean; error?: string }>;
 };
 
 const AlertContext = createContext<AlertContextValue | null>(null);
