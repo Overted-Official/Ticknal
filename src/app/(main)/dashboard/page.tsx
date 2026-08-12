@@ -15,6 +15,7 @@ type DashboardOrder = {
   tickerSymbol: string;
   companyName: string;
   sector: string;
+  logoUrl?: string | null;
   entryDate: string;
   entryPrice: number;
   quantity: number;
@@ -27,6 +28,7 @@ type Opportunity = {
   symbol: string;
   companyName: string;
   sector: string;
+  logoUrl?: string | null;
   signal: PsiSignal;
 };
 
@@ -108,19 +110,30 @@ export default async function DashboardPage() {
             {/* Mobile View (Cards) */}
             <div className="md:hidden flex flex-col space-y-2 p-2">
               {orderStats.openOrders.length === 0 ? (
-                <div className="p-4 text-center text-tv-muted">No open positions</div>
+                <div className="p-4 text-center text-tv-muted text-[12px] font-normal">No open positions</div>
               ) : (
                 orderStats.openOrders.slice(0, 10).map((order) => (
                   <div key={order.id} className="bg-tv-base rounded-tv-lg border border-tv-border p-3 flex justify-between items-center">
-                    <div>
-                      <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent text-sm">
-                        {order.tickerSymbol}
-                      </Link>
-                      <div className="max-w-40 truncate text-[11px] text-tv-muted">{order.companyName}</div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-full bg-tv-surface flex items-center justify-center overflow-hidden shrink-0 border border-tv-border">
+                        {order.logoUrl ? (
+                          <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[12px] font-medium text-tv-muted">
+                            {order.tickerSymbol.substring(0, 2)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-[12px] text-tv-text hover:text-tv-accent">
+                          {order.tickerSymbol}
+                        </Link>
+                        <div className="max-w-40 truncate text-[12px] font-light text-tv-muted">{order.companyName}</div>
+                      </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-medium">{formatPrice(order.currentPrice * order.quantity)}</div>
-                      <div className={`flex items-center justify-end text-[11px] font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                      <div className="text-[12px] font-medium">{formatPrice(order.currentPrice * order.quantity)}</div>
+                      <div className={`flex items-center justify-end text-[12px] font-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
                         {formatMoney(order.profitLoss, true)} ({order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
                       </div>
                     </div>
@@ -131,32 +144,45 @@ export default async function DashboardPage() {
 
             {/* Desktop View (Table) */}
             <div className="hidden md:block">
-              <table className="w-full border-collapse text-left text-xs">
-                <thead className="bg-tv-surface text-[0.65rem] uppercase text-tv-muted">
+              <table className="w-full border-collapse text-left text-[12px]">
+                <thead className="bg-tv-surface text-[12px] font-normal uppercase text-tv-muted">
                   <tr>
-                    <th className="border-b border-tv-border px-3 py-2">Ticker</th>
-                    <th className="border-b border-tv-border px-3 py-2 text-right">Position Value</th>
-                    <th className="border-b border-tv-border px-3 py-2 text-right">P/L</th>
+                    <th className="border-b border-tv-border px-3 py-2 font-normal">Ticker</th>
+                    <th className="border-b border-tv-border px-3 py-2 text-right font-normal">Position Value</th>
+                    <th className="border-b border-tv-border px-3 py-2 text-right font-normal">P/L</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orderStats.openOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-3 py-6 text-center text-tv-muted">No open positions</td>
+                      <td colSpan={3} className="px-3 py-6 text-center text-tv-muted text-[12px] font-normal">No open positions</td>
                     </tr>
                   ) : (
                     orderStats.openOrders.slice(0, 10).map((order) => (
                       <tr key={order.id} className="border-b border-tv-border last:border-b-0 hover:bg-tv-hover">
                         <td className="px-3 py-2">
-                          <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent">
-                            {order.tickerSymbol}
-                          </Link>
-                          <div className="max-w-48 truncate text-[11px] text-tv-muted">{order.companyName}</div>
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full bg-tv-surface flex items-center justify-center overflow-hidden shrink-0 border border-tv-border">
+                              {order.logoUrl ? (
+                                <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-[12px] font-medium text-tv-muted">
+                                  {order.tickerSymbol.substring(0, 2)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-[12px] text-tv-text hover:text-tv-accent">
+                                {order.tickerSymbol}
+                              </Link>
+                              <div className="max-w-48 truncate text-[12px] font-light text-tv-muted">{order.companyName}</div>
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-3 py-2 text-right font-weight-medium">{formatPrice(order.currentPrice * order.quantity)}</td>
-                        <td className={`px-3 py-2 text-right font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                        <td className="px-3 py-2 text-right font-medium">{formatPrice(order.currentPrice * order.quantity)}</td>
+                        <td className={`px-3 py-2 text-right font-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
                           {formatMoney(order.profitLoss, true)}
-                          <div className="text-[11px] opacity-90">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
+                          <div className="text-[12px] font-light opacity-90">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
                         </td>
                       </tr>
                     ))
@@ -230,6 +256,7 @@ async function getOrderStats() {
         tickerSymbol: symbol,
         companyName: tickerMap[symbol]?.companyName ?? symbol,
         sector: tickerMap[symbol]?.sector ?? 'Unclassified',
+        logoUrl: tickerMap[symbol]?.logoUrl ?? null,
         entryDate: order.entryDate,
         entryPrice,
         quantity,
@@ -317,6 +344,7 @@ async function getRecentOpportunities(): Promise<Opportunity[]> {
       {
         companyName: ticker.companyName ?? ticker.symbol,
         sector: ticker.sector ?? 'Unclassified',
+        logoUrl: ticker.logoUrl ?? null,
       },
     ]),
   );
@@ -350,6 +378,7 @@ async function getRecentOpportunities(): Promise<Opportunity[]> {
       symbol,
       companyName: ticker?.companyName ?? symbol,
       sector: ticker?.sector ?? 'Unclassified',
+      logoUrl: ticker?.logoUrl ?? null,
       signal,
     });
   }
@@ -380,13 +409,14 @@ async function getLatestPriceMap(): Promise<Record<string, number>> {
   return priceMap;
 }
 
-async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string }>> {
+async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; logoUrl: string | null }>> {
   const rows = await db.select().from(tickers);
-  const tickerMap: Record<string, { companyName: string; sector: string }> = {};
+  const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }> = {};
   for (const ticker of rows) {
     tickerMap[ticker.symbol] = {
       companyName: ticker.companyName ?? ticker.symbol,
       sector: ticker.sector ?? 'Unclassified',
+      logoUrl: ticker.logoUrl,
     };
   }
   return tickerMap;

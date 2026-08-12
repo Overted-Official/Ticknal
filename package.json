@@ -39,5 +39,10 @@
     "tsx": "^4.23.12",
     "typescript": "^5",
     "vercel": "^58.9.0"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "_technical_support/*"
+    ]
   }
 }

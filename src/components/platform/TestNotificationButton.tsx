@@ -6,6 +6,13 @@ import { useState, useEffect } from 'react';
 export default function TestNotificationButton() {
   const { ensurePushSubscription, permission, statusMessage } = useAlerts();
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
+  }, []);
 
   const handleTestNotification = async () => {
     try {
@@ -40,7 +47,7 @@ export default function TestNotificationButton() {
   return (
     <button
       onClick={handleTestNotification}
-      disabled={loading || permission === 'unsupported'}
+      disabled={!isMounted || loading || permission === 'unsupported'}
       className="rounded-tv-sm border border-tv-accent bg-tv-accent/10 px-3 py-2 text-xs text-tv-accent transition-colors hover:bg-tv-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {loading ? 'Sending...' : 'Test push notification'}
