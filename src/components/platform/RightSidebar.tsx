@@ -172,11 +172,10 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
             Positions
           </button>
           <button 
-            className={`flex-1 px-2 py-1 flex items-center justify-center rounded-tv-sm transition-colors ${listFilter === 'OPPORTUNITIES' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
+            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPPORTUNITIES' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
             onClick={() => setListFilter('OPPORTUNITIES')}
-            title="Buy Opportunities"
           >
-            <Zap size={14} className={listFilter === 'OPPORTUNITIES' ? "text-tv-accent" : ""} />
+            Buy Signals
           </button>
         </div>
       </div>
