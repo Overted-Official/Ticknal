@@ -295,25 +295,53 @@ async function getOrderStats() {
     }))
     .sort((a, b) => b.value - a.value);
 
-  // --- Monthly Investment (cost basis per month, from all OPEN orders raw rows) ---
-  const monthlyMap = new Map<string, number>();
-  for (const order of openRows) {
+  // --- Monthly Investment & P/L Snapshot ---
+  type MonthlyDataAgg = { invested: number; realizedPl: number; closedCost: number };
+  const monthlyAggMap = new Map<string, MonthlyDataAgg>();
+
+  const getLabel = (dateStr: string) => {
+    const [year, month] = dateStr.split('-');
+    return `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(month) - 1]} '${year.slice(2)}`;
+  };
+
+  const allOrders = [...openRows, ...closedRows];
+  for (const order of allOrders) {
     const date = typeof order.entryDate === 'string' ? order.entryDate : new Date(order.entryDate as unknown as string).toISOString().split('T')[0];
-    const [year, month] = date.split('-');
-    const label = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(month) - 1]} '${year.slice(2)}`;
+    const label = getLabel(date);
     const cost = Number(order.entryPrice) * Number(order.quantity);
-    monthlyMap.set(label, (monthlyMap.get(label) ?? 0) + cost);
+    
+    if (!monthlyAggMap.has(label)) monthlyAggMap.set(label, { invested: 0, realizedPl: 0, closedCost: 0 });
+    monthlyAggMap.get(label)!.invested += cost;
   }
-  // Sort chronologically
+
+  for (const order of closedRows) {
+    if (!order.exitDate) continue;
+    const date = typeof order.exitDate === 'string' ? order.exitDate : new Date(order.exitDate as unknown as string).toISOString().split('T')[0];
+    const label = getLabel(date);
+    const cost = Number(order.entryPrice) * Number(order.quantity);
+    const profit = (Number(order.exitPrice) - Number(order.entryPrice)) * Number(order.quantity);
+    
+    if (!monthlyAggMap.has(label)) monthlyAggMap.set(label, { invested: 0, realizedPl: 0, closedCost: 0 });
+    
+    const agg = monthlyAggMap.get(label)!;
+    agg.realizedPl += profit;
+    agg.closedCost += cost;
+  }
+
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const monthlyData: MonthlyDataItem[] = Array.from(monthlyMap.entries())
+  const monthlyData: MonthlyDataItem[] = Array.from(monthlyAggMap.entries())
     .sort((a, b) => {
       const [aM, aY] = [a[0].slice(0, 3), a[0].slice(-2)];
       const [bM, bY] = [b[0].slice(0, 3), b[0].slice(-2)];
       if (aY !== bY) return Number(aY) - Number(bY);
       return monthOrder.indexOf(aM) - monthOrder.indexOf(bM);
     })
-    .map(([month, invested]) => ({ month, invested, orders: 1 }));
+    .map(([month, agg]) => ({
+      month,
+      invested: agg.invested,
+      pl: agg.realizedPl,
+      roi: agg.closedCost > 0 ? (agg.realizedPl / agg.closedCost) * 100 : 0
+    }));
 
   let winningTrades = 0;
   let totalHoldDays = 0;

@@ -1,11 +1,12 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 
 export type MonthlyDataItem = {
-  month: string; // e.g. "Jan '25"
+  month: string;
   invested: number;
-  orders: number;
+  pl: number;
+  roi: number;
 };
 
 function formatEGP(value: number): string {
@@ -16,7 +17,7 @@ function formatEGP(value: number): string {
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: Array<{ value: number }>;
+  payload?: Array<{ value: number; name?: string; color?: string }>;
   label?: string;
 }
 
@@ -24,8 +25,22 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-[#1e2d3d] bg-[#121C26] px-3 py-2 text-xs shadow-xl">
-      <div className="font-medium text-white">{label}</div>
-      <div className="mt-1 text-[#00FFA7]">{payload[0].value.toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP</div>
+      <div className="font-medium text-white mb-1">{label}</div>
+      {payload.map((entry, index) => {
+        const value = entry.value as number;
+        const color = entry.name === 'roi' 
+          ? (value >= 0 ? '#00FFA7' : '#FF4444')
+          : entry.color;
+        const formatted = entry.name === 'roi' 
+          ? `${value.toFixed(2)}%` 
+          : `${value.toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
+          
+        return (
+          <div key={index} style={{ color }} className="mt-0.5">
+            {entry.name === 'invested' ? 'Invested' : entry.name === 'pl' ? 'P/L' : 'ROI'}: {formatted}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -43,7 +58,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }} barCategoryGap="30%">
+      <ComposedChart data={data} margin={{ top: 12, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
         <CartesianGrid vertical={false} stroke="#1e2d3d" strokeDasharray="3 3" />
         <XAxis
           dataKey="month"
@@ -52,23 +67,41 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
           tickLine={false}
         />
         <YAxis
+          yAxisId="left"
           tick={{ fill: '#8899aa', fontSize: 10 }}
           tickFormatter={formatEGP}
           axisLine={false}
           tickLine={false}
           width={42}
         />
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          tick={{ fill: '#8899aa', fontSize: 10 }}
+          tickFormatter={(val) => `${val}%`}
+          axisLine={false}
+          tickLine={false}
+          width={42}
+        />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-        <Bar dataKey="invested" radius={[3, 3, 0, 0]} maxBarSize={48}>
+        <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} iconType="circle" />
+        <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#3B82F6" radius={[2, 2, 0, 0]} maxBarSize={32} />
+        <Bar yAxisId="left" dataKey="pl" name="P/L" radius={[2, 2, 0, 0]} maxBarSize={32}>
           {data.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={entry.invested === maxValue ? '#00FFA7' : '#3B82F6'}
-              fillOpacity={0.85}
-            />
+            <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#00FFA7' : '#ef4444'} />
           ))}
         </Bar>
-      </BarChart>
+        <Line 
+          yAxisId="right"
+          type="monotone" 
+          dataKey="roi" 
+          name="ROI"
+          stroke="#F59E0B" 
+          strokeWidth={2}
+          dot={{ r: 3, fill: '#F59E0B', strokeWidth: 0 }}
+          activeDot={{ r: 5 }}
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   );
 }
