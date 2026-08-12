@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 
 export default function BottomToolbar() {
-  const [utcTime, setUtcTime] = useState('--:--:--');
+  const [cairoTime, setCairoTime] = useState('--:--:--');
 
   useEffect(() => {
-    const updateClock = () => setUtcTime(formatUtcTime());
+    const updateClock = () => setCairoTime(formatCairoTime());
     window.setTimeout(updateClock, 0);
     const intervalId = window.setInterval(() => {
       updateClock();
@@ -24,14 +24,14 @@ export default function BottomToolbar() {
       <div className="text-tv-muted">EGX</div>
       
       <div className="flex items-center space-x-4 text-tv-muted">
-        <div>{utcTime} UTC</div>
+        <div>{cairoTime} Cairo</div>
         <button type="button" onClick={recenterChart} className="hover:text-tv-text transition-colors">Auto</button>
       </div>
     </div>
   );
 }
 
-function formatUtcTime(): string {
+function formatCairoTime(): string {
   const now = new Date();
-  return now.toISOString().slice(11, 19);
+  return now.toLocaleTimeString('en-US', { timeZone: 'Africa/Cairo', hour12: false });
 }

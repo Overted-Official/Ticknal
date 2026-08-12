@@ -46,14 +46,14 @@ export default function TopBar({
   return (
     <>
       <div className="h-12 w-full bg-tv-base border-b border-tv-border flex items-center px-3 justify-between select-none relative z-40">
-        {/* Left section */}
-        <div className="flex items-center space-x-2 md:space-x-4 overflow-x-auto no-scrollbar whitespace-nowrap">
-          {/* Logo / Symbol */}
+        {/* Left section (Logo + Symbol) */}
+        <div className="flex items-center space-x-2 md:space-x-4">
           <div 
-            className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:bg-tv-hover p-1.5 rounded-tv-md transition-colors"
+            className="flex items-center space-x-2 cursor-pointer hover:bg-tv-hover p-1.5 rounded-tv-md transition-colors"
             onClick={() => setIsSearchOpen(true)}
           >
-            <div className="hidden md:flex items-center justify-center shrink-0 w-8 h-8 rounded-tv-full bg-tv-surface border border-tv-border overflow-hidden p-[2px]">
+            {/* Logo visible on all screens */}
+            <div className="flex items-center justify-center shrink-0 w-8 h-8 rounded-tv-full bg-tv-surface border border-tv-border overflow-hidden p-[2px]">
               {currentTicker.logoUrl ? (
                 <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-tv-full bg-white" />
               ) : currentTicker.website ? (
@@ -63,28 +63,29 @@ export default function TopBar({
               )}
             </div>
             
-            <div className="flex flex-col justify-center min-w-0 max-w-[200px]">
-              <span className="text-tv-text text-sm font-weight-medium truncate">{currentTicker.companyName}</span>
-              <div className="flex items-center space-x-1 text-tv-muted font-weight-light text-xs truncate">
+            <div className="flex flex-col justify-center min-w-0">
+              <span className="text-tv-text text-sm font-weight-medium truncate hidden md:block">{currentTicker.companyName}</span>
+              <div className="flex items-center space-x-1 font-weight-medium md:font-weight-light text-tv-text md:text-tv-muted text-sm md:text-xs">
                 <span>{displaySymbol}</span>
-                <span className="text-[10px]">•</span>
-                <span>EGX</span>
+                <span className="text-[10px] hidden md:inline">•</span>
+                <span className="hidden md:inline">EGX</span>
               </div>
             </div>
             
-            <Search size={14} className="text-tv-muted ml-1 md:ml-2 shrink-0" />
+            <Search size={14} className="text-tv-muted ml-1 shrink-0" />
           </div>
+        </div>
 
-          <div className="h-5 w-px bg-tv-border shrink-0" />
-
+        {/* Middle/Right section */}
+        <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar whitespace-nowrap ml-auto">
           {/* Timeframes */}
-          <div className="flex items-center space-x-0.5 md:space-x-1">
+          <div className="flex items-center space-x-0.5">
             {timeframes.map((tf) => (
               <Link
                 key={tf}
                 href={`?ticker=${symbol}&timeframe=${tf}${replayQuery}`}
                 className={`px-2 py-1 rounded-tv-sm hover:bg-tv-hover transition-colors text-xs ${
-                  tf === timeframe ? 'text-tv-accent' : 'text-tv-muted'
+                  tf === timeframe ? 'text-tv-accent font-medium' : 'text-tv-muted'
                 }`}
               >
                 {tf}
@@ -92,18 +93,17 @@ export default function TopBar({
             ))}
           </div>
 
-          <div className="h-5 w-px bg-tv-border shrink-0 hidden sm:block mx-1" />
+          <div className="h-4 w-px bg-tv-border shrink-0 mx-1" />
 
-          {/* Bell Icon visible on mobile */}
+          {/* Bell Icon visible on mobile & desktop */}
           <button
             type="button"
             onClick={() => toggleAlert(symbol)}
-            className={`flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors text-xs ${
-              alertEnabled ? 'text-tv-accent' : 'text-tv-text'
+            className={`flex items-center justify-center hover:bg-tv-hover w-8 h-8 rounded-tv-sm transition-colors ${
+              alertEnabled ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-text'
             }`}
           >
             <Bell size={16} fill={alertEnabled ? 'currentColor' : 'none'} />
-            <span className="hidden md:inline">Alert</span>
           </button>
 
           {/* Indicators & Tools - hidden on small mobile, visible on sm and up */}

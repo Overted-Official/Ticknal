@@ -76,41 +76,41 @@ export default function SignalPanel({
   const reason = visibleSignalData?.entryReason || visibleSignalData?.exitReason || 'PSI';
 
   return (
-    <div className="absolute top-4 left-4 z-10 w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
+    <div className="absolute top-4 left-4 z-10 w-48 md:w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
       {/* Header / Main Signal */}
       <div 
-        className="p-4 cursor-pointer hover:bg-tv-hover transition-colors flex items-center justify-between"
+        className="p-2 md:p-4 cursor-pointer hover:bg-tv-hover transition-colors flex items-center justify-between"
         onClick={() => setExpanded(!expanded)}
       >
         <div>
-          <h3 className="text-xs font-weight-medium text-tv-muted uppercase tracking-wider mb-1 flex items-center gap-1.5">
-            <Target className="w-3.5 h-3.5" /> PSI Strategy
+          <h3 className="text-[10px] md:text-xs font-weight-medium text-tv-muted uppercase tracking-wider mb-0.5 md:mb-1 flex items-center gap-1.5">
+            <Target className="w-3 h-3 md:w-3.5 md:h-3.5" /> PSI Strategy
           </h3>
           <div className="flex items-center gap-2">
             {loading ? (
-              <div className="h-6 w-20 bg-tv-surface animate-pulse rounded-tv-sm" />
+              <div className="h-4 md:h-6 w-16 md:w-20 bg-tv-surface animate-pulse rounded-tv-sm" />
             ) : visibleSignalData ? (
               <>
-                <span className={`text-lg font-weight-medium ${
+                <span className={`text-sm md:text-lg font-weight-medium ${
                   visibleSignalData.signal === 'BUY' ? 'text-tv-up' :
                   isExit ? 'text-tv-down' :
                   'text-tv-text'
                 }`}>
                   {signalLabel}
                 </span>
-                <span className="text-xs bg-tv-surface px-1.5 py-0.5 rounded-tv-sm text-tv-text font-weight-medium">
+                <span className="text-[10px] md:text-xs bg-tv-surface px-1 md:px-1.5 py-0.5 rounded-tv-sm text-tv-text font-weight-medium">
                   {reason}
                 </span>
               </>
             ) : (
-              <span className="text-sm text-tv-muted">No PSI signals</span>
+              <span className="text-xs md:text-sm text-tv-muted">No PSI signals</span>
             )}
           </div>
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-tv-full bg-tv-surface border border-tv-border">
-           {visibleSignalData?.signal === 'BUY' ? <CheckCircle className="w-4 h-4 text-tv-up" /> : 
-            isExit ? <AlertTriangle className="w-4 h-4 text-tv-down" /> : 
-            <Activity className="w-4 h-4 text-tv-muted" />}
+        <div className="flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded-tv-full bg-tv-surface border border-tv-border shrink-0 ml-2">
+           {visibleSignalData?.signal === 'BUY' ? <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-tv-up" /> : 
+            isExit ? <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 text-tv-down" /> : 
+            <Activity className="w-3.5 h-3.5 md:w-4 md:h-4 text-tv-muted" />}
         </div>
       </div>
 
