@@ -306,9 +306,6 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               <span className="font-weight-medium text-tv-text text-base">{displaySelectedSymbol}</span>
             </div>
             <div className="flex items-center space-x-2 text-tv-text">
-              <button className="hover:text-tv-accent transition-colors"><Grid size={16} /></button>
-              <button className="hover:text-tv-accent transition-colors"><Edit3 size={16} /></button>
-              <button className="hover:text-tv-accent transition-colors"><MoreHorizontal size={16} /></button>
               <button 
                 onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
                 className="hover:text-tv-accent transition-colors ml-1"
