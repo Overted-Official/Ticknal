@@ -18,8 +18,8 @@ self.addEventListener('push', (event) => {
   const title = payload.title || 'QuantEGX signal';
   const options = {
     body: payload.body || 'A PSI strategy signal is available.',
-    icon: '/icon-192x192.jpg',
-    badge: '/icon-192x192.jpg',
+    icon: '/icon-192x192.png',
+    badge: '/badge.png',
     tag: payload.tag || 'quantegx-signal',
     vibrate: [200, 100, 200], // Makes the phone buzz!
     data: {
