@@ -82,7 +82,6 @@ export default function OpportunityTable({
               <div className="flex justify-between items-end mt-2">
                 <div className="text-[12px] font-light text-tv-muted">{item.signal.date}</div>
                 <div className="text-right">
-                  <div className="text-[12px] font-light text-tv-muted">{item.signal.level}</div>
                   <div className={`font-medium text-[12px] ${item.signal.signal === 'BUY' ? 'text-tv-up' : 'text-tv-down'}`}>
                     {item.signal.price.toFixed(2)} EGP
                   </div>
@@ -101,7 +100,6 @@ export default function OpportunityTable({
               <th className="px-5 py-3 font-medium">Ticker</th>
               {!compact && <th className="px-5 py-3 font-medium">Sector</th>}
               <th className="px-5 py-3 font-medium">Date</th>
-              <th className="px-5 py-3 font-medium">Level</th>
               <th className="px-5 py-3 font-medium text-right">Price</th>
               <th className="px-5 py-3 font-medium text-right">Action</th>
             </tr>
@@ -109,7 +107,7 @@ export default function OpportunityTable({
           <tbody className="divide-y divide-tv-border bg-tv-base">
             {opportunities.length === 0 ? (
               <tr>
-                <td colSpan={compact ? 5 : 6} className="px-5 py-8 text-center text-tv-muted text-[12px] font-normal">
+                <td colSpan={compact ? 4 : 5} className="px-5 py-8 text-center text-tv-muted text-[12px] font-normal">
                   {emptyText}
                 </td>
               </tr>
@@ -137,7 +135,6 @@ export default function OpportunityTable({
                   </td>
                   {!compact && <td className="px-5 py-3 whitespace-nowrap text-tv-muted text-[12px] font-normal">{item.sector}</td>}
                   <td className="px-5 py-3 whitespace-nowrap text-tv-muted text-[12px] font-normal">{item.signal.date}</td>
-                  <td className="px-5 py-3 whitespace-nowrap text-tv-muted text-[12px] font-normal">{item.signal.level}</td>
                   <td className={`px-5 py-3 whitespace-nowrap text-right text-[12px] font-medium ${item.signal.signal === 'BUY' ? 'text-tv-up' : 'text-tv-down'}`}>
                     {item.signal.price.toFixed(2)} EGP
                   </td>

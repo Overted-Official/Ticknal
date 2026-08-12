@@ -101,7 +101,7 @@ export default async function DashboardContent() {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 xl:grid-cols-[1.25fr_0.75fr]">
+      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 xl:grid-cols-2">
         {/* Open Positions */}
         <section>
           <div className="mb-2 flex items-center justify-between">
