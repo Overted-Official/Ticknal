@@ -85,7 +85,7 @@ const DEFAULT_PARAMS: PsiStrategyParams = {
   useStructStop: false,
   structLookback: 20,
   initialCapital: 3000,
-  startDate: "2020-01-01",
+  startDate: "2021-01-01",
 };
 
 const TICKER_PRESETS: Record<string, Partial<PsiStrategyParams>> = {
@@ -270,7 +270,7 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
       buyHoldRoi,
       roiMargin: sysRoi - buyHoldRoi,
       trades: tradeCount,
-      winRate: tradeCount > 0 ? (winCount / tradeCount) * 100 : 0,
+      winRate: closedTrades > 0 ? (winCount / closedTrades) * 100 : 0,
       maxDrawdown,
       maxAdverseExcursion,
       avgAdverseExcursion: tradeCount > 0 ? adverseSum / tradeCount : 0,
