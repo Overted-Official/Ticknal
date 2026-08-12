@@ -21,6 +21,7 @@ self.addEventListener('push', (event) => {
     icon: '/icon-192x192.jpg',
     badge: '/icon-192x192.jpg',
     tag: payload.tag || 'quantegx-signal',
+    vibrate: [200, 100, 200], // Makes the phone buzz!
     data: {
       url: payload.url || '/charts',
     },
