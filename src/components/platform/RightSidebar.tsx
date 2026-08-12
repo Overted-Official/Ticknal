@@ -242,7 +242,9 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                         {item.symbol.replace('.CA', '')}
                       </span>
                       {item.recentBuyOpportunity && (
-                        <Zap size={12} className="text-tv-accent ml-0.5 shrink-0" title="Recent Buy Signal" />
+                        <span title="Recent Buy Signal" className="ml-0.5 shrink-0 flex items-center">
+                          <Zap size={12} className="text-tv-accent" />
+                        </span>
                       )}
                       <button
                         type="button"
