@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Target, Activity, CheckCircle, AlertTriangle, ShieldCheck } from '@/components/ui/icons';
+import { Target, Activity, CheckCircle, AlertTriangle, ShieldCheck, ChevronDown } from '@/components/ui/icons';
 import { motion } from 'framer-motion';
 
 type SignalData = {
@@ -34,6 +34,15 @@ export default function SignalPanel({
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState('psi');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const strategies = [
+    { id: 'psi', label: 'PSI Strategy' },
+    { id: 'momentum', label: 'Momentum (Soon)', disabled: true },
+    { id: 'mean_reversion', label: 'Mean Rev (Soon)', disabled: true },
+  ];
+
+  const selectedLabel = strategies.find(s => s.id === selectedStrategy)?.label || 'Strategy';
 
   useEffect(() => {
     if (!activeSymbol) return;
@@ -88,17 +97,49 @@ export default function SignalPanel({
         onClick={() => setExpanded(!expanded)}
       >
         <div>
-          <div className="mb-0.5 md:mb-1 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            <Target className="w-3 h-3 md:w-3.5 md:h-3.5 text-tv-muted" />
-            <select
-              value={selectedStrategy}
-              onChange={(e) => setSelectedStrategy(e.target.value)}
-              className="bg-transparent border-none text-[10px] md:text-xs font-weight-medium text-tv-muted uppercase tracking-wider cursor-pointer outline-none hover:text-tv-text p-0 m-0"
+          <div className="relative">
+            <div 
+              className="mb-1 md:mb-1.5 flex items-center gap-1.5 cursor-pointer text-tv-muted hover:text-tv-text transition-colors" 
+              onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
             >
-              <option value="psi">PSI Strategy</option>
-              <option value="momentum" disabled>Momentum (Soon)</option>
-              <option value="mean_reversion" disabled>Mean Rev (Soon)</option>
-            </select>
+              <Target className="w-3 h-3 md:w-3.5 md:h-3.5" />
+              <span className="text-[10px] md:text-xs font-weight-medium uppercase tracking-wider">
+                {selectedLabel}
+              </span>
+              <ChevronDown className="w-3 h-3 opacity-50" />
+            </div>
+            
+            {dropdownOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); }} 
+                />
+                <div className="absolute top-full left-0 w-36 md:w-40 bg-[#1e222d] border border-tv-border rounded-tv-sm shadow-xl z-50 overflow-hidden">
+                  {strategies.map((strat) => (
+                    <div
+                      key={strat.id}
+                      className={`px-3 py-2 text-[10px] md:text-xs font-weight-medium uppercase tracking-wider ${
+                        strat.disabled 
+                          ? 'text-tv-muted/40 cursor-not-allowed' 
+                          : strat.id === selectedStrategy 
+                            ? 'text-tv-up bg-tv-hover cursor-default' 
+                            : 'text-tv-muted hover:text-tv-text hover:bg-tv-hover cursor-pointer transition-colors'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!strat.disabled) {
+                          setSelectedStrategy(strat.id);
+                          setDropdownOpen(false);
+                        }
+                      }}
+                    >
+                      {strat.label}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {loading ? (
