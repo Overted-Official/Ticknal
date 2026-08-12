@@ -46,9 +46,36 @@ export async function dispatchSignalNotifications(options: {
   configureWebPush();
 
   const symbolFilter = new Set((options.symbols ?? []).map(normalizeTickerSymbol));
-  const alertRows = (await db.select().from(tickerAlerts).where(eq(tickerAlerts.enabled, true))).filter((alert) =>
+  
+  // 1. Get explicit alerts from users who tapped the bell icon
+  const explicitAlertRows = (await db.select().from(tickerAlerts).where(eq(tickerAlerts.enabled, true))).filter((alert) =>
     symbolFilter.size === 0 ? true : symbolFilter.has(alert.tickerSymbol),
   );
+
+  // 2. Automatically include any ticker that currently has an open position
+  const openOrderRows = await db.select({ tickerSymbol: orders.tickerSymbol }).from(orders).where(eq(orders.status, 'OPEN'));
+  const openOrderTickers = new Set(
+    openOrderRows
+      .map(row => row.tickerSymbol)
+      .filter(ticker => symbolFilter.size === 0 ? true : symbolFilter.has(ticker))
+  );
+
+  const subscriptionRows = await db.select().from(pushSubscriptions);
+  const subscriptionsByDevice = groupBy(subscriptionRows, (subscription) => subscription.deviceId);
+  const allDeviceIds = Object.keys(subscriptionsByDevice);
+
+  // Merge explicit alerts and pseudo-alerts (for open positions) across all known devices
+  const alertRows: { deviceId: string; tickerSymbol: string }[] = [...explicitAlertRows];
+  
+  for (const ticker of openOrderTickers) {
+    for (const deviceId of allDeviceIds) {
+      // Avoid duplicate alert rows if the device already explicitly enabled it
+      if (!alertRows.some(a => a.deviceId === deviceId && a.tickerSymbol === ticker)) {
+        alertRows.push({ deviceId, tickerSymbol: ticker });
+      }
+    }
+  }
+
   const symbolSet = new Set(alertRows.map((alert) => alert.tickerSymbol));
 
   if (symbolSet.size === 0) {
@@ -56,8 +83,6 @@ export async function dispatchSignalNotifications(options: {
     return result;
   }
 
-  const subscriptionRows = await db.select().from(pushSubscriptions);
-  const subscriptionsByDevice = groupBy(subscriptionRows, (subscription) => subscription.deviceId);
   const alertsByTicker = groupBy(alertRows, (alert) => alert.tickerSymbol);
   const lookbackBars = Math.max(1, options.lookbackBars ?? 1);
 
