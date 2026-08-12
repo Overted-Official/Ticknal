@@ -67,7 +67,7 @@ export default async function DashboardContent() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-1">
             <Metric
               label="Net Worth"
@@ -78,7 +78,18 @@ export default async function DashboardContent() {
           </div>
           <Metric label="Unrealized P/L" value={formatMoney(orderStats.unrealized, true)} valueClass={orderStats.unrealized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
           <Metric label="Realized P/L" value={formatMoney(orderStats.realized, true)} valueClass={orderStats.realized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
-          <Metric label="Open Positions" value={String(orderStats.openOrders.length)} />
+          <Metric 
+            label="Open Positions" 
+            value={String(orderStats.openOrders.length)} 
+            subtitle={`${orderStats.openWinning} Win / ${orderStats.openLosing} Loss`}
+            subtitleClass="text-tv-muted"
+          />
+          <Metric 
+            label="Closed Positions" 
+            value={String(orderStats.closedCount)} 
+            subtitle={`${orderStats.closedWinning} Win / ${orderStats.closedLosing} Loss`}
+            subtitleClass="text-tv-muted"
+          />
           <Metric label="Active Alerts" value={String(activeAlertCount)} />
         </div>
 
@@ -295,8 +306,8 @@ async function getOrderStats() {
     }))
     .sort((a, b) => b.value - a.value);
 
-  // --- Monthly Investment & P/L Snapshot ---
-  type MonthlyDataAgg = { invested: number; realizedPl: number; closedCost: number };
+  // --- Monthly Investment & P/L Snapshot (Cohort based) ---
+  type MonthlyDataAgg = { invested: number; currentValue: number };
   const monthlyAggMap = new Map<string, MonthlyDataAgg>();
 
   const getLabel = (dateStr: string) => {
@@ -310,22 +321,18 @@ async function getOrderStats() {
     const label = getLabel(date);
     const cost = Number(order.entryPrice) * Number(order.quantity);
     
-    if (!monthlyAggMap.has(label)) monthlyAggMap.set(label, { invested: 0, realizedPl: 0, closedCost: 0 });
+    // Determine the current value of this order cohort
+    let value = 0;
+    if (order.status === 'CLOSED') {
+      value = Number(order.exitPrice ?? order.entryPrice) * Number(order.quantity);
+    } else {
+      const symbol = order.tickerSymbol.trim().toUpperCase();
+      value = (latestPrices[symbol] ?? Number(order.entryPrice)) * Number(order.quantity);
+    }
+    
+    if (!monthlyAggMap.has(label)) monthlyAggMap.set(label, { invested: 0, currentValue: 0 });
     monthlyAggMap.get(label)!.invested += cost;
-  }
-
-  for (const order of closedRows) {
-    if (!order.exitDate) continue;
-    const date = typeof order.exitDate === 'string' ? order.exitDate : new Date(order.exitDate as unknown as string).toISOString().split('T')[0];
-    const label = getLabel(date);
-    const cost = Number(order.entryPrice) * Number(order.quantity);
-    const profit = (Number(order.exitPrice) - Number(order.entryPrice)) * Number(order.quantity);
-    
-    if (!monthlyAggMap.has(label)) monthlyAggMap.set(label, { invested: 0, realizedPl: 0, closedCost: 0 });
-    
-    const agg = monthlyAggMap.get(label)!;
-    agg.realizedPl += profit;
-    agg.closedCost += cost;
+    monthlyAggMap.get(label)!.currentValue += value;
   }
 
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -336,16 +343,21 @@ async function getOrderStats() {
       if (aY !== bY) return Number(aY) - Number(bY);
       return monthOrder.indexOf(aM) - monthOrder.indexOf(bM);
     })
-    .map(([month, agg]) => ({
-      month,
-      invested: agg.invested,
-      pl: agg.realizedPl,
-      roi: agg.closedCost > 0 ? (agg.realizedPl / agg.closedCost) * 100 : 0
-    }));
+    .map(([month, agg]) => {
+      const pl = agg.currentValue - agg.invested;
+      return {
+        month,
+        invested: agg.invested,
+        pl,
+        roi: agg.invested > 0 ? (pl / agg.invested) * 100 : 0
+      };
+    });
 
   let winningTrades = 0;
   let totalHoldDays = 0;
   let maxDrawdownPct = 0;
+
+  let closedLosing = 0;
 
   const realized = closedRows.reduce((sum, order) => {
     const entryPrice = Number(order.entryPrice);
@@ -354,6 +366,8 @@ async function getOrderStats() {
     
     if (exitPrice > entryPrice) {
       winningTrades++;
+    } else if (exitPrice < entryPrice) {
+      closedLosing++;
     }
 
     const tradePct = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 : 0;
@@ -389,6 +403,11 @@ async function getOrderStats() {
     winRate,
     avgBarsPerTrade,
     maxDrawdownPct,
+    openWinning: openOrders.filter(o => o.profitLoss > 0).length,
+    openLosing: openOrders.filter(o => o.profitLoss < 0).length,
+    closedWinning: winningTrades,
+    closedLosing,
+    closedCount,
   };
 }
 
