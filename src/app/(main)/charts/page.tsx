@@ -7,6 +7,7 @@ import { db } from '@/db';
 import { dailyPrices, tickers, orders } from '@/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/lib/psiStrategy';
+import { getRecentOpportunities } from '@/lib/opportunities';
 
 import { Suspense } from 'react';
 import ChartsSkeleton from './ChartsSkeleton';
@@ -50,8 +51,19 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
     FROM RankedPrices
     WHERE rn <= 2;
   `;
-  const recentPricesRows = await db.execute(recentPricesQuery);
   
+  // Fetch opportunities to show thunder icon on watchlist
+  const [recentPricesRows, recentOpportunities] = await Promise.all([
+    db.execute(recentPricesQuery),
+    getRecentOpportunities(5)
+  ]);
+  
+  const recentBuySymbols = new Set(
+    recentOpportunities
+      .filter(opp => opp.signal.signal === 'BUY')
+      .map(opp => opp.symbol)
+  );
+
   // Group by ticker symbol for O(1) lookup
   const priceMap: Record<string, { lastPrice: number, prevPrice: number }> = {};
   for (const row of recentPricesRows) {
@@ -83,6 +95,7 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
       isUp: change >= 0,
       hasOpenPosition: openPositionsSet.has(t.symbol),
       logoUrl: t.logoUrl,
+      recentBuyOpportunity: recentBuySymbols.has(t.symbol),
     };
   });
 

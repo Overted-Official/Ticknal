@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { dailyPrices, orders, tickerAlerts, tickers } from '@/db/schema';
 import { resolvePsiParamsFromStore } from '@/lib/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/lib/psiStrategy';
+import { getRecentOpportunities } from '@/lib/opportunities';
 import OpportunityTable from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
 import SectorDonutChart, { type SectorDataItem } from '@/components/platform/SectorDonutChart';
@@ -321,70 +322,7 @@ async function getOrderStats() {
   };
 }
 
-async function getRecentOpportunities(): Promise<Opportunity[]> {
-  const [tickerRows, priceRows] = await Promise.all([
-    db.select().from(tickers),
-    db.execute(sql`
-      WITH ranked_prices AS (
-        SELECT ticker_symbol, date, open, high, low, close, volume,
-               ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) AS rn
-        FROM ${dailyPrices}
-        WHERE volume > 0
-      )
-      SELECT ticker_symbol, date, open, high, low, close, volume
-      FROM ranked_prices
-      WHERE rn <= ${DASHBOARD_HISTORY_BARS}
-      ORDER BY ticker_symbol, date
-    `),
-  ]);
 
-  const tickerMap = new Map(
-    tickerRows.map((ticker) => [
-      normalizeTickerSymbol(ticker.symbol),
-      {
-        companyName: ticker.companyName ?? ticker.symbol,
-        sector: ticker.sector ?? 'Unclassified',
-        logoUrl: ticker.logoUrl ?? null,
-      },
-    ]),
-  );
-  const barsByTicker = new Map<string, PriceBar[]>();
-
-  for (const row of priceRows) {
-    const symbol = normalizeTickerSymbol(String(row.ticker_symbol));
-    const bars = barsByTicker.get(symbol) ?? [];
-    bars.push({
-      date: typeof row.date === 'string' ? row.date.split('T')[0] : new Date(row.date as Date).toISOString().split('T')[0],
-      open: Number(row.open),
-      high: Number(row.high),
-      low: Number(row.low),
-      close: Number(row.close),
-      volume: Number(row.volume),
-    });
-    barsByTicker.set(symbol, bars);
-  }
-
-  const opportunities: Opportunity[] = [];
-  for (const [symbol, bars] of barsByTicker.entries()) {
-    if (bars.length < 220) continue;
-    const recentDates = new Set(bars.slice(-5).map((bar) => bar.date));
-    // The dashboard scans only recent mature histories; full-history strategy metrics stay on the chart.
-    const strategyResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: bars[0].date }));
-    const signal = [...strategyResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
-    if (!signal) continue;
-
-    const ticker = tickerMap.get(symbol);
-    opportunities.push({
-      symbol,
-      companyName: ticker?.companyName ?? symbol,
-      sector: ticker?.sector ?? 'Unclassified',
-      logoUrl: ticker?.logoUrl ?? null,
-      signal,
-    });
-  }
-
-  return opportunities.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
-}
 
 async function getActiveAlertCount(): Promise<number> {
   const rows = await db.select({ id: tickerAlerts.id }).from(tickerAlerts).where(eq(tickerAlerts.enabled, true));

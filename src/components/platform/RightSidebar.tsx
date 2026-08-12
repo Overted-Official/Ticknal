@@ -1,6 +1,6 @@
 'use client';
 import { Bell, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, Settings } from '@/components/ui/icons';
-import { ExternalLink, Grid, Edit3 } from 'lucide-react';
+import { ExternalLink, Grid, Edit3, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useAlerts } from './AlertProvider';
@@ -15,6 +15,7 @@ export interface WatchlistItem {
   isUp: boolean;
   hasOpenPosition?: boolean;
   logoUrl?: string | null;
+  recentBuyOpportunity?: boolean;
 }
 
 interface RightSidebarProps {
@@ -240,6 +241,9 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                       <span className={`truncate ${item.symbol === selectedSymbol ? 'text-tv-accent' : 'text-tv-text'}`}>
                         {item.symbol.replace('.CA', '')}
                       </span>
+                      {item.recentBuyOpportunity && (
+                        <Zap size={12} className="text-tv-accent ml-0.5 shrink-0" title="Recent Buy Signal" />
+                      )}
                       <button
                         type="button"
                         title={alertEnabled ? 'Disable alert' : 'Enable alert'}
