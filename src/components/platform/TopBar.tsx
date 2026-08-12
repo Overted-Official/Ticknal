@@ -126,18 +126,6 @@ export default function TopBar({
 
         {/* Right section - hidden on mobile */}
         <div className="hidden md:flex items-center space-x-2">
-          <button className="hover:bg-tv-hover p-1.5 rounded-tv-sm transition-colors text-tv-muted hover:text-tv-text">
-            <Layout size={18} />
-          </button>
-          <button className="hover:bg-tv-hover p-1.5 rounded-tv-sm transition-colors text-tv-muted hover:text-tv-text">
-            <Settings size={18} />
-          </button>
-          <button className="hover:bg-tv-hover p-1.5 rounded-tv-sm transition-colors text-tv-muted hover:text-tv-text">
-            <Maximize size={18} />
-          </button>
-          <button className="hover:bg-tv-hover p-1.5 rounded-tv-sm transition-colors text-tv-muted hover:text-tv-text">
-            <Camera size={18} />
-          </button>
           <button 
             onClick={() => setIsAddOrderOpen(true)}
             className="rounded-tv-sm border border-tv-border px-3 py-1.5 text-xs text-tv-muted transition-colors hover:border-tv-border-highlight hover:text-tv-text ml-2"
