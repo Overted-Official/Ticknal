@@ -1,11 +1,17 @@
 'use client';
 
 import { useAlerts } from './AlertProvider';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function TestNotificationButton() {
-  const { ensurePushSubscription, permission } = useAlerts();
+  const { ensurePushSubscription, permission, statusMessage } = useAlerts();
   const [loading, setLoading] = useState(false);
+  const [latestStatus, setLatestStatus] = useState<string | null>(null);
+
+  // Keep track of the latest status message to show in the alert
+  useEffect(() => {
+    if (statusMessage) setLatestStatus(statusMessage);
+  }, [statusMessage]);
 
   const handleTestNotification = async () => {
     try {
@@ -14,8 +20,10 @@ export default function TestNotificationButton() {
       // Ensure the device is subscribed to push notifications first
       const subscribed = await ensurePushSubscription();
       if (!subscribed) {
-        alert('Could not subscribe this device to push notifications. Please check browser permissions and ensure you are using a supported browser/PWA.');
-        setLoading(false);
+        // Wait a tiny bit for the state update to propagate so we can grab the latest status
+        setTimeout(() => {
+          alert(`Failed to subscribe. Reason: ${latestStatus || statusMessage || 'Unknown error. Check browser permissions or VAPID keys.'}`);
+        }, 100);
         return;
       }
 
