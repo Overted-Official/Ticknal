@@ -8,6 +8,9 @@ import { dailyPrices, tickers, orders } from '@/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/lib/psiStrategy';
 
+import { Suspense } from 'react';
+import ChartsSkeleton from './ChartsSkeleton';
+
 interface PlatformPageProps {
   searchParams: Promise<{ ticker?: string; timeframe?: string; replay?: string }>;
 }
@@ -17,6 +20,15 @@ export default async function PlatformPage(props: PlatformPageProps) {
   const selectedSymbol = normalizeTickerSymbol(searchParams?.ticker || 'COMI');
   const timeframe = searchParams?.timeframe || 'D';
   const initialReplayMode = searchParams?.replay === '1';
+
+  return (
+    <Suspense key={`${selectedSymbol}-${timeframe}-${initialReplayMode}`} fallback={<ChartsSkeleton />}>
+      <PlatformPageContent selectedSymbol={selectedSymbol} timeframe={timeframe} initialReplayMode={initialReplayMode} />
+    </Suspense>
+  );
+}
+
+async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMode }: { selectedSymbol: string; timeframe: string; initialReplayMode: boolean }) {
 
   // Fetch all tickers to build the watchlist
   const allTickers = await db.select().from(tickers);
