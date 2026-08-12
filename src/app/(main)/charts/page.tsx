@@ -8,6 +8,8 @@ import { dailyPrices, tickers, orders } from '@/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/lib/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
+import ChartViews from '@/components/platform/ChartViews';
+import TickerPositions, { TickerOrder } from '@/components/platform/TickerPositions';
 
 import { Suspense } from 'react';
 import ChartsSkeleton from './ChartsSkeleton';
@@ -98,6 +100,23 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
       recentBuyOpportunity: recentBuySymbols.has(t.symbol),
     };
   });
+
+  // Fetch orders specifically for the selected symbol for the Positions view
+  const tickerOrdersData = await db.select().from(orders).where(eq(orders.tickerSymbol, selectedSymbol));
+  const tickerOrders: TickerOrder[] = tickerOrdersData.map(o => ({
+    id: o.id,
+    status: o.status,
+    side: o.side,
+    entryDate: typeof o.entryDate === 'string' ? o.entryDate : new Date(o.entryDate as Date).toISOString(),
+    entryPrice: Number(o.entryPrice),
+    quantity: Number(o.quantity),
+    targetPrice: o.targetPrice ? Number(o.targetPrice) : null,
+    stopPrice: o.stopPrice ? Number(o.stopPrice) : null,
+    exitDate: o.exitDate ? (typeof o.exitDate === 'string' ? o.exitDate : new Date(o.exitDate as Date).toISOString()) : null,
+    exitPrice: o.exitPrice ? Number(o.exitPrice) : null,
+  }));
+
+  const currentPriceForSymbol = priceMap[selectedSymbol]?.lastPrice || 0;
 
   // Fetch chart data for the selected symbol
   const dbData = await db.select().from(dailyPrices)
@@ -202,7 +221,9 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
       <TopBar symbol={selectedSymbol} timeframe={timeframe} replay={initialReplayMode} watchlist={watchlist} />
       <div className="flex-1 flex overflow-hidden">
 
-        <div className="flex-1 flex flex-col min-w-0 relative">
+        <ChartViews 
+          positionsView={<TickerPositions symbol={selectedSymbol} orders={tickerOrders} currentPrice={currentPriceForSymbol} />}
+        >
           <ChartReplayWorkspace
             key={`${selectedSymbol}-${timeframe}-${initialReplayMode ? 'replay' : 'live'}`}
             data={chartData}
@@ -210,7 +231,8 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
             initialReplayMode={initialReplayMode}
           />
           <BottomToolbar />
-        </div>
+        </ChartViews>
+
         <div className="hidden lg:flex">
           <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} rangeData={rangeData} />
         </div>

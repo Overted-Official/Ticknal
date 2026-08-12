@@ -24,25 +24,45 @@ export default function SidebarNav() {
       <div className="flex-1 flex flex-col space-y-4 w-full items-center">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
+          const isCharts = item.href === '/charts';
+          
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="w-full py-1 flex flex-col items-center justify-center group relative"
-            >
-              <div 
-                className={`flex items-center justify-center rounded-tv-full w-10 h-7 transition-colors duration-200 mb-1 ${
-                  isActive 
-                    ? 'bg-tv-accent/20 text-tv-accent' 
-                    : 'text-tv-muted group-hover:bg-tv-hover group-hover:text-tv-text'
-                }`}
+            <div key={item.href} className="w-full relative group">
+              <Link
+                href={item.href}
+                className="w-full py-1 flex flex-col items-center justify-center relative"
               >
-                <item.icon size={18} strokeWidth={1.5} />
-              </div>
-              <span className={`text-[9px] font-weight-medium ${isActive ? 'text-tv-accent' : 'text-tv-muted group-hover:text-tv-text'}`}>
-                {item.label}
-              </span>
-            </Link>
+                <div 
+                  className={`flex items-center justify-center rounded-tv-full w-10 h-7 transition-colors duration-200 mb-1 ${
+                    isActive 
+                      ? 'bg-tv-accent/20 text-tv-accent' 
+                      : 'text-tv-muted group-hover:bg-tv-hover group-hover:text-tv-text'
+                  }`}
+                >
+                  <item.icon size={18} strokeWidth={1.5} />
+                </div>
+                <span className={`text-[9px] font-weight-medium ${isActive ? 'text-tv-accent' : 'text-tv-muted group-hover:text-tv-text'}`}>
+                  {item.label}
+                </span>
+              </Link>
+              
+              {/* Desktop Floating Menu for Charts */}
+              {isCharts && (
+                <div className="absolute left-full top-0 ml-1 hidden lg:group-hover:flex flex-col bg-tv-surface border border-tv-border rounded-tv-lg shadow-2xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200">
+                  <div className="px-3 py-2 text-[10px] font-weight-bold text-tv-muted uppercase tracking-wider border-b border-tv-border bg-tv-base/50">
+                    Views
+                  </div>
+                  <Link href="/charts?view=chart" className="px-3 py-2.5 text-xs font-weight-medium text-tv-text hover:bg-tv-hover hover:text-tv-accent transition-colors flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-tv-accent opacity-70"></span>
+                    Chart
+                  </Link>
+                  <Link href="/charts?view=positions" className="px-3 py-2.5 text-xs font-weight-medium text-tv-text hover:bg-tv-hover hover:text-tv-accent transition-colors border-t border-tv-border/30 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-tv-border-highlight"></span>
+                    Positions
+                  </Link>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
