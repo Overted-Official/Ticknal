@@ -361,11 +361,13 @@ async function getTickerMap(): Promise<Record<string, { companyName: string; sec
 }
 
 function formatMoney(value: number, showSign: boolean): string {
-  return `${showSign && value >= 0 ? '+' : ''}${value.toFixed(2)} EGP`;
+  const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sign = showSign && value >= 0 ? '+' : value < 0 ? '-' : '';
+  return `${sign}${formatted} EGP`;
 }
 
 function formatPrice(value: number): string {
-  return `${Number(value).toFixed(2)} EGP`;
+  return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
 }
 
 function formatSignal(signal: string): string {

@@ -361,11 +361,12 @@ function Metric({ label, value, valueClass = 'text-tv-text' }: { label: string; 
 }
 
 function formatPrice(value: number): string {
-  return `${value.toFixed(2)} EGP`;
+  return `${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
 }
 
 function formatMoney(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)} EGP`;
+  const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${value >= 0 ? '+' : '-'}${formatted} EGP`;
 }
 
 function formatQuantity(value: number): string {
