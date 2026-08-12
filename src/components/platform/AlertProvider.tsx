@@ -9,6 +9,7 @@ type AlertContextValue = {
   ready: boolean;
   isAlerted: (symbol: string) => boolean;
   toggleAlert: (symbol: string) => Promise<boolean>;
+  ensurePushSubscription: () => Promise<boolean>;
 };
 
 const AlertContext = createContext<AlertContextValue | null>(null);
@@ -153,8 +154,9 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
       ready,
       isAlerted: (symbol: string) => alertedSymbols.has(normalizeSymbol(symbol)),
       toggleAlert,
+      ensurePushSubscription,
     }),
-    [alertedSymbols, permission, ready, statusMessage, toggleAlert],
+    [alertedSymbols, permission, ready, statusMessage, toggleAlert, ensurePushSubscription],
   );
 
   return <AlertContext.Provider value={value}>{children}</AlertContext.Provider>;
