@@ -28,16 +28,17 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       <div className="font-medium text-white mb-1">{label}</div>
       {payload.map((entry, index) => {
         const value = entry.value as number;
-        const color = entry.name === 'roi' 
-          ? (value >= 0 ? '#00FFA7' : '#FF4444')
+        const isRoi = entry.name === 'ROI';
+        const color = isRoi 
+          ? (value >= 0 ? '#00FFA7' : '#ef4444')
           : entry.color;
-        const formatted = entry.name === 'roi' 
+        const formatted = isRoi 
           ? `${value.toFixed(2)}%` 
           : `${value.toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
           
         return (
           <div key={index} style={{ color }} className="mt-0.5">
-            {entry.name === 'invested' ? 'Invested' : entry.name === 'pl' ? 'P/L' : 'ROI'}: {formatted}
+            {entry.name}: {formatted}
           </div>
         );
       })}
@@ -86,7 +87,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} iconType="circle" />
         <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#3B82F6" radius={[2, 2, 0, 0]} maxBarSize={32} />
-        <Bar yAxisId="left" dataKey="pl" name="P/L" radius={[2, 2, 0, 0]} maxBarSize={32}>
+        <Bar yAxisId="left" dataKey="pl" name="P/L" fill="#00FFA7" radius={[2, 2, 0, 0]} maxBarSize={32}>
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#00FFA7' : '#ef4444'} />
           ))}
