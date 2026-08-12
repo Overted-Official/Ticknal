@@ -50,8 +50,8 @@ export default async function DashboardContent() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text pb-6">
-      <div className="px-4 py-5 md:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="px-4 pt-4 pb-0 md:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-xl font-weight-medium">Dashboard</h1>
             <p className="mt-1 text-xs text-tv-muted">Portfolio performance and fresh PSI opportunities</p>
@@ -67,7 +67,7 @@ export default async function DashboardContent() {
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
           <div className="col-span-2 lg:col-span-1">
             <Metric
               label="Net Worth"
@@ -106,7 +106,7 @@ export default async function DashboardContent() {
       </div>
 
       {/* Analytics Charts */}
-      <div className="border-b border-tv-border pb-5">
+      <div className="border-b border-tv-border pb-4">
         <DashboardCharts sectorData={orderStats.sectorData} monthlyData={orderStats.monthlyData} />
       </div>
 
