@@ -6,6 +6,7 @@ import { CheckCircle, LineChart, Trash2, Pencil, Search } from '@/components/ui/
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
+import { DesktopOrdersSkeleton, MobileOrdersSkeleton } from '@/components/platform/OrdersSkeleton';
 
 type OrderRow = {
   id: number;
@@ -145,7 +146,7 @@ export default function OrdersTable() {
         {/* Mobile View (Cards) */}
         <div className="md:hidden flex flex-col space-y-3 p-3">
           {loading ? (
-            <div className="p-8 text-center text-tv-muted">Loading orders</div>
+            <MobileOrdersSkeleton />
           ) : filteredOrders.length === 0 ? (
             <div className="p-8 text-center text-tv-muted">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
@@ -241,11 +242,7 @@ export default function OrdersTable() {
           </thead>
           <tbody className="divide-y divide-tv-border bg-tv-base">
             {loading ? (
-              <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-tv-muted">
-                  Loading orders...
-                </td>
-              </tr>
+              <DesktopOrdersSkeleton />
             ) : filteredOrders.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-5 py-8 text-center text-tv-muted">
