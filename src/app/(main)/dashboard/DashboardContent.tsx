@@ -316,9 +316,44 @@ async function getOrderStats() {
   };
 
   const allOrders = [...openRows, ...closedRows];
+  
+  const getIsoDate = (d: any) => typeof d === 'string' ? d : new Date(d as unknown as string).toISOString().split('T')[0];
+  
+  if (allOrders.length > 0) {
+    let minDateStr = getIsoDate(allOrders[0].entryDate);
+    let maxDateStr = getIsoDate(allOrders[0].entryDate);
+    
+    for (const order of allOrders) {
+      const dateStr = getIsoDate(order.entryDate);
+      if (dateStr < minDateStr) minDateStr = dateStr;
+      if (dateStr > maxDateStr) maxDateStr = dateStr;
+    }
+    
+    let current = new Date(minDateStr);
+    current.setDate(1);
+    const end = new Date(maxDateStr);
+    end.setDate(1);
+    // Also include current month just in case we have no orders this month but want to show it
+    const today = new Date();
+    today.setDate(1);
+    if (today > end) {
+      end.setTime(today.getTime());
+    }
+    
+    while (current <= end) {
+      const year = current.getFullYear();
+      const month = String(current.getMonth() + 1).padStart(2, '0');
+      const label = getLabel(`${year}-${month}`);
+      if (!monthlyAggMap.has(label)) {
+        monthlyAggMap.set(label, { invested: 0, currentValue: 0 });
+      }
+      current.setMonth(current.getMonth() + 1);
+    }
+  }
+
   for (const order of allOrders) {
-    const date = typeof order.entryDate === 'string' ? order.entryDate : new Date(order.entryDate as unknown as string).toISOString().split('T')[0];
-    const label = getLabel(date);
+    const dateStr = getIsoDate(order.entryDate);
+    const label = getLabel(dateStr);
     const cost = Number(order.entryPrice) * Number(order.quantity);
     
     // Determine the current value of this order cohort
