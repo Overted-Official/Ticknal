@@ -27,9 +27,9 @@ export default function ChartViews({ children, positionsView }: ChartViewsProps)
       <div className="lg:hidden flex items-center p-2 bg-tv-surface border-b border-tv-border space-x-2 shrink-0">
         <button
           onClick={() => setView('chart')}
-          className={`flex-1 py-1.5 text-xs font-weight-medium rounded-tv-full transition-colors ${
+          className={`flex-1 py-1.5 text-xs font-weight-bold rounded-tv-full transition-colors ${
             currentView === 'chart' 
-              ? 'bg-tv-accent text-white shadow-sm' 
+              ? 'bg-tv-accent text-tv-base shadow-sm' 
               : 'bg-tv-base text-tv-muted hover:text-tv-text'
           }`}
         >
@@ -37,9 +37,9 @@ export default function ChartViews({ children, positionsView }: ChartViewsProps)
         </button>
         <button
           onClick={() => setView('positions')}
-          className={`flex-1 py-1.5 text-xs font-weight-medium rounded-tv-full transition-colors ${
+          className={`flex-1 py-1.5 text-xs font-weight-bold rounded-tv-full transition-colors ${
             currentView === 'positions' 
-              ? 'bg-tv-accent text-white shadow-sm' 
+              ? 'bg-tv-accent text-tv-base shadow-sm' 
               : 'bg-tv-base text-tv-muted hover:text-tv-text'
           }`}
         >
