@@ -340,7 +340,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               <div className="mb-4 mt-2">
                 <div className="flex justify-between text-[11px] mb-1.5">
                   <span className="text-tv-text font-medium">{rangeData.dayLow.toFixed(2)}</span>
-                  <span className="text-tv-muted text-[10px] uppercase">Day's Range</span>
+                  <span className="text-tv-muted text-[10px] uppercase">Day&apos;s Range</span>
                   <span className="text-tv-text font-medium">{rangeData.dayHigh.toFixed(2)}</span>
                 </div>
                 <div className="h-1 bg-tv-border rounded-tv-full relative mx-1">

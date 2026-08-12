@@ -89,7 +89,7 @@ const DEFAULT_PARAMS: PsiStrategyParams = {
 };
 
 const TICKER_PRESETS: Record<string, Partial<PsiStrategyParams>> = {
-  COMI: { entryLevels: [14.6, 23.6], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 4, useStoploss: true, stoplossLevel: 5 },
+  COMI: { entryLevels: [23.6], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2, useStoploss: true, stoplossLevel: 6 },
   ADIB: { entryLevels: [23.6, 38.2, 50.0, 61.8], useAym: true, aymMultiplier: 8, aymLimit: 88.6, useAtr: false, atrDistance: null, useStoploss: false, stoplossLevel: null },
   HDBK: { entryLevels: [14.6], useAym: true, aymMultiplier: 3, aymLimit: 50.0, useAtr: false, atrDistance: null, useStoploss: false, stoplossLevel: null },
   CANA: { entryLevels: [14.6, 23.6, 38.2, 50.0], useAym: true, aymMultiplier: 9, aymLimit: 78.6, useAtr: true, atrDistance: 5, useStoploss: false, stoplossLevel: null },

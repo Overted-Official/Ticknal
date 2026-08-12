@@ -57,8 +57,8 @@ export default function AddOrderModal({
           entryPrice: initialData?.price ? initialData.price.toString() : '',
           quantity: '100'
         });
+        setIsSearchOpen(false);
       }, 0);
-      setIsSearchOpen(false);
 
       if (!initialData?.symbol) {
         fetch('/api/tickers')
