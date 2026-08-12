@@ -53,24 +53,24 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
     return () => controller.abort();
   }, [deviceId]);
 
-  const ensurePushSubscription = useCallback(async () => {
-    if (!deviceId) return false;
+  const ensurePushSubscription = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    if (!deviceId) return { success: false, error: 'Device ID not initialized.' };
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       setPermission('unsupported');
       setStatusMessage('Push notifications are not supported on this browser.');
-      return false;
+      return { success: false, error: 'Push notifications are not supported on this browser.' };
     }
 
     const keyRes = await fetch('/api/push/vapid-key');
     if (!keyRes.ok) {
       setStatusMessage('Could not load push configuration.');
-      return false;
+      return { success: false, error: 'Could not load push configuration from server.' };
     }
 
     const keyData = await keyRes.json();
     if (!keyData.configured || !keyData.publicKey) {
       setStatusMessage('Web Push keys are not configured yet.');
-      return false;
+      return { success: false, error: 'Web Push VAPID keys are not configured.' };
     }
 
     let currentPermission = Notification.permission;
@@ -81,35 +81,41 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
     if (currentPermission !== 'granted') {
       setStatusMessage('Notification permission was not granted.');
-      return false;
+      return { success: false, error: 'Notification permission was denied by the user.' };
     }
 
-    const registration = await navigator.serviceWorker.ready;
-    const existingSubscription = await registration.pushManager.getSubscription();
-    const subscription =
-      existingSubscription ??
-      (await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
-      }));
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const existingSubscription = await registration.pushManager.getSubscription();
+      const subscription =
+        existingSubscription ??
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
+        }));
 
-    const res = await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deviceId,
-        subscription: subscription.toJSON(),
-        userAgent: navigator.userAgent,
-      }),
-    });
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId,
+          subscription: subscription.toJSON(),
+          userAgent: navigator.userAgent,
+        }),
+      });
 
-    if (!res.ok) {
-      setStatusMessage('Could not save the browser push subscription.');
-      return false;
+      if (!res.ok) {
+        setStatusMessage('Could not save the browser push subscription.');
+        return { success: false, error: 'Failed to save subscription to database.' };
+      }
+
+      setStatusMessage(null);
+      return { success: true };
+    } catch (err: any) {
+      console.error('Push subscription failed:', err);
+      setStatusMessage('Failed to subscribe to push manager.');
+      return { success: false, error: err.message || 'PushManager subscription failed' };
     }
-
-    setStatusMessage(null);
-    return true;
   }, [deviceId]);
 
   const toggleAlert = useCallback(
@@ -120,7 +126,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
       if (enabled) {
         const subscribed = await ensurePushSubscription();
-        if (!subscribed) return false;
+        if (!subscribed.success) return false;
       }
 
       const res = await fetch('/api/alerts', {

@@ -19,11 +19,8 @@ export default function TestNotificationButton() {
       
       // Ensure the device is subscribed to push notifications first
       const subscribed = await ensurePushSubscription();
-      if (!subscribed) {
-        // Wait a tiny bit for the state update to propagate so we can grab the latest status
-        setTimeout(() => {
-          alert(`Failed to subscribe. Reason: ${latestStatus || statusMessage || 'Unknown error. Check browser permissions or VAPID keys.'}`);
-        }, 100);
+      if (!subscribed.success) {
+        alert(`Failed to subscribe. Reason: ${subscribed.error || 'Unknown error. Check browser permissions or VAPID keys.'}`);
         return;
       }
 
