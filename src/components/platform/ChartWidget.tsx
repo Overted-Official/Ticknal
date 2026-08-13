@@ -491,7 +491,7 @@ export default function ChartWidget({
           sellThreshold: sellThreshold.toString()
         });
         if (replayMode && replayDate) {
-          params.set('start', replayStartDate ?? data[0]?.time ?? replayDate);
+          params.set('start', strategyStartDate || replayStartDate || data[0]?.time || replayDate);
           params.set('end', replayDate);
         } else {
           if (strategyStartDate) params.set('start', strategyStartDate);
@@ -528,7 +528,7 @@ export default function ChartWidget({
           sellThreshold: sellThreshold.toString()
         });
         if (replayMode && replayDate) {
-          params.set('start', replayStartDate ?? data[0]?.time ?? replayDate);
+          params.set('start', strategyStartDate || replayStartDate || data[0]?.time || replayDate);
           params.set('end', replayDate);
         } else {
           if (strategyStartDate) params.set('start', strategyStartDate);
