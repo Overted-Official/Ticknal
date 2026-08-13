@@ -481,6 +481,7 @@ export default function ChartWidget({
 
   useEffect(() => {
     let isActive = true;
+    const controller = new AbortController();
 
     async function fetchMetrics() {
       try {
@@ -491,20 +492,27 @@ export default function ChartWidget({
           sellThreshold: sellThreshold.toString()
         });
         if (replayMode && replayDate) {
-          params.set('start', strategyStartDate || replayStartDate || data[0]?.time || replayDate);
-          params.set('end', replayDate);
+          let parsedReplayDate = replayDate;
+          if (typeof replayDate === 'object') {
+             // Handle lightweight-charts BusinessDay object
+             parsedReplayDate = `${(replayDate as any).year}-${String((replayDate as any).month).padStart(2, '0')}-${String((replayDate as any).day).padStart(2, '0')}`;
+          }
+          params.set('start', strategyStartDate || (typeof replayStartDate === 'object' ? `${(replayStartDate as any).year}-${String((replayStartDate as any).month).padStart(2, '0')}-${String((replayStartDate as any).day).padStart(2, '0')}` : replayStartDate as string) || (typeof data[0]?.time === 'object' ? `${(data[0].time as any).year}-${String((data[0].time as any).month).padStart(2, '0')}-${String((data[0].time as any).day).padStart(2, '0')}` : data[0]?.time as string) || parsedReplayDate as string);
+          params.set('end', parsedReplayDate as string);
         } else {
           if (strategyStartDate) params.set('start', strategyStartDate);
           if (strategyEndDate) params.set('end', strategyEndDate);
         }
 
-        const res = await fetch(`/api/metrics?${params.toString()}`);
+        const res = await fetch(`/api/metrics?${params.toString()}`, {
+          signal: controller.signal
+        });
         if (res.ok && isActive) {
           const json = await res.json();
           if (isActive && json.metrics) setMetrics(json.metrics);
         }
-      } catch (error) {
-        if (isActive) {
+      } catch (error: any) {
+        if (isActive && error.name !== 'AbortError') {
           console.error('Failed to fetch metrics', error);
         }
       }
@@ -513,11 +521,13 @@ export default function ChartWidget({
     void fetchMetrics();
     return () => {
       isActive = false;
+      controller.abort();
     };
   }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate]);
 
   useEffect(() => {
     let isActive = true;
+    const controller = new AbortController();
 
     async function fetchSignals() {
       try {
@@ -528,14 +538,20 @@ export default function ChartWidget({
           sellThreshold: sellThreshold.toString()
         });
         if (replayMode && replayDate) {
-          params.set('start', strategyStartDate || replayStartDate || data[0]?.time || replayDate);
-          params.set('end', replayDate);
+          let parsedReplayDate = replayDate;
+          if (typeof replayDate === 'object') {
+             parsedReplayDate = `${(replayDate as any).year}-${String((replayDate as any).month).padStart(2, '0')}-${String((replayDate as any).day).padStart(2, '0')}`;
+          }
+          params.set('start', strategyStartDate || (typeof replayStartDate === 'object' ? `${(replayStartDate as any).year}-${String((replayStartDate as any).month).padStart(2, '0')}-${String((replayStartDate as any).day).padStart(2, '0')}` : replayStartDate as string) || (typeof data[0]?.time === 'object' ? `${(data[0].time as any).year}-${String((data[0].time as any).month).padStart(2, '0')}-${String((data[0].time as any).day).padStart(2, '0')}` : data[0]?.time as string) || parsedReplayDate as string);
+          params.set('end', parsedReplayDate as string);
         } else {
           if (strategyStartDate) params.set('start', strategyStartDate);
           if (strategyEndDate) params.set('end', strategyEndDate);
         }
 
-        const res = await fetch(`/api/signals?${params.toString()}`);
+        const res = await fetch(`/api/signals?${params.toString()}`, {
+          signal: controller.signal
+        });
         if (!res.ok || !isActive) return;
 
         const signalResponse = (await res.json()) as SignalsResponse;
@@ -543,8 +559,8 @@ export default function ChartWidget({
         if (!isActive) return;
         markerApiRef.current?.setMarkers(buildMarkers(signals));
         setChartSignals(signals);
-      } catch (error) {
-        if (isActive) {
+      } catch (error: any) {
+        if (isActive && error.name !== 'AbortError') {
           console.error('Failed to fetch signals', error);
         }
       }
@@ -555,6 +571,7 @@ export default function ChartWidget({
     void fetchSignals();
     return () => {
       isActive = false;
+      controller.abort();
       window.clearTimeout(resetSignalsTimeout);
     };
   }, [
