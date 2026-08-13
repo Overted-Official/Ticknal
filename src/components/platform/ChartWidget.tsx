@@ -558,13 +558,9 @@ export default function ChartWidget({
         }
       }
     }
-
-    markerApiRef.current?.setMarkers([]);
-    const resetSignalsTimeout = window.setTimeout(() => setChartSignals([]), 0);
     void fetchSignals();
     return () => {
       isActive = false;
-      window.clearTimeout(resetSignalsTimeout);
     };
   }, [
     symbol,
