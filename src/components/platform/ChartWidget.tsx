@@ -496,7 +496,7 @@ export default function ChartWidget({
              // Handle lightweight-charts BusinessDay object
              parsedReplayDate = `${(replayDate as any).year}-${String((replayDate as any).month).padStart(2, '0')}-${String((replayDate as any).day).padStart(2, '0')}`;
           }
-          params.set('start', strategyStartDate || (typeof replayStartDate === 'object' ? `${(replayStartDate as any).year}-${String((replayStartDate as any).month).padStart(2, '0')}-${String((replayStartDate as any).day).padStart(2, '0')}` : replayStartDate as string) || (typeof data[0]?.time === 'object' ? `${(data[0].time as any).year}-${String((data[0].time as any).month).padStart(2, '0')}-${String((data[0].time as any).day).padStart(2, '0')}` : data[0]?.time as string) || parsedReplayDate as string);
+          if (strategyStartDate) params.set('start', strategyStartDate);
           params.set('end', parsedReplayDate as string);
         } else {
           if (strategyStartDate) params.set('start', strategyStartDate);
@@ -537,7 +537,7 @@ export default function ChartWidget({
           if (typeof replayDate === 'object') {
              parsedReplayDate = `${(replayDate as any).year}-${String((replayDate as any).month).padStart(2, '0')}-${String((replayDate as any).day).padStart(2, '0')}`;
           }
-          params.set('start', strategyStartDate || (typeof replayStartDate === 'object' ? `${(replayStartDate as any).year}-${String((replayStartDate as any).month).padStart(2, '0')}-${String((replayStartDate as any).day).padStart(2, '0')}` : replayStartDate as string) || (typeof data[0]?.time === 'object' ? `${(data[0].time as any).year}-${String((data[0].time as any).month).padStart(2, '0')}-${String((data[0].time as any).day).padStart(2, '0')}` : data[0]?.time as string) || parsedReplayDate as string);
+          if (strategyStartDate) params.set('start', strategyStartDate);
           params.set('end', parsedReplayDate as string);
         } else {
           if (strategyStartDate) params.set('start', strategyStartDate);
