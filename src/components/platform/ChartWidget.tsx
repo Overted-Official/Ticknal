@@ -481,7 +481,6 @@ export default function ChartWidget({
 
   useEffect(() => {
     let isActive = true;
-    const controller = new AbortController();
 
     async function fetchMetrics() {
       try {
@@ -504,15 +503,13 @@ export default function ChartWidget({
           if (strategyEndDate) params.set('end', strategyEndDate);
         }
 
-        const res = await fetch(`/api/metrics?${params.toString()}`, {
-          signal: controller.signal
-        });
+        const res = await fetch(`/api/metrics?${params.toString()}`);
         if (res.ok && isActive) {
           const json = await res.json();
           if (isActive && json.metrics) setMetrics(json.metrics);
         }
       } catch (error: any) {
-        if (isActive && error.name !== 'AbortError' && error.message !== 'CANCELLED') {
+        if (isActive) {
           console.error('Failed to fetch metrics', error);
         }
       }
@@ -521,13 +518,11 @@ export default function ChartWidget({
     void fetchMetrics();
     return () => {
       isActive = false;
-      controller.abort(new Error('CANCELLED'));
     };
   }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate]);
 
   useEffect(() => {
     let isActive = true;
-    const controller = new AbortController();
 
     async function fetchSignals() {
       try {
@@ -549,9 +544,7 @@ export default function ChartWidget({
           if (strategyEndDate) params.set('end', strategyEndDate);
         }
 
-        const res = await fetch(`/api/signals?${params.toString()}`, {
-          signal: controller.signal
-        });
+        const res = await fetch(`/api/signals?${params.toString()}`);
         if (!res.ok || !isActive) return;
 
         const signalResponse = (await res.json()) as SignalsResponse;
@@ -560,7 +553,7 @@ export default function ChartWidget({
         markerApiRef.current?.setMarkers(buildMarkers(signals));
         setChartSignals(signals);
       } catch (error: any) {
-        if (isActive && error.name !== 'AbortError' && error.message !== 'CANCELLED') {
+        if (isActive) {
           console.error('Failed to fetch signals', error);
         }
       }
@@ -571,7 +564,6 @@ export default function ChartWidget({
     void fetchSignals();
     return () => {
       isActive = false;
-      controller.abort(new Error('CANCELLED'));
       window.clearTimeout(resetSignalsTimeout);
     };
   }, [
