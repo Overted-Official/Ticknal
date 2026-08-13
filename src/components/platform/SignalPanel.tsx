@@ -57,6 +57,7 @@ export default function SignalPanel({
   const strategies: { id: string; label: string; disabled?: boolean }[] = [
     { id: 'psi', label: 'PSI Strategy' },
     { id: 'quantum_exhaustion', label: 'Quantum Exhaustion (QE)' },
+    { id: 'quantum_exhaustion_v2', label: 'Quantum Exhaustion v2 (Research Gate)', disabled: true },
   ];
 
   const selectedLabel = strategies.find(s => s.id === selectedStrategy)?.label || 'Strategy';
@@ -109,10 +110,10 @@ export default function SignalPanel({
   const reason = visibleSignalData?.entryReason || visibleSignalData?.exitReason || 'PSI';
 
   return (
-    <div className="absolute top-4 left-4 z-10 w-48 md:w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
+    <div className="absolute top-4 left-4 z-10 w-48 md:w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex flex-col">
       {/* Header / Main Signal */}
       <div 
-        className="p-2 md:p-4 cursor-pointer hover:bg-tv-hover transition-colors flex items-center justify-between"
+        className={`p-2 md:p-4 cursor-pointer hover:bg-tv-hover transition-colors flex items-center justify-between ${expanded ? 'rounded-t-tv-lg' : 'rounded-tv-lg'}`}
         onClick={() => setExpanded(!expanded)}
       >
         <div>

@@ -979,7 +979,7 @@ export default function ChartWidget({
       )}
 
       {replayMode && replayDate && (
-        <div className="absolute left-4 top-16 z-40 rounded-tv-sm border border-tv-border bg-tv-base px-2 py-1 text-[11px] text-tv-muted shadow-lg">
+        <div className="absolute right-4 bottom-4 z-40 rounded-tv-sm border border-tv-border bg-tv-base px-2 py-1 text-[11px] text-tv-muted shadow-lg">
           <span className="text-tv-accent">Replay</span> {data[0]?.time} to {replayDate}
         </div>
       )}
