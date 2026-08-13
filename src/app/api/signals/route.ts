@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { dailyPrices } from "@/db/schema";
+import { getCachedDailyPrices } from "@/lib/data-cache";
 import { resolvePsiParamsWithSource } from "@/strategies/PSI/psiParameterStore";
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from "@/strategies/PSI/psiStrategy";
 import { runQeStrategy } from "@/strategies/QuantumExhaustion/qeStrategy";
@@ -25,11 +26,7 @@ export async function GET(request: Request) {
     const startDate = searchParams.get("start") ?? "2021-01-01";
     const endDate = searchParams.get("end") ?? undefined;
 
-    const rows = await db
-      .select()
-      .from(dailyPrices)
-      .where(eq(dailyPrices.tickerSymbol, ticker))
-      .orderBy(asc(dailyPrices.date));
+    const rows = await getCachedDailyPrices(ticker);
 
     const bars: PriceBar[] = rows
       .map((record) => ({

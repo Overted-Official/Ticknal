@@ -10,6 +10,7 @@ import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
 import ChartViews from '@/components/platform/ChartViews';
 import TickerPositions, { TickerOrder } from '@/components/platform/TickerPositions';
+import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices } from '@/lib/data-cache';
 
 import { Suspense } from 'react';
 import ChartsSkeleton from './ChartsSkeleton';
@@ -34,7 +35,7 @@ export default async function PlatformPage(props: PlatformPageProps) {
 async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMode }: { selectedSymbol: string; timeframe: string; initialReplayMode: boolean }) {
 
   // Fetch all tickers to build the watchlist
-  const allTickers = await db.select().from(tickers);
+  const allTickers = await getCachedTickers();
 
   // Fetch open positions
   const openOrdersRows = await db.select({ tickerSymbol: orders.tickerSymbol }).from(orders).where(eq(orders.status, 'OPEN'));
@@ -43,20 +44,10 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   
   // Calculate watchlist items by fetching the last 2 prices for each ticker
   // Using a Window Function to eliminate the N+1 query problem that caused connection exhaustion and 7s load times
-  const recentPricesQuery = sql`
-    WITH RankedPrices AS (
-      SELECT ticker_symbol, close,
-             ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) as rn
-      FROM daily_prices
-    )
-    SELECT ticker_symbol, close, rn
-    FROM RankedPrices
-    WHERE rn <= 2;
-  `;
   
   // Fetch opportunities to show thunder icon on watchlist
   const [recentPricesRows, recentOpportunities] = await Promise.all([
-    db.execute(recentPricesQuery),
+    getCachedRecentPrices(),
     getRecentOpportunities(5)
   ]);
   
@@ -119,9 +110,7 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   const currentPriceForSymbol = priceMap[selectedSymbol]?.lastPrice || 0;
 
   // Fetch chart data for the selected symbol
-  const dbData = await db.select().from(dailyPrices)
-    .where(eq(dailyPrices.tickerSymbol, selectedSymbol))
-    .orderBy(asc(dailyPrices.date));
+  const dbData = await getCachedDailyPrices(selectedSymbol);
 
   let dayHigh = 0;
   let dayLow = 0;

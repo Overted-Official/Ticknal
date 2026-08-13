@@ -6,6 +6,7 @@ import { dailyPrices, orders, tickerAlerts, tickers } from '@/db/schema';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
+import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import OpportunityTable from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
 import DashboardCharts from '@/components/platform/DashboardCharts';
@@ -454,25 +455,18 @@ async function getActiveAlertCount(): Promise<number> {
 }
 
 async function getLatestPriceMap(): Promise<Record<string, number>> {
-  const rows = await db.execute(sql`
-    WITH ranked_prices AS (
-      SELECT ticker_symbol, close, ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) AS rn
-      FROM ${dailyPrices}
-    )
-    SELECT ticker_symbol, close
-    FROM ranked_prices
-    WHERE rn = 1
-  `);
-
+  const rows = await getCachedRecentPrices();
   const priceMap: Record<string, number> = {};
   for (const row of rows) {
-    priceMap[String(row.ticker_symbol)] = Number(row.close);
+    if (Number(row.rn) === 1) {
+      priceMap[String(row.ticker_symbol)] = Number(row.close);
+    }
   }
   return priceMap;
 }
 
 async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; logoUrl: string | null }>> {
-  const rows = await db.select().from(tickers);
+  const rows = await getCachedTickers();
   const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }> = {};
   for (const ticker of rows) {
     tickerMap[ticker.symbol] = {

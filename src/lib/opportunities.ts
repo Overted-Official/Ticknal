@@ -15,7 +15,9 @@ export type OpportunitySignal = {
   signal: any;
 };
 
-export async function getRecentOpportunities(limitBars: number = 5): Promise<OpportunitySignal[]> {
+import { unstable_cache } from 'next/cache';
+
+export async function _getRecentOpportunities(limitBars: number = 5): Promise<OpportunitySignal[]> {
   const [tickerRows, priceRows] = await Promise.all([
     db.select().from(tickers),
     db.execute(sql`
@@ -80,3 +82,11 @@ export async function getRecentOpportunities(limitBars: number = 5): Promise<Opp
 
   return opportunities.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
 }
+
+export const getRecentOpportunities = (limitBars: number = 5) => {
+  return unstable_cache(
+    async () => _getRecentOpportunities(limitBars),
+    [`recent-opportunities-${limitBars}`],
+    { tags: ['opportunities'], revalidate: 900 }
+  )();
+};
