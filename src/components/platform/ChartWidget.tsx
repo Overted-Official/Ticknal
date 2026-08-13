@@ -289,7 +289,10 @@ export default function ChartWidget({
   useEffect(() => {
     const candlestickSeries = candlestickSeriesRef.current;
     const volumeSeries = volumeSeriesRef.current;
-    if (!candlestickSeries || !volumeSeries) return;
+    const timeScale = chartRef.current?.timeScale();
+    if (!candlestickSeries || !volumeSeries || !timeScale) return;
+
+    const currentLogicalRange = timeScale.getVisibleLogicalRange();
 
     const upColor = '#089981';
     const downColor = '#f23645';
@@ -310,9 +313,21 @@ export default function ChartWidget({
     volumeSeries.setData(vData);
 
     if (visibleData.length > 0) {
-      chartRef.current?.timeScale().fitContent();
+      if (replayMode) {
+        if (currentLogicalRange) {
+          const barsVisible = currentLogicalRange.to - currentLogicalRange.from;
+          const half = Math.floor(barsVisible / 2);
+          const newLastIndex = visibleData.length - 1;
+          timeScale.setVisibleLogicalRange({
+            from: newLastIndex - half,
+            to: newLastIndex + half,
+          });
+        }
+      } else {
+        timeScale.fitContent();
+      }
     }
-  }, [visibleData]);
+  }, [visibleData, replayMode]);
 
   useEffect(() => {
     const recenterChart = () => {
