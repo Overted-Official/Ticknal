@@ -512,7 +512,7 @@ export default function ChartWidget({
           if (isActive && json.metrics) setMetrics(json.metrics);
         }
       } catch (error: any) {
-        if (isActive && error.name !== 'AbortError') {
+        if (isActive && error.name !== 'AbortError' && error.message !== 'CANCELLED') {
           console.error('Failed to fetch metrics', error);
         }
       }
@@ -521,7 +521,7 @@ export default function ChartWidget({
     void fetchMetrics();
     return () => {
       isActive = false;
-      controller.abort();
+      controller.abort(new Error('CANCELLED'));
     };
   }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate]);
 
@@ -560,7 +560,7 @@ export default function ChartWidget({
         markerApiRef.current?.setMarkers(buildMarkers(signals));
         setChartSignals(signals);
       } catch (error: any) {
-        if (isActive && error.name !== 'AbortError') {
+        if (isActive && error.name !== 'AbortError' && error.message !== 'CANCELLED') {
           console.error('Failed to fetch signals', error);
         }
       }
@@ -571,7 +571,7 @@ export default function ChartWidget({
     void fetchSignals();
     return () => {
       isActive = false;
-      controller.abort();
+      controller.abort(new Error('CANCELLED'));
       window.clearTimeout(resetSignalsTimeout);
     };
   }, [

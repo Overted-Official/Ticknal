@@ -40,6 +40,11 @@
     "src/strategies/QuantumExhaustion",
     "scratch_*.ts",
     "scratch_*.js",
-    "scratch_*.py"
+    "scratch_*.py",
+    "_playground",
+    "_technical_support",
+    "_dynamic-psi-test",
+    "src/app/(main)/test",
+    "src/components/platform/TestChartWidget.tsx"
   ]
 }
