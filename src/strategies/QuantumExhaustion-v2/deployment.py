@@ -69,6 +69,8 @@ def export_deployment_bundle(
     latest = ordered.groupby("ticker", as_index=False).tail(1)
     score_columns = [
         "ticker", "date", "psi40", "psi_direction", "exhaustion_percentile",
+        "psi_at_last_pivot", "running_delta", "price_swing_return",
+        "price_swing_median_multiple", "median_daily_move", "swing_threshold",
         "reversal_probability_3", "reversal_probability_5", "reversal_probability_10",
         "expected_return_5", "expected_return_10", "expected_return_20",
         "barrier_probability", "expected_mfe_10", "expected_mae_10",

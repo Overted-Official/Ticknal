@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createChart,
   ColorType,
+  CrosshairMode,
   CandlestickSeries,
   HistogramSeries,
+  LineSeries,
   LineStyle,
   createSeriesMarkers,
   type CandlestickData,
@@ -18,7 +20,7 @@ import {
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Settings } from '@/components/ui/icons';
+import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Settings, Sparkles, Loader2 } from '@/components/ui/icons';
 
 export interface ChartData {
   time: string; // "YYYY-MM-DD"
@@ -174,6 +176,12 @@ export default function ChartWidget({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(PLAYBACK_SPEEDS[0].delay);
 
+  const [isPredicting, setIsPredicting] = useState(false);
+  const predictionSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+
+  const [predictPopoverOpen, setPredictPopoverOpen] = useState(false);
+  const [predictDaysInput, setPredictDaysInput] = useState("10");
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const replayDate = replayMode ? data[replayIndex]?.time ?? null : null;
@@ -234,6 +242,7 @@ export default function ChartWidget({
         borderColor,
       },
       crosshair: {
+        mode: CrosshairMode.Normal,
         vertLine: {
           color: textMuted,
           width: 1,
@@ -631,16 +640,73 @@ export default function ChartWidget({
 
     const intervalId = window.setInterval(() => {
       setReplayIndex((current) => {
-        const next = Math.min(current + 1, data.length - 1);
-        if (next >= data.length - 1) {
+        if (current >= data.length - 2) {
+          // Pause when reaching the end
           window.setTimeout(() => setIsPlaying(false), 0);
+          return current + 1;
         }
-        return next;
+        return current + 1;
       });
     }, playbackSpeed);
 
     return () => window.clearInterval(intervalId);
   }, [data.length, isPlaying, playbackSpeed, replayIndex, replayMode]);
+
+  const handlePredict = async () => {
+    const days = parseInt(predictDaysInput, 10);
+    if (isNaN(days) || days <= 0) return;
+
+    setPredictPopoverOpen(false);
+    setIsPredicting(true);
+    try {
+      // Use up to 90 days of history for context
+      const historySize = Math.min(90, visibleData.length);
+      const history = visibleData.slice(visibleData.length - historySize);
+      
+      const res = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history, predictDays: days })
+      });
+      
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
+      
+      const { predictions } = await res.json();
+      
+      if (chartRef.current) {
+        if (!predictionSeriesRef.current) {
+          predictionSeriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
+            upColor: 'rgba(245, 158, 11, 0.4)',    // TV Accent orange (transparent)
+            downColor: 'rgba(245, 158, 11, 0.4)',  // TV Accent orange (transparent)
+            borderVisible: true,
+            borderColor: '#F59E0B',
+            wickUpColor: '#F59E0B',
+            wickDownColor: '#F59E0B',
+          });
+        }
+        
+        // Connect the prediction line to the last candle
+        const lineData = predictions.map((p: any) => ({
+          time: p.date as Time,
+          open: p.open,
+          high: p.high,
+          low: p.low,
+          close: p.close
+        }));
+        
+        if (predictionSeriesRef.current) {
+          predictionSeriesRef.current.setData(lineData);
+        }
+      }
+    } catch (err) {
+      console.error("Prediction failed:", err);
+      alert("Prediction failed. Check console for details.");
+    } finally {
+      setIsPredicting(false);
+    }
+  };
 
   const enableReplay = () => {
     if (!hasReplayRoom) return;
@@ -739,6 +805,64 @@ export default function ChartWidget({
     if (isNaN(val)) return valStr;
     return val > 0 ? `+${valStr}%` : `${valStr}%`;
   };
+
+  const predictButtonUI = (
+    <div className="relative">
+      <button
+        type="button"
+        title="Predict Future"
+        onClick={() => setPredictPopoverOpen(true)}
+        disabled={isPredicting || data.length === 0}
+        className="h-9 rounded-tv-sm border border-tv-border bg-tv-surface px-3 text-xs font-weight-medium text-tv-text shadow-lg transition-colors hover:bg-tv-hover disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span className="flex items-center gap-2">
+          {isPredicting ? (
+            <Loader2 className="h-4 w-4 animate-spin text-tv-accent" />
+          ) : (
+            <Sparkles className="h-4 w-4 text-tv-accent" />
+          )}
+          {isPredicting ? 'Predicting...' : 'Predict N Days'}
+        </span>
+      </button>
+
+      {predictPopoverOpen && (
+        <div className="absolute bottom-full left-0 mb-2 w-56 rounded-tv-lg border border-tv-highlight/60 bg-tv-surface/95 p-3 text-xs text-tv-text shadow-2xl backdrop-blur-md z-[60]">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="font-weight-medium">AI Forecast</div>
+            <button
+              type="button"
+              onClick={() => setPredictPopoverOpen(false)}
+              className="flex h-5 w-5 items-center justify-center rounded-tv-sm text-tv-muted hover:bg-tv-hover hover:text-tv-text transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+          
+          <div className="space-y-2">
+            <div>
+              <label className="mb-1 block text-[11px] text-tv-muted">Number of Days</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={predictDaysInput}
+                onChange={(e) => setPredictDaysInput(e.target.value)}
+                className="h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-xs text-tv-text outline-none transition-colors hover:border-tv-border-highlight focus:border-tv-accent"
+              />
+            </div>
+            
+            <button
+              type="button"
+              onClick={handlePredict}
+              className="h-8 w-full rounded-tv-sm bg-tv-accent text-xs font-weight-medium text-tv-base transition-colors hover:bg-tv-accent-hover"
+            >
+              Run Prediction
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex-1 w-full h-full relative bg-tv-chart">
@@ -867,7 +991,7 @@ export default function ChartWidget({
       )}
 
       {!replayMode ? (
-        <div className="absolute bottom-4 left-4 z-50">
+        <div className="absolute bottom-4 left-4 z-50 flex items-center gap-2">
           <button
             type="button"
             title="Bar Replay"
@@ -881,6 +1005,8 @@ export default function ChartWidget({
               Replay
             </span>
           </button>
+
+          {predictButtonUI}
         </div>
       ) : (
         <div className="absolute bottom-4 left-4 z-50 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1 rounded-tv-sm border border-tv-border bg-tv-surface p-1 text-xs text-tv-text shadow-lg">
@@ -975,6 +1101,7 @@ export default function ChartWidget({
           >
             Live
           </button>
+          {predictButtonUI}
         </div>
       )}
 

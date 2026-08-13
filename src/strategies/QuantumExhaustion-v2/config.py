@@ -15,9 +15,15 @@ DEFAULT_DEPLOY_DIR = PACKAGE_DIR / "deploy"
 class QEConfig:
     """All research constants that can affect labels, models, or replay."""
 
-    model_version: str = "QE-v2.0-research"
+    model_version: str = "QE-v2.1-price-swing-research"
     minimum_history: int = 500
-    reversal_points: float = 5.0
+    swing_median_window: int = 64
+    swing_median_min_periods: int = 20
+    swing_threshold_multiplier: float = 2.0
+    swing_threshold_floor: float = 0.005
+    pivot_label_tolerance: int = 1
+    cdf_ticker_prior: float = 12.0
+    cdf_sector_prior: float = 30.0
     max_horizon: int = 10
     return_horizons: tuple[int, ...] = (5, 10, 20)
     sequence_lengths: tuple[int, ...] = (32, 64, 128)
@@ -29,10 +35,12 @@ class QEConfig:
     adverse_atr: float = 1.5
     extreme_jump_threshold: float = 0.50
     seeds: tuple[int, ...] = (17, 41, 73)
-    hidden_channels: int = 64
+    hidden_channels: int = 32
     embedding_dim: int = 8
     dropout: float = 0.20
-    batch_size: int = 512
+    batch_size: int = 1024
+    max_train_sequences: int | None = None
+    max_calibration_sequences: int | None = None
     epochs: int = 20
     learning_rate: float = 3e-4
     weight_decay: float = 1e-4
@@ -70,6 +78,14 @@ DYNAMIC_FEATURES = (
     "leg_age",
     "running_delta",
     "exhaustion_percentile",
+    "median_daily_move",
+    "swing_threshold",
+    "price_swing_return",
+    "price_swing_median_multiple",
+    "psi_at_last_pivot",
+    "cdf_ticker_count",
+    "cdf_sector_count",
+    "cdf_market_count",
     "return_1",
     "return_5",
     "return_10",

@@ -3,10 +3,11 @@ from __future__ import annotations
 import copy
 import json
 import math
+import os
 import random
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 import joblib
 import numpy as np
@@ -21,6 +22,7 @@ from .config import DYNAMIC_FEATURES, QEConfig
 
 
 def set_deterministic_seed(seed: int) -> None:
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -121,6 +123,19 @@ class SequenceDataset(Dataset):
         self.features = scaler.transform(ordered)
         self.ticker_ids = ordered["ticker"].map(categories.encode_ticker).to_numpy(dtype=np.int64)
         self.sector_ids = ordered["sector"].map(categories.encode_sector).to_numpy(dtype=np.int64)
+        self.event_times = ordered["event_time"].fillna(10).to_numpy(dtype=np.int64)
+        self.event_observed = ordered["event_observed"].fillna(0).to_numpy(dtype=np.float32)
+        self.return_values = ordered[[f"target_return_{horizon}" for horizon in (5, 10, 20)]].to_numpy(dtype=np.float32)
+        self.return_masks = np.isfinite(self.return_values)
+        self.return_values = np.nan_to_num(self.return_values, nan=0.0)
+        self.excursion_values = ordered[["mfe_10", "mae_10"]].to_numpy(dtype=np.float32)
+        self.excursion_masks = np.isfinite(self.excursion_values)
+        self.excursion_values = np.nan_to_num(self.excursion_values, nan=0.0)
+        self.barrier_values = ordered["barrier_success"].to_numpy(dtype=np.float32)
+        self.barrier_masks = np.isfinite(self.barrier_values)
+        self.barrier_values = np.nan_to_num(self.barrier_values, nan=0.0)
+        self.rank_targets = ordered["target_return_10"].fillna(0).to_numpy(dtype=np.float32)
+        self.date_ids = (pd.to_datetime(ordered["date"]).astype("int64") // 86_400_000_000_000).to_numpy(dtype=np.int64)
         self.sequence_length = sequence_length
         self.ends: list[int] = []
         for _, group in ordered.groupby("ticker", sort=False):
@@ -139,26 +154,45 @@ class SequenceDataset(Dataset):
     def __getitem__(self, item: int) -> dict[str, torch.Tensor]:
         end = self.ends[item]
         start = end - self.sequence_length + 1
-        row = self.frame.iloc[end]
-        returns = [row.get(f"target_return_{horizon}", np.nan) for horizon in (5, 10, 20)]
-        excursions = [row.get("mfe_10", np.nan), row.get("mae_10", np.nan)]
-        barrier = row.get("barrier_success", np.nan)
         return {
             "x": torch.from_numpy(self.features[start : end + 1]).float(),
             "ticker": torch.tensor(self.ticker_ids[end], dtype=torch.long),
             "sector": torch.tensor(self.sector_ids[end], dtype=torch.long),
-            "event_time": torch.tensor(int(row["event_time"]), dtype=torch.long),
-            "event_observed": torch.tensor(float(row["event_observed"]), dtype=torch.float32),
-            "returns": torch.tensor(np.nan_to_num(returns, nan=0.0), dtype=torch.float32),
-            "return_mask": torch.tensor(np.isfinite(returns), dtype=torch.bool),
-            "excursions": torch.tensor(np.nan_to_num(excursions, nan=0.0), dtype=torch.float32),
-            "excursion_mask": torch.tensor(np.isfinite(excursions), dtype=torch.bool),
-            "barrier": torch.tensor(0.0 if not np.isfinite(barrier) else float(barrier), dtype=torch.float32),
-            "barrier_mask": torch.tensor(bool(np.isfinite(barrier)), dtype=torch.bool),
-            "rank_target": torch.tensor(float(np.nan_to_num(row.get("target_return_10", np.nan))), dtype=torch.float32),
-            "date_id": torch.tensor(pd.Timestamp(row["date"]).value // 86_400_000_000_000, dtype=torch.long),
+            "event_time": torch.tensor(self.event_times[end], dtype=torch.long),
+            "event_observed": torch.tensor(self.event_observed[end], dtype=torch.float32),
+            "returns": torch.from_numpy(self.return_values[end]),
+            "return_mask": torch.from_numpy(self.return_masks[end]),
+            "excursions": torch.from_numpy(self.excursion_values[end]),
+            "excursion_mask": torch.from_numpy(self.excursion_masks[end]),
+            "barrier": torch.tensor(self.barrier_values[end], dtype=torch.float32),
+            "barrier_mask": torch.tensor(bool(self.barrier_masks[end]), dtype=torch.bool),
+            "rank_target": torch.tensor(self.rank_targets[end], dtype=torch.float32),
+            "date_id": torch.tensor(self.date_ids[end], dtype=torch.long),
             "row_index": torch.tensor(end, dtype=torch.long),
         }
+
+
+def sequence_batch(dataset: SequenceDataset, ends: np.ndarray) -> dict[str, torch.Tensor]:
+    """Vectorized batch materialization; avoids Python work per sequence."""
+    ends = np.asarray(ends, dtype=np.int64)
+    offsets = np.arange(dataset.sequence_length - 1, -1, -1, dtype=np.int64)
+    sequence_indices = ends[:, None] - offsets[None, :]
+    return {
+        "x": torch.from_numpy(dataset.features[sequence_indices]).float(),
+        "ticker": torch.from_numpy(dataset.ticker_ids[ends]),
+        "sector": torch.from_numpy(dataset.sector_ids[ends]),
+        "event_time": torch.from_numpy(dataset.event_times[ends]),
+        "event_observed": torch.from_numpy(dataset.event_observed[ends]),
+        "returns": torch.from_numpy(dataset.return_values[ends]),
+        "return_mask": torch.from_numpy(dataset.return_masks[ends]),
+        "excursions": torch.from_numpy(dataset.excursion_values[ends]),
+        "excursion_mask": torch.from_numpy(dataset.excursion_masks[ends]),
+        "barrier": torch.from_numpy(dataset.barrier_values[ends]),
+        "barrier_mask": torch.from_numpy(dataset.barrier_masks[ends]),
+        "rank_target": torch.from_numpy(dataset.rank_targets[ends]),
+        "date_id": torch.from_numpy(dataset.date_ids[ends]),
+        "row_index": torch.from_numpy(ends),
+    }
 
 
 class CausalConv1d(nn.Conv1d):
@@ -339,21 +373,16 @@ def multi_task_loss(
     )
     rank_target = batch["rank_target"]
     rank_score = outputs["rank_score"]
-    rank_terms: list[torch.Tensor] = []
-    for date_id in torch.unique(batch["date_id"]):
-        indices = torch.flatnonzero(batch["date_id"] == date_id)
-        if len(indices) < 2:
-            continue
-        pairs = torch.triu_indices(len(indices), len(indices), offset=1, device=logits.device)
-        if pairs.shape[1] > 512:
-            pairs = pairs[:, :512]
-        left, right = indices[pairs[0]], indices[pairs[1]]
-        target_difference = rank_target[left] - rank_target[right]
-        valid = target_difference.abs() > 1e-6
-        if valid.any():
-            score_difference = rank_score[left] - rank_score[right]
-            rank_terms.append(F.softplus(-score_difference[valid] * target_difference[valid].sign()).mean())
-    rank_loss = torch.stack(rank_terms).mean() if rank_terms else logits.sum() * 0
+    # Adjacent rows after a date sort form bounded, simultaneous cross-sectional pairs.
+    order = torch.argsort(batch["date_id"])
+    left, right = order[:-1], order[1:]
+    target_difference = rank_target[left] - rank_target[right]
+    valid = (batch["date_id"][left] == batch["date_id"][right]) & (target_difference.abs() > 1e-6)
+    if valid.any():
+        score_difference = rank_score[left] - rank_score[right]
+        rank_loss = F.softplus(-score_difference[valid] * target_difference[valid].sign()).mean()
+    else:
+        rank_loss = logits.sum() * 0
     weights = config or QEConfig()
     total = (
         weights.hazard_loss_weight * hazard_loss
@@ -388,16 +417,19 @@ def train_model(
     config: QEConfig,
     seed: int,
     device: torch.device,
+    metric_callback: Callable[[dict[str, float]], None] | None = None,
 ) -> TrainingResult:
     set_deterministic_seed(seed)
     model.to(device)
-    generator = torch.Generator().manual_seed(seed)
-    train_loader = DataLoader(
-        train_dataset, batch_size=config.batch_size, shuffle=True, generator=generator, num_workers=0
-    )
-    validation_loader = DataLoader(
-        validation_dataset, batch_size=config.batch_size, shuffle=False, num_workers=0
-    )
+    rng = np.random.default_rng(seed)
+    train_ends = np.asarray(train_dataset.ends, dtype=np.int64)
+    validation_ends = np.asarray(validation_dataset.ends, dtype=np.int64)
+    if config.max_train_sequences and len(train_ends) > config.max_train_sequences:
+        positions = np.linspace(0, len(train_ends) - 1, config.max_train_sequences, dtype=np.int64)
+        train_ends = train_ends[positions]
+    if config.max_calibration_sequences and len(validation_ends) > config.max_calibration_sequences:
+        positions = np.linspace(0, len(validation_ends) - 1, config.max_calibration_sequences, dtype=np.int64)
+        validation_ends = validation_ends[positions]
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
     )
@@ -411,7 +443,9 @@ def train_model(
         model.train()
         train_total = 0.0
         train_rows = 0
-        for batch in train_loader:
+        shuffled = rng.permutation(train_ends)
+        for start in range(0, len(shuffled), config.batch_size):
+            batch = sequence_batch(train_dataset, shuffled[start : start + config.batch_size])
             batch = {key: value.to(device) for key, value in batch.items()}
             optimizer.zero_grad(set_to_none=True)
             outputs = model(batch["x"], batch["ticker"], batch["sector"])
@@ -426,7 +460,8 @@ def train_model(
         validation_total = 0.0
         validation_rows = 0
         with torch.no_grad():
-            for batch in validation_loader:
+            for start in range(0, len(validation_ends), config.batch_size):
+                batch = sequence_batch(validation_dataset, validation_ends[start : start + config.batch_size])
                 batch = {key: value.to(device) for key, value in batch.items()}
                 outputs = model(batch["x"], batch["ticker"], batch["sector"])
                 loss = multi_task_loss(outputs, batch, loss_scales, config)["total"]
@@ -439,6 +474,8 @@ def train_model(
             "validation_loss": validation_loss,
         }
         history.append(record)
+        if metric_callback is not None:
+            metric_callback(record)
         if validation_loss < best_loss - 1e-6:
             best_loss = validation_loss
             best_state = copy.deepcopy(model.state_dict())
@@ -457,11 +494,12 @@ def predict_model(
     device: torch.device,
     batch_size: int = 1024,
 ) -> pd.DataFrame:
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+    ends = np.asarray(dataset.ends, dtype=np.int64)
     model.to(device).eval()
     records: list[dict[str, float | int]] = []
     with torch.no_grad():
-        for batch in loader:
+        for start in range(0, len(ends), batch_size):
+            batch = sequence_batch(dataset, ends[start : start + batch_size])
             outputs = model(
                 batch["x"].to(device), batch["ticker"].to(device), batch["sector"].to(device)
             )

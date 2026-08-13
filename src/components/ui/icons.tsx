@@ -38,4 +38,6 @@ export {
   X,
   ChevronDown,
   ChevronRight,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';

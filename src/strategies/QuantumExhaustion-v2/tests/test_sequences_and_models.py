@@ -58,3 +58,17 @@ def test_regularized_discrete_hazard_baseline_outputs_daily_hazards(price_frame:
     cumulative = prediction[[f"p_reversal_{horizon}" for horizon in (3, 5, 10)]].to_numpy()
     assert np.all((hazards >= 0) & (hazards <= 1))
     assert np.all(np.diff(cumulative, axis=1) >= -1e-7)
+
+
+def test_multi_task_loss_supports_same_session_ranking(price_frame: pd.DataFrame) -> None:
+    frame = data_module.build_causal_dataset(price_frame, config_module.QEConfig(minimum_history=1))
+    scaler = models.FeatureScaler.fit(frame)
+    categories = models.CategoryMaps.fit(frame)
+    dataset = models.SequenceDataset(frame, scaler, categories, sequence_length=32, require_labels=True)
+    batch = torch.utils.data.default_collate([dataset[0], dataset[1]])
+    batch["date_id"][:] = batch["date_id"][0]
+    config = config_module.QEConfig(minimum_history=1, hidden_channels=8, embedding_dim=2)
+    model = models.build_model("tcn", len(config_module.DYNAMIC_FEATURES), categories, config)
+    output = model(batch["x"], batch["ticker"], batch["sector"])
+    losses = models.multi_task_loss(output, batch, models.LossScales.fit(dataset.frame), config)
+    assert torch.isfinite(losses["total"])

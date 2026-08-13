@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import bisect
 import json
 import os
 from dataclasses import dataclass
@@ -11,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from .config import DYNAMIC_FEATURES, QEConfig
+from .swings import add_hierarchical_exhaustion, causal_price_swing_features, trailing_median_daily_move
 
 
 PRICE_COLUMNS = ("open", "high", "low", "close", "volume")
@@ -160,7 +160,11 @@ class AuditResult:
     null_values: int
     extreme_jumps: int
     eligible_tickers: int
+    history_eligible_tickers: int
+    clean_eligible_rows: int
+    history_eligible_rows: int
     eligible_symbols: list[str]
+    short_history_tickers: list[str]
     unresolved_tickers: list[str]
 
     def to_dict(self) -> dict[str, object]:
@@ -168,8 +172,10 @@ class AuditResult:
 
 
 def normalize_prices(frame: pd.DataFrame) -> pd.DataFrame:
+    data = frame.copy()
+    data.columns = [str(column).strip().lower() for column in data.columns]
     aliases = {"ticker_symbol": "ticker"}
-    data = frame.rename(columns=aliases).copy()
+    data = data.rename(columns=aliases)
     missing = [column for column in REQUIRED_COLUMNS if column not in data.columns]
     if missing:
         raise ValueError(f"Missing required price columns: {', '.join(missing)}")
@@ -185,6 +191,17 @@ def normalize_prices(frame: pd.DataFrame) -> pd.DataFrame:
 
 def load_prices(path: str | Path) -> pd.DataFrame:
     source = Path(path)
+    if source.is_dir():
+        pieces: list[pd.DataFrame] = []
+        for csv_path in sorted(source.glob("*.csv")):
+            piece = pd.read_csv(csv_path)
+            if "ticker" not in piece.columns and "ticker_symbol" not in piece.columns:
+                piece["ticker"] = csv_path.stem
+            piece["source_file"] = csv_path.name
+            pieces.append(piece)
+        if not pieces:
+            raise ValueError(f"No CSV price files found in {source}")
+        return normalize_prices(pd.concat(pieces, ignore_index=True))
     if source.suffix.lower() == ".parquet":
         return normalize_prices(pd.read_parquet(source))
     return normalize_prices(pd.read_csv(source))
@@ -246,6 +263,7 @@ def audit_prices(frame: pd.DataFrame, config: QEConfig, unresolved: Iterable[str
     unresolved_set = set(unresolved)
     unresolved_set.update(data.loc[returns.abs() >= config.extreme_jump_threshold, "ticker"].unique())
     eligible = history[(history >= config.minimum_history) & ~history.index.isin(unresolved_set)]
+    history_eligible = history[history >= config.minimum_history]
     return AuditResult(
         rows=len(data),
         tickers=int(data["ticker"].nunique()),
@@ -256,75 +274,25 @@ def audit_prices(frame: pd.DataFrame, config: QEConfig, unresolved: Iterable[str
         null_values=int(data[list(REQUIRED_COLUMNS)].isna().any(axis=1).sum()),
         extreme_jumps=int((returns.abs() >= config.extreme_jump_threshold).sum()),
         eligible_tickers=len(eligible),
+        history_eligible_tickers=len(history_eligible),
+        clean_eligible_rows=int(eligible.sum()),
+        history_eligible_rows=int(history_eligible.sum()),
         eligible_symbols=sorted(eligible.index.astype(str).tolist()),
+        short_history_tickers=sorted(history[history < config.minimum_history].index.astype(str).tolist()),
         unresolved_tickers=sorted(unresolved_set),
-    )
-
-
-def causal_leg_features(psi: pd.Series, reversal_points: float) -> pd.DataFrame:
-    values = psi.to_numpy(dtype=float)
-    n = len(values)
-    direction = np.zeros(n, dtype=np.int8)
-    age = np.zeros(n, dtype=np.int32)
-    running = np.zeros(n, dtype=np.float32)
-    exhaustion = np.zeros(n, dtype=np.float32)
-    confirmation = np.zeros(n, dtype=np.int8)
-    completed_up: list[float] = []
-    completed_down: list[float] = []
-    state = 0
-    anchor = values[0] if n else 0.0
-    extreme = anchor
-    leg_start = 0
-
-    for index, value in enumerate(values):
-        if not np.isfinite(value):
-            continue
-        if state == 0:
-            if value >= anchor + reversal_points:
-                state, extreme, leg_start = 1, value, index
-            elif value <= anchor - reversal_points:
-                state, extreme, leg_start = -1, value, index
-            else:
-                extreme = max(extreme, value) if value >= anchor else min(extreme, value)
-        elif state == 1:
-            if value > extreme:
-                extreme = value
-            elif value <= extreme - reversal_points:
-                bisect.insort(completed_up, abs(extreme - anchor))
-                anchor, extreme, state, leg_start = extreme, value, -1, index
-                confirmation[index] = 1
-        else:
-            if value < extreme:
-                extreme = value
-            elif value >= extreme + reversal_points:
-                bisect.insort(completed_down, abs(extreme - anchor))
-                anchor, extreme, state, leg_start = extreme, value, 1, index
-                confirmation[index] = 1
-
-        direction[index] = state
-        age[index] = max(0, index - leg_start)
-        running[index] = abs(value - anchor)
-        history = completed_up if state == 1 else completed_down
-        exhaustion[index] = 100 * bisect.bisect_right(history, running[index]) / len(history) if history else 0
-
-    return pd.DataFrame(
-        {
-            "psi_direction": direction,
-            "leg_age": age,
-            "running_delta": running,
-            "exhaustion_percentile": exhaustion,
-            "reversal_confirmation": confirmation,
-        },
-        index=psi.index,
     )
 
 
 def _ticker_features(group: pd.DataFrame, config: QEConfig) -> pd.DataFrame:
     data = group.sort_values("date").copy()
     data["psi40"] = compute_psi40(data)
-    legs = causal_leg_features(data["psi40"], config.reversal_points)
-    data = pd.concat([data, legs], axis=1)
     close = data["close"]
+    data["median_daily_move"] = trailing_median_daily_move(close, config)
+    data["swing_threshold"] = (
+        config.swing_threshold_multiplier * data["median_daily_move"]
+    ).clip(lower=config.swing_threshold_floor)
+    swings = causal_price_swing_features(data, config)
+    data = pd.concat([data, swings], axis=1)
     data["psi_delta_1"] = data["psi40"].diff()
     data["psi_delta_5"] = data["psi40"].diff(5)
     data["psi_acceleration"] = data["psi_delta_1"].diff()
@@ -345,12 +313,12 @@ def _ticker_features(group: pd.DataFrame, config: QEConfig) -> pd.DataFrame:
 
 
 def _add_labels(group: pd.DataFrame, config: QEConfig) -> pd.DataFrame:
-    data = group.sort_values("date").copy()
+    data = group.sort_values("date").reset_index(drop=True).copy()
     direction = data["psi_direction"].to_numpy(dtype=int)
     close = data["close"].to_numpy(dtype=float)
     high = data["high"].to_numpy(dtype=float)
     low = data["low"].to_numpy(dtype=float)
-    atr = data["atr14"].to_numpy(dtype=float)
+    median_move = data["median_daily_move"].to_numpy(dtype=float)
     n = len(data)
     event_time = np.full(n, config.max_horizon, dtype=np.int16)
     observed = np.zeros(n, dtype=np.int8)
@@ -358,30 +326,67 @@ def _add_labels(group: pd.DataFrame, config: QEConfig) -> pd.DataFrame:
     barrier = np.full(n, np.nan, dtype=np.float32)
     mfe = np.full(n, np.nan, dtype=np.float32)
     mae = np.full(n, np.nan, dtype=np.float32)
+    target_event_type = np.full(n, "none", dtype=object)
+    target_pivot_date = np.full(n, np.datetime64("NaT"), dtype="datetime64[ns]")
+
+    pivot_events: dict[int, list[tuple[int, int, pd.Timestamp]]] = {1: [], -1: []}
+    for confirmation_index, row in data[data["pivot_confirmation"] == 1].iterrows():
+        pivot_index = int(row["confirmed_pivot_index"])
+        pivot_type = int(row["confirmed_pivot_type"])
+        pivot_events[pivot_type].append(
+            (pivot_index, int(confirmation_index), pd.Timestamp(data.at[pivot_index, "date"]))
+        )
+    pivot_arrays = {
+        pivot_type: (
+            np.asarray([event[0] for event in events], dtype=np.int32),
+            np.asarray([event[1] for event in events], dtype=np.int32),
+            [event[2] for event in events],
+        )
+        for pivot_type, events in pivot_events.items()
+    }
 
     for index in range(n):
         current_direction = direction[index]
         if current_direction == 0 or index + 1 >= n:
             continue
-        end = min(n, index + config.max_horizon + 1)
-        future_directions = direction[index + 1 : end]
-        changed = np.flatnonzero((future_directions != 0) & (future_directions != current_direction))
-        if changed.size:
-            event_time[index] = int(changed[0] + 1)
+        target_type = 1 if current_direction > 0 else -1
+        target_event_type[index] = "top" if target_type > 0 else "bottom"
+        pivot_indices, confirmation_indices, pivot_dates = pivot_arrays[target_type]
+        position = int(np.searchsorted(confirmation_indices, index, side="left"))
+        while position < len(pivot_indices) and pivot_indices[position] < index - config.pivot_label_tolerance:
+            position += 1
+        candidate = (
+            (int(pivot_indices[position]), int(confirmation_indices[position]), pivot_dates[position])
+            if position < len(pivot_indices) else None
+        )
+        if (
+            candidate is not None
+            and candidate[0] <= index + config.max_horizon
+            and candidate[1] <= index + config.max_horizon
+        ):
+            event_time[index] = max(1, int(candidate[0] - index))
             observed[index] = 1
             survival_available[index] = 1
+            target_pivot_date[index] = np.datetime64(candidate[2])
         elif index + config.max_horizon < n:
             survival_available[index] = 1
+        end = min(n, index + config.max_horizon + 1)
         future_high = high[index + 1 : end]
         future_low = low[index + 1 : end]
-        if index + config.max_horizon >= n or future_high.size == 0 or not np.isfinite(atr[index]) or atr[index] <= 0:
+        if (
+            index + config.max_horizon >= n
+            or future_high.size == 0
+            or not np.isfinite(median_move[index])
+            or median_move[index] <= 0
+        ):
             continue
-        long_returns = np.concatenate(
-            [(future_high - close[index]) / close[index], (future_low - close[index]) / close[index]]
-        )
-        mfe[index] = float(np.nanmax(long_returns))
-        mae[index] = float(np.nanmin(long_returns))
+        mfe[index] = float(np.nanmax(future_high / close[index] - 1.0))
+        mae[index] = float(np.nanmin(future_low / close[index] - 1.0))
         action_side = -current_direction
+        barrier_distance = close[index] * max(
+            config.swing_threshold_floor,
+            config.swing_threshold_multiplier * median_move[index],
+        )
         for step in range(len(future_high)):
             favorable_move = (
                 future_high[step] - close[index] if action_side > 0 else close[index] - future_low[step]
@@ -389,16 +394,18 @@ def _add_labels(group: pd.DataFrame, config: QEConfig) -> pd.DataFrame:
             adverse_move = (
                 close[index] - future_low[step] if action_side > 0 else future_high[step] - close[index]
             )
-            if adverse_move >= config.adverse_atr * atr[index]:
+            if adverse_move >= barrier_distance:
                 barrier[index] = 0.0
                 break
-            if favorable_move >= config.favorable_atr * atr[index]:
+            if favorable_move >= barrier_distance:
                 barrier[index] = 1.0
                 break
 
     data["event_time"] = event_time
     data["event_observed"] = observed
     data["survival_label_available"] = survival_available
+    data["target_event_type"] = target_event_type
+    data["target_pivot_date"] = target_pivot_date
     data["barrier_success"] = barrier
     data["mfe_10"] = mfe
     data["mae_10"] = mae
@@ -437,6 +444,7 @@ def build_causal_dataset(frame: pd.DataFrame, config: QEConfig) -> pd.DataFrame:
         ["risk_off", "risk_on"],
         default="neutral",
     )
+    featured = add_hierarchical_exhaustion(featured, config)
     labeled = pd.concat(
         [_add_labels(group, config) for _, group in featured.groupby("ticker", sort=False)], ignore_index=True
     )

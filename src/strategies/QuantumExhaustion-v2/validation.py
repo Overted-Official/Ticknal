@@ -85,10 +85,22 @@ def reversal_metrics(frame: pd.DataFrame, prediction: pd.DataFrame, threshold: f
             actual[valid], prob[valid] >= threshold, average="binary", zero_division=0
         )
         metrics[f"brier_{horizon}"] = float(brier_score_loss(actual[valid], prob[valid]))
+        probability_error = prob[valid] - actual[valid]
+        metrics[f"probability_mae_{horizon}"] = float(np.mean(np.abs(probability_error)))
+        metrics[f"probability_rmse_{horizon}"] = float(np.sqrt(np.mean(probability_error ** 2)))
         metrics[f"precision_{horizon}"] = float(precision)
         metrics[f"recall_{horizon}"] = float(recall)
         metrics[f"f1_{horizon}"] = float(f1)
         metrics[f"calibration_gap_{horizon}"] = float(abs(prob[valid].mean() - actual[valid].mean()))
+        if "target_event_type" in frame:
+            event_types = frame["target_event_type"].astype(str).to_numpy()[valid]
+            for event_type in ("bottom", "top"):
+                event_mask = event_types == event_type
+                if event_mask.any():
+                    event_error = probability_error[event_mask]
+                    metrics[f"{event_type}_probability_mae_{horizon}"] = float(np.mean(np.abs(event_error)))
+                    metrics[f"{event_type}_probability_rmse_{horizon}"] = float(np.sqrt(np.mean(event_error ** 2)))
+                    metrics[f"{event_type}_base_rate_{horizon}"] = float(actual[valid][event_mask].mean())
     for horizon in (5, 10, 20):
         actual = frame[f"target_return_{horizon}"].to_numpy(dtype=float)
         predicted = prediction[f"expected_return_{horizon}"].to_numpy(dtype=float)
@@ -119,6 +131,51 @@ def metric_dispersion(frame: pd.DataFrame, prediction: pd.DataFrame, group_colum
         "std_brier_5": float(np.std(values)), "p10_brier_5": float(np.quantile(values, 0.10)),
         "p90_brier_5": float(np.quantile(values, 0.90)),
     }
+
+
+def ticker_diagnostics(frame: pd.DataFrame, prediction: pd.DataFrame) -> pd.DataFrame:
+    """Per-ticker prediction errors used alongside economic backtest metrics."""
+    truth = frame.reset_index(drop=True)
+    predicted = prediction.reset_index(drop=True)
+    rows: list[dict[str, float | str]] = []
+    for ticker, positions in truth.groupby("ticker").groups.items():
+        indices = np.asarray(list(positions), dtype=int)
+        row: dict[str, float | str] = {"ticker": str(ticker)}
+        actual_reversal = (
+            truth.iloc[indices]["event_observed"].astype(bool)
+            & (truth.iloc[indices]["event_time"] <= 5)
+        ).astype(int).to_numpy()
+        probability = predicted.iloc[indices]["p_reversal_5"].to_numpy(dtype=float)
+        valid = np.isfinite(probability)
+        row["brier_5"] = float(np.mean((probability[valid] - actual_reversal[valid]) ** 2)) if valid.any() else np.nan
+        if valid.any():
+            probability_error = probability[valid] - actual_reversal[valid]
+            row["probability_mae_5"] = float(np.mean(np.abs(probability_error)))
+            row["probability_rmse_5"] = float(np.sqrt(np.mean(probability_error ** 2)))
+        else:
+            row["probability_mae_5"] = np.nan
+            row["probability_rmse_5"] = np.nan
+        for horizon in (5, 10, 20):
+            actual = truth.iloc[indices][f"target_return_{horizon}"].to_numpy(dtype=float)
+            estimate = predicted.iloc[indices][f"expected_return_{horizon}"].to_numpy(dtype=float)
+            valid = np.isfinite(actual) & np.isfinite(estimate)
+            error = estimate[valid] - actual[valid]
+            row[f"return_mae_{horizon}"] = float(np.mean(np.abs(error))) if len(error) else np.nan
+            row[f"return_rmse_{horizon}"] = float(np.sqrt(np.mean(error ** 2))) if len(error) else np.nan
+        for target, estimate in (("mfe_10", "expected_mfe_10"), ("mae_10", "expected_mae_10")):
+            actual = truth.iloc[indices][target].to_numpy(dtype=float)
+            values = predicted.iloc[indices][estimate].to_numpy(dtype=float)
+            valid = np.isfinite(actual) & np.isfinite(values)
+            error = values[valid] - actual[valid]
+            row[f"{target}_prediction_mae"] = float(np.mean(np.abs(error))) if len(error) else np.nan
+            row[f"{target}_prediction_rmse"] = float(np.sqrt(np.mean(error ** 2))) if len(error) else np.nan
+        barrier_column = "p_barrier" if "p_barrier" in predicted else "barrier_probability"
+        barrier_actual = truth.iloc[indices]["barrier_success"].to_numpy(dtype=float)
+        barrier_probability = predicted.iloc[indices][barrier_column].to_numpy(dtype=float)
+        valid = np.isfinite(barrier_actual) & np.isfinite(barrier_probability)
+        row["barrier_accuracy"] = float(np.mean((barrier_probability[valid] >= 0.5) == barrier_actual[valid])) if valid.any() else np.nan
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def discrete_survival_nll(frame: pd.DataFrame, daily_hazards: np.ndarray) -> float:

@@ -56,14 +56,14 @@ def _positive_probability(model: Any, x: np.ndarray) -> np.ndarray:
 
 @dataclass
 class EmpiricalExhaustionBaseline:
-    """Strictly causal exhaustion/hook benchmark with no fitted parameters."""
+    """Original-QE benchmark: price-pivot PSI-delta CDF plus direction-aware hook."""
 
     def fit(self, frame: pd.DataFrame) -> "EmpiricalExhaustionBaseline":
         return self
 
     def predict(self, frame: pd.DataFrame) -> pd.DataFrame:
         exhaustion = frame["exhaustion_percentile"].clip(0, 100).fillna(50).to_numpy() / 100.0
-        hook = frame["psi_delta"].fillna(0).to_numpy()
+        hook = frame["psi_delta_1"].fillna(0).to_numpy()
         direction = frame["psi_direction"].fillna(0).to_numpy()
         alignment = np.where(direction > 0, -hook, hook)
         p5 = np.clip(0.65 * exhaustion + 0.35 / (1.0 + np.exp(-alignment / 2.0)), 0.01, 0.99)
@@ -74,8 +74,8 @@ class EmpiricalExhaustionBaseline:
         for horizon in RETURN_HORIZONS:
             out[f"expected_return_{horizon}"] = 0.0
         out["p_barrier"] = 0.5
-        out["expected_mfe"] = 0.0
-        out["expected_mae"] = 0.0
+        out["expected_mfe_10"] = 0.0
+        out["expected_mae_10"] = 0.0
         return out
 
 
@@ -151,8 +151,8 @@ class LogisticHazardBaseline:
         for horizon, model in self.regressors.items():
             out[f"expected_return_{horizon}"] = model.predict(x)
         out["p_barrier"] = _positive_probability(self.barrier, x)
-        out["expected_mfe"] = self.excursions["mfe_10"].predict(x)
-        out["expected_mae"] = self.excursions["mae_10"].predict(x)
+        out["expected_mfe_10"] = self.excursions["mfe_10"].predict(x)
+        out["expected_mae_10"] = self.excursions["mae_10"].predict(x)
         return out
 
 
@@ -215,6 +215,6 @@ class BoostedTreeBaseline:
         for horizon, model in self.regressors.items():
             out[f"expected_return_{horizon}"] = model.predict(x)
         out["p_barrier"] = _positive_probability(self.barrier, x)
-        out["expected_mfe"] = self.excursions["mfe_10"].predict(x)
-        out["expected_mae"] = self.excursions["mae_10"].predict(x)
+        out["expected_mfe_10"] = self.excursions["mfe_10"].predict(x)
+        out["expected_mae_10"] = self.excursions["mae_10"].predict(x)
         return out
