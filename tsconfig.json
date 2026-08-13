@@ -37,6 +37,7 @@
     "_cosine_similarity_strategy",
     "scripts",
     "src/scripts",
+    "src/strategies/QuantumExhaustion",
     "scratch_*.ts",
     "scratch_*.js",
     "scratch_*.py"

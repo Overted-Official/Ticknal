@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { tickerAlerts } from '@/db/schema';
-import { normalizeTickerSymbol } from '@/lib/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

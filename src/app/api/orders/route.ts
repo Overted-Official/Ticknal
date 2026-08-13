@@ -3,7 +3,7 @@ import { desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { dailyPrices, orders, tickers } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
-import { normalizeTickerSymbol } from '@/lib/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 
 type OrderRow = typeof orders.$inferSelect;
 

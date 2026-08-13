@@ -122,6 +122,13 @@ interface ChartWidgetProps {
   symbol: string;
   initialReplayMode?: boolean;
   onReplayStateChange?: (state: ReplayState) => void;
+  selectedStrategy?: string;
+  buyThreshold?: number;
+  sellThreshold?: number;
+  strategyStartDate?: string;
+  strategyEndDate?: string;
+  setStrategyStartDate?: (d: string) => void;
+  setStrategyEndDate?: (d: string) => void;
 }
 
 const DEFAULT_REPLAY_DATE = '2019-12-31';
@@ -137,6 +144,13 @@ export default function ChartWidget({
   symbol,
   initialReplayMode = false,
   onReplayStateChange,
+  selectedStrategy = 'psi',
+  buyThreshold = 75,
+  sellThreshold = 75,
+  strategyStartDate,
+  strategyEndDate,
+  setStrategyStartDate,
+  setStrategyEndDate,
 }: ChartWidgetProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -160,8 +174,6 @@ export default function ChartWidget({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(PLAYBACK_SPEEDS[0].delay);
 
-  const [strategyStartDate, setStrategyStartDate] = useState<string>('2021-01-01');
-  const [strategyEndDate, setStrategyEndDate] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const replayDate = replayMode ? data[replayIndex]?.time ?? null : null;
@@ -472,7 +484,12 @@ export default function ChartWidget({
 
     async function fetchMetrics() {
       try {
-        const params = new URLSearchParams({ symbol });
+        const params = new URLSearchParams({ 
+          symbol, 
+          strategy: selectedStrategy,
+          buyThreshold: buyThreshold.toString(),
+          sellThreshold: sellThreshold.toString()
+        });
         if (replayMode && replayDate) {
           params.set('start', replayStartDate ?? data[0]?.time ?? replayDate);
           params.set('end', replayDate);
@@ -504,7 +521,12 @@ export default function ChartWidget({
 
     async function fetchSignals() {
       try {
-        const params = new URLSearchParams({ symbol });
+        const params = new URLSearchParams({ 
+          symbol, 
+          strategy: selectedStrategy,
+          buyThreshold: buyThreshold.toString(),
+          sellThreshold: sellThreshold.toString()
+        });
         if (replayMode && replayDate) {
           params.set('start', replayStartDate ?? data[0]?.time ?? replayDate);
           params.set('end', replayDate);
@@ -535,7 +557,19 @@ export default function ChartWidget({
       isActive = false;
       window.clearTimeout(resetSignalsTimeout);
     };
-  }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate]);
+  }, [
+    symbol,
+    data,
+    replayMode,
+    replayDate,
+    replayStartDate,
+    strategyStartDate,
+    strategyEndDate,
+    buildMarkers,
+    selectedStrategy,
+    buyThreshold,
+    sellThreshold,
+  ]);
 
   useEffect(() => {
     if (replayMode) return;
@@ -965,7 +999,7 @@ export default function ChartWidget({
                     type="date" 
                     className="w-full bg-tv-base border border-tv-border rounded-tv-sm px-2 py-1 text-tv-text text-xs focus:outline-none focus:border-tv-accent"
                     value={strategyStartDate}
-                    onChange={(e) => setStrategyStartDate(e.target.value)}
+                    onChange={(e) => setStrategyStartDate?.(e.target.value)}
                   />
                 </div>
                 <div>
@@ -974,14 +1008,14 @@ export default function ChartWidget({
                     type="date" 
                     className="w-full bg-tv-base border border-tv-border rounded-tv-sm px-2 py-1 text-tv-text text-xs focus:outline-none focus:border-tv-accent"
                     value={strategyEndDate}
-                    onChange={(e) => setStrategyEndDate(e.target.value)}
+                    onChange={(e) => setStrategyEndDate?.(e.target.value)}
                   />
                 </div>
                 <div className="pt-1 flex justify-end">
                   <button 
                     onClick={() => {
-                      setStrategyStartDate('2021-01-01');
-                      setStrategyEndDate('');
+                      setStrategyStartDate?.('2021-01-01');
+                      setStrategyEndDate?.('');
                     }}
                     className="text-[10px] text-tv-muted hover:text-tv-text transition-colors"
                   >

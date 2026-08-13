@@ -16,12 +16,21 @@ type SignalData = {
   exitReason?: string;
   modelVersion: string;
 };
-
 interface SignalPanelProps {
   activeSymbol: string | null;
   replayActive?: boolean;
   replayStartDate?: string | null;
   replayEndDate?: string | null;
+  selectedStrategy: string;
+  setSelectedStrategy: (strategy: string) => void;
+  buyThreshold?: number;
+  setBuyThreshold?: (t: number) => void;
+  sellThreshold?: number;
+  setSellThreshold?: (t: number) => void;
+  strategyStartDate?: string;
+  strategyEndDate?: string;
+  setStrategyStartDate?: (d: string) => void;
+  setStrategyEndDate?: (d: string) => void;
 }
 
 export default function SignalPanel({
@@ -29,17 +38,25 @@ export default function SignalPanel({
   replayActive = false,
   replayStartDate = null,
   replayEndDate = null,
+  selectedStrategy,
+  setSelectedStrategy,
+  buyThreshold = 75,
+  setBuyThreshold,
+  sellThreshold = 75,
+  setSellThreshold,
+  strategyStartDate,
+  strategyEndDate,
+  setStrategyStartDate,
+  setStrategyEndDate,
 }: SignalPanelProps) {
   const [signalData, setSignalData] = useState<SignalData | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [selectedStrategy, setSelectedStrategy] = useState('psi');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const strategies = [
+  const strategies: { id: string; label: string; disabled?: boolean }[] = [
     { id: 'psi', label: 'PSI Strategy' },
-    { id: 'momentum', label: 'Momentum (Soon)', disabled: true },
-    { id: 'mean_reversion', label: 'Mean Rev (Soon)', disabled: true },
+    { id: 'quantum_exhaustion', label: 'Quantum Exhaustion (QE)' },
   ];
 
   const selectedLabel = strategies.find(s => s.id === selectedStrategy)?.label || 'Strategy';
@@ -54,7 +71,9 @@ export default function SignalPanel({
         const params = new URLSearchParams({ 
           symbol: activeSymbol, 
           limit: '1',
-          strategy: selectedStrategy
+          strategy: selectedStrategy,
+          buyThreshold: buyThreshold.toString(),
+          sellThreshold: sellThreshold.toString()
         });
         if (replayActive && replayEndDate) {
           params.set('end', replayEndDate);
@@ -80,7 +99,7 @@ export default function SignalPanel({
 
     const interval = setInterval(fetchSignals, 60000); // refresh every minute
     return () => clearInterval(interval);
-  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, selectedStrategy]);
+  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, selectedStrategy, buyThreshold, sellThreshold]);
 
   if (!activeSymbol) return null;
 
@@ -177,28 +196,82 @@ export default function SignalPanel({
       >
         {visibleSignalData && (
           <div className="p-4 bg-tv-base flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-tv-sm bg-tv-surface p-2">
-                <div className="text-tv-muted mb-1">Master Index</div>
-                <div className="text-tv-text font-weight-medium">{visibleSignalData.masterIndex.toFixed(2)}</div>
-              </div>
-              <div className="rounded-tv-sm bg-tv-surface p-2">
-                <div className="text-tv-muted mb-1">AYM Index</div>
-                <div className="text-tv-text font-weight-medium">{visibleSignalData.masterIndexAdjusted.toFixed(2)}</div>
-              </div>
-              <div className="rounded-tv-sm bg-tv-surface p-2">
-                <div className="text-tv-muted mb-1">Price</div>
-                <div className="text-tv-text font-weight-medium">{Number(visibleSignalData.price).toFixed(2)}</div>
-              </div>
-              <div className="rounded-tv-sm bg-tv-surface p-2">
-                <div className="text-tv-muted mb-1">MDM</div>
-                <div className="text-tv-text font-weight-medium">
-                  {visibleSignalData.medianDailyMove === null ? 'N/A' : `${visibleSignalData.medianDailyMove.toFixed(2)}%`}
+            {selectedStrategy === 'quantum_exhaustion' ? (
+              <div className="flex flex-col gap-3 text-xs">
+                <div className="rounded-tv-sm bg-tv-surface p-2">
+                  <div className="text-tv-muted mb-2 flex justify-between">
+                    <span>BUY Threshold</span>
+                    <span className="text-tv-text font-weight-medium">{buyThreshold}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="50"
+                    max="99"
+                    value={buyThreshold}
+                    onChange={(e) => setBuyThreshold?.(Number(e.target.value))}
+                    className="w-full accent-tv-up cursor-pointer"
+                  />
+                </div>
+                <div className="rounded-tv-sm bg-tv-surface p-2">
+                  <div className="text-tv-muted mb-2 flex justify-between">
+                    <span>SELL Threshold</span>
+                    <span className="text-tv-text font-weight-medium">{sellThreshold}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="50"
+                    max="99"
+                    value={sellThreshold}
+                    onChange={(e) => setSellThreshold?.(Number(e.target.value))}
+                    className="w-full accent-tv-down cursor-pointer"
+                  />
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-tv-sm bg-tv-surface p-2">
+                  <div className="text-tv-muted mb-1">Master Index</div>
+                  <div className="text-tv-text font-weight-medium">{visibleSignalData.masterIndex.toFixed(2)}</div>
+                </div>
+                <div className="rounded-tv-sm bg-tv-surface p-2">
+                  <div className="text-tv-muted mb-1">AYM Index</div>
+                  <div className="text-tv-text font-weight-medium">{visibleSignalData.masterIndexAdjusted.toFixed(2)}</div>
+                </div>
+                <div className="rounded-tv-sm bg-tv-surface p-2">
+                  <div className="text-tv-muted mb-1">Price</div>
+                  <div className="text-tv-text font-weight-medium">{Number(visibleSignalData.price).toFixed(2)}</div>
+                </div>
+                <div className="rounded-tv-sm bg-tv-surface p-2">
+                  <div className="text-tv-muted mb-1">MDM</div>
+                  <div className="text-tv-text font-weight-medium">
+                    {visibleSignalData.medianDailyMove === null ? 'N/A' : `${visibleSignalData.medianDailyMove.toFixed(2)}%`}
+                  </div>
+                </div>
+              </div>
+            )}
             
-            <div className="mt-2 pt-2 border-t border-tv-border flex items-center justify-between text-[10px] text-tv-muted">
+            <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-tv-border/50">
+              <div className="flex items-center justify-between">
+                <label className="text-tv-muted text-[10px]">Start Date</label>
+                <input 
+                  type="date" 
+                  className="bg-tv-surface border border-tv-border rounded-tv-sm px-1 py-0.5 text-tv-text text-[10px] focus:outline-none focus:border-tv-accent w-28"
+                  value={strategyStartDate || ''}
+                  onChange={(e) => setStrategyStartDate?.(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-tv-muted text-[10px]">End Date</label>
+                <input 
+                  type="date" 
+                  className="bg-tv-surface border border-tv-border rounded-tv-sm px-1 py-0.5 text-tv-text text-[10px] focus:outline-none focus:border-tv-accent w-28"
+                  value={strategyEndDate || ''}
+                  onChange={(e) => setStrategyEndDate?.(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mt-1 pt-2 border-t border-tv-border/50 text-[10px] text-tv-muted">
               <span className="flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> {visibleSignalData.modelVersion || 'v1.0'}
               </span>

@@ -2,18 +2,22 @@ import { NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { dailyPrices } from "@/db/schema";
-import { resolvePsiParamsWithSource } from "@/lib/psiParameterStore";
+import { resolvePsiParamsWithSource } from "@/strategies/PSI/psiParameterStore";
 import {
   formatMetricsForApi,
   normalizeTickerSymbol,
   runPsiStrategy,
   type PriceBar,
-} from "@/lib/psiStrategy";
+} from "@/strategies/PSI/psiStrategy";
+import { runQeStrategy, simulateQePerformance } from "@/strategies/QuantumExhaustion/qeStrategy";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get("symbol");
+    const strategy = searchParams.get("strategy") ?? "psi";
+    const buyThreshold = Number(searchParams.get("buyThreshold") ?? 75);
+    const sellThreshold = Number(searchParams.get("sellThreshold") ?? 75);
 
     if (!symbol) {
       return NextResponse.json({ error: "Missing symbol parameter" }, { status: 400 });
@@ -43,11 +47,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Insufficient price history" }, { status: 404 });
     }
 
-    const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
-    const result = runPsiStrategy(bars, parameterResolution.params);
+    let metricsPayload;
+    let parameterSource;
+
+    if (strategy === "quantum_exhaustion") {
+      const qeResult = runQeStrategy(ticker, bars, startDate, endDate, buyThreshold, sellThreshold);
+      const simResult = simulateQePerformance(bars, qeResult.signals, startDate, endDate);
+      metricsPayload = simResult.metrics;
+      parameterSource = "Quantum Exhaustion Model";
+    } else {
+      const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+      const result = runPsiStrategy(bars, parameterResolution.params);
+      metricsPayload = result.metrics;
+      parameterSource = parameterResolution.parameterSource;
+    }
+
     return NextResponse.json({
-      metrics: formatMetricsForApi(result.metrics),
-      parameterSource: parameterResolution.parameterSource,
+      metrics: formatMetricsForApi(metricsPayload),
+      parameterSource,
     });
   } catch (error) {
     console.error("Error computing PSI metrics:", error);

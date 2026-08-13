@@ -6,7 +6,7 @@ import ChartReplayWorkspace from '@/components/platform/ChartReplayWorkspace';
 import { db } from '@/db';
 import { dailyPrices, tickers, orders } from '@/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
-import { normalizeTickerSymbol } from '@/lib/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
 import ChartViews from '@/components/platform/ChartViews';
 import TickerPositions, { TickerOrder } from '@/components/platform/TickerPositions';

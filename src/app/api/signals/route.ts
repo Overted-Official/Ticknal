@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { dailyPrices } from "@/db/schema";
-import { resolvePsiParamsWithSource } from "@/lib/psiParameterStore";
-import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from "@/lib/psiStrategy";
+import { resolvePsiParamsWithSource } from "@/strategies/PSI/psiParameterStore";
+import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from "@/strategies/PSI/psiStrategy";
+import { runQeStrategy } from "@/strategies/QuantumExhaustion/qeStrategy";
 
 export async function GET(request: Request) {
   try {
@@ -17,6 +18,9 @@ export async function GET(request: Request) {
     const ticker = normalizeTickerSymbol(symbol);
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? Number.parseInt(limitParam, 10) : undefined;
+    const strategy = searchParams.get("strategy") ?? "psi";
+    const buyThreshold = Number(searchParams.get("buyThreshold") ?? 75);
+    const sellThreshold = Number(searchParams.get("sellThreshold") ?? 75);
     const startDate = searchParams.get("start") ?? "2021-01-01";
     const endDate = searchParams.get("end") ?? undefined;
 
@@ -37,12 +41,24 @@ export async function GET(request: Request) {
       }))
       .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
-    if (bars.length < 260) {
+    if (bars.length < 260 && strategy === "psi") {
       return NextResponse.json({ signals: [], latestMasterIndex: null, latestMasterIndexAdjusted: null });
     }
 
-    const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
-    const result = runPsiStrategy(bars, parameterResolution.params);
+    let result: { signals: any[]; latestMasterIndex: number | null; latestMasterIndexAdjusted: number | null; parameterSource?: any };
+    
+    if (strategy === "quantum_exhaustion") {
+      result = runQeStrategy(ticker, bars, startDate, endDate, buyThreshold, sellThreshold);
+      result.parameterSource = "Quantum Exhaustion Model";
+    } else {
+      const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+      const psiResult = runPsiStrategy(bars, parameterResolution.params);
+      result = {
+        ...psiResult,
+        parameterSource: parameterResolution.parameterSource,
+      };
+    }
+
     const signals =
       limit && limit > 0
         ? [...result.signals].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, limit)
@@ -52,7 +68,7 @@ export async function GET(request: Request) {
       signals,
       latestMasterIndex: result.latestMasterIndex,
       latestMasterIndexAdjusted: result.latestMasterIndexAdjusted,
-      parameterSource: parameterResolution.parameterSource,
+      parameterSource: result.parameterSource,
     });
   } catch (error) {
     console.error("Error computing PSI signals:", error);

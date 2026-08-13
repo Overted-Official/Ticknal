@@ -2,9 +2,9 @@ import webPush from 'web-push';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { orders, pushSubscriptions, signalNotifications, tickerAlerts } from '@/db/schema';
-import { resolvePsiParamsFromStore } from '@/lib/psiParameterStore';
+import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { getDailyPriceBars } from '@/lib/strategyOrders';
-import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal } from '@/lib/psiStrategy';
+import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal } from '@/strategies/PSI/psiStrategy';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 

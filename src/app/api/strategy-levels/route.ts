@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
-import { normalizeTickerSymbol } from '@/lib/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

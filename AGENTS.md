@@ -14,3 +14,8 @@ When working on this project, DO NOT create temporary files, test scripts, or sc
 If you need to create any test files, scripts, or non-core files to test implementations or debug problems, you MUST:
 1. Create a descriptive subfolder inside `_technical_support/` for the specific problem or task you are working on.
 2. Place all your scratch scripts and test files inside that new subfolder.
+
+# Build and Type Checking
+
+When working on this project, ALWAYS verify that the code compiles and has no type errors after making changes. 
+You MUST proactively run commands like `npx tsc --noEmit` or `npm run build` to check for build errors before concluding a task or asking the user to review.

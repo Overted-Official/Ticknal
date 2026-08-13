@@ -1,9 +1,9 @@
 import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
-import { normalizeTickerSymbol, runPsiStrategy } from '@/lib/psiStrategy';
-import { resolvePsiParamsFromStore } from '@/lib/psiParameterStore';
-import { PriceBar } from '@/lib/psiStrategy';
+import { normalizeTickerSymbol, runPsiStrategy } from '@/strategies/PSI/psiStrategy';
+import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
+import { PriceBar } from '@/strategies/PSI/psiStrategy';
 
 const HISTORY_BARS = 320;
 
