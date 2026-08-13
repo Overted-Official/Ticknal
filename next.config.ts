@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       "./Data/psi_*best*.csv",
       "./src/strategies/QuantumExhaustion-v2/deploy/**/*",
     ],
+    "/api/predict": [
+      "./src/tools/kronos/models/**/*.onnx",
+    ],
   },
   eslint: {
     ignoreDuringBuilds: true,
