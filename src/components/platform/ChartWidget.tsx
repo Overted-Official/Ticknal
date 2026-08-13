@@ -675,6 +675,9 @@ export default function ChartWidget({
   const handleDateChange = (value: string) => {
     setIsPlaying(false);
     setReplayIndex(findIndexAtOrBefore(data, value));
+    if (setStrategyStartDate) {
+      setStrategyStartDate(value);
+    }
   };
 
   const saveOrderDraft = async () => {

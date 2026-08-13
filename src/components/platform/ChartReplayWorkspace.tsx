@@ -35,11 +35,6 @@ export default function ChartReplayWorkspace({
     data[0]?.time ?? 'none',
     data[data.length - 1]?.time ?? 'none',
     initialReplayMode ? 'replay' : 'live',
-    selectedStrategy,
-    buyThreshold,
-    sellThreshold,
-    strategyStartDate,
-    strategyEndDate,
   ].join(':');
   const handleReplayStateChange = useCallback((state: ReplayState) => {
     setReplayState(state);
