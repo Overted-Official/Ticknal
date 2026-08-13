@@ -1,6 +1,6 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  serverExternalPackages: ["onnxruntime-node"],
   outputFileTracingIncludes: {
     "/api/metrics": [
       "./Data/psi_*best*.csv",
@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
     ],
     "/api/predict": [
       "./src/tools/kronos/models/**/*.onnx",
+      "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.so*",
+      "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.node",
     ],
   },
   eslint: {
