@@ -1,0 +1,10 @@
+{
+  "entry_probability": 0.62,
+  "exit_probability": 0.68,
+  "hysteresis": 0.05,
+  "cooldown_sessions": 3,
+  "atr_stop_multiple": 2.5,
+  "trailing_atr_multiple": 3.0,
+  "maximum_holding_sessions": 120,
+  "probability_horizon": 5
+}

@@ -5,6 +5,7 @@ import { dailyPrices } from "@/db/schema";
 import { resolvePsiParamsWithSource } from "@/strategies/PSI/psiParameterStore";
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from "@/strategies/PSI/psiStrategy";
 import { runQeStrategy } from "@/strategies/QuantumExhaustion/qeStrategy";
+import { QeV2DeploymentError, runQeV2Strategy } from "@/strategies/QuantumExhaustion-v2/qeV2Strategy";
 
 export async function GET(request: Request) {
   try {
@@ -46,8 +47,36 @@ export async function GET(request: Request) {
     }
 
     let result: { signals: any[]; latestMasterIndex: number | null; latestMasterIndexAdjusted: number | null; parameterSource?: any };
+    let qeV2Details: Record<string, unknown> | undefined;
     
-    if (strategy === "quantum_exhaustion") {
+    if (strategy === "quantum_exhaustion_v2") {
+      const qeV2Result = runQeV2Strategy(ticker, bars, startDate, endDate);
+      result = {
+        signals: qeV2Result.signals,
+        latestMasterIndex: qeV2Result.latestMasterIndex,
+        latestMasterIndexAdjusted: qeV2Result.latestMasterIndexAdjusted,
+        parameterSource: `${qeV2Result.modelVersion} (locked policy, as of ${qeV2Result.asOfDate})`,
+      };
+      const latest = qeV2Result.scores.at(-1);
+      qeV2Details = latest ? {
+        reversalProbabilities: {
+          sessions3: latest.reversal_probability_3,
+          sessions5: latest.reversal_probability_5,
+          sessions10: latest.reversal_probability_10,
+        },
+        expectedReturns: {
+          sessions5: latest.expected_return_5,
+          sessions10: latest.expected_return_10,
+          sessions20: latest.expected_return_20,
+        },
+        uncertainty: latest.prediction_uncertainty,
+        exhaustionPercentile: latest.exhaustion_percentile,
+        targetPosition: latest.target_position,
+        reason: latest.reason,
+        modelVersion: qeV2Result.modelVersion,
+        asOfDate: qeV2Result.asOfDate,
+      } : undefined;
+    } else if (strategy === "quantum_exhaustion") {
       result = runQeStrategy(ticker, bars, startDate, endDate, buyThreshold, sellThreshold);
       result.parameterSource = "Quantum Exhaustion Model";
     } else {
@@ -69,8 +98,12 @@ export async function GET(request: Request) {
       latestMasterIndex: result.latestMasterIndex,
       latestMasterIndexAdjusted: result.latestMasterIndexAdjusted,
       parameterSource: result.parameterSource,
+      qeV2: qeV2Details,
     });
   } catch (error) {
+    if (error instanceof QeV2DeploymentError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("Error computing PSI signals:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

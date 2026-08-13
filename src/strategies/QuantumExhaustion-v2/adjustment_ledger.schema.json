@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QE-v2 reviewed EGX adjustment ledger",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["ticker", "effectiveDate", "backAdjustmentFactor", "verified", "source"],
+    "properties": {
+      "ticker": { "type": "string", "minLength": 1 },
+      "effectiveDate": { "type": "string", "format": "date" },
+      "backAdjustmentFactor": { "type": "number", "exclusiveMinimum": 0 },
+      "verified": { "type": "boolean" },
+      "source": { "type": "string", "minLength": 1 },
+      "notes": { "type": "string" }
+    }
+  }
+}

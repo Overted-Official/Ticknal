@@ -10,6 +10,11 @@ import {
   type PriceBar,
 } from "@/strategies/PSI/psiStrategy";
 import { runQeStrategy, simulateQePerformance } from "@/strategies/QuantumExhaustion/qeStrategy";
+import {
+  QeV2DeploymentError,
+  runQeV2Strategy,
+  simulateQeV2Performance,
+} from "@/strategies/QuantumExhaustion-v2/qeV2Strategy";
 
 export async function GET(request: Request) {
   try {
@@ -50,7 +55,12 @@ export async function GET(request: Request) {
     let metricsPayload;
     let parameterSource;
 
-    if (strategy === "quantum_exhaustion") {
+    if (strategy === "quantum_exhaustion_v2") {
+      const qeV2Result = runQeV2Strategy(ticker, bars, startDate, endDate);
+      const simResult = simulateQeV2Performance(bars, qeV2Result.scores, startDate, endDate);
+      metricsPayload = simResult.metrics;
+      parameterSource = `${qeV2Result.modelVersion} (locked policy, as of ${qeV2Result.asOfDate})`;
+    } else if (strategy === "quantum_exhaustion") {
       const qeResult = runQeStrategy(ticker, bars, startDate, endDate, buyThreshold, sellThreshold);
       const simResult = simulateQePerformance(bars, qeResult.signals, startDate, endDate);
       metricsPayload = simResult.metrics;
@@ -67,6 +77,9 @@ export async function GET(request: Request) {
       parameterSource,
     });
   } catch (error) {
+    if (error instanceof QeV2DeploymentError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("Error computing PSI metrics:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
