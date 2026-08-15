@@ -1,12 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
 import "./globals.css";
-
-const aeonikFont = Outfit({
-  variable: "--font-aeonik",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "QuantEGX | Trading Platform",
@@ -14,17 +8,17 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#060709",
+  themeColor: "#0F0F0F",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${aeonikFont.variable} h-full antialiased`}
+      className="h-full antialiased"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         {children}
         <ServiceWorkerRegistration />
       </body>

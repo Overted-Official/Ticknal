@@ -43,8 +43,8 @@ export default function DashboardCharts({
         {/* Monthly Investment Bar Chart */}
         <div className="glass-panel rounded-2xl p-5 shadow-xl">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white tracking-tight">Monthly Investment</h2>
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40 font-mono">Cost basis / mo</span>
+            <h2 className="text-sm font-medium text-white tracking-[-0.02em]">Monthly Investment</h2>
+            <span className="text-[10px] uppercase tracking-[0.06em] font-medium text-white/40 font-mono">Cost basis / mo</span>
           </div>
           <div style={{ height: 240 }}>
             <MonthlyInvestmentChart data={monthlyData} />

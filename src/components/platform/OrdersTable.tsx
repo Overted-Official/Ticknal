@@ -93,7 +93,7 @@ export default function OrdersTable() {
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
-              <h1 className="text-2xl font-bold tracking-tight text-white">Positions & Orders</h1>
+              <h1 className="text-2xl font-medium tracking-[-0.03em] text-white">Positions & Orders</h1>
             </div>
             <p className="mt-0.5 text-xs text-white/50">Tracked long positions and execution trade history</p>
           </div>
@@ -364,7 +364,7 @@ function Metric({ label, value, valueClass = 'text-white' }: { label: string; va
       whileHover={hoverLift}
       className="glass-panel glass-panel-hover rounded-2xl p-3.5 md:p-4 group cursor-default"
     >
-      <div className="text-[10px] uppercase font-semibold tracking-wider text-white/45">{label}</div>
+      <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45">{label}</div>
       <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
     </motion.div>
   );

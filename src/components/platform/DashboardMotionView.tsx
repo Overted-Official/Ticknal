@@ -68,7 +68,7 @@ export default function DashboardMotionView({
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
-              <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+              <h1 className="text-2xl font-medium tracking-[-0.03em] text-white">Dashboard</h1>
             </div>
             <p className="mt-0.5 text-xs text-white/50">Portfolio performance and real-time PSI trading intelligence</p>
           </div>
@@ -125,19 +125,19 @@ export default function DashboardMotionView({
           className="mt-4 glass-panel rounded-2xl p-4 md:p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
         >
           <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Win Rate</div>
+            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Win Rate</div>
             <div className="text-xl font-bold font-mono text-white">{orderStats.winRate.toFixed(1)}%</div>
           </div>
           <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Avg. Bars / Trade</div>
+            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Avg. Bars / Trade</div>
             <div className="text-xl font-bold font-mono text-white">{Math.round(orderStats.avgBarsPerTrade)}</div>
           </div>
           <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Avg. Adverse Excursion</div>
+            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Avg. Adverse Excursion</div>
             <div className="text-xl font-bold font-mono text-white/30">N/A</div>
           </div>
           <div className="flex-1 md:px-5 last:pr-0 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Max Trade Loss</div>
+            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Max Trade Loss</div>
             <div className={`text-xl font-bold font-mono ${orderStats.maxDrawdownPct < 0 ? 'text-[#ff4d58]' : 'text-white'}`}>
               {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
             </div>
@@ -156,7 +156,7 @@ export default function DashboardMotionView({
         <motion.section variants={itemFadeInUp} className="glass-panel rounded-2xl overflow-hidden flex flex-col">
           <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+              <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_rgba(255,100,13,0.4)]" />
                 Active Positions
               </h2>
@@ -275,7 +275,7 @@ export default function DashboardMotionView({
           <motion.div variants={itemFadeInUp} className="glass-panel rounded-2xl overflow-hidden">
             <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+                <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#00e676] shadow-[0_0_8px_#00e676]" />
                   Buy Opportunities
                 </h2>
@@ -291,7 +291,7 @@ export default function DashboardMotionView({
           <motion.div variants={itemFadeInUp} className="glass-panel rounded-2xl overflow-hidden">
             <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+                <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#ff4d58] shadow-[0_0_8px_#ff4d58]" />
                   Exit & Stop Alerts
                 </h2>

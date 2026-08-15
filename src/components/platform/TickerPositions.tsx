@@ -48,20 +48,20 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
       
       {/* Summary Cards */}
       <div>
-        <h2 className="text-sm font-semibold tracking-tight mb-3 text-white">{symbol.replace('.CA', '')} Position Summary</h2>
+        <h2 className="text-sm font-medium tracking-[-0.02em] mb-3 text-white">{symbol.replace('.CA', '')} Position Summary</h2>
         <div className="grid grid-cols-3 gap-2.5">
           <div className="glass-panel glass-panel-hover rounded-2xl p-3.5 shadow-xl">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate font-mono">Invested</div>
+            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Invested</div>
             <div className="mt-1 text-sm font-bold font-mono text-white truncate">{formatMoney(totalInvested)}</div>
           </div>
           <div className="glass-panel glass-panel-hover rounded-2xl p-3.5 shadow-xl">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate font-mono">Unrealized P/L</div>
+            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Unrealized P/L</div>
             <div className={`mt-1 text-sm font-bold font-mono truncate ${unrealizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
               {formatMoney(unrealizedPl, true)}
             </div>
           </div>
           <div className="glass-panel glass-panel-hover rounded-2xl p-3.5 shadow-xl">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate font-mono">Realized P/L</div>
+            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Realized P/L</div>
             <div className={`mt-1 text-sm font-bold font-mono truncate ${realizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
               {formatMoney(realizedPl, true)}
             </div>
@@ -71,7 +71,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
 
       {/* Position Detail Cards */}
       <div>
-        <h2 className="text-sm font-semibold tracking-tight mb-3 text-white">Order History</h2>
+        <h2 className="text-sm font-medium tracking-[-0.02em] mb-3 text-white">Order History</h2>
         {displayOrders.length === 0 ? (
           <div className="text-xs text-white/40 text-center py-8 border border-white/[0.08] rounded-2xl border-dashed bg-white/[0.01]">
             No tracked positions for {symbol.replace('.CA', '')}
