@@ -5,8 +5,8 @@ import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 
-// Helper to fetch data for one symbol using a promise
-function fetchSymbolData(client: TradingViewClient, symbol: string): Promise<TradingViewPeriod | null> {
+// Helper to fetch multi-bar history for one symbol using a promise (fills gaps up to rangeBars)
+function fetchSymbolPeriods(client: TradingViewClient, symbol: string, rangeBars: number = 30): Promise<TradingViewPeriod[]> {
   return new Promise((resolve) => {
     try {
       const tvSymbol = `EGX:${symbol.replace('.CA', '')}`;
@@ -14,25 +14,24 @@ function fetchSymbolData(client: TradingViewClient, symbol: string): Promise<Tra
       
       chart.setMarket(tvSymbol, {
         timeframe: 'D',
-        range: 2 // We just need today's close and maybe yesterday's
+        range: rangeBars
       });
 
       const timeout = setTimeout(() => {
         chart.delete();
-        resolve(null);
-      }, 5000);
+        resolve([]);
+      }, 7000);
 
       chart.onUpdate(() => {
         clearTimeout(timeout);
         const data = chart.periods;
         if (data && data.length > 0) {
           data.sort((a, b) => a.time - b.time);
-          const current = data[data.length - 1];
           chart.delete();
-          resolve(current);
+          resolve(data);
         } else {
           chart.delete();
-          resolve(null);
+          resolve([]);
         }
       });
 
@@ -40,12 +39,99 @@ function fetchSymbolData(client: TradingViewClient, symbol: string): Promise<Tra
         clearTimeout(timeout);
         chart.delete();
         console.error(`Error for ${symbol}:`, err.message || err);
-        resolve(null);
+        resolve([]);
       });
     } catch {
-      resolve(null);
+      resolve([]);
     }
   });
+}
+
+/**
+ * Fetch and upsert NAV history for CI The Quant Fund from Snduk
+ */
+async function updateCIQuantFund(): Promise<{ symbol: string; status: string; count?: number; date?: string; message?: string }> {
+  try {
+    // 1. Ensure CI_QUANT exists in tickers table
+    await db.insert(tickers)
+      .values({
+        symbol: 'CI_QUANT',
+        companyName: 'CI The Quant Fund',
+        exchange: 'EGX',
+        sector: 'Mutual Funds',
+        industry: 'Equity Funds',
+      })
+      .onConflictDoNothing({ target: tickers.symbol });
+
+    // 2. Fetch history from Snduk tRPC endpoint
+    const inputPayload = {
+      '0': {
+        json: {
+          fundId: 123,
+          period: 'ALL',
+        },
+      },
+    };
+
+    const url = `https://snduk.com/api/trpc/funds.getPriceHistory?batch=1&input=${encodeURIComponent(
+      JSON.stringify(inputPayload)
+    )}`;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      next: { revalidate: 0 },
+    });
+
+    if (!res.ok) {
+      return { symbol: 'CI_QUANT', status: 'error', message: `Snduk HTTP ${res.status}` };
+    }
+
+    const raw = await res.json();
+    const history: Array<{ date: string; price: number; changePercent: number }> = raw[0]?.result?.data?.json || [];
+
+    if (history.length === 0) {
+      return { symbol: 'CI_QUANT', status: 'no_data' };
+    }
+
+    // 3. Upsert historical points into dailyPrices
+    for (const item of history) {
+      const priceStr = item.price.toString();
+      await db.insert(dailyPrices)
+        .values({
+          tickerSymbol: 'CI_QUANT',
+          date: item.date,
+          open: priceStr,
+          high: priceStr,
+          low: priceStr,
+          close: priceStr,
+          volume: '0',
+        })
+        .onConflictDoUpdate({
+          target: [dailyPrices.tickerSymbol, dailyPrices.date],
+          set: {
+            open: priceStr,
+            high: priceStr,
+            low: priceStr,
+            close: priceStr,
+          },
+        });
+    }
+
+    const latest = history[history.length - 1];
+    return {
+      symbol: 'CI_QUANT',
+      status: 'updated',
+      count: history.length,
+      date: latest?.date,
+    };
+  } catch (err) {
+    console.error('Error updating CI_QUANT fund:', err);
+    return { symbol: 'CI_QUANT', status: 'error', message: (err as Error).message };
+  }
 }
 
 export async function GET(req: Request) {
@@ -58,56 +144,72 @@ export async function GET(req: Request) {
   try {
     const allTickers = await db.select().from(tickers);
 
-    if (allTickers.length === 0) {
-      return NextResponse.json({ message: 'No tickers found to update.' }, { status: 200 });
-    }
-
-    const client = new TradingView.Client();
-    const results: Array<{ symbol: string; status: string; date?: string; message?: string }> = [];
+    const results: Array<{ symbol: string; status: string; count?: number; date?: string; message?: string }> = [];
     const updatedSymbols: string[] = [];
 
-    for (const t of allTickers) {
-      try {
-        const quote = await fetchSymbolData(client, t.symbol);
-        
-        if (quote) {
-          const dateStr = new Date(quote.time * 1000).toISOString().split('T')[0];
-
-          await db.insert(dailyPrices)
-            .values({
-              tickerSymbol: t.symbol,
-              date: dateStr,
-              open: quote.open.toString(),
-              high: quote.max.toString(),
-              low: quote.min.toString(),
-              close: quote.close.toString(),
-              volume: quote.volume.toString()
-            })
-            .onConflictDoUpdate({
-              target: [dailyPrices.tickerSymbol, dailyPrices.date],
-              set: {
-                open: quote.open.toString(),
-                high: quote.max.toString(),
-                low: quote.min.toString(),
-                close: quote.close.toString(),
-                volume: quote.volume.toString()
-              }
-            });
-            
-          results.push({ symbol: t.symbol, status: 'updated', date: dateStr });
-          updatedSymbols.push(t.symbol);
-        } else {
-          results.push({ symbol: t.symbol, status: 'no_data' });
-        }
-        
-        // Sleep to avoid rate limits
-        await new Promise(r => setTimeout(r, 1000));
-      } catch (err) {
-        results.push({ symbol: t.symbol, status: 'error', message: (err as Error).message });
-      }
+    // 1. Sync CI The Quant Fund via Snduk
+    const ciQuantResult = await updateCIQuantFund();
+    results.push(ciQuantResult);
+    if (ciQuantResult.status === 'updated') {
+      updatedSymbols.push('CI_QUANT');
     }
-    
-    client.end();
+
+    // 2. Sync EGX Stock Tickers via TradingView with 30-day gap-fill
+    const stockTickers = allTickers.filter((t) => t.symbol !== 'CI_QUANT');
+
+    if (stockTickers.length > 0) {
+      const client = new TradingView.Client();
+
+      for (const t of stockTickers) {
+        try {
+          const periods = await fetchSymbolPeriods(client, t.symbol, 30);
+          
+          if (periods.length > 0) {
+            let updatedCount = 0;
+            let latestDateStr = '';
+
+            for (const quote of periods) {
+              const dateStr = new Date(quote.time * 1000).toISOString().split('T')[0];
+              latestDateStr = dateStr;
+
+              await db.insert(dailyPrices)
+                .values({
+                  tickerSymbol: t.symbol,
+                  date: dateStr,
+                  open: quote.open.toString(),
+                  high: quote.max.toString(),
+                  low: quote.min.toString(),
+                  close: quote.close.toString(),
+                  volume: quote.volume.toString()
+                })
+                .onConflictDoUpdate({
+                  target: [dailyPrices.tickerSymbol, dailyPrices.date],
+                  set: {
+                    open: quote.open.toString(),
+                    high: quote.max.toString(),
+                    low: quote.min.toString(),
+                    close: quote.close.toString(),
+                    volume: quote.volume.toString()
+                  }
+                });
+              updatedCount++;
+            }
+              
+            results.push({ symbol: t.symbol, status: 'updated', count: updatedCount, date: latestDateStr });
+            updatedSymbols.push(t.symbol);
+          } else {
+            results.push({ symbol: t.symbol, status: 'no_data' });
+          }
+          
+          // Sleep to avoid rate limits
+          await new Promise(r => setTimeout(r, 800));
+        } catch (err) {
+          results.push({ symbol: t.symbol, status: 'error', message: (err as Error).message });
+        }
+      }
+      
+      client.end();
+    }
 
     let notificationResult = null;
     try {
@@ -123,3 +225,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
   }
 }
+
