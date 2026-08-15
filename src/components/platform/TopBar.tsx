@@ -44,15 +44,15 @@ export default function TopBar({
 
   return (
     <>
-      <div className="h-12 w-full bg-plt-surface border-b border-plt-border flex items-center px-3 justify-between select-none relative z-40">
+      <div className="h-[48px] w-full bg-plt-surface border-b border-plt-border flex items-center px-3 justify-between select-none relative z-40 shrink-0">
         {/* Left section (Logo + Symbol) */}
         <div className="flex items-center space-x-2 md:space-x-4">
           <div 
-            className="flex items-center space-x-2 cursor-pointer hover:bg-plt-hover p-1.5 rounded-tv-md transition-colors"
+            className="flex items-center space-x-2 cursor-pointer hover:bg-plt-hover px-1.5 py-1 rounded-tv-md transition-colors"
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Logo visible on all screens */}
-            <div className="flex items-center justify-center shrink-0 w-8 h-8 rounded-tv-full bg-plt-card border border-plt-border overflow-hidden p-[2px]">
+            <div className="flex items-center justify-center shrink-0 w-7 h-7 rounded-tv-full bg-plt-card border border-plt-border overflow-hidden p-[1px]">
               {currentTicker.logoUrl ? (
                 <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-tv-full bg-transparent" />
               ) : currentTicker.website ? (
@@ -63,15 +63,15 @@ export default function TopBar({
             </div>
             
             <div className="flex flex-col justify-center min-w-0">
-              <span className="text-plt-text text-sm font-weight-medium truncate hidden md:block">{currentTicker.companyName}</span>
-              <div className="flex items-center space-x-1 font-weight-medium md:font-weight-light text-plt-text md:text-plt-muted text-sm md:text-xs">
+              <span className="text-plt-text text-xs font-weight-medium truncate hidden md:block leading-tight">{currentTicker.companyName}</span>
+              <div className="flex items-center space-x-1 font-weight-medium md:font-weight-light text-plt-text md:text-plt-muted text-xs leading-tight">
                 <span>{displaySymbol}</span>
                 <span className="text-[10px] hidden md:inline">•</span>
                 <span className="hidden md:inline">EGX</span>
               </div>
             </div>
             
-            <Search size={14} className="text-plt-muted ml-1 shrink-0" />
+            <Search size={13} className="text-plt-muted ml-0.5 shrink-0" />
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export default function TopBar({
               <Link
                 key={tf}
                 href={`?ticker=${symbol}&timeframe=${tf}${replayQuery}`}
-                className={`px-2 py-1 rounded-tv-sm hover:bg-plt-hover transition-colors text-xs ${
+                className={`px-2 py-0.5 rounded-tv-sm hover:bg-plt-hover transition-colors text-xs ${
                   tf === timeframe ? 'text-plt-orange font-semibold' : 'text-plt-muted'
                 }`}
               >
@@ -98,17 +98,17 @@ export default function TopBar({
           <button
             type="button"
             onClick={() => toggleAlert(symbol)}
-            className={`flex items-center justify-center hover:bg-plt-hover w-8 h-8 rounded-tv-sm transition-colors ${
+            className={`flex items-center justify-center hover:bg-plt-hover w-7 h-7 rounded-tv-sm transition-colors ${
               alertEnabled ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30' : 'text-plt-text'
             }`}
           >
-            <Bell size={16} fill={alertEnabled ? 'currentColor' : 'none'} />
+            <Bell size={15} fill={alertEnabled ? 'currentColor' : 'none'} />
           </button>
 
           {/* Indicators & Tools */}
-          <div className="hidden sm:flex items-center space-x-2 ml-1">
+          <div className="hidden sm:flex items-center space-x-1.5 ml-1">
             <button className="flex items-center space-x-1 hover:bg-plt-hover px-2 py-1 rounded-tv-sm transition-colors text-plt-text text-xs">
-              <BarChart2 size={16} />
+              <BarChart2 size={15} />
               <span className="hidden md:inline">Indicators</span>
             </button>
             <Link
@@ -117,7 +117,7 @@ export default function TopBar({
                 replay ? 'text-plt-orange font-medium' : 'text-plt-text'
               }`}
             >
-              <RotateCcw size={16} />
+              <RotateCcw size={15} />
               <span className="hidden md:inline">Replay</span>
             </Link>
           </div>
@@ -127,14 +127,14 @@ export default function TopBar({
         <div className="hidden md:flex items-center space-x-2">
           <button 
             onClick={() => setIsAddOrderOpen(true)}
-            className="rounded-tv-sm border border-plt-orange/40 bg-plt-orange/10 px-3 py-1.5 text-xs text-plt-orange font-medium transition-all hover:bg-plt-orange hover:text-white ml-2 shadow-[0_0_12px_rgba(255,100,13,0.2)]"
+            className="rounded-tv-sm border border-plt-orange/40 bg-plt-orange/10 px-2.5 py-1 text-xs text-plt-orange font-medium transition-all hover:bg-plt-orange hover:text-white ml-2 shadow-[0_0_12px_rgba(255,100,13,0.2)]"
           >
             + Add Order
           </button>
         </div>
 
         {statusMessage && (
-          <div className="absolute left-3 top-12 z-50 rounded-tv-sm border border-plt-border bg-plt-card px-3 py-2 text-xs text-plt-text shadow-lg hidden md:block">
+          <div className="absolute left-3 top-[52px] z-50 rounded-tv-sm border border-plt-border bg-plt-card px-3 py-2 text-xs text-plt-text shadow-lg hidden md:block">
             {statusMessage}
           </div>
         )}

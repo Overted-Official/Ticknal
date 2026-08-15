@@ -68,20 +68,31 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   );
 
   // Group by ticker symbol for O(1) lookup
-  const priceMap: Record<string, { lastPrice: number, prevPrice: number }> = {};
+  const priceMap: Record<string, { lastPrice: number, prevPrice: number, volume: number }> = {};
   for (const row of recentPricesRows) {
     const sym = row.ticker_symbol as string;
     const close = Number(row.close);
+    const volume = Number(row.volume || 0);
     const rn = Number(row.rn);
     
-    if (!priceMap[sym]) priceMap[sym] = { lastPrice: 0, prevPrice: 0 };
+    if (!priceMap[sym]) priceMap[sym] = { lastPrice: 0, prevPrice: 0, volume: 0 };
     
-    if (rn === 1) priceMap[sym].lastPrice = close;
+    if (rn === 1) {
+      priceMap[sym].lastPrice = close;
+      priceMap[sym].volume = volume;
+    }
     if (rn === 2) priceMap[sym].prevPrice = close;
   }
 
+  function formatVol(v: number): string {
+    if (!v || isNaN(v)) return '-';
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)} M`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(1)} K`;
+    return String(v);
+  }
+
   const watchlist: WatchlistItem[] = allTickers.map((t) => {
-    const p = priceMap[t.symbol] || { lastPrice: 0, prevPrice: 0 };
+    const p = priceMap[t.symbol] || { lastPrice: 0, prevPrice: 0, volume: 0 };
     const lastPrice = p.lastPrice;
     const prevPrice = p.prevPrice || lastPrice;
     
@@ -95,6 +106,8 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
       sector: t.sector || 'Unclassified',
       price: lastPrice.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
+      changePct: `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}%`,
+      volume: formatVol(p.volume),
       isUp: change >= 0,
       hasOpenPosition: openPositionsSet.has(t.symbol),
       logoUrl: t.logoUrl,

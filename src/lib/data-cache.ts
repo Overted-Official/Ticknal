@@ -52,11 +52,11 @@ export const getCachedRecentPrices = unstable_cache(
   async () => {
     const recentPricesQuery = sql`
       WITH RankedPrices AS (
-        SELECT ticker_symbol, close,
+        SELECT ticker_symbol, close, volume,
                ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) as rn
         FROM daily_prices
       )
-      SELECT ticker_symbol, close, rn
+      SELECT ticker_symbol, close, volume, rn
       FROM RankedPrices
       WHERE rn <= 2;
     `;

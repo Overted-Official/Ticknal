@@ -1,6 +1,7 @@
 'use client';
-import { Bell, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, Settings } from '@/components/ui/icons';
-import { ExternalLink, Grid, Edit3, Zap } from 'lucide-react';
+
+import { Bell, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search } from '@/components/ui/icons';
+import { ExternalLink, Grid, Edit3, Bookmark, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
@@ -15,6 +16,8 @@ export interface WatchlistItem {
   sector: string;
   price: string;
   change?: string;
+  changePct?: string;
+  volume?: string;
   isUp: boolean;
   hasOpenPosition?: boolean;
   logoUrl?: string | null;
@@ -43,24 +46,24 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     return {
       price: Number(quoteData.close).toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
+      changePct: `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}%`,
       isUp: change >= 0
     };
   }, [quoteData]);
 
-  // Merge live data with base data
   const [searchQuery, setSearchQuery] = useState("");
-  const [listFilter, setListFilter] = useState<'ALL' | 'OPEN' | 'OPPORTUNITIES'>('ALL');
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarWidth, setSidebarWidth] = useState(265);
   const [isResizing, setIsResizing] = useState(false);
-  const [panelHeight, setPanelHeight] = useState(380);
+  const [panelHeight, setPanelHeight] = useState(340);
   const [isResizingPanel, setIsResizingPanel] = useState(false);
   const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(false);
+  const [collapsedSectors, setCollapsedSectors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isResizingPanel) return;
     const handleMouseMove = (e: MouseEvent) => {
       const newHeight = window.innerHeight - e.clientY;
-      if (newHeight >= 200 && newHeight <= 800) {
+      if (newHeight >= 180 && newHeight <= 600) {
         setPanelHeight(newHeight);
       }
     };
@@ -77,7 +80,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     if (!isResizing) return;
     const handleMouseMove = (e: MouseEvent) => {
       const newWidth = window.innerWidth - e.clientX;
-      if (newWidth >= 260 && newWidth <= 500) {
+      if (newWidth >= 230 && newWidth <= 420) {
         setSidebarWidth(newWidth);
       }
     };
@@ -89,21 +92,18 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isResizing]);
-  const [collapsedSectors, setCollapsedSectors] = useState<Set<string>>(new Set());
+
   const router = useRouter();
   const { isAlerted, toggleAlert } = useAlerts();
   
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
 
-  // Merge live data with base data
   const selectedItem = liveData 
     ? { ...baseSelectedItem, ...liveData } 
     : baseSelectedItem;
 
   const filteredWatchlist = watchlist.filter(item => {
-    if (listFilter === 'OPEN' && !item.hasOpenPosition) return false;
-    if (listFilter === 'OPPORTUNITIES' && !item.recentBuyOpportunity) return false;
     const q = searchQuery.toLowerCase();
     return (
       item.symbol.toLowerCase().includes(q) || 
@@ -138,128 +138,132 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     router.push(`?ticker=${symbol}&timeframe=${timeframe}`);
   };
 
+  const currentPriceNum = parseFloat(selectedItem?.price || '0');
+  const dLow = rangeData?.dayLow ?? (currentPriceNum * 0.98);
+  const dHigh = rangeData?.dayHigh ?? (currentPriceNum * 1.02);
+  const yLow = rangeData?.yearLow ?? (currentPriceNum * 0.6);
+  const yHigh = rangeData?.yearHigh ?? (currentPriceNum * 1.15);
+
+  const dayPct = Math.min(100, Math.max(0, ((currentPriceNum - dLow) / (dHigh - dLow || 1)) * 100));
+  const yearPct = Math.min(100, Math.max(0, ((currentPriceNum - yLow) / (yHigh - yLow || 1)) * 100));
+
   return (
     <div 
-      className="bg-plt-surface border-l border-plt-border flex flex-col select-none relative shrink-0"
+      className="bg-plt-surface border-l border-plt-border flex flex-col select-none relative shrink-0 text-plt-text"
       style={{ width: `${sidebarWidth}px` }}
     >
+      {/* Resizer Handle */}
       <div 
-        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-plt-red/50 active:bg-plt-red z-50 transition-colors"
+        className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-plt-orange/60 active:bg-plt-orange z-50 transition-colors"
         onMouseDown={() => setIsResizing(true)}
       />
-      {/* Header Filter Tabs */}
-      <div className="flex items-center p-2 border-b border-plt-border">
-        <div className="flex w-full bg-plt-base rounded-tv-sm p-0.5 border border-plt-border/50">
-          <button 
-            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'ALL' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
-            onClick={() => setListFilter('ALL')}
-          >
-            All
-          </button>
-          <button 
-            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPEN' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
-            onClick={() => setListFilter('OPEN')}
-          >
-            Positions
-          </button>
-          <button 
-            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPPORTUNITIES' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
-            onClick={() => setListFilter('OPPORTUNITIES')}
-          >
-            Buy Signals
-          </button>
-        </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="p-2 border-b border-plt-border">
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-plt-muted" />
-          <input 
-            type="text" 
-            placeholder="Search tickers..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-plt-base border border-plt-border rounded-tv-sm px-8 py-1.5 text-sm text-plt-text focus:outline-none focus:border-plt-border-active placeholder:text-plt-muted transition-colors"
-          />
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between px-2.5 py-2 border-b border-plt-border bg-plt-surface shrink-0">
+        <div className="flex items-center space-x-1.5 cursor-pointer hover:opacity-80 transition-opacity">
+          <svg className="w-3.5 h-3.5 text-[#ff4954] fill-[#ff4954]" viewBox="0 0 24 24">
+            <path d="M5 3h14a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2z" />
+          </svg>
+          <span className="text-xs font-semibold text-plt-text flex items-center gap-1">
+            Portfolio <ChevronDown size={11} className="text-plt-muted" />
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-2 text-plt-muted">
+          <button title="Add symbol" className="hover:text-plt-text transition-colors p-0.5">
+            <Plus size={14} />
+          </button>
+          <button title="Layout / Table view" className="hover:text-plt-text transition-colors p-0.5">
+            <Grid size={13} />
+          </button>
+          <button title="More options" className="hover:text-plt-text transition-colors p-0.5">
+            <MoreHorizontal size={14} />
+          </button>
         </div>
       </div>
 
       {/* Columns Header */}
-      <div className="flex px-3 py-2 text-plt-muted uppercase font-weight-medium border-b border-plt-border text-[0.65rem] bg-plt-surface">
-        <div className="flex-1 min-w-0">Symbol</div>
-        <div className="w-[50px] text-right">Last</div>
-        <div className="w-[85px] text-right">Chg%</div>
+      <div className="flex items-center px-2 py-1.5 text-plt-muted font-medium border-b border-plt-border text-[10px] bg-plt-surface shrink-0">
+        <div className="flex-1 min-w-0 pl-4">Symbol</div>
+        <div className="w-[46px] text-right">Last</div>
+        <div className="w-[48px] text-right">Chg%</div>
+        <div className="w-[44px] text-right pr-1">Vol</div>
       </div>
 
-      {/* Watchlist Items */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Watchlist Rows */}
+      <div className="flex-1 overflow-y-auto no-scrollbar py-0.5">
         {groupedWatchlist.map(([sector, items]) => {
           const collapsed = collapsedSectors.has(sector) && searchQuery.length === 0;
           return (
-            <div key={sector}>
+            <div key={sector} className="mb-0.5">
               <button
                 type="button"
                 onClick={() => toggleSector(sector)}
-                className="flex w-full items-center gap-1 border-b border-plt-border bg-plt-base px-3 py-1.5 text-left text-[0.65rem] uppercase text-plt-muted transition-colors hover:bg-plt-hover hover:text-plt-text"
+                className="flex w-full items-center gap-1 px-2 py-1 text-left text-[9px] uppercase tracking-wider text-plt-muted/80 transition-colors hover:text-plt-text"
               >
-                {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
-                <span className="min-w-0 flex-1 truncate">{sector}</span>
-                <span>{items.length}</span>
+                {collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
+                <span className="min-w-0 flex-1 truncate font-semibold">{sector}</span>
+                <span className="text-[8px] opacity-60">{items.length}</span>
               </button>
 
               {!collapsed && items.map((item) => {
-                const alertEnabled = isAlerted(item.symbol);
+                const isSelected = item.symbol === selectedSymbol;
+                const changePctDisplay = item.changePct || (item.change ? item.change.split('(')[1]?.replace(')', '') : '0.00%');
+                const isPositive = item.isUp;
+
                 return (
                   <div
                     key={item.symbol}
                     role="button"
                     tabIndex={0}
                     onClick={() => openTicker(item.symbol)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') openTicker(item.symbol);
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') openTicker(item.symbol);
                     }}
-                    className={`flex items-center cursor-pointer px-3 py-1.5 transition-colors hover:bg-plt-hover group text-[11px] ${item.symbol === selectedSymbol ? 'bg-plt-hover' : ''}`}
+                    className={`flex items-center cursor-pointer px-1.5 py-1 text-[11px] transition-all group ${
+                      isSelected 
+                        ? 'border border-white/20 rounded-md bg-[#1a1a1a] shadow-sm mx-1 my-0.5' 
+                        : 'hover:bg-plt-hover/70 rounded-sm mx-1'
+                    }`}
                   >
-                    <div className="flex min-w-0 flex-1 items-center space-x-2 font-weight-medium">
+                    {/* Red Ribbon Indicator Tag */}
+                    <div className="w-1 h-3 bg-[#ff4954] rounded-r-xs shrink-0 mr-1.5" />
+
+                    {/* Logo & Symbol info */}
+                    <div className="flex min-w-0 flex-1 items-center space-x-1.5 font-medium">
                       {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.symbol} className="h-5 w-5 rounded-tv-full bg-transparent object-contain p-[1px]" />
+                        <img src={item.logoUrl} alt={item.symbol} className="h-4 w-4 rounded-full bg-transparent object-contain shrink-0" />
                       ) : item.website ? (
-                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-5 w-5 rounded-tv-full border border-plt-border bg-plt-card object-cover" />
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-4 w-4 rounded-full border border-plt-border bg-plt-card object-cover shrink-0" />
                       ) : (
-                        <div className="flex h-5 w-5 items-center justify-center rounded-tv-full border border-plt-border bg-plt-card text-[0.5rem] font-weight-medium text-plt-text">
+                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-plt-border bg-plt-card text-[7px] font-semibold text-plt-text">
                           {item.symbol.substring(0, 2)}
                         </div>
                       )}
-                      <span className={`truncate ${item.symbol === selectedSymbol ? 'text-plt-orange font-bold' : 'text-plt-text'}`}>
+                      
+                      <span className="truncate text-xs font-semibold text-white tracking-tight">
                         {item.symbol.replace('.CA', '')}
                       </span>
-                      {item.recentBuyOpportunity && (
-                        <span title="Recent Buy Signal" className="ml-0.5 shrink-0 flex items-center">
-                          <Zap size={12} className="text-plt-orange fill-plt-orange/30" />
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        title={alertEnabled ? 'Disable alert' : 'Enable alert'}
-                        aria-label={alertEnabled ? `Disable ${item.symbol} alert` : `Enable ${item.symbol} alert`}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          toggleAlert(item.symbol);
-                        }}
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-tv-sm transition-colors hover:bg-plt-card ${
-                          alertEnabled ? 'text-plt-orange opacity-100' : 'text-plt-muted opacity-0 group-hover:opacity-100'
-                        }`}
-                      >
-                        <Bell size={13} fill={alertEnabled ? 'currentColor' : 'none'} />
-                      </button>
+                      
+                      <span className="text-[8px] font-bold text-plt-orange leading-none">D</span>
+                      <span className="text-plt-muted/40 text-[9px] leading-none">•</span>
                     </div>
-                    <div className={`w-[50px] shrink-0 text-right font-weight-medium whitespace-nowrap ${item.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
+
+                    {/* Last Price */}
+                    <div className="w-[46px] shrink-0 text-right font-medium text-white text-[11px] whitespace-nowrap">
                       {item.price}
                     </div>
-                    <div className={`w-[85px] shrink-0 text-right font-weight-medium whitespace-nowrap ${item.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
-                      {item.change}
+
+                    {/* Chg% */}
+                    <div className={`w-[48px] shrink-0 text-right font-medium text-[11px] whitespace-nowrap ${
+                      isPositive ? 'text-[#00e676]' : 'text-[#ff4d58]'
+                    }`}>
+                      {changePctDisplay}
+                    </div>
+
+                    {/* Volume */}
+                    <div className="w-[44px] shrink-0 text-right font-normal text-plt-muted text-[10px] whitespace-nowrap pr-0.5 truncate">
+                      {item.volume || '-'}
                     </div>
                   </div>
                 );
@@ -269,124 +273,142 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
         })}
       </div>
 
-      {/* Details Panel */}
+      {/* Details Panel (Bottom Section) */}
       {selectedItem && (
         <div 
-          className="border-t border-plt-border bg-plt-surface p-4 flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
+          className="border-t border-plt-border bg-plt-surface flex flex-col shrink-0 relative overflow-hidden transition-all duration-150"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {/* Vertical Resizer */}
           {!isDetailsCollapsed && (
             <div 
-              className="absolute top-0 left-0 right-0 h-1.5 cursor-row-resize hover:bg-plt-orange/50 active:bg-plt-orange z-50 transition-colors"
+              className="absolute top-0 left-0 right-0 h-1 cursor-row-resize hover:bg-plt-orange/60 active:bg-plt-orange z-50 transition-colors"
               onMouseDown={() => setIsResizingPanel(true)}
             />
           )}
 
-          <div className="flex items-center justify-between mb-3 mt-1">
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between px-3 pt-2.5 pb-1 shrink-0">
             <div className="flex items-center space-x-2">
               {selectedItem.logoUrl ? (
-                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-transparent border border-plt-border object-contain p-[2px]" />
-              ) : selectedItem.website ? (
-                <img src={`https://logo.clearbit.com/${selectedItem.website}`} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-plt-card border border-plt-border object-cover" />
+                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-5 h-5 rounded-full bg-transparent object-contain" />
               ) : (
-                <div className="w-7 h-7 rounded-tv-full bg-plt-card flex items-center justify-center font-weight-medium text-plt-text border border-plt-border text-xs">
+                <div className="w-5 h-5 rounded-full bg-plt-card flex items-center justify-center font-bold text-plt-text border border-plt-border text-[9px]">
                   {displaySelectedSymbol.substring(0, 2)}
                 </div>
               )}
-              <span className="font-weight-medium text-plt-text text-base">{displaySelectedSymbol}</span>
+              <span className="font-bold text-plt-text text-sm">{displaySelectedSymbol}</span>
             </div>
-            <div className="flex items-center space-x-2 text-plt-text">
+
+            <div className="flex items-center space-x-2 text-plt-muted">
+              <button title="Grid View" className="hover:text-plt-text transition-colors p-0.5">
+                <Grid size={13} />
+              </button>
+              <button title="Notes" className="hover:text-plt-text transition-colors p-0.5">
+                <Edit3 size={13} />
+              </button>
               <button 
                 onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
-                className="hover:text-plt-text transition-colors ml-1 text-plt-muted"
+                className="hover:text-plt-text transition-colors p-0.5 text-plt-muted"
+                title="Toggle details"
               >
-                <ChevronDown size={18} className={`transition-transform ${isDetailsCollapsed ? 'rotate-180' : ''}`} />
+                <MoreHorizontal size={13} />
               </button>
             </div>
           </div>
 
           {!isDetailsCollapsed && (
-            <div className="flex-1 overflow-y-auto no-scrollbar">
-              <div className="text-plt-text mb-1 flex items-center text-sm font-weight-medium">
-                {selectedItem.companyName}
-                <ExternalLink size={12} className="ml-1 text-plt-muted hover:text-plt-text cursor-pointer" />
-                <span className="text-plt-muted font-weight-light mx-1">•</span>
-                <span className="text-plt-text">EGX</span>
-              </div>
-              
-              <div className="text-plt-muted font-weight-light text-xs mb-4">
-                Finance • {selectedItem.sector}
-              </div>
-
-              <div className="flex items-baseline space-x-2 mb-1">
-                <span className="text-3xl font-weight-medium text-plt-text tracking-tight">
-                  {selectedItem.price}
-                </span>
-                <span className="font-semibold text-xs relative top-[-10px] left-[-4px] text-plt-orange">D</span>
-                <span className="text-plt-muted font-weight-medium text-xs">EGP</span>
-                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
-                  {selectedItem.change ? selectedItem.change.split(' ')[0] : ''}
-                </span>
-                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
-                  {selectedItem.change ? selectedItem.change.split(' ')[1] : ''}
-                </span>
+            <div className="flex-1 overflow-y-auto no-scrollbar px-3 pb-3 space-y-2.5">
+              {/* Company Meta */}
+              <div>
+                <div className="text-white text-[11px] font-medium leading-snug">
+                  {selectedItem.companyName}
+                </div>
+                <div className="flex items-center text-[10px] text-plt-muted space-x-1 mt-0.5">
+                  <ExternalLink size={10} className="hover:text-plt-text cursor-pointer" />
+                  <span>•</span>
+                  <span>EGX</span>
+                </div>
+                <div className="text-[10px] text-plt-muted mt-0.5">
+                  Finance • {selectedItem.sector}
+                </div>
               </div>
 
-              <div className="flex items-center text-plt-muted text-xs mb-1">
-                <div className="w-2 h-1 bg-plt-muted rounded-full mr-2" />
-                Market closed
-              </div>
-              <div className="text-plt-muted text-xs mb-4">
-                Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:26 GMT+3
-              </div>
-
-              {rangeData && (
-                <>
-                  {/* Range Bars */}
-                  <div className="mb-4 mt-2">
-                    <div className="flex justify-between text-[11px] mb-1.5">
-                      <span className="text-plt-text font-medium">{rangeData.dayLow.toFixed(2)}</span>
-                      <span className="text-plt-muted text-[10px] uppercase">Day&apos;s Range</span>
-                      <span className="text-plt-text font-medium">{rangeData.dayHigh.toFixed(2)}</span>
-                    </div>
-                    <div className="h-1 bg-plt-border rounded-tv-full relative mx-1">
-                      <div 
-                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-plt-green' : 'bg-plt-red'}`}
-                        style={{ 
-                          width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%`, 
-                          left: 0 
-                        }} 
-                      />
-                      <div 
-                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-plt-text"
-                        style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%` }}
-                      />
-                    </div>
+              {/* Big Price & Change */}
+              <div>
+                <div className="flex items-baseline space-x-1">
+                  <span className="text-2xl font-bold text-white tracking-tight">
+                    {selectedItem.price}
+                  </span>
+                  <div className="flex flex-col leading-none">
+                    <span className="text-[9px] font-bold text-plt-orange">D</span>
+                    <span className="text-[9px] text-plt-muted">EGP</span>
                   </div>
-
-                  <div className="mb-2">
-                    <div className="flex justify-between text-[11px] mb-1.5">
-                      <span className="text-plt-text font-medium">{rangeData.yearLow.toFixed(2)}</span>
-                      <span className="text-plt-muted text-[10px] uppercase">52Wk Range</span>
-                      <span className="text-plt-text font-medium">{rangeData.yearHigh.toFixed(2)}</span>
-                    </div>
-                    <div className="h-1 bg-plt-border rounded-tv-full relative mx-1">
-                      <div 
-                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-plt-green' : 'bg-plt-red'}`}
-                        style={{ 
-                          width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%`, 
-                          left: 0 
-                        }} 
-                      />
-                      <div 
-                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-plt-text"
-                        style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%` }}
-                      />
-                    </div>
+                  <div className={`ml-2 text-xs font-semibold ${selectedItem.isUp ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                    {selectedItem.change ? selectedItem.change.split(' ')[0] : ''} {selectedItem.changePct || ''}
                   </div>
-                </>
-              )}
+                </div>
+
+                <div className="flex items-center text-plt-muted text-[10px] mt-1 space-x-1.5">
+                  <span className="inline-block w-1.5 h-0.5 bg-plt-muted rounded-full" />
+                  <span>Market closed</span>
+                </div>
+                <div className="text-plt-muted/70 text-[9px] mt-0.5">
+                  Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:28 GMT+3
+                </div>
+              </div>
+
+              {/* Bid / Ask Pills */}
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <div className="bg-[#0c2340]/80 border border-[#1d4ed8]/40 text-[#60a5fa] text-[10px] py-1 text-center rounded font-mono font-medium">
+                  {(currentPriceNum * 0.999).toFixed(2)} × 100
+                </div>
+                <div className="bg-[#381015]/80 border border-[#b91c1c]/40 text-[#f87171] text-[10px] py-1 text-center rounded font-mono font-medium">
+                  {(currentPriceNum * 1.001).toFixed(2)} × 250
+                </div>
+              </div>
+
+              {/* Range Sliders */}
+              <div className="space-y-2 pt-1">
+                {/* Day's Range */}
+                <div>
+                  <div className="flex justify-between text-[10px] mb-1">
+                    <span className="text-white font-medium">{dLow.toFixed(2)}</span>
+                    <span className="text-plt-muted text-[8px] uppercase tracking-wider font-semibold">Day&apos;s Range</span>
+                    <span className="text-white font-medium">{dHigh.toFixed(2)}</span>
+                  </div>
+                  <div className="h-1 bg-plt-border rounded-full relative">
+                    <div 
+                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#00e676]' : 'bg-[#ff4d58]'}`}
+                      style={{ width: `${dayPct}%`, left: 0 }} 
+                    />
+                    <div 
+                      className="absolute top-1.5 -ml-1 w-0 h-0 border-l-[3.5px] border-r-[3.5px] border-b-[4.5px] border-l-transparent border-r-transparent border-b-white"
+                      style={{ left: `${dayPct}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 52Wk Range */}
+                <div>
+                  <div className="flex justify-between text-[10px] mb-1">
+                    <span className="text-white font-medium">{yLow.toFixed(2)}</span>
+                    <span className="text-plt-muted text-[8px] uppercase tracking-wider font-semibold">52Wk Range</span>
+                    <span className="text-white font-medium">{yHigh.toFixed(2)}</span>
+                  </div>
+                  <div className="h-1 bg-plt-border rounded-full relative">
+                    <div 
+                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#00e676]' : 'bg-[#ff4d58]'}`}
+                      style={{ width: `${yearPct}%`, left: 0 }} 
+                    />
+                    <div 
+                      className="absolute top-1.5 -ml-1 w-0 h-0 border-l-[3.5px] border-r-[3.5px] border-b-[4.5px] border-l-transparent border-r-transparent border-b-white"
+                      style={{ left: `${yearPct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
             </div>
           )}
         </div>
