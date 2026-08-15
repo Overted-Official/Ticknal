@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, Fragment } from 'react';
 import useSWR from 'swr';
 import { motion } from 'framer-motion';
 import { containerStagger, itemFadeInUp, hoverLift } from '@/lib/motion';
-import { CheckCircle, LineChart, Trash2, Pencil, Search } from '@/components/ui/icons';
+import { CheckCircle, LineChart, Trash2, Pencil, Search, ChevronDown, ChevronRight } from '@/components/ui/icons';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
@@ -64,6 +64,74 @@ export default function OrdersTable() {
       portfolioValue: openOrders.reduce((sum, order) => sum + (order.currentPrice * order.quantity), 0),
     };
   }, [orders]);
+
+  const groupedOrders = useMemo(() => {
+    const map = new Map<string, OrderRow[]>();
+    
+    for (const order of filteredOrders) {
+      const groupKey = `${order.tickerSymbol}_${order.status}`;
+      if (!map.has(groupKey)) {
+        map.set(groupKey, []);
+      }
+      map.get(groupKey)!.push(order);
+    }
+
+    const result = [];
+    
+    for (const [key, rows] of map.entries()) {
+      // Sort lots by entryDate descending
+      rows.sort((a, b) => (a.entryDate > b.entryDate ? -1 : 1));
+
+      const totalQuantity = rows.reduce((sum, r) => sum + r.quantity, 0);
+      const totalCost = rows.reduce((sum, r) => sum + (r.entryPrice * r.quantity), 0);
+      const avgEntryPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0;
+      const currentPrice = rows[0].currentPrice;
+      const totalMktValue = rows[0].status === 'OPEN' ? currentPrice * totalQuantity : 0;
+      const totalProfitLoss = rows.reduce((sum, r) => sum + r.profitLoss, 0);
+      const totalProfitLossPct = totalCost > 0 ? (totalProfitLoss / totalCost) * 100 : 0;
+
+      const targets = Array.from(new Set(rows.map(r => r.targetPrice).filter((v): v is number => v !== null)));
+      const stops = Array.from(new Set(rows.map(r => r.stopPrice).filter((v): v is number => v !== null)));
+
+      result.push({
+        key,
+        tickerSymbol: rows[0].tickerSymbol,
+        companyName: rows[0].companyName,
+        sector: rows[0].sector,
+        status: rows[0].status,
+        currentPrice,
+        totalQuantity,
+        totalCost,
+        avgEntryPrice,
+        totalMktValue,
+        totalProfitLoss,
+        totalProfitLossPct,
+        firstEntryDate: rows[rows.length - 1].entryDate,
+        lastEntryDate: rows[0].entryDate,
+        targetPrice: targets.length === 1 ? targets[0] : null,
+        hasMultipleTargets: targets.length > 1,
+        stopPrice: stops.length === 1 ? stops[0] : null,
+        hasMultipleStops: stops.length > 1,
+        orders: rows,
+      });
+    }
+
+    return result;
+  }, [filteredOrders]);
+
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (key: string) => {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   async function closeOrder(order: OrderRow) {
     setOrderToClose(order);
@@ -180,80 +248,160 @@ export default function OrdersTable() {
         <div className="md:hidden flex flex-col space-y-3">
           {loading ? (
             <MobileOrdersSkeleton />
-          ) : filteredOrders.length === 0 ? (
+          ) : groupedOrders.length === 0 ? (
             <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
-            filteredOrders.map((order) => (
-              <div key={order.id} className="border border-white/[0.09] rounded-md bg-black p-5">
-                <div className="flex justify-between items-start border-b border-white/[0.09] pb-2.5 mb-2.5">
-                  <div>
-                    <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
-                      {order.tickerSymbol}
-                      <span className="text-[10px] text-white/40 font-normal">({order.sector})</span>
-                    </Link>
-                    <div className="text-[11px] text-white/40 truncate max-w-[160px]">{order.companyName}</div>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-medium ${
-                    order.status === 'OPEN' ? 'bg-white/[0.06] text-white/90 border border-white/[0.09]' : 'bg-white/[0.02] text-white/40'
-                  }`}>
-                    {order.status}
-                  </span>
-                </div>
+            groupedOrders.map((group) => {
+              const isMulti = group.orders.length > 1;
+              const isExpanded = expandedKeys.has(group.key);
 
-                <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-xs mb-3 font-mono">
-                  <div>
-                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Entry</span>
-                    <span className="text-white font-medium">{formatPrice(order.entryPrice)}</span>
-                    <span className="text-white/40 text-[10px] block">{order.entryDate}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Current</span>
-                    <span className="text-white font-medium">{formatPrice(order.currentPrice)}</span>
-                    <span className="text-white/40 text-[10px] block">Qty: {formatQuantity(order.quantity)}</span>
+              return (
+                <div key={group.key} className="border border-white/[0.09] rounded-md bg-black p-5">
+                  <div className="flex justify-between items-start border-b border-white/[0.09] pb-2.5 mb-2.5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
+                          {group.tickerSymbol}
+                          <span className="text-[10px] text-white/40 font-normal">({group.sector})</span>
+                        </Link>
+                        {isMulti && (
+                          <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] bg-white/[0.06] border border-white/[0.09] text-white/70 font-mono">
+                            {group.orders.length} Lots
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-white/40 truncate max-w-[200px] mt-0.5">{group.companyName}</div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-medium ${
+                      group.status === 'OPEN' ? 'bg-white/[0.06] text-white/90 border border-white/[0.09]' : 'bg-white/[0.02] text-white/40'
+                    }`}>
+                      {group.status}
+                    </span>
                   </div>
 
-                  <div>
-                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Target / Stop</span>
-                    <span className="text-white/70">{order.targetPrice ? order.targetPrice.toFixed(2) : '-'} / {order.stopPrice ? order.stopPrice.toFixed(2) : '-'}</span>
-                  </div>
-                  
-                  <div className="text-right">
-                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">P/L</span>
-                    <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
-                      {formatMoney(order.profitLoss)}
-                      <span className="text-[10px] ml-1 opacity-80">({order.profitLossPct.toFixed(2)}%)</span>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-xs mb-3 font-mono">
+                    <div>
+                      <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">
+                        {isMulti ? 'Avg Entry' : 'Entry'}
+                      </span>
+                      <span className="text-white font-medium">{formatPrice(group.avgEntryPrice)}</span>
+                      <span className="text-white/40 text-[10px] block">
+                        {isMulti ? `${group.firstEntryDate} → ${group.lastEntryDate}` : group.orders[0].entryDate}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Current</span>
+                      <span className="text-white font-medium">{formatPrice(group.currentPrice)}</span>
+                      <span className="text-white/40 text-[10px] block">Qty: {formatQuantity(group.totalQuantity)}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Mkt Value</span>
+                      <span className="text-white/80">{group.status === 'OPEN' ? formatPrice(group.totalMktValue) : '—'}</span>
+                    </div>
+                    
+                    <div className="text-right">
+                      <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Total P/L</span>
+                      <div className={`font-semibold ${group.totalProfitLoss > 0 ? 'text-[#22c55e]' : group.totalProfitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                        {formatMoney(group.totalProfitLoss)}
+                        <span className="text-[10px] ml-1 opacity-80">({group.totalProfitLossPct.toFixed(2)}%)</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-end gap-2 pt-2.5 border-t border-white/[0.09]">
-                  {order.status === 'OPEN' && (
-                    <button
-                      title="Close Position"
-                      onClick={() => closeOrder(order)}
-                      className="px-2.5 py-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09] text-xs font-medium"
-                    >
-                      <CheckCircle size={13} className="mr-1 text-[#22c55e]" />
-                      <span>Close</span>
-                    </button>
+                  {isMulti ? (
+                    <div className="border-t border-white/[0.09] pt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(group.key)}
+                        className="w-full py-1.5 px-3 rounded-[4px] bg-white/[0.03] hover:bg-white/[0.06] text-white/70 hover:text-white border border-white/[0.07] text-xs font-medium flex items-center justify-between transition-colors"
+                      >
+                        <span>{isExpanded ? 'Hide individual lots' : `View ${group.orders.length} individual lots`}</span>
+                        <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-3 space-y-2 pt-2 border-t border-white/[0.05]">
+                          {group.orders.map((order, idx) => (
+                            <div key={order.id} className="p-3 rounded-[4px] bg-white/[0.02] border border-white/[0.06] text-xs font-mono">
+                              <div className="flex justify-between items-center mb-2 font-sans">
+                                <span className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60 font-mono">Lot #{idx + 1}</span>
+                                <span className="text-white/40 text-[10px]">{order.entryDate}</span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                                <div>
+                                  <span className="text-[10px] text-white/35 font-sans block">Entry @ Qty</span>
+                                  <span>{formatPrice(order.entryPrice)} × {formatQuantity(order.quantity)}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[10px] text-white/35 font-sans block">P/L</span>
+                                  <span className={order.profitLoss >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}>
+                                    {formatMoney(order.profitLoss)} ({order.profitLossPct.toFixed(2)}%)
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex justify-end gap-1.5 pt-2 border-t border-white/[0.05]">
+                                {order.status === 'OPEN' && (
+                                  <button
+                                    title="Close Position"
+                                    onClick={() => closeOrder(order)}
+                                    className="px-2 py-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09] text-[11px]"
+                                  >
+                                    <CheckCircle size={12} className="mr-1 text-[#22c55e]" />
+                                    <span>Close</span>
+                                  </button>
+                                )}
+                                <button
+                                  title="Edit Order"
+                                  onClick={() => editOrder(order)}
+                                  className="p-1 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
+                                >
+                                  <Pencil size={12} />
+                                </button>
+                                <button
+                                  title="Delete Record"
+                                  onClick={() => deleteOrder(order)}
+                                  className="p-1 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex justify-end gap-2 pt-2.5 border-t border-white/[0.09]">
+                      {group.orders[0].status === 'OPEN' && (
+                        <button
+                          title="Close Position"
+                          onClick={() => closeOrder(group.orders[0])}
+                          className="px-2.5 py-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09] text-xs font-medium"
+                        >
+                          <CheckCircle size={13} className="mr-1 text-[#22c55e]" />
+                          <span>Close</span>
+                        </button>
+                      )}
+                      <button
+                        title="Edit Order"
+                        onClick={() => editOrder(group.orders[0])}
+                        className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09]"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        title="Delete Record"
+                        onClick={() => deleteOrder(group.orders[0])}
+                        className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.09]"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   )}
-                  <button
-                    title="Edit Order"
-                    onClick={() => editOrder(order)}
-                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09]"
-                  >
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    title="Delete Record"
-                    onClick={() => deleteOrder(order)}
-                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.09]"
-                  >
-                    <Trash2 size={13} />
-                  </button>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -276,85 +424,218 @@ export default function OrdersTable() {
             <tbody className="divide-y divide-white/[0.04]">
               {loading ? (
                 <DesktopOrdersSkeleton />
-              ) : filteredOrders.length === 0 ? (
+              ) : groupedOrders.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-6 py-12 text-center text-white/40 text-xs">
                     No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-3.5 whitespace-nowrap">
-                      <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white group-hover:text-plt-orange transition-colors flex items-center gap-2">
-                        <LineChart size={15} className="text-white/40 group-hover:text-plt-orange" />
-                        {order.tickerSymbol}
-                      </Link>
-                      <div className="text-[11px] text-white/40 truncate max-w-[200px] mt-0.5">{order.companyName}</div>
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap">
-                      <span
-                        className={`inline-block rounded-[4px] px-2 py-0.5 text-[10px] font-medium ${
-                          order.status === 'OPEN' ? 'bg-white/[0.06] border border-white/[0.09] text-white' : 'bg-white/[0.02] text-white/40'
-                        }`}
+                groupedOrders.map((group) => {
+                  const isMulti = group.orders.length > 1;
+                  const isExpanded = expandedKeys.has(group.key);
+
+                  return (
+                    <Fragment key={group.key}>
+                      {/* Master / Grouped Row */}
+                      <tr 
+                        onClick={() => isMulti && toggleExpand(group.key)}
+                        className={`transition-colors group ${
+                          isMulti 
+                            ? 'cursor-pointer hover:bg-white/[0.03]' 
+                            : 'hover:bg-white/[0.02]'
+                        } ${isExpanded ? 'bg-white/[0.02]' : ''}`}
                       >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap font-mono">
-                      <div className="text-white font-medium">{formatPrice(order.entryPrice)}</div>
-                      <div className="text-[10px] text-white/40 mt-0.5">{order.entryDate}</div>
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
-                      <div className="text-[#22c55e]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
-                      <div className="text-[#ef4444] mt-0.5">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono font-medium text-white">
-                      {formatQuantity(order.quantity)}
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono text-white font-medium">
-                      {formatPrice(order.currentPrice)}
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono text-white/80 font-medium">
-                      {order.status === 'OPEN' ? formatPrice(order.currentPrice * order.quantity) : '—'}
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
-                      <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
-                        {formatMoney(order.profitLoss)}
-                      </div>
-                      <div className={`text-[10px] mt-0.5 ${order.profitLossPct > 0 ? 'text-[#22c55e]' : order.profitLossPct < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
-                        {order.profitLossPct.toFixed(2)}%
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {order.status === 'OPEN' && (
-                          <button
-                            title="Close Position"
-                            onClick={() => closeOrder(order)}
-                            className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
+                        <td className="px-6 py-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            {isMulti ? (
+                              <button 
+                                type="button" 
+                                className="p-0.5 rounded text-white/40 group-hover:text-plt-orange hover:text-white transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleExpand(group.key);
+                                }}
+                              >
+                                <ChevronRight 
+                                  size={14} 
+                                  className={`transition-transform duration-150 ${isExpanded ? 'rotate-90 text-plt-orange' : ''}`} 
+                                />
+                              </button>
+                            ) : (
+                              <LineChart size={15} className="text-white/40 group-hover:text-plt-orange" />
+                            )}
+                            <Link 
+                              href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} 
+                              className="font-semibold text-white group-hover:text-plt-orange transition-colors flex items-center gap-1.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {group.tickerSymbol}
+                            </Link>
+                            {isMulti && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/[0.06] border border-white/[0.09] text-white/70 font-mono">
+                                {group.orders.length} Lots
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-white/40 truncate max-w-[200px] mt-0.5 pl-6">{group.companyName}</div>
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap">
+                          <span
+                            className={`inline-block rounded-[4px] px-2 py-0.5 text-[10px] font-medium ${
+                              group.status === 'OPEN' ? 'bg-white/[0.06] border border-white/[0.09] text-white' : 'bg-white/[0.02] text-white/40'
+                            }`}
                           >
-                            <CheckCircle size={15} className="text-[#22c55e]" />
-                          </button>
-                        )}
-                        <button
-                          title="Edit Order"
-                          onClick={() => editOrder(order)}
-                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          title="Delete Record"
-                          onClick={() => deleteOrder(order)}
-                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                            {group.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap font-mono">
+                          <div className="text-white font-medium">
+                            {isMulti ? `Avg ${formatPrice(group.avgEntryPrice)}` : formatPrice(group.avgEntryPrice)}
+                          </div>
+                          <div className="text-[10px] text-white/40 mt-0.5">
+                            {isMulti ? `${group.firstEntryDate} → ${group.lastEntryDate}` : group.orders[0].entryDate}
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
+                          {isMulti ? (
+                            <div className="text-white/40 text-[11px]">
+                              {group.hasMultipleTargets || group.hasMultipleStops ? 'Multiple' : (group.targetPrice ? formatPrice(group.targetPrice) : '-')}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-[#22c55e]">{group.orders[0].targetPrice ? formatPrice(group.orders[0].targetPrice) : '-'}</div>
+                              <div className="text-[#ef4444] mt-0.5">{group.orders[0].stopPrice ? formatPrice(group.orders[0].stopPrice) : '-'}</div>
+                            </>
+                          )}
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono font-medium text-white">
+                          {formatQuantity(group.totalQuantity)}
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono text-white font-medium">
+                          {formatPrice(group.currentPrice)}
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono text-white/80 font-medium">
+                          {group.status === 'OPEN' ? formatPrice(group.totalMktValue) : '—'}
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
+                          <div className={`font-semibold ${group.totalProfitLoss > 0 ? 'text-[#22c55e]' : group.totalProfitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                            {formatMoney(group.totalProfitLoss)}
+                          </div>
+                          <div className={`text-[10px] mt-0.5 ${group.totalProfitLossPct > 0 ? 'text-[#22c55e]' : group.totalProfitLossPct < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                            {group.totalProfitLossPct.toFixed(2)}%
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-right">
+                          {isMulti ? (
+                            <div className="flex items-center justify-end gap-1.5 text-white/40 group-hover:text-white/80 text-[11px] font-medium transition-colors">
+                              <span>{isExpanded ? 'Hide lots' : 'View lots'}</span>
+                              <ChevronDown size={13} className={`transition-transform duration-150 ${isExpanded ? 'rotate-180' : ''}`} />
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {group.orders[0].status === 'OPEN' && (
+                                <button
+                                  title="Close Position"
+                                  onClick={() => closeOrder(group.orders[0])}
+                                  className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
+                                >
+                                  <CheckCircle size={15} className="text-[#22c55e]" />
+                                </button>
+                              )}
+                              <button
+                                title="Edit Order"
+                                onClick={() => editOrder(group.orders[0])}
+                                className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
+                              >
+                                <Pencil size={15} />
+                              </button>
+                              <button
+                                title="Delete Record"
+                                onClick={() => deleteOrder(group.orders[0])}
+                                className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+
+                      {/* Subrows for multiple positions */}
+                      {isMulti && isExpanded && (
+                        group.orders.map((order, idx) => (
+                          <tr key={order.id} className="bg-white/[0.015] hover:bg-white/[0.035] transition-colors border-t border-white/[0.03]">
+                            <td className="px-6 py-3 whitespace-nowrap pl-12">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-white/40 bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/[0.06]">
+                                  Lot #{idx + 1}
+                                </span>
+                                <span className="text-white/40 text-[11px] font-mono">{order.entryDate}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap">
+                              <span className="text-[10px] text-white/40 font-medium">
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap font-mono text-white/90">
+                              <div>{formatPrice(order.entryPrice)}</div>
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap text-right font-mono">
+                              <div className="text-[#22c55e]/90">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
+                              <div className="text-[#ef4444]/90 text-[10px]">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap text-right font-mono text-white/90">
+                              {formatQuantity(order.quantity)}
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap text-right font-mono text-white/50">
+                              {formatPrice(order.currentPrice)}
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap text-right font-mono text-white/70">
+                              {order.status === 'OPEN' ? formatPrice(order.currentPrice * order.quantity) : '—'}
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap text-right font-mono">
+                              <div className={`font-medium ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                                {formatMoney(order.profitLoss)}
+                              </div>
+                              <div className={`text-[10px] ${order.profitLossPct > 0 ? 'text-[#22c55e]/80' : order.profitLossPct < 0 ? 'text-[#ef4444]/80' : 'text-white/60'}`}>
+                                {order.profitLossPct.toFixed(2)}%
+                              </div>
+                            </td>
+                            <td className="px-6 py-3 whitespace-nowrap text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {order.status === 'OPEN' && (
+                                  <button
+                                    title="Close Position"
+                                    onClick={() => closeOrder(order)}
+                                    className="p-1 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
+                                  >
+                                    <CheckCircle size={13} className="text-[#22c55e]" />
+                                  </button>
+                                )}
+                                <button
+                                  title="Edit Order"
+                                  onClick={() => editOrder(order)}
+                                  className="p-1 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                <button
+                                  title="Delete Record"
+                                  onClick={() => deleteOrder(order)}
+                                  className="p-1 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -365,7 +646,7 @@ export default function OrdersTable() {
         isOpen={isAddingOrder} 
         onClose={() => setIsAddingOrder(false)} 
         onSuccess={() => mutate()} 
-      />
+        />
       
       <CloseOrderModal
         isOpen={!!orderToClose}
