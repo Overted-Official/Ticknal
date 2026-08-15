@@ -15,7 +15,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="h-14 w-full bg-plt-surface border-t border-plt-border flex items-center justify-around z-50">
+    <div className="h-14 w-full bg-black/95 backdrop-blur-xl border-t border-white/[0.06] flex items-center justify-around z-50">
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -25,15 +25,15 @@ export default function BottomNav() {
             className="flex-1 h-full flex flex-col items-center justify-center group"
           >
             <div 
-              className={`flex items-center justify-center rounded-tv-full w-12 h-7 transition-colors duration-200 mb-1 ${
+              className={`flex items-center justify-center rounded-full w-12 h-7 transition-all duration-200 mb-0.5 ${
                 isActive 
-                  ? 'bg-plt-card border border-plt-orange/30 text-plt-orange' 
-                  : 'text-plt-muted group-hover:bg-plt-hover group-hover:text-plt-text'
+                  ? 'bg-white/[0.08] border border-white/[0.12] text-plt-orange shadow-[0_0_10px_rgba(255,100,13,0.2)]' 
+                  : 'text-white/40 group-hover:text-white'
               }`}
             >
-              <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
+              <item.icon size={18} strokeWidth={isActive ? 2 : 1.5} />
             </div>
-            <span className={`text-[10px] font-weight-medium ${isActive ? 'text-plt-orange' : 'text-plt-muted group-hover:text-plt-text'}`}>
+            <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-plt-orange' : 'text-white/40 group-hover:text-white'}`}>
               {item.label}
             </span>
           </Link>
