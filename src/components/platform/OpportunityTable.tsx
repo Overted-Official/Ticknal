@@ -47,41 +47,45 @@ export default function OpportunityTable({
   return (
     <>
       {/* Mobile View (Cards) */}
-      <div className="md:hidden flex flex-col space-y-2 p-2">
+      <div className="md:hidden flex flex-col space-y-2 p-3">
         {opportunities.length === 0 ? (
-          <div className="p-4 text-center text-plt-muted text-[12px] font-normal">{emptyText}</div>
+          <div className="p-6 text-center text-white/40 text-xs font-normal">{emptyText}</div>
         ) : (
           opportunities.map((item) => (
-            <div key={`${item.symbol}-${item.signal.date}`} className="bg-plt-card rounded-tv-lg border border-plt-border p-3">
+            <div key={`${item.symbol}-${item.signal.date}`} className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
               <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-plt-surface flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
                     {item.logoUrl ? (
                       <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain bg-transparent" />
                     ) : (
-                      <span className="text-[12px] font-medium text-plt-muted">
+                      <span className="text-[9px] font-bold text-white">
                         {item.symbol.substring(0, 2)}
                       </span>
                     )}
                   </div>
                   <div>
-                    <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-medium text-plt-text hover:text-plt-red text-[12px]">
-                      {item.symbol}
+                    <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-xs">
+                      {item.symbol.replace('.CA', '')}
                     </Link>
-                    {!compact && <div className="text-[12px] font-light text-plt-muted">{item.sector}</div>}
+                    {!compact && <div className="text-[10px] text-white/40">{item.sector}</div>}
                   </div>
                 </div>
                 <button 
                   onClick={() => setSelectedOpp(item)}
-                  className={`rounded-tv-sm px-4 py-1 text-[12px] font-medium transition-colors ${item.signal.signal === 'BUY' ? 'bg-plt-green hover:bg-plt-green/90 text-black' : 'bg-plt-red hover:bg-plt-red/90 text-white'}`}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all ${
+                    item.signal.signal === 'BUY' 
+                      ? 'bg-[#00e676]/15 text-[#00e676] border border-[#00e676]/30 hover:bg-[#00e676]/25' 
+                      : 'bg-[#ff4d58]/15 text-[#ff4d58] border border-[#ff4d58]/30 hover:bg-[#ff4d58]/25'
+                  }`}
                 >
                   {formatSignal(item.signal.signal)}
                 </button>
               </div>
-              <div className="flex justify-between items-end mt-2">
-                <div className="text-[12px] font-light text-plt-muted">{item.signal.date}</div>
+              <div className="flex justify-between items-end mt-2 pt-2 border-t border-white/[0.04]">
+                <div className="text-[10px] text-white/40 font-mono">{item.signal.date}</div>
                 <div className="text-right">
-                  <div className={`font-medium text-[12px] ${item.signal.signal === 'BUY' ? 'text-plt-green' : 'text-plt-red'}`}>
+                  <div className={`font-mono font-semibold text-xs ${item.signal.signal === 'BUY' ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                     {item.signal.price.toFixed(2)} EGP
                   </div>
                 </div>
@@ -93,54 +97,58 @@ export default function OpportunityTable({
 
       {/* Desktop View (Table) */}
       <div className="hidden md:block w-full">
-        <table className="w-full text-left text-[12px] text-plt-text">
-          <thead className="bg-plt-card sticky top-0 z-10 border-b border-plt-border text-[11px] uppercase text-plt-muted">
+        <table className="w-full text-left text-xs text-white">
+          <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
             <tr>
-              <th className="px-5 py-3 font-medium">Ticker</th>
-              {!compact && <th className="px-5 py-3 font-medium">Sector</th>}
-              <th className="px-5 py-3 font-medium">Date</th>
-              <th className="px-5 py-3 font-medium text-right">Price</th>
-              <th className="px-5 py-3 font-medium text-right">Action</th>
+              <th className="px-4 py-2.5">Ticker</th>
+              {!compact && <th className="px-4 py-2.5">Sector</th>}
+              <th className="px-4 py-2.5">Date</th>
+              <th className="px-4 py-2.5 text-right">Price</th>
+              <th className="px-4 py-2.5 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-plt-border bg-plt-surface">
+          <tbody className="divide-y divide-white/[0.04]">
             {opportunities.length === 0 ? (
               <tr>
-                <td colSpan={compact ? 4 : 5} className="px-5 py-8 text-center text-plt-muted text-[12px] font-normal">
+                <td colSpan={compact ? 4 : 5} className="px-4 py-8 text-center text-white/40 text-xs">
                   {emptyText}
                 </td>
               </tr>
             ) : (
               opportunities.map((item) => (
-                <tr key={`${item.symbol}-${item.signal.date}`} className="hover:bg-plt-hover transition-colors group">
-                  <td className="px-5 py-3 whitespace-nowrap">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-plt-card flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
+                <tr key={`${item.symbol}-${item.signal.date}`} className="hover:bg-white/[0.03] transition-colors group">
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
                         {item.logoUrl ? (
                           <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain bg-transparent" />
                         ) : (
-                          <span className="text-[12px] font-medium text-plt-muted">
+                          <span className="text-[9px] font-bold text-white">
                             {item.symbol.substring(0, 2)}
                           </span>
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-medium text-[12px] text-plt-text group-hover:text-plt-red transition-colors">
-                          {item.symbol}
+                        <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-semibold text-xs text-white group-hover:text-plt-orange transition-colors">
+                          {item.symbol.replace('.CA', '')}
                         </Link>
-                        {!compact && <div className="text-[12px] font-light text-plt-muted truncate max-w-[150px]">{item.companyName}</div>}
+                        {!compact && <span className="text-[10px] text-white/40 truncate max-w-[130px]">{item.companyName}</span>}
                       </div>
                     </div>
                   </td>
-                  {!compact && <td className="px-5 py-3 whitespace-nowrap text-plt-muted text-[12px] font-normal">{item.sector}</td>}
-                  <td className="px-5 py-3 whitespace-nowrap text-plt-muted text-[12px] font-normal">{item.signal.date}</td>
-                  <td className={`px-5 py-3 whitespace-nowrap text-right text-[12px] font-medium ${item.signal.signal === 'BUY' ? 'text-plt-green' : 'text-plt-red'}`}>
+                  {!compact && <td className="px-4 py-2.5 whitespace-nowrap text-white/50 text-[11px]">{item.sector}</td>}
+                  <td className="px-4 py-2.5 whitespace-nowrap text-white/40 font-mono text-[11px]">{item.signal.date}</td>
+                  <td className={`px-4 py-2.5 whitespace-nowrap text-right font-mono text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                     {item.signal.price.toFixed(2)} EGP
                   </td>
-                  <td className="px-5 py-3 whitespace-nowrap text-right text-[12px] font-medium">
+                  <td className="px-4 py-2.5 whitespace-nowrap text-right">
                     <button
                       onClick={() => setSelectedOpp(item)}
-                      className={`inline-block rounded-tv-sm px-4 py-1 text-[12px] font-medium transition-colors shadow-sm ${item.signal.signal === 'BUY' ? 'bg-plt-green hover:bg-plt-green/90 text-black' : 'bg-plt-red hover:bg-plt-red/90 text-white'}`}
+                      className={`inline-block rounded-lg px-3 py-1 text-[11px] font-semibold transition-all ${
+                        item.signal.signal === 'BUY' 
+                          ? 'bg-[#00e676]/15 text-[#00e676] border border-[#00e676]/30 hover:bg-[#00e676]/25 shadow-[0_0_10px_rgba(0,230,118,0.12)]' 
+                          : 'bg-[#ff4d58]/15 text-[#ff4d58] border border-[#ff4d58]/30 hover:bg-[#ff4d58]/25 shadow-[0_0_10px_rgba(255,77,88,0.12)]'
+                      }`}
                     >
                       {formatSignal(item.signal.signal)}
                     </button>

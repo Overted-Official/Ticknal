@@ -65,172 +65,156 @@ export default async function DashboardContent() {
   const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-auto bg-plt-base text-plt-text pb-6">
-      <div className="px-4 pt-4 pb-0 md:px-6">
+    <div className="flex h-full min-h-0 flex-col overflow-auto bg-[#0e0e0e] text-white pb-8">
+      <div className="px-4 pt-5 pb-0 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-xl font-weight-medium text-plt-text">Dashboard</h1>
-            <p className="mt-1 text-xs text-plt-muted">Portfolio performance and fresh PSI opportunities</p>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+            <p className="mt-0.5 text-xs text-white/50">Portfolio performance and fresh PSI trading signals</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <TestNotificationButton />
             <Link
               href="/charts"
-              className="rounded-tv-sm border border-plt-border bg-plt-surface px-3 py-2 text-xs text-plt-muted transition-colors hover:border-plt-border-active hover:text-plt-text"
+              className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-all hover:bg-white/[0.08] hover:text-white shadow-sm"
             >
               Open Charts
             </Link>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-6">
+        {/* Top Metric Cards */}
+        <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-1">
             <Metric
               label="Net Worth"
               value={formatMoney(orderStats.openMarketValue, false)}
-              subtitle={`Total ROI ${orderStats.totalRoi >= 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
-              subtitleClass={orderStats.totalRoi >= 0 ? 'text-plt-green' : 'text-plt-red'}
+              subtitle={`ROI ${orderStats.totalRoi >= 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
+              subtitleClass={orderStats.totalRoi >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}
             />
           </div>
-          <Metric label="Unrealized P/L" value={formatMoney(orderStats.unrealized, true)} valueClass={orderStats.unrealized >= 0 ? 'text-plt-green' : 'text-plt-red'} />
-          <Metric label="Realized P/L" value={formatMoney(orderStats.realized, true)} valueClass={orderStats.realized >= 0 ? 'text-plt-green' : 'text-plt-red'} />
+          <Metric 
+            label="Unrealized P/L" 
+            value={formatMoney(orderStats.unrealized, true)} 
+            valueClass={orderStats.unrealized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} 
+          />
+          <Metric 
+            label="Realized P/L" 
+            value={formatMoney(orderStats.realized, true)} 
+            valueClass={orderStats.realized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} 
+          />
           <Metric 
             label="Open Positions" 
             value={String(orderStats.openOrders.length)} 
-            subtitle={`${orderStats.openWinning} Win / ${orderStats.openLosing} Loss`}
-            subtitleClass="text-plt-muted"
+            subtitle={`${orderStats.openWinning} Win · ${orderStats.openLosing} Loss`}
+            subtitleClass="text-white/40"
           />
           <Metric 
             label="Closed Positions" 
             value={String(orderStats.closedCount)} 
-            subtitle={`${orderStats.closedWinning} Win / ${orderStats.closedLosing} Loss`}
-            subtitleClass="text-plt-muted"
+            subtitle={`${orderStats.closedWinning} Win · ${orderStats.closedLosing} Loss`}
+            subtitleClass="text-white/40"
           />
           <Metric label="Active Alerts" value={String(activeAlertCount)} />
         </div>
 
         {/* Extended Portfolio Stats */}
-        <div className="mt-4 rounded-tv-lg border border-plt-border bg-plt-surface p-4 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-plt-border gap-4 md:gap-0">
-          <div className="flex-1 md:px-4 first:px-0 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-plt-muted mb-1">Win Rate</div>
-            <div className="text-lg font-weight-medium text-plt-text">{orderStats.winRate.toFixed(1)}%</div>
+        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-4 md:p-5 shadow-xl flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0">
+          <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Win Rate</div>
+            <div className="text-xl font-bold font-mono text-white">{orderStats.winRate.toFixed(1)}%</div>
           </div>
-          <div className="flex-1 md:px-4 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-plt-muted mb-1">Avg. Bars / Trade</div>
-            <div className="text-lg font-weight-medium text-plt-text">{Math.round(orderStats.avgBarsPerTrade)}</div>
+          <div className="flex-1 md:px-5 flex flex-col justify-center">
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Avg. Bars / Trade</div>
+            <div className="text-xl font-bold font-mono text-white">{Math.round(orderStats.avgBarsPerTrade)}</div>
           </div>
-          <div className="flex-1 md:px-4 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-plt-muted mb-1">Avg. Adverse Excursion</div>
-            <div className="text-lg font-weight-medium text-plt-muted">N/A</div>
+          <div className="flex-1 md:px-5 flex flex-col justify-center">
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Avg. Adverse Excursion</div>
+            <div className="text-xl font-bold font-mono text-white/30">N/A</div>
           </div>
-          <div className="flex-1 md:px-4 last:pr-0 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-plt-muted mb-1">Max Trade Loss</div>
-            <div className={`text-lg font-weight-medium ${orderStats.maxDrawdownPct < 0 ? 'text-plt-red' : 'text-plt-text'}`}>
+          <div className="flex-1 md:px-5 last:pr-0 flex flex-col justify-center">
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1">Max Trade Loss</div>
+            <div className={`text-xl font-bold font-mono ${orderStats.maxDrawdownPct < 0 ? 'text-[#ff4d58]' : 'text-white'}`}>
               {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
             </div>
           </div>
         </div>
       </div>
 
-      {/* Analytics Charts */}
-      <div className="border-b border-plt-border pb-4">
-        <DashboardCharts sectorData={orderStats.sectorData} monthlyData={orderStats.monthlyData} />
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 xl:grid-cols-2">
-        {/* Open Positions */}
-        <section>
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-weight-bold uppercase tracking-wider text-plt-muted">Open Positions</h3>
-            <Link href="/positions" className="text-[11px] text-plt-muted hover:text-plt-text">Positions</Link>
-          </div>
-          <div className="overflow-hidden rounded-tv-lg border border-plt-border bg-plt-surface">
-            {/* Mobile View (Cards) */}
-            <div className="md:hidden flex flex-col space-y-2 p-2">
-              {orderStats.openOrders.length === 0 ? (
-                <div className="p-4 text-center text-plt-muted text-[12px] font-normal">No open positions</div>
-              ) : (
-                orderStats.openOrders.slice(0, 10).map((order) => (
-                  <div key={order.id} className="bg-plt-card rounded-tv-lg border border-plt-border p-3 flex justify-between items-center">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-plt-surface flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
-                        {order.logoUrl ? (
-                          <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-contain bg-transparent" />
-                        ) : (
-                          <span className="text-[12px] font-medium text-plt-muted">
-                            {order.tickerSymbol.substring(0, 2)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-col">
-                        <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-[12px] text-plt-text hover:text-plt-red">
-                          {order.tickerSymbol}
-                        </Link>
-                        <div className="max-w-40 truncate text-[12px] font-light text-plt-muted">{order.companyName}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[12px] font-medium text-plt-text">{formatPrice(order.currentPrice * order.quantity)}</div>
-                      <div className={`flex items-center justify-end text-[12px] font-medium ${order.profitLoss >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
-                        {formatMoney(order.profitLoss, true)} ({order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+      {/* Two-Column Grid: Left (Open Positions) / Right (Signals) */}
+      <div className="mt-5 grid grid-cols-1 gap-5 px-4 md:px-6 xl:grid-cols-2">
+        {/* Open Positions Card */}
+        <section className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
+          <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_rgba(255,100,13,0.4)]" />
+                Active Positions
+              </h2>
+              <p className="text-[11px] text-white/40 mt-0.5">Summary of currently open portfolio holdings</p>
             </div>
+            <Link 
+              href="/positions" 
+              className="text-[11px] font-semibold text-white/60 hover:text-white px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] transition-all"
+            >
+              All Orders →
+            </Link>
+          </div>
 
-            {/* Desktop View (Table) */}
-            <div className="hidden md:block overflow-x-auto">
+          <div className="flex-1 overflow-x-auto">
+            {/* Desktop View */}
+            <div className="hidden md:block">
               <table className="w-full text-left text-xs">
-                <thead className="border-b border-plt-border bg-plt-card text-[11px] uppercase text-plt-muted font-normal">
+                <thead className="border-b border-white/[0.06] bg-white/[0.02] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
                   <tr>
-                    <th className="px-3 py-2">Symbol</th>
-                    <th className="px-3 py-2 text-right">Entry</th>
-                    <th className="px-3 py-2 text-right">Current</th>
-                    <th className="px-3 py-2 text-right">Total Value</th>
-                    <th className="px-3 py-2 text-right">P/L</th>
+                    <th className="px-4 py-2.5">Symbol</th>
+                    <th className="px-4 py-2.5 text-right">Entry</th>
+                    <th className="px-4 py-2.5 text-right">Current</th>
+                    <th className="px-4 py-2.5 text-right">Position Value</th>
+                    <th className="px-4 py-2.5 text-right">P/L</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-plt-border">
+                <tbody className="divide-y divide-white/[0.04]">
                   {orderStats.openOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-3 py-6 text-center text-plt-muted">No open positions</td>
+                      <td colSpan={5} className="px-4 py-10 text-center text-white/40 text-xs">No active open positions</td>
                     </tr>
                   ) : (
-                    orderStats.openOrders.slice(0, 10).map((order) => (
-                      <tr key={order.id} className="hover:bg-plt-hover transition-colors">
-                        <td className="px-3 py-2">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-6 h-6 rounded-full bg-plt-card flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
+                    orderStats.openOrders.slice(0, 8).map((order) => (
+                      <tr key={order.id} className="hover:bg-white/[0.03] transition-colors group">
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center space-x-2.5">
+                            <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
                               {order.logoUrl ? (
                                 <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-contain bg-transparent" />
                               ) : (
-                                <span className="text-[10px] font-medium text-plt-muted">
+                                <span className="text-[9px] font-bold text-white">
                                   {order.tickerSymbol.substring(0, 2)}
                                 </span>
                               )}
                             </div>
                             <div className="flex flex-col">
-                              <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-plt-text hover:text-plt-red">
+                              <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-xs text-white group-hover:text-plt-orange transition-colors">
                                 {order.tickerSymbol}
                               </Link>
-                              <div className="max-w-32 truncate text-[11px] text-plt-muted">{order.companyName}</div>
+                              <span className="text-[10px] text-white/40 truncate max-w-[120px]">{order.companyName}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-right">
-                          <div className="font-medium text-plt-text">{formatPrice(order.entryPrice)}</div>
-                          <div className="text-[11px] text-plt-muted">{order.entryDate}</div>
+                        <td className="px-4 py-2.5 text-right font-mono">
+                          <div className="text-white text-xs">{formatPrice(order.entryPrice)}</div>
+                          <div className="text-[10px] text-white/40">{order.entryDate}</div>
                         </td>
-                        <td className="px-3 py-2 text-right">
-                          <div className="font-medium text-plt-text">{formatPrice(order.currentPrice)}</div>
-                          <div className="text-[11px] text-plt-muted">{order.quantity} shares</div>
+                        <td className="px-4 py-2.5 text-right font-mono">
+                          <div className="text-white text-xs">{formatPrice(order.currentPrice)}</div>
+                          <div className="text-[10px] text-white/40">{order.quantity} shares</div>
                         </td>
-                        <td className="px-3 py-2 text-right font-medium text-plt-text">{formatPrice(order.currentPrice * order.quantity)}</td>
-                        <td className={`px-3 py-2 text-right font-medium ${order.profitLoss >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
-                          {formatMoney(order.profitLoss, true)}
-                          <div className="text-[12px] font-light opacity-90">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
+                        <td className="px-4 py-2.5 text-right font-mono text-white text-xs">
+                          {formatPrice(order.currentPrice * order.quantity)}
+                        </td>
+                        <td className={`px-4 py-2.5 text-right font-mono text-xs ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                          <div className="font-semibold">{formatMoney(order.profitLoss, true)}</div>
+                          <div className="text-[10px] opacity-80">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
                         </td>
                       </tr>
                     ))
@@ -238,26 +222,76 @@ export default async function DashboardContent() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden flex flex-col space-y-2 p-3">
+              {orderStats.openOrders.length === 0 ? (
+                <div className="p-6 text-center text-white/40 text-xs">No active open positions</div>
+              ) : (
+                orderStats.openOrders.slice(0, 6).map((order) => (
+                  <div key={order.id} className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3 flex justify-between items-center">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
+                        {order.logoUrl ? (
+                          <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-contain bg-transparent" />
+                        ) : (
+                          <span className="text-[9px] font-bold text-white">
+                            {order.tickerSymbol.substring(0, 2)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-xs text-white hover:text-plt-orange">
+                          {order.tickerSymbol}
+                        </Link>
+                        <span className="text-[10px] text-white/40 truncate max-w-[120px]">{order.companyName}</span>
+                      </div>
+                    </div>
+                    <div className="text-right font-mono">
+                      <div className="text-xs text-white">{formatPrice(order.currentPrice * order.quantity)}</div>
+                      <div className={`text-[11px] font-semibold ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                        {formatMoney(order.profitLoss, true)} ({order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </section>
 
-        <section>
+        {/* Opportunities Card */}
+        <section className="space-y-4">
           {/* Buy Opportunities */}
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium text-plt-text">Buy Opportunities</h2>
-            <span className="text-[11px] text-plt-muted">Last 5 bars</span>
-          </div>
-          <div className="overflow-hidden rounded-tv-lg border border-plt-border bg-plt-surface">
-            <OpportunityTable opportunities={buyOpportunities} emptyText="No buy opportunities in the last 5 bars" />
+          <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl shadow-xl overflow-hidden">
+            <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#00e676] shadow-[0_0_8px_#00e676]" />
+                  Buy Opportunities
+                </h2>
+                <p className="text-[11px] text-white/40 mt-0.5">Top buy signals triggered across the market</p>
+              </div>
+            </div>
+            <div className="p-0">
+              <OpportunityTable opportunities={buyOpportunities} emptyText="No buy opportunities in the last 5 bars" compact />
+            </div>
           </div>
 
           {/* Exit Signals */}
-          <div className="mt-4 mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium text-plt-text">Exit Signals</h2>
-            <span className="text-[11px] text-plt-muted">Last 5 bars</span>
-          </div>
-          <div className="overflow-hidden rounded-tv-lg border border-plt-border bg-plt-surface">
-            <OpportunityTable opportunities={exitSignals} emptyText="No exit signals in the last 5 bars" compact />
+          <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl shadow-xl overflow-hidden">
+            <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#ff4d58] shadow-[0_0_8px_#ff4d58]" />
+                  Exit & Stop Alerts
+                </h2>
+                <p className="text-[11px] text-white/40 mt-0.5">Exit notifications for your current positions</p>
+              </div>
+            </div>
+            <div className="p-0">
+              <OpportunityTable opportunities={exitSignals} emptyText="No exit signals in the last 5 bars" compact />
+            </div>
           </div>
         </section>
       </div>

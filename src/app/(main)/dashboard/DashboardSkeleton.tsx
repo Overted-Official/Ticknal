@@ -2,30 +2,30 @@ import React from 'react';
 
 function MetricSkeleton() {
   return (
-    <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-3 animate-pulse">
-      <div className="h-3 w-16 bg-tv-border rounded mb-2"></div>
-      <div className="h-6 w-24 bg-tv-border/80 rounded mb-1"></div>
-      <div className="h-3 w-20 bg-tv-border/50 rounded"></div>
+    <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-4 animate-pulse">
+      <div className="h-2.5 w-16 bg-white/[0.06] rounded mb-2"></div>
+      <div className="h-6 w-24 bg-white/[0.1] rounded mb-1.5"></div>
+      <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
     </div>
   );
 }
 
 export default function DashboardSkeleton() {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text">
-      <div className="border-b border-tv-border px-5 py-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-auto bg-[#0e0e0e] text-white">
+      <div className="border-b border-white/[0.06] px-5 py-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="animate-pulse">
-            <div className="h-6 w-32 bg-tv-border rounded mb-2"></div>
-            <div className="h-3 w-64 bg-tv-border/50 rounded"></div>
+            <div className="h-7 w-36 bg-white/[0.08] rounded-xl mb-2"></div>
+            <div className="h-3 w-64 bg-white/[0.04] rounded-lg"></div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="h-8 w-24 bg-tv-surface border border-tv-border rounded-tv-sm animate-pulse"></div>
-            <div className="h-8 w-24 bg-tv-surface border border-tv-border rounded-tv-sm animate-pulse"></div>
+            <div className="h-8 w-24 bg-white/[0.04] border border-white/[0.08] rounded-xl animate-pulse"></div>
+            <div className="h-8 w-28 bg-white/[0.04] border border-white/[0.08] rounded-xl animate-pulse"></div>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
+        <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-1">
             <MetricSkeleton />
           </div>
@@ -33,56 +33,55 @@ export default function DashboardSkeleton() {
           <MetricSkeleton />
           <MetricSkeleton />
           <MetricSkeleton />
+          <MetricSkeleton />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-4 pt-4 md:grid-cols-2">
-        <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4 animate-pulse">
+      <div className="grid grid-cols-1 gap-5 px-5 pt-5 md:grid-cols-2">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-5 animate-pulse">
           <div className="mb-3 flex items-center justify-between">
-            <div className="h-4 w-32 bg-tv-border rounded"></div>
-            <div className="h-3 w-20 bg-tv-border/50 rounded"></div>
+            <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
+            <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
           </div>
           <div style={{ height: 240 }} className="flex items-center justify-center">
-            <div className="h-48 w-48 rounded-full bg-tv-border/30"></div>
+            <div className="h-44 w-44 rounded-full border-8 border-white/[0.06]"></div>
           </div>
         </div>
 
-        <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-4 animate-pulse">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-5 animate-pulse">
           <div className="mb-3 flex items-center justify-between">
-            <div className="h-4 w-36 bg-tv-border rounded"></div>
-            <div className="h-3 w-24 bg-tv-border/50 rounded"></div>
+            <div className="h-4 w-36 bg-white/[0.08] rounded"></div>
+            <div className="h-3 w-24 bg-white/[0.04] rounded"></div>
           </div>
           <div style={{ height: 240 }} className="flex items-end justify-between px-2 pb-2">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="w-8 bg-tv-border/40 rounded-t-sm" style={{ height: `${Math.max(20, Math.random() * 100)}%` }}></div>
+              <div key={i} className="w-8 bg-white/[0.06] rounded-t-lg" style={{ height: `${Math.max(20, Math.random() * 100)}%` }}></div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[1.25fr_0.75fr]">
-        <section className="animate-pulse">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="h-4 w-32 bg-tv-border rounded"></div>
-            <div className="h-3 w-12 bg-tv-border/50 rounded"></div>
+      <div className="grid grid-cols-1 gap-5 p-5 xl:grid-cols-2">
+        <section className="animate-pulse rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
+            <div className="h-3 w-16 bg-white/[0.04] rounded"></div>
           </div>
-          <div className="overflow-hidden rounded-tv-lg border border-tv-border">
-            <div className="h-10 bg-tv-surface border-b border-tv-border"></div>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-14 bg-tv-base border-b border-tv-border/50"></div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-12 bg-white/[0.03] rounded-xl border border-white/[0.04]"></div>
             ))}
           </div>
         </section>
 
-        <section className="animate-pulse">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="h-4 w-36 bg-tv-border rounded"></div>
-            <div className="h-3 w-20 bg-tv-border/50 rounded"></div>
+        <section className="animate-pulse rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="h-4 w-36 bg-white/[0.08] rounded"></div>
+            <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
           </div>
-          <div className="overflow-hidden rounded-tv-lg border border-tv-border">
-            <div className="h-10 bg-tv-surface border-b border-tv-border"></div>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-10 bg-tv-base border-b border-tv-border/50"></div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-12 bg-white/[0.03] rounded-xl border border-white/[0.04]"></div>
             ))}
           </div>
         </section>
