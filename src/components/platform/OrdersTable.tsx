@@ -150,8 +150,16 @@ export default function OrdersTable() {
           <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-white font-bold" />
           <Metric label="Open Positions" value={String(totals.openCount)} />
           <Metric label="Closed Positions" value={String(totals.closedCount)} />
-          <Metric label="Unrealized P/L" value={formatMoney(totals.unrealized)} valueClass={totals.unrealized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} />
-          <Metric label="Realized P/L" value={formatMoney(totals.realized)} valueClass={totals.realized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} />
+          <Metric 
+            label="Unrealized P/L" 
+            value={formatMoney(totals.unrealized)} 
+            valueClass={totals.unrealized > 0 ? 'text-[#00e676]' : totals.unrealized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
+          />
+          <Metric 
+            label="Realized P/L" 
+            value={formatMoney(totals.realized)} 
+            valueClass={totals.realized > 0 ? 'text-[#00e676]' : totals.realized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
+          />
         </motion.div>
 
         {/* Mobile View (Cards) */}
@@ -197,7 +205,7 @@ export default function OrdersTable() {
                   
                   <div className="text-right">
                     <span className="text-white/40 text-[9px] uppercase tracking-wider block mb-0.5 font-sans">P/L</span>
-                    <div className={`font-semibold ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                    <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
                       {formatMoney(order.profitLoss)}
                       <span className="text-[10px] ml-1 opacity-80">({(order.profitLossPct * 100).toFixed(2)}%)</span>
                     </div>
@@ -293,10 +301,10 @@ export default function OrdersTable() {
                       {formatPrice(order.currentPrice)}
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
-                      <div className={`font-semibold ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                      <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
                         {formatMoney(order.profitLoss)}
                       </div>
-                      <div className={`text-[10px] mt-0.5 ${order.profitLossPct >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                      <div className={`text-[10px] mt-0.5 ${order.profitLossPct > 0 ? 'text-[#00e676]' : order.profitLossPct < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
                         {(order.profitLossPct * 100).toFixed(2)}%
                       </div>
                     </td>
@@ -363,9 +371,9 @@ function Metric({ label, value, valueClass = 'text-white' }: { label: string; va
     <motion.div 
       variants={itemFadeInUp}
       whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-xl p-6 group cursor-default"
+      className="glass-panel glass-panel-hover rounded-xl p-5 min-h-[110px] flex flex-col justify-between group cursor-default"
     >
-      <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45">{label}</div>
+      <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50">{label}</div>
       <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
     </motion.div>
   );
@@ -376,8 +384,9 @@ function formatPrice(value: number): string {
 }
 
 function formatMoney(value: number): string {
+  if (value === 0) return '0.00 EGP';
   const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${value >= 0 ? '+' : '-'}${formatted} EGP`;
+  return `${value > 0 ? '+' : '-'}${formatted} EGP`;
 }
 
 function formatQuantity(value: number): string {

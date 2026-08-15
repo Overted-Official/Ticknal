@@ -26,13 +26,13 @@
      ========================================================================== */
   --plt-bg-base: #000000;
   --plt-bg-surface: #000000;
-  --plt-bg-card: rgba(10, 10, 10, 0.75);
-  --plt-bg-hover: #141414;
+  --plt-bg-card: #0d0e12;
+  --plt-bg-hover: #14151a;
   --plt-bg-chart: #171B26;
 
-  --plt-border: rgba(255, 255, 255, 0.05);
-  --plt-border-soft: rgba(255, 255, 255, 0.03);
-  --plt-border-active: #ea3943;
+  --plt-border: rgba(255, 255, 255, 0.07);
+  --plt-border-soft: rgba(255, 255, 255, 0.04);
+  --plt-border-active: #ff640d;
   --plt-specular: rgba(255, 255, 255, 0.12);
 
   --plt-accent-red: #ea3943;
@@ -64,7 +64,7 @@
   --radius-3xl: 1.5rem;
   --radius-full: 9999px;
   
-  --glass-bg: rgba(10, 10, 10, 0.75);
+  --glass-bg: #0d0e12;
 }
 
 @theme inline {
@@ -108,6 +108,7 @@
   --color-plt-muted: var(--plt-text-muted);
   --color-plt-faint: var(--plt-text-faint);
 
+  /* Font mapping for Tailwind */
   --font-sans: var(--font-tv-sans);
   --font-mono: var(--font-tv-mono);
 }
@@ -136,33 +137,38 @@ body {
   padding: 0;
 }
 
-/* Hide scrollbar for clean UI like TradingView */
+/* Custom Scrollbar for Platform */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent; 
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08); 
-  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.16); 
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* ==========================================================================
-   Tactile Smoked Glass & Specular Utilities
-   ========================================================================== */
+/* Hide scrollbar for clean UI where needed */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Unified Platform Surface & Glow Tokens */
 .glass-panel {
   position: relative;
   border-radius: 12px;
-  background: rgba(10, 10, 10, 0.75);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03), 0 8px 32px rgba(0, 0, 0, 0.6);
+  background: #0d0e12;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 20px rgba(0, 0, 0, 0.5);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -173,14 +179,14 @@ body {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 30%, rgba(255, 255, 255, 0.12) 70%, transparent 100%);
   pointer-events: none;
   border-radius: inherit;
 }
 
 .glass-panel-hover:hover {
   border-color: rgba(255, 100, 13, 0.35);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 12px 36px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 100, 13, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 100, 13, 0.08);
 }
 
 .glass-pill {

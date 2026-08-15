@@ -101,31 +101,37 @@ export default function DashboardMotionView({
             <MetricCard
               label="Net Worth"
               value={formatMoney(orderStats.openMarketValue, false)}
-              subtitle={`ROI ${orderStats.totalRoi >= 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
-              subtitleClass={orderStats.totalRoi >= 0 ? 'text-[#00e676] bg-[#00e676]/10 border-[#00e676]/20' : 'text-[#ff4d58] bg-[#ff4d58]/10 border-[#ff4d58]/20'}
+              subtitle={`ROI ${orderStats.totalRoi > 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
+              subtitleClass={
+                orderStats.totalRoi > 0 
+                  ? 'text-[#00e676] bg-[#00e676]/10 border border-[#00e676]/20 font-medium' 
+                  : orderStats.totalRoi < 0 
+                  ? 'text-[#ff4d58] bg-[#ff4d58]/10 border border-[#ff4d58]/20 font-medium' 
+                  : 'text-white/50 bg-white/[0.04] border border-white/[0.08]'
+              }
             />
           </div>
           <MetricCard 
             label="Unrealized P/L" 
             value={formatMoney(orderStats.unrealized, true)} 
-            valueClass={orderStats.unrealized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} 
+            valueClass={orderStats.unrealized > 0 ? 'text-[#00e676]' : orderStats.unrealized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
           />
           <MetricCard 
             label="Realized P/L" 
             value={formatMoney(orderStats.realized, true)} 
-            valueClass={orderStats.realized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} 
+            valueClass={orderStats.realized > 0 ? 'text-[#00e676]' : orderStats.realized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
           />
           <MetricCard 
             label="Open Positions" 
             value={String(orderStats.openOrders.length)} 
             subtitle={`${orderStats.openWinning} Win · ${orderStats.openLosing} Loss`}
-            subtitleClass="text-white/40"
+            subtitleClass="text-white/50 bg-white/[0.04] border border-white/[0.08]"
           />
           <MetricCard 
             label="Closed Positions" 
             value={String(orderStats.closedCount)} 
             subtitle={`${orderStats.closedWinning} Win · ${orderStats.closedLosing} Loss`}
-            subtitleClass="text-white/40"
+            subtitleClass="text-white/50 bg-white/[0.04] border border-white/[0.08]"
           />
           <MetricCard label="Active Alerts" value={String(activeAlertCount)} />
         </motion.div>
@@ -136,19 +142,19 @@ export default function DashboardMotionView({
           className="glass-panel rounded-xl p-6 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
         >
           <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Win Rate</div>
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Win Rate</div>
             <div className="text-xl font-bold font-mono text-white">{orderStats.winRate.toFixed(1)}%</div>
           </div>
           <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Avg. Bars / Trade</div>
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Avg. Bars / Trade</div>
             <div className="text-xl font-bold font-mono text-white">{Math.round(orderStats.avgBarsPerTrade)}</div>
           </div>
           <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Avg. Adverse Excursion</div>
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Avg. Adverse Excursion</div>
             <div className="text-xl font-bold font-mono text-white/30">N/A</div>
           </div>
           <div className="flex-1 md:px-5 last:pr-0 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Max Trade Loss</div>
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Max Trade Loss</div>
             <div className={`text-xl font-bold font-mono ${orderStats.maxDrawdownPct < 0 ? 'text-[#ff4d58]' : 'text-white'}`}>
               {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
             </div>
@@ -231,9 +237,9 @@ export default function DashboardMotionView({
                           <td className="px-6 py-3.5 text-right font-mono text-white text-xs">
                             {formatPrice(order.currentPrice * order.quantity)}
                           </td>
-                          <td className={`px-6 py-3.5 text-right font-mono text-xs ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                          <td className={`px-6 py-3.5 text-right font-mono text-xs ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
                             <div className="font-semibold">{formatMoney(order.profitLoss, true)}</div>
-                            <div className="text-[10px] opacity-80">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
+                            <div className="text-[10px] opacity-80">{order.profitLossPct > 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
                           </td>
                         </tr>
                       ))
@@ -268,8 +274,8 @@ export default function DashboardMotionView({
                       </div>
                       <div className="text-right font-mono">
                         <div className="text-xs text-white">{formatPrice(order.currentPrice * order.quantity)}</div>
-                        <div className={`text-[11px] font-semibold ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
-                          {formatMoney(order.profitLoss, true)} ({order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
+                        <div className={`text-[11px] font-semibold ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
+                          {formatMoney(order.profitLoss, true)} ({order.profitLossPct > 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
                         </div>
                       </div>
                     </div>
@@ -336,13 +342,15 @@ function MetricCard({
     <motion.div 
       variants={itemFadeInUp}
       whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-xl p-6 group cursor-default"
+      className="glass-panel glass-panel-hover rounded-xl p-5 min-h-[110px] flex flex-col justify-between group cursor-default"
     >
-      <div className="text-[10px] uppercase font-semibold tracking-wider text-white/45">{label}</div>
-      <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
+      <div>
+        <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50">{label}</div>
+        <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
+      </div>
       {subtitle && (
-        <div className="mt-1">
-          <span className={`inline-block px-1.5 py-0.5 rounded border border-white/[0.06] text-[10px] font-mono ${subtitleClass}`}>
+        <div className="mt-2 flex items-center">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono ${subtitleClass}`}>
             {subtitle}
           </span>
         </div>
@@ -351,9 +359,10 @@ function MetricCard({
   );
 }
 
-function formatMoney(value: number, showSign: boolean): string {
+function formatMoney(value: number, showSign: boolean = false): string {
+  if (value === 0) return '0.00 EGP';
   const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const sign = showSign && value >= 0 ? '+' : value < 0 ? '-' : '';
+  const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
   return `${sign}${formatted} EGP`;
 }
 
