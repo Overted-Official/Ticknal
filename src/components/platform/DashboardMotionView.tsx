@@ -63,7 +63,7 @@ export default function DashboardMotionView({
       className="flex h-full min-h-0 flex-col overflow-auto bg-transparent text-white pb-8 relative z-10"
     >
       {/* Top Header Banner */}
-      <div className="border-b border-white/[0.06] px-6 py-5 shrink-0">
+      <div className="border-b border-white/[0.09] px-6 py-5 shrink-0">
         <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -77,14 +77,14 @@ export default function DashboardMotionView({
             <TestNotificationButton />
             <Link
               href="/positions"
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] transition-all"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
             >
               <span>Manage Positions</span>
               <span className="text-plt-orange">→</span>
             </Link>
             <Link
               href="/charts"
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] transition-all"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
             >
               <span>Open Charts</span>
               <span className="text-plt-orange">→</span>
@@ -98,7 +98,7 @@ export default function DashboardMotionView({
         {/* 1. Unified Master KPI Strip (Clean, seamless, 6px corners, pure black) */}
         <motion.div 
           variants={itemFadeInUp}
-          className="border border-white/[0.07] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 overflow-hidden"
+          className="border border-white/[0.09] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 overflow-hidden"
         >
           {/* Cell 1: Net Worth */}
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
@@ -170,7 +170,7 @@ export default function DashboardMotionView({
         {/* 2. Extended Portfolio Stats Bar */}
         <motion.div 
           variants={itemFadeInUp}
-          className="border border-white/[0.07] rounded-md bg-black p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
+          className="border border-white/[0.09] rounded-md bg-black p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
         >
           <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
             <div className="text-[11px] text-white/40 font-medium mb-1">Win Rate</div>
@@ -200,8 +200,8 @@ export default function DashboardMotionView({
         {/* 4. Two-Column Grid: Left (Open Positions) / Right (Signals) */}
         <motion.div variants={containerStagger} className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {/* Open Positions Card */}
-          <motion.section variants={itemFadeInUp} className="border border-white/[0.07] rounded-md bg-black overflow-hidden flex flex-col">
-            <div className="border-b border-white/[0.06] px-6 py-4 bg-transparent flex items-center justify-between">
+          <motion.section variants={itemFadeInUp} className="border border-white/[0.09] rounded-md bg-black overflow-hidden flex flex-col">
+            <div className="border-b border-white/[0.09] px-6 py-4 bg-transparent flex items-center justify-between">
               <div>
                 <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-plt-orange" />
@@ -211,7 +211,7 @@ export default function DashboardMotionView({
               </div>
               <Link 
                 href="/positions" 
-                className="text-[11px] font-medium text-white/60 hover:text-white px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] transition-all"
+                className="text-[11px] font-medium text-white/60 hover:text-white px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] transition-all"
               >
                 All Orders →
               </Link>
@@ -221,7 +221,7 @@ export default function DashboardMotionView({
               {/* Desktop View */}
               <div className="hidden md:block">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-white/[0.06] bg-transparent text-[11px] font-medium text-white/30">
+                  <thead className="border-b border-white/[0.09] bg-transparent text-[11px] font-medium text-white/30">
                     <tr>
                       <th className="px-6 py-3.5">Symbol</th>
                       <th className="px-6 py-3.5 text-right">Entry</th>
@@ -240,7 +240,7 @@ export default function DashboardMotionView({
                         <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="px-6 py-3.5">
                             <div className="flex items-center space-x-2.5">
-                              <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
+                              <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
                                 {order.logoUrl ? (
                                   <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-contain bg-transparent" />
                                 ) : (
@@ -285,9 +285,9 @@ export default function DashboardMotionView({
                   <div className="p-6 text-center text-white/40 text-xs">No active open positions</div>
                 ) : (
                   orderStats.openOrders.slice(0, 6).map((order) => (
-                    <div key={order.id} className="bg-transparent rounded-md border border-white/[0.06] p-3 flex justify-between items-center">
+                    <div key={order.id} className="bg-transparent rounded-md border border-white/[0.09] p-3 flex justify-between items-center">
                       <div className="flex items-center space-x-2.5">
-                        <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
+                        <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
                           {order.logoUrl ? (
                             <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-contain bg-transparent" />
                           ) : (
@@ -319,8 +319,8 @@ export default function DashboardMotionView({
           {/* Opportunities Column (Buy & Exit signals separated by 12px) */}
           <div className="flex flex-col gap-3">
             {/* Buy Opportunities */}
-            <motion.div variants={itemFadeInUp} className="border border-white/[0.07] rounded-md bg-black overflow-hidden">
-              <div className="border-b border-white/[0.06] px-6 py-4 bg-transparent flex items-center justify-between">
+            <motion.div variants={itemFadeInUp} className="border border-white/[0.09] rounded-md bg-black overflow-hidden">
+              <div className="border-b border-white/[0.09] px-6 py-4 bg-transparent flex items-center justify-between">
                 <div>
                   <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
@@ -335,8 +335,8 @@ export default function DashboardMotionView({
             </motion.div>
 
             {/* Exit Signals */}
-            <motion.div variants={itemFadeInUp} className="border border-white/[0.07] rounded-md bg-black overflow-hidden">
-              <div className="border-b border-white/[0.06] px-6 py-4 bg-transparent flex items-center justify-between">
+            <motion.div variants={itemFadeInUp} className="border border-white/[0.09] rounded-md bg-black overflow-hidden">
+              <div className="border-b border-white/[0.09] px-6 py-4 bg-transparent flex items-center justify-between">
                 <div>
                   <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#ef4444]" />

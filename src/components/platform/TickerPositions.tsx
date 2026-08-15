@@ -49,7 +49,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
       {/* Summary Cards */}
       <div>
         <h2 className="text-sm font-medium tracking-[-0.02em] mb-2 text-white">{symbol.replace('.CA', '')} Position Summary</h2>
-        <div className="border border-white/[0.07] rounded-md bg-black divide-x divide-white/[0.06] grid grid-cols-3 overflow-hidden">
+        <div className="border border-white/[0.09] rounded-md bg-black divide-x divide-white/[0.06] grid grid-cols-3 overflow-hidden">
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium truncate font-mono">Invested</div>
             <div className="mt-1 text-sm font-semibold font-mono text-white truncate">{formatMoney(totalInvested)}</div>
@@ -73,7 +73,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
       <div>
         <h2 className="text-sm font-medium tracking-[-0.02em] mb-2 text-white">Order History</h2>
         {displayOrders.length === 0 ? (
-          <div className="text-xs text-white/40 text-center py-8 border border-white/[0.08] rounded-md border-dashed bg-white/[0.01]">
+          <div className="text-xs text-white/40 text-center py-8 border border-white/[0.09] rounded-md border-dashed bg-white/[0.01]">
             No tracked positions for {symbol.replace('.CA', '')}
           </div>
         ) : (
@@ -86,7 +86,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
               const plPct = order.entryPrice > 0 ? (pl / (order.entryPrice * order.quantity)) * 100 : 0;
 
               return (
-                <div key={order.id} className="border border-white/[0.07] rounded-md bg-black p-5 flex flex-col space-y-2.5 relative overflow-hidden">
+                <div key={order.id} className="border border-white/[0.09] rounded-md bg-black p-5 flex flex-col space-y-2.5 relative overflow-hidden">
                   {/* Left accent strip based on status */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-orange' : 'bg-white/10'}`} />
                   
@@ -94,7 +94,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className={`text-[10px] px-2 py-0.5 rounded-[4px] font-medium ${
-                          isOpen ? 'bg-white/[0.06] border border-white/[0.08] text-white' : 'bg-white/[0.02] text-white/40'
+                          isOpen ? 'bg-white/[0.06] border border-white/[0.09] text-white' : 'bg-white/[0.02] text-white/40'
                         }`}>
                           {isOpen ? 'OPEN' : 'CLOSED'}
                         </span>

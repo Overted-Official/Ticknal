@@ -88,7 +88,7 @@ export default function OrdersTable() {
       className="flex h-full min-h-0 flex-col bg-transparent text-white relative z-10"
     >
       {/* Top Header Banner */}
-      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.06] px-6 py-5 shrink-0">
+      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.09] px-6 py-5 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -109,12 +109,12 @@ export default function OrdersTable() {
                 placeholder="Search ticker or name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-48 md:w-56 rounded-md bg-white/[0.03] border border-white/[0.07] pl-8 pr-3 text-xs text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none transition-all"
+                className="h-8 w-48 md:w-56 rounded-md bg-white/[0.03] border border-white/[0.09] pl-8 pr-3 text-xs text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none transition-all"
               />
             </div>
 
             {/* Filter Pill Switch */}
-            <div className="flex items-center bg-black border border-white/[0.07] rounded-md p-0.5 gap-0.5">
+            <div className="flex items-center bg-black border border-white/[0.09] rounded-md p-0.5 gap-0.5">
               {(['ALL', 'OPEN', 'CLOSED'] as const).map((value) => (
                 <button
                   key={value}
@@ -148,7 +148,7 @@ export default function OrdersTable() {
         {/* Metric Strip (5 items in unified master container) */}
         <motion.div 
           variants={itemFadeInUp}
-          className="border border-white/[0.07] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-5 overflow-hidden"
+          className="border border-white/[0.09] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-5 overflow-hidden"
         >
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium">Net Worth</div>
@@ -184,8 +184,8 @@ export default function OrdersTable() {
             <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
             filteredOrders.map((order) => (
-              <div key={order.id} className="border border-white/[0.07] rounded-md bg-black p-5">
-                <div className="flex justify-between items-start border-b border-white/[0.06] pb-2.5 mb-2.5">
+              <div key={order.id} className="border border-white/[0.09] rounded-md bg-black p-5">
+                <div className="flex justify-between items-start border-b border-white/[0.09] pb-2.5 mb-2.5">
                   <div>
                     <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
                       {order.tickerSymbol}
@@ -194,7 +194,7 @@ export default function OrdersTable() {
                     <div className="text-[11px] text-white/40 truncate max-w-[160px]">{order.companyName}</div>
                   </div>
                   <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-medium ${
-                    order.status === 'OPEN' ? 'bg-white/[0.06] text-white/90 border border-white/[0.08]' : 'bg-white/[0.02] text-white/40'
+                    order.status === 'OPEN' ? 'bg-white/[0.06] text-white/90 border border-white/[0.09]' : 'bg-white/[0.02] text-white/40'
                   }`}>
                     {order.status}
                   </span>
@@ -226,12 +226,12 @@ export default function OrdersTable() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2.5 border-t border-white/[0.06]">
+                <div className="flex justify-end gap-2 pt-2.5 border-t border-white/[0.09]">
                   {order.status === 'OPEN' && (
                     <button
                       title="Close Position"
                       onClick={() => closeOrder(order)}
-                      className="px-2.5 py-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08] text-xs font-medium"
+                      className="px-2.5 py-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09] text-xs font-medium"
                     >
                       <CheckCircle size={13} className="mr-1 text-[#22c55e]" />
                       <span>Close</span>
@@ -240,14 +240,14 @@ export default function OrdersTable() {
                   <button
                     title="Edit Order"
                     onClick={() => editOrder(order)}
-                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08]"
+                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09]"
                   >
                     <Pencil size={13} />
                   </button>
                   <button
                     title="Delete Record"
                     onClick={() => deleteOrder(order)}
-                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.08]"
+                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.09]"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -258,9 +258,9 @@ export default function OrdersTable() {
         </div>
 
         {/* Desktop View (Table Container) */}
-        <motion.div variants={itemFadeInUp} className="hidden md:block border border-white/[0.07] rounded-md bg-black overflow-hidden">
+        <motion.div variants={itemFadeInUp} className="hidden md:block border border-white/[0.09] rounded-md bg-black overflow-hidden">
           <table className="w-full text-left text-xs">
-            <thead className="bg-transparent border-b border-white/[0.06] text-[11px] font-medium text-white/30">
+            <thead className="bg-transparent border-b border-white/[0.09] text-[11px] font-medium text-white/30">
               <tr>
                 <th className="px-6 py-3.5">Ticker</th>
                 <th className="px-6 py-3.5">Status</th>
@@ -294,7 +294,7 @@ export default function OrdersTable() {
                     <td className="px-6 py-3.5 whitespace-nowrap">
                       <span
                         className={`inline-block rounded-[4px] px-2 py-0.5 text-[10px] font-medium ${
-                          order.status === 'OPEN' ? 'bg-white/[0.06] border border-white/[0.08] text-white' : 'bg-white/[0.02] text-white/40'
+                          order.status === 'OPEN' ? 'bg-white/[0.06] border border-white/[0.09] text-white' : 'bg-white/[0.02] text-white/40'
                         }`}
                       >
                         {order.status}
@@ -328,7 +328,7 @@ export default function OrdersTable() {
                           <button
                             title="Close Position"
                             onClick={() => closeOrder(order)}
-                            className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
+                            className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
                           >
                             <CheckCircle size={15} className="text-[#22c55e]" />
                           </button>
@@ -336,14 +336,14 @@ export default function OrdersTable() {
                         <button
                           title="Edit Order"
                           onClick={() => editOrder(order)}
-                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
+                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           title="Delete Record"
                           onClick={() => deleteOrder(order)}
-                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.08]"
+                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -384,7 +384,7 @@ function Metric({ label, value, valueClass = 'text-white' }: { label: string; va
   return (
     <motion.div 
       variants={itemFadeInUp}
-      className="border border-white/[0.07] rounded-md bg-black p-5 group"
+      className="border border-white/[0.09] rounded-md bg-black p-5 group"
     >
       <div className="text-[11px] text-white/40 font-medium">{label}</div>
       <div className={`mt-1.5 text-xl font-semibold font-mono tracking-tight ${valueClass}`}>{value}</div>

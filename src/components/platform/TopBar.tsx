@@ -42,16 +42,16 @@ export default function TopBar({
 
   return (
     <>
-      <div className="h-[48px] w-full bg-black/90 backdrop-blur-xl border-b border-white/[0.06] flex items-center px-3 justify-between select-none relative z-40 shrink-0 text-white">
+      <div className="h-[48px] w-full bg-black/90 backdrop-blur-xl border-b border-white/[0.09] flex items-center px-3 justify-between select-none relative z-40 shrink-0 text-white">
         {/* Left section (Logo + Symbol Command trigger) */}
         <div className="flex items-center space-x-2 md:space-x-3">
           <button 
             type="button"
-            className="flex items-center space-x-2.5 cursor-pointer hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08] px-2.5 py-1 rounded-md transition-all text-left"
+            className="flex items-center space-x-2.5 cursor-pointer hover:bg-white/[0.04] border border-transparent hover:border-white/[0.09] px-2.5 py-1 rounded-md transition-all text-left"
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Circular Logo */}
-            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-md bg-white/[0.04] border border-white/[0.08] overflow-hidden p-[1px]">
+            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-md bg-white/[0.04] border border-white/[0.09] overflow-hidden p-[1px]">
               {currentTicker.logoUrl ? (
                 <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-md bg-transparent" />
               ) : currentTicker.website ? (
@@ -70,7 +70,7 @@ export default function TopBar({
               </div>
             </div>
             
-            <div className="hidden sm:flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-[4px] bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/40 font-mono">
+            <div className="hidden sm:flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-[4px] bg-white/[0.06] border border-white/[0.09] text-[10px] text-white/40 font-mono">
               <Search size={10} />
               <span>⌘K</span>
             </div>
@@ -81,7 +81,7 @@ export default function TopBar({
         <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap ml-auto">
           {/* Indicators & Replay Quick Links */}
           <div className="flex items-center space-x-1.5">
-            <button className="flex items-center space-x-1.5 bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] px-3 py-1.5 rounded-md transition-all text-white/80 hover:text-white text-xs font-medium">
+            <button className="flex items-center space-x-1.5 bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] px-3 py-1.5 rounded-md transition-all text-white/80 hover:text-white text-xs font-medium">
               <BarChart2 size={13} />
               <span className="hidden md:inline">Indicators</span>
             </button>
@@ -90,7 +90,7 @@ export default function TopBar({
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
                 replay 
                   ? 'text-plt-orange bg-plt-orange/10 font-medium border border-plt-orange/30' 
-                  : 'bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] text-white/80 hover:text-white'
+                  : 'bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] text-white/80 hover:text-white'
               }`}
             >
               <RotateCcw size={13} />
@@ -110,7 +110,7 @@ export default function TopBar({
         </div>
 
         {statusMessage && (
-          <div className="absolute left-3 top-[52px] z-50 rounded-md border border-white/[0.08] bg-black/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
+          <div className="absolute left-3 top-[52px] z-50 rounded-md border border-white/[0.09] bg-black/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -122,8 +122,8 @@ export default function TopBar({
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/80 backdrop-blur-md px-4 animate-in fade-in duration-150" 
           onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}
         >
-          <div className="bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-md shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
-            <div className="flex items-center px-4 py-3.5 border-b border-white/[0.08] bg-white/[0.02]">
+          <div className="bg-black/95 backdrop-blur-2xl border border-white/[0.09] rounded-md shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
+            <div className="flex items-center px-4 py-3.5 border-b border-white/[0.09] bg-white/[0.02]">
               <Search size={18} className="text-white/40 mr-3 shrink-0" />
               <input 
                 type="text" 
@@ -158,7 +158,7 @@ export default function TopBar({
                       {item.logoUrl ? (
                         <img src={item.logoUrl} alt={item.symbol} className="h-7 w-7 rounded-full bg-transparent object-contain p-[1px] shrink-0" />
                       ) : (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[10px] font-bold text-white">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/[0.09] bg-white/[0.04] text-[10px] font-bold text-white">
                           {item.symbol.substring(0, 2)}
                         </div>
                       )}

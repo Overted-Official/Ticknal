@@ -848,7 +848,7 @@ export default function ChartWidget({
         title="Predict Future"
         onClick={() => setPredictPopoverOpen(true)}
         disabled={isPredicting || data.length === 0}
-        className="h-7.5 rounded-md border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.14] px-3 text-xs font-medium text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
+        className="h-7.5 rounded-md border border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.18] px-3 text-xs font-medium text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
       >
         <span className="flex items-center gap-1.5">
           {isPredicting ? (
@@ -884,7 +884,7 @@ export default function ChartWidget({
                 max="100"
                 value={predictDaysInput}
                 onChange={(e) => setPredictDaysInput(e.target.value)}
-                className="h-7 w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 text-xs text-white outline-none transition-colors focus:border-plt-orange"
+                className="h-7 w-full rounded-md border border-white/[0.09] bg-white/[0.03] px-2.5 text-xs text-white outline-none transition-colors focus:border-plt-orange"
               />
             </div>
             
@@ -1028,14 +1028,14 @@ export default function ChartWidget({
       )}
 
       {!replayMode ? (
-        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-black/90 backdrop-blur-xl p-1 shadow-2xl">
+        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-1.5 rounded-md border border-white/[0.09] bg-black/90 backdrop-blur-xl p-1 shadow-2xl">
           <button
             type="button"
             title="Bar Replay"
             aria-label="Bar Replay"
             disabled={!hasReplayRoom}
             onClick={enableReplay}
-            className="h-7.5 rounded-md px-3 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.06] hover:border-white/[0.14] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
+            className="h-7.5 rounded-md px-3 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
           >
             <RotateCcw className="h-3.5 w-3.5 text-white/60" />
             Replay
@@ -1044,7 +1044,7 @@ export default function ChartWidget({
           {predictButtonUI}
         </div>
       ) : (
-        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.08] bg-black/90 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
+        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.09] bg-black/90 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
           <button
             type="button"
             title="Reset replay point"
@@ -1104,7 +1104,7 @@ export default function ChartWidget({
             max={data[data.length - 1]?.time}
             value={replayDate ?? ''}
             onChange={(event) => handleDateChange(event.target.value)}
-            className="h-7 w-32 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
+            className="h-7 w-32 rounded-md border border-white/[0.09] bg-white/[0.03] px-2 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
           />
           <input
             type="range"
@@ -1121,7 +1121,7 @@ export default function ChartWidget({
             aria-label="Replay speed"
             value={playbackSpeed}
             onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-            className="h-7 rounded-md border border-white/[0.08] bg-white/[0.03] px-1.5 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
+            className="h-7 rounded-md border border-white/[0.09] bg-white/[0.03] px-1.5 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
           >
             {PLAYBACK_SPEEDS.map((speed) => (
               <option key={speed.label} value={speed.delay}>
@@ -1132,7 +1132,7 @@ export default function ChartWidget({
           <button
             type="button"
             onClick={exitReplay}
-            className="h-7 rounded-md px-2.5 text-xs font-medium text-white/70 bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.06] hover:text-white transition-colors"
+            className="h-7 rounded-md px-2.5 text-xs font-medium text-white/70 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:text-white transition-colors"
           >
             Live
           </button>
@@ -1148,12 +1148,12 @@ export default function ChartWidget({
 
       {metrics && (
         <div
-          className="absolute z-50 rounded-md border border-white/[0.08] bg-black/90 backdrop-blur-xl shadow-2xl text-[11px] transition-all overflow-hidden"
+          className="absolute z-50 rounded-md border border-white/[0.09] bg-black/90 backdrop-blur-xl shadow-2xl text-[11px] transition-all overflow-hidden"
           style={{ top: '16px', right: '65px' }}
         >
           {/* Summary Badge */}
           <div 
-            className={`flex items-center justify-between gap-3 px-3 py-1.5 cursor-pointer transition-colors ${isMetricsExpanded ? 'border-b border-white/[0.08] bg-white/[0.04]' : 'hover:bg-white/[0.04]'}`}
+            className={`flex items-center justify-between gap-3 px-3 py-1.5 cursor-pointer transition-colors ${isMetricsExpanded ? 'border-b border-white/[0.09] bg-white/[0.04]' : 'hover:bg-white/[0.04]'}`}
             onClick={() => setIsMetricsExpanded(!isMetricsExpanded)}
           >
             <span className="text-white/60 font-medium flex items-center gap-1.5 text-[11px]">
@@ -1179,35 +1179,35 @@ export default function ChartWidget({
             <div className="w-64 bg-black/40 backdrop-blur-2xl p-1">
               <table className="w-full text-right border-collapse text-[10px]">
                 <tbody>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">System Total ROI</td>
                     <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['Sys ROI'])}`}>{formatPlus(metrics['Sys ROI'])}</td>
                   </tr>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Buy & Hold ROI</td>
                     <td className="py-1.5 px-2.5 font-mono text-white">{metrics['B&H ROI']}%</td>
                   </tr>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">ROI Margin</td>
                     <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['ROI Margin'])}`}>{formatPlus(metrics['ROI Margin'])}</td>
                   </tr>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Win Rate</td>
                     <td className="py-1.5 px-2.5 font-mono text-white">{metrics['Win Rate']}%</td>
                   </tr>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Drawdown</td>
                     <td className="py-1.5 px-2.5 font-mono text-[#ef4444] font-semibold">{metrics['Max Drawdown']}%</td>
                   </tr>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Adverse Excursion</td>
                     <td className={`py-1.5 px-2.5 font-mono ${formatColor(metrics['Max Adverse Excursion'])}`}>{formatPlus(metrics['Max Adverse Excursion'])}</td>
                   </tr>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Avg Bars/Trade</td>
                     <td className="py-1.5 px-2.5 font-mono text-white">{metrics['Avg Bars/Trade']}</td>
                   </tr>
-                  <tr className="border-b border-white/[0.05]">
+                  <tr className="border-b border-white/[0.09]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Avg Return / Trade</td>
                     <td className={`py-1.5 px-2.5 font-mono ${formatColor(metrics['Avg. Return/Trade'])}`}>{formatPlus(metrics['Avg. Return/Trade'])}</td>
                   </tr>

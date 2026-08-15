@@ -38,11 +38,11 @@ export default function BottomToolbar({
   };
 
   return (
-    <div className="h-8 w-full bg-black border-t border-white/[0.06] flex items-center justify-between px-3 font-medium select-none text-[0.75rem] text-white">
+    <div className="h-8 w-full bg-black border-t border-white/[0.09] flex items-center justify-between px-3 font-medium select-none text-[0.75rem] text-white">
       {/* Left Section: Timeframe Switcher & Alert Button */}
       <div className="flex items-center space-x-2">
         {/* Segmented Timeframe Switch */}
-        <div className="flex items-center bg-white/[0.02] border border-white/[0.07] rounded-md p-0.5 gap-0.5">
+        <div className="flex items-center bg-white/[0.02] border border-white/[0.09] rounded-md p-0.5 gap-0.5">
           {timeframes.map((tf) => (
             <Link
               key={tf}

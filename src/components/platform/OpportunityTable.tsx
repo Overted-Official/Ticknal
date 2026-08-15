@@ -52,10 +52,10 @@ export default function OpportunityTable({
           <div className="p-6 text-center text-white/40 text-xs font-normal">{emptyText}</div>
         ) : (
           opportunities.map((item) => (
-            <div key={`${item.symbol}-${item.signal.date}`} className="bg-transparent rounded-md border border-white/[0.06] p-3">
+            <div key={`${item.symbol}-${item.signal.date}`} className="bg-transparent rounded-md border border-white/[0.09] p-3">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
+                  <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
                     {item.logoUrl ? (
                       <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain bg-transparent" />
                     ) : (
@@ -98,7 +98,7 @@ export default function OpportunityTable({
       {/* Desktop View (Table) */}
       <div className="hidden md:block w-full">
         <table className="w-full text-left text-xs text-white">
-          <thead className="bg-transparent border-b border-white/[0.06] text-[11px] font-medium text-white/30">
+          <thead className="bg-transparent border-b border-white/[0.09] text-[11px] font-medium text-white/30">
             <tr>
               <th className="px-6 py-3.5">Ticker</th>
               {!compact && <th className="px-6 py-3.5">Sector</th>}
@@ -119,7 +119,7 @@ export default function OpportunityTable({
                 <tr key={`${item.symbol}-${item.signal.date}`} className="hover:bg-white/[0.02] transition-colors group">
                   <td className="px-6 py-3.5 whitespace-nowrap">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
+                      <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
                         {item.logoUrl ? (
                           <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain bg-transparent" />
                         ) : (

@@ -17,8 +17,8 @@
   --up-color: #34CF82;
   --down-color: #FF4242;
   
-  --border-color: rgba(255, 255, 255, 0.05);
-  --border-highlight-soft: rgba(255, 255, 255, 0.12);
+  --border-color: rgba(255, 255, 255, 0.09);
+  --border-highlight-soft: rgba(255, 255, 255, 0.15);
   --border-highlight: #ff640d;
 
   /* ==========================================================================
@@ -30,8 +30,8 @@
   --plt-bg-hover: #0a0a0a;
   --plt-bg-chart: #171B26;
 
-  --plt-border: rgba(255, 255, 255, 0.06);
-  --plt-border-soft: rgba(255, 255, 255, 0.04);
+  --plt-border: rgba(255, 255, 255, 0.09);
+  --plt-border-soft: rgba(255, 255, 255, 0.05);
   --plt-border-active: #ff640d;
 
   --plt-accent-red: #ef4444;
@@ -173,25 +173,25 @@ body {
 .glass-panel {
   border-radius: 6px;
   background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .glass-panel-hover:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.015);
 }
 
 .glass-pill {
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   transition: all 0.15s ease;
 }
 
 .glass-pill:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* ==========================================================================
