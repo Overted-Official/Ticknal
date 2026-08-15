@@ -10,7 +10,7 @@ export default function BottomNav() {
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
     { icon: LineChart, label: 'Charts', href: '/charts' },
-    { icon: ListOrdered, label: 'Orders', href: '/orders' },
+    { icon: ListOrdered, label: 'Positions', href: '/positions' },
     { icon: Settings, label: 'Settings', href: '#' },
   ];
 

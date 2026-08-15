@@ -42,7 +42,7 @@ export default function CloseOrderModal({
   const handleCloseOrder = async () => {
     if (!order || !form.exitPrice || !form.quantityToClose) return;
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/positions', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -87,6 +87,6 @@ export const getRecentOpportunities = (limitBars: number = 5) => {
   return unstable_cache(
     async () => _getRecentOpportunities(limitBars),
     [`recent-opportunities-${limitBars}`],
-    { tags: ['opportunities'], revalidate: 900 }
+    { tags: ['opportunities'], revalidate: 3600 }
   )();
 };

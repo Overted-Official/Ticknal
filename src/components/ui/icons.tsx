@@ -18,6 +18,7 @@ export {
   ZoomIn,
   Magnet,
   Lock,
+  Eye,
   EyeOff,
   Trash2,
   MoreHorizontal,

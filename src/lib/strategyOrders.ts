@@ -15,11 +15,8 @@ export type PositionLevels = {
 
 export async function getDailyPriceBars(symbol: string): Promise<PriceBar[]> {
   const ticker = normalizeTickerSymbol(symbol);
-  const rows = await db
-    .select()
-    .from(dailyPrices)
-    .where(eq(dailyPrices.tickerSymbol, ticker))
-    .orderBy(asc(dailyPrices.date));
+  const { getCachedDailyPrices } = await import('@/lib/data-cache');
+  const rows = await getCachedDailyPrices(ticker, 400);
 
   return rows.map((row) => ({
     date: normalizeDateString(row.date),

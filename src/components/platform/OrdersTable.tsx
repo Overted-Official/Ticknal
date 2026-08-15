@@ -36,7 +36,7 @@ export default function OrdersTable() {
   const [orderToClose, setOrderToClose] = useState<OrderRow | null>(null);
   const [orderToEdit, setOrderToEdit] = useState<OrderRow | null>(null);
 
-  const { data, isLoading, mutate } = useSWR<{ orders: OrderRow[] }>('/api/orders', fetcher);
+  const { data, isLoading, mutate } = useSWR<{ orders: OrderRow[] }>('/api/positions', fetcher);
   const orders = data?.orders ?? [];
   const loading = isLoading;
 
@@ -72,7 +72,7 @@ export default function OrdersTable() {
   }
 
   async function deleteOrder(order: OrderRow) {
-    const res = await fetch(`/api/orders?id=${order.id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/positions?id=${order.id}`, { method: 'DELETE' });
     if (res.ok) {
       mutate({ orders: orders.filter((item) => item.id !== order.id) }, { revalidate: false });
     }

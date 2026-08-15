@@ -2,9 +2,20 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LandingPage() {
   const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-tv-base flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -28,7 +39,7 @@ export default function LandingPage() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => router.push('/charts')}
+          onClick={handleLogin}
           className="flex items-center justify-center space-x-3 w-full sm:w-auto mx-auto bg-white hover:bg-gray-100 text-black px-8 py-4 rounded-xl font-semibold text-lg transition-colors shadow-[0_0_40px_rgba(41,98,255,0.3)]"
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24">

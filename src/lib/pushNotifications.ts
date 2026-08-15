@@ -1,7 +1,7 @@
 import webPush from 'web-push';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { orders, pushSubscriptions, signalNotifications, tickerAlerts } from '@/db/schema';
+import { positions, pushSubscriptions, signalNotifications, tickerAlerts } from '@/db/schema';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal } from '@/strategies/PSI/psiStrategy';
@@ -53,7 +53,7 @@ export async function dispatchSignalNotifications(options: {
   );
 
   // 2. Automatically include any ticker that currently has an open position
-  const openOrderRows = await db.select({ tickerSymbol: orders.tickerSymbol }).from(orders).where(eq(orders.status, 'OPEN'));
+  const openOrderRows = await db.select({ tickerSymbol: positions.tickerSymbol, userId: positions.userId }).from(positions).where(eq(positions.status, 'OPEN'));
   const openOrderTickers = new Set(
     openOrderRows
       .map(row => row.tickerSymbol)
@@ -61,64 +61,88 @@ export async function dispatchSignalNotifications(options: {
   );
 
   const subscriptionRows = await db.select().from(pushSubscriptions);
-  const subscriptionsByDevice = groupBy(subscriptionRows, (subscription) => subscription.deviceId);
-  const allDeviceIds = Object.keys(subscriptionsByDevice);
+  const subscriptionsByUser = groupBy(subscriptionRows, (subscription) => subscription.userId);
+  const allUserIds = Object.keys(subscriptionsByUser);
 
-  // Merge explicit alerts and pseudo-alerts (for open positions) across all known devices
-  const alertRows: { deviceId: string; tickerSymbol: string }[] = [...explicitAlertRows];
+  // Merge explicit alerts and pseudo-alerts (for open positions)
+  const alertRows: { userId: string; tickerSymbol: string }[] = [...explicitAlertRows];
   
   for (const ticker of openOrderTickers) {
-    for (const deviceId of allDeviceIds) {
-      // Avoid duplicate alert rows if the device already explicitly enabled it
-      if (!alertRows.some(a => a.deviceId === deviceId && a.tickerSymbol === ticker)) {
-        alertRows.push({ deviceId, tickerSymbol: ticker });
+    for (const userId of allUserIds) {
+      const userHasOpenOrder = openOrderRows.some(o => o.userId === userId && o.tickerSymbol === ticker);
+      if (userHasOpenOrder && !alertRows.some(a => a.userId === userId && a.tickerSymbol === ticker)) {
+        alertRows.push({ userId, tickerSymbol: ticker });
       }
     }
   }
 
-  const symbolSet = new Set(alertRows.map((alert) => alert.tickerSymbol));
-
-  if (symbolSet.size === 0) {
-    result.messages.push('No enabled ticker alerts matched the requested symbols.');
+  if (alertRows.length === 0) {
+    result.messages.push('No enabled ticker alerts or open positions matched.');
     return result;
   }
 
+  // Group by ticker so we can fetch bars once per ticker
   const alertsByTicker = groupBy(alertRows, (alert) => alert.tickerSymbol);
   const lookbackBars = Math.max(1, options.lookbackBars ?? 1);
 
-  for (const ticker of symbolSet) {
+  // Fetch custom user strategy settings
+  const { userStrategySettings } = await import('@/db/schema');
+  const userSettingsRows = await db.select().from(userStrategySettings);
+  const userSettingsMap = groupBy(userSettingsRows, (setting) => `${setting.userId}-${setting.tickerSymbol}`);
+
+  for (const [ticker, userAlerts] of Object.entries(alertsByTicker)) {
     result.checkedSymbols += 1;
     const bars = await getDailyPriceBars(ticker);
     if (bars.length === 0) {
-      result.skipped += 1;
+      result.skipped += userAlerts.length;
       continue;
     }
 
-    const signal = getLatestSignalInLookback(ticker, bars, lookbackBars);
-    if (!signal) {
-      result.skipped += 1;
-      continue;
-    }
+    const defaultParams = resolvePsiParamsFromStore(ticker);
+    const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
 
-    const openOrderExists = await hasOpenOrder(ticker);
-    const payload = JSON.stringify({
-      title: buildNotificationTitle(ticker, signal, openOrderExists),
-      body: buildNotificationBody(signal),
-      url: `/charts?ticker=${ticker}&timeframe=D`,
-      tag: `psi-${ticker}-${signal.date}-${signal.signal}`,
-      symbol: ticker,
-      signal: signal.signal,
-      price: signal.price,
-    });
+    for (const alert of userAlerts) {
+      // Resolve params for this specific user and ticker
+      const userSettingsKey = `${alert.userId}-${ticker}`;
+      const userSettingRow = userSettingsMap[userSettingsKey]?.find(s => s.strategyName === 'psi');
+      
+      let userParams = defaultParams;
+      if (userSettingRow) {
+        try {
+          const parsed = JSON.parse(userSettingRow.params);
+          userParams = { ...defaultParams, ...parsed };
+        } catch (e) {
+          console.error('Failed to parse user strategy settings', e);
+        }
+      }
 
-    for (const alert of alertsByTicker[ticker] ?? []) {
-      const alreadySent = await hasNotificationBeenSent(alert.deviceId, ticker, signal);
+      // Run strategy per user
+      const psiResult = runPsiStrategy(bars, userParams);
+      const signal = [...psiResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
+
+      if (!signal) {
+        result.skipped += 1;
+        continue;
+      }
+
+      const openOrderExists = openOrderRows.some(o => o.userId === alert.userId && o.tickerSymbol === ticker);
+      const payload = JSON.stringify({
+        title: buildNotificationTitle(ticker, signal, openOrderExists),
+        body: buildNotificationBody(signal),
+        url: `/charts?ticker=${ticker}&timeframe=D`,
+        tag: `psi-${ticker}-${signal.date}-${signal.signal}`,
+        symbol: ticker,
+        signal: signal.signal,
+        price: signal.price,
+      });
+
+      const alreadySent = await hasNotificationBeenSent(alert.userId, ticker, signal);
       if (alreadySent) {
         result.skipped += 1;
         continue;
       }
 
-      const subscriptions = subscriptionsByDevice[alert.deviceId] ?? [];
+      const subscriptions = subscriptionsByUser[alert.userId] ?? [];
       if (subscriptions.length === 0) {
         result.skipped += 1;
         continue;
@@ -140,7 +164,7 @@ export async function dispatchSignalNotifications(options: {
         await db
           .insert(signalNotifications)
           .values({
-            deviceId: alert.deviceId,
+            userId: alert.userId,
             tickerSymbol: ticker,
             signalDate: signal.date,
             signal: signal.signal,
@@ -215,32 +239,15 @@ function configureWebPush() {
   );
 }
 
-function getLatestSignalInLookback(
-  ticker: string,
-  bars: Awaited<ReturnType<typeof getDailyPriceBars>>,
-  lookbackBars: number,
-): PsiSignal | null {
-  const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
-  const result = runPsiStrategy(bars, resolvePsiParamsFromStore(ticker));
-  return [...result.signals].reverse().find((signal) => dateWindow.has(signal.date)) ?? null;
-}
 
-async function hasOpenOrder(ticker: string): Promise<boolean> {
-  const rows = await db
-    .select({ id: orders.id })
-    .from(orders)
-    .where(and(eq(orders.tickerSymbol, ticker), eq(orders.status, 'OPEN')))
-    .limit(1);
-  return rows.length > 0;
-}
 
-async function hasNotificationBeenSent(deviceId: string, ticker: string, signal: PsiSignal): Promise<boolean> {
+async function hasNotificationBeenSent(userId: string, ticker: string, signal: PsiSignal): Promise<boolean> {
   const rows = await db
     .select({ id: signalNotifications.id })
     .from(signalNotifications)
     .where(
       and(
-        eq(signalNotifications.deviceId, deviceId),
+        eq(signalNotifications.userId, userId),
         eq(signalNotifications.tickerSymbol, ticker),
         eq(signalNotifications.signalDate, signal.date),
         eq(signalNotifications.signal, signal.signal),

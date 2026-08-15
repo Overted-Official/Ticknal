@@ -1,4 +1,4 @@
-import { boolean, date, index, numeric, pgTable, serial, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
+import { boolean, date, index, numeric, pgTable, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
 
 export const tickers = pgTable('tickers', {
   symbol: varchar('symbol', { length: 20 }).primaryKey(),
@@ -25,47 +25,12 @@ export const dailyPrices = pgTable('daily_prices', {
   };
 });
 
-export const signals = pgTable('signals', {
-  id: serial('id').primaryKey(),
-  tickerSymbol: varchar('ticker_symbol', { length: 20 })
-    .notNull()
-    .references(() => tickers.symbol, { onDelete: 'cascade' }),
-  date: date('date').notNull(),
-  signal: varchar('signal', { length: 10 }).notNull(),
-  confidence: numeric('confidence', { precision: 5, scale: 4 }),
-  prob5d: numeric('prob_5d', { precision: 5, scale: 4 }),
-  prob10d: numeric('prob_10d', { precision: 5, scale: 4 }),
-  prob15d: numeric('prob_15d', { precision: 5, scale: 4 }),
-  prob20d: numeric('prob_20d', { precision: 5, scale: 4 }),
-  prob25d: numeric('prob_25d', { precision: 5, scale: 4 }),
-  modelVersion: varchar('model_version', { length: 50 }),
-}, (table) => {
-  return {
-    signalTickerDateUnique: unique('signal_ticker_date_unique').on(table.tickerSymbol, table.date),
-  };
-});
-
-export const strategySignals = pgTable('strategy_signals', {
-  id: serial('id').primaryKey(),
-  tickerSymbol: varchar('ticker_symbol', { length: 20 })
-    .notNull()
-    .references(() => tickers.symbol, { onDelete: 'cascade' }),
-  date: date('date').notNull(),
-  signal: varchar('signal', { length: 10 }).notNull(),
-  masterIndex: numeric('master_index', { precision: 8, scale: 2 }),
-  entryReason: varchar('entry_reason', { length: 255 }),
-  exitReason: varchar('exit_reason', { length: 255 }),
-  tickerClass: varchar('ticker_class', { length: 100 }),
-  positionSizePct: numeric('position_size_pct', { precision: 5, scale: 4 }),
-}, (table) => {
-  return {
-    strategySignalTickerDateUnique: unique('strategy_signal_ticker_date_unique').on(table.tickerSymbol, table.date),
-  };
-});
+// Removed old ML signals table as signals are now dynamically calculated per user configuration
+// Removed strategy_signals table as signals are now dynamically calculated per user configuration
 
 export const pushSubscriptions = pgTable('push_subscriptions', {
   id: serial('id').primaryKey(),
-  deviceId: varchar('device_id', { length: 64 }).notNull(),
+  userId: uuid('user_id').notNull(),
   endpoint: text('endpoint').notNull(),
   p256dh: text('p256dh').notNull(),
   auth: text('auth').notNull(),
@@ -75,13 +40,13 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
 }, (table) => {
   return {
     endpointUnique: unique('push_subscriptions_endpoint_unique').on(table.endpoint),
-    deviceIdIdx: index('push_subscriptions_device_id_idx').on(table.deviceId),
+    userIdIdx: index('push_subscriptions_user_id_idx').on(table.userId),
   };
 });
 
 export const tickerAlerts = pgTable('ticker_alerts', {
   id: serial('id').primaryKey(),
-  deviceId: varchar('device_id', { length: 64 }).notNull(),
+  userId: uuid('user_id').notNull(),
   tickerSymbol: varchar('ticker_symbol', { length: 20 })
     .notNull()
     .references(() => tickers.symbol, { onDelete: 'cascade' }),
@@ -90,14 +55,14 @@ export const tickerAlerts = pgTable('ticker_alerts', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
   return {
-    deviceTickerUnique: unique('ticker_alerts_device_ticker_unique').on(table.deviceId, table.tickerSymbol),
+    userTickerUnique: unique('ticker_alerts_user_ticker_unique').on(table.userId, table.tickerSymbol),
     tickerIdx: index('ticker_alerts_ticker_idx').on(table.tickerSymbol),
   };
 });
 
 export const signalNotifications = pgTable('signal_notifications', {
   id: serial('id').primaryKey(),
-  deviceId: varchar('device_id', { length: 64 }).notNull(),
+  userId: uuid('user_id').notNull(),
   tickerSymbol: varchar('ticker_symbol', { length: 20 })
     .notNull()
     .references(() => tickers.symbol, { onDelete: 'cascade' }),
@@ -106,13 +71,14 @@ export const signalNotifications = pgTable('signal_notifications', {
   sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
   return {
-    notificationUnique: unique('signal_notifications_unique').on(table.deviceId, table.tickerSymbol, table.signalDate, table.signal),
+    notificationUnique: unique('signal_notifications_unique').on(table.userId, table.tickerSymbol, table.signalDate, table.signal),
     tickerDateIdx: index('signal_notifications_ticker_date_idx').on(table.tickerSymbol, table.signalDate),
   };
 });
 
-export const orders = pgTable('orders', {
+export const positions = pgTable('positions', {
   id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
   tickerSymbol: varchar('ticker_symbol', { length: 20 })
     .notNull()
     .references(() => tickers.symbol, { onDelete: 'cascade' }),
@@ -130,7 +96,22 @@ export const orders = pgTable('orders', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
   return {
-    statusIdx: index('orders_status_idx').on(table.status),
-    tickerStatusIdx: index('orders_ticker_status_idx').on(table.tickerSymbol, table.status),
+    statusIdx: index('positions_status_idx').on(table.status),
+    userTickerStatusIdx: index('positions_user_ticker_status_idx').on(table.userId, table.tickerSymbol, table.status),
+  };
+});
+
+export const userStrategySettings = pgTable('user_strategy_settings', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  strategyName: varchar('strategy_name', { length: 50 }).notNull(),
+  params: text('params').notNull(), // Stores JSON stringified parameters
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    userTickerStrategyUnique: unique('user_strategy_settings_unique').on(table.userId, table.tickerSymbol, table.strategyName),
   };
 });

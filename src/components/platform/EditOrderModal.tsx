@@ -43,7 +43,7 @@ export default function EditOrderModal({
   const handleEditOrder = async () => {
     if (!order || !form.entryPrice || !form.quantity) return;
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/positions', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

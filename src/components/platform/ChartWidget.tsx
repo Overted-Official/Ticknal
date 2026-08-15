@@ -20,7 +20,8 @@ import {
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Settings, Sparkles, Loader2 } from '@/components/ui/icons';
+import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Eye, EyeOff, Sparkles, Loader2 } from '@/components/ui/icons';
+import { INDICATORS } from '@/indicators';
 
 export interface ChartData {
   time: string; // "YYYY-MM-DD"
@@ -125,12 +126,12 @@ interface ChartWidgetProps {
   initialReplayMode?: boolean;
   onReplayStateChange?: (state: ReplayState) => void;
   selectedStrategy?: string;
-  buyThreshold?: number;
-  sellThreshold?: number;
+  strategyParams?: Record<string, any>;
   strategyStartDate?: string;
   strategyEndDate?: string;
   setStrategyStartDate?: (d: string) => void;
   setStrategyEndDate?: (d: string) => void;
+  activeIndicators?: string[];
 }
 
 const DEFAULT_REPLAY_DATE = '2019-12-31';
@@ -147,12 +148,12 @@ export default function ChartWidget({
   initialReplayMode = false,
   onReplayStateChange,
   selectedStrategy = 'psi',
-  buyThreshold = 75,
-  sellThreshold = 75,
+  strategyParams = {},
   strategyStartDate,
   strategyEndDate,
   setStrategyStartDate,
   setStrategyEndDate,
+  activeIndicators = [],
 }: ChartWidgetProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -163,6 +164,7 @@ export default function ChartWidget({
 
   const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
   const [isMetricsExpanded, setIsMetricsExpanded] = useState(false);
+  const [showSignals, setShowSignals] = useState(true);
   const [orders, setOrders] = useState<ChartOrder[]>([]);
   const [orderDraft, setOrderDraft] = useState<OrderDraft | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -412,7 +414,7 @@ export default function ChartWidget({
 
     async function fetchOrders() {
       try {
-        const res = await fetch(`/api/orders?symbol=${encodeURIComponent(symbol)}&status=OPEN`);
+        const res = await fetch(`/api/positions?symbol=${encodeURIComponent(symbol)}&status=OPEN`);
         if (!res.ok || !isActive) return;
         const json = await res.json();
         if (isActive) setOrders(json.orders ?? []);
@@ -511,8 +513,12 @@ export default function ChartWidget({
         const params = new URLSearchParams({ 
           symbol, 
           strategy: selectedStrategy,
-          buyThreshold: buyThreshold.toString(),
-          sellThreshold: sellThreshold.toString()
+        });
+
+        Object.entries(strategyParams).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) {
+            params.set(k, String(v));
+          }
         });
         if (replayMode && replayDate) {
           let parsedReplayDate = replayDate;
@@ -553,8 +559,12 @@ export default function ChartWidget({
         const params = new URLSearchParams({ 
           symbol, 
           strategy: selectedStrategy,
-          buyThreshold: buyThreshold.toString(),
-          sellThreshold: sellThreshold.toString()
+        });
+        
+        Object.entries(strategyParams).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) {
+            params.set(k, String(v));
+          }
         });
         if (replayMode && replayDate) {
           let parsedReplayDate = replayDate;
@@ -574,7 +584,6 @@ export default function ChartWidget({
         const signalResponse = (await res.json()) as SignalsResponse;
         const signals = signalResponse.signals ?? [];
         if (!isActive) return;
-        markerApiRef.current?.setMarkers(buildMarkers(signals));
         setChartSignals(signals);
       } catch (error: any) {
         if (isActive) {
@@ -594,11 +603,37 @@ export default function ChartWidget({
     replayStartDate,
     strategyStartDate,
     strategyEndDate,
-    buildMarkers,
     selectedStrategy,
-    buyThreshold,
-    sellThreshold,
+    strategyParams,
   ]);
+
+  const indicatorMarkers = useMemo(() => {
+    let combinedMarkers: SeriesMarker<Time>[] = [];
+    if (!activeIndicators || activeIndicators.length === 0) return combinedMarkers;
+    for (const id of activeIndicators) {
+      const ind = INDICATORS[id];
+      if (ind) {
+        const res = ind.compute(data);
+        if (res.markers) combinedMarkers = [...combinedMarkers, ...res.markers];
+      }
+    }
+    return combinedMarkers;
+  }, [data, activeIndicators]);
+
+  useEffect(() => {
+    if (!markerApiRef.current) return;
+    
+    const strategyMarkers = showSignals ? buildMarkers(chartSignals) : [];
+    
+    // Sort all markers by time as required by lightweight-charts
+    const allMarkers = [...strategyMarkers, ...indicatorMarkers].sort((a, b) => {
+      if (a.time < b.time) return -1;
+      if (a.time > b.time) return 1;
+      return 0;
+    });
+    
+    markerApiRef.current.setMarkers(allMarkers);
+  }, [chartSignals, indicatorMarkers, buildMarkers, showSignals]);
 
   useEffect(() => {
     if (replayMode) return;
@@ -763,7 +798,7 @@ export default function ChartWidget({
     setOrderError(null);
 
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/positions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1130,51 +1165,14 @@ export default function ChartWidget({
                 {formatPlus(metrics['Sys ROI'])}
               </span>
               <button 
-                onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
-                className={`p-1 rounded transition-colors ${isSettingsOpen ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-muted hover:text-tv-accent hover:bg-tv-hover'}`}
+                onClick={(e) => { e.stopPropagation(); setShowSignals(!showSignals); }}
+                className={`p-1 rounded transition-colors ${!showSignals ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-muted hover:text-tv-accent hover:bg-tv-hover'}`}
+                title={showSignals ? "Hide Signals" : "Show Signals"}
               >
-                <Settings size={14} />
+                {showSignals ? <Eye size={14} /> : <EyeOff size={14} />}
               </button>
             </div>
           </div>
-
-          {/* Settings Popover */}
-          {isSettingsOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-tv-surface border border-tv-border rounded-tv-sm p-3 shadow-xl z-[60]">
-              <div className="mb-2 text-tv-text font-medium text-xs">Strategy Settings</div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-tv-muted text-[10px] mb-1">Start Date</label>
-                  <input 
-                    type="date" 
-                    className="w-full bg-tv-base border border-tv-border rounded-tv-sm px-2 py-1 text-tv-text text-xs focus:outline-none focus:border-tv-accent"
-                    value={strategyStartDate}
-                    onChange={(e) => setStrategyStartDate?.(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-tv-muted text-[10px] mb-1">End Date</label>
-                  <input 
-                    type="date" 
-                    className="w-full bg-tv-base border border-tv-border rounded-tv-sm px-2 py-1 text-tv-text text-xs focus:outline-none focus:border-tv-accent"
-                    value={strategyEndDate}
-                    onChange={(e) => setStrategyEndDate?.(e.target.value)}
-                  />
-                </div>
-                <div className="pt-1 flex justify-end">
-                  <button 
-                    onClick={() => {
-                      setStrategyStartDate?.('2021-01-01');
-                      setStrategyEndDate?.('');
-                    }}
-                    className="text-[10px] text-tv-muted hover:text-tv-text transition-colors"
-                  >
-                    Reset Dates
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Expanded Table */}
           {isMetricsExpanded && (

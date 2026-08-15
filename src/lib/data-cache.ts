@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
-import { eq, asc, sql } from 'drizzle-orm';
+import { eq, asc, desc, sql } from 'drizzle-orm';
 
 /**
  * Fetches all tickers from the database.
@@ -19,16 +19,26 @@ export const getCachedTickers = unstable_cache(
  * Fetches the complete price history for a specific ticker.
  * Caches the result for 1 hour.
  */
-export const getCachedDailyPrices = async (ticker: string) => {
+export const getCachedDailyPrices = async (ticker: string, limitBars?: number) => {
   const cachedFn = unstable_cache(
     async () => {
-      return await db
-        .select()
-        .from(dailyPrices)
-        .where(eq(dailyPrices.tickerSymbol, ticker))
-        .orderBy(asc(dailyPrices.date));
+      if (limitBars) {
+        const rows = await db
+          .select()
+          .from(dailyPrices)
+          .where(eq(dailyPrices.tickerSymbol, ticker))
+          .orderBy(desc(dailyPrices.date))
+          .limit(limitBars);
+        return rows.reverse();
+      } else {
+        return await db
+          .select()
+          .from(dailyPrices)
+          .where(eq(dailyPrices.tickerSymbol, ticker))
+          .orderBy(asc(dailyPrices.date));
+      }
     },
-    [`daily-prices-${ticker}`],
+    [`daily-prices-${ticker}-${limitBars ?? 'all'}`],
     { tags: [`prices-${ticker}`, 'prices'], revalidate: 3600 }
   );
   return cachedFn();
@@ -53,5 +63,5 @@ export const getCachedRecentPrices = unstable_cache(
     return await db.execute(recentPricesQuery);
   },
   ['recent-prices-all'],
-  { tags: ['recent-prices'], revalidate: 900 }
+  { tags: ['recent-prices'], revalidate: 3600 }
 );

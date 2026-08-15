@@ -4,18 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Target, Activity, CheckCircle, AlertTriangle, ShieldCheck, ChevronDown } from '@/components/ui/icons';
 import { motion } from 'framer-motion';
 
-type SignalData = {
-  date: string;
-  signal: 'BUY' | 'SELL_TP' | 'SELL_TRAIL' | 'SELL_SL' | 'SELL_STRUCT';
-  confidence: number;
-  price: number;
-  masterIndex: number;
-  masterIndexAdjusted: number;
-  medianDailyMove: number | null;
-  entryReason?: string;
-  exitReason?: string;
-  modelVersion: string;
-};
+import { STRATEGIES, getAvailableStrategies } from '@/strategies/registry';
+import type { ChartData } from '@/components/platform/ChartWidget';
+
+type SignalData = Record<string, any>; // Make this dynamic since different strategies return different things
+// We'll keep some common fields like date, signal, confidence
 interface SignalPanelProps {
   activeSymbol: string | null;
   replayActive?: boolean;
@@ -23,10 +16,10 @@ interface SignalPanelProps {
   replayEndDate?: string | null;
   selectedStrategy: string;
   setSelectedStrategy: (strategy: string) => void;
-  buyThreshold?: number;
-  setBuyThreshold?: (t: number) => void;
-  sellThreshold?: number;
-  setSellThreshold?: (t: number) => void;
+  strategyParams?: Record<string, any>;
+  updateStrategyParam?: (key: string, value: any) => void;
+  bulkUpdateStrategyParams?: (newParams: Record<string, any>) => void;
+  chartData?: ChartData[];
   strategyStartDate?: string;
   strategyEndDate?: string;
   setStrategyStartDate?: (d: string) => void;
@@ -40,10 +33,10 @@ export default function SignalPanel({
   replayEndDate = null,
   selectedStrategy,
   setSelectedStrategy,
-  buyThreshold = 75,
-  setBuyThreshold,
-  sellThreshold = 75,
-  setSellThreshold,
+  strategyParams = {},
+  updateStrategyParam,
+  bulkUpdateStrategyParams,
+  chartData = [],
   strategyStartDate,
   strategyEndDate,
   setStrategyStartDate,
@@ -51,16 +44,15 @@ export default function SignalPanel({
 }: SignalPanelProps) {
   const [signalData, setSignalData] = useState<SignalData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+  const [optimProgress, setOptimProgress] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [trainingModel, setTrainingModel] = useState<'psi8' | 'psi40'>('psi8');
 
-  const strategies: { id: string; label: string; disabled?: boolean }[] = [
-    { id: 'psi', label: 'PSI Strategy' },
-    { id: 'quantum_exhaustion', label: 'Quantum Exhaustion (QE)' },
-    { id: 'quantum_exhaustion_v2', label: 'Quantum Exhaustion v2 (Research Gate)', disabled: true },
-  ];
-
-  const selectedLabel = strategies.find(s => s.id === selectedStrategy)?.label || 'Strategy';
+  const strategies = getAvailableStrategies();
+  const activeStratDef = STRATEGIES[selectedStrategy] || STRATEGIES['psi'];
+  const selectedLabel = activeStratDef.label;
 
   useEffect(() => {
     if (!activeSymbol) return;
@@ -73,9 +65,14 @@ export default function SignalPanel({
           symbol: activeSymbol, 
           limit: '1',
           strategy: selectedStrategy,
-          buyThreshold: buyThreshold.toString(),
-          sellThreshold: sellThreshold.toString()
         });
+        
+        Object.entries(strategyParams).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) {
+            params.set(k, String(v));
+          }
+        });
+
         if (replayActive && replayEndDate) {
           params.set('end', replayEndDate);
           if (replayStartDate) params.set('start', replayStartDate);
@@ -98,16 +95,65 @@ export default function SignalPanel({
     fetchSignals();
     if (replayActive) return;
 
-    const interval = setInterval(fetchSignals, 60000); // refresh every minute
-    return () => clearInterval(interval);
-  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, selectedStrategy, buyThreshold, sellThreshold]);
+    // Polling removed to reduce unnecessary egress.
+    // Daily signals typically do not change minute-by-minute.
+  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, selectedStrategy, strategyParams]);
 
   if (!activeSymbol) return null;
 
-  const visibleSignalData = replayActive && !replayEndDate ? null : signalData;
-  const isExit = visibleSignalData?.signal.startsWith('SELL') ?? false;
-  const signalLabel = visibleSignalData ? (isExit ? 'EXIT' : visibleSignalData.signal) : '';
-  const reason = visibleSignalData?.entryReason || visibleSignalData?.exitReason || 'PSI';
+  const visibleSignalData = signalData;
+  const signalLabel = visibleSignalData?.signal || 'N/A';
+  const isExit = signalLabel.startsWith('SELL');
+  const reason = isExit ? visibleSignalData?.exitReason : visibleSignalData?.entryReason;
+
+  const startTraining = () => {
+    if (!chartData || chartData.length === 0) return;
+    if (trainingModel !== 'psi8') {
+      alert("Only PSI-8 training is currently supported.");
+      return;
+    }
+
+    setOptimizing(true);
+    setOptimProgress(0);
+
+    const worker = new Worker(new URL('../../strategies/PSI/psiOptimizer.worker.ts', import.meta.url));
+
+    worker.onmessage = (e) => {
+      if (e.data.type === 'progress') {
+        setOptimProgress(e.data.progress);
+      } else if (e.data.type === 'done') {
+        setOptimizing(false);
+        const { bestParams, bestScore } = e.data;
+        if (bestParams && bulkUpdateStrategyParams) {
+          console.log("Optimization complete! Best Score:", bestScore, "Params:", bestParams);
+          bulkUpdateStrategyParams(bestParams);
+          // TODO: Save to Supabase DB here in Phase 3
+          // localStorage.setItem(`quantegx_optim_psi8_${activeSymbol}`, JSON.stringify(bestParams));
+        }
+        worker.terminate();
+      }
+    };
+
+    worker.postMessage({
+      bars: chartData.map(d => ({
+        date: d.time,
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+        volume: d.volume
+      })),
+      // Expanded grid for exhaustive search (Warning: larger grid takes exponentially longer)
+      entryLevelsGrid: [[14.6], [23.6], [38.2], [50.0], [61.8], [14.6, 23.6, 38.2, 50.0, 61.8]],
+      aymMultipliers: [5, 7, 9, 11],
+      aymLimits: [61.8, 78.6, 88.6],
+      atrDistances: [2, 3, 4],
+      stoplossLevels: [2, 3, 5],
+      initialCapital: 100000,
+      startDate: strategyStartDate || '2020-01-01',
+      endDate: strategyEndDate || new Date().toISOString().split('T')[0]
+    });
+  };
 
   return (
     <div className="absolute top-4 left-4 z-10 w-48 md:w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex flex-col">
@@ -197,61 +243,83 @@ export default function SignalPanel({
       >
         {visibleSignalData && (
           <div className="p-4 bg-tv-base flex flex-col gap-3">
-            {selectedStrategy === 'quantum_exhaustion' ? (
-              <div className="flex flex-col gap-3 text-xs">
-                <div className="rounded-tv-sm bg-tv-surface p-2">
-                  <div className="text-tv-muted mb-2 flex justify-between">
-                    <span>BUY Threshold</span>
-                    <span className="text-tv-text font-weight-medium">{buyThreshold}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="50"
-                    max="99"
-                    value={buyThreshold}
-                    onChange={(e) => setBuyThreshold?.(Number(e.target.value))}
-                    className="w-full accent-tv-up cursor-pointer"
-                  />
-                </div>
-                <div className="rounded-tv-sm bg-tv-surface p-2">
-                  <div className="text-tv-muted mb-2 flex justify-between">
-                    <span>SELL Threshold</span>
-                    <span className="text-tv-text font-weight-medium">{sellThreshold}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="50"
-                    max="99"
-                    value={sellThreshold}
-                    onChange={(e) => setSellThreshold?.(Number(e.target.value))}
-                    className="w-full accent-tv-down cursor-pointer"
-                  />
-                </div>
+            {/* Dynamic Settings */}
+            {activeStratDef.settings.length > 0 && (
+              <div className="flex flex-col gap-3 text-xs mb-2">
+                {activeStratDef.settings.map(setting => {
+                  if (setting.type === 'range') {
+                    return (
+                      <div key={setting.key} className="rounded-tv-sm bg-tv-surface p-2">
+                        <div className="text-tv-muted mb-2 flex justify-between">
+                          <span>{setting.label}</span>
+                          <span className="text-tv-text font-weight-medium">{strategyParams[setting.key] ?? setting.default}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={setting.min}
+                          max={setting.max}
+                          step={setting.step}
+                          value={strategyParams[setting.key] ?? setting.default}
+                          onChange={(e) => updateStrategyParam?.(setting.key, Number(e.target.value))}
+                          className="w-full accent-tv-accent cursor-pointer"
+                        />
+                      </div>
+                    );
+                  }
+                  // We can support more types later
+                  return null;
+                })}
               </div>
-            ) : (
+            )}
+
+            {/* Dynamic Metrics */}
+            {activeStratDef.metrics.length > 0 && (
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-tv-sm bg-tv-surface p-2">
-                  <div className="text-tv-muted mb-1">Master Index</div>
-                  <div className="text-tv-text font-weight-medium">{visibleSignalData.masterIndex.toFixed(2)}</div>
-                </div>
-                <div className="rounded-tv-sm bg-tv-surface p-2">
-                  <div className="text-tv-muted mb-1">AYM Index</div>
-                  <div className="text-tv-text font-weight-medium">{visibleSignalData.masterIndexAdjusted.toFixed(2)}</div>
-                </div>
-                <div className="rounded-tv-sm bg-tv-surface p-2">
-                  <div className="text-tv-muted mb-1">Price</div>
-                  <div className="text-tv-text font-weight-medium">{Number(visibleSignalData.price).toFixed(2)}</div>
-                </div>
-                <div className="rounded-tv-sm bg-tv-surface p-2">
-                  <div className="text-tv-muted mb-1">MDM</div>
-                  <div className="text-tv-text font-weight-medium">
-                    {visibleSignalData.medianDailyMove === null ? 'N/A' : `${visibleSignalData.medianDailyMove.toFixed(2)}%`}
-                  </div>
-                </div>
+                {activeStratDef.metrics.map(metric => {
+                  let rawVal = visibleSignalData[metric.key];
+                  let displayVal = 'N/A';
+                  
+                  if (rawVal !== undefined && rawVal !== null) {
+                    if (metric.format === 'percentage') {
+                      displayVal = `${Number(rawVal).toFixed(metric.decimals ?? 2)}%`;
+                    } else if (metric.format === 'number') {
+                      displayVal = Number(rawVal).toFixed(metric.decimals ?? 2);
+                    } else {
+                      displayVal = String(rawVal);
+                    }
+                  }
+
+                  return (
+                    <div key={metric.key} className="rounded-tv-sm bg-tv-surface p-2 flex flex-col justify-between">
+                      <div className="text-tv-muted mb-1">{metric.label}</div>
+                      <div className="text-tv-text font-weight-medium">{displayVal}</div>
+                    </div>
+                  );
+                })}
               </div>
             )}
             
             <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-tv-border/50">
+              <div className="flex bg-tv-surface p-0.5 rounded-tv-sm mb-1">
+                <button
+                  className={`flex-1 py-1 text-xs font-weight-medium rounded-sm transition-colors ${
+                    trainingModel === 'psi8' ? 'bg-tv-base text-tv-text shadow-sm' : 'text-tv-muted hover:text-tv-text'
+                  }`}
+                  onClick={() => setTrainingModel('psi8')}
+                >
+                  PSI-8
+                </button>
+                <button
+                  className={`flex-1 py-1 text-xs font-weight-medium rounded-sm transition-colors ${
+                    trainingModel === 'psi40' ? 'bg-tv-base text-tv-text shadow-sm' : 'text-tv-muted hover:text-tv-text'
+                  }`}
+                  onClick={() => setTrainingModel('psi40')}
+                >
+                  PSI-40
+                </button>
+              </div>
+
+              <div className="text-[11px] text-tv-text font-weight-medium mb-1 uppercase tracking-wider text-tv-muted">Training period</div>
               <div className="flex items-center justify-between">
                 <label className="text-tv-muted text-[10px]">Start Date</label>
                 <input 
@@ -270,6 +338,23 @@ export default function SignalPanel({
                   onChange={(e) => setStrategyEndDate?.(e.target.value)}
                 />
               </div>
+              <button 
+                className="mt-2 w-full bg-tv-accent text-tv-base hover:bg-tv-accent/90 transition-colors rounded-tv-sm py-1.5 text-xs font-weight-medium disabled:opacity-50 relative overflow-hidden"
+                onClick={startTraining}
+                disabled={optimizing}
+              >
+                {optimizing ? (
+                  <>
+                    <span className="relative z-10">Optimizing... {optimProgress.toFixed(0)}%</span>
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 bg-tv-up/30 z-0 transition-all duration-300" 
+                      style={{ width: `${optimProgress}%` }}
+                    />
+                  </>
+                ) : (
+                  "Start Training"
+                )}
+              </button>
             </div>
 
             <div className="flex items-center justify-between mt-1 pt-2 border-t border-tv-border/50 text-[10px] text-tv-muted">

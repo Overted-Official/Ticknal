@@ -1,36 +1,55 @@
 import { NextResponse } from 'next/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 import { db } from '@/db';
-import { dailyPrices, orders, tickers } from '@/db/schema';
+import { dailyPrices, positions, tickers } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { createClient } from '@/lib/supabase/server';
 
-type OrderRow = typeof orders.$inferSelect;
+type PositionRow = typeof positions.$inferSelect;
 
 export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol');
   const status = searchParams.get('status')?.toUpperCase();
 
   try {
-    const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
-    const filteredOrders = allOrders.filter((order) => {
-      if (symbol && order.tickerSymbol !== normalizeTickerSymbol(symbol)) return false;
-      if (status && order.status !== status) return false;
+    const allPositions = await db.select()
+      .from(positions)
+      .where(eq(positions.userId, user.id))
+      .orderBy(desc(positions.createdAt));
+      
+    const filteredPositions = allPositions.filter((position) => {
+      if (symbol && position.tickerSymbol !== normalizeTickerSymbol(symbol)) return false;
+      if (status && position.status !== status) return false;
       return true;
     });
 
     const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
     return NextResponse.json({
-      orders: filteredOrders.map((order) => formatOrder(order, priceMap, tickerMap)),
+      orders: filteredPositions.map((position) => formatPosition(position, priceMap, tickerMap)),
     });
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.error('Error fetching positions:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const ticker = normalizeTickerSymbol(String(body.symbol ?? body.tickerSymbol ?? ''));
@@ -53,9 +72,10 @@ export async function POST(request: Request) {
       existingLevels ??
       derivePositionLevels(ticker, await getDailyPriceBars(ticker), entryDate, entryPrice);
 
-    const [createdOrder] = await db
-      .insert(orders)
+    const [createdPosition] = await db
+      .insert(positions)
       .values({
+        userId: user.id,
         tickerSymbol: ticker,
         status: 'OPEN',
         side: 'LONG',
@@ -70,24 +90,34 @@ export async function POST(request: Request) {
       .returning();
 
     const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
-    return NextResponse.json({ order: formatOrder(createdOrder, priceMap, tickerMap) }, { status: 201 });
+    return NextResponse.json({ order: formatPosition(createdPosition, priceMap, tickerMap) }, { status: 201 });
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('Error creating position:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
 export async function PATCH(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const id = Number(body.id);
     if (!Number.isInteger(id) || id <= 0) {
-      return NextResponse.json({ error: 'A valid order id is required' }, { status: 400 });
+      return NextResponse.json({ error: 'A valid position id is required' }, { status: 400 });
     }
 
-    const [existingOrder] = await db.select().from(orders).where(eq(orders.id, id));
-    if (!existingOrder) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    const [existingPosition] = await db.select()
+      .from(positions)
+      .where(and(eq(positions.id, id), eq(positions.userId, user.id)));
+      
+    if (!existingPosition) {
+      return NextResponse.json({ error: 'Position not found' }, { status: 404 });
     }
 
     const status = typeof body.status === 'string' ? body.status.toUpperCase() : undefined;
@@ -95,38 +125,39 @@ export async function PATCH(request: Request) {
     const exitDate = typeof body.exitDate === 'string' && body.exitDate ? body.exitDate.split('T')[0] : null;
     const quantityToClose = toNullableNumber(body.quantityToClose);
 
-    if (status === 'CLOSED' && quantityToClose !== null && quantityToClose > 0 && quantityToClose < Number(existingOrder.quantity)) {
+    if (status === 'CLOSED' && quantityToClose !== null && quantityToClose > 0 && quantityToClose < Number(existingPosition.quantity)) {
       // Partial close
-      const remainingQty = Number(existingOrder.quantity) - quantityToClose;
+      const remainingQty = Number(existingPosition.quantity) - quantityToClose;
 
       // 1. Update original order's quantity (it stays OPEN)
-      const [updatedOrder] = await db
-        .update(orders)
+      const [updatedPosition] = await db
+        .update(positions)
         .set({ quantity: remainingQty.toString(), updatedAt: new Date() })
-        .where(eq(orders.id, id))
+        .where(and(eq(positions.id, id), eq(positions.userId, user.id)))
         .returning();
 
       // 2. Insert new CLOSED order for the partial amount
-      await db.insert(orders).values({
-        tickerSymbol: existingOrder.tickerSymbol,
+      await db.insert(positions).values({
+        userId: user.id,
+        tickerSymbol: existingPosition.tickerSymbol,
         status: 'CLOSED',
-        side: existingOrder.side,
-        entryDate: existingOrder.entryDate,
-        entryPrice: existingOrder.entryPrice,
+        side: existingPosition.side,
+        entryDate: existingPosition.entryDate,
+        entryPrice: existingPosition.entryPrice,
         quantity: quantityToClose.toString(),
-        targetPrice: existingOrder.targetPrice,
-        stopPrice: existingOrder.stopPrice,
+        targetPrice: existingPosition.targetPrice,
+        stopPrice: existingPosition.stopPrice,
         exitDate: exitDate ?? new Date().toISOString().split('T')[0],
         exitPrice: exitPrice !== null ? exitPrice.toString() : null,
-        notes: typeof body.notes === 'string' ? body.notes : existingOrder.notes,
-        createdAt: existingOrder.createdAt,
+        notes: typeof body.notes === 'string' ? body.notes : existingPosition.notes,
+        createdAt: existingPosition.createdAt,
       });
 
       const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
-      return NextResponse.json({ order: formatOrder(updatedOrder, priceMap, tickerMap) });
+      return NextResponse.json({ order: formatPosition(updatedPosition, priceMap, tickerMap) });
     }
 
-    const setValues: Partial<typeof orders.$inferInsert> = {
+    const setValues: Partial<typeof positions.$inferInsert> = {
       updatedAt: new Date(),
     };
 
@@ -146,60 +177,67 @@ export async function PATCH(request: Request) {
     const editQuantity = toNullableNumber(body.quantity);
     if (editQuantity !== null) setValues.quantity = editQuantity.toString();
 
-    const [updatedOrder] = await db
-      .update(orders)
+    const [updatedPosition] = await db
+      .update(positions)
       .set(setValues)
-      .where(eq(orders.id, id))
+      .where(and(eq(positions.id, id), eq(positions.userId, user.id)))
       .returning();
 
     const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
-    return NextResponse.json({ order: formatOrder(updatedOrder, priceMap, tickerMap) });
+    return NextResponse.json({ order: formatPosition(updatedPosition, priceMap, tickerMap) });
   } catch (error) {
-    console.error('Error updating order:', error);
+    console.error('Error updating position:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const id = Number(searchParams.get('id'));
 
   if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ error: 'A valid order id is required' }, { status: 400 });
+    return NextResponse.json({ error: 'A valid position id is required' }, { status: 400 });
   }
 
   try {
-    const [deletedOrder] = await db.delete(orders).where(eq(orders.id, id)).returning();
-    if (!deletedOrder) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    const [deletedPosition] = await db.delete(positions)
+      .where(and(eq(positions.id, id), eq(positions.userId, user.id)))
+      .returning();
+      
+    if (!deletedPosition) {
+      return NextResponse.json({ error: 'Position not found' }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Error deleting order:', error);
+    console.error('Error deleting position:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
 async function getLatestPriceMap(): Promise<Record<string, number>> {
-  const rows = await db.execute(sql`
-    WITH ranked_prices AS (
-      SELECT ticker_symbol, close, ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) AS rn
-      FROM ${dailyPrices}
-    )
-    SELECT ticker_symbol, close
-    FROM ranked_prices
-    WHERE rn = 1
-  `);
+  const { getCachedRecentPrices } = await import('@/lib/data-cache');
+  const rows = await getCachedRecentPrices();
 
   const priceMap: Record<string, number> = {};
   for (const row of rows) {
-    priceMap[String(row.ticker_symbol)] = Number(row.close);
+    if (Number(row.rn) === 1) {
+      priceMap[String(row.ticker_symbol)] = Number(row.close);
+    }
   }
   return priceMap;
 }
 
 async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string }>> {
-  const rows = await db.select().from(tickers);
+  const { getCachedTickers } = await import('@/lib/data-cache');
+  const rows = await getCachedTickers();
+  
   const tickerMap: Record<string, { companyName: string; sector: string }> = {};
   for (const ticker of rows) {
     tickerMap[ticker.symbol] = {
@@ -210,37 +248,37 @@ async function getTickerMap(): Promise<Record<string, { companyName: string; sec
   return tickerMap;
 }
 
-function formatOrder(
-  order: OrderRow,
+function formatPosition(
+  position: PositionRow,
   priceMap: Record<string, number>,
   tickerMap: Record<string, { companyName: string; sector: string }>,
 ) {
-  const entryPrice = Number(order.entryPrice);
-  const quantity = Number(order.quantity);
-  const currentPrice = order.status === 'CLOSED' && order.exitPrice ? Number(order.exitPrice) : priceMap[order.tickerSymbol] ?? entryPrice;
+  const entryPrice = Number(position.entryPrice);
+  const quantity = Number(position.quantity);
+  const currentPrice = position.status === 'CLOSED' && position.exitPrice ? Number(position.exitPrice) : priceMap[position.tickerSymbol] ?? entryPrice;
   const profitLoss = (currentPrice - entryPrice) * quantity;
   const profitLossPct = entryPrice > 0 ? ((currentPrice - entryPrice) / entryPrice) * 100 : 0;
 
   return {
-    id: order.id,
-    tickerSymbol: order.tickerSymbol,
-    companyName: tickerMap[order.tickerSymbol]?.companyName ?? order.tickerSymbol,
-    sector: tickerMap[order.tickerSymbol]?.sector ?? 'Unclassified',
-    status: order.status,
-    side: order.side,
-    entryDate: order.entryDate,
+    id: position.id,
+    tickerSymbol: position.tickerSymbol,
+    companyName: tickerMap[position.tickerSymbol]?.companyName ?? position.tickerSymbol,
+    sector: tickerMap[position.tickerSymbol]?.sector ?? 'Unclassified',
+    status: position.status,
+    side: position.side,
+    entryDate: position.entryDate,
     entryPrice,
     quantity,
-    targetPrice: toNullableNumber(order.targetPrice),
-    stopPrice: toNullableNumber(order.stopPrice),
-    exitDate: order.exitDate,
-    exitPrice: toNullableNumber(order.exitPrice),
+    targetPrice: toNullableNumber(position.targetPrice),
+    stopPrice: toNullableNumber(position.stopPrice),
+    exitDate: position.exitDate,
+    exitPrice: toNullableNumber(position.exitPrice),
     currentPrice,
     profitLoss,
     profitLossPct,
-    notes: order.notes,
-    createdAt: order.createdAt,
-    updatedAt: order.updatedAt,
+    notes: position.notes,
+    createdAt: position.createdAt,
+    updatedAt: position.updatedAt,
   };
 }
 

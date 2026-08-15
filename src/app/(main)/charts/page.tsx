@@ -4,13 +4,15 @@ import RightSidebar, { WatchlistItem } from '@/components/platform/RightSidebar'
 import BottomToolbar from '@/components/platform/BottomToolbar';
 import ChartReplayWorkspace from '@/components/platform/ChartReplayWorkspace';
 import { db } from '@/db';
-import { dailyPrices, tickers, orders } from '@/db/schema';
-import { eq, asc, sql } from 'drizzle-orm';
+import { dailyPrices, tickers, positions } from '@/db/schema';
+import { eq, asc, sql, and } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
 import ChartViews from '@/components/platform/ChartViews';
 import TickerPositions, { TickerOrder } from '@/components/platform/TickerPositions';
 import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices } from '@/lib/data-cache';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 import { Suspense } from 'react';
 import ChartsSkeleton from './ChartsSkeleton';
@@ -33,13 +35,21 @@ export default async function PlatformPage(props: PlatformPageProps) {
 }
 
 async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMode }: { selectedSymbol: string; timeframe: string; initialReplayMode: boolean }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/auth');
+  }
 
   // Fetch all tickers to build the watchlist
   const allTickers = await getCachedTickers();
 
   // Fetch open positions
-  const openOrdersRows = await db.select({ tickerSymbol: orders.tickerSymbol }).from(orders).where(eq(orders.status, 'OPEN'));
-  const openPositionsSet = new Set(openOrdersRows.map(o => o.tickerSymbol));
+  const openPositionsRows = await db.select({ tickerSymbol: positions.tickerSymbol })
+    .from(positions)
+    .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, user.id)));
+  const openPositionsSet = new Set(openPositionsRows.map(o => o.tickerSymbol));
 
   
   // Calculate watchlist items by fetching the last 2 prices for each ticker
@@ -93,8 +103,8 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   });
 
   // Fetch orders specifically for the selected symbol for the Positions view
-  const tickerOrdersData = await db.select().from(orders).where(eq(orders.tickerSymbol, selectedSymbol));
-  const tickerOrders: TickerOrder[] = tickerOrdersData.map(o => ({
+  const tickerPositionsData = await db.select().from(positions).where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, user.id)));
+  const tickerPositions: TickerOrder[] = tickerPositionsData.map(o => ({
     id: o.id,
     status: o.status,
     side: o.side,
@@ -211,7 +221,7 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
       <div className="flex-1 flex overflow-hidden">
 
         <ChartViews 
-          positionsView={<TickerPositions symbol={selectedSymbol} orders={tickerOrders} currentPrice={currentPriceForSymbol} />}
+          positionsView={<TickerPositions symbol={selectedSymbol} orders={tickerPositions} currentPrice={currentPriceForSymbol} />}
         >
           <ChartReplayWorkspace
             key={`${selectedSymbol}-${timeframe}-${initialReplayMode ? 'replay' : 'live'}`}

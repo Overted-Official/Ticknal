@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { pushSubscriptions } from '@/db/schema';
+import { createClient } from '@/lib/supabase/server';
 
 type BrowserPushSubscription = {
   endpoint?: string;
@@ -11,19 +12,25 @@ type BrowserPushSubscription = {
 };
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
-    const deviceId = typeof body.deviceId === 'string' ? body.deviceId : '';
     const subscription = body.subscription as BrowserPushSubscription | undefined;
 
-    if (!/^[a-zA-Z0-9-]{12,64}$/.test(deviceId) || !subscription?.endpoint || !subscription.keys?.p256dh || !subscription.keys.auth) {
-      return NextResponse.json({ error: 'A valid deviceId and browser push subscription are required' }, { status: 400 });
+    if (!subscription?.endpoint || !subscription.keys?.p256dh || !subscription.keys.auth) {
+      return NextResponse.json({ error: 'A valid browser push subscription is required' }, { status: 400 });
     }
 
     const [savedSubscription] = await db
       .insert(pushSubscriptions)
       .values({
-        deviceId,
+        userId: user.id,
         endpoint: subscription.endpoint,
         p256dh: subscription.keys.p256dh,
         auth: subscription.keys.auth,
@@ -33,7 +40,7 @@ export async function POST(request: Request) {
       .onConflictDoUpdate({
         target: pushSubscriptions.endpoint,
         set: {
-          deviceId,
+          userId: user.id,
           p256dh: subscription.keys.p256dh,
           auth: subscription.keys.auth,
           userAgent: typeof body.userAgent === 'string' ? body.userAgent.slice(0, 500) : null,
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       subscription: {
         id: savedSubscription.id,
-        deviceId: savedSubscription.deviceId,
+        userId: savedSubscription.userId,
       },
     });
   } catch (error) {

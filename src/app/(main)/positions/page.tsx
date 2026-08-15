@@ -1,5 +1,5 @@
 import OrdersTable from '@/components/platform/OrdersTable';
 
-export default function OrdersPage() {
+export default function PositionsPage() {
   return <OrdersTable />;
 }

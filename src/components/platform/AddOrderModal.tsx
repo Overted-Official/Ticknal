@@ -90,7 +90,7 @@ export default function AddOrderModal({
   const handleAddOrder = async () => {
     if (!newOrderForm.symbol || !newOrderForm.entryPrice) return;
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/positions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { connection } from 'next/server';
 import { desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { dailyPrices, orders, tickerAlerts, tickers } from '@/db/schema';
+import { dailyPrices, positions, tickerAlerts, tickers } from '@/db/schema';
+import { createClient } from '@/lib/supabase/server';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
@@ -39,11 +40,25 @@ const DASHBOARD_HISTORY_BARS = 320;
 
 export default async function DashboardContent() {
   await connection();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return (
+      <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text items-center justify-center p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Welcome to QuantEGX</h2>
+        <p className="text-tv-muted mb-6">Please sign in to view your personalized dashboard and portfolio.</p>
+        <Link href="/" className="bg-tv-accent text-white px-6 py-2 rounded-tv-sm hover:bg-tv-accent/90 transition">
+          Sign In
+        </Link>
+      </div>
+    );
+  }
 
   const [orderStats, opportunities, activeAlertCount] = await Promise.all([
-    getOrderStats(),
+    getOrderStats(user.id),
     getRecentOpportunities(),
-    getActiveAlertCount(),
+    getActiveAlertCount(user.id),
   ]);
   const openPositionTickers = new Set(orderStats.openOrders.map(o => o.tickerSymbol));
   const buyOpportunities = opportunities.filter((item) => item.signal.signal === 'BUY').slice(0, 12);
@@ -125,9 +140,9 @@ export default async function DashboardContent() {
       <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6 xl:grid-cols-2">
         {/* Open Positions */}
         <section>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium">Open Positions</h2>
-            <Link href="/orders" className="text-[11px] text-tv-muted hover:text-tv-text">Orders</Link>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-weight-bold uppercase tracking-wider text-tv-muted">Open Positions</h3>
+            <Link href="/positions" className="text-[11px] text-tv-muted hover:text-tv-text">Positions</Link>
           </div>
           <div className="overflow-hidden rounded-tv-lg border border-tv-border">
             {/* Mobile View (Cards) */}
@@ -250,9 +265,13 @@ function Metric({ label, value, valueClass = 'text-tv-text', subtitle, subtitleC
   );
 }
 
-async function getOrderStats() {
-  const openRows = await db.select().from(orders).where(eq(orders.status, 'OPEN')).orderBy(desc(orders.createdAt));
-  const closedRows = await db.select().from(orders).where(eq(orders.status, 'CLOSED')).orderBy(desc(orders.createdAt));
+async function getOrderStats(userId: string) {
+  const openRows = await db.select().from(positions).where(
+    sql`${positions.status} = 'OPEN' AND ${positions.userId} = ${userId}`
+  ).orderBy(desc(positions.createdAt));
+  const closedRows = await db.select().from(positions).where(
+    sql`${positions.status} = 'CLOSED' AND ${positions.userId} = ${userId}`
+  ).orderBy(desc(positions.createdAt));
   const latestPrices = await getLatestPriceMap();
   const tickerMap = await getTickerMap();
 
@@ -449,8 +468,12 @@ async function getOrderStats() {
 
 
 
-async function getActiveAlertCount(): Promise<number> {
-  const rows = await db.select({ id: tickerAlerts.id }).from(tickerAlerts).where(eq(tickerAlerts.enabled, true));
+async function getActiveAlertCount(userId: string) {
+  const rows = await db.select({ id: tickerAlerts.id })
+    .from(tickerAlerts)
+    .where(
+      sql`${tickerAlerts.enabled} = true AND ${tickerAlerts.userId} = ${userId}`
+    );
   return rows.length;
 }
 
