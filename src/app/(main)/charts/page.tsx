@@ -39,7 +39,7 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth');
+    redirect('/');
   }
 
   // Fetch all tickers to build the watchlist
