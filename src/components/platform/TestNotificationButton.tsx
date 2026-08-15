@@ -4,7 +4,7 @@ import { useAlerts } from './AlertProvider';
 import { useState, useEffect } from 'react';
 
 export default function TestNotificationButton() {
-  const { ensurePushSubscription, permission, statusMessage } = useAlerts();
+  const { ensurePushSubscription, permission } = useAlerts();
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -48,9 +48,10 @@ export default function TestNotificationButton() {
     <button
       onClick={handleTestNotification}
       disabled={!isMounted || loading || permission === 'unsupported'}
-      className="rounded-tv-sm border border-tv-accent bg-tv-accent/10 px-3 py-2 text-xs text-tv-accent transition-colors hover:bg-tv-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+      className="glass-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white/70 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
     >
-      {loading ? 'Sending...' : 'Test push notification'}
+      <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-plt-orange animate-ping' : 'bg-plt-orange shadow-[0_0_6px_#ff640d]'}`} />
+      <span>{loading ? 'Sending...' : 'Test Notification'}</span>
     </button>
   );
 }

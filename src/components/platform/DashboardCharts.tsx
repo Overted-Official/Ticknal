@@ -25,7 +25,7 @@ export default function DashboardCharts({
     <div className="mt-4 px-4 md:px-6">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden w-full flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/[0.08]"
+        className="md:hidden w-full flex items-center justify-between rounded-xl glass-pill px-4 py-3 text-sm font-semibold text-white transition-colors"
       >
         <div className="flex items-center gap-2">
           <BarChart2 size={16} className="text-plt-orange" />
@@ -36,15 +36,15 @@ export default function DashboardCharts({
 
       <div className={`grid-cols-1 gap-5 lg:grid-cols-2 ${isOpen ? 'grid mt-4 md:mt-0' : 'hidden md:grid'}`}>
         {/* Sector Distribution Donut */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-5 shadow-xl">
+        <div className="glass-panel rounded-2xl p-5 shadow-xl">
           <SectorDonutChart data={sectorData} />
         </div>
 
         {/* Monthly Investment Bar Chart */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-5 shadow-xl">
+        <div className="glass-panel rounded-2xl p-5 shadow-xl">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white tracking-tight">Monthly Investment</h2>
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40">Cost basis / mo</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40 font-mono">Cost basis / mo</span>
           </div>
           <div style={{ height: 240 }}>
             <MonthlyInvestmentChart data={monthlyData} />

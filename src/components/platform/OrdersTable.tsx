@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
+import { motion } from 'framer-motion';
+import { containerStagger, itemFadeInUp, hoverLift } from '@/lib/motion';
 import { CheckCircle, LineChart, Trash2, Pencil, Search } from '@/components/ui/icons';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
@@ -79,12 +81,20 @@ export default function OrdersTable() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#0f0f0f] text-white">
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerStagger}
+      className="flex h-full min-h-0 flex-col bg-transparent text-white relative z-10"
+    >
       {/* Top Header */}
-      <div className="border-b border-white/[0.06] px-5 py-5">
+      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.06] px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Positions & Orders</h1>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
+              <h1 className="text-2xl font-bold tracking-tight text-white">Positions & Orders</h1>
+            </div>
             <p className="mt-0.5 text-xs text-white/50">Tracked long positions and execution trade history</p>
           </div>
           
@@ -99,7 +109,7 @@ export default function OrdersTable() {
                 placeholder="Search ticker or name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-48 md:w-56 rounded-xl border border-white/[0.08] bg-white/[0.04] pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none transition-all"
+                className="h-8 w-48 md:w-56 rounded-xl glass-pill pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none transition-all"
               />
             </div>
 
@@ -125,7 +135,7 @@ export default function OrdersTable() {
             <button
               type="button"
               onClick={() => setIsAddingOrder(true)}
-              className="h-8 rounded-xl bg-plt-orange hover:bg-plt-orange-hover text-white px-3.5 text-xs font-semibold shadow-[0_0_15px_rgba(255,100,13,0.3)] transition-all"
+              className="h-8 rounded-xl bg-plt-orange hover:bg-plt-orange-hover text-white px-3.5 text-xs font-semibold shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)] transition-all"
             >
               + Add Order
             </button>
@@ -133,14 +143,14 @@ export default function OrdersTable() {
         </div>
 
         {/* Metric Cards */}
-        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <motion.div variants={containerStagger} className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
           <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-white font-bold" />
           <Metric label="Open Positions" value={String(totals.openCount)} />
           <Metric label="Closed Positions" value={String(totals.closedCount)} />
           <Metric label="Unrealized P/L" value={formatMoney(totals.unrealized)} valueClass={totals.unrealized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} />
           <Metric label="Realized P/L" value={formatMoney(totals.realized)} valueClass={totals.realized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <div className="min-h-0 flex-1 overflow-auto p-4 md:p-6">
         {/* Mobile View (Cards) */}
@@ -225,7 +235,7 @@ export default function OrdersTable() {
         </div>
 
         {/* Desktop View (Table Container) */}
-        <div className="hidden md:block rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl shadow-xl overflow-hidden">
+        <motion.div variants={itemFadeInUp} className="hidden md:block glass-panel rounded-2xl shadow-xl overflow-hidden">
           <table className="w-full text-left text-xs">
             <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
               <tr>
@@ -250,7 +260,7 @@ export default function OrdersTable() {
                 </tr>
               ) : (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-white/[0.03] transition-colors group">
+                  <tr key={order.id} className="hover:bg-white/[0.04] transition-colors group">
                     <td className="px-5 py-3 whitespace-nowrap">
                       <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white group-hover:text-plt-orange transition-colors flex items-center gap-2">
                         <LineChart size={15} className="text-white/40 group-hover:text-plt-orange" />
@@ -321,7 +331,7 @@ export default function OrdersTable() {
               )}
             </tbody>
           </table>
-        </div>
+        </motion.div>
       </div>
 
       <AddOrderModal 
@@ -343,16 +353,20 @@ export default function OrdersTable() {
         onSuccess={() => mutate()}
         order={orderToEdit}
       />
-    </div>
+    </motion.div>
   );
 }
 
 function Metric({ label, value, valueClass = 'text-white' }: { label: string; value: string; valueClass?: string }) {
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-3.5 md:p-4 shadow-xl hover:border-white/[0.14] transition-all">
+    <motion.div 
+      variants={itemFadeInUp}
+      whileHover={hoverLift}
+      className="glass-panel glass-panel-hover rounded-2xl p-3.5 md:p-4 group cursor-default"
+    >
       <div className="text-[10px] uppercase font-semibold tracking-wider text-white/45">{label}</div>
       <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
-    </div>
+    </motion.div>
   );
 }
 

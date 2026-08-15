@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X } from '@/components/ui/icons';
+import { motion } from 'framer-motion';
 
 type OrderRow = {
   id: number;
@@ -11,17 +12,19 @@ type OrderRow = {
   entryDate: string;
 };
 
+interface EditOrderModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  order: OrderRow | null;
+}
+
 export default function EditOrderModal({ 
   isOpen, 
   onClose, 
   onSuccess,
   order
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onSuccess: () => void;
-  order: OrderRow | null;
-}) {
+}: EditOrderModalProps) {
   const [form, setForm] = useState({ 
     entryDate: '', 
     entryPrice: '', 
@@ -29,7 +32,7 @@ export default function EditOrderModal({
   });
 
   useEffect(() => {
-    if (isOpen && order) {
+    if (order) {
       setTimeout(() => {
         setForm({
           entryDate: order.entryDate || new Date().toISOString().split('T')[0],
@@ -38,7 +41,7 @@ export default function EditOrderModal({
         });
       }, 0);
     }
-  }, [isOpen, order]);
+  }, [order]);
 
   const handleEditOrder = async () => {
     if (!order || !form.entryPrice || !form.quantity) return;
@@ -68,12 +71,24 @@ export default function EditOrderModal({
   if (!isOpen || !order) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-md px-4 animate-in fade-in duration-150">
-      <div className="bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl w-full max-w-sm overflow-visible animate-in zoom-in-95 duration-150 flex flex-col text-white">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 animate-in fade-in duration-200"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="glass-panel rounded-2xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12]"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
-          <span className="font-semibold text-white text-sm">Edit {order.tickerSymbol.replace('.CA', '')} Position</span>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
+            <span className="font-semibold text-white text-sm">Edit {order.tickerSymbol.replace('.CA', '')} Position</span>
+          </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/[0.06]">
             <X size={16} />
           </button>
@@ -143,7 +158,7 @@ export default function EditOrderModal({
           </button>
         </div>
 
-      </div>
+      </motion.div>
     </div>
   );
 }

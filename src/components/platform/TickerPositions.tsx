@@ -44,24 +44,24 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
   const displayOrders = [...openOrders, ...closedOrders];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-[#0f0f0f] text-white p-4 space-y-6">
+    <div className="flex flex-col h-full overflow-y-auto bg-transparent text-white p-4 space-y-6">
       
       {/* Summary Cards */}
       <div>
         <h2 className="text-sm font-semibold tracking-tight mb-3 text-white">{symbol.replace('.CA', '')} Position Summary</h2>
         <div className="grid grid-cols-3 gap-2.5">
-          <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-3.5 shadow-xl">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate">Invested</div>
+          <div className="glass-panel glass-panel-hover rounded-2xl p-3.5 shadow-xl">
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate font-mono">Invested</div>
             <div className="mt-1 text-sm font-bold font-mono text-white truncate">{formatMoney(totalInvested)}</div>
           </div>
-          <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-3.5 shadow-xl">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate">Unrealized P/L</div>
+          <div className="glass-panel glass-panel-hover rounded-2xl p-3.5 shadow-xl">
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate font-mono">Unrealized P/L</div>
             <div className={`mt-1 text-sm font-bold font-mono truncate ${unrealizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
               {formatMoney(unrealizedPl, true)}
             </div>
           </div>
-          <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-3.5 shadow-xl">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate">Realized P/L</div>
+          <div className="glass-panel glass-panel-hover rounded-2xl p-3.5 shadow-xl">
+            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/40 truncate font-mono">Realized P/L</div>
             <div className={`mt-1 text-sm font-bold font-mono truncate ${realizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
               {formatMoney(realizedPl, true)}
             </div>
@@ -73,7 +73,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
       <div>
         <h2 className="text-sm font-semibold tracking-tight mb-3 text-white">Order History</h2>
         {displayOrders.length === 0 ? (
-          <div className="text-xs text-white/40 text-center py-8 border border-white/[0.08] rounded-2xl border-dashed bg-[#141414]/40">
+          <div className="text-xs text-white/40 text-center py-8 border border-white/[0.08] rounded-2xl border-dashed bg-white/[0.01]">
             No tracked positions for {symbol.replace('.CA', '')}
           </div>
         ) : (
@@ -86,9 +86,9 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
               const plPct = order.entryPrice > 0 ? (pl / (order.entryPrice * order.quantity)) * 100 : 0;
 
               return (
-                <div key={order.id} className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 backdrop-blur-xl p-4 flex flex-col space-y-3 shadow-xl relative overflow-hidden">
+                <div key={order.id} className="glass-panel rounded-2xl p-4 flex flex-col space-y-3 shadow-xl relative overflow-hidden">
                   {/* Left accent strip based on status */}
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-orange' : 'bg-white/10'}`} />
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-orange shadow-[0_0_8px_#ff640d]' : 'bg-white/10'}`} />
                   
                   <div className="flex justify-between items-start ml-2">
                     <div>
@@ -98,57 +98,52 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
                         }`}>
                           {isOpen ? 'OPEN' : 'CLOSED'}
                         </span>
-                        <span className="text-xs text-white/40 font-mono">
-                          {typeof order.entryDate === 'string' ? order.entryDate.split('T')[0] : new Date(order.entryDate).toISOString().split('T')[0]}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-xs text-white/60">
-                        Qty: <span className="font-mono font-semibold text-white">{order.quantity}</span>
+                        <span className="text-xs text-white/40 font-mono">{order.entryDate}</span>
                       </div>
                     </div>
                     <div className="text-right font-mono">
                       <div className={`text-sm font-bold ${pl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                         {formatMoney(pl, true)}
                       </div>
-                      <div className={`text-xs ${pl >= 0 ? 'text-[#00e676]/80' : 'text-[#ff4d58]/80'}`}>
+                      <div className={`text-[10px] ${plPct >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                         {plPct >= 0 ? '+' : ''}{plPct.toFixed(2)}%
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 ml-2 pt-2.5 border-t border-white/[0.04] text-xs font-mono">
+
+                  <div className="grid grid-cols-3 gap-2 text-xs pt-3 border-t border-white/[0.06] ml-2 font-mono">
                     <div>
-                      <span className="text-white/40 text-[10px] block font-sans">Entry</span>
-                      <span className="text-white">{formatPrice(order.entryPrice)}</span>
-                    </div>
-                    {isOpen ? (
-                      <div>
-                        <span className="text-white/40 text-[10px] block font-sans">Current</span>
-                        <span className="text-white">{formatPrice(currentPrice)}</span>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="text-white/40 text-[10px] block font-sans">Exit</span>
-                        <span className="text-white">{order.exitPrice ? formatPrice(order.exitPrice) : '-'}</span>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <span className="text-white/40 text-[10px] block font-sans">Target</span>
-                      <span className="text-[#00e676]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</span>
+                      <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Entry</span>
+                      <span className="text-white font-medium">{formatPrice(order.entryPrice)}</span>
                     </div>
                     <div>
-                      <span className="text-white/40 text-[10px] block font-sans">Stop</span>
-                      <span className="text-[#ff4d58]">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</span>
+                      <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Current / Exit</span>
+                      <span className="text-white font-medium">{isOpen ? formatPrice(currentPrice) : formatPrice(order.exitPrice ?? 0)}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Quantity</span>
+                      <span className="text-white font-medium">{order.quantity}</span>
                     </div>
                   </div>
+
+                  {(order.targetPrice || order.stopPrice) && (
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-white/[0.04] ml-2 font-mono">
+                      <div>
+                        <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Target Price</span>
+                        <span className="text-[#00e676]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Stop Loss</span>
+                        <span className="text-[#ff4d58]">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
       </div>
-
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 
 function MetricSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-4 animate-pulse">
+    <div className="glass-panel rounded-2xl p-4 animate-pulse">
       <div className="h-2.5 w-16 bg-white/[0.06] rounded mb-2"></div>
       <div className="h-6 w-24 bg-white/[0.1] rounded mb-1.5"></div>
       <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
@@ -12,7 +12,7 @@ function MetricSkeleton() {
 
 export default function DashboardSkeleton() {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-auto bg-[#0f0f0f] text-white">
+    <div className="flex h-full min-h-0 flex-col overflow-auto bg-transparent text-white">
       <div className="border-b border-white/[0.06] px-5 py-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="animate-pulse">
