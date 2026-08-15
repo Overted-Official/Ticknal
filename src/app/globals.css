@@ -1,26 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Trading Platform Palette (Nansen Theme) */
-  --bg-base: #06101A;
-  --bg-surface: #121C26;
-  --bg-chart: #06101A;
-  --bg-hover: #1F2833;
+  /* Trading Platform Palette (Trenox Theme) */
+  --bg-base: rgb(0, 0, 0);
+  --bg-surface: rgb(10, 10, 10);
+  --bg-chart: rgb(0, 0, 0);
+  --bg-hover: rgb(26, 23, 23);
+  --bg-deep: rgb(5, 5, 5);
   
-  --text-primary: #F2F4F5;
-  --text-secondary: #8B949E; /* Muted gray for secondary text */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
   
-  --accent-blue: #00FFA7;
-  --accent-blue-hover: #00CC85; /* Slightly darker mint for hover */
+  --accent-blue: rgb(255, 100, 13);
+  --accent-blue-hover: #e55a0b;
   
   --up-color: #34CF82;
   --down-color: #FF4242;
   
-  --border-color: #1F2833;
-  --border-highlight: #00FFA7;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --border-highlight-soft: rgba(255, 255, 255, 0.16);
+  --border-highlight: #ff640d;
 
   /* Typography */
-  --font-tv-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-tv-sans: "Inter", sans-serif;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -29,6 +32,9 @@
   --radius-sm: 0.125rem;
   --radius-md: 0.25rem;
   --radius-lg: 0.5rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
   --radius-full: 9999px;
   
   --glass-bg: rgba(18, 28, 38, 0.8);
@@ -39,6 +45,7 @@
   --color-tv-surface: var(--bg-surface);
   --color-tv-chart: var(--bg-chart);
   --color-tv-hover: var(--bg-hover);
+  --color-tv-deep: var(--bg-deep);
   --color-tv-text: var(--text-primary);
   --color-tv-muted: var(--text-secondary);
   --color-tv-accent: var(--accent-blue);
@@ -46,14 +53,23 @@
   --color-tv-up: var(--up-color);
   --color-tv-down: var(--down-color);
   --color-tv-border: var(--border-color);
+  --color-tv-border-soft: var(--border-highlight-soft);
   --color-tv-border-highlight: var(--border-highlight);
   --color-tv-glass: var(--glass-bg);
 
   --font-tv-sans: var(--font-tv-sans);
+  --z-tv-behind: -1;
+  --z-tv-base: 1;
+  --z-tv-above: 10;
+  --z-tv-nav: 50;
+  --z-tv-modal: 100;
 
   --radius-tv-sm: var(--radius-sm);
   --radius-tv-md: var(--radius-md);
   --radius-tv-lg: var(--radius-lg);
+  --radius-tv-xl: var(--radius-xl);
+  --radius-tv-2xl: var(--radius-2xl);
+  --radius-tv-3xl: var(--radius-3xl);
   --radius-tv-full: var(--radius-full);
 }
 
@@ -88,4 +104,30 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary); 
+}
+
+@theme {
+  --animate-marquee: marquee 30s linear infinite;
+  
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+  }
+}
+
+/* Lenis Smooth Scrolling Optimization */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }

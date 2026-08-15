@@ -1,6 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["onnxruntime-node"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "framerusercontent.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.framerusercontent.com",
+        pathname: "/**",
+      },
+    ],
+  },
   outputFileTracingIncludes: {
     "/api/metrics": [
       "./Data/psi_*best*.csv",
