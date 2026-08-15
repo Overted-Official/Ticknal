@@ -47,7 +47,7 @@ export default function TopBar({
         <div className="flex items-center space-x-2 md:space-x-3">
           <button 
             type="button"
-            className="flex items-center space-x-2.5 cursor-pointer hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] px-2 py-1 rounded-lg transition-all text-left"
+            className="flex items-center space-x-2.5 cursor-pointer hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] px-3 py-1 rounded-full transition-all text-left"
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Circular Logo */}
@@ -70,7 +70,7 @@ export default function TopBar({
               </div>
             </div>
             
-            <div className="hidden sm:flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/40 font-mono">
+            <div className="hidden sm:flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/40 font-mono">
               <Search size={10} />
               <span>⌘K</span>
             </div>
@@ -81,14 +81,14 @@ export default function TopBar({
         <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap ml-auto">
           {/* Indicators & Replay Quick Links */}
           <div className="flex items-center space-x-1">
-            <button className="flex items-center space-x-1.5 hover:bg-white/[0.05] px-2.5 py-1 rounded-lg transition-colors text-white/70 hover:text-white text-xs font-medium">
+            <button className="flex items-center space-x-1.5 hover:bg-white/[0.05] px-3 py-1 rounded-full transition-colors text-white/70 hover:text-white text-xs font-medium">
               <BarChart2 size={14} />
               <span className="hidden md:inline">Indicators</span>
             </button>
             <Link
               href={`?ticker=${symbol}&timeframe=${timeframe}&replay=1`}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium ${
-                replay ? 'text-plt-orange bg-plt-orange/10 font-semibold' : 'text-white/70 hover:text-white hover:bg-white/[0.05]'
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-full transition-colors text-xs font-medium ${
+                replay ? 'text-plt-orange bg-plt-orange/10 font-semibold border border-plt-orange/20' : 'text-white/70 hover:text-white hover:bg-white/[0.05]'
               }`}
             >
               <RotateCcw size={14} />
@@ -100,7 +100,7 @@ export default function TopBar({
           <div className="flex items-center pl-1">
             <button 
               onClick={() => setIsAddOrderOpen(true)}
-              className="rounded-lg bg-plt-orange hover:bg-plt-orange-hover px-3 py-1 text-xs text-white font-semibold transition-all shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)]"
+              className="rounded-full bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1 text-xs text-white font-semibold transition-all shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)]"
             >
               + Add Order
             </button>
@@ -108,7 +108,7 @@ export default function TopBar({
         </div>
 
         {statusMessage && (
-          <div className="absolute left-3 top-[52px] z-50 rounded-lg border border-white/[0.1] bg-[#161616]/95 backdrop-blur-xl px-3 py-2 text-xs text-white shadow-2xl hidden md:block">
+          <div className="absolute left-3 top-[52px] z-50 rounded-xl border border-white/[0.1] bg-[#161616]/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -120,7 +120,7 @@ export default function TopBar({
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/75 backdrop-blur-md px-4 animate-in fade-in duration-150" 
           onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}
         >
-          <div className="bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
+          <div className="bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
             <div className="flex items-center px-4 py-3.5 border-b border-white/[0.08] bg-white/[0.02]">
               <Search size={18} className="text-white/40 mr-3 shrink-0" />
               <input 

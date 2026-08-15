@@ -43,7 +43,7 @@ export function MobileOrdersSkeleton() {
   return (
     <>
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="glass-panel rounded-2xl p-4 shadow-xl animate-pulse">
+        <div key={i} className="glass-panel rounded-xl p-4 shadow-xl animate-pulse">
           <div className="flex justify-between items-start border-b border-white/[0.06] pb-2.5 mb-2.5">
             <div>
               <div className="h-4 w-20 bg-white/[0.08] rounded mb-1"></div>

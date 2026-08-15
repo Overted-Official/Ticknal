@@ -76,7 +76,7 @@ export default function DashboardMotionView({
             <TestNotificationButton />
             <Link
               href="/charts"
-              className="glass-pill rounded-xl px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-all hover:text-white shadow-sm flex items-center gap-1.5"
+              className="glass-pill rounded-full px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-all hover:text-white shadow-sm flex items-center gap-1.5"
             >
               <span>Open Charts</span>
               <span className="text-plt-orange">→</span>
@@ -85,7 +85,7 @@ export default function DashboardMotionView({
         </motion.div>
 
         {/* Top Metric Cards */}
-        <motion.div variants={containerStagger} className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-6">
+        <motion.div variants={containerStagger} className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-1">
             <MetricCard
               label="Net Worth"
@@ -122,7 +122,7 @@ export default function DashboardMotionView({
         {/* Extended Portfolio Stats Bar */}
         <motion.div 
           variants={itemFadeInUp}
-          className="mt-4 glass-panel rounded-2xl p-4 md:p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
+          className="mt-2 glass-panel rounded-xl p-4 md:p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
         >
           <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
             <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Win Rate</div>
@@ -146,14 +146,14 @@ export default function DashboardMotionView({
       </div>
 
       {/* Analytics Charts Module */}
-      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.06] pb-5">
+      <motion.div variants={itemFadeInUp} className="mt-2 border-b border-white/[0.06] pb-2">
         <DashboardCharts sectorData={orderStats.sectorData} monthlyData={orderStats.monthlyData} />
       </motion.div>
 
       {/* Two-Column Grid: Left (Open Positions) / Right (Signals) */}
-      <motion.div variants={containerStagger} className="mt-5 grid grid-cols-1 gap-5 px-4 md:px-6 xl:grid-cols-2">
+      <motion.div variants={containerStagger} className="mt-2 grid grid-cols-1 gap-2 px-4 md:px-6 xl:grid-cols-2">
         {/* Open Positions Card */}
-        <motion.section variants={itemFadeInUp} className="glass-panel rounded-2xl overflow-hidden flex flex-col">
+        <motion.section variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden flex flex-col">
           <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
             <div>
               <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function DashboardMotionView({
             </div>
             <Link 
               href="/positions" 
-              className="text-[11px] font-semibold text-white/60 hover:text-white px-2.5 py-1 rounded-lg glass-pill transition-all"
+              className="text-[11px] font-semibold text-white/60 hover:text-white px-3 py-1 rounded-full glass-pill transition-all"
             >
               All Orders →
             </Link>
@@ -270,9 +270,9 @@ export default function DashboardMotionView({
         </motion.section>
 
         {/* Opportunities Card */}
-        <div className="space-y-4">
+        <div className="space-y-2">
           {/* Buy Opportunities */}
-          <motion.div variants={itemFadeInUp} className="glass-panel rounded-2xl overflow-hidden">
+          <motion.div variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden">
             <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
@@ -288,7 +288,7 @@ export default function DashboardMotionView({
           </motion.div>
 
           {/* Exit Signals */}
-          <motion.div variants={itemFadeInUp} className="glass-panel rounded-2xl overflow-hidden">
+          <motion.div variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden">
             <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
@@ -325,7 +325,7 @@ function MetricCard({
     <motion.div 
       variants={itemFadeInUp}
       whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-2xl p-3.5 md:p-4 group cursor-default"
+      className="glass-panel glass-panel-hover rounded-xl p-3.5 md:p-4 group cursor-default"
     >
       <div className="text-[10px] uppercase font-semibold tracking-wider text-white/45">{label}</div>
       <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>

@@ -73,7 +73,7 @@ export default function OpportunityTable({
                 </div>
                 <button 
                   onClick={() => setSelectedOpp(item)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all ${
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-all ${
                     item.signal.signal === 'BUY' 
                       ? 'bg-[#00e676]/15 text-[#00e676] border border-[#00e676]/30 hover:bg-[#00e676]/25' 
                       : 'bg-[#ff4d58]/15 text-[#ff4d58] border border-[#ff4d58]/30 hover:bg-[#ff4d58]/25'
@@ -144,7 +144,7 @@ export default function OpportunityTable({
                   <td className="px-4 py-2.5 whitespace-nowrap text-right">
                     <button
                       onClick={() => setSelectedOpp(item)}
-                      className={`inline-block rounded-lg px-3 py-1 text-[11px] font-semibold transition-all ${
+                      className={`inline-block rounded-full px-3.5 py-1 text-[11px] font-semibold transition-all ${
                         item.signal.signal === 'BUY' 
                           ? 'bg-[#00e676]/15 text-[#00e676] border border-[#00e676]/30 hover:bg-[#00e676]/25 shadow-[0_0_10px_rgba(0,230,118,0.12)]' 
                           : 'bg-[#ff4d58]/15 text-[#ff4d58] border border-[#ff4d58]/30 hover:bg-[#ff4d58]/25 shadow-[0_0_10px_rgba(255,77,88,0.12)]'

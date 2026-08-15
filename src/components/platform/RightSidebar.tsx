@@ -190,7 +190,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.08] bg-white/[0.01] shrink-0 relative" ref={filterDropdownRef}>
         <button 
           onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-          className="flex items-center space-x-1.5 cursor-pointer hover:bg-white/[0.06] px-2 py-1 rounded-lg border border-white/[0.06] transition-all text-xs font-semibold text-white focus:outline-none"
+          className="flex items-center space-x-1.5 cursor-pointer hover:bg-white/[0.06] px-3 py-1 rounded-full border border-white/[0.08] transition-all text-xs font-semibold text-white focus:outline-none"
         >
           <span>{filterLabels[listFilter]}</span>
           <ChevronDown size={12} className={`text-white/50 transition-transform duration-150 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />

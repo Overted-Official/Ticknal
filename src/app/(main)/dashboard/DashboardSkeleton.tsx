@@ -2,7 +2,7 @@ import React from 'react';
 
 function MetricSkeleton() {
   return (
-    <div className="glass-panel rounded-2xl p-4 animate-pulse">
+    <div className="glass-panel rounded-xl p-4 animate-pulse">
       <div className="h-2.5 w-16 bg-white/[0.06] rounded mb-2"></div>
       <div className="h-6 w-24 bg-white/[0.1] rounded mb-1.5"></div>
       <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
@@ -20,12 +20,12 @@ export default function DashboardSkeleton() {
             <div className="h-3 w-64 bg-white/[0.04] rounded-lg"></div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="h-8 w-24 bg-white/[0.04] border border-white/[0.08] rounded-xl animate-pulse"></div>
-            <div className="h-8 w-28 bg-white/[0.04] border border-white/[0.08] rounded-xl animate-pulse"></div>
+            <div className="h-8 w-24 bg-white/[0.04] border border-white/[0.08] rounded-full animate-pulse"></div>
+            <div className="h-8 w-28 bg-white/[0.04] border border-white/[0.08] rounded-full animate-pulse"></div>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-6">
+        <div className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-1">
             <MetricSkeleton />
           </div>
@@ -37,8 +37,8 @@ export default function DashboardSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 px-5 pt-5 md:grid-cols-2">
-        <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-5 animate-pulse">
+      <div className="grid grid-cols-1 gap-2 px-5 pt-2 md:grid-cols-2">
+        <div className="glass-panel rounded-xl p-5 animate-pulse">
           <div className="mb-3 flex items-center justify-between">
             <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
             <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
@@ -48,7 +48,7 @@ export default function DashboardSkeleton() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-5 animate-pulse">
+        <div className="glass-panel rounded-xl p-5 animate-pulse">
           <div className="mb-3 flex items-center justify-between">
             <div className="h-4 w-36 bg-white/[0.08] rounded"></div>
             <div className="h-3 w-24 bg-white/[0.04] rounded"></div>
@@ -61,8 +61,8 @@ export default function DashboardSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 p-5 xl:grid-cols-2">
-        <section className="animate-pulse rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-4">
+      <div className="grid grid-cols-1 gap-2 p-5 xl:grid-cols-2">
+        <section className="animate-pulse glass-panel rounded-xl p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
             <div className="h-3 w-16 bg-white/[0.04] rounded"></div>
@@ -74,7 +74,7 @@ export default function DashboardSkeleton() {
           </div>
         </section>
 
-        <section className="animate-pulse rounded-2xl border border-white/[0.08] bg-[#141414]/80 p-4">
+        <section className="animate-pulse glass-panel rounded-xl p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="h-4 w-36 bg-white/[0.08] rounded"></div>
             <div className="h-3 w-20 bg-white/[0.04] rounded"></div>

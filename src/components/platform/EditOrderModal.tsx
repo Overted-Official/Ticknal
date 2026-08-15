@@ -80,7 +80,7 @@ export default function EditOrderModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-panel rounded-2xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12]"
+        className="glass-panel rounded-xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12]"
       >
         
         {/* Header */}
@@ -146,13 +146,13 @@ export default function EditOrderModal({
         <div className="p-5 pt-0 shrink-0 flex gap-2.5">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-white/80 font-semibold text-xs transition-all"
+            className="flex-1 py-2.5 rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-white/80 font-semibold text-xs transition-all"
           >
             Cancel
           </button>
           <button
             onClick={handleEditOrder}
-            className="flex-1 py-2.5 rounded-xl bg-plt-orange hover:bg-plt-orange-hover text-white font-semibold text-xs transition-all shadow-[0_0_15px_rgba(255,100,13,0.3)]"
+            className="flex-1 py-2.5 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white font-semibold text-xs transition-all shadow-[0_0_15px_rgba(255,100,13,0.3)]"
           >
             Save Changes
           </button>

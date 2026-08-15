@@ -42,14 +42,14 @@ export default function BottomToolbar({
       {/* Left Section: Timeframe Switcher & Alert Button (replacing EGX) */}
       <div className="flex items-center space-x-2">
         {/* Segmented Timeframe Switch */}
-        <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-lg p-0.5">
+        <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-full p-0.5 gap-0.5">
           {timeframes.map((tf) => (
             <Link
               key={tf}
               href={`?ticker=${symbol}&timeframe=${tf}${replayQuery}`}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all ${
                 tf === timeframe 
-                  ? 'bg-white/[0.1] text-plt-orange shadow-sm' 
+                  ? 'bg-white/[0.12] text-plt-orange shadow-sm border border-white/[0.08]' 
                   : 'text-white/40 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -64,7 +64,7 @@ export default function BottomToolbar({
         <button
           type="button"
           onClick={() => toggleAlert(symbol)}
-          className={`flex items-center justify-center w-6 h-6 rounded-lg transition-all ${
+          className={`flex items-center justify-center w-6 h-6 rounded-full transition-all ${
             alertEnabled 
               ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30 shadow-[0_0_8px_rgba(255,100,13,0.2)]' 
               : 'text-white/40 hover:text-white hover:bg-white/[0.05]'
@@ -81,7 +81,7 @@ export default function BottomToolbar({
         <button 
           type="button" 
           onClick={recenterChart} 
-          className="hover:text-white font-sans text-xs px-1.5 py-0.5 rounded hover:bg-white/[0.04] transition-colors"
+          className="hover:text-white font-sans text-xs px-2.5 py-0.5 rounded-full hover:bg-white/[0.06] transition-colors"
         >
           Auto
         </button>

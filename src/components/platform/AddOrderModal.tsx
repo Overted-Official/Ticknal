@@ -135,7 +135,7 @@ export default function AddOrderModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white"
+        className="glass-panel bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12] rounded-xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white"
       >
         
         {/* Header */}
@@ -265,7 +265,7 @@ export default function AddOrderModal({
         <div className="p-5 pt-0 shrink-0">
           <button
             onClick={handleAddOrder}
-            className={`w-full py-2.5 rounded-xl font-semibold text-xs transition-all shadow-md ${
+            className={`w-full py-2.5 rounded-full font-semibold text-xs transition-all shadow-md ${
               isBuy 
                 ? 'bg-[#00e676] hover:bg-[#00e676]/90 text-black shadow-[0_0_15px_rgba(0,230,118,0.3)]' 
                 : isSell 

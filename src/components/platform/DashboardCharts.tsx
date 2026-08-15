@@ -22,10 +22,10 @@ export default function DashboardCharts({
   }, []);
 
   return (
-    <div className="mt-4 px-4 md:px-6">
+    <div className="mt-2 px-4 md:px-6">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden w-full flex items-center justify-between rounded-xl glass-pill px-4 py-3 text-sm font-semibold text-white transition-colors"
+        className="md:hidden w-full flex items-center justify-between rounded-full glass-pill px-4 py-2.5 text-sm font-medium text-white transition-colors"
       >
         <div className="flex items-center gap-2">
           <BarChart2 size={16} className="text-plt-orange" />
@@ -34,14 +34,14 @@ export default function DashboardCharts({
         {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 
-      <div className={`grid-cols-1 gap-5 lg:grid-cols-2 ${isOpen ? 'grid mt-4 md:mt-0' : 'hidden md:grid'}`}>
+      <div className={`grid-cols-1 gap-2 lg:grid-cols-2 ${isOpen ? 'grid mt-2 md:mt-0' : 'hidden md:grid'}`}>
         {/* Sector Distribution Donut */}
-        <div className="glass-panel rounded-2xl p-5 shadow-xl">
+        <div className="glass-panel rounded-xl p-5 shadow-xl">
           <SectorDonutChart data={sectorData} />
         </div>
 
         {/* Monthly Investment Bar Chart */}
-        <div className="glass-panel rounded-2xl p-5 shadow-xl">
+        <div className="glass-panel rounded-xl p-5 shadow-xl">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium text-white tracking-[-0.02em]">Monthly Investment</h2>
             <span className="text-[10px] uppercase tracking-[0.06em] font-medium text-white/40 font-mono">Cost basis / mo</span>

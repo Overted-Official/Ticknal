@@ -101,7 +101,7 @@ export default function OrdersTable() {
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* Search Input */}
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/40">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
                 <Search size={14} />
               </div>
               <input
@@ -109,20 +109,20 @@ export default function OrdersTable() {
                 placeholder="Search ticker or name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-48 md:w-56 rounded-xl glass-pill pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none transition-all"
+                className="h-8 w-48 md:w-56 rounded-full glass-pill pl-9 pr-3.5 text-xs text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none transition-all"
               />
             </div>
 
-            {/* Filter Pill */}
-            <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-xl p-0.5">
+            {/* Filter Pill Switch */}
+            <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-full p-1 gap-1">
               {(['ALL', 'OPEN', 'CLOSED'] as const).map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setFilter(value)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all relative ${
                     filter === value
-                      ? 'bg-white/[0.1] text-plt-orange shadow-sm'
+                      ? 'bg-white/[0.1] text-plt-orange shadow-sm border border-white/[0.08]'
                       : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
@@ -135,7 +135,7 @@ export default function OrdersTable() {
             <button
               type="button"
               onClick={() => setIsAddingOrder(true)}
-              className="h-8 rounded-xl bg-plt-orange hover:bg-plt-orange-hover text-white px-3.5 text-xs font-semibold shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)] transition-all"
+              className="h-8 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white px-4 text-xs font-semibold shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)] transition-all"
             >
               + Add Order
             </button>
@@ -143,7 +143,7 @@ export default function OrdersTable() {
         </div>
 
         {/* Metric Cards */}
-        <motion.div variants={containerStagger} className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <motion.div variants={containerStagger} className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-5">
           <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-white font-bold" />
           <Metric label="Open Positions" value={String(totals.openCount)} />
           <Metric label="Closed Positions" value={String(totals.closedCount)} />
@@ -152,16 +152,16 @@ export default function OrdersTable() {
         </motion.div>
       </motion.div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-4 md:p-6">
+      <div className="min-h-0 flex-1 overflow-auto p-2 md:p-3">
         {/* Mobile View (Cards) */}
-        <div className="md:hidden flex flex-col space-y-3">
+        <div className="md:hidden flex flex-col space-y-2">
           {loading ? (
             <MobileOrdersSkeleton />
           ) : filteredOrders.length === 0 ? (
             <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
             filteredOrders.map((order) => (
-              <div key={order.id} className="bg-[#141414]/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 shadow-xl">
+              <div key={order.id} className="glass-panel rounded-xl p-4 shadow-xl">
                 <div className="flex justify-between items-start border-b border-white/[0.06] pb-2.5 mb-2.5">
                   <div>
                     <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
@@ -170,7 +170,7 @@ export default function OrdersTable() {
                     </Link>
                     <div className="text-[11px] text-white/40 truncate max-w-[160px]">{order.companyName}</div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
                     order.status === 'OPEN' ? 'bg-white/[0.08] border border-white/[0.12] text-white' : 'bg-white/[0.03] text-white/40'
                   }`}>
                     {order.status}
@@ -208,7 +208,7 @@ export default function OrdersTable() {
                     <button
                       title="Close Position"
                       onClick={() => closeOrder(order)}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08] text-xs font-medium"
+                      className="px-3 py-1 rounded-full bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08] text-xs font-medium"
                     >
                       <CheckCircle size={13} className="mr-1 text-[#00e676]" />
                       <span>Close</span>
@@ -217,14 +217,14 @@ export default function OrdersTable() {
                   <button
                     title="Edit Order"
                     onClick={() => editOrder(order)}
-                    className="p-1.5 rounded-lg bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08]"
+                    className="p-1.5 rounded-full bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08]"
                   >
                     <Pencil size={13} />
                   </button>
                   <button
                     title="Delete Record"
                     onClick={() => deleteOrder(order)}
-                    className="p-1.5 rounded-lg bg-white/[0.04] text-[#ff4d58] hover:bg-[#ff4d58]/10 transition-all flex items-center justify-center border border-white/[0.08]"
+                    className="p-1.5 rounded-full bg-white/[0.04] text-[#ff4d58] hover:bg-[#ff4d58]/10 transition-all flex items-center justify-center border border-white/[0.08]"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -235,7 +235,7 @@ export default function OrdersTable() {
         </div>
 
         {/* Desktop View (Table Container) */}
-        <motion.div variants={itemFadeInUp} className="hidden md:block glass-panel rounded-2xl shadow-xl overflow-hidden">
+        <motion.div variants={itemFadeInUp} className="hidden md:block glass-panel rounded-xl shadow-xl overflow-hidden">
           <table className="w-full text-left text-xs">
             <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
               <tr>
@@ -305,7 +305,7 @@ export default function OrdersTable() {
                           <button
                             title="Close Position"
                             onClick={() => closeOrder(order)}
-                            className="p-1.5 rounded-lg bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
+                            className="p-1.5 rounded-full bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
                           >
                             <CheckCircle size={15} className="text-[#00e676]" />
                           </button>
@@ -313,14 +313,14 @@ export default function OrdersTable() {
                         <button
                           title="Edit Order"
                           onClick={() => editOrder(order)}
-                          className="p-1.5 rounded-lg bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
+                          className="p-1.5 rounded-full bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           title="Delete Record"
                           onClick={() => deleteOrder(order)}
-                          className="p-1.5 rounded-lg bg-white/[0.04] text-[#ff4d58] hover:bg-[#ff4d58]/10 transition-all border border-white/[0.08]"
+                          className="p-1.5 rounded-full bg-white/[0.04] text-[#ff4d58] hover:bg-[#ff4d58]/10 transition-all border border-white/[0.08]"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -362,7 +362,7 @@ function Metric({ label, value, valueClass = 'text-white' }: { label: string; va
     <motion.div 
       variants={itemFadeInUp}
       whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-2xl p-3.5 md:p-4 group cursor-default"
+      className="glass-panel glass-panel-hover rounded-xl p-3.5 md:p-4 group cursor-default"
     >
       <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45">{label}</div>
       <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
