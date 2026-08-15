@@ -177,7 +177,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
   return (
     <div 
-      className="bg-[#141414]/95 backdrop-blur-xl border-l border-white/[0.08] flex flex-col select-none relative shrink-0 text-white"
+      className="bg-black/95 backdrop-blur-xl border-l border-white/[0.06] flex flex-col select-none relative shrink-0 text-white"
       style={{ width: `${sidebarWidth}px` }}
     >
       {/* Resizer Handle */}
@@ -198,7 +198,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
         {/* Dropdown Menu */}
         {isFilterDropdownOpen && (
-          <div className="absolute left-3 top-10 bg-[#181818]/95 backdrop-blur-2xl border border-white/[0.1] rounded-xl shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute left-3 top-10 bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
             {(['ALL', 'OPEN', 'OPPORTUNITIES'] as const).map((mode) => (
               <button
                 key={mode}

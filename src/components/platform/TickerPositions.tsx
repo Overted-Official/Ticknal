@@ -44,23 +44,23 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
   const displayOrders = [...openOrders, ...closedOrders];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-transparent text-white p-4 space-y-6">
+    <div className="flex flex-col h-full overflow-y-auto bg-transparent text-white p-6 space-y-6">
       
       {/* Summary Cards */}
       <div>
         <h2 className="text-sm font-medium tracking-[-0.02em] mb-2 text-white">{symbol.replace('.CA', '')} Position Summary</h2>
         <div className="grid grid-cols-3 gap-2">
-          <div className="glass-panel glass-panel-hover rounded-xl p-3.5 shadow-xl">
+          <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
             <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Invested</div>
             <div className="mt-1 text-sm font-bold font-mono text-white truncate">{formatMoney(totalInvested)}</div>
           </div>
-          <div className="glass-panel glass-panel-hover rounded-xl p-3.5 shadow-xl">
+          <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
             <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Unrealized P/L</div>
             <div className={`mt-1 text-sm font-bold font-mono truncate ${unrealizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
               {formatMoney(unrealizedPl, true)}
             </div>
           </div>
-          <div className="glass-panel glass-panel-hover rounded-xl p-3.5 shadow-xl">
+          <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
             <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Realized P/L</div>
             <div className={`mt-1 text-sm font-bold font-mono truncate ${realizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
               {formatMoney(realizedPl, true)}
@@ -86,7 +86,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
               const plPct = order.entryPrice > 0 ? (pl / (order.entryPrice * order.quantity)) * 100 : 0;
 
               return (
-                <div key={order.id} className="glass-panel rounded-xl p-4 flex flex-col space-y-2.5 shadow-xl relative overflow-hidden">
+                <div key={order.id} className="glass-panel rounded-xl p-6 flex flex-col space-y-2.5 shadow-xl relative overflow-hidden">
                   {/* Left accent strip based on status */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-orange shadow-[0_0_8px_#ff640d]' : 'bg-white/10'}`} />
                   

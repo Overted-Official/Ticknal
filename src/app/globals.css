@@ -1,13 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Trading Platform Palette (Trenox Theme) */
-  --bg-base: rgb(0, 0, 0);
-  --bg-surface: rgb(10, 10, 10);
+  /* Trading Platform Palette (Pure Black Theme) */
+  --bg-base: #000000;
+  --bg-surface: #000000;
   --bg-chart: #171B26;
-  --bg-hover: rgb(26, 23, 23);
-  --bg-deep: rgb(5, 5, 5);
+  --bg-hover: rgb(20, 20, 20);
+  --bg-deep: #000000;
   
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
@@ -19,22 +18,22 @@
   --down-color: #FF4242;
   
   --border-color: rgba(255, 255, 255, 0.05);
-  --border-highlight-soft: rgba(255, 255, 255, 0.16);
+  --border-highlight-soft: rgba(255, 255, 255, 0.12);
   --border-highlight: #ff640d;
 
   /* ==========================================================================
-     Internal Platform Palette (Dedicated tokens for Dashboard, Charts, etc.)
+     Internal Platform Palette (Pure Black Base & Calmer Glass Tokens)
      ========================================================================== */
-  --plt-bg-base: #0F0F0F;
-  --plt-bg-surface: #161616;
-  --plt-bg-card: rgba(18, 18, 18, 0.72);
-  --plt-bg-hover: #202020;
+  --plt-bg-base: #000000;
+  --plt-bg-surface: #000000;
+  --plt-bg-card: rgba(10, 10, 10, 0.75);
+  --plt-bg-hover: #141414;
   --plt-bg-chart: #171B26;
 
-  --plt-border: rgba(255, 255, 255, 0.08);
-  --plt-border-soft: rgba(255, 255, 255, 0.04);
+  --plt-border: rgba(255, 255, 255, 0.05);
+  --plt-border-soft: rgba(255, 255, 255, 0.03);
   --plt-border-active: #ea3943;
-  --plt-specular: rgba(255, 255, 255, 0.22);
+  --plt-specular: rgba(255, 255, 255, 0.12);
 
   --plt-accent-red: #ea3943;
   --plt-accent-red-hover: #ff4757;
@@ -50,7 +49,8 @@
   --plt-text-faint: #525866;
 
   /* Typography */
-  --font-tv-sans: "Inter", sans-serif;
+  --font-tv-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-tv-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -59,12 +59,12 @@
   --radius-sm: 0.125rem;
   --radius-md: 0.25rem;
   --radius-lg: 0.5rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-3xl: 2rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
   --radius-full: 9999px;
   
-  --glass-bg: rgba(18, 18, 18, 0.72);
+  --glass-bg: rgba(10, 10, 10, 0.75);
 }
 
 @theme inline {
@@ -108,28 +108,23 @@
   --color-plt-muted: var(--plt-text-muted);
   --color-plt-faint: var(--plt-text-faint);
 
-  --font-tv-sans: var(--font-tv-sans);
-  --z-tv-behind: -1;
-  --z-tv-base: 1;
-  --z-tv-above: 10;
-  --z-tv-nav: 50;
-  --z-tv-modal: 100;
+  --font-sans: var(--font-tv-sans);
+  --font-mono: var(--font-tv-mono);
+}
 
-  --radius-tv-sm: var(--radius-sm);
-  --radius-tv-md: var(--radius-md);
-  --radius-tv-lg: var(--radius-lg);
-  --radius-tv-xl: var(--radius-xl);
-  --radius-tv-2xl: var(--radius-2xl);
-  --radius-tv-3xl: var(--radius-3xl);
-  --radius-tv-full: var(--radius-full);
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html {
   font-size: 16px;
+  background: #000000;
 }
 
 body {
-  background: var(--bg-base);
+  background: #000000;
   color: var(--text-primary);
   font-family: var(--font-tv-sans);
   
@@ -150,11 +145,11 @@ body {
   background: transparent; 
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1); 
+  background: rgba(255, 255, 255, 0.08); 
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2); 
+  background: rgba(255, 255, 255, 0.16); 
 }
 
 /* ==========================================================================
@@ -163,11 +158,11 @@ body {
 .glass-panel {
   position: relative;
   border-radius: 12px;
-  background: rgba(18, 18, 18, 0.72);
+  background: rgba(10, 10, 10, 0.75);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06), 0 12px 36px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03), 0 8px 32px rgba(0, 0, 0, 0.6);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -178,28 +173,28 @@ body {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
   pointer-events: none;
   border-radius: inherit;
 }
 
 .glass-panel-hover:hover {
-  border-color: rgba(255, 100, 13, 0.30);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 100, 13, 0.08);
+  border-color: rgba(255, 100, 13, 0.35);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 12px 36px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 100, 13, 0.08);
 }
 
 .glass-pill {
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.2s ease;
 }
 
 .glass-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 @theme {

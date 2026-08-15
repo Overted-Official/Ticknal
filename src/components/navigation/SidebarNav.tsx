@@ -28,7 +28,7 @@ export default function SidebarNav() {
   ];
 
   return (
-    <div className="w-[48px] h-full flex flex-col items-center py-3 bg-[#0f0f0f] border-r border-white/[0.08] select-none text-white">
+    <div className="w-[48px] h-full flex flex-col items-center py-3 bg-black border-r border-white/[0.06] select-none text-white">
       {/* Brand Logo */}
       <Link href="/dashboard" className="mb-4 w-6 h-6 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center">
         <Image src="/logo.svg" alt="QuantEGX" width={22} height={22} className="object-contain" priority />
@@ -62,7 +62,7 @@ export default function SidebarNav() {
                 
                 {/* Desktop Floating Menu for Charts */}
                 {isChartsMenuOpen && (
-                  <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#181818]/95 backdrop-blur-2xl border border-white/[0.1] rounded-xl shadow-2xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1">
+                  <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1">
                     <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
                       Views
                     </div>

@@ -42,7 +42,7 @@ export default function TopBar({
 
   return (
     <>
-      <div className="h-[48px] w-full bg-[#141414]/90 backdrop-blur-xl border-b border-white/[0.08] flex items-center px-3 justify-between select-none relative z-40 shrink-0 text-white">
+      <div className="h-[48px] w-full bg-black/90 backdrop-blur-xl border-b border-white/[0.06] flex items-center px-3 justify-between select-none relative z-40 shrink-0 text-white">
         {/* Left section (Logo + Symbol Command trigger) */}
         <div className="flex items-center space-x-2 md:space-x-3">
           <button 
@@ -108,7 +108,7 @@ export default function TopBar({
         </div>
 
         {statusMessage && (
-          <div className="absolute left-3 top-[52px] z-50 rounded-xl border border-white/[0.1] bg-[#161616]/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
+          <div className="absolute left-3 top-[52px] z-50 rounded-xl border border-white/[0.08] bg-black/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -117,10 +117,10 @@ export default function TopBar({
       {/* Search Modal (Glassmorphic Command Palette) */}
       {isSearchOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/75 backdrop-blur-md px-4 animate-in fade-in duration-150" 
+          className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/80 backdrop-blur-md px-4 animate-in fade-in duration-150" 
           onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}
         >
-          <div className="bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
+          <div className="bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
             <div className="flex items-center px-4 py-3.5 border-b border-white/[0.08] bg-white/[0.02]">
               <Search size={18} className="text-white/40 mr-3 shrink-0" />
               <input 

@@ -2,7 +2,7 @@ import React from 'react';
 
 function MetricSkeleton() {
   return (
-    <div className="glass-panel rounded-xl p-4 animate-pulse">
+    <div className="glass-panel rounded-xl p-6 animate-pulse">
       <div className="h-2.5 w-16 bg-white/[0.06] rounded mb-2"></div>
       <div className="h-6 w-24 bg-white/[0.1] rounded mb-1.5"></div>
       <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
@@ -13,7 +13,7 @@ function MetricSkeleton() {
 export default function DashboardSkeleton() {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-auto bg-transparent text-white">
-      <div className="border-b border-white/[0.06] px-5 py-5">
+      <div className="border-b border-white/[0.06] px-6 py-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="animate-pulse">
             <div className="h-7 w-36 bg-white/[0.08] rounded-xl mb-2"></div>
@@ -37,8 +37,8 @@ export default function DashboardSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 px-5 pt-2 md:grid-cols-2">
-        <div className="glass-panel rounded-xl p-5 animate-pulse">
+      <div className="grid grid-cols-1 gap-2 px-6 pt-2 md:grid-cols-2">
+        <div className="glass-panel rounded-xl p-6 animate-pulse">
           <div className="mb-3 flex items-center justify-between">
             <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
             <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
@@ -48,7 +48,7 @@ export default function DashboardSkeleton() {
           </div>
         </div>
 
-        <div className="glass-panel rounded-xl p-5 animate-pulse">
+        <div className="glass-panel rounded-xl p-6 animate-pulse">
           <div className="mb-3 flex items-center justify-between">
             <div className="h-4 w-36 bg-white/[0.08] rounded"></div>
             <div className="h-3 w-24 bg-white/[0.04] rounded"></div>
@@ -61,8 +61,8 @@ export default function DashboardSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 p-5 xl:grid-cols-2">
-        <section className="animate-pulse glass-panel rounded-xl p-4">
+      <div className="grid grid-cols-1 gap-2 p-6 xl:grid-cols-2">
+        <section className="animate-pulse glass-panel rounded-xl p-6">
           <div className="mb-3 flex items-center justify-between">
             <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
             <div className="h-3 w-16 bg-white/[0.04] rounded"></div>

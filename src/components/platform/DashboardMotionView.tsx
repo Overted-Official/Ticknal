@@ -62,21 +62,28 @@ export default function DashboardMotionView({
       variants={containerStagger}
       className="flex h-full min-h-0 flex-col overflow-auto bg-transparent text-white pb-8 relative z-10"
     >
-      <div className="px-4 pt-5 pb-0 md:px-6">
-        {/* Header Title & Actions */}
+      <div className="border-b border-white/[0.06] px-6 py-6">
         <motion.div variants={itemFadeInUp} className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
               <h1 className="text-2xl font-medium tracking-[-0.03em] text-white">Dashboard</h1>
             </div>
             <p className="mt-0.5 text-xs text-white/50">Portfolio performance and real-time PSI trading intelligence</p>
           </div>
-          <div className="flex items-center gap-2.5">
+
+          <div className="flex items-center gap-2">
             <TestNotificationButton />
             <Link
+              href="/positions"
+              className="glass-panel glass-panel-hover flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-white/80 hover:text-white transition-all shadow-sm"
+            >
+              <span>Manage Positions</span>
+              <span className="text-plt-orange">→</span>
+            </Link>
+            <Link
               href="/charts"
-              className="glass-pill rounded-full px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-all hover:text-white shadow-sm flex items-center gap-1.5"
+              className="glass-panel glass-panel-hover flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-white/80 hover:text-white transition-all shadow-sm"
             >
               <span>Open Charts</span>
               <span className="text-plt-orange">→</span>
@@ -122,7 +129,7 @@ export default function DashboardMotionView({
         {/* Extended Portfolio Stats Bar */}
         <motion.div 
           variants={itemFadeInUp}
-          className="mt-2 glass-panel rounded-xl p-4 md:p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
+          className="mt-2 glass-panel rounded-xl p-6 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
         >
           <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
             <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45 mb-1">Win Rate</div>
@@ -151,10 +158,10 @@ export default function DashboardMotionView({
       </motion.div>
 
       {/* Two-Column Grid: Left (Open Positions) / Right (Signals) */}
-      <motion.div variants={containerStagger} className="mt-2 grid grid-cols-1 gap-2 px-4 md:px-6 xl:grid-cols-2">
+      <motion.div variants={containerStagger} className="mt-2 grid grid-cols-1 gap-2 px-6 xl:grid-cols-2">
         {/* Open Positions Card */}
         <motion.section variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden flex flex-col">
-          <div className="border-b border-white/[0.06] px-5 py-3.5 bg-white/[0.01] flex items-center justify-between">
+          <div className="border-b border-white/[0.06] px-6 py-4 bg-white/[0.01] flex items-center justify-between">
             <div>
               <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_rgba(255,100,13,0.4)]" />
@@ -176,22 +183,22 @@ export default function DashboardMotionView({
               <table className="w-full text-left text-xs">
                 <thead className="border-b border-white/[0.06] bg-white/[0.02] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
                   <tr>
-                    <th className="px-4 py-2.5">Symbol</th>
-                    <th className="px-4 py-2.5 text-right">Entry</th>
-                    <th className="px-4 py-2.5 text-right">Current</th>
-                    <th className="px-4 py-2.5 text-right">Position Value</th>
-                    <th className="px-4 py-2.5 text-right">P/L</th>
+                    <th className="px-6 py-3.5">Symbol</th>
+                    <th className="px-6 py-3.5 text-right">Entry</th>
+                    <th className="px-6 py-3.5 text-right">Current</th>
+                    <th className="px-6 py-3.5 text-right">Position Value</th>
+                    <th className="px-6 py-3.5 text-right">P/L</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
                   {orderStats.openOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-10 text-center text-white/40 text-xs">No active open positions</td>
+                      <td colSpan={5} className="px-6 py-10 text-center text-white/40 text-xs">No active open positions</td>
                     </tr>
                   ) : (
                     orderStats.openOrders.slice(0, 8).map((order) => (
                       <tr key={order.id} className="hover:bg-white/[0.04] transition-colors group">
-                        <td className="px-4 py-2.5">
+                        <td className="px-6 py-3.5">
                           <div className="flex items-center space-x-2.5">
                             <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
                               {order.logoUrl ? (
@@ -210,18 +217,18 @@ export default function DashboardMotionView({
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-2.5 text-right font-mono">
+                        <td className="px-6 py-3.5 text-right font-mono">
                           <div className="text-white text-xs">{formatPrice(order.entryPrice)}</div>
                           <div className="text-[10px] text-white/40">{order.entryDate}</div>
                         </td>
-                        <td className="px-4 py-2.5 text-right font-mono">
+                        <td className="px-6 py-3.5 text-right font-mono">
                           <div className="text-white text-xs">{formatPrice(order.currentPrice)}</div>
                           <div className="text-[10px] text-white/40">{order.quantity} shares</div>
                         </td>
-                        <td className="px-4 py-2.5 text-right font-mono text-white text-xs">
+                        <td className="px-6 py-3.5 text-right font-mono text-white text-xs">
                           {formatPrice(order.currentPrice * order.quantity)}
                         </td>
-                        <td className={`px-4 py-2.5 text-right font-mono text-xs ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                        <td className={`px-6 py-3.5 text-right font-mono text-xs ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                           <div className="font-semibold">{formatMoney(order.profitLoss, true)}</div>
                           <div className="text-[10px] opacity-80">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
                         </td>
@@ -325,7 +332,7 @@ function MetricCard({
     <motion.div 
       variants={itemFadeInUp}
       whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-xl p-3.5 md:p-4 group cursor-default"
+      className="glass-panel glass-panel-hover rounded-xl p-6 group cursor-default"
     >
       <div className="text-[10px] uppercase font-semibold tracking-wider text-white/45">{label}</div>
       <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>

@@ -88,7 +88,7 @@ export default function OrdersTable() {
       className="flex h-full min-h-0 flex-col bg-transparent text-white relative z-10"
     >
       {/* Top Header */}
-      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.06] px-5 py-5">
+      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.06] px-6 py-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export default function OrdersTable() {
         </motion.div>
       </motion.div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-2 md:p-3">
+      <div className="min-h-0 flex-1 overflow-auto p-6">
         {/* Mobile View (Cards) */}
         <div className="md:hidden flex flex-col space-y-2">
           {loading ? (
@@ -161,7 +161,7 @@ export default function OrdersTable() {
             <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
             filteredOrders.map((order) => (
-              <div key={order.id} className="glass-panel rounded-xl p-4 shadow-xl">
+              <div key={order.id} className="glass-panel rounded-xl p-6 shadow-xl">
                 <div className="flex justify-between items-start border-b border-white/[0.06] pb-2.5 mb-2.5">
                   <div>
                     <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
@@ -239,14 +239,14 @@ export default function OrdersTable() {
           <table className="w-full text-left text-xs">
             <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
               <tr>
-                <th className="px-5 py-3">Ticker</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Entry</th>
-                <th className="px-5 py-3 text-right">Target / Stop</th>
-                <th className="px-5 py-3 text-right">Quantity</th>
-                <th className="px-5 py-3 text-right">Current</th>
-                <th className="px-5 py-3 text-right">P/L</th>
-                <th className="px-5 py-3 text-right"></th>
+                <th className="px-6 py-3.5">Ticker</th>
+                <th className="px-6 py-3.5">Status</th>
+                <th className="px-6 py-3.5">Entry</th>
+                <th className="px-6 py-3.5 text-right">Target / Stop</th>
+                <th className="px-6 py-3.5 text-right">Quantity</th>
+                <th className="px-6 py-3.5 text-right">Current</th>
+                <th className="px-6 py-3.5 text-right">P/L</th>
+                <th className="px-6 py-3.5 text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
@@ -254,21 +254,21 @@ export default function OrdersTable() {
                 <DesktopOrdersSkeleton />
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-white/40 text-xs">
+                  <td colSpan={8} className="px-6 py-12 text-center text-white/40 text-xs">
                     No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-white/[0.04] transition-colors group">
-                    <td className="px-5 py-3 whitespace-nowrap">
+                    <td className="px-6 py-3.5 whitespace-nowrap">
                       <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white group-hover:text-plt-orange transition-colors flex items-center gap-2">
                         <LineChart size={15} className="text-white/40 group-hover:text-plt-orange" />
                         {order.tickerSymbol}
                       </Link>
                       <div className="text-[11px] text-white/40 truncate max-w-[200px] mt-0.5">{order.companyName}</div>
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
+                    <td className="px-6 py-3.5 whitespace-nowrap">
                       <span
                         className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold ${
                           order.status === 'OPEN' ? 'bg-white/[0.08] border border-white/[0.12] text-white' : 'bg-white/[0.02] text-white/40'
@@ -277,21 +277,21 @@ export default function OrdersTable() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap font-mono">
+                    <td className="px-6 py-3.5 whitespace-nowrap font-mono">
                       <div className="text-white font-medium">{formatPrice(order.entryPrice)}</div>
                       <div className="text-[10px] text-white/40 mt-0.5">{order.entryDate}</div>
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right font-mono">
+                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
                       <div className="text-[#00e676]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
                       <div className="text-[#ff4d58] mt-0.5">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right font-mono font-medium text-white">
+                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono font-medium text-white">
                       {formatQuantity(order.quantity)}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right font-mono text-white font-medium">
+                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono text-white font-medium">
                       {formatPrice(order.currentPrice)}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right font-mono">
+                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
                       <div className={`font-semibold ${order.profitLoss >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                         {formatMoney(order.profitLoss)}
                       </div>
@@ -299,7 +299,7 @@ export default function OrdersTable() {
                         {(order.profitLossPct * 100).toFixed(2)}%
                       </div>
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right">
+                    <td className="px-6 py-3.5 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         {order.status === 'OPEN' && (
                           <button
@@ -362,7 +362,7 @@ function Metric({ label, value, valueClass = 'text-white' }: { label: string; va
     <motion.div 
       variants={itemFadeInUp}
       whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-xl p-3.5 md:p-4 group cursor-default"
+      className="glass-panel glass-panel-hover rounded-xl p-6 group cursor-default"
     >
       <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/45">{label}</div>
       <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>

@@ -100,24 +100,24 @@ export default function OpportunityTable({
         <table className="w-full text-left text-xs text-white">
           <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
             <tr>
-              <th className="px-4 py-2.5">Ticker</th>
-              {!compact && <th className="px-4 py-2.5">Sector</th>}
-              <th className="px-4 py-2.5">Date</th>
-              <th className="px-4 py-2.5 text-right">Price</th>
-              <th className="px-4 py-2.5 text-right">Action</th>
+              <th className="px-6 py-3.5">Ticker</th>
+              {!compact && <th className="px-6 py-3.5">Sector</th>}
+              <th className="px-6 py-3.5">Date</th>
+              <th className="px-6 py-3.5 text-right">Price</th>
+              <th className="px-6 py-3.5 text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.04]">
             {opportunities.length === 0 ? (
               <tr>
-                <td colSpan={compact ? 4 : 5} className="px-4 py-8 text-center text-white/40 text-xs">
+                <td colSpan={compact ? 4 : 5} className="px-6 py-8 text-center text-white/40 text-xs">
                   {emptyText}
                 </td>
               </tr>
             ) : (
               opportunities.map((item) => (
                 <tr key={`${item.symbol}-${item.signal.date}`} className="hover:bg-white/[0.03] transition-colors group">
-                  <td className="px-4 py-2.5 whitespace-nowrap">
+                  <td className="px-6 py-3.5 whitespace-nowrap">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
                         {item.logoUrl ? (
@@ -136,12 +136,12 @@ export default function OpportunityTable({
                       </div>
                     </div>
                   </td>
-                  {!compact && <td className="px-4 py-2.5 whitespace-nowrap text-white/50 text-[11px]">{item.sector}</td>}
-                  <td className="px-4 py-2.5 whitespace-nowrap text-white/40 font-mono text-[11px]">{item.signal.date}</td>
-                  <td className={`px-4 py-2.5 whitespace-nowrap text-right font-mono text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                  {!compact && <td className="px-6 py-3.5 whitespace-nowrap text-white/50 text-[11px]">{item.sector}</td>}
+                  <td className="px-6 py-3.5 whitespace-nowrap text-white/40 font-mono text-[11px]">{item.signal.date}</td>
+                  <td className={`px-6 py-3.5 whitespace-nowrap text-right font-mono text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                     {item.signal.price.toFixed(2)} EGP
                   </td>
-                  <td className="px-4 py-2.5 whitespace-nowrap text-right">
+                  <td className="px-6 py-3.5 whitespace-nowrap text-right">
                     <button
                       onClick={() => setSelectedOpp(item)}
                       className={`inline-block rounded-full px-3.5 py-1 text-[11px] font-semibold transition-all ${

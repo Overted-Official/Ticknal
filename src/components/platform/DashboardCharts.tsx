@@ -36,12 +36,12 @@ export default function DashboardCharts({
 
       <div className={`grid-cols-1 gap-2 lg:grid-cols-2 ${isOpen ? 'grid mt-2 md:mt-0' : 'hidden md:grid'}`}>
         {/* Sector Distribution Donut */}
-        <div className="glass-panel rounded-xl p-5 shadow-xl">
+        <div className="glass-panel rounded-xl p-6 shadow-xl">
           <SectorDonutChart data={sectorData} />
         </div>
 
         {/* Monthly Investment Bar Chart */}
-        <div className="glass-panel rounded-xl p-5 shadow-xl">
+        <div className="glass-panel rounded-xl p-6 shadow-xl">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium text-white tracking-[-0.02em]">Monthly Investment</h2>
             <span className="text-[10px] uppercase tracking-[0.06em] font-medium text-white/40 font-mono">Cost basis / mo</span>
