@@ -221,7 +221,7 @@ export default function OrdersTable() {
                     <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">P/L</span>
                     <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
                       {formatMoney(order.profitLoss)}
-                      <span className="text-[10px] ml-1 opacity-80">({(order.profitLossPct * 100).toFixed(2)}%)</span>
+                      <span className="text-[10px] ml-1 opacity-80">({order.profitLossPct.toFixed(2)}%)</span>
                     </div>
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export default function OrdersTable() {
                         {formatMoney(order.profitLoss)}
                       </div>
                       <div className={`text-[10px] mt-0.5 ${order.profitLossPct > 0 ? 'text-[#22c55e]' : order.profitLossPct < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
-                        {(order.profitLossPct * 100).toFixed(2)}%
+                        {order.profitLossPct.toFixed(2)}%
                       </div>
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap text-right">
