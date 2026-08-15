@@ -861,7 +861,7 @@ export default function ChartWidget({
       </button>
 
       {predictPopoverOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-xl border border-white/[0.1] bg-[#161616]/95 p-3.5 text-xs text-white shadow-2xl backdrop-blur-2xl z-[60]">
+        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-md border border-white/[0.1] bg-[#161616] p-3.5 text-xs text-white shadow-2xl z-[60]">
           <div className="mb-2.5 flex items-center justify-between">
             <div className="font-semibold text-white/90 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-plt-orange" /> AI Forecast
@@ -1148,7 +1148,7 @@ export default function ChartWidget({
 
       {metrics && (
         <div
-          className="absolute z-50 rounded-xl border border-white/[0.08] bg-[#121212]/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] text-[11px] transition-all overflow-hidden"
+          className="absolute z-50 rounded-md border border-white/[0.08] bg-black/90 backdrop-blur-xl shadow-2xl text-[11px] transition-all overflow-hidden"
           style={{ top: '16px', right: '65px' }}
         >
           {/* Summary Badge */}

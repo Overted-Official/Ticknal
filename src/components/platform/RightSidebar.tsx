@@ -198,7 +198,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
         {/* Dropdown Menu */}
         {isFilterDropdownOpen && (
-          <div className="absolute left-3 top-10 bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute left-3 top-10 bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-md shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
             {(['ALL', 'OPEN', 'OPPORTUNITIES'] as const).map((mode) => (
               <button
                 key={mode}
@@ -206,7 +206,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                   setListFilter(mode);
                   setIsFilterDropdownOpen(false);
                 }}
-                className={`w-full px-3 py-2 text-xs text-left rounded-lg flex items-center justify-between transition-colors ${
+                className={`w-full px-3 py-2 text-xs text-left rounded-md flex items-center justify-between transition-colors ${
                   listFilter === mode ? 'text-plt-orange font-semibold bg-white/[0.06]' : 'text-white/80 hover:bg-white/[0.04] hover:text-white'
                 }`}
               >
@@ -349,7 +349,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               </div>
 
               {/* Big Price & Change Hero Card */}
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5">
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-md p-2.5">
                 <div className="flex items-baseline space-x-1">
                   <span className="text-2xl font-bold font-mono text-white tracking-tight">
                     {selectedItem.price || '0.00'}

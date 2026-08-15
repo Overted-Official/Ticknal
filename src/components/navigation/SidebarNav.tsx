@@ -47,7 +47,7 @@ export default function SidebarNav() {
                   className="w-full py-0.5 flex flex-col items-center justify-center relative"
                 >
                   <div 
-                    className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 mb-0.5 ${
+                    className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 mb-0.5 ${
                       isActive || isChartsMenuOpen
                         ? 'bg-white/[0.06] text-white' 
                         : 'text-white/35 group-hover:text-white/70'
@@ -62,14 +62,14 @@ export default function SidebarNav() {
                 
                 {/* Desktop Floating Menu for Charts */}
                 {isChartsMenuOpen && (
-                  <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1">
+                  <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1">
                     <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
                       Views
                     </div>
                     <Link 
                       href="/charts?view=chart" 
                       onClick={() => setIsChartsMenuOpen(false)}
-                      className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors flex items-center gap-2"
+                      className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors flex items-center gap-2"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-plt-orange"></span>
                       Chart
@@ -77,7 +77,7 @@ export default function SidebarNav() {
                     <Link 
                       href="/charts?view=positions" 
                       onClick={() => setIsChartsMenuOpen(false)}
-                      className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors flex items-center gap-2"
+                      className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors flex items-center gap-2"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
                       Positions
@@ -95,7 +95,7 @@ export default function SidebarNav() {
               className="w-full py-0.5 flex flex-col items-center justify-center group"
             >
               <div 
-                className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 mb-0.5 ${
+                className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 mb-0.5 ${
                   isActive 
                     ? 'bg-white/[0.06] text-white' 
                     : 'text-white/35 group-hover:text-white/70'
@@ -118,7 +118,7 @@ export default function SidebarNav() {
           className="w-full py-0.5 flex flex-col items-center justify-center group"
         >
           <div 
-            className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 ${
+            className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 ${
               pathname === '/settings' 
                 ? 'bg-white/[0.06] text-white' 
                 : 'text-white/35 group-hover:text-white/70'

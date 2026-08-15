@@ -77,14 +77,14 @@ export default function DashboardMotionView({
             <TestNotificationButton />
             <Link
               href="/positions"
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium text-white/50 hover:text-white/80 bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.10] transition-all"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] transition-all"
             >
               <span>Manage Positions</span>
               <span className="text-plt-orange">→</span>
             </Link>
             <Link
               href="/charts"
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium text-white/50 hover:text-white/80 bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.10] transition-all"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] transition-all"
             >
               <span>Open Charts</span>
               <span className="text-plt-orange">→</span>
@@ -93,53 +93,84 @@ export default function DashboardMotionView({
         </motion.div>
       </div>
 
-      {/* Main Dashboard Canvas: 24px outer padding (p-6), 8px uniform gap between all widgets (space-y-2) */}
+      {/* Main Dashboard Canvas: 24px outer padding (p-6), 12px gap between widgets (space-y-3) */}
       <div className="flex-1 p-6 space-y-3">
-        {/* 1. Top Metric Cards (6 cards in grid, 8px gap) */}
-        <motion.div variants={containerStagger} className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-          <div className="col-span-2 lg:col-span-1">
-            <MetricCard
-              label="Net Worth"
-              value={formatMoney(orderStats.openMarketValue, false)}
-              subtitle={`ROI ${orderStats.totalRoi > 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
-              subtitleClass={
-                orderStats.totalRoi > 0 
-                  ? 'text-[#22c55e] bg-[#22c55e]/8 border border-[#22c55e]/15 font-medium' 
-                  : orderStats.totalRoi < 0 
-                  ? 'text-[#ef4444] bg-[#ef4444]/8 border border-[#ef4444]/15 font-medium' 
-                  : 'text-white/40 bg-white/[0.03] border border-white/[0.06]'
-              }
-            />
+        {/* 1. Unified Master KPI Strip (Clean, seamless, 6px corners, pure black) */}
+        <motion.div 
+          variants={itemFadeInUp}
+          className="border border-white/[0.07] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 overflow-hidden"
+        >
+          {/* Cell 1: Net Worth */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Net Worth</div>
+            <div className="mt-2">
+              <div className="text-xl font-semibold font-mono tracking-tight text-white">{formatMoney(orderStats.openMarketValue, false)}</div>
+              <div className="mt-1 text-[11px] font-mono text-white/40">
+                ROI <span className={orderStats.totalRoi > 0 ? 'text-[#22c55e]' : orderStats.totalRoi < 0 ? 'text-[#ef4444]' : 'text-white/40'}>
+                  {orderStats.totalRoi > 0 ? '+' : ''}{orderStats.totalRoi.toFixed(2)}%
+                </span>
+              </div>
+            </div>
           </div>
-          <MetricCard 
-            label="Unrealized P/L" 
-            value={formatMoney(orderStats.unrealized, true)} 
-            valueClass={orderStats.unrealized > 0 ? 'text-[#22c55e]' : orderStats.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
-          />
-          <MetricCard 
-            label="Realized P/L" 
-            value={formatMoney(orderStats.realized, true)} 
-            valueClass={orderStats.realized > 0 ? 'text-[#22c55e]' : orderStats.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
-          />
-          <MetricCard 
-            label="Open Positions" 
-            value={String(orderStats.openOrders.length)} 
-            subtitle={`${orderStats.openWinning} Win · ${orderStats.openLosing} Loss`}
-            subtitleClass="text-white/40 bg-white/[0.03] border border-white/[0.06]"
-          />
-          <MetricCard 
-            label="Closed Positions" 
-            value={String(orderStats.closedCount)} 
-            subtitle={`${orderStats.closedWinning} Win · ${orderStats.closedLosing} Loss`}
-            subtitleClass="text-white/40 bg-white/[0.03] border border-white/[0.06]"
-          />
-          <MetricCard label="Active Alerts" value={String(activeAlertCount)} />
+
+          {/* Cell 2: Unrealized P/L */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Unrealized P/L</div>
+            <div className="mt-2">
+              <div className={`text-xl font-semibold font-mono tracking-tight ${orderStats.unrealized > 0 ? 'text-[#22c55e]' : orderStats.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                {formatMoney(orderStats.unrealized, true)}
+              </div>
+              <div className="mt-1 text-[11px] font-mono text-white/30">Open positions</div>
+            </div>
+          </div>
+
+          {/* Cell 3: Realized P/L */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Realized P/L</div>
+            <div className="mt-2">
+              <div className={`text-xl font-semibold font-mono tracking-tight ${orderStats.realized > 0 ? 'text-[#22c55e]' : orderStats.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                {formatMoney(orderStats.realized, true)}
+              </div>
+              <div className="mt-1 text-[11px] font-mono text-white/30">Closed trades</div>
+            </div>
+          </div>
+
+          {/* Cell 4: Open Positions */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Open Positions</div>
+            <div className="mt-2">
+              <div className="text-xl font-semibold font-mono tracking-tight text-white">{orderStats.openOrders.length}</div>
+              <div className="mt-1 text-[11px] font-mono text-white/40">
+                <span className="text-[#22c55e]">{orderStats.openWinning}W</span> · <span className="text-[#ef4444]">{orderStats.openLosing}L</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cell 5: Closed Positions */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Closed Positions</div>
+            <div className="mt-2">
+              <div className="text-xl font-semibold font-mono tracking-tight text-white">{orderStats.closedCount}</div>
+              <div className="mt-1 text-[11px] font-mono text-white/40">
+                <span className="text-[#22c55e]">{orderStats.closedWinning}W</span> · <span className="text-[#ef4444]">{orderStats.closedLosing}L</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cell 6: Active Alerts */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Active Alerts</div>
+            <div className="mt-2">
+              <div className="text-xl font-semibold font-mono tracking-tight text-white">{activeAlertCount}</div>
+              <div className="mt-1 text-[11px] font-mono text-white/30">Market triggers</div>
+            </div>
+          </div>
         </motion.div>
 
         {/* 2. Extended Portfolio Stats Bar */}
         <motion.div 
           variants={itemFadeInUp}
-          className="glass-panel rounded-xl p-6 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
+          className="border border-white/[0.07] rounded-md bg-black p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
         >
           <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
             <div className="text-[11px] text-white/40 font-medium mb-1">Win Rate</div>
@@ -169,8 +200,8 @@ export default function DashboardMotionView({
         {/* 4. Two-Column Grid: Left (Open Positions) / Right (Signals) */}
         <motion.div variants={containerStagger} className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {/* Open Positions Card */}
-          <motion.section variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden flex flex-col">
-            <div className="border-b border-white/[0.06] px-6 py-4 bg-white/[0.01] flex items-center justify-between">
+          <motion.section variants={itemFadeInUp} className="border border-white/[0.07] rounded-md bg-black overflow-hidden flex flex-col">
+            <div className="border-b border-white/[0.06] px-6 py-4 bg-transparent flex items-center justify-between">
               <div>
                 <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-plt-orange" />
@@ -180,7 +211,7 @@ export default function DashboardMotionView({
               </div>
               <Link 
                 href="/positions" 
-                className="text-[11px] font-semibold text-white/60 hover:text-white px-3 py-1 rounded-full glass-pill transition-all"
+                className="text-[11px] font-medium text-white/60 hover:text-white px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] transition-all"
               >
                 All Orders →
               </Link>
@@ -190,7 +221,7 @@ export default function DashboardMotionView({
               {/* Desktop View */}
               <div className="hidden md:block">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-white/[0.06] bg-white/[0.02] text-[11px] font-medium text-white/30">
+                  <thead className="border-b border-white/[0.06] bg-transparent text-[11px] font-medium text-white/30">
                     <tr>
                       <th className="px-6 py-3.5">Symbol</th>
                       <th className="px-6 py-3.5 text-right">Entry</th>
@@ -206,7 +237,7 @@ export default function DashboardMotionView({
                       </tr>
                     ) : (
                       orderStats.openOrders.slice(0, 8).map((order) => (
-                        <tr key={order.id} className="hover:bg-white/[0.04] transition-colors group">
+                        <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="px-6 py-3.5">
                             <div className="flex items-center space-x-2.5">
                               <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
@@ -254,7 +285,7 @@ export default function DashboardMotionView({
                   <div className="p-6 text-center text-white/40 text-xs">No active open positions</div>
                 ) : (
                   orderStats.openOrders.slice(0, 6).map((order) => (
-                    <div key={order.id} className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3 flex justify-between items-center">
+                    <div key={order.id} className="bg-transparent rounded-md border border-white/[0.06] p-3 flex justify-between items-center">
                       <div className="flex items-center space-x-2.5">
                         <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
                           {order.logoUrl ? (
@@ -285,11 +316,11 @@ export default function DashboardMotionView({
             </div>
           </motion.section>
 
-          {/* Opportunities Column (Buy & Exit signals separated by 8px) */}
-          <div className="flex flex-col gap-2">
+          {/* Opportunities Column (Buy & Exit signals separated by 12px) */}
+          <div className="flex flex-col gap-3">
             {/* Buy Opportunities */}
-            <motion.div variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden">
-              <div className="border-b border-white/[0.06] px-6 py-4 bg-white/[0.01] flex items-center justify-between">
+            <motion.div variants={itemFadeInUp} className="border border-white/[0.07] rounded-md bg-black overflow-hidden">
+              <div className="border-b border-white/[0.06] px-6 py-4 bg-transparent flex items-center justify-between">
                 <div>
                   <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
@@ -304,8 +335,8 @@ export default function DashboardMotionView({
             </motion.div>
 
             {/* Exit Signals */}
-            <motion.div variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden">
-              <div className="border-b border-white/[0.06] px-6 py-4 bg-white/[0.01] flex items-center justify-between">
+            <motion.div variants={itemFadeInUp} className="border border-white/[0.07] rounded-md bg-black overflow-hidden">
+              <div className="border-b border-white/[0.06] px-6 py-4 bg-transparent flex items-center justify-between">
                 <div>
                   <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#ef4444]" />
@@ -321,37 +352,6 @@ export default function DashboardMotionView({
           </div>
         </motion.div>
       </div>
-    </motion.div>
-  );
-}
-
-function MetricCard({ 
-  label, 
-  value, 
-  valueClass = 'text-white', 
-  subtitle, 
-  subtitleClass = 'text-white/40' 
-}: { 
-  label: string; 
-  value: string; 
-  valueClass?: string; 
-  subtitle?: string; 
-  subtitleClass?: string;
-}) {
-  return (
-    <motion.div 
-      variants={itemFadeInUp}
-      className="glass-panel rounded-xl p-5 group"
-    >
-      <div className="text-[11px] text-white/40 font-medium">{label}</div>
-      <div className={`mt-1 text-xl font-semibold font-mono tracking-tight ${valueClass}`}>{value}</div>
-      {subtitle && (
-        <div className="mt-2 flex items-center">
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono ${subtitleClass}`}>
-            {subtitle}
-          </span>
-        </div>
-      )}
     </motion.div>
   );
 }

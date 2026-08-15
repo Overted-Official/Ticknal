@@ -49,20 +49,20 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
       {/* Summary Cards */}
       <div>
         <h2 className="text-sm font-medium tracking-[-0.02em] mb-2 text-white">{symbol.replace('.CA', '')} Position Summary</h2>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
-            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Invested</div>
-            <div className="mt-1 text-sm font-bold font-mono text-white truncate">{formatMoney(totalInvested)}</div>
+        <div className="border border-white/[0.07] rounded-md bg-black divide-x divide-white/[0.06] grid grid-cols-3 overflow-hidden">
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium truncate font-mono">Invested</div>
+            <div className="mt-1 text-sm font-semibold font-mono text-white truncate">{formatMoney(totalInvested)}</div>
           </div>
-          <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
-            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Unrealized P/L</div>
-            <div className={`mt-1 text-sm font-bold font-mono truncate ${unrealizedPl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium truncate font-mono">Unrealized P/L</div>
+            <div className={`mt-1 text-sm font-semibold font-mono truncate ${unrealizedPl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
               {formatMoney(unrealizedPl, true)}
             </div>
           </div>
-          <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
-            <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Realized P/L</div>
-            <div className={`mt-1 text-sm font-bold font-mono truncate ${realizedPl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium truncate font-mono">Realized P/L</div>
+            <div className={`mt-1 text-sm font-semibold font-mono truncate ${realizedPl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
               {formatMoney(realizedPl, true)}
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
       <div>
         <h2 className="text-sm font-medium tracking-[-0.02em] mb-2 text-white">Order History</h2>
         {displayOrders.length === 0 ? (
-          <div className="text-xs text-white/40 text-center py-8 border border-white/[0.08] rounded-xl border-dashed bg-white/[0.01]">
+          <div className="text-xs text-white/40 text-center py-8 border border-white/[0.08] rounded-md border-dashed bg-white/[0.01]">
             No tracked positions for {symbol.replace('.CA', '')}
           </div>
         ) : (
@@ -86,15 +86,15 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
               const plPct = order.entryPrice > 0 ? (pl / (order.entryPrice * order.quantity)) * 100 : 0;
 
               return (
-                <div key={order.id} className="glass-panel rounded-xl p-6 flex flex-col space-y-2.5 shadow-xl relative overflow-hidden">
+                <div key={order.id} className="border border-white/[0.07] rounded-md bg-black p-5 flex flex-col space-y-2.5 relative overflow-hidden">
                   {/* Left accent strip based on status */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-orange' : 'bg-white/10'}`} />
                   
                   <div className="flex justify-between items-start ml-2">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${
-                          isOpen ? 'bg-white/[0.08] border border-white/[0.12] text-white' : 'bg-white/[0.02] text-white/40'
+                        <span className={`text-[10px] px-2 py-0.5 rounded-[4px] font-medium ${
+                          isOpen ? 'bg-white/[0.06] border border-white/[0.08] text-white' : 'bg-white/[0.02] text-white/40'
                         }`}>
                           {isOpen ? 'OPEN' : 'CLOSED'}
                         </span>
@@ -102,7 +102,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
                       </div>
                     </div>
                     <div className="text-right font-mono">
-                      <div className={`text-sm font-bold ${pl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                      <div className={`text-sm font-semibold ${pl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                         {formatMoney(pl, true)}
                       </div>
                       <div className={`text-[10px] ${plPct >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
@@ -111,17 +111,17 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-xs pt-3 border-t border-white/[0.06] ml-2 font-mono">
+                  <div className="grid grid-cols-3 gap-2 text-xs pt-2 border-t border-white/[0.04] ml-2 font-mono">
                     <div>
-                      <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Entry</span>
+                      <span className="text-white/40 text-[10px] block font-sans">Entry</span>
                       <span className="text-white font-medium">{formatPrice(order.entryPrice)}</span>
                     </div>
                     <div>
-                      <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Current / Exit</span>
+                      <span className="text-white/40 text-[10px] block font-sans">Current / Exit</span>
                       <span className="text-white font-medium">{isOpen ? formatPrice(currentPrice) : formatPrice(order.exitPrice ?? 0)}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Quantity</span>
+                      <span className="text-white/40 text-[10px] block font-sans">Quantity</span>
                       <span className="text-white font-medium">{order.quantity}</span>
                     </div>
                   </div>
@@ -129,11 +129,11 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
                   {(order.targetPrice || order.stopPrice) && (
                     <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-white/[0.04] ml-2 font-mono">
                       <div>
-                        <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Target Price</span>
+                        <span className="text-white/40 text-[10px] block font-sans">Target Price</span>
                         <span className="text-[#22c55e]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Stop Loss</span>
+                        <span className="text-white/40 text-[10px] block font-sans">Stop Loss</span>
                         <span className="text-[#ef4444]">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</span>
                       </div>
                     </div>

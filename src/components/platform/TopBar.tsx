@@ -100,7 +100,7 @@ export default function TopBar({
           <div className="flex items-center pl-1">
             <button 
               onClick={() => setIsAddOrderOpen(true)}
-              className="rounded-full bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1 text-xs text-white font-medium transition-all"
+              className="rounded-md bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1 text-xs text-white font-medium transition-all"
             >
               + Add Order
             </button>
@@ -108,7 +108,7 @@ export default function TopBar({
         </div>
 
         {statusMessage && (
-          <div className="absolute left-3 top-[52px] z-50 rounded-xl border border-white/[0.08] bg-black/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
+          <div className="absolute left-3 top-[52px] z-50 rounded-md border border-white/[0.08] bg-black/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -120,7 +120,7 @@ export default function TopBar({
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/80 backdrop-blur-md px-4 animate-in fade-in duration-150" 
           onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}
         >
-          <div className="bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
+          <div className="bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-md shadow-2xl w-full max-w-lg flex flex-col max-h-[75vh] overflow-hidden animate-in zoom-in-95 duration-150 text-white">
             <div className="flex items-center px-4 py-3.5 border-b border-white/[0.08] bg-white/[0.02]">
               <Search size={18} className="text-white/40 mr-3 shrink-0" />
               <input 
@@ -146,7 +146,7 @@ export default function TopBar({
                 filteredWatchlist.map((item) => (
                   <div 
                     key={item.symbol}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/[0.05] cursor-pointer transition-colors group"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors group"
                     onClick={() => {
                       setIsSearchOpen(false);
                       router.push(`?ticker=${item.symbol}&timeframe=${timeframe}${replayQuery}`);

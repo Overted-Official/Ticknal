@@ -156,10 +156,10 @@ export default function SignalPanel({
   };
 
   return (
-    <div className="absolute top-4 left-4 z-10 w-48 md:w-60 bg-[#121212]/80 backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex flex-col transition-all">
+    <div className="absolute top-4 left-4 z-10 w-48 md:w-60 bg-black/90 backdrop-blur-xl border border-white/[0.08] rounded-md shadow-2xl flex flex-col transition-all">
       {/* Header / Main Signal */}
       <div 
-        className={`p-2.5 md:p-3.5 cursor-pointer hover:bg-white/[0.03] transition-colors flex items-center justify-between ${expanded ? 'rounded-t-xl' : 'rounded-xl'}`}
+        className={`p-2.5 md:p-3.5 cursor-pointer hover:bg-white/[0.03] transition-colors flex items-center justify-between ${expanded ? 'rounded-t-md' : 'rounded-md'}`}
         onClick={() => setExpanded(!expanded)}
       >
         <div className="min-w-0 flex-1">

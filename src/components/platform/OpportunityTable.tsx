@@ -52,7 +52,7 @@ export default function OpportunityTable({
           <div className="p-6 text-center text-white/40 text-xs font-normal">{emptyText}</div>
         ) : (
           opportunities.map((item) => (
-            <div key={`${item.symbol}-${item.signal.date}`} className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
+            <div key={`${item.symbol}-${item.signal.date}`} className="bg-transparent rounded-md border border-white/[0.06] p-3">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center space-x-2.5">
                   <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
@@ -73,10 +73,10 @@ export default function OpportunityTable({
                 </div>
                 <button 
                   onClick={() => setSelectedOpp(item)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-all ${
+                  className={`rounded-[4px] px-2.5 py-0.5 text-[10px] font-medium transition-all ${
                     item.signal.signal === 'BUY' 
-                      ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/30 hover:bg-[#22c55e]/25' 
-                      : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/30 hover:bg-[#ef4444]/25'
+                      ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/25 hover:bg-[#22c55e]/25' 
+                      : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/25 hover:bg-[#ef4444]/25'
                   }`}
                 >
                   {formatSignal(item.signal.signal)}
@@ -98,7 +98,7 @@ export default function OpportunityTable({
       {/* Desktop View (Table) */}
       <div className="hidden md:block w-full">
         <table className="w-full text-left text-xs text-white">
-          <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[11px] font-medium text-white/30">
+          <thead className="bg-transparent border-b border-white/[0.06] text-[11px] font-medium text-white/30">
             <tr>
               <th className="px-6 py-3.5">Ticker</th>
               {!compact && <th className="px-6 py-3.5">Sector</th>}
@@ -116,7 +116,7 @@ export default function OpportunityTable({
               </tr>
             ) : (
               opportunities.map((item) => (
-                <tr key={`${item.symbol}-${item.signal.date}`} className="hover:bg-white/[0.03] transition-colors group">
+                <tr key={`${item.symbol}-${item.signal.date}`} className="hover:bg-white/[0.02] transition-colors group">
                   <td className="px-6 py-3.5 whitespace-nowrap">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.08]">
@@ -144,10 +144,10 @@ export default function OpportunityTable({
                   <td className="px-6 py-3.5 whitespace-nowrap text-right">
                     <button
                       onClick={() => setSelectedOpp(item)}
-                      className={`inline-block rounded-full px-3.5 py-1 text-[11px] font-semibold transition-all ${
+                      className={`inline-block rounded-[4px] px-2.5 py-0.5 text-[10px] font-medium transition-all ${
                         item.signal.signal === 'BUY' 
-                          ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/30 hover:bg-[#22c55e]/25' 
-                          : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/30 hover:bg-[#ef4444]/25'
+                          ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/25 hover:bg-[#22c55e]/25' 
+                          : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/25 hover:bg-[#ef4444]/25'
                       }`}
                     >
                       {formatSignal(item.signal.signal)}

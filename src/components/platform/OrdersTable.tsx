@@ -101,29 +101,29 @@ export default function OrdersTable() {
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* Search Input */}
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
-                <Search size={14} />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/40">
+                <Search size={13} />
               </div>
               <input
                 type="text"
                 placeholder="Search ticker or name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-48 md:w-56 rounded-full glass-pill pl-9 pr-3.5 text-xs text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none transition-all"
+                className="h-8 w-48 md:w-56 rounded-md bg-white/[0.03] border border-white/[0.07] pl-8 pr-3 text-xs text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none transition-all"
               />
             </div>
 
             {/* Filter Pill Switch */}
-            <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-full p-1 gap-1">
+            <div className="flex items-center bg-black border border-white/[0.07] rounded-md p-0.5 gap-0.5">
               {(['ALL', 'OPEN', 'CLOSED'] as const).map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setFilter(value)}
-                  className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all relative ${
+                  className={`px-3 py-1 rounded-[4px] text-xs font-medium transition-all ${
                     filter === value
-                      ? 'bg-white/[0.08] text-white border border-white/[0.10]'
-                      : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-white/[0.08] text-white'
+                      : 'text-white/40 hover:text-white hover:bg-white/[0.03]'
                   }`}
                 >
                   {value}
@@ -135,7 +135,7 @@ export default function OrdersTable() {
             <button
               type="button"
               onClick={() => setIsAddingOrder(true)}
-              className="h-8 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white px-4 text-xs font-medium transition-colors"
+              className="h-8 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white px-3.5 text-xs font-medium transition-colors"
             >
               + Add Order
             </button>
@@ -143,23 +143,37 @@ export default function OrdersTable() {
         </div>
       </motion.div>
 
-      {/* Main Canvas: 24px outer padding (p-6), 8px widget gap (space-y-2) */}
+      {/* Main Canvas: 24px outer padding (p-6), 12px widget gap (space-y-3) */}
       <div className="min-h-0 flex-1 overflow-auto p-6 space-y-3">
-        {/* Metric Cards (5 items in grid, 8px gap) */}
-        <motion.div variants={containerStagger} className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-white font-bold" />
-          <Metric label="Open Positions" value={String(totals.openCount)} />
-          <Metric label="Closed Positions" value={String(totals.closedCount)} />
-          <Metric 
-            label="Unrealized P/L" 
-            value={formatMoney(totals.unrealized)} 
-            valueClass={totals.unrealized > 0 ? 'text-[#22c55e]' : totals.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
-          />
-          <Metric 
-            label="Realized P/L" 
-            value={formatMoney(totals.realized)} 
-            valueClass={totals.realized > 0 ? 'text-[#22c55e]' : totals.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
-          />
+        {/* Metric Strip (5 items in unified master container) */}
+        <motion.div 
+          variants={itemFadeInUp}
+          className="border border-white/[0.07] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-5 overflow-hidden"
+        >
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Net Worth</div>
+            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{formatPrice(totals.netWorth)}</div>
+          </div>
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Open Positions</div>
+            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{totals.openCount}</div>
+          </div>
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Closed Positions</div>
+            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{totals.closedCount}</div>
+          </div>
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Unrealized P/L</div>
+            <div className={`mt-2 text-xl font-semibold font-mono tracking-tight ${totals.unrealized > 0 ? 'text-[#22c55e]' : totals.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+              {formatMoney(totals.unrealized)}
+            </div>
+          </div>
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Realized P/L</div>
+            <div className={`mt-2 text-xl font-semibold font-mono tracking-tight ${totals.realized > 0 ? 'text-[#22c55e]' : totals.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+              {formatMoney(totals.realized)}
+            </div>
+          </div>
         </motion.div>
 
         {/* Mobile View (Cards) */}
@@ -170,7 +184,7 @@ export default function OrdersTable() {
             <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
             filteredOrders.map((order) => (
-              <div key={order.id} className="glass-panel rounded-xl p-6">
+              <div key={order.id} className="border border-white/[0.07] rounded-md bg-black p-5">
                 <div className="flex justify-between items-start border-b border-white/[0.06] pb-2.5 mb-2.5">
                   <div>
                     <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
@@ -179,8 +193,8 @@ export default function OrdersTable() {
                     </Link>
                     <div className="text-[11px] text-white/40 truncate max-w-[160px]">{order.companyName}</div>
                   </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                    order.status === 'OPEN' ? 'bg-white/[0.05] border border-white/[0.08] text-white/80' : 'bg-white/[0.03] text-white/40'
+                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-medium ${
+                    order.status === 'OPEN' ? 'bg-white/[0.06] text-white/90 border border-white/[0.08]' : 'bg-white/[0.02] text-white/40'
                   }`}>
                     {order.status}
                   </span>
@@ -217,7 +231,7 @@ export default function OrdersTable() {
                     <button
                       title="Close Position"
                       onClick={() => closeOrder(order)}
-                      className="px-3 py-1 rounded-full bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08] text-xs font-medium"
+                      className="px-2.5 py-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08] text-xs font-medium"
                     >
                       <CheckCircle size={13} className="mr-1 text-[#22c55e]" />
                       <span>Close</span>
@@ -226,14 +240,14 @@ export default function OrdersTable() {
                   <button
                     title="Edit Order"
                     onClick={() => editOrder(order)}
-                    className="p-1.5 rounded-full bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08]"
+                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08]"
                   >
                     <Pencil size={13} />
                   </button>
                   <button
                     title="Delete Record"
                     onClick={() => deleteOrder(order)}
-                    className="p-1.5 rounded-full bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.08]"
+                    className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.08]"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -244,9 +258,9 @@ export default function OrdersTable() {
         </div>
 
         {/* Desktop View (Table Container) */}
-        <motion.div variants={itemFadeInUp} className="hidden md:block glass-panel rounded-xl overflow-hidden">
+        <motion.div variants={itemFadeInUp} className="hidden md:block border border-white/[0.07] rounded-md bg-black overflow-hidden">
           <table className="w-full text-left text-xs">
-            <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[11px] font-medium text-white/30">
+            <thead className="bg-transparent border-b border-white/[0.06] text-[11px] font-medium text-white/30">
               <tr>
                 <th className="px-6 py-3.5">Ticker</th>
                 <th className="px-6 py-3.5">Status</th>
@@ -269,7 +283,7 @@ export default function OrdersTable() {
                 </tr>
               ) : (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-white/[0.04] transition-colors group">
+                  <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-6 py-3.5 whitespace-nowrap">
                       <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white group-hover:text-plt-orange transition-colors flex items-center gap-2">
                         <LineChart size={15} className="text-white/40 group-hover:text-plt-orange" />
@@ -279,8 +293,8 @@ export default function OrdersTable() {
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap">
                       <span
-                        className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold ${
-                          order.status === 'OPEN' ? 'bg-white/[0.05] border border-white/[0.08] text-white/80' : 'bg-white/[0.02] text-white/40'
+                        className={`inline-block rounded-[4px] px-2 py-0.5 text-[10px] font-medium ${
+                          order.status === 'OPEN' ? 'bg-white/[0.06] border border-white/[0.08] text-white' : 'bg-white/[0.02] text-white/40'
                         }`}
                       >
                         {order.status}
@@ -314,7 +328,7 @@ export default function OrdersTable() {
                           <button
                             title="Close Position"
                             onClick={() => closeOrder(order)}
-                            className="p-1.5 rounded-full bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
+                            className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
                           >
                             <CheckCircle size={15} className="text-[#22c55e]" />
                           </button>
@@ -322,14 +336,14 @@ export default function OrdersTable() {
                         <button
                           title="Edit Order"
                           onClick={() => editOrder(order)}
-                          className="p-1.5 rounded-full bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
+                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           title="Delete Record"
                           onClick={() => deleteOrder(order)}
-                          className="p-1.5 rounded-full bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.08]"
+                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.08]"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -370,7 +384,7 @@ function Metric({ label, value, valueClass = 'text-white' }: { label: string; va
   return (
     <motion.div 
       variants={itemFadeInUp}
-      className="glass-panel rounded-xl p-5 group"
+      className="border border-white/[0.07] rounded-md bg-black p-5 group"
     >
       <div className="text-[11px] text-white/40 font-medium">{label}</div>
       <div className={`mt-1.5 text-xl font-semibold font-mono tracking-tight ${valueClass}`}>{value}</div>

@@ -78,7 +78,7 @@ export default function CloseOrderModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-panel rounded-xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white bg-black/95 backdrop-blur-2xl border border-white/[0.12]"
+        className="glass-panel rounded-md shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white bg-black border border-white/[0.12]"
       >
         
         {/* Header */}
@@ -87,7 +87,7 @@ export default function CloseOrderModal({
             <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
             <span className="font-semibold text-white text-sm">Close {order.tickerSymbol.replace('.CA', '')} Position</span>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1 rounded-full hover:bg-white/[0.06]">
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1 rounded-md hover:bg-white/[0.06]">
             <X size={16} />
           </button>
         </div>
@@ -99,14 +99,14 @@ export default function CloseOrderModal({
               <label className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 block font-sans">Close Date</label>
               <input 
                 type="date"
-                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-white/20 transition-all"
+                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-2 text-xs text-white outline-none focus:border-white/20 transition-all"
                 value={form.exitDate}
                 onChange={e => setForm({ ...form, exitDate: e.target.value })}
               />
             </div>
             <div>
               <label className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 block font-sans">Close Price</label>
-              <div className="flex items-center bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 focus-within:border-white/20 transition-all">
+              <div className="flex items-center bg-white/[0.04] border border-white/[0.08] rounded-md px-3 focus-within:border-white/20 transition-all">
                 <input 
                   type="number"
                   step="0.01"
@@ -126,7 +126,7 @@ export default function CloseOrderModal({
               type="number"
               min="1"
               max={order.quantity}
-              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none focus:border-white/20 transition-all"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-2 text-xs font-semibold text-white outline-none focus:border-white/20 transition-all"
               value={form.quantityToClose}
               onChange={e => setForm({ ...form, quantityToClose: e.target.value })}
             />
@@ -134,7 +134,7 @@ export default function CloseOrderModal({
           </div>
 
           {/* Close Proceeds */}
-          <div className="bg-white/[0.03] rounded-xl p-3 flex justify-between items-center text-xs border border-white/[0.06]">
+          <div className="bg-white/[0.03] rounded-md p-3 flex justify-between items-center text-xs border border-white/[0.06]">
             <span className="text-white/40 font-sans text-[11px]">Total Proceeds</span>
             <span className="font-bold text-white">
               {((parseFloat(form.exitPrice) || 0) * (parseFloat(form.quantityToClose) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
@@ -146,13 +146,13 @@ export default function CloseOrderModal({
         <div className="p-5 pt-0 shrink-0 flex gap-2.5">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-white/80 font-semibold text-xs transition-all"
+            className="flex-1 py-2 rounded-md border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-white/80 font-medium text-xs transition-all"
           >
             Cancel
           </button>
           <button
             onClick={handleCloseOrder}
-            className="flex-1 py-2.5 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white font-medium text-xs transition-all"
+            className="flex-1 py-2 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white font-medium text-xs transition-all"
           >
             Confirm Close
           </button>

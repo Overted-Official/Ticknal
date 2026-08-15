@@ -48,7 +48,7 @@ export default function TestNotificationButton() {
     <button
       onClick={handleTestNotification}
       disabled={!isMounted || loading || permission === 'unsupported'}
-      className="glass-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white/70 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
     >
       <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-plt-orange animate-ping' : 'bg-plt-orange'}`} />
       <span>{loading ? 'Sending...' : 'Test Notification'}</span>

@@ -25,7 +25,7 @@ export default function BottomNav() {
             className="flex-1 h-full flex flex-col items-center justify-center group"
           >
             <div 
-              className={`flex items-center justify-center rounded-full w-12 h-7 transition-all duration-200 mb-0.5 ${
+              className={`flex items-center justify-center rounded-md w-12 h-7 transition-all duration-200 mb-0.5 ${
                 isActive 
                   ? 'bg-white/[0.06] text-white' 
                   : 'text-white/35 group-hover:text-white/60'
