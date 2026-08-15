@@ -5,7 +5,7 @@
   /* Trading Platform Palette (Trenox Theme) */
   --bg-base: rgb(0, 0, 0);
   --bg-surface: rgb(10, 10, 10);
-  --bg-chart: rgb(0, 0, 0);
+  --bg-chart: #171B26;
   --bg-hover: rgb(26, 23, 23);
   --bg-deep: rgb(5, 5, 5);
   
@@ -25,11 +25,11 @@
   /* ==========================================================================
      Internal Platform Palette (Dedicated tokens for Dashboard, Charts, etc.)
      ========================================================================== */
-  --plt-bg-base: #101010;
+  --plt-bg-base: #0F0F0F;
   --plt-bg-surface: #161616;
   --plt-bg-card: #161616;
   --plt-bg-hover: #202020;
-  --plt-bg-chart: #101010;
+  --plt-bg-chart: #171B26;
 
   --plt-border: rgba(255, 255, 255, 0.08);
   --plt-border-soft: rgba(255, 255, 255, 0.04);

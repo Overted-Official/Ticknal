@@ -65,7 +65,7 @@ export default async function DashboardContent() {
   const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-auto bg-[#0e0e0e] text-white pb-8">
+    <div className="flex h-full min-h-0 flex-col overflow-auto bg-[#0f0f0f] text-white pb-8">
       <div className="px-4 pt-5 pb-0 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

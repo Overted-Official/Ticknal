@@ -44,7 +44,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
   const displayOrders = [...openOrders, ...closedOrders];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-[#0e0e0e] text-white p-4 space-y-6">
+    <div className="flex flex-col h-full overflow-y-auto bg-[#0f0f0f] text-white p-4 space-y-6">
       
       {/* Summary Cards */}
       <div>

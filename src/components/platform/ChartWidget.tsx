@@ -218,7 +218,7 @@ export default function ChartWidget({
     if (!chartContainerRef.current) return;
 
     const computedStyle = getComputedStyle(document.documentElement);
-    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#08090b';
+    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#171B26';
     const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#8b929f';
     const borderColor = computedStyle.getPropertyValue('--border-color').trim() || 'rgba(255, 255, 255, 0.08)';
     const upColor = computedStyle.getPropertyValue('--up-color').trim() || '#00e676';

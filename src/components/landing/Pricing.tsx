@@ -38,7 +38,7 @@ export default function Pricing() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-[#0e0e0e] border border-[rgba(255,255,255,0.12)] rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-xl"
+            className="bg-[#0f0f0f] border border-[rgba(255,255,255,0.12)] rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-xl"
           >
             <div>
               <h3 className="text-xl font-bold text-white mb-1.5">Basic Tier</h3>

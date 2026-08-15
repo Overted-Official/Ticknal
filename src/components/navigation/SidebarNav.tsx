@@ -28,7 +28,7 @@ export default function SidebarNav() {
   ];
 
   return (
-    <div className="w-[48px] h-full flex flex-col items-center py-3 bg-[#0e0e0e] border-r border-white/[0.08] select-none text-white">
+    <div className="w-[48px] h-full flex flex-col items-center py-3 bg-[#0f0f0f] border-r border-white/[0.08] select-none text-white">
       {/* Brand Logo */}
       <Link href="/dashboard" className="mb-4 w-6 h-6 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center">
         <Image src="/logo.svg" alt="QuantEGX" width={22} height={22} className="object-contain" priority />

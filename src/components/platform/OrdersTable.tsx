@@ -79,7 +79,7 @@ export default function OrdersTable() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#0e0e0e] text-white">
+    <div className="flex h-full min-h-0 flex-col bg-[#0f0f0f] text-white">
       {/* Top Header */}
       <div className="border-b border-white/[0.06] px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-4">

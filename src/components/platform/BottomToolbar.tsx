@@ -38,7 +38,7 @@ export default function BottomToolbar({
   };
 
   return (
-    <div className="h-8 w-full bg-[#0e0e0e] border-t border-white/[0.08] flex items-center justify-between px-3 font-medium select-none text-[0.75rem] text-white">
+    <div className="h-8 w-full bg-[#0f0f0f] border-t border-white/[0.08] flex items-center justify-between px-3 font-medium select-none text-[0.75rem] text-white">
       {/* Left Section: Timeframe Switcher & Alert Button (replacing EGX) */}
       <div className="flex items-center space-x-2">
         {/* Segmented Timeframe Switch */}

@@ -54,7 +54,7 @@ export default function Testimonials() {
           {[...testimonials, ...testimonials].map((t, idx) => (
             <div
               key={idx}
-              className="w-[304px] shrink-0 bg-[#0e0e0e] border border-[rgba(255,255,255,0.12)] p-6 rounded-xl flex flex-col justify-between shadow-xl hover:border-tv-accent/50 transition-colors"
+              className="w-[304px] shrink-0 bg-[#0f0f0f] border border-[rgba(255,255,255,0.12)] p-6 rounded-xl flex flex-col justify-between shadow-xl hover:border-tv-accent/50 transition-colors"
             >
               {/* Stars */}
               <div className="flex items-center gap-1 mb-4 text-[#ff8c45]">
