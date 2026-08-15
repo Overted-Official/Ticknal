@@ -22,10 +22,10 @@ export default function DashboardCharts({
   }, []);
 
   return (
-    <div className="mt-2 px-4 md:px-6">
+    <div className="w-full">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden w-full flex items-center justify-between rounded-full glass-pill px-4 py-2.5 text-sm font-medium text-white transition-colors"
+        className="md:hidden w-full flex items-center justify-between rounded-full glass-pill px-4 py-2.5 text-sm font-medium text-white transition-colors mb-2"
       >
         <div className="flex items-center gap-2">
           <BarChart2 size={16} className="text-plt-orange" />
@@ -34,7 +34,7 @@ export default function DashboardCharts({
         {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 
-      <div className={`grid-cols-1 gap-2 lg:grid-cols-2 ${isOpen ? 'grid mt-2 md:mt-0' : 'hidden md:grid'}`}>
+      <div className={`grid-cols-1 gap-2 lg:grid-cols-2 ${isOpen ? 'grid' : 'hidden md:grid'}`}>
         {/* Sector Distribution Donut */}
         <div className="glass-panel rounded-xl p-6 shadow-xl">
           <SectorDonutChart data={sectorData} />

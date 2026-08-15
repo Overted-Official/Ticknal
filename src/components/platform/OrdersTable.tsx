@@ -87,8 +87,8 @@ export default function OrdersTable() {
       variants={containerStagger}
       className="flex h-full min-h-0 flex-col bg-transparent text-white relative z-10"
     >
-      {/* Top Header */}
-      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.06] px-6 py-6">
+      {/* Top Header Banner */}
+      <motion.div variants={itemFadeInUp} className="border-b border-white/[0.06] px-6 py-5 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -141,18 +141,19 @@ export default function OrdersTable() {
             </button>
           </div>
         </div>
+      </motion.div>
 
-        {/* Metric Cards */}
-        <motion.div variants={containerStagger} className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-5">
+      {/* Main Canvas: 24px outer padding (p-6), 8px widget gap (space-y-2) */}
+      <div className="min-h-0 flex-1 overflow-auto p-6 space-y-2">
+        {/* Metric Cards (5 items in grid, 8px gap) */}
+        <motion.div variants={containerStagger} className="grid grid-cols-2 gap-2 md:grid-cols-5">
           <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-white font-bold" />
           <Metric label="Open Positions" value={String(totals.openCount)} />
           <Metric label="Closed Positions" value={String(totals.closedCount)} />
           <Metric label="Unrealized P/L" value={formatMoney(totals.unrealized)} valueClass={totals.unrealized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} />
           <Metric label="Realized P/L" value={formatMoney(totals.realized)} valueClass={totals.realized >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'} />
         </motion.div>
-      </motion.div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-6">
         {/* Mobile View (Cards) */}
         <div className="md:hidden flex flex-col space-y-2">
           {loading ? (

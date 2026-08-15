@@ -80,22 +80,22 @@ export default function EditOrderModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-panel rounded-xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white bg-[#141414]/95 backdrop-blur-2xl border border-white/[0.12]"
+        className="glass-panel rounded-xl shadow-2xl w-full max-w-sm overflow-visible flex flex-col text-white bg-black/95 backdrop-blur-2xl border border-white/[0.12]"
       >
         
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
             <span className="font-semibold text-white text-sm">Edit {order.tickerSymbol.replace('.CA', '')} Position</span>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/[0.06]">
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1 rounded-full hover:bg-white/[0.06]">
             <X size={16} />
           </button>
         </div>
         
         {/* Body */}
-        <div className="p-5 space-y-4 font-mono">
+        <div className="p-6 space-y-4 font-mono">
           <div>
             <label className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 block font-sans">Entry Date</label>
             <input 
