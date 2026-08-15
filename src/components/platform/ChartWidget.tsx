@@ -848,7 +848,7 @@ export default function ChartWidget({
         title="Predict Future"
         onClick={() => setPredictPopoverOpen(true)}
         disabled={isPredicting || data.length === 0}
-        className="h-8 rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-plt-orange/40 hover:text-plt-orange px-3 text-[11px] font-semibold text-white/90 shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
+        className="h-7.5 rounded-md border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.14] px-3 text-xs font-medium text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
       >
         <span className="flex items-center gap-1.5">
           {isPredicting ? (
@@ -861,7 +861,7 @@ export default function ChartWidget({
       </button>
 
       {predictPopoverOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-md border border-white/[0.1] bg-[#161616] p-3.5 text-xs text-white shadow-2xl z-[60]">
+        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-md border border-white/[0.1] bg-black p-3.5 text-xs text-white shadow-2xl z-[60]">
           <div className="mb-2.5 flex items-center justify-between">
             <div className="font-semibold text-white/90 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-plt-orange" /> AI Forecast
@@ -884,14 +884,14 @@ export default function ChartWidget({
                 max="100"
                 value={predictDaysInput}
                 onChange={(e) => setPredictDaysInput(e.target.value)}
-                className="h-7 w-full rounded-lg border border-white/[0.08] bg-black/40 px-2.5 text-xs text-white outline-none transition-colors focus:border-plt-orange"
+                className="h-7 w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 text-xs text-white outline-none transition-colors focus:border-plt-orange"
               />
             </div>
             
             <button
               type="button"
               onClick={handlePredict}
-              className="h-8 w-full rounded-lg bg-plt-orange text-xs font-medium text-white transition-all hover:bg-plt-orange-hover"
+              className="h-8 w-full rounded-md bg-plt-orange text-xs font-medium text-white transition-all hover:bg-plt-orange-hover"
             >
               Run Prediction
             </button>
@@ -1028,14 +1028,14 @@ export default function ChartWidget({
       )}
 
       {!replayMode ? (
-        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#121212]/80 backdrop-blur-xl p-1 shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
+        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-black/90 backdrop-blur-xl p-1 shadow-2xl">
           <button
             type="button"
             title="Bar Replay"
             aria-label="Bar Replay"
             disabled={!hasReplayRoom}
             onClick={enableReplay}
-            className="h-8 rounded-full px-3 text-[11px] font-semibold text-white/80 transition-all hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
+            className="h-7.5 rounded-md px-3 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.06] hover:border-white/[0.14] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
           >
             <RotateCcw className="h-3.5 w-3.5 text-white/60" />
             Replay
@@ -1044,13 +1044,13 @@ export default function ChartWidget({
           {predictButtonUI}
         </div>
       ) : (
-        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#121212]/85 backdrop-blur-xl p-1.5 text-xs text-white shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
+        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.08] bg-black/90 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
           <button
             type="button"
             title="Reset replay point"
             aria-label="Reset replay point"
             onClick={jumpToStart}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
           >
             <SkipBack className="h-3.5 w-3.5" />
           </button>
@@ -1060,7 +1060,7 @@ export default function ChartWidget({
             aria-label="Step back"
             disabled={replayIndex <= 0}
             onClick={() => stepReplay(-1)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
           >
             <StepBack className="h-3.5 w-3.5" />
           </button>
@@ -1070,7 +1070,7 @@ export default function ChartWidget({
             aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
             disabled={replayIndex >= data.length - 1}
             onClick={() => setIsPlaying((value) => !value)}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-plt-orange text-white transition-all hover:bg-plt-orange-hover disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-plt-orange text-white transition-all hover:bg-plt-orange-hover disabled:opacity-30"
           >
             {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
           </button>
@@ -1080,7 +1080,7 @@ export default function ChartWidget({
             aria-label="Step forward"
             disabled={replayIndex >= data.length - 1}
             onClick={() => stepReplay(1)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
           >
             <StepForward className="h-3.5 w-3.5" />
           </button>
@@ -1089,7 +1089,7 @@ export default function ChartWidget({
             title="Jump to latest"
             aria-label="Jump to latest"
             onClick={jumpToLatest}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
           >
             <SkipForward className="h-3.5 w-3.5" />
           </button>
@@ -1104,7 +1104,7 @@ export default function ChartWidget({
             max={data[data.length - 1]?.time}
             value={replayDate ?? ''}
             onChange={(event) => handleDateChange(event.target.value)}
-            className="h-7 w-32 rounded-lg border border-white/[0.08] bg-black/40 px-2 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
+            className="h-7 w-32 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
           />
           <input
             type="range"
@@ -1121,7 +1121,7 @@ export default function ChartWidget({
             aria-label="Replay speed"
             value={playbackSpeed}
             onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-            className="h-7 rounded-lg border border-white/[0.08] bg-black/40 px-1.5 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
+            className="h-7 rounded-md border border-white/[0.08] bg-white/[0.03] px-1.5 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
           >
             {PLAYBACK_SPEEDS.map((speed) => (
               <option key={speed.label} value={speed.delay}>
@@ -1132,7 +1132,7 @@ export default function ChartWidget({
           <button
             type="button"
             onClick={exitReplay}
-            className="h-7 rounded-full px-2.5 text-[10px] font-semibold text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="h-7 rounded-md px-2.5 text-xs font-medium text-white/70 bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.06] hover:text-white transition-colors"
           >
             Live
           </button>

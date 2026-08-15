@@ -156,10 +156,10 @@ export default function SignalPanel({
   };
 
   return (
-    <div className="absolute top-4 left-4 z-10 w-48 md:w-60 bg-black/90 backdrop-blur-xl border border-white/[0.08] rounded-md shadow-2xl flex flex-col transition-all">
+    <div className="absolute top-4 left-4 z-10 w-48 md:w-60 bg-black border border-white/[0.08] rounded-md shadow-2xl flex flex-col transition-all">
       {/* Header / Main Signal */}
       <div 
-        className={`p-2.5 md:p-3.5 cursor-pointer hover:bg-white/[0.03] transition-colors flex items-center justify-between ${expanded ? 'rounded-t-md' : 'rounded-md'}`}
+        className={`p-2.5 md:p-3 cursor-pointer hover:bg-white/[0.02] transition-colors flex items-center justify-between ${expanded ? 'rounded-t-md' : 'rounded-md'}`}
         onClick={() => setExpanded(!expanded)}
       >
         <div className="min-w-0 flex-1">
@@ -181,7 +181,7 @@ export default function SignalPanel({
                   className="fixed inset-0 z-40" 
                   onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); }} 
                 />
-                <div className="absolute top-full left-0 w-40 bg-[#181818]/95 backdrop-blur-2xl border border-white/[0.1] rounded-lg shadow-2xl z-50 overflow-hidden py-1">
+                <div className="absolute top-full left-0 w-40 bg-black border border-white/[0.08] rounded-md shadow-2xl z-50 overflow-hidden py-1">
                   {strategies.map((strat) => (
                     <div
                       key={strat.id}
@@ -210,7 +210,7 @@ export default function SignalPanel({
           
           <div className="flex items-center gap-2">
             {loading ? (
-              <div className="h-5 w-20 bg-white/[0.05] animate-pulse rounded" />
+              <div className="h-5 w-20 bg-white/[0.05] animate-pulse rounded-md" />
             ) : visibleSignalData ? (
               <div className="flex items-center gap-2">
                 <span className={`text-base md:text-lg font-bold tracking-tight ${
@@ -220,7 +220,7 @@ export default function SignalPanel({
                 }`}>
                   {signalLabel}
                 </span>
-                <span className="text-[10px] bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded text-white/80 font-mono">
+                <span className="text-[10px] bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded-[4px] text-white/80 font-mono">
                   {reason}
                 </span>
               </div>
@@ -230,8 +230,8 @@ export default function SignalPanel({
           </div>
         </div>
 
-        {/* Status Pill Icon with Glow */}
-        <div className={`flex h-7 w-7 items-center justify-center rounded-full border shrink-0 ml-2 ${
+        {/* Status Pill Icon */}
+        <div className={`flex h-6 w-6 items-center justify-center rounded-md border shrink-0 ml-2 ${
           visibleSignalData?.signal === 'BUY' ? 'bg-[#22c55e]/10 border-[#22c55e]/30' :
           isExit ? 'bg-[#ef4444]/10 border-[#ef4444]/30' :
           'bg-white/[0.04] border-white/[0.08]'
@@ -249,14 +249,14 @@ export default function SignalPanel({
         className="overflow-hidden border-t border-white/[0.06]"
       >
         {visibleSignalData && (
-          <div className="p-3.5 bg-black/20 flex flex-col gap-3">
+          <div className="p-3 bg-black flex flex-col gap-2.5">
             {/* Dynamic Settings */}
             {activeStratDef.settings.length > 0 && (
               <div className="flex flex-col gap-2 text-xs">
                 {activeStratDef.settings.map(setting => {
                   if (setting.type === 'range') {
                     return (
-                      <div key={setting.key} className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2">
+                      <div key={setting.key} className="rounded-md bg-white/[0.02] border border-white/[0.06] p-2">
                         <div className="text-white/50 mb-1.5 flex justify-between text-[10px]">
                           <span>{setting.label}</span>
                           <span className="text-white font-mono">{strategyParams[setting.key] ?? setting.default}</span>
@@ -268,7 +268,7 @@ export default function SignalPanel({
                           step={setting.step}
                           value={strategyParams[setting.key] ?? setting.default}
                           onChange={(e) => updateStrategyParam?.(setting.key, Number(e.target.value))}
-                          className="w-full accent-plt-orange cursor-pointer h-1 bg-white/10 rounded-lg"
+                          className="w-full accent-plt-orange cursor-pointer h-1 bg-white/10 rounded-md"
                         />
                       </div>
                     );
@@ -296,7 +296,7 @@ export default function SignalPanel({
                   }
 
                   return (
-                    <div key={metric.key} className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2 flex flex-col justify-between">
+                    <div key={metric.key} className="rounded-md bg-white/[0.02] border border-white/[0.06] p-2 flex flex-col justify-between">
                       <div className="text-white/40 text-[9px] uppercase tracking-wider">{metric.label}</div>
                       <div className="text-white font-mono text-[11px] font-semibold mt-0.5">{displayVal}</div>
                     </div>
@@ -305,10 +305,10 @@ export default function SignalPanel({
               </div>
             )}
             
-            <div className="flex flex-col gap-2 mt-1 pt-2 border-t border-white/[0.06]">
-              <div className="flex bg-white/[0.03] border border-white/[0.06] p-0.5 rounded-lg">
+            <div className="flex flex-col gap-2 mt-0.5 pt-2 border-t border-white/[0.06]">
+              <div className="flex bg-white/[0.02] border border-white/[0.06] p-0.5 rounded-md">
                 <button
-                  className={`flex-1 py-1 text-[10px] font-semibold rounded transition-colors ${
+                  className={`flex-1 py-1 text-[10px] font-medium rounded-[4px] transition-colors ${
                     trainingModel === 'psi8' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white'
                   }`}
                   onClick={() => setTrainingModel('psi8')}
@@ -316,7 +316,7 @@ export default function SignalPanel({
                   PSI-8
                 </button>
                 <button
-                  className={`flex-1 py-1 text-[10px] font-semibold rounded transition-colors ${
+                  className={`flex-1 py-1 text-[10px] font-medium rounded-[4px] transition-colors ${
                     trainingModel === 'psi40' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white'
                   }`}
                   onClick={() => setTrainingModel('psi40')}
@@ -325,12 +325,12 @@ export default function SignalPanel({
                 </button>
               </div>
 
-              <div className="text-[9px] font-semibold uppercase tracking-wider text-white/40">Training period</div>
+              <div className="text-[9px] font-medium uppercase tracking-wider text-white/40">Training period</div>
               <div className="flex items-center justify-between text-[10px]">
                 <label className="text-white/40">Start Date</label>
                 <input 
                   type="date" 
-                  className="bg-white/[0.04] border border-white/[0.08] rounded px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28"
+                  className="bg-white/[0.04] border border-white/[0.08] rounded-md px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28"
                   value={strategyStartDate || ''}
                   onChange={(e) => setStrategyStartDate?.(e.target.value)}
                 />
@@ -339,13 +339,13 @@ export default function SignalPanel({
                 <label className="text-white/40">End Date</label>
                 <input 
                   type="date" 
-                  className="bg-white/[0.04] border border-white/[0.08] rounded px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28"
+                  className="bg-white/[0.04] border border-white/[0.08] rounded-md px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28"
                   value={strategyEndDate || ''}
                   onChange={(e) => setStrategyEndDate?.(e.target.value)}
                 />
               </div>
               <button 
-                className="mt-1.5 w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-all rounded-lg py-1.5 text-xs font-medium disabled:opacity-50 relative overflow-hidden"
+                className="mt-1 w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-all rounded-md py-1.5 text-xs font-medium disabled:opacity-50 relative overflow-hidden"
                 onClick={startTraining}
                 disabled={optimizing}
               >

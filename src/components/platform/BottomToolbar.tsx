@@ -39,17 +39,17 @@ export default function BottomToolbar({
 
   return (
     <div className="h-8 w-full bg-black border-t border-white/[0.06] flex items-center justify-between px-3 font-medium select-none text-[0.75rem] text-white">
-      {/* Left Section: Timeframe Switcher & Alert Button (replacing EGX) */}
+      {/* Left Section: Timeframe Switcher & Alert Button */}
       <div className="flex items-center space-x-2">
         {/* Segmented Timeframe Switch */}
-        <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-full p-0.5 gap-0.5">
+        <div className="flex items-center bg-white/[0.02] border border-white/[0.07] rounded-md p-0.5 gap-0.5">
           {timeframes.map((tf) => (
             <Link
               key={tf}
               href={`?ticker=${symbol}&timeframe=${tf}${replayQuery}`}
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all ${
+              className={`px-2 py-0.5 rounded-[4px] text-[11px] font-medium transition-all ${
                 tf === timeframe 
-                  ? 'bg-white/[0.12] text-plt-orange shadow-sm border border-white/[0.08]' 
+                  ? 'bg-white/[0.08] text-plt-orange font-medium' 
                   : 'text-white/40 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -64,10 +64,10 @@ export default function BottomToolbar({
         <button
           type="button"
           onClick={() => toggleAlert(symbol)}
-          className={`flex items-center justify-center w-6 h-6 rounded-full transition-all ${
+          className={`flex items-center justify-center w-6 h-6 rounded-md transition-all ${
             alertEnabled 
               ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30' 
-              : 'text-white/40 hover:text-white hover:bg-white/[0.05]'
+              : 'text-white/40 hover:text-white hover:bg-white/[0.04]'
           }`}
           title={alertEnabled ? "Disable Alert" : "Set Price Alert"}
         >
@@ -81,7 +81,7 @@ export default function BottomToolbar({
         <button 
           type="button" 
           onClick={recenterChart} 
-          className="hover:text-white font-sans text-xs px-2.5 py-0.5 rounded-full hover:bg-white/[0.06] transition-colors"
+          className="hover:text-white font-sans text-xs px-2 py-0.5 rounded-md hover:bg-white/[0.06] transition-colors text-white/60"
         >
           Auto
         </button>

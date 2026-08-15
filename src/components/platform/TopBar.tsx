@@ -47,15 +47,15 @@ export default function TopBar({
         <div className="flex items-center space-x-2 md:space-x-3">
           <button 
             type="button"
-            className="flex items-center space-x-2.5 cursor-pointer hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] px-3 py-1 rounded-full transition-all text-left"
+            className="flex items-center space-x-2.5 cursor-pointer hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08] px-2.5 py-1 rounded-md transition-all text-left"
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Circular Logo */}
-            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-white/[0.04] border border-white/[0.08] overflow-hidden p-[1px]">
+            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-md bg-white/[0.04] border border-white/[0.08] overflow-hidden p-[1px]">
               {currentTicker.logoUrl ? (
-                <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-full bg-transparent" />
+                <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-md bg-transparent" />
               ) : currentTicker.website ? (
-                <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="w-full h-full object-cover rounded-full" />
+                <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="w-full h-full object-cover rounded-md" />
               ) : (
                 <span className="text-[9px] font-bold text-white">{displaySymbol.substring(0, 2)}</span>
               )}
@@ -70,7 +70,7 @@ export default function TopBar({
               </div>
             </div>
             
-            <div className="hidden sm:flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/40 font-mono">
+            <div className="hidden sm:flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-[4px] bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/40 font-mono">
               <Search size={10} />
               <span>⌘K</span>
             </div>
@@ -80,18 +80,20 @@ export default function TopBar({
         {/* Middle/Right section */}
         <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap ml-auto">
           {/* Indicators & Replay Quick Links */}
-          <div className="flex items-center space-x-1">
-            <button className="flex items-center space-x-1.5 hover:bg-white/[0.05] px-3 py-1 rounded-full transition-colors text-white/70 hover:text-white text-xs font-medium">
-              <BarChart2 size={14} />
+          <div className="flex items-center space-x-1.5">
+            <button className="flex items-center space-x-1.5 bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] px-3 py-1.5 rounded-md transition-all text-white/80 hover:text-white text-xs font-medium">
+              <BarChart2 size={13} />
               <span className="hidden md:inline">Indicators</span>
             </button>
             <Link
               href={`?ticker=${symbol}&timeframe=${timeframe}&replay=1`}
-              className={`flex items-center space-x-1.5 px-3 py-1 rounded-full transition-colors text-xs font-medium ${
-                replay ? 'text-plt-orange bg-plt-orange/10 font-semibold border border-plt-orange/20' : 'text-white/70 hover:text-white hover:bg-white/[0.05]'
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                replay 
+                  ? 'text-plt-orange bg-plt-orange/10 font-medium border border-plt-orange/30' 
+                  : 'bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] text-white/80 hover:text-white'
               }`}
             >
-              <RotateCcw size={14} />
+              <RotateCcw size={13} />
               <span className="hidden md:inline">Replay</span>
             </Link>
           </div>
@@ -100,7 +102,7 @@ export default function TopBar({
           <div className="flex items-center pl-1">
             <button 
               onClick={() => setIsAddOrderOpen(true)}
-              className="rounded-md bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1 text-xs text-white font-medium transition-all"
+              className="rounded-md bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1.5 text-xs text-white font-medium transition-all"
             >
               + Add Order
             </button>

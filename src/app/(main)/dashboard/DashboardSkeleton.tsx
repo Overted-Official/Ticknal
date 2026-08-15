@@ -2,7 +2,7 @@ import React from 'react';
 
 function MetricSkeleton() {
   return (
-    <div className="glass-panel rounded-xl p-5 animate-pulse">
+    <div className="border border-white/[0.07] rounded-md bg-black p-5 animate-pulse">
       <div className="h-2.5 w-16 bg-white/[0.06] rounded mb-2"></div>
       <div className="h-6 w-24 bg-white/[0.1] rounded mb-1.5"></div>
       <div className="h-3 w-20 bg-white/[0.04] rounded"></div>

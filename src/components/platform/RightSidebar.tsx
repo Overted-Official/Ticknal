@@ -190,7 +190,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.08] bg-white/[0.01] shrink-0 relative" ref={filterDropdownRef}>
         <button 
           onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-          className="flex items-center space-x-1.5 cursor-pointer hover:bg-white/[0.06] px-3 py-1 rounded-full border border-white/[0.08] transition-all text-xs font-semibold text-white focus:outline-none"
+          className="flex items-center space-x-1.5 cursor-pointer bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.14] px-2.5 py-1 rounded-md border border-white/[0.07] transition-all text-xs font-medium text-white focus:outline-none"
         >
           <span>{filterLabels[listFilter]}</span>
           <ChevronDown size={12} className={`text-white/50 transition-transform duration-150 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
@@ -198,7 +198,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
         {/* Dropdown Menu */}
         {isFilterDropdownOpen && (
-          <div className="absolute left-3 top-10 bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-md shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute left-3 top-10 bg-black border border-white/[0.08] rounded-md shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
             {(['ALL', 'OPEN', 'OPPORTUNITIES'] as const).map((mode) => (
               <button
                 key={mode}
@@ -239,7 +239,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               >
                 {collapsed ? <ChevronRight size={10} className="text-white/30 group-hover:text-white" /> : <ChevronDown size={10} className="text-white/30 group-hover:text-white" />}
                 <span className="min-w-0 flex-1 truncate font-semibold">{sector}</span>
-                <span className="text-[8px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.04] text-white/40">{items.length}</span>
+                <span className="text-[8px] font-mono px-1.5 py-0.2 rounded-[4px] bg-white/[0.04] text-white/40">{items.length}</span>
               </button>
 
               {!collapsed && items.map((item) => {
@@ -256,7 +256,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') openTicker(item.symbol);
                     }}
-                    className={`flex items-center cursor-pointer px-2.5 py-1.5 text-[11px] transition-all group mx-1 my-0.5 rounded-lg ${
+                    className={`flex items-center cursor-pointer px-2.5 py-1.5 text-[11px] transition-all group mx-1 my-0.5 rounded-md ${
                       isSelected 
                         ? 'border border-white/[0.12] bg-white/[0.06] shadow-sm' 
                         : 'hover:bg-white/[0.03] border border-transparent'
@@ -265,11 +265,11 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                     {/* Logo & Symbol info */}
                     <div className="flex min-w-0 flex-1 items-center space-x-2">
                       {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.symbol} className="h-4 w-4 rounded-full bg-transparent object-contain shrink-0" />
+                        <img src={item.logoUrl} alt={item.symbol} className="h-4 w-4 rounded-md bg-transparent object-contain shrink-0" />
                       ) : item.website ? (
-                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-4 w-4 rounded-full border border-white/[0.08] bg-white/[0.04] object-cover shrink-0" />
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-4 w-4 rounded-md border border-white/[0.08] bg-white/[0.04] object-cover shrink-0" />
                       ) : (
-                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[7px] font-bold text-white">
+                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.04] text-[7px] font-bold text-white">
                           {item.symbol.substring(0, 2)}
                         </div>
                       )}
@@ -306,7 +306,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       {/* Details Panel (Bottom Section) */}
       {selectedItem && (
         <div 
-          className="border-t border-white/[0.08] bg-[#121212]/90 backdrop-blur-2xl flex flex-col shrink-0 relative overflow-hidden transition-all duration-150"
+          className="border-t border-white/[0.08] bg-black flex flex-col shrink-0 relative overflow-hidden transition-all duration-150"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {/* Vertical Resizer */}
@@ -321,13 +321,13 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
           <div className="flex items-center justify-between px-3 pt-2.5 pb-1 shrink-0">
             <div className="flex items-center space-x-2">
               {selectedItem.logoUrl ? (
-                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-5 h-5 rounded-full bg-transparent object-contain" />
+                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-5 h-5 rounded-md bg-transparent object-contain" />
               ) : (
-                <div className="w-5 h-5 rounded-full bg-white/[0.04] flex items-center justify-center font-bold text-white border border-white/[0.08] text-[9px]">
+                <div className="w-5 h-5 rounded-md bg-white/[0.04] flex items-center justify-center font-bold text-white border border-white/[0.08] text-[9px]">
                   {displaySelectedSymbol.substring(0, 2)}
                 </div>
               )}
-              <span className="font-bold text-white text-sm tracking-tight">{displaySelectedSymbol}</span>
+              <span className="font-semibold text-white text-sm tracking-tight">{displaySelectedSymbol}</span>
             </div>
           </div>
 
@@ -349,9 +349,9 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               </div>
 
               {/* Big Price & Change Hero Card */}
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-md p-2.5">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-md p-3">
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-2xl font-bold font-mono text-white tracking-tight">
+                  <span className="text-2xl font-semibold font-mono text-white tracking-tight">
                     {selectedItem.price || '0.00'}
                   </span>
                   <div className="flex flex-col leading-none">
@@ -378,10 +378,10 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                 <div>
                   <div className="flex justify-between text-[10px] mb-1">
                     <span className="text-white font-mono font-medium">{dLow.toFixed(2)}</span>
-                    <span className="text-white/40 text-[8px] uppercase tracking-wider font-semibold">Day&apos;s Range</span>
+                    <span className="text-white/40 text-[8px] uppercase tracking-wider font-medium">Day&apos;s Range</span>
                     <span className="text-white font-mono font-medium">{dHigh.toFixed(2)}</span>
                   </div>
-                  <div className="h-1 bg-white/[0.06] rounded-full relative">
+                  <div className="h-1 bg-white/[0.08] rounded-full relative">
                     <div 
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`}
                       style={{ width: `${dayPct}%`, left: 0 }} 
@@ -397,10 +397,10 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                 <div>
                   <div className="flex justify-between text-[10px] mb-1">
                     <span className="text-white font-mono font-medium">{yLow.toFixed(2)}</span>
-                    <span className="text-white/40 text-[8px] uppercase tracking-wider font-semibold">52Wk Range</span>
+                    <span className="text-white/40 text-[8px] uppercase tracking-wider font-medium">52Wk Range</span>
                     <span className="text-white font-mono font-medium">{yHigh.toFixed(2)}</span>
                   </div>
-                  <div className="h-1 bg-white/[0.06] rounded-full relative">
+                  <div className="h-1 bg-white/[0.08] rounded-full relative">
                     <div 
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`}
                       style={{ width: `${yearPct}%`, left: 0 }} 
