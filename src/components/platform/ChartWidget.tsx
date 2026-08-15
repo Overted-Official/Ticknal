@@ -828,10 +828,10 @@ export default function ChartWidget({
   };
 
   const formatColor = (valStr: string) => {
-    if (!valStr) return '';
+    if (!valStr) return 'text-white';
     const val = parseFloat(valStr);
-    if (isNaN(val)) return 'text-tv-text';
-    return val > 0 ? 'text-tv-up' : val < 0 ? 'text-tv-down' : 'text-tv-text';
+    if (isNaN(val)) return 'text-white';
+    return val > 0 ? 'text-[#00e676]' : val < 0 ? 'text-[#ff4d58]' : 'text-white';
   };
 
   const formatPlus = (valStr: string) => {
@@ -848,48 +848,50 @@ export default function ChartWidget({
         title="Predict Future"
         onClick={() => setPredictPopoverOpen(true)}
         disabled={isPredicting || data.length === 0}
-        className="h-9 rounded-tv-sm border border-tv-border bg-tv-surface px-3 text-xs font-weight-medium text-tv-text shadow-lg transition-colors hover:bg-tv-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-8 rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-plt-orange/40 hover:text-plt-orange px-3 text-[11px] font-semibold text-white/90 shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
       >
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1.5">
           {isPredicting ? (
-            <Loader2 className="h-4 w-4 animate-spin text-tv-accent" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-plt-orange" />
           ) : (
-            <Sparkles className="h-4 w-4 text-tv-accent" />
+            <Sparkles className="h-3.5 w-3.5 text-plt-orange" />
           )}
           {isPredicting ? 'Predicting...' : 'Predict N Days'}
         </span>
       </button>
 
       {predictPopoverOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-56 rounded-tv-lg border border-tv-highlight/60 bg-tv-surface/95 p-3 text-xs text-tv-text shadow-2xl backdrop-blur-md z-[60]">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="font-weight-medium">AI Forecast</div>
+        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-xl border border-white/[0.1] bg-[#161616]/95 p-3.5 text-xs text-white shadow-2xl backdrop-blur-2xl z-[60]">
+          <div className="mb-2.5 flex items-center justify-between">
+            <div className="font-semibold text-white/90 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-plt-orange" /> AI Forecast
+            </div>
             <button
               type="button"
               onClick={() => setPredictPopoverOpen(false)}
-              className="flex h-5 w-5 items-center justify-center rounded-tv-sm text-tv-muted hover:bg-tv-hover hover:text-tv-text transition-colors"
+              className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 hover:bg-white/[0.08] hover:text-white transition-colors"
             >
               <X className="h-3 w-3" />
             </button>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div>
-              <label className="mb-1 block text-[11px] text-tv-muted">Number of Days</label>
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-white/50">Forecast Horizon (Days)</label>
               <input
                 type="number"
                 min="1"
                 max="100"
                 value={predictDaysInput}
                 onChange={(e) => setPredictDaysInput(e.target.value)}
-                className="h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-xs text-tv-text outline-none transition-colors hover:border-tv-border-highlight focus:border-tv-accent"
+                className="h-7 w-full rounded-lg border border-white/[0.08] bg-black/40 px-2.5 text-xs text-white outline-none transition-colors focus:border-plt-orange"
               />
             </div>
             
             <button
               type="button"
               onClick={handlePredict}
-              className="h-8 w-full rounded-tv-sm bg-tv-accent text-xs font-weight-medium text-tv-base transition-colors hover:bg-tv-accent-hover"
+              className="h-8 w-full rounded-lg bg-plt-orange text-xs font-semibold text-white transition-all hover:bg-plt-orange-hover shadow-[0_0_15px_rgba(255,100,13,0.3)]"
             >
               Run Prediction
             </button>
@@ -1026,33 +1028,31 @@ export default function ChartWidget({
       )}
 
       {!replayMode ? (
-        <div className="absolute bottom-4 left-4 z-50 flex items-center gap-2">
+        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#121212]/80 backdrop-blur-xl p-1 shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
           <button
             type="button"
             title="Bar Replay"
             aria-label="Bar Replay"
             disabled={!hasReplayRoom}
             onClick={enableReplay}
-            className="h-9 rounded-tv-sm border border-tv-border bg-tv-surface px-3 text-xs font-weight-medium text-tv-text shadow-lg transition-colors hover:bg-tv-hover disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-8 rounded-full px-3 text-[11px] font-semibold text-white/80 transition-all hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
           >
-            <span className="flex items-center gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Replay
-            </span>
+            <RotateCcw className="h-3.5 w-3.5 text-white/60" />
+            Replay
           </button>
 
           {predictButtonUI}
         </div>
       ) : (
-        <div className="absolute bottom-4 left-4 z-50 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1 rounded-tv-sm border border-tv-border bg-tv-surface p-1 text-xs text-tv-text shadow-lg">
+        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#121212]/85 backdrop-blur-xl p-1.5 text-xs text-white shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
           <button
             type="button"
             title="Reset replay point"
             aria-label="Reset replay point"
             onClick={jumpToStart}
-            className="flex h-8 w-8 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
           >
-            <SkipBack className="h-4 w-4" />
+            <SkipBack className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
@@ -1060,9 +1060,9 @@ export default function ChartWidget({
             aria-label="Step back"
             disabled={replayIndex <= 0}
             onClick={() => stepReplay(-1)}
-            className="flex h-8 w-8 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text disabled:opacity-40"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
           >
-            <StepBack className="h-4 w-4" />
+            <StepBack className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
@@ -1070,9 +1070,9 @@ export default function ChartWidget({
             aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
             disabled={replayIndex >= data.length - 1}
             onClick={() => setIsPlaying((value) => !value)}
-            className="flex h-8 w-8 items-center justify-center rounded-tv-sm bg-tv-accent text-tv-text transition-colors hover:bg-tv-accent-hover disabled:opacity-40"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-plt-orange text-white transition-all hover:bg-plt-orange-hover shadow-[0_0_12px_rgba(255,100,13,0.3)] disabled:opacity-30"
           >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
           </button>
           <button
             type="button"
@@ -1080,21 +1080,21 @@ export default function ChartWidget({
             aria-label="Step forward"
             disabled={replayIndex >= data.length - 1}
             onClick={() => stepReplay(1)}
-            className="flex h-8 w-8 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text disabled:opacity-40"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
           >
-            <StepForward className="h-4 w-4" />
+            <StepForward className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
             title="Jump to latest"
             aria-label="Jump to latest"
             onClick={jumpToLatest}
-            className="flex h-8 w-8 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
           >
-            <SkipForward className="h-4 w-4" />
+            <SkipForward className="h-3.5 w-3.5" />
           </button>
 
-          <div className="mx-1 h-5 w-px bg-tv-border" />
+          <div className="mx-1 h-4 w-px bg-white/10" />
 
           <input
             type="date"
@@ -1104,7 +1104,7 @@ export default function ChartWidget({
             max={data[data.length - 1]?.time}
             value={replayDate ?? ''}
             onChange={(event) => handleDateChange(event.target.value)}
-            className="h-8 w-36 rounded-tv-sm border border-tv-border bg-tv-base px-2 text-xs text-tv-text outline-none transition-colors hover:border-tv-border-highlight focus:border-tv-accent"
+            className="h-7 w-32 rounded-lg border border-white/[0.08] bg-black/40 px-2 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
           />
           <input
             type="range"
@@ -1114,14 +1114,14 @@ export default function ChartWidget({
             max={Math.max(0, data.length - 1)}
             value={replayIndex}
             onChange={(event) => handleDateChange(data[Number(event.target.value)]?.time ?? replayDate ?? '')}
-            className="h-8 w-32 accent-tv-accent"
+            className="h-7 w-28 accent-plt-orange cursor-pointer"
           />
           <select
             title="Replay speed"
             aria-label="Replay speed"
             value={playbackSpeed}
             onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-            className="h-8 rounded-tv-sm border border-tv-border bg-tv-base px-2 text-xs text-tv-text outline-none transition-colors hover:border-tv-border-highlight focus:border-tv-accent"
+            className="h-7 rounded-lg border border-white/[0.08] bg-black/40 px-1.5 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
           >
             {PLAYBACK_SPEEDS.map((speed) => (
               <option key={speed.label} value={speed.delay}>
@@ -1132,7 +1132,7 @@ export default function ChartWidget({
           <button
             type="button"
             onClick={exitReplay}
-            className="h-8 rounded-tv-sm px-3 text-xs font-weight-medium text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text"
+            className="h-7 rounded-full px-2.5 text-[10px] font-semibold text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
           >
             Live
           </button>
@@ -1148,72 +1148,72 @@ export default function ChartWidget({
 
       {metrics && (
         <div
-          className="absolute z-50 rounded-tv-sm border border-plt-border bg-plt-surface/95 backdrop-blur-md shadow-2xl text-[11px] transition-all overflow-hidden"
+          className="absolute z-50 rounded-xl border border-white/[0.08] bg-[#121212]/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] text-[11px] transition-all overflow-hidden"
           style={{ top: '16px', right: '65px' }}
         >
           {/* Summary Badge */}
           <div 
-            className={`flex items-center justify-between gap-4 px-3 py-1.5 cursor-pointer border-b transition-colors ${isMetricsExpanded ? 'border-plt-border bg-plt-card' : 'border-transparent hover:bg-plt-hover'}`}
+            className={`flex items-center justify-between gap-3 px-3 py-1.5 cursor-pointer transition-colors ${isMetricsExpanded ? 'border-b border-white/[0.08] bg-white/[0.04]' : 'hover:bg-white/[0.04]'}`}
             onClick={() => setIsMetricsExpanded(!isMetricsExpanded)}
           >
-            <span className="text-plt-muted font-medium flex items-center gap-1.5">
-              <ChevronDown size={12} className={`transition-transform duration-200 ${isMetricsExpanded ? 'rotate-180' : ''}`} />
-              Performance Metrics
+            <span className="text-white/60 font-medium flex items-center gap-1.5 text-[11px]">
+              <ChevronDown size={12} className={`transition-transform duration-200 opacity-60 ${isMetricsExpanded ? 'rotate-180' : ''}`} />
+              Performance
             </span>
-            <div className="flex items-center gap-3">
-              <span className={`font-medium ${formatColor(metrics['Sys ROI'])}`}>
+            <div className="flex items-center gap-2.5">
+              <span className={`font-bold font-mono text-[11px] ${formatColor(metrics['Sys ROI'])}`}>
                 {formatPlus(metrics['Sys ROI'])}
               </span>
               <button 
                 onClick={(e) => { e.stopPropagation(); setShowSignals(!showSignals); }}
-                className={`p-1 rounded transition-colors ${!showSignals ? 'text-plt-red bg-plt-red/10' : 'text-plt-muted hover:text-plt-red hover:bg-plt-hover'}`}
+                className={`p-1 rounded-md transition-colors ${!showSignals ? 'text-plt-orange bg-plt-orange/15' : 'text-white/40 hover:text-white hover:bg-white/[0.06]'}`}
                 title={showSignals ? "Hide Signals" : "Show Signals"}
               >
-                {showSignals ? <Eye size={14} /> : <EyeOff size={14} />}
+                {showSignals ? <Eye size={13} /> : <EyeOff size={13} />}
               </button>
             </div>
           </div>
 
           {/* Expanded Table */}
           {isMetricsExpanded && (
-            <div className="w-64 bg-plt-card">
-              <table className="w-full text-right border-collapse">
+            <div className="w-64 bg-black/40 backdrop-blur-2xl p-1">
+              <table className="w-full text-right border-collapse text-[10px]">
                 <tbody>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">System Total ROI</td>
-                    <td className={`py-1 px-3 ${formatColor(metrics['Sys ROI'])}`}>{formatPlus(metrics['Sys ROI'])}</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">System Total ROI</td>
+                    <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['Sys ROI'])}`}>{formatPlus(metrics['Sys ROI'])}</td>
                   </tr>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Buy & Hold ROI</td>
-                    <td className="py-1 px-3 text-plt-text">{metrics['B&H ROI']}%</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Buy & Hold ROI</td>
+                    <td className="py-1.5 px-2.5 font-mono text-white">{metrics['B&H ROI']}%</td>
                   </tr>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">ROI Margin</td>
-                    <td className={`py-1 px-3 ${formatColor(metrics['ROI Margin'])}`}>{formatPlus(metrics['ROI Margin'])}</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">ROI Margin</td>
+                    <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['ROI Margin'])}`}>{formatPlus(metrics['ROI Margin'])}</td>
                   </tr>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Win Rate</td>
-                    <td className="py-1 px-3 text-plt-text">{metrics['Win Rate']}%</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Win Rate</td>
+                    <td className="py-1.5 px-2.5 font-mono text-white">{metrics['Win Rate']}%</td>
                   </tr>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Max Drawdown</td>
-                    <td className="py-1 px-3 text-plt-red">{metrics['Max Drawdown']}%</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Drawdown</td>
+                    <td className="py-1.5 px-2.5 font-mono text-[#ff4d58] font-semibold">{metrics['Max Drawdown']}%</td>
                   </tr>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Max Adverse Excursion</td>
-                    <td className={`py-1 px-3 ${formatColor(metrics['Max Adverse Excursion'])}`}>{formatPlus(metrics['Max Adverse Excursion'])}</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Adverse Excursion</td>
+                    <td className={`py-1.5 px-2.5 font-mono ${formatColor(metrics['Max Adverse Excursion'])}`}>{formatPlus(metrics['Max Adverse Excursion'])}</td>
                   </tr>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Avg Bars/Trade</td>
-                    <td className="py-1 px-3 text-plt-text">{metrics['Avg Bars/Trade']}</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Avg Bars/Trade</td>
+                    <td className="py-1.5 px-2.5 font-mono text-white">{metrics['Avg Bars/Trade']}</td>
                   </tr>
-                  <tr className="border-b border-plt-border">
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Avg Return / Trade</td>
-                    <td className={`py-1 px-3 ${formatColor(metrics['Avg. Return/Trade'])}`}>{formatPlus(metrics['Avg. Return/Trade'])}</td>
+                  <tr className="border-b border-white/[0.05]">
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Avg Return / Trade</td>
+                    <td className={`py-1.5 px-2.5 font-mono ${formatColor(metrics['Avg. Return/Trade'])}`}>{formatPlus(metrics['Avg. Return/Trade'])}</td>
                   </tr>
                   <tr>
-                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Annual CAGR</td>
-                    <td className={`py-1 px-3 ${formatColor(metrics['Annual CAGR'])}`}>{formatPlus(metrics['Annual CAGR'])}</td>
+                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Annual CAGR</td>
+                    <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['Annual CAGR'])}`}>{formatPlus(metrics['Annual CAGR'])}</td>
                   </tr>
                 </tbody>
               </table>

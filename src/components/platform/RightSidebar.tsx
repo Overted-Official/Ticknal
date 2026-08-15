@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronRight, Search } from '@/components/ui/icons';
+import { ChevronDown, ChevronRight } from '@/components/ui/icons';
 import { ExternalLink, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -177,7 +177,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
   return (
     <div 
-      className="bg-plt-surface border-l border-plt-border flex flex-col select-none relative shrink-0 text-plt-text"
+      className="bg-[#141414]/95 backdrop-blur-xl border-l border-white/[0.08] flex flex-col select-none relative shrink-0 text-white"
       style={{ width: `${sidebarWidth}px` }}
     >
       {/* Resizer Handle */}
@@ -187,18 +187,18 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       />
 
       {/* Top Header Bar with Filter Switch Dropdown */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-plt-border bg-plt-surface shrink-0 relative" ref={filterDropdownRef}>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.08] bg-white/[0.01] shrink-0 relative" ref={filterDropdownRef}>
         <button 
           onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-          className="flex items-center space-x-1.5 cursor-pointer hover:opacity-80 transition-opacity text-xs font-semibold text-plt-text focus:outline-none"
+          className="flex items-center space-x-1.5 cursor-pointer hover:bg-white/[0.06] px-2 py-1 rounded-lg border border-white/[0.06] transition-all text-xs font-semibold text-white focus:outline-none"
         >
           <span>{filterLabels[listFilter]}</span>
-          <ChevronDown size={12} className={`text-plt-muted transition-transform duration-150 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown size={12} className={`text-white/50 transition-transform duration-150 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {/* Dropdown Menu */}
         {isFilterDropdownOpen && (
-          <div className="absolute left-2.5 top-9 bg-plt-surface border border-plt-border rounded-md shadow-2xl z-50 w-44 py-1 animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute left-3 top-10 bg-[#181818]/95 backdrop-blur-2xl border border-white/[0.1] rounded-xl shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
             {(['ALL', 'OPEN', 'OPPORTUNITIES'] as const).map((mode) => (
               <button
                 key={mode}
@@ -206,8 +206,8 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                   setListFilter(mode);
                   setIsFilterDropdownOpen(false);
                 }}
-                className={`w-full px-3 py-2 text-xs text-left flex items-center justify-between transition-colors hover:bg-plt-hover ${
-                  listFilter === mode ? 'text-plt-orange font-semibold bg-plt-card' : 'text-plt-text'
+                className={`w-full px-3 py-2 text-xs text-left rounded-lg flex items-center justify-between transition-colors ${
+                  listFilter === mode ? 'text-plt-orange font-semibold bg-white/[0.06]' : 'text-white/80 hover:bg-white/[0.04] hover:text-white'
                 }`}
               >
                 <span>{filterLabels[mode]}</span>
@@ -219,7 +219,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       </div>
 
       {/* Columns Header */}
-      <div className="flex items-center px-3 py-1.5 text-plt-muted font-medium border-b border-plt-border text-[10px] bg-plt-surface shrink-0">
+      <div className="flex items-center px-3 py-1.5 text-white/40 font-semibold uppercase tracking-wider border-b border-white/[0.06] text-[9px] bg-white/[0.01] shrink-0">
         <div className="flex-1 min-w-0">Symbol</div>
         <div className="w-[48px] text-right">Last</div>
         <div className="w-[50px] text-right">Chg%</div>
@@ -227,7 +227,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       </div>
 
       {/* Watchlist Rows */}
-      <div className="flex-1 overflow-y-auto no-scrollbar py-0.5">
+      <div className="flex-1 overflow-y-auto no-scrollbar py-1">
         {groupedWatchlist.map(([sector, items]) => {
           const collapsed = collapsedSectors.has(sector) && searchQuery.length === 0;
           return (
@@ -235,11 +235,11 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               <button
                 type="button"
                 onClick={() => toggleSector(sector)}
-                className="flex w-full items-center gap-1 px-3 py-1 text-left text-[9px] uppercase tracking-wider text-plt-muted/80 transition-colors hover:text-plt-text"
+                className="flex w-full items-center gap-1.5 px-3 py-1 text-left text-[9px] uppercase tracking-wider text-white/45 transition-colors hover:text-white group"
               >
-                {collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
+                {collapsed ? <ChevronRight size={10} className="text-white/30 group-hover:text-white" /> : <ChevronDown size={10} className="text-white/30 group-hover:text-white" />}
                 <span className="min-w-0 flex-1 truncate font-semibold">{sector}</span>
-                <span className="text-[8px] opacity-60">{items.length}</span>
+                <span className="text-[8px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.04] text-white/40">{items.length}</span>
               </button>
 
               {!collapsed && items.map((item) => {
@@ -256,10 +256,10 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') openTicker(item.symbol);
                     }}
-                    className={`flex items-center cursor-pointer px-2.5 py-1 text-[11px] transition-all group ${
+                    className={`flex items-center cursor-pointer px-2.5 py-1.5 text-[11px] transition-all group mx-1 my-0.5 rounded-lg ${
                       isSelected 
-                        ? 'border border-white/20 rounded-md bg-[#1a1a1a] shadow-sm mx-1 my-0.5' 
-                        : 'hover:bg-plt-hover/70 rounded-sm mx-1'
+                        ? 'border border-white/[0.12] bg-white/[0.06] shadow-sm' 
+                        : 'hover:bg-white/[0.03] border border-transparent'
                     }`}
                   >
                     {/* Logo & Symbol info */}
@@ -267,32 +267,32 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                       {item.logoUrl ? (
                         <img src={item.logoUrl} alt={item.symbol} className="h-4 w-4 rounded-full bg-transparent object-contain shrink-0" />
                       ) : item.website ? (
-                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-4 w-4 rounded-full border border-plt-border bg-plt-card object-cover shrink-0" />
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-4 w-4 rounded-full border border-white/[0.08] bg-white/[0.04] object-cover shrink-0" />
                       ) : (
-                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-plt-border bg-plt-card text-[7px] font-semibold text-plt-text">
+                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[7px] font-bold text-white">
                           {item.symbol.substring(0, 2)}
                         </div>
                       )}
                       
-                      <span className="truncate text-[12px] font-normal text-white">
+                      <span className={`truncate text-[12px] ${isSelected ? 'font-semibold text-plt-orange' : 'font-normal text-white'}`}>
                         {item.symbol.replace('.CA', '')}
                       </span>
                     </div>
 
                     {/* Last Price */}
-                    <div className="w-[48px] shrink-0 text-right font-medium text-white text-[11px] whitespace-nowrap">
+                    <div className="w-[48px] shrink-0 text-right font-mono font-medium text-white text-[11px] whitespace-nowrap">
                       {item.price}
                     </div>
 
                     {/* Chg% */}
-                    <div className={`w-[50px] shrink-0 text-right font-medium text-[11px] whitespace-nowrap ${
+                    <div className={`w-[50px] shrink-0 text-right font-mono font-medium text-[11px] whitespace-nowrap ${
                       isPositive ? 'text-[#00e676]' : 'text-[#ff4d58]'
                     }`}>
                       {changePctDisplay}
                     </div>
 
                     {/* Volume */}
-                    <div className="w-[44px] shrink-0 text-right font-normal text-plt-muted text-[10px] whitespace-nowrap pr-0.5 truncate">
+                    <div className="w-[44px] shrink-0 text-right font-mono text-white/40 text-[10px] whitespace-nowrap pr-0.5 truncate">
                       {item.volume || '-'}
                     </div>
                   </div>
@@ -306,7 +306,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       {/* Details Panel (Bottom Section) */}
       {selectedItem && (
         <div 
-          className="border-t border-plt-border bg-plt-surface flex flex-col shrink-0 relative overflow-hidden transition-all duration-150"
+          className="border-t border-white/[0.08] bg-[#121212]/90 backdrop-blur-2xl flex flex-col shrink-0 relative overflow-hidden transition-all duration-150"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {/* Vertical Resizer */}
@@ -323,11 +323,11 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               {selectedItem.logoUrl ? (
                 <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-5 h-5 rounded-full bg-transparent object-contain" />
               ) : (
-                <div className="w-5 h-5 rounded-full bg-plt-card flex items-center justify-center font-bold text-plt-text border border-plt-border text-[9px]">
+                <div className="w-5 h-5 rounded-full bg-white/[0.04] flex items-center justify-center font-bold text-white border border-white/[0.08] text-[9px]">
                   {displaySelectedSymbol.substring(0, 2)}
                 </div>
               )}
-              <span className="font-bold text-plt-text text-sm">{displaySelectedSymbol}</span>
+              <span className="font-bold text-white text-sm tracking-tight">{displaySelectedSymbol}</span>
             </div>
           </div>
 
@@ -338,50 +338,50 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                 <div className="text-white text-[11px] font-medium leading-snug">
                   {selectedItem.companyName}
                 </div>
-                <div className="flex items-center text-[10px] text-plt-muted space-x-1 mt-0.5">
-                  <ExternalLink size={10} className="hover:text-plt-text cursor-pointer" />
+                <div className="flex items-center text-[10px] text-white/50 space-x-1 mt-0.5">
+                  <ExternalLink size={10} className="hover:text-white cursor-pointer" />
                   <span>•</span>
                   <span>EGX</span>
                 </div>
-                <div className="text-[10px] text-plt-muted mt-0.5">
+                <div className="text-[10px] text-white/40 mt-0.5">
                   Finance • {selectedItem.sector}
                 </div>
               </div>
 
-              {/* Big Price & Change */}
-              <div>
+              {/* Big Price & Change Hero Card */}
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5">
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-2xl font-bold text-white tracking-tight">
+                  <span className="text-2xl font-bold font-mono text-white tracking-tight">
                     {selectedItem.price || '0.00'}
                   </span>
                   <div className="flex flex-col leading-none">
                     <span className="text-[9px] font-bold text-plt-orange">D</span>
-                    <span className="text-[9px] text-plt-muted">EGP</span>
+                    <span className="text-[9px] text-white/40">EGP</span>
                   </div>
-                  <div className={`ml-2 text-xs font-semibold ${selectedItem.isUp ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                  <div className={`ml-2 text-xs font-semibold font-mono ${selectedItem.isUp ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
                     {selectedItem.change ? selectedItem.change.split(' ')[0] : ''} {selectedItem.changePct || ''}
                   </div>
                 </div>
 
-                <div className="flex items-center text-plt-muted text-[10px] mt-1 space-x-1.5">
-                  <span className="inline-block w-1.5 h-0.5 bg-plt-muted rounded-full" />
+                <div className="flex items-center text-white/50 text-[10px] mt-1.5 space-x-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
                   <span>Market closed</span>
                 </div>
-                <div className="text-plt-muted/70 text-[9px] mt-0.5">
+                <div className="text-white/35 text-[9px] mt-0.5">
                   Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:28 GMT+3
                 </div>
               </div>
 
               {/* Range Sliders */}
-              <div className="space-y-2 pt-1">
+              <div className="space-y-2.5 pt-0.5">
                 {/* Day's Range */}
                 <div>
                   <div className="flex justify-between text-[10px] mb-1">
-                    <span className="text-white font-medium">{dLow.toFixed(2)}</span>
-                    <span className="text-plt-muted text-[8px] uppercase tracking-wider font-semibold">Day&apos;s Range</span>
-                    <span className="text-white font-medium">{dHigh.toFixed(2)}</span>
+                    <span className="text-white font-mono font-medium">{dLow.toFixed(2)}</span>
+                    <span className="text-white/40 text-[8px] uppercase tracking-wider font-semibold">Day&apos;s Range</span>
+                    <span className="text-white font-mono font-medium">{dHigh.toFixed(2)}</span>
                   </div>
-                  <div className="h-1 bg-plt-border rounded-full relative">
+                  <div className="h-1 bg-white/[0.06] rounded-full relative">
                     <div 
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#00e676]' : 'bg-[#ff4d58]'}`}
                       style={{ width: `${dayPct}%`, left: 0 }} 
@@ -396,11 +396,11 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                 {/* 52Wk Range */}
                 <div>
                   <div className="flex justify-between text-[10px] mb-1">
-                    <span className="text-white font-medium">{yLow.toFixed(2)}</span>
-                    <span className="text-plt-muted text-[8px] uppercase tracking-wider font-semibold">52Wk Range</span>
-                    <span className="text-white font-medium">{yHigh.toFixed(2)}</span>
+                    <span className="text-white font-mono font-medium">{yLow.toFixed(2)}</span>
+                    <span className="text-white/40 text-[8px] uppercase tracking-wider font-semibold">52Wk Range</span>
+                    <span className="text-white font-mono font-medium">{yHigh.toFixed(2)}</span>
                   </div>
-                  <div className="h-1 bg-plt-border rounded-full relative">
+                  <div className="h-1 bg-white/[0.06] rounded-full relative">
                     <div 
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#00e676]' : 'bg-[#ff4d58]'}`}
                       style={{ width: `${yearPct}%`, left: 0 }} 

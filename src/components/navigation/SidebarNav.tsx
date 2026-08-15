@@ -28,13 +28,13 @@ export default function SidebarNav() {
   ];
 
   return (
-    <div className="w-[48px] h-full flex flex-col items-center py-2.5 bg-plt-base border-r border-plt-border select-none">
+    <div className="w-[48px] h-full flex flex-col items-center py-3 bg-[#0e0e0e] border-r border-white/[0.08] select-none text-white">
       {/* Brand Logo */}
       <Link href="/dashboard" className="mb-4 w-6 h-6 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center">
-        <Image src="/logo.svg" alt="QuantEGX" width={24} height={24} className="object-contain" priority />
+        <Image src="/logo.svg" alt="QuantEGX" width={22} height={22} className="object-contain" priority />
       </Link>
 
-      <div className="flex-1 flex flex-col space-y-2.5 w-full items-center">
+      <div className="flex-1 flex flex-col space-y-3 w-full items-center">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const isCharts = item.href === '/charts';
@@ -47,29 +47,29 @@ export default function SidebarNav() {
                   className="w-full py-0.5 flex flex-col items-center justify-center relative"
                 >
                   <div 
-                    className={`flex items-center justify-center rounded-tv-md w-8 h-7 transition-colors duration-150 mb-0.5 ${
+                    className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 mb-0.5 ${
                       isActive || isChartsMenuOpen
-                        ? 'bg-plt-surface border border-plt-orange/40 text-plt-orange shadow-sm' 
-                        : 'text-plt-muted group-hover:bg-plt-hover group-hover:text-plt-text'
+                        ? 'bg-white/[0.08] border border-white/[0.12] text-plt-orange shadow-[0_0_12px_rgba(255,100,13,0.15)]' 
+                        : 'text-white/40 group-hover:bg-white/[0.04] group-hover:text-white'
                     }`}
                   >
                     <item.icon size={16} strokeWidth={1.5} />
                   </div>
-                  <span className={`text-[8px] font-weight-medium ${isActive || isChartsMenuOpen ? 'text-plt-orange font-semibold' : 'text-plt-muted group-hover:text-plt-text'}`}>
+                  <span className={`text-[8px] tracking-tight ${isActive || isChartsMenuOpen ? 'text-plt-orange font-semibold' : 'text-white/40 group-hover:text-white/80'}`}>
                     {item.label}
                   </span>
                 </button>
                 
                 {/* Desktop Floating Menu for Charts */}
                 {isChartsMenuOpen && (
-                  <div className="absolute left-full top-0 ml-1.5 hidden lg:flex flex-col bg-plt-surface border border-plt-border rounded-tv-lg shadow-2xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150">
-                    <div className="px-3 py-1.5 text-[9px] font-weight-bold text-plt-muted uppercase tracking-wider border-b border-plt-border bg-plt-base/50">
+                  <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#181818]/95 backdrop-blur-2xl border border-white/[0.1] rounded-xl shadow-2xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1">
+                    <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
                       Views
                     </div>
                     <Link 
                       href="/charts?view=chart" 
                       onClick={() => setIsChartsMenuOpen(false)}
-                      className="px-3 py-2 text-xs font-weight-medium text-plt-text hover:bg-plt-hover transition-colors flex items-center gap-2"
+                      className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors flex items-center gap-2"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-plt-orange"></span>
                       Chart
@@ -77,9 +77,9 @@ export default function SidebarNav() {
                     <Link 
                       href="/charts?view=positions" 
                       onClick={() => setIsChartsMenuOpen(false)}
-                      className="px-3 py-2 text-xs font-weight-medium text-plt-text hover:bg-plt-hover transition-colors border-t border-plt-border/30 flex items-center gap-2"
+                      className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors flex items-center gap-2"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-plt-cyan"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
                       Positions
                     </Link>
                   </div>
@@ -95,15 +95,15 @@ export default function SidebarNav() {
               className="w-full py-0.5 flex flex-col items-center justify-center group"
             >
               <div 
-                className={`flex items-center justify-center rounded-tv-md w-8 h-7 transition-colors duration-150 mb-0.5 ${
+                className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 mb-0.5 ${
                   isActive 
-                    ? 'bg-plt-surface border border-plt-orange/40 text-plt-orange shadow-sm' 
-                    : 'text-plt-muted group-hover:bg-plt-hover group-hover:text-plt-text'
+                    ? 'bg-white/[0.08] border border-white/[0.12] text-plt-orange shadow-[0_0_12px_rgba(255,100,13,0.15)]' 
+                    : 'text-white/40 group-hover:bg-white/[0.04] group-hover:text-white'
                 }`}
               >
                 <item.icon size={16} strokeWidth={1.5} />
               </div>
-              <span className={`text-[8px] font-weight-medium ${isActive ? 'text-plt-orange font-semibold' : 'text-plt-muted group-hover:text-plt-text'}`}>
+              <span className={`text-[8px] tracking-tight ${isActive ? 'text-plt-orange font-semibold' : 'text-white/40 group-hover:text-white/80'}`}>
                 {item.label}
               </span>
             </Link>
@@ -111,13 +111,25 @@ export default function SidebarNav() {
         })}
       </div>
 
-      <div className="mt-auto flex flex-col items-center w-full pb-2">
-        <button className="w-full py-0.5 flex flex-col items-center justify-center group">
-          <div className="flex items-center justify-center rounded-tv-md w-8 h-7 text-plt-muted group-hover:bg-plt-hover group-hover:text-plt-text transition-colors duration-150 mb-0.5">
+      {/* Settings at the bottom */}
+      <div className="w-full flex flex-col items-center space-y-2 mt-auto">
+        <Link
+          href="/settings"
+          className="w-full py-0.5 flex flex-col items-center justify-center group"
+        >
+          <div 
+            className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 ${
+              pathname === '/settings' 
+                ? 'bg-white/[0.08] border border-white/[0.12] text-plt-orange shadow-[0_0_12px_rgba(255,100,13,0.15)]' 
+                : 'text-white/40 group-hover:bg-white/[0.04] group-hover:text-white'
+            }`}
+          >
             <Settings size={16} strokeWidth={1.5} />
           </div>
-          <span className="text-[8px] font-weight-medium text-plt-muted group-hover:text-plt-text">Settings</span>
-        </button>
+          <span className={`text-[8px] tracking-tight mt-0.5 ${pathname === '/settings' ? 'text-plt-orange font-semibold' : 'text-white/40 group-hover:text-white/80'}`}>
+            Settings
+          </span>
+        </Link>
       </div>
     </div>
   );
