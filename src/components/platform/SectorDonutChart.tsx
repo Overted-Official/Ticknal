@@ -11,16 +11,16 @@ export type SectorDataItem = {
 };
 
 const SECTOR_COLORS = [
-  '#00FFA7', // mint green - accent
-  '#3B82F6', // blue
-  '#F59E0B', // amber
-  '#EC4899', // pink
-  '#8B5CF6', // purple
-  '#10B981', // emerald
-  '#F97316', // orange
-  '#06B6D4', // cyan
-  '#EF4444', // red
-  '#84CC16', // lime
+  '#00e676', // neon green
+  '#00d2ff', // cyan
+  '#f59e0b', // amber
+  '#a855f7', // violet
+  '#ea3943', // crimson
+  '#ec4899', // pink
+  '#3b82f6', // blue
+  '#10b981', // emerald
+  '#f97316', // orange
+  '#84cc16', // lime
 ];
 
 function formatEGP(value: number): string {
@@ -41,10 +41,10 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="rounded-lg border border-[#1e2d3d] bg-[#121C26] px-3 py-2 text-xs shadow-xl z-50">
-      <div className="font-medium text-white">{item.sector}</div>
-      <div className="mt-1 text-[#00FFA7]">{formatEGP(item.value)}</div>
-      <div className="text-[#8899aa]">{item.percentage.toFixed(1)}%</div>
+    <div className="rounded-lg border border-plt-border bg-plt-card px-3 py-2 text-xs shadow-xl z-50 backdrop-blur-md">
+      <div className="font-medium text-plt-text">{item.sector}</div>
+      <div className="mt-1 text-plt-green">{formatEGP(item.value)}</div>
+      <div className="text-plt-muted">{item.percentage.toFixed(1)}%</div>
     </div>
   );
 }
@@ -62,13 +62,13 @@ function CustomLegend({ payload }: CustomLegendProps) {
   return (
     <div className="flex flex-col justify-center gap-y-2.5 h-full pl-2">
       {payload.map((entry) => (
-        <div key={entry.value} className="flex items-center gap-2 text-[11px] text-[#8899aa]">
+        <div key={entry.value} className="flex items-center gap-2 text-[11px] text-plt-muted">
           <span
             className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
             style={{ backgroundColor: entry.color }}
           />
           <span className="truncate max-w-[110px]" title={entry.value}>{entry.value}</span>
-          <span className="text-[#aabbcc] ml-auto font-medium">{entry.payload.percentage.toFixed(0)}%</span>
+          <span className="text-plt-text ml-auto font-medium">{entry.payload.percentage.toFixed(0)}%</span>
         </div>
       ))}
     </div>
@@ -97,7 +97,7 @@ function CustomizedTreemapContent(props: any) {
           height={height}
           style={{
             fill: color,
-            stroke: '#121C26',
+            stroke: '#0d0f12',
             strokeWidth: 2,
             strokeOpacity: 1,
             opacity: 0.9,
@@ -126,14 +126,14 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-weight-medium">Sector Allocation</h2>
+        <h2 className="text-sm font-weight-medium text-plt-text">Sector Allocation</h2>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-tv-muted hidden sm:inline">by current value</span>
-          <div className="flex bg-tv-base rounded-md p-0.5 border border-tv-border">
+          <span className="text-[11px] text-plt-muted hidden sm:inline">by current value</span>
+          <div className="flex bg-plt-base rounded-md p-0.5 border border-plt-border">
             <button
               type="button"
               onClick={() => setView('donut')}
-              className={`p-1 rounded-sm transition-colors ${view === 'donut' ? 'bg-tv-surface text-tv-accent shadow-sm' : 'text-tv-muted hover:text-tv-text'}`}
+              className={`p-1 rounded-sm transition-colors ${view === 'donut' ? 'bg-plt-surface text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
               title="Donut View"
             >
               <PieChartIcon size={14} />
@@ -141,7 +141,7 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
             <button
               type="button"
               onClick={() => setView('treemap')}
-              className={`p-1 rounded-sm transition-colors ${view === 'treemap' ? 'bg-tv-surface text-tv-accent shadow-sm' : 'text-tv-muted hover:text-tv-text'}`}
+              className={`p-1 rounded-sm transition-colors ${view === 'treemap' ? 'bg-plt-surface text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
               title="Treemap View"
             >
               <Grid size={14} />
@@ -152,7 +152,7 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
       
       <div style={{ height: 240 }} className="relative">
         {!data.length ? (
-          <div className="flex h-full items-center justify-center text-xs text-[#8899aa]">
+          <div className="flex h-full items-center justify-center text-xs text-plt-muted">
             No open positions
           </div>
         ) : view === 'donut' ? (

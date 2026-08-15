@@ -156,16 +156,16 @@ export default function SignalPanel({
   };
 
   return (
-    <div className="absolute top-4 left-4 z-10 w-48 md:w-64 bg-tv-glass backdrop-blur-md border border-tv-border rounded-tv-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex flex-col">
+    <div className="absolute top-4 left-4 z-10 w-48 md:w-64 bg-plt-surface/95 backdrop-blur-md border border-plt-border rounded-tv-lg shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col">
       {/* Header / Main Signal */}
       <div 
-        className={`p-2 md:p-4 cursor-pointer hover:bg-tv-hover transition-colors flex items-center justify-between ${expanded ? 'rounded-t-tv-lg' : 'rounded-tv-lg'}`}
+        className={`p-2 md:p-4 cursor-pointer hover:bg-plt-hover transition-colors flex items-center justify-between ${expanded ? 'rounded-t-tv-lg' : 'rounded-tv-lg'}`}
         onClick={() => setExpanded(!expanded)}
       >
         <div>
           <div className="relative">
             <div 
-              className="mb-1 md:mb-1.5 flex items-center gap-1.5 cursor-pointer text-tv-muted hover:text-tv-text transition-colors" 
+              className="mb-1 md:mb-1.5 flex items-center gap-1.5 cursor-pointer text-plt-muted hover:text-plt-text transition-colors" 
               onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
             >
               <Target className="w-3 h-3 md:w-3.5 md:h-3.5" />
@@ -181,16 +181,16 @@ export default function SignalPanel({
                   className="fixed inset-0 z-40" 
                   onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); }} 
                 />
-                <div className="absolute top-full left-0 w-36 md:w-40 bg-[#1e222d] border border-tv-border rounded-tv-sm shadow-xl z-50 overflow-hidden">
+                <div className="absolute top-full left-0 w-36 md:w-40 bg-plt-card border border-plt-border rounded-tv-sm shadow-xl z-50 overflow-hidden">
                   {strategies.map((strat) => (
                     <div
                       key={strat.id}
                       className={`px-3 py-2 text-[10px] md:text-xs font-weight-medium uppercase tracking-wider ${
                         strat.disabled 
-                          ? 'text-tv-muted/40 cursor-not-allowed' 
+                          ? 'text-plt-muted/40 cursor-not-allowed' 
                           : strat.id === selectedStrategy 
-                            ? 'text-tv-up bg-tv-hover cursor-default' 
-                            : 'text-tv-muted hover:text-tv-text hover:bg-tv-hover cursor-pointer transition-colors'
+                            ? 'text-plt-green bg-plt-hover cursor-default' 
+                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover cursor-pointer transition-colors'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -209,29 +209,29 @@ export default function SignalPanel({
           </div>
           <div className="flex items-center gap-2">
             {loading ? (
-              <div className="h-4 md:h-6 w-16 md:w-20 bg-tv-surface animate-pulse rounded-tv-sm" />
+              <div className="h-4 md:h-6 w-16 md:w-20 bg-plt-card animate-pulse rounded-tv-sm" />
             ) : visibleSignalData ? (
               <>
                 <span className={`text-sm md:text-lg font-weight-medium ${
-                  visibleSignalData.signal === 'BUY' ? 'text-tv-up' :
-                  isExit ? 'text-tv-down' :
-                  'text-tv-text'
+                  visibleSignalData.signal === 'BUY' ? 'text-plt-green' :
+                  isExit ? 'text-plt-red' :
+                  'text-plt-text'
                 }`}>
                   {signalLabel}
                 </span>
-                <span className="text-[10px] md:text-xs bg-tv-surface px-1 md:px-1.5 py-0.5 rounded-tv-sm text-tv-text font-weight-medium">
+                <span className="text-[10px] md:text-xs bg-plt-card px-1 md:px-1.5 py-0.5 rounded-tv-sm text-plt-text font-weight-medium border border-plt-border/50">
                   {reason}
                 </span>
               </>
             ) : (
-              <span className="text-xs md:text-sm text-tv-muted">No PSI signals</span>
+              <span className="text-xs md:text-sm text-plt-muted">No PSI signals</span>
             )}
           </div>
         </div>
-        <div className="flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded-tv-full bg-tv-surface border border-tv-border shrink-0 ml-2">
-           {visibleSignalData?.signal === 'BUY' ? <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-tv-up" /> : 
-            isExit ? <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 text-tv-down" /> : 
-            <Activity className="w-3.5 h-3.5 md:w-4 md:h-4 text-tv-muted" />}
+        <div className="flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded-tv-full bg-plt-card border border-plt-border shrink-0 ml-2">
+           {visibleSignalData?.signal === 'BUY' ? <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-plt-green" /> : 
+            isExit ? <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 text-plt-red" /> : 
+            <Activity className="w-3.5 h-3.5 md:w-4 md:h-4 text-plt-muted" />}
         </div>
       </div>
 
@@ -239,20 +239,20 @@ export default function SignalPanel({
       <motion.div 
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0 }}
-        className="overflow-hidden border-t border-tv-border"
+        className="overflow-hidden border-t border-plt-border"
       >
         {visibleSignalData && (
-          <div className="p-4 bg-tv-base flex flex-col gap-3">
+          <div className="p-4 bg-plt-surface flex flex-col gap-3">
             {/* Dynamic Settings */}
             {activeStratDef.settings.length > 0 && (
               <div className="flex flex-col gap-3 text-xs mb-2">
                 {activeStratDef.settings.map(setting => {
                   if (setting.type === 'range') {
                     return (
-                      <div key={setting.key} className="rounded-tv-sm bg-tv-surface p-2">
-                        <div className="text-tv-muted mb-2 flex justify-between">
+                      <div key={setting.key} className="rounded-tv-sm bg-plt-card border border-plt-border/60 p-2">
+                        <div className="text-plt-muted mb-2 flex justify-between">
                           <span>{setting.label}</span>
-                          <span className="text-tv-text font-weight-medium">{strategyParams[setting.key] ?? setting.default}</span>
+                          <span className="text-plt-text font-weight-medium">{strategyParams[setting.key] ?? setting.default}</span>
                         </div>
                         <input
                           type="range"
@@ -261,12 +261,11 @@ export default function SignalPanel({
                           step={setting.step}
                           value={strategyParams[setting.key] ?? setting.default}
                           onChange={(e) => updateStrategyParam?.(setting.key, Number(e.target.value))}
-                          className="w-full accent-tv-accent cursor-pointer"
+                          className="w-full accent-plt-red cursor-pointer"
                         />
                       </div>
                     );
                   }
-                  // We can support more types later
                   return null;
                 })}
               </div>
@@ -290,20 +289,20 @@ export default function SignalPanel({
                   }
 
                   return (
-                    <div key={metric.key} className="rounded-tv-sm bg-tv-surface p-2 flex flex-col justify-between">
-                      <div className="text-tv-muted mb-1">{metric.label}</div>
-                      <div className="text-tv-text font-weight-medium">{displayVal}</div>
+                    <div key={metric.key} className="rounded-tv-sm bg-plt-card border border-plt-border/60 p-2 flex flex-col justify-between">
+                      <div className="text-plt-muted mb-1">{metric.label}</div>
+                      <div className="text-plt-text font-weight-medium">{displayVal}</div>
                     </div>
                   );
                 })}
               </div>
             )}
             
-            <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-tv-border/50">
-              <div className="flex bg-tv-surface p-0.5 rounded-tv-sm mb-1">
+            <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-plt-border/50">
+              <div className="flex bg-plt-card border border-plt-border p-0.5 rounded-tv-sm mb-1">
                 <button
                   className={`flex-1 py-1 text-xs font-weight-medium rounded-sm transition-colors ${
-                    trainingModel === 'psi8' ? 'bg-tv-base text-tv-text shadow-sm' : 'text-tv-muted hover:text-tv-text'
+                    trainingModel === 'psi8' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'
                   }`}
                   onClick={() => setTrainingModel('psi8')}
                 >
@@ -311,7 +310,7 @@ export default function SignalPanel({
                 </button>
                 <button
                   className={`flex-1 py-1 text-xs font-weight-medium rounded-sm transition-colors ${
-                    trainingModel === 'psi40' ? 'bg-tv-base text-tv-text shadow-sm' : 'text-tv-muted hover:text-tv-text'
+                    trainingModel === 'psi40' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'
                   }`}
                   onClick={() => setTrainingModel('psi40')}
                 >
@@ -319,27 +318,27 @@ export default function SignalPanel({
                 </button>
               </div>
 
-              <div className="text-[11px] text-tv-text font-weight-medium mb-1 uppercase tracking-wider text-tv-muted">Training period</div>
+              <div className="text-[11px] font-weight-medium mb-1 uppercase tracking-wider text-plt-muted">Training period</div>
               <div className="flex items-center justify-between">
-                <label className="text-tv-muted text-[10px]">Start Date</label>
+                <label className="text-plt-muted text-[10px]">Start Date</label>
                 <input 
                   type="date" 
-                  className="bg-tv-surface border border-tv-border rounded-tv-sm px-1 py-0.5 text-tv-text text-[10px] focus:outline-none focus:border-tv-accent w-28"
+                  className="bg-plt-card border border-plt-border rounded-tv-sm px-1 py-0.5 text-plt-text text-[10px] focus:outline-none focus:border-plt-border-active w-28"
                   value={strategyStartDate || ''}
                   onChange={(e) => setStrategyStartDate?.(e.target.value)}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <label className="text-tv-muted text-[10px]">End Date</label>
+                <label className="text-plt-muted text-[10px]">End Date</label>
                 <input 
                   type="date" 
-                  className="bg-tv-surface border border-tv-border rounded-tv-sm px-1 py-0.5 text-tv-text text-[10px] focus:outline-none focus:border-tv-accent w-28"
+                  className="bg-plt-card border border-plt-border rounded-tv-sm px-1 py-0.5 text-plt-text text-[10px] focus:outline-none focus:border-plt-border-active w-28"
                   value={strategyEndDate || ''}
                   onChange={(e) => setStrategyEndDate?.(e.target.value)}
                 />
               </div>
               <button 
-                className="mt-2 w-full bg-tv-accent text-tv-base hover:bg-tv-accent/90 transition-colors rounded-tv-sm py-1.5 text-xs font-weight-medium disabled:opacity-50 relative overflow-hidden"
+                className="mt-2 w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-colors rounded-tv-sm py-1.5 text-xs font-weight-medium disabled:opacity-50 relative overflow-hidden shadow-[0_0_15px_rgba(255,100,13,0.25)]"
                 onClick={startTraining}
                 disabled={optimizing}
               >
@@ -347,7 +346,7 @@ export default function SignalPanel({
                   <>
                     <span className="relative z-10">Optimizing... {optimProgress.toFixed(0)}%</span>
                     <div 
-                      className="absolute left-0 top-0 bottom-0 bg-tv-up/30 z-0 transition-all duration-300" 
+                      className="absolute left-0 top-0 bottom-0 bg-white/30 z-0 transition-all duration-300" 
                       style={{ width: `${optimProgress}%` }}
                     />
                   </>
@@ -357,14 +356,14 @@ export default function SignalPanel({
               </button>
             </div>
 
-            <div className="flex items-center justify-between mt-1 pt-2 border-t border-tv-border/50 text-[10px] text-tv-muted">
+            <div className="flex items-center justify-between mt-1 pt-2 border-t border-plt-border/50 text-[10px] text-plt-muted">
               <span className="flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> {visibleSignalData.modelVersion || 'v1.0'}
               </span>
               <span>Updated {new Date(visibleSignalData.date).toLocaleDateString()}</span>
             </div>
             {replayActive && replayEndDate && (
-              <div className="text-[10px] text-tv-muted">Replay as of {new Date(replayEndDate).toLocaleDateString()}</div>
+              <div className="text-[10px] text-plt-muted">Replay as of {new Date(replayEndDate).toLocaleDateString()}</div>
             )}
           </div>
         )}

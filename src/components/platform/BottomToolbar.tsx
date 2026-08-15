@@ -20,12 +20,12 @@ export default function BottomToolbar() {
   };
 
   return (
-    <div className="h-8 w-full bg-tv-base border-t border-tv-border flex items-center justify-between px-4 font-weight-medium select-none text-[0.75rem]">
-      <div className="text-tv-muted">EGX</div>
+    <div className="h-8 w-full bg-plt-base border-t border-plt-border flex items-center justify-between px-4 font-weight-medium select-none text-[0.75rem]">
+      <div className="text-plt-muted">EGX</div>
       
-      <div className="flex items-center space-x-4 text-tv-muted">
+      <div className="flex items-center space-x-4 text-plt-muted">
         <div>{cairoTime} Cairo</div>
-        <button type="button" onClick={recenterChart} className="hover:text-tv-text transition-colors">Auto</button>
+        <button type="button" onClick={recenterChart} className="hover:text-plt-text transition-colors">Auto</button>
       </div>
     </div>
   );

@@ -218,11 +218,11 @@ export default function ChartWidget({
     if (!chartContainerRef.current) return;
 
     const computedStyle = getComputedStyle(document.documentElement);
-    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#06101A';
-    const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#8B949E';
-    const borderColor = computedStyle.getPropertyValue('--border-color').trim() || '#1F2833';
-    const upColor = computedStyle.getPropertyValue('--up-color').trim() || '#34CF82';
-    const downColor = computedStyle.getPropertyValue('--down-color').trim() || '#FF4242';
+    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#08090b';
+    const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#8b929f';
+    const borderColor = computedStyle.getPropertyValue('--border-color').trim() || 'rgba(255, 255, 255, 0.08)';
+    const upColor = computedStyle.getPropertyValue('--up-color').trim() || '#00e676';
+    const downColor = computedStyle.getPropertyValue('--down-color').trim() || '#ea3943';
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -1141,22 +1141,22 @@ export default function ChartWidget({
       )}
 
       {replayMode && replayDate && (
-        <div className="absolute right-4 bottom-4 z-40 rounded-tv-sm border border-tv-border bg-tv-base px-2 py-1 text-[11px] text-tv-muted shadow-lg">
-          <span className="text-tv-accent">Replay</span> {data[0]?.time} to {replayDate}
+        <div className="absolute right-4 bottom-4 z-40 rounded-tv-sm border border-plt-border bg-plt-card px-2 py-1 text-[11px] text-plt-muted shadow-lg">
+          <span className="text-plt-red">Replay</span> {data[0]?.time} to {replayDate}
         </div>
       )}
 
       {metrics && (
         <div
-          className="absolute z-50 rounded-tv-sm border border-tv-border bg-tv-glass backdrop-blur-md shadow-lg text-[11px] transition-all"
+          className="absolute z-50 rounded-tv-sm border border-plt-border bg-plt-surface/95 backdrop-blur-md shadow-2xl text-[11px] transition-all overflow-hidden"
           style={{ top: '16px', right: '65px' }}
         >
           {/* Summary Badge */}
           <div 
-            className={`flex items-center justify-between gap-4 px-3 py-1.5 cursor-pointer border-b transition-colors ${isMetricsExpanded ? 'border-tv-border bg-tv-surface' : 'border-transparent hover:bg-tv-hover/50'}`}
+            className={`flex items-center justify-between gap-4 px-3 py-1.5 cursor-pointer border-b transition-colors ${isMetricsExpanded ? 'border-plt-border bg-plt-card' : 'border-transparent hover:bg-plt-hover'}`}
             onClick={() => setIsMetricsExpanded(!isMetricsExpanded)}
           >
-            <span className="text-tv-muted font-medium flex items-center gap-1.5">
+            <span className="text-plt-muted font-medium flex items-center gap-1.5">
               <ChevronDown size={12} className={`transition-transform duration-200 ${isMetricsExpanded ? 'rotate-180' : ''}`} />
               Performance Metrics
             </span>
@@ -1166,7 +1166,7 @@ export default function ChartWidget({
               </span>
               <button 
                 onClick={(e) => { e.stopPropagation(); setShowSignals(!showSignals); }}
-                className={`p-1 rounded transition-colors ${!showSignals ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-muted hover:text-tv-accent hover:bg-tv-hover'}`}
+                className={`p-1 rounded transition-colors ${!showSignals ? 'text-plt-red bg-plt-red/10' : 'text-plt-muted hover:text-plt-red hover:bg-plt-hover'}`}
                 title={showSignals ? "Hide Signals" : "Show Signals"}
               >
                 {showSignals ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -1176,43 +1176,43 @@ export default function ChartWidget({
 
           {/* Expanded Table */}
           {isMetricsExpanded && (
-            <div className="w-64 bg-tv-surface">
+            <div className="w-64 bg-plt-card">
               <table className="w-full text-right border-collapse">
                 <tbody>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">System Total ROI</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">System Total ROI</td>
                     <td className={`py-1 px-3 ${formatColor(metrics['Sys ROI'])}`}>{formatPlus(metrics['Sys ROI'])}</td>
                   </tr>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Buy & Hold ROI</td>
-                    <td className="py-1 px-3 text-tv-text">{metrics['B&H ROI']}%</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Buy & Hold ROI</td>
+                    <td className="py-1 px-3 text-plt-text">{metrics['B&H ROI']}%</td>
                   </tr>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">ROI Margin</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">ROI Margin</td>
                     <td className={`py-1 px-3 ${formatColor(metrics['ROI Margin'])}`}>{formatPlus(metrics['ROI Margin'])}</td>
                   </tr>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Win Rate</td>
-                    <td className="py-1 px-3 text-tv-text">{metrics['Win Rate']}%</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Win Rate</td>
+                    <td className="py-1 px-3 text-plt-text">{metrics['Win Rate']}%</td>
                   </tr>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Max Drawdown</td>
-                    <td className="py-1 px-3 text-tv-down">{metrics['Max Drawdown']}%</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Max Drawdown</td>
+                    <td className="py-1 px-3 text-plt-red">{metrics['Max Drawdown']}%</td>
                   </tr>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Max Adverse Excursion</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Max Adverse Excursion</td>
                     <td className={`py-1 px-3 ${formatColor(metrics['Max Adverse Excursion'])}`}>{formatPlus(metrics['Max Adverse Excursion'])}</td>
                   </tr>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Avg Bars/Trade</td>
-                    <td className="py-1 px-3 text-tv-text">{metrics['Avg Bars/Trade']}</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Avg Bars/Trade</td>
+                    <td className="py-1 px-3 text-plt-text">{metrics['Avg Bars/Trade']}</td>
                   </tr>
-                  <tr className="border-b border-tv-border">
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Avg Return / Trade</td>
+                  <tr className="border-b border-plt-border">
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Avg Return / Trade</td>
                     <td className={`py-1 px-3 ${formatColor(metrics['Avg. Return/Trade'])}`}>{formatPlus(metrics['Avg. Return/Trade'])}</td>
                   </tr>
                   <tr>
-                    <td className="py-1 px-3 text-tv-muted font-medium text-left">Annual CAGR</td>
+                    <td className="py-1 px-3 text-plt-muted font-medium text-left">Annual CAGR</td>
                     <td className={`py-1 px-3 ${formatColor(metrics['Annual CAGR'])}`}>{formatPlus(metrics['Annual CAGR'])}</td>
                   </tr>
                 </tbody>

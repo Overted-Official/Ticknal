@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, BarChart2, Bell, RotateCcw, Layout, Settings, Maximize, Camera, X } from '@/components/ui/icons';
+import { Search, BarChart2, Bell, RotateCcw, X } from '@/components/ui/icons';
 import Link from 'next/link';
-import Image from 'next/image';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import { WatchlistItem } from './RightSidebar';
 import { useRouter } from 'next/navigation';
@@ -45,34 +44,34 @@ export default function TopBar({
 
   return (
     <>
-      <div className="h-12 w-full bg-tv-base border-b border-tv-border flex items-center px-3 justify-between select-none relative z-40">
+      <div className="h-12 w-full bg-plt-surface border-b border-plt-border flex items-center px-3 justify-between select-none relative z-40">
         {/* Left section (Logo + Symbol) */}
         <div className="flex items-center space-x-2 md:space-x-4">
           <div 
-            className="flex items-center space-x-2 cursor-pointer hover:bg-tv-hover p-1.5 rounded-tv-md transition-colors"
+            className="flex items-center space-x-2 cursor-pointer hover:bg-plt-hover p-1.5 rounded-tv-md transition-colors"
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Logo visible on all screens */}
-            <div className="flex items-center justify-center shrink-0 w-8 h-8 rounded-tv-full bg-tv-surface border border-tv-border overflow-hidden p-[2px]">
+            <div className="flex items-center justify-center shrink-0 w-8 h-8 rounded-tv-full bg-plt-card border border-plt-border overflow-hidden p-[2px]">
               {currentTicker.logoUrl ? (
-                <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-tv-full bg-white" />
+                <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-tv-full bg-transparent" />
               ) : currentTicker.website ? (
                 <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="w-full h-full object-cover rounded-tv-full" />
               ) : (
-                <span className="text-[10px] font-weight-medium text-tv-text">{displaySymbol.substring(0, 2)}</span>
+                <span className="text-[10px] font-weight-medium text-plt-text">{displaySymbol.substring(0, 2)}</span>
               )}
             </div>
             
             <div className="flex flex-col justify-center min-w-0">
-              <span className="text-tv-text text-sm font-weight-medium truncate hidden md:block">{currentTicker.companyName}</span>
-              <div className="flex items-center space-x-1 font-weight-medium md:font-weight-light text-tv-text md:text-tv-muted text-sm md:text-xs">
+              <span className="text-plt-text text-sm font-weight-medium truncate hidden md:block">{currentTicker.companyName}</span>
+              <div className="flex items-center space-x-1 font-weight-medium md:font-weight-light text-plt-text md:text-plt-muted text-sm md:text-xs">
                 <span>{displaySymbol}</span>
                 <span className="text-[10px] hidden md:inline">•</span>
                 <span className="hidden md:inline">EGX</span>
               </div>
             </div>
             
-            <Search size={14} className="text-tv-muted ml-1 shrink-0" />
+            <Search size={14} className="text-plt-muted ml-1 shrink-0" />
           </div>
         </div>
 
@@ -84,8 +83,8 @@ export default function TopBar({
               <Link
                 key={tf}
                 href={`?ticker=${symbol}&timeframe=${tf}${replayQuery}`}
-                className={`px-2 py-1 rounded-tv-sm hover:bg-tv-hover transition-colors text-xs ${
-                  tf === timeframe ? 'text-tv-accent font-medium' : 'text-tv-muted'
+                className={`px-2 py-1 rounded-tv-sm hover:bg-plt-hover transition-colors text-xs ${
+                  tf === timeframe ? 'text-plt-orange font-semibold' : 'text-plt-muted'
                 }`}
               >
                 {tf}
@@ -93,29 +92,29 @@ export default function TopBar({
             ))}
           </div>
 
-          <div className="h-4 w-px bg-tv-border shrink-0 mx-1" />
+          <div className="h-4 w-px bg-plt-border shrink-0 mx-1" />
 
           {/* Bell Icon visible on mobile & desktop */}
           <button
             type="button"
             onClick={() => toggleAlert(symbol)}
-            className={`flex items-center justify-center hover:bg-tv-hover w-8 h-8 rounded-tv-sm transition-colors ${
-              alertEnabled ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-text'
+            className={`flex items-center justify-center hover:bg-plt-hover w-8 h-8 rounded-tv-sm transition-colors ${
+              alertEnabled ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30' : 'text-plt-text'
             }`}
           >
             <Bell size={16} fill={alertEnabled ? 'currentColor' : 'none'} />
           </button>
 
-          {/* Indicators & Tools - hidden on small mobile, visible on sm and up */}
+          {/* Indicators & Tools */}
           <div className="hidden sm:flex items-center space-x-2 ml-1">
-            <button className="flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors text-tv-text text-xs">
+            <button className="flex items-center space-x-1 hover:bg-plt-hover px-2 py-1 rounded-tv-sm transition-colors text-plt-text text-xs">
               <BarChart2 size={16} />
               <span className="hidden md:inline">Indicators</span>
             </button>
             <Link
               href={`?ticker=${symbol}&timeframe=${timeframe}&replay=1`}
-              className={`flex items-center space-x-1 hover:bg-tv-hover px-2 py-1 rounded-tv-sm transition-colors text-xs ${
-                replay ? 'text-tv-accent' : 'text-tv-text'
+              className={`flex items-center space-x-1 hover:bg-plt-hover px-2 py-1 rounded-tv-sm transition-colors text-xs ${
+                replay ? 'text-plt-orange font-medium' : 'text-plt-text'
               }`}
             >
               <RotateCcw size={16} />
@@ -124,18 +123,18 @@ export default function TopBar({
           </div>
         </div>
 
-        {/* Right section - hidden on mobile */}
+        {/* Right section - Add Order */}
         <div className="hidden md:flex items-center space-x-2">
           <button 
             onClick={() => setIsAddOrderOpen(true)}
-            className="rounded-tv-sm border border-tv-border px-3 py-1.5 text-xs text-tv-muted transition-colors hover:border-tv-border-highlight hover:text-tv-text ml-2"
+            className="rounded-tv-sm border border-plt-orange/40 bg-plt-orange/10 px-3 py-1.5 text-xs text-plt-orange font-medium transition-all hover:bg-plt-orange hover:text-white ml-2 shadow-[0_0_12px_rgba(255,100,13,0.2)]"
           >
             + Add Order
           </button>
         </div>
 
         {statusMessage && (
-          <div className="absolute left-3 top-12 z-50 rounded-tv-sm border border-tv-border bg-tv-surface px-3 py-2 text-xs text-tv-text shadow-lg hidden md:block">
+          <div className="absolute left-3 top-12 z-50 rounded-tv-sm border border-plt-border bg-plt-card px-3 py-2 text-xs text-plt-text shadow-lg hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -143,30 +142,30 @@ export default function TopBar({
 
       {/* Search Modal */}
       {isSearchOpen && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/60 backdrop-blur-sm px-4 animate-in fade-in duration-200" onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}>
-          <div className="bg-tv-base border border-tv-border rounded-tv-lg shadow-2xl w-full max-w-lg flex flex-col max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center p-4 border-b border-tv-border bg-tv-surface">
-              <Search size={20} className="text-tv-muted mr-3" />
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/70 backdrop-blur-sm px-4 animate-in fade-in duration-200" onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}>
+          <div className="bg-plt-surface border border-plt-border rounded-tv-lg shadow-2xl w-full max-w-lg flex flex-col max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center p-4 border-b border-plt-border bg-plt-card">
+              <Search size={20} className="text-plt-muted mr-3" />
               <input 
                 type="text" 
                 placeholder="Search tickers..."
-                className="flex-1 bg-transparent border-none outline-none text-tv-text placeholder:text-tv-muted"
+                className="flex-1 bg-transparent border-none outline-none text-plt-text placeholder:text-plt-muted"
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <button onClick={() => setIsSearchOpen(false)} className="p-2 text-tv-muted hover:text-tv-text transition-colors">
+              <button onClick={() => setIsSearchOpen(false)} className="p-2 text-plt-muted hover:text-plt-text transition-colors">
                 <X size={20} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto min-h-[300px]">
               {filteredWatchlist.length === 0 ? (
-                <div className="p-8 text-center text-tv-muted">No tickers found</div>
+                <div className="p-8 text-center text-plt-muted">No tickers found</div>
               ) : (
                 filteredWatchlist.map((item) => (
                   <div 
                     key={item.symbol}
-                    className="flex items-center justify-between p-4 border-b border-tv-border hover:bg-tv-hover cursor-pointer"
+                    className="flex items-center justify-between p-4 border-b border-plt-border hover:bg-plt-hover cursor-pointer transition-colors"
                     onClick={() => {
                       setIsSearchOpen(false);
                       router.push(`?ticker=${item.symbol}&timeframe=${timeframe}${replayQuery}`);
@@ -174,23 +173,23 @@ export default function TopBar({
                   >
                     <div className="flex items-center space-x-3">
                       {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.symbol} className="h-8 w-8 rounded-tv-full bg-white object-contain p-[2px]" />
+                        <img src={item.logoUrl} alt={item.symbol} className="h-8 w-8 rounded-tv-full bg-transparent object-contain p-[2px]" />
                       ) : item.website ? (
-                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-8 w-8 rounded-tv-full border border-tv-border bg-tv-surface object-cover" />
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-8 w-8 rounded-tv-full border border-plt-border bg-plt-card object-cover" />
                       ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-tv-full border border-tv-border bg-tv-surface text-xs font-weight-medium text-tv-text">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-tv-full border border-plt-border bg-plt-card text-xs font-weight-medium text-plt-text">
                           {item.symbol.substring(0, 2)}
                         </div>
                       )}
                       <div>
-                        <div className="font-weight-medium text-tv-text">{item.symbol.replace('.CA', '')}</div>
-                        <div className="text-xs text-tv-muted mt-1">{item.companyName}</div>
+                        <div className="font-weight-medium text-plt-text">{item.symbol.replace('.CA', '')}</div>
+                        <div className="text-xs text-plt-muted mt-1">{item.companyName}</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <div className="text-xs text-tv-muted">{item.sector}</div>
-                        <div className="text-xs font-weight-medium text-tv-text mt-1">{item.price ? Number(item.price).toFixed(2) : ''} {item.price ? 'EGP' : ''}</div>
+                        <div className="text-xs text-plt-muted">{item.sector}</div>
+                        <div className="text-xs font-weight-medium text-plt-text mt-1">{item.price ? Number(item.price).toFixed(2) : ''} {item.price ? 'EGP' : ''}</div>
                       </div>
                       <button 
                         onClick={(e) => {
@@ -198,7 +197,7 @@ export default function TopBar({
                           toggleAlert(item.symbol);
                         }}
                         className={`p-2 rounded-full transition-colors ${
-                          isAlerted(item.symbol) ? 'text-tv-accent bg-tv-accent/10' : 'text-tv-muted hover:text-tv-accent hover:bg-tv-border'
+                          isAlerted(item.symbol) ? 'text-plt-red bg-plt-red/10' : 'text-plt-muted hover:text-plt-red hover:bg-plt-hover'
                         }`}
                       >
                          <Bell size={18} fill={isAlerted(item.symbol) ? 'currentColor' : 'none'} />

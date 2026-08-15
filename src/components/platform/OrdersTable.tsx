@@ -79,16 +79,16 @@ export default function OrdersTable() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-tv-base text-tv-text">
-      <div className="border-b border-tv-border px-5 py-4">
+    <div className="flex h-full min-h-0 flex-col bg-plt-base text-plt-text">
+      <div className="border-b border-plt-border px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-weight-medium">Orders</h1>
-            <p className="mt-1 text-xs text-tv-muted">Tracked long positions from chart candle clicks</p>
+            <h1 className="text-xl font-weight-medium text-plt-text">Orders</h1>
+            <p className="mt-1 text-xs text-plt-muted">Tracked long positions from chart candle clicks</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-tv-muted">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-plt-muted">
                 <Search size={14} />
               </div>
               <input
@@ -96,13 +96,13 @@ export default function OrdersTable() {
                 placeholder="Search ticker or company..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-48 rounded-tv-sm border border-tv-border bg-tv-surface pl-8 pr-3 text-xs text-tv-text placeholder:text-tv-muted focus:border-tv-accent focus:outline-none transition-colors"
+                className="h-8 w-48 rounded-tv-sm border border-plt-border bg-plt-surface pl-8 pr-3 text-xs text-plt-text placeholder:text-plt-muted focus:border-plt-border-active focus:outline-none transition-colors"
               />
             </div>
             <button
               type="button"
               onClick={() => setIsAddingOrder(true)}
-              className="h-8 rounded-tv-sm bg-tv-accent text-white px-3 text-xs font-weight-medium hover:bg-tv-accent/90 transition-colors shadow-[0_0_10px_rgba(41,98,255,0.3)]"
+              className="h-8 rounded-tv-sm bg-plt-red text-white px-3 text-xs font-weight-medium hover:bg-plt-red-hover transition-colors shadow-md"
             >
               + Add Order
             </button>
@@ -113,8 +113,8 @@ export default function OrdersTable() {
                 onClick={() => setFilter(value)}
                 className={`h-8 rounded-tv-sm border px-3 text-xs transition-colors ${
                   filter === value
-                    ? 'border-tv-accent bg-tv-hover text-tv-text'
-                    : 'border-tv-border text-tv-muted hover:border-tv-border-highlight hover:text-tv-text'
+                    ? 'border-plt-border-active bg-plt-card text-plt-text'
+                    : 'border-plt-border text-plt-muted hover:border-plt-border-active hover:text-plt-text'
                 }`}
               >
                 {value}
@@ -124,11 +124,11 @@ export default function OrdersTable() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
-          <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-tv-accent" />
+          <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-plt-text font-bold" />
           <Metric label="Open" value={String(totals.openCount)} />
           <Metric label="Closed" value={String(totals.closedCount)} />
-          <Metric label="Unrealized P/L" value={formatMoney(totals.unrealized)} valueClass={totals.unrealized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
-          <Metric label="Realized P/L" value={formatMoney(totals.realized)} valueClass={totals.realized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
+          <Metric label="Unrealized P/L" value={formatMoney(totals.unrealized)} valueClass={totals.unrealized >= 0 ? 'text-plt-green' : 'text-plt-red'} />
+          <Metric label="Realized P/L" value={formatMoney(totals.realized)} valueClass={totals.realized >= 0 ? 'text-plt-green' : 'text-plt-red'} />
         </div>
       </div>
 
@@ -138,20 +138,20 @@ export default function OrdersTable() {
           {loading ? (
             <MobileOrdersSkeleton />
           ) : filteredOrders.length === 0 ? (
-            <div className="p-8 text-center text-tv-muted">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
+            <div className="p-8 text-center text-plt-muted">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
             filteredOrders.map((order) => (
-              <div key={order.id} className="bg-tv-base border border-tv-border rounded-tv-lg p-3 shadow-sm">
-                <div className="flex justify-between items-start border-b border-tv-border pb-2 mb-2">
+              <div key={order.id} className="bg-plt-card border border-plt-border rounded-tv-lg p-3 shadow-sm">
+                <div className="flex justify-between items-start border-b border-plt-border pb-2 mb-2">
                   <div>
-                    <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text hover:text-tv-accent text-sm flex items-center gap-1">
+                    <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-plt-text hover:text-plt-red text-sm flex items-center gap-1">
                       {order.tickerSymbol}
-                      <span className="text-[10px] text-tv-muted font-normal">({order.sector})</span>
+                      <span className="text-[10px] text-plt-muted font-normal">({order.sector})</span>
                     </Link>
-                    <div className="text-[11px] text-tv-muted truncate max-w-[150px]">{order.companyName}</div>
+                    <div className="text-[11px] text-plt-muted truncate max-w-[150px]">{order.companyName}</div>
                   </div>
                   <span className={`px-2 py-0.5 rounded-sm text-[10px] font-weight-medium ${
-                    order.status === 'OPEN' ? 'bg-[#2962FF]/10 text-tv-accent' : 'bg-tv-surface text-tv-muted'
+                    order.status === 'OPEN' ? 'bg-plt-surface border border-plt-border text-plt-text' : 'bg-plt-surface text-plt-muted'
                   }`}>
                     {order.status}
                   </span>
@@ -159,36 +159,36 @@ export default function OrdersTable() {
 
                 <div className="grid grid-cols-2 gap-x-2 gap-y-3 text-xs mb-3">
                   <div>
-                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">Entry</span>
-                    <span className="text-tv-text font-weight-medium">{formatPrice(order.entryPrice)}</span>
-                    <span className="text-tv-muted text-[10px] block">{order.entryDate}</span>
+                    <span className="text-plt-muted text-[10px] uppercase block mb-0.5">Entry</span>
+                    <span className="text-plt-text font-weight-medium">{formatPrice(order.entryPrice)}</span>
+                    <span className="text-plt-muted text-[10px] block">{order.entryDate}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">Current</span>
-                    <span className="text-tv-text font-weight-medium">{formatPrice(order.currentPrice)}</span>
-                    <span className="text-tv-muted text-[10px] block">Qty: {formatQuantity(order.quantity)}</span>
+                    <span className="text-plt-muted text-[10px] uppercase block mb-0.5">Current</span>
+                    <span className="text-plt-text font-weight-medium">{formatPrice(order.currentPrice)}</span>
+                    <span className="text-plt-muted text-[10px] block">Qty: {formatQuantity(order.quantity)}</span>
                   </div>
 
                   <div>
-                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">Target/Stop</span>
-                    <span className="text-tv-text">{order.targetPrice ? order.targetPrice.toFixed(2) : '-'} / {order.stopPrice ? order.stopPrice.toFixed(2) : '-'}</span>
+                    <span className="text-plt-muted text-[10px] uppercase block mb-0.5">Target/Stop</span>
+                    <span className="text-plt-text">{order.targetPrice ? order.targetPrice.toFixed(2) : '-'} / {order.stopPrice ? order.stopPrice.toFixed(2) : '-'}</span>
                   </div>
                   
                   <div className="text-right">
-                    <span className="text-tv-muted text-[10px] uppercase block mb-0.5">P/L</span>
-                    <div className={`font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                    <span className="text-plt-muted text-[10px] uppercase block mb-0.5">P/L</span>
+                    <div className={`font-weight-medium ${order.profitLoss >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
                       {formatMoney(order.profitLoss)}
                       <span className="text-[10px] ml-1 opacity-80">({(order.profitLossPct * 100).toFixed(2)}%)</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-tv-border">
+                <div className="flex justify-end gap-2 pt-2 border-t border-plt-border">
                   {order.status === 'OPEN' && (
                     <button
                       title="Close Position"
                       onClick={() => closeOrder(order)}
-                      className="p-1.5 rounded bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors flex items-center justify-center border border-tv-border"
+                      className="p-1.5 rounded bg-plt-surface text-plt-text hover:bg-plt-hover transition-colors flex items-center justify-center border border-plt-border"
                     >
                       <CheckCircle size={14} className="mr-1" />
                       <span className="text-[11px]">Close</span>
@@ -197,7 +197,7 @@ export default function OrdersTable() {
                   <button
                     title="Edit Order"
                     onClick={() => editOrder(order)}
-                    className="p-1.5 rounded bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors flex items-center justify-center border border-tv-border"
+                    className="p-1.5 rounded bg-plt-surface text-plt-text hover:bg-plt-hover transition-colors flex items-center justify-center border border-plt-border"
                   >
                     <Pencil size={14} className="mr-1" />
                     <span className="text-[11px]">Edit</span>
@@ -205,7 +205,7 @@ export default function OrdersTable() {
                   <button
                     title="Delete Record"
                     onClick={() => deleteOrder(order)}
-                    className="p-1.5 rounded bg-tv-surface text-tv-down hover:bg-red-900/20 transition-colors flex items-center justify-center border border-tv-border"
+                    className="p-1.5 rounded bg-plt-surface text-plt-red hover:bg-plt-red/10 transition-colors flex items-center justify-center border border-plt-border"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -218,7 +218,7 @@ export default function OrdersTable() {
         {/* Desktop View (Table) */}
         <div className="hidden md:block">
         <table className="w-full text-left text-sm">
-          <thead className="bg-tv-surface sticky top-0 z-10 border-b border-tv-border text-xs uppercase text-tv-muted">
+          <thead className="bg-plt-card sticky top-0 z-10 border-b border-plt-border text-xs uppercase text-plt-muted">
             <tr>
               <th className="px-5 py-3 font-weight-medium">Ticker</th>
               <th className="px-5 py-3 font-weight-medium">Status</th>
@@ -230,53 +230,53 @@ export default function OrdersTable() {
               <th className="px-5 py-3 font-weight-medium"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-tv-border bg-tv-base">
+          <tbody className="divide-y divide-plt-border bg-plt-surface">
             {loading ? (
               <DesktopOrdersSkeleton />
             ) : filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-tv-muted">
+                <td colSpan={8} className="px-5 py-8 text-center text-plt-muted">
                   No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found
                 </td>
               </tr>
             ) : (
               filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-tv-hover transition-colors group">
+                <tr key={order.id} className="hover:bg-plt-hover transition-colors group">
                   <td className="px-5 py-3 whitespace-nowrap">
-                    <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-tv-text group-hover:text-tv-accent transition-colors flex items-center gap-2">
-                      <LineChart size={16} className="text-tv-muted" />
+                    <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-weight-medium text-plt-text group-hover:text-plt-red transition-colors flex items-center gap-2">
+                      <LineChart size={16} className="text-plt-muted" />
                       {order.tickerSymbol}
                     </Link>
-                    <div className="text-xs text-tv-muted truncate max-w-[200px] mt-0.5">{order.companyName}</div>
+                    <div className="text-xs text-plt-muted truncate max-w-[200px] mt-0.5">{order.companyName}</div>
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap">
                     <span
                       className={`inline-block rounded-sm px-2 py-0.5 text-xs font-weight-medium ${
-                        order.status === 'OPEN' ? 'bg-[#2962FF]/10 text-tv-accent' : 'bg-tv-surface text-tv-muted'
+                        order.status === 'OPEN' ? 'bg-plt-card border border-plt-border text-plt-text' : 'bg-plt-card text-plt-muted'
                       }`}
                     >
                       {order.status}
                     </span>
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap">
-                    <div className="text-tv-text font-weight-medium">{formatPrice(order.entryPrice)}</div>
-                    <div className="text-xs text-tv-muted mt-0.5">{order.entryDate}</div>
+                    <div className="text-plt-text font-weight-medium">{formatPrice(order.entryPrice)}</div>
+                    <div className="text-xs text-plt-muted mt-0.5">{order.entryDate}</div>
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap text-right">
-                    <div className="text-tv-up">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
-                    <div className="text-tv-down mt-0.5">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
+                    <div className="text-plt-green">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
+                    <div className="text-plt-red mt-0.5">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
                   </td>
-                  <td className="px-5 py-3 whitespace-nowrap text-right font-weight-medium text-tv-text">
+                  <td className="px-5 py-3 whitespace-nowrap text-right font-weight-medium text-plt-text">
                     {formatQuantity(order.quantity)}
                   </td>
-                  <td className="px-5 py-3 whitespace-nowrap text-right text-tv-text font-weight-medium">
+                  <td className="px-5 py-3 whitespace-nowrap text-right text-plt-text font-weight-medium">
                     {formatPrice(order.currentPrice)}
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap text-right">
-                    <div className={`font-weight-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                    <div className={`font-weight-medium ${order.profitLoss >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
                       {formatMoney(order.profitLoss)}
                     </div>
-                    <div className={`text-xs mt-0.5 ${order.profitLossPct >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                    <div className={`text-xs mt-0.5 ${order.profitLossPct >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
                       {(order.profitLossPct * 100).toFixed(2)}%
                     </div>
                   </td>
@@ -286,7 +286,7 @@ export default function OrdersTable() {
                         <button
                           title="Close Position"
                           onClick={() => closeOrder(order)}
-                          className="p-1.5 rounded-tv-sm bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors border border-tv-border"
+                          className="p-1.5 rounded-tv-sm bg-plt-card text-plt-text hover:bg-plt-hover transition-colors border border-plt-border"
                         >
                           <CheckCircle size={16} />
                         </button>
@@ -294,14 +294,14 @@ export default function OrdersTable() {
                       <button
                         title="Edit Order"
                         onClick={() => editOrder(order)}
-                        className="p-1.5 rounded-tv-sm bg-tv-surface text-tv-text hover:bg-tv-hover transition-colors border border-tv-border"
+                        className="p-1.5 rounded-tv-sm bg-plt-card text-plt-text hover:bg-plt-hover transition-colors border border-plt-border"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
                         title="Delete Record"
                         onClick={() => deleteOrder(order)}
-                        className="p-1.5 rounded-tv-sm bg-tv-surface text-tv-down hover:bg-red-900/20 transition-colors border border-tv-border"
+                        className="p-1.5 rounded-tv-sm bg-plt-card text-plt-red hover:bg-plt-red/10 transition-colors border border-plt-border"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -338,10 +338,10 @@ export default function OrdersTable() {
   );
 }
 
-function Metric({ label, value, valueClass = 'text-tv-text' }: { label: string; value: string; valueClass?: string }) {
+function Metric({ label, value, valueClass = 'text-plt-text' }: { label: string; value: string; valueClass?: string }) {
   return (
-    <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-3">
-      <div className="text-[11px] uppercase text-tv-muted">{label}</div>
+    <div className="rounded-tv-lg border border-plt-border bg-plt-surface p-3">
+      <div className="text-[11px] uppercase text-plt-muted">{label}</div>
       <div className={`mt-1 text-lg font-weight-medium ${valueClass}`}>{value}</div>
     </div>
   );

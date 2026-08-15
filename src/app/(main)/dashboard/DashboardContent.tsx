@@ -65,18 +65,18 @@ export default async function DashboardContent() {
   const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text pb-6">
+    <div className="flex h-full min-h-0 flex-col overflow-auto bg-plt-base text-plt-text pb-6">
       <div className="px-4 pt-4 pb-0 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-xl font-weight-medium">Dashboard</h1>
-            <p className="mt-1 text-xs text-tv-muted">Portfolio performance and fresh PSI opportunities</p>
+            <h1 className="text-xl font-weight-medium text-plt-text">Dashboard</h1>
+            <p className="mt-1 text-xs text-plt-muted">Portfolio performance and fresh PSI opportunities</p>
           </div>
           <div className="flex items-center gap-3">
             <TestNotificationButton />
             <Link
               href="/charts"
-              className="rounded-tv-sm border border-tv-border px-3 py-2 text-xs text-tv-muted transition-colors hover:border-tv-border-highlight hover:text-tv-text"
+              className="rounded-tv-sm border border-plt-border bg-plt-surface px-3 py-2 text-xs text-plt-muted transition-colors hover:border-plt-border-active hover:text-plt-text"
             >
               Open Charts
             </Link>
@@ -89,43 +89,43 @@ export default async function DashboardContent() {
               label="Net Worth"
               value={formatMoney(orderStats.openMarketValue, false)}
               subtitle={`Total ROI ${orderStats.totalRoi >= 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
-              subtitleClass={orderStats.totalRoi >= 0 ? 'text-tv-up' : 'text-tv-down'}
+              subtitleClass={orderStats.totalRoi >= 0 ? 'text-plt-green' : 'text-plt-red'}
             />
           </div>
-          <Metric label="Unrealized P/L" value={formatMoney(orderStats.unrealized, true)} valueClass={orderStats.unrealized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
-          <Metric label="Realized P/L" value={formatMoney(orderStats.realized, true)} valueClass={orderStats.realized >= 0 ? 'text-tv-up' : 'text-tv-down'} />
+          <Metric label="Unrealized P/L" value={formatMoney(orderStats.unrealized, true)} valueClass={orderStats.unrealized >= 0 ? 'text-plt-green' : 'text-plt-red'} />
+          <Metric label="Realized P/L" value={formatMoney(orderStats.realized, true)} valueClass={orderStats.realized >= 0 ? 'text-plt-green' : 'text-plt-red'} />
           <Metric 
             label="Open Positions" 
             value={String(orderStats.openOrders.length)} 
             subtitle={`${orderStats.openWinning} Win / ${orderStats.openLosing} Loss`}
-            subtitleClass="text-tv-muted"
+            subtitleClass="text-plt-muted"
           />
           <Metric 
             label="Closed Positions" 
             value={String(orderStats.closedCount)} 
             subtitle={`${orderStats.closedWinning} Win / ${orderStats.closedLosing} Loss`}
-            subtitleClass="text-tv-muted"
+            subtitleClass="text-plt-muted"
           />
           <Metric label="Active Alerts" value={String(activeAlertCount)} />
         </div>
 
         {/* Extended Portfolio Stats */}
-        <div className="mt-4 rounded-tv-lg border border-tv-border bg-tv-surface p-4 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-tv-border gap-4 md:gap-0">
+        <div className="mt-4 rounded-tv-lg border border-plt-border bg-plt-surface p-4 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-plt-border gap-4 md:gap-0">
           <div className="flex-1 md:px-4 first:px-0 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-tv-muted mb-1">Win Rate</div>
-            <div className="text-lg font-weight-medium text-tv-text">{orderStats.winRate.toFixed(1)}%</div>
+            <div className="text-[11px] uppercase text-plt-muted mb-1">Win Rate</div>
+            <div className="text-lg font-weight-medium text-plt-text">{orderStats.winRate.toFixed(1)}%</div>
           </div>
           <div className="flex-1 md:px-4 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-tv-muted mb-1">Avg. Bars / Trade</div>
-            <div className="text-lg font-weight-medium text-tv-text">{Math.round(orderStats.avgBarsPerTrade)}</div>
+            <div className="text-[11px] uppercase text-plt-muted mb-1">Avg. Bars / Trade</div>
+            <div className="text-lg font-weight-medium text-plt-text">{Math.round(orderStats.avgBarsPerTrade)}</div>
           </div>
           <div className="flex-1 md:px-4 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-tv-muted mb-1">Avg. Adverse Excursion</div>
-            <div className="text-lg font-weight-medium text-tv-muted">N/A</div>
+            <div className="text-[11px] uppercase text-plt-muted mb-1">Avg. Adverse Excursion</div>
+            <div className="text-lg font-weight-medium text-plt-muted">N/A</div>
           </div>
           <div className="flex-1 md:px-4 last:pr-0 flex flex-col justify-center">
-            <div className="text-[11px] uppercase text-tv-muted mb-1">Max Trade Loss</div>
-            <div className={`text-lg font-weight-medium ${orderStats.maxDrawdownPct < 0 ? 'text-tv-down' : 'text-tv-text'}`}>
+            <div className="text-[11px] uppercase text-plt-muted mb-1">Max Trade Loss</div>
+            <div className={`text-lg font-weight-medium ${orderStats.maxDrawdownPct < 0 ? 'text-plt-red' : 'text-plt-text'}`}>
               {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
             </div>
           </div>
@@ -133,7 +133,7 @@ export default async function DashboardContent() {
       </div>
 
       {/* Analytics Charts */}
-      <div className="border-b border-tv-border pb-4">
+      <div className="border-b border-plt-border pb-4">
         <DashboardCharts sectorData={orderStats.sectorData} monthlyData={orderStats.monthlyData} />
       </div>
 
@@ -141,37 +141,37 @@ export default async function DashboardContent() {
         {/* Open Positions */}
         <section>
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-weight-bold uppercase tracking-wider text-tv-muted">Open Positions</h3>
-            <Link href="/positions" className="text-[11px] text-tv-muted hover:text-tv-text">Positions</Link>
+            <h3 className="text-xs font-weight-bold uppercase tracking-wider text-plt-muted">Open Positions</h3>
+            <Link href="/positions" className="text-[11px] text-plt-muted hover:text-plt-text">Positions</Link>
           </div>
-          <div className="overflow-hidden rounded-tv-lg border border-tv-border">
+          <div className="overflow-hidden rounded-tv-lg border border-plt-border bg-plt-surface">
             {/* Mobile View (Cards) */}
             <div className="md:hidden flex flex-col space-y-2 p-2">
               {orderStats.openOrders.length === 0 ? (
-                <div className="p-4 text-center text-tv-muted text-[12px] font-normal">No open positions</div>
+                <div className="p-4 text-center text-plt-muted text-[12px] font-normal">No open positions</div>
               ) : (
                 orderStats.openOrders.slice(0, 10).map((order) => (
-                  <div key={order.id} className="bg-tv-base rounded-tv-lg border border-tv-border p-3 flex justify-between items-center">
+                  <div key={order.id} className="bg-plt-card rounded-tv-lg border border-plt-border p-3 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-tv-surface flex items-center justify-center overflow-hidden shrink-0 border border-tv-border">
+                      <div className="w-8 h-8 rounded-full bg-plt-surface flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
                         {order.logoUrl ? (
-                          <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-cover" />
+                          <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-contain bg-transparent" />
                         ) : (
-                          <span className="text-[12px] font-medium text-tv-muted">
+                          <span className="text-[12px] font-medium text-plt-muted">
                             {order.tickerSymbol.substring(0, 2)}
                           </span>
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-[12px] text-tv-text hover:text-tv-accent">
+                        <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-[12px] text-plt-text hover:text-plt-red">
                           {order.tickerSymbol}
                         </Link>
-                        <div className="max-w-40 truncate text-[12px] font-light text-tv-muted">{order.companyName}</div>
+                        <div className="max-w-40 truncate text-[12px] font-light text-plt-muted">{order.companyName}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[12px] font-medium">{formatPrice(order.currentPrice * order.quantity)}</div>
-                      <div className={`flex items-center justify-end text-[12px] font-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                      <div className="text-[12px] font-medium text-plt-text">{formatPrice(order.currentPrice * order.quantity)}</div>
+                      <div className={`flex items-center justify-end text-[12px] font-medium ${order.profitLoss >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
                         {formatMoney(order.profitLoss, true)} ({order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
                       </div>
                     </div>
@@ -181,44 +181,54 @@ export default async function DashboardContent() {
             </div>
 
             {/* Desktop View (Table) */}
-            <div className="hidden md:block">
-              <table className="w-full border-collapse text-left text-[12px]">
-                <thead className="bg-tv-surface text-[12px] font-normal uppercase text-tv-muted">
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-plt-border bg-plt-card text-[11px] uppercase text-plt-muted font-normal">
                   <tr>
-                    <th className="border-b border-tv-border px-3 py-2 font-normal">Ticker</th>
-                    <th className="border-b border-tv-border px-3 py-2 text-right font-normal">Position Value</th>
-                    <th className="border-b border-tv-border px-3 py-2 text-right font-normal">P/L</th>
+                    <th className="px-3 py-2">Symbol</th>
+                    <th className="px-3 py-2 text-right">Entry</th>
+                    <th className="px-3 py-2 text-right">Current</th>
+                    <th className="px-3 py-2 text-right">Total Value</th>
+                    <th className="px-3 py-2 text-right">P/L</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-plt-border">
                   {orderStats.openOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-3 py-6 text-center text-tv-muted text-[12px] font-normal">No open positions</td>
+                      <td colSpan={5} className="px-3 py-6 text-center text-plt-muted">No open positions</td>
                     </tr>
                   ) : (
                     orderStats.openOrders.slice(0, 10).map((order) => (
-                      <tr key={order.id} className="border-b border-tv-border last:border-b-0 hover:bg-tv-hover">
+                      <tr key={order.id} className="hover:bg-plt-hover transition-colors">
                         <td className="px-3 py-2">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-full bg-tv-surface flex items-center justify-center overflow-hidden shrink-0 border border-tv-border">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 rounded-full bg-plt-card flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
                               {order.logoUrl ? (
-                                <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-cover" />
+                                <img src={order.logoUrl} alt={order.tickerSymbol} className="w-full h-full object-contain bg-transparent" />
                               ) : (
-                                <span className="text-[12px] font-medium text-tv-muted">
+                                <span className="text-[10px] font-medium text-plt-muted">
                                   {order.tickerSymbol.substring(0, 2)}
                                 </span>
                               )}
                             </div>
                             <div className="flex flex-col">
-                              <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-[12px] text-tv-text hover:text-tv-accent">
+                              <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-medium text-plt-text hover:text-plt-red">
                                 {order.tickerSymbol}
                               </Link>
-                              <div className="max-w-48 truncate text-[12px] font-light text-tv-muted">{order.companyName}</div>
+                              <div className="max-w-32 truncate text-[11px] text-plt-muted">{order.companyName}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-right font-medium">{formatPrice(order.currentPrice * order.quantity)}</td>
-                        <td className={`px-3 py-2 text-right font-medium ${order.profitLoss >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                        <td className="px-3 py-2 text-right">
+                          <div className="font-medium text-plt-text">{formatPrice(order.entryPrice)}</div>
+                          <div className="text-[11px] text-plt-muted">{order.entryDate}</div>
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <div className="font-medium text-plt-text">{formatPrice(order.currentPrice)}</div>
+                          <div className="text-[11px] text-plt-muted">{order.quantity} shares</div>
+                        </td>
+                        <td className="px-3 py-2 text-right font-medium text-plt-text">{formatPrice(order.currentPrice * order.quantity)}</td>
+                        <td className={`px-3 py-2 text-right font-medium ${order.profitLoss >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
                           {formatMoney(order.profitLoss, true)}
                           <div className="text-[12px] font-light opacity-90">{order.profitLossPct >= 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
                         </td>
@@ -234,19 +244,19 @@ export default async function DashboardContent() {
         <section>
           {/* Buy Opportunities */}
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium">Buy Opportunities</h2>
-            <span className="text-[11px] text-tv-muted">Last 5 bars</span>
+            <h2 className="text-sm font-weight-medium text-plt-text">Buy Opportunities</h2>
+            <span className="text-[11px] text-plt-muted">Last 5 bars</span>
           </div>
-          <div className="overflow-hidden rounded-tv-lg border border-tv-border">
+          <div className="overflow-hidden rounded-tv-lg border border-plt-border bg-plt-surface">
             <OpportunityTable opportunities={buyOpportunities} emptyText="No buy opportunities in the last 5 bars" />
           </div>
 
           {/* Exit Signals */}
           <div className="mt-4 mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-weight-medium">Exit Signals</h2>
-            <span className="text-[11px] text-tv-muted">Last 5 bars</span>
+            <h2 className="text-sm font-weight-medium text-plt-text">Exit Signals</h2>
+            <span className="text-[11px] text-plt-muted">Last 5 bars</span>
           </div>
-          <div className="overflow-hidden rounded-tv-lg border border-tv-border">
+          <div className="overflow-hidden rounded-tv-lg border border-plt-border bg-plt-surface">
             <OpportunityTable opportunities={exitSignals} emptyText="No exit signals in the last 5 bars" compact />
           </div>
         </section>
@@ -255,10 +265,10 @@ export default async function DashboardContent() {
   );
 }
 
-function Metric({ label, value, valueClass = 'text-tv-text', subtitle, subtitleClass = 'text-tv-muted' }: { label: string; value: string; valueClass?: string; subtitle?: string; subtitleClass?: string }) {
+function Metric({ label, value, valueClass = 'text-plt-text', subtitle, subtitleClass = 'text-plt-muted' }: { label: string; value: string; valueClass?: string; subtitle?: string; subtitleClass?: string }) {
   return (
-    <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-3">
-      <div className="text-[11px] uppercase text-tv-muted">{label}</div>
+    <div className="rounded-tv-lg border border-plt-border bg-plt-surface p-3">
+      <div className="text-[11px] uppercase text-plt-muted">{label}</div>
       <div className={`mt-1 text-lg font-weight-medium ${valueClass}`}>{value}</div>
       {subtitle && <div className={`text-[11px] mt-0.5 font-weight-medium ${subtitleClass}`}>{subtitle}</div>}
     </div>

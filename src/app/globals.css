@@ -22,6 +22,32 @@
   --border-highlight-soft: rgba(255, 255, 255, 0.16);
   --border-highlight: #ff640d;
 
+  /* ==========================================================================
+     Internal Platform Palette (Dedicated tokens for Dashboard, Charts, etc.)
+     ========================================================================== */
+  --plt-bg-base: #101010;
+  --plt-bg-surface: #161616;
+  --plt-bg-card: #161616;
+  --plt-bg-hover: #202020;
+  --plt-bg-chart: #101010;
+
+  --plt-border: rgba(255, 255, 255, 0.08);
+  --plt-border-soft: rgba(255, 255, 255, 0.04);
+  --plt-border-active: #ea3943;
+
+  --plt-accent-red: #ea3943;
+  --plt-accent-red-hover: #ff4757;
+  --plt-accent-red-soft: #8b1d24;
+  --plt-accent-orange: #ff640d;
+  --plt-accent-orange-hover: #ff7a1a;
+  --plt-accent-green: #00e676;
+  --plt-accent-cyan: #00d2ff;
+  --plt-accent-violet: #a855f7;
+
+  --plt-text-primary: #ffffff;
+  --plt-text-muted: #8b929f;
+  --plt-text-faint: #525866;
+
   /* Typography */
   --font-tv-sans: "Inter", sans-serif;
   --font-weight-light: 300;
@@ -37,7 +63,7 @@
   --radius-3xl: 2rem;
   --radius-full: 9999px;
   
-  --glass-bg: rgba(18, 28, 38, 0.8);
+  --glass-bg: rgba(22, 22, 22, 0.85);
 }
 
 @theme inline {
@@ -56,6 +82,30 @@
   --color-tv-border-soft: var(--border-highlight-soft);
   --color-tv-border-highlight: var(--border-highlight);
   --color-tv-glass: var(--glass-bg);
+
+  /* Platform Tokens */
+  --color-plt-base: var(--plt-bg-base);
+  --color-plt-surface: var(--plt-bg-surface);
+  --color-plt-card: var(--plt-bg-card);
+  --color-plt-hover: var(--plt-bg-hover);
+  --color-plt-chart: var(--plt-bg-chart);
+
+  --color-plt-border: var(--plt-border);
+  --color-plt-border-soft: var(--plt-border-soft);
+  --color-plt-border-active: var(--plt-border-active);
+
+  --color-plt-red: var(--plt-accent-red);
+  --color-plt-red-hover: var(--plt-accent-red-hover);
+  --color-plt-red-soft: var(--plt-accent-red-soft);
+  --color-plt-orange: var(--plt-accent-orange);
+  --color-plt-orange-hover: var(--plt-accent-orange-hover);
+  --color-plt-green: var(--plt-accent-green);
+  --color-plt-cyan: var(--plt-accent-cyan);
+  --color-plt-violet: var(--plt-accent-violet);
+
+  --color-plt-text: var(--plt-text-primary);
+  --color-plt-muted: var(--plt-text-muted);
+  --color-plt-faint: var(--plt-text-faint);
 
   --font-tv-sans: var(--font-tv-sans);
   --z-tv-behind: -1;

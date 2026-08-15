@@ -216,7 +216,7 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   }
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col bg-tv-base text-tv-text overflow-hidden">
+    <div className="flex-1 h-full w-full flex flex-col bg-plt-base text-plt-text overflow-hidden">
       <TopBar symbol={selectedSymbol} timeframe={timeframe} replay={initialReplayMode} watchlist={watchlist} />
       <div className="flex-1 flex overflow-hidden">
 

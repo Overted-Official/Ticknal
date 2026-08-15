@@ -24,13 +24,13 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-[#1e2d3d] bg-[#121C26] px-3 py-2 text-xs shadow-xl">
-      <div className="font-medium text-white mb-1">{label}</div>
+    <div className="rounded-lg border border-plt-border bg-plt-card px-3 py-2 text-xs shadow-xl backdrop-blur-md">
+      <div className="font-medium text-plt-text mb-1">{label}</div>
       {payload.map((entry, index) => {
         const value = entry.value as number;
         const isRoi = entry.name === 'ROI';
         const color = isRoi 
-          ? (value >= 0 ? '#00FFA7' : '#ef4444')
+          ? (value >= 0 ? '#00e676' : '#ea3943')
           : entry.color;
         const formatted = isRoi 
           ? `${value.toFixed(2)}%` 
@@ -49,27 +49,25 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem[] }) {
   if (!data.length) {
     return (
-      <div className="flex h-full items-center justify-center text-xs text-[#8899aa]">
+      <div className="flex h-full items-center justify-center text-xs text-plt-muted">
         No data to display
       </div>
     );
   }
 
-  const maxValue = Math.max(...data.map(d => d.invested));
-
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart data={data} margin={{ top: 12, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
-        <CartesianGrid vertical={false} stroke="#1e2d3d" strokeDasharray="3 3" />
+        <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
         <XAxis
           dataKey="month"
-          tick={{ fill: '#8899aa', fontSize: 10 }}
+          tick={{ fill: '#8b929f', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
           yAxisId="left"
-          tick={{ fill: '#8899aa', fontSize: 10 }}
+          tick={{ fill: '#8b929f', fontSize: 10 }}
           tickFormatter={formatEGP}
           axisLine={false}
           tickLine={false}
@@ -78,7 +76,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         <YAxis
           yAxisId="right"
           orientation="right"
-          tick={{ fill: '#8899aa', fontSize: 10 }}
+          tick={{ fill: '#8b929f', fontSize: 10 }}
           tickFormatter={(val) => `${val}%`}
           axisLine={false}
           tickLine={false}
@@ -86,10 +84,10 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} iconType="circle" />
-        <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#3B82F6" radius={[2, 2, 0, 0]} maxBarSize={32} />
-        <Bar yAxisId="left" dataKey="pl" name="P/L" fill="#00FFA7" radius={[2, 2, 0, 0]} maxBarSize={32}>
+        <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#00d2ff" radius={[2, 2, 0, 0]} maxBarSize={32} />
+        <Bar yAxisId="left" dataKey="pl" name="P/L" fill="#00e676" radius={[2, 2, 0, 0]} maxBarSize={32}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#00FFA7' : '#ef4444'} />
+            <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#00e676' : '#ea3943'} />
           ))}
         </Bar>
         <Line 
@@ -97,9 +95,9 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
           type="monotone" 
           dataKey="roi" 
           name="ROI"
-          stroke="#F59E0B" 
+          stroke="#f59e0b" 
           strokeWidth={2}
-          dot={{ r: 3, fill: '#F59E0B', strokeWidth: 0 }}
+          dot={{ r: 3, fill: '#f59e0b', strokeWidth: 0 }}
           activeDot={{ r: 5 }}
         />
       </ComposedChart>

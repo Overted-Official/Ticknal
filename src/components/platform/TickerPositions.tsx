@@ -44,25 +44,25 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
   const displayOrders = [...openOrders, ...closedOrders];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-tv-base text-tv-text p-4 space-y-6">
+    <div className="flex flex-col h-full overflow-y-auto bg-plt-base text-plt-text p-4 space-y-6">
       
       {/* Summary Cards */}
       <div>
-        <h2 className="text-sm font-weight-medium mb-3">{symbol} Position Summary</h2>
+        <h2 className="text-sm font-weight-medium mb-3 text-plt-text">{symbol} Position Summary</h2>
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-3">
-            <div className="text-[10px] uppercase text-tv-muted truncate">Invested</div>
-            <div className="mt-1 text-sm font-weight-medium text-tv-text truncate">{formatMoney(totalInvested)}</div>
+          <div className="rounded-tv-lg border border-plt-border bg-plt-surface p-3">
+            <div className="text-[10px] uppercase text-plt-muted truncate">Invested</div>
+            <div className="mt-1 text-sm font-weight-medium text-plt-text truncate">{formatMoney(totalInvested)}</div>
           </div>
-          <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-3">
-            <div className="text-[10px] uppercase text-tv-muted truncate">Unrealized P/L</div>
-            <div className={`mt-1 text-sm font-weight-medium truncate ${unrealizedPl >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+          <div className="rounded-tv-lg border border-plt-border bg-plt-surface p-3">
+            <div className="text-[10px] uppercase text-plt-muted truncate">Unrealized P/L</div>
+            <div className={`mt-1 text-sm font-weight-medium truncate ${unrealizedPl >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
               {formatMoney(unrealizedPl, true)}
             </div>
           </div>
-          <div className="rounded-tv-lg border border-tv-border bg-tv-surface p-3">
-            <div className="text-[10px] uppercase text-tv-muted truncate">Realized P/L</div>
-            <div className={`mt-1 text-sm font-weight-medium truncate ${realizedPl >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+          <div className="rounded-tv-lg border border-plt-border bg-plt-surface p-3">
+            <div className="text-[10px] uppercase text-plt-muted truncate">Realized P/L</div>
+            <div className={`mt-1 text-sm font-weight-medium truncate ${realizedPl >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
               {formatMoney(realizedPl, true)}
             </div>
           </div>
@@ -71,9 +71,9 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
 
       {/* Position Detail Cards */}
       <div>
-        <h2 className="text-sm font-weight-medium mb-3">Order History</h2>
+        <h2 className="text-sm font-weight-medium mb-3 text-plt-text">Order History</h2>
         {displayOrders.length === 0 ? (
-          <div className="text-sm text-tv-muted text-center py-6 border border-tv-border rounded-tv-lg border-dashed">
+          <div className="text-sm text-plt-muted text-center py-6 border border-plt-border rounded-tv-lg border-dashed bg-plt-surface">
             No positions found for {symbol}
           </div>
         ) : (
@@ -86,58 +86,58 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
               const plPct = order.entryPrice > 0 ? (pl / (order.entryPrice * order.quantity)) * 100 : 0;
 
               return (
-                <div key={order.id} className="rounded-tv-lg border border-tv-border bg-tv-surface p-4 flex flex-col space-y-3 relative overflow-hidden">
+                <div key={order.id} className="rounded-tv-lg border border-plt-border bg-plt-surface p-4 flex flex-col space-y-3 relative overflow-hidden">
                   {/* Left accent strip based on status/side */}
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-tv-accent' : 'bg-tv-border-highlight'}`} />
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-red' : 'bg-plt-border'}`} />
                   
                   <div className="flex justify-between items-start ml-2">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className={`text-[11px] px-1.5 py-0.5 rounded-sm font-weight-bold ${isOpen ? 'bg-tv-up/20 text-tv-up' : 'bg-tv-border text-tv-muted'}`}>
+                        <span className={`text-[11px] px-1.5 py-0.5 rounded-sm font-weight-bold ${isOpen ? 'bg-plt-green/20 text-plt-green' : 'bg-plt-card border border-plt-border text-plt-muted'}`}>
                           {isOpen ? 'OPEN' : 'CLOSED'}
                         </span>
-                        <span className="text-xs text-tv-muted">
+                        <span className="text-xs text-plt-muted">
                           {typeof order.entryDate === 'string' ? order.entryDate.split('T')[0] : new Date(order.entryDate).toISOString().split('T')[0]}
                         </span>
                       </div>
                       <div className="mt-2 text-sm">
-                        Qty: <span className="font-medium text-tv-text">{order.quantity}</span>
+                        Qty: <span className="font-medium text-plt-text">{order.quantity}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-sm font-weight-bold ${pl >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                      <div className={`text-sm font-weight-bold ${pl >= 0 ? 'text-plt-green' : 'text-plt-red'}`}>
                         {formatMoney(pl, true)}
                       </div>
-                      <div className={`text-xs ${pl >= 0 ? 'text-tv-up/80' : 'text-tv-down/80'}`}>
+                      <div className={`text-xs ${pl >= 0 ? 'text-plt-green/80' : 'text-plt-red/80'}`}>
                         {plPct >= 0 ? '+' : ''}{plPct.toFixed(2)}%
                       </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 ml-2 pt-2 border-t border-tv-border/50 text-xs">
+                  <div className="grid grid-cols-2 gap-2 ml-2 pt-2 border-t border-plt-border/50 text-xs">
                     <div>
-                      <span className="text-tv-muted">Entry: </span>
-                      <span className="text-tv-text">{formatPrice(order.entryPrice)}</span>
+                      <span className="text-plt-muted">Entry: </span>
+                      <span className="text-plt-text">{formatPrice(order.entryPrice)}</span>
                     </div>
                     {isOpen ? (
                       <div>
-                        <span className="text-tv-muted">Current: </span>
-                        <span className="text-tv-text">{formatPrice(currentPrice)}</span>
+                        <span className="text-plt-muted">Current: </span>
+                        <span className="text-plt-text">{formatPrice(currentPrice)}</span>
                       </div>
                     ) : (
                       <div>
-                        <span className="text-tv-muted">Exit: </span>
-                        <span className="text-tv-text">{order.exitPrice ? formatPrice(order.exitPrice) : '-'}</span>
+                        <span className="text-plt-muted">Exit: </span>
+                        <span className="text-plt-text">{order.exitPrice ? formatPrice(order.exitPrice) : '-'}</span>
                       </div>
                     )}
                     
                     <div>
-                      <span className="text-tv-muted">Target: </span>
-                      <span className="text-tv-up">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</span>
+                      <span className="text-plt-muted">Target: </span>
+                      <span className="text-plt-green">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</span>
                     </div>
                     <div>
-                      <span className="text-tv-muted">Stop: </span>
-                      <span className="text-tv-down">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</span>
+                      <span className="text-plt-muted">Stop: </span>
+                      <span className="text-plt-red">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</span>
                     </div>
                   </div>
                 </div>

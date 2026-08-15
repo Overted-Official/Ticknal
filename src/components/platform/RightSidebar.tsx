@@ -96,8 +96,6 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
 
-
-
   // Merge live data with base data
   const selectedItem = liveData 
     ? { ...baseSelectedItem, ...liveData } 
@@ -142,30 +140,30 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
   return (
     <div 
-      className="bg-tv-base border-l border-tv-border flex flex-col select-none relative shrink-0"
+      className="bg-plt-surface border-l border-plt-border flex flex-col select-none relative shrink-0"
       style={{ width: `${sidebarWidth}px` }}
     >
       <div 
-        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-tv-accent/50 active:bg-tv-accent z-50 transition-colors"
+        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-plt-red/50 active:bg-plt-red z-50 transition-colors"
         onMouseDown={() => setIsResizing(true)}
       />
-      {/* Header */}
-      <div className="flex items-center p-2 border-b border-tv-border">
-        <div className="flex w-full bg-tv-surface rounded-tv-sm p-0.5">
+      {/* Header Filter Tabs */}
+      <div className="flex items-center p-2 border-b border-plt-border">
+        <div className="flex w-full bg-plt-base rounded-tv-sm p-0.5 border border-plt-border/50">
           <button 
-            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'ALL' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
+            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'ALL' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
             onClick={() => setListFilter('ALL')}
           >
             All
           </button>
           <button 
-            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPEN' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
+            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPEN' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
             onClick={() => setListFilter('OPEN')}
           >
             Positions
           </button>
           <button 
-            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPPORTUNITIES' ? 'bg-tv-hover text-tv-text' : 'text-tv-muted hover:text-tv-text'}`}
+            className={`flex-1 px-2 py-1 text-xs font-medium rounded-tv-sm transition-colors ${listFilter === 'OPPORTUNITIES' ? 'bg-plt-hover text-plt-text shadow-sm' : 'text-plt-muted hover:text-plt-text'}`}
             onClick={() => setListFilter('OPPORTUNITIES')}
           >
             Buy Signals
@@ -174,21 +172,21 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       </div>
 
       {/* Search Bar */}
-      <div className="p-2 border-b border-tv-border">
+      <div className="p-2 border-b border-plt-border">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-tv-muted" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-plt-muted" />
           <input 
             type="text" 
             placeholder="Search tickers..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-tv-surface border border-tv-border rounded-tv-sm px-8 py-1.5 text-sm text-tv-text focus:outline-none focus:border-tv-accent placeholder:text-tv-muted transition-colors"
+            className="w-full bg-plt-base border border-plt-border rounded-tv-sm px-8 py-1.5 text-sm text-plt-text focus:outline-none focus:border-plt-border-active placeholder:text-plt-muted transition-colors"
           />
         </div>
       </div>
 
-      {/* Columns */}
-      <div className="flex px-3 py-2 text-tv-muted uppercase font-weight-medium border-b border-tv-border text-[0.65rem]">
+      {/* Columns Header */}
+      <div className="flex px-3 py-2 text-plt-muted uppercase font-weight-medium border-b border-plt-border text-[0.65rem] bg-plt-surface">
         <div className="flex-1 min-w-0">Symbol</div>
         <div className="w-[50px] text-right">Last</div>
         <div className="w-[85px] text-right">Chg%</div>
@@ -203,7 +201,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
               <button
                 type="button"
                 onClick={() => toggleSector(sector)}
-                className="flex w-full items-center gap-1 border-b border-tv-border bg-tv-base px-3 py-1.5 text-left text-[0.65rem] uppercase text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text"
+                className="flex w-full items-center gap-1 border-b border-plt-border bg-plt-base px-3 py-1.5 text-left text-[0.65rem] uppercase text-plt-muted transition-colors hover:bg-plt-hover hover:text-plt-text"
               >
                 {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
                 <span className="min-w-0 flex-1 truncate">{sector}</span>
@@ -221,24 +219,24 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') openTicker(item.symbol);
                     }}
-                    className={`flex items-center cursor-pointer px-3 py-1.5 transition-colors hover:bg-tv-hover group text-[11px] ${item.symbol === selectedSymbol ? 'bg-tv-hover' : ''}`}
+                    className={`flex items-center cursor-pointer px-3 py-1.5 transition-colors hover:bg-plt-hover group text-[11px] ${item.symbol === selectedSymbol ? 'bg-plt-hover' : ''}`}
                   >
                     <div className="flex min-w-0 flex-1 items-center space-x-2 font-weight-medium">
                       {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.symbol} className="h-5 w-5 rounded-tv-full bg-white object-contain p-[1px]" />
+                        <img src={item.logoUrl} alt={item.symbol} className="h-5 w-5 rounded-tv-full bg-transparent object-contain p-[1px]" />
                       ) : item.website ? (
-                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-5 w-5 rounded-tv-full border border-tv-border bg-tv-surface object-cover" />
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-5 w-5 rounded-tv-full border border-plt-border bg-plt-card object-cover" />
                       ) : (
-                        <div className="flex h-5 w-5 items-center justify-center rounded-tv-full border border-tv-border bg-tv-surface text-[0.5rem] font-weight-medium text-tv-text">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-tv-full border border-plt-border bg-plt-card text-[0.5rem] font-weight-medium text-plt-text">
                           {item.symbol.substring(0, 2)}
                         </div>
                       )}
-                      <span className={`truncate ${item.symbol === selectedSymbol ? 'text-tv-accent' : 'text-tv-text'}`}>
+                      <span className={`truncate ${item.symbol === selectedSymbol ? 'text-plt-orange font-bold' : 'text-plt-text'}`}>
                         {item.symbol.replace('.CA', '')}
                       </span>
                       {item.recentBuyOpportunity && (
                         <span title="Recent Buy Signal" className="ml-0.5 shrink-0 flex items-center">
-                          <Zap size={12} className="text-tv-accent" />
+                          <Zap size={12} className="text-plt-orange fill-plt-orange/30" />
                         </span>
                       )}
                       <button
@@ -250,17 +248,17 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                           event.stopPropagation();
                           toggleAlert(item.symbol);
                         }}
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-tv-sm transition-colors hover:bg-tv-surface ${
-                          alertEnabled ? 'text-tv-accent opacity-100' : 'text-tv-muted opacity-0 group-hover:opacity-100'
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-tv-sm transition-colors hover:bg-plt-card ${
+                          alertEnabled ? 'text-plt-orange opacity-100' : 'text-plt-muted opacity-0 group-hover:opacity-100'
                         }`}
                       >
                         <Bell size={13} fill={alertEnabled ? 'currentColor' : 'none'} />
                       </button>
                     </div>
-                    <div className={`w-[50px] shrink-0 text-right font-weight-medium whitespace-nowrap ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                    <div className={`w-[50px] shrink-0 text-right font-weight-medium whitespace-nowrap ${item.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
                       {item.price}
                     </div>
-                    <div className={`w-[85px] shrink-0 text-right font-weight-medium whitespace-nowrap ${item.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                    <div className={`w-[85px] shrink-0 text-right font-weight-medium whitespace-nowrap ${item.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
                       {item.change}
                     </div>
                   </div>
@@ -274,13 +272,13 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
       {/* Details Panel */}
       {selectedItem && (
         <div 
-          className="border-t border-tv-border bg-tv-base p-4 flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
+          className="border-t border-plt-border bg-plt-surface p-4 flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {/* Vertical Resizer */}
           {!isDetailsCollapsed && (
             <div 
-              className="absolute top-0 left-0 right-0 h-1.5 cursor-row-resize hover:bg-tv-accent/50 active:bg-tv-accent z-50 transition-colors"
+              className="absolute top-0 left-0 right-0 h-1.5 cursor-row-resize hover:bg-plt-orange/50 active:bg-plt-orange z-50 transition-colors"
               onMouseDown={() => setIsResizingPanel(true)}
             />
           )}
@@ -288,20 +286,20 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
           <div className="flex items-center justify-between mb-3 mt-1">
             <div className="flex items-center space-x-2">
               {selectedItem.logoUrl ? (
-                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-white border border-tv-border object-contain p-[2px]" />
+                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-transparent border border-plt-border object-contain p-[2px]" />
               ) : selectedItem.website ? (
-                <img src={`https://logo.clearbit.com/${selectedItem.website}`} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-tv-surface border border-tv-border object-cover" />
+                <img src={`https://logo.clearbit.com/${selectedItem.website}`} alt={selectedItem.symbol} className="w-7 h-7 rounded-tv-full bg-plt-card border border-plt-border object-cover" />
               ) : (
-                <div className="w-7 h-7 rounded-tv-full bg-tv-surface flex items-center justify-center font-weight-medium text-tv-text border border-tv-border text-xs">
+                <div className="w-7 h-7 rounded-tv-full bg-plt-card flex items-center justify-center font-weight-medium text-plt-text border border-plt-border text-xs">
                   {displaySelectedSymbol.substring(0, 2)}
                 </div>
               )}
-              <span className="font-weight-medium text-tv-text text-base">{displaySelectedSymbol}</span>
+              <span className="font-weight-medium text-plt-text text-base">{displaySelectedSymbol}</span>
             </div>
-            <div className="flex items-center space-x-2 text-tv-text">
+            <div className="flex items-center space-x-2 text-plt-text">
               <button 
                 onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
-                className="hover:text-tv-accent transition-colors ml-1"
+                className="hover:text-plt-text transition-colors ml-1 text-plt-muted"
               >
                 <ChevronDown size={18} className={`transition-transform ${isDetailsCollapsed ? 'rotate-180' : ''}`} />
               </button>
@@ -310,36 +308,36 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
           {!isDetailsCollapsed && (
             <div className="flex-1 overflow-y-auto no-scrollbar">
-              <div className="text-tv-text mb-1 flex items-center text-sm font-weight-medium">
+              <div className="text-plt-text mb-1 flex items-center text-sm font-weight-medium">
                 {selectedItem.companyName}
-                <ExternalLink size={12} className="ml-1 text-tv-muted hover:text-tv-text cursor-pointer" />
-                <span className="text-tv-muted font-weight-light mx-1">•</span>
-                <span className="text-tv-text">EGX</span>
+                <ExternalLink size={12} className="ml-1 text-plt-muted hover:text-plt-text cursor-pointer" />
+                <span className="text-plt-muted font-weight-light mx-1">•</span>
+                <span className="text-plt-text">EGX</span>
               </div>
               
-              <div className="text-tv-muted font-weight-light text-xs mb-4">
+              <div className="text-plt-muted font-weight-light text-xs mb-4">
                 Finance • {selectedItem.sector}
               </div>
 
               <div className="flex items-baseline space-x-2 mb-1">
-                <span className="text-3xl font-weight-medium text-tv-text tracking-tight">
+                <span className="text-3xl font-weight-medium text-plt-text tracking-tight">
                   {selectedItem.price}
                 </span>
-                <span className="text-tv-muted font-weight-medium text-xs relative top-[-10px] left-[-4px] text-orange-500">D</span>
-                <span className="text-tv-muted font-weight-medium text-xs">EGP</span>
-                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                <span className="font-semibold text-xs relative top-[-10px] left-[-4px] text-plt-orange">D</span>
+                <span className="text-plt-muted font-weight-medium text-xs">EGP</span>
+                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
                   {selectedItem.change ? selectedItem.change.split(' ')[0] : ''}
                 </span>
-                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-tv-up' : 'text-tv-down'}`}>
+                <span className={`text-lg font-weight-medium ${selectedItem.isUp ? 'text-plt-green' : 'text-plt-red'}`}>
                   {selectedItem.change ? selectedItem.change.split(' ')[1] : ''}
                 </span>
               </div>
 
-              <div className="flex items-center text-tv-muted text-xs mb-1">
-                <div className="w-2 h-1 bg-tv-muted rounded-full mr-2" />
+              <div className="flex items-center text-plt-muted text-xs mb-1">
+                <div className="w-2 h-1 bg-plt-muted rounded-full mr-2" />
                 Market closed
               </div>
-              <div className="text-tv-muted text-xs mb-4">
+              <div className="text-plt-muted text-xs mb-4">
                 Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:26 GMT+3
               </div>
 
@@ -348,20 +346,20 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                   {/* Range Bars */}
                   <div className="mb-4 mt-2">
                     <div className="flex justify-between text-[11px] mb-1.5">
-                      <span className="text-tv-text font-medium">{rangeData.dayLow.toFixed(2)}</span>
-                      <span className="text-tv-muted text-[10px] uppercase">Day&apos;s Range</span>
-                      <span className="text-tv-text font-medium">{rangeData.dayHigh.toFixed(2)}</span>
+                      <span className="text-plt-text font-medium">{rangeData.dayLow.toFixed(2)}</span>
+                      <span className="text-plt-muted text-[10px] uppercase">Day&apos;s Range</span>
+                      <span className="text-plt-text font-medium">{rangeData.dayHigh.toFixed(2)}</span>
                     </div>
-                    <div className="h-1 bg-tv-border rounded-tv-full relative mx-1">
+                    <div className="h-1 bg-plt-border rounded-tv-full relative mx-1">
                       <div 
-                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-tv-up' : 'bg-tv-down'}`}
+                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-plt-green' : 'bg-plt-red'}`}
                         style={{ 
                           width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%`, 
                           left: 0 
                         }} 
                       />
                       <div 
-                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-tv-text"
+                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-plt-text"
                         style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.dayLow) / (rangeData.dayHigh - rangeData.dayLow)) * 100))}%` }}
                       />
                     </div>
@@ -369,20 +367,20 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
                   <div className="mb-2">
                     <div className="flex justify-between text-[11px] mb-1.5">
-                      <span className="text-tv-text font-medium">{rangeData.yearLow.toFixed(2)}</span>
-                      <span className="text-tv-muted text-[10px] uppercase">52Wk Range</span>
-                      <span className="text-tv-text font-medium">{rangeData.yearHigh.toFixed(2)}</span>
+                      <span className="text-plt-text font-medium">{rangeData.yearLow.toFixed(2)}</span>
+                      <span className="text-plt-muted text-[10px] uppercase">52Wk Range</span>
+                      <span className="text-plt-text font-medium">{rangeData.yearHigh.toFixed(2)}</span>
                     </div>
-                    <div className="h-1 bg-tv-border rounded-tv-full relative mx-1">
+                    <div className="h-1 bg-plt-border rounded-tv-full relative mx-1">
                       <div 
-                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-tv-up' : 'bg-tv-down'}`}
+                        className={`absolute h-full rounded-tv-full ${selectedItem.isUp ? 'bg-plt-green' : 'bg-plt-red'}`}
                         style={{ 
                           width: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%`, 
                           left: 0 
                         }} 
                       />
                       <div 
-                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-tv-text"
+                        className="absolute top-1.5 -ml-1.5 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-plt-text"
                         style={{ left: `${Math.min(100, Math.max(0, ((parseFloat(selectedItem.price) - rangeData.yearLow) / (rangeData.yearHigh - rangeData.yearLow)) * 100))}%` }}
                       />
                     </div>

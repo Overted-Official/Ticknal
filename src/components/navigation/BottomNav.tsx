@@ -15,7 +15,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="h-14 w-full bg-tv-base border-t border-tv-border flex items-center justify-around z-50">
+    <div className="h-14 w-full bg-plt-surface border-t border-plt-border flex items-center justify-around z-50">
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -27,13 +27,13 @@ export default function BottomNav() {
             <div 
               className={`flex items-center justify-center rounded-tv-full w-12 h-7 transition-colors duration-200 mb-1 ${
                 isActive 
-                  ? 'bg-tv-accent/20 text-tv-accent' 
-                  : 'text-tv-muted group-hover:bg-tv-hover group-hover:text-tv-text'
+                  ? 'bg-plt-card border border-plt-orange/30 text-plt-orange' 
+                  : 'text-plt-muted group-hover:bg-plt-hover group-hover:text-plt-text'
               }`}
             >
               <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
             </div>
-            <span className={`text-[10px] font-weight-medium ${isActive ? 'text-tv-accent' : 'text-tv-muted group-hover:text-tv-text'}`}>
+            <span className={`text-[10px] font-weight-medium ${isActive ? 'text-plt-orange' : 'text-plt-muted group-hover:text-plt-text'}`}>
               {item.label}
             </span>
           </Link>

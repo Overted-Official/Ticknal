@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Advanced Algorithmic Trading Platform for the EGX',
     start_url: '/dashboard',
     display: 'standalone',
-    background_color: '#06101A',
-    theme_color: '#06101A',
+    background_color: '#060709',
+    theme_color: '#060709',
     icons: [
       {
         src: '/QuantEGX_icon.svg',
