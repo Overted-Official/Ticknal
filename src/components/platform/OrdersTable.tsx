@@ -57,11 +57,11 @@ export default function OrdersTable() {
     const openOrders = orders.filter((order) => order.status === 'OPEN');
     const closedOrders = orders.filter((order) => order.status === 'CLOSED');
     return {
-      openCount: new Set(openOrders.map(o => o.tickerSymbol)).size,
+      openCount: openOrders.length,
       closedCount: closedOrders.length,
       unrealized: openOrders.reduce((sum, order) => sum + order.profitLoss, 0),
       realized: closedOrders.reduce((sum, order) => sum + order.profitLoss, 0),
-      netWorth: openOrders.reduce((sum, order) => sum + (order.currentPrice * order.quantity), 0),
+      portfolioValue: openOrders.reduce((sum, order) => sum + (order.currentPrice * order.quantity), 0),
     };
   }, [orders]);
 
@@ -151,8 +151,8 @@ export default function OrdersTable() {
           className="border border-white/[0.09] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-5 overflow-hidden"
         >
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-            <div className="text-[11px] text-white/40 font-medium">Net Worth</div>
-            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{formatPrice(totals.netWorth)}</div>
+            <div className="text-[11px] text-white/40 font-medium">Portfolio Value</div>
+            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{formatPrice(totals.portfolioValue)}</div>
           </div>
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium">Open Positions</div>
@@ -268,6 +268,7 @@ export default function OrdersTable() {
                 <th className="px-6 py-3.5 text-right">Target / Stop</th>
                 <th className="px-6 py-3.5 text-right">Quantity</th>
                 <th className="px-6 py-3.5 text-right">Current</th>
+                <th className="px-6 py-3.5 text-right">Mkt Value</th>
                 <th className="px-6 py-3.5 text-right">P/L</th>
                 <th className="px-6 py-3.5 text-right"></th>
               </tr>
@@ -277,7 +278,7 @@ export default function OrdersTable() {
                 <DesktopOrdersSkeleton />
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-white/40 text-xs">
+                  <td colSpan={9} className="px-6 py-12 text-center text-white/40 text-xs">
                     No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found
                   </td>
                 </tr>
@@ -313,6 +314,9 @@ export default function OrdersTable() {
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono text-white font-medium">
                       {formatPrice(order.currentPrice)}
+                    </td>
+                    <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono text-white/80 font-medium">
+                      {order.status === 'OPEN' ? formatPrice(order.currentPrice * order.quantity) : '—'}
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
                       <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>

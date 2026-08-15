@@ -25,12 +25,15 @@ export function DesktopOrdersSkeleton() {
             <div className="h-4 w-16 bg-white/[0.08] rounded inline-block"></div>
           </td>
           <td className="px-6 py-3.5 text-right">
+            <div className="h-4 w-20 bg-white/[0.08] rounded inline-block"></div>
+          </td>
+          <td className="px-6 py-3.5 text-right">
             <div className="h-4 w-16 bg-white/[0.08] rounded inline-block mb-1"></div>
             <div className="h-3 w-10 bg-white/[0.04] rounded inline-block"></div>
           </td>
           <td className="px-6 py-3.5">
             <div className="flex justify-end gap-2">
-              <div className="h-6 w-16 bg-white/[0.06] rounded-lg"></div>
+              <div className="h-6 w-16 bg-white/[0.06] rounded-md"></div>
             </div>
           </td>
         </tr>
