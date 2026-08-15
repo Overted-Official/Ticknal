@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, BarChart2, Bell, RotateCcw, X } from '@/components/ui/icons';
+import { Search, BarChart2, RotateCcw, X, Bell } from '@/components/ui/icons';
 import Link from 'next/link';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import { WatchlistItem } from './RightSidebar';
@@ -25,10 +25,8 @@ export default function TopBar({
   const router = useRouter();
   const { isAlerted, statusMessage, toggleAlert } = useAlerts();
   
-  const timeframes = ['D', 'W', 'M'];
   const displaySymbol = symbol.replace('.CA', '');
   const replayQuery = replay ? '&replay=1' : '';
-  const alertEnabled = isAlerted(symbol);
 
   const currentTicker = watchlist.find(item => item.symbol === symbol) || {
     symbol,
@@ -80,42 +78,9 @@ export default function TopBar({
         </div>
 
         {/* Middle/Right section */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar whitespace-nowrap ml-auto">
-          {/* Segmented Timeframe Switch */}
-          <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-lg p-0.5">
-            {timeframes.map((tf) => (
-              <Link
-                key={tf}
-                href={`?ticker=${symbol}&timeframe=${tf}${replayQuery}`}
-                className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
-                  tf === timeframe 
-                    ? 'bg-white/[0.1] text-plt-orange shadow-sm' 
-                    : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
-                }`}
-              >
-                {tf}
-              </Link>
-            ))}
-          </div>
-
-          <div className="h-4 w-px bg-white/[0.08] shrink-0 mx-0.5" />
-
-          {/* Bell Icon Alert */}
-          <button
-            type="button"
-            onClick={() => toggleAlert(symbol)}
-            className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all ${
-              alertEnabled 
-                ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30 shadow-[0_0_10px_rgba(255,100,13,0.2)]' 
-                : 'text-white/50 hover:text-white hover:bg-white/[0.05]'
-            }`}
-            title={alertEnabled ? "Disable Alert" : "Set Price Alert"}
-          >
-            <Bell size={14} fill={alertEnabled ? 'currentColor' : 'none'} />
-          </button>
-
+        <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap ml-auto">
           {/* Indicators & Replay Quick Links */}
-          <div className="hidden sm:flex items-center space-x-1">
+          <div className="flex items-center space-x-1">
             <button className="flex items-center space-x-1.5 hover:bg-white/[0.05] px-2.5 py-1 rounded-lg transition-colors text-white/70 hover:text-white text-xs font-medium">
               <BarChart2 size={14} />
               <span className="hidden md:inline">Indicators</span>
@@ -132,7 +97,7 @@ export default function TopBar({
           </div>
 
           {/* CTA Add Order Button */}
-          <div className="hidden md:flex items-center pl-1">
+          <div className="flex items-center pl-1">
             <button 
               onClick={() => setIsAddOrderOpen(true)}
               className="rounded-lg bg-plt-orange hover:bg-plt-orange-hover px-3 py-1 text-xs text-white font-semibold transition-all shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)]"

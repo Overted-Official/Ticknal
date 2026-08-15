@@ -242,7 +242,11 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
             symbol={selectedSymbol}
             initialReplayMode={initialReplayMode}
           />
-          <BottomToolbar />
+          <BottomToolbar 
+            symbol={selectedSymbol} 
+            timeframe={timeframe} 
+            replay={initialReplayMode} 
+          />
         </ChartViews>
 
         <div className="hidden lg:flex">
