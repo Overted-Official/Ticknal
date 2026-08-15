@@ -30,7 +30,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         const value = entry.value as number;
         const isRoi = entry.name === 'ROI';
         const color = isRoi 
-          ? (value >= 0 ? '#00e676' : '#ea3943')
+          ? (value >= 0 ? '#22c55e' : '#ef4444')
           : entry.color;
         const formatted = isRoi 
           ? `${value.toFixed(2)}%` 
@@ -85,9 +85,9 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} iconType="circle" />
         <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#00d2ff" radius={[2, 2, 0, 0]} maxBarSize={32} />
-        <Bar yAxisId="left" dataKey="pl" name="P/L" fill="#00e676" radius={[2, 2, 0, 0]} maxBarSize={32}>
+        <Bar yAxisId="left" dataKey="pl" name="P/L" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={32}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#00e676' : '#ea3943'} />
+            <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#22c55e' : '#ef4444'} />
           ))}
         </Bar>
         <Line 

@@ -75,8 +75,8 @@ export default function OpportunityTable({
                   onClick={() => setSelectedOpp(item)}
                   className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-all ${
                     item.signal.signal === 'BUY' 
-                      ? 'bg-[#00e676]/15 text-[#00e676] border border-[#00e676]/30 hover:bg-[#00e676]/25' 
-                      : 'bg-[#ff4d58]/15 text-[#ff4d58] border border-[#ff4d58]/30 hover:bg-[#ff4d58]/25'
+                      ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/30 hover:bg-[#22c55e]/25' 
+                      : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/30 hover:bg-[#ef4444]/25'
                   }`}
                 >
                   {formatSignal(item.signal.signal)}
@@ -85,7 +85,7 @@ export default function OpportunityTable({
               <div className="flex justify-between items-end mt-2 pt-2 border-t border-white/[0.04]">
                 <div className="text-[10px] text-white/40 font-mono">{item.signal.date}</div>
                 <div className="text-right">
-                  <div className={`font-mono font-semibold text-xs ${item.signal.signal === 'BUY' ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                  <div className={`font-mono font-semibold text-xs ${item.signal.signal === 'BUY' ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                     {item.signal.price.toFixed(2)} EGP
                   </div>
                 </div>
@@ -98,7 +98,7 @@ export default function OpportunityTable({
       {/* Desktop View (Table) */}
       <div className="hidden md:block w-full">
         <table className="w-full text-left text-xs text-white">
-          <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
+          <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[11px] font-medium text-white/30">
             <tr>
               <th className="px-6 py-3.5">Ticker</th>
               {!compact && <th className="px-6 py-3.5">Sector</th>}
@@ -138,7 +138,7 @@ export default function OpportunityTable({
                   </td>
                   {!compact && <td className="px-6 py-3.5 whitespace-nowrap text-white/50 text-[11px]">{item.sector}</td>}
                   <td className="px-6 py-3.5 whitespace-nowrap text-white/40 font-mono text-[11px]">{item.signal.date}</td>
-                  <td className={`px-6 py-3.5 whitespace-nowrap text-right font-mono text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                  <td className={`px-6 py-3.5 whitespace-nowrap text-right font-mono text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                     {item.signal.price.toFixed(2)} EGP
                   </td>
                   <td className="px-6 py-3.5 whitespace-nowrap text-right">
@@ -146,8 +146,8 @@ export default function OpportunityTable({
                       onClick={() => setSelectedOpp(item)}
                       className={`inline-block rounded-full px-3.5 py-1 text-[11px] font-semibold transition-all ${
                         item.signal.signal === 'BUY' 
-                          ? 'bg-[#00e676]/15 text-[#00e676] border border-[#00e676]/30 hover:bg-[#00e676]/25 shadow-[0_0_10px_rgba(0,230,118,0.12)]' 
-                          : 'bg-[#ff4d58]/15 text-[#ff4d58] border border-[#ff4d58]/30 hover:bg-[#ff4d58]/25 shadow-[0_0_10px_rgba(255,77,88,0.12)]'
+                          ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/30 hover:bg-[#22c55e]/25' 
+                          : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/30 hover:bg-[#ef4444]/25'
                       }`}
                     >
                       {formatSignal(item.signal.signal)}

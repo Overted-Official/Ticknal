@@ -66,7 +66,7 @@ export default function BottomToolbar({
           onClick={() => toggleAlert(symbol)}
           className={`flex items-center justify-center w-6 h-6 rounded-full transition-all ${
             alertEnabled 
-              ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30 shadow-[0_0_8px_rgba(255,100,13,0.2)]' 
+              ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30' 
               : 'text-white/40 hover:text-white hover:bg-white/[0.05]'
           }`}
           title={alertEnabled ? "Disable Alert" : "Set Price Alert"}

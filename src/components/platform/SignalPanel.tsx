@@ -214,8 +214,8 @@ export default function SignalPanel({
             ) : visibleSignalData ? (
               <div className="flex items-center gap-2">
                 <span className={`text-base md:text-lg font-bold tracking-tight ${
-                  visibleSignalData.signal === 'BUY' ? 'text-[#00e676]' :
-                  isExit ? 'text-[#ff4d58]' :
+                  visibleSignalData.signal === 'BUY' ? 'text-[#22c55e]' :
+                  isExit ? 'text-[#ef4444]' :
                   'text-white'
                 }`}>
                   {signalLabel}
@@ -232,12 +232,12 @@ export default function SignalPanel({
 
         {/* Status Pill Icon with Glow */}
         <div className={`flex h-7 w-7 items-center justify-center rounded-full border shrink-0 ml-2 ${
-          visibleSignalData?.signal === 'BUY' ? 'bg-[#00e676]/10 border-[#00e676]/30 shadow-[0_0_12px_rgba(0,230,118,0.2)]' :
-          isExit ? 'bg-[#ff4d58]/10 border-[#ff4d58]/30 shadow-[0_0_12px_rgba(255,77,88,0.2)]' :
+          visibleSignalData?.signal === 'BUY' ? 'bg-[#22c55e]/10 border-[#22c55e]/30' :
+          isExit ? 'bg-[#ef4444]/10 border-[#ef4444]/30' :
           'bg-white/[0.04] border-white/[0.08]'
         }`}>
-           {visibleSignalData?.signal === 'BUY' ? <CheckCircle className="w-3.5 h-3.5 text-[#00e676]" /> : 
-            isExit ? <AlertTriangle className="w-3.5 h-3.5 text-[#ff4d58]" /> : 
+           {visibleSignalData?.signal === 'BUY' ? <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" /> : 
+            isExit ? <AlertTriangle className="w-3.5 h-3.5 text-[#ef4444]" /> : 
             <Activity className="w-3.5 h-3.5 text-white/40" />}
         </div>
       </div>
@@ -345,7 +345,7 @@ export default function SignalPanel({
                 />
               </div>
               <button 
-                className="mt-1.5 w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-all rounded-lg py-1.5 text-xs font-semibold disabled:opacity-50 relative overflow-hidden shadow-[0_0_20px_rgba(255,100,13,0.3)] hover:shadow-[0_0_25px_rgba(255,100,13,0.45)]"
+                className="mt-1.5 w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-all rounded-lg py-1.5 text-xs font-medium disabled:opacity-50 relative overflow-hidden"
                 onClick={startTraining}
                 disabled={optimizing}
               >

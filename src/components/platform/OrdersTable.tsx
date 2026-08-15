@@ -92,10 +92,10 @@ export default function OrdersTable() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
-              <h1 className="text-2xl font-medium tracking-[-0.03em] text-white">Positions & Orders</h1>
+              <span className="w-2 h-2 rounded-full bg-plt-orange" />
+              <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Positions & Orders</h1>
             </div>
-            <p className="mt-0.5 text-xs text-white/50">Tracked long positions and execution trade history</p>
+            <p className="mt-0.5 text-[13px] text-white/30">Tracked long positions and execution trade history</p>
           </div>
           
           <div className="flex items-center gap-2.5 flex-wrap">
@@ -122,7 +122,7 @@ export default function OrdersTable() {
                   onClick={() => setFilter(value)}
                   className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all relative ${
                     filter === value
-                      ? 'bg-white/[0.1] text-plt-orange shadow-sm border border-white/[0.08]'
+                      ? 'bg-white/[0.08] text-white border border-white/[0.10]'
                       : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
@@ -135,7 +135,7 @@ export default function OrdersTable() {
             <button
               type="button"
               onClick={() => setIsAddingOrder(true)}
-              className="h-8 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white px-4 text-xs font-semibold shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)] transition-all"
+              className="h-8 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white px-4 text-xs font-medium transition-colors"
             >
               + Add Order
             </button>
@@ -144,33 +144,33 @@ export default function OrdersTable() {
       </motion.div>
 
       {/* Main Canvas: 24px outer padding (p-6), 8px widget gap (space-y-2) */}
-      <div className="min-h-0 flex-1 overflow-auto p-6 space-y-2">
+      <div className="min-h-0 flex-1 overflow-auto p-6 space-y-3">
         {/* Metric Cards (5 items in grid, 8px gap) */}
-        <motion.div variants={containerStagger} className="grid grid-cols-2 gap-2 md:grid-cols-5">
+        <motion.div variants={containerStagger} className="grid grid-cols-2 gap-3 md:grid-cols-5">
           <Metric label="Net Worth" value={formatPrice(totals.netWorth)} valueClass="text-white font-bold" />
           <Metric label="Open Positions" value={String(totals.openCount)} />
           <Metric label="Closed Positions" value={String(totals.closedCount)} />
           <Metric 
             label="Unrealized P/L" 
             value={formatMoney(totals.unrealized)} 
-            valueClass={totals.unrealized > 0 ? 'text-[#00e676]' : totals.unrealized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
+            valueClass={totals.unrealized > 0 ? 'text-[#22c55e]' : totals.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
           />
           <Metric 
             label="Realized P/L" 
             value={formatMoney(totals.realized)} 
-            valueClass={totals.realized > 0 ? 'text-[#00e676]' : totals.realized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
+            valueClass={totals.realized > 0 ? 'text-[#22c55e]' : totals.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
           />
         </motion.div>
 
         {/* Mobile View (Cards) */}
-        <div className="md:hidden flex flex-col space-y-2">
+        <div className="md:hidden flex flex-col space-y-3">
           {loading ? (
             <MobileOrdersSkeleton />
           ) : filteredOrders.length === 0 ? (
             <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
           ) : (
             filteredOrders.map((order) => (
-              <div key={order.id} className="glass-panel rounded-xl p-6 shadow-xl">
+              <div key={order.id} className="glass-panel rounded-xl p-6">
                 <div className="flex justify-between items-start border-b border-white/[0.06] pb-2.5 mb-2.5">
                   <div>
                     <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
@@ -180,7 +180,7 @@ export default function OrdersTable() {
                     <div className="text-[11px] text-white/40 truncate max-w-[160px]">{order.companyName}</div>
                   </div>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                    order.status === 'OPEN' ? 'bg-white/[0.08] border border-white/[0.12] text-white' : 'bg-white/[0.03] text-white/40'
+                    order.status === 'OPEN' ? 'bg-white/[0.05] border border-white/[0.08] text-white/80' : 'bg-white/[0.03] text-white/40'
                   }`}>
                     {order.status}
                   </span>
@@ -188,24 +188,24 @@ export default function OrdersTable() {
 
                 <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-xs mb-3 font-mono">
                   <div>
-                    <span className="text-white/40 text-[9px] uppercase tracking-wider block mb-0.5 font-sans">Entry</span>
+                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Entry</span>
                     <span className="text-white font-medium">{formatPrice(order.entryPrice)}</span>
                     <span className="text-white/40 text-[10px] block">{order.entryDate}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-white/40 text-[9px] uppercase tracking-wider block mb-0.5 font-sans">Current</span>
+                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Current</span>
                     <span className="text-white font-medium">{formatPrice(order.currentPrice)}</span>
                     <span className="text-white/40 text-[10px] block">Qty: {formatQuantity(order.quantity)}</span>
                   </div>
 
                   <div>
-                    <span className="text-white/40 text-[9px] uppercase tracking-wider block mb-0.5 font-sans">Target / Stop</span>
+                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Target / Stop</span>
                     <span className="text-white/70">{order.targetPrice ? order.targetPrice.toFixed(2) : '-'} / {order.stopPrice ? order.stopPrice.toFixed(2) : '-'}</span>
                   </div>
                   
                   <div className="text-right">
-                    <span className="text-white/40 text-[9px] uppercase tracking-wider block mb-0.5 font-sans">P/L</span>
-                    <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
+                    <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">P/L</span>
+                    <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
                       {formatMoney(order.profitLoss)}
                       <span className="text-[10px] ml-1 opacity-80">({(order.profitLossPct * 100).toFixed(2)}%)</span>
                     </div>
@@ -219,7 +219,7 @@ export default function OrdersTable() {
                       onClick={() => closeOrder(order)}
                       className="px-3 py-1 rounded-full bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.08] text-xs font-medium"
                     >
-                      <CheckCircle size={13} className="mr-1 text-[#00e676]" />
+                      <CheckCircle size={13} className="mr-1 text-[#22c55e]" />
                       <span>Close</span>
                     </button>
                   )}
@@ -233,7 +233,7 @@ export default function OrdersTable() {
                   <button
                     title="Delete Record"
                     onClick={() => deleteOrder(order)}
-                    className="p-1.5 rounded-full bg-white/[0.04] text-[#ff4d58] hover:bg-[#ff4d58]/10 transition-all flex items-center justify-center border border-white/[0.08]"
+                    className="p-1.5 rounded-full bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.08]"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -244,9 +244,9 @@ export default function OrdersTable() {
         </div>
 
         {/* Desktop View (Table Container) */}
-        <motion.div variants={itemFadeInUp} className="hidden md:block glass-panel rounded-xl shadow-xl overflow-hidden">
+        <motion.div variants={itemFadeInUp} className="hidden md:block glass-panel rounded-xl overflow-hidden">
           <table className="w-full text-left text-xs">
-            <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
+            <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[11px] font-medium text-white/30">
               <tr>
                 <th className="px-6 py-3.5">Ticker</th>
                 <th className="px-6 py-3.5">Status</th>
@@ -280,7 +280,7 @@ export default function OrdersTable() {
                     <td className="px-6 py-3.5 whitespace-nowrap">
                       <span
                         className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold ${
-                          order.status === 'OPEN' ? 'bg-white/[0.08] border border-white/[0.12] text-white' : 'bg-white/[0.02] text-white/40'
+                          order.status === 'OPEN' ? 'bg-white/[0.05] border border-white/[0.08] text-white/80' : 'bg-white/[0.02] text-white/40'
                         }`}
                       >
                         {order.status}
@@ -291,8 +291,8 @@ export default function OrdersTable() {
                       <div className="text-[10px] text-white/40 mt-0.5">{order.entryDate}</div>
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
-                      <div className="text-[#00e676]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
-                      <div className="text-[#ff4d58] mt-0.5">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
+                      <div className="text-[#22c55e]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</div>
+                      <div className="text-[#ef4444] mt-0.5">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</div>
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono font-medium text-white">
                       {formatQuantity(order.quantity)}
@@ -301,10 +301,10 @@ export default function OrdersTable() {
                       {formatPrice(order.currentPrice)}
                     </td>
                     <td className="px-6 py-3.5 whitespace-nowrap text-right font-mono">
-                      <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
+                      <div className={`font-semibold ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
                         {formatMoney(order.profitLoss)}
                       </div>
-                      <div className={`text-[10px] mt-0.5 ${order.profitLossPct > 0 ? 'text-[#00e676]' : order.profitLossPct < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
+                      <div className={`text-[10px] mt-0.5 ${order.profitLossPct > 0 ? 'text-[#22c55e]' : order.profitLossPct < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
                         {(order.profitLossPct * 100).toFixed(2)}%
                       </div>
                     </td>
@@ -316,7 +316,7 @@ export default function OrdersTable() {
                             onClick={() => closeOrder(order)}
                             className="p-1.5 rounded-full bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.08]"
                           >
-                            <CheckCircle size={15} className="text-[#00e676]" />
+                            <CheckCircle size={15} className="text-[#22c55e]" />
                           </button>
                         )}
                         <button
@@ -329,7 +329,7 @@ export default function OrdersTable() {
                         <button
                           title="Delete Record"
                           onClick={() => deleteOrder(order)}
-                          className="p-1.5 rounded-full bg-white/[0.04] text-[#ff4d58] hover:bg-[#ff4d58]/10 transition-all border border-white/[0.08]"
+                          className="p-1.5 rounded-full bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.08]"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -370,11 +370,10 @@ function Metric({ label, value, valueClass = 'text-white' }: { label: string; va
   return (
     <motion.div 
       variants={itemFadeInUp}
-      whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-xl p-5 min-h-[110px] flex flex-col justify-between group cursor-default"
+      className="glass-panel rounded-xl p-5 group"
     >
-      <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50">{label}</div>
-      <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
+      <div className="text-[11px] text-white/40 font-medium">{label}</div>
+      <div className={`mt-1.5 text-xl font-semibold font-mono tracking-tight ${valueClass}`}>{value}</div>
     </motion.div>
   );
 }

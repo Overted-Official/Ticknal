@@ -22,40 +22,36 @@
   --border-highlight: #ff640d;
 
   /* ==========================================================================
-     Internal Platform Palette (Pure Black Base & Calmer Glass Tokens)
+     Internal Platform Palette
      ========================================================================== */
   --plt-bg-base: #000000;
-  --plt-bg-surface: #000000;
-  --plt-bg-card: #0d0e12;
-  --plt-bg-hover: #14151a;
+  --plt-bg-surface: #0a0a0a;
+  --plt-bg-card: #0a0a0a;
+  --plt-bg-hover: #111111;
   --plt-bg-chart: #171B26;
 
-  --plt-border: rgba(255, 255, 255, 0.07);
+  --plt-border: rgba(255, 255, 255, 0.06);
   --plt-border-soft: rgba(255, 255, 255, 0.04);
   --plt-border-active: #ff640d;
-  --plt-specular: rgba(255, 255, 255, 0.12);
 
-  --plt-accent-red: #ea3943;
-  --plt-accent-red-hover: #ff4757;
-  --plt-accent-red-soft: #8b1d24;
+  --plt-accent-red: #ef4444;
+  --plt-accent-red-hover: #f87171;
+  --plt-accent-red-soft: #7f1d1d;
   --plt-accent-orange: #ff640d;
   --plt-accent-orange-hover: #ff7a1a;
-  --plt-accent-green: #00e676;
-  --plt-accent-cyan: #00d2ff;
+  --plt-accent-green: #22c55e;
+  --plt-accent-cyan: #06b6d4;
   --plt-accent-violet: #a855f7;
 
-  --plt-text-primary: #ffffff;
-  --plt-text-muted: #8b929f;
-  --plt-text-faint: #525866;
+  --plt-text-primary: rgba(255, 255, 255, 0.92);
+  --plt-text-muted: rgba(255, 255, 255, 0.45);
+  --plt-text-faint: rgba(255, 255, 255, 0.28);
 
   /* Typography */
   --font-tv-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-tv-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-weight-light: 300;
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
 
-  /* Geometry & Effects */
+  /* Geometry */
   --radius-sm: 0.125rem;
   --radius-md: 0.25rem;
   --radius-lg: 0.5rem;
@@ -64,7 +60,7 @@
   --radius-3xl: 1.5rem;
   --radius-full: 9999px;
   
-  --glass-bg: #0d0e12;
+  --glass-bg: #0a0a0a;
 }
 
 @theme inline {
@@ -113,6 +109,10 @@
   --font-mono: var(--font-tv-mono);
 }
 
+/* ==========================================================================
+   Base Reset
+   ========================================================================== */
+
 * {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
@@ -126,34 +126,35 @@ html {
 
 body {
   background: #000000;
-  color: var(--text-primary);
+  color: var(--plt-text-primary);
   font-family: var(--font-tv-sans);
-  
-  /* Core platform text size is 12px (0.75rem) */
-  font-size: 0.75rem; 
-  font-weight: var(--font-weight-regular);
-  
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
   margin: 0;
   padding: 0;
 }
 
-/* Custom Scrollbar for Platform */
+/* ==========================================================================
+   Scrollbar
+   ========================================================================== */
+
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
 }
 
-/* Hide scrollbar for clean UI where needed */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -162,46 +163,41 @@ body {
   scrollbar-width: none;
 }
 
-/* Unified Platform Surface & Glow Tokens */
-.glass-panel {
-  position: relative;
-  border-radius: 12px;
-  background: #0d0e12;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 20px rgba(0, 0, 0, 0.5);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* ==========================================================================
+   Card Surface System
+   
+   Premium dark surfaces: flat, clean, minimal.
+   No specular lines. No inset shadows. No glow halos.
+   Just a subtle border to delineate structure.
+   ========================================================================== */
 
-.glass-panel::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 30%, rgba(255, 255, 255, 0.12) 70%, transparent 100%);
-  pointer-events: none;
-  border-radius: inherit;
+.glass-panel {
+  border-radius: 12px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .glass-panel-hover:hover {
-  border-color: rgba(255, 100, 13, 0.35);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 100, 13, 0.08);
+  border-color: rgba(255, 255, 255, 0.10);
+  background: #0e0e0e;
 }
 
 .glass-pill {
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .glass-pill:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.10);
 }
+
+/* ==========================================================================
+   Animation Keyframes
+   ========================================================================== */
 
 @theme {
   --animate-marquee: marquee 30s linear infinite;
@@ -212,7 +208,10 @@ body {
   }
 }
 
-/* Lenis Smooth Scrolling Optimization */
+/* ==========================================================================
+   Lenis Smooth Scrolling
+   ========================================================================== */
+
 html.lenis, html.lenis body {
   height: auto;
 }

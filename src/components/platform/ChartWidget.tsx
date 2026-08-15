@@ -221,8 +221,8 @@ export default function ChartWidget({
     const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#171B26';
     const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#8b929f';
     const borderColor = computedStyle.getPropertyValue('--border-color').trim() || 'rgba(255, 255, 255, 0.08)';
-    const upColor = computedStyle.getPropertyValue('--up-color').trim() || '#00e676';
-    const downColor = computedStyle.getPropertyValue('--down-color').trim() || '#ea3943';
+    const upColor = computedStyle.getPropertyValue('--up-color').trim() || '#22c55e';
+    const downColor = computedStyle.getPropertyValue('--down-color').trim() || '#ef4444';
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -831,7 +831,7 @@ export default function ChartWidget({
     if (!valStr) return 'text-white';
     const val = parseFloat(valStr);
     if (isNaN(val)) return 'text-white';
-    return val > 0 ? 'text-[#00e676]' : val < 0 ? 'text-[#ff4d58]' : 'text-white';
+    return val > 0 ? 'text-[#22c55e]' : val < 0 ? 'text-[#ef4444]' : 'text-white';
   };
 
   const formatPlus = (valStr: string) => {
@@ -891,7 +891,7 @@ export default function ChartWidget({
             <button
               type="button"
               onClick={handlePredict}
-              className="h-8 w-full rounded-lg bg-plt-orange text-xs font-semibold text-white transition-all hover:bg-plt-orange-hover shadow-[0_0_15px_rgba(255,100,13,0.3)]"
+              className="h-8 w-full rounded-lg bg-plt-orange text-xs font-medium text-white transition-all hover:bg-plt-orange-hover"
             >
               Run Prediction
             </button>
@@ -1070,7 +1070,7 @@ export default function ChartWidget({
             aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
             disabled={replayIndex >= data.length - 1}
             onClick={() => setIsPlaying((value) => !value)}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-plt-orange text-white transition-all hover:bg-plt-orange-hover shadow-[0_0_12px_rgba(255,100,13,0.3)] disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-plt-orange text-white transition-all hover:bg-plt-orange-hover disabled:opacity-30"
           >
             {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
           </button>
@@ -1197,7 +1197,7 @@ export default function ChartWidget({
                   </tr>
                   <tr className="border-b border-white/[0.05]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Drawdown</td>
-                    <td className="py-1.5 px-2.5 font-mono text-[#ff4d58] font-semibold">{metrics['Max Drawdown']}%</td>
+                    <td className="py-1.5 px-2.5 font-mono text-[#ef4444] font-semibold">{metrics['Max Drawdown']}%</td>
                   </tr>
                   <tr className="border-b border-white/[0.05]">
                     <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Adverse Excursion</td>

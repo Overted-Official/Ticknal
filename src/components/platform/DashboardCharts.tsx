@@ -34,17 +34,17 @@ export default function DashboardCharts({
         {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 
-      <div className={`grid-cols-1 gap-2 lg:grid-cols-2 ${isOpen ? 'grid' : 'hidden md:grid'}`}>
+      <div className={`grid-cols-1 gap-3 lg:grid-cols-2 ${isOpen ? 'grid' : 'hidden md:grid'}`}>
         {/* Sector Distribution Donut */}
-        <div className="glass-panel rounded-xl p-6 shadow-xl">
+        <div className="glass-panel rounded-xl p-6">
           <SectorDonutChart data={sectorData} />
         </div>
 
         {/* Monthly Investment Bar Chart */}
-        <div className="glass-panel rounded-xl p-6 shadow-xl">
+        <div className="glass-panel rounded-xl p-6">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-white tracking-[-0.02em]">Monthly Investment</h2>
-            <span className="text-[10px] uppercase tracking-[0.06em] font-medium text-white/40 font-mono">Cost basis / mo</span>
+            <h2 className="text-[13px] font-medium text-white tracking-[-0.02em]">Monthly Investment</h2>
+            <span className="text-[11px] text-white/30 font-medium font-mono">Cost basis / mo</span>
           </div>
           <div style={{ height: 240 }}>
             <MonthlyInvestmentChart data={monthlyData} />

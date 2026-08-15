@@ -286,7 +286,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
                     {/* Chg% */}
                     <div className={`w-[50px] shrink-0 text-right font-mono font-medium text-[11px] whitespace-nowrap ${
-                      isPositive ? 'text-[#00e676]' : 'text-[#ff4d58]'
+                      isPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'
                     }`}>
                       {changePctDisplay}
                     </div>
@@ -358,7 +358,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                     <span className="text-[9px] font-bold text-plt-orange">D</span>
                     <span className="text-[9px] text-white/40">EGP</span>
                   </div>
-                  <div className={`ml-2 text-xs font-semibold font-mono ${selectedItem.isUp ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                  <div className={`ml-2 text-xs font-semibold font-mono ${selectedItem.isUp ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                     {selectedItem.change ? selectedItem.change.split(' ')[0] : ''} {selectedItem.changePct || ''}
                   </div>
                 </div>
@@ -383,7 +383,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                   </div>
                   <div className="h-1 bg-white/[0.06] rounded-full relative">
                     <div 
-                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#00e676]' : 'bg-[#ff4d58]'}`}
+                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`}
                       style={{ width: `${dayPct}%`, left: 0 }} 
                     />
                     <div 
@@ -402,7 +402,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                   </div>
                   <div className="h-1 bg-white/[0.06] rounded-full relative">
                     <div 
-                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#00e676]' : 'bg-[#ff4d58]'}`}
+                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`}
                       style={{ width: `${yearPct}%`, left: 0 }} 
                     />
                     <div 

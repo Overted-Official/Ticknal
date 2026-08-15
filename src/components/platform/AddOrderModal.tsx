@@ -141,7 +141,7 @@ export default function AddOrderModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
+            <span className="w-2 h-2 rounded-full bg-plt-orange" />
             <span className="font-semibold text-white text-sm">{title}</span>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1 rounded-full hover:bg-white/[0.06]">
@@ -228,13 +228,13 @@ export default function AddOrderModal({
           <div className="grid grid-cols-2 gap-3 bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 font-mono">
             <div>
               <label className="block text-[9px] uppercase font-semibold tracking-wider text-white/40 mb-0.5 font-sans">Target (Est.)</label>
-              <div className="text-[#00e676] text-xs font-semibold">
+              <div className="text-[#22c55e] text-xs font-semibold">
                 {(entryPriceNum * 1.15).toFixed(2)} EGP
               </div>
             </div>
             <div>
               <label className="block text-[9px] uppercase font-semibold tracking-wider text-white/40 mb-0.5 font-sans">Stop (Est.)</label>
-              <div className="text-[#ff4d58] text-xs font-semibold">
+              <div className="text-[#ef4444] text-xs font-semibold">
                 {(entryPriceNum * 0.95).toFixed(2)} EGP
               </div>
             </div>
@@ -265,12 +265,12 @@ export default function AddOrderModal({
         <div className="p-5 pt-0 shrink-0">
           <button
             onClick={handleAddOrder}
-            className={`w-full py-2.5 rounded-full font-semibold text-xs transition-all shadow-md ${
+            className={`w-full py-2.5 rounded-full font-medium text-xs transition-all shadow-md ${
               isBuy 
-                ? 'bg-[#00e676] hover:bg-[#00e676]/90 text-black shadow-[0_0_15px_rgba(0,230,118,0.3)]' 
+                ? 'bg-[#22c55e] hover:bg-[#22c55e]/90 text-black' 
                 : isSell 
-                  ? 'bg-[#ff4d58] hover:bg-[#ff4d58]/90 text-white shadow-[0_0_15px_rgba(255,77,88,0.3)]'
-                  : 'bg-plt-orange hover:bg-plt-orange-hover text-white shadow-[0_0_15px_rgba(255,100,13,0.3)]'
+                  ? 'bg-[#ef4444] hover:bg-[#ef4444]/90 text-white'
+                  : 'bg-plt-orange hover:bg-plt-orange-hover text-white'
             }`}
           >
             {isBuy || isSell ? 'Place Order' : 'Save Order'}

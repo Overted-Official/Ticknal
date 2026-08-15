@@ -11,7 +11,7 @@ export type SectorDataItem = {
 };
 
 const SECTOR_COLORS = [
-  '#00e676', // neon green
+  '#22c55e', // green
   '#00d2ff', // cyan
   '#f59e0b', // amber
   '#a855f7', // violet

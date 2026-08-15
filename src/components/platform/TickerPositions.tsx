@@ -56,13 +56,13 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
           </div>
           <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
             <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Unrealized P/L</div>
-            <div className={`mt-1 text-sm font-bold font-mono truncate ${unrealizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+            <div className={`mt-1 text-sm font-bold font-mono truncate ${unrealizedPl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
               {formatMoney(unrealizedPl, true)}
             </div>
           </div>
           <div className="glass-panel glass-panel-hover rounded-xl p-6 shadow-xl">
             <div className="text-[10px] uppercase font-medium tracking-[0.06em] text-white/40 truncate font-mono">Realized P/L</div>
-            <div className={`mt-1 text-sm font-bold font-mono truncate ${realizedPl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+            <div className={`mt-1 text-sm font-bold font-mono truncate ${realizedPl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
               {formatMoney(realizedPl, true)}
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
               return (
                 <div key={order.id} className="glass-panel rounded-xl p-6 flex flex-col space-y-2.5 shadow-xl relative overflow-hidden">
                   {/* Left accent strip based on status */}
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-orange shadow-[0_0_8px_#ff640d]' : 'bg-white/10'}`} />
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOpen ? 'bg-plt-orange' : 'bg-white/10'}`} />
                   
                   <div className="flex justify-between items-start ml-2">
                     <div>
@@ -102,10 +102,10 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
                       </div>
                     </div>
                     <div className="text-right font-mono">
-                      <div className={`text-sm font-bold ${pl >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                      <div className={`text-sm font-bold ${pl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                         {formatMoney(pl, true)}
                       </div>
-                      <div className={`text-[10px] ${plPct >= 0 ? 'text-[#00e676]' : 'text-[#ff4d58]'}`}>
+                      <div className={`text-[10px] ${plPct >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                         {plPct >= 0 ? '+' : ''}{plPct.toFixed(2)}%
                       </div>
                     </div>
@@ -130,11 +130,11 @@ export default function TickerPositions({ symbol, orders, currentPrice }: Ticker
                     <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-white/[0.04] ml-2 font-mono">
                       <div>
                         <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Target Price</span>
-                        <span className="text-[#00e676]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</span>
+                        <span className="text-[#22c55e]">{order.targetPrice ? formatPrice(order.targetPrice) : '-'}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-white/40 text-[9px] uppercase tracking-wider block font-sans">Stop Loss</span>
-                        <span className="text-[#ff4d58]">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</span>
+                        <span className="text-[#ef4444]">{order.stopPrice ? formatPrice(order.stopPrice) : '-'}</span>
                       </div>
                     </div>
                   )}

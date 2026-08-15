@@ -50,7 +50,7 @@ export default function TestNotificationButton() {
       disabled={!isMounted || loading || permission === 'unsupported'}
       className="glass-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white/70 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-plt-orange animate-ping' : 'bg-plt-orange shadow-[0_0_6px_#ff640d]'}`} />
+      <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-plt-orange animate-ping' : 'bg-plt-orange'}`} />
       <span>{loading ? 'Sending...' : 'Test Notification'}</span>
     </button>
   );

@@ -49,20 +49,20 @@ export default function SidebarNav() {
                   <div 
                     className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 mb-0.5 ${
                       isActive || isChartsMenuOpen
-                        ? 'bg-white/[0.08] border border-white/[0.12] text-plt-orange shadow-[0_0_12px_rgba(255,100,13,0.15)]' 
-                        : 'text-white/40 group-hover:bg-white/[0.04] group-hover:text-white'
+                        ? 'bg-white/[0.06] text-white' 
+                        : 'text-white/35 group-hover:text-white/70'
                     }`}
                   >
                     <item.icon size={16} strokeWidth={1.5} />
                   </div>
-                  <span className={`text-[8px] tracking-tight ${isActive || isChartsMenuOpen ? 'text-plt-orange font-semibold' : 'text-white/40 group-hover:text-white/80'}`}>
+                  <span className={`text-[8px] tracking-tight ${isActive || isChartsMenuOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
                     {item.label}
                   </span>
                 </button>
                 
                 {/* Desktop Floating Menu for Charts */}
                 {isChartsMenuOpen && (
-                  <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-black/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1">
+                  <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-xl z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1">
                     <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
                       Views
                     </div>
@@ -79,7 +79,7 @@ export default function SidebarNav() {
                       onClick={() => setIsChartsMenuOpen(false)}
                       className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors flex items-center gap-2"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
                       Positions
                     </Link>
                   </div>
@@ -97,13 +97,13 @@ export default function SidebarNav() {
               <div 
                 className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 mb-0.5 ${
                   isActive 
-                    ? 'bg-white/[0.08] border border-white/[0.12] text-plt-orange shadow-[0_0_12px_rgba(255,100,13,0.15)]' 
-                    : 'text-white/40 group-hover:bg-white/[0.04] group-hover:text-white'
+                    ? 'bg-white/[0.06] text-white' 
+                    : 'text-white/35 group-hover:text-white/70'
                 }`}
               >
                 <item.icon size={16} strokeWidth={1.5} />
               </div>
-              <span className={`text-[8px] tracking-tight ${isActive ? 'text-plt-orange font-semibold' : 'text-white/40 group-hover:text-white/80'}`}>
+              <span className={`text-[8px] tracking-tight ${isActive ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
                 {item.label}
               </span>
             </Link>
@@ -120,13 +120,13 @@ export default function SidebarNav() {
           <div 
             className={`flex items-center justify-center rounded-lg w-8 h-8 transition-all duration-150 ${
               pathname === '/settings' 
-                ? 'bg-white/[0.08] border border-white/[0.12] text-plt-orange shadow-[0_0_12px_rgba(255,100,13,0.15)]' 
-                : 'text-white/40 group-hover:bg-white/[0.04] group-hover:text-white'
+                ? 'bg-white/[0.06] text-white' 
+                : 'text-white/35 group-hover:text-white/70'
             }`}
           >
             <Settings size={16} strokeWidth={1.5} />
           </div>
-          <span className={`text-[8px] tracking-tight mt-0.5 ${pathname === '/settings' ? 'text-plt-orange font-semibold' : 'text-white/40 group-hover:text-white/80'}`}>
+          <span className={`text-[8px] tracking-tight mt-0.5 ${pathname === '/settings' ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
             Settings
           </span>
         </Link>

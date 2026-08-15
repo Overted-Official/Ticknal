@@ -67,24 +67,24 @@ export default function DashboardMotionView({
         <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
-              <h1 className="text-2xl font-medium tracking-[-0.03em] text-white">Dashboard</h1>
+              <span className="w-2 h-2 rounded-full bg-plt-orange" />
+              <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Dashboard</h1>
             </div>
-            <p className="mt-0.5 text-xs text-white/50">Portfolio performance and real-time PSI trading intelligence</p>
+            <p className="mt-0.5 text-[13px] text-white/30">Portfolio performance and real-time PSI trading intelligence</p>
           </div>
 
           <div className="flex items-center gap-2">
             <TestNotificationButton />
             <Link
               href="/positions"
-              className="glass-panel glass-panel-hover flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-white/80 hover:text-white transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium text-white/50 hover:text-white/80 bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.10] transition-all"
             >
               <span>Manage Positions</span>
               <span className="text-plt-orange">→</span>
             </Link>
             <Link
               href="/charts"
-              className="glass-panel glass-panel-hover flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-white/80 hover:text-white transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium text-white/50 hover:text-white/80 bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.10] transition-all"
             >
               <span>Open Charts</span>
               <span className="text-plt-orange">→</span>
@@ -94,9 +94,9 @@ export default function DashboardMotionView({
       </div>
 
       {/* Main Dashboard Canvas: 24px outer padding (p-6), 8px uniform gap between all widgets (space-y-2) */}
-      <div className="flex-1 p-6 space-y-2">
+      <div className="flex-1 p-6 space-y-3">
         {/* 1. Top Metric Cards (6 cards in grid, 8px gap) */}
-        <motion.div variants={containerStagger} className="grid grid-cols-2 gap-2 lg:grid-cols-6">
+        <motion.div variants={containerStagger} className="grid grid-cols-2 gap-3 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-1">
             <MetricCard
               label="Net Worth"
@@ -104,34 +104,34 @@ export default function DashboardMotionView({
               subtitle={`ROI ${orderStats.totalRoi > 0 ? '+' : ''}${orderStats.totalRoi.toFixed(2)}%`}
               subtitleClass={
                 orderStats.totalRoi > 0 
-                  ? 'text-[#00e676] bg-[#00e676]/10 border border-[#00e676]/20 font-medium' 
+                  ? 'text-[#22c55e] bg-[#22c55e]/8 border border-[#22c55e]/15 font-medium' 
                   : orderStats.totalRoi < 0 
-                  ? 'text-[#ff4d58] bg-[#ff4d58]/10 border border-[#ff4d58]/20 font-medium' 
-                  : 'text-white/50 bg-white/[0.04] border border-white/[0.08]'
+                  ? 'text-[#ef4444] bg-[#ef4444]/8 border border-[#ef4444]/15 font-medium' 
+                  : 'text-white/40 bg-white/[0.03] border border-white/[0.06]'
               }
             />
           </div>
           <MetricCard 
             label="Unrealized P/L" 
             value={formatMoney(orderStats.unrealized, true)} 
-            valueClass={orderStats.unrealized > 0 ? 'text-[#00e676]' : orderStats.unrealized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
+            valueClass={orderStats.unrealized > 0 ? 'text-[#22c55e]' : orderStats.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
           />
           <MetricCard 
             label="Realized P/L" 
             value={formatMoney(orderStats.realized, true)} 
-            valueClass={orderStats.realized > 0 ? 'text-[#00e676]' : orderStats.realized < 0 ? 'text-[#ff4d58]' : 'text-white/80'} 
+            valueClass={orderStats.realized > 0 ? 'text-[#22c55e]' : orderStats.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'} 
           />
           <MetricCard 
             label="Open Positions" 
             value={String(orderStats.openOrders.length)} 
             subtitle={`${orderStats.openWinning} Win · ${orderStats.openLosing} Loss`}
-            subtitleClass="text-white/50 bg-white/[0.04] border border-white/[0.08]"
+            subtitleClass="text-white/40 bg-white/[0.03] border border-white/[0.06]"
           />
           <MetricCard 
             label="Closed Positions" 
             value={String(orderStats.closedCount)} 
             subtitle={`${orderStats.closedWinning} Win · ${orderStats.closedLosing} Loss`}
-            subtitleClass="text-white/50 bg-white/[0.04] border border-white/[0.08]"
+            subtitleClass="text-white/40 bg-white/[0.03] border border-white/[0.06]"
           />
           <MetricCard label="Active Alerts" value={String(activeAlertCount)} />
         </motion.div>
@@ -142,20 +142,20 @@ export default function DashboardMotionView({
           className="glass-panel rounded-xl p-6 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
         >
           <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Win Rate</div>
-            <div className="text-xl font-bold font-mono text-white">{orderStats.winRate.toFixed(1)}%</div>
+            <div className="text-[11px] text-white/40 font-medium mb-1">Win Rate</div>
+            <div className="text-lg font-semibold font-mono text-white">{orderStats.winRate.toFixed(1)}%</div>
           </div>
           <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Avg. Bars / Trade</div>
-            <div className="text-xl font-bold font-mono text-white">{Math.round(orderStats.avgBarsPerTrade)}</div>
+            <div className="text-[11px] text-white/40 font-medium mb-1">Avg. Bars / Trade</div>
+            <div className="text-lg font-semibold font-mono text-white">{Math.round(orderStats.avgBarsPerTrade)}</div>
           </div>
           <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Avg. Adverse Excursion</div>
-            <div className="text-xl font-bold font-mono text-white/30">N/A</div>
+            <div className="text-[11px] text-white/40 font-medium mb-1">Avg. Adverse Excursion</div>
+            <div className="text-lg font-semibold font-mono text-white/30">N/A</div>
           </div>
           <div className="flex-1 md:px-5 last:pr-0 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50 mb-1">Max Trade Loss</div>
-            <div className={`text-xl font-bold font-mono ${orderStats.maxDrawdownPct < 0 ? 'text-[#ff4d58]' : 'text-white'}`}>
+            <div className="text-[11px] text-white/40 font-medium mb-1">Max Trade Loss</div>
+            <div className={`text-lg font-semibold font-mono ${orderStats.maxDrawdownPct < 0 ? 'text-[#ef4444]' : 'text-white'}`}>
               {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
             </div>
           </div>
@@ -167,16 +167,16 @@ export default function DashboardMotionView({
         </motion.div>
 
         {/* 4. Two-Column Grid: Left (Open Positions) / Right (Signals) */}
-        <motion.div variants={containerStagger} className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+        <motion.div variants={containerStagger} className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {/* Open Positions Card */}
           <motion.section variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden flex flex-col">
             <div className="border-b border-white/[0.06] px-6 py-4 bg-white/[0.01] flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_rgba(255,100,13,0.4)]" />
+                <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-plt-orange" />
                   Active Positions
                 </h2>
-                <p className="text-[11px] text-white/40 mt-0.5">Summary of currently open portfolio holdings</p>
+                <p className="text-[12px] text-white/30 mt-0.5">Summary of currently open portfolio holdings</p>
               </div>
               <Link 
                 href="/positions" 
@@ -190,7 +190,7 @@ export default function DashboardMotionView({
               {/* Desktop View */}
               <div className="hidden md:block">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-white/[0.06] bg-white/[0.02] text-[10px] uppercase font-semibold text-white/40 tracking-wider">
+                  <thead className="border-b border-white/[0.06] bg-white/[0.02] text-[11px] font-medium text-white/30">
                     <tr>
                       <th className="px-6 py-3.5">Symbol</th>
                       <th className="px-6 py-3.5 text-right">Entry</th>
@@ -237,7 +237,7 @@ export default function DashboardMotionView({
                           <td className="px-6 py-3.5 text-right font-mono text-white text-xs">
                             {formatPrice(order.currentPrice * order.quantity)}
                           </td>
-                          <td className={`px-6 py-3.5 text-right font-mono text-xs ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
+                          <td className={`px-6 py-3.5 text-right font-mono text-xs ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
                             <div className="font-semibold">{formatMoney(order.profitLoss, true)}</div>
                             <div className="text-[10px] opacity-80">{order.profitLossPct > 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%</div>
                           </td>
@@ -274,7 +274,7 @@ export default function DashboardMotionView({
                       </div>
                       <div className="text-right font-mono">
                         <div className="text-xs text-white">{formatPrice(order.currentPrice * order.quantity)}</div>
-                        <div className={`text-[11px] font-semibold ${order.profitLoss > 0 ? 'text-[#00e676]' : order.profitLoss < 0 ? 'text-[#ff4d58]' : 'text-white/80'}`}>
+                        <div className={`text-[11px] font-semibold ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
                           {formatMoney(order.profitLoss, true)} ({order.profitLossPct > 0 ? '+' : ''}{order.profitLossPct.toFixed(2)}%)
                         </div>
                       </div>
@@ -291,11 +291,11 @@ export default function DashboardMotionView({
             <motion.div variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden">
               <div className="border-b border-white/[0.06] px-6 py-4 bg-white/[0.01] flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#00e676] shadow-[0_0_8px_#00e676]" />
+                  <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
                     Buy Opportunities
                   </h2>
-                  <p className="text-[11px] text-white/40 mt-0.5">Top buy signals triggered across the market</p>
+                  <p className="text-[12px] text-white/30 mt-0.5">Top buy signals triggered across the market</p>
                 </div>
               </div>
               <div className="p-0">
@@ -307,11 +307,11 @@ export default function DashboardMotionView({
             <motion.div variants={itemFadeInUp} className="glass-panel rounded-xl overflow-hidden">
               <div className="border-b border-white/[0.06] px-6 py-4 bg-white/[0.01] flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-medium tracking-[-0.02em] text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#ff4d58] shadow-[0_0_8px_#ff4d58]" />
+                  <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#ef4444]" />
                     Exit & Stop Alerts
                   </h2>
-                  <p className="text-[11px] text-white/40 mt-0.5">Exit notifications for your current positions</p>
+                  <p className="text-[12px] text-white/30 mt-0.5">Exit notifications for your current positions</p>
                 </div>
               </div>
               <div className="p-0">
@@ -341,13 +341,10 @@ function MetricCard({
   return (
     <motion.div 
       variants={itemFadeInUp}
-      whileHover={hoverLift}
-      className="glass-panel glass-panel-hover rounded-xl p-5 min-h-[110px] flex flex-col justify-between group cursor-default"
+      className="glass-panel rounded-xl p-5 group"
     >
-      <div>
-        <div className="text-[10px] uppercase font-semibold tracking-wider text-white/50">{label}</div>
-        <div className={`mt-1.5 text-lg md:text-xl font-bold font-mono tracking-tight ${valueClass}`}>{value}</div>
-      </div>
+      <div className="text-[11px] text-white/40 font-medium">{label}</div>
+      <div className={`mt-1 text-xl font-semibold font-mono tracking-tight ${valueClass}`}>{value}</div>
       {subtitle && (
         <div className="mt-2 flex items-center">
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono ${subtitleClass}`}>

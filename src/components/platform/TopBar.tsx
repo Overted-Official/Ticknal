@@ -100,7 +100,7 @@ export default function TopBar({
           <div className="flex items-center pl-1">
             <button 
               onClick={() => setIsAddOrderOpen(true)}
-              className="rounded-full bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1 text-xs text-white font-semibold transition-all shadow-[0_0_15px_rgba(255,100,13,0.3)] hover:shadow-[0_0_20px_rgba(255,100,13,0.45)]"
+              className="rounded-full bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1 text-xs text-white font-medium transition-all"
             >
               + Add Order
             </button>

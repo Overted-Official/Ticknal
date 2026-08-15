@@ -86,7 +86,7 @@ export default function EditOrderModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-plt-orange shadow-[0_0_8px_#ff640d]" />
+            <span className="w-2 h-2 rounded-full bg-plt-orange" />
             <span className="font-semibold text-white text-sm">Edit {order.tickerSymbol.replace('.CA', '')} Position</span>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1 rounded-full hover:bg-white/[0.06]">
@@ -152,7 +152,7 @@ export default function EditOrderModal({
           </button>
           <button
             onClick={handleEditOrder}
-            className="flex-1 py-2.5 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white font-semibold text-xs transition-all shadow-[0_0_15px_rgba(255,100,13,0.3)]"
+            className="flex-1 py-2.5 rounded-full bg-plt-orange hover:bg-plt-orange-hover text-white font-medium text-xs transition-all"
           >
             Save Changes
           </button>

@@ -2,7 +2,7 @@ import React from 'react';
 
 function MetricSkeleton() {
   return (
-    <div className="glass-panel rounded-xl p-6 animate-pulse">
+    <div className="glass-panel rounded-xl p-5 animate-pulse">
       <div className="h-2.5 w-16 bg-white/[0.06] rounded mb-2"></div>
       <div className="h-6 w-24 bg-white/[0.1] rounded mb-1.5"></div>
       <div className="h-3 w-20 bg-white/[0.04] rounded"></div>
@@ -28,9 +28,9 @@ export default function DashboardSkeleton() {
       </div>
 
       {/* Main Canvas: 24px outer padding (p-6), 8px widget gap (space-y-2) */}
-      <div className="flex-1 p-6 space-y-2">
+      <div className="flex-1 p-6 space-y-3">
         {/* 1. Metric Cards */}
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-1">
             <MetricSkeleton />
           </div>
@@ -52,7 +52,7 @@ export default function DashboardSkeleton() {
         </div>
 
         {/* 3. Analytics Charts */}
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div className="glass-panel rounded-xl p-6 animate-pulse">
             <div className="mb-3 flex items-center justify-between">
               <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
@@ -77,7 +77,7 @@ export default function DashboardSkeleton() {
         </div>
 
         {/* 4. Two-Column Grid */}
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           <section className="animate-pulse glass-panel rounded-xl p-6">
             <div className="mb-3 flex items-center justify-between">
               <div className="h-4 w-32 bg-white/[0.08] rounded"></div>
