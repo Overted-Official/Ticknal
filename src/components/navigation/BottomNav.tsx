@@ -11,7 +11,7 @@ export default function BottomNav() {
     { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
     { icon: LineChart, label: 'Charts', href: '/charts' },
     { icon: ListOrdered, label: 'Positions', href: '/positions' },
-    { icon: Settings, label: 'Settings', href: '#' },
+    { icon: Settings, label: 'Settings', href: '/settings' },
   ];
 
   return (

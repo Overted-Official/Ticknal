@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { pushSubscriptions } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
@@ -57,6 +58,67 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error saving push subscription:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const rows = await db
+      .select({
+        id: pushSubscriptions.id,
+        endpoint: pushSubscriptions.endpoint,
+        userAgent: pushSubscriptions.userAgent,
+        createdAt: pushSubscriptions.createdAt,
+        updatedAt: pushSubscriptions.updatedAt,
+      })
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, user.id));
+
+    return NextResponse.json({ subscriptions: rows });
+  } catch (error) {
+    console.error('Error fetching push subscriptions:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const endpoint = searchParams.get('endpoint');
+
+    if (id) {
+      await db
+        .delete(pushSubscriptions)
+        .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.id, Number(id))));
+      return NextResponse.json({ ok: true });
+    }
+
+    if (endpoint) {
+      await db
+        .delete(pushSubscriptions)
+        .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)));
+      return NextResponse.json({ ok: true });
+    }
+
+    return NextResponse.json({ error: 'id or endpoint is required' }, { status: 400 });
+  } catch (error) {
+    console.error('Error deleting push subscription:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
