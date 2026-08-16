@@ -29,13 +29,29 @@ export default async function SettingsPage() {
     );
   }
 
-  const [deviceRows, openRows, alertRows, cachedTickers, cachedPrices] = await Promise.all([
-    db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, user.id)).orderBy(desc(pushSubscriptions.createdAt)),
-    db.select().from(positions).where(and(eq(positions.userId, user.id), eq(positions.status, 'OPEN'))),
-    db.select().from(tickerAlerts).where(eq(tickerAlerts.userId, user.id)),
-    getCachedTickers(),
-    getCachedRecentPrices(),
-  ]);
+  let deviceRows: (typeof pushSubscriptions.$inferSelect)[] = [];
+  let openRows: (typeof positions.$inferSelect)[] = [];
+  let alertRows: (typeof tickerAlerts.$inferSelect)[] = [];
+  let cachedTickers: Awaited<ReturnType<typeof getCachedTickers>> = [];
+  let cachedPrices: Awaited<ReturnType<typeof getCachedRecentPrices>> = [];
+
+  try {
+    const [devRes, openRes, alertRes, tickRes, priceRes] = await Promise.allSettled([
+      db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, user.id)).orderBy(desc(pushSubscriptions.createdAt)),
+      db.select().from(positions).where(and(eq(positions.userId, user.id), eq(positions.status, 'OPEN'))),
+      db.select().from(tickerAlerts).where(eq(tickerAlerts.userId, user.id)),
+      getCachedTickers(),
+      getCachedRecentPrices(),
+    ]);
+
+    if (devRes.status === 'fulfilled') deviceRows = devRes.value;
+    if (openRes.status === 'fulfilled') openRows = openRes.value;
+    if (alertRes.status === 'fulfilled') alertRows = alertRes.value;
+    if (tickRes.status === 'fulfilled') cachedTickers = tickRes.value;
+    if (priceRes.status === 'fulfilled') cachedPrices = priceRes.value;
+  } catch (err) {
+    console.error('Error loading settings data:', err);
+  }
 
   // Build price map
   const priceMap: Record<string, number> = {};

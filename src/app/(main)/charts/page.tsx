@@ -46,9 +46,14 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   const allTickers = await getCachedTickers();
 
   // Fetch open positions
-  const openPositionsRows = await db.select({ tickerSymbol: positions.tickerSymbol })
-    .from(positions)
-    .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, user.id)));
+  let openPositionsRows: { tickerSymbol: string }[] = [];
+  try {
+    openPositionsRows = await db.select({ tickerSymbol: positions.tickerSymbol })
+      .from(positions)
+      .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, user.id)));
+  } catch (err) {
+    console.error('Error fetching openPositionsRows in charts:', err);
+  }
   const openPositionsSet = new Set(openPositionsRows.map(o => o.tickerSymbol));
 
   
@@ -116,7 +121,12 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   });
 
   // Fetch orders specifically for the selected symbol for the Positions view
-  const tickerPositionsData = await db.select().from(positions).where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, user.id)));
+  let tickerPositionsData: (typeof positions.$inferSelect)[] = [];
+  try {
+    tickerPositionsData = await db.select().from(positions).where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, user.id)));
+  } catch (err) {
+    console.error('Error fetching tickerPositionsData in charts:', err);
+  }
   const tickerPositions: TickerOrder[] = tickerPositionsData.map(o => ({
     id: o.id,
     status: o.status,

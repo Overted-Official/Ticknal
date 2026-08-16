@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { connection } from 'next/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { dailyPrices, positions, tickerAlerts, tickers } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
@@ -37,6 +37,25 @@ type Opportunity = {
   signal: PsiSignal;
 };
 
+const emptyOrderStats = {
+  openOrders: [] as DashboardOrder[],
+  openMarketValue: 0,
+  unrealized: 0,
+  realized: 0,
+  totalRoi: 0,
+  sectorData: [] as SectorDataItem[],
+  monthlyData: [] as MonthlyDataItem[],
+  winRate: 0,
+  avgBarsPerTrade: 0,
+  maxDrawdownPct: 0,
+  avgAdverseExcursion: 0,
+  openWinning: 0,
+  openLosing: 0,
+  closedWinning: 0,
+  closedLosing: 0,
+  closedCount: 0,
+};
+
 const DASHBOARD_HISTORY_BARS = 320;
 
 export default async function DashboardContent() {
@@ -56,11 +75,38 @@ export default async function DashboardContent() {
     );
   }
 
-  const [orderStats, opportunities, activeAlertCount] = await Promise.all([
-    getOrderStats(user.id),
-    getRecentOpportunities(),
-    getActiveAlertCount(user.id),
-  ]);
+  let orderStats = emptyOrderStats;
+  let opportunities: Opportunity[] = [];
+  let activeAlertCount = 0;
+
+  try {
+    const [statsResult, oppsResult, alertResult] = await Promise.allSettled([
+      getOrderStats(user.id),
+      getRecentOpportunities(),
+      getActiveAlertCount(user.id),
+    ]);
+
+    if (statsResult.status === 'fulfilled') {
+      orderStats = statsResult.value;
+    } else {
+      console.error('Error fetching orderStats:', statsResult.reason);
+    }
+
+    if (oppsResult.status === 'fulfilled') {
+      opportunities = oppsResult.value;
+    } else {
+      console.error('Error fetching opportunities:', oppsResult.reason);
+    }
+
+    if (alertResult.status === 'fulfilled') {
+      activeAlertCount = alertResult.value;
+    } else {
+      console.error('Error fetching activeAlertCount:', alertResult.reason);
+    }
+  } catch (err) {
+    console.error('Unexpected error in DashboardContent:', err);
+  }
+
   const openPositionTickers = new Set(orderStats.openOrders.map(o => o.tickerSymbol));
   const buyOpportunities = opportunities.filter((item) => item.signal.signal === 'BUY').slice(0, 12);
   const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
@@ -76,17 +122,18 @@ export default async function DashboardContent() {
 }
 
 async function getOrderStats(userId: string) {
-  const [openRows, closedRows, latestPrices, tickerMap, avgAdverseExcursion] = await Promise.all([
-    db.select().from(positions).where(
-      sql`${positions.status} = 'OPEN' AND ${positions.userId} = ${userId}`
-    ).orderBy(desc(positions.createdAt)),
-    db.select().from(positions).where(
-      sql`${positions.status} = 'CLOSED' AND ${positions.userId} = ${userId}`
-    ).orderBy(desc(positions.createdAt)),
-    getLatestPriceMap(),
-    getTickerMap(),
-    getAvgAdverseExcursion(userId),
-  ]);
+  try {
+    const [openRows, closedRows, latestPrices, tickerMap, avgAdverseExcursion] = await Promise.all([
+      db.select().from(positions).where(
+        and(eq(positions.status, 'OPEN'), eq(positions.userId, userId))
+      ).orderBy(desc(positions.createdAt)),
+      db.select().from(positions).where(
+        and(eq(positions.status, 'CLOSED'), eq(positions.userId, userId))
+      ).orderBy(desc(positions.createdAt)),
+      getLatestPriceMap().catch(() => ({})),
+      getTickerMap().catch(() => ({})),
+      getAvgAdverseExcursion(userId).catch(() => 0),
+    ]);
 
   const openOrdersMap = new Map<string, DashboardOrder>();
   for (const order of openRows) {
@@ -283,27 +330,29 @@ async function getOrderStats(userId: string) {
   const unrealized = openOrders.reduce((sum, order) => sum + order.profitLoss, 0);
   const totalRoi = totalCostBasis > 0 ? ((unrealized + realized) / totalCostBasis) * 100 : 0;
 
-  return {
-    openOrders,
-    openMarketValue: totalMarketValue,
-    unrealized,
-    realized,
-    totalRoi,
-    sectorData,
-    monthlyData,
-    winRate,
-    avgBarsPerTrade,
-    maxDrawdownPct,
-    avgAdverseExcursion,
-    openWinning: openOrders.filter(o => o.profitLoss > 0).length,
-    openLosing: openOrders.filter(o => o.profitLoss < 0).length,
-    closedWinning: winningTrades,
-    closedLosing,
-    closedCount,
-  };
+    return {
+      openOrders,
+      openMarketValue: totalMarketValue,
+      unrealized,
+      realized,
+      totalRoi,
+      sectorData,
+      monthlyData,
+      winRate,
+      avgBarsPerTrade,
+      maxDrawdownPct,
+      avgAdverseExcursion,
+      openWinning: openOrders.filter(o => o.profitLoss > 0).length,
+      openLosing: openOrders.filter(o => o.profitLoss < 0).length,
+      closedWinning: winningTrades,
+      closedLosing,
+      closedCount,
+    };
+  } catch (err) {
+    console.error('Error in getOrderStats:', err);
+    return emptyOrderStats;
+  }
 }
-
-
 
 async function getAvgAdverseExcursion(userId: string): Promise<number> {
   try {
@@ -315,49 +364,65 @@ async function getAvgAdverseExcursion(userId: string): Promise<number> {
           ON dp.ticker_symbol = p.ticker_symbol
           AND dp.date >= p.entry_date
           AND dp.date <= p.exit_date
-        WHERE p.user_id = ${userId} AND p.status = 'CLOSED'
+        WHERE p.user_id = ${userId}::uuid AND p.status = 'CLOSED'
         GROUP BY p.id, p.entry_price
       ) sub
     `);
     const row = result[0] as Record<string, unknown> | undefined;
     const avgMae = Number(row?.avg_mae ?? 0);
     return isNaN(avgMae) ? 0 : avgMae;
-  } catch {
+  } catch (err) {
+    console.error('Error calculating avgAdverseExcursion:', err);
     return 0;
   }
 }
 
-async function getActiveAlertCount(userId: string) {
-  const rows = await db.select({ id: tickerAlerts.id })
-    .from(tickerAlerts)
-    .where(
-      sql`${tickerAlerts.enabled} = true AND ${tickerAlerts.userId} = ${userId}`
-    );
-  return rows.length;
+async function getActiveAlertCount(userId: string): Promise<number> {
+  try {
+    const rows = await db.select({ id: tickerAlerts.id })
+      .from(tickerAlerts)
+      .where(
+        and(eq(tickerAlerts.enabled, true), eq(tickerAlerts.userId, userId))
+      );
+    return rows.length;
+  } catch (err) {
+    console.error('Error in getActiveAlertCount:', err);
+    return 0;
+  }
 }
 
 async function getLatestPriceMap(): Promise<Record<string, number>> {
-  const rows = await getCachedRecentPrices();
-  const priceMap: Record<string, number> = {};
-  for (const row of rows) {
-    if (Number(row.rn) === 1) {
-      priceMap[String(row.ticker_symbol)] = Number(row.close);
+  try {
+    const rows = await getCachedRecentPrices();
+    const priceMap: Record<string, number> = {};
+    for (const row of rows) {
+      if (Number(row.rn) === 1) {
+        priceMap[String(row.ticker_symbol)] = Number(row.close);
+      }
     }
+    return priceMap;
+  } catch (err) {
+    console.error('Error in getLatestPriceMap:', err);
+    return {};
   }
-  return priceMap;
 }
 
 async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; logoUrl: string | null }>> {
-  const rows = await getCachedTickers();
-  const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }> = {};
-  for (const ticker of rows) {
-    tickerMap[ticker.symbol] = {
-      companyName: ticker.companyName ?? ticker.symbol,
-      sector: ticker.sector ?? 'Unclassified',
-      logoUrl: ticker.logoUrl,
-    };
+  try {
+    const rows = await getCachedTickers();
+    const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }> = {};
+    for (const ticker of rows) {
+      tickerMap[ticker.symbol] = {
+        companyName: ticker.companyName ?? ticker.symbol,
+        sector: ticker.sector ?? 'Unclassified',
+        logoUrl: ticker.logoUrl,
+      };
+    }
+    return tickerMap;
+  } catch (err) {
+    console.error('Error in getTickerMap:', err);
+    return {};
   }
-  return tickerMap;
 }
 
 function formatMoney(value: number, showSign: boolean): string {
