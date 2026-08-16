@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { ChevronDown } from '@/components/ui/icons';
 import { containerStagger, itemFadeInUp, hoverLift } from '@/lib/motion';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
 import DashboardCharts from '@/components/platform/DashboardCharts';
@@ -35,6 +36,7 @@ export type OrderStats = {
   winRate: number;
   avgBarsPerTrade: number;
   maxDrawdownPct: number;
+  avgAdverseExcursion: number;
   openWinning: number;
   openLosing: number;
   closedWinning: number;
@@ -55,6 +57,11 @@ export default function DashboardMotionView({
   exitSignals,
   activeAlertCount
 }: DashboardMotionViewProps) {
+  const [statsBarExpandedMobile, setStatsBarExpandedMobile] = useState(false);
+  const [openPositionsExpandedMobile, setOpenPositionsExpandedMobile] = useState(false);
+  const [buyOpportunitiesExpandedMobile, setBuyOpportunitiesExpandedMobile] = useState(false);
+  const [exitSignalsExpandedMobile, setExitSignalsExpandedMobile] = useState(false);
+
   return (
     <motion.div 
       initial="hidden"
@@ -93,22 +100,22 @@ export default function DashboardMotionView({
         </motion.div>
       </div>
 
-      {/* Main Dashboard Canvas: 24px outer padding (p-6), 12px gap between widgets (space-y-3) */}
-      <div className="flex-1 p-6 space-y-3">
-        {/* 1. Unified Master KPI Strip (Clean, seamless, 6px corners, pure black) */}
+      {/* Main Canvas Space */}
+      <div className="p-4 md:p-6 space-y-3">
+        {/* 1. Core Portfolio KPIs Grid (6 Tiles) */}
         <motion.div 
           variants={itemFadeInUp}
-          className="border border-white/[0.09] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 overflow-hidden"
+          className="grid grid-cols-2 lg:grid-cols-6 border border-white/[0.09] rounded-md bg-black divide-y lg:divide-y-0 lg:divide-x divide-white/[0.06]"
         >
-          {/* Cell 1: Net Worth */}
+          {/* Cell 1: Portfolio Value */}
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-            <div className="text-[11px] text-white/40 font-medium">Net Worth</div>
+            <div className="text-[11px] text-white/40 font-medium">Portfolio Value</div>
             <div className="mt-2">
-              <div className="text-xl font-semibold font-mono tracking-tight text-white">{formatMoney(orderStats.openMarketValue, false)}</div>
+              <div className="text-xl font-semibold font-mono tracking-tight text-white">
+                {formatMoney(orderStats.openMarketValue)}
+              </div>
               <div className="mt-1 text-[11px] font-mono text-white/40">
-                ROI <span className={orderStats.totalRoi > 0 ? 'text-[#22c55e]' : orderStats.totalRoi < 0 ? 'text-[#ef4444]' : 'text-white/40'}>
-                  {orderStats.totalRoi > 0 ? '+' : ''}{orderStats.totalRoi.toFixed(2)}%
-                </span>
+                Total market holdings
               </div>
             </div>
           </div>
@@ -117,10 +124,12 @@ export default function DashboardMotionView({
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium">Unrealized P/L</div>
             <div className="mt-2">
-              <div className={`text-xl font-semibold font-mono tracking-tight ${orderStats.unrealized > 0 ? 'text-[#22c55e]' : orderStats.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+              <div className={`text-xl font-semibold font-mono tracking-tight ${orderStats.unrealized >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                 {formatMoney(orderStats.unrealized, true)}
               </div>
-              <div className="mt-1 text-[11px] font-mono text-white/30">Open positions</div>
+              <div className="mt-1 text-[11px] font-mono text-white/40">
+                Open positions
+              </div>
             </div>
           </div>
 
@@ -128,14 +137,16 @@ export default function DashboardMotionView({
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium">Realized P/L</div>
             <div className="mt-2">
-              <div className={`text-xl font-semibold font-mono tracking-tight ${orderStats.realized > 0 ? 'text-[#22c55e]' : orderStats.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+              <div className={`text-xl font-semibold font-mono tracking-tight ${orderStats.realized >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                 {formatMoney(orderStats.realized, true)}
               </div>
-              <div className="mt-1 text-[11px] font-mono text-white/30">Closed trades</div>
+              <div className="mt-1 text-[11px] font-mono text-white/40">
+                Net closed gain/loss
+              </div>
             </div>
           </div>
 
-          {/* Cell 4: Open Positions */}
+          {/* Cell 4: Open Positions Count */}
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium">Open Positions</div>
             <div className="mt-2">
@@ -146,7 +157,7 @@ export default function DashboardMotionView({
             </div>
           </div>
 
-          {/* Cell 5: Closed Positions */}
+          {/* Cell 5: Closed Positions Count */}
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium">Closed Positions</div>
             <div className="mt-2">
@@ -167,27 +178,45 @@ export default function DashboardMotionView({
           </div>
         </motion.div>
 
-        {/* 2. Extended Portfolio Stats Bar */}
+        {/* 2. Extended Portfolio Stats Bar (Collapsible on mobile, default collapsed) */}
         <motion.div 
           variants={itemFadeInUp}
-          className="border border-white/[0.09] rounded-md bg-black p-5 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] gap-4 md:gap-0"
+          className="border border-white/[0.09] rounded-md bg-black overflow-hidden"
         >
-          <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
-            <div className="text-[11px] text-white/40 font-medium mb-1">Win Rate</div>
-            <div className="text-lg font-semibold font-mono text-white">{orderStats.winRate.toFixed(1)}%</div>
-          </div>
-          <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[11px] text-white/40 font-medium mb-1">Avg. Bars / Trade</div>
-            <div className="text-lg font-semibold font-mono text-white">{Math.round(orderStats.avgBarsPerTrade)}</div>
-          </div>
-          <div className="flex-1 md:px-5 flex flex-col justify-center">
-            <div className="text-[11px] text-white/40 font-medium mb-1">Avg. Adverse Excursion</div>
-            <div className="text-lg font-semibold font-mono text-white/30">N/A</div>
-          </div>
-          <div className="flex-1 md:px-5 last:pr-0 flex flex-col justify-center">
-            <div className="text-[11px] text-white/40 font-medium mb-1">Max Trade Loss</div>
-            <div className={`text-lg font-semibold font-mono ${orderStats.maxDrawdownPct < 0 ? 'text-[#ef4444]' : 'text-white'}`}>
-              {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
+          {/* Mobile Collapsible Header Toggle */}
+          <button
+            type="button"
+            onClick={() => setStatsBarExpandedMobile(!statsBarExpandedMobile)}
+            className="md:hidden w-full px-4 py-3 flex items-center justify-between text-xs text-white/60 hover:text-white transition-colors bg-white/[0.015]"
+          >
+            <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Extended Performance</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-white text-[11px] font-semibold">{orderStats.winRate.toFixed(1)}% Win Rate</span>
+              <ChevronDown className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${statsBarExpandedMobile ? 'rotate-180 text-white' : ''}`} />
+            </div>
+          </button>
+
+          {/* Metrics Content (Visible on desktop, toggleable on mobile) */}
+          <div className={`${statsBarExpandedMobile ? 'flex' : 'hidden'} md:flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.06] p-4 md:p-5 gap-3 md:gap-0 ${statsBarExpandedMobile ? 'border-t md:border-t-0 border-white/[0.06]' : ''}`}>
+            <div className="flex-1 md:px-5 first:pl-0 flex flex-col justify-center">
+              <div className="text-[11px] text-white/40 font-medium mb-1">Win Rate</div>
+              <div className="text-lg font-semibold font-mono text-white">{orderStats.winRate.toFixed(1)}%</div>
+            </div>
+            <div className="flex-1 md:px-5 flex flex-col justify-center pt-2 md:pt-0">
+              <div className="text-[11px] text-white/40 font-medium mb-1">Avg. Bars / Trade</div>
+              <div className="text-lg font-semibold font-mono text-white">{Math.round(orderStats.avgBarsPerTrade)}</div>
+            </div>
+            <div className="flex-1 md:px-5 flex flex-col justify-center pt-2 md:pt-0">
+              <div className="text-[11px] text-white/40 font-medium mb-1">Avg. Adverse Excursion</div>
+              <div className={`text-lg font-semibold font-mono ${orderStats.avgAdverseExcursion < 0 ? 'text-[#ef4444]' : 'text-white/30'}`}>
+                {orderStats.avgAdverseExcursion !== 0 ? `${orderStats.avgAdverseExcursion.toFixed(2)}%` : 'N/A'}
+              </div>
+            </div>
+            <div className="flex-1 md:px-5 last:pr-0 flex flex-col justify-center pt-2 md:pt-0">
+              <div className="text-[11px] text-white/40 font-medium mb-1">Max Trade Loss</div>
+              <div className={`text-lg font-semibold font-mono ${orderStats.maxDrawdownPct < 0 ? 'text-[#ef4444]' : 'text-white'}`}>
+                {orderStats.maxDrawdownPct < 0 ? '' : '+'}{orderStats.maxDrawdownPct.toFixed(2)}%
+              </div>
             </div>
           </div>
         </motion.div>
@@ -201,23 +230,39 @@ export default function DashboardMotionView({
         <motion.div variants={containerStagger} className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {/* Open Positions Card */}
           <motion.section variants={itemFadeInUp} className="border border-white/[0.09] rounded-md bg-black overflow-hidden flex flex-col">
-            <div className="border-b border-white/[0.09] px-6 py-4 bg-transparent flex items-center justify-between">
+            <div 
+              className="border-b border-white/[0.09] px-4 md:px-6 py-3.5 md:py-4 bg-transparent flex items-center justify-between cursor-pointer md:cursor-default select-none"
+              onClick={() => setOpenPositionsExpandedMobile(!openPositionsExpandedMobile)}
+            >
               <div>
                 <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-plt-orange" />
                   Active Positions
+                  <span className="md:hidden text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] text-white/60">
+                    {orderStats.openOrders.length}
+                  </span>
                 </h2>
                 <p className="text-[12px] text-white/30 mt-0.5">Summary of currently open portfolio holdings</p>
               </div>
-              <Link 
-                href="/positions" 
-                className="text-[11px] font-medium text-white/60 hover:text-white px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] transition-all"
-              >
-                All Positions →
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link 
+                  href="/positions" 
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-[11px] font-medium text-white/60 hover:text-white px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] transition-all"
+                >
+                  All Positions →
+                </Link>
+                <button
+                  type="button"
+                  className="md:hidden p-1 text-white/40 hover:text-white"
+                  aria-label="Toggle active positions"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${openPositionsExpandedMobile ? 'rotate-180 text-white' : ''}`} />
+                </button>
+              </div>
             </div>
 
-            <div className="flex-1 overflow-x-auto">
+            <div className={`${openPositionsExpandedMobile ? 'block' : 'hidden'} md:block flex-1 overflow-x-auto`}>
               {/* Desktop View */}
               <div className="hidden md:block">
                 <table className="w-full text-left text-xs">
@@ -320,32 +365,58 @@ export default function DashboardMotionView({
           <div className="flex flex-col gap-3">
             {/* Buy Opportunities */}
             <motion.div variants={itemFadeInUp} className="border border-white/[0.09] rounded-md bg-black overflow-hidden">
-              <div className="border-b border-white/[0.09] px-6 py-4 bg-transparent flex items-center justify-between">
+              <div 
+                className="border-b border-white/[0.09] px-4 md:px-6 py-3.5 md:py-4 bg-transparent flex items-center justify-between cursor-pointer md:cursor-default select-none"
+                onClick={() => setBuyOpportunitiesExpandedMobile(!buyOpportunitiesExpandedMobile)}
+              >
                 <div>
                   <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
                     Buy Opportunities
+                    <span className="md:hidden text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#22c55e]/15 text-[#22c55e]">
+                      {buyOpportunities.length}
+                    </span>
                   </h2>
                   <p className="text-[12px] text-white/30 mt-0.5">Top buy signals triggered across the market</p>
                 </div>
+                <button
+                  type="button"
+                  className="md:hidden p-1 text-white/40 hover:text-white"
+                  aria-label="Toggle buy opportunities"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${buyOpportunitiesExpandedMobile ? 'rotate-180 text-white' : ''}`} />
+                </button>
               </div>
-              <div className="p-0">
+              <div className={`${buyOpportunitiesExpandedMobile ? 'block' : 'hidden'} md:block p-0`}>
                 <OpportunityTable opportunities={buyOpportunities} emptyText="No buy opportunities in the last 5 bars" compact />
               </div>
             </motion.div>
 
             {/* Exit Signals */}
             <motion.div variants={itemFadeInUp} className="border border-white/[0.09] rounded-md bg-black overflow-hidden">
-              <div className="border-b border-white/[0.09] px-6 py-4 bg-transparent flex items-center justify-between">
+              <div 
+                className="border-b border-white/[0.09] px-4 md:px-6 py-3.5 md:py-4 bg-transparent flex items-center justify-between cursor-pointer md:cursor-default select-none"
+                onClick={() => setExitSignalsExpandedMobile(!exitSignalsExpandedMobile)}
+              >
                 <div>
                   <h2 className="text-[13px] font-medium text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#ef4444]" />
                     Exit & Stop Alerts
+                    <span className="md:hidden text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#ef4444]/15 text-[#ef4444]">
+                      {exitSignals.length}
+                    </span>
                   </h2>
                   <p className="text-[12px] text-white/30 mt-0.5">Exit notifications for your current positions</p>
                 </div>
+                <button
+                  type="button"
+                  className="md:hidden p-1 text-white/40 hover:text-white"
+                  aria-label="Toggle exit signals"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${exitSignalsExpandedMobile ? 'rotate-180 text-white' : ''}`} />
+                </button>
               </div>
-              <div className="p-0">
+              <div className={`${exitSignalsExpandedMobile ? 'block' : 'hidden'} md:block p-0`}>
                 <OpportunityTable opportunities={exitSignals} emptyText="No exit signals in the last 5 bars" compact />
               </div>
             </motion.div>

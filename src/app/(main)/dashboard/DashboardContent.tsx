@@ -76,14 +76,17 @@ export default async function DashboardContent() {
 }
 
 async function getOrderStats(userId: string) {
-  const openRows = await db.select().from(positions).where(
-    sql`${positions.status} = 'OPEN' AND ${positions.userId} = ${userId}`
-  ).orderBy(desc(positions.createdAt));
-  const closedRows = await db.select().from(positions).where(
-    sql`${positions.status} = 'CLOSED' AND ${positions.userId} = ${userId}`
-  ).orderBy(desc(positions.createdAt));
-  const latestPrices = await getLatestPriceMap();
-  const tickerMap = await getTickerMap();
+  const [openRows, closedRows, latestPrices, tickerMap, avgAdverseExcursion] = await Promise.all([
+    db.select().from(positions).where(
+      sql`${positions.status} = 'OPEN' AND ${positions.userId} = ${userId}`
+    ).orderBy(desc(positions.createdAt)),
+    db.select().from(positions).where(
+      sql`${positions.status} = 'CLOSED' AND ${positions.userId} = ${userId}`
+    ).orderBy(desc(positions.createdAt)),
+    getLatestPriceMap(),
+    getTickerMap(),
+    getAvgAdverseExcursion(userId),
+  ]);
 
   const openOrdersMap = new Map<string, DashboardOrder>();
   for (const order of openRows) {
@@ -136,9 +139,9 @@ async function getOrderStats(userId: string) {
     }))
     .sort((a, b) => b.value - a.value);
 
-  // --- Monthly Investment & P/L Snapshot (Cohort based) ---
-  type MonthlyDataAgg = { invested: number; currentValue: number };
-  const monthlyAggMap = new Map<string, MonthlyDataAgg>();
+  // --- Monthly Investment & Realized P/L (Activity-based) ---
+  type MonthlyBucket = { invested: number; realizedPL: number };
+  const monthlyBucketMap = new Map<string, MonthlyBucket>();
 
   const getLabel = (dateStr: string) => {
     const [year, month] = dateStr.split('-');
@@ -146,77 +149,85 @@ async function getOrderStats(userId: string) {
   };
 
   const allOrders = [...openRows, ...closedRows];
-  
   const getIsoDate = (d: any) => typeof d === 'string' ? d : new Date(d as unknown as string).toISOString().split('T')[0];
-  
+
+  // 1. Determine the full date span across all entry and exit dates
   if (allOrders.length > 0) {
     let minDateStr = getIsoDate(allOrders[0].entryDate);
     let maxDateStr = getIsoDate(allOrders[0].entryDate);
-    
+
     for (const order of allOrders) {
-      const dateStr = getIsoDate(order.entryDate);
-      if (dateStr < minDateStr) minDateStr = dateStr;
-      if (dateStr > maxDateStr) maxDateStr = dateStr;
+      const entryStr = getIsoDate(order.entryDate);
+      if (entryStr < minDateStr) minDateStr = entryStr;
+      if (entryStr > maxDateStr) maxDateStr = entryStr;
+      if (order.exitDate) {
+        const exitStr = getIsoDate(order.exitDate);
+        if (exitStr > maxDateStr) maxDateStr = exitStr;
+      }
     }
-    
+
+    // Generate empty monthly buckets from earliest date to today
     let current = new Date(minDateStr);
     current.setDate(1);
     const end = new Date(maxDateStr);
     end.setDate(1);
-    // Also include current month just in case we have no orders this month but want to show it
     const today = new Date();
     today.setDate(1);
-    if (today > end) {
-      end.setTime(today.getTime());
-    }
-    
+    if (today > end) end.setTime(today.getTime());
+
     while (current <= end) {
       const year = current.getFullYear();
       const month = String(current.getMonth() + 1).padStart(2, '0');
       const label = getLabel(`${year}-${month}`);
-      if (!monthlyAggMap.has(label)) {
-        monthlyAggMap.set(label, { invested: 0, currentValue: 0 });
+      if (!monthlyBucketMap.has(label)) {
+        monthlyBucketMap.set(label, { invested: 0, realizedPL: 0 });
       }
       current.setMonth(current.getMonth() + 1);
     }
   }
 
+  // 2. Invested: group by entryDate month (capital deployed)
   for (const order of allOrders) {
-    const dateStr = getIsoDate(order.entryDate);
-    const label = getLabel(dateStr);
+    const entryLabel = getLabel(getIsoDate(order.entryDate));
     const cost = Number(order.entryPrice) * Number(order.quantity);
-    
-    // Determine the current value of this order cohort
-    let value = 0;
-    if (order.status === 'CLOSED') {
-      value = Number(order.exitPrice ?? order.entryPrice) * Number(order.quantity);
-    } else {
-      const symbol = order.tickerSymbol.trim().toUpperCase();
-      value = (latestPrices[symbol] ?? Number(order.entryPrice)) * Number(order.quantity);
-    }
-    
-    if (!monthlyAggMap.has(label)) monthlyAggMap.set(label, { invested: 0, currentValue: 0 });
-    monthlyAggMap.get(label)!.invested += cost;
-    monthlyAggMap.get(label)!.currentValue += value;
+    if (!monthlyBucketMap.has(entryLabel)) monthlyBucketMap.set(entryLabel, { invested: 0, realizedPL: 0 });
+    monthlyBucketMap.get(entryLabel)!.invested += cost;
   }
 
+  // 3. Realized P/L: group by exitDate month (gains/losses booked)
+  for (const order of closedRows) {
+    if (!order.exitDate) continue;
+    const exitLabel = getLabel(getIsoDate(order.exitDate));
+    const entryPrice = Number(order.entryPrice);
+    const exitPrice = Number(order.exitPrice ?? entryPrice);
+    const quantity = Number(order.quantity);
+    const pl = (exitPrice - entryPrice) * quantity;
+    if (!monthlyBucketMap.has(exitLabel)) monthlyBucketMap.set(exitLabel, { invested: 0, realizedPL: 0 });
+    monthlyBucketMap.get(exitLabel)!.realizedPL += pl;
+  }
+
+  // 4. Sort chronologically and compute cumulative ROI line
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const monthlyData: MonthlyDataItem[] = Array.from(monthlyAggMap.entries())
+  const sortedBuckets = Array.from(monthlyBucketMap.entries())
     .sort((a, b) => {
       const [aM, aY] = [a[0].slice(0, 3), a[0].slice(-2)];
       const [bM, bY] = [b[0].slice(0, 3), b[0].slice(-2)];
       if (aY !== bY) return Number(aY) - Number(bY);
       return monthOrder.indexOf(aM) - monthOrder.indexOf(bM);
-    })
-    .map(([month, agg]) => {
-      const pl = agg.currentValue - agg.invested;
-      return {
-        month,
-        invested: agg.invested,
-        pl,
-        roi: agg.invested > 0 ? (pl / agg.invested) * 100 : 0
-      };
     });
+
+  let cumInvested = 0;
+  let cumRealizedPL = 0;
+  const monthlyData: MonthlyDataItem[] = sortedBuckets.map(([month, bucket]) => {
+    cumInvested += bucket.invested;
+    cumRealizedPL += bucket.realizedPL;
+    return {
+      month,
+      invested: bucket.invested,
+      pl: bucket.realizedPL,
+      roi: cumInvested > 0 ? (cumRealizedPL / cumInvested) * 100 : 0,
+    };
+  });
 
   let winningTrades = 0;
   let totalHoldDays = 0;
@@ -258,7 +269,6 @@ async function getOrderStats(userId: string) {
 
   return {
     openOrders,
-    // Net Worth = current market value of all open positions
     openMarketValue: totalMarketValue,
     unrealized,
     realized,
@@ -268,6 +278,7 @@ async function getOrderStats(userId: string) {
     winRate,
     avgBarsPerTrade,
     maxDrawdownPct,
+    avgAdverseExcursion,
     openWinning: openOrders.filter(o => o.profitLoss > 0).length,
     openLosing: openOrders.filter(o => o.profitLoss < 0).length,
     closedWinning: winningTrades,
@@ -277,6 +288,28 @@ async function getOrderStats(userId: string) {
 }
 
 
+
+async function getAvgAdverseExcursion(userId: string): Promise<number> {
+  try {
+    const result = await db.execute(sql`
+      SELECT AVG(mae) AS avg_mae FROM (
+        SELECT (MIN(dp.low) - p.entry_price) / NULLIF(p.entry_price, 0) * 100 AS mae
+        FROM ${positions} p
+        JOIN ${dailyPrices} dp
+          ON dp.ticker_symbol = p.ticker_symbol
+          AND dp.date >= p.entry_date
+          AND dp.date <= p.exit_date
+        WHERE p.user_id = ${userId} AND p.status = 'CLOSED'
+        GROUP BY p.id, p.entry_price
+      ) sub
+    `);
+    const row = result[0] as Record<string, unknown> | undefined;
+    const avgMae = Number(row?.avg_mae ?? 0);
+    return isNaN(avgMae) ? 0 : avgMae;
+  } catch {
+    return 0;
+  }
+}
 
 async function getActiveAlertCount(userId: string) {
   const rows = await db.select({ id: tickerAlerts.id })

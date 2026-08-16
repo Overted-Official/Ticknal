@@ -80,12 +80,12 @@ function CustomizedTreemapContent(props: any) {
   const { root, depth, x, y, width, height, index, name, value } = props;
 
   // Don't render text if the block is too small
-  const isLargeEnough = width > 40 && height > 30;
+  const isLargeEnough = width > 42 && height > 32;
   
   // recharts treemap passes the data in a nested way, but since ours is flat, we get depth=1
   // If it's a leaf node, render it
   if (depth === 1) {
-    const item = root.children[index];
+    const item = root?.children?.[index];
     const color = SECTOR_COLORS[index % SECTOR_COLORS.length];
     
     return (
@@ -97,19 +97,33 @@ function CustomizedTreemapContent(props: any) {
           height={height}
           style={{
             fill: color,
-            stroke: '#0d0f12',
+            stroke: '#000000',
             strokeWidth: 2,
             strokeOpacity: 1,
-            opacity: 0.9,
+            opacity: 0.85,
           }}
         />
         {isLargeEnough && (
           <>
-            <text x={x + 4} y={y + 16} fill="#fff" fontSize={11} fontWeight="bold" className="pointer-events-none">
-              {name.length > (width / 6) ? name.substring(0, Math.floor(width / 6)) + '...' : name}
+            <text 
+              x={x + 6} 
+              y={y + 16} 
+              fill="#ffffff" 
+              fontSize={11} 
+              fontWeight={500} 
+              className="pointer-events-none select-none tracking-tight font-sans"
+            >
+              {name && name.length > Math.floor(width / 7) ? name.substring(0, Math.floor(width / 7)) + '…' : name}
             </text>
-            <text x={x + 4} y={y + 30} fill="#ffffffcc" fontSize={10} className="pointer-events-none">
-              {item.percentage ? item.percentage.toFixed(1) + '%' : ''}
+            <text 
+              x={x + 6} 
+              y={y + 30} 
+              fill="rgba(255,255,255,0.7)" 
+              fontSize={10} 
+              fontWeight={400}
+              className="pointer-events-none select-none font-mono"
+            >
+              {item?.percentage ? `${item.percentage.toFixed(1)}%` : ''}
             </text>
           </>
         )}
@@ -126,7 +140,7 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-weight-medium text-plt-text">Sector Allocation</h2>
+        <h2 className="text-sm font-medium text-plt-text">Sector Allocation</h2>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-plt-muted hidden sm:inline">by current value</span>
           <div className="flex bg-plt-base rounded-md p-0.5 border border-plt-border">

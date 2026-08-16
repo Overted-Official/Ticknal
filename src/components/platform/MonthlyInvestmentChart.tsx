@@ -28,7 +28,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       <div className="font-medium text-plt-text mb-1">{label}</div>
       {payload.map((entry, index) => {
         const value = entry.value as number;
-        const isRoi = entry.name === 'ROI';
+        const isRoi = entry.name === 'Cumulative ROI';
         const color = isRoi 
           ? (value >= 0 ? '#22c55e' : '#ef4444')
           : entry.color;
@@ -85,7 +85,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} iconType="circle" />
         <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#00d2ff" radius={[2, 2, 0, 0]} maxBarSize={32} />
-        <Bar yAxisId="left" dataKey="pl" name="P/L" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={32}>
+        <Bar yAxisId="left" dataKey="pl" name="Realized P/L" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={32}>
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#22c55e' : '#ef4444'} />
           ))}
@@ -94,7 +94,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
           yAxisId="right"
           type="monotone" 
           dataKey="roi" 
-          name="ROI"
+          name="Cumulative ROI"
           stroke="#f59e0b" 
           strokeWidth={2}
           dot={{ r: 3, fill: '#f59e0b', strokeWidth: 0 }}
