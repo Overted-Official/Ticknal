@@ -4,12 +4,24 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, LineChart, ListOrdered, Settings } from '@/components/ui/icons';
+import useSWR from 'swr';
+import { LayoutDashboard, LineChart, ListOrdered, Settings, Bell } from 'lucide-react';
+import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function SidebarNav() {
   const pathname = usePathname();
   const [isChartsMenuOpen, setIsChartsMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const chartsMenuRef = useRef<HTMLDivElement>(null);
+
+  const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
+    refreshInterval: 30000,
+    revalidateOnFocus: true,
+  });
+
+  const notificationCount = notifData?.notifications?.length ?? 0;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -111,8 +123,33 @@ export default function SidebarNav() {
         })}
       </div>
 
-      {/* Settings at the bottom */}
+      {/* Notifications & Settings at the bottom */}
       <div className="w-full flex flex-col items-center space-y-2 mt-auto">
+        {/* Notifications Bell */}
+        <button
+          type="button"
+          onClick={() => setIsNotificationsOpen(true)}
+          className="w-full py-0.5 flex flex-col items-center justify-center group relative"
+          title="Trade Notifications & Alerts"
+        >
+          <div 
+            className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 relative ${
+              isNotificationsOpen 
+                ? 'bg-white/[0.06] text-white' 
+                : 'text-white/35 group-hover:text-white/70'
+            }`}
+          >
+            <Bell size={16} strokeWidth={1.5} />
+            {notificationCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-plt-orange ring-2 ring-black" />
+            )}
+          </div>
+          <span className={`text-[8px] tracking-tight mt-0.5 ${isNotificationsOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
+            Alerts
+          </span>
+        </button>
+
+        {/* Settings */}
         <Link
           href="/settings"
           className="w-full py-0.5 flex flex-col items-center justify-center group"
@@ -131,6 +168,11 @@ export default function SidebarNav() {
           </span>
         </Link>
       </div>
+
+      <NotificationsDrawer
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,7 +28,9 @@ import {
   AlertTriangle,
   Lock,
   Layers,
-  X
+  X,
+  Camera,
+  Loader2
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAlerts } from '@/components/platform/AlertProvider';
@@ -145,6 +147,12 @@ export default function SettingsView({
   const [pushStatus, setPushStatus] = useState<string | null>(null);
   const [deletingDeviceId, setDeletingDeviceId] = useState<number | null>(null);
 
+  // Avatar Upload State
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(userProfile.avatarUrl);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarUploadStatus, setAvatarUploadStatus] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Search and Filter for Monitored Tickers
   const [tickerFilter, setTickerFilter] = useState<'ALL' | 'POSITIONS' | 'ALERTS'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,6 +184,65 @@ export default function SettingsView({
     } catch (e) {
       console.error('Error logging out:', e);
       setIsLoggingOut(false);
+    }
+  };
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarUploadStatus('File size must be under 5MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setAvatarUploadStatus(null);
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `avatar-${Date.now()}.${fileExt}`;
+      const filePath = `users/${userProfile.id}/avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('QuantEGX Public')
+        .upload(filePath, file, {
+          upsert: true,
+          cacheControl: '3600',
+        });
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        setAvatarUploadStatus(`Upload failed: ${uploadError.message}`);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('QuantEGX Public')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Update Supabase auth user metadata
+      const { error: userUpdateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+
+      if (userUpdateError) {
+        console.error('User update error:', userUpdateError);
+        setAvatarUploadStatus(`Failed to update profile: ${userUpdateError.message}`);
+        return;
+      }
+
+      setAvatarUrl(publicUrl);
+      setAvatarUploadStatus('Profile photo updated successfully!');
+      setTimeout(() => setAvatarUploadStatus(null), 4000);
+    } catch (err) {
+      console.error('Unexpected avatar upload error:', err);
+      setAvatarUploadStatus('An error occurred during upload.');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -452,19 +519,40 @@ export default function SettingsView({
             <div className="border border-white/[0.09] rounded-md bg-black p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-white/[0.08]">
                 <div className="flex items-center gap-4">
-                  {/* Avatar (Google profile picture or initials) */}
-                  <div className="relative">
-                    {userProfile.avatarUrl ? (
+                  {/* Avatar (with upload trigger) */}
+                  <div 
+                    className="relative group cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Click to upload profile photo"
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleAvatarFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    {avatarUrl ? (
                       <img
-                        src={userProfile.avatarUrl}
+                        src={avatarUrl}
                         alt={userProfile.name}
-                        className="w-16 h-16 rounded-full border-2 border-white/[0.12] object-cover bg-white/[0.04]"
+                        className="w-16 h-16 rounded-full border-2 border-white/[0.12] object-cover bg-white/[0.04] group-hover:opacity-75 transition-opacity"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full border border-white/[0.12] bg-gradient-to-tr from-white/[0.06] to-white/[0.12] flex items-center justify-center text-lg font-bold text-white font-mono shadow-inner">
+                      <div className="w-16 h-16 rounded-full border border-white/[0.12] bg-gradient-to-tr from-white/[0.06] to-white/[0.12] flex items-center justify-center text-lg font-bold text-white font-mono shadow-inner group-hover:opacity-75 transition-opacity">
                         {initials}
                       </div>
                     )}
+
+                    {/* Camera hover overlay */}
+                    <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      {isUploadingAvatar ? (
+                        <Loader2 size={18} className="animate-spin text-white" />
+                      ) : (
+                        <Camera size={18} className="text-white/90" />
+                      )}
+                    </div>
+
                     <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#22c55e] border-2 border-black" />
                   </div>
 
@@ -477,14 +565,31 @@ export default function SettingsView({
                       </span>
                     </div>
                     <p className="text-xs text-white/40 mt-0.5">{userProfile.email}</p>
-                    <div className="flex items-center gap-3 mt-2 text-[11px] text-white/30">
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] text-white/30">
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
                         Member since {memberSince}
                       </span>
                       <span>•</span>
                       <span className="capitalize">Auth: {userProfile.provider}</span>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                        className="text-plt-orange hover:underline inline-flex items-center gap-1"
+                      >
+                        <Camera size={11} />
+                        <span>{isUploadingAvatar ? 'Uploading...' : 'Change Photo'}</span>
+                      </button>
                     </div>
+
+                    {avatarUploadStatus && (
+                      <div className="mt-2 text-[11px] text-plt-orange font-mono flex items-center gap-1">
+                        <CheckCircle2 size={12} />
+                        <span>{avatarUploadStatus}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
