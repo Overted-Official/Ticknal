@@ -49,28 +49,64 @@ function fetchSymbolPeriods(client: TradingViewClient, symbol: string, rangeBars
   });
 }
 
+type SndukFundConfig = {
+  symbol: string;
+  fundId: number;
+  companyName: string;
+  sector: string;
+  industry: string;
+  logoUrl: string;
+};
+
+const SNDUK_FUNDS: SndukFundConfig[] = [
+  {
+    symbol: 'CI_QUANT',
+    fundId: 123,
+    companyName: 'CI The Quant Fund',
+    sector: 'Mutual Funds',
+    industry: 'Equity Funds',
+    logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/funds/1780357545756-9yoqpms6r0o.jpeg',
+  },
+  {
+    symbol: 'OSOUL',
+    fundId: 16,
+    companyName: 'CIB Osoul Money Market Fund',
+    sector: 'Mutual Funds',
+    industry: 'Money Market Funds',
+    logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/funds/1777586064877-t780xncyncb.png',
+  },
+];
+
 /**
- * Fetch and upsert NAV history for CI The Quant Fund from Snduk
+ * Fetch and upsert NAV history for mutual funds from Snduk
  */
-async function updateCIQuantFund(): Promise<{ symbol: string; status: string; count?: number; date?: string; message?: string }> {
+async function updateSndukFund(fund: SndukFundConfig): Promise<{ symbol: string; status: string; count?: number; date?: string; message?: string }> {
   try {
-    // 1. Ensure CI_QUANT exists in tickers table
+    // 1. Ensure ticker exists in tickers table
     await db.insert(tickers)
       .values({
-        symbol: 'CI_QUANT',
-        companyName: 'CI The Quant Fund',
+        symbol: fund.symbol,
+        companyName: fund.companyName,
         exchange: 'EGX',
-        sector: 'Mutual Funds',
-        industry: 'Equity Funds',
-        logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/funds/1780357545756-9yoqpms6r0o.jpeg',
+        sector: fund.sector,
+        industry: fund.industry,
+        logoUrl: fund.logoUrl,
       })
-      .onConflictDoNothing({ target: tickers.symbol });
+      .onConflictDoUpdate({
+        target: tickers.symbol,
+        set: {
+          companyName: fund.companyName,
+          sector: fund.sector,
+          industry: fund.industry,
+          logoUrl: fund.logoUrl,
+        },
+      });
 
     // 2. Fetch history from Snduk tRPC endpoint
     const inputPayload = {
       '0': {
         json: {
-          fundId: 123,
+          fundId: fund.fundId,
           period: 'ALL',
         },
       },
@@ -90,14 +126,14 @@ async function updateCIQuantFund(): Promise<{ symbol: string; status: string; co
     });
 
     if (!res.ok) {
-      return { symbol: 'CI_QUANT', status: 'error', message: `Snduk HTTP ${res.status}` };
+      return { symbol: fund.symbol, status: 'error', message: `Snduk HTTP ${res.status}` };
     }
 
     const raw = await res.json();
     const history: Array<{ date: string; price: number; changePercent: number }> = raw[0]?.result?.data?.json || [];
 
     if (history.length === 0) {
-      return { symbol: 'CI_QUANT', status: 'no_data' };
+      return { symbol: fund.symbol, status: 'no_data' };
     }
 
     // 3. Upsert historical points into dailyPrices
@@ -105,7 +141,7 @@ async function updateCIQuantFund(): Promise<{ symbol: string; status: string; co
       const priceStr = item.price.toString();
       await db.insert(dailyPrices)
         .values({
-          tickerSymbol: 'CI_QUANT',
+          tickerSymbol: fund.symbol,
           date: item.date,
           open: priceStr,
           high: priceStr,
@@ -126,14 +162,14 @@ async function updateCIQuantFund(): Promise<{ symbol: string; status: string; co
 
     const latest = history[history.length - 1];
     return {
-      symbol: 'CI_QUANT',
+      symbol: fund.symbol,
       status: 'updated',
       count: history.length,
       date: latest?.date,
     };
   } catch (err) {
-    console.error('Error updating CI_QUANT fund:', err);
-    return { symbol: 'CI_QUANT', status: 'error', message: (err as Error).message };
+    console.error(`Error updating ${fund.symbol} fund:`, err);
+    return { symbol: fund.symbol, status: 'error', message: (err as Error).message };
   }
 }
 
@@ -150,11 +186,13 @@ export async function GET(req: Request) {
     const results: Array<{ symbol: string; status: string; count?: number; date?: string; message?: string }> = [];
     const updatedSymbols: string[] = [];
 
-    // 1. Sync CI The Quant Fund via Snduk
-    const ciQuantResult = await updateCIQuantFund();
-    results.push(ciQuantResult);
-    if (ciQuantResult.status === 'updated') {
-      updatedSymbols.push('CI_QUANT');
+    // 1. Sync Snduk Mutual Funds (CI_QUANT, OSOUL)
+    for (const fund of SNDUK_FUNDS) {
+      const fundResult = await updateSndukFund(fund);
+      results.push(fundResult);
+      if (fundResult.status === 'updated') {
+        updatedSymbols.push(fund.symbol);
+      }
     }
 
     // 2. Query last recorded date per ticker to compute dynamic gap lookback
