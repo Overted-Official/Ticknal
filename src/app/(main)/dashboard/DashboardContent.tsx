@@ -130,8 +130,8 @@ async function getOrderStats(userId: string) {
       db.select().from(positions).where(
         and(eq(positions.status, 'CLOSED'), eq(positions.userId, userId))
       ).orderBy(desc(positions.createdAt)),
-      getLatestPriceMap().catch(() => ({})),
-      getTickerMap().catch(() => ({})),
+      getLatestPriceMap().catch(() => ({} as Record<string, number>)),
+      getTickerMap().catch(() => ({} as Record<string, { companyName: string; sector: string; logoUrl: string | null }>)),
       getAvgAdverseExcursion(userId).catch(() => 0),
     ]);
 

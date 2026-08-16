@@ -33,7 +33,7 @@ export default async function SettingsPage() {
   let openRows: (typeof positions.$inferSelect)[] = [];
   let alertRows: (typeof tickerAlerts.$inferSelect)[] = [];
   let cachedTickers: Awaited<ReturnType<typeof getCachedTickers>> = [];
-  let cachedPrices: Awaited<ReturnType<typeof getCachedRecentPrices>> = [];
+  let cachedPrices: Array<Record<string, unknown>> = [];
 
   try {
     const [devRes, openRes, alertRes, tickRes, priceRes] = await Promise.allSettled([
