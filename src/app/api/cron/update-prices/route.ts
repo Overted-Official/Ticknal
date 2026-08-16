@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { tickers, dailyPrices } from '@/db/schema';
+import { sql } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
@@ -154,15 +155,47 @@ export async function GET(req: Request) {
       updatedSymbols.push('CI_QUANT');
     }
 
-    // 2. Sync EGX Stock Tickers via TradingView with 30-day gap-fill
+    // 2. Query last recorded date per ticker to compute dynamic gap lookback
+    const lastDates = await db
+      .select({
+        tickerSymbol: dailyPrices.tickerSymbol,
+        maxDate: sql<string>`MAX(${dailyPrices.date})`,
+      })
+      .from(dailyPrices)
+      .groupBy(dailyPrices.tickerSymbol);
+
+    const lastDateMap = new Map<string, string>();
+    for (const row of lastDates) {
+      if (row.tickerSymbol && row.maxDate) {
+        lastDateMap.set(row.tickerSymbol, row.maxDate);
+      }
+    }
+
+    // 3. Sync EGX Stock Tickers via TradingView with dynamic gap-aware lookback
     const stockTickers = allTickers.filter((t) => t.symbol !== 'CI_QUANT');
 
     if (stockTickers.length > 0) {
       const client = new TradingView.Client();
+      const now = new Date();
 
       for (const t of stockTickers) {
         try {
-          const periods = await fetchSymbolPeriods(client, t.symbol, 30);
+          const lastDateStr = lastDateMap.get(t.symbol);
+          let requiredRange = 30; // Default lookback window
+
+          if (!lastDateStr) {
+            // New ticker with no existing history in DB: fetch 300 bars
+            requiredRange = 300;
+          } else {
+            const lastDate = new Date(lastDateStr);
+            const diffDays = Math.ceil((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays > 20) {
+              // Ticker fell behind: calculate exact bars needed to bridge the full gap
+              requiredRange = Math.min(300, Math.max(30, Math.ceil(diffDays * 0.75) + 15));
+            }
+          }
+
+          const periods = await fetchSymbolPeriods(client, t.symbol, requiredRange);
           
           if (periods.length > 0) {
             let updatedCount = 0;
