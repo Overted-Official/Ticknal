@@ -139,8 +139,8 @@ async function getOrderStats(userId: string) {
     }))
     .sort((a, b) => b.value - a.value);
 
-  // --- Monthly Investment & Realized P/L (Activity-based) ---
-  type MonthlyBucket = { invested: number; realizedPL: number };
+  // --- Monthly Investment & Realized/Unrealized P/L (Activity-based) ---
+  type MonthlyBucket = { invested: number; realizedPL: number; unrealizedPL: number };
   const monthlyBucketMap = new Map<string, MonthlyBucket>();
 
   const getLabel = (dateStr: string) => {
@@ -180,7 +180,7 @@ async function getOrderStats(userId: string) {
       const month = String(current.getMonth() + 1).padStart(2, '0');
       const label = getLabel(`${year}-${month}`);
       if (!monthlyBucketMap.has(label)) {
-        monthlyBucketMap.set(label, { invested: 0, realizedPL: 0 });
+        monthlyBucketMap.set(label, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
       }
       current.setMonth(current.getMonth() + 1);
     }
@@ -190,7 +190,7 @@ async function getOrderStats(userId: string) {
   for (const order of allOrders) {
     const entryLabel = getLabel(getIsoDate(order.entryDate));
     const cost = Number(order.entryPrice) * Number(order.quantity);
-    if (!monthlyBucketMap.has(entryLabel)) monthlyBucketMap.set(entryLabel, { invested: 0, realizedPL: 0 });
+    if (!monthlyBucketMap.has(entryLabel)) monthlyBucketMap.set(entryLabel, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
     monthlyBucketMap.get(entryLabel)!.invested += cost;
   }
 
@@ -202,12 +202,23 @@ async function getOrderStats(userId: string) {
     const exitPrice = Number(order.exitPrice ?? entryPrice);
     const quantity = Number(order.quantity);
     const pl = (exitPrice - entryPrice) * quantity;
-    if (!monthlyBucketMap.has(exitLabel)) monthlyBucketMap.set(exitLabel, { invested: 0, realizedPL: 0 });
+    if (!monthlyBucketMap.has(exitLabel)) monthlyBucketMap.set(exitLabel, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
     monthlyBucketMap.get(exitLabel)!.realizedPL += pl;
   }
 
-  // 4. Sort chronologically and compute cumulative ROI line
-  //    ROI includes both realized P/L and unrealized P/L (from open positions, attributed to current month)
+  // 4. Unrealized P/L: group by entryDate month for active open positions
+  for (const order of openRows) {
+    const entryLabel = getLabel(getIsoDate(order.entryDate));
+    const symbol = order.tickerSymbol.trim().toUpperCase();
+    const entryPrice = Number(order.entryPrice);
+    const currentPrice = latestPrices[symbol] ?? entryPrice;
+    const quantity = Number(order.quantity);
+    const unpl = (currentPrice - entryPrice) * quantity;
+    if (!monthlyBucketMap.has(entryLabel)) monthlyBucketMap.set(entryLabel, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
+    monthlyBucketMap.get(entryLabel)!.unrealizedPL += unpl;
+  }
+
+  // 5. Sort chronologically and compute cumulative ROI line
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const sortedBuckets = Array.from(monthlyBucketMap.entries())
     .sort((a, b) => {
@@ -217,27 +228,19 @@ async function getOrderStats(userId: string) {
       return monthOrder.indexOf(aM) - monthOrder.indexOf(bM);
     });
 
-  // Compute total unrealized P/L from open positions using current market prices
-  const totalUnrealizedPL = openRows.reduce((sum, order) => {
-    const symbol = order.tickerSymbol.trim().toUpperCase();
-    const entryPrice = Number(order.entryPrice);
-    const currentPrice = latestPrices[symbol] ?? entryPrice;
-    const quantity = Number(order.quantity);
-    return sum + (currentPrice - entryPrice) * quantity;
-  }, 0);
-
   let cumInvested = 0;
   let cumRealizedPL = 0;
-  const monthlyData: MonthlyDataItem[] = sortedBuckets.map(([month, bucket], index) => {
+  let cumUnrealizedPL = 0;
+  const monthlyData: MonthlyDataItem[] = sortedBuckets.map(([month, bucket]) => {
     cumInvested += bucket.invested;
     cumRealizedPL += bucket.realizedPL;
-    // For the last month (current), include unrealized P/L in the cumulative total
-    const isLastMonth = index === sortedBuckets.length - 1;
-    const totalPL = cumRealizedPL + (isLastMonth ? totalUnrealizedPL : 0);
+    cumUnrealizedPL += bucket.unrealizedPL;
+    const totalPL = cumRealizedPL + cumUnrealizedPL;
     return {
       month,
       invested: bucket.invested,
       pl: bucket.realizedPL,
+      unrealizedPl: bucket.unrealizedPL,
       roi: cumInvested > 0 ? (totalPL / cumInvested) * 100 : 0,
     };
   });

@@ -6,6 +6,7 @@ export type MonthlyDataItem = {
   month: string;
   invested: number;
   pl: number;
+  unrealizedPl?: number;
   roi: number;
 };
 
@@ -24,21 +25,31 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-plt-border bg-plt-card px-3 py-2 text-xs shadow-xl backdrop-blur-md">
-      <div className="font-medium text-plt-text mb-1">{label}</div>
+    <div className="rounded-lg border border-white/10 bg-[#0a0a0a]/95 px-3.5 py-2.5 text-xs shadow-xl backdrop-blur-md min-w-[170px]">
+      <div className="font-medium text-white mb-1.5 pb-1 border-b border-white/5">{label}</div>
       {payload.map((entry, index) => {
         const value = entry.value as number;
         const isRoi = entry.name === 'Cumulative ROI';
-        const color = isRoi 
-          ? (value >= 0 ? '#22c55e' : '#ef4444')
-          : entry.color;
+        const isRealized = entry.name === 'Realized P/L';
+        const isUnrealized = entry.name === 'Unrealized P/L';
+        
+        let color = entry.color;
+        if (isRoi) {
+          color = value >= 0 ? '#f59e0b' : '#ef4444';
+        } else if (isRealized) {
+          color = value >= 0 ? '#22c55e' : '#ef4444';
+        } else if (isUnrealized) {
+          color = value >= 0 ? '#3b82f6' : '#ef4444';
+        }
+        
         const formatted = isRoi 
-          ? `${value.toFixed(2)}%` 
-          : `${value.toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
+          ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%` 
+          : `${value >= 0 && (isRealized || isUnrealized) ? '+' : ''}${value.toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
           
         return (
-          <div key={index} style={{ color }} className="mt-0.5">
-            {entry.name}: {formatted}
+          <div key={index} style={{ color }} className="mt-1 flex items-center justify-between gap-3 text-[11px]">
+            <span className="opacity-90">{entry.name}:</span>
+            <span className="font-mono font-medium">{formatted}</span>
           </div>
         );
       })}
@@ -57,7 +68,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={data} margin={{ top: 12, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
+      <ComposedChart data={data} margin={{ top: 12, right: 12, left: 0, bottom: 0 }} barCategoryGap="15%">
         <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
         <XAxis
           dataKey="month"
@@ -84,10 +95,15 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} iconType="circle" />
-        <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#00d2ff" radius={[2, 2, 0, 0]} maxBarSize={32} />
-        <Bar yAxisId="left" dataKey="pl" name="Realized P/L" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={32}>
+        <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#00d2ff" radius={[2, 2, 0, 0]} maxBarSize={24} />
+        <Bar yAxisId="left" dataKey="pl" name="Realized P/L" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={24}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.pl >= 0 ? '#22c55e' : '#ef4444'} />
+            <Cell key={`cell-realized-${index}`} fill={entry.pl >= 0 ? '#22c55e' : '#ef4444'} />
+          ))}
+        </Bar>
+        <Bar yAxisId="left" dataKey="unrealizedPl" name="Unrealized P/L" fill="#3b82f6" radius={[2, 2, 0, 0]} maxBarSize={24}>
+          {data.map((entry, index) => (
+            <Cell key={`cell-unrealized-${index}`} fill={(entry.unrealizedPl ?? 0) >= 0 ? '#3b82f6' : '#ef4444'} />
           ))}
         </Bar>
         <Line 
