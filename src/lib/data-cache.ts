@@ -63,5 +63,5 @@ export const getCachedRecentPrices = unstable_cache(
     return await db.execute(recentPricesQuery);
   },
   ['recent-prices-all'],
-  { tags: ['recent-prices'], revalidate: 3600 }
+  { tags: ['recent-prices'], revalidate: 60 }
 );

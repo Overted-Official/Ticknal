@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { tickers, dailyPrices } from '@/db/schema';
 import { sql } from 'drizzle-orm';
@@ -249,6 +250,16 @@ export async function GET(req: Request) {
       notificationResult = await dispatchSignalNotifications({ symbols: updatedSymbols, lookbackBars: 1 });
     } catch (notificationError) {
       console.error('Error dispatching signal notifications:', notificationError);
+    }
+
+    try {
+      revalidateTag('recent-prices', 'max');
+      revalidateTag('tickers', 'max');
+      revalidateTag('prices', 'max');
+      revalidatePath('/api/positions');
+      revalidatePath('/positions');
+    } catch {
+      // Ignore in non-request contexts
     }
 
     return NextResponse.json({ message: 'Daily price update completed', results, notificationResult }, { status: 200 });
