@@ -62,6 +62,7 @@ async function updateCIQuantFund(): Promise<{ symbol: string; status: string; co
         exchange: 'EGX',
         sector: 'Mutual Funds',
         industry: 'Equity Funds',
+        logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/funds/1780357545756-9yoqpms6r0o.jpeg',
       })
       .onConflictDoNothing({ target: tickers.symbol });
 

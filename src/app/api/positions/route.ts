@@ -237,15 +237,16 @@ async function getLatestPriceMap(): Promise<Record<string, number>> {
   return priceMap;
 }
 
-async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string }>> {
+async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; logoUrl: string | null }>> {
   const { getCachedTickers } = await import('@/lib/data-cache');
   const rows = await getCachedTickers();
   
-  const tickerMap: Record<string, { companyName: string; sector: string }> = {};
+  const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }> = {};
   for (const ticker of rows) {
     tickerMap[ticker.symbol] = {
       companyName: ticker.companyName ?? ticker.symbol,
       sector: ticker.sector ?? 'Unclassified',
+      logoUrl: ticker.logoUrl ?? null,
     };
   }
   return tickerMap;
@@ -254,7 +255,7 @@ async function getTickerMap(): Promise<Record<string, { companyName: string; sec
 function formatPosition(
   position: PositionRow,
   priceMap: Record<string, number>,
-  tickerMap: Record<string, { companyName: string; sector: string }>,
+  tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }>,
 ) {
   const entryPrice = Number(position.entryPrice);
   const quantity = Number(position.quantity);
@@ -267,6 +268,7 @@ function formatPosition(
     tickerSymbol: position.tickerSymbol,
     companyName: tickerMap[position.tickerSymbol]?.companyName ?? position.tickerSymbol,
     sector: tickerMap[position.tickerSymbol]?.sector ?? 'Unclassified',
+    logoUrl: tickerMap[position.tickerSymbol]?.logoUrl ?? null,
     status: position.status,
     side: position.side,
     entryDate: position.entryDate,

@@ -16,6 +16,7 @@ type OrderRow = {
   tickerSymbol: string;
   companyName: string;
   sector: string;
+  logoUrl?: string | null;
   status: 'OPEN' | 'CLOSED';
   entryDate: string;
   entryPrice: number;
@@ -30,6 +31,26 @@ type OrderRow = {
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+function TickerLogo({ symbol, logoUrl, size = 'sm' }: { symbol: string; logoUrl?: string | null; size?: 'sm' | 'md' }) {
+  const [imgError, setImgError] = useState(false);
+  const sizeClasses = size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
+
+  return (
+    <div className={`${sizeClasses} rounded-md bg-white/[0.04] border border-white/[0.08] p-0.5 shrink-0 flex items-center justify-center overflow-hidden`}>
+      {logoUrl && !imgError ? (
+        <img
+          src={logoUrl}
+          alt={symbol}
+          className="w-full h-full object-contain rounded-[3px] bg-transparent"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <span className="text-[9px] font-bold text-white/50 uppercase">{symbol.slice(0, 2)}</span>
+      )}
+    </div>
+  );
+}
 
 export default function OrdersTable() {
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
@@ -98,6 +119,7 @@ export default function OrdersTable() {
         tickerSymbol: rows[0].tickerSymbol,
         companyName: rows[0].companyName,
         sector: rows[0].sector,
+        logoUrl: rows[0].logoUrl ?? null,
         status: rows[0].status,
         currentPrice,
         totalQuantity,
@@ -258,19 +280,22 @@ export default function OrdersTable() {
               return (
                 <div key={group.key} className="border border-white/[0.09] rounded-md bg-black p-5">
                   <div className="flex justify-between items-start border-b border-white/[0.09] pb-2.5 mb-2.5">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Link href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
-                          {group.tickerSymbol}
-                          <span className="text-[10px] text-white/40 font-normal">({group.sector})</span>
-                        </Link>
-                        {isMulti && (
-                          <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] bg-white/[0.06] border border-white/[0.09] text-white/70 font-mono">
-                            {group.orders.length} Lots
-                          </span>
-                        )}
+                    <div className="flex items-center gap-2.5">
+                      <TickerLogo symbol={group.tickerSymbol} logoUrl={group.logoUrl} size="md" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Link href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
+                            {group.tickerSymbol}
+                            <span className="text-[10px] text-white/40 font-normal">({group.sector})</span>
+                          </Link>
+                          {isMulti && (
+                            <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] bg-white/[0.06] border border-white/[0.09] text-white/70 font-mono">
+                              {group.orders.length} Lots
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-white/40 truncate max-w-[180px] mt-0.5">{group.companyName}</div>
                       </div>
-                      <div className="text-[11px] text-white/40 truncate max-w-[200px] mt-0.5">{group.companyName}</div>
                     </div>
                     <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-medium ${
                       group.status === 'OPEN' ? 'bg-white/[0.06] text-white/90 border border-white/[0.09]' : 'bg-white/[0.02] text-white/40'
@@ -448,7 +473,7 @@ export default function OrdersTable() {
                       >
                         <td className="px-6 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            {isMulti ? (
+                            {isMulti && (
                               <button 
                                 type="button" 
                                 className="p-0.5 rounded text-white/40 group-hover:text-plt-orange hover:text-white transition-colors"
@@ -462,9 +487,8 @@ export default function OrdersTable() {
                                   className={`transition-transform duration-150 ${isExpanded ? 'rotate-90 text-plt-orange' : ''}`} 
                                 />
                               </button>
-                            ) : (
-                              <LineChart size={15} className="text-white/40 group-hover:text-plt-orange" />
                             )}
+                            <TickerLogo symbol={group.tickerSymbol} logoUrl={group.logoUrl} size="sm" />
                             <Link 
                               href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} 
                               className="font-semibold text-white group-hover:text-plt-orange transition-colors flex items-center gap-1.5"
@@ -478,7 +502,7 @@ export default function OrdersTable() {
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-white/40 truncate max-w-[200px] mt-0.5 pl-6">{group.companyName}</div>
+                          <div className={`text-[11px] text-white/40 truncate max-w-[200px] mt-0.5 ${isMulti ? 'pl-11' : 'pl-7'}`}>{group.companyName}</div>
                         </td>
                         <td className="px-6 py-3.5 whitespace-nowrap">
                           <span
