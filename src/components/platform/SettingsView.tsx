@@ -199,42 +199,22 @@ export default function SettingsView({
     setIsUploadingAvatar(true);
     setAvatarUploadStatus(null);
     try {
-      const supabase = createClient();
-      const fileExt = file.name.split('.').pop() || 'jpg';
-      const fileName = `avatar-${Date.now()}.${fileExt}`;
-      const filePath = `users/${userProfile.id}/avatars/${fileName}`;
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from('QuantEGX Public')
-        .upload(filePath, file, {
-          upsert: true,
-          cacheControl: '3600',
-        });
-
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        setAvatarUploadStatus(`Upload failed: ${uploadError.message}`);
-        return;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('QuantEGX Public')
-        .getPublicUrl(filePath);
-
-      const publicUrl = urlData.publicUrl;
-
-      // Update Supabase auth user metadata
-      const { error: userUpdateError } = await supabase.auth.updateUser({
-        data: { avatar_url: publicUrl },
+      const res = await fetch('/api/user/avatar', {
+        method: 'POST',
+        body: formData,
       });
 
-      if (userUpdateError) {
-        console.error('User update error:', userUpdateError);
-        setAvatarUploadStatus(`Failed to update profile: ${userUpdateError.message}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setAvatarUploadStatus(`Upload failed: ${data.error || 'Unknown error'}`);
         return;
       }
 
-      setAvatarUrl(publicUrl);
+      setAvatarUrl(data.avatarUrl);
       setAvatarUploadStatus('Profile photo updated successfully!');
       setTimeout(() => setAvatarUploadStatus(null), 4000);
     } catch (err) {
