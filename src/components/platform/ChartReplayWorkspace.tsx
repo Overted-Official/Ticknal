@@ -6,9 +6,12 @@ import ChartWidget, { type ChartData, type ReplayState } from '@/components/plat
 import SignalPanel from '@/components/platform/SignalPanel';
 import { STRATEGIES } from '@/strategies/registry';
 
+import { WatchlistItem } from '@/components/platform/RightSidebar';
+
 interface ChartReplayWorkspaceProps {
   data: ChartData[];
   symbol: string;
+  watchlist?: WatchlistItem[];
   initialReplayMode?: boolean;
 }
 
@@ -21,6 +24,7 @@ const EMPTY_REPLAY_STATE: ReplayState = {
 export default function ChartReplayWorkspace({
   data,
   symbol,
+  watchlist = [],
   initialReplayMode = false,
 }: ChartReplayWorkspaceProps) {
   const [replayState, setReplayState] = useState<ReplayState>(
@@ -111,12 +115,16 @@ export default function ChartReplayWorkspace({
     setReplayState(state);
   }, []);
 
+  const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
+  const [showSignals, setShowSignals] = useState(true);
+
   return (
     <>
       <ChartWidget
         key={chartKey}
         data={data}
         symbol={symbol}
+        watchlist={watchlist}
         initialReplayMode={initialReplayMode}
         onReplayStateChange={handleReplayStateChange}
         selectedStrategy={selectedStrategy}
@@ -126,6 +134,8 @@ export default function ChartReplayWorkspace({
         setStrategyStartDate={(val) => updateGlobalParam('strategyStart', val)}
         setStrategyEndDate={(val) => updateGlobalParam('strategyEnd', val)}
         activeIndicators={activeIndicators}
+        showSignals={showSignals}
+        onMetricsChange={setMetrics}
       />
       <SignalPanel
         activeSymbol={symbol}
@@ -142,6 +152,9 @@ export default function ChartReplayWorkspace({
         strategyEndDate={strategyEndDate}
         setStrategyStartDate={(val) => updateGlobalParam('strategyStart', val)}
         setStrategyEndDate={(val) => updateGlobalParam('strategyEnd', val)}
+        metrics={metrics}
+        showSignals={showSignals}
+        setShowSignals={setShowSignals}
       />
     </>
   );

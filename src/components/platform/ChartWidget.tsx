@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   createChart,
   ColorType,
@@ -20,8 +21,13 @@ import {
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Eye, EyeOff, Sparkles, Loader2 } from '@/components/ui/icons';
-import { INDICATORS } from '@/indicators';
+import { Search, Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Eye, EyeOff, Sparkles, Loader2 } from '@/components/ui/icons';
+import { BarChart2, Check } from 'lucide-react';
+import AddOrderModal from '@/components/platform/AddOrderModal';
+import EditOrderModal from '@/components/platform/EditOrderModal';
+import CloseOrderModal from '@/components/platform/CloseOrderModal';
+import { INDICATORS, getAvailableIndicators } from '@/indicators';
+import { WatchlistItem } from '@/components/platform/RightSidebar';
 
 export interface ChartData {
   time: string; // "YYYY-MM-DD"
@@ -91,16 +97,23 @@ type OrderDraft = {
 
 type OrderOverlay = {
   id: number;
+  order: ChartOrder;
   left: number;
   width: number;
   entryTop: number;
   targetTop: number | null;
   stopTop: number | null;
-  targetHeight: number;
-  stopHeight: number;
-  targetPrice: number | null;
-  stopPrice: number | null;
+  currentTop: number | null;
+  profitBoxTop: number | null;
+  profitBoxHeight: number;
+  stopBoxTop: number | null;
+  stopBoxHeight: number;
+  isProfit: boolean;
   entryPrice: number;
+  currentPrice: number;
+  quantity: number;
+  marketValue: number;
+  profitLoss: number;
   profitLossPct: number;
 };
 
@@ -132,6 +145,9 @@ interface ChartWidgetProps {
   setStrategyStartDate?: (d: string) => void;
   setStrategyEndDate?: (d: string) => void;
   activeIndicators?: string[];
+  watchlist?: WatchlistItem[];
+  showSignals?: boolean;
+  onMetricsChange?: (metrics: Record<string, string> | null) => void;
 }
 
 const DEFAULT_REPLAY_DATE = '2019-12-31';
@@ -145,6 +161,7 @@ const MAX_VISIBLE_SIGNAL_BADGES = 7;
 export default function ChartWidget({
   data,
   symbol,
+  watchlist = [],
   initialReplayMode = false,
   onReplayStateChange,
   selectedStrategy = 'psi',
@@ -154,6 +171,8 @@ export default function ChartWidget({
   setStrategyStartDate,
   setStrategyEndDate,
   activeIndicators = [],
+  showSignals = true,
+  onMetricsChange,
 }: ChartWidgetProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -163,13 +182,14 @@ export default function ChartWidget({
   const orderPriceLineRefs = useRef<Map<number, IPriceLine[]>>(new Map());
 
   const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
-  const [isMetricsExpanded, setIsMetricsExpanded] = useState(false);
-  const [showSignals, setShowSignals] = useState(true);
   const [orders, setOrders] = useState<ChartOrder[]>([]);
   const [orderDraft, setOrderDraft] = useState<OrderDraft | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderOverlays, setOrderOverlays] = useState<OrderOverlay[]>([]);
+  const [selectedOrderToEdit, setSelectedOrderToEdit] = useState<ChartOrder | null>(null);
+  const [selectedOrderToClose, setSelectedOrderToClose] = useState<ChartOrder | null>(null);
+  const [positionsRefreshKey, setPositionsRefreshKey] = useState(0);
   const [chartSignals, setChartSignals] = useState<StrategySignal[]>([]);
   const [replayMode, setReplayMode] = useState(initialReplayMode);
   const [replayIndex, setReplayIndex] = useState(() =>
@@ -183,8 +203,95 @@ export default function ChartWidget({
 
   const [predictPopoverOpen, setPredictPopoverOpen] = useState(false);
   const [predictDaysInput, setPredictDaysInput] = useState("10");
-
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [indicatorsPopoverOpen, setIndicatorsPopoverOpen] = useState(false);
+  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+
+  // In-place Ticker Search State
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+
+  const displaySymbol = symbol.replace('.CA', '');
+  const currentTickerItem = useMemo(() => {
+    return watchlist.find(item => item.symbol === symbol) || {
+      symbol,
+      companyName: displaySymbol,
+      logoUrl: null,
+      website: null,
+      price: data[data.length - 1]?.close ? Number(data[data.length - 1].close).toFixed(2) : '0.00',
+      isUp: true,
+      changePct: '0.00%',
+      sector: 'EGX'
+    };
+  }, [watchlist, symbol, displaySymbol, data]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return watchlist.slice(0, 10);
+    const q = searchQuery.toLowerCase();
+    return watchlist.filter(item => 
+      item.symbol.toLowerCase().includes(q) ||
+      item.companyName.toLowerCase().includes(q) ||
+      item.sector.toLowerCase().includes(q)
+    ).slice(0, 15);
+  }, [searchQuery, watchlist]);
+
+  // Focus search input on open
+  useEffect(() => {
+    if (isSearchDropdownOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [isSearchDropdownOpen]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
+        setIsSearchDropdownOpen(false);
+      }
+    }
+    if (isSearchDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isSearchDropdownOpen]);
+
+  // Keyboard shortcut ⌘K / Ctrl+K and Esc
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchDropdownOpen(prev => !prev);
+      }
+      if (e.key === 'Escape' && isSearchDropdownOpen) {
+        setIsSearchDropdownOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchDropdownOpen]);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const availableIndicators = useMemo(() => getAvailableIndicators(), []);
+
+  const toggleIndicator = useCallback((id: string) => {
+    const current = new Set(activeIndicators);
+    if (current.has(id)) {
+      current.delete(id);
+    } else {
+      current.add(id);
+    }
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    if (current.size > 0) {
+      params.set('indicators', Array.from(current).join(','));
+    } else {
+      params.delete('indicators');
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [activeIndicators, searchParams, pathname, router]);
 
   const replayDate = replayMode ? data[replayIndex]?.time ?? null : null;
   const replayStartDate = replayMode ? data[0]?.time ?? null : null;
@@ -324,18 +431,34 @@ export default function ChartWidget({
     volumeSeries.setData(vData);
 
     if (visibleData.length > 0) {
+      const newLastIndex = visibleData.length - 1;
+      const currentYear = new Date().getFullYear();
+      const startOfYearDate = `${currentYear}-01-01`;
+      let startOfYearIndex = visibleData.findIndex((d) => d.time >= startOfYearDate);
+      if (startOfYearIndex === -1) {
+        startOfYearIndex = Math.max(0, newLastIndex - 60);
+      }
+
       if (replayMode) {
         if (currentLogicalRange) {
           const barsVisible = currentLogicalRange.to - currentLogicalRange.from;
           const half = Math.floor(barsVisible / 2);
-          const newLastIndex = visibleData.length - 1;
           timeScale.setVisibleLogicalRange({
             from: newLastIndex - half,
             to: newLastIndex + half,
           });
+        } else {
+          timeScale.setVisibleLogicalRange({
+            from: startOfYearIndex,
+            to: newLastIndex + 6,
+          });
         }
       } else {
-        timeScale.fitContent();
+        // Default zoom: from start of current year to latest candle with right margin
+        timeScale.setVisibleLogicalRange({
+          from: startOfYearIndex,
+          to: newLastIndex + 6,
+        });
       }
     }
   }, [visibleData, replayMode]);
@@ -343,12 +466,24 @@ export default function ChartWidget({
   useEffect(() => {
     const recenterChart = () => {
       chartRef.current?.priceScale('right').applyOptions({ autoScale: true });
-      chartRef.current?.timeScale().scrollToRealTime();
+      const lastIndex = visibleData.length - 1;
+      if (lastIndex >= 0) {
+        const currentYear = new Date().getFullYear();
+        const startOfYearDate = `${currentYear}-01-01`;
+        let startOfYearIndex = visibleData.findIndex((d) => d.time >= startOfYearDate);
+        if (startOfYearIndex === -1) {
+          startOfYearIndex = Math.max(0, lastIndex - 60);
+        }
+        chartRef.current?.timeScale().setVisibleLogicalRange({
+          from: startOfYearIndex,
+          to: lastIndex + 6,
+        });
+      }
     };
 
     window.addEventListener('quantegx:chart-recenter', recenterChart);
     return () => window.removeEventListener('quantegx:chart-recenter', recenterChart);
-  }, []);
+  }, [visibleData]);
 
   useEffect(() => {
     const chart = chartRef.current;
@@ -429,7 +564,7 @@ export default function ChartWidget({
     return () => {
       isActive = false;
     };
-  }, [symbol]);
+  }, [symbol, positionsRefreshKey]);
 
   useEffect(() => {
     const candlestickSeries = candlestickSeriesRef.current;
@@ -489,7 +624,7 @@ export default function ChartWidget({
 
     const updateOverlays = () => {
       const nextOrderOverlays = orders
-        .map((order) => buildOrderOverlay(order, chart, candlestickSeries, container))
+        .map((order) => buildOrderOverlay(order, chart, candlestickSeries, container, visibleData))
         .filter((overlay): overlay is OrderOverlay => overlay !== null);
 
       setOrderOverlays(nextOrderOverlays);
@@ -536,7 +671,10 @@ export default function ChartWidget({
         const res = await fetch(`/api/metrics?${params.toString()}`);
         if (res.ok && isActive) {
           const json = await res.json();
-          if (isActive && json.metrics) setMetrics(json.metrics);
+          if (isActive && json.metrics) {
+            setMetrics(json.metrics);
+            onMetricsChange?.(json.metrics);
+          }
         }
       } catch (error: any) {
         if (isActive) {
@@ -827,20 +965,6 @@ export default function ChartWidget({
     }
   };
 
-  const formatColor = (valStr: string) => {
-    if (!valStr) return 'text-white';
-    const val = parseFloat(valStr);
-    if (isNaN(val)) return 'text-white';
-    return val > 0 ? 'text-[#22c55e]' : val < 0 ? 'text-[#ef4444]' : 'text-white';
-  };
-
-  const formatPlus = (valStr: string) => {
-    if (!valStr) return '';
-    const val = parseFloat(valStr);
-    if (isNaN(val)) return valStr;
-    return val > 0 ? `+${valStr}%` : `${valStr}%`;
-  };
-
   const predictButtonUI = (
     <div className="relative">
       <button
@@ -861,7 +985,7 @@ export default function ChartWidget({
       </button>
 
       {predictPopoverOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-md border border-white/[0.1] bg-black p-3.5 text-xs text-white shadow-2xl z-[60]">
+        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-md border border-white/[0.15] bg-black/85 backdrop-blur-2xl p-3.5 text-xs text-white shadow-2xl z-[60]">
           <div className="mb-2.5 flex items-center justify-between">
             <div className="font-semibold text-white/90 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-plt-orange" /> AI Forecast
@@ -905,38 +1029,205 @@ export default function ChartWidget({
     <div className="flex-1 w-full h-full relative bg-tv-chart">
       <div className="absolute inset-0" ref={chartContainerRef} />
 
-      {orderOverlays.map((overlay) => (
-        <div key={overlay.id} className="pointer-events-none absolute inset-0 z-20">
-          {overlay.targetTop !== null && (
-            <div
-              className="absolute rounded-tv-sm border border-tv-accent-hover/60 bg-tv-accent-hover/15"
-              style={{
-                left: overlay.left,
-                width: overlay.width,
-                top: overlay.targetTop,
-                height: overlay.targetHeight,
-              }}
-            />
-          )}
-          {overlay.stopTop !== null && (
-            <div
-              className="absolute rounded-tv-sm border border-tv-down/60 bg-tv-down/15"
-              style={{
-                left: overlay.left,
-                width: overlay.width,
-                top: overlay.entryTop,
-                height: overlay.stopHeight,
-              }}
-            />
-          )}
-          <div
-            className="absolute flex -translate-y-1/2 items-center gap-2 rounded-tv-sm border border-tv-highlight/70 bg-tv-surface/95 px-2 py-1 text-[11px] text-tv-text shadow-lg"
-            style={{ left: overlay.left, top: overlay.entryTop }}
-          >
-            <span className="font-weight-medium">LONG</span>
-            <span className={overlay.profitLossPct >= 0 ? 'text-tv-up' : 'text-tv-down'}>
-              {overlay.profitLossPct >= 0 ? '+' : ''}{overlay.profitLossPct.toFixed(2)}%
+      {/* Top-Left In-Place Ticker Selector Pill & Search Dropdown */}
+      <div className="absolute top-4 left-4 z-30" ref={searchDropdownRef}>
+        {/* Interactive Trigger Pill */}
+        <button
+          type="button"
+          onClick={() => setIsSearchDropdownOpen((prev) => !prev)}
+          className="group flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-black/60 hover:bg-black/75 border border-white/[0.12] hover:border-white/[0.22] shadow-2xl backdrop-blur-xl transition-all text-left cursor-pointer select-none"
+        >
+          {/* Logo / Initials */}
+          <div className="w-5 h-5 rounded-[4px] bg-white/[0.04] border border-white/[0.09] flex items-center justify-center overflow-hidden shrink-0">
+            {currentTickerItem.logoUrl ? (
+              <img src={currentTickerItem.logoUrl} alt={displaySymbol} className="w-full h-full object-contain bg-transparent" />
+            ) : (
+              <span className="text-[9px] font-bold text-white">{displaySymbol.substring(0, 2)}</span>
+            )}
+          </div>
+
+          {/* Symbol & Name */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-semibold text-white text-xs tracking-tight group-hover:text-plt-orange transition-colors">
+              {displaySymbol}
             </span>
+            <span className="text-[11px] text-white/40 font-normal hidden sm:inline truncate max-w-[140px]">
+              {currentTickerItem.companyName}
+            </span>
+          </div>
+
+          {/* Quick Search ⌘K Indicator */}
+          <div className="flex items-center gap-1 text-white/40 group-hover:text-white/80 transition-colors pl-1 border-l border-white/[0.08]">
+            <Search size={11} />
+            <ChevronDown size={11} className={`transition-transform duration-150 ${isSearchDropdownOpen ? 'rotate-180 text-white' : ''}`} />
+          </div>
+        </button>
+
+        {/* In-Place Dropdown Menu */}
+        {isSearchDropdownOpen && (
+          <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-black/85 border border-white/[0.15] rounded-md shadow-2xl backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+            {/* Search Input */}
+            <div className="flex items-center px-3 py-2 border-b border-white/[0.09] bg-white/[0.02]">
+              <Search size={13} className="text-white/40 mr-2 shrink-0" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search EGX tickers or names..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent border-none outline-none text-white text-xs placeholder:text-white/30"
+              />
+              <div className="text-[9px] font-mono text-white/30 px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08]">
+                ESC
+              </div>
+            </div>
+
+            {/* List of Tickers */}
+            <div className="max-h-64 overflow-y-auto no-scrollbar p-1 space-y-0.5">
+              {searchResults.length === 0 ? (
+                <div className="p-4 text-center text-white/40 text-xs">No tickers found</div>
+              ) : (
+                searchResults.map((item) => {
+                  const isSelected = item.symbol === symbol;
+                  const itemDisplay = item.symbol.replace('.CA', '');
+                  return (
+                    <div
+                      key={item.symbol}
+                      onClick={() => {
+                        setIsSearchDropdownOpen(false);
+                        router.push(`?ticker=${item.symbol}`);
+                      }}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-white/[0.08] text-white font-medium border border-white/[0.12]'
+                          : 'hover:bg-white/[0.04] text-white/80 hover:text-white border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-5 h-5 rounded-[4px] bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+                          {item.logoUrl ? (
+                            <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="text-[8px] font-bold text-white">{itemDisplay.substring(0, 2)}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium text-white flex items-center gap-1.5">
+                            <span className={isSelected ? 'text-plt-orange font-semibold' : ''}>{itemDisplay}</span>
+                            <span className="text-[10px] text-white/40 font-normal truncate max-w-[120px]">{item.companyName}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0 pl-2">
+                        <div className="text-[11px] font-mono font-medium text-white">{item.price}</div>
+                        {item.changePct && (
+                          <div className={`text-[9px] font-mono ${item.isUp ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                            {item.changePct}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {orderOverlays.map((overlay) => (
+        <div key={overlay.id} className="absolute inset-0 z-10 pointer-events-none">
+          {/* Target / Profit Zone (Subtle green tint, NO blur so candlesticks are completely crisp) */}
+          {overlay.profitBoxTop !== null && overlay.profitBoxHeight > 0 && (
+            <div
+              className="absolute border-t border-l border-r border-[#22c55e]/30 bg-[#22c55e]/[0.08] pointer-events-none rounded-t-sm"
+              style={{
+                left: overlay.left,
+                width: overlay.width,
+                top: overlay.profitBoxTop,
+                height: overlay.profitBoxHeight,
+              }}
+            />
+          )}
+
+          {/* Stop / Loss Zone (Subtle red tint, NO blur) */}
+          {overlay.stopBoxTop !== null && overlay.stopBoxHeight > 0 && (
+            <div
+              className="absolute border-b border-l border-r border-[#ef4444]/30 bg-[#ef4444]/[0.08] pointer-events-none rounded-b-sm"
+              style={{
+                left: overlay.left,
+                width: overlay.width,
+                top: overlay.stopBoxTop,
+                height: overlay.stopBoxHeight,
+              }}
+            />
+          )}
+
+          {/* Center Entry Price Line */}
+          <div
+            className="absolute border-b border-white/20 pointer-events-none"
+            style={{
+              left: overlay.left,
+              width: overlay.width,
+              top: overlay.entryTop,
+            }}
+          />
+
+          {/* Interactive Informative Position Pill */}
+          <div
+            onClick={() => setSelectedOrderToEdit(overlay.order)}
+            className="group pointer-events-auto cursor-pointer absolute flex -translate-y-1/2 items-center gap-2 rounded-md border border-white/[0.15] bg-black/85 hover:bg-black/95 hover:border-plt-orange/60 px-2.5 py-1 text-xs text-white shadow-2xl backdrop-blur-xl transition-all select-none z-30"
+            style={{ left: overlay.left, top: overlay.entryTop }}
+            title="Click to Edit or Close Position"
+          >
+            {/* Tag */}
+            <span className="text-[9px] font-bold uppercase tracking-wider text-plt-orange bg-plt-orange/15 px-1.5 py-0.5 rounded border border-plt-orange/30">
+              LONG
+            </span>
+
+            {/* Formatted Information: Entry Price • Units • Current Mkt Value • P/L (P/L%) */}
+            <div className="flex items-center gap-1.5 text-[11px] font-mono">
+              <span className="text-white/80">
+                <span className="text-white/40 text-[9px] font-sans mr-0.5">Entry:</span>
+                {overlay.entryPrice.toFixed(2)}
+              </span>
+
+              <span className="text-white/20">•</span>
+
+              <span className="text-white/80">
+                {overlay.quantity.toLocaleString()} <span className="text-white/40 text-[9px] font-sans">units</span>
+              </span>
+
+              <span className="text-white/20">•</span>
+
+              <span className="text-white/80">
+                <span className="text-white/40 text-[9px] font-sans mr-0.5">Val:</span>
+                {overlay.marketValue.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+              </span>
+
+              <span className="text-white/20">•</span>
+
+              <span className={`font-semibold flex items-center gap-1 ${overlay.isProfit ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                <span>{overlay.profitLoss >= 0 ? '+' : ''}{overlay.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
+                <span className="text-[10px]">({overlay.profitLossPct >= 0 ? '+' : ''}{overlay.profitLossPct.toFixed(2)}%)</span>
+              </span>
+            </div>
+
+            {/* Quick Exit CTA */}
+            <div className="flex items-center pl-1 border-l border-white/[0.1] ml-0.5">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedOrderToClose(overlay.order);
+                }}
+                className="px-1.5 py-0.5 text-[9px] rounded bg-[#ef4444]/15 hover:bg-[#ef4444] text-[#ef4444] hover:text-white border border-[#ef4444]/30 transition-all font-sans font-medium"
+                title="Close Position"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       ))}
@@ -1028,23 +1319,101 @@ export default function ChartWidget({
       )}
 
       {!replayMode ? (
-        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-1.5 rounded-md border border-white/[0.09] bg-black/90 backdrop-blur-xl p-1 shadow-2xl">
+        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-1.5 rounded-md border border-white/[0.12] bg-black/60 backdrop-blur-xl p-1 shadow-2xl">
+          {/* 1. Bar Replay */}
           <button
             type="button"
             title="Bar Replay"
             aria-label="Bar Replay"
             disabled={!hasReplayRoom}
             onClick={enableReplay}
-            className="h-7.5 rounded-md px-3 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
+            className="h-7.5 rounded-md px-2.5 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
           >
             <RotateCcw className="h-3.5 w-3.5 text-white/60" />
-            Replay
+            <span>Replay</span>
           </button>
 
+          {/* 2. Predict N Days */}
           {predictButtonUI}
+
+          {/* 3. Indicators Popover */}
+          <div className="relative">
+            <button
+              type="button"
+              title="Technical Indicators"
+              onClick={() => setIndicatorsPopoverOpen(!indicatorsPopoverOpen)}
+              className={`h-7.5 rounded-md px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
+                activeIndicators.length > 0
+                  ? 'bg-plt-orange/15 text-plt-orange border border-plt-orange/40 font-semibold'
+                  : 'text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white'
+              }`}
+            >
+              <BarChart2 className="h-3.5 w-3.5" />
+              <span>Indicators</span>
+              {activeIndicators.length > 0 && (
+                <span className="ml-0.5 px-1 py-0.2 rounded text-[9px] bg-plt-orange text-black font-bold">
+                  {activeIndicators.length}
+                </span>
+              )}
+            </button>
+
+            {indicatorsPopoverOpen && (
+              <div className="absolute bottom-full left-0 mb-2 w-64 rounded-md border border-white/[0.15] bg-black/85 backdrop-blur-2xl p-3 text-xs text-white shadow-2xl z-[60]">
+                <div className="mb-2 flex items-center justify-between border-b border-white/[0.09] pb-2">
+                  <div className="font-semibold text-white flex items-center gap-1.5">
+                    <BarChart2 className="w-3.5 h-3.5 text-plt-orange" /> Technical Overlays
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIndicatorsPopoverOpen(false)}
+                    className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 hover:bg-white/[0.08] hover:text-white transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  {availableIndicators.map((ind) => {
+                    const isActive = activeIndicators.includes(ind.id);
+                    return (
+                      <div
+                        key={ind.id}
+                        onClick={() => toggleIndicator(ind.id)}
+                        className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-all border ${
+                          isActive 
+                            ? 'bg-plt-orange/10 border-plt-orange/30 text-white' 
+                            : 'bg-white/[0.02] border-white/[0.06] text-white/70 hover:bg-white/[0.05] hover:text-white'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-medium text-xs text-white">{ind.name}</div>
+                          <div className="text-[10px] text-white/40 leading-snug">{ind.description}</div>
+                        </div>
+                        <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors ${
+                          isActive ? 'bg-plt-orange border-plt-orange text-black' : 'border-white/20 bg-transparent'
+                        }`}>
+                          {isActive && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 4. Add Position CTA */}
+          <button
+            type="button"
+            onClick={() => setIsAddOrderOpen(true)}
+            className="h-7.5 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white px-3 text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
+            title="Add Position"
+          >
+            <span>+</span>
+            <span>Add Position</span>
+          </button>
         </div>
       ) : (
-        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.09] bg-black/90 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
+        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.12] bg-black/60 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
           <button
             type="button"
             title="Reset replay point"
@@ -1146,81 +1515,35 @@ export default function ChartWidget({
         </div>
       )}
 
-      {metrics && (
-        <div
-          className="absolute z-50 rounded-md border border-white/[0.09] bg-black/90 backdrop-blur-xl shadow-2xl text-[11px] transition-all overflow-hidden"
-          style={{ top: '16px', right: '65px' }}
-        >
-          {/* Summary Badge */}
-          <div 
-            className={`flex items-center justify-between gap-3 px-3 py-1.5 cursor-pointer transition-colors ${isMetricsExpanded ? 'border-b border-white/[0.09] bg-white/[0.04]' : 'hover:bg-white/[0.04]'}`}
-            onClick={() => setIsMetricsExpanded(!isMetricsExpanded)}
-          >
-            <span className="text-white/60 font-medium flex items-center gap-1.5 text-[11px]">
-              <ChevronDown size={12} className={`transition-transform duration-200 opacity-60 ${isMetricsExpanded ? 'rotate-180' : ''}`} />
-              Performance
-            </span>
-            <div className="flex items-center gap-2.5">
-              <span className={`font-bold font-mono text-[11px] ${formatColor(metrics['Sys ROI'])}`}>
-                {formatPlus(metrics['Sys ROI'])}
-              </span>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setShowSignals(!showSignals); }}
-                className={`p-1 rounded-md transition-colors ${!showSignals ? 'text-plt-orange bg-plt-orange/15' : 'text-white/40 hover:text-white hover:bg-white/[0.06]'}`}
-                title={showSignals ? "Hide Signals" : "Show Signals"}
-              >
-                {showSignals ? <Eye size={13} /> : <EyeOff size={13} />}
-              </button>
-            </div>
-          </div>
+      <AddOrderModal
+        isOpen={isAddOrderOpen}
+        onClose={() => setIsAddOrderOpen(false)}
+        initialData={{
+          symbol,
+          price: data[data.length - 1]?.close,
+          date: data[data.length - 1]?.time,
+        }}
+      />
 
-          {/* Expanded Table */}
-          {isMetricsExpanded && (
-            <div className="w-64 bg-black/40 backdrop-blur-2xl p-1">
-              <table className="w-full text-right border-collapse text-[10px]">
-                <tbody>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">System Total ROI</td>
-                    <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['Sys ROI'])}`}>{formatPlus(metrics['Sys ROI'])}</td>
-                  </tr>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Buy & Hold ROI</td>
-                    <td className="py-1.5 px-2.5 font-mono text-white">{metrics['B&H ROI']}%</td>
-                  </tr>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">ROI Margin</td>
-                    <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['ROI Margin'])}`}>{formatPlus(metrics['ROI Margin'])}</td>
-                  </tr>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Win Rate</td>
-                    <td className="py-1.5 px-2.5 font-mono text-white">{metrics['Win Rate']}%</td>
-                  </tr>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Drawdown</td>
-                    <td className="py-1.5 px-2.5 font-mono text-[#ef4444] font-semibold">{metrics['Max Drawdown']}%</td>
-                  </tr>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Max Adverse Excursion</td>
-                    <td className={`py-1.5 px-2.5 font-mono ${formatColor(metrics['Max Adverse Excursion'])}`}>{formatPlus(metrics['Max Adverse Excursion'])}</td>
-                  </tr>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Avg Bars/Trade</td>
-                    <td className="py-1.5 px-2.5 font-mono text-white">{metrics['Avg Bars/Trade']}</td>
-                  </tr>
-                  <tr className="border-b border-white/[0.09]">
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Avg Return / Trade</td>
-                    <td className={`py-1.5 px-2.5 font-mono ${formatColor(metrics['Avg. Return/Trade'])}`}>{formatPlus(metrics['Avg. Return/Trade'])}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1.5 px-2.5 text-white/50 font-medium text-left">Annual CAGR</td>
-                    <td className={`py-1.5 px-2.5 font-mono font-semibold ${formatColor(metrics['Annual CAGR'])}`}>{formatPlus(metrics['Annual CAGR'])}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+      <EditOrderModal
+        isOpen={Boolean(selectedOrderToEdit)}
+        onClose={() => setSelectedOrderToEdit(null)}
+        onSuccess={() => {
+          setSelectedOrderToEdit(null);
+          setPositionsRefreshKey((k) => k + 1);
+        }}
+        order={selectedOrderToEdit}
+      />
+
+      <CloseOrderModal
+        isOpen={Boolean(selectedOrderToClose)}
+        onClose={() => setSelectedOrderToClose(null)}
+        onSuccess={() => {
+          setSelectedOrderToClose(null);
+          setPositionsRefreshKey((k) => k + 1);
+        }}
+        order={selectedOrderToClose}
+      />
     </div>
   );
 }
@@ -1265,31 +1588,74 @@ function buildOrderOverlay(
   chart: IChartApi,
   candlestickSeries: ISeriesApi<'Candlestick'>,
   container: HTMLDivElement,
+  visibleData: ChartData[],
 ): OrderOverlay | null {
   const left = chart.timeScale().timeToCoordinate(order.entryDate as Time);
   const entryTop = candlestickSeries.priceToCoordinate(order.entryPrice);
   if (left === null || entryTop === null) return null;
 
-  const targetTop = order.targetPrice === null ? null : candlestickSeries.priceToCoordinate(order.targetPrice);
-  const stopTop = order.stopPrice === null ? null : candlestickSeries.priceToCoordinate(order.stopPrice);
-  const clampedLeft = clampNumber(left, 8, Math.max(8, container.clientWidth - 120));
-  const width = Math.max(96, container.clientWidth - clampedLeft - 76);
-  const validTargetTop = targetTop !== null && targetTop < entryTop ? clampNumber(targetTop, 8, container.clientHeight - 8) : null;
-  const validStopTop = stopTop !== null && stopTop > entryTop ? clampNumber(stopTop, 8, container.clientHeight - 8) : null;
+  const lastCandle = visibleData[visibleData.length - 1];
+  const lastCandleX = lastCandle
+    ? chart.timeScale().timeToCoordinate(lastCandle.time as Time)
+    : null;
+
+  // The box stops precisely at the latest current candle!
+  const rightX = lastCandleX !== null ? lastCandleX : left + 120;
+  const width = Math.max(24, rightX - left);
+
+  const effectiveCurrentPrice = order.currentPrice || (lastCandle ? Number(lastCandle.close) : order.entryPrice);
+  const currentTop = candlestickSeries.priceToCoordinate(effectiveCurrentPrice);
+  const targetTop = order.targetPrice !== null ? candlestickSeries.priceToCoordinate(order.targetPrice) : null;
+  const stopTop = order.stopPrice !== null ? candlestickSeries.priceToCoordinate(order.stopPrice) : null;
+
+  const isProfit = effectiveCurrentPrice >= order.entryPrice;
+
+  // Determine upper green box (Target / Unrealized Profit zone)
+  let profitBoxTop: number | null = null;
+  let profitBoxHeight = 0;
+  if (targetTop !== null && targetTop < entryTop) {
+    profitBoxTop = targetTop;
+    profitBoxHeight = entryTop - targetTop;
+  } else if (isProfit && currentTop !== null && currentTop < entryTop) {
+    profitBoxTop = currentTop;
+    profitBoxHeight = entryTop - currentTop;
+  }
+
+  // Determine lower red box (Stop / Loss zone)
+  let stopBoxTop: number | null = null;
+  let stopBoxHeight = 0;
+  if (stopTop !== null && stopTop > entryTop) {
+    stopBoxTop = entryTop;
+    stopBoxHeight = stopTop - entryTop;
+  } else if (!isProfit && currentTop !== null && currentTop > entryTop) {
+    stopBoxTop = entryTop;
+    stopBoxHeight = currentTop - entryTop;
+  }
+
+  const marketValue = order.quantity * effectiveCurrentPrice;
+  const pnl = order.quantity * (effectiveCurrentPrice - order.entryPrice);
+  const pnlPct = order.entryPrice ? ((effectiveCurrentPrice - order.entryPrice) / order.entryPrice) * 100 : 0;
 
   return {
     id: order.id,
-    left: clampedLeft,
+    order,
+    left,
     width,
     entryTop: clampNumber(entryTop, 8, container.clientHeight - 8),
-    targetTop: validTargetTop,
-    stopTop: validStopTop,
-    targetHeight: validTargetTop === null ? 0 : Math.max(6, entryTop - validTargetTop),
-    stopHeight: validStopTop === null ? 0 : Math.max(6, validStopTop - entryTop),
-    targetPrice: order.targetPrice,
-    stopPrice: order.stopPrice,
+    profitBoxTop: profitBoxTop !== null ? clampNumber(profitBoxTop, 8, container.clientHeight - 8) : null,
+    profitBoxHeight,
+    stopBoxTop: stopBoxTop !== null ? clampNumber(stopBoxTop, 8, container.clientHeight - 8) : null,
+    stopBoxHeight,
+    targetTop: targetTop !== null ? clampNumber(targetTop, 8, container.clientHeight - 8) : null,
+    stopTop: stopTop !== null ? clampNumber(stopTop, 8, container.clientHeight - 8) : null,
+    currentTop: currentTop !== null ? clampNumber(currentTop, 8, container.clientHeight - 8) : null,
+    isProfit,
     entryPrice: order.entryPrice,
-    profitLossPct: order.profitLossPct,
+    currentPrice: effectiveCurrentPrice,
+    quantity: order.quantity,
+    marketValue,
+    profitLoss: pnl,
+    profitLossPct: pnlPct,
   };
 }
 

@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, Fragment } from 'react';
+import { useMemo, useState, useEffect, Fragment } from 'react';
 import useSWR from 'swr';
 import { motion } from 'framer-motion';
-import { containerStagger, itemFadeInUp, hoverLift } from '@/lib/motion';
-import { CheckCircle, LineChart, Trash2, Pencil, Search, ChevronDown, ChevronRight } from '@/components/ui/icons';
+import { containerStagger, itemFadeInUp } from '@/lib/motion';
+import { CheckCircle, Trash2, Pencil, Search, ChevronDown, ChevronRight } from '@/components/ui/icons';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
@@ -34,7 +34,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 function TickerLogo({ symbol, logoUrl, size = 'sm' }: { symbol: string; logoUrl?: string | null; size?: 'sm' | 'md' }) {
   const [imgError, setImgError] = useState(false);
-  const sizeClasses = size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
+  const sizeClasses = size === 'md' ? 'w-7 h-7' : 'w-6 h-6';
 
   return (
     <div className={`${sizeClasses} rounded-md bg-white/[0.04] border border-white/[0.08] p-0.5 shrink-0 flex items-center justify-center overflow-hidden`}>
@@ -46,7 +46,7 @@ function TickerLogo({ symbol, logoUrl, size = 'sm' }: { symbol: string; logoUrl?
           onError={() => setImgError(true)}
         />
       ) : (
-        <span className="text-[9px] font-bold text-white/50 uppercase">{symbol.slice(0, 2)}</span>
+        <span className="text-[10px] font-bold text-white/50 uppercase">{symbol.slice(0, 2)}</span>
       )}
     </div>
   );
@@ -58,6 +58,14 @@ export default function OrdersTable() {
   const [isAddingOrder, setIsAddingOrder] = useState(false);
   const [orderToClose, setOrderToClose] = useState<OrderRow | null>(null);
   const [orderToEdit, setOrderToEdit] = useState<OrderRow | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // Auto-reset confirmation "Sure?" after 4 seconds
+  useEffect(() => {
+    if (deletingId === null) return;
+    const timer = setTimeout(() => setDeletingId(null), 4000);
+    return () => clearTimeout(timer);
+  }, [deletingId]);
 
   const { data, isLoading, mutate } = useSWR<{ orders: OrderRow[] }>('/api/positions', fetcher);
   const orders = data?.orders ?? [];
@@ -77,9 +85,20 @@ export default function OrdersTable() {
   const totals = useMemo(() => {
     const openOrders = orders.filter((order) => order.status === 'OPEN');
     const closedOrders = orders.filter((order) => order.status === 'CLOSED');
+
+    const openWins = openOrders.filter((o) => o.profitLoss > 0).length;
+    const openLosses = openOrders.filter((o) => o.profitLoss < 0).length;
+
+    const closedWins = closedOrders.filter((o) => o.profitLoss > 0).length;
+    const closedLosses = closedOrders.filter((o) => o.profitLoss < 0).length;
+
     return {
       openCount: openOrders.length,
       closedCount: closedOrders.length,
+      openWins,
+      openLosses,
+      closedWins,
+      closedLosses,
       unrealized: openOrders.reduce((sum, order) => sum + order.profitLoss, 0),
       realized: closedOrders.reduce((sum, order) => sum + order.profitLoss, 0),
       portfolioValue: openOrders.reduce((sum, order) => sum + (order.currentPrice * order.quantity), 0),
@@ -170,6 +189,14 @@ export default function OrdersTable() {
     }
   }
 
+  const formatPrice = (p: number) => `${p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
+  const formatQuantity = (q: number) => Number.isInteger(q) ? q.toLocaleString('en-US') : q.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const formatMoney = (val: number) => {
+    const sign = val > 0 ? '+' : val < 0 ? '-' : '';
+    const abs = Math.abs(val);
+    return `${sign}${abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
+  };
+
   return (
     <motion.div 
       initial="hidden"
@@ -183,36 +210,36 @@ export default function OrdersTable() {
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-plt-orange" />
-              <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Positions & Orders</h1>
+              <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Positions</h1>
             </div>
             <p className="mt-0.5 text-[13px] text-white/30">Tracked long positions and execution trade history</p>
           </div>
           
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-nowrap w-full sm:w-auto">
             {/* Search Input */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/40">
+            <div className="relative flex items-center flex-1 min-w-0 sm:flex-initial">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-white/40">
                 <Search size={13} />
               </div>
               <input
                 type="text"
-                placeholder="Search ticker or name..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-48 md:w-56 rounded-md bg-white/[0.03] border border-white/[0.09] pl-8 pr-3 text-xs text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none transition-all"
+                className="h-8 w-full sm:w-48 md:w-56 rounded-md bg-white/[0.03] border border-white/[0.09] pl-8 pr-2.5 text-xs text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none transition-all leading-none"
               />
             </div>
 
             {/* Filter Pill Switch */}
-            <div className="flex items-center bg-black border border-white/[0.09] rounded-md p-0.5 gap-0.5">
+            <div className="flex items-center h-8 bg-black border border-white/[0.09] rounded-md p-0.5 gap-0.5 box-border shrink-0">
               {(['ALL', 'OPEN', 'CLOSED'] as const).map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setFilter(value)}
-                  className={`px-3 py-1 rounded-[4px] text-xs font-medium transition-all ${
+                  className={`h-full px-2 sm:px-3 rounded-[4px] text-[11px] sm:text-xs font-medium transition-all flex items-center justify-center leading-none ${
                     filter === value
-                      ? 'bg-white/[0.08] text-white'
+                      ? 'bg-white/[0.08] text-white font-semibold'
                       : 'text-white/40 hover:text-white hover:bg-white/[0.03]'
                   }`}
                 >
@@ -221,13 +248,15 @@ export default function OrdersTable() {
               ))}
             </div>
 
-            {/* Add Order CTA */}
+            {/* Add Position CTA */}
             <button
               type="button"
               onClick={() => setIsAddingOrder(true)}
-              className="h-8 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white px-3.5 text-xs font-medium transition-colors"
+              className="h-8 w-8 sm:w-auto rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white px-0 sm:px-3 text-xs font-medium transition-colors flex items-center justify-center gap-1 leading-none shadow-sm shrink-0"
+              title="Add Tracked Position"
             >
-              + Add Order
+              <span className="text-base leading-none font-medium -mt-0.5">+</span>
+              <span className="hidden sm:inline">Add Position</span>
             </button>
           </div>
         </div>
@@ -235,33 +264,65 @@ export default function OrdersTable() {
 
       {/* Main Canvas: 24px outer padding (p-6), 12px widget gap (space-y-3) */}
       <div className="min-h-0 flex-1 overflow-auto p-6 space-y-3">
-        {/* Metric Strip (5 items in unified master container) */}
+        {/* Metric Strip (5 items in unified master container: Portfolio Value, Unrealized P/L, Realized P/L, Open Positions, Closed Positions) */}
         <motion.div 
           variants={itemFadeInUp}
           className="border border-white/[0.09] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-2 md:grid-cols-5 overflow-hidden"
         >
-          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+          {/* 1. Portfolio Value */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors col-span-2 md:col-span-1">
             <div className="text-[11px] text-white/40 font-medium">Portfolio Value</div>
-            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{formatPrice(totals.portfolioValue)}</div>
-          </div>
-          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-            <div className="text-[11px] text-white/40 font-medium">Open Positions</div>
-            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{totals.openCount}</div>
-          </div>
-          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-            <div className="text-[11px] text-white/40 font-medium">Closed Positions</div>
-            <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{totals.closedCount}</div>
-          </div>
-          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-            <div className="text-[11px] text-white/40 font-medium">Unrealized P/L</div>
-            <div className={`mt-2 text-xl font-semibold font-mono tracking-tight ${totals.unrealized > 0 ? 'text-[#22c55e]' : totals.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
-              {formatMoney(totals.unrealized)}
+            <div>
+              <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{formatPrice(totals.portfolioValue)}</div>
+              <div className="mt-1 text-[11px] text-white/30 font-mono">Invested + Live P/L</div>
             </div>
           </div>
+
+          {/* 2. Unrealized P/L */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Unrealized P/L</div>
+            <div>
+              <div className={`mt-2 text-xl font-semibold font-mono tracking-tight ${totals.unrealized > 0 ? 'text-[#22c55e]' : totals.unrealized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                {formatMoney(totals.unrealized)}
+              </div>
+              <div className="mt-1 text-[11px] text-white/30 font-mono">Open positions</div>
+            </div>
+          </div>
+
+          {/* 3. Realized P/L */}
           <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
             <div className="text-[11px] text-white/40 font-medium">Realized P/L</div>
-            <div className={`mt-2 text-xl font-semibold font-mono tracking-tight ${totals.realized > 0 ? 'text-[#22c55e]' : totals.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
-              {formatMoney(totals.realized)}
+            <div>
+              <div className={`mt-2 text-xl font-semibold font-mono tracking-tight ${totals.realized > 0 ? 'text-[#22c55e]' : totals.realized < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                {formatMoney(totals.realized)}
+              </div>
+              <div className="mt-1 text-[11px] text-white/30 font-mono">Closed positions</div>
+            </div>
+          </div>
+
+          {/* 4. Open Positions */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Open Positions</div>
+            <div>
+              <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{totals.openCount}</div>
+              <div className="mt-1 text-[11px] font-mono flex items-center gap-1.5">
+                <span className="text-[#22c55e] font-medium">{totals.openWins}W</span>
+                <span className="text-white/20">·</span>
+                <span className="text-[#ef4444] font-medium">{totals.openLosses}L</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 5. Closed Positions */}
+          <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+            <div className="text-[11px] text-white/40 font-medium">Closed Positions</div>
+            <div>
+              <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">{totals.closedCount}</div>
+              <div className="mt-1 text-[11px] font-mono flex items-center gap-1.5">
+                <span className="text-[#22c55e] font-medium">{totals.closedWins}W</span>
+                <span className="text-white/20">·</span>
+                <span className="text-[#ef4444] font-medium">{totals.closedLosses}L</span>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -271,7 +332,7 @@ export default function OrdersTable() {
           {loading ? (
             <MobileOrdersSkeleton />
           ) : groupedOrders.length === 0 ? (
-            <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found</div>
+            <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} positions found</div>
           ) : (
             groupedOrders.map((group) => {
               const isMulti = group.orders.length > 1;
@@ -377,19 +438,32 @@ export default function OrdersTable() {
                                   </button>
                                 )}
                                 <button
-                                  title="Edit Order"
+                                  title="Edit Position"
                                   onClick={() => editOrder(order)}
                                   className="p-1 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
                                 >
                                   <Pencil size={12} />
                                 </button>
-                                <button
-                                  title="Delete Record"
-                                  onClick={() => deleteOrder(order)}
-                                  className="p-1 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
+                                {deletingId === order.id ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      deleteOrder(order);
+                                      setDeletingId(null);
+                                    }}
+                                    className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-all"
+                                  >
+                                    Sure?
+                                  </button>
+                                ) : (
+                                  <button
+                                    title="Delete Record"
+                                    onClick={() => setDeletingId(order.id)}
+                                    className="p-1 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -409,19 +483,32 @@ export default function OrdersTable() {
                         </button>
                       )}
                       <button
-                        title="Edit Order"
+                        title="Edit Position"
                         onClick={() => editOrder(group.orders[0])}
                         className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09]"
                       >
                         <Pencil size={13} />
                       </button>
-                      <button
-                        title="Delete Record"
-                        onClick={() => deleteOrder(group.orders[0])}
-                        className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.09]"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {deletingId === group.orders[0].id ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            deleteOrder(group.orders[0]);
+                            setDeletingId(null);
+                          }}
+                          className="px-2.5 py-1 rounded text-xs font-semibold bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-all"
+                        >
+                          Sure?
+                        </button>
+                      ) : (
+                        <button
+                          title="Delete Record"
+                          onClick={() => setDeletingId(group.orders[0].id)}
+                          className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all flex items-center justify-center border border-white/[0.09]"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -430,20 +517,20 @@ export default function OrdersTable() {
           )}
         </div>
 
-        {/* Desktop View (Table Container) */}
+        {/* Desktop Table View */}
         <motion.div variants={itemFadeInUp} className="hidden md:block border border-white/[0.09] rounded-md bg-black overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-transparent border-b border-white/[0.09] text-[11px] font-medium text-white/30">
-              <tr>
-                <th className="px-6 py-3.5">Ticker</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5">Entry</th>
-                <th className="px-6 py-3.5 text-right">Target / Stop</th>
-                <th className="px-6 py-3.5 text-right">Quantity</th>
-                <th className="px-6 py-3.5 text-right">Current</th>
-                <th className="px-6 py-3.5 text-right">Mkt Value</th>
-                <th className="px-6 py-3.5 text-right">P/L</th>
-                <th className="px-6 py-3.5 text-right"></th>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-white/[0.09] bg-white/[0.02] text-white/30 font-medium">
+                <th className="px-6 py-3 font-normal">Ticker</th>
+                <th className="px-6 py-3 font-normal">Status</th>
+                <th className="px-6 py-3 font-normal">Entry</th>
+                <th className="px-6 py-3 font-normal text-right">Target / Stop</th>
+                <th className="px-6 py-3 font-normal text-right">Quantity</th>
+                <th className="px-6 py-3 font-normal text-right">Current</th>
+                <th className="px-6 py-3 font-normal text-right">Mkt Value</th>
+                <th className="px-6 py-3 font-normal text-right">P/L</th>
+                <th className="px-6 py-3 font-normal text-right w-24"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
@@ -452,7 +539,7 @@ export default function OrdersTable() {
               ) : groupedOrders.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-6 py-12 text-center text-white/40 text-xs">
-                    No {filter !== 'ALL' ? filter.toLowerCase() : ''} orders found
+                    No {filter !== 'ALL' ? filter.toLowerCase() : ''} positions found
                   </td>
                 </tr>
               ) : (
@@ -472,22 +559,7 @@ export default function OrdersTable() {
                         } ${isExpanded ? 'bg-white/[0.02]' : ''}`}
                       >
                         <td className="px-6 py-3.5 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            {isMulti && (
-                              <button 
-                                type="button" 
-                                className="p-0.5 rounded text-white/40 group-hover:text-plt-orange hover:text-white transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleExpand(group.key);
-                                }}
-                              >
-                                <ChevronRight 
-                                  size={14} 
-                                  className={`transition-transform duration-150 ${isExpanded ? 'rotate-90 text-plt-orange' : ''}`} 
-                                />
-                              </button>
-                            )}
+                          <div className="flex items-center gap-2.5">
                             <TickerLogo symbol={group.tickerSymbol} logoUrl={group.logoUrl} size="sm" />
                             <Link 
                               href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} 
@@ -497,12 +569,18 @@ export default function OrdersTable() {
                               {group.tickerSymbol}
                             </Link>
                             {isMulti && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/[0.06] border border-white/[0.09] text-white/70 font-mono">
-                                {group.orders.length} Lots
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/[0.06] border border-white/[0.09] text-white/70 font-mono">
+                                  {group.orders.length} Lots
+                                </span>
+                                <ChevronRight 
+                                  size={13} 
+                                  className={`text-white/40 group-hover:text-plt-orange transition-transform duration-150 ${isExpanded ? 'rotate-90 text-plt-orange' : ''}`} 
+                                />
+                              </div>
                             )}
                           </div>
-                          <div className={`text-[11px] text-white/40 truncate max-w-[200px] mt-0.5 ${isMulti ? 'pl-11' : 'pl-7'}`}>{group.companyName}</div>
+                          <div className="text-[11px] text-white/40 truncate max-w-[200px] mt-0.5 pl-8">{group.companyName}</div>
                         </td>
                         <td className="px-6 py-3.5 whitespace-nowrap">
                           <span
@@ -561,26 +639,49 @@ export default function OrdersTable() {
                               {group.orders[0].status === 'OPEN' && (
                                 <button
                                   title="Close Position"
-                                  onClick={() => closeOrder(group.orders[0])}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    closeOrder(group.orders[0]);
+                                  }}
                                   className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
                                 >
-                                  <CheckCircle size={15} className="text-[#22c55e]" />
+                                  <CheckCircle size={14} className="text-[#22c55e]" />
                                 </button>
                               )}
                               <button
-                                title="Edit Order"
-                                onClick={() => editOrder(group.orders[0])}
+                                title="Edit Position"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  editOrder(group.orders[0]);
+                                }}
                                 className="p-1.5 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
                               >
-                                <Pencil size={15} />
+                                <Pencil size={14} />
                               </button>
-                              <button
-                                title="Delete Record"
-                                onClick={() => deleteOrder(group.orders[0])}
-                                className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
-                              >
-                                <Trash2 size={15} />
-                              </button>
+                              {deletingId === group.orders[0].id ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteOrder(group.orders[0]);
+                                    setDeletingId(null);
+                                  }}
+                                  className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-all"
+                                >
+                                  Sure?
+                                </button>
+                              ) : (
+                                <button
+                                  title="Delete Record"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeletingId(group.orders[0].id);
+                                  }}
+                                  className="p-1.5 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </div>
                           )}
                         </td>
@@ -590,9 +691,9 @@ export default function OrdersTable() {
                       {isMulti && isExpanded && (
                         group.orders.map((order, idx) => (
                           <tr key={order.id} className="bg-white/[0.015] hover:bg-white/[0.035] transition-colors border-t border-white/[0.03]">
-                            <td className="px-6 py-3 whitespace-nowrap pl-12">
+                            <td className="px-6 py-3 whitespace-nowrap pl-14">
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-mono text-white/40 bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/[0.06]">
+                                <span className="text-[10px] font-mono text-white/50 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.07]">
                                   Lot #{idx + 1}
                                 </span>
                                 <span className="text-white/40 text-[11px] font-mono">{order.entryDate}</span>
@@ -639,19 +740,32 @@ export default function OrdersTable() {
                                   </button>
                                 )}
                                 <button
-                                  title="Edit Order"
+                                  title="Edit Position"
                                   onClick={() => editOrder(order)}
                                   className="p-1 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
                                 >
                                   <Pencil size={13} />
                                 </button>
-                                <button
-                                  title="Delete Record"
-                                  onClick={() => deleteOrder(order)}
-                                  className="p-1 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
-                                >
-                                  <Trash2 size={13} />
-                                </button>
+                                {deletingId === order.id ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      deleteOrder(order);
+                                      setDeletingId(null);
+                                    }}
+                                    className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-all"
+                                  >
+                                    Sure?
+                                  </button>
+                                ) : (
+                                  <button
+                                    title="Delete Record"
+                                    onClick={() => setDeletingId(order.id)}
+                                    className="p-1 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -670,47 +784,21 @@ export default function OrdersTable() {
         isOpen={isAddingOrder} 
         onClose={() => setIsAddingOrder(false)} 
         onSuccess={() => mutate()} 
-        />
-      
-      <CloseOrderModal
-        isOpen={!!orderToClose}
-        onClose={() => setOrderToClose(null)}
-        onSuccess={() => mutate()}
-        order={orderToClose}
       />
-
+      
       <EditOrderModal
         isOpen={!!orderToEdit}
         onClose={() => setOrderToEdit(null)}
         onSuccess={() => mutate()}
         order={orderToEdit}
       />
+
+      <CloseOrderModal
+        isOpen={!!orderToClose}
+        onClose={() => setOrderToClose(null)}
+        onSuccess={() => mutate()}
+        order={orderToClose}
+      />
     </motion.div>
   );
-}
-
-function Metric({ label, value, valueClass = 'text-white' }: { label: string; value: string; valueClass?: string }) {
-  return (
-    <motion.div 
-      variants={itemFadeInUp}
-      className="border border-white/[0.09] rounded-md bg-black p-5 group"
-    >
-      <div className="text-[11px] text-white/40 font-medium">{label}</div>
-      <div className={`mt-1.5 text-xl font-semibold font-mono tracking-tight ${valueClass}`}>{value}</div>
-    </motion.div>
-  );
-}
-
-function formatPrice(value: number): string {
-  return `${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
-}
-
-function formatMoney(value: number): string {
-  if (value === 0) return '0.00 EGP';
-  const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${value > 0 ? '+' : '-'}${formatted} EGP`;
-}
-
-function formatQuantity(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }

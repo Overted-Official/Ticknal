@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, BarChart2, RotateCcw, X, Bell } from '@/components/ui/icons';
-import Link from 'next/link';
-import AddOrderModal from '@/components/platform/AddOrderModal';
+import { Search, X, Bell } from '@/components/ui/icons';
 import { WatchlistItem } from './RightSidebar';
 import { useRouter } from 'next/navigation';
 import { useAlerts } from './AlertProvider';
@@ -19,7 +17,6 @@ export default function TopBar({
   replay?: boolean,
   watchlist?: WatchlistItem[]
 }) {
-  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
@@ -77,40 +74,9 @@ export default function TopBar({
           </button>
         </div>
 
-        {/* Middle/Right section */}
-        <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap ml-auto">
-          {/* Indicators & Replay Quick Links */}
-          <div className="flex items-center space-x-1.5">
-            <button className="flex items-center space-x-1.5 bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] px-3 py-1.5 rounded-md transition-all text-white/80 hover:text-white text-xs font-medium">
-              <BarChart2 size={13} />
-              <span className="hidden md:inline">Indicators</span>
-            </button>
-            <Link
-              href={`?ticker=${symbol}&timeframe=${timeframe}&replay=1`}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
-                replay 
-                  ? 'text-plt-orange bg-plt-orange/10 font-medium border border-plt-orange/30' 
-                  : 'bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] text-white/80 hover:text-white'
-              }`}
-            >
-              <RotateCcw size={13} />
-              <span className="hidden md:inline">Replay</span>
-            </Link>
-          </div>
-
-          {/* CTA Add Order Button */}
-          <div className="flex items-center pl-1">
-            <button 
-              onClick={() => setIsAddOrderOpen(true)}
-              className="rounded-md bg-plt-orange hover:bg-plt-orange-hover px-3.5 py-1.5 text-xs text-white font-medium transition-all"
-            >
-              + Add Order
-            </button>
-          </div>
-        </div>
-
+        {/* Right side empty placeholder or alerts */}
         {statusMessage && (
-          <div className="absolute left-3 top-[52px] z-50 rounded-md border border-white/[0.09] bg-black/95 backdrop-blur-xl px-3.5 py-2 text-xs text-white shadow-2xl hidden md:block">
+          <div className="absolute right-3 top-[10px] z-50 rounded-md border border-white/[0.09] bg-black/95 backdrop-blur-xl px-3.5 py-1.5 text-xs text-white shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -196,12 +162,6 @@ export default function TopBar({
           </div>
         </div>
       )}
-
-      <AddOrderModal 
-        isOpen={isAddOrderOpen} 
-        onClose={() => setIsAddOrderOpen(false)} 
-        onSuccess={() => window.location.reload()} 
-      />
     </>
   );
 }

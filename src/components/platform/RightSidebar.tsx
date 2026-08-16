@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronRight } from '@/components/ui/icons';
+import { ChevronDown, ChevronRight, Search, X } from '@/components/ui/icons';
 import { ExternalLink, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -57,26 +57,13 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
 
   const [searchQuery, setSearchQuery] = useState("");
   const [listFilter, setListFilter] = useState<'ALL' | 'OPEN' | 'OPPORTUNITIES'>('ALL');
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
-  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  const [sidebarWidth, setSidebarWidth] = useState(265);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
-  const [panelHeight, setPanelHeight] = useState(300);
+  const [panelHeight, setPanelHeight] = useState(280);
   const [isResizingPanel, setIsResizingPanel] = useState(false);
   const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(false);
   const [collapsedSectors, setCollapsedSectors] = useState<Set<string>>(new Set());
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
-        setIsFilterDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   useEffect(() => {
     if (!isResizingPanel) return;
@@ -99,7 +86,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     if (!isResizing) return;
     const handleMouseMove = (e: MouseEvent) => {
       const newWidth = window.innerWidth - e.clientX;
-      if (newWidth >= 220 && newWidth <= 420) {
+      if (newWidth >= 240 && newWidth <= 440) {
         setSidebarWidth(newWidth);
       }
     };
@@ -169,12 +156,6 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
   const dayPct = Math.min(100, Math.max(0, ((validPrice - dLow) / (dHigh - dLow || 1)) * 100));
   const yearPct = Math.min(100, Math.max(0, ((validPrice - yLow) / (yHigh - yLow || 1)) * 100));
 
-  const filterLabels = {
-    ALL: 'Portfolio (All)',
-    OPEN: 'Open Positions',
-    OPPORTUNITIES: 'Buy Signals'
-  };
-
   return (
     <div 
       className="bg-black/95 backdrop-blur-xl border-l border-white/[0.09] flex flex-col select-none relative shrink-0 text-white"
@@ -186,44 +167,60 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
         onMouseDown={() => setIsResizing(true)}
       />
 
-      {/* Top Header Bar with Filter Switch Dropdown */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.09] bg-white/[0.01] shrink-0 relative" ref={filterDropdownRef}>
-        <button 
-          onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-          className="flex items-center space-x-1.5 cursor-pointer bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.18] px-2.5 py-1 rounded-md border border-white/[0.09] transition-all text-xs font-medium text-white focus:outline-none"
-        >
-          <span>{filterLabels[listFilter]}</span>
-          <ChevronDown size={12} className={`text-white/50 transition-transform duration-150 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
-        </button>
+      {/* Top Header Bar with Filter Switch & Search */}
+      <div className="flex flex-col gap-2 p-2.5 border-b border-white/[0.09] bg-white/[0.01] shrink-0">
+        {/* Switch Pill (ALL | OPEN | SIGNALS) */}
+        <div className="flex items-center h-7 bg-black border border-white/[0.09] rounded-md p-0.5 gap-0.5 box-border w-full">
+          {([
+            { id: 'ALL', label: 'ALL' },
+            { id: 'OPEN', label: 'OPEN' },
+            { id: 'OPPORTUNITIES', label: 'SIGNALS' }
+          ] as const).map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setListFilter(id)}
+              className={`flex-1 h-full rounded-[4px] text-[10px] font-medium transition-all flex items-center justify-center leading-none ${
+                listFilter === id
+                  ? 'bg-white/[0.08] text-white font-semibold shadow-sm'
+                  : 'text-white/40 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-        {/* Dropdown Menu */}
-        {isFilterDropdownOpen && (
-          <div className="absolute left-3 top-10 bg-black border border-white/[0.09] rounded-md shadow-2xl z-50 w-44 p-1 animate-in fade-in zoom-in-95 duration-100">
-            {(['ALL', 'OPEN', 'OPPORTUNITIES'] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => {
-                  setListFilter(mode);
-                  setIsFilterDropdownOpen(false);
-                }}
-                className={`w-full px-3 py-2 text-xs text-left rounded-md flex items-center justify-between transition-colors ${
-                  listFilter === mode ? 'text-plt-orange font-semibold bg-white/[0.06]' : 'text-white/80 hover:bg-white/[0.04] hover:text-white'
-                }`}
-              >
-                <span>{filterLabels[mode]}</span>
-                {listFilter === mode && <Check size={13} className="text-plt-orange" />}
-              </button>
-            ))}
+        {/* Watchlist Search Input */}
+        <div className="relative flex items-center w-full">
+          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-white/30">
+            <Search size={11} />
           </div>
-        )}
+          <input
+            type="text"
+            placeholder="Search tickers or sectors..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-7 w-full rounded-md bg-white/[0.03] border border-white/[0.09] pl-7 pr-6 text-xs text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none transition-all leading-none"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-2 flex items-center text-white/30 hover:text-white transition-colors"
+            >
+              <X size={11} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Columns Header */}
-      <div className="flex items-center px-3 py-1.5 text-white/40 font-semibold uppercase tracking-wider border-b border-white/[0.09] text-[9px] bg-white/[0.01] shrink-0">
-        <div className="flex-1 min-w-0">Symbol</div>
-        <div className="w-[48px] text-right">Last</div>
-        <div className="w-[50px] text-right">Chg%</div>
-        <div className="w-[44px] text-right pr-0.5">Vol</div>
+      {/* Columns Header - Grid Layout to prevent any text overlapping */}
+      <div className="grid grid-cols-[1fr_56px_56px_46px] items-center px-3 py-1.5 text-white/40 font-semibold uppercase tracking-wider border-b border-white/[0.09] text-[9px] bg-white/[0.01] shrink-0 gap-x-1">
+        <div className="truncate">Symbol</div>
+        <div className="text-right">Last</div>
+        <div className="text-right">Chg%</div>
+        <div className="text-right">Vol</div>
       </div>
 
       {/* Watchlist Rows */}
@@ -256,43 +253,43 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') openTicker(item.symbol);
                     }}
-                    className={`flex items-center cursor-pointer px-2.5 py-1.5 text-[11px] transition-all group mx-1 my-0.5 rounded-md ${
+                    className={`grid grid-cols-[1fr_56px_56px_46px] items-center cursor-pointer px-2.5 py-1.5 text-xs transition-all group mx-1 my-0.5 rounded-md gap-x-1 ${
                       isSelected 
                         ? 'border border-white/[0.14] bg-white/[0.06] shadow-sm' 
                         : 'hover:bg-white/[0.03] border border-transparent'
                     }`}
                   >
                     {/* Logo & Symbol info */}
-                    <div className="flex min-w-0 flex-1 items-center space-x-2">
+                    <div className="flex min-w-0 items-center space-x-1.5">
                       {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.symbol} className="h-4 w-4 rounded-md bg-transparent object-contain shrink-0" />
+                        <img src={item.logoUrl} alt={item.symbol} className="h-4 w-4 rounded-[4px] bg-transparent object-contain shrink-0" />
                       ) : item.website ? (
-                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-4 w-4 rounded-md border border-white/[0.09] bg-white/[0.04] object-cover shrink-0" />
+                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-4 w-4 rounded-[4px] border border-white/[0.09] bg-white/[0.04] object-cover shrink-0" />
                       ) : (
-                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md border border-white/[0.09] bg-white/[0.04] text-[7px] font-bold text-white">
+                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border border-white/[0.09] bg-white/[0.04] text-[7px] font-bold text-white uppercase">
                           {item.symbol.substring(0, 2)}
                         </div>
                       )}
                       
-                      <span className={`truncate text-[12px] ${isSelected ? 'font-semibold text-plt-orange' : 'font-normal text-white'}`}>
+                      <span className={`truncate text-xs ${isSelected ? 'font-semibold text-plt-orange' : 'font-medium text-white'}`}>
                         {item.symbol.replace('.CA', '')}
                       </span>
                     </div>
 
                     {/* Last Price */}
-                    <div className="w-[48px] shrink-0 text-right font-mono font-medium text-white text-[11px] whitespace-nowrap">
+                    <div className="text-right font-mono font-medium text-white text-[11px] tabular-nums whitespace-nowrap">
                       {item.price}
                     </div>
 
                     {/* Chg% */}
-                    <div className={`w-[50px] shrink-0 text-right font-mono font-medium text-[11px] whitespace-nowrap ${
+                    <div className={`text-right font-mono font-medium text-[11px] tabular-nums whitespace-nowrap ${
                       isPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'
                     }`}>
                       {changePctDisplay}
                     </div>
 
                     {/* Volume */}
-                    <div className="w-[44px] shrink-0 text-right font-mono text-white/40 text-[10px] whitespace-nowrap pr-0.5 truncate">
+                    <div className="text-right font-mono text-white/40 text-[10px] tabular-nums whitespace-nowrap truncate">
                       {item.volume || '-'}
                     </div>
                   </div>
@@ -303,10 +300,10 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
         })}
       </div>
 
-      {/* Details Panel (Bottom Section) */}
+      {/* Details Panel (Collapsible Bottom Section) */}
       {selectedItem && (
         <div 
-          className="border-t border-white/[0.09] bg-black flex flex-col shrink-0 relative overflow-hidden transition-all duration-150"
+          className="border-t border-white/[0.09] bg-black flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {/* Vertical Resizer */}
@@ -317,18 +314,36 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
             />
           )}
 
-          {/* Drawer Header */}
-          <div className="flex items-center justify-between px-3 pt-2.5 pb-1 shrink-0">
-            <div className="flex items-center space-x-2">
+          {/* Drawer Header (Click to collapse/expand) */}
+          <div 
+            onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
+            className="flex items-center justify-between px-3 py-2 shrink-0 cursor-pointer hover:bg-white/[0.02] transition-colors"
+          >
+            <div className="flex items-center space-x-2 min-w-0">
               {selectedItem.logoUrl ? (
-                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-5 h-5 rounded-md bg-transparent object-contain" />
+                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-5 h-5 rounded-md bg-transparent object-contain shrink-0" />
               ) : (
-                <div className="w-5 h-5 rounded-md bg-white/[0.04] flex items-center justify-center font-bold text-white border border-white/[0.09] text-[9px]">
+                <div className="w-5 h-5 rounded-md bg-white/[0.04] flex items-center justify-center font-bold text-white border border-white/[0.09] text-[9px] shrink-0">
                   {displaySelectedSymbol.substring(0, 2)}
                 </div>
               )}
-              <span className="font-semibold text-white text-sm tracking-tight">{displaySelectedSymbol}</span>
+              <div className="flex items-baseline gap-2 min-w-0">
+                <span className="font-semibold text-white text-xs tracking-tight truncate">{displaySelectedSymbol}</span>
+                {isDetailsCollapsed && (
+                  <span className="text-[11px] font-mono text-white/70 font-medium">
+                    {selectedItem.price || '0.00'} EGP
+                  </span>
+                )}
+              </div>
             </div>
+
+            <button 
+              type="button"
+              className="p-1 rounded text-white/40 hover:text-white transition-colors"
+              aria-label={isDetailsCollapsed ? 'Expand details' : 'Collapse details'}
+            >
+              <ChevronDown size={14} className={`transition-transform duration-200 ${isDetailsCollapsed ? 'rotate-180 text-white/60' : ''}`} />
+            </button>
           </div>
 
           {!isDetailsCollapsed && (

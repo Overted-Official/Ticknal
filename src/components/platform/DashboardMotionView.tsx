@@ -213,7 +213,7 @@ export default function DashboardMotionView({
                 href="/positions" 
                 className="text-[11px] font-medium text-white/60 hover:text-white px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] transition-all"
               >
-                All Orders →
+                All Positions →
               </Link>
             </div>
 

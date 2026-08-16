@@ -229,10 +229,8 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   }
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col bg-plt-base text-plt-text overflow-hidden">
-      <TopBar symbol={selectedSymbol} timeframe={timeframe} replay={initialReplayMode} watchlist={watchlist} />
-      <div className="flex-1 flex overflow-hidden">
-
+    <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <ChartViews 
           positionsView={<TickerPositions symbol={selectedSymbol} orders={tickerPositions} currentPrice={currentPriceForSymbol} />}
         >
@@ -240,6 +238,7 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
             key={`${selectedSymbol}-${timeframe}-${initialReplayMode ? 'replay' : 'live'}`}
             data={chartData}
             symbol={selectedSymbol}
+            watchlist={watchlist}
             initialReplayMode={initialReplayMode}
           />
           <BottomToolbar 
@@ -248,10 +247,10 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
             replay={initialReplayMode} 
           />
         </ChartViews>
+      </div>
 
-        <div className="hidden lg:flex">
-          <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} rangeData={rangeData} />
-        </div>
+      <div className="hidden lg:flex h-full shrink-0">
+        <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} rangeData={rangeData} />
       </div>
     </div>
   );
