@@ -35,6 +35,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useAlerts } from '@/components/platform/AlertProvider';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
+import PinSecurityCard from '@/components/platform/settings/PinSecurityCard';
 
 export type SettingsUserProfile = {
   id: string;
@@ -138,7 +139,7 @@ export default function SettingsView({
   const router = useRouter();
   const { ensurePushSubscription, permission } = useAlerts();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'devices' | 'alerts'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'devices' | 'alerts'>('profile');
   const [devices, setDevices] = useState<DeviceInfo[]>(initialDevices);
   const [monitoredTickers, setMonitoredTickers] = useState<MonitoredTicker[]>(initialMonitoredTickers);
   const [copiedUid, setCopiedUid] = useState(false);
@@ -461,6 +462,19 @@ export default function SettingsView({
 
           <button
             type="button"
+            onClick={() => setActiveTab('security')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+              activeTab === 'security'
+                ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
+                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+            }`}
+          >
+            <ShieldCheck size={14} className={activeTab === 'security' ? 'text-plt-orange' : 'text-white/40'} />
+            <span>Security & PIN</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('devices')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
               activeTab === 'devices'
@@ -612,6 +626,16 @@ export default function SettingsView({
                 </div>
               </div>
             </div>
+
+            {/* Passcode Security Card */}
+            <PinSecurityCard />
+          </motion.div>
+        )}
+
+        {/* TAB 2: SECURITY & PIN */}
+        {activeTab === 'security' && (
+          <motion.div variants={itemFadeInUp} className="space-y-2">
+            <PinSecurityCard />
           </motion.div>
         )}
 
