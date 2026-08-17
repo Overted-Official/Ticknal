@@ -526,10 +526,10 @@ export default function SettingsView({
             {/* User Profile Card */}
             <div className="border border-white/[0.09] rounded-md bg-black p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-white/[0.08]">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
                   {/* Avatar (with upload trigger) */}
                   <div 
-                    className="relative group cursor-pointer"
+                    className="relative group cursor-pointer shrink-0 w-16 h-16 aspect-square"
                     onClick={() => fileInputRef.current?.click()}
                     title="Click to upload profile photo"
                   >
@@ -544,10 +544,10 @@ export default function SettingsView({
                       <img
                         src={avatarUrl}
                         alt={userProfile.name}
-                        className="w-16 h-16 rounded-full border-2 border-white/[0.12] object-cover bg-white/[0.04] group-hover:opacity-75 transition-opacity"
+                        className="w-16 h-16 shrink-0 aspect-square rounded-full border-2 border-white/[0.12] object-cover bg-white/[0.04] group-hover:opacity-75 transition-opacity"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full border border-white/[0.12] bg-gradient-to-tr from-white/[0.06] to-white/[0.12] flex items-center justify-center text-lg font-bold text-white font-mono shadow-inner group-hover:opacity-75 transition-opacity">
+                      <div className="w-16 h-16 shrink-0 aspect-square rounded-full border border-white/[0.12] bg-gradient-to-tr from-white/[0.06] to-white/[0.12] flex items-center justify-center text-lg font-bold text-white font-mono shadow-inner group-hover:opacity-75 transition-opacity">
                         {initials}
                       </div>
                     )}
@@ -564,16 +564,16 @@ export default function SettingsView({
                     <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#22c55e] border-2 border-black" />
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <h2 className="text-base font-semibold text-white tracking-tight">{userProfile.name}</h2>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e]">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h2 className="text-base font-semibold text-white tracking-tight truncate">{userProfile.name}</h2>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e] shrink-0">
                         <ShieldCheck size={11} />
                         Verified
                       </span>
                     </div>
-                    <p className="text-xs text-white/40 mt-0.5">{userProfile.email}</p>
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] text-white/30">
+                    <p className="text-xs text-white/40 mt-0.5 truncate">{userProfile.email}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-white/30">
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
                         Member since {memberSince}
