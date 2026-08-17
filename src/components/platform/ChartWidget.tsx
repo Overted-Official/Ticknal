@@ -1201,14 +1201,14 @@ export default function ChartWidget({
             style={{ left: overlay.left, top: overlay.entryTop }}
             title="Click to Edit Position"
           >
-            {/* Top Row: [LONG] Tag, Quantity, and Quick Close Button */}
+            {/* Top Row: [LONG] Tag, Quantity @ Entry Price, and Quick Close Button */}
             <div className="flex items-center justify-between gap-1.5 pb-1 border-b border-white/[0.08]">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-plt-orange bg-plt-orange/15 px-1.5 py-0.5 rounded border border-plt-orange/30">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-plt-orange bg-plt-orange/15 px-1.5 py-0.5 rounded border border-plt-orange/30 shrink-0">
                   LONG
                 </span>
-                <span className="text-[10px] font-mono text-white/70 font-medium">
-                  {overlay.quantity.toLocaleString()} <span className="text-[9px] text-white/40 font-sans">units</span>
+                <span className="text-[10px] font-mono text-white/80 font-medium truncate">
+                  {overlay.quantity.toLocaleString()} <span className="text-[9px] text-white/40 font-sans">units @</span> {overlay.entryPrice.toFixed(2)}
                 </span>
               </div>
 
@@ -1218,19 +1218,19 @@ export default function ChartWidget({
                   e.stopPropagation();
                   setSelectedOrderToClose(overlay.order);
                 }}
-                className="px-1.5 py-0.5 text-[9px] rounded bg-[#ef4444]/15 hover:bg-[#ef4444] text-[#ef4444] hover:text-white border border-[#ef4444]/30 transition-all font-sans font-medium"
+                className="px-1.5 py-0.5 text-[9px] rounded bg-[#ef4444]/15 hover:bg-[#ef4444] text-[#ef4444] hover:text-white border border-[#ef4444]/30 transition-all font-sans font-medium shrink-0"
                 title="Close Position"
               >
                 Close
               </button>
             </div>
 
-            {/* Bottom Row: Entry / Market Value and Real-Time P/L */}
+            {/* Bottom Row: Position Market Value and Real-Time P/L */}
             <div className="pt-1.5 flex items-center justify-between gap-2 text-[10px] font-mono">
               <div className="flex flex-col">
-                <span className="text-[8.5px] text-white/40 font-sans leading-none">Entry / Val</span>
-                <span className="text-white/85 text-[10.5px] mt-0.5 font-medium">
-                  {overlay.entryPrice.toFixed(2)} <span className="text-white/30 text-[9px]">·</span> {overlay.marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                <span className="text-[8.5px] text-white/40 font-sans leading-none">Position Val</span>
+                <span className="text-white/90 text-[10.5px] mt-0.5 font-medium">
+                  {overlay.marketValue.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                 </span>
               </div>
 
