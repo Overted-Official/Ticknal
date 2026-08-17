@@ -120,8 +120,8 @@ export default function BankAccountsLedgerView({
                 Bank Accounts & Ledger
               </h1>
             </div>
-            <p className="mt-0.5 text-[13px] text-white/30">
-              Manage multi-currency liquid reserves, log transfers, and track categorical cash flows
+            <p className="mt-0.5 text-[13px] text-white/30 truncate">
+              Multi-currency liquid reserves & cash flow ledger
             </p>
           </div>
 

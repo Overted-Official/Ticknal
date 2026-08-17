@@ -145,8 +145,8 @@ export default function DashboardNetWorthView({
               Net Worth & Inflation
             </h1>
           </div>
-          <p className="mt-0.5 text-[13px] text-white/30">
-            Mark-to-market total wealth aggregation, currency conversions, and CBE purchasing power deflator
+          <p className="mt-0.5 text-[13px] text-white/30 truncate">
+            Total wealth aggregation & CBE inflation deflator
           </p>
         </div>
 

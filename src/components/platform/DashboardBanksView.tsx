@@ -147,8 +147,8 @@ export default function DashboardBanksView({
                 Bank Accounts & Liquidity
               </h1>
             </div>
-            <p className="mt-0.5 text-[13px] text-white/30">
-              Monthly cash flow trajectory, spending category breakdowns, and multi-currency bank allocations
+            <p className="mt-0.5 text-[13px] text-white/30 truncate">
+              Cash flow trajectory & multi-currency bank allocations
             </p>
           </div>
 
