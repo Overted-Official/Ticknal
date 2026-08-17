@@ -24,6 +24,7 @@ interface DashboardNetWorthViewProps {
   openPositions?: PositionItem[];
   usdRate?: number;
   cbeAnnualInflation?: number; // e.g. 15.0 for 15%
+  initialInflationSeries?: Array<{ yearMonth: string; cbeHeadlineInflation: string }>;
 }
 
 export default function DashboardNetWorthView({
@@ -31,6 +32,7 @@ export default function DashboardNetWorthView({
   openPositions = [],
   usdRate = 50.20,
   cbeAnnualInflation = 15.0,
+  initialInflationSeries = [],
 }: DashboardNetWorthViewProps) {
   const router = useRouter();
 
@@ -89,21 +91,49 @@ export default function DashboardNetWorthView({
     ].filter((s) => s.rawEgp > 0);
   }, [totalNetWorthEgp, totalEquitiesMarketValue, totalFundsMarketValue, totalUsdCashInEgp, totalEgpLiquidCash, fxMultiplier]);
 
-  // Inflation & Purchasing Power Modeling
+  // Inflation & Purchasing Power Modeling with Forward-Filling for missing/latest months
   const inflationAnalysis = useMemo(() => {
-    const monthlyInflationRate = cbeAnnualInflation / 100 / 12;
+    // 1. Build rate map from historical database series
+    const rateMap = new Map<string, number>();
+    if (initialInflationSeries && initialInflationSeries.length > 0) {
+      for (const s of initialInflationSeries) {
+        const val = parseFloat(s.cbeHeadlineInflation);
+        if (!isNaN(val) && val > 0) {
+          rateMap.set(s.yearMonth, val);
+        }
+      }
+    }
+
+    const latestAvailableRate = cbeAnnualInflation > 0 ? cbeAnnualInflation : 15.0;
     const points = [];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonthIdx = new Date().getMonth();
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonthIdx = now.getMonth(); // 0-11
 
     const nominalAcc = displayTotalNetWorth;
 
-    for (let i = 11; i >= 0; i--) {
-      const mIdx = (currentMonthIdx - i + 12) % 12;
-      const monthLabel = monthNames[mIdx];
-      
-      const compoundedDeflator = Math.pow(1 + monthlyInflationRate, i);
-      const realValue = nominalAcc / compoundedDeflator;
+    // Cumulative deflator compounding forward over the 12-month period
+    let cumulativeDeflator = 1.0;
+
+    for (let step = 0; step < 12; step++) {
+      const monthsAgo = 11 - step;
+      const d = new Date(currentYear, currentMonthIdx - monthsAgo, 1);
+      const y = d.getFullYear();
+      const mNum = String(d.getMonth() + 1).padStart(2, '0');
+      const ymKey = `${y}-${mNum}`;
+      const monthLabel = monthNames[d.getMonth()];
+
+      // Use actual reported rate for that month, or forward-fill with the latest available CBE rate
+      const annualRateForMonth = rateMap.get(ymKey) ?? latestAvailableRate;
+      const monthlyRate = annualRateForMonth / 100 / 12;
+
+      if (step > 0) {
+        cumulativeDeflator *= (1 + monthlyRate);
+      }
+
+      const realValue = nominalAcc / cumulativeDeflator;
       const inflationDrag = nominalAcc - realValue;
 
       points.push({
@@ -114,14 +144,14 @@ export default function DashboardNetWorthView({
       });
     }
 
-    const currentYearDrag = displayTotalNetWorth - (displayTotalNetWorth / (1 + cbeAnnualInflation / 100));
+    const currentYearDrag = displayTotalNetWorth - (displayTotalNetWorth / cumulativeDeflator);
 
     return {
       points,
       currentYearDrag,
-      headlineRate: cbeAnnualInflation,
+      headlineRate: latestAvailableRate,
     };
-  }, [displayTotalNetWorth, cbeAnnualInflation]);
+  }, [displayTotalNetWorth, cbeAnnualInflation, initialInflationSeries]);
 
   return (
     <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
