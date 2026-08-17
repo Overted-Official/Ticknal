@@ -17,6 +17,8 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import ChartsSkeleton from './ChartsSkeleton';
 
+export const dynamic = 'force-dynamic';
+
 interface PlatformPageProps {
   searchParams: Promise<{ ticker?: string; timeframe?: string; replay?: string }>;
 }

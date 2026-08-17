@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import SidebarNav from '@/components/navigation/SidebarNav';
 import BottomNav from '@/components/navigation/BottomNav';
 import { AlertProvider } from '@/components/platform/AlertProvider';
@@ -9,7 +10,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <AlertProvider>
         <div className="flex flex-col md:flex-row h-[100dvh] w-screen overflow-hidden bg-black text-white">
           <div className="hidden md:flex h-full shrink-0 z-50">
-            <SidebarNav />
+            <Suspense fallback={<div className="w-[48px] h-full bg-black border-r border-white/[0.06]" />}>
+              <SidebarNav />
+            </Suspense>
           </div>
           <div className="flex-1 overflow-hidden relative z-10 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
             {children}

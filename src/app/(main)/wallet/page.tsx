@@ -4,6 +4,8 @@ import BankAccountsLedgerView from '@/components/platform/BankAccountsLedgerView
 import WalletPositionsWrapper from './WalletPositionsWrapper';
 import { getCachedRecentPrices } from '@/lib/data-cache';
 
+export const dynamic = 'force-dynamic';
+
 export default async function WalletPage({
   searchParams,
 }: {

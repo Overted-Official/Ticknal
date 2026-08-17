@@ -23,7 +23,7 @@ export default function SubNavTopRail({
   className = '',
 }: SubNavTopRailProps) {
   return (
-    <div className={`w-full overflow-x-auto no-scrollbar py-2.5 px-4 flex items-center gap-1.5 border-b border-white/[0.06] bg-black/40 backdrop-blur-md sticky top-0 z-30 ${className}`}>
+    <div className={`md:hidden w-full overflow-x-auto no-scrollbar py-2 px-3.5 flex items-center gap-1.5 border-b border-white/[0.06] bg-black/40 backdrop-blur-md sticky top-0 z-30 ${className}`}>
       {items.map((item) => {
         const isActive = activeTab === item.value;
         const Icon = item.icon;

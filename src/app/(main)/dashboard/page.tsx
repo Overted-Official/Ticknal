@@ -2,6 +2,8 @@ import { Suspense } from 'react';
 import DashboardContent from './DashboardContent';
 import DashboardSkeleton from './DashboardSkeleton';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage({
   searchParams,
 }: {

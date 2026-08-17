@@ -12,6 +12,8 @@ import SettingsView, {
   type TickerOption 
 } from '@/components/platform/SettingsView';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
   await connection();
   const supabase = await createClient();
