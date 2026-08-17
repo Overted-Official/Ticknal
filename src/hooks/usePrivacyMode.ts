@@ -1,73 +1,61 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useSyncExternalStore, useCallback } from 'react';
 
 const STORAGE_KEY = 'quantegx_privacy_mode';
 
-export function usePrivacyMode() {
-  // Default to true (values masked) as requested
-  const [isPrivacy, setIsPrivacy] = useState<boolean>(true);
-  const [isMounted, setIsMounted] = useState(false);
+function subscribe(callback: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('quantegx_privacy_mode_changed', callback);
+  window.addEventListener('storage', callback);
+  return () => {
+    window.removeEventListener('quantegx_privacy_mode_changed', callback);
+    window.removeEventListener('storage', callback);
+  };
+}
 
-  useEffect(() => {
-    setIsMounted(true);
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored !== null) {
-        setIsPrivacy(stored === 'true');
-      } else {
-        // Default to true if not set
-        setIsPrivacy(true);
-        localStorage.setItem(STORAGE_KEY, 'true');
-      }
-    } catch {
-      setIsPrivacy(true);
+function getSnapshot(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored !== null) {
+      return stored === 'true';
     }
-  }, []);
+    return true; // Default true (masked)
+  } catch {
+    return true;
+  }
+}
+
+function getServerSnapshot(): boolean {
+  return true; // Default true (masked) during SSR
+}
+
+export function usePrivacyMode() {
+  const isPrivacy = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const togglePrivacy = useCallback(() => {
-    setIsPrivacy((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(STORAGE_KEY, String(next));
-        window.dispatchEvent(new Event('quantegx_privacy_mode_changed'));
-      } catch {}
-      return next;
-    });
+    try {
+      const current = getSnapshot();
+      const next = !current;
+      localStorage.setItem(STORAGE_KEY, String(next));
+      // Dispatch event outside render phase
+      window.dispatchEvent(new Event('quantegx_privacy_mode_changed'));
+    } catch {}
   }, []);
 
-  useEffect(() => {
-    const handleSync = () => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored !== null) {
-          setIsPrivacy(stored === 'true');
-        }
-      } catch {}
-    };
-
-    window.addEventListener('quantegx_privacy_mode_changed', handleSync);
-    window.addEventListener('storage', handleSync);
-    return () => {
-      window.removeEventListener('quantegx_privacy_mode_changed', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
-  }, []);
-
-  // Helper masking function
   const mask = useCallback(
     (realValue: string | number, fallbackSuffix = '') => {
-      // During SSR or when privacy is enabled, return masked stars
-      if (!isMounted || isPrivacy) {
+      if (isPrivacy) {
         return fallbackSuffix ? `****** ${fallbackSuffix}` : '******';
       }
       return String(realValue);
     },
-    [isMounted, isPrivacy]
+    [isPrivacy]
   );
 
   return {
-    isPrivacy: !isMounted ? true : isPrivacy,
+    isPrivacy,
     togglePrivacy,
     mask,
   };
