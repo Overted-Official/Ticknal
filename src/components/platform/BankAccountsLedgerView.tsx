@@ -157,6 +157,7 @@ export default function BankAccountsLedgerView({
         {/* 4. Bank Accounts Cards Grid */}
         <BankAccountsGrid
           accounts={accounts}
+          usdRate={usdRate}
           onOpenAddModal={() => setIsAccountDrawerOpen(true)}
           onEditAccount={(acc) => setSelectedAccountForEdit(acc)}
           onDeleteAccount={handleDeleteAccount}
