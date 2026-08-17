@@ -17,6 +17,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { type BankAccount } from '@/types/bank';
+import { maskAccountNumber } from '@/lib/masking';
 
 interface BankAccountsGridProps {
   accounts: BankAccount[];
@@ -316,7 +317,7 @@ export default function BankAccountsGrid({
                                     </span>
                                     {acc.accountNumber && (
                                       <span className="text-[10px] font-mono text-white/30 hidden sm:inline">
-                                        • {acc.accountNumber}
+                                        • {maskAccountNumber(acc.accountNumber)}
                                       </span>
                                     )}
                                   </div>
