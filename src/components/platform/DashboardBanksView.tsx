@@ -125,7 +125,7 @@ export default function DashboardBanksView({
   }, [accounts, usdRate, totalCombinedEgp]);
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-y-auto bg-tv-base text-tv-text select-none">
+    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
       {/* 1. Mobile / Desktop Top Rail */}
       <SubNavTopRail
         activeTab="banks"
@@ -137,7 +137,7 @@ export default function DashboardBanksView({
         ]}
       />
 
-      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-2 pb-20">
+      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20">
         {/* 2. Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

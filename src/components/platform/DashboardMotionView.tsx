@@ -71,7 +71,7 @@ export default function DashboardMotionView({
       initial="hidden"
       animate="visible"
       variants={containerStagger}
-      className="flex-1 h-full w-full min-h-0 flex flex-col overflow-y-auto bg-transparent text-white pb-20 relative z-10"
+      className="flex-1 h-full w-full min-h-0 flex flex-col overflow-hidden bg-transparent text-white relative z-10"
     >
       {/* 1. Mobile / Desktop Top Rail */}
       <SubNavTopRail
@@ -84,8 +84,9 @@ export default function DashboardMotionView({
         ]}
       />
 
-      {/* Top Header Banner */}
-      <div className="border-b border-white/[0.09] px-6 py-5 shrink-0">
+      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-20">
+        {/* Top Header Banner */}
+        <div className="border-b border-white/[0.09] px-6 py-5 shrink-0">
         <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -437,6 +438,7 @@ export default function DashboardMotionView({
             </motion.div>
           </div>
         </motion.div>
+      </div>
       </div>
     </motion.div>
   );
