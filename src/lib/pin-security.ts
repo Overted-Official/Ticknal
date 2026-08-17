@@ -201,54 +201,23 @@ export function removeAppPin(): void {
   sessionStorage.removeItem(SESSION_UNLOCKED_KEY);
 }
 
+/**
+ * Strictly verify PIN against the device's cryptographically random salt.
+ * Legacy static-salt hashes are rejected to maintain maximum security.
+ */
 export async function verifyAppPin(inputPin: string): Promise<boolean> {
   const storedHash = getStoredPinHash();
   if (!storedHash) return true;
 
-  // 1. Check with stored random salt
   const storedSalt = typeof window !== 'undefined' ? localStorage.getItem(PIN_SALT_KEY) : null;
-  if (storedSalt) {
-    const inputHash = await hashPin(inputPin, storedSalt);
-    if (inputHash === storedHash) return true;
+  if (!storedSalt) {
+    // If no random per-device salt exists, reject immediately.
+    // User must authenticate via Account Password or Security Question.
+    return false;
   }
 
-  // 2. Check legacy SHA-256 salt format: "quantegx_salt_${pin}"
-  if (typeof window !== 'undefined' && window.crypto?.subtle) {
-    try {
-      const encoder = new TextEncoder();
-      const legacyData = encoder.encode(`quantegx_salt_${inputPin}`);
-      const legacyBuffer = await window.crypto.subtle.digest('SHA-256', legacyData);
-      const legacyHash = Array.from(new Uint8Array(legacyBuffer))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-
-      if (legacyHash === storedHash) {
-        // Automatically upgrade legacy hash to modern salted format!
-        await setAppPin(inputPin);
-        return true;
-      }
-    } catch {}
-  }
-
-  // 3. Check legacy simple hash fallback
-  let fallbackLegacy = 0;
-  for (let i = 0; i < inputPin.length; i++) {
-    fallbackLegacy = (fallbackLegacy << 5) - fallbackLegacy + inputPin.charCodeAt(i);
-    fallbackLegacy |= 0;
-  }
-  if (String(fallbackLegacy) === storedHash) {
-    await setAppPin(inputPin);
-    return true;
-  }
-
-  // 4. Safety fallback
-  const rawHash = await hashPin(inputPin, '');
-  if (rawHash === storedHash) {
-    await setAppPin(inputPin);
-    return true;
-  }
-
-  return false;
+  const inputHash = await hashPin(inputPin, storedSalt);
+  return inputHash === storedHash;
 }
 
 export function isSessionUnlocked(): boolean {
