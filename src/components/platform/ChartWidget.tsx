@@ -1194,48 +1194,24 @@ export default function ChartWidget({
             }}
           />
 
-          {/* Interactive Informative Position Pill */}
+          {/* Interactive Informative Position Card (Condensed Multi-line) */}
           <div
             onClick={() => setSelectedOrderToEdit(overlay.order)}
-            className="group pointer-events-auto cursor-pointer absolute flex -translate-y-1/2 items-center gap-2 rounded-md border border-white/[0.15] bg-black/85 hover:bg-black/95 hover:border-plt-orange/60 px-2.5 py-1 text-xs text-white shadow-2xl backdrop-blur-xl transition-all select-none z-30"
+            className="group pointer-events-auto cursor-pointer absolute flex flex-col -translate-y-1/2 rounded-lg border border-white/[0.16] bg-black/90 hover:bg-black/95 hover:border-plt-orange/60 p-2 text-white shadow-2xl backdrop-blur-xl transition-all select-none z-30 min-w-[170px] max-w-[215px]"
             style={{ left: overlay.left, top: overlay.entryTop }}
-            title="Click to Edit or Close Position"
+            title="Click to Edit Position"
           >
-            {/* Tag */}
-            <span className="text-[9px] font-bold uppercase tracking-wider text-plt-orange bg-plt-orange/15 px-1.5 py-0.5 rounded border border-plt-orange/30">
-              LONG
-            </span>
+            {/* Top Row: [LONG] Tag, Quantity, and Quick Close Button */}
+            <div className="flex items-center justify-between gap-1.5 pb-1 border-b border-white/[0.08]">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-plt-orange bg-plt-orange/15 px-1.5 py-0.5 rounded border border-plt-orange/30">
+                  LONG
+                </span>
+                <span className="text-[10px] font-mono text-white/70 font-medium">
+                  {overlay.quantity.toLocaleString()} <span className="text-[9px] text-white/40 font-sans">units</span>
+                </span>
+              </div>
 
-            {/* Formatted Information: Entry Price • Units • Current Mkt Value • P/L (P/L%) */}
-            <div className="flex items-center gap-1.5 text-[11px] font-mono">
-              <span className="text-white/80">
-                <span className="text-white/40 text-[9px] font-sans mr-0.5">Entry:</span>
-                {overlay.entryPrice.toFixed(2)}
-              </span>
-
-              <span className="text-white/20">•</span>
-
-              <span className="text-white/80">
-                {overlay.quantity.toLocaleString()} <span className="text-white/40 text-[9px] font-sans">units</span>
-              </span>
-
-              <span className="text-white/20">•</span>
-
-              <span className="text-white/80">
-                <span className="text-white/40 text-[9px] font-sans mr-0.5">Val:</span>
-                {overlay.marketValue.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-              </span>
-
-              <span className="text-white/20">•</span>
-
-              <span className={`font-semibold flex items-center gap-1 ${overlay.isProfit ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                <span>{overlay.profitLoss >= 0 ? '+' : ''}{overlay.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
-                <span className="text-[10px]">({overlay.profitLossPct >= 0 ? '+' : ''}{overlay.profitLossPct.toFixed(2)}%)</span>
-              </span>
-            </div>
-
-            {/* Quick Exit CTA */}
-            <div className="flex items-center pl-1 border-l border-white/[0.1] ml-0.5">
               <button
                 type="button"
                 onClick={(e) => {
@@ -1247,6 +1223,24 @@ export default function ChartWidget({
               >
                 Close
               </button>
+            </div>
+
+            {/* Bottom Row: Entry / Market Value and Real-Time P/L */}
+            <div className="pt-1.5 flex items-center justify-between gap-2 text-[10px] font-mono">
+              <div className="flex flex-col">
+                <span className="text-[8.5px] text-white/40 font-sans leading-none">Entry / Val</span>
+                <span className="text-white/85 text-[10.5px] mt-0.5 font-medium">
+                  {overlay.entryPrice.toFixed(2)} <span className="text-white/30 text-[9px]">·</span> {overlay.marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+
+              <div className="flex flex-col items-end">
+                <span className="text-[8.5px] text-white/40 font-sans leading-none">Unrealized P/L</span>
+                <span className={`font-semibold text-[10.5px] mt-0.5 flex items-center gap-0.5 ${overlay.isProfit ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                  <span>{overlay.profitLoss >= 0 ? '+' : ''}{overlay.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
+                  <span className="text-[9.5px]">({overlay.profitLossPct >= 0 ? '+' : ''}{overlay.profitLossPct.toFixed(2)}%)</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
