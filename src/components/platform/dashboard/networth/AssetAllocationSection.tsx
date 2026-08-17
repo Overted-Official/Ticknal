@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { PieChart as PieChartIcon, LayoutGrid } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Treemap } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
@@ -63,63 +63,77 @@ export default function AssetAllocationSection({
     return null;
   };
 
-  // Custom Node Content for Treemap
-  const TreemapContentNode = (props: any) => {
-    const { depth, x, y, width, height, name, color, percentage } = props;
+  // Custom Crisp Treemap Node Renderer (Fast, no duplicate text, adaptive label sizing)
+  const TreemapContentNode = useCallback((props: any) => {
+    const { x, y, width, height, name, color, percentage, index } = props;
 
-    if (depth !== 1 || width <= 0 || height <= 0) return null;
+    if (width <= 4 || height <= 4) return null;
 
-    const matchedSlice = slices.find((s) => s.name === name);
-    const nodeColor = color || matchedSlice?.color || '#3b82f6';
-    const nodePct = percentage ?? matchedSlice?.percentage ?? 0;
+    const matchedSlice = slices.find((s) => s.name === name) || slices[index];
+    const nodeColor = matchedSlice?.color || color || '#3b82f6';
+    const nodePct = matchedSlice?.percentage ?? percentage ?? 0;
+    const rawName = matchedSlice?.name || name || '';
+
+    // Smart adaptive label
+    const shortLabel = 
+      rawName.includes('USD') ? 'USD Cash' :
+      rawName.includes('EGP') ? 'EGP Cash' :
+      rawName.includes('Mutual') ? 'Funds' :
+      rawName.includes('Equities') ? 'Equities' :
+      rawName;
+
+    const isVerySmall = width < 45 || height < 28;
+    const isNarrow = width < 85 || height < 44;
 
     return (
       <g>
         <rect
           x={x + 1}
           y={y + 1}
-          width={width - 2}
-          height={height - 2}
-          rx={6}
-          ry={6}
-          style={{
-            fill: nodeColor,
-            stroke: '#000',
-            strokeWidth: 2,
-            opacity: 0.9,
-            cursor: 'pointer',
-          }}
+          width={Math.max(0, width - 2)}
+          height={Math.max(0, height - 2)}
+          rx={5}
+          ry={5}
+          fill={nodeColor}
+          fillOpacity={0.92}
+          stroke="#000000"
+          strokeWidth={1.5}
+          style={{ cursor: 'pointer' }}
         />
-        {width > 55 && height > 36 && (
-          <text
-            x={x + width / 2}
-            y={y + height / 2 - 4}
-            textAnchor="middle"
-            fill="#fff"
-            fontSize={11}
-            fontWeight="bold"
-            style={{ pointerEvents: 'none' }}
-          >
-            {name}
-          </text>
-        )}
-        {width > 55 && height > 48 && (
-          <text
-            x={x + width / 2}
-            y={y + height / 2 + 10}
-            textAnchor="middle"
-            fill="rgba(255,255,255,0.75)"
-            fontSize={10}
-            fontFamily="monospace"
-            fontWeight="600"
-            style={{ pointerEvents: 'none' }}
-          >
-            {nodePct.toFixed(1)}%
-          </text>
+        {!isVerySmall && (
+          <g style={{ pointerEvents: 'none' }}>
+            <text
+              x={x + width / 2}
+              y={isNarrow ? y + height / 2 : y + height / 2 - 6}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="#ffffff"
+              fontSize={isNarrow ? 10 : 11}
+              fontWeight="700"
+              style={{ userSelect: 'none' }}
+            >
+              {isNarrow ? shortLabel : rawName}
+            </text>
+            {!isNarrow && (
+              <text
+                x={x + width / 2}
+                y={y + height / 2 + 10}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill="rgba(255, 255, 255, 0.85)"
+                fontSize={10}
+                fontWeight="600"
+                fontFamily="monospace"
+                style={{ userSelect: 'none' }}
+              >
+                {nodePct.toFixed(1)}%
+              </text>
+            )}
+          </g>
         )}
       </g>
     );
-  };
+  }, [slices]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
@@ -221,6 +235,7 @@ export default function AssetAllocationSection({
                   innerRadius={50}
                   outerRadius={75}
                   paddingAngle={3}
+                  isAnimationActive={false}
                 >
                   {slices.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
@@ -233,7 +248,7 @@ export default function AssetAllocationSection({
                 data={slices}
                 dataKey="value"
                 nameKey="name"
-                stroke="#000"
+                isAnimationActive={false}
                 content={<TreemapContentNode />}
               >
                 <Tooltip content={<CustomTooltip />} />
