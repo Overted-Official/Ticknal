@@ -369,22 +369,37 @@ export default function SignalPanel({
       {/* TAB 2: ALPHA & BACKTEST SCORECARD */}
       {activeTab === 'alpha' && (
         <div className="flex flex-col gap-2.5 animate-in fade-in duration-200">
-          {/* Alpha Hero Scorecard */}
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.08] flex items-center justify-between">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Strategy vs B&H Alpha</span>
-              <div className="text-sm font-bold font-mono text-white mt-0.5 flex items-center gap-2">
-                <span>Sys: {metrics?.['Sys ROI'] ? `${metrics['Sys ROI']}%` : '—'}</span>
-                <span className="text-white/20">vs</span>
-                <span className="text-white/50 text-xs">B&H: {metrics?.['B&H ROI'] ? `${metrics['B&H ROI']}%` : '—'}</span>
-              </div>
+          {/* 3-Card Alpha Grid (System ROI, Buy & Hold, Alpha Spread) */}
+          <div className="grid grid-cols-3 gap-1.5">
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">System ROI</span>
+              <span className={`text-[11px] font-mono font-bold mt-1 ${
+                metrics?.['Sys ROI'] && parseFloat(metrics['Sys ROI']) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              }`}>
+                {metrics?.['Sys ROI'] ? `${parseFloat(metrics['Sys ROI']) > 0 ? '+' : ''}${metrics['Sys ROI']}%` : '—'}
+              </span>
             </div>
-            <div className={`px-2 py-1 rounded-md font-mono text-xs font-bold border ${
+
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Buy & Hold</span>
+              <span className="text-[11px] font-mono font-bold text-zinc-200 mt-1">
+                {metrics?.['B&H ROI'] ? `${parseFloat(metrics['B&H ROI']) > 0 ? '+' : ''}${metrics['B&H ROI']}%` : '—'}
+              </span>
+            </div>
+
+            <div className={`p-2 rounded-md border flex flex-col justify-between ${
               roiMarginVal !== null && roiMarginVal >= 0 
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
             }`}>
-              {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}% α` : `${roiMarginVal.toFixed(2)}% α`) : '—'}
+              <span className={`text-[9px] uppercase tracking-wider font-semibold ${
+                roiMarginVal !== null && roiMarginVal >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'
+              }`}>
+                Alpha (α)
+              </span>
+              <span className="text-[11px] font-mono font-bold mt-1">
+                {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}%` : `${roiMarginVal.toFixed(2)}%`) : '—'}
+              </span>
             </div>
           </div>
 
