@@ -1,15 +1,39 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Target, Activity, CheckCircle, AlertTriangle, ShieldCheck, ChevronDown, Eye, EyeOff } from '@/components/ui/icons';
-import { motion } from 'framer-motion';
+import {
+  Target,
+  Activity,
+  ShieldCheck,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  X,
+  Zap,
+  TrendingUp,
+  Sliders,
+  Sparkles,
+  Layers,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
+  BarChart3,
+  Cpu,
+  Scale,
+  CheckCircle2,
+  AlertTriangle,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { STRATEGIES, getAvailableStrategies } from '@/strategies/registry';
 import type { ChartData } from '@/components/platform/ChartWidget';
 import { useToast } from '@/context/ToastContext';
+import { PsiOptimizationDrawer } from './PsiOptimizationDrawer';
+import type { CandidateOptimizationResult } from '@/strategies/PSI/psiOptimizer.worker';
+import type { PsiStrategyParams } from '@/strategies/PSI/psiStrategy';
 
-type SignalData = Record<string, any>; // Make this dynamic since different strategies return different things
-// We'll keep some common fields like date, signal, confidence
+type SignalData = Record<string, any>;
+
 interface SignalPanelProps {
   activeSymbol: string | null;
   replayActive?: boolean;
@@ -55,9 +79,17 @@ export default function SignalPanel({
   const [optimizing, setOptimizing] = useState(false);
   const [optimProgress, setOptimProgress] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const [metricsExpanded, setMetricsExpanded] = useState(true);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'signal' | 'alpha' | 'optimizer'>('signal');
   const [trainingModel, setTrainingModel] = useState<'psi8' | 'psi40'>('psi8');
+  const [trainCutoffPreset, setTrainCutoffPreset] = useState<'2020' | '2022' | '2024' | 'custom'>('2024');
+  const [customCutoffDate, setCustomCutoffDate] = useState<string>("2024-12-31");
+
+  // Optimization Drawer State
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerCandidates, setDrawerCandidates] = useState<CandidateOptimizationResult[]>([]);
+  const [drawerTrainPeriod, setDrawerTrainPeriod] = useState("2020-01-01 to 2024-12-31");
+  const [drawerTestPeriod, setDrawerTestPeriod] = useState("2025-01-01 to Present");
+  const [drawerTotalEvaluated, setDrawerTotalEvaluated] = useState(50220);
 
   const strategies = getAvailableStrategies();
   const activeStratDef = STRATEGIES[selectedStrategy] || STRATEGIES['psi'];
@@ -102,20 +134,31 @@ export default function SignalPanel({
     };
 
     fetchSignals();
-    if (replayActive) return;
-
-    // Polling removed to reduce unnecessary egress.
-    // Daily signals typically do not change minute-by-minute.
   }, [activeSymbol, replayActive, replayEndDate, replayStartDate, selectedStrategy, strategyParams]);
 
   if (!activeSymbol) return null;
 
   const visibleSignalData = signalData;
-  const signalLabel = visibleSignalData?.signal || 'N/A';
-  const isExit = signalLabel.startsWith('SELL');
+  const rawSignal = visibleSignalData?.signal || 'NEUTRAL';
+  const isBuy = rawSignal.toUpperCase().includes('BUY');
+  const isExit = rawSignal.toUpperCase().includes('SELL') || rawSignal.toUpperCase().includes('EXIT');
+  const isNeutral = !isBuy && !isExit;
   const reason = isExit ? visibleSignalData?.exitReason : visibleSignalData?.entryReason;
 
-  // Calculate ROI Margin (Strategy ROI - B&H ROI)
+  // Master Index Score
+  const masterIndex = visibleSignalData?.masterIndex !== undefined && visibleSignalData?.masterIndex !== null 
+    ? Number(visibleSignalData.masterIndex) 
+    : null;
+  const mdm = visibleSignalData?.medianDailyMove !== undefined && visibleSignalData?.medianDailyMove !== null 
+    ? Number(visibleSignalData.medianDailyMove) 
+    : null;
+
+  // Key execution levels
+  const triggerPrice = visibleSignalData?.price !== undefined ? Number(visibleSignalData.price) : null;
+  const stopLossPrice = visibleSignalData?.stopLoss !== undefined ? Number(visibleSignalData.stopLoss) : null;
+  const targetPrice = visibleSignalData?.targetPrice !== undefined ? Number(visibleSignalData.targetPrice) : null;
+
+  // ROI Margin & Performance Alpha
   const sysRoi = metrics?.['Sys ROI'] ? parseFloat(metrics['Sys ROI']) : null;
   const bnHroi = metrics?.['B&H ROI'] ? parseFloat(metrics['B&H ROI']) : 0;
   const roiMarginVal = metrics?.['ROI Margin']
@@ -124,30 +167,43 @@ export default function SignalPanel({
       ? sysRoi - bnHroi
       : null;
 
+  const getEffectiveCutoffDate = (): string => {
+    if (trainCutoffPreset === '2020') return '2020-12-31';
+    if (trainCutoffPreset === '2022') return '2022-12-31';
+    if (trainCutoffPreset === '2024') return '2024-12-31';
+    return customCutoffDate || '2024-12-31';
+  };
+
   const startTraining = () => {
     if (!chartData || chartData.length === 0) return;
-    if (trainingModel !== 'psi8') {
-      toast.info("Model Training", "Only PSI-8 training is currently supported.");
-      return;
-    }
 
     setOptimizing(true);
     setOptimProgress(0);
 
     const worker = new Worker(new URL('../../strategies/PSI/psiOptimizer.worker.ts', import.meta.url));
 
+    const cutoff = getEffectiveCutoffDate();
+    const cutoffDate = new Date(cutoff);
+    const testStart = new Date(cutoffDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
     worker.onmessage = (e) => {
       if (e.data.type === 'progress') {
         setOptimProgress(e.data.progress);
       } else if (e.data.type === 'done') {
         setOptimizing(false);
-        const { bestParams, bestScore } = e.data;
-        if (bestParams && bulkUpdateStrategyParams) {
-          console.log("Optimization complete! Best Score:", bestScore, "Params:", bestParams);
-          bulkUpdateStrategyParams(bestParams);
-          // TODO: Save to Supabase DB here in Phase 3
-          // localStorage.setItem(`quantegx_optim_psi8_${activeSymbol}`, JSON.stringify(bestParams));
-        }
+        setDrawerCandidates(e.data.candidates);
+        setDrawerTrainPeriod(e.data.trainPeriod);
+        setDrawerTestPeriod(e.data.testPeriod);
+        setDrawerTotalEvaluated(e.data.totalEvaluated);
+        setDrawerOpen(true);
+        toast.success(
+          "Walk-Forward Complete",
+          `Evaluated ${e.data.totalEvaluated.toLocaleString()} combinations for ${activeSymbol} on ${trainingModel.toUpperCase()}.`
+        );
+        worker.terminate();
+      } else if (e.data.type === 'error') {
+        setOptimizing(false);
+        toast.error("Optimization Error", e.data.message);
         worker.terminate();
       }
     };
@@ -161,54 +217,376 @@ export default function SignalPanel({
         close: d.close,
         volume: d.volume
       })),
-      entryLevelsGrid: [[14.6], [23.6], [38.2], [50.0], [61.8], [14.6, 23.6, 38.2, 50.0, 61.8]],
-      aymMultipliers: [5, 7, 9, 11],
-      aymLimits: [61.8, 78.6, 88.6],
-      atrDistances: [2, 3, 4],
-      stoplossLevels: [2, 3, 5],
-      initialCapital: 100000,
-      startDate: strategyStartDate || '2020-01-01',
-      endDate: strategyEndDate || new Date().toISOString().split('T')[0]
+      model: trainingModel,
+      trainStartDate: strategyStartDate || '2020-01-01',
+      trainEndDate: cutoff,
+      testStartDate: testStart,
+      testEndDate: undefined,
+      topK: 10,
     });
   };
 
-  return (
-    <div className="absolute top-4 right-[68px] z-30 w-72 md:w-80 bg-black/60 hover:bg-black/75 backdrop-blur-xl border border-white/[0.12] hover:border-white/[0.22] rounded-md shadow-2xl flex flex-col transition-all">
-      {/* Header / Main Signal */}
-      <div 
-        className={`p-3 cursor-pointer hover:bg-white/[0.04] transition-colors flex flex-col gap-2 ${expanded ? 'rounded-t-md' : 'rounded-md'}`}
-        onClick={() => setExpanded(!expanded)}
-      >
-        {/* Row 1: Strategy Dropdown Selector (Left) + Performance ROI Margin & Eye Toggle (Right) */}
-        <div className="flex items-center justify-between gap-2 relative">
-          <div 
-            className={`flex items-center gap-1.5 text-white/70 transition-colors ${
-              strategies.length > 1 ? 'cursor-pointer hover:text-white' : 'cursor-default'
-            }`} 
-            onClick={(e) => { 
-              if (strategies.length > 1) {
-                e.stopPropagation(); 
-                setDropdownOpen(!dropdownOpen); 
-              }
-            }}
-          >
-            <Target className="w-3.5 h-3.5 text-plt-orange shrink-0" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap">
-              {selectedLabel}
-            </span>
-            {strategies.length > 1 && <ChevronDown className="w-3 h-3 opacity-40 shrink-0" />}
+  // ----------------------------------------------------
+  // RENDER: Inspector Body (Tabs: Signal / Alpha / Optimizer)
+  // ----------------------------------------------------
+  const renderInspectorBody = () => (
+    <div className="flex flex-col gap-3">
+      {/* 3-Tab Segmented Controller */}
+      <div className="flex bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.08] relative">
+        <button
+          type="button"
+          onClick={() => setActiveTab('signal')}
+          className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'signal'
+              ? 'bg-zinc-800 text-white font-semibold shadow-sm'
+              : 'text-white/40 hover:text-white/70'
+          }`}
+        >
+          <Target className="w-3.5 h-3.5 text-plt-orange" />
+          <span>Signal</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('alpha')}
+          className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'alpha'
+              ? 'bg-zinc-800 text-white font-semibold shadow-sm'
+              : 'text-white/40 hover:text-white/70'
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Alpha</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('optimizer')}
+          className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'optimizer'
+              ? 'bg-zinc-800 text-white font-semibold shadow-sm'
+              : 'text-white/40 hover:text-white/70'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>Optimizer</span>
+        </button>
+      </div>
+
+      {/* TAB 1: SIGNAL & LIVE LEVELS */}
+      {activeTab === 'signal' && (
+        <div className="flex flex-col gap-2.5 animate-in fade-in duration-200">
+          {/* Hero Verdict Box */}
+          <div className={`p-3 rounded-lg border flex flex-col gap-1.5 relative overflow-hidden ${
+            isBuy 
+              ? 'bg-emerald-950/20 border-emerald-500/30' 
+              : isExit 
+                ? 'bg-rose-950/20 border-rose-500/30' 
+                : 'bg-zinc-900/40 border-white/[0.08]'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${
+                  isBuy ? 'bg-emerald-400 animate-pulse' : isExit ? 'bg-rose-500' : 'bg-amber-400'
+                }`} />
+                <span className={`text-xs font-bold font-mono tracking-tight uppercase ${
+                  isBuy ? 'text-emerald-400' : isExit ? 'text-rose-400' : 'text-zinc-300'
+                }`}>
+                  {rawSignal}
+                </span>
+              </div>
+              {triggerPrice && (
+                <span className="text-xs font-mono font-bold text-white">
+                  {triggerPrice.toFixed(2)} EGP
+                </span>
+              )}
+            </div>
+
+            {reason && (
+              <p className="text-[10px] text-white/50 leading-relaxed font-sans mt-0.5">
+                {reason}
+              </p>
+            )}
           </div>
 
-          {/* Performance ROI Margin Badge & Eye Toggle */}
+          {/* Execution Coordinates 3-Card Grid */}
+          <div className="grid grid-cols-3 gap-1.5">
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Trigger</span>
+              <span className="text-[11px] font-mono font-bold text-white mt-1">
+                {triggerPrice ? `${triggerPrice.toFixed(2)}` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-rose-400/80 font-medium">Stop Loss</span>
+              <span className="text-[11px] font-mono font-bold text-rose-400 mt-1">
+                {stopLossPrice ? `${stopLossPrice.toFixed(2)}` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-emerald-400/80 font-medium">AYM Target</span>
+              <span className="text-[11px] font-mono font-bold text-emerald-400 mt-1">
+                {targetPrice ? `${targetPrice.toFixed(2)}` : '—'}
+              </span>
+            </div>
+          </div>
+
+          {/* Master Index (0-100 Gauge) */}
+          <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.08] flex flex-col gap-2">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-white/60 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                <Scale className="w-3 h-3 text-plt-orange" />
+                Master Index (0-100)
+              </span>
+              <div className="flex items-center gap-2 font-mono">
+                <span className="text-white font-bold">{masterIndex !== null ? masterIndex.toFixed(1) : '—'}</span>
+                {mdm !== null && (
+                  <span className="text-[9px] text-white/40">MDM: {mdm.toFixed(2)}%</span>
+                )}
+              </div>
+            </div>
+
+            {/* Gauge Track */}
+            <div className="relative w-full h-2 rounded-full bg-zinc-900 border border-white/[0.08] overflow-hidden flex">
+              <div className="w-[20%] h-full bg-emerald-500/30" title="Oversold / Buy" />
+              <div className="w-[60%] h-full bg-white/[0.03]" title="Equilibrium" />
+              <div className="w-[20%] h-full bg-rose-500/30" title="Overbought / Sell" />
+              {masterIndex !== null && (
+                <div 
+                  className="absolute top-0 bottom-0 w-1.5 bg-plt-orange rounded-full shadow-[0_0_8px_rgba(255,100,13,0.8)] -ml-0.5 transition-all duration-300"
+                  style={{ left: `${Math.min(Math.max(masterIndex, 0), 100)}%` }}
+                />
+              )}
+            </div>
+
+            <div className="flex justify-between text-[8px] font-mono text-white/30 px-0.5">
+              <span>0 (Oversold)</span>
+              <span>50</span>
+              <span>100 (Overbought)</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: ALPHA & BACKTEST SCORECARD */}
+      {activeTab === 'alpha' && (
+        <div className="flex flex-col gap-2.5 animate-in fade-in duration-200">
+          {/* Alpha Hero Scorecard */}
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.08] flex items-center justify-between">
+            <div>
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Strategy vs B&H Alpha</span>
+              <div className="text-sm font-bold font-mono text-white mt-0.5 flex items-center gap-2">
+                <span>Sys: {metrics?.['Sys ROI'] ? `${metrics['Sys ROI']}%` : '—'}</span>
+                <span className="text-white/20">vs</span>
+                <span className="text-white/50 text-xs">B&H: {metrics?.['B&H ROI'] ? `${metrics['B&H ROI']}%` : '—'}</span>
+              </div>
+            </div>
+            <div className={`px-2 py-1 rounded-md font-mono text-xs font-bold border ${
+              roiMarginVal !== null && roiMarginVal >= 0 
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+            }`}>
+              {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}% α` : `${roiMarginVal.toFixed(2)}% α`) : '—'}
+            </div>
+          </div>
+
+          {/* 4-Metric Grid */}
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Win Rate</span>
+              <span className="text-xs font-mono font-bold text-emerald-400 mt-1">
+                {metrics?.['Win Rate'] ? `${metrics['Win Rate']}%` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Annual CAGR</span>
+              <span className="text-xs font-mono font-bold text-white mt-1">
+                {metrics?.['Annual CAGR'] ? `${metrics['Annual CAGR']}%` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-rose-400/80 font-medium">Max Drawdown</span>
+              <span className="text-xs font-mono font-bold text-rose-400 mt-1">
+                {metrics?.['Max Drawdown'] ? `${metrics['Max Drawdown']}%` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Avg Return/Trade</span>
+              <span className="text-xs font-mono font-bold text-white mt-1">
+                {metrics?.['Avg. Return/Trade'] ? `${metrics['Avg. Return/Trade']}%` : '—'}
+              </span>
+            </div>
+          </div>
+
+          {/* Chart Backtest Horizon Controls */}
+          <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.08] flex flex-col gap-2">
+            <span className="text-[9px] font-medium uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+              <Calendar className="w-3 h-3 text-plt-orange" />
+              Chart Backtest Horizon
+            </span>
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="flex flex-col gap-1">
+                <label className="text-white/40 text-[9px]">Start Date</label>
+                <input 
+                  type="date" 
+                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-1 text-white text-[10px] focus:outline-none focus:border-plt-orange font-mono"
+                  value={strategyStartDate || '2025-01-01'}
+                  onChange={(e) => setStrategyStartDate?.(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/40 text-[9px]">End Date</label>
+                <input 
+                  type="date" 
+                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-1 text-white text-[10px] focus:outline-none focus:border-plt-orange font-mono"
+                  value={strategyEndDate || ''}
+                  placeholder="Present"
+                  onChange={(e) => setStrategyEndDate?.(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: WALK-FORWARD OPTIMIZER STUDIO */}
+      {activeTab === 'optimizer' && (
+        <div className="flex flex-col gap-2.5 animate-in fade-in duration-200">
+          {/* Model Architecture Toggle */}
+          <div className="flex bg-white/[0.02] border border-white/[0.08] p-0.5 rounded-lg">
+            <button
+              type="button"
+              className={`flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all ${
+                trainingModel === 'psi8' 
+                  ? 'bg-zinc-800 text-white shadow-sm font-semibold' 
+                  : 'text-white/40 hover:text-white'
+              }`}
+              onClick={() => setTrainingModel('psi8')}
+            >
+              PSI-8 (Inflection)
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all ${
+                trainingModel === 'psi40' 
+                  ? 'bg-zinc-800 text-white shadow-sm font-semibold' 
+                  : 'text-white/40 hover:text-white'
+              }`}
+              onClick={() => setTrainingModel('psi40')}
+            >
+              PSI-40 (Trend)
+            </button>
+          </div>
+
+          {/* Interactive Split-Timeline Visualizer */}
+          <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.08] flex flex-col gap-2">
+            <div className="flex items-center justify-between text-[9px] text-white/40">
+              <span className="font-semibold uppercase tracking-wider">In-Sample Cutoff</span>
+              <div className="flex gap-1">
+                {(['2020', '2022', '2024', 'custom'] as const).map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setTrainCutoffPreset(preset)}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition ${
+                      trainCutoffPreset === preset
+                        ? 'bg-plt-orange text-white font-semibold'
+                        : 'bg-white/[0.04] text-white/40 hover:text-white'
+                    }`}
+                  >
+                    {preset === 'custom' ? 'Custom' : `≤ ${preset}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {trainCutoffPreset === 'custom' && (
+              <div className="flex items-center justify-between text-[10px] pt-1">
+                <label className="text-white/40 text-[9px]">Custom Cutoff Date</label>
+                <input 
+                  type="date" 
+                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28 font-mono"
+                  value={customCutoffDate}
+                  onChange={(e) => setCustomCutoffDate(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Visual Slices Bar */}
+            <div className="px-2 py-1.5 rounded-md bg-zinc-950/80 border border-white/[0.06] text-[9px] text-white/50 flex flex-col gap-1 font-mono">
+              <div className="flex justify-between">
+                <span className="text-amber-400/90 font-medium">Train (In-Sample):</span>
+                <span>Inception → {getEffectiveCutoffDate()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-emerald-400/90 font-medium">Test (Out-of-Sample):</span>
+                <span>{new Date(new Date(getEffectiveCutoffDate()).getTime() + 86400000).toISOString().split('T')[0]} → Present</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Run Optimizer CTA */}
+          <button 
+            type="button"
+            className="w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-all rounded-lg py-2 text-xs font-semibold disabled:opacity-50 relative overflow-hidden flex items-center justify-center gap-1.5 shadow-lg shadow-orange-950/30 active:scale-[0.99]"
+            onClick={startTraining}
+            disabled={optimizing}
+          >
+            {optimizing ? (
+              <>
+                <span className="relative z-10 font-mono">Evaluating 50,220 Combos... {optimProgress.toFixed(0)}%</span>
+                <div 
+                  className="absolute left-0 top-0 bottom-0 bg-white/25 z-0 transition-all duration-300" 
+                  style={{ width: `${optimProgress}%` }}
+                />
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>⚡ Run Walk-Forward Optimizer (50k)</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Footer Info */}
+      <div className="flex items-center justify-between pt-2 border-t border-white/[0.08] text-[9px] text-white/40">
+        <span className="flex items-center gap-1">
+          <ShieldCheck className="w-3 h-3 text-plt-orange" /> {visibleSignalData?.modelVersion || 'v1.0'}
+        </span>
+        <span>Updated {visibleSignalData?.date ? new Date(visibleSignalData.date).toLocaleDateString() : 'Live'}</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="absolute top-4 right-[68px] z-30 w-72 md:w-80 bg-[#09090b]/80 hover:bg-[#09090b]/95 backdrop-blur-2xl border border-white/[0.12] hover:border-white/[0.22] rounded-xl shadow-2xl flex flex-col transition-all">
+      {/* -------------------------------------------------- */}
+      {/* FLOATING HUD (COLLAPSED HEADER)                   */}
+      {/* -------------------------------------------------- */}
+      <div 
+        className={`p-3 cursor-pointer hover:bg-white/[0.03] transition-colors flex flex-col gap-2 ${expanded ? 'rounded-t-xl' : 'rounded-xl'}`}
+        onClick={() => setExpanded(!expanded)}
+      >
+        {/* Row 1: Strategy Label + Alpha Spread Badge + Eye Toggle */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-white/80">
+            <Target className="w-3.5 h-3.5 text-plt-orange shrink-0" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-white">
+              {trainingModel === 'psi40' ? 'PSI-40 TREND' : 'PSI-8 INFLECTION'}
+            </span>
+          </div>
+
           <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
             {roiMarginVal !== null && (
               <span 
-                className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] bg-white/[0.04] border border-white/[0.08] ${
-                  roiMarginVal >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'
+                className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] border ${
+                  roiMarginVal >= 0 
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                    : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                 }`}
-                title={`ROI Margin (Strategy vs B&H): ${roiMarginVal > 0 ? '+' : ''}${roiMarginVal.toFixed(2)}% | Strategy ROI: ${sysRoi !== null ? (sysRoi > 0 ? '+' : '') + sysRoi.toFixed(2) + '%' : '—'} | B&H ROI: ${(bnHroi > 0 ? '+' : '') + bnHroi.toFixed(2)}%`}
+                title={`Alpha Margin: ${roiMarginVal > 0 ? '+' : ''}${roiMarginVal.toFixed(2)}%`}
               >
-                {roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}%` : `${roiMarginVal.toFixed(2)}%`}
+                {roiMarginVal > 0 ? `+${roiMarginVal.toFixed(1)}% α` : `${roiMarginVal.toFixed(1)}% α`}
               </span>
             )}
             {setShowSignals && (
@@ -226,277 +604,127 @@ export default function SignalPanel({
               </button>
             )}
           </div>
-
-          {/* Strategy Picker Dropdown */}
-          {dropdownOpen && (
-            <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); }} 
-              />
-              <div className="absolute top-full left-0 w-44 bg-black/85 backdrop-blur-2xl border border-white/[0.15] rounded-md shadow-2xl z-50 overflow-hidden py-1 mt-1">
-                {strategies.map((strat) => (
-                  <div
-                    key={strat.id}
-                    className={`px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider ${
-                      strat.disabled 
-                        ? 'text-white/20 cursor-not-allowed' 
-                        : strat.id === selectedStrategy 
-                          ? 'text-plt-orange bg-white/[0.06] cursor-default font-semibold' 
-                          : 'text-white/70 hover:text-white hover:bg-white/[0.04] cursor-pointer transition-colors'
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!strat.disabled) {
-                        setSelectedStrategy(strat.id);
-                        setDropdownOpen(false);
-                      }
-                    }}
-                  >
-                    {strat.label}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
         </div>
 
-        {/* Row 2: Signal (Left) + Status Pill & Expand Chevron (Right) */}
+        {/* Row 2: Live Signal Status + Master Index + Expand Chevron */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {loading ? (
-              <div className="h-5 w-24 bg-white/[0.05] animate-pulse rounded-md" />
-            ) : visibleSignalData ? (
-              <div className="flex items-center gap-2">
-                <span className={`text-base font-bold tracking-tight ${
-                  visibleSignalData.signal === 'BUY' ? 'text-[#22c55e]' :
-                  isExit ? 'text-[#ef4444]' :
-                  'text-white'
-                }`}>
-                  {signalLabel}
-                </span>
-                <span className="text-[10px] bg-white/[0.06] border border-white/[0.09] px-1.5 py-0.5 rounded-[4px] text-white/80 font-mono">
-                  {reason}
-                </span>
+              <div className="flex items-center gap-1.5 text-white/40 text-[11px] font-mono">
+                <Activity className="w-3 h-3 animate-spin text-plt-orange" />
+                <span>Scanning...</span>
               </div>
             ) : (
-              <span className="text-xs text-white/40">No signals</span>
+              <div className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono flex items-center gap-1.5 border ${
+                isBuy 
+                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+                  : isExit 
+                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' 
+                    : 'bg-white/[0.05] text-zinc-300 border-white/[0.08]'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  isBuy ? 'bg-emerald-400 animate-pulse' : isExit ? 'bg-rose-500' : 'bg-amber-400'
+                }`} />
+                <span className="truncate">{rawSignal}</span>
+              </div>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Status Pill Icon */}
-            <div className={`flex h-6 w-6 items-center justify-center rounded-md border shrink-0 ${
-              visibleSignalData?.signal === 'BUY' ? 'bg-[#22c55e]/10 border-[#22c55e]/30' :
-              isExit ? 'bg-[#ef4444]/10 border-[#ef4444]/30' :
-              'bg-white/[0.04] border-white/[0.09]'
-            }`}>
-               {visibleSignalData?.signal === 'BUY' ? <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" /> : 
-                isExit ? <AlertTriangle className="w-3.5 h-3.5 text-[#ef4444]" /> : 
-                <Activity className="w-3.5 h-3.5 text-white/40" />}
-            </div>
-
-            {/* Expand Chevron */}
+          <div className="flex items-center gap-2 shrink-0">
+            {masterIndex !== null && (
+              <span className="text-[10px] font-mono font-semibold text-white/50 bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/[0.06]">
+                MI: <strong className="text-white">{masterIndex.toFixed(0)}</strong>
+              </span>
+            )}
             <ChevronDown className={`w-3.5 h-3.5 text-white/40 transition-transform duration-200 ${expanded ? 'rotate-180 text-white' : ''}`} />
           </div>
         </div>
       </div>
 
-      {/* Expanded Details */}
+      {/* -------------------------------------------------- */}
+      {/* DESKTOP EXPANDED INSPECTOR BODY                    */}
+      {/* -------------------------------------------------- */}
       <motion.div 
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0 }}
-        className="overflow-hidden border-t border-white/[0.09]"
+        className="hidden md:block overflow-hidden border-t border-white/[0.09]"
       >
-        <div className="p-3 bg-black/50 backdrop-blur-xl flex flex-col gap-2.5">
-          {/* Collapsible Performance Metrics Table */}
-          {metrics && (
-            <div className="rounded-md bg-white/[0.02] border border-white/[0.08] overflow-hidden">
-              <div 
-                className="flex items-center justify-between p-2 cursor-pointer hover:bg-white/[0.03] transition-colors select-none"
-                onClick={() => setMetricsExpanded(!metricsExpanded)}
-              >
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-white/60 flex items-center gap-1.5">
-                  <ChevronDown className={`w-3 h-3 opacity-60 transition-transform duration-200 ${metricsExpanded ? '' : '-rotate-90'}`} />
-                  Strategy Performance
-                </div>
-                <span className={`font-mono text-[9px] font-bold ${
-                  roiMarginVal !== null && roiMarginVal >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'
-                }`}>
-                  {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}%` : `${roiMarginVal.toFixed(2)}%`) : '—'}
-                </span>
-              </div>
-
-              {metricsExpanded && (
-                <div className="px-2 pb-2 pt-0.5 border-t border-white/[0.06]">
-                  <table className="w-full text-right border-collapse text-[10px]">
-                    <tbody>
-                      <tr className="border-b border-white/[0.06]">
-                        <td className="py-1 text-white/50 text-left">System Total ROI</td>
-                        <td className={`py-1 font-mono font-semibold ${parseFloat(metrics['Sys ROI']) >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                          {parseFloat(metrics['Sys ROI']) > 0 ? `+${metrics['Sys ROI']}%` : `${metrics['Sys ROI']}%`}
-                        </td>
-                      </tr>
-                      <tr className="border-b border-white/[0.06]">
-                        <td className="py-1 text-white/50 text-left">Buy & Hold ROI</td>
-                        <td className="py-1 font-mono text-white">{metrics['B&H ROI']}%</td>
-                      </tr>
-                      <tr className="border-b border-white/[0.06]">
-                        <td className="py-1 text-white/50 text-left">ROI Margin</td>
-                        <td className={`py-1 font-mono font-semibold ${parseFloat(metrics['ROI Margin']) >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                          {parseFloat(metrics['ROI Margin']) > 0 ? `+${metrics['ROI Margin']}%` : `${metrics['ROI Margin']}%`}
-                        </td>
-                      </tr>
-                      <tr className="border-b border-white/[0.06]">
-                        <td className="py-1 text-white/50 text-left">Win Rate</td>
-                        <td className="py-1 font-mono text-white">{metrics['Win Rate']}%</td>
-                      </tr>
-                      <tr className="border-b border-white/[0.06]">
-                        <td className="py-1 text-white/50 text-left">Max Drawdown</td>
-                        <td className="py-1 font-mono text-[#ef4444] font-semibold">{metrics['Max Drawdown']}%</td>
-                      </tr>
-                      <tr className="border-b border-white/[0.06]">
-                        <td className="py-1 text-white/50 text-left">Avg Return / Trade</td>
-                        <td className={`py-1 font-mono ${parseFloat(metrics['Avg. Return/Trade']) >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                          {parseFloat(metrics['Avg. Return/Trade']) > 0 ? `+${metrics['Avg. Return/Trade']}%` : `${metrics['Avg. Return/Trade']}%`}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-1 text-white/50 text-left">Annual CAGR</td>
-                        <td className={`py-1 font-mono font-semibold ${parseFloat(metrics['Annual CAGR']) >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                          {parseFloat(metrics['Annual CAGR']) > 0 ? `+${metrics['Annual CAGR']}%` : `${metrics['Annual CAGR']}%`}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-            {/* Dynamic Settings */}
-            {activeStratDef.settings.length > 0 && (
-              <div className="flex flex-col gap-2 text-xs">
-                {activeStratDef.settings.map(setting => {
-                  if (setting.type === 'range') {
-                    return (
-                      <div key={setting.key} className="rounded-md bg-white/[0.02] border border-white/[0.09] p-2">
-                        <div className="text-white/50 mb-1.5 flex justify-between text-[10px]">
-                          <span>{setting.label}</span>
-                          <span className="text-white font-mono">{strategyParams[setting.key] ?? setting.default}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={setting.min}
-                          max={setting.max}
-                          step={setting.step}
-                          value={strategyParams[setting.key] ?? setting.default}
-                          onChange={(e) => updateStrategyParam?.(setting.key, Number(e.target.value))}
-                          className="w-full accent-plt-orange cursor-pointer h-1 bg-white/10 rounded-md"
-                        />
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            )}
-
-            {/* Dynamic Metrics */}
-            {activeStratDef.metrics.length > 0 && (
-              <div className="grid grid-cols-2 gap-1.5 text-xs">
-                {activeStratDef.metrics.map(metric => {
-                  let rawVal = visibleSignalData?.[metric.key];
-                  let displayVal = 'N/A';
-                  
-                  if (rawVal !== undefined && rawVal !== null) {
-                    if (metric.format === 'percentage') {
-                      displayVal = `${Number(rawVal).toFixed(metric.decimals ?? 2)}%`;
-                    } else if (metric.format === 'number') {
-                      displayVal = Number(rawVal).toFixed(metric.decimals ?? 2);
-                    } else {
-                      displayVal = String(rawVal);
-                    }
-                  }
-
-                  return (
-                    <div key={metric.key} className="rounded-md bg-white/[0.02] border border-white/[0.09] p-2 flex flex-col justify-between">
-                      <div className="text-white/40 text-[9px] uppercase tracking-wider">{metric.label}</div>
-                      <div className="text-white font-mono text-[11px] font-semibold mt-0.5">{displayVal}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            
-            <div className="flex flex-col gap-2 mt-0.5 pt-2 border-t border-white/[0.09]">
-              <div className="flex bg-white/[0.02] border border-white/[0.09] p-0.5 rounded-md">
-                <button
-                  className={`flex-1 py-1 text-[10px] font-medium rounded-[4px] transition-colors ${
-                    trainingModel === 'psi8' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white'
-                  }`}
-                  onClick={() => setTrainingModel('psi8')}
-                >
-                  PSI-8
-                </button>
-                <button
-                  className={`flex-1 py-1 text-[10px] font-medium rounded-[4px] transition-colors ${
-                    trainingModel === 'psi40' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white'
-                  }`}
-                  onClick={() => setTrainingModel('psi40')}
-                >
-                  PSI-40
-                </button>
-              </div>
-
-              <div className="text-[9px] font-medium uppercase tracking-wider text-white/40">Training period</div>
-              <div className="flex items-center justify-between text-[10px]">
-                <label className="text-white/40">Start Date</label>
-                <input 
-                  type="date" 
-                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28"
-                  value={strategyStartDate || ''}
-                  onChange={(e) => setStrategyStartDate?.(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center justify-between text-[10px]">
-                <label className="text-white/40">End Date</label>
-                <input 
-                  type="date" 
-                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28"
-                  value={strategyEndDate || ''}
-                  onChange={(e) => setStrategyEndDate?.(e.target.value)}
-                />
-              </div>
-              <button 
-                className="mt-1 w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-all rounded-md py-1.5 text-xs font-medium disabled:opacity-50 relative overflow-hidden"
-                onClick={startTraining}
-                disabled={optimizing}
-              >
-                {optimizing ? (
-                  <>
-                    <span className="relative z-10">Optimizing... {optimProgress.toFixed(0)}%</span>
-                    <div 
-                      className="absolute left-0 top-0 bottom-0 bg-white/30 z-0 transition-all duration-300" 
-                      style={{ width: `${optimProgress}%` }}
-                    />
-                  </>
-                ) : (
-                  "Start Training"
-                )}
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between mt-0.5 pt-2 border-t border-white/[0.09] text-[9px] text-white/40">
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-plt-orange" /> {visibleSignalData?.modelVersion || 'v1.0'}
-              </span>
-              <span>Updated {visibleSignalData?.date ? new Date(visibleSignalData.date).toLocaleDateString() : 'N/A'}</span>
-            </div>
-            {replayActive && replayEndDate && (
-              <div className="text-[9px] text-white/40">Replay as of {new Date(replayEndDate).toLocaleDateString()}</div>
-            )}
-          </div>
+        <div className="p-3 bg-[#09090b]/90 backdrop-blur-2xl">
+          {renderInspectorBody()}
+        </div>
       </motion.div>
+
+      {/* -------------------------------------------------- */}
+      {/* MOBILE EXPANDED BOTTOM SHEET DRAWER                */}
+      {/* -------------------------------------------------- */}
+      {expanded && (
+        <div className="md:hidden fixed inset-0 z-50 overflow-hidden flex flex-col justify-end">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in"
+            onClick={() => setExpanded(false)}
+          />
+          {/* Bottom Sheet */}
+          <div className="relative w-full max-h-[85vh] bg-zinc-950 border-t border-zinc-800 rounded-t-2xl shadow-2xl z-10 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+            {/* Drag Handle & Header */}
+            <div className="p-3 border-b border-zinc-800/80 flex flex-col items-center gap-2 bg-zinc-900/60 shrink-0">
+              <div className="w-10 h-1 rounded-full bg-zinc-700" />
+              <div className="w-full flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-plt-orange" />
+                  <span className="text-sm font-bold text-zinc-100 uppercase tracking-wider">
+                    {trainingModel === 'psi40' ? 'PSI-40 TREND' : 'PSI-8 INFLECTION'}
+                  </span>
+                  {roiMarginVal !== null && (
+                    <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.05] ${roiMarginVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {roiMarginVal > 0 ? `+${roiMarginVal.toFixed(1)}% α` : `${roiMarginVal.toFixed(1)}% α`}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpanded(false)}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {renderInspectorBody()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------- */}
+      {/* WALK-FORWARD CANDIDATE COMBINATIONS DRAWER         */}
+      {/* -------------------------------------------------- */}
+      <PsiOptimizationDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        symbol={activeSymbol}
+        model={trainingModel}
+        trainPeriod={drawerTrainPeriod}
+        testPeriod={drawerTestPeriod}
+        totalEvaluated={drawerTotalEvaluated}
+        candidates={drawerCandidates}
+        onPreviewCombination={(params) => {
+          if (bulkUpdateStrategyParams) {
+            bulkUpdateStrategyParams(params);
+          }
+        }}
+        onApplyCombination={(params, chosenModel) => {
+          if (bulkUpdateStrategyParams) {
+            bulkUpdateStrategyParams({ ...params, model: chosenModel });
+            try {
+              localStorage.setItem(`quantegx_custom_psi_${activeSymbol}`, JSON.stringify({ ...params, model: chosenModel }));
+            } catch (e) {}
+            toast.success("Strategy Updated", `Applied combination for ${activeSymbol} on ${chosenModel.toUpperCase()}.`);
+          }
+        }}
+      />
     </div>
   );
 }
