@@ -141,11 +141,14 @@ export default function DashboardBanksView({
         {/* 2. Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
-              Bank Accounts & Liquidity Overview
-            </h1>
-            <p className="text-xs md:text-sm text-white/40 mt-1">
-              Monthly cash flow trajectory, spending category breakdowns, and multi-currency bank allocations.
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-plt-orange" />
+              <h1 className="text-lg font-medium tracking-[-0.02em] text-white">
+                Bank Accounts & Liquidity
+              </h1>
+            </div>
+            <p className="mt-0.5 text-[13px] text-white/30">
+              Monthly cash flow trajectory, spending category breakdowns, and multi-currency bank allocations
             </p>
           </div>
 

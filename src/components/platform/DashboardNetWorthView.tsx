@@ -139,11 +139,14 @@ export default function DashboardNetWorthView({
       <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6">
         {/* 2. Header */}
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
-            Total Net Worth & Inflation Intelligence
-          </h1>
-          <p className="text-xs md:text-sm text-white/40 mt-1">
-            Mark-to-market total wealth aggregation, currency conversions, and CBE purchasing power deflator.
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-plt-orange" />
+            <h1 className="text-lg font-medium tracking-[-0.02em] text-white">
+              Net Worth & Inflation
+            </h1>
+          </div>
+          <p className="mt-0.5 text-[13px] text-white/30">
+            Mark-to-market total wealth aggregation, currency conversions, and CBE purchasing power deflator
           </p>
         </div>
 
