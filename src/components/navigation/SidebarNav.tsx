@@ -158,26 +158,34 @@ export default function SidebarNav() {
           
           {/* Desktop Floating Menu for Charts */}
           {isChartsMenuOpen && (
-            <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-32 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1 shadow-2xl">
+            <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-36 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1 shadow-2xl">
               <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
-                Views
+                Charts
               </div>
               <Link 
                 href="/charts?view=chart" 
                 prefetch={true}
                 onClick={() => setIsChartsMenuOpen(false)}
-                className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors flex items-center gap-2"
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                  isChartsActive && (!searchParams.get('view') || searchParams.get('view') === 'chart')
+                    ? 'text-white bg-white/[0.08]'
+                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-plt-orange"></span>
+                <LineChart size={13} className="text-plt-orange" />
                 Chart
               </Link>
               <Link 
                 href="/charts?view=positions" 
                 prefetch={true}
                 onClick={() => setIsChartsMenuOpen(false)}
-                className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors flex items-center gap-2"
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                  isChartsActive && searchParams.get('view') === 'positions'
+                    ? 'text-white bg-white/[0.08]'
+                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
+                <Layers size={13} className="text-sky-400" />
                 Positions
               </Link>
             </div>
