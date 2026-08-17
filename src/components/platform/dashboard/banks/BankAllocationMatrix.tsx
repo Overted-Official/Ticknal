@@ -23,8 +23,7 @@ export default function BankAllocationMatrix({ distribution }: BankAllocationMat
   return (
     <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <Landmark size={16} className="text-sky-400" />
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
           Bank-by-Bank Allocation Matrix
         </h3>
       </div>

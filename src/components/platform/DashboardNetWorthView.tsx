@@ -139,8 +139,7 @@ export default function DashboardNetWorthView({
       <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6">
         {/* 2. Header */}
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <ShieldCheck className="text-emerald-400" size={24} />
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             Total Net Worth & Inflation Intelligence
           </h1>
           <p className="text-xs md:text-sm text-white/40 mt-1">

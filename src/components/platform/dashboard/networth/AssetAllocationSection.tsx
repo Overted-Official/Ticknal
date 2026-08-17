@@ -31,8 +31,7 @@ export default function AssetAllocationSection({
       {/* Left 2 Cols: Asset Allocation Grid */}
       <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-4 flex flex-col justify-between">
         <div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <Layers size={16} className="text-plt-orange" />
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
             Asset Allocation & Wealth Composition
           </h3>
           <p className="text-[11px] text-white/40 mt-0.5">

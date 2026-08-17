@@ -208,10 +208,7 @@ export default function OrdersTable() {
       <motion.div variants={itemFadeInUp} className="border-b border-white/[0.09] px-6 py-5 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-plt-orange" />
-              <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Positions</h1>
-            </div>
+            <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Positions</h1>
             <p className="mt-0.5 text-[13px] text-white/30">Tracked long positions and execution trade history</p>
           </div>
           

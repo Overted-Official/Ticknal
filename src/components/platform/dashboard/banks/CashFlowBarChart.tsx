@@ -22,8 +22,7 @@ export default function CashFlowBarChart({ data }: CashFlowBarChartProps) {
   return (
     <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-4 flex flex-col">
       <div>
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <ArrowRightLeft size={16} className="text-emerald-400" />
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
           Monthly Cash Flow Activity (Inflows vs. Outflows)
         </h3>
         <p className="text-[11px] text-white/40 mt-0.5">

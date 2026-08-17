@@ -29,8 +29,7 @@ export default function SpendingDonutChart({ splits }: SpendingDonutChartProps) 
   return (
     <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4 flex flex-col">
       <div>
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <PieChartIcon size={16} className="text-plt-orange" />
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
           Spending Category Splits
         </h3>
         <p className="text-[11px] text-white/40 mt-0.5">

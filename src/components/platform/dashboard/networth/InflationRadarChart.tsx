@@ -29,8 +29,7 @@ export default function InflationRadarChart({
     <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <Flame size={16} className="text-rose-400" />
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
             CBE Inflation & Purchasing Power Radar
           </h3>
           <p className="text-[11px] text-white/40 mt-0.5">

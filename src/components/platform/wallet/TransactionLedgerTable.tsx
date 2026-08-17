@@ -40,8 +40,7 @@ export default function TransactionLedgerTable({
   return (
     <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider flex items-center gap-2">
-          <ArrowRightLeft size={15} className="text-emerald-400" />
+        <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
           Transaction History & Cash Flow Ledger
         </h2>
 

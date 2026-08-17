@@ -112,8 +112,7 @@ export default function BankAccountsLedgerView({
         {/* 2. Top Header & Action Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-              <Landmark className="text-emerald-400" size={24} />
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
               Bank Accounts & Cash Ledger
             </h1>
             <p className="text-xs md:text-sm text-white/40 mt-1">

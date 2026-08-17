@@ -19,8 +19,7 @@ export default function BankAccountsGrid({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider flex items-center gap-2">
-          <CreditCard size={15} className="text-plt-orange" />
+        <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
           Connected Bank Accounts ({accounts.length})
         </h2>
       </div>
