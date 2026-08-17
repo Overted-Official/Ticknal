@@ -36,6 +36,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAlerts } from '@/components/platform/AlertProvider';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 import PinSecurityCard from '@/components/platform/settings/PinSecurityCard';
+import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 
 export type SettingsUserProfile = {
   id: string;
@@ -402,109 +403,122 @@ export default function SettingsView({
       initial="hidden"
       animate="visible"
       variants={containerStagger}
-      className="flex-1 h-full w-full min-h-0 flex flex-col overflow-y-auto bg-transparent text-white pb-20 relative z-10"
+      className="flex-1 h-full w-full min-h-0 flex flex-col overflow-hidden bg-transparent text-white relative z-10"
     >
-      {/* Top Header Banner */}
-      <div className="border-b border-white/[0.09] px-6 py-5 shrink-0">
-        <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-plt-orange" />
-              <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Settings</h1>
+      {/* 1. Mobile Top Rail */}
+      <SubNavTopRail
+        activeTab={activeTab}
+        onChange={(val) => setActiveTab(val as any)}
+        items={[
+          { label: 'Profile', value: 'profile', icon: User },
+          { label: 'Security & PIN', value: 'security', icon: ShieldCheck },
+          { label: 'Devices', value: 'devices', icon: Smartphone, badge: devices.length },
+          { label: 'Alerts', value: 'alerts', icon: Bell, badge: monitoredTickers.length },
+        ]}
+      />
+
+      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-24">
+        {/* Top Header Banner */}
+        <div className="border-b border-white/[0.09] px-4 md:px-6 py-4 md:py-5 shrink-0">
+          <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="w-2 h-2 rounded-full bg-plt-orange" />
+                <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Settings</h1>
+              </div>
+              <p className="mt-0.5 text-[13px] text-white/30 truncate">
+                Account profile, security PIN, devices, and alert triggers
+              </p>
             </div>
-            <p className="mt-0.5 text-[13px] text-white/30">
-              Account profile, active devices, and real-time market alert triggers
-            </p>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
+            <div className="hidden md:flex items-center gap-2">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
+              >
+                <span>Dashboard</span>
+                <span className="text-plt-orange">→</span>
+              </Link>
+              <Link
+                href="/positions"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
+              >
+                <span>Manage Positions</span>
+                <span className="text-plt-orange">→</span>
+              </Link>
+              <Link
+                href="/charts"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
+              >
+                <span>Open Charts</span>
+                <span className="text-plt-orange">→</span>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Main Settings Canvas */}
+        <div className="p-4 md:p-6 space-y-2 w-full">
+          {/* Navigation Tabs (Desktop Only) */}
+          <motion.div variants={itemFadeInUp} className="hidden md:flex items-center gap-2 border-b border-white/[0.09] pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab('profile')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                activeTab === 'profile'
+                  ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
+                  : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+              }`}
             >
-              <span>Dashboard</span>
-              <span className="text-plt-orange">→</span>
-            </Link>
-            <Link
-              href="/positions"
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
+              <User size={14} className={activeTab === 'profile' ? 'text-plt-orange' : 'text-white/40'} />
+              <span>Account Profile</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('security')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                activeTab === 'security'
+                  ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
+                  : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+              }`}
             >
-              <span>Manage Positions</span>
-              <span className="text-plt-orange">→</span>
-            </Link>
-            <Link
-              href="/charts"
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
+              <ShieldCheck size={14} className={activeTab === 'security' ? 'text-plt-orange' : 'text-white/40'} />
+              <span>Security & PIN</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('devices')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                activeTab === 'devices'
+                  ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
+                  : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+              }`}
             >
-              <span>Open Charts</span>
-              <span className="text-plt-orange">→</span>
-            </Link>
-          </div>
-        </motion.div>
-      </div>
+              <Smartphone size={14} className={activeTab === 'devices' ? 'text-plt-orange' : 'text-white/40'} />
+              <span>Connected Devices</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
+                {devices.length}
+              </span>
+            </button>
 
-      {/* Main Settings Canvas */}
-      <div className="p-4 md:p-6 space-y-2 w-full">
-        {/* Navigation Tabs */}
-        <motion.div variants={itemFadeInUp} className="flex items-center gap-2 border-b border-white/[0.09] pb-3">
-          <button
-            type="button"
-            onClick={() => setActiveTab('profile')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              activeTab === 'profile'
-                ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
-            }`}
-          >
-            <User size={14} className={activeTab === 'profile' ? 'text-plt-orange' : 'text-white/40'} />
-            <span>Account Profile</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('security')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              activeTab === 'security'
-                ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
-            }`}
-          >
-            <ShieldCheck size={14} className={activeTab === 'security' ? 'text-plt-orange' : 'text-white/40'} />
-            <span>Security & PIN</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('devices')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              activeTab === 'devices'
-                ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
-            }`}
-          >
-            <Smartphone size={14} className={activeTab === 'devices' ? 'text-plt-orange' : 'text-white/40'} />
-            <span>Connected Devices</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
-              {devices.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('alerts')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              activeTab === 'alerts'
-                ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
-            }`}
-          >
-            <Bell size={14} className={activeTab === 'alerts' ? 'text-plt-orange' : 'text-white/40'} />
-            <span>Monitored Tickers & Alerts</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
-              {monitoredTickers.length}
-            </span>
-          </button>
-        </motion.div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('alerts')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                activeTab === 'alerts'
+                  ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
+                  : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+              }`}
+            >
+              <Bell size={14} className={activeTab === 'alerts' ? 'text-plt-orange' : 'text-white/40'} />
+              <span>Monitored Tickers & Alerts</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
+                {monitoredTickers.length}
+              </span>
+            </button>
+          </motion.div>
 
         {/* TAB 1: ACCOUNT PROFILE */}
         {activeTab === 'profile' && (
@@ -921,6 +935,7 @@ export default function SettingsView({
             </div>
           </motion.div>
         )}
+      </div>
       </div>
 
       {/* Add Alert Modal */}
