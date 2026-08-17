@@ -32,31 +32,35 @@ const CATEGORIES = [
   'Other',
 ];
 
+import BankAccountsSkeleton from './wallet/BankAccountsSkeleton';
+
 interface BankAccountsLedgerViewProps {
   initialAccounts?: BankAccount[];
   initialTransactions?: BankTransaction[];
   usdRate?: number;
+  hideTopRail?: boolean;
 }
 
 export default function BankAccountsLedgerView({
   initialAccounts = [],
   initialTransactions = [],
   usdRate = 50.20,
+  hideTopRail = false,
 }: BankAccountsLedgerViewProps) {
   const router = useRouter();
   const { toast } = useToast();
 
   // SWR Hooks for live data synchronization
-  const { data: accountsData, mutate: mutateAccounts } = useSWR<{ accounts: BankAccount[] }>(
+  const { data: accountsData, isLoading: isLoadingAccounts, mutate: mutateAccounts } = useSWR<{ accounts: BankAccount[] }>(
     '/api/banks/accounts',
     fetcher,
-    { fallbackData: { accounts: initialAccounts }, refreshInterval: 10000 }
+    { fallbackData: initialAccounts.length > 0 ? { accounts: initialAccounts } : undefined, refreshInterval: 10000 }
   );
 
   const { data: txData, mutate: mutateTx } = useSWR<{ transactions: BankTransaction[] }>(
     '/api/banks/transactions',
     fetcher,
-    { fallbackData: { transactions: initialTransactions }, refreshInterval: 10000 }
+    { fallbackData: initialTransactions.length > 0 ? { transactions: initialTransactions } : undefined, refreshInterval: 10000 }
   );
 
   const { data: banksListData } = useSWR<{ banks: BankItem[] }>('/api/banks/list', fetcher);
@@ -64,6 +68,7 @@ export default function BankAccountsLedgerView({
   const accounts = accountsData?.accounts ?? initialAccounts;
   const transactions = txData?.transactions ?? initialTransactions;
   const availableBanks = banksListData?.banks ?? [];
+  const isInitialLoading = !accountsData && accounts.length === 0;
 
   // Drawers state
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
@@ -100,18 +105,24 @@ export default function BankAccountsLedgerView({
 
   return (
     <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
-      {/* 1. Mobile Top Rail */}
-      <SubNavTopRail
-        activeTab="banks"
-        onChange={(val) => router.push(`/wallet?tab=${val}`)}
-        items={[
-          { label: 'Stock Positions', value: 'positions', icon: Wallet },
-          { label: 'Bank Accounts & Ledger', value: 'banks', icon: Landmark, badge: accounts.length },
-        ]}
-      />
+      {/* 1. Mobile Top Rail (only if not hidden by parent wrapper) */}
+      {!hideTopRail && (
+        <SubNavTopRail
+          activeTab="banks"
+          onChange={(val) => router.push(`/wallet?tab=${val}`)}
+          items={[
+            { label: 'Stock Positions', value: 'positions', icon: Wallet },
+            { label: 'Bank Accounts & Ledger', value: 'banks', icon: Landmark, badge: accounts.length },
+          ]}
+        />
+      )}
 
       <div className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20">
-        {/* 2. Top Header & Action Controls */}
+        {isInitialLoading ? (
+          <BankAccountsSkeleton />
+        ) : (
+          <>
+            {/* 2. Top Header & Action Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -170,6 +181,8 @@ export default function BankAccountsLedgerView({
           categories={CATEGORIES}
           onDeleteTransaction={handleDeleteTransaction}
         />
+          </>
+        )}
       </div>
 
       {/* Drawers */}

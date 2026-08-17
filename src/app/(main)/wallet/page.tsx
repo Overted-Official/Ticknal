@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import BankAccountsLedgerView from '@/components/platform/BankAccountsLedgerView';
-import WalletPositionsWrapper from './WalletPositionsWrapper';
+import WalletClientView from './WalletClientView';
 import { getCachedRecentPrices } from '@/lib/data-cache';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +20,7 @@ export default async function WalletPage({
     redirect('/');
   }
 
-  // Get current USD rate from cached daily_prices
+  // Get current USD rate from cached daily_prices (0 extra DB queries)
   let usdRate = 50.20;
   try {
     const recentPrices = await getCachedRecentPrices();
@@ -33,9 +32,5 @@ export default async function WalletPage({
     console.error('Error fetching USDEGP rate:', err);
   }
 
-  if (tab === 'banks') {
-    return <BankAccountsLedgerView usdRate={usdRate} />;
-  }
-
-  return <WalletPositionsWrapper />;
+  return <WalletClientView initialTab={tab} usdRate={usdRate} />;
 }
