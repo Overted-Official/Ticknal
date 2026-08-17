@@ -1,4 +1,4 @@
-import { boolean, date, index, integer, numeric, pgTable, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
 
 export const tickers = pgTable('tickers', {
   symbol: varchar('symbol', { length: 20 }).primaryKey(),
@@ -203,4 +203,11 @@ export const macroInflationRates = pgTable('macro_inflation_rates', {
   };
 });
 
-
+export const systemLogs = pgTable('system_logs', {
+  id: serial('id').primaryKey(),
+  level: varchar('level', { length: 20 }).default('INFO').notNull(),
+  source: varchar('source', { length: 50 }).notNull(),
+  message: text('message').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});

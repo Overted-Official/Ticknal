@@ -17,10 +17,14 @@ const nextConfig = {
   },
   outputFileTracingIncludes: {
     "/api/metrics": [
+      "./src/strategies/PSI/data/**/*",
       "./Data/psi_*best*.csv",
+      "./src/strategies/QuantumExhaustion-v2/deploy/**/*",
     ],
     "/api/signals": [
+      "./src/strategies/PSI/data/**/*",
       "./Data/psi_*best*.csv",
+      "./src/strategies/QuantumExhaustion-v2/deploy/**/*",
     ],
     "/api/predict": [
       "./src/tools/kronos/models/**/*.onnx",

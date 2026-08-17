@@ -1,12 +1,24 @@
 {
   "crons": [
     {
-      "path": "/api/cron/update-prices",
-      "schedule": "0 16 * * 1-5"
+      "path": "/api/cron/update-stocks",
+      "schedule": "0 15 * * 0-4"
     },
     {
-      "path": "/api/cron/signals",
-      "schedule": "0 13 * * 0-4"
+      "path": "/api/cron/update-funds",
+      "schedule": "0 18 * * 0-4"
+    },
+    {
+      "path": "/api/cron/update-macro",
+      "schedule": "30 18 1 * *"
+    },
+    {
+      "path": "/api/cron/process-signals",
+      "schedule": "30 15 * * 0-4"
+    },
+    {
+      "path": "/api/cron/watchdog",
+      "schedule": "0 20 * * 0-4"
     }
   ]
 }

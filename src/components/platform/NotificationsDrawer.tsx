@@ -28,6 +28,15 @@ export type SignalNotificationItem = {
   sector?: string | null;
 };
 
+export type SystemLogItem = {
+  id: number;
+  level: string;
+  source: string;
+  message: string;
+  metadata?: any;
+  createdAt: string;
+};
+
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 function formatTimeAgo(dateStr: string): string {
@@ -114,13 +123,22 @@ export default function NotificationsDrawer({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { data, mutate, isLoading } = useSWR<{ notifications: SignalNotificationItem[] }>(
-    isOpen ? '/api/notifications' : null,
+  const [activeTab, setActiveTab] = useState<'signals' | 'system'>('signals');
+
+  const { data: signalsData, mutate: mutateSignals, isLoading: isLoadingSignals } = useSWR<{ notifications: SignalNotificationItem[] }>(
+    isOpen && activeTab === 'signals' ? '/api/notifications' : null,
     fetcher,
     { refreshInterval: 15000 }
   );
 
-  const notifications = data?.notifications ?? [];
+  const { data: logsData, isLoading: isLoadingLogs } = useSWR<{ logs: SystemLogItem[] }>(
+    isOpen && activeTab === 'system' ? '/api/system-logs' : null,
+    fetcher,
+    { refreshInterval: 15000 }
+  );
+
+  const notifications = signalsData?.notifications ?? [];
+  const systemLogs = logsData?.logs ?? [];
   const [isClearing, setIsClearing] = useState(false);
 
   const handleClearAll = async () => {
@@ -128,7 +146,7 @@ export default function NotificationsDrawer({
     try {
       const res = await fetch('/api/notifications', { method: 'DELETE' });
       if (res.ok) {
-        mutate({ notifications: [] }, false);
+        mutateSignals({ notifications: [] }, false);
       }
     } catch (err) {
       console.error('Failed to clear notifications:', err);
@@ -141,7 +159,7 @@ export default function NotificationsDrawer({
     try {
       const res = await fetch(`/api/notifications?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
-        mutate(
+        mutateSignals(
           (prev) => ({
             notifications: (prev?.notifications ?? []).filter((n) => n.id !== id),
           }),
@@ -194,7 +212,7 @@ export default function NotificationsDrawer({
               </div>
 
               <div className="flex items-center gap-1">
-                {notifications.length > 0 && (
+                {activeTab === 'signals' && notifications.length > 0 && (
                   <button
                     type="button"
                     onClick={handleClearAll}
@@ -215,14 +233,39 @@ export default function NotificationsDrawer({
               </div>
             </div>
 
+            {/* Tabs */}
+            <div className="flex items-center gap-1 p-2 border-b border-white/[0.06] shrink-0">
+              <button
+                onClick={() => setActiveTab('signals')}
+                className={`flex-1 text-[11px] py-1.5 rounded-md font-medium transition-colors ${
+                  activeTab === 'signals'
+                    ? 'bg-white/[0.08] text-white'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                }`}
+              >
+                Position Alerts
+              </button>
+              <button
+                onClick={() => setActiveTab('system')}
+                className={`flex-1 text-[11px] py-1.5 rounded-md font-medium transition-colors ${
+                  activeTab === 'system'
+                    ? 'bg-white/[0.08] text-white'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                }`}
+              >
+                System Logs
+              </button>
+            </div>
+
             {/* Notification Items List */}
             <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04] p-3 space-y-2">
-              {isLoading && notifications.length === 0 ? (
-                <div className="py-20 text-center text-white/30 text-xs flex flex-col items-center justify-center gap-2">
-                  <Loader2 size={20} className="animate-spin text-plt-orange" />
-                  <span>Loading recent signals...</span>
-                </div>
-              ) : notifications.length === 0 ? (
+              {activeTab === 'signals' ? (
+                isLoadingSignals && notifications.length === 0 ? (
+                  <div className="py-20 text-center text-white/30 text-xs flex flex-col items-center justify-center gap-2">
+                    <Loader2 size={20} className="animate-spin text-plt-orange" />
+                    <span>Loading recent signals...</span>
+                  </div>
+                ) : notifications.length === 0 ? (
                 <div className="py-24 text-center text-white/30 text-xs flex flex-col items-center justify-center gap-3 px-6">
                   <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-white/20">
                     <Bell size={22} />
@@ -289,6 +332,61 @@ export default function NotificationsDrawer({
                     </div>
                   );
                 })
+              )) : (
+                isLoadingLogs && systemLogs.length === 0 ? (
+                  <div className="py-20 text-center text-white/30 text-xs flex flex-col items-center justify-center gap-2">
+                    <Loader2 size={20} className="animate-spin text-plt-orange" />
+                    <span>Loading system logs...</span>
+                  </div>
+                ) : systemLogs.length === 0 ? (
+                  <div className="py-24 text-center text-white/30 text-xs flex flex-col items-center justify-center gap-3 px-6">
+                    <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-white/20">
+                      <Clock size={22} />
+                    </div>
+                    <div>
+                      <span className="font-medium text-white/60 block mb-1">No system logs</span>
+                      <span className="text-[11px] text-white/30 block leading-relaxed">
+                        Cron job status updates will appear here.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  systemLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className={`p-3 rounded-md border ${
+                        log.level === 'ERROR'
+                          ? 'bg-[#ef4444]/5 border-[#ef4444]/20'
+                          : log.level === 'WARNING'
+                          ? 'bg-[#f59e0b]/5 border-[#f59e0b]/20'
+                          : 'bg-white/[0.02] border-white/[0.06]'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-0.5 shrink-0 ${
+                          log.level === 'ERROR' ? 'text-[#ef4444]' : log.level === 'WARNING' ? 'text-[#f59e0b]' : 'text-[#22c55e]'
+                        }`}>
+                          {log.level === 'ERROR' ? <AlertCircle size={14} /> : log.level === 'WARNING' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[11px] font-mono font-medium text-white/70">
+                              {log.source.toUpperCase()}
+                            </span>
+                            <span className="text-[10px] font-mono text-white/30">
+                              {formatTimeAgo(log.createdAt)}
+                            </span>
+                          </div>
+                          <p className={`text-[11px] leading-relaxed ${
+                            log.level === 'ERROR' ? 'text-[#ef4444]/90' : log.level === 'WARNING' ? 'text-[#f59e0b]/90' : 'text-white/60'
+                          }`}>
+                            {log.message}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
               )}
             </div>
           </motion.div>
