@@ -171,8 +171,10 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
   }
   const rangeData = { dayHigh, dayLow, yearHigh, yearLow };
 
+  const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(selectedSymbol.toUpperCase());
+
   let chartData = dbData
-    .filter(record => Number(record.volume) > 0)
+    .filter(record => isFund ? Number(record.close) > 0 : (Number(record.volume) > 0 || Number(record.close) > 0))
     .map(record => {
       // Ensure time is strictly 'YYYY-MM-DD' (10 chars). 
       // If the DB returns an ISO string or Date, this strips the time component.

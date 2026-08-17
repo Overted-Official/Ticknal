@@ -8,11 +8,13 @@ import {
   ColorType,
   CrosshairMode,
   CandlestickSeries,
+  AreaSeries,
   HistogramSeries,
   LineSeries,
   LineStyle,
   createSeriesMarkers,
   type CandlestickData,
+  type AreaData,
   type HistogramData,
   type IChartApi,
   type IPriceLine,
@@ -176,9 +178,13 @@ export default function ChartWidget({
   showSignals = true,
   onMetricsChange,
 }: ChartWidgetProps) {
+  const isFund = useMemo(() => {
+    return ['CI_QUANT', 'OSOUL', 'COF'].includes(symbol.toUpperCase());
+  }, [symbol]);
+
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | ISeriesApi<'Area'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const markerApiRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const orderPriceLineRefs = useRef<Map<number, IPriceLine[]>>(new Map());
@@ -387,31 +393,48 @@ export default function ChartWidget({
       },
     });
 
-    const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor,
-      downColor,
-      borderVisible: false,
-      wickUpColor: upColor,
-      wickDownColor: downColor,
-    });
+    let mainSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>;
+    let volumeSeries: ISeriesApi<'Histogram'> | null = null;
 
-    const volumeSeries = chart.addSeries(HistogramSeries, {
-      color: '#6A2CFF',
-      priceFormat: { type: 'volume' },
-      priceScaleId: '',
-    });
+    if (isFund) {
+      mainSeries = chart.addSeries(AreaSeries, {
+        topColor: 'rgba(59, 130, 246, 0.35)',
+        bottomColor: 'rgba(59, 130, 246, 0.02)',
+        lineColor: '#3b82f6',
+        lineWidth: 2,
+        priceFormat: {
+          type: 'price',
+          precision: 4,
+          minMove: 0.0001,
+        },
+      });
+    } else {
+      mainSeries = chart.addSeries(CandlestickSeries, {
+        upColor,
+        downColor,
+        borderVisible: false,
+        wickUpColor: upColor,
+        wickDownColor: downColor,
+      });
 
-    chart.priceScale('').applyOptions({
-      scaleMargins: {
-        top: 0.8,
-        bottom: 0,
-      },
-    });
+      volumeSeries = chart.addSeries(HistogramSeries, {
+        color: '#6A2CFF',
+        priceFormat: { type: 'volume' },
+        priceScaleId: '',
+      });
+
+      chart.priceScale('').applyOptions({
+        scaleMargins: {
+          top: 0.8,
+          bottom: 0,
+        },
+      });
+    }
 
     chartRef.current = chart;
-    candlestickSeriesRef.current = candlestickSeries;
+    candlestickSeriesRef.current = mainSeries;
     volumeSeriesRef.current = volumeSeries;
-    markerApiRef.current = createSeriesMarkers(candlestickSeries, []);
+    markerApiRef.current = createSeriesMarkers(mainSeries as any, []);
 
     return () => {
       markerApiRef.current?.detach();
@@ -422,33 +445,44 @@ export default function ChartWidget({
       chartRef.current = null;
       chart.remove();
     };
-  }, [clearOrderPriceLines, symbol]);
+  }, [clearOrderPriceLines, symbol, isFund]);
 
   useEffect(() => {
     const candlestickSeries = candlestickSeriesRef.current;
     const volumeSeries = volumeSeriesRef.current;
     const timeScale = chartRef.current?.timeScale();
-    if (!candlestickSeries || !volumeSeries || !timeScale) return;
+    if (!candlestickSeries || !timeScale) return;
 
     const currentLogicalRange = timeScale.getVisibleLogicalRange();
 
     const upColor = '#089981';
     const downColor = '#f23645';
-    const cData: CandlestickData<Time>[] = visibleData.map((d) => ({
-      time: d.time as Time,
-      open: d.open,
-      high: d.high,
-      low: d.low,
-      close: d.close,
-    }));
-    const vData: HistogramData<Time>[] = visibleData.map((d) => ({
-      time: d.time as Time,
-      value: d.volume,
-      color: d.close >= d.open ? `${upColor}80` : `${downColor}80`,
-    }));
 
-    candlestickSeries.setData(cData);
-    volumeSeries.setData(vData);
+    if (isFund) {
+      const aData: AreaData<Time>[] = visibleData.map((d) => ({
+        time: d.time as Time,
+        value: d.close,
+      }));
+      (candlestickSeries as ISeriesApi<'Area'>).setData(aData);
+    } else {
+      const cData: CandlestickData<Time>[] = visibleData.map((d) => ({
+        time: d.time as Time,
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+      }));
+      (candlestickSeries as ISeriesApi<'Candlestick'>).setData(cData);
+
+      if (volumeSeries) {
+        const vData: HistogramData<Time>[] = visibleData.map((d) => ({
+          time: d.time as Time,
+          value: d.volume,
+          color: d.close >= d.open ? `${upColor}80` : `${downColor}80`,
+        }));
+        volumeSeries.setData(vData);
+      }
+    }
 
     if (visibleData.length > 0) {
       const newLastIndex = visibleData.length - 1;
@@ -804,19 +838,26 @@ export default function ChartWidget({
         const close = Number(liveData.close);
         const open = Number(liveData.open);
 
-        candlestickSeriesRef.current?.update({
-          time: liveData.date as Time,
-          open,
-          high: Number(liveData.high),
-          low: Number(liveData.low),
-          close,
-        });
+        if (isFund) {
+          (candlestickSeriesRef.current as ISeriesApi<'Area'>)?.update({
+            time: liveData.date as Time,
+            value: close,
+          });
+        } else {
+          (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>)?.update({
+            time: liveData.date as Time,
+            open,
+            high: Number(liveData.high),
+            low: Number(liveData.low),
+            close,
+          });
 
-        volumeSeriesRef.current?.update({
-          time: liveData.date as Time,
-          value: Number(liveData.volume),
-          color: close >= open ? '#08998180' : '#f2364580',
-        });
+          volumeSeriesRef.current?.update({
+            time: liveData.date as Time,
+            value: Number(liveData.volume),
+            color: close >= open ? '#08998180' : '#f2364580',
+          });
+        }
       } catch (error) {
         console.error('Failed to poll live chart data', error);
       }
@@ -1645,7 +1686,7 @@ function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
 function buildOrderOverlay(
   order: ChartOrder,
   chart: IChartApi,
-  candlestickSeries: ISeriesApi<'Candlestick'>,
+  candlestickSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>,
   container: HTMLDivElement,
   visibleData: ChartData[],
 ): OrderOverlay | null {
@@ -1722,7 +1763,7 @@ function arrangeSignalBadges(
   signals: StrategySignal[],
   visibleData: ChartData[],
   chart: IChartApi,
-  candlestickSeries: ISeriesApi<'Candlestick'>,
+  candlestickSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>,
   container: HTMLDivElement,
 ): SignalBadge[] {
   const reservedRects: Rect[] = [];
@@ -1759,7 +1800,7 @@ function buildSignalBadge(
   signal: StrategySignal,
   visibleData: ChartData[],
   chart: IChartApi,
-  candlestickSeries: ISeriesApi<'Candlestick'>,
+  candlestickSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>,
   container: HTMLDivElement,
 ): SignalBadge | null {
   if (signal.signal === 'HOLD') return null;
