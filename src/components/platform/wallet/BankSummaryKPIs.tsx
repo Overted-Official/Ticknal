@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Landmark, DollarSign, Building2 } from 'lucide-react';
 import { type BankAccount } from '@/types/bank';
 
 interface BankSummaryKPIsProps {
@@ -19,53 +18,48 @@ export default function BankSummaryKPIs({ accounts, usdRate }: BankSummaryKPIsPr
     .reduce((sum, a) => sum + Number(a.balance), 0);
 
   const totalCombinedEgp = totalEgpLiquid + totalUsdLiquid * usdRate;
+  const egpCount = accounts.filter((a) => a.currency === 'EGP').length;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-      {/* 1. Total Liquid EGP */}
-      <div className="glass-panel rounded-xl p-4 flex flex-col justify-between">
-        <div className="text-[11px] text-white/40 font-medium uppercase tracking-wider flex items-center justify-between">
-          <span>Total Liquid EGP</span>
-          <span className="text-emerald-400 font-mono text-xs">EGP</span>
-        </div>
-        <div className="mt-2 text-xl md:text-2xl font-bold font-mono text-white tracking-tight">
-          {totalEgpLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          <span className="text-xs font-normal text-white/40 ml-1.5">EGP</span>
-        </div>
-        <div className="text-[11px] text-white/35 mt-1">
-          Across {accounts.filter((a) => a.currency === 'EGP').length} Egyptian pound account(s)
+    <div className="border border-white/[0.09] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-1 md:grid-cols-3 overflow-hidden">
+      {/* 1. Combined Liquid Cash */}
+      <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+        <div className="text-[11px] text-white/40 font-medium">Combined Liquid Cash</div>
+        <div>
+          <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">
+            {totalCombinedEgp.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+          </div>
+          <div className="mt-1 text-[11px] text-white/30 font-mono">
+            Ready uninvested buying power & savings
+          </div>
         </div>
       </div>
 
-      {/* 2. Total USD Foreign Reserves */}
-      <div className="glass-panel rounded-xl p-4 flex flex-col justify-between">
-        <div className="text-[11px] text-white/40 font-medium uppercase tracking-wider flex items-center justify-between">
-          <span>Foreign Reserves (USD)</span>
-          <span className="text-sky-400 font-mono text-xs">USD</span>
-        </div>
-        <div className="mt-2 text-xl md:text-2xl font-bold font-mono text-white tracking-tight">
-          ${totalUsdLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          <span className="text-xs font-normal text-white/40 ml-1.5">USD</span>
-        </div>
-        <div className="text-[11px] text-white/35 mt-1 flex items-center gap-1.5">
-          <span>≈ {(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} EGP</span>
-          <span className="text-white/20">•</span>
-          <span className="text-white/40">@{usdRate.toFixed(2)} FX</span>
+      {/* 2. Total Liquid EGP */}
+      <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+        <div className="text-[11px] text-white/40 font-medium">Total Liquid EGP</div>
+        <div>
+          <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">
+            {totalEgpLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+          </div>
+          <div className="mt-1 text-[11px] text-white/30 font-mono">
+            Across {egpCount} Egyptian pound account{egpCount !== 1 ? 's' : ''}
+          </div>
         </div>
       </div>
 
-      {/* 3. Combined Liquid Worth */}
-      <div className="glass-panel rounded-xl p-4 flex flex-col justify-between border-emerald-500/20 bg-gradient-to-br from-emerald-950/20 to-black">
-        <div className="text-[11px] text-emerald-400/70 font-medium uppercase tracking-wider flex items-center justify-between">
-          <span>Combined Liquid Cash</span>
-          <Building2 size={15} className="text-emerald-400" />
-        </div>
-        <div className="mt-2 text-xl md:text-2xl font-bold font-mono text-emerald-400 tracking-tight">
-          {totalCombinedEgp.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          <span className="text-xs font-normal text-emerald-400/60 ml-1.5">EGP</span>
-        </div>
-        <div className="text-[11px] text-white/40 mt-1">
-          Ready uninvested buying power & savings
+      {/* 3. Foreign Reserves (USD) */}
+      <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
+        <div className="text-[11px] text-white/40 font-medium">Foreign Reserves (USD)</div>
+        <div>
+          <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">
+            ${totalUsdLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+          </div>
+          <div className="mt-1 text-[11px] text-white/30 font-mono flex items-center gap-1.5">
+            <span>≈ {(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} EGP</span>
+            <span className="text-white/20">·</span>
+            <span>@{usdRate.toFixed(2)} FX</span>
+          </div>
         </div>
       </div>
     </div>

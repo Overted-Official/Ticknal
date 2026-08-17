@@ -90,9 +90,9 @@ export default function BankAccountsGrid({
     return Array.from(map.values()).sort((a, b) => b.totalCombinedEgp - a.totalCombinedEgp);
   }, [accounts, usdRate]);
 
-  // Initially expand all banks
+  // Default collapsed
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
-    () => new Set(groupedBanks.map((g) => g.key))
+    () => new Set()
   );
 
   const toggleExpand = (key: string) => {
