@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X } from '@/components/ui/icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/context/ToastContext';
 
 type OrderRow = {
   id: number;
@@ -22,6 +23,7 @@ export default function CloseOrderModal({
   onSuccess: () => void; 
   order: OrderRow | null; 
 }) {
+  const { toast } = useToast();
   const [form, setForm] = useState({ 
     exitDate: new Date().toISOString().split('T')[0], 
     exitPrice: '', 
@@ -66,14 +68,15 @@ export default function CloseOrderModal({
         }),
       });
       if (res.ok) {
+        toast.success('Position Closed', `Closed ${order.tickerSymbol} at ${Number(form.exitPrice).toLocaleString()} EGP.`);
         onSuccess();
         onClose();
       } else {
-        alert('Failed to close position');
+        toast.error('Close Failed', 'Failed to close position.');
       }
     } catch (e) {
       console.error(e);
-      alert('Error closing position');
+      toast.error('Error', 'Error closing position.');
     }
   };
 

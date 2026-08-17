@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 
 import { STRATEGIES, getAvailableStrategies } from '@/strategies/registry';
 import type { ChartData } from '@/components/platform/ChartWidget';
+import { useToast } from '@/context/ToastContext';
 
 type SignalData = Record<string, any>; // Make this dynamic since different strategies return different things
 // We'll keep some common fields like date, signal, confidence
@@ -48,6 +49,7 @@ export default function SignalPanel({
   showSignals = true,
   setShowSignals,
 }: SignalPanelProps) {
+  const { toast } = useToast();
   const [signalData, setSignalData] = useState<SignalData | null>(null);
   const [loading, setLoading] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
@@ -116,7 +118,7 @@ export default function SignalPanel({
   const startTraining = () => {
     if (!chartData || chartData.length === 0) return;
     if (trainingModel !== 'psi8') {
-      alert("Only PSI-8 training is currently supported.");
+      toast.info("Model Training", "Only PSI-8 training is currently supported.");
       return;
     }
 

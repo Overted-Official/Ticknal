@@ -28,6 +28,7 @@ import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import { INDICATORS, getAvailableIndicators } from '@/indicators';
 import { WatchlistItem } from '@/components/platform/RightSidebar';
+import { useToast } from '@/context/ToastContext';
 
 export interface ChartData {
   time: string; // "YYYY-MM-DD"
@@ -275,6 +276,7 @@ export default function ChartWidget({
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { toast } = useToast();
   const availableIndicators = useMemo(() => getAvailableIndicators(), []);
 
   const toggleIndicator = useCallback((id: string) => {
@@ -875,7 +877,7 @@ export default function ChartWidget({
       }
     } catch (err) {
       console.error("Prediction failed:", err);
-      alert("Prediction failed. Check console for details.");
+      toast.error("Prediction Failed", "Check console for details.");
     } finally {
       setIsPredicting(false);
     }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Search } from '@/components/ui/icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/context/ToastContext';
 
 export type InitialOrderData = {
   symbol: string;
@@ -25,6 +26,7 @@ export default function AddOrderModal({
   onSuccess?: () => void;
   initialData?: InitialOrderData | null;
 }) {
+  const { toast } = useToast();
   const [newOrderForm, setNewOrderForm] = useState({ 
     symbol: '', 
     entryDate: new Date().toISOString().split('T')[0], 
@@ -59,7 +61,7 @@ export default function AddOrderModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Sync initialData when modal opens, and fetch tickers if manual entry
+  // Sync initialData when modal opens, and fetch tickers
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
@@ -72,30 +74,35 @@ export default function AddOrderModal({
         setIsSearchOpen(false);
       }, 0);
 
-      if (!initialData?.symbol) {
-        fetch('/api/tickers')
-          .then(res => res.json())
-          .then((data: Ticker[]) => {
+      fetch('/api/tickers')
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) {
             setTickers(data);
             setFilteredTickers(data.slice(0, 50));
-          })
-          .catch(console.error);
-      }
+          }
+        })
+        .catch(console.error);
     }
   }, [isOpen, initialData]);
 
   const handleSymbolChange = (val: string) => {
-    setNewOrderForm({ ...newOrderForm, symbol: val.toUpperCase() });
-    const filtered = tickers.filter(t => 
-      t.symbol.toLowerCase().includes(val.toLowerCase()) || 
-      t.companyName.toLowerCase().includes(val.toLowerCase())
-    ).slice(0, 50);
-    setFilteredTickers(filtered);
+    const sym = val.toUpperCase();
+    setNewOrderForm(prev => ({ ...prev, symbol: sym }));
+    if (!sym) {
+      setFilteredTickers(tickers.slice(0, 50));
+    } else {
+      const filtered = tickers.filter(
+        t => t.symbol.toLowerCase().includes(val.toLowerCase()) || 
+             t.companyName.toLowerCase().includes(val.toLowerCase())
+      ).slice(0, 50);
+      setFilteredTickers(filtered);
+    }
     setIsSearchOpen(true);
   };
 
   const handleSelectTicker = (ticker: Ticker) => {
-    setNewOrderForm({ ...newOrderForm, symbol: ticker.symbol });
+    setNewOrderForm(prev => ({ ...prev, symbol: ticker.symbol }));
     setIsSearchOpen(false);
   };
 
@@ -113,14 +120,15 @@ export default function AddOrderModal({
         })
       });
       if (res.ok) {
+        toast.success('Position Added', `${newOrderForm.symbol} position created successfully.`);
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        alert('Failed to add position');
+        toast.error('Position Failed', 'Failed to add position.');
       }
     } catch (e) {
       console.error(e);
-      alert('Error adding position');
+      toast.error('Error', 'Error adding position.');
     }
   };
 

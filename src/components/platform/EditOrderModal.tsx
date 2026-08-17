@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X } from '@/components/ui/icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/context/ToastContext';
 
 type OrderRow = {
   id: number;
@@ -25,6 +26,7 @@ export default function EditOrderModal({
   onSuccess,
   order
 }: EditOrderModalProps) {
+  const { toast } = useToast();
   const [form, setForm] = useState({ 
     entryDate: '', 
     entryPrice: '', 
@@ -68,14 +70,15 @@ export default function EditOrderModal({
         }),
       });
       if (res.ok) {
+        toast.success('Position Updated', `Updated ${order.tickerSymbol} successfully.`);
         onSuccess();
         onClose();
       } else {
-        alert('Failed to edit position');
+        toast.error('Update Failed', 'Failed to edit position.');
       }
     } catch (e) {
       console.error(e);
-      alert('Error editing position');
+      toast.error('Error', 'Error editing position.');
     }
   };
 

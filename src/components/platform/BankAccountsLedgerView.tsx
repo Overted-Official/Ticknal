@@ -8,9 +8,10 @@ import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import BankSummaryKPIs from './wallet/BankSummaryKPIs';
 import BankAccountsGrid from './wallet/BankAccountsGrid';
 import TransactionLedgerTable from './wallet/TransactionLedgerTable';
-import AddAccountModal from './wallet/AddAccountModal';
-import LogTransactionModal from './wallet/LogTransactionModal';
+import AddAccountDrawer from './wallet/AddAccountDrawer';
+import LogTransactionDrawer from './wallet/LogTransactionDrawer';
 import { type BankAccount, type BankTransaction, type BankItem } from '@/types/bank';
+import { useToast } from '@/context/ToastContext';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -42,6 +43,7 @@ export default function BankAccountsLedgerView({
   usdRate = 50.20,
 }: BankAccountsLedgerViewProps) {
   const router = useRouter();
+  const { toast } = useToast();
 
   // SWR Hooks for live data synchronization
   const { data: accountsData, mutate: mutateAccounts } = useSWR<{ accounts: BankAccount[] }>(
@@ -62,19 +64,21 @@ export default function BankAccountsLedgerView({
   const transactions = txData?.transactions ?? initialTransactions;
   const availableBanks = banksListData?.banks ?? [];
 
-  // Modals state
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [isTxModalOpen, setIsTxModalOpen] = useState(false);
+  // Drawers state
+  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+  const [isTxDrawerOpen, setIsTxDrawerOpen] = useState(false);
 
   // Handle Delete Account
   async function handleDeleteAccount(id: number) {
     if (!confirm('Are you sure you want to delete this bank account? All associated transaction records will be removed.')) return;
     try {
       await fetch(`/api/banks/accounts?id=${id}`, { method: 'DELETE' });
+      toast.info('Account Deleted', 'Bank account and related entries were removed.');
       mutateAccounts();
       mutateTx();
     } catch (err) {
       console.error('Failed to delete account:', err);
+      toast.error('Deletion Failed', 'Could not delete bank account.');
     }
   }
 
@@ -83,10 +87,12 @@ export default function BankAccountsLedgerView({
     if (!confirm('Delete this transaction and reverse its balance impact?')) return;
     try {
       await fetch(`/api/banks/transactions?id=${id}`, { method: 'DELETE' });
+      toast.info('Transaction Reverted', 'Balance has been restored.');
       mutateAccounts();
       mutateTx();
     } catch (err) {
       console.error('Failed to delete transaction:', err);
+      toast.error('Deletion Failed', 'Could not delete transaction.');
     }
   }
 
@@ -120,10 +126,10 @@ export default function BankAccountsLedgerView({
               type="button"
               onClick={() => {
                 if (accounts.length === 0) {
-                  alert('Please add a bank account first!');
+                  toast.warning('No Accounts Found', 'Please add a bank account first before logging transactions.');
                   return;
                 }
-                setIsTxModalOpen(true);
+                setIsTxDrawerOpen(true);
               }}
               className="px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black font-semibold text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-emerald-500/10"
             >
@@ -132,7 +138,7 @@ export default function BankAccountsLedgerView({
             </button>
             <button
               type="button"
-              onClick={() => setIsAccountModalOpen(true)}
+              onClick={() => setIsAccountDrawerOpen(true)}
               className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium text-xs border border-white/10 transition-all flex items-center gap-1.5"
             >
               <Plus size={14} strokeWidth={2} />
@@ -147,7 +153,7 @@ export default function BankAccountsLedgerView({
         {/* 4. Bank Accounts Cards Grid */}
         <BankAccountsGrid
           accounts={accounts}
-          onOpenAddModal={() => setIsAccountModalOpen(true)}
+          onOpenAddModal={() => setIsAccountDrawerOpen(true)}
           onDeleteAccount={handleDeleteAccount}
         />
 
@@ -160,17 +166,17 @@ export default function BankAccountsLedgerView({
         />
       </div>
 
-      {/* Modals */}
-      <AddAccountModal
-        isOpen={isAccountModalOpen}
-        onClose={() => setIsAccountModalOpen(false)}
+      {/* Drawers */}
+      <AddAccountDrawer
+        isOpen={isAccountDrawerOpen}
+        onClose={() => setIsAccountDrawerOpen(false)}
         availableBanks={availableBanks}
         onAccountCreated={() => mutateAccounts()}
       />
 
-      <LogTransactionModal
-        isOpen={isTxModalOpen}
-        onClose={() => setIsTxModalOpen(false)}
+      <LogTransactionDrawer
+        isOpen={isTxDrawerOpen}
+        onClose={() => setIsTxDrawerOpen(false)}
         accounts={accounts}
         categories={CATEGORIES}
         onTransactionLogged={() => {
