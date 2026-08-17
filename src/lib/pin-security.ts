@@ -124,9 +124,51 @@ export function removeAppPin(): void {
 export async function verifyAppPin(inputPin: string): Promise<boolean> {
   const storedHash = getStoredPinHash();
   if (!storedHash) return true;
-  const salt = typeof window !== 'undefined' ? localStorage.getItem(PIN_SALT_KEY) || '' : '';
-  const inputHash = await hashPin(inputPin, salt);
-  return inputHash === storedHash;
+
+  // 1. Check with stored random salt (if salt exists)
+  const storedSalt = typeof window !== 'undefined' ? localStorage.getItem(PIN_SALT_KEY) : null;
+  if (storedSalt) {
+    const inputHash = await hashPin(inputPin, storedSalt);
+    if (inputHash === storedHash) return true;
+  }
+
+  // 2. Check legacy SHA-256 salt format: "quantegx_salt_${pin}"
+  if (typeof window !== 'undefined' && window.crypto?.subtle) {
+    try {
+      const encoder = new TextEncoder();
+      const legacyData = encoder.encode(`quantegx_salt_${inputPin}`);
+      const legacyBuffer = await window.crypto.subtle.digest('SHA-256', legacyData);
+      const legacyHash = Array.from(new Uint8Array(legacyBuffer))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+
+      if (legacyHash === storedHash) {
+        // Automatically upgrade legacy hash to modern salted format!
+        await setAppPin(inputPin);
+        return true;
+      }
+    } catch {}
+  }
+
+  // 3. Check legacy simple hash fallback (pre-crypto or fallback environments)
+  let fallbackLegacy = 0;
+  for (let i = 0; i < inputPin.length; i++) {
+    fallbackLegacy = (fallbackLegacy << 5) - fallbackLegacy + inputPin.charCodeAt(i);
+    fallbackLegacy |= 0;
+  }
+  if (String(fallbackLegacy) === storedHash) {
+    await setAppPin(inputPin);
+    return true;
+  }
+
+  // 4. Also check without salt as a safety fallback
+  const rawHash = await hashPin(inputPin, '');
+  if (rawHash === storedHash) {
+    await setAppPin(inputPin);
+    return true;
+  }
+
+  return false;
 }
 
 export function isSessionUnlocked(): boolean {

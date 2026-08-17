@@ -24,6 +24,7 @@ interface PinLockContextType {
   unlockApp: (pin: string) => Promise<boolean>;
   setPin: (pin: string) => Promise<void>;
   removePin: () => void;
+  resetPin: () => void;
   updateSettings: (settings: PinSecuritySettings) => void;
 }
 
@@ -98,9 +99,11 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
     syncState();
   }, [syncState]);
 
-  // Remove PIN
-  const handleRemovePin = useCallback(() => {
+  // Remove / Reset PIN
+  const handleResetPin = useCallback(() => {
     removeAppPin();
+    setSessionUnlocked(true);
+    setIsLocked(false);
     syncState();
   }, [syncState]);
 
@@ -162,7 +165,8 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
         lockApp,
         unlockApp,
         setPin: handleSetPin,
-        removePin: handleRemovePin,
+        removePin: handleResetPin,
+        resetPin: handleResetPin,
         updateSettings: handleUpdateSettings,
       }}
     >
@@ -170,7 +174,9 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
 
       {/* Lock Screen Overlay */}
       <AnimatePresence>
-        {isLocked && isConfigured && <PinLockScreen onUnlock={unlockApp} />}
+        {isLocked && isConfigured && (
+          <PinLockScreen onUnlock={unlockApp} onResetPin={handleResetPin} />
+        )}
       </AnimatePresence>
     </PinLockContext.Provider>
   );

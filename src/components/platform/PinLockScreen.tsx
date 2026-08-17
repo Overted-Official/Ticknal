@@ -8,13 +8,15 @@ import { useRouter } from 'next/navigation';
 
 interface PinLockScreenProps {
   onUnlock: (pin: string) => Promise<boolean>;
+  onResetPin?: () => void;
 }
 
-export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
+export default function PinLockScreen({ onUnlock, onResetPin }: PinLockScreenProps) {
   const [pin, setPin] = useState<string>('');
   const [isError, setIsError] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const router = useRouter();
 
   const handleDigit = useCallback(
@@ -66,6 +68,7 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
   // Support physical keyboard inputs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (showResetConfirm) return;
       if (e.key >= '0' && e.key <= '9') {
         handleDigit(e.key);
       } else if (e.key === 'Backspace') {
@@ -75,15 +78,21 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleDigit, handleBackspace]);
+  }, [handleDigit, handleBackspace, showResetConfirm]);
 
-  const handleForgotPin = async () => {
-    if (confirm('Forgot your PIN? Signing out will allow you to re-authenticate with your account credentials.')) {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      router.push('/');
-      router.refresh();
+  const handleSignOut = async () => {
+    if (onResetPin) onResetPin();
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
+
+  const handleResetConfirm = () => {
+    if (onResetPin) {
+      onResetPin();
     }
+    setShowResetConfirm(false);
   };
 
   return (
@@ -92,17 +101,17 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-between py-12 px-6 text-white select-none overflow-hidden"
+      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-between py-10 px-6 text-white select-none overflow-hidden"
     >
       {/* Top Header */}
-      <div className="flex flex-col items-center text-center space-y-3 mt-4">
-        <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center shadow-[0_0_24px_rgba(255,100,13,0.15)] relative">
-          <Lock size={24} className="text-plt-orange" />
+      <div className="flex flex-col items-center text-center space-y-3 mt-2">
+        <div className="w-13 h-13 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center shadow-[0_0_24px_rgba(255,100,13,0.15)] relative">
+          <Lock size={22} className="text-plt-orange" />
           <div className="absolute inset-0 rounded-2xl border border-plt-orange/30 animate-pulse" />
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-white">QuantEGX Security</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-white">QuantEGX Security</h2>
           <p className="text-xs text-white/40 mt-1">Enter your 4-digit passcode to unlock</p>
         </div>
       </div>
@@ -149,7 +158,7 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
       </div>
 
       {/* Numeric Keypad (3x4) */}
-      <div className="w-full max-w-[280px] space-y-4 mb-4">
+      <div className="w-full max-w-[280px] space-y-4 mb-3">
         {/* Rows 1-3 */}
         {[
           ['1', '2', '3'],
@@ -196,17 +205,77 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
         </div>
       </div>
 
-      {/* Footer: Forgot PIN */}
-      <div className="mt-2 text-center">
+      {/* Footer: Reset PIN & Sign Out options */}
+      <div className="mt-2 text-center flex items-center justify-center gap-4 text-xs">
         <button
           type="button"
-          onClick={handleForgotPin}
-          className="text-xs text-white/30 hover:text-white/70 transition-colors flex items-center gap-1.5 mx-auto"
+          onClick={() => setShowResetConfirm(true)}
+          className="text-white/40 hover:text-plt-orange transition-colors flex items-center gap-1"
+        >
+          <span>Reset Passcode</span>
+        </button>
+
+        <span className="text-white/20">•</span>
+
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="text-white/40 hover:text-white/80 transition-colors flex items-center gap-1"
         >
           <LogOut size={12} />
-          <span>Forgot PIN? Sign out</span>
+          <span>Sign Out</span>
         </button>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#121212] border border-white/[0.12] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-plt-orange/10 border border-plt-orange/20 flex items-center justify-center text-plt-orange shrink-0">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Reset Device Passcode</h3>
+                  <p className="text-xs text-white/40 mt-0.5">Clear PIN lock on this device</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-white/60 leading-relaxed">
+                Resetting will remove the PIN lock on this device so you can access your dashboard and configure a new PIN in Settings.
+              </p>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(false)}
+                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetConfirm}
+                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-plt-orange hover:bg-plt-orange/90 shadow-sm transition-colors"
+                >
+                  Reset PIN & Unlock
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
