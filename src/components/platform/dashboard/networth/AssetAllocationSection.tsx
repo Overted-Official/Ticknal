@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Layers, PieChart as PieChartIcon } from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import React, { useState } from 'react';
+import { PieChart as PieChartIcon, LayoutGrid } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Treemap } from 'recharts';
 
 export type AssetSlice = {
   name: string;
@@ -23,8 +23,95 @@ export default function AssetAllocationSection({
   currencyMode,
   usdRate,
 }: AssetAllocationSectionProps) {
+  const [chartType, setChartType] = useState<'donut' | 'treemap'>('donut');
+
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
+
+  // Custom Sleek Tooltip showing Category Name, Value & Percentage
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const item = payload[0].payload || payload[0];
+      const sliceName = item.name || payload[0].name;
+      const sliceVal = Number(item.value ?? payload[0].value ?? 0);
+      const slicePct = item.percentage ?? (slices.find((s) => s.name === sliceName)?.percentage ?? 0);
+      const sliceColor = item.color || (slices.find((s) => s.name === sliceName)?.color ?? '#fff');
+
+      return (
+        <div className="p-2.5 rounded-lg bg-[#141414] border border-white/15 shadow-xl text-xs font-mono">
+          <div className="flex items-center gap-1.5 font-bold text-white mb-1 font-sans">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: sliceColor }} />
+            <span>{sliceName}</span>
+          </div>
+          <div className="text-white/80">
+            {displaySymbol}
+            {sliceVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {displaySuffix}
+            <span className="text-emerald-400 font-bold ml-1.5">({slicePct.toFixed(1)}%)</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Custom Node Content for Treemap
+  const TreemapContentNode = (props: any) => {
+    const { depth, x, y, width, height, name, color, percentage } = props;
+
+    if (depth !== 1 || width <= 0 || height <= 0) return null;
+
+    const matchedSlice = slices.find((s) => s.name === name);
+    const nodeColor = color || matchedSlice?.color || '#3b82f6';
+    const nodePct = percentage ?? matchedSlice?.percentage ?? 0;
+
+    return (
+      <g>
+        <rect
+          x={x + 1}
+          y={y + 1}
+          width={width - 2}
+          height={height - 2}
+          rx={6}
+          ry={6}
+          style={{
+            fill: nodeColor,
+            stroke: '#000',
+            strokeWidth: 2,
+            opacity: 0.9,
+            cursor: 'pointer',
+          }}
+        />
+        {width > 55 && height > 36 && (
+          <text
+            x={x + width / 2}
+            y={y + height / 2 - 4}
+            textAnchor="middle"
+            fill="#fff"
+            fontSize={11}
+            fontWeight="bold"
+            style={{ pointerEvents: 'none' }}
+          >
+            {name}
+          </text>
+        )}
+        {width > 55 && height > 48 && (
+          <text
+            x={x + width / 2}
+            y={y + height / 2 + 10}
+            textAnchor="middle"
+            fill="rgba(255,255,255,0.75)"
+            fontSize={10}
+            fontFamily="monospace"
+            fontWeight="600"
+            style={{ pointerEvents: 'none' }}
+          >
+            {nodePct.toFixed(1)}%
+          </text>
+        )}
+      </g>
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
@@ -75,37 +162,69 @@ export default function AssetAllocationSection({
         </div>
       </div>
 
-      {/* Right 1 Col: Donut Chart */}
+      {/* Right 1 Col: Donut or Treemap Chart */}
       <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4 flex flex-col justify-between">
-        <div>
+        <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <PieChartIcon size={16} className="text-emerald-400" />
             Portfolio Split
           </h3>
+
+          {/* View Switcher: Donut vs Treemap */}
+          <div className="flex items-center bg-black border border-white/[0.08] rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => setChartType('donut')}
+              className={`p-1.5 rounded-md text-xs transition ${
+                chartType === 'donut' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-white/40 hover:text-white'
+              }`}
+              title="Donut Chart"
+            >
+              <PieChartIcon size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setChartType('treemap')}
+              className={`p-1.5 rounded-md text-xs transition ${
+                chartType === 'treemap' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-white/40 hover:text-white'
+              }`}
+              title="Treemap"
+            >
+              <LayoutGrid size={14} />
+            </button>
+          </div>
         </div>
 
         <div className="h-48 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
+            {chartType === 'donut' ? (
+              <PieChart>
+                <Pie
+                  data={slices}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={3}
+                >
+                  {slices.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            ) : (
+              <Treemap
                 data={slices}
                 dataKey="value"
                 nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={75}
-                paddingAngle={3}
+                stroke="#000"
+                content={<TreemapContentNode />}
               >
-                {slices.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: 8, fontSize: 12 }}
-                formatter={(val: any) => [`${displaySymbol}${Number(val).toLocaleString()} ${displaySuffix}`, '']}
-              />
-            </PieChart>
+                <Tooltip content={<CustomTooltip />} />
+              </Treemap>
+            )}
           </ResponsiveContainer>
         </div>
 
