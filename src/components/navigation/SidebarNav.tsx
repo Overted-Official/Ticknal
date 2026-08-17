@@ -91,6 +91,7 @@ export default function SidebarNav() {
               </div>
               <Link 
                 href="/dashboard?tab=net-worth" 
+                prefetch={true}
                 onClick={() => setIsDashboardMenuOpen(false)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
                   isDashboardActive && (!currentTab || currentTab === 'net-worth')
@@ -103,6 +104,7 @@ export default function SidebarNav() {
               </Link>
               <Link 
                 href="/dashboard?tab=investments" 
+                prefetch={true}
                 onClick={() => setIsDashboardMenuOpen(false)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
                   isDashboardActive && currentTab === 'investments'
@@ -115,6 +117,7 @@ export default function SidebarNav() {
               </Link>
               <Link 
                 href="/dashboard?tab=banks" 
+                prefetch={true}
                 onClick={() => setIsDashboardMenuOpen(false)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
                   isDashboardActive && currentTab === 'banks'
@@ -161,6 +164,7 @@ export default function SidebarNav() {
               </div>
               <Link 
                 href="/charts?view=chart" 
+                prefetch={true}
                 onClick={() => setIsChartsMenuOpen(false)}
                 className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors flex items-center gap-2"
               >
@@ -169,6 +173,7 @@ export default function SidebarNav() {
               </Link>
               <Link 
                 href="/charts?view=positions" 
+                prefetch={true}
                 onClick={() => setIsChartsMenuOpen(false)}
                 className="px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors flex items-center gap-2"
               >
@@ -211,6 +216,7 @@ export default function SidebarNav() {
               </div>
               <Link 
                 href="/wallet?tab=positions" 
+                prefetch={true}
                 onClick={() => setIsWalletMenuOpen(false)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
                   isWalletActive && (!currentTab || currentTab === 'positions')
@@ -223,6 +229,7 @@ export default function SidebarNav() {
               </Link>
               <Link 
                 href="/wallet?tab=banks" 
+                prefetch={true}
                 onClick={() => setIsWalletMenuOpen(false)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
                   isWalletActive && currentTab === 'banks'
@@ -267,6 +274,7 @@ export default function SidebarNav() {
         {/* Settings */}
         <Link
           href="/settings"
+          prefetch={true}
           className="w-full py-0.5 flex flex-col items-center justify-center group"
         >
           <div 

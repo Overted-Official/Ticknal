@@ -17,70 +17,94 @@ export type OpportunitySignal = {
 
 import { unstable_cache } from 'next/cache';
 
+// In-memory module-level cache for instantaneous (<1ms) response across routes
+let memCache: { data: OpportunitySignal[]; timestamp: number } | null = null;
+let inFlightPromise: Promise<OpportunitySignal[]> | null = null;
+const MEM_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
 export async function _getRecentOpportunities(limitBars: number = 5): Promise<OpportunitySignal[]> {
-  const [tickerRows, priceRows] = await Promise.all([
-    db.select().from(tickers),
-    db.execute(sql`
-      WITH ranked_prices AS (
-        SELECT ticker_symbol, date, open, high, low, close, volume,
-               ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) AS rn
-        FROM ${dailyPrices}
-        WHERE volume > 0
-      )
-      SELECT ticker_symbol, date, open, high, low, close, volume
-      FROM ranked_prices
-      WHERE rn <= ${HISTORY_BARS}
-      ORDER BY ticker_symbol, date
-    `),
-  ]);
-
-  const tickerMap = new Map(
-    tickerRows.map((ticker) => [
-      normalizeTickerSymbol(ticker.symbol),
-      {
-        companyName: ticker.companyName ?? ticker.symbol,
-        sector: ticker.sector ?? 'Unclassified',
-        logoUrl: ticker.logoUrl ?? null,
-      },
-    ]),
-  );
-  const barsByTicker = new Map<string, PriceBar[]>();
-
-  for (const row of priceRows) {
-    const symbol = normalizeTickerSymbol(String(row.ticker_symbol));
-    const bars = barsByTicker.get(symbol) ?? [];
-    bars.push({
-      date: typeof row.date === 'string' ? row.date.split('T')[0] : new Date(row.date as Date).toISOString().split('T')[0],
-      open: Number(row.open),
-      high: Number(row.high),
-      low: Number(row.low),
-      close: Number(row.close),
-      volume: Number(row.volume),
-    });
-    barsByTicker.set(symbol, bars);
+  const now = Date.now();
+  if (memCache && now - memCache.timestamp < MEM_CACHE_TTL) {
+    return memCache.data;
   }
 
-  const opportunities: OpportunitySignal[] = [];
-  for (const [symbol, bars] of barsByTicker.entries()) {
-    if (bars.length < 220) continue;
-    const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
-    
-    // The dashboard scans only recent mature histories
-    const strategyResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: bars[0].date }));
-    const signal = [...strategyResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
-    if (!signal) continue;
-
-    const ticker = tickerMap.get(symbol);
-    opportunities.push({
-      symbol,
-      companyName: ticker?.companyName ?? symbol,
-      sector: ticker?.sector ?? 'Unclassified',
-      logoUrl: ticker?.logoUrl ?? null,
-      signal,
-    });
+  if (inFlightPromise) {
+    return inFlightPromise;
   }
 
-  return opportunities.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
+  inFlightPromise = (async () => {
+    try {
+      const [tickerRows, priceRows] = await Promise.all([
+        db.select().from(tickers),
+        db.execute(sql`
+          WITH ranked_prices AS (
+            SELECT ticker_symbol, date, open, high, low, close, volume,
+                   ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) AS rn
+            FROM ${dailyPrices}
+            WHERE volume > 0
+          )
+          SELECT ticker_symbol, date, open, high, low, close, volume
+          FROM ranked_prices
+          WHERE rn <= ${HISTORY_BARS}
+          ORDER BY ticker_symbol, date
+        `),
+      ]);
+
+      const tickerMap = new Map(
+        tickerRows.map((ticker) => [
+          normalizeTickerSymbol(ticker.symbol),
+          {
+            companyName: ticker.companyName ?? ticker.symbol,
+            sector: ticker.sector ?? 'Unclassified',
+            logoUrl: ticker.logoUrl ?? null,
+          },
+        ]),
+      );
+      const barsByTicker = new Map<string, PriceBar[]>();
+
+      for (const row of priceRows) {
+        const symbol = normalizeTickerSymbol(String(row.ticker_symbol));
+        const bars = barsByTicker.get(symbol) ?? [];
+        bars.push({
+          date: typeof row.date === 'string' ? row.date.split('T')[0] : new Date(row.date as Date).toISOString().split('T')[0],
+          open: Number(row.open),
+          high: Number(row.high),
+          low: Number(row.low),
+          close: Number(row.close),
+          volume: Number(row.volume),
+        });
+        barsByTicker.set(symbol, bars);
+      }
+
+      const opportunities: OpportunitySignal[] = [];
+      for (const [symbol, bars] of barsByTicker.entries()) {
+        if (bars.length < 220) continue;
+        const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
+        
+        // The dashboard scans only recent mature histories
+        const strategyResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: bars[0].date }));
+        const signal = [...strategyResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
+        if (!signal) continue;
+
+        const ticker = tickerMap.get(symbol);
+        opportunities.push({
+          symbol,
+          companyName: ticker?.companyName ?? symbol,
+          sector: ticker?.sector ?? 'Unclassified',
+          logoUrl: ticker?.logoUrl ?? null,
+          signal,
+        });
+      }
+
+      const sorted = opportunities.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
+      memCache = { data: sorted, timestamp: Date.now() };
+      return sorted;
+    } finally {
+      inFlightPromise = null;
+    }
+  })();
+
+  return inFlightPromise;
 }
 
 export const getRecentOpportunities = (limitBars: number = 5) => {

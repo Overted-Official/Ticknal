@@ -3,17 +3,36 @@ import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
 import { eq, asc, desc, sql } from 'drizzle-orm';
 
+// Fast in-memory cache to guarantee sub-millisecond responses on warm routes
+let tickersMemCache: { data: any[]; timestamp: number } | null = null;
+let tickersInFlight: Promise<any[]> | null = null;
+
+let recentPricesMemCache: { data: any[]; timestamp: number } | null = null;
+let recentPricesInFlight: Promise<any[]> | null = null;
+
 /**
  * Fetches all tickers from the database.
- * Caches the result for 1 hour.
+ * Caches in memory for 15 minutes, Next.js cache for 1 hour.
  */
-export const getCachedTickers = unstable_cache(
-  async () => {
-    return await db.select().from(tickers);
-  },
-  ['all-tickers'],
-  { tags: ['tickers'], revalidate: 3600 }
-);
+export async function getCachedTickers(): Promise<any[]> {
+  const now = Date.now();
+  if (tickersMemCache && now - tickersMemCache.timestamp < 15 * 60 * 1000) {
+    return tickersMemCache.data;
+  }
+  if (tickersInFlight) return tickersInFlight;
+
+  tickersInFlight = (async () => {
+    try {
+      const data = await db.select().from(tickers);
+      tickersMemCache = { data, timestamp: Date.now() };
+      return data;
+    } finally {
+      tickersInFlight = null;
+    }
+  })();
+
+  return tickersInFlight;
+}
 
 /**
  * Fetches the complete price history for a specific ticker.
@@ -46,22 +65,34 @@ export const getCachedDailyPrices = async (ticker: string, limitBars?: number) =
 
 /**
  * Fetches the latest 2 prices for all tickers using a Window Function.
- * Caches the result for 15 minutes.
+ * Caches in memory for 30 seconds.
  */
-export const getCachedRecentPrices = unstable_cache(
-  async () => {
-    const recentPricesQuery = sql`
-      WITH RankedPrices AS (
-        SELECT ticker_symbol, close, volume,
-               ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) as rn
-        FROM daily_prices
-      )
-      SELECT ticker_symbol, close, volume, rn
-      FROM RankedPrices
-      WHERE rn <= 2;
-    `;
-    return await db.execute(recentPricesQuery);
-  },
-  ['recent-prices-all'],
-  { tags: ['recent-prices'], revalidate: 60 }
-);
+export async function getCachedRecentPrices(): Promise<any[]> {
+  const now = Date.now();
+  if (recentPricesMemCache && now - recentPricesMemCache.timestamp < 30 * 1000) {
+    return recentPricesMemCache.data;
+  }
+  if (recentPricesInFlight) return recentPricesInFlight;
+
+  recentPricesInFlight = (async () => {
+    try {
+      const recentPricesQuery = sql`
+        WITH RankedPrices AS (
+          SELECT ticker_symbol, close, volume,
+                 ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) as rn
+          FROM daily_prices
+        )
+        SELECT ticker_symbol, close, volume, rn
+        FROM RankedPrices
+        WHERE rn <= 2;
+      `;
+      const data = await db.execute(recentPricesQuery);
+      recentPricesMemCache = { data: data as any[], timestamp: Date.now() };
+      return data as any[];
+    } finally {
+      recentPricesInFlight = null;
+    }
+  })();
+
+  return recentPricesInFlight;
+}

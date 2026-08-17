@@ -13,7 +13,7 @@ export default async function DashboardPage({
   const tab = params.tab || 'net-worth';
 
   return (
-    <Suspense key={tab} fallback={<DashboardSkeleton />}>
+    <Suspense fallback={<DashboardSkeleton />}>
       <DashboardContent tab={tab} />
     </Suspense>
   );

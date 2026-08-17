@@ -16,8 +16,8 @@ const client =
   globalForPostgres.postgresClient ??
   postgres(connectionString, {
     prepare: false,
-    max: Number(process.env.POSTGRES_POOL_SIZE ?? 3),
-    idle_timeout: 20,
+    max: Number(process.env.POSTGRES_POOL_SIZE ?? 10),
+    idle_timeout: 30,
   });
 
 if (process.env.NODE_ENV !== 'production') {

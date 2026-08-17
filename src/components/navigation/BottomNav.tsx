@@ -26,6 +26,7 @@ export default function BottomNav() {
         {/* 1. Dashboard */}
         <Link
           href="/dashboard"
+          prefetch={true}
           className="flex-1 h-full flex flex-col items-center justify-center group"
         >
           <div
@@ -47,6 +48,7 @@ export default function BottomNav() {
         {/* 2. Charts */}
         <Link
           href="/charts"
+          prefetch={true}
           className="flex-1 h-full flex flex-col items-center justify-center group"
         >
           <div
@@ -90,6 +92,7 @@ export default function BottomNav() {
         {/* 4. Wallet */}
         <Link
           href="/wallet"
+          prefetch={true}
           className="flex-1 h-full flex flex-col items-center justify-center group"
         >
           <div
@@ -111,6 +114,7 @@ export default function BottomNav() {
         {/* 5. Settings */}
         <Link
           href="/settings"
+          prefetch={true}
           className="flex-1 h-full flex flex-col items-center justify-center group"
         >
           <div
