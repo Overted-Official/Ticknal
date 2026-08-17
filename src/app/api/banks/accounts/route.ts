@@ -3,6 +3,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { banks, userBankAccounts } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
+import { maskAccountNumber } from '@/lib/masking';
 
 export async function GET() {
   try {
@@ -37,7 +38,12 @@ export async function GET() {
       .where(and(eq(userBankAccounts.userId, user.id), eq(userBankAccounts.isArchived, false)))
       .orderBy(desc(userBankAccounts.balance));
 
-    return NextResponse.json({ accounts: accounts || [] });
+    const maskedAccounts = (accounts || []).map((acc) => ({
+      ...acc,
+      accountNumber: maskAccountNumber(acc.accountNumber),
+    }));
+
+    return NextResponse.json({ accounts: maskedAccounts });
   } catch (error) {
     console.error('Error fetching bank accounts:', error);
     return NextResponse.json({ accounts: [], error: 'Failed to fetch bank accounts' }, { status: 200 });

@@ -1,6 +1,7 @@
 'use client';
 
 const PIN_STORAGE_KEY = 'quantegx_pin_hash';
+const PIN_SALT_KEY = 'quantegx_pin_salt';
 const PIN_SETTINGS_KEY = 'quantegx_pin_settings';
 const SESSION_UNLOCKED_KEY = 'quantegx_session_unlocked';
 
@@ -17,21 +18,55 @@ export const DEFAULT_PIN_SETTINGS: PinSecuritySettings = {
 };
 
 /**
- * Compute SHA-256 hash of the 4-digit PIN
+ * Generate a cryptographically random salt
  */
-export async function hashPin(pin: string): Promise<string> {
+function generateSalt(): string {
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    const saltBytes = new Uint8Array(16);
+    window.crypto.getRandomValues(saltBytes);
+    return Array.from(saltBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  // Fallback for older environments
+  return `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+/**
+ * Get or create a stored salt
+ */
+function getOrCreateSalt(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const existing = localStorage.getItem(PIN_SALT_KEY);
+    if (existing) return existing;
+    const newSalt = generateSalt();
+    localStorage.setItem(PIN_SALT_KEY, newSalt);
+    return newSalt;
+  } catch {
+    return generateSalt();
+  }
+}
+
+/**
+ * Compute SHA-256 hash of the 4-digit PIN with a unique per-device salt
+ */
+export async function hashPin(pin: string, salt?: string): Promise<string> {
+  const actualSalt = salt ?? getOrCreateSalt();
+
   if (typeof window === 'undefined' || !window.crypto?.subtle) {
     // Fallback simple hash for older environments
     let hash = 0;
-    for (let i = 0; i < pin.length; i++) {
-      hash = (hash << 5) - hash + pin.charCodeAt(i);
+    const salted = `${actualSalt}_${pin}`;
+    for (let i = 0; i < salted.length; i++) {
+      hash = (hash << 5) - hash + salted.charCodeAt(i);
       hash |= 0;
     }
     return String(hash);
   }
 
   const encoder = new TextEncoder();
-  const data = encoder.encode(`quantegx_salt_${pin}`);
+  const data = encoder.encode(`${actualSalt}_${pin}`);
   const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -67,7 +102,10 @@ export function savePinSettings(settings: PinSecuritySettings): void {
 
 export async function setAppPin(pin: string): Promise<void> {
   if (typeof window === 'undefined') return;
-  const hash = await hashPin(pin);
+  // Generate a fresh random salt for each new PIN
+  const salt = generateSalt();
+  localStorage.setItem(PIN_SALT_KEY, salt);
+  const hash = await hashPin(pin, salt);
   localStorage.setItem(PIN_STORAGE_KEY, hash);
   const currentSettings = getPinSettings();
   savePinSettings({ ...currentSettings, enabled: true });
@@ -77,6 +115,7 @@ export async function setAppPin(pin: string): Promise<void> {
 export function removeAppPin(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(PIN_STORAGE_KEY);
+  localStorage.removeItem(PIN_SALT_KEY);
   const currentSettings = getPinSettings();
   savePinSettings({ ...currentSettings, enabled: false });
   sessionStorage.removeItem(SESSION_UNLOCKED_KEY);
@@ -85,7 +124,8 @@ export function removeAppPin(): void {
 export async function verifyAppPin(inputPin: string): Promise<boolean> {
   const storedHash = getStoredPinHash();
   if (!storedHash) return true;
-  const inputHash = await hashPin(inputPin);
+  const salt = typeof window !== 'undefined' ? localStorage.getItem(PIN_SALT_KEY) || '' : '';
+  const inputHash = await hashPin(inputPin, salt);
   return inputHash === storedHash;
 }
 

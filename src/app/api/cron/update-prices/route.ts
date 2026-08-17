@@ -175,9 +175,14 @@ async function updateSndukFund(fund: SndukFundConfig): Promise<{ symbol: string;
 }
 
 export async function GET(req: Request) {
-  // Ensure the cron is called with a secure secret in production
+  // Ensure the cron is called with a secure secret — always required
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error('CRON_SECRET environment variable is not set.');
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
   const authHeader = req.headers.get('authorization');
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

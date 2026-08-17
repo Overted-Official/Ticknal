@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol');
   const date = searchParams.get('date');
