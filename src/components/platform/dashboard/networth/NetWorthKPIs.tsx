@@ -147,7 +147,7 @@ export default function NetWorthKPIs({
         {/* Card 4: Inflation Drag */}
         <div className="glass-panel rounded-xl p-4 flex flex-col justify-between border-rose-500/20 bg-gradient-to-br from-rose-950/15 to-black">
           <div className="text-[11px] text-rose-400/80 font-medium uppercase tracking-wider flex items-center justify-between">
-            <span>Inflation Drag (1Y @ {cbeAnnualInflation}%)</span>
+            <span>Inflation Drag (1Y @ {cbeAnnualInflation}% Eff.)</span>
             <Flame size={16} className="text-rose-400" />
           </div>
           <div className="mt-2 text-xl md:text-2xl font-bold font-mono text-rose-400 tracking-tight">
@@ -162,7 +162,7 @@ export default function NetWorthKPIs({
             )}
           </div>
           <div className="text-[11px] text-white/40 mt-1">
-            Annual unhedged cash purchasing power loss
+            Asset-weighted multi-currency purchasing power deflator
           </div>
         </div>
       </div>

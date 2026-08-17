@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Flame, Info } from 'lucide-react';
+import { Flame, Info, Globe } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
@@ -14,34 +14,50 @@ export type InflationPoint = {
 
 interface InflationRadarChartProps {
   points: InflationPoint[];
-  cbeAnnualInflation: number;
+  cbeAnnualInflation?: number;
+  usCpiAnnualInflation?: number;
+  effectiveAnnualInflation?: number;
+  wEgpPct?: number;
+  wUsdPct?: number;
   currencyMode: 'EGP' | 'USD';
 }
 
 export default function InflationRadarChart({
   points,
-  cbeAnnualInflation,
+  cbeAnnualInflation = 14.9,
+  usCpiAnnualInflation = 2.8,
+  effectiveAnnualInflation,
+  wEgpPct,
+  wUsdPct,
   currencyMode,
 }: InflationRadarChartProps) {
   const { isPrivacy } = usePrivacyMode();
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
 
+  const activeEffectiveRate = effectiveAnnualInflation !== undefined ? effectiveAnnualInflation : cbeAnnualInflation;
+
   return (
     <div className="glass-panel rounded-xl p-4 md:p-5 space-y-2">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-            CBE Inflation & Purchasing Power Radar
+            Multi-Currency Inflation & Purchasing Power Radar
           </h3>
           <p className="text-[11px] text-white/40 mt-0.5">
-            Visualizing nominal wealth vs. real inflation-adjusted purchasing power discounted by CBE headline rate ({cbeAnnualInflation}% Annually).
+            Visualizing nominal wealth vs. real purchasing power using currency-weighted deflator ({activeEffectiveRate}% Effective YoY).
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono font-bold">
-            CBE Rate: {cbeAnnualInflation}%
+        <div className="flex items-center gap-2 text-xs flex-wrap">
+          <span className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">
+            Effective: {activeEffectiveRate}%
+          </span>
+          <span className="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono text-[11px]">
+            EGP CBE: {cbeAnnualInflation}% {wEgpPct !== undefined && `(${wEgpPct}%)`}
+          </span>
+          <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[11px]">
+            USD CPI: {usCpiAnnualInflation}% {wUsdPct !== undefined && `(${wUsdPct}%)`}
           </span>
         </div>
       </div>
@@ -60,30 +76,63 @@ export default function InflationRadarChart({
                 <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
               </linearGradient>
             </defs>
+
             <XAxis
               dataKey="month"
-              stroke="#666"
-              tick={{ fill: '#888', fontSize: 11 }}
+              stroke="#555"
+              tick={{ fill: '#888', fontSize: 10 }}
               axisLine={{ stroke: '#333' }}
+              tickLine={false}
             />
             <YAxis
-              stroke="#666"
-              tick={{ fill: '#888', fontSize: 11 }}
+              stroke="#555"
+              tick={{ fill: '#888', fontSize: 10 }}
               axisLine={{ stroke: '#333' }}
-              tickFormatter={(v) => (isPrivacy ? '***' : `${(v / 1000).toFixed(0)}k`)}
+              tickLine={false}
+              tickFormatter={(v) => isPrivacy ? '***' : `${displaySymbol}${(v / 1000).toFixed(0)}k`}
             />
             <Tooltip
-              contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: 8, fontSize: 12 }}
-              formatter={(val: any, name: any) => [
-                isPrivacy ? '******' : `${displaySymbol}${Number(val).toLocaleString(undefined, { maximumFractionDigits: 0 })}${displaySuffix}`,
-                name,
-              ]}
+              content={({ active, payload, label }) => {
+                if (!active || !payload || !payload.length) return null;
+                const data = payload[0].payload as InflationPoint;
+                return (
+                  <div className="rounded-lg border border-white/10 bg-black/90 p-3 shadow-xl backdrop-blur-md text-xs space-y-1.5 min-w-[190px]">
+                    <div className="font-bold text-white border-b border-white/10 pb-1 flex items-center justify-between">
+                      <span>{label}</span>
+                      <span className="text-[10px] text-white/40 font-mono">Real vs Nominal</span>
+                    </div>
+                    <div className="flex justify-between items-center text-emerald-400">
+                      <span>Nominal Value:</span>
+                      <span className="font-mono font-semibold">
+                        {isPrivacy ? '***' : `${displaySymbol}${data.nominal.toLocaleString('en-US', { maximumFractionDigits: 0 })}${displaySuffix}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-amber-400">
+                      <span>Real Purchasing Power:</span>
+                      <span className="font-mono font-semibold">
+                        {isPrivacy ? '***' : `${displaySymbol}${data.realValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}${displaySuffix}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-rose-400 pt-1 border-t border-white/10">
+                      <span>Cumulative Drag:</span>
+                      <span className="font-mono font-bold">
+                        {isPrivacy ? '***' : `-${displaySymbol}${data.inflationDrag.toLocaleString('en-US', { maximumFractionDigits: 0 })}${displaySuffix}`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }}
             />
-            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+            <Legend
+              verticalAlign="top"
+              align="right"
+              iconType="circle"
+              wrapperStyle={{ paddingBottom: '10px', fontSize: '11px' }}
+            />
             <Area
               type="monotone"
               dataKey="nominal"
-              name="Nominal Net Worth"
+              name="Nominal Wealth"
               stroke="#22c55e"
               strokeWidth={2}
               fillOpacity={1}
@@ -92,26 +141,14 @@ export default function InflationRadarChart({
             <Area
               type="monotone"
               dataKey="realValue"
-              name="Real Purchasing Power"
+              name="Inflation-Adjusted Real Wealth"
               stroke="#f59e0b"
               strokeWidth={2}
-              strokeDasharray="4 4"
               fillOpacity={1}
               fill="url(#realGrad)"
             />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
-
-      <div className="p-3.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-white/60 space-y-1.5">
-        <div className="flex items-center gap-1.5 text-white font-semibold">
-          <Info size={14} className="text-plt-orange" />
-          How to interpret your purchasing power curve:
-        </div>
-        <p className="text-[11px] text-white/50 leading-relaxed">
-          The dashed orange line reveals the <strong>real purchasing power</strong> of your total balance. 
-          Because inflation reduces the value of idle cash over time, having your wealth diversified into high-conviction EGX equities, mutual funds like Osoul, and USD reserves acts as an essential shield to keep your real purchasing power growing.
-        </p>
       </div>
     </div>
   );

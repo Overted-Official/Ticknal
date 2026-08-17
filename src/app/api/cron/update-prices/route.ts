@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
+import { syncAllMacroInflation } from '@/lib/cbe-inflation';
 
 // Helper to fetch multi-bar history for one symbol using a promise (fills gaps up to rangeBars)
 function fetchSymbolPeriods(client: TradingViewClient, symbol: string, exchange: string | null = 'EGX', rangeBars: number = 30): Promise<TradingViewPeriod[]> {
@@ -295,6 +296,13 @@ export async function GET(req: Request) {
       notificationResult = await dispatchSignalNotifications({ symbols: updatedSymbols, lookbackBars: 1 });
     } catch (notificationError) {
       console.error('Error dispatching signal notifications:', notificationError);
+    }
+
+    // Sync macroeconomic inflation rates (CBE & US CPI)
+    try {
+      await syncAllMacroInflation();
+    } catch (macroError) {
+      console.error('Error syncing macro inflation rates:', macroError);
     }
 
     try {

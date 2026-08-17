@@ -193,6 +193,7 @@ export const macroInflationRates = pgTable('macro_inflation_rates', {
   yearMonth: varchar('year_month', { length: 7 }).notNull(), // YYYY-MM
   cbeHeadlineInflation: numeric('cbe_headline_inflation', { precision: 6, scale: 2 }).notNull(), // e.g. 15.20 for 15.2%
   cbeCoreInflation: numeric('cbe_core_inflation', { precision: 6, scale: 2 }),
+  usCpiInflation: numeric('us_cpi_inflation', { precision: 6, scale: 2 }), // e.g. 2.80 for 2.8%
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

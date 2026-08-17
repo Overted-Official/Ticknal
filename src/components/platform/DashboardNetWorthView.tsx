@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { ShieldCheck, TrendingUp, Landmark } from 'lucide-react';
@@ -13,25 +13,27 @@ import { type BankAccount, type PositionItem } from '@/types/bank';
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const ASSET_COLORS = {
-  stocks: '#22c55e',      // Green - Equities
-  funds: '#ff640d',       // Orange - Mutual Funds (Osoul / Quant)
-  usdCash: '#38bdf8',     // Sky Blue - USD Foreign Reserves
-  egpCash: '#a855f7',     // Purple - EGP Liquid Cash
+  stocks: '#3b82f6', // Blue
+  funds: '#8b5cf6',  // Purple
+  usdCash: '#10b981',// Emerald
+  egpCash: '#f59e0b',// Amber
 };
 
 interface DashboardNetWorthViewProps {
   initialAccounts?: BankAccount[];
   openPositions?: PositionItem[];
   usdRate?: number;
-  cbeAnnualInflation?: number; // e.g. 15.0 for 15%
-  initialInflationSeries?: Array<{ yearMonth: string; cbeHeadlineInflation: string }>;
+  cbeAnnualInflation?: number; // e.g. 14.9 for 14.9%
+  usCpiAnnualInflation?: number; // e.g. 2.8 for 2.8%
+  initialInflationSeries?: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }>;
 }
 
 export default function DashboardNetWorthView({
   initialAccounts = [],
   openPositions = [],
   usdRate = 50.20,
-  cbeAnnualInflation = 15.0,
+  cbeAnnualInflation = 14.9,
+  usCpiAnnualInflation = 2.8,
   initialInflationSeries = [],
 }: DashboardNetWorthViewProps) {
   const router = useRouter();
@@ -91,20 +93,39 @@ export default function DashboardNetWorthView({
     ].filter((s) => s.rawEgp > 0);
   }, [totalNetWorthEgp, totalEquitiesMarketValue, totalFundsMarketValue, totalUsdCashInEgp, totalEgpLiquidCash, fxMultiplier]);
 
-  // Inflation & Purchasing Power Modeling with Forward-Filling for missing/latest months
+  // Asset-Weighted Multi-Currency Inflation & Purchasing Power Modeling
   const inflationAnalysis = useMemo(() => {
     // 1. Build rate map from historical database series
-    const rateMap = new Map<string, number>();
+    const cbeRateMap = new Map<string, number>();
+    const usCpiRateMap = new Map<string, number>();
     if (initialInflationSeries && initialInflationSeries.length > 0) {
       for (const s of initialInflationSeries) {
-        const val = parseFloat(s.cbeHeadlineInflation);
-        if (!isNaN(val) && val > 0) {
-          rateMap.set(s.yearMonth, val);
+        const cbeVal = parseFloat(s.cbeHeadlineInflation);
+        if (!isNaN(cbeVal) && cbeVal > 0) {
+          cbeRateMap.set(s.yearMonth, cbeVal);
+        }
+        if (s.usCpiInflation) {
+          const usVal = parseFloat(s.usCpiInflation);
+          if (!isNaN(usVal) && usVal > 0) {
+            usCpiRateMap.set(s.yearMonth, usVal);
+          }
         }
       }
     }
 
-    const latestAvailableRate = cbeAnnualInflation > 0 ? cbeAnnualInflation : 15.0;
+    const latestCbeRate = cbeAnnualInflation > 0 ? cbeAnnualInflation : 14.9;
+    const latestUsCpiRate = usCpiAnnualInflation > 0 ? usCpiAnnualInflation : 2.8;
+
+    // Currency weights: EGP portion (EGP Cash + EGX Stocks + Funds) vs USD Cash Reserves
+    const totalEgpAssets = totalEgpLiquidCash + totalEquitiesMarketValue + totalFundsMarketValue;
+    const totalUsdAssets = totalUsdCashInEgp;
+    const totalWealth = totalNetWorthEgp > 0 ? totalNetWorthEgp : 1;
+
+    const wEgp = totalEgpAssets / totalWealth;
+    const wUsd = totalUsdAssets / totalWealth;
+
+    const effectiveAnnualRate = (wEgp * latestCbeRate) + (wUsd * latestUsCpiRate);
+
     const points = [];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
@@ -125,9 +146,12 @@ export default function DashboardNetWorthView({
       const ymKey = `${y}-${mNum}`;
       const monthLabel = monthNames[d.getMonth()];
 
-      // Use actual reported rate for that month, or forward-fill with the latest available CBE rate
-      const annualRateForMonth = rateMap.get(ymKey) ?? latestAvailableRate;
-      const monthlyRate = annualRateForMonth / 100 / 12;
+      const monthCbeRate = cbeRateMap.get(ymKey) ?? latestCbeRate;
+      const monthUsRate = usCpiRateMap.get(ymKey) ?? latestUsCpiRate;
+
+      // Currency-weighted blended monthly inflation rate
+      const monthBlendedAnnualRate = (wEgp * monthCbeRate) + (wUsd * monthUsRate);
+      const monthlyRate = monthBlendedAnnualRate / 100 / 12;
 
       if (step > 0) {
         cumulativeDeflator *= (1 + monthlyRate);
@@ -149,9 +173,13 @@ export default function DashboardNetWorthView({
     return {
       points,
       currentYearDrag,
-      headlineRate: latestAvailableRate,
+      headlineRate: latestCbeRate,
+      usCpiRate: latestUsCpiRate,
+      effectiveRate: Number(effectiveAnnualRate.toFixed(2)),
+      wEgp: Number((wEgp * 100).toFixed(1)),
+      wUsd: Number((wUsd * 100).toFixed(1)),
     };
-  }, [displayTotalNetWorth, cbeAnnualInflation, initialInflationSeries]);
+  }, [displayTotalNetWorth, totalEgpLiquidCash, totalEquitiesMarketValue, totalFundsMarketValue, totalUsdCashInEgp, totalNetWorthEgp, cbeAnnualInflation, usCpiAnnualInflation, initialInflationSeries]);
 
   return (
     <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
@@ -176,7 +204,7 @@ export default function DashboardNetWorthView({
             </h1>
           </div>
           <p className="mt-0.5 text-[13px] text-white/30 truncate">
-            Total wealth aggregation & CBE inflation deflator
+            Total wealth aggregation & currency-weighted inflation deflator
           </p>
         </div>
 
@@ -194,7 +222,7 @@ export default function DashboardNetWorthView({
           openPositionsCount={openPositions.length}
           connectedAccountsCount={accounts.length}
           currentYearDrag={inflationAnalysis.currentYearDrag}
-          cbeAnnualInflation={cbeAnnualInflation}
+          cbeAnnualInflation={inflationAnalysis.effectiveRate}
         />
 
         {/* 4. Asset Allocation & Composition */}
@@ -204,10 +232,14 @@ export default function DashboardNetWorthView({
           usdRate={usdRate}
         />
 
-        {/* 5. CBE Inflation Purchasing Power Deflator Radar */}
+        {/* 5. Currency-Weighted Inflation Purchasing Power Deflator Radar */}
         <InflationRadarChart
           points={inflationAnalysis.points}
-          cbeAnnualInflation={cbeAnnualInflation}
+          cbeAnnualInflation={inflationAnalysis.headlineRate}
+          usCpiAnnualInflation={inflationAnalysis.usCpiRate}
+          effectiveAnnualInflation={inflationAnalysis.effectiveRate}
+          wEgpPct={inflationAnalysis.wEgp}
+          wUsdPct={inflationAnalysis.wUsd}
           currencyMode={currencyMode}
         />
       </div>

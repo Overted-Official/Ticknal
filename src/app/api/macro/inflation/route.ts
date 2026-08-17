@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
-import { macroInflationRates } from '@/db/schema';
-import { sql } from 'drizzle-orm';
-import { getHistoricalInflationSeries, scrapeLatestCbeInflation, getLatestInflationRate } from '@/lib/cbe-inflation';
+import { 
+  getHistoricalInflationSeries, 
+  getLatestInflationRate, 
+  getLatestUsCpiRate,
+  syncAllMacroInflation 
+} from '@/lib/cbe-inflation';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,34 +14,17 @@ export async function GET(request: Request) {
 
   try {
     if (sync) {
-      const scraped = await scrapeLatestCbeInflation();
-      if (scraped) {
-        await db
-          .insert(macroInflationRates)
-          .values({
-            yearMonth: scraped.yearMonth,
-            cbeHeadlineInflation: String(scraped.headlineYoY),
-            cbeCoreInflation: String(scraped.coreYoY),
-            notes: scraped.notes,
-          })
-          .onConflictDoUpdate({
-            target: macroInflationRates.yearMonth,
-            set: {
-              cbeHeadlineInflation: String(scraped.headlineYoY),
-              cbeCoreInflation: String(scraped.coreYoY),
-              notes: scraped.notes,
-              updatedAt: sql`now()`,
-            },
-          });
-      }
+      await syncAllMacroInflation();
     }
 
     const series = await getHistoricalInflationSeries();
-    const latestRate = await getLatestInflationRate();
+    const latestCbeRate = await getLatestInflationRate();
+    const latestUsCpiRate = await getLatestUsCpiRate();
 
     return NextResponse.json({
       success: true,
-      latestRate,
+      latestCbeRate,
+      latestUsCpiRate,
       series,
     });
   } catch (err) {

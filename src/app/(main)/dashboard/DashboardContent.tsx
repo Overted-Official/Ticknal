@@ -17,7 +17,7 @@ import DashboardNetWorthView from '@/components/platform/DashboardNetWorthView';
 import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 import { type BankAccount, type BankTransaction, type PositionItem } from '@/types/bank';
-import { getLatestInflationRate, getHistoricalInflationSeries } from '@/lib/cbe-inflation';
+import { getLatestInflationRate, getLatestUsCpiRate, getHistoricalInflationSeries } from '@/lib/cbe-inflation';
 
 type DashboardOrder = {
   id: number;
@@ -112,24 +112,28 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
   if (tab === 'net-worth') {
     let accounts: BankAccount[] = [];
     let openPositions: PositionItem[] = [];
-    let cbeInflation = 15.0;
-    let inflationSeries: Array<{ yearMonth: string; cbeHeadlineInflation: string }> = [];
+    let cbeInflation = 14.9;
+    let usCpiInflation = 2.8;
+    let inflationSeries: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }> = [];
 
     try {
-      const [accRes, posRes, infRes, seriesRes] = await Promise.allSettled([
+      const [accRes, posRes, infRes, usCpiRes, seriesRes] = await Promise.allSettled([
         getUserBankAccounts(user.id),
         getOpenPositionsForNetWorth(user.id),
         getLatestInflationRate(),
+        getLatestUsCpiRate(),
         getHistoricalInflationSeries(),
       ]);
 
       if (accRes.status === 'fulfilled') accounts = accRes.value;
       if (posRes.status === 'fulfilled') openPositions = posRes.value;
       if (infRes.status === 'fulfilled') cbeInflation = infRes.value;
+      if (usCpiRes.status === 'fulfilled') usCpiInflation = usCpiRes.value;
       if (seriesRes.status === 'fulfilled') {
         inflationSeries = seriesRes.value.map((r) => ({
           yearMonth: r.yearMonth,
           cbeHeadlineInflation: String(r.cbeHeadlineInflation),
+          usCpiInflation: r.usCpiInflation ? String(r.usCpiInflation) : undefined,
         }));
       }
     } catch (err) {
@@ -142,6 +146,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
         openPositions={openPositions}
         usdRate={usdRate}
         cbeAnnualInflation={cbeInflation}
+        usCpiAnnualInflation={usCpiInflation}
         initialInflationSeries={inflationSeries}
       />
     );
