@@ -6,7 +6,7 @@ import { usePinLock } from '@/components/platform/PinLockProvider';
 import PinSetupModal from '@/components/platform/settings/PinSetupModal';
 
 export default function PinSecurityCard() {
-  const { isConfigured, pinSettings, lockApp, removePin, updateSettings } = usePinLock();
+  const { isConfigured, hasSecurityQuestion, securityQuestion, pinSettings, lockApp, removePin, updateSettings } = usePinLock();
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
 
   const handleToggle = (checked: boolean) => {
@@ -65,25 +65,32 @@ export default function PinSecurityCard() {
         {/* Configurations when PIN is active */}
         {isConfigured && (
           <div className="space-y-3 pt-1">
-            {/* Quick Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={lockApp}
-                className="px-3 py-1.5 rounded-md text-xs font-medium text-white bg-white/[0.05] hover:bg-white/[0.09] active:bg-white/[0.15] border border-white/[0.10] transition-all flex items-center gap-1.5"
-              >
-                <Lock size={12} className="text-plt-orange" />
-                <span>Lock Now</span>
-              </button>
+            {/* Quick Action Buttons & Status */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={lockApp}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium text-white bg-white/[0.05] hover:bg-white/[0.09] active:bg-white/[0.15] border border-white/[0.10] transition-all flex items-center gap-1.5"
+                >
+                  <Lock size={12} className="text-plt-orange" />
+                  <span>Lock Now</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setIsSetupModalOpen(true)}
-                className="px-3 py-1.5 rounded-md text-xs font-medium text-white/80 hover:text-white bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.07] transition-all flex items-center gap-1.5"
-              >
-                <KeyRound size={12} className="text-white/40" />
-                <span>Change PIN</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSetupModalOpen(true)}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium text-white/80 hover:text-white bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.07] transition-all flex items-center gap-1.5"
+                >
+                  <KeyRound size={12} className="text-white/40" />
+                  <span>Change PIN & Recovery</span>
+                </button>
+              </div>
+
+              <div className="text-[11px] text-white/40 flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${hasSecurityQuestion ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                <span>Recovery Question: {hasSecurityQuestion ? 'Configured' : 'Password Only'}</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">

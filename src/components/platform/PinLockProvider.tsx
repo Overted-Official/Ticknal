@@ -11,6 +11,9 @@ import {
   verifyAppPin,
   isSessionUnlocked,
   setSessionUnlocked,
+  getStoredSecurityQuestion,
+  hasSecurityQuestionConfigured,
+  verifySecurityAnswer,
   type PinSecuritySettings,
   DEFAULT_PIN_SETTINGS,
 } from '@/lib/pin-security';
@@ -19,10 +22,13 @@ import PinLockScreen from '@/components/platform/PinLockScreen';
 interface PinLockContextType {
   isLocked: boolean;
   isConfigured: boolean;
+  hasSecurityQuestion: boolean;
+  securityQuestion: string | null;
   pinSettings: PinSecuritySettings;
   lockApp: () => void;
   unlockApp: (pin: string) => Promise<boolean>;
-  setPin: (pin: string) => Promise<void>;
+  setPin: (pin: string, question?: string, answer?: string) => Promise<void>;
+  verifyRecoveryAnswer: (answer: string) => Promise<boolean>;
   removePin: () => void;
   resetPin: () => void;
   updateSettings: (settings: PinSecuritySettings) => void;
@@ -41,6 +47,8 @@ export function usePinLock() {
 export function PinLockProvider({ children }: { children: React.ReactNode }) {
   const [pinSettings, setPinSettings] = useState<PinSecuritySettings>(DEFAULT_PIN_SETTINGS);
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
+  const [hasSecurityQuestion, setHasSecurityQuestion] = useState<boolean>(false);
+  const [securityQuestion, setSecurityQuestion] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -49,9 +57,13 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
     const hash = getStoredPinHash();
     const settings = getPinSettings();
     const hasPin = Boolean(hash && settings.enabled);
+    const hasQuestion = hasSecurityQuestionConfigured();
+    const question = getStoredSecurityQuestion();
 
     setIsConfigured(hasPin);
     setPinSettings(settings);
+    setHasSecurityQuestion(hasQuestion);
+    setSecurityQuestion(question);
 
     if (hasPin) {
       const unlocked = isSessionUnlocked();
@@ -93,13 +105,18 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  // Set new PIN
-  const handleSetPin = useCallback(async (pin: string) => {
-    await setAppPin(pin);
+  // Set new PIN with optional recovery question
+  const handleSetPin = useCallback(async (pin: string, question?: string, answer?: string) => {
+    await setAppPin(pin, question, answer);
     syncState();
   }, [syncState]);
 
-  // Remove / Reset PIN
+  // Verify recovery question answer
+  const handleVerifyRecoveryAnswer = useCallback(async (answer: string): Promise<boolean> => {
+    return await verifySecurityAnswer(answer);
+  }, []);
+
+  // Remove / Reset PIN (requires verified recovery or authenticated action)
   const handleResetPin = useCallback(() => {
     removeAppPin();
     setSessionUnlocked(true);
@@ -161,10 +178,13 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
       value={{
         isLocked,
         isConfigured,
+        hasSecurityQuestion,
+        securityQuestion,
         pinSettings,
         lockApp,
         unlockApp,
         setPin: handleSetPin,
+        verifyRecoveryAnswer: handleVerifyRecoveryAnswer,
         removePin: handleResetPin,
         resetPin: handleResetPin,
         updateSettings: handleUpdateSettings,
@@ -175,7 +195,12 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
       {/* Lock Screen Overlay */}
       <AnimatePresence>
         {isLocked && isConfigured && (
-          <PinLockScreen onUnlock={unlockApp} onResetPin={handleResetPin} />
+          <PinLockScreen
+            onUnlock={unlockApp}
+            onResetPin={handleResetPin}
+            securityQuestion={securityQuestion}
+            onVerifyRecovery={handleVerifyRecoveryAnswer}
+          />
         )}
       </AnimatePresence>
     </PinLockContext.Provider>
