@@ -17,6 +17,7 @@ import DashboardNetWorthView from '@/components/platform/DashboardNetWorthView';
 import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 import { type BankAccount, type BankTransaction, type PositionItem } from '@/types/bank';
+import { getLatestInflationRate } from '@/lib/cbe-inflation';
 
 type DashboardOrder = {
   id: number;
@@ -117,7 +118,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
       const [accRes, posRes, infRes] = await Promise.allSettled([
         getUserBankAccounts(user.id),
         getOpenPositionsForNetWorth(user.id),
-        getCbeInflationRate(),
+        getLatestInflationRate(),
       ]);
 
       if (accRes.status === 'fulfilled') accounts = accRes.value;
@@ -612,16 +613,4 @@ async function getOpenPositionsForNetWorth(userId: string): Promise<PositionItem
     console.error('Error fetching open positions for net worth:', err);
     return [];
   }
-}
-
-async function getCbeInflationRate(): Promise<number> {
-  try {
-    const rows = await db.select().from(macroInflationRates).orderBy(desc(macroInflationRates.yearMonth)).limit(1);
-    if (rows.length > 0 && Number(rows[0].cbeHeadlineInflation) > 0) {
-      return Number(rows[0].cbeHeadlineInflation);
-    }
-  } catch (err) {
-    console.error('Error fetching CBE inflation rate:', err);
-  }
-  return 15.0; // Default CBE headline inflation rate
 }
