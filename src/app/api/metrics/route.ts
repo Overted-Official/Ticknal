@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { asc, eq } from "drizzle-orm";
-import { db } from "@/db";
-import { dailyPrices } from "@/db/schema";
 import { getCachedDailyPrices } from "@/lib/data-cache";
 import { resolvePsiParamsWithSource } from "@/strategies/PSI/psiParameterStore";
 import {
@@ -10,20 +7,11 @@ import {
   runPsiStrategy,
   type PriceBar,
 } from "@/strategies/PSI/psiStrategy";
-import { runQeStrategy, simulateQePerformance } from "@/strategies/QuantumExhaustion/qeStrategy";
-import {
-  QeV2DeploymentError,
-  runQeV2Strategy,
-  simulateQeV2Performance,
-} from "@/strategies/QuantumExhaustion-v2/qeV2Strategy";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get("symbol");
-    const strategy = searchParams.get("strategy") ?? "psi";
-    const buyThreshold = Number(searchParams.get("buyThreshold") ?? 75);
-    const sellThreshold = Number(searchParams.get("sellThreshold") ?? 75);
 
     if (!symbol) {
       return NextResponse.json({ error: "Missing symbol parameter" }, { status: 400 });
@@ -49,34 +37,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Insufficient price history" }, { status: 404 });
     }
 
-    let metricsPayload;
-    let parameterSource;
-
-    if (strategy === "quantum_exhaustion_v2") {
-      const qeV2Result = runQeV2Strategy(ticker, bars, startDate, endDate);
-      const simResult = simulateQeV2Performance(bars, qeV2Result.scores, startDate, endDate);
-      metricsPayload = simResult.metrics;
-      parameterSource = `${qeV2Result.modelVersion} (locked policy, as of ${qeV2Result.asOfDate})`;
-    } else if (strategy === "quantum_exhaustion") {
-      const qeResult = runQeStrategy(ticker, bars, startDate, endDate, buyThreshold, sellThreshold);
-      const simResult = simulateQePerformance(bars, qeResult.signals, startDate, endDate);
-      metricsPayload = simResult.metrics;
-      parameterSource = "Quantum Exhaustion Model";
-    } else {
-      const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
-      const result = runPsiStrategy(bars, parameterResolution.params);
-      metricsPayload = result.metrics;
-      parameterSource = parameterResolution.parameterSource;
-    }
+    const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+    const result = runPsiStrategy(bars, parameterResolution.params);
+    const metricsPayload = result.metrics;
+    const parameterSource = parameterResolution.parameterSource;
 
     return NextResponse.json({
       metrics: formatMetricsForApi(metricsPayload),
       parameterSource,
     });
   } catch (error) {
-    if (error instanceof QeV2DeploymentError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
     console.error("Error computing PSI metrics:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

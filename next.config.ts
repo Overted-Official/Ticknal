@@ -18,11 +18,9 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/api/metrics": [
       "./Data/psi_*best*.csv",
-      "./src/strategies/QuantumExhaustion-v2/deploy/**/*",
     ],
     "/api/signals": [
       "./Data/psi_*best*.csv",
-      "./src/strategies/QuantumExhaustion-v2/deploy/**/*",
     ],
     "/api/predict": [
       "./src/tools/kronos/models/**/*.onnx",

@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "qe:v2": "python -m src.strategies.QuantumExhaustion-v2",
-    "test:qe:v2": "python -m pytest src/strategies/QuantumExhaustion-v2/tests"
+    "lint": "eslint"
   },
   "dependencies": {
     "@mathieuc/tradingview": "^3.5.2",

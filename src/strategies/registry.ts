@@ -37,23 +37,8 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
       { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },
       { key: 'medianDailyMove', label: 'MDM', format: 'percentage', decimals: 2 },
     ]
-  },
-  quantum_exhaustion: {
-    id: 'quantum_exhaustion',
-    label: 'Quantum Exhaustion (QE)',
-    settings: [
-      { key: 'buyThreshold', label: 'BUY Threshold', type: 'range', default: 75, min: 50, max: 99, step: 1 },
-      { key: 'sellThreshold', label: 'SELL Threshold', type: 'range', default: 75, min: 50, max: 99, step: 1 },
-    ],
-    metrics: [] // Add metrics if QE exposes any specific ones in the signal data
-  },
-  quantum_exhaustion_v2: {
-    id: 'quantum_exhaustion_v2',
-    label: 'Quantum Exhaustion v2 (Research Gate)',
-    disabled: true,
-    settings: [],
-    metrics: []
   }
 };
 
 export const getAvailableStrategies = () => Object.values(STRATEGIES);
+

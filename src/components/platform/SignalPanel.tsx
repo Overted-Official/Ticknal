@@ -182,14 +182,21 @@ export default function SignalPanel({
         {/* Row 1: Strategy Dropdown Selector (Left) + Performance ROI Margin & Eye Toggle (Right) */}
         <div className="flex items-center justify-between gap-2 relative">
           <div 
-            className="flex items-center gap-1.5 cursor-pointer text-white/70 hover:text-white transition-colors" 
-            onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
+            className={`flex items-center gap-1.5 text-white/70 transition-colors ${
+              strategies.length > 1 ? 'cursor-pointer hover:text-white' : 'cursor-default'
+            }`} 
+            onClick={(e) => { 
+              if (strategies.length > 1) {
+                e.stopPropagation(); 
+                setDropdownOpen(!dropdownOpen); 
+              }
+            }}
           >
             <Target className="w-3.5 h-3.5 text-plt-orange shrink-0" />
             <span className="text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap">
               {selectedLabel}
             </span>
-            <ChevronDown className="w-3 h-3 opacity-40 shrink-0" />
+            {strategies.length > 1 && <ChevronDown className="w-3 h-3 opacity-40 shrink-0" />}
           </div>
 
           {/* Performance ROI Margin Badge & Eye Toggle */}
