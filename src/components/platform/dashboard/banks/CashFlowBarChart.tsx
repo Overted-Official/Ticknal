@@ -25,8 +25,8 @@ export default function CashFlowBarChart({ data }: CashFlowBarChartProps) {
         <h3 className="text-sm font-bold text-white uppercase tracking-wider">
           Monthly Cash Flow Activity (Inflows vs. Outflows)
         </h3>
-        <p className="text-[11px] text-white/40 mt-0.5">
-          Comparison of monthly deposits & income vs. withdrawals, expenses, and brokerage injections.
+        <p className="text-[11px] text-white/40 mt-0.5 truncate">
+          Monthly deposits & income vs. expenses and transfers
         </p>
       </div>
 
