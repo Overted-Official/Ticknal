@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { LineChart, Briefcase } from 'lucide-react';
+import SubNavTopRail, { type SubNavTabItem } from '@/components/navigation/SubNavTopRail';
 
 interface ChartViewsProps {
   children: React.ReactNode; // The ChartReplayWorkspace + BottomToolbar
@@ -21,31 +23,19 @@ export default function ChartViews({ children, positionsView }: ChartViewsProps)
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const navItems: SubNavTabItem[] = [
+    { label: 'Chart', value: 'chart', icon: LineChart },
+    { label: 'Positions', value: 'positions', icon: Briefcase },
+  ];
+
   return (
-    <div className="flex-1 flex flex-col min-w-0 relative bg-plt-base">
-      {/* Mobile Tab Rail */}
-      <div className="lg:hidden flex items-center p-2 bg-black border-b border-white/[0.09] space-x-2 shrink-0">
-        <button
-          onClick={() => setView('chart')}
-          className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
-            currentView === 'chart' 
-              ? 'bg-white/[0.08] border border-white/[0.14] text-white shadow-sm' 
-              : 'text-white/40 hover:text-white'
-          }`}
-        >
-          Chart
-        </button>
-        <button
-          onClick={() => setView('positions')}
-          className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
-            currentView === 'positions' 
-              ? 'bg-white/[0.08] border border-white/[0.14] text-white shadow-sm' 
-              : 'text-white/40 hover:text-white'
-          }`}
-        >
-          Positions
-        </button>
-      </div>
+    <div className="flex-1 flex flex-col min-w-0 relative bg-plt-base h-full overflow-hidden">
+      {/* Standardized Mobile SubNav Top Rail */}
+      <SubNavTopRail
+        items={navItems}
+        activeTab={currentView}
+        onChange={setView}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden relative flex flex-col min-h-0">
