@@ -817,8 +817,104 @@ export default function SettingsView({
                 </div>
               </div>
 
-              {/* Monitored Tickers Table */}
-              <div className="overflow-x-auto">
+              {/* Mobile View: Clean Card List */}
+              <div className="md:hidden divide-y divide-white/[0.04]">
+                {filteredMonitoredTickers.length === 0 ? (
+                  <div className="py-8 text-center text-white/30 text-xs">
+                    No monitored tickers found matching the current filter.
+                  </div>
+                ) : (
+                  filteredMonitoredTickers.map((ticker) => (
+                    <div key={ticker.symbol} className="py-3.5 space-y-2">
+                      {/* Top Row: Symbol, Company & Price */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <TickerLogo symbol={ticker.symbol} logoUrl={ticker.logoUrl} />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-xs text-white">{ticker.symbol}</span>
+                              <span className="text-[10px] font-mono text-white/35 px-1.5 py-0.2 rounded bg-white/[0.03] border border-white/[0.05] truncate max-w-[110px]">
+                                {ticker.sector}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-white/40 truncate block mt-0.5">
+                              {ticker.companyName}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <div className="font-mono text-xs font-semibold text-white/90">
+                            {ticker.currentPrice ? `${ticker.currentPrice.toFixed(2)} EGP` : '—'}
+                          </div>
+                          {ticker.isPosition ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-[#22c55e] font-mono font-medium mt-0.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                              Always ON
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleAlert(ticker.symbol, ticker.alertEnabled)}
+                              disabled={togglingSymbol === ticker.symbol}
+                              className={`mt-0.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium transition-all ${
+                                ticker.alertEnabled
+                                  ? 'bg-[#22c55e]/10 border border-[#22c55e]/25 text-[#22c55e]'
+                                  : 'bg-white/[0.03] border border-white/[0.08] text-white/40'
+                              }`}
+                            >
+                              {ticker.alertEnabled ? 'Active' : 'Muted'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bottom Row: Badges & Quick Actions */}
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.03]">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {ticker.isPosition && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-orange/10 border border-plt-orange/20 text-plt-orange">
+                              <Lock size={10} />
+                              Active Holding
+                            </span>
+                          )}
+                          {ticker.isExplicitAlert && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-white/[0.06] border border-white/[0.12] text-white/80">
+                              <Bell size={10} />
+                              Custom Alert
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Link
+                            href={`/charts?symbol=${ticker.symbol}`}
+                            className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+                            title="Open in Charts"
+                          >
+                            <TrendingUp size={14} />
+                          </Link>
+
+                          {ticker.isExplicitAlert && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCustomAlert(ticker.symbol)}
+                              disabled={togglingSymbol === ticker.symbol}
+                              className="p-1.5 rounded text-white/30 hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
+                              title="Remove Alert"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop View: Monitored Tickers Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-white/[0.06] text-[11px] font-medium text-white/35">
@@ -854,19 +950,19 @@ export default function SettingsView({
                           </td>
 
                           {/* Sector */}
-                          <td className="py-3 px-3 text-white/50">{ticker.sector}</td>
+                          <td className="py-3 px-3 text-white/50 truncate max-w-[140px]">{ticker.sector}</td>
 
                           {/* Monitoring Type Badge */}
                           <td className="py-3 px-3">
                             <div className="flex flex-wrap items-center gap-1.5">
                               {ticker.isPosition && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-plt-orange/10 border border-plt-orange/20 text-plt-orange">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-orange/10 border border-plt-orange/20 text-plt-orange">
                                   <Lock size={10} />
                                   Active Holding
                                 </span>
                               )}
                               {ticker.isExplicitAlert && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/[0.06] border border-white/[0.12] text-white/80">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-white/[0.06] border border-white/[0.12] text-white/80">
                                   <Bell size={10} />
                                   Custom Alert
                                 </span>
@@ -882,7 +978,7 @@ export default function SettingsView({
                           {/* Alert Trigger Status Toggle */}
                           <td className="py-3 px-3 text-center">
                             {ticker.isPosition ? (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] text-[#22c55e] font-mono font-medium" title="Auto-enabled for open portfolio holding">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] text-[#22c55e] font-mono font-medium whitespace-nowrap" title="Auto-enabled for open portfolio holding">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
                                 Always ON
                               </span>
@@ -891,7 +987,7 @@ export default function SettingsView({
                                 type="button"
                                 onClick={() => handleToggleAlert(ticker.symbol, ticker.alertEnabled)}
                                 disabled={togglingSymbol === ticker.symbol}
-                                className={`px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-all ${
+                                className={`px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-all whitespace-nowrap ${
                                   ticker.alertEnabled
                                     ? 'bg-[#22c55e]/10 border border-[#22c55e]/25 text-[#22c55e] hover:bg-[#22c55e]/20'
                                     : 'bg-white/[0.03] border border-white/[0.08] text-white/40 hover:text-white/70'
