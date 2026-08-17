@@ -47,10 +47,10 @@ export async function GET(req: Request) {
       .orderBy(desc(bankTransactions.transactionDate), desc(bankTransactions.createdAt))
       .limit(limit);
 
-    return NextResponse.json({ transactions });
+    return NextResponse.json({ transactions: transactions || [] });
   } catch (error) {
     console.error('Error fetching bank transactions:', error);
-    return NextResponse.json({ error: 'Failed to fetch transactions', transactions: [] }, { status: 500 });
+    return NextResponse.json({ transactions: [], error: 'Failed to fetch transactions' }, { status: 200 });
   }
 }
 

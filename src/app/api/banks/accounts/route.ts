@@ -37,10 +37,10 @@ export async function GET() {
       .where(and(eq(userBankAccounts.userId, user.id), eq(userBankAccounts.isArchived, false)))
       .orderBy(desc(userBankAccounts.balance));
 
-    return NextResponse.json({ accounts });
+    return NextResponse.json({ accounts: accounts || [] });
   } catch (error) {
     console.error('Error fetching bank accounts:', error);
-    return NextResponse.json({ error: 'Failed to fetch bank accounts', accounts: [] }, { status: 500 });
+    return NextResponse.json({ accounts: [], error: 'Failed to fetch bank accounts' }, { status: 200 });
   }
 }
 

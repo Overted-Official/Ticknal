@@ -83,10 +83,20 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
 
   // Tab 2: Bank Accounts View
   if (tab === 'banks') {
-    const [accounts, transactions] = await Promise.all([
-      getUserBankAccounts(user.id),
-      getUserBankTransactions(user.id),
-    ]);
+    let accounts: BankAccount[] = [];
+    let transactions: BankTransaction[] = [];
+
+    try {
+      const [accRes, txRes] = await Promise.allSettled([
+        getUserBankAccounts(user.id),
+        getUserBankTransactions(user.id),
+      ]);
+
+      if (accRes.status === 'fulfilled') accounts = accRes.value;
+      if (txRes.status === 'fulfilled') transactions = txRes.value;
+    } catch (err) {
+      console.error('Error fetching bank accounts / transactions:', err);
+    }
 
     return (
       <DashboardBanksView
@@ -99,11 +109,23 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
 
   // Tab 3: Net Worth & Inflation View
   if (tab === 'net-worth') {
-    const [accounts, openPositions, cbeInflation] = await Promise.all([
-      getUserBankAccounts(user.id),
-      getOpenPositionsForNetWorth(user.id),
-      getCbeInflationRate(),
-    ]);
+    let accounts: BankAccount[] = [];
+    let openPositions: PositionItem[] = [];
+    let cbeInflation = 15.0;
+
+    try {
+      const [accRes, posRes, infRes] = await Promise.allSettled([
+        getUserBankAccounts(user.id),
+        getOpenPositionsForNetWorth(user.id),
+        getCbeInflationRate(),
+      ]);
+
+      if (accRes.status === 'fulfilled') accounts = accRes.value;
+      if (posRes.status === 'fulfilled') openPositions = posRes.value;
+      if (infRes.status === 'fulfilled') cbeInflation = infRes.value;
+    } catch (err) {
+      console.error('Error fetching net worth data:', err);
+    }
 
     return (
       <DashboardNetWorthView
