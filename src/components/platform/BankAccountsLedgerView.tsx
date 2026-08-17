@@ -10,6 +10,7 @@ import BankAccountsGrid from './wallet/BankAccountsGrid';
 import TransactionLedgerTable from './wallet/TransactionLedgerTable';
 import AddAccountDrawer from './wallet/AddAccountDrawer';
 import LogTransactionDrawer from './wallet/LogTransactionDrawer';
+import EditAccountHistoryDrawer from './wallet/EditAccountHistoryDrawer';
 import { type BankAccount, type BankTransaction, type BankItem } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
 
@@ -67,6 +68,7 @@ export default function BankAccountsLedgerView({
   // Drawers state
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isTxDrawerOpen, setIsTxDrawerOpen] = useState(false);
+  const [selectedAccountForEdit, setSelectedAccountForEdit] = useState<BankAccount | null>(null);
 
   // Handle Delete Account
   async function handleDeleteAccount(id: number) {
@@ -156,6 +158,7 @@ export default function BankAccountsLedgerView({
         <BankAccountsGrid
           accounts={accounts}
           onOpenAddModal={() => setIsAccountDrawerOpen(true)}
+          onEditAccount={(acc) => setSelectedAccountForEdit(acc)}
           onDeleteAccount={handleDeleteAccount}
         />
 
@@ -174,6 +177,16 @@ export default function BankAccountsLedgerView({
         onClose={() => setIsAccountDrawerOpen(false)}
         availableBanks={availableBanks}
         onAccountCreated={() => mutateAccounts()}
+      />
+
+      <EditAccountHistoryDrawer
+        isOpen={!!selectedAccountForEdit}
+        onClose={() => setSelectedAccountForEdit(null)}
+        account={selectedAccountForEdit}
+        onAccountUpdated={() => {
+          mutateAccounts();
+          mutateTx();
+        }}
       />
 
       <LogTransactionDrawer

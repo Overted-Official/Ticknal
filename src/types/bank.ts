@@ -51,3 +51,13 @@ export type PositionItem = {
   sector: string;
   logoUrl?: string | null;
 };
+
+export type BankMonthlySnapshot = {
+  id?: number;
+  userId?: string;
+  accountId: number;
+  yearMonth: string; // e.g. '2026-07'
+  closingBalance: number | string;
+  createdAt?: string;
+};
+

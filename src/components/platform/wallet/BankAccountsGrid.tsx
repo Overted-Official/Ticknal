@@ -2,18 +2,20 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { CreditCard, Landmark, Trash2 } from 'lucide-react';
+import { CreditCard, Landmark, Trash2, History, Pencil } from 'lucide-react';
 import { type BankAccount } from '@/types/bank';
 
 interface BankAccountsGridProps {
   accounts: BankAccount[];
   onOpenAddModal: () => void;
+  onEditAccount: (account: BankAccount) => void;
   onDeleteAccount: (id: number) => void;
 }
 
 export default function BankAccountsGrid({
   accounts,
   onOpenAddModal,
+  onEditAccount,
   onDeleteAccount,
 }: BankAccountsGridProps) {
   return (
@@ -45,7 +47,8 @@ export default function BankAccountsGrid({
             return (
               <div
                 key={acc.id}
-                className="glass-panel rounded-xl p-4 flex flex-col justify-between group hover:border-white/20 transition-all relative overflow-hidden"
+                className="glass-panel rounded-xl p-4 flex flex-col justify-between group hover:border-white/20 transition-all relative overflow-hidden cursor-pointer"
+                onClick={() => onEditAccount(acc)}
               >
                 {/* Header: Bank Logo + Name + Account Type */}
                 <div className="flex items-start justify-between gap-3">
@@ -66,7 +69,7 @@ export default function BankAccountsGrid({
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-bold text-white tracking-tight line-clamp-1">
+                      <h3 className="text-sm font-bold text-white tracking-tight line-clamp-1 group-hover:text-emerald-400 transition-colors">
                         {acc.accountName}
                       </h3>
                       <p className="text-[11px] text-white/40 line-clamp-1">
@@ -100,7 +103,22 @@ export default function BankAccountsGrid({
                   <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
-                      onClick={() => onDeleteAccount(acc.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditAccount(acc);
+                      }}
+                      className="px-2 py-1 rounded bg-white/10 hover:bg-emerald-500/20 text-white/70 hover:text-emerald-400 text-[11px] font-medium transition flex items-center gap-1 border border-white/10"
+                      title="Edit & Monthly History"
+                    >
+                      <History size={12} />
+                      <span>History</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteAccount(acc.id);
+                      }}
                       className="p-1.5 rounded bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-400 transition"
                       title="Delete Account"
                     >
