@@ -6,6 +6,7 @@ import useSWR from 'swr';
 import { motion } from 'framer-motion';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 import { CheckCircle, Trash2, Pencil, Search, ChevronDown, ChevronRight } from '@/components/ui/icons';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
@@ -159,6 +160,58 @@ export default function OrdersTable() {
 
     return result;
   }, [filteredOrders]);
+
+  type SortField = 'ticker' | 'status' | 'entry' | 'target' | 'quantity' | 'current' | 'mktValue' | 'pl';
+  type SortDirection = 'asc' | 'desc';
+
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDirection === 'desc') {
+        setSortDirection('asc');
+      } else {
+        setSortField(null);
+        setSortDirection('desc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection(field === 'ticker' || field === 'status' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedGroupedOrders = useMemo(() => {
+    if (!sortField) return groupedOrders;
+
+    const sorted = [...groupedOrders];
+    const mult = sortDirection === 'asc' ? 1 : -1;
+
+    sorted.sort((a, b) => {
+      switch (sortField) {
+        case 'ticker':
+          return a.tickerSymbol.localeCompare(b.tickerSymbol) * mult;
+        case 'status':
+          return a.status.localeCompare(b.status) * mult;
+        case 'entry':
+          return (a.avgEntryPrice - b.avgEntryPrice) * mult;
+        case 'target':
+          return ((a.targetPrice ?? 0) - (b.targetPrice ?? 0)) * mult;
+        case 'quantity':
+          return (a.totalQuantity - b.totalQuantity) * mult;
+        case 'current':
+          return (a.currentPrice - b.currentPrice) * mult;
+        case 'mktValue':
+          return (a.totalMktValue - b.totalMktValue) * mult;
+        case 'pl':
+          return (a.totalProfitLoss - b.totalProfitLoss) * mult;
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [groupedOrders, sortField, sortDirection]);
 
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
@@ -326,15 +379,14 @@ export default function OrdersTable() {
             </div>
           </div>
         </motion.div>
-
         {/* Mobile View (Cards) */}
         <div className="md:hidden flex flex-col space-y-3">
           {loading ? (
             <MobileOrdersSkeleton />
-          ) : groupedOrders.length === 0 ? (
+          ) : sortedGroupedOrders.length === 0 ? (
             <div className="p-10 text-center text-white/40 text-xs">No {filter !== 'ALL' ? filter.toLowerCase() : ''} positions found</div>
           ) : (
-            groupedOrders.map((group) => {
+            sortedGroupedOrders.map((group) => {
               const isMulti = group.orders.length > 1;
               const isExpanded = expandedKeys.has(group.key);
 
@@ -388,59 +440,54 @@ export default function OrdersTable() {
                     
                     <div className="text-right">
                       <span className="text-[10px] text-white/35 font-medium block mb-0.5 font-sans">Total P/L</span>
-                      <div className={`font-semibold ${group.totalProfitLoss > 0 ? 'text-[#22c55e]' : group.totalProfitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
+                      <span className={`font-medium ${group.totalProfitLoss > 0 ? 'text-[#22c55e]' : group.totalProfitLoss < 0 ? 'text-[#ef4444]' : 'text-white/80'}`}>
                         {formatMoney(group.totalProfitLoss)}
-                        <span className="text-[10px] ml-1 opacity-80">({group.totalProfitLossPct.toFixed(2)}%)</span>
-                      </div>
+                      </span>
+                      <span className={`text-[10px] block ${group.totalProfitLossPct > 0 ? 'text-[#22c55e]' : group.totalProfitLossPct < 0 ? 'text-[#ef4444]' : 'text-white/40'}`}>
+                        {group.totalProfitLossPct > 0 ? '+' : ''}{group.totalProfitLossPct.toFixed(2)}%
+                      </span>
                     </div>
                   </div>
 
                   {isMulti ? (
                     <div className="border-t border-white/[0.09] pt-2.5">
                       <button
-                        type="button"
                         onClick={() => toggleExpand(group.key)}
-                        className="w-full py-1.5 px-3 rounded-[4px] bg-white/[0.03] hover:bg-white/[0.06] text-white/70 hover:text-white border border-white/[0.07] text-xs font-medium flex items-center justify-between transition-colors"
+                        className="w-full flex items-center justify-between text-xs text-white/50 hover:text-white py-1 transition-colors"
                       >
-                        <span>{isExpanded ? 'Hide individual lots' : `View ${group.orders.length} individual lots`}</span>
-                        <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        <span className="text-[11px] font-mono">View {group.orders.length} execution lots</span>
+                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-3 space-y-2 pt-2 border-t border-white/[0.05]">
+                        <div className="mt-2.5 space-y-2 pt-2 border-t border-white/[0.06] divide-y divide-white/[0.04]">
                           {group.orders.map((order, idx) => (
-                            <div key={order.id} className="p-3 rounded-[4px] bg-white/[0.02] border border-white/[0.06] text-xs font-mono">
-                              <div className="flex justify-between items-center mb-2 font-sans">
-                                <span className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60 font-mono">Lot #{idx + 1}</span>
-                                <span className="text-white/40 text-[10px]">{order.entryDate}</span>
+                            <div key={order.id} className="pt-2 first:pt-0 text-[11px] font-mono flex justify-between items-center">
+                              <div>
+                                <span className="text-white/40 text-[10px] mr-1.5">#{idx + 1}</span>
+                                <span className="text-white">{formatPrice(order.entryPrice)}</span>
+                                <span className="text-white/30 text-[10px] block font-sans">{order.entryDate}</span>
                               </div>
-                              <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                                <div>
-                                  <span className="text-[10px] text-white/35 font-sans block">Entry @ Qty</span>
-                                  <span>{formatPrice(order.entryPrice)} × {formatQuantity(order.quantity)}</span>
-                                </div>
-                                <div className="text-right">
-                                  <span className="text-[10px] text-white/35 font-sans block">P/L</span>
-                                  <span className={order.profitLoss >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}>
-                                    {formatMoney(order.profitLoss)} ({order.profitLossPct.toFixed(2)}%)
-                                  </span>
-                                </div>
+                              <div className="text-right">
+                                <span className="text-white/70">{formatQuantity(order.quantity)} shs</span>
+                                <span className={`text-[10px] block ${order.profitLoss > 0 ? 'text-[#22c55e]' : order.profitLoss < 0 ? 'text-[#ef4444]' : 'text-white/40'}`}>
+                                  {order.profitLoss > 0 ? '+' : ''}{order.profitLossPct.toFixed(1)}%
+                                </span>
                               </div>
-                              <div className="flex justify-end gap-1.5 pt-2 border-t border-white/[0.05]">
+                              <div className="flex items-center gap-1 ml-2">
                                 {order.status === 'OPEN' && (
                                   <button
-                                    title="Close Position"
+                                    title="Close Lot"
                                     onClick={() => closeOrder(order)}
-                                    className="px-2 py-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all flex items-center justify-center border border-white/[0.09] text-[11px]"
+                                    className="p-1 rounded-[4px] bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
                                   >
-                                    <CheckCircle size={12} className="mr-1 text-[#22c55e]" />
-                                    <span>Close</span>
+                                    <CheckCircle size={12} className="text-[#22c55e]" />
                                   </button>
                                 )}
                                 <button
-                                  title="Edit Position"
+                                  title="Edit Lot"
                                   onClick={() => editOrder(order)}
-                                  className="p-1 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border border-white/[0.09]"
+                                  className="p-1 rounded-[4px] bg-white/[0.04] text-white/70 hover:text-white transition-all border border-white/[0.09]"
                                 >
                                   <Pencil size={12} />
                                 </button>
@@ -451,13 +498,13 @@ export default function OrdersTable() {
                                       deleteOrder(order);
                                       setDeletingId(null);
                                     }}
-                                    className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-all"
+                                    className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-all"
                                   >
                                     Sure?
                                   </button>
                                 ) : (
                                   <button
-                                    title="Delete Record"
+                                    title="Delete Lot"
                                     onClick={() => setDeletingId(order.id)}
                                     className="p-1 rounded-[4px] bg-white/[0.04] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all border border-white/[0.09]"
                                   >
@@ -522,28 +569,172 @@ export default function OrdersTable() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-white/[0.09] bg-white/[0.02] text-white/30 font-medium">
-                <th className="px-6 py-3 font-normal">Ticker</th>
-                <th className="px-6 py-3 font-normal">Status</th>
-                <th className="px-6 py-3 font-normal">Entry</th>
-                <th className="px-6 py-3 font-normal text-right">Target / Stop</th>
-                <th className="px-6 py-3 font-normal text-right">Quantity</th>
-                <th className="px-6 py-3 font-normal text-right">Current</th>
-                <th className="px-6 py-3 font-normal text-right">Mkt Value</th>
-                <th className="px-6 py-3 font-normal text-right">P/L</th>
+                {/* Ticker */}
+                <th
+                  onClick={() => handleSort('ticker')}
+                  className={`px-6 py-3 font-normal cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'ticker' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center gap-1.5">
+                    <span>Ticker</span>
+                    <span className="shrink-0">
+                      {sortField === 'ticker' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
+                {/* Status */}
+                <th
+                  onClick={() => handleSort('status')}
+                  className={`px-6 py-3 font-normal cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'status' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center gap-1.5">
+                    <span>Status</span>
+                    <span className="shrink-0">
+                      {sortField === 'status' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
+                {/* Entry */}
+                <th
+                  onClick={() => handleSort('entry')}
+                  className={`px-6 py-3 font-normal cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'entry' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center gap-1.5">
+                    <span>Entry</span>
+                    <span className="shrink-0">
+                      {sortField === 'entry' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
+                {/* Target / Stop */}
+                <th
+                  onClick={() => handleSort('target')}
+                  className={`px-6 py-3 font-normal text-right cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'target' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center justify-end gap-1.5 flex-row-reverse">
+                    <span>Target / Stop</span>
+                    <span className="shrink-0">
+                      {sortField === 'target' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
+                {/* Quantity */}
+                <th
+                  onClick={() => handleSort('quantity')}
+                  className={`px-6 py-3 font-normal text-right cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'quantity' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center justify-end gap-1.5 flex-row-reverse">
+                    <span>Quantity</span>
+                    <span className="shrink-0">
+                      {sortField === 'quantity' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
+                {/* Current */}
+                <th
+                  onClick={() => handleSort('current')}
+                  className={`px-6 py-3 font-normal text-right cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'current' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center justify-end gap-1.5 flex-row-reverse">
+                    <span>Current</span>
+                    <span className="shrink-0">
+                      {sortField === 'current' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
+                {/* Mkt Value */}
+                <th
+                  onClick={() => handleSort('mktValue')}
+                  className={`px-6 py-3 font-normal text-right cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'mktValue' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center justify-end gap-1.5 flex-row-reverse">
+                    <span>Mkt Value</span>
+                    <span className="shrink-0">
+                      {sortField === 'mktValue' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
+                {/* P/L */}
+                <th
+                  onClick={() => handleSort('pl')}
+                  className={`px-6 py-3 font-normal text-right cursor-pointer select-none transition-colors group/th ${
+                    sortField === 'pl' ? 'text-white' : 'text-white/30 hover:text-white/70'
+                  }`}
+                >
+                  <div className="inline-flex items-center justify-end gap-1.5 flex-row-reverse">
+                    <span>P/L</span>
+                    <span className="shrink-0">
+                      {sortField === 'pl' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-plt-orange" /> : <ArrowDown size={12} className="text-plt-orange" />
+                      ) : (
+                        <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </th>
+
                 <th className="px-6 py-3 font-normal text-right w-24"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {loading ? (
                 <DesktopOrdersSkeleton />
-              ) : groupedOrders.length === 0 ? (
+              ) : sortedGroupedOrders.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-6 py-12 text-center text-white/40 text-xs">
                     No {filter !== 'ALL' ? filter.toLowerCase() : ''} positions found
                   </td>
                 </tr>
               ) : (
-                groupedOrders.map((group) => {
+                sortedGroupedOrders.map((group) => {
                   const isMulti = group.orders.length > 1;
                   const isExpanded = expandedKeys.has(group.key);
 
