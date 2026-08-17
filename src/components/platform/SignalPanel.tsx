@@ -115,6 +115,15 @@ export default function SignalPanel({
   const isExit = signalLabel.startsWith('SELL');
   const reason = isExit ? visibleSignalData?.exitReason : visibleSignalData?.entryReason;
 
+  // Calculate ROI Margin (Strategy ROI - B&H ROI)
+  const sysRoi = metrics?.['Sys ROI'] ? parseFloat(metrics['Sys ROI']) : null;
+  const bnHroi = metrics?.['B&H ROI'] ? parseFloat(metrics['B&H ROI']) : 0;
+  const roiMarginVal = metrics?.['ROI Margin']
+    ? parseFloat(metrics['ROI Margin'])
+    : sysRoi !== null
+      ? sysRoi - bnHroi
+      : null;
+
   const startTraining = () => {
     if (!chartData || chartData.length === 0) return;
     if (trainingModel !== 'psi8') {
@@ -170,7 +179,7 @@ export default function SignalPanel({
         className={`p-3 cursor-pointer hover:bg-white/[0.04] transition-colors flex flex-col gap-2 ${expanded ? 'rounded-t-md' : 'rounded-md'}`}
         onClick={() => setExpanded(!expanded)}
       >
-        {/* Row 1: Strategy Dropdown Selector (Left) + Performance ROI & Eye Toggle (Right) */}
+        {/* Row 1: Strategy Dropdown Selector (Left) + Performance ROI Margin & Eye Toggle (Right) */}
         <div className="flex items-center justify-between gap-2 relative">
           <div 
             className="flex items-center gap-1.5 cursor-pointer text-white/70 hover:text-white transition-colors" 
@@ -183,13 +192,16 @@ export default function SignalPanel({
             <ChevronDown className="w-3 h-3 opacity-40 shrink-0" />
           </div>
 
-          {/* Performance ROI Badge & Eye Toggle */}
+          {/* Performance ROI Margin Badge & Eye Toggle */}
           <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            {metrics?.['Sys ROI'] && (
-              <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] bg-white/[0.04] border border-white/[0.08] ${
-                parseFloat(metrics['Sys ROI']) >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'
-              }`}>
-                {parseFloat(metrics['Sys ROI']) > 0 ? `+${metrics['Sys ROI']}%` : `${metrics['Sys ROI']}%`}
+            {roiMarginVal !== null && (
+              <span 
+                className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] bg-white/[0.04] border border-white/[0.08] ${
+                  roiMarginVal >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'
+                }`}
+                title={`ROI Margin (Strategy vs B&H): ${roiMarginVal > 0 ? '+' : ''}${roiMarginVal.toFixed(2)}% | Strategy ROI: ${sysRoi !== null ? (sysRoi > 0 ? '+' : '') + sysRoi.toFixed(2) + '%' : '—'} | B&H ROI: ${(bnHroi > 0 ? '+' : '') + bnHroi.toFixed(2)}%`}
+              >
+                {roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}%` : `${roiMarginVal.toFixed(2)}%`}
               </span>
             )}
             {setShowSignals && (
@@ -302,9 +314,9 @@ export default function SignalPanel({
                   Strategy Performance
                 </div>
                 <span className={`font-mono text-[9px] font-bold ${
-                  parseFloat(metrics['Sys ROI'] || '0') >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'
+                  roiMarginVal !== null && roiMarginVal >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'
                 }`}>
-                  {parseFloat(metrics['Sys ROI'] || '0') > 0 ? `+${metrics['Sys ROI']}%` : `${metrics['Sys ROI']}%`}
+                  {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}%` : `${roiMarginVal.toFixed(2)}%`) : '—'}
                 </span>
               </div>
 
