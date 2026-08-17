@@ -27,7 +27,7 @@ interface SpendingDonutChartProps {
 
 export default function SpendingDonutChart({ splits }: SpendingDonutChartProps) {
   return (
-    <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4 flex flex-col">
+    <div className="glass-panel rounded-xl p-4 md:p-5 space-y-2 flex flex-col">
       <div>
         <h3 className="text-sm font-bold text-white uppercase tracking-wider">
           Spending Category Splits

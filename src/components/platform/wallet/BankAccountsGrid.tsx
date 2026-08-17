@@ -17,7 +17,7 @@ export default function BankAccountsGrid({
   onDeleteAccount,
 }: BankAccountsGridProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
           Connected Bank Accounts ({accounts.length})
@@ -37,7 +37,7 @@ export default function BankAccountsGrid({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {accounts.map((acc) => {
             const bal = Number(acc.balance);
             const isUsd = acc.currency === 'USD';

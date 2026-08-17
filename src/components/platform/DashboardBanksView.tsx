@@ -137,7 +137,7 @@ export default function DashboardBanksView({
         ]}
       />
 
-      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6 pb-20">
+      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-2 pb-20">
         {/* 2. Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -152,23 +152,20 @@ export default function DashboardBanksView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => router.push('/wallet?tab=banks')}
-              className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium text-xs border border-white/10 transition flex items-center gap-1.5"
-            >
-              <Wallet size={14} className="text-emerald-400" />
-              Manage Accounts in Wallet
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => router.push('/wallet?tab=banks')}
+            className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs border border-white/10 transition-all flex items-center gap-1.5 self-start md:self-auto"
+          >
+            Manage Accounts in Wallet &rarr;
+          </button>
         </div>
 
-        {/* 3. Liquid Cash Summary KPIs */}
+        {/* 3. Top Summary Stats */}
         <BankSummaryKPIs accounts={accounts} usdRate={usdRate} />
 
-        {/* 4. Cash Flow Chart & Spending Splits */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* 4. Cash Flow & Expense Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
           <CashFlowBarChart data={monthlyFlowData} />
           <SpendingDonutChart splits={categorySplits} />
         </div>

@@ -443,7 +443,7 @@ export default function SettingsView({
       </div>
 
       {/* Main Settings Canvas */}
-      <div className="p-4 md:p-6 space-y-6 w-full">
+      <div className="p-4 md:p-6 space-y-2 w-full">
         {/* Navigation Tabs */}
         <motion.div variants={itemFadeInUp} className="flex items-center gap-2 border-b border-white/[0.09] pb-3">
           <button
@@ -494,7 +494,7 @@ export default function SettingsView({
 
         {/* TAB 1: ACCOUNT PROFILE */}
         {activeTab === 'profile' && (
-          <motion.div variants={itemFadeInUp} className="space-y-6">
+          <motion.div variants={itemFadeInUp} className="space-y-2">
             {/* User Profile Card */}
             <div className="border border-white/[0.09] rounded-md bg-black p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-white/[0.08]">
@@ -617,7 +617,7 @@ export default function SettingsView({
 
         {/* TAB 2: CONNECTED DEVICES */}
         {activeTab === 'devices' && (
-          <motion.div variants={itemFadeInUp} className="space-y-6">
+          <motion.div variants={itemFadeInUp} className="space-y-2">
             {/* Device Info Header Card */}
             <div className="border border-white/[0.09] rounded-md bg-black p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/[0.08]">
@@ -708,7 +708,7 @@ export default function SettingsView({
 
         {/* TAB 3: MONITORED TICKERS & ALERTS */}
         {activeTab === 'alerts' && (
-          <motion.div variants={itemFadeInUp} className="space-y-6">
+          <motion.div variants={itemFadeInUp} className="space-y-2">
             <div className="border border-white/[0.09] rounded-md bg-black p-6">
               {/* Header & Actions */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/[0.08]">

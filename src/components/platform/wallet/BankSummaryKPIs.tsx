@@ -21,7 +21,7 @@ export default function BankSummaryKPIs({ accounts, usdRate }: BankSummaryKPIsPr
   const totalCombinedEgp = totalEgpLiquid + totalUsdLiquid * usdRate;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
       {/* 1. Total Liquid EGP */}
       <div className="glass-panel rounded-xl p-4 flex flex-col justify-between">
         <div className="text-[11px] text-white/40 font-medium uppercase tracking-wider flex items-center justify-between">

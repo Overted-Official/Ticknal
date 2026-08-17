@@ -34,7 +34,7 @@ export default function DashboardCharts({
         {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 
-      <div className={`grid-cols-1 gap-3 lg:grid-cols-2 ${isOpen ? 'grid' : 'hidden md:grid'}`}>
+      <div className={`grid-cols-1 gap-2 lg:grid-cols-2 ${isOpen ? 'grid' : 'hidden md:grid'}`}>
         {/* Sector Distribution Donut */}
         <div className="border border-white/[0.09] rounded-md bg-black p-6">
           <SectorDonutChart data={sectorData} />

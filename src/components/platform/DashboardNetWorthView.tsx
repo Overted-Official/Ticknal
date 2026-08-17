@@ -136,7 +136,7 @@ export default function DashboardNetWorthView({
         ]}
       />
 
-      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6 pb-20">
+      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-2 pb-20">
         {/* 2. Header */}
         <div>
           <div className="flex items-center gap-2 mb-1">

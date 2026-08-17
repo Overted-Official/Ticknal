@@ -116,7 +116,7 @@ export default function DashboardMotionView({
       </div>
 
       {/* Main Canvas Space */}
-      <div className="p-4 md:p-6 space-y-3">
+      <div className="p-4 md:p-6 space-y-2">
         {/* 1. Core Portfolio KPIs Grid (6 Tiles) */}
         <motion.div 
           variants={itemFadeInUp}
@@ -242,7 +242,7 @@ export default function DashboardMotionView({
         </motion.div>
 
         {/* 4. Two-Column Grid: Left (Open Positions) / Right (Signals) */}
-        <motion.div variants={containerStagger} className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <motion.div variants={containerStagger} className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           {/* Open Positions Card */}
           <motion.section variants={itemFadeInUp} className="border border-white/[0.09] rounded-md bg-black overflow-hidden flex flex-col">
             <div 

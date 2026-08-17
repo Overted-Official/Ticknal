@@ -27,9 +27,9 @@ export default function AssetAllocationSection({
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
       {/* Left 2 Cols: Asset Allocation Grid */}
-      <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-4 flex flex-col justify-between">
+      <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-2 flex flex-col justify-between">
         <div>
           <h3 className="text-sm font-bold text-white uppercase tracking-wider">
             Asset Allocation & Wealth Composition
@@ -39,7 +39,7 @@ export default function AssetAllocationSection({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">
           {slices.map((slice) => (
             <div key={slice.name} className="p-3.5 rounded-lg bg-white/[0.02] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">

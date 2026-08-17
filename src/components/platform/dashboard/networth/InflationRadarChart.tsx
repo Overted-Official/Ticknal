@@ -26,7 +26,7 @@ export default function InflationRadarChart({
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
 
   return (
-    <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4">
+    <div className="glass-panel rounded-xl p-4 md:p-5 space-y-2">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-bold text-white uppercase tracking-wider">

@@ -21,7 +21,7 @@ interface BankAllocationMatrixProps {
 
 export default function BankAllocationMatrix({ distribution }: BankAllocationMatrixProps) {
   return (
-    <div className="glass-panel rounded-xl p-4 md:p-5 space-y-4">
+    <div className="glass-panel rounded-xl p-4 md:p-5 space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider">
           Bank-by-Bank Allocation Matrix
@@ -33,7 +33,7 @@ export default function BankAllocationMatrix({ distribution }: BankAllocationMat
           No bank accounts found.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {distribution.map((b) => (
             <div key={b.id} className="p-3.5 rounded-lg bg-white/[0.02] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">

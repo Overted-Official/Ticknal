@@ -38,7 +38,7 @@ export default function NetWorthKPIs({
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Currency Switcher Row */}
       <div className="flex items-center justify-end">
         <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 p-1 rounded-lg">
@@ -68,7 +68,7 @@ export default function NetWorthKPIs({
       </div>
 
       {/* 4 KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         {/* Card 1: Total Net Worth */}
         <div className="glass-panel rounded-xl p-4 flex flex-col justify-between border-emerald-500/20 bg-gradient-to-br from-emerald-950/20 to-black">
           <div className="text-[11px] text-emerald-400/80 font-medium uppercase tracking-wider flex items-center justify-between">

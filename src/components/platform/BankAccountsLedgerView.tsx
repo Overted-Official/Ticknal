@@ -108,7 +108,7 @@ export default function BankAccountsLedgerView({
         ]}
       />
 
-      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6 pb-20">
+      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-2 pb-20">
         {/* 2. Top Header & Action Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

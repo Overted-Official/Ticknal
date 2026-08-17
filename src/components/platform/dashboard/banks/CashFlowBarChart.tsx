@@ -20,7 +20,7 @@ export default function CashFlowBarChart({ data }: CashFlowBarChartProps) {
   const router = useRouter();
 
   return (
-    <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-4 flex flex-col">
+    <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-2 flex flex-col">
       <div>
         <h3 className="text-sm font-bold text-white uppercase tracking-wider">
           Monthly Cash Flow Activity (Inflows vs. Outflows)
