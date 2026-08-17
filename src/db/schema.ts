@@ -1,4 +1,4 @@
-import { boolean, date, index, numeric, pgTable, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, numeric, pgTable, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
 
 export const tickers = pgTable('tickers', {
   symbol: varchar('symbol', { length: 20 }).primaryKey(),
@@ -115,3 +115,91 @@ export const userStrategySettings = pgTable('user_strategy_settings', {
     userTickerStrategyUnique: unique('user_strategy_settings_unique').on(table.userId, table.tickerSymbol, table.strategyName),
   };
 });
+
+export const banks = pgTable('banks', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull(),
+  logoUrl: varchar('logo_url', { length: 500 }),
+  location: varchar('location', { length: 255 }),
+  description: text('description'),
+  website: varchar('website', { length: 500 }),
+  detailUrl: varchar('detail_url', { length: 500 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    slugUnique: unique('banks_slug_unique').on(table.slug),
+    slugIdx: index('banks_slug_idx').on(table.slug),
+  };
+});
+
+export const userBankAccounts = pgTable('user_bank_accounts', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  bankId: integer('bank_id').references(() => banks.id, { onDelete: 'set null' }),
+  customBankName: varchar('custom_bank_name', { length: 255 }),
+  accountName: varchar('account_name', { length: 255 }).notNull(),
+  accountNumber: varchar('account_number', { length: 50 }),
+  accountType: varchar('account_type', { length: 50 }).default('CURRENT').notNull(), // CURRENT, SAVINGS, CD_TIME_DEPOSIT, BROKER_CASH, WALLET
+  currency: varchar('currency', { length: 10 }).default('EGP').notNull(), // EGP, USD
+  balance: numeric('balance', { precision: 16, scale: 4 }).default('0').notNull(),
+  color: varchar('color', { length: 30 }),
+  isArchived: boolean('is_archived').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index('user_bank_accounts_user_id_idx').on(table.userId),
+  };
+});
+
+export const bankTransactions = pgTable('bank_transactions', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  accountId: integer('account_id').references(() => userBankAccounts.id, { onDelete: 'cascade' }).notNull(),
+  toAccountId: integer('to_account_id').references(() => userBankAccounts.id, { onDelete: 'set null' }), // for transfers
+  type: varchar('type', { length: 30 }).notNull(), // DEPOSIT, WITHDRAWAL, TRANSFER, EXPENSE, INCOME, BROKER_INJECTION, BROKER_WITHDRAWAL
+  amount: numeric('amount', { precision: 16, scale: 4 }).notNull(),
+  currency: varchar('currency', { length: 10 }).default('EGP').notNull(),
+  category: varchar('category', { length: 100 }).default('Other').notNull(), // Living, Housing, Food, Trading, Salary, Savings, Investments, Other
+  transactionDate: date('transaction_date').notNull(), // YYYY-MM-DD
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdDateIdx: index('bank_transactions_user_id_date_idx').on(table.userId, table.transactionDate),
+    accountIdIdx: index('bank_transactions_account_id_idx').on(table.accountId),
+  };
+});
+
+export const bankMonthlySnapshots = pgTable('bank_monthly_snapshots', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  accountId: integer('account_id').references(() => userBankAccounts.id, { onDelete: 'cascade' }).notNull(),
+  yearMonth: varchar('year_month', { length: 7 }).notNull(), // YYYY-MM
+  closingBalance: numeric('closing_balance', { precision: 16, scale: 4 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    accountMonthUnique: unique('bank_monthly_snapshots_account_month_unique').on(table.accountId, table.yearMonth),
+    userIdMonthIdx: index('bank_monthly_snapshots_user_id_month_idx').on(table.userId, table.yearMonth),
+  };
+});
+
+export const macroInflationRates = pgTable('macro_inflation_rates', {
+  id: serial('id').primaryKey(),
+  yearMonth: varchar('year_month', { length: 7 }).notNull(), // YYYY-MM
+  cbeHeadlineInflation: numeric('cbe_headline_inflation', { precision: 6, scale: 2 }).notNull(), // e.g. 15.20 for 15.2%
+  cbeCoreInflation: numeric('cbe_core_inflation', { precision: 6, scale: 2 }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    yearMonthUnique: unique('macro_inflation_rates_year_month_unique').on(table.yearMonth),
+  };
+});
+
+

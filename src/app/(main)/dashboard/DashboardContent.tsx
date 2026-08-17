@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { connection } from 'next/server';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { dailyPrices, positions, tickerAlerts, tickers } from '@/db/schema';
+import { banks, dailyPrices, macroInflationRates, positions, tickerAlerts, tickers, userBankAccounts, bankTransactions } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/strategies/PSI/psiStrategy';
@@ -12,8 +12,11 @@ import OpportunityTable from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
 import DashboardCharts from '@/components/platform/DashboardCharts';
 import DashboardMotionView from '@/components/platform/DashboardMotionView';
+import DashboardBanksView from '@/components/platform/DashboardBanksView';
+import DashboardNetWorthView from '@/components/platform/DashboardNetWorthView';
 import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
+import { type BankAccount, type BankTransaction, type PositionItem } from '@/types/bank';
 
 type DashboardOrder = {
   id: number;
@@ -58,7 +61,7 @@ const emptyOrderStats = {
 
 const DASHBOARD_HISTORY_BARS = 320;
 
-export default async function DashboardContent() {
+export default async function DashboardContent({ tab = 'investments' }: { tab?: string }) {
   await connection();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -75,6 +78,44 @@ export default async function DashboardContent() {
     );
   }
 
+  // Live USD/EGP rate
+  const usdRate = await getUsdRate();
+
+  // Tab 2: Bank Accounts View
+  if (tab === 'banks') {
+    const [accounts, transactions] = await Promise.all([
+      getUserBankAccounts(user.id),
+      getUserBankTransactions(user.id),
+    ]);
+
+    return (
+      <DashboardBanksView
+        initialAccounts={accounts}
+        initialTransactions={transactions}
+        usdRate={usdRate}
+      />
+    );
+  }
+
+  // Tab 3: Net Worth & Inflation View
+  if (tab === 'net-worth') {
+    const [accounts, openPositions, cbeInflation] = await Promise.all([
+      getUserBankAccounts(user.id),
+      getOpenPositionsForNetWorth(user.id),
+      getCbeInflationRate(),
+    ]);
+
+    return (
+      <DashboardNetWorthView
+        initialAccounts={accounts}
+        openPositions={openPositions}
+        usdRate={usdRate}
+        cbeAnnualInflation={cbeInflation}
+      />
+    );
+  }
+
+  // Tab 1: Investments View (Default)
   let orderStats = emptyOrderStats;
   let opportunities: Opportunity[] = [];
   let activeAlertCount = 0;
@@ -441,4 +482,124 @@ function formatSignal(signal: string): string {
   if (signal === 'SELL_TRAIL') return 'TRAIL';
   if (signal === 'SELL_SL') return 'STOP';
   return 'EXIT';
+}
+
+async function getUserBankAccounts(userId: string): Promise<BankAccount[]> {
+  try {
+    const rows = await db
+      .select({
+        id: userBankAccounts.id,
+        userId: userBankAccounts.userId,
+        bankId: userBankAccounts.bankId,
+        customBankName: userBankAccounts.customBankName,
+        accountName: userBankAccounts.accountName,
+        accountNumber: userBankAccounts.accountNumber,
+        accountType: userBankAccounts.accountType,
+        currency: userBankAccounts.currency,
+        balance: userBankAccounts.balance,
+        color: userBankAccounts.color,
+        isArchived: userBankAccounts.isArchived,
+        bankName: banks.name,
+        bankLogoUrl: banks.logoUrl,
+        bankSlug: banks.slug,
+      })
+      .from(userBankAccounts)
+      .leftJoin(banks, eq(userBankAccounts.bankId, banks.id))
+      .where(and(eq(userBankAccounts.userId, userId), eq(userBankAccounts.isArchived, false)))
+      .orderBy(desc(userBankAccounts.balance));
+    return rows;
+  } catch (err) {
+    console.error('Error fetching userBankAccounts:', err);
+    return [];
+  }
+}
+
+async function getUserBankTransactions(userId: string): Promise<BankTransaction[]> {
+  try {
+    const rows = await db
+      .select({
+        id: bankTransactions.id,
+        userId: bankTransactions.userId,
+        accountId: bankTransactions.accountId,
+        toAccountId: bankTransactions.toAccountId,
+        type: bankTransactions.type,
+        amount: bankTransactions.amount,
+        currency: bankTransactions.currency,
+        category: bankTransactions.category,
+        transactionDate: bankTransactions.transactionDate,
+        notes: bankTransactions.notes,
+        accountName: userBankAccounts.accountName,
+        accountType: userBankAccounts.accountType,
+        bankLogoUrl: banks.logoUrl,
+        bankName: banks.name,
+      })
+      .from(bankTransactions)
+      .innerJoin(userBankAccounts, eq(bankTransactions.accountId, userBankAccounts.id))
+      .leftJoin(banks, eq(userBankAccounts.bankId, banks.id))
+      .where(eq(bankTransactions.userId, userId))
+      .orderBy(desc(bankTransactions.transactionDate), desc(bankTransactions.createdAt))
+      .limit(100);
+    return rows;
+  } catch (err) {
+    console.error('Error fetching bankTransactions:', err);
+    return [];
+  }
+}
+
+async function getUsdRate(): Promise<number> {
+  try {
+    const recentPrices = await getCachedRecentPrices();
+    const usdRow = recentPrices.find((r) => r.ticker_symbol === 'USDEGP' && Number(r.rn) === 1);
+    if (usdRow && Number(usdRow.close) > 0) {
+      return Number(usdRow.close);
+    }
+  } catch (err) {
+    console.error('Error fetching USD rate:', err);
+  }
+  return 50.20;
+}
+
+async function getOpenPositionsForNetWorth(userId: string): Promise<PositionItem[]> {
+  try {
+    const [rows, latestPrices, tickerMap] = await Promise.all([
+      db.select().from(positions).where(
+        and(eq(positions.status, 'OPEN'), eq(positions.userId, userId))
+      ),
+      getLatestPriceMap().catch(() => ({} as Record<string, number>)),
+      getTickerMap().catch(() => ({} as Record<string, { companyName: string; sector: string; logoUrl: string | null }>)),
+    ]);
+
+    return rows.map((p) => {
+      const sym = p.tickerSymbol.trim().toUpperCase();
+      const entryPrice = Number(p.entryPrice);
+      const currentPrice = latestPrices[sym] ?? entryPrice;
+      const meta = tickerMap[sym];
+
+      return {
+        id: p.id,
+        tickerSymbol: sym,
+        companyName: meta?.companyName ?? sym,
+        quantity: Number(p.quantity),
+        entryPrice,
+        currentPrice,
+        sector: meta?.sector ?? 'Unclassified',
+        logoUrl: meta?.logoUrl ?? null,
+      };
+    });
+  } catch (err) {
+    console.error('Error fetching open positions for net worth:', err);
+    return [];
+  }
+}
+
+async function getCbeInflationRate(): Promise<number> {
+  try {
+    const rows = await db.select().from(macroInflationRates).orderBy(desc(macroInflationRates.yearMonth)).limit(1);
+    if (rows.length > 0 && Number(rows[0].cbeHeadlineInflation) > 0) {
+      return Number(rows[0].cbeHeadlineInflation);
+    }
+  } catch (err) {
+    console.error('Error fetching CBE inflation rate:', err);
+  }
+  return 15.0; // Default CBE headline inflation rate
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { LayoutDashboard, LineChart, ListOrdered, Settings, Bell } from 'lucide-react';
+import { LayoutDashboard, LineChart, Wallet, Settings, Bell } from 'lucide-react';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -87,24 +87,24 @@ export default function BottomNav() {
           </button>
         </div>
 
-        {/* 4. Positions */}
+        {/* 4. Wallet */}
         <Link
-          href="/positions"
+          href="/wallet"
           className="flex-1 h-full flex flex-col items-center justify-center group"
         >
           <div
             className={`flex items-center justify-center rounded-md w-10 h-6 transition-all duration-200 mb-0.5 ${
-              pathname === '/positions' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
+              pathname === '/wallet' || pathname === '/positions' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
             }`}
           >
-            <ListOrdered size={17} strokeWidth={pathname === '/positions' ? 2 : 1.5} />
+            <Wallet size={17} strokeWidth={pathname === '/wallet' || pathname === '/positions' ? 2 : 1.5} />
           </div>
           <span
             className={`text-[9px] font-medium transition-colors ${
-              pathname === '/positions' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
+              pathname === '/wallet' || pathname === '/positions' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
             }`}
           >
-            Positions
+            Wallet
           </span>
         </Link>
 

@@ -8,10 +8,11 @@ import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 
 // Helper to fetch multi-bar history for one symbol using a promise (fills gaps up to rangeBars)
-function fetchSymbolPeriods(client: TradingViewClient, symbol: string, rangeBars: number = 30): Promise<TradingViewPeriod[]> {
+function fetchSymbolPeriods(client: TradingViewClient, symbol: string, exchange: string | null = 'EGX', rangeBars: number = 30): Promise<TradingViewPeriod[]> {
   return new Promise((resolve) => {
     try {
-      const tvSymbol = `EGX:${symbol.replace('.CA', '')}`;
+      const ex = exchange || 'EGX';
+      const tvSymbol = `${ex}:${symbol.replace('.CA', '')}`;
       const chart = new client.Session.Chart();
       
       chart.setMarket(tvSymbol, {
@@ -235,7 +236,7 @@ export async function GET(req: Request) {
             }
           }
 
-          const periods = await fetchSymbolPeriods(client, t.symbol, requiredRange);
+          const periods = await fetchSymbolPeriods(client, t.symbol, t.exchange, requiredRange);
           
           if (periods.length > 0) {
             let updatedCount = 0;

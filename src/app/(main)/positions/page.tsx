@@ -1,5 +1,5 @@
-import OrdersTable from '@/components/platform/OrdersTable';
+import { redirect } from 'next/navigation';
 
 export default function PositionsPage() {
-  return <OrdersTable />;
+  redirect('/wallet?tab=positions');
 }

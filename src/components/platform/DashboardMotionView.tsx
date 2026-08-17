@@ -1,8 +1,8 @@
-'use client';
-
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { TrendingUp, Landmark, ShieldCheck } from 'lucide-react';
 import { ChevronDown } from '@/components/ui/icons';
 import { containerStagger, itemFadeInUp, hoverLift } from '@/lib/motion';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
@@ -10,6 +10,7 @@ import DashboardCharts from '@/components/platform/DashboardCharts';
 import OpportunityTable, { Opportunity } from '@/components/platform/OpportunityTable';
 import { SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
+import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 
 export type DashboardOrder = {
   id: number;
@@ -57,6 +58,7 @@ export default function DashboardMotionView({
   exitSignals,
   activeAlertCount
 }: DashboardMotionViewProps) {
+  const router = useRouter();
   const [statsBarExpandedMobile, setStatsBarExpandedMobile] = useState(false);
   const [openPositionsExpandedMobile, setOpenPositionsExpandedMobile] = useState(false);
   const [buyOpportunitiesExpandedMobile, setBuyOpportunitiesExpandedMobile] = useState(false);
@@ -69,6 +71,17 @@ export default function DashboardMotionView({
       variants={containerStagger}
       className="flex h-full min-h-0 flex-col overflow-auto bg-transparent text-white pb-8 relative z-10"
     >
+      {/* 1. Mobile / Desktop Top Rail */}
+      <SubNavTopRail
+        activeTab="investments"
+        onChange={(val) => router.push(`/dashboard?tab=${val}`)}
+        items={[
+          { label: 'Investments', value: 'investments', icon: TrendingUp },
+          { label: 'Bank Accounts', value: 'banks', icon: Landmark },
+          { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
+        ]}
+      />
+
       {/* Top Header Banner */}
       <div className="border-b border-white/[0.09] px-6 py-5 shrink-0">
         <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
