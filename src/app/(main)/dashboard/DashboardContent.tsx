@@ -61,7 +61,7 @@ const emptyOrderStats = {
 
 const DASHBOARD_HISTORY_BARS = 320;
 
-export default async function DashboardContent({ tab = 'investments' }: { tab?: string }) {
+export default async function DashboardContent({ tab = 'net-worth' }: { tab?: string }) {
   await connection();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

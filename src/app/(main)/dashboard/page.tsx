@@ -10,7 +10,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const params = await searchParams;
-  const tab = params.tab || 'investments';
+  const tab = params.tab || 'net-worth';
 
   return (
     <Suspense key={tab} fallback={<DashboardSkeleton />}>

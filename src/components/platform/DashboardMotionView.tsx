@@ -78,9 +78,9 @@ export default function DashboardMotionView({
         activeTab="investments"
         onChange={(val) => router.push(`/dashboard?tab=${val}`)}
         items={[
+          { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
           { label: 'Investments', value: 'investments', icon: TrendingUp },
           { label: 'Bank Accounts', value: 'banks', icon: Landmark },
-          { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
         ]}
       />
 

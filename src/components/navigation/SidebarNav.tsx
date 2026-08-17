@@ -90,10 +90,22 @@ export default function SidebarNav() {
                 Dashboard
               </div>
               <Link 
+                href="/dashboard?tab=net-worth" 
+                onClick={() => setIsDashboardMenuOpen(false)}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                  isDashboardActive && (!currentTab || currentTab === 'net-worth')
+                    ? 'text-white bg-white/[0.08]'
+                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                }`}
+              >
+                <ShieldCheck size={13} className="text-emerald-400" />
+                Net Worth
+              </Link>
+              <Link 
                 href="/dashboard?tab=investments" 
                 onClick={() => setIsDashboardMenuOpen(false)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
-                  isDashboardActive && (!currentTab || currentTab === 'investments')
+                  isDashboardActive && currentTab === 'investments'
                     ? 'text-white bg-white/[0.08]'
                     : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
                 }`}
@@ -112,18 +124,6 @@ export default function SidebarNav() {
               >
                 <Landmark size={13} className="text-sky-400" />
                 Bank Accounts
-              </Link>
-              <Link 
-                href="/dashboard?tab=net-worth" 
-                onClick={() => setIsDashboardMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
-                  isDashboardActive && currentTab === 'net-worth'
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
-                }`}
-              >
-                <ShieldCheck size={13} className="text-emerald-400" />
-                Net Worth
               </Link>
             </div>
           )}
