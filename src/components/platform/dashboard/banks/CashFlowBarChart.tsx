@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRightLeft, Landmark } from 'lucide-react';
+import { Landmark } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type MonthlyFlowPoint = {
   month: string;
@@ -18,6 +19,7 @@ interface CashFlowBarChartProps {
 
 export default function CashFlowBarChart({ data }: CashFlowBarChartProps) {
   const router = useRouter();
+  const { isPrivacy } = usePrivacyMode();
 
   return (
     <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-2 flex flex-col">
@@ -56,11 +58,11 @@ export default function CashFlowBarChart({ data }: CashFlowBarChartProps) {
                 stroke="#666"
                 tick={{ fill: '#888', fontSize: 11 }}
                 axisLine={{ stroke: '#333' }}
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                tickFormatter={(v) => (isPrivacy ? '***' : `${(v / 1000).toFixed(0)}k`)}
               />
               <Tooltip
                 contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: 8, fontSize: 12 }}
-                formatter={(val: any) => [`${Number(val).toLocaleString()} EGP`, '']}
+                formatter={(val: any, name: any) => [isPrivacy ? '****** EGP' : `${Number(val).toLocaleString()} EGP`, name]}
               />
               <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
               <Bar dataKey="inflows" name="Inflows (Income/Deposits)" fill="#22c55e" radius={[4, 4, 0, 0]} />

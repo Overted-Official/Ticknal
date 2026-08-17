@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { ShieldCheck, Flame } from 'lucide-react';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 
 interface NetWorthKPIsProps {
   currencyMode: 'EGP' | 'USD';
@@ -34,13 +36,16 @@ export default function NetWorthKPIs({
   currentYearDrag,
   cbeAnnualInflation,
 }: NetWorthKPIsProps) {
+  const { isPrivacy } = usePrivacyMode();
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
 
   return (
     <div className="space-y-2">
-      {/* Currency Switcher Row */}
-      <div className="flex items-center justify-end">
+      {/* Controls Row: Privacy Toggle + Currency Switcher */}
+      <div className="flex items-center justify-end gap-2">
+        <PrivacyToggleButton />
+
         <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 p-1 rounded-lg">
           <button
             type="button"
@@ -76,9 +81,15 @@ export default function NetWorthKPIs({
             <ShieldCheck size={16} className="text-emerald-400" />
           </div>
           <div className="mt-2 text-2xl md:text-3xl font-bold font-mono text-emerald-400 tracking-tight">
-            {displaySymbol}
-            {displayTotalNetWorth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {displaySuffix}
+            {isPrivacy ? (
+              <span className="tracking-wider">****** {displaySuffix}</span>
+            ) : (
+              <>
+                {displaySymbol}
+                {displayTotalNetWorth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {displaySuffix}
+              </>
+            )}
           </div>
           <div className="text-[11px] text-white/40 mt-1">
             Mark-to-market liquid + invested assets
@@ -94,9 +105,15 @@ export default function NetWorthKPIs({
             </span>
           </div>
           <div className="mt-2 text-xl md:text-2xl font-bold font-mono text-white tracking-tight">
-            {displaySymbol}
-            {((totalEquitiesMarketValue + totalFundsMarketValue) * fxMultiplier).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {displaySuffix}
+            {isPrivacy ? (
+              <span className="tracking-wider">****** {displaySuffix}</span>
+            ) : (
+              <>
+                {displaySymbol}
+                {((totalEquitiesMarketValue + totalFundsMarketValue) * fxMultiplier).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {displaySuffix}
+              </>
+            )}
           </div>
           <div className="text-[11px] text-white/35 mt-1">
             {openPositionsCount} active holdings & mutual funds
@@ -112,9 +129,15 @@ export default function NetWorthKPIs({
             </span>
           </div>
           <div className="mt-2 text-xl md:text-2xl font-bold font-mono text-white tracking-tight">
-            {displaySymbol}
-            {((totalEgpLiquidCash + totalUsdCashInEgp) * fxMultiplier).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {displaySuffix}
+            {isPrivacy ? (
+              <span className="tracking-wider">****** {displaySuffix}</span>
+            ) : (
+              <>
+                {displaySymbol}
+                {((totalEgpLiquidCash + totalUsdCashInEgp) * fxMultiplier).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {displaySuffix}
+              </>
+            )}
           </div>
           <div className="text-[11px] text-white/35 mt-1">
             {connectedAccountsCount} connected bank account(s)
@@ -128,9 +151,15 @@ export default function NetWorthKPIs({
             <Flame size={16} className="text-rose-400" />
           </div>
           <div className="mt-2 text-xl md:text-2xl font-bold font-mono text-rose-400 tracking-tight">
-            -{displaySymbol}
-            {currentYearDrag.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-            {displaySuffix}
+            {isPrivacy ? (
+              <span className="tracking-wider">-****** {displaySuffix}</span>
+            ) : (
+              <>
+                -{displaySymbol}
+                {currentYearDrag.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {displaySuffix}
+              </>
+            )}
           </div>
           <div className="text-[11px] text-white/40 mt-1">
             Annual unhedged cash purchasing power loss

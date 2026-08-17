@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Treemap } from 'recharts';
 import { PieChart as PieChartIcon, Grid } from 'lucide-react';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type SectorDataItem = {
   sector: string;
@@ -23,7 +24,8 @@ const SECTOR_COLORS = [
   '#84cc16', // lime
 ];
 
-function formatEGP(value: number): string {
+function formatEGP(value: number, isPrivacy = false): string {
+  if (isPrivacy) return '****** EGP';
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M EGP`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K EGP`;
   return `${value.toFixed(0)} EGP`;
@@ -35,16 +37,17 @@ interface CustomTooltipProps {
     payload: SectorDataItem;
     value: number;
   }>;
+  isPrivacy?: boolean;
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, isPrivacy }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
     <div className="rounded-lg border border-plt-border bg-plt-card px-3 py-2 text-xs shadow-xl z-50 backdrop-blur-md">
       <div className="font-medium text-plt-text">{item.sector}</div>
-      <div className="mt-1 text-plt-green">{formatEGP(item.value)}</div>
-      <div className="text-plt-muted">{item.percentage.toFixed(1)}%</div>
+      <div className="mt-1 text-plt-green">{formatEGP(item.value, isPrivacy)}</div>
+      <div className="text-plt-muted font-mono">{item.percentage.toFixed(1)}%</div>
     </div>
   );
 }
@@ -136,6 +139,7 @@ function CustomizedTreemapContent(props: any) {
 
 export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
   const [view, setView] = useState<'donut' | 'treemap'>('donut');
+  const { isPrivacy } = usePrivacyMode();
 
   return (
     <div className="flex h-full flex-col">
@@ -191,7 +195,7 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip isPrivacy={isPrivacy} />} />
               <Legend 
                 layout="vertical" 
                 verticalAlign="middle" 
@@ -212,7 +216,7 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
               isAnimationActive={false}
               content={<CustomizedTreemapContent />}
             >
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip isPrivacy={isPrivacy} />} />
             </Treemap>
           </ResponsiveContainer>
         )}

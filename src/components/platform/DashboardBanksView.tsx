@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { Landmark, TrendingUp, ShieldCheck, Wallet } from 'lucide-react';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
+import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import BankSummaryKPIs from '@/components/platform/wallet/BankSummaryKPIs';
 import CashFlowBarChart from './dashboard/banks/CashFlowBarChart';
 import SpendingDonutChart from './dashboard/banks/SpendingDonutChart';
@@ -152,13 +153,16 @@ export default function DashboardBanksView({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => router.push('/wallet?tab=banks')}
-            className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs border border-white/10 transition-all flex items-center gap-1.5 self-start md:self-auto"
-          >
-            Manage Accounts in Wallet &rarr;
-          </button>
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <PrivacyToggleButton />
+            <button
+              type="button"
+              onClick={() => router.push('/wallet?tab=banks')}
+              className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs border border-white/10 transition-all flex items-center gap-1.5"
+            >
+              Manage Accounts in Wallet &rarr;
+            </button>
+          </div>
         </div>
 
         {/* 3. Top Summary Stats */}

@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Landmark } from 'lucide-react';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type BankDistributionItem = {
   id: number;
@@ -20,6 +21,8 @@ interface BankAllocationMatrixProps {
 }
 
 export default function BankAllocationMatrix({ distribution }: BankAllocationMatrixProps) {
+  const { isPrivacy } = usePrivacyMode();
+
   return (
     <div className="glass-panel rounded-xl p-4 md:p-5 space-y-2">
       <div className="flex items-center justify-between">
@@ -64,9 +67,15 @@ export default function BankAllocationMatrix({ distribution }: BankAllocationMat
               <div className="flex items-baseline justify-between text-[11px] font-mono pt-1">
                 <span className="text-white/40">{b.currency}</span>
                 <span className="text-white font-bold">
-                  {b.currency === 'USD' ? '$' : ''}
-                  {b.rawBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  {b.currency === 'EGP' ? ' EGP' : ''}
+                  {isPrivacy ? (
+                    <span className="tracking-wider">****** {b.currency}</span>
+                  ) : (
+                    <>
+                      {b.currency === 'USD' ? '$' : ''}
+                      {b.rawBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {b.currency === 'EGP' ? ' EGP' : ''}
+                    </>
+                  )}
                 </span>
               </div>
             </div>

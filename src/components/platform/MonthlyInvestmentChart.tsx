@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type MonthlyDataItem = {
   month: string;
@@ -16,7 +17,8 @@ export type TimeFilter = typeof TIME_FILTERS[number];
 
 const MONTH_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function formatEGP(value: number): string {
+function formatEGP(value: number, isPrivacy = false): string {
+  if (isPrivacy) return '***';
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
   return `${value.toFixed(0)}`;
@@ -26,9 +28,10 @@ interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{ value: number; name?: string; color?: string }>;
   label?: string;
+  isPrivacy?: boolean;
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, label, isPrivacy }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-white/10 bg-[#0a0a0a]/95 px-3.5 py-2.5 text-xs shadow-xl backdrop-blur-md min-w-[170px]">
@@ -50,7 +53,9 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         
         const formatted = isRoi 
           ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%` 
-          : `${value >= 0 && (isRealized || isUnrealized) ? '+' : ''}${value.toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
+          : isPrivacy
+            ? `${value >= 0 && (isRealized || isUnrealized) ? '+' : ''}****** EGP`
+            : `${value >= 0 && (isRealized || isUnrealized) ? '+' : ''}${value.toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
           
         return (
           <div key={index} style={{ color }} className="mt-1 flex items-center justify-between gap-3 text-[11px]">
@@ -65,61 +70,45 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem[] }) {
   const [filter, setFilter] = useState<TimeFilter>('All');
+  const { isPrivacy } = usePrivacyMode();
 
   const filteredData = useMemo(() => {
     if (filter === 'All' || !data.length) return data;
 
     const now = new Date();
-    const currentYear = now.getFullYear();
+    const currentYearStr = now.getFullYear().toString();
     const currentMonthIdx = now.getMonth(); // 0-11
     const currentQuarter = Math.floor(currentMonthIdx / 3);
 
-    return data.filter((item) => {
-      const [mStr, yStrWithApos] = item.month.split(" '");
-      const mIdx = MONTH_ORDER.indexOf(mStr);
-      const yNum = Number(yStrWithApos);
-      const fullYear = 2000 + (isNaN(yNum) ? 0 : yNum);
-
-      if (filter === 'Y') {
-        return fullYear === currentYear;
-      }
-      if (filter === 'Q') {
-        return fullYear === currentYear && Math.floor(mIdx / 3) === currentQuarter;
-      }
-      if (filter === 'M') {
-        return fullYear === currentYear && mIdx === currentMonthIdx;
-      }
-      return true;
-    });
+    if (filter === 'Y') {
+      return data.filter(d => d.month.endsWith(currentYearStr.slice(2)) || d.month.endsWith(currentYearStr));
+    }
+    if (filter === 'Q') {
+      return data.slice(-3);
+    }
+    if (filter === 'M') {
+      return data.slice(-1);
+    }
+    return data;
   }, [data, filter]);
 
   return (
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[13px] font-medium text-white tracking-[-0.02em]">Monthly Investment</h2>
-        <div className="flex items-center gap-2">
-          <div className="flex bg-white/[0.04] rounded-md p-0.5 border border-white/[0.08]">
-            {TIME_FILTERS.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={`px-2 py-0.5 text-[11px] font-mono rounded-sm transition-all ${
-                  filter === f 
-                    ? 'bg-white/[0.12] text-white font-semibold shadow-sm' 
-                    : 'text-white/40 hover:text-white/80'
-                }`}
-                title={
-                  f === 'All' ? 'All History' :
-                  f === 'Y' ? 'This Year' :
-                  f === 'Q' ? 'This Quarter' :
-                  'This Month'
-                }
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+        <h2 className="text-sm font-medium text-plt-text">Monthly Performance</h2>
+        <div className="flex bg-plt-base rounded-md p-0.5 border border-plt-border">
+          {TIME_FILTERS.map((tf) => (
+            <button
+              key={tf}
+              type="button"
+              onClick={() => setFilter(tf)}
+              className={`px-2 py-0.5 text-[11px] rounded-sm transition-colors ${
+                filter === tf ? 'bg-plt-surface text-plt-text font-medium shadow-sm' : 'text-plt-muted hover:text-plt-text'
+              }`}
+            >
+              {tf}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -141,7 +130,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
               <YAxis
                 yAxisId="left"
                 tick={{ fill: '#8b929f', fontSize: 10 }}
-                tickFormatter={formatEGP}
+                tickFormatter={(val) => formatEGP(val, isPrivacy)}
                 axisLine={false}
                 tickLine={false}
                 width={42}
@@ -155,7 +144,7 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
                 tickLine={false}
                 width={42}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+              <Tooltip content={<CustomTooltip isPrivacy={isPrivacy} />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} iconType="circle" />
               <Bar yAxisId="left" dataKey="invested" name="Invested" fill="#00d2ff" radius={[2, 2, 0, 0]} maxBarSize={24} />
               <Bar yAxisId="left" dataKey="pl" name="Realized P/L" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={24}>

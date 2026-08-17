@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { PieChart as PieChartIcon, LayoutGrid } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Treemap } from 'recharts';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type AssetSlice = {
   name: string;
@@ -24,6 +25,7 @@ export default function AssetAllocationSection({
   usdRate,
 }: AssetAllocationSectionProps) {
   const [chartType, setChartType] = useState<'donut' | 'treemap'>('donut');
+  const { isPrivacy } = usePrivacyMode();
 
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
@@ -44,9 +46,15 @@ export default function AssetAllocationSection({
             <span>{sliceName}</span>
           </div>
           <div className="text-white/80">
-            {displaySymbol}
-            {sliceVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {displaySuffix}
+            {isPrivacy ? (
+              <span className="tracking-wider">****** {displaySuffix}</span>
+            ) : (
+              <>
+                {displaySymbol}
+                {sliceVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {displaySuffix}
+              </>
+            )}
             <span className="text-emerald-400 font-bold ml-1.5">({slicePct.toFixed(1)}%)</span>
           </div>
         </div>
@@ -147,9 +155,15 @@ export default function AssetAllocationSection({
               <div className="flex items-baseline justify-between text-[11px] font-mono pt-1">
                 <span className="text-white/40">Value</span>
                 <span className="text-white/90 font-medium">
-                  {displaySymbol}
-                  {slice.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  {displaySuffix}
+                  {isPrivacy ? (
+                    <span className="tracking-wider">****** {displaySuffix}</span>
+                  ) : (
+                    <>
+                      {displaySymbol}
+                      {slice.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {displaySuffix}
+                    </>
+                  )}
                 </span>
               </div>
             </div>

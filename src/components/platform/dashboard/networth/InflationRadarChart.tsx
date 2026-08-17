@@ -3,6 +3,7 @@
 import React from 'react';
 import { Flame, Info } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type InflationPoint = {
   month: string;
@@ -22,6 +23,7 @@ export default function InflationRadarChart({
   cbeAnnualInflation,
   currencyMode,
 }: InflationRadarChartProps) {
+  const { isPrivacy } = usePrivacyMode();
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
 
@@ -68,12 +70,12 @@ export default function InflationRadarChart({
               stroke="#666"
               tick={{ fill: '#888', fontSize: 11 }}
               axisLine={{ stroke: '#333' }}
-              tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v) => (isPrivacy ? '***' : `${(v / 1000).toFixed(0)}k`)}
             />
             <Tooltip
               contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: 8, fontSize: 12 }}
               formatter={(val: any, name: any) => [
-                `${displaySymbol}${Number(val).toLocaleString(undefined, { maximumFractionDigits: 0 })}${displaySuffix}`,
+                isPrivacy ? '******' : `${displaySymbol}${Number(val).toLocaleString(undefined, { maximumFractionDigits: 0 })}${displaySuffix}`,
                 name,
               ]}
             />

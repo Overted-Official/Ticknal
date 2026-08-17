@@ -12,6 +12,8 @@ import DashboardCharts from '@/components/platform/DashboardCharts';
 import OpportunityTable, { Opportunity } from '@/components/platform/OpportunityTable';
 import { SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 
 export type DashboardOrder = {
@@ -61,10 +63,28 @@ export default function DashboardMotionView({
   activeAlertCount
 }: DashboardMotionViewProps) {
   const router = useRouter();
+  const { isPrivacy } = usePrivacyMode();
   const [statsBarExpandedMobile, setStatsBarExpandedMobile] = useState(false);
   const [openPositionsExpandedMobile, setOpenPositionsExpandedMobile] = useState(false);
   const [buyOpportunitiesExpandedMobile, setBuyOpportunitiesExpandedMobile] = useState(false);
   const [exitSignalsExpandedMobile, setExitSignalsExpandedMobile] = useState(false);
+
+  const formatMoney = (value: number, showSign: boolean = false): string => {
+    if (isPrivacy) {
+      if (value === 0) return '****** EGP';
+      const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
+      return `${sign}****** EGP`;
+    }
+    if (value === 0) return '0.00 EGP';
+    const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
+    return `${sign}${formatted} EGP`;
+  };
+
+  const formatPrice = (value: number): string => {
+    if (isPrivacy) return '****** EGP';
+    return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
+  };
 
   return (
     <motion.div 
@@ -97,6 +117,7 @@ export default function DashboardMotionView({
           </div>
 
           <div className="flex items-center gap-2">
+            <PrivacyToggleButton />
             <TestNotificationButton />
             <Link
               href="/positions"
@@ -442,15 +463,4 @@ export default function DashboardMotionView({
       </div>
     </motion.div>
   );
-}
-
-function formatMoney(value: number, showSign: boolean = false): string {
-  if (value === 0) return '0.00 EGP';
-  const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
-  return `${sign}${formatted} EGP`;
-}
-
-function formatPrice(value: number): string {
-  return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
 }

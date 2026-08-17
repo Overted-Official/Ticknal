@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { PieChart as PieChartIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 const PIE_COLORS = [
   '#22c55e', // green
@@ -26,6 +26,8 @@ interface SpendingDonutChartProps {
 }
 
 export default function SpendingDonutChart({ splits }: SpendingDonutChartProps) {
+  const { isPrivacy } = usePrivacyMode();
+
   return (
     <div className="glass-panel rounded-xl p-4 md:p-5 space-y-2 flex flex-col">
       <div>
@@ -62,7 +64,7 @@ export default function SpendingDonutChart({ splits }: SpendingDonutChartProps) 
                 </Pie>
                 <Tooltip
                   contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: 8, fontSize: 12 }}
-                  formatter={(val: any) => [`${Number(val).toLocaleString()} EGP`, 'Spent']}
+                  formatter={(val: any) => [isPrivacy ? '****** EGP' : `${Number(val).toLocaleString()} EGP`, 'Spent']}
                 />
               </PieChart>
             </ResponsiveContainer>
