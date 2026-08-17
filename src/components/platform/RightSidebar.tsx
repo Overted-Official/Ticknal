@@ -124,9 +124,13 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     const groups = new Map<string, WatchlistItem[]>();
 
     for (const item of filteredWatchlist) {
-      const sector = item.sector || 'Unclassified';
+      let sector = item.sector || 'Unclassified';
+      const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(item.symbol.toUpperCase());
+      if (isFund || sector.toLowerCase().includes('fund')) {
+        sector = 'Funds';
+      }
       const items = groups.get(sector) ?? [];
-      items.push(item);
+      items.push({ ...item, sector });
       groups.set(sector, items);
     }
 

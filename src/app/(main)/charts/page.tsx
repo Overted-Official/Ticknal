@@ -106,11 +106,17 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
     const change = lastPrice - prevPrice;
     const changePct = prevPrice ? (change / prevPrice) * 100 : 0;
     
+    const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(t.symbol.toUpperCase());
+    let sector = t.sector || 'Unclassified';
+    if (isFund || sector.toLowerCase().includes('fund')) {
+      sector = 'Funds';
+    }
+
     return {
       symbol: t.symbol,
       companyName: t.companyName || t.symbol,
       website: t.website || undefined,
-      sector: t.sector || 'Unclassified',
+      sector: sector,
       price: lastPrice.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
       changePct: `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}%`,

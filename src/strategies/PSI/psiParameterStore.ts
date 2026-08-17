@@ -3,6 +3,9 @@ import path from "path";
 import { normalizeTickerSymbol, resolvePsiParams, type PsiStrategyParams } from "./psiStrategy";
 
 const BEST_COMBINATION_FILES = [
+  path.join(process.cwd(), "src", "strategies", "PSI", "data", "psi_best_combinations.csv"),
+  path.join(process.cwd(), "src", "strategies", "PSI", "data", "psi8_best_combinations.csv"),
+  path.join(process.cwd(), "src", "strategies", "PSI", "data", "psi40_best_combinations.csv"),
   path.join(process.cwd(), "Data", "psi_best_combinations.csv"),
   path.join(process.cwd(), "Data", "psi_egx30_best_combinations.csv"),
   path.join(process.cwd(), "Data", "psi_comi_best_combination.csv"),
@@ -112,8 +115,10 @@ function rowToParams(row: CsvRow): Partial<PsiStrategyParams> {
   const useAym = isTrue(row["Use AYM"]);
   const useAtr = isTrue(row["Use ATR"]);
   const useStoploss = isTrue(row["Use Stoploss"]);
+  const model = row["Model"]?.toLowerCase() === "psi-40" ? ("psi40" as const) : ("psi8" as const);
 
   return {
+    model,
     ...(entryLevels.length > 0 ? { entryLevels } : {}),
     useAym,
     aymMultiplier: useAym ? toNumber(row["AYM TP Multiplier"]) : null,

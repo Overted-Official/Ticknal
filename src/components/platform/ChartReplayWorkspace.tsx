@@ -51,8 +51,8 @@ export default function ChartReplayWorkspace({
     return initialParams;
   });
 
-  const [strategyStartDate, setStrategyStartDate] = useState<string>(searchParams?.get('strategyStart') || '2021-01-01');
-  const [strategyEndDate, setStrategyEndDate] = useState<string>(searchParams?.get('strategyEnd') || '');
+  const [strategyStartDate, setStrategyStartDate] = useState<string>(searchParams?.get('strategyStart') || '2025-01-01');
+  const [strategyEndDate, setStrategyEndDate] = useState<string | undefined>(searchParams?.get('strategyEnd') || undefined);
 
   const handleStrategyChange = useCallback((newStrategy: string) => {
     setSelectedStrategy(newStrategy);

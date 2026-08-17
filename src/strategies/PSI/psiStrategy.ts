@@ -59,6 +59,7 @@ export type PsiBacktestResult = {
 };
 
 export type PsiStrategyParams = {
+  model?: "psi8" | "psi40";
   entryLevels: number[];
   useAym: boolean;
   aymMultiplier: number | null;
@@ -78,6 +79,7 @@ type ComputedPsiBar = PriceBar & {
   masterIndex: number | null;
   masterIndexAdjusted: number | null;
   masterIndex40: number | null;
+  masterIndexAdjusted40: number | null;
   atr14: number | null;
   medianDailyMove: number | null;
   structLow: number | null;
@@ -88,6 +90,7 @@ const ENTRY_PRIORITY = [23.6, 14.6, 38.2, 50.0, 61.8];
 const MODEL_VERSION = "psi-v9-platform";
 
 const DEFAULT_PARAMS: PsiStrategyParams = {
+  model: "psi8",
   entryLevels: [...PSI_LEVELS],
   useAym: true,
   aymMultiplier: 9,
@@ -99,7 +102,7 @@ const DEFAULT_PARAMS: PsiStrategyParams = {
   useStructStop: false,
   structLookback: 20,
   initialCapital: 3000,
-  startDate: "2021-01-01",
+  startDate: "2025-01-01",
 };
 
 const TICKER_PRESETS: Record<string, Partial<PsiStrategyParams>> = {
@@ -182,6 +185,8 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
   let lastDate = params.startDate;
   let finalEquity = initialCapital;
 
+  const is40 = params.model === "psi40";
+
   for (let i = 1; i < computed.length; i += 1) {
     const bar = computed[i];
     const time = Date.parse(bar.date);
@@ -191,8 +196,9 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
     lastClose = bar.close;
     lastDate = bar.date;
 
-    const previousMaster = computed[i - 1].masterIndex;
-    const currentMaster = bar.masterIndex;
+    const previousMaster = is40 ? computed[i - 1].masterIndex40 : computed[i - 1].masterIndex;
+    const currentMaster = is40 ? bar.masterIndex40 : bar.masterIndex;
+    const currentMasterAdjusted = is40 ? bar.masterIndexAdjusted40 : bar.masterIndexAdjusted;
     const entryLevel = getCrossedEntryLevel(previousMaster, currentMaster, params.entryLevels);
 
     if (!active && entryLevel !== null) {
@@ -213,10 +219,10 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
           confidence: 1,
           price: bar.close,
           masterIndex: currentMaster ?? 0,
-          masterIndexAdjusted: bar.masterIndexAdjusted ?? 0,
+          masterIndexAdjusted: currentMasterAdjusted ?? 0,
           medianDailyMove: bar.medianDailyMove,
           entryReason: `L-${entryLevel.toFixed(1)}`,
-          modelVersion: MODEL_VERSION,
+          modelVersion: is40 ? "psi40-platform" : MODEL_VERSION,
         });
       }
     }
@@ -245,10 +251,10 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
           confidence: exitSignal.confidence,
           price: bar.close,
           masterIndex: currentMaster ?? 0,
-          masterIndexAdjusted: bar.masterIndexAdjusted ?? 0,
+          masterIndexAdjusted: currentMasterAdjusted ?? 0,
           medianDailyMove: bar.medianDailyMove,
           exitReason: exitSignal.reason,
-          modelVersion: MODEL_VERSION,
+          modelVersion: is40 ? "psi40-platform" : MODEL_VERSION,
         });
 
         active = false;
@@ -326,6 +332,7 @@ export function computePsiSeries(bars: PriceBar[]): ComputedPsiBar[] {
 
   const rawIndex40 = computePsi40(sorted);
   const masterIndex40 = dynamicEma(rawIndex40, 1);
+  const masterIndexAdjusted40 = dynamicEma(rawIndex40, 2);
 
   const masterIndex = dynamicEma(rawIndex, 1);
   const masterIndexAdjusted = dynamicEma(rawIndex, 2);
@@ -341,6 +348,7 @@ export function computePsiSeries(bars: PriceBar[]): ComputedPsiBar[] {
     masterIndex: nullable(masterIndex[i]),
     masterIndexAdjusted: nullable(masterIndexAdjusted[i]),
     masterIndex40: nullable(masterIndex40[i]),
+    masterIndexAdjusted40: nullable(masterIndexAdjusted40[i]),
     atr14: nullable(atr14[i]),
     medianDailyMove: nullable(medianDailyMove[i]),
     structLow: nullable(structLow[i]),
@@ -365,13 +373,14 @@ function getExitSignal(
   highestPrice: number,
 ): { signal: PsiSignalType; reason: string; confidence: number } | null {
   const medianDailyMove = bar.medianDailyMove;
+  const currentAdjusted = params.model === "psi40" ? bar.masterIndexAdjusted40 : bar.masterIndexAdjusted;
   const hitTakeProfit =
     params.useAym &&
     isFiniteNumber(targetPrice) &&
     isFiniteNumber(params.aymLimit) &&
-    isFiniteNumber(bar.masterIndexAdjusted) &&
+    isFiniteNumber(currentAdjusted) &&
     bar.close >= targetPrice &&
-    Number(bar.masterIndexAdjusted) < Number(params.aymLimit);
+    Number(currentAdjusted) < Number(params.aymLimit);
   const hitStop =
     params.useStoploss &&
     isFiniteNumber(params.stoplossLevel) &&

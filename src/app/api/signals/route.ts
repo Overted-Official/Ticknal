@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const ticker = normalizeTickerSymbol(symbol);
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? Number.parseInt(limitParam, 10) : undefined;
-    const startDate = searchParams.get("start") ?? "2021-01-01";
+    const startDate = searchParams.get("start") ?? "2025-01-01";
     const endDate = searchParams.get("end") ?? undefined;
 
     const rows = await getCachedDailyPrices(ticker);
