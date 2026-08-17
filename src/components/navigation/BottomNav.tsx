@@ -4,14 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { LayoutDashboard, LineChart, Wallet, Settings, Bell } from 'lucide-react';
+import { LayoutDashboard, LineChart, Wallet, Settings, Bell, Plus } from 'lucide-react';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
+import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function BottomNav() {
   const pathname = usePathname();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
     refreshInterval: 30000,
@@ -22,6 +24,24 @@ export default function BottomNav() {
 
   return (
     <>
+      {/* Floating Persistent Alerts Button on Mobile */}
+      <div className="fixed bottom-[calc(4.2rem+env(safe-area-inset-bottom,0px))] right-3.5 z-40 md:hidden">
+        <button
+          type="button"
+          onClick={() => setIsNotificationsOpen(true)}
+          className="w-10 h-10 rounded-full bg-[#111]/95 border border-plt-orange/40 shadow-xl shadow-black/80 flex items-center justify-center text-plt-orange hover:scale-105 active:scale-95 transition-all relative backdrop-blur-md"
+          title="Trade Notifications & Alerts"
+        >
+          <Bell size={18} strokeWidth={2} />
+          {notificationCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-plt-orange text-black text-[9px] font-mono font-bold flex items-center justify-center ring-2 ring-black">
+              {notificationCount > 9 ? '9+' : notificationCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Main Bottom Bar */}
       <div className="h-14 w-full bg-black border-t border-white/[0.08] flex items-center justify-around z-50 px-1 relative">
         {/* 1. Dashboard */}
         <Link
@@ -67,24 +87,19 @@ export default function BottomNav() {
           </span>
         </Link>
 
-        {/* 3. Middle Prominent Action: Alerts / Notifications */}
+        {/* 3. Middle Prominent Action: + Quick Add (Transactions & Positions) */}
         <div className="flex-1 h-full flex flex-col items-center justify-center relative">
           <button
             type="button"
-            onClick={() => setIsNotificationsOpen(true)}
+            onClick={() => setIsQuickAddOpen(true)}
             className="flex flex-col items-center justify-center group -mt-3 relative"
-            title="Trade Notifications & Alerts"
+            title="Quick Add Transaction or Position"
           >
-            <div className="w-10 h-10 rounded-full bg-[#111] border border-plt-orange/40 shadow-[0_0_12px_rgba(255,100,13,0.2)] flex items-center justify-center text-plt-orange transition-all duration-200 group-hover:scale-105 group-hover:border-plt-orange group-active:scale-95 relative">
-              <Bell size={18} strokeWidth={2} />
-              {notificationCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-plt-orange text-black text-[9px] font-mono font-bold flex items-center justify-center ring-2 ring-black">
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
-              )}
+            <div className="w-10 h-10 rounded-full bg-[#111] border border-plt-orange/50 shadow-[0_0_14px_rgba(255,100,13,0.25)] flex items-center justify-center text-plt-orange transition-all duration-200 group-hover:scale-105 group-hover:border-plt-orange group-active:scale-95">
+              <Plus size={20} strokeWidth={2.4} />
             </div>
             <span className="text-[9px] font-medium text-plt-orange mt-0.5 tracking-tight">
-              Alerts
+              Add
             </span>
           </button>
         </div>
@@ -134,9 +149,16 @@ export default function BottomNav() {
         </Link>
       </div>
 
+      {/* Notifications Drawer */}
       <NotificationsDrawer
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
+      />
+
+      {/* Quick Add (Transaction / Position) Drawer */}
+      <QuickAddDrawer
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
       />
     </>
   );
