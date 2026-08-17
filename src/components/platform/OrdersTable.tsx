@@ -316,7 +316,7 @@ export default function OrdersTable() {
       </motion.div>
 
       {/* Main Canvas: 24px outer padding (p-6), 8px widget gap (space-y-2) */}
-      <div className="min-h-0 flex-1 overflow-auto p-6 space-y-2">
+      <div className="min-h-0 flex-1 overflow-auto p-4 md:p-6 space-y-2 pb-28 md:pb-6">
         {/* Metric Strip (5 items in unified master container: Portfolio Value, Unrealized P/L, Realized P/L, Open Positions, Closed Positions) */}
         <motion.div 
           variants={itemFadeInUp}

@@ -18,10 +18,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   <SidebarNav />
                 </Suspense>
               </div>
-              <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 flex flex-col">
+              <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col">
                 {children}
               </div>
-              <div className="md:hidden fixed bottom-0 left-0 right-0 w-full z-50 pb-[env(safe-area-inset-bottom)] pointer-events-none">
+              <div className="md:hidden fixed bottom-0 left-0 right-0 w-full z-50 pointer-events-none">
                 <BottomNav />
               </div>
             </div>

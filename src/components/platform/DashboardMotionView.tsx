@@ -113,7 +113,7 @@ export default function DashboardMotionView({
         ]}
       />
 
-      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-20 touch-pan-y">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-28 md:pb-20 touch-pan-y">
         {/* Top Header Banner */}
         <div className="border-b border-white/[0.09] px-6 py-5 shrink-0">
         <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">

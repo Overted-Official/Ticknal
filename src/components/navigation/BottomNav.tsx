@@ -49,10 +49,11 @@ export default function BottomNav() {
 
       {/* Main Bottom Bar */}
       <div
-        className={`h-14 w-full bg-black border-t border-white/[0.08] flex items-center justify-around z-50 px-1 relative transition-transform duration-300 ease-out will-change-transform ${
-          isNavVisible ? 'translate-y-0 pointer-events-auto' : 'translate-y-[120%] pointer-events-none'
+        className={`w-full bg-black/95 backdrop-blur-xl border-t border-white/[0.08] flex items-center justify-around z-50 px-1 pb-[env(safe-area-inset-bottom)] relative transition-all duration-300 ease-out will-change-transform ${
+          isNavVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'
         }`}
       >
+        <div className="h-14 w-full flex items-center justify-around">
         {/* 1. Dashboard */}
         <Link
           href="/dashboard"
@@ -156,7 +157,8 @@ export default function BottomNav() {
           >
             Settings
           </span>
-        </Link>
+          </Link>
+        </div>
       </div>
 
       {/* Notifications Drawer */}

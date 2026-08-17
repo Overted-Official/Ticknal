@@ -126,7 +126,7 @@ export default function BankAccountsLedgerView({
         />
       )}
 
-      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20 touch-pan-y">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-28 md:pb-20 touch-pan-y">
         {isInitialLoading ? (
           <BankAccountsSkeleton />
         ) : (
