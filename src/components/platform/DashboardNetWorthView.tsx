@@ -124,7 +124,7 @@ export default function DashboardNetWorthView({
   }, [displayTotalNetWorth, cbeAnnualInflation]);
 
   return (
-    <div className="flex-1 w-full flex flex-col min-h-0 overflow-y-auto bg-tv-base text-tv-text select-none">
+    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-y-auto bg-tv-base text-tv-text select-none">
       {/* 1. Mobile / Desktop Top Rail */}
       <SubNavTopRail
         activeTab="net-worth"
@@ -136,7 +136,7 @@ export default function DashboardNetWorthView({
         ]}
       />
 
-      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6">
+      <div className="p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6 pb-20">
         {/* 2. Header */}
         <div>
           <div className="flex items-center gap-2 mb-1">

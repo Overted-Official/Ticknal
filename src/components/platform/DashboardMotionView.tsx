@@ -71,7 +71,7 @@ export default function DashboardMotionView({
       initial="hidden"
       animate="visible"
       variants={containerStagger}
-      className="flex h-full min-h-0 flex-col overflow-auto bg-transparent text-white pb-8 relative z-10"
+      className="flex-1 h-full w-full min-h-0 flex flex-col overflow-y-auto bg-transparent text-white pb-20 relative z-10"
     >
       {/* 1. Mobile / Desktop Top Rail */}
       <SubNavTopRail

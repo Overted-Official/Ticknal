@@ -10,7 +10,7 @@ export default function WalletPositionsWrapper() {
   const router = useRouter();
 
   return (
-    <div className="flex-1 w-full flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden">
       <SubNavTopRail
         activeTab="positions"
         onChange={(val) => router.push(`/wallet?tab=${val}`)}
@@ -19,7 +19,7 @@ export default function WalletPositionsWrapper() {
           { label: 'Bank Accounts & Ledger', value: 'banks', icon: Landmark },
         ]}
       />
-      <div className="flex-1 min-h-0 overflow-auto">
+      <div className="flex-1 h-full min-h-0 overflow-y-auto">
         <OrdersTable />
       </div>
     </div>
