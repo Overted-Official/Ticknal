@@ -155,17 +155,24 @@ export class KronosPredictor {
       s2Data.push(BigInt(nextS2));
     }
 
-    // 4. Decode tokens back to time series
-    const predS1Data = s1Data.slice(-pred_len);
-    const predS2Data = s2Data.slice(-pred_len);
-    const predS1Tensor = new ort.Tensor('int64', new BigInt64Array(predS1Data), [1, pred_len]);
-    const predS2Tensor = new ort.Tensor('int64', new BigInt64Array(predS2Data), [1, pred_len]);
+    // 4. Decode full token sequence back to time series (preserving convolutional receptive field)
+    const maxContext = 512;
+    const totalTokens = s1Data.length;
+    const contextStart = Math.max(0, totalTokens - maxContext);
+    const decodeS1 = s1Data.slice(contextStart);
+    const decodeS2 = s2Data.slice(contextStart);
+    const decodeLen = decodeS1.length;
+
+    const predS1Tensor = new ort.Tensor('int64', new BigInt64Array(decodeS1), [1, decodeLen]);
+    const predS2Tensor = new ort.Tensor('int64', new BigInt64Array(decodeS2), [1, decodeLen]);
 
     const decResult = await this.sessionDec!.run({
       s1_ids: predS1Tensor,
       s2_ids: predS2Tensor
     });
 
-    return decResult.x_pred.data as Float32Array; // Return all OHLCV data (shape: 1, pred_len, 6)
+    const allDecoded = decResult.x_pred.data as Float32Array; // shape: (1, decodeLen, 6)
+    const predStart = (decodeLen - pred_len) * 6;
+    return allDecoded.subarray(predStart, predStart + pred_len * 6);
   }
 }

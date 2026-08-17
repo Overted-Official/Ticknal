@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { KronosPredictor } from '@/tools/kronos/KronosPredictor';
+import { createClient } from '@/lib/supabase/server';
 
 let predictor: KronosPredictor | null = null;
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { history, predictDays } = body;
 
@@ -25,15 +32,14 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < seqLen; i++) {
       const row = history[i];
-      // Expecting { open, high, low, close, volume, amount, date }
-      const f = [
-        Number(row.open) || 0,
-        Number(row.high) || 0,
-        Number(row.low) || 0,
-        Number(row.close) || 0,
-        Number(row.volume) || 0,
-        Number(row.amount) || 0
-      ];
+      const open = Number(row.open) || 0;
+      const high = Number(row.high) || open;
+      const low = Number(row.low) || open;
+      const close = Number(row.close) || open;
+      const volume = Number(row.volume) || 0;
+      const amount = Number(row.amount) || (volume * ((open + high + low + close) / 4));
+
+      const f = [open, high, low, close, volume, amount];
 
       for (let j = 0; j < 6; j++) {
         x[i * 6 + j] = f[j];
@@ -42,7 +48,6 @@ export async function POST(req: NextRequest) {
       }
 
       // Parse date for stamps (using row.time which is "YYYY-MM-DD")
-      // Split the string and construct UTC date directly to avoid local timezone shifts
       const [year, month, day] = row.time.split('-').map(Number);
       const dt = new Date(Date.UTC(year, month - 1, day));
       
@@ -73,21 +78,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generate future stamps
+    // Generate future stamps (respecting EGX business days: Sunday-Thursday)
     const y_stamp = new Float32Array(nDays * 5);
     const [ly, lm, ld] = history[seqLen - 1].time.split('-').map(Number);
     const lastDate = new Date(Date.UTC(ly, lm - 1, ld));
     
-    // Create an array of future date strings for the response
     const futureDates: string[] = [];
 
     for (let i = 0; i < nDays; i++) {
-      // Add one day
+      // Advance day
       lastDate.setUTCDate(lastDate.getUTCDate() + 1);
       
-      // Skip weekends (simple heuristic)
-      if (lastDate.getUTCDay() === 0) lastDate.setUTCDate(lastDate.getUTCDate() + 1); // Sunday -> Monday
-      else if (lastDate.getUTCDay() === 6) lastDate.setUTCDate(lastDate.getUTCDate() + 2); // Saturday -> Monday
+      // EGX Weekend: Friday (5) -> Sunday (+2 days), Saturday (6) -> Sunday (+1 day)
+      if (lastDate.getUTCDay() === 5) {
+        lastDate.setUTCDate(lastDate.getUTCDate() + 2); // Friday -> Sunday
+      } else if (lastDate.getUTCDay() === 6) {
+        lastDate.setUTCDate(lastDate.getUTCDate() + 1); // Saturday -> Sunday
+      }
       
       const isoDate = lastDate.toISOString().split('T')[0];
       futureDates.push(isoDate);
@@ -111,8 +118,8 @@ export async function POST(req: NextRequest) {
     // Run inference
     const predNorm = await predictor.predict(x, x_stamp, y_stamp, seqLen, nDays);
 
-    // Denormalize
-    const predictions = [];
+    // Denormalize and calculate raw predictions
+    const rawPredictions = [];
     for (let i = 0; i < nDays; i++) {
       const idx = i * 6;
       const denormOpen = (predNorm[idx + 0] * x_std[0]) + x_mean[0];
@@ -120,14 +127,39 @@ export async function POST(req: NextRequest) {
       const denormLow = (predNorm[idx + 2] * x_std[2]) + x_mean[2];
       const denormClose = (predNorm[idx + 3] * x_std[3]) + x_mean[3];
       
-      predictions.push({
+      rawPredictions.push({
         date: futureDates[i],
         open: denormOpen,
-        high: Math.max(denormHigh, denormOpen, denormClose), // sanity check
-        low: Math.min(denormLow, denormOpen, denormClose),   // sanity check
+        high: denormHigh,
+        low: denormLow,
         close: denormClose
       });
     }
+
+    // Anchor predicted candles to the last historical close price
+    // This ensures smooth continuity without jarring vertical gaps caused by global lookback variance
+    const lastHistoricalClose = Number(history[seqLen - 1].close);
+    const firstPredictedOpen = rawPredictions[0]?.open || lastHistoricalClose;
+    
+    // Calculate continuity scale ratio
+    const scaleRatio = (firstPredictedOpen > 0 && lastHistoricalClose > 0)
+      ? lastHistoricalClose / firstPredictedOpen
+      : 1.0;
+
+    const predictions = rawPredictions.map((p) => {
+      const scaledOpen = p.open * scaleRatio;
+      const scaledClose = p.close * scaleRatio;
+      const scaledHigh = Math.max(p.high * scaleRatio, scaledOpen, scaledClose);
+      const scaledLow = Math.min(p.low * scaleRatio, scaledOpen, scaledClose);
+
+      return {
+        date: p.date,
+        open: Number(scaledOpen.toFixed(2)),
+        high: Number(scaledHigh.toFixed(2)),
+        low: Number(scaledLow.toFixed(2)),
+        close: Number(scaledClose.toFixed(2)),
+      };
+    });
 
     return NextResponse.json({ predictions });
 

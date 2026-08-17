@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   createChart,
   ColorType,
@@ -201,6 +202,23 @@ export default function ChartWidget({
 
   const [isPredicting, setIsPredicting] = useState(false);
   const predictionSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const [isChartLoading, setIsChartLoading] = useState(true);
+
+  // Clear previous predictions and trigger loading skeleton on symbol/data change
+  useEffect(() => {
+    if (predictionSeriesRef.current && chartRef.current) {
+      try {
+        chartRef.current.removeSeries(predictionSeriesRef.current);
+      } catch {}
+      predictionSeriesRef.current = null;
+    }
+
+    setIsChartLoading(true);
+    const timer = setTimeout(() => {
+      setIsChartLoading(false);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [symbol, data]);
 
   const [predictPopoverOpen, setPredictPopoverOpen] = useState(false);
   const [predictDaysInput, setPredictDaysInput] = useState("10");
@@ -1516,6 +1534,51 @@ export default function ChartWidget({
           <span className="text-plt-red">Replay</span> {data[0]?.time} to {replayDate}
         </div>
       )}
+
+      {/* Ticker-Switching Loading Skeleton Overlay */}
+      <AnimatePresence>
+        {isChartLoading && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 z-30 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden"
+          >
+            {/* Grid Line Shimmer */}
+            <div className="absolute inset-0 flex flex-col justify-between py-12 px-6 opacity-15">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="w-full h-px bg-white/25" />
+              ))}
+            </div>
+
+            {/* Shimmering Candlestick Bars */}
+            <div className="absolute bottom-12 left-10 right-10 h-3/5 flex items-end gap-1 px-4 opacity-20">
+              {[45, 62, 55, 78, 50, 70, 60, 88, 45, 74, 82, 60, 72, 54, 86, 64, 48, 76, 62, 94, 55, 70, 46, 80, 60, 84, 50, 68, 76, 58].map((h, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ opacity: [0.15, 0.65, 0.15] }}
+                  transition={{ duration: 1.2, repeat: Infinity, delay: (i % 6) * 0.1 }}
+                  className="flex-1 bg-white rounded-[1px]"
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
+
+            {/* Center Loading Badge */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative z-10 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-black/80 border border-white/[0.12] backdrop-blur-md shadow-2xl"
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-plt-orange animate-pulse" />
+              <span className="text-xs font-mono font-medium text-white tracking-wide">
+                Loading {displaySymbol}...
+              </span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AddOrderModal
         isOpen={isAddOrderOpen}

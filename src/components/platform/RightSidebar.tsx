@@ -142,7 +142,16 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     });
   };
 
+  const [isPending, startTransition] = useState<[boolean, (fn: () => void) => void]>(() => [false, (fn) => fn()]);
+  const [pendingTicker, setPendingTicker] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPendingTicker(null);
+  }, [selectedSymbol]);
+
   const openTicker = (symbol: string) => {
+    if (symbol === selectedSymbol) return;
+    setPendingTicker(symbol);
     router.push(`?ticker=${symbol}&timeframe=${timeframe}`);
   };
 
@@ -244,6 +253,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                 const changePctDisplay = item.changePct || (item.change ? item.change.split('(')[1]?.replace(')', '') : '0.00%');
                 const isPositive = item.isUp;
 
+                const isPendingThis = pendingTicker === item.symbol;
                 return (
                   <div
                     key={item.symbol}
@@ -254,9 +264,11 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                       if (e.key === 'Enter' || e.key === ' ') openTicker(item.symbol);
                     }}
                     className={`grid grid-cols-[1fr_56px_56px_46px] items-center cursor-pointer px-2.5 py-1.5 text-xs transition-all group mx-1 my-0.5 rounded-md gap-x-1 ${
-                      isSelected 
-                        ? 'border border-white/[0.14] bg-white/[0.06] shadow-sm' 
-                        : 'hover:bg-white/[0.03] border border-transparent'
+                      isPendingThis
+                        ? 'border border-plt-orange/40 bg-white/[0.08] animate-pulse shadow-sm'
+                        : isSelected 
+                          ? 'border border-white/[0.14] bg-white/[0.06] shadow-sm' 
+                          : 'hover:bg-white/[0.03] border border-transparent'
                     }`}
                   >
                     {/* Logo & Symbol info */}
