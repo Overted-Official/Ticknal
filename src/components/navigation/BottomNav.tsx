@@ -7,11 +7,13 @@ import useSWR from 'swr';
 import { LayoutDashboard, LineChart, Wallet, Settings, Bell, Plus } from 'lucide-react';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
+import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { isNavVisible } = useMobileNavScroll();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
@@ -25,7 +27,11 @@ export default function BottomNav() {
   return (
     <>
       {/* Floating Persistent Alerts Button on Mobile */}
-      <div className="fixed bottom-[calc(4.2rem+env(safe-area-inset-bottom,0px))] right-3.5 z-40 md:hidden">
+      <div
+        className={`fixed bottom-[calc(4.2rem+env(safe-area-inset-bottom,0px))] right-3.5 z-40 md:hidden transition-all duration-300 ease-out will-change-transform ${
+          isNavVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-16 opacity-0 pointer-events-none'
+        }`}
+      >
         <button
           type="button"
           onClick={() => setIsNotificationsOpen(true)}
@@ -42,7 +48,11 @@ export default function BottomNav() {
       </div>
 
       {/* Main Bottom Bar */}
-      <div className="h-14 w-full bg-black border-t border-white/[0.08] flex items-center justify-around z-50 px-1 relative">
+      <div
+        className={`h-14 w-full bg-black border-t border-white/[0.08] flex items-center justify-around z-50 px-1 relative transition-transform duration-300 ease-out will-change-transform ${
+          isNavVisible ? 'translate-y-0 pointer-events-auto' : 'translate-y-[120%] pointer-events-none'
+        }`}
+      >
         {/* 1. Dashboard */}
         <Link
           href="/dashboard"

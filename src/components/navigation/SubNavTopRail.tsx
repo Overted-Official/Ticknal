@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 
 export type SubNavTabItem = {
   label: string;
@@ -22,9 +23,15 @@ export default function SubNavTopRail({
   onChange,
   className = '',
 }: SubNavTopRailProps) {
+  const { isNavVisible } = useMobileNavScroll();
+
   return (
     <div
-      className={`md:hidden w-full shrink-0 h-11 px-3 flex items-center gap-1.5 border-b border-white/[0.08] bg-black/95 backdrop-blur-md z-30 overflow-x-auto no-scrollbar scroll-smooth ${className}`}
+      className={`md:hidden w-full shrink-0 flex items-center gap-1.5 border-b bg-black/95 backdrop-blur-md z-30 overflow-x-auto no-scrollbar scroll-smooth transition-all duration-300 ease-out will-change-[transform,max-height,opacity] ${
+        isNavVisible
+          ? 'translate-y-0 max-h-11 h-11 px-3 border-white/[0.08] opacity-100'
+          : '-translate-y-full max-h-0 h-0 px-3 py-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
+      } ${className}`}
     >
       {items.map((item) => {
         const isActive = activeTab === item.value;

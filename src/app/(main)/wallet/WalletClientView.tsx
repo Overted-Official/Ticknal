@@ -6,6 +6,7 @@ import { Wallet, Landmark } from 'lucide-react';
 import OrdersTable from '@/components/platform/OrdersTable';
 import BankAccountsLedgerView from '@/components/platform/BankAccountsLedgerView';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
+import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 
 interface WalletClientViewProps {
   initialTab?: string;
@@ -46,6 +47,8 @@ export default function WalletClientView({
     window.history.replaceState(null, '', `/wallet?tab=${newTab}`);
   };
 
+  const { isNavVisible } = useMobileNavScroll();
+
   const navItems = [
     { label: 'Stock Positions', value: 'positions' as const, icon: Wallet },
     { label: 'Bank Accounts & Ledger', value: 'banks' as const, icon: Landmark },
@@ -54,7 +57,13 @@ export default function WalletClientView({
   return (
     <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
       {/* Unified Responsive Top Navigation Rail */}
-      <div className="w-full shrink-0 h-11 px-4 md:px-6 flex items-center justify-between border-b border-white/[0.08] bg-black/95 backdrop-blur-md z-30 overflow-x-auto no-scrollbar">
+      <div
+        className={`w-full shrink-0 flex items-center justify-between border-b bg-black/95 backdrop-blur-md z-30 overflow-x-auto no-scrollbar transition-all duration-300 ease-out will-change-[transform,max-height,opacity] ${
+          isNavVisible
+            ? 'translate-y-0 max-h-11 h-11 px-4 md:px-6 border-white/[0.08] opacity-100'
+            : 'md:translate-y-0 md:max-h-11 md:h-11 md:px-6 md:border-white/[0.08] md:opacity-100 -translate-y-full max-h-0 h-0 px-4 py-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
+        }`}
+      >
         <div className="flex items-center gap-1.5">
           {navItems.map((item) => {
             const isActive = currentTab === item.value;
