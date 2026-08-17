@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { Landmark, ArrowRightLeft, Plus, Wallet } from 'lucide-react';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
+
+const WALLET_TABS = ['positions', 'banks'] as const;
 import BankSummaryKPIs from './wallet/BankSummaryKPIs';
 import BankAccountsGrid from './wallet/BankAccountsGrid';
 import TransactionLedgerTable from './wallet/TransactionLedgerTable';
@@ -103,6 +106,12 @@ export default function BankAccountsLedgerView({
     }
   }
 
+  const { swipeHandlers } = useSwipeableTabs({
+    tabs: WALLET_TABS,
+    activeTab: 'banks',
+    onTabChange: (val) => router.push(`/wallet?tab=${val}`),
+  });
+
   return (
     <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
       {/* 1. Mobile Top Rail (only if not hidden by parent wrapper) */}
@@ -117,7 +126,7 @@ export default function BankAccountsLedgerView({
         />
       )}
 
-      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20 touch-pan-y">
         {isInitialLoading ? (
           <BankAccountsSkeleton />
         ) : (

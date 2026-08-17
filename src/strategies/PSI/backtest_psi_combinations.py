@@ -478,7 +478,7 @@ def prepare_ticker_arrays(df: pd.DataFrame, ticker: str, start_date: str, end_da
         + ticker_df["ma_score"] * 4.0
         + ticker_df["slope_score"]
     ) / total_weight
-    master_raw = np.floor((raw_calc.to_numpy(dtype=np.float64) / 16.18) + 0.5) * 16.18
+    master_raw = raw_calc.to_numpy(dtype=np.float64)
     ticker_df["master_index"] = dynamic_ema(master_raw, 1)
     ticker_df["master_index_adjusted"] = dynamic_ema(master_raw, 2)
 

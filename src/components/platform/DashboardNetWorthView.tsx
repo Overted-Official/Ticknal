@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { ShieldCheck, TrendingUp, Landmark } from 'lucide-react';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
+
+const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 import NetWorthKPIs from './dashboard/networth/NetWorthKPIs';
 import AssetAllocationSection, { type AssetSlice } from './dashboard/networth/AssetAllocationSection';
 import InflationRadarChart from './dashboard/networth/InflationRadarChart';
@@ -181,6 +184,12 @@ export default function DashboardNetWorthView({
     };
   }, [displayTotalNetWorth, totalEgpLiquidCash, totalEquitiesMarketValue, totalFundsMarketValue, totalUsdCashInEgp, totalNetWorthEgp, cbeAnnualInflation, usCpiAnnualInflation, initialInflationSeries]);
 
+  const { swipeHandlers } = useSwipeableTabs({
+    tabs: DASHBOARD_TABS,
+    activeTab: 'net-worth',
+    onTabChange: (val) => router.push(`/dashboard?tab=${val}`),
+  });
+
   return (
     <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
       {/* 1. Mobile / Desktop Top Rail */}
@@ -194,7 +203,7 @@ export default function DashboardNetWorthView({
         ]}
       />
 
-      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20 touch-pan-y">
         {/* 2. Header */}
         <div>
           <div className="flex items-center gap-2 mb-1">

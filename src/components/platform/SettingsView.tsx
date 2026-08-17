@@ -37,6 +37,7 @@ import { useAlerts } from '@/components/platform/AlertProvider';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 import PinSecurityCard from '@/components/platform/settings/PinSecurityCard';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
 export type SettingsUserProfile = {
   id: string;
@@ -131,6 +132,8 @@ function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | nu
   );
 }
 
+const SETTINGS_TABS = ['profile', 'security', 'devices', 'alerts'] as const;
+
 export default function SettingsView({
   userProfile,
   initialDevices,
@@ -141,6 +144,13 @@ export default function SettingsView({
   const { ensurePushSubscription, permission } = useAlerts();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'devices' | 'alerts'>('profile');
+
+  const { swipeHandlers } = useSwipeableTabs({
+    tabs: SETTINGS_TABS,
+    activeTab,
+    onTabChange: (newTab) => setActiveTab(newTab),
+  });
+
   const [devices, setDevices] = useState<DeviceInfo[]>(initialDevices);
   const [monitoredTickers, setMonitoredTickers] = useState<MonitoredTicker[]>(initialMonitoredTickers);
   const [copiedUid, setCopiedUid] = useState(false);
@@ -417,7 +427,7 @@ export default function SettingsView({
         ]}
       />
 
-      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-24">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-24 touch-pan-y">
         {/* Top Header Banner */}
         <div className="border-b border-white/[0.09] px-4 md:px-6 py-4 md:py-5 shrink-0">
           <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">

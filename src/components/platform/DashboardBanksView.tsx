@@ -6,6 +6,9 @@ import useSWR from 'swr';
 import { Landmark, TrendingUp, ShieldCheck, Wallet } from 'lucide-react';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
+
+const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 import BankSummaryKPIs from '@/components/platform/wallet/BankSummaryKPIs';
 import CashFlowBarChart from './dashboard/banks/CashFlowBarChart';
 import SpendingDonutChart from './dashboard/banks/SpendingDonutChart';
@@ -125,6 +128,12 @@ export default function DashboardBanksView({
     }).sort((a, b) => b.egpVal - a.egpVal);
   }, [accounts, usdRate, totalCombinedEgp]);
 
+  const { swipeHandlers } = useSwipeableTabs({
+    tabs: DASHBOARD_TABS,
+    activeTab: 'banks',
+    onTabChange: (val) => router.push(`/dashboard?tab=${val}`),
+  });
+
   return (
     <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
       {/* 1. Mobile / Desktop Top Rail */}
@@ -138,7 +147,7 @@ export default function DashboardBanksView({
         ]}
       />
 
-      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto p-4 md:p-6 max-w-[1600px] mx-auto space-y-2 pb-20 touch-pan-y">
         {/* 2. Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

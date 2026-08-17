@@ -326,7 +326,7 @@ export function computePsi8(close: number[], high: number[], low: number[]): { r
       Number(adxScore[i]) * 10 +
       Number(maScore[i]) * 4 +
       Number(slopeScore[i]) * 1;
-    return Math.round((weighted / 99) / 16.18) * 16.18;
+    return weighted / 99;
   });
   
   return { rawIndex, atr14 };

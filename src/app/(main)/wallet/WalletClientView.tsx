@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Wallet, Landmark } from 'lucide-react';
 import OrdersTable from '@/components/platform/OrdersTable';
 import BankAccountsLedgerView from '@/components/platform/BankAccountsLedgerView';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
 interface WalletClientViewProps {
   initialTab?: string;
@@ -22,6 +23,12 @@ export default function WalletClientView({
     const urlTab = searchParams?.get('tab');
     if (urlTab === 'banks' || urlTab === 'positions') return urlTab;
     return initialTab === 'banks' ? 'banks' : 'positions';
+  });
+
+  const { swipeHandlers } = useSwipeableTabs({
+    tabs: ['positions', 'banks'] as const,
+    activeTab: currentTab,
+    onTabChange: (newTab) => handleTabChange(newTab),
   });
 
   // Sync internal state if URL search param changes from external navigation
@@ -75,8 +82,8 @@ export default function WalletClientView({
         </div>
       </div>
 
-      {/* Main Tab Views with Instant Zero-Latency Switch */}
-      <div className="flex-1 h-full min-h-0 relative overflow-hidden">
+      {/* Main Tab Views with Instant Zero-Latency Switch & Touch Swiping */}
+      <div {...swipeHandlers} className="flex-1 h-full min-h-0 relative overflow-hidden touch-pan-y">
         <div className={`absolute inset-0 flex flex-col ${currentTab === 'positions' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
           <div className="flex-1 h-full min-h-0 overflow-y-auto">
             <OrdersTable />

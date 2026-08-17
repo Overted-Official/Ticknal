@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
+  background-color: #000000;
+  
   /* Trading Platform Palette (Pure Black Theme) */
   --bg-base: #000000;
   --bg-surface: #000000;
@@ -225,4 +228,10 @@ html.lenis, html.lenis body {
 }
 .lenis.lenis-smooth iframe {
   pointer-events: none;
+}
+
+html, body {
+  background-color: #000000 !important;
+  color-scheme: dark !important;
+  -webkit-tap-highlight-color: transparent;
 }

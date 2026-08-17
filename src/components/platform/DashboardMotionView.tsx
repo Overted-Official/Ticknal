@@ -15,6 +15,9 @@ import { MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
+
+const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 
 export type DashboardOrder = {
   id: number;
@@ -86,6 +89,12 @@ export default function DashboardMotionView({
     return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
   };
 
+  const { swipeHandlers } = useSwipeableTabs({
+    tabs: DASHBOARD_TABS,
+    activeTab: 'investments',
+    onTabChange: (val) => router.push(`/dashboard?tab=${val}`),
+  });
+
   return (
     <motion.div 
       initial="hidden"
@@ -104,7 +113,7 @@ export default function DashboardMotionView({
         ]}
       />
 
-      <div className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-20">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-20 touch-pan-y">
         {/* Top Header Banner */}
         <div className="border-b border-white/[0.09] px-6 py-5 shrink-0">
         <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
