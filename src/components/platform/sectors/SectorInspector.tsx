@@ -13,9 +13,13 @@ import {
   Info,
 } from 'lucide-react';
 
+import type { TickerStrategySignalState } from '@/app/api/sectors/signals/route';
+
 interface SectorInspectorProps {
   sector: SectorPerformanceItem | null;
   selectedTicker?: string | null;
+  analysisMode?: 'macro' | 'strategy';
+  signalsMap?: Record<string, TickerStrategySignalState>;
   onSelectTicker: (symbol: string) => void;
   onOpenTickerChart?: (symbol: string) => void;
 }
@@ -23,6 +27,8 @@ interface SectorInspectorProps {
 export default function SectorInspector({
   sector,
   selectedTicker,
+  analysisMode = 'macro',
+  signalsMap,
   onSelectTicker,
   onOpenTickerChart,
 }: SectorInspectorProps) {
@@ -187,7 +193,28 @@ export default function SectorInspector({
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="flex flex-col">
-                    <span className="font-bold font-mono text-white text-[11px]">{stock.symbol}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold font-mono text-white text-[11px]">{stock.symbol}</span>
+                      {analysisMode === 'strategy' && signalsMap?.[stock.symbol] && (
+                        signalsMap[stock.symbol].status === 'BUY_FRESH' ? (
+                          <span className="px-1 py-0.2 rounded bg-emerald-400 text-black font-extrabold text-[8px] animate-pulse">
+                            BUY
+                          </span>
+                        ) : signalsMap[stock.symbol].status === 'LONG_ACTIVE' ? (
+                          <span className="px-1 py-0.2 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold text-[8px]">
+                            LONG
+                          </span>
+                        ) : signalsMap[stock.symbol].status === 'EXIT_RECENT' ? (
+                          <span className="px-1 py-0.2 rounded bg-rose-500/20 border border-rose-500/40 text-rose-300 font-bold text-[8px]">
+                            EXIT
+                          </span>
+                        ) : (
+                          <span className="px-1 py-0.2 rounded bg-white/[0.04] text-white/30 text-[8px]">
+                            FLAT
+                          </span>
+                        )
+                      )}
+                    </div>
                     <span className="text-[10px] text-white/40 truncate max-w-[120px]">{stock.companyName}</span>
                   </div>
                 </div>

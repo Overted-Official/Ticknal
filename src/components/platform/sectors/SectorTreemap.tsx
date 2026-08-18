@@ -5,10 +5,15 @@ import { computeTreemap, type TreemapNode, type TreemapRect } from './treemapMat
 import type { SectorPerformanceItem, StockPerformanceItem } from '@/app/api/sectors/performance/route';
 import { Sparkles, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
+import type { TickerStrategySignalState } from '@/app/api/sectors/signals/route';
+
 interface SectorTreemapProps {
   sectors: SectorPerformanceItem[];
   sizingMetric?: 'turnover' | 'volume' | 'equal';
   mode?: 'nominal' | 'usd' | 'alpha';
+  analysisMode?: 'macro' | 'strategy';
+  signalsMap?: Record<string, TickerStrategySignalState>;
+  filterActiveSignalsOnly?: boolean;
   selectedSector: string | null;
   onSelectSector: (sectorName: string) => void;
   onSelectTicker: (symbol: string) => void;
@@ -71,6 +76,9 @@ export default function SectorTreemap({
   sectors,
   sizingMetric = 'turnover',
   mode = 'nominal',
+  analysisMode = 'macro',
+  signalsMap,
+  filterActiveSignalsOnly = false,
   selectedSector,
   onSelectSector,
   onSelectTicker,
@@ -181,6 +189,12 @@ export default function SectorTreemap({
               const isTiny = stockRect.width < 50 || stockRect.height < 40;
               const isMicro = stockRect.width < 35 || stockRect.height < 25;
 
+              const signalState = signalsMap?.[stock.symbol];
+              const isBuy = signalState?.status === 'BUY_FRESH';
+              const isLong = signalState?.status === 'LONG_ACTIVE';
+              const isExit = signalState?.status === 'EXIT_RECENT';
+              const isDimmed = filterActiveSignalsOnly && !isBuy && !isLong && !isExit;
+
               return (
                 <div
                   key={stockRect.id}
@@ -193,7 +207,9 @@ export default function SectorTreemap({
                     backgroundColor: colors.bg,
                     borderColor: colors.border,
                   }}
-                  className="border rounded-[4px] p-1 flex flex-col justify-between cursor-pointer transition-all duration-150 hover:brightness-125 hover:z-20 group relative overflow-hidden"
+                  className={`border rounded-[4px] p-1 flex flex-col justify-between cursor-pointer transition-all duration-150 hover:brightness-125 hover:z-20 group relative overflow-hidden ${
+                    isDimmed ? 'opacity-20' : isBuy ? 'ring-1 ring-emerald-400 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : ''
+                  }`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectSector(sectorData.sector);
@@ -207,8 +223,24 @@ export default function SectorTreemap({
                       <span className="text-[10px] font-bold text-white font-mono tracking-tight truncate">
                         {stock.symbol}
                       </span>
-                      {stock.returnPct >= 10 && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#22c55e]" />
+                      {analysisMode === 'strategy' ? (
+                        isBuy ? (
+                          <span className="px-1 py-0.2 rounded bg-emerald-400 text-black font-extrabold text-[8px] animate-pulse">
+                            BUY
+                          </span>
+                        ) : isLong ? (
+                          <span className="px-1 py-0.2 rounded bg-cyan-500/30 border border-cyan-400 text-cyan-300 font-bold text-[8px]">
+                            LONG
+                          </span>
+                        ) : isExit ? (
+                          <span className="px-1 py-0.2 rounded bg-rose-500/30 border border-rose-400 text-rose-300 font-bold text-[8px]">
+                            EXIT
+                          </span>
+                        ) : null
+                      ) : (
+                        stock.returnPct >= 10 && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#22c55e]" />
+                        )
                       )}
                     </div>
                   )}
@@ -240,7 +272,7 @@ export default function SectorTreemap({
 
       {/* Floating Hover Tooltip */}
       {hoveredStock && (
-        <div className="absolute bottom-3 left-3 z-30 pointer-events-none bg-zinc-950/95 border border-white/20 rounded-lg p-2.5 shadow-2xl backdrop-blur-xl text-xs flex flex-col gap-1 min-w-[200px] animate-in fade-in duration-100">
+        <div className="absolute bottom-3 left-3 z-30 pointer-events-none bg-zinc-950/95 border border-white/20 rounded-lg p-2.5 shadow-2xl backdrop-blur-xl text-xs flex flex-col gap-1 min-w-[210px] animate-in fade-in duration-100">
           <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-1">
             <span className="font-bold text-white">{hoveredStock.symbol}</span>
             <span className="text-[10px] text-white/40">{hoveredStock.sector}</span>
@@ -269,6 +301,31 @@ export default function SectorTreemap({
               {(hoveredStock.turnover / 1_000_000).toFixed(2)}M EGP
             </span>
           </div>
+
+          {analysisMode === 'strategy' && signalsMap?.[hoveredStock.symbol] && (
+            <div className="mt-1 pt-1 border-t border-white/[0.08] flex items-center justify-between text-[10px] font-mono">
+              <span className="text-white/50">PSI Signal:</span>
+              <span
+                className={`font-bold ${
+                  signalsMap[hoveredStock.symbol].status === 'BUY_FRESH'
+                    ? 'text-emerald-400'
+                    : signalsMap[hoveredStock.symbol].status === 'LONG_ACTIVE'
+                    ? 'text-cyan-400'
+                    : signalsMap[hoveredStock.symbol].status === 'EXIT_RECENT'
+                    ? 'text-rose-400'
+                    : 'text-zinc-400'
+                }`}
+              >
+                {signalsMap[hoveredStock.symbol].status === 'BUY_FRESH'
+                  ? '🎯 Fresh BUY'
+                  : signalsMap[hoveredStock.symbol].status === 'LONG_ACTIVE'
+                  ? `⚡ Active LONG (${signalsMap[hoveredStock.symbol].tradeReturnPct ? (signalsMap[hoveredStock.symbol].tradeReturnPct! > 0 ? '+' : '') + signalsMap[hoveredStock.symbol].tradeReturnPct!.toFixed(1) + '%' : 'Hold'})`
+                  : signalsMap[hoveredStock.symbol].status === 'EXIT_RECENT'
+                  ? '🔻 Closed Trade'
+                  : '⚪ Idle / Cash'}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>
