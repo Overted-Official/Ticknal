@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { SectorPerformanceItem } from '@/app/api/sectors/performance/route';
-import { TrendingUp, Zap, AlertTriangle, TrendingDown } from 'lucide-react';
+import { TrendingUp, Zap, AlertTriangle, TrendingDown, Info } from 'lucide-react';
 
 interface SectorRotationMatrixProps {
   sectors: SectorPerformanceItem[];
@@ -10,36 +10,79 @@ interface SectorRotationMatrixProps {
   onSelectSector: (sector: string) => void;
 }
 
+// Generate short 3-letter acronym for sector badges
+function getSectorAcronym(name: string): string {
+  const words = name.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/);
+  if (words.length >= 3) {
+    return (words[0][0] + words[1][0] + words[2][0]).toUpperCase();
+  }
+  if (words.length === 2) {
+    return (words[0].slice(0, 2) + words[1][0]).toUpperCase();
+  }
+  return name.slice(0, 3).toUpperCase();
+}
+
 export default function SectorRotationMatrix({
   sectors,
   selectedSector,
   onSelectSector,
 }: SectorRotationMatrixProps) {
-  // Find min/max bounds for normalization
-  const returns = sectors.map((s) => s.turnoverWeightedReturn);
-  const maxReturn = Math.max(...returns, 15);
-  const minReturn = Math.min(...returns, -15);
-  const returnRange = Math.max(maxReturn - minReturn, 10);
+  const [hoveredSector, setHoveredSector] = useState<SectorPerformanceItem | null>(null);
+
+  // Filter out extreme outliers (like 'Other' with 600%+) from stretching the scale
+  const validSectors = sectors.filter((s) => s.stockCount > 0);
+  
+  // Calculate relative alpha (X) and momentum spread (Y)
+  // X = Relative Strength vs EGX30 Benchmark
+  // Y = Momentum Spread (Turnover-Weighted Return - Equal-Weighted Return)
+  const dataPoints = validSectors.map((s) => {
+    const alpha = s.relativeStrengthVsBenchmark;
+    // Calculate momentum spread
+    const equalReturn = s.stocks.length > 0 
+      ? s.stocks.reduce((sum, st) => sum + st.returnPct, 0) / s.stocks.length 
+      : 0;
+    const momentum = s.turnoverWeightedReturn - equalReturn;
+
+    return {
+      sector: s,
+      alpha,
+      momentum,
+    };
+  });
+
+  // Calculate dynamic axis limits centered at 0
+  const maxAbsAlpha = Math.max(
+    ...dataPoints.map((d) => Math.min(Math.abs(d.alpha), 150)), // soft-clamp at 150%
+    30
+  );
+  const maxAbsMomentum = Math.max(
+    ...dataPoints.map((d) => Math.min(Math.abs(d.momentum), 100)), // soft-clamp at 100%
+    20
+  );
 
   return (
-    <div className="relative w-full h-full min-h-[420px] bg-black/40 rounded-xl overflow-hidden border border-white/[0.08] p-6 flex flex-col justify-between">
+    <div className="relative w-full h-full min-h-[420px] bg-black/40 rounded-xl overflow-hidden border border-white/[0.08] p-4 flex flex-col justify-between select-none">
       {/* 4 Quadrants Background */}
-      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none opacity-25">
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none opacity-20">
+        {/* Top-Left: Improving */}
         <div className="border-r border-b border-cyan-500/40 bg-cyan-500/5 flex items-start p-3">
           <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
             <Zap size={13} /> Improving (Accumulate)
           </span>
         </div>
+        {/* Top-Right: Leading */}
         <div className="border-b border-emerald-500/40 bg-emerald-500/5 flex items-start justify-end p-3">
           <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
             <TrendingUp size={13} /> Leading (Alpha Wave)
           </span>
         </div>
+        {/* Bottom-Left: Lagging */}
         <div className="border-r border-rose-500/40 bg-rose-500/5 flex items-end p-3">
           <span className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
             <TrendingDown size={13} /> Lagging (Avoid)
           </span>
         </div>
+        {/* Bottom-Right: Weakening */}
         <div className="bg-amber-500/5 flex items-end justify-end p-3">
           <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
             <AlertTriangle size={13} /> Weakening (Take Profit)
@@ -47,24 +90,43 @@ export default function SectorRotationMatrix({
         </div>
       </div>
 
-      {/* Axis Crosshairs */}
-      <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/10 pointer-events-none" />
-      <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/10 pointer-events-none" />
+      {/* Axis Crosshairs (Centered at Benchmark 0 Alpha / 0 Momentum) */}
+      <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/15 pointer-events-none" />
+      <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/15 pointer-events-none" />
+
+      {/* Axis Center Benchmark Badge */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-zinc-900 border border-white/20 px-2 py-0.5 rounded-full text-[9px] font-mono text-white/50 pointer-events-none z-10">
+        EGX 30 Benchmark
+      </div>
 
       {/* Interactive Sector Nodes */}
       <div className="relative w-full h-full">
-        {sectors.map((sector) => {
-          // X-position based on return
-          const normalizedX = ((sector.turnoverWeightedReturn - minReturn) / returnRange) * 80 + 10;
-          // Y-position based on rotation regime
-          let normalizedY = 50;
-          if (sector.rotationRegime === 'Leading') normalizedY = 25;
-          else if (sector.rotationRegime === 'Improving') normalizedY = 30;
-          else if (sector.rotationRegime === 'Weakening') normalizedY = 70;
-          else normalizedY = 75;
+        {dataPoints.map(({ sector, alpha, momentum }) => {
+          // X mapping: Center = 50%
+          // alpha > 0 -> X in (50%, 92%)
+          // alpha < 0 -> X in (8%, 50%)
+          const clampedAlpha = Math.max(Math.min(alpha, maxAbsAlpha), -maxAbsAlpha);
+          const normalizedX = 50 + (clampedAlpha / maxAbsAlpha) * 40;
+
+          // Y mapping: Center = 50%
+          // momentum > 0 (Up) -> Y in (8%, 50%)
+          // momentum < 0 (Down) -> Y in (50%, 92%)
+          const clampedMomentum = Math.max(Math.min(momentum, maxAbsMomentum), -maxAbsMomentum);
+          const normalizedY = 50 - (clampedMomentum / maxAbsMomentum) * 40;
 
           const isSelected = selectedSector === sector.sector;
-          const nodeSize = Math.max(Math.min(sector.turnoverShare * 1.5, 45), 24);
+          const isHovered = hoveredSector?.sector === sector.sector;
+          
+          // Node size proportional to turnover share
+          const nodeSize = Math.max(Math.min(sector.turnoverShare * 1.2 + 28, 54), 28);
+          const acronym = getSectorAcronym(sector.sector);
+
+          const regimeBg = {
+            Leading: 'bg-emerald-500/30 border-emerald-400 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+            Improving: 'bg-cyan-500/30 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]',
+            Weakening: 'bg-amber-500/30 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]',
+            Lagging: 'bg-rose-500/30 border-rose-400 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.25)]',
+          }[sector.rotationRegime];
 
           return (
             <div
@@ -73,29 +135,75 @@ export default function SectorRotationMatrix({
                 position: 'absolute',
                 left: `${normalizedX}%`,
                 top: `${normalizedY}%`,
+                width: `${nodeSize}px`,
+                height: `${nodeSize}px`,
                 transform: 'translate(-50%, -50%)',
               }}
+              className={`rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                isSelected
+                  ? 'ring-2 ring-plt-orange ring-offset-2 ring-offset-black z-30 scale-110'
+                  : isHovered
+                  ? 'scale-125 z-40 ring-1 ring-white/60'
+                  : 'z-20 hover:scale-115'
+              } ${regimeBg}`}
               onClick={() => onSelectSector(sector.sector)}
-              className="cursor-pointer group flex flex-col items-center z-10 hover:z-30 transition-all duration-200"
+              onMouseEnter={() => setHoveredSector(sector)}
+              onMouseLeave={() => setHoveredSector(null)}
             >
-              <div
-                style={{ width: nodeSize, height: nodeSize }}
-                className={`rounded-full flex items-center justify-center font-bold text-[9px] font-mono shadow-xl transition-all group-hover:scale-125 ${
-                  isSelected
-                    ? 'ring-4 ring-plt-orange bg-plt-orange text-black font-extrabold'
-                    : sector.turnoverWeightedReturn >= 0
-                      ? 'bg-emerald-500/30 border border-emerald-400 text-emerald-300'
-                      : 'bg-rose-500/30 border border-rose-400 text-rose-300'
-                }`}
-              >
-                {sector.sector.slice(0, 3).toUpperCase()}
-              </div>
-              <span className="text-[9px] font-mono font-semibold text-white/80 bg-black/80 px-1.5 py-0.5 rounded border border-white/10 mt-1 whitespace-nowrap group-hover:text-white">
-                {sector.sector}: {sector.turnoverWeightedReturn > 0 ? '+' : ''}{sector.turnoverWeightedReturn.toFixed(1)}%
+              <span className="text-[10px] font-bold font-mono tracking-tight text-center leading-none">
+                {acronym}
               </span>
             </div>
           );
         })}
+
+        {/* Floating Tooltip for Hovered Sector */}
+        {hoveredSector && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-zinc-950/95 backdrop-blur-md border border-white/20 p-2.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-white uppercase tracking-wider">
+                  {hoveredSector.sector}
+                </span>
+                <span className="text-[10px] font-mono text-white/40">
+                  ({hoveredSector.stockCount} stocks)
+                </span>
+              </div>
+              <div className="text-[10px] font-mono text-white/60 mt-0.5">
+                Turnover: {(hoveredSector.totalTurnover / 1_000_000).toFixed(1)}M EGP ({hoveredSector.turnoverShare.toFixed(1)}% of market)
+              </div>
+            </div>
+
+            <div className="h-7 w-[1px] bg-white/10" />
+
+            <div className="flex items-center gap-3 font-mono text-xs">
+              <div>
+                <span className="text-[9px] uppercase tracking-wider text-white/40 block">Alpha</span>
+                <span className={`font-bold ${hoveredSector.relativeStrengthVsBenchmark >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {hoveredSector.relativeStrengthVsBenchmark > 0 ? '+' : ''}
+                  {hoveredSector.relativeStrengthVsBenchmark.toFixed(1)}%
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[9px] uppercase tracking-wider text-white/40 block">ROI</span>
+                <span className={`font-bold ${hoveredSector.turnoverWeightedReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {hoveredSector.turnoverWeightedReturn > 0 ? '+' : ''}
+                  {hoveredSector.turnoverWeightedReturn.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Subtext Note */}
+      <div className="flex items-center justify-between text-[10px] text-white/40 font-mono pt-2 border-t border-white/[0.06]">
+        <div className="flex items-center gap-1">
+          <Info size={11} />
+          <span>Horizontal = Outperformance vs EGX 30 (Alpha) | Vertical = Capital Momentum</span>
+        </div>
+        <span>Click any sector bubble to inspect</span>
       </div>
     </div>
   );
