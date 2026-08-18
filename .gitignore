@@ -48,6 +48,7 @@ Data/*
 !Data/psi_best_combinations.csv
 !Data/psi_egx30_best_combinations.csv
 !Data/psi_comi_best_combination.csv
+!src/strategies/PSI/data/*.csv
 *.mp4  
 quant_engine/__pycache__/  
 quant_engine/.pytest_cache/  
