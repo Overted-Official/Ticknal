@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 import { Suspense } from 'react';
+import SectorsHeatmapView from '@/components/platform/sectors/SectorsHeatmapView';
 import ChartsSkeleton from './ChartsSkeleton';
 
 export const dynamic = 'force-dynamic';
@@ -253,6 +254,7 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <ChartViews 
           positionsView={<TickerPositions symbol={selectedSymbol} orders={tickerPositions} currentPrice={currentPriceForSymbol} />}
+          sectorsView={<SectorsHeatmapView />}
         >
           <ChartReplayWorkspace
             key={`${selectedSymbol}-${timeframe}-${initialReplayMode ? 'replay' : 'live'}`}
