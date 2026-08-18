@@ -63,7 +63,24 @@ export async function handleSignalsGet(request: Request) {
         parameterSource: 'thoth-egx-macro-onnx',
       };
     } else {
-      const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+      const overrides: Record<string, any> = { startDate, endDate };
+      if (searchParams.has('model')) overrides.model = searchParams.get('model');
+      if (searchParams.has('useAym')) overrides.useAym = searchParams.get('useAym') === 'true';
+      if (searchParams.has('aymMultiplier')) overrides.aymMultiplier = Number(searchParams.get('aymMultiplier'));
+      if (searchParams.has('aymLimit')) overrides.aymLimit = Number(searchParams.get('aymLimit'));
+      if (searchParams.has('useAtr')) overrides.useAtr = searchParams.get('useAtr') === 'true';
+      if (searchParams.has('atrDistance')) overrides.atrDistance = Number(searchParams.get('atrDistance'));
+      if (searchParams.has('useStoploss')) overrides.useStoploss = searchParams.get('useStoploss') === 'true';
+      if (searchParams.has('stoplossLevel')) overrides.stoplossLevel = Number(searchParams.get('stoplossLevel'));
+      if (searchParams.has('useStructStop')) overrides.useStructStop = searchParams.get('useStructStop') === 'true';
+      if (searchParams.has('structLookback')) overrides.structLookback = Number(searchParams.get('structLookback'));
+      if (searchParams.has('entryLevels')) {
+        try {
+          overrides.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);
+        } catch (e) {}
+      }
+
+      const parameterResolution = resolvePsiParamsWithSource(ticker, overrides);
       const psiResult = runPsiStrategy(bars, parameterResolution.params);
 
       result = {
@@ -128,7 +145,24 @@ export async function handleMetricsGet(request: Request) {
       metricsPayload = thothResult.metrics;
       parameterSource = 'thoth-egx-macro-onnx';
     } else {
-      const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+      const overrides: Record<string, any> = { startDate, endDate };
+      if (searchParams.has('model')) overrides.model = searchParams.get('model');
+      if (searchParams.has('useAym')) overrides.useAym = searchParams.get('useAym') === 'true';
+      if (searchParams.has('aymMultiplier')) overrides.aymMultiplier = Number(searchParams.get('aymMultiplier'));
+      if (searchParams.has('aymLimit')) overrides.aymLimit = Number(searchParams.get('aymLimit'));
+      if (searchParams.has('useAtr')) overrides.useAtr = searchParams.get('useAtr') === 'true';
+      if (searchParams.has('atrDistance')) overrides.atrDistance = Number(searchParams.get('atrDistance'));
+      if (searchParams.has('useStoploss')) overrides.useStoploss = searchParams.get('useStoploss') === 'true';
+      if (searchParams.has('stoplossLevel')) overrides.stoplossLevel = Number(searchParams.get('stoplossLevel'));
+      if (searchParams.has('useStructStop')) overrides.useStructStop = searchParams.get('useStructStop') === 'true';
+      if (searchParams.has('structLookback')) overrides.structLookback = Number(searchParams.get('structLookback'));
+      if (searchParams.has('entryLevels')) {
+        try {
+          overrides.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);
+        } catch (e) {}
+      }
+
+      const parameterResolution = resolvePsiParamsWithSource(ticker, overrides);
       const psiResult = runPsiStrategy(bars, parameterResolution.params);
       metricsPayload = psiResult.metrics;
       parameterSource = parameterResolution.parameterSource;

@@ -800,7 +800,7 @@ export default function ChartWidget({
     return () => {
       isActive = false;
     };
-  }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate]);
+  }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate, selectedStrategy, strategyParams]);
 
   useEffect(() => {
     let isActive = true;
