@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Search, X, Bell } from '@/components/ui/icons';
 import { WatchlistItem } from './RightSidebar';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { LineChart, Briefcase, LayoutGrid } from 'lucide-react';
 import { useAlerts } from './AlertProvider';
 
 export default function TopBar({ 
@@ -24,6 +25,16 @@ export default function TopBar({
   
   const displaySymbol = symbol.replace('.CA', '');
   const replayQuery = replay ? '&replay=1' : '';
+
+  const searchParams = useSearchParams();
+  const rawView = searchParams.get('view');
+  const activeView = (rawView === 'positions' || rawView === 'sectors' ? rawView : 'chart');
+
+  const switchView = (newView: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', newView);
+    router.push(`?${params.toString()}`);
+  };
 
   const currentTicker = watchlist.find(item => item.symbol === symbol) || {
     symbol,
@@ -71,6 +82,48 @@ export default function TopBar({
               <Search size={10} />
               <span>⌘K</span>
             </div>
+          </button>
+        </div>
+
+        {/* Center section: Desktop View Switcher Pills */}
+        <div className="hidden md:flex items-center bg-white/[0.04] border border-white/[0.08] rounded-lg p-0.5 gap-0.5">
+          <button
+            type="button"
+            onClick={() => switchView('chart')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+              activeView === 'chart'
+                ? 'bg-white/[0.12] text-white font-semibold shadow-sm'
+                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.04]'
+            }`}
+          >
+            <LineChart size={13} className={activeView === 'chart' ? 'text-plt-orange' : 'text-white/40'} />
+            <span>Chart</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => switchView('positions')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+              activeView === 'positions'
+                ? 'bg-white/[0.12] text-white font-semibold shadow-sm'
+                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.04]'
+            }`}
+          >
+            <Briefcase size={13} className={activeView === 'positions' ? 'text-sky-400' : 'text-white/40'} />
+            <span>Positions</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => switchView('sectors')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+              activeView === 'sectors'
+                ? 'bg-white/[0.12] text-white font-semibold shadow-sm'
+                : 'text-white/40 hover:text-white/80 hover:bg-white/[0.04]'
+            }`}
+          >
+            <LayoutGrid size={13} className={activeView === 'sectors' ? 'text-emerald-400' : 'text-white/40'} />
+            <span>Sectors & Heatmap</span>
           </button>
         </div>
 
