@@ -42,6 +42,8 @@ export async function runThothStrategy(
   const predMap = new Map<string, ThothModelPrediction>();
   predictions.forEach(p => predMap.set(p.date, p));
 
+  console.log(`[ThothStrategy] ONNX produced ${predictions.length} predictions from ${bars.length} input bars`);
+
   const validBars = [...bars]
     .filter(b => b.date >= params.startDate && (!params.endDate || b.date <= params.endDate))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -96,6 +98,11 @@ export async function runThothStrategy(
   for (let i = 0; i < validBars.length; i++) {
     const bar = validBars[i];
     const pred = predMap.get(bar.date);
+
+    // ── CRITICAL: Only act on bars where the ONNX model produced a valid prediction.
+    // Defaulting to exh=0.0 when pred=undefined causes false entries that never close.
+    // When pred is absent (model cold-start / warmup window not yet full), skip signal eval.
+    const hasPred = pred !== undefined;
     const exh = pred?.predictedExhaustion ?? 0.0;
     const direction = pred?.direction ?? 'up';
     const masterIdx = pred?.masterIndex ?? 50.0;
@@ -173,19 +180,23 @@ export async function runThothStrategy(
       highestPrice = Math.max(highestPrice, bar.high);
       lowestPrice = Math.min(lowestPrice, bar.low);
 
-      // Pure ML Neural Exhaustion Exit Conditions:
-      // 1. Bull Exhaustion >= sellThreshold (default 85%)
-      // 2. Bear Exhaustion <= 10%
-      const isBullExhausted = (direction === 'up' && exh >= params.sellThreshold);
-      const isBearExhausted = (direction === 'down' && exh <= 10.0);
+      // Only set exit triggers when ONNX has a valid prediction for this bar
+      if (hasPred) {
+        // Pure ML Neural Exhaustion Exit Conditions:
+        // 1. Bull Exhaustion >= sellThreshold (default 85%)
+        // 2. Bear Exhaustion <= 10%
+        const isBullExhausted = (direction === 'up' && exh >= params.sellThreshold);
+        const isBearExhausted = (direction === 'down' && exh <= 10.0);
 
-      if (isBullExhausted || isBearExhausted) {
-        pendingExit = true;
-        pendingExitReason = isBullExhausted 
-          ? `Bull Exhaustion Peak (${exh.toFixed(1)}%)`
-          : `Bear Exhaustion Bottom (${exh.toFixed(1)}%)`;
+        if (isBullExhausted || isBearExhausted) {
+          pendingExit = true;
+          pendingExitReason = isBullExhausted
+            ? `Bull Exhaustion Peak (${exh.toFixed(1)}%)`
+            : `Bear Exhaustion Bottom (${exh.toFixed(1)}%)`;
+        }
       }
-    } else if (!pendingBuy) {
+    } else if (!pendingBuy && hasPred) {
+      // Only trigger entries when ONNX has a valid prediction for this bar
       // Pure ML Neural Exhaustion Entry Conditions:
       // 1. Early Bull (direction == up && exh <= buyThreshold)
       // 2. Oversold Bear Reversal (direction == down && exh >= 75%)
