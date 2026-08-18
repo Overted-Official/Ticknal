@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCachedDailyPrices } from '@/lib/data-cache';
-import { resolvePsiParamsWithSource } from '@/strategies/PSI/psiParameterStore';
+import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import {
   formatMetricsForApi,
   normalizeTickerSymbol,
@@ -76,7 +76,7 @@ export async function handleSignalsGet(request: Request) {
         } catch (e) {}
       }
 
-      const parameterResolution = resolvePsiParamsWithSource(ticker, overrides);
+      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides);
       const psiResult = runPsiStrategy(bars, parameterResolution.params);
 
       result = {
@@ -148,17 +148,13 @@ export async function handleMetricsGet(request: Request) {
       if (searchParams.has('aymLimit')) overrides.aymLimit = Number(searchParams.get('aymLimit'));
       if (searchParams.has('useAtr')) overrides.useAtr = searchParams.get('useAtr') === 'true';
       if (searchParams.has('atrDistance')) overrides.atrDistance = Number(searchParams.get('atrDistance'));
-      if (searchParams.has('useStoploss')) overrides.useStoploss = searchParams.get('useStoploss') === 'true';
-      if (searchParams.has('stoplossLevel')) overrides.stoplossLevel = Number(searchParams.get('stoplossLevel'));
-      if (searchParams.has('useStructStop')) overrides.useStructStop = searchParams.get('useStructStop') === 'true';
-      if (searchParams.has('structLookback')) overrides.structLookback = Number(searchParams.get('structLookback'));
       if (searchParams.has('entryLevels')) {
         try {
           overrides.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);
         } catch (e) {}
       }
 
-      const parameterResolution = resolvePsiParamsWithSource(ticker, overrides);
+      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides);
       const psiResult = runPsiStrategy(bars, parameterResolution.params);
       metricsPayload = psiResult.metrics;
       parameterSource = parameterResolution.parameterSource;
@@ -201,7 +197,8 @@ export async function handleLevelsGet(request: Request) {
       return NextResponse.json({ error: 'No price history found' }, { status: 404 });
     }
 
-    const levels = derivePositionLevels(ticker, bars, date, entryPrice);
+    const paramRes = await resolvePsiParamsAsync(ticker);
+    const levels = derivePositionLevels(ticker, bars, date, entryPrice, paramRes.params);
     return NextResponse.json({
       symbol: ticker,
       entryDate: date,

@@ -33,8 +33,9 @@ export function derivePositionLevels(
   bars: PriceBar[],
   entryDate: string,
   entryPrice: number,
+  paramsOverride?: PsiStrategyParams,
 ): PositionLevels {
-  const params = resolvePsiParamsFromStore(symbol);
+  const params = paramsOverride ?? resolvePsiParamsFromStore(symbol);
   const computedBars = computePsiSeries(bars);
   const entryBar =
     [...computedBars]
