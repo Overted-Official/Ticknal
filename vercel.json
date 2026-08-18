@@ -9,6 +9,10 @@
       "schedule": "0 18 * * 0-4"
     },
     {
+      "path": "/api/cron/update-commodities",
+      "schedule": "0 22 * * 1-5"
+    },
+    {
       "path": "/api/cron/update-macro",
       "schedule": "30 18 1 * *"
     },
@@ -18,7 +22,7 @@
     },
     {
       "path": "/api/cron/watchdog",
-      "schedule": "0 20 * * 0-4"
+      "schedule": "0 23 * * 0-5"
     }
   ]
 }

@@ -2,30 +2,27 @@ import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { tickers, dailyPrices, systemLogs } from '@/db/schema';
-import { sql } from 'drizzle-orm';
+import { sql, inArray } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { verifyCronAuth } from '@/lib/cron-auth';
 
-function getTradingViewSymbol(symbol: string, exchange: string | null = 'EGX'): string {
-  if (symbol === 'EGX70') return 'EGX:EGX70EWI';
-  if (symbol === 'EGX100') return 'EGX:EGX100EWI';
-  const ex = exchange || 'EGX';
-  return `${ex}:${symbol.replace('.CA', '')}`;
-}
+const GLOBAL_ASSETS = [
+  { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals' },
+  { symbol: 'SI1!', tvSymbol: 'COMEX:SI1!', name: 'Silver Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals' },
+  { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex' }
+];
 
-function fetchSymbolPeriods(client: TradingViewClient, symbol: string, exchange: string | null = 'EGX', rangeBars: number = 30): Promise<TradingViewPeriod[]> {
+function fetchSymbolPeriods(client: TradingViewClient, tvSymbol: string, rangeBars: number = 30): Promise<TradingViewPeriod[]> {
   return new Promise((resolve) => {
     try {
-      const tvSymbol = getTradingViewSymbol(symbol, exchange);
       const chart = new client.Session.Chart();
-      
       chart.setMarket(tvSymbol, { timeframe: 'D', range: rangeBars });
 
       const timeout = setTimeout(() => {
         chart.delete();
         resolve([]);
-      }, 7000);
+      }, 8000);
 
       chart.onUpdate(() => {
         clearTimeout(timeout);
@@ -43,7 +40,7 @@ function fetchSymbolPeriods(client: TradingViewClient, symbol: string, exchange:
       chart.onError((err: Error) => {
         clearTimeout(timeout);
         chart.delete();
-        console.error(`Error for ${symbol}:`, err.message || err);
+        console.error(`Error for ${tvSymbol}:`, err.message || err);
         resolve([]);
       });
     } catch {
@@ -57,27 +54,14 @@ export async function GET(req: Request) {
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    const allTickers = await db.select().from(tickers);
-    const stockTickers = allTickers.filter(
-      (t) =>
-        t.symbol !== 'CI_QUANT' &&
-        t.symbol !== 'OSOUL' &&
-        t.symbol !== 'GC1!' &&
-        t.symbol !== 'SI1!' &&
-        t.symbol !== 'USDEGP' &&
-        t.sector !== 'Macro'
-    );
-
-    if (stockTickers.length === 0) {
-      return NextResponse.json({ message: 'No stocks to update' }, { status: 200 });
-    }
-
+    const symbols = GLOBAL_ASSETS.map(a => a.symbol);
     const lastDates = await db
       .select({
         tickerSymbol: dailyPrices.tickerSymbol,
         maxDate: sql<string>`MAX(${dailyPrices.date})`,
       })
       .from(dailyPrices)
+      .where(inArray(dailyPrices.tickerSymbol, symbols))
       .groupBy(dailyPrices.tickerSymbol);
 
     const lastDateMap = new Map<string, string>();
@@ -91,9 +75,9 @@ export async function GET(req: Request) {
     const client = new TradingView.Client();
     const now = new Date();
 
-    for (const t of stockTickers) {
+    for (const asset of GLOBAL_ASSETS) {
       try {
-        const lastDateStr = lastDateMap.get(t.symbol);
+        const lastDateStr = lastDateMap.get(asset.symbol);
         let requiredRange = 30;
 
         if (!lastDateStr) {
@@ -106,8 +90,8 @@ export async function GET(req: Request) {
           }
         }
 
-        const periods = await fetchSymbolPeriods(client, t.symbol, t.exchange, requiredRange);
-        
+        const periods = await fetchSymbolPeriods(client, asset.tvSymbol, requiredRange);
+
         if (periods.length > 0) {
           let updatedCount = 0;
           let latestDateStr = '';
@@ -116,13 +100,13 @@ export async function GET(req: Request) {
             const dateStr = new Date(quote.time * 1000).toISOString().split('T')[0];
             if (dateStr > latestDateStr) latestDateStr = dateStr;
             return {
-              tickerSymbol: t.symbol,
+              tickerSymbol: asset.symbol,
               date: dateStr,
               open: quote.open.toString(),
               high: quote.max.toString(),
               low: quote.min.toString(),
               close: quote.close.toString(),
-              volume: quote.volume.toString()
+              volume: (quote.volume || 0).toString()
             };
           });
 
@@ -145,18 +129,18 @@ export async function GET(req: Request) {
               updatedCount += chunk.length;
             }
           }
-            
-          results.push({ symbol: t.symbol, status: 'updated', count: updatedCount, date: latestDateStr });
+
+          results.push({ symbol: asset.symbol, status: 'updated', count: updatedCount, date: latestDateStr });
         } else {
-          results.push({ symbol: t.symbol, status: 'no_data' });
+          results.push({ symbol: asset.symbol, status: 'no_data' });
         }
-        
-        await new Promise(r => setTimeout(r, 800));
+
+        await new Promise(r => setTimeout(r, 1000));
       } catch (err) {
-        results.push({ symbol: t.symbol, status: 'error', message: (err as Error).message });
+        results.push({ symbol: asset.symbol, status: 'error', message: (err as Error).message });
       }
     }
-    
+
     client.end();
 
     try {
@@ -169,19 +153,19 @@ export async function GET(req: Request) {
 
     const updated = results.filter(r => r.status === 'updated').length;
     await db.insert(systemLogs).values({
-      source: 'cron-stocks',
+      source: 'cron-commodities',
       level: updated > 0 ? 'INFO' : 'WARNING',
-      message: `Updated ${updated}/${stockTickers.length} TradingView Tickers.`,
+      message: `Updated ${updated}/${GLOBAL_ASSETS.length} Global Commodities & Forex (Gold, Silver, USDEGP).`,
       metadata: { results }
     });
 
-    return NextResponse.json({ message: 'Stocks update completed', results }, { status: 200 });
+    return NextResponse.json({ message: 'Commodities and global assets update completed', results }, { status: 200 });
   } catch (error) {
-    console.error('Error updating stocks:', error);
+    console.error('Error updating commodities:', error);
     await db.insert(systemLogs).values({
-      source: 'cron-stocks',
+      source: 'cron-commodities',
       level: 'ERROR',
-      message: 'Failed to update TradingView stocks',
+      message: 'Failed to update Global Commodities & Forex',
       metadata: { error: (error as Error).message }
     });
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
