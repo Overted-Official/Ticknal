@@ -21,6 +21,7 @@ const nextConfig = {
       "./src/strategies/PSI/data/**/*",
       "./Data/psi_*best*.csv",
       "./src/tools/kronos/models/**/*.onnx",
+      "./node_modules/onnxruntime-web/dist/**/*",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.so*",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.node",
     ],
