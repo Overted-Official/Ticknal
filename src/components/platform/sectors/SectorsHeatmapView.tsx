@@ -18,6 +18,8 @@ import {
   Target,
   Sliders,
   Info,
+  LayoutGrid,
+  Compass,
 } from 'lucide-react';
 import SectorTreemap from './SectorTreemap';
 import SectorInspector from './SectorInspector';
@@ -126,7 +128,14 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
                   : 'bg-white/[0.04] text-white/50 hover:text-white hover:bg-white/[0.08]'
               }`}
             >
-              {preset === 'custom' ? '📅 Custom' : preset}
+              {preset === 'custom' ? (
+                <span className="flex items-center gap-1">
+                  <Calendar size={11} />
+                  <span>Custom</span>
+                </span>
+              ) : (
+                preset
+              )}
             </button>
           ))}
         </div>
@@ -185,16 +194,18 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
             <button
               type="button"
               onClick={() => setViewLayout('treemap')}
-              className={`px-2 py-0.5 rounded transition ${viewLayout === 'treemap' ? 'bg-zinc-800 text-white font-bold' : 'text-white/40'}`}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded transition ${viewLayout === 'treemap' ? 'bg-zinc-800 text-white font-bold' : 'text-white/40'}`}
             >
-              🗺️ Treemap
+              <LayoutGrid size={11} />
+              <span>Treemap</span>
             </button>
             <button
               type="button"
               onClick={() => setViewLayout('matrix')}
-              className={`px-2 py-0.5 rounded transition ${viewLayout === 'matrix' ? 'bg-zinc-800 text-white font-bold' : 'text-white/40'}`}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded transition ${viewLayout === 'matrix' ? 'bg-zinc-800 text-white font-bold' : 'text-white/40'}`}
             >
-              ⚡ Rotation
+              <Compass size={11} />
+              <span>Rotation</span>
             </button>
           </div>
 
@@ -223,7 +234,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       {/* 2. MACRO MARKET PULSE KPI STRIP                      */}
       {/* ---------------------------------------------------- */}
       {marketSummary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0 relative z-30">
           {/* Top Sector */}
           <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between group relative">
             <div className="min-w-0 flex-1">
@@ -231,7 +242,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
                 <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Top Sector</span>
                 <div className="relative group/tooltip">
                   <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
-                  <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-48 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                  <div className="absolute left-0 top-full mt-1.5 hidden group-hover/tooltip:block w-52 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
                     The highest performing economic sector in this timeframe, weighted by total traded liquidity (EGP volume).
                   </div>
                 </div>
@@ -250,7 +261,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
                 <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Laggard Sector</span>
                 <div className="relative group/tooltip">
                   <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
-                  <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-48 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                  <div className="absolute left-0 top-full mt-1.5 hidden group-hover/tooltip:block w-52 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
                     The weakest performing sector across EGX during this period, based on turnover-weighted returns.
                   </div>
                 </div>
@@ -269,7 +280,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
                 <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Market Turnover</span>
                 <div className="relative group/tooltip">
                   <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
-                  <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-52 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                  <div className="absolute left-0 sm:right-0 top-full mt-1.5 hidden group-hover/tooltip:block w-56 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
                     Total traded capital (cash liquidity) that changed hands across all EGX stocks during this time window.
                   </div>
                 </div>
@@ -280,7 +291,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
             </div>
             <div className="relative group/tooltip">
               <Info className="w-4 h-4 text-white/30 hover:text-cyan-400 cursor-help transition" />
-              <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-52 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+              <div className="absolute right-0 top-full mt-1.5 hidden group-hover/tooltip:block w-56 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
                 Sum of (Price × Traded Volume) for every stock over the selected period.
               </div>
             </div>
@@ -293,7 +304,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
                 <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Market Breadth</span>
                 <div className="relative group/tooltip">
                   <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
-                  <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-56 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                  <div className="absolute right-0 top-full mt-1.5 hidden group-hover/tooltip:block w-56 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
                     Ratio of Advancing stocks (Gainers) vs Declining stocks (Losers). High green breadth confirms a healthy, broad-based market bull rally.
                   </div>
                 </div>
@@ -306,7 +317,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
             </div>
             <div className="relative group/tooltip">
               <Info className="w-4 h-4 text-white/30 hover:text-plt-orange cursor-help transition" />
-              <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-56 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+              <div className="absolute right-0 top-full mt-1.5 hidden group-hover/tooltip:block w-56 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
                 Breadth proves whether the index rally is authentic across all sectors or just propped up by 1 or 2 mega-caps.
               </div>
             </div>

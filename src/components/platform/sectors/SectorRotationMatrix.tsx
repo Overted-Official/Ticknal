@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { SectorPerformanceItem } from '@/app/api/sectors/performance/route';
+import { TrendingUp, Zap, AlertTriangle, TrendingDown } from 'lucide-react';
 
 interface SectorRotationMatrixProps {
   sectors: SectorPerformanceItem[];
@@ -23,18 +24,26 @@ export default function SectorRotationMatrix({
   return (
     <div className="relative w-full h-full min-h-[420px] bg-black/40 rounded-xl overflow-hidden border border-white/[0.08] p-6 flex flex-col justify-between">
       {/* 4 Quadrants Background */}
-      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none opacity-20">
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none opacity-25">
         <div className="border-r border-b border-cyan-500/40 bg-cyan-500/5 flex items-start p-3">
-          <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">⚡ Improving (Accumulate)</span>
+          <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+            <Zap size={13} /> Improving (Accumulate)
+          </span>
         </div>
         <div className="border-b border-emerald-500/40 bg-emerald-500/5 flex items-start justify-end p-3">
-          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">🚀 Leading (Alpha Wave)</span>
+          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            <TrendingUp size={13} /> Leading (Alpha Wave)
+          </span>
         </div>
         <div className="border-r border-rose-500/40 bg-rose-500/5 flex items-end p-3">
-          <span className="text-[11px] font-bold text-rose-400 uppercase tracking-wider">❄️ Lagging (Avoid)</span>
+          <span className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+            <TrendingDown size={13} /> Lagging (Avoid)
+          </span>
         </div>
         <div className="bg-amber-500/5 flex items-end justify-end p-3">
-          <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">⚠️ Weakening (Take Profit)</span>
+          <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+            <AlertTriangle size={13} /> Weakening (Take Profit)
+          </span>
         </div>
       </div>
 
