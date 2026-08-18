@@ -1,0 +1,36 @@
+import path from 'path';
+import fs from 'fs';
+
+let ortModule: any = null;
+
+export async function getOnnxRuntime() {
+  if (ortModule) return ortModule;
+
+  // 1. Try native onnxruntime-node
+  try {
+    ortModule = await import('onnxruntime-node');
+    return ortModule;
+  } catch (nodeErr) {
+    // 2. Fall back cleanly to onnxruntime-web (WebAssembly engine)
+    try {
+      // @ts-ignore
+      ortModule = await import('onnxruntime-web');
+      return ortModule;
+    } catch (webErr) {
+      console.warn('[ONNX Loader] Failed to load ONNX runtime:', (webErr as Error).message);
+      return null;
+    }
+  }
+}
+
+/**
+ * Creates an InferenceSession safely across Node native and WASM web runtimes.
+ * Reading buffer ensures seamless compatibility across both onnxruntime-node and onnxruntime-web.
+ */
+export async function createSafeInferenceSession(ort: any, filePath: string) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`ONNX model file not found at ${filePath}`);
+  }
+  const buffer = fs.readFileSync(filePath);
+  return await ort.InferenceSession.create(buffer);
+}

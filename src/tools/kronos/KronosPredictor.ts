@@ -1,17 +1,5 @@
 import path from 'path';
-
-let ortModule: any = null;
-
-async function getOrt() {
-  if (ortModule) return ortModule;
-  try {
-    ortModule = await import('onnxruntime-node');
-    return ortModule;
-  } catch (err) {
-    console.warn('[KronosPredictor] onnxruntime-node native bindings not available:', (err as Error).message);
-    return null;
-  }
-}
+import { getOnnxRuntime, createSafeInferenceSession } from '@/lib/onnx-loader';
 
 export class KronosPredictor {
   private sessionEnc: any = null;
@@ -25,17 +13,17 @@ export class KronosPredictor {
   async init() {
     if (this.initialized) return;
 
-    const ort = await getOrt();
+    const ort = await getOnnxRuntime();
     if (!ort) {
-      throw new Error('onnxruntime-node is not supported in this runtime environment');
+      throw new Error('No ONNX runtime (native or WASM) available in this environment');
     }
 
     const modelsDir = path.join(process.cwd(), 'src', 'tools', 'kronos', 'models');
 
-    this.sessionEnc = await ort.InferenceSession.create(path.join(modelsDir, 'tokenizer_encode.onnx'));
-    this.sessionDecS1 = await ort.InferenceSession.create(path.join(modelsDir, 'model_decode_s1.onnx'));
-    this.sessionDecS2 = await ort.InferenceSession.create(path.join(modelsDir, 'model_decode_s2.onnx'));
-    this.sessionDec = await ort.InferenceSession.create(path.join(modelsDir, 'tokenizer_decode.onnx'));
+    this.sessionEnc = await createSafeInferenceSession(ort, path.join(modelsDir, 'tokenizer_encode.onnx'));
+    this.sessionDecS1 = await createSafeInferenceSession(ort, path.join(modelsDir, 'model_decode_s1.onnx'));
+    this.sessionDecS2 = await createSafeInferenceSession(ort, path.join(modelsDir, 'model_decode_s2.onnx'));
+    this.sessionDec = await createSafeInferenceSession(ort, path.join(modelsDir, 'tokenizer_decode.onnx'));
 
     this.initialized = true;
   }
@@ -112,9 +100,9 @@ export class KronosPredictor {
    */
   async predict(x: Float32Array, x_stamp: Float32Array, y_stamp: Float32Array, seq_len: number, pred_len: number): Promise<Float32Array> {
     if (!this.initialized) await this.init();
-    const ort = await getOrt();
+    const ort = await getOnnxRuntime();
     if (!ort) {
-      throw new Error('onnxruntime-node is not supported in this runtime environment');
+      throw new Error('No ONNX runtime (native or WASM) available in this environment');
     }
 
     const xTensor = new ort.Tensor('float32', x, [1, seq_len, 6]);

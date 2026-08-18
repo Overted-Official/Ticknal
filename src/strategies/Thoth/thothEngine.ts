@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { extractThothFeatures, type ThothBarFeatures } from './thothFeatureExtractor';
 import type { PriceBar } from '../PSI/psiStrategy';
+import { getOnnxRuntime, createSafeInferenceSession } from '@/lib/onnx-loader';
 
 export interface ThothModelPrediction {
   date: string;
@@ -18,23 +19,6 @@ interface ScalerParams {
   features: string[];
   up: { mean: number[]; scale: number[] };
   down: { mean: number[]; scale: number[] };
-}
-
-let ortInstance: any = null;
-let ortLoadAttempted = false;
-
-async function getOnnxRuntime() {
-  if (ortInstance) return ortInstance;
-  if (ortLoadAttempted) return null;
-  ortLoadAttempted = true;
-
-  try {
-    ortInstance = await import('onnxruntime-node');
-    return ortInstance;
-  } catch (err) {
-    console.warn('[ThothEngine] onnxruntime-node native bindings not available in current environment:', (err as Error).message);
-    return null;
-  }
 }
 
 export class ThothEngine {
@@ -81,9 +65,9 @@ export class ThothEngine {
         const scalersContent = fs.readFileSync(scalersPath, 'utf-8');
         this.scalers = JSON.parse(scalersContent);
 
-        // Load ONNX sessions
-        this.sessionUp = await ort.InferenceSession.create(upPath);
-        this.sessionDown = await ort.InferenceSession.create(downPath);
+        // Load ONNX sessions safely
+        this.sessionUp = await createSafeInferenceSession(ort, upPath);
+        this.sessionDown = await createSafeInferenceSession(ort, downPath);
       } catch (err) {
         this.isAvailable = false;
         console.warn('[ThothEngine] Failed to initialize ONNX sessions (gracefully disabling Thoth AI inference):', (err as Error).message);
