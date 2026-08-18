@@ -1,4 +1,4 @@
-import { computePsiSeries, type PriceBar, type PsiStrategyParams, type PsiSignalType } from "./psiStrategy";
+import { computePsiSeries, type PriceBar, type PsiStrategyParams } from "./psiStrategy";
 
 export type WalkForwardOptimizationConfig = {
   bars: PriceBar[];
@@ -102,24 +102,32 @@ function buildSimSlice(
   const atr14 = new Float64Array(n);
   const medianDailyMove = new Float64Array(n);
 
-  const is40 = model === "psi40";
-
   for (let i = 0; i < n; i++) {
     const b = filtered[i];
     close[i] = b.close;
     high[i] = b.high;
     low[i] = b.low;
-    masterIndex[i] = (is40 ? b.masterIndex40 : b.masterIndex) ?? Number.NaN;
-    masterIndexAdjusted[i] = (is40 ? b.masterIndexAdjusted40 : b.masterIndexAdjusted) ?? Number.NaN;
-    atr14[i] = b.atr14 ?? Number.NaN;
-    medianDailyMove[i] = b.medianDailyMove ?? Number.NaN;
+    masterIndex[i] = (model === "psi40" ? b.masterIndex40 : b.masterIndex) ?? 50;
+    masterIndexAdjusted[i] = (model === "psi40" ? b.masterIndexAdjusted40 : b.masterIndexAdjusted) ?? 50;
+    atr14[i] = b.atr14 ?? (b.high - b.low);
+    medianDailyMove[i] = b.medianDailyMove ?? 2.0;
   }
 
-  const dStart = Date.parse(filtered[0].date);
-  const dEnd = Date.parse(filtered[n - 1].date);
-  const years = Math.max((dEnd - dStart) / (1000 * 60 * 60 * 24 * 365.25), 0.001);
+  const startMs = Date.parse(filtered[0].date);
+  const endMs = Date.parse(filtered[n - 1].date);
+  const years = Math.max((endMs - startMs) / (1000 * 60 * 60 * 24 * 365.25), 0.1);
 
-  return { close, high, low, masterIndex, masterIndexAdjusted, atr14, medianDailyMove, years, length: n };
+  return {
+    close,
+    high,
+    low,
+    masterIndex,
+    masterIndexAdjusted,
+    atr14,
+    medianDailyMove,
+    years,
+    length: n,
+  };
 }
 
 type FastBacktestMetrics = {
@@ -140,117 +148,127 @@ function fastSimulate(
   aymLimit: number | null,
   atrDistance: number | null,
   stoplossLevel: number | null,
-  initialCapital: number = 3000,
+  initialCapital: number,
 ): FastBacktestMetrics {
-  const n = slice.length;
-  const close = slice.close;
-  const high = slice.high;
-  const low = slice.low;
-  const master = slice.masterIndex;
-  const masterAdj = slice.masterIndexAdjusted;
-  const atr = slice.atr14;
-  const mdm = slice.medianDailyMove;
-
-  const useAym = aymMultiplier !== null && aymLimit !== null;
-  const useAtr = atrDistance !== null;
-  const useStop = stoplossLevel !== null;
+  const { close, high, low, masterIndex, masterIndexAdjusted, atr14, medianDailyMove, years, length: n } = slice;
 
   let balance = initialCapital;
   let active = false;
   let entryPrice = 0;
   let targetPrice = Number.NaN;
   let highestPrice = 0;
-  let lowestPrice = 0;
+
   let tradeCount = 0;
-  let winCount = 0;
   let closedTrades = 0;
+  let winCount = 0;
   let activeBars = 0;
+
   let peakEquity = initialCapital;
   let maxDrawdown = 0;
   let finalEquity = initialCapital;
 
-  for (let i = 1; i < n; i++) {
-    const curMaster = master[i];
-    const prevMaster = master[i - 1];
+  const useAym = aymMultiplier !== null && aymLimit !== null;
+  const useAtr = atrDistance !== null;
+  const useStoploss = stoplossLevel !== null;
 
-    if (!active && !Number.isNaN(curMaster) && !Number.isNaN(prevMaster)) {
-      let crossed = false;
-      for (let p = 0; p < ENTRY_PRIORITY.length; p++) {
-        const lvl = ENTRY_PRIORITY[p];
-        if (entryLevels.includes(lvl) && curMaster > lvl && prevMaster <= lvl) {
-          crossed = true;
-          break;
+  for (let i = 0; i < n; i++) {
+    const c = close[i];
+    const h = high[i];
+    const l = low[i];
+    const currMaster = masterIndex[i];
+    const currMasterAdjusted = masterIndexAdjusted[i];
+    const prevMaster = i > 0 ? masterIndex[i - 1] : null;
+
+    if (!active) {
+      if (prevMaster !== null) {
+        let crossedLevel: number | null = null;
+        for (const level of ENTRY_PRIORITY) {
+          if (entryLevels.includes(level) && currMaster > level && prevMaster <= level) {
+            crossedLevel = level;
+            break;
+          }
         }
-      }
 
-      if (crossed) {
-        const shares = Math.floor(balance / close[i]);
-        if (shares > 0) {
+        if (crossedLevel !== null) {
           active = true;
-          entryPrice = close[i];
-          highestPrice = high[i];
-          lowestPrice = low[i];
-          tradeCount++;
-          targetPrice = Number.NaN;
-          if (useAym && !Number.isNaN(mdm[i])) {
-            targetPrice = close[i] * (1.0 + (mdm[i] * aymMultiplier) / 100.0);
+          entryPrice = c;
+          highestPrice = h;
+          tradeCount += 1;
+
+          if (useAym) {
+            const range = (currMasterAdjusted / 100) * c;
+            targetPrice = c + range * (aymMultiplier ?? 1);
+          } else {
+            targetPrice = Number.NaN;
           }
         }
       }
     }
 
     if (active) {
-      activeBars++;
-      if (high[i] > highestPrice) highestPrice = high[i];
-      if (low[i] < lowestPrice) lowestPrice = low[i];
+      activeBars += 1;
+      if (h > highestPrice) highestPrice = h;
 
-      let exit = false;
-      // 1. Stoploss
-      if (useStop && !Number.isNaN(mdm[i])) {
-        const slPrice = entryPrice * (1.0 - (mdm[i] * stoplossLevel) / 100.0);
-        if (close[i] <= slPrice) exit = true;
-      }
-      // 2. Trailing ATR Stop
-      if (!exit && useAtr && !Number.isNaN(atr[i])) {
-        const trailPrice = highestPrice - atr[i] * atrDistance;
-        if (close[i] <= trailPrice && close[i] > entryPrice) exit = true;
-      }
-      // 3. AYM Take Profit
-      if (!exit && useAym && !Number.isNaN(targetPrice) && !Number.isNaN(masterAdj[i])) {
-        if (close[i] >= targetPrice && masterAdj[i] < aymLimit) exit = true;
-      }
+      const mdm = medianDailyMove[i];
+      const atr = atr14[i];
 
-      if (exit) {
+      const hitTakeProfit =
+        useAym &&
+        !Number.isNaN(targetPrice) &&
+        c >= targetPrice &&
+        currMasterAdjusted < (aymLimit ?? 100);
+
+      const hitStop =
+        useStoploss &&
+        c <= entryPrice * (1 - (mdm * (stoplossLevel ?? 0)) / 100);
+
+      const hitTrail =
+        useAtr &&
+        c <= highestPrice - atr * (atrDistance ?? 0) &&
+        c > entryPrice;
+
+      if (hitStop || hitTrail || hitTakeProfit) {
         const shares = Math.floor(balance / entryPrice);
-        const diff = close[i] - entryPrice;
-        balance += shares * diff;
-        closedTrades++;
-        if (diff > 0) winCount++;
+        const pnl = shares * (c - entryPrice);
+        balance += pnl;
+        closedTrades += 1;
+        if (c > entryPrice) winCount += 1;
 
         active = false;
         entryPrice = 0;
         highestPrice = 0;
-        lowestPrice = 0;
         targetPrice = Number.NaN;
       }
     }
 
-    finalEquity = active ? balance + Math.floor(balance / entryPrice) * (close[i] - entryPrice) : balance;
+    if (active) {
+      const shares = Math.floor(balance / entryPrice);
+      finalEquity = balance + shares * (c - entryPrice);
+    } else {
+      finalEquity = balance;
+    }
+
     if (finalEquity > peakEquity) peakEquity = finalEquity;
     if (peakEquity > 0) {
-      const dd = ((peakEquity - finalEquity) / peakEquity) * 100.0;
+      const dd = ((peakEquity - finalEquity) / peakEquity) * 100;
       if (dd > maxDrawdown) maxDrawdown = dd;
     }
   }
 
-  const buyHoldRoi = close[0] > 0 ? ((close[n - 1] / close[0]) - 1.0) * 100.0 : 0;
-  const sysRoi = ((finalEquity - initialCapital) / initialCapital) * 100.0;
+  const firstClose = close[0];
+  const lastClose = close[n - 1];
+  const buyHoldRoi = firstClose > 0 ? ((lastClose / firstClose) - 1) * 100 : 0;
+  const sysRoi = ((finalEquity - initialCapital) / initialCapital) * 100;
   const roiMargin = sysRoi - buyHoldRoi;
-  const winRate = closedTrades > 0 ? (winCount / closedTrades) * 100.0 : 0;
+  const winRate = closedTrades > 0 ? (winCount / closedTrades) * 100 : 0;
   const avgBars = tradeCount > 0 ? activeBars / tradeCount : 0;
 
-  // Multi-objective composite score
-  const compositeScore = (roiMargin * 0.50) + (winRate * 0.30) - (avgBars * 0.15) - (maxDrawdown * 0.05);
+  // Composite Multi-Objective Scoring
+  const annualCagr = finalEquity > 0 ? ((finalEquity / initialCapital) ** (1 / years) - 1) * 100 : 0;
+  const winRateFactor = winRate >= 80 ? winRate * 1.5 : winRate;
+  const ddPenalty = maxDrawdown > 30 ? (maxDrawdown - 30) * 2 : 0;
+  const tradeBonus = Math.min(tradeCount, 30) * 2;
+  const compositeScore = roiMargin * 1.0 + winRateFactor * 2.0 + annualCagr * 1.0 + tradeBonus - ddPenalty;
 
   return {
     sysRoi,
@@ -264,8 +282,13 @@ function fastSimulate(
   };
 }
 
-self.onmessage = (e: MessageEvent<WalkForwardOptimizationConfig>) => {
-  const config = e.data;
+export function runWalkForwardOptimization(config: WalkForwardOptimizationConfig): {
+  model: "psi8" | "psi40";
+  candidates: CandidateOptimizationResult[];
+  trainPeriod: string;
+  testPeriod: string;
+  totalEvaluated: number;
+} {
   const {
     bars,
     model = "psi8",
@@ -285,12 +308,10 @@ self.onmessage = (e: MessageEvent<WalkForwardOptimizationConfig>) => {
   const testSlice = buildSimSlice(computed, model, testStartDate, testEndDate);
 
   if (!trainSlice || trainSlice.length < 20) {
-    self.postMessage({ type: "error", message: "Insufficient historical data in training window." });
-    return;
+    throw new Error("Insufficient historical data in training window.");
   }
 
   const totalCombinations = ENTRY_LEVEL_COMBOS.length * AYM_PAIRS.length * ATR_DISTANCES.length * STOPLOSS_LEVELS.length; // 50,220
-  let completed = 0;
 
   type ComboEval = {
     entryLevels: number[];
@@ -326,11 +347,6 @@ self.onmessage = (e: MessageEvent<WalkForwardOptimizationConfig>) => {
               stoplossLevel: sl,
               trainMetrics: metrics,
             });
-          }
-
-          completed++;
-          if (completed % 2500 === 0) {
-            self.postMessage({ type: "progress", progress: (completed / totalCombinations) * 90 });
           }
         }
       }
@@ -442,12 +458,26 @@ self.onmessage = (e: MessageEvent<WalkForwardOptimizationConfig>) => {
     };
   });
 
-  self.postMessage({
-    type: "done",
+  return {
     model,
     candidates: finalCandidates,
     trainPeriod: `${trainStartDate ?? "Inception"} to ${trainEndDate}`,
     testPeriod: `${testStartDate} to ${testEndDate ?? "Present"}`,
     totalEvaluated: totalCombinations,
-  });
-};
+  };
+}
+
+// Browser Web Worker Listener
+if (typeof self !== "undefined" && typeof (self as any).postMessage === "function") {
+  (self as any).onmessage = (e: MessageEvent<WalkForwardOptimizationConfig>) => {
+    try {
+      const result = runWalkForwardOptimization(e.data);
+      (self as any).postMessage({
+        type: "done",
+        ...result,
+      });
+    } catch (err: any) {
+      (self as any).postMessage({ type: "error", message: err.message });
+    }
+  };
+}
