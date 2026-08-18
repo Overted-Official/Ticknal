@@ -16,17 +16,11 @@ const nextConfig = {
     ],
   },
   outputFileTracingIncludes: {
-    "/**": [
+    "/api/[[...slug]]": [
       "./src/strategies/Thoth/models/**/*",
       "./src/strategies/PSI/data/**/*",
       "./Data/psi_*best*.csv",
-      "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.so*",
-      "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.node",
-    ],
-    "/api/**/*": [
-      "./src/strategies/Thoth/models/**/*",
-      "./src/strategies/PSI/data/**/*",
-      "./Data/psi_*best*.csv",
+      "./src/tools/kronos/models/**/*.onnx",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.so*",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.node",
     ],
@@ -62,6 +56,14 @@ const nextConfig = {
         source: '/charts',
         destination: '/invest',
         permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/auth/callback',
+        destination: '/api/auth/callback',
       },
     ];
   },

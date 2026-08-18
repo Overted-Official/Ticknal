@@ -63,6 +63,8 @@ import {
   handleSystemLogsGet,
 } from '@/lib/user-handlers';
 
+import { createClient } from '@/lib/supabase/server';
+
 export const dynamic = 'force-dynamic';
 
 function getPathSegments(slug?: string[]): string[] {
@@ -77,6 +79,31 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   const segments = getPathSegments(slug);
   const root = segments[0] || '';
   const sub = segments[1] || '';
+
+  // 0. Auth Callback
+  if (root === 'auth' && sub === 'callback') {
+    const requestUrl = new URL(req.url);
+    const code = requestUrl.searchParams.get('code');
+    const next = requestUrl.searchParams.get('next') || '/dashboard';
+    const forwardedHost = req.headers.get('x-forwarded-host');
+    const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
+    const isLocalEnv = process.env.NODE_ENV === 'development';
+
+    let siteOrigin = requestUrl.origin;
+    if (!isLocalEnv && forwardedHost) {
+      siteOrigin = `${forwardedProto}://${forwardedHost}`;
+    }
+
+    if (code) {
+      const supabase = await createClient();
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (!error) {
+        const destination = next.startsWith('/') ? next : `/${next}`;
+        return NextResponse.redirect(new URL(destination, siteOrigin).toString());
+      }
+    }
+    return NextResponse.redirect(new URL('/?error=auth', siteOrigin).toString());
+  }
 
   // 1. Cron
   if (root === 'cron') {
