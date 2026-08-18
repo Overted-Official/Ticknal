@@ -7,11 +7,13 @@ import {
   runPsiStrategy,
   type PriceBar,
 } from "@/strategies/PSI/psiStrategy";
+import { runThothStrategy } from "@/strategies/Thoth/thothStrategy";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get("symbol");
+    const strategy = searchParams.get("strategy") || "psi";
 
     if (!symbol) {
       return NextResponse.json({ error: "Missing symbol parameter" }, { status: 400 });
@@ -33,21 +35,41 @@ export async function GET(request: Request) {
       }))
       .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
-    if (bars.length < 260) {
+    if (bars.length < 130) {
       return NextResponse.json({ error: "Insufficient price history" }, { status: 404 });
     }
 
-    const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
-    const result = runPsiStrategy(bars, parameterResolution.params);
-    const metricsPayload = result.metrics;
-    const parameterSource = parameterResolution.parameterSource;
+    let metricsPayload;
+    let parameterSource;
+
+    if (strategy === "thoth_egx_macro") {
+      const buyThreshold = searchParams.get("buyThreshold") ? Number(searchParams.get("buyThreshold")) : 65.0;
+      const sellThreshold = searchParams.get("sellThreshold") ? Number(searchParams.get("sellThreshold")) : 80.0;
+      const minNetProfit = searchParams.get("minNetProfit") !== null ? Number(searchParams.get("minNetProfit")) : 0.5;
+
+      const thothResult = await runThothStrategy(bars, {
+        buyThreshold,
+        sellThreshold,
+        minNetProfit,
+        startDate,
+        endDate,
+      });
+
+      metricsPayload = thothResult.metrics;
+      parameterSource = "thoth-egx-macro-onnx";
+    } else {
+      const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+      const result = runPsiStrategy(bars, parameterResolution.params);
+      metricsPayload = result.metrics;
+      parameterSource = parameterResolution.parameterSource;
+    }
 
     return NextResponse.json({
       metrics: formatMetricsForApi(metricsPayload),
       parameterSource,
     });
   } catch (error) {
-    console.error("Error computing PSI metrics:", error);
+    console.error("Error computing metrics:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

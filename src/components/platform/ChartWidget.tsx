@@ -25,12 +25,12 @@ import {
   type Time,
 } from 'lightweight-charts';
 import { Search, Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Eye, EyeOff, Sparkles, Loader2 } from '@/components/ui/icons';
-import { BarChart2, Check, Briefcase } from 'lucide-react';
+import { BarChart2, Check, Briefcase, Plus } from 'lucide-react';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
-import { INDICATORS, getAvailableIndicators } from '@/indicators';
+import { INDICATORS, getAvailableIndicators, IndicatorLine } from '@/indicators';
 import { WatchlistItem } from '@/components/platform/RightSidebar';
 import { useToast } from '@/context/ToastContext';
 
@@ -238,7 +238,13 @@ export default function ChartWidget({
   const [predictDaysInput, setPredictDaysInput] = useState("10");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [indicatorsPopoverOpen, setIndicatorsPopoverOpen] = useState(false);
+  const [expandedIndicators, setExpandedIndicators] = useState<Record<string, boolean>>({ supportResistance: true });
+  const indicatorLineSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+
+  const toggleIndicatorExpanded = useCallback((id: string) => {
+    setExpandedIndicators((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
 
   // In-place Ticker Search State
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
@@ -313,17 +319,57 @@ export default function ChartWidget({
 
   const toggleIndicator = useCallback((id: string) => {
     const current = new Set(activeIndicators);
+    const params = new URLSearchParams(searchParams?.toString() || '');
     if (current.has(id)) {
       current.delete(id);
+      params.delete(`ind_${id}_opts`);
     } else {
       current.add(id);
+      const ind = INDICATORS[id];
+      if (ind?.options) {
+        const defaultOpts = ind.options.filter((o) => o.defaultActive ?? true).map((o) => o.id);
+        params.set(`ind_${id}_opts`, defaultOpts.join(','));
+      }
     }
-    const params = new URLSearchParams(searchParams?.toString() || '');
     if (current.size > 0) {
       params.set('indicators', Array.from(current).join(','));
     } else {
       params.delete('indicators');
     }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [activeIndicators, searchParams, pathname, router]);
+
+  const toggleIndicatorOption = useCallback((indicatorId: string, optionId: string) => {
+    const ind = INDICATORS[indicatorId];
+    if (!ind || !ind.options) return;
+
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    const rawOpts = searchParams?.get(`ind_${indicatorId}_opts`);
+    const currentActiveOpts = rawOpts
+      ? new Set(rawOpts.split(',').filter(Boolean))
+      : new Set(ind.options.filter((o) => o.defaultActive ?? true).map((o) => o.id));
+
+    if (currentActiveOpts.has(optionId)) {
+      currentActiveOpts.delete(optionId);
+    } else {
+      currentActiveOpts.add(optionId);
+    }
+
+    const currentIndicators = new Set(activeIndicators);
+    if (currentActiveOpts.size === 0) {
+      currentIndicators.delete(indicatorId);
+      params.delete(`ind_${indicatorId}_opts`);
+    } else {
+      currentIndicators.add(indicatorId);
+      params.set(`ind_${indicatorId}_opts`, Array.from(currentActiveOpts).join(','));
+    }
+
+    if (currentIndicators.size > 0) {
+      params.set('indicators', Array.from(currentIndicators).join(','));
+    } else {
+      params.delete('indicators');
+    }
+
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [activeIndicators, searchParams, pathname, router]);
 
@@ -383,6 +429,10 @@ export default function ChartWidget({
       },
       rightPriceScale: {
         borderColor,
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.12,
+        },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -447,6 +497,7 @@ export default function ChartWidget({
     return () => {
       markerApiRef.current?.detach();
       clearOrderPriceLines();
+      indicatorLineSeriesRef.current.clear();
       markerApiRef.current = null;
       candlestickSeriesRef.current = null;
       volumeSeriesRef.current = null;
@@ -807,18 +858,78 @@ export default function ChartWidget({
     strategyParams,
   ]);
 
-  const indicatorMarkers = useMemo(() => {
+  const { indicatorMarkers, indicatorLines } = useMemo(() => {
     let combinedMarkers: SeriesMarker<Time>[] = [];
-    if (!activeIndicators || activeIndicators.length === 0) return combinedMarkers;
+    let combinedLines: IndicatorLine[] = [];
+    if (!activeIndicators || activeIndicators.length === 0) {
+      return { indicatorMarkers: combinedMarkers, indicatorLines: combinedLines };
+    }
     for (const id of activeIndicators) {
       const ind = INDICATORS[id];
       if (ind) {
-        const res = ind.compute(data);
+        let optionsState: Record<string, boolean> | undefined;
+        if (ind.options && ind.options.length > 0) {
+          const rawOpts = searchParams?.get(`ind_${id}_opts`);
+          if (rawOpts) {
+            const activeSet = new Set(rawOpts.split(',').filter(Boolean));
+            optionsState = {};
+            ind.options.forEach((opt) => {
+              optionsState![opt.id] = activeSet.has(opt.id);
+            });
+          } else {
+            optionsState = {};
+            ind.options.forEach((opt) => {
+              optionsState![opt.id] = opt.defaultActive ?? true;
+            });
+          }
+        }
+        const res = ind.compute(visibleData, optionsState);
         if (res.markers) combinedMarkers = [...combinedMarkers, ...res.markers];
+        if (res.lines) combinedLines = [...combinedLines, ...res.lines];
       }
     }
-    return combinedMarkers;
-  }, [data, activeIndicators]);
+    return { indicatorMarkers: combinedMarkers, indicatorLines: combinedLines };
+  }, [visibleData, activeIndicators, searchParams]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const chart = chartRef.current;
+    const currentSeriesMap = indicatorLineSeriesRef.current;
+    const activeLineIds = new Set(indicatorLines.map((l) => l.id));
+
+    // Remove obsolete line series
+    for (const [id, series] of Array.from(currentSeriesMap.entries())) {
+      if (!activeLineIds.has(id)) {
+        try {
+          chart.removeSeries(series);
+        } catch {}
+        currentSeriesMap.delete(id);
+      }
+    }
+
+    // Add or update active line series
+    for (const line of indicatorLines) {
+      let series = currentSeriesMap.get(line.id);
+      if (!series) {
+        series = chart.addSeries(LineSeries, {
+          color: line.color,
+          lineWidth: (line.lineWidth as any) ?? 2,
+          lineStyle: (line.lineStyle as any) ?? 0,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          crosshairMarkerVisible: true,
+        });
+        currentSeriesMap.set(line.id, series);
+      } else {
+        series.applyOptions({
+          color: line.color,
+          lineWidth: (line.lineWidth as any) ?? 2,
+          lineStyle: (line.lineStyle as any) ?? 0,
+        });
+      }
+      series.setData(line.data as any);
+    }
+  }, [indicatorLines]);
 
   useEffect(() => {
     if (!markerApiRef.current) return;
@@ -1062,7 +1173,7 @@ export default function ChartWidget({
         title="Predict Future"
         onClick={() => setPredictPopoverOpen(true)}
         disabled={isPredicting || data.length === 0}
-        className="h-7.5 rounded-md border border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.18] px-3 text-xs font-medium text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
+        className="h-7.5 rounded-md border border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.18] px-2 sm:px-3 text-xs font-medium text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
       >
         <span className="flex items-center gap-1.5">
           {isPredicting ? (
@@ -1070,7 +1181,8 @@ export default function ChartWidget({
           ) : (
             <Sparkles className="h-3.5 w-3.5 text-plt-orange" />
           )}
-          {isPredicting ? 'Predicting...' : 'Predict N Days'}
+          <span className="hidden sm:inline">{isPredicting ? 'Predicting...' : 'Predict N Days'}</span>
+          <span className="sm:hidden">{isPredicting ? '...' : 'Predict'}</span>
         </span>
       </button>
 
@@ -1403,7 +1515,7 @@ export default function ChartWidget({
       )}
 
       {!replayMode ? (
-        <div className="absolute bottom-5 left-5 z-40 flex items-center gap-1.5 rounded-md border border-white/[0.12] bg-black/60 backdrop-blur-xl p-1 shadow-2xl">
+        <div className="absolute bottom-8 sm:bottom-9 left-2 sm:left-4 z-40 flex items-center gap-1 sm:gap-1.5 rounded-md border border-white/[0.12] bg-black/70 backdrop-blur-xl p-1 shadow-2xl">
           {/* 1. Bar Replay */}
           <button
             type="button"
@@ -1411,10 +1523,10 @@ export default function ChartWidget({
             aria-label="Bar Replay"
             disabled={!hasReplayRoom}
             onClick={enableReplay}
-            className="h-7.5 rounded-md px-2.5 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5"
+            className="h-7.5 rounded-md px-2 sm:px-2.5 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-1.5"
           >
             <RotateCcw className="h-3.5 w-3.5 text-white/60" />
-            <span>Replay</span>
+            <span className="hidden sm:inline">Replay</span>
           </button>
 
           {/* 2. Predict N Days */}
@@ -1426,14 +1538,14 @@ export default function ChartWidget({
               type="button"
               title="Technical Indicators"
               onClick={() => setIndicatorsPopoverOpen(!indicatorsPopoverOpen)}
-              className={`h-7.5 rounded-md px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
+              className={`h-7.5 rounded-md px-2 sm:px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
                 activeIndicators.length > 0
                   ? 'bg-plt-orange/15 text-plt-orange border border-plt-orange/40 font-semibold'
                   : 'text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white'
               }`}
             >
               <BarChart2 className="h-3.5 w-3.5" />
-              <span>Indicators</span>
+              <span className="hidden sm:inline">Indicators</span>
               {activeIndicators.length > 0 && (
                 <span className="ml-0.5 px-1 py-0.2 rounded text-[9px] bg-plt-orange text-black font-bold">
                   {activeIndicators.length}
@@ -1442,10 +1554,10 @@ export default function ChartWidget({
             </button>
 
             {indicatorsPopoverOpen && (
-              <div className="absolute bottom-full left-0 mb-2 w-64 rounded-md border border-white/[0.15] bg-black/85 backdrop-blur-2xl p-3 text-xs text-white shadow-2xl z-[60]">
-                <div className="mb-2 flex items-center justify-between border-b border-white/[0.09] pb-2">
+              <div className="absolute bottom-full left-0 mb-2 w-72 sm:w-80 rounded-xl border border-white/[0.15] bg-black/90 backdrop-blur-2xl p-3 text-xs text-white shadow-2xl z-[60]">
+                <div className="mb-2.5 flex items-center justify-between border-b border-white/[0.09] pb-2">
                   <div className="font-semibold text-white flex items-center gap-1.5">
-                    <BarChart2 className="w-3.5 h-3.5 text-plt-orange" /> Technical Overlays
+                    <BarChart2 className="w-3.5 h-3.5 text-plt-orange" /> Technical Indicators
                   </div>
                   <button
                     type="button"
@@ -1455,30 +1567,110 @@ export default function ChartWidget({
                     <X className="h-3 w-3" />
                   </button>
                 </div>
-                <div className="space-y-1.5 pt-1">
+                <div className="space-y-2 pt-0.5 max-h-[420px] overflow-y-auto pr-0.5 custom-scrollbar">
                   {availableIndicators.map((ind) => {
                     const isSelected = activeIndicators.includes(ind.id);
+                    const hasOptions = !!(ind.options && ind.options.length > 0);
+                    const isExpanded = expandedIndicators[ind.id] ?? true;
+
+                    const rawOpts = searchParams?.get(`ind_${ind.id}_opts`);
+                    const activeOptsSet = hasOptions
+                      ? rawOpts
+                        ? new Set(rawOpts.split(',').filter(Boolean))
+                        : new Set(ind.options!.filter((o) => o.defaultActive ?? true).map((o) => o.id))
+                      : new Set();
+
                     return (
-                      <button
+                      <div
                         key={ind.id}
-                        type="button"
-                        onClick={() => toggleIndicator(ind.id)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs transition-colors ${
+                        className={`rounded-lg border transition-all ${
                           isSelected
-                            ? 'bg-plt-orange/20 text-plt-orange font-medium'
-                            : 'hover:bg-white/[0.06] text-white/80'
+                            ? 'border-plt-orange/40 bg-plt-orange/[0.04]'
+                            : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14]'
                         }`}
                       >
-                        <div>
-                          <div className="font-medium text-xs text-white">{ind.name}</div>
-                          <div className="text-[10px] text-white/40 leading-snug">{ind.description}</div>
+                        {/* Main indicator header row */}
+                        <div className="flex items-center justify-between p-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {hasOptions && (
+                              <button
+                                type="button"
+                                title={isExpanded ? 'Collapse options' : 'Expand options'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleIndicatorExpanded(ind.id);
+                                }}
+                                className="flex h-5 w-5 items-center justify-center rounded text-white/50 hover:bg-white/[0.08] hover:text-white transition-colors shrink-0"
+                              >
+                                <ChevronDown
+                                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                    isExpanded ? 'rotate-180 text-plt-orange' : 'rotate-0'
+                                  }`}
+                                />
+                              </button>
+                            )}
+                            <div
+                              className="cursor-pointer select-none min-w-0 flex-1"
+                              onClick={() => toggleIndicator(ind.id)}
+                            >
+                              <div className="font-medium text-xs text-white truncate">{ind.name}</div>
+                              <div className="text-[10px] text-white/40 leading-snug truncate">{ind.description}</div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleIndicator(ind.id)}
+                            className={`ml-2 w-4.5 h-4.5 rounded-[4px] border flex items-center justify-center transition-all shrink-0 ${
+                              isSelected
+                                ? 'bg-plt-orange border-plt-orange text-black font-bold'
+                                : 'border-white/25 bg-white/[0.04] hover:border-white/40'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </button>
                         </div>
-                        <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors ${
-                          isSelected ? 'bg-plt-orange border-plt-orange text-black' : 'border-white/20 bg-transparent'
-                        }`}>
-                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                        </div>
-                      </button>
+
+                        {/* Expandable sub-options list */}
+                        {hasOptions && isExpanded && (
+                          <div className="border-t border-white/[0.06] bg-black/40 p-2 space-y-1.5 rounded-b-lg">
+                            <div className="text-[9px] uppercase tracking-wider text-white/40 font-semibold px-1">
+                              Channels & Levels
+                            </div>
+                            {ind.options!.map((opt) => {
+                              const isOptActive = isSelected && activeOptsSet.has(opt.id);
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => toggleIndicatorOption(ind.id, opt.id)}
+                                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left transition-colors ${
+                                    isOptActive
+                                      ? 'bg-white/[0.08] text-white'
+                                      : 'hover:bg-white/[0.04] text-white/70'
+                                  }`}
+                                >
+                                  <div className="min-w-0 pr-2">
+                                    <div className="text-[11px] font-medium text-white/90 truncate">{opt.name}</div>
+                                    {opt.description && (
+                                      <div className="text-[9px] text-white/40 leading-tight truncate">{opt.description}</div>
+                                    )}
+                                  </div>
+                                  <div
+                                    className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 transition-colors ${
+                                      isOptActive
+                                        ? 'bg-plt-orange border-plt-orange text-black'
+                                        : 'border-white/20 bg-transparent'
+                                    }`}
+                                  >
+                                    {isOptActive && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -1491,14 +1683,14 @@ export default function ChartWidget({
             type="button"
             title="View Positions & Orders"
             onClick={() => setPositionsDrawerOpen(true)}
-            className={`h-7.5 rounded-md px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
+            className={`h-7.5 rounded-md px-2 sm:px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
               openPositionsCount > 0
                 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 font-semibold'
                 : 'text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white'
             }`}
           >
             <Briefcase className="h-3.5 w-3.5" />
-            <span>Positions</span>
+            <span className="hidden sm:inline">Positions</span>
             {openPositionsCount > 0 && (
               <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] bg-emerald-500 text-black font-bold">
                 {openPositionsCount}
@@ -1510,15 +1702,16 @@ export default function ChartWidget({
           <button
             type="button"
             onClick={() => setIsAddOrderOpen(true)}
-            className="h-7.5 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white px-3 text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
+            className="h-7.5 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white px-2.5 sm:px-3 text-xs font-medium transition-colors flex items-center justify-center gap-1 shadow-sm shrink-0"
             title="Add Position"
+            aria-label="Add Position"
           >
-            <span>+</span>
-            <span>Add Position</span>
+            <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+            <span className="hidden sm:inline">Add Position</span>
           </button>
         </div>
       ) : (
-        <div className="absolute bottom-5 left-5 z-40 flex max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.12] bg-black/60 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
+        <div className="absolute bottom-8 sm:bottom-9 left-2 sm:left-4 z-40 flex max-w-[calc(100vw-32px)] sm:max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.12] bg-black/70 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
           <button
             type="button"
             title="Reset replay point"

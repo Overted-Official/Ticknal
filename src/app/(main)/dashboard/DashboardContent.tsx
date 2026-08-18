@@ -8,7 +8,7 @@ import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
-import OpportunityTable from '@/components/platform/OpportunityTable';
+import OpportunityTable, { type Opportunity } from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
 import DashboardCharts from '@/components/platform/DashboardCharts';
 import DashboardMotionView from '@/components/platform/DashboardMotionView';
@@ -31,14 +31,6 @@ type DashboardOrder = {
   currentPrice: number;
   profitLoss: number;
   profitLossPct: number;
-};
-
-type Opportunity = {
-  symbol: string;
-  companyName: string;
-  sector: string;
-  logoUrl?: string | null;
-  signal: PsiSignal;
 };
 
 const emptyOrderStats = {

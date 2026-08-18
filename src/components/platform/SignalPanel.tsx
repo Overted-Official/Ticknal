@@ -582,13 +582,21 @@ export default function SignalPanel({
         className={`p-3 cursor-pointer hover:bg-white/[0.03] transition-colors flex flex-col gap-2 ${expanded ? 'rounded-t-xl' : 'rounded-xl'}`}
         onClick={() => setExpanded(!expanded)}
       >
-        {/* Row 1: Strategy Label + Alpha Spread Badge + Eye Toggle */}
+        {/* Row 1: Strategy Label + Strategy Dropdown + Alpha Spread Badge + Eye Toggle */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-white/80">
+          <div className="flex items-center gap-1.5 text-white/80" onClick={(e) => e.stopPropagation()}>
             <Target className="w-3.5 h-3.5 text-plt-orange shrink-0" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-white">
-              {trainingModel === 'psi40' ? 'PSI-40 TREND' : 'PSI-8 INFLECTION'}
-            </span>
+            <select
+              value={selectedStrategy}
+              onChange={(e) => setSelectedStrategy(e.target.value)}
+              className="bg-zinc-900 border border-white/10 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-plt-orange cursor-pointer tracking-wide uppercase"
+            >
+              {strategies.map((strat) => (
+                <option key={strat.id} value={strat.id} className="bg-zinc-900 text-white">
+                  {strat.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>

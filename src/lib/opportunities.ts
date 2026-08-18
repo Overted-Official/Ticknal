@@ -1,9 +1,11 @@
 import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
-import { normalizeTickerSymbol, runPsiStrategy } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
-import { PriceBar } from '@/strategies/PSI/psiStrategy';
+import { runThothStrategy } from '@/strategies/Thoth/thothStrategy';
+import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
+import { unstable_cache } from 'next/cache';
 
 const HISTORY_BARS = 320;
 
@@ -12,27 +14,43 @@ export type OpportunitySignal = {
   companyName: string;
   sector: string;
   logoUrl: string | null;
-  signal: any;
+  strategyId: string;
+  strategyLabel: string;
+  strategyShortName: string;
+  strategyBadgeClassName: string;
+  signal: {
+    signal: string;
+    level?: string;
+    date: string;
+    price: number;
+    reasoning?: string;
+    exitReason?: string;
+    entryReason?: string;
+  };
 };
 
-import { unstable_cache } from 'next/cache';
-
 // In-memory module-level cache for instantaneous (<1ms) response across routes
-let memCache: { data: OpportunitySignal[]; timestamp: number } | null = null;
-let inFlightPromise: Promise<OpportunitySignal[]> | null = null;
+const memCache = new Map<string, { data: OpportunitySignal[]; timestamp: number }>();
+const inFlightPromises = new Map<string, Promise<OpportunitySignal[]>>();
 const MEM_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
-export async function _getRecentOpportunities(limitBars: number = 5): Promise<OpportunitySignal[]> {
+export async function _getRecentOpportunities(
+  limitBars: number = 5,
+  strategyScope: string = 'all'
+): Promise<OpportunitySignal[]> {
+  const cacheKey = `${limitBars}-${strategyScope}`;
   const now = Date.now();
-  if (memCache && now - memCache.timestamp < MEM_CACHE_TTL) {
-    return memCache.data;
+  const cached = memCache.get(cacheKey);
+
+  if (cached && now - cached.timestamp < MEM_CACHE_TTL) {
+    return cached.data;
   }
 
-  if (inFlightPromise) {
-    return inFlightPromise;
+  if (inFlightPromises.has(cacheKey)) {
+    return inFlightPromises.get(cacheKey)!;
   }
 
-  inFlightPromise = (async () => {
+  const promise = (async () => {
     try {
       const [tickerRows, priceRows] = await Promise.all([
         db.select().from(tickers),
@@ -77,40 +95,80 @@ export async function _getRecentOpportunities(limitBars: number = 5): Promise<Op
       }
 
       const opportunities: OpportunitySignal[] = [];
-      for (const [symbol, bars] of barsByTicker.entries()) {
-        if (bars.length < 220) continue;
-        const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
-        
-        // The dashboard scans only recent mature histories
-        const strategyResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: bars[0].date }));
-        const signal = [...strategyResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
-        if (!signal) continue;
+      const includePsi = strategyScope === 'all' || strategyScope === 'psi';
+      const includeThoth = strategyScope === 'all' || strategyScope === 'thoth_egx_macro';
 
+      for (const [symbol, bars] of barsByTicker.entries()) {
+        if (bars.length < 130) continue;
+        const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
         const ticker = tickerMap.get(symbol);
-        opportunities.push({
-          symbol,
+        const meta = {
           companyName: ticker?.companyName ?? symbol,
           sector: ticker?.sector ?? 'Unclassified',
           logoUrl: ticker?.logoUrl ?? null,
-          signal,
-        });
+        };
+
+        // 1. Evaluate PSI Strategy
+        if (includePsi && bars.length >= 130) {
+          try {
+            const psiResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: bars[0].date }));
+            const signal = [...psiResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
+            if (signal) {
+              const badge = getStrategyBadge('psi');
+              opportunities.push({
+                symbol,
+                ...meta,
+                strategyId: 'psi',
+                strategyLabel: STRATEGIES.psi?.label ?? 'PSI Strategy',
+                strategyShortName: badge.label,
+                strategyBadgeClassName: badge.className,
+                signal,
+              });
+            }
+          } catch (e) {
+            // Ignore individual ticker calculation failures
+          }
+        }
+
+        // 2. Evaluate Thoth EGX Macro Strategy
+        if (includeThoth && bars.length >= 130) {
+          try {
+            const thothResult = await runThothStrategy(bars, { startDate: bars[0].date });
+            const signal = [...thothResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
+            if (signal) {
+              const badge = getStrategyBadge('thoth_egx_macro');
+              opportunities.push({
+                symbol,
+                ...meta,
+                strategyId: 'thoth_egx_macro',
+                strategyLabel: STRATEGIES.thoth_egx_macro?.label ?? 'Thoth EGX Macro',
+                strategyShortName: badge.label,
+                strategyBadgeClassName: badge.className,
+                signal,
+              });
+            }
+          } catch (e) {
+            // Ignore individual ticker calculation failures
+          }
+        }
       }
 
       const sorted = opportunities.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
-      memCache = { data: sorted, timestamp: Date.now() };
+      memCache.set(cacheKey, { data: sorted, timestamp: Date.now() });
       return sorted;
     } finally {
-      inFlightPromise = null;
+      inFlightPromises.delete(cacheKey);
     }
   })();
 
-  return inFlightPromise;
+  inFlightPromises.set(cacheKey, promise);
+  return promise;
 }
 
-export const getRecentOpportunities = (limitBars: number = 5) => {
+export const getRecentOpportunities = (limitBars: number = 5, strategyScope: string = 'all') => {
   return unstable_cache(
-    async () => _getRecentOpportunities(limitBars),
-    [`recent-opportunities-${limitBars}`],
+    async () => _getRecentOpportunities(limitBars, strategyScope),
+    [`recent-opportunities-${limitBars}-${strategyScope}`],
     { tags: ['opportunities'], revalidate: 3600 }
   )();
 };

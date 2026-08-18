@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { getCachedDailyPrices } from "@/lib/data-cache";
 import { resolvePsiParamsWithSource } from "@/strategies/PSI/psiParameterStore";
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from "@/strategies/PSI/psiStrategy";
+import { runThothStrategy } from "@/strategies/Thoth/thothStrategy";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get("symbol");
+    const strategy = searchParams.get("strategy") || "psi";
 
     if (!symbol) {
       return NextResponse.json({ error: "Missing symbol parameter" }, { status: 400 });
@@ -31,16 +33,36 @@ export async function GET(request: Request) {
       }))
       .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
-    if (bars.length < 260) {
+    if (bars.length < 130) {
       return NextResponse.json({ signals: [], latestMasterIndex: null, latestMasterIndexAdjusted: null });
     }
 
-    const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
-    const psiResult = runPsiStrategy(bars, parameterResolution.params);
-    const result = {
-      ...psiResult,
-      parameterSource: parameterResolution.parameterSource,
-    };
+    let result;
+    if (strategy === "thoth_egx_macro") {
+      const buyThreshold = searchParams.get("buyThreshold") ? Number(searchParams.get("buyThreshold")) : 65.0;
+      const sellThreshold = searchParams.get("sellThreshold") ? Number(searchParams.get("sellThreshold")) : 80.0;
+      const minNetProfit = searchParams.get("minNetProfit") !== null ? Number(searchParams.get("minNetProfit")) : 0.5;
+
+      const thothResult = await runThothStrategy(bars, {
+        buyThreshold,
+        sellThreshold,
+        minNetProfit,
+        startDate,
+        endDate,
+      });
+
+      result = {
+        ...thothResult,
+        parameterSource: "thoth-egx-macro-onnx",
+      };
+    } else {
+      const parameterResolution = resolvePsiParamsWithSource(ticker, { startDate, endDate });
+      const psiResult = runPsiStrategy(bars, parameterResolution.params);
+      result = {
+        ...psiResult,
+        parameterSource: parameterResolution.parameterSource,
+      };
+    }
 
     const signals =
       limit && limit > 0
@@ -54,7 +76,7 @@ export async function GET(request: Request) {
       parameterSource: result.parameterSource,
     });
   } catch (error) {
-    console.error("Error computing PSI signals:", error);
+    console.error("Error computing signals:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

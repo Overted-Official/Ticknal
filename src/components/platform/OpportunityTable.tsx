@@ -1,20 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import AddOrderModal, { InitialOrderData } from '@/components/platform/AddOrderModal';
+import { Layers, Sparkles } from 'lucide-react';
 
 export type Opportunity = {
   symbol: string;
   companyName: string;
   sector: string;
   logoUrl?: string | null;
+  strategyId?: string;
+  strategyLabel?: string;
+  strategyShortName?: string;
+  strategyBadgeClassName?: string;
   signal: {
     signal: string;
     level?: string;
     date: string;
     price: number;
     reasoning?: string;
+    exitReason?: string;
+    entryReason?: string;
   };
 };
 
@@ -29,12 +36,29 @@ export default function OpportunityTable({
   opportunities,
   emptyText,
   compact = false,
+  showFilter = true,
 }: {
   opportunities: Opportunity[];
   emptyText: string;
   compact?: boolean;
+  showFilter?: boolean;
 }) {
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
+  const [strategyFilter, setStrategyFilter] = useState<'ALL' | 'psi' | 'thoth_egx_macro'>('ALL');
+
+  // Extract unique strategies present
+  const availableStrategies = useMemo(() => {
+    const set = new Set<string>();
+    opportunities.forEach((o) => {
+      if (o.strategyId) set.add(o.strategyId);
+    });
+    return Array.from(set);
+  }, [opportunities]);
+
+  const filteredOpportunities = useMemo(() => {
+    if (strategyFilter === 'ALL') return opportunities;
+    return opportunities.filter((o) => (o.strategyId || 'psi') === strategyFilter);
+  }, [opportunities, strategyFilter]);
 
   const initialOrderData: InitialOrderData | null = selectedOpp ? {
     symbol: selectedOpp.symbol,
@@ -46,13 +70,56 @@ export default function OpportunityTable({
 
   return (
     <>
+      {/* Optional Strategy Filter Pill Bar */}
+      {showFilter && availableStrategies.length > 1 && (
+        <div className="flex items-center gap-1 px-3 pt-2.5 pb-1 border-b border-white/[0.04] bg-white/[0.01]">
+          <button
+            type="button"
+            onClick={() => setStrategyFilter('ALL')}
+            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+              strategyFilter === 'ALL'
+                ? 'bg-white/[0.12] text-white font-semibold shadow-sm'
+                : 'text-white/40 hover:text-white'
+            }`}
+          >
+            All ({opportunities.length})
+          </button>
+          {availableStrategies.includes('psi') && (
+            <button
+              type="button"
+              onClick={() => setStrategyFilter('psi')}
+              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                strategyFilter === 'psi'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold shadow-sm'
+                  : 'text-white/40 hover:text-cyan-400'
+              }`}
+            >
+              PSI ({opportunities.filter((o) => (o.strategyId || 'psi') === 'psi').length})
+            </button>
+          )}
+          {availableStrategies.includes('thoth_egx_macro') && (
+            <button
+              type="button"
+              onClick={() => setStrategyFilter('thoth_egx_macro')}
+              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                strategyFilter === 'thoth_egx_macro'
+                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold shadow-sm'
+                  : 'text-white/40 hover:text-purple-400'
+              }`}
+            >
+              Thoth ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Mobile View (Cards) */}
       <div className="md:hidden flex flex-col space-y-2 p-3">
-        {opportunities.length === 0 ? (
+        {filteredOpportunities.length === 0 ? (
           <div className="p-6 text-center text-white/40 text-xs font-normal">{emptyText}</div>
         ) : (
-          opportunities.map((item) => (
-            <div key={`${item.symbol}-${item.signal.date}`} className="bg-transparent rounded-md border border-white/[0.09] p-3">
+          filteredOpportunities.map((item) => (
+            <div key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="bg-transparent rounded-md border border-white/[0.09] p-3">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center space-x-2.5">
                   <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
@@ -65,10 +132,17 @@ export default function OpportunityTable({
                     )}
                   </div>
                   <div>
-                    <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-xs">
-                      {item.symbol.replace('.CA', '')}
-                    </Link>
-                    {!compact && <div className="text-[10px] text-white/40">{item.sector}</div>}
+                    <div className="flex items-center gap-1.5">
+                      <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-xs">
+                        {item.symbol.replace('.CA', '')}
+                      </Link>
+                      {item.strategyShortName && (
+                        <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${item.strategyBadgeClassName || 'bg-white/[0.06] text-white/70 border-white/10'}`}>
+                          {item.strategyShortName}
+                        </span>
+                      )}
+                    </div>
+                    {!compact && <div className="text-[10px] text-white/40">{item.companyName || item.sector}</div>}
                   </div>
                 </div>
                 <button 
@@ -101,6 +175,7 @@ export default function OpportunityTable({
           <thead className="bg-transparent border-b border-white/[0.09] text-[11px] font-medium text-white/30">
             <tr>
               <th className="px-6 py-3.5">Ticker</th>
+              <th className="px-4 py-3.5">Strategy</th>
               {!compact && <th className="px-6 py-3.5">Sector</th>}
               <th className="px-6 py-3.5">Date</th>
               <th className="px-6 py-3.5 text-right">Price</th>
@@ -108,15 +183,15 @@ export default function OpportunityTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.04]">
-            {opportunities.length === 0 ? (
+            {filteredOpportunities.length === 0 ? (
               <tr>
-                <td colSpan={compact ? 4 : 5} className="px-6 py-8 text-center text-white/40 text-xs">
+                <td colSpan={compact ? 5 : 6} className="px-6 py-8 text-center text-white/40 text-xs">
                   {emptyText}
                 </td>
               </tr>
             ) : (
-              opportunities.map((item) => (
-                <tr key={`${item.symbol}-${item.signal.date}`} className="hover:bg-white/[0.02] transition-colors group">
+              filteredOpportunities.map((item) => (
+                <tr key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="hover:bg-white/[0.02] transition-colors group">
                   <td className="px-6 py-3.5 whitespace-nowrap">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
@@ -135,6 +210,13 @@ export default function OpportunityTable({
                         {!compact && <span className="text-[10px] text-white/40 truncate max-w-[130px]">{item.companyName}</span>}
                       </div>
                     </div>
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
+                      item.strategyBadgeClassName || 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25'
+                    }`}>
+                      {item.strategyShortName || 'PSI'}
+                    </span>
                   </td>
                   {!compact && <td className="px-6 py-3.5 whitespace-nowrap text-white/50 text-[11px]">{item.sector}</td>}
                   <td className="px-6 py-3.5 whitespace-nowrap text-white/40 font-mono text-[11px]">{item.signal.date}</td>

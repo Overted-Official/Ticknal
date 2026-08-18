@@ -102,76 +102,135 @@ export async function dispatchSignalNotifications(options: {
     const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
 
     for (const alert of userAlerts) {
-      // Resolve params for this specific user and ticker
-      const userSettingsKey = `${alert.userId}-${ticker}`;
-      const userSettingRow = userSettingsMap[userSettingsKey]?.find(s => s.strategyName === 'psi');
-      
-      let userParams = defaultParams;
-      if (userSettingRow) {
+      // Resolve user's global alert scope preference ('all' | 'psi' | 'thoth_egx_macro')
+      const userGlobalScopeRow = userSettingsMap[`${alert.userId}-GLOBAL`]?.find(s => s.strategyName === 'alert_scope');
+      let userScope: string = 'all';
+      if (userGlobalScopeRow) {
         try {
-          const parsed = JSON.parse(userSettingRow.params);
-          userParams = { ...defaultParams, ...parsed };
-        } catch (e) {
-          console.error('Failed to parse user strategy settings', e);
+          const parsed = JSON.parse(userGlobalScopeRow.params);
+          userScope = parsed.scope || 'all';
+        } catch (e) {}
+      }
+
+      // Check per-ticker alert scope if set
+      const userSettingsKey = `${alert.userId}-${ticker}`;
+      const userTickerScopeRow = userSettingsMap[userSettingsKey]?.find(s => s.strategyName === 'alert_scope');
+      if (userTickerScopeRow) {
+        try {
+          const parsed = JSON.parse(userTickerScopeRow.params);
+          if (parsed.scope) userScope = parsed.scope;
+        } catch (e) {}
+      }
+
+      const signalsToDispatch: Array<{
+        strategyId: string;
+        strategyShort: string;
+        strategyLabel: string;
+        signal: PsiSignal;
+      }> = [];
+
+      // 1. Evaluate PSI Strategy
+      if (userScope === 'all' || userScope === 'psi') {
+        const userSettingRow = userSettingsMap[userSettingsKey]?.find(s => s.strategyName === 'psi');
+        let userParams = defaultParams;
+        if (userSettingRow) {
+          try {
+            const parsed = JSON.parse(userSettingRow.params);
+            userParams = { ...defaultParams, ...parsed };
+          } catch (e) {
+            console.error('Failed to parse user strategy settings', e);
+          }
+        }
+
+        const psiResult = runPsiStrategy(bars, userParams);
+        const signal = [...psiResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
+        if (signal) {
+          signalsToDispatch.push({
+            strategyId: 'psi',
+            strategyShort: 'PSI',
+            strategyLabel: 'PSI Strategy',
+            signal,
+          });
         }
       }
 
-      // Run strategy per user
-      const psiResult = runPsiStrategy(bars, userParams);
-      const signal = [...psiResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
+      // 2. Evaluate Thoth EGX Macro Strategy
+      if (userScope === 'all' || userScope === 'thoth_egx_macro') {
+        try {
+          const { runThothStrategy } = await import('@/strategies/Thoth/thothStrategy');
+          const thothResult = await runThothStrategy(bars, { startDate: bars[0].date });
+          const signal = [...thothResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
+          if (signal) {
+            signalsToDispatch.push({
+              strategyId: 'thoth_egx_macro',
+              strategyShort: 'THOTH',
+              strategyLabel: 'Thoth EGX Macro',
+              signal,
+            });
+          }
+        } catch (e) {
+          console.error('Failed to run Thoth strategy for alert', e);
+        }
+      }
 
-      if (!signal) {
+      if (signalsToDispatch.length === 0) {
         result.skipped += 1;
         continue;
       }
 
       const openOrderExists = openOrderRows.some(o => o.userId === alert.userId && o.tickerSymbol === ticker);
-      const payload = JSON.stringify({
-        title: buildNotificationTitle(ticker, signal, openOrderExists),
-        body: buildNotificationBody(signal),
-        url: `/invest?ticker=${ticker}&timeframe=D`,
-        tag: `psi-${ticker}-${signal.date}-${signal.signal}`,
-        symbol: ticker,
-        signal: signal.signal,
-        price: signal.price,
-      });
 
-      const alreadySent = await hasNotificationBeenSent(alert.userId, ticker, signal);
-      if (alreadySent) {
-        result.skipped += 1;
-        continue;
-      }
+      for (const item of signalsToDispatch) {
+        const { strategyId, strategyShort, strategyLabel, signal } = item;
 
-      const subscriptions = subscriptionsByUser[alert.userId] ?? [];
-      if (subscriptions.length === 0) {
-        result.skipped += 1;
-        continue;
-      }
+        const payload = JSON.stringify({
+          title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
+          body: buildNotificationBody(signal, strategyLabel),
+          url: `/invest?ticker=${ticker}&timeframe=D`,
+          tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
+          symbol: ticker,
+          strategy: strategyId,
+          signal: signal.signal,
+          price: signal.price,
+        });
 
-      let sentToDevice = false;
-      for (const subscription of subscriptions) {
-        const sent = await sendToSubscription(subscription, payload);
-        if (sent === 'expired') {
-          result.expiredSubscriptions += 1;
-          await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
-        } else if (sent === 'sent') {
-          sentToDevice = true;
+        const alreadySent = await hasNotificationBeenSent(alert.userId, ticker, signal);
+        if (alreadySent) {
+          result.skipped += 1;
+          continue;
         }
-      }
 
-      if (sentToDevice) {
-        result.sent += 1;
-        await db
-          .insert(signalNotifications)
-          .values({
-            userId: alert.userId,
-            tickerSymbol: ticker,
-            signalDate: signal.date,
-            signal: signal.signal,
-          })
-          .onConflictDoNothing();
-      } else {
-        result.skipped += 1;
+        const subscriptions = subscriptionsByUser[alert.userId] ?? [];
+        if (subscriptions.length === 0) {
+          result.skipped += 1;
+          continue;
+        }
+
+        let sentToDevice = false;
+        for (const subscription of subscriptions) {
+          const sent = await sendToSubscription(subscription, payload);
+          if (sent === 'expired') {
+            result.expiredSubscriptions += 1;
+            await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
+          } else if (sent === 'sent') {
+            sentToDevice = true;
+          }
+        }
+
+        if (sentToDevice) {
+          result.sent += 1;
+          await db
+            .insert(signalNotifications)
+            .values({
+              userId: alert.userId,
+              tickerSymbol: ticker,
+              signalDate: signal.date,
+              signal: signal.signal,
+            })
+            .onConflictDoNothing();
+        } else {
+          result.skipped += 1;
+        }
       }
     }
   }
@@ -281,16 +340,25 @@ async function sendToSubscription(
   }
 }
 
-function buildNotificationTitle(ticker: string, signal: PsiSignal, openOrderExists: boolean): string {
-  if (signal.signal === 'BUY') return `${ticker} has a buy opportunity`;
-  if (openOrderExists) return `Sell the open ${ticker} position`;
-  return `${ticker} has an exit signal`;
+function buildNotificationTitle(
+  ticker: string,
+  signal: PsiSignal,
+  openOrderExists: boolean,
+  strategyShort: string = 'PSI'
+): string {
+  const prefix = `[${strategyShort}]`;
+  if (signal.signal === 'BUY') return `${prefix} ${ticker} has a buy opportunity`;
+  if (openOrderExists) return `${prefix} Sell the open ${ticker} position`;
+  return `${prefix} ${ticker} has an exit signal`;
 }
 
-function buildNotificationBody(signal: PsiSignal): string {
+function buildNotificationBody(
+  signal: PsiSignal,
+  strategyLabel: string = 'PSI Strategy'
+): string {
   const price = `${Number(signal.price).toFixed(2)} EGP`;
-  if (signal.signal === 'BUY') return `PSI buy signal at ${price}.`;
-  return `PSI ${signal.signal.replace('SELL_', '').toLowerCase()} exit at ${price}.`;
+  if (signal.signal === 'BUY') return `${strategyLabel} buy signal at ${price}.`;
+  return `${strategyLabel} ${signal.signal.replace('SELL_', '').toLowerCase()} exit at ${price}.`;
 }
 
 function groupBy<T>(items: T[], getKey: (item: T) => string): Record<string, T[]> {

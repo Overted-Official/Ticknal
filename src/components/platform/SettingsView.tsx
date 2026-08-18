@@ -30,10 +30,15 @@ import {
   Layers,
   X,
   Camera,
-  Loader2
+  Loader2,
+  Target,
+  Zap,
+  Sparkles,
+  Cpu
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAlerts } from '@/components/platform/AlertProvider';
+import { useToast } from '@/context/ToastContext';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 import PinSecurityCard from '@/components/platform/settings/PinSecurityCard';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
@@ -171,6 +176,56 @@ export default function SettingsView({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addSearchQuery, setAddSearchQuery] = useState('');
   const [togglingSymbol, setTogglingSymbol] = useState<string | null>(null);
+
+  const { toast } = useToast();
+  const [alertStrategyScope, setAlertStrategyScope] = useState<'all' | 'psi' | 'thoth_egx_macro'>('all');
+  const [isSavingScope, setIsSavingScope] = useState(false);
+
+  // Load saved strategy scope preference
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('quantegx_alert_strategy_scope');
+      if (saved && (saved === 'all' || saved === 'psi' || saved === 'thoth_egx_macro')) {
+        setAlertStrategyScope(saved as any);
+      }
+    } catch (e) {}
+
+    fetch('/api/alerts/preferences')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.scope && (data.scope === 'all' || data.scope === 'psi' || data.scope === 'thoth_egx_macro')) {
+          setAlertStrategyScope(data.scope);
+          try {
+            localStorage.setItem('quantegx_alert_strategy_scope', data.scope);
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleStrategyScopeChange = async (newScope: 'all' | 'psi' | 'thoth_egx_macro') => {
+    setAlertStrategyScope(newScope);
+    try {
+      localStorage.setItem('quantegx_alert_strategy_scope', newScope);
+    } catch (e) {}
+
+    setIsSavingScope(true);
+    try {
+      const res = await fetch('/api/alerts/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: newScope }),
+      });
+      if (res.ok) {
+        const label = newScope === 'all' ? 'All Active Strategies' : newScope === 'psi' ? 'PSI Strategy Only' : 'Thoth EGX Macro Only';
+        toast.success('Strategy Scope Updated', `Alerts and opportunities set to ${label}.`);
+      }
+    } catch (e) {
+      toast.error('Save Error', 'Failed to save alert preference to server.');
+    } finally {
+      setIsSavingScope(false);
+    }
+  };
 
   // Current client user agent
   const [clientUa, setClientUa] = useState<string>('');
@@ -756,7 +811,130 @@ export default function SettingsView({
 
         {/* TAB 3: MONITORED TICKERS & ALERTS */}
         {activeTab === 'alerts' && (
-          <motion.div variants={itemFadeInUp} className="space-y-2">
+          <motion.div variants={itemFadeInUp} className="space-y-4">
+            {/* Strategy Scope Selector Card */}
+            <div className="border border-white/[0.09] rounded-md bg-black p-6">
+              <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-white/[0.08]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-plt-orange/10 border border-plt-orange/20 flex items-center justify-center text-plt-orange">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-[13px] font-medium text-white tracking-[-0.02em] flex items-center gap-2">
+                      <span>Signal & Alert Strategy Scope</span>
+                      {isSavingScope && <span className="text-[10px] text-plt-orange animate-pulse font-mono">Syncing...</span>}
+                    </h2>
+                    <p className="mt-0.5 text-xs text-white/40">
+                      Choose which models send push notifications and populate the dashboard Buy/Sell Opportunity tables.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 Strategy Scope Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* 1. All Strategies */}
+                <div
+                  onClick={() => handleStrategyScopeChange('all')}
+                  className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+                    alertStrategyScope === 'all'
+                      ? 'bg-white/[0.06] border-plt-orange/60 shadow-[0_0_15px_rgba(255,100,13,0.12)]'
+                      : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Zap className={`w-4 h-4 ${alertStrategyScope === 'all' ? 'text-plt-orange' : 'text-white/40'}`} />
+                        <span className="text-xs font-bold text-white">All Strategies</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                        Recommended
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-white/40 leading-relaxed">
+                      Receive alerts from both PSI Inflection & Thoth EGX Macro. Each alert is clearly tagged with its originating model.
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
+                    <span className="text-[9px] font-mono text-white/30">Scope: Multi-Model</span>
+                    <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      alertStrategyScope === 'all' ? 'border-plt-orange bg-plt-orange' : 'border-white/30'
+                    }`}>
+                      {alertStrategyScope === 'all' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. PSI Strategy */}
+                <div
+                  onClick={() => handleStrategyScopeChange('psi')}
+                  className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+                    alertStrategyScope === 'psi'
+                      ? 'bg-cyan-500/10 border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.12)]'
+                      : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Target className={`w-4 h-4 ${alertStrategyScope === 'psi' ? 'text-cyan-400' : 'text-white/40'}`} />
+                        <span className="text-xs font-bold text-white">PSI Strategy Only</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
+                        PSI
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-white/40 leading-relaxed">
+                      Only trigger alerts and opportunities from the multi-indicator PSI inflection and consensus engine.
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
+                    <span className="text-[9px] font-mono text-white/30">Scope: PSI Rules</span>
+                    <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      alertStrategyScope === 'psi' ? 'border-cyan-400 bg-cyan-400' : 'border-white/30'
+                    }`}>
+                      {alertStrategyScope === 'psi' && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Thoth EGX Macro */}
+                <div
+                  onClick={() => handleStrategyScopeChange('thoth_egx_macro')}
+                  className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+                    alertStrategyScope === 'thoth_egx_macro'
+                      ? 'bg-purple-500/10 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.12)]'
+                      : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Cpu className={`w-4 h-4 ${alertStrategyScope === 'thoth_egx_macro' ? 'text-purple-400' : 'text-white/40'}`} />
+                        <span className="text-xs font-bold text-white">Thoth EGX Macro Only</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/25">
+                        Deep Learning
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-white/40 leading-relaxed">
+                      Only trigger alerts and opportunities from the Thoth Transformer Exhaustion Prediction model.
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
+                    <span className="text-[9px] font-mono text-white/30">Scope: AI Model</span>
+                    <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      alertStrategyScope === 'thoth_egx_macro' ? 'border-purple-400 bg-purple-400' : 'border-white/30'
+                    }`}>
+                      {alertStrategyScope === 'thoth_egx_macro' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Monitored Tickers Card */}
             <div className="border border-white/[0.09] rounded-md bg-black p-6">
               {/* Header & Actions */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/[0.08]">

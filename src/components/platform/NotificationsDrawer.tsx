@@ -22,6 +22,7 @@ export type SignalNotificationItem = {
   tickerSymbol: string;
   signalDate: string;
   signal: string;
+  strategy?: string | null;
   sentAt: string;
   companyName?: string | null;
   logoUrl?: string | null;
@@ -290,8 +291,15 @@ export default function NotificationsDrawer({
                         <div className="flex items-center gap-2.5">
                           <TickerLogo symbol={item.tickerSymbol} logoUrl={item.logoUrl} />
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs font-mono font-semibold text-white">{item.tickerSymbol}</span>
+                              <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                                item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth'
+                                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/25'
+                                  : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25'
+                              }`}>
+                                {item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth' ? 'THOTH' : 'PSI'}
+                              </span>
                               <span
                                 className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-medium border ${badge.className}`}
                               >
