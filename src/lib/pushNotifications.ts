@@ -52,26 +52,16 @@ export async function dispatchSignalNotifications(options: {
     symbolFilter.size === 0 ? true : symbolFilter.has(alert.tickerSymbol),
   );
 
-  // 2. Automatically include any ticker that currently has an open position
+  // 2. Automatically include any ticker that currently has an open position for that specific user
   const openOrderRows = await db.select({ tickerSymbol: positions.tickerSymbol, userId: positions.userId }).from(positions).where(eq(positions.status, 'OPEN'));
-  const openOrderTickers = new Set(
-    openOrderRows
-      .map(row => row.tickerSymbol)
-      .filter(ticker => symbolFilter.size === 0 ? true : symbolFilter.has(ticker))
-  );
-
-  const subscriptionRows = await db.select().from(pushSubscriptions);
-  const subscriptionsByUser = groupBy(subscriptionRows, (subscription) => subscription.userId);
-  const allUserIds = Object.keys(subscriptionsByUser);
-
-  // Merge explicit alerts and pseudo-alerts (for open positions)
+  
+  // Merge explicit alerts and open positions directly
   const alertRows: { userId: string; tickerSymbol: string }[] = [...explicitAlertRows];
   
-  for (const ticker of openOrderTickers) {
-    for (const userId of allUserIds) {
-      const userHasOpenOrder = openOrderRows.some(o => o.userId === userId && o.tickerSymbol === ticker);
-      if (userHasOpenOrder && !alertRows.some(a => a.userId === userId && a.tickerSymbol === ticker)) {
-        alertRows.push({ userId, tickerSymbol: ticker });
+  for (const openOrder of openOrderRows) {
+    if (symbolFilter.size === 0 || symbolFilter.has(openOrder.tickerSymbol)) {
+      if (!alertRows.some(a => a.userId === openOrder.userId && a.tickerSymbol === openOrder.tickerSymbol)) {
+        alertRows.push({ userId: openOrder.userId, tickerSymbol: openOrder.tickerSymbol });
       }
     }
   }
@@ -81,9 +71,12 @@ export async function dispatchSignalNotifications(options: {
     return result;
   }
 
+  const subscriptionRows = await db.select().from(pushSubscriptions);
+  const subscriptionsByUser = groupBy(subscriptionRows, (subscription) => subscription.userId);
+
   // Group by ticker so we can fetch bars once per ticker
   const alertsByTicker = groupBy(alertRows, (alert) => alert.tickerSymbol);
-  const lookbackBars = Math.max(1, options.lookbackBars ?? 1);
+  const lookbackBars = Math.max(1, options.lookbackBars ?? 5);
 
   // Fetch custom user strategy settings
   const { userStrategySettings } = await import('@/db/schema');
@@ -183,53 +176,46 @@ export async function dispatchSignalNotifications(options: {
       for (const item of signalsToDispatch) {
         const { strategyId, strategyShort, strategyLabel, signal } = item;
 
-        const payload = JSON.stringify({
-          title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
-          body: buildNotificationBody(signal, strategyLabel),
-          url: `/invest?ticker=${ticker}&timeframe=D`,
-          tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
-          symbol: ticker,
-          strategy: strategyId,
-          signal: signal.signal,
-          price: signal.price,
-        });
-
         const alreadySent = await hasNotificationBeenSent(alert.userId, ticker, signal);
         if (alreadySent) {
           result.skipped += 1;
           continue;
         }
 
+        // 1. Always record in-app notification in database for Notifications Drawer
+        await db
+          .insert(signalNotifications)
+          .values({
+            userId: alert.userId,
+            tickerSymbol: ticker,
+            signalDate: signal.date,
+            signal: signal.signal,
+          })
+          .onConflictDoNothing();
+
+        // 2. If user has active Web Push subscriptions, send push notification to their devices
         const subscriptions = subscriptionsByUser[alert.userId] ?? [];
-        if (subscriptions.length === 0) {
-          result.skipped += 1;
-          continue;
-        }
+        if (subscriptions.length > 0) {
+          const payload = JSON.stringify({
+            title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
+            body: buildNotificationBody(signal, strategyLabel),
+            url: `/invest?ticker=${ticker}&timeframe=D`,
+            tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
+            symbol: ticker,
+            strategy: strategyId,
+            signal: signal.signal,
+            price: signal.price,
+          });
 
-        let sentToDevice = false;
-        for (const subscription of subscriptions) {
-          const sent = await sendToSubscription(subscription, payload);
-          if (sent === 'expired') {
-            result.expiredSubscriptions += 1;
-            await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
-          } else if (sent === 'sent') {
-            sentToDevice = true;
+          for (const subscription of subscriptions) {
+            const sent = await sendToSubscription(subscription, payload);
+            if (sent === 'expired') {
+              result.expiredSubscriptions += 1;
+              await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
+            } else if (sent === 'sent') {
+              result.sent += 1;
+            }
           }
-        }
-
-        if (sentToDevice) {
-          result.sent += 1;
-          await db
-            .insert(signalNotifications)
-            .values({
-              userId: alert.userId,
-              tickerSymbol: ticker,
-              signalDate: signal.date,
-              signal: signal.signal,
-            })
-            .onConflictDoNothing();
-        } else {
-          result.skipped += 1;
         }
       }
     }
@@ -334,7 +320,7 @@ async function sendToSubscription(
     return 'sent';
   } catch (error) {
     const statusCode = (error as { statusCode?: number }).statusCode;
-    if (statusCode === 404 || statusCode === 410) return 'expired';
+    if (statusCode === 404 || statusCode === 410 || statusCode === 403) return 'expired';
     console.error('Failed to send Web Push notification:', error);
     return 'failed';
   }

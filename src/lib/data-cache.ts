@@ -39,28 +39,35 @@ export async function getCachedTickers(): Promise<any[]> {
  * Caches the result for 1 hour.
  */
 export const getCachedDailyPrices = async (ticker: string, limitBars?: number) => {
-  const cachedFn = unstable_cache(
-    async () => {
-      if (limitBars) {
-        const rows = await db
-          .select()
-          .from(dailyPrices)
-          .where(eq(dailyPrices.tickerSymbol, ticker))
-          .orderBy(desc(dailyPrices.date))
-          .limit(limitBars);
-        return rows.reverse();
-      } else {
-        return await db
-          .select()
-          .from(dailyPrices)
-          .where(eq(dailyPrices.tickerSymbol, ticker))
-          .orderBy(asc(dailyPrices.date));
-      }
-    },
-    [`daily-prices-${ticker}-${limitBars ?? 'all'}`],
-    { tags: [`prices-${ticker}`, 'prices'], revalidate: 3600 }
-  );
-  return cachedFn();
+  const fetchPrices = async () => {
+    if (limitBars) {
+      const rows = await db
+        .select()
+        .from(dailyPrices)
+        .where(eq(dailyPrices.tickerSymbol, ticker))
+        .orderBy(desc(dailyPrices.date))
+        .limit(limitBars);
+      return rows.reverse();
+    } else {
+      return await db
+        .select()
+        .from(dailyPrices)
+        .where(eq(dailyPrices.tickerSymbol, ticker))
+        .orderBy(asc(dailyPrices.date));
+    }
+  };
+
+  try {
+    const cachedFn = unstable_cache(
+      fetchPrices,
+      [`daily-prices-${ticker}-${limitBars ?? 'all'}`],
+      { tags: [`prices-${ticker}`, 'prices'], revalidate: 3600 }
+    );
+    return await cachedFn();
+  } catch (error) {
+    // Fallback directly to DB query when running outside Next.js request lifecycle
+    return await fetchPrices();
+  }
 };
 
 /**

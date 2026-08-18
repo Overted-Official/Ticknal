@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const rows = await db
+    let rows = await db
       .select({
         id: signalNotifications.id,
         tickerSymbol: signalNotifications.tickerSymbol,
@@ -29,6 +29,33 @@ export async function GET(request: Request) {
       .where(eq(signalNotifications.userId, user.id))
       .orderBy(desc(signalNotifications.sentAt))
       .limit(50);
+
+    // If notifications drawer is empty, automatically check and sync recent signals on active positions
+    if (rows.length === 0) {
+      try {
+        const { dispatchSignalNotifications } = await import('@/lib/pushNotifications');
+        await dispatchSignalNotifications({ lookbackBars: 5 });
+
+        rows = await db
+          .select({
+            id: signalNotifications.id,
+            tickerSymbol: signalNotifications.tickerSymbol,
+            signalDate: signalNotifications.signalDate,
+            signal: signalNotifications.signal,
+            sentAt: signalNotifications.sentAt,
+            companyName: tickers.companyName,
+            logoUrl: tickers.logoUrl,
+            sector: tickers.sector,
+          })
+          .from(signalNotifications)
+          .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
+          .where(eq(signalNotifications.userId, user.id))
+          .orderBy(desc(signalNotifications.sentAt))
+          .limit(50);
+      } catch (syncErr) {
+        console.error('Error during notifications lazy sync:', syncErr);
+      }
+    }
 
     return NextResponse.json({ notifications: rows });
   } catch (error) {
