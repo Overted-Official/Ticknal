@@ -62,30 +62,33 @@ export default function SectorRotationMatrix({
 
   return (
     <div className="relative w-full h-full min-h-[420px] bg-black/40 rounded-xl overflow-hidden border border-white/[0.08] p-4 flex flex-col justify-between select-none">
-      {/* 4 Quadrants Background */}
-      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none opacity-20">
-        {/* Top-Left: Improving */}
-        <div className="border-r border-b border-cyan-500/40 bg-cyan-500/5 flex items-start p-3">
-          <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Zap size={13} /> Improving (Accumulate)
+      {/* 4 Quadrants Ambient Background (Tinted per category) */}
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none">
+        {/* Top-Left: Improving (Cyan) */}
+        <div className="border-r border-b border-white/[0.08] bg-gradient-to-br from-cyan-500/[0.10] via-cyan-500/[0.03] to-transparent flex items-start p-3">
+          <span className="px-2 py-0.5 rounded-md bg-zinc-950/80 border border-cyan-500/30 text-[10px] font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
+            <Zap size={12} className="text-cyan-400" /> Improving (Accumulate)
           </span>
         </div>
-        {/* Top-Right: Leading */}
-        <div className="border-b border-emerald-500/40 bg-emerald-500/5 flex items-start justify-end p-3">
-          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-            <TrendingUp size={13} /> Leading (Alpha Wave)
+
+        {/* Top-Right: Leading (Emerald) */}
+        <div className="border-b border-white/[0.08] bg-gradient-to-bl from-emerald-500/[0.10] via-emerald-500/[0.03] to-transparent flex items-start justify-end p-3">
+          <span className="px-2 py-0.5 rounded-md bg-zinc-950/80 border border-emerald-500/30 text-[10px] font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
+            <TrendingUp size={12} className="text-emerald-400" /> Leading (Alpha Wave)
           </span>
         </div>
-        {/* Bottom-Left: Lagging */}
-        <div className="border-r border-rose-500/40 bg-rose-500/5 flex items-end p-3">
-          <span className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-            <TrendingDown size={13} /> Lagging (Avoid)
+
+        {/* Bottom-Left: Lagging (Rose) */}
+        <div className="border-r border-white/[0.08] bg-gradient-to-tr from-rose-500/[0.10] via-rose-500/[0.03] to-transparent flex items-end p-3 pb-8">
+          <span className="px-2 py-0.5 rounded-md bg-zinc-950/80 border border-rose-500/30 text-[10px] font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
+            <TrendingDown size={12} className="text-rose-400" /> Lagging (Avoid)
           </span>
         </div>
-        {/* Bottom-Right: Weakening */}
-        <div className="bg-amber-500/5 flex items-end justify-end p-3">
-          <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-            <AlertTriangle size={13} /> Weakening (Take Profit)
+
+        {/* Bottom-Right: Weakening (Amber) */}
+        <div className="bg-gradient-to-tl from-amber-500/[0.10] via-amber-500/[0.03] to-transparent flex items-end justify-end p-3 pb-8">
+          <span className="px-2 py-0.5 rounded-md bg-zinc-950/80 border border-amber-500/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
+            <AlertTriangle size={12} className="text-amber-400" /> Weakening (Take Profit)
           </span>
         </div>
       </div>
