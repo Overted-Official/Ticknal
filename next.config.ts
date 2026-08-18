@@ -16,18 +16,17 @@ const nextConfig = {
     ],
   },
   outputFileTracingIncludes: {
-    "/api/metrics": [
+    "/**": [
+      "./src/strategies/Thoth/models/**/*",
       "./src/strategies/PSI/data/**/*",
       "./Data/psi_*best*.csv",
-      "./src/strategies/QuantumExhaustion-v2/deploy/**/*",
+      "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.so*",
+      "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.node",
     ],
-    "/api/signals": [
+    "/api/**/*": [
+      "./src/strategies/Thoth/models/**/*",
       "./src/strategies/PSI/data/**/*",
       "./Data/psi_*best*.csv",
-      "./src/strategies/QuantumExhaustion-v2/deploy/**/*",
-    ],
-    "/api/predict": [
-      "./src/tools/kronos/models/**/*.onnx",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.so*",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.node",
     ],

@@ -1,4 +1,3 @@
-import * as ort from 'onnxruntime-node';
 import path from 'path';
 import fs from 'fs';
 import { extractThothFeatures, type ThothBarFeatures } from './thothFeatureExtractor';
@@ -21,12 +20,30 @@ interface ScalerParams {
   down: { mean: number[]; scale: number[] };
 }
 
+let ortInstance: any = null;
+let ortLoadAttempted = false;
+
+async function getOnnxRuntime() {
+  if (ortInstance) return ortInstance;
+  if (ortLoadAttempted) return null;
+  ortLoadAttempted = true;
+
+  try {
+    ortInstance = await import('onnxruntime-node');
+    return ortInstance;
+  } catch (err) {
+    console.warn('[ThothEngine] onnxruntime-node native bindings not available in current environment:', (err as Error).message);
+    return null;
+  }
+}
+
 export class ThothEngine {
   private static instance: ThothEngine | null = null;
-  private sessionUp: ort.InferenceSession | null = null;
-  private sessionDown: ort.InferenceSession | null = null;
+  private sessionUp: any = null;
+  private sessionDown: any = null;
   private scalers: ScalerParams | null = null;
   private initPromise: Promise<void> | null = null;
+  private isAvailable: boolean = true;
 
   private constructor() {}
 
@@ -38,18 +55,27 @@ export class ThothEngine {
   }
 
   public async initialize(): Promise<void> {
+    if (!this.isAvailable) return;
     if (this.sessionUp && this.sessionDown && this.scalers) return;
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
       try {
+        const ort = await getOnnxRuntime();
+        if (!ort) {
+          this.isAvailable = false;
+          return;
+        }
+
         const modelsDir = path.join(process.cwd(), 'src', 'strategies', 'Thoth', 'models');
         const upPath = path.join(modelsDir, 'thoth_egx_macro_up.onnx');
         const downPath = path.join(modelsDir, 'thoth_egx_macro_down.onnx');
         const scalersPath = path.join(modelsDir, 'scalers_egx_macro.json');
 
         if (!fs.existsSync(upPath) || !fs.existsSync(downPath) || !fs.existsSync(scalersPath)) {
-          throw new Error(`Thoth ONNX models or scalers missing in ${modelsDir}`);
+          console.warn(`[ThothEngine] Models or scalers missing at ${modelsDir}`);
+          this.isAvailable = false;
+          return;
         }
 
         const scalersContent = fs.readFileSync(scalersPath, 'utf-8');
@@ -59,9 +85,10 @@ export class ThothEngine {
         this.sessionUp = await ort.InferenceSession.create(upPath);
         this.sessionDown = await ort.InferenceSession.create(downPath);
       } catch (err) {
+        this.isAvailable = false;
+        console.warn('[ThothEngine] Failed to initialize ONNX sessions (gracefully disabling Thoth AI inference):', (err as Error).message);
+      } finally {
         this.initPromise = null;
-        console.error('[ThothEngine] Failed to initialize ONNX sessions:', err);
-        throw err;
       }
     })();
 
@@ -73,8 +100,9 @@ export class ThothEngine {
    */
   public async predict(bars: PriceBar[]): Promise<ThothModelPrediction[]> {
     await this.initialize();
-    if (!this.sessionUp || !this.sessionDown || !this.scalers) {
-      throw new Error('ThothEngine not initialized');
+    const ort = await getOnnxRuntime();
+    if (!this.isAvailable || !this.sessionUp || !this.sessionDown || !this.scalers || !ort) {
+      return [];
     }
 
     const featureBars = extractThothFeatures(bars);
@@ -114,13 +142,17 @@ export class ThothEngine {
         }
       }
 
-      const inputTensor = new ort.Tensor('float32', inputBuffer, [validUpCount, seqLen, numFeatures]);
-      const output = await this.sessionUp.run({ input_sequences: inputTensor });
-      const outData = output.predicted_exhaustion.data as Float32Array;
+      try {
+        const inputTensor = new ort.Tensor('float32', inputBuffer, [validUpCount, seqLen, numFeatures]);
+        const output = await this.sessionUp.run({ input_sequences: inputTensor });
+        const outData = output.predicted_exhaustion.data as Float32Array;
 
-      for (let b = 0; b < validUpCount; b++) {
-        const origIdx = upBars[b + seqLen - 1].idx;
-        predictions[origIdx] = Math.max(0.0, Math.min(100.0, outData[b]));
+        for (let b = 0; b < validUpCount; b++) {
+          const origIdx = upBars[b + seqLen - 1].idx;
+          predictions[origIdx] = Math.max(0.0, Math.min(100.0, outData[b]));
+        }
+      } catch (runErr) {
+        console.warn('[ThothEngine] UP inference failed:', (runErr as Error).message);
       }
     }
 
@@ -139,13 +171,17 @@ export class ThothEngine {
         }
       }
 
-      const inputTensor = new ort.Tensor('float32', inputBuffer, [validDownCount, seqLen, numFeatures]);
-      const output = await this.sessionDown.run({ input_sequences: inputTensor });
-      const outData = output.predicted_exhaustion.data as Float32Array;
+      try {
+        const inputTensor = new ort.Tensor('float32', inputBuffer, [validDownCount, seqLen, numFeatures]);
+        const output = await this.sessionDown.run({ input_sequences: inputTensor });
+        const outData = output.predicted_exhaustion.data as Float32Array;
 
-      for (let b = 0; b < validDownCount; b++) {
-        const origIdx = downBars[b + seqLen - 1].idx;
-        predictions[origIdx] = Math.max(0.0, Math.min(100.0, outData[b]));
+        for (let b = 0; b < validDownCount; b++) {
+          const origIdx = downBars[b + seqLen - 1].idx;
+          predictions[origIdx] = Math.max(0.0, Math.min(100.0, outData[b]));
+        }
+      } catch (runErr) {
+        console.warn('[ThothEngine] DOWN inference failed:', (runErr as Error).message);
       }
     }
 
