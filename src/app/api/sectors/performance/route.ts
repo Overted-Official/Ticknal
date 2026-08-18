@@ -123,8 +123,8 @@ export async function GET(request: Request) {
         p_start.date as start_date,
         p_end.close as end_price,
         p_end.date as end_date,
-        p_start.total_volume,
-        p_start.total_turnover
+        wp.total_volume,
+        wp.total_turnover
       FROM (
         SELECT DISTINCT ticker_symbol, total_volume, total_turnover FROM RankedPrices
       ) wp

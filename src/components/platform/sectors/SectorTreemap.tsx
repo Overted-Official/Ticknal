@@ -186,8 +186,8 @@ export default function SectorTreemap({
                   key={stockRect.id}
                   style={{
                     position: 'absolute',
-                    left: stockRect.x - sectorRect.x - 4,
-                    top: stockRect.y - sectorRect.y - 24,
+                    left: stockRect.x - sectorRect.x,
+                    top: stockRect.y - sectorRect.y,
                     width: stockRect.width,
                     height: stockRect.height,
                     backgroundColor: colors.bg,
