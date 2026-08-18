@@ -270,22 +270,24 @@ export async function handlePredictPost(req: Request) {
 
     while (generatedDays < nDays) {
       currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+
       const dayOfWeek = currentDate.getUTCDay();
-      if (dayOfWeek !== 5 && dayOfWeek !== 6) {
-        const pyWeekday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-        y_stamp[generatedDays * 5 + 0] = currentDate.getUTCMinutes();
-        y_stamp[generatedDays * 5 + 1] = currentDate.getUTCHours();
-        y_stamp[generatedDays * 5 + 2] = pyWeekday;
-        y_stamp[generatedDays * 5 + 3] = currentDate.getUTCDate();
-        y_stamp[generatedDays * 5 + 4] = currentDate.getUTCMonth() + 1;
+      if (dayOfWeek === 5 || dayOfWeek === 6) continue; // Skip Friday and Saturday for EGX
 
-        const yyyy = currentDate.getUTCFullYear();
-        const mm = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(currentDate.getUTCDate()).padStart(2, '0');
-        futureDates.push(`${yyyy}-${mm}-${dd}`);
+      const pyWeekday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      
+      y_stamp[generatedDays * 5 + 0] = currentDate.getUTCMinutes();
+      y_stamp[generatedDays * 5 + 1] = currentDate.getUTCHours();
+      y_stamp[generatedDays * 5 + 2] = pyWeekday; 
+      y_stamp[generatedDays * 5 + 3] = currentDate.getUTCDate();
+      y_stamp[generatedDays * 5 + 4] = currentDate.getUTCMonth() + 1;
 
-        generatedDays++;
-      }
+      const yyyy = currentDate.getUTCFullYear();
+      const mm = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(currentDate.getUTCDate()).padStart(2, '0');
+      futureDates.push(`${yyyy}-${mm}-${dd}`);
+
+      generatedDays++;
     }
 
     if (!predictorInstance) {
@@ -294,15 +296,44 @@ export async function handlePredictPost(req: Request) {
     }
 
     const outNorm = await predictorInstance.predict(x, x_stamp, y_stamp, seqLen, nDays);
-    const predictions = [];
+    const rawPredictions = [];
     for (let i = 0; i < nDays; i++) {
-      const predCloseNorm = outNorm[i * 6 + 3];
-      const predClose = (predCloseNorm * stds[3]) + means[3];
-      predictions.push({
-        time: futureDates[i],
-        predictedClose: Math.max(0.01, Number(predClose.toFixed(2))),
+      const idx = i * 6;
+      const denormOpen = (outNorm[idx + 0] * stds[0]) + means[0];
+      const denormHigh = (outNorm[idx + 1] * stds[1]) + means[1];
+      const denormLow = (outNorm[idx + 2] * stds[2]) + means[2];
+      const denormClose = (outNorm[idx + 3] * stds[3]) + means[3];
+      
+      rawPredictions.push({
+        date: futureDates[i],
+        open: denormOpen,
+        high: denormHigh,
+        low: denormLow,
+        close: denormClose
       });
     }
+
+    const lastHistoricalClose = Number(history[seqLen - 1].close);
+    const firstPredictedOpen = rawPredictions[0]?.open || lastHistoricalClose;
+    
+    const scaleRatio = (firstPredictedOpen > 0 && lastHistoricalClose > 0)
+      ? lastHistoricalClose / firstPredictedOpen
+      : 1.0;
+
+    const predictions = rawPredictions.map((p) => {
+      const scaledOpen = p.open * scaleRatio;
+      const scaledClose = p.close * scaleRatio;
+      const scaledHigh = Math.max(p.high * scaleRatio, scaledOpen, scaledClose);
+      const scaledLow = Math.min(p.low * scaleRatio, scaledOpen, scaledClose);
+
+      return {
+        date: p.date,
+        open: Number(scaledOpen.toFixed(2)),
+        high: Number(scaledHigh.toFixed(2)),
+        low: Number(scaledLow.toFixed(2)),
+        close: Number(scaledClose.toFixed(2)),
+      };
+    });
 
     return NextResponse.json({ predictions });
   } catch (error: any) {

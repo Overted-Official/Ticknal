@@ -9,6 +9,7 @@ export async function getOnnxRuntime() {
 
   // 1. Try native onnxruntime-node
   try {
+    throw new Error('Forcing fallback');
     ortModule = await import('onnxruntime-node');
     return ortModule;
   } catch (nodeErr) {
