@@ -188,7 +188,7 @@ async function InvestPageContent({
 
   const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(selectedSymbol.toUpperCase());
 
-  let chartData = dbData
+  const dailyChartData = dbData
     .filter(record => isFund ? Number(record.close) > 0 : (Number(record.volume) > 0 || Number(record.close) > 0))
     .map(record => {
       const strictDateString = typeof record.date === 'string' 
@@ -204,6 +204,8 @@ async function InvestPageContent({
         volume: Number(record.volume)
       };
     });
+
+  let chartData = dailyChartData;
 
   if (timeframe === 'W') {
     const weeklyData: typeof chartData = [];
@@ -272,7 +274,8 @@ async function InvestPageContent({
           <BottomToolbar 
             symbol={selectedSymbol} 
             timeframe={timeframe} 
-            replay={initialReplayMode} 
+            replay={initialReplayMode}
+            chartData={dailyChartData}
           />
         </ChartViews>
       </div>
