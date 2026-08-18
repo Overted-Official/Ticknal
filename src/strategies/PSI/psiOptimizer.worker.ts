@@ -37,11 +37,11 @@ export type CandidateOptimizationResult = {
   selectionTier: string;
 };
 
-const PSI_LEVELS = [14.6, 23.6, 38.2, 50.0, 61.8];
-const ENTRY_PRIORITY = [23.6, 14.6, 38.2, 50.0, 61.8];
+export const PSI_LEVELS = [14.6, 23.6, 38.2, 50.0, 61.8];
+export const ENTRY_PRIORITY = [23.6, 14.6, 38.2, 50.0, 61.8];
 
 // Generate 31 entry level subsets (2^5 - 1)
-const ENTRY_LEVEL_COMBOS: number[][] = [];
+export const ENTRY_LEVEL_COMBOS: number[][] = [];
 for (let mask = 1; mask < 32; mask++) {
   const subset: number[] = [];
   for (let bit = 0; bit < 5; bit++) {
@@ -52,9 +52,9 @@ for (let mask = 1; mask < 32; mask++) {
   ENTRY_LEVEL_COMBOS.push(subset);
 }
 
-const AYM_MULTIPLIERS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const AYM_LIMITS = [50.0, 61.8, 78.6, 88.6];
-const AYM_PAIRS: Array<{ aymMultiplier: number | null; aymLimit: number | null }> = [];
+export const AYM_MULTIPLIERS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+export const AYM_LIMITS = [50.0, 61.8, 78.6, 88.6];
+export const AYM_PAIRS: Array<{ aymMultiplier: number | null; aymLimit: number | null }> = [];
 for (const mult of AYM_MULTIPLIERS) {
   for (const lim of AYM_LIMITS) {
     AYM_PAIRS.push({ aymMultiplier: mult, aymLimit: lim });
@@ -62,15 +62,13 @@ for (const mult of AYM_MULTIPLIERS) {
 }
 AYM_PAIRS.push({ aymMultiplier: null, aymLimit: null }); // disabled
 
-const ATR_DISTANCES: Array<number | null> = [2, 3, 4, 5, 6, null];
-const STOPLOSS_LEVELS: Array<number | null> = [4, 5, 6, 8, 10, null];
+export const ATR_DISTANCES: Array<number | null> = [2, 3, 4, 5, 6, null];
 
 type SimSlice = {
   close: Float64Array;
   high: Float64Array;
   low: Float64Array;
   masterIndex: Float64Array;
-  masterIndexAdjusted: Float64Array;
   atr14: Float64Array;
   medianDailyMove: Float64Array;
   years: number;
@@ -98,7 +96,6 @@ function buildSimSlice(
   const high = new Float64Array(n);
   const low = new Float64Array(n);
   const masterIndex = new Float64Array(n);
-  const masterIndexAdjusted = new Float64Array(n);
   const atr14 = new Float64Array(n);
   const medianDailyMove = new Float64Array(n);
 
@@ -108,7 +105,6 @@ function buildSimSlice(
     high[i] = b.high;
     low[i] = b.low;
     masterIndex[i] = (model === "psi40" ? b.masterIndex40 : b.masterIndex) ?? 50;
-    masterIndexAdjusted[i] = (model === "psi40" ? b.masterIndexAdjusted40 : b.masterIndexAdjusted) ?? 50;
     atr14[i] = b.atr14 ?? (b.high - b.low);
     medianDailyMove[i] = b.medianDailyMove ?? 2.0;
   }
@@ -122,7 +118,6 @@ function buildSimSlice(
     high,
     low,
     masterIndex,
-    masterIndexAdjusted,
     atr14,
     medianDailyMove,
     years,
@@ -130,7 +125,7 @@ function buildSimSlice(
   };
 }
 
-type FastBacktestMetrics = {
+export type FastBacktestMetrics = {
   sysRoi: number;
   buyHoldRoi: number;
   roiMargin: number;
@@ -138,19 +133,17 @@ type FastBacktestMetrics = {
   trades: number;
   maxDrawdown: number;
   avgBarsPerTrade: number;
-  compositeScore: number;
 };
 
-function fastSimulate(
+export function fastSimulate(
   slice: SimSlice,
   entryLevels: number[],
   aymMultiplier: number | null,
   aymLimit: number | null,
   atrDistance: number | null,
-  stoplossLevel: number | null,
   initialCapital: number,
 ): FastBacktestMetrics {
-  const { close, high, low, masterIndex, masterIndexAdjusted, atr14, medianDailyMove, years, length: n } = slice;
+  const { close, high, low, masterIndex, atr14, medianDailyMove, length: n } = slice;
 
   let balance = initialCapital;
   let active = false;
@@ -169,14 +162,11 @@ function fastSimulate(
 
   const useAym = aymMultiplier !== null && aymLimit !== null;
   const useAtr = atrDistance !== null;
-  const useStoploss = stoplossLevel !== null;
 
   for (let i = 0; i < n; i++) {
     const c = close[i];
     const h = high[i];
-    const l = low[i];
     const currMaster = masterIndex[i];
-    const currMasterAdjusted = masterIndexAdjusted[i];
     const prevMaster = i > 0 ? masterIndex[i - 1] : null;
 
     if (!active) {
@@ -196,8 +186,8 @@ function fastSimulate(
           tradeCount += 1;
 
           if (useAym) {
-            const range = (currMasterAdjusted / 100) * c;
-            targetPrice = c + range * (aymMultiplier ?? 1);
+            const mdm = medianDailyMove[i];
+            targetPrice = c * (1 + (mdm * (aymMultiplier ?? 1)) / 100);
           } else {
             targetPrice = Number.NaN;
           }
@@ -209,25 +199,20 @@ function fastSimulate(
       activeBars += 1;
       if (h > highestPrice) highestPrice = h;
 
-      const mdm = medianDailyMove[i];
       const atr = atr14[i];
 
       const hitTakeProfit =
         useAym &&
         !Number.isNaN(targetPrice) &&
         c >= targetPrice &&
-        currMasterAdjusted < (aymLimit ?? 100);
-
-      const hitStop =
-        useStoploss &&
-        c <= entryPrice * (1 - (mdm * (stoplossLevel ?? 0)) / 100);
+        currMaster < (aymLimit ?? 100);
 
       const hitTrail =
         useAtr &&
         c <= highestPrice - atr * (atrDistance ?? 0) &&
         c > entryPrice;
 
-      if (hitStop || hitTrail || hitTakeProfit) {
+      if (hitTrail || hitTakeProfit) {
         const shares = Math.floor(balance / entryPrice);
         const pnl = shares * (c - entryPrice);
         balance += pnl;
@@ -263,13 +248,6 @@ function fastSimulate(
   const winRate = closedTrades > 0 ? (winCount / closedTrades) * 100 : 0;
   const avgBars = tradeCount > 0 ? activeBars / tradeCount : 0;
 
-  // Composite Multi-Objective Scoring
-  const annualCagr = finalEquity > 0 ? ((finalEquity / initialCapital) ** (1 / years) - 1) * 100 : 0;
-  const winRateFactor = winRate >= 80 ? winRate * 1.5 : winRate;
-  const ddPenalty = maxDrawdown > 30 ? (maxDrawdown - 30) * 2 : 0;
-  const tradeBonus = Math.min(tradeCount, 30) * 2;
-  const compositeScore = roiMargin * 1.0 + winRateFactor * 2.0 + annualCagr * 1.0 + tradeBonus - ddPenalty;
-
   return {
     sysRoi,
     buyHoldRoi,
@@ -278,7 +256,6 @@ function fastSimulate(
     trades: tradeCount,
     maxDrawdown,
     avgBarsPerTrade: avgBars,
-    compositeScore,
   };
 }
 
@@ -311,51 +288,49 @@ export function runWalkForwardOptimization(config: WalkForwardOptimizationConfig
     throw new Error("Insufficient historical data in training window.");
   }
 
-  const totalCombinations = ENTRY_LEVEL_COMBOS.length * AYM_PAIRS.length * ATR_DISTANCES.length * STOPLOSS_LEVELS.length; // 50,220
-
   type ComboEval = {
     entryLevels: number[];
     aymMultiplier: number | null;
     aymLimit: number | null;
     atrDistance: number | null;
-    stoplossLevel: number | null;
     trainMetrics: FastBacktestMetrics;
   };
 
   const trainCandidates: ComboEval[] = [];
+  let evaluatedCount = 0;
 
   for (const entryLevels of ENTRY_LEVEL_COMBOS) {
     for (const aym of AYM_PAIRS) {
       for (const atr of ATR_DISTANCES) {
-        for (const sl of STOPLOSS_LEVELS) {
-          const metrics = fastSimulate(
-            trainSlice,
-            entryLevels,
-            aym.aymMultiplier,
-            aym.aymLimit,
-            atr,
-            sl,
-            initialCapital,
-          );
+        // Skip if both exits are disabled
+        if (aym.aymMultiplier === null && atr === null) continue;
 
-          if (metrics.trades >= 3) {
-            trainCandidates.push({
-              entryLevels,
-              aymMultiplier: aym.aymMultiplier,
-              aymLimit: aym.aymLimit,
-              atrDistance: atr,
-              stoplossLevel: sl,
-              trainMetrics: metrics,
-            });
-          }
+        evaluatedCount += 1;
+        const metrics = fastSimulate(
+          trainSlice,
+          entryLevels,
+          aym.aymMultiplier,
+          aym.aymLimit,
+          atr,
+          initialCapital,
+        );
+
+        if (metrics.trades >= 3 && metrics.roiMargin > 0) {
+          trainCandidates.push({
+            entryLevels,
+            aymMultiplier: aym.aymMultiplier,
+            aymLimit: aym.aymLimit,
+            atrDistance: atr,
+            trainMetrics: metrics,
+          });
         }
       }
     }
   }
 
-  // 3. Rank Top Candidates by In-Sample Multi-Objective Score
-  trainCandidates.sort((a, b) => b.trainMetrics.compositeScore - a.trainMetrics.compositeScore);
-  const topCandidates = trainCandidates.slice(0, Math.max(topK, 25));
+  // 3. Rank Top Candidates by In-Sample ROI Margin
+  trainCandidates.sort((a, b) => b.trainMetrics.roiMargin - a.trainMetrics.roiMargin);
+  const topCandidates = trainCandidates.slice(0, Math.max(topK * 5, 50));
 
   // 4. Evaluate Top Candidates on Out-of-Sample Test Slice
   const evaluatedResults: Array<{
@@ -371,7 +346,6 @@ export function runWalkForwardOptimization(config: WalkForwardOptimizationConfig
           cand.aymMultiplier,
           cand.aymLimit,
           cand.atrDistance,
-          cand.stoplossLevel,
           initialCapital,
         )
       : { ...cand.trainMetrics };
@@ -382,37 +356,31 @@ export function runWalkForwardOptimization(config: WalkForwardOptimizationConfig
     });
   }
 
-  // 5. Tiered Ranking for OOS Winner & Display Order
+  // 5. Rank by Highest Out-of-Sample ROI Margin
   evaluatedResults.sort((a, b) => {
-    const aWR = a.testMetrics.winRate;
-    const bWR = b.testMetrics.winRate;
-    const aMargin = a.testMetrics.roiMargin;
-    const bMargin = b.testMetrics.roiMargin;
+    // If one has positive OOS ROI margin and the other doesn't
+    const aHasPositiveOOS = a.testMetrics.trades > 0 && a.testMetrics.roiMargin > 0;
+    const bHasPositiveOOS = b.testMetrics.trades > 0 && b.testMetrics.roiMargin > 0;
 
-    // Tier 1: Win Rate >= 90%
-    const aIsTier1 = a.testMetrics.trades > 0 && aWR >= 90.0;
-    const bIsTier1 = b.testMetrics.trades > 0 && bWR >= 90.0;
+    if (aHasPositiveOOS && !bHasPositiveOOS) return -1;
+    if (!aHasPositiveOOS && bHasPositiveOOS) return 1;
 
-    if (aIsTier1 && !bIsTier1) return -1;
-    if (!aIsTier1 && bIsTier1) return 1;
-
-    if (aIsTier1 && bIsTier1) {
-      return bMargin - aMargin; // Highest Margin among Tier 1
+    if (aHasPositiveOOS && bHasPositiveOOS) {
+      return b.testMetrics.roiMargin - a.testMetrics.roiMargin;
     }
 
-    // Tier 2: Highest Win Rate, then Highest Margin
-    if (bWR !== aWR) return bWR - aWR;
-    return bMargin - aMargin;
+    // Fallback to highest in-sample margin
+    return b.combo.trainMetrics.roiMargin - a.combo.trainMetrics.roiMargin;
   });
 
   const finalCandidates: CandidateOptimizationResult[] = evaluatedResults.slice(0, topK).map((item, idx) => {
     const c = item.combo;
-    const isTier1 = item.testMetrics.trades > 0 && item.testMetrics.winRate >= 90.0;
-    const tierLabel = isTier1
-      ? "Tier 1 (WR ≥ 90%)"
+    const isPositiveOOS = item.testMetrics.trades > 0 && item.testMetrics.roiMargin > 0;
+    const tierLabel = isPositiveOOS
+      ? `OOS Winner (+${item.testMetrics.roiMargin.toFixed(1)}% Margin)`
       : item.testMetrics.trades > 0
-      ? `Tier 2 (WR ${item.testMetrics.winRate.toFixed(1)}%)`
-      : "Tier 3 (Zero OOS Trades)";
+      ? `OOS Tested (${item.testMetrics.roiMargin.toFixed(1)}% Margin)`
+      : "In-Sample Ranked";
 
     const params: PsiStrategyParams = {
       model,
@@ -422,10 +390,6 @@ export function runWalkForwardOptimization(config: WalkForwardOptimizationConfig
       aymLimit: c.aymLimit,
       useAtr: c.atrDistance !== null,
       atrDistance: c.atrDistance,
-      useStoploss: c.stoplossLevel !== null,
-      stoplossLevel: c.stoplossLevel,
-      useStructStop: false,
-      structLookback: 20,
       initialCapital,
       startDate: testStartDate,
       endDate: testEndDate,
@@ -463,7 +427,7 @@ export function runWalkForwardOptimization(config: WalkForwardOptimizationConfig
     candidates: finalCandidates,
     trainPeriod: `${trainStartDate ?? "Inception"} to ${trainEndDate}`,
     testPeriod: `${testStartDate} to ${testEndDate ?? "Present"}`,
-    totalEvaluated: totalCombinations,
+    totalEvaluated: evaluatedCount,
   };
 }
 

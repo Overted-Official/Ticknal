@@ -8,6 +8,10 @@ function pad<T>(arr: T[], length: number, fillValue: any = null): any[] {
   return [...Array(padLen).fill(fillValue), ...arr];
 }
 
+function isNum(val: any): val is number {
+  return typeof val === 'number' && Number.isFinite(val);
+}
+
 export function computePsi40(bars: PriceBar[]): number[] {
   const close = bars.map(b => b.close);
   const high = bars.map(b => b.high);
@@ -52,49 +56,49 @@ export function computePsi40(bars: PriceBar[]): number[] {
     let score = 0;
 
     // Momentum (12 conditions)
-    if (rsi14[i] > 50) score++;
-    if (rsi7[i] > rsi14[i]) score++;
-    if (rsi14[i] > rsi21[i]) score++;
-    if (macd[i]?.histogram > 0) score++;
-    if (macd[i]?.MACD > 0) score++;
-    if (stoch[i]?.k > stoch[i]?.d) score++;
-    if (stoch[i]?.k > 50) score++;
-    if (cci20[i] > 0) score++;
-    if (mfi14[i] > 50) score++;
-    if (roc10[i] > 0) score++;
-    if (willr14[i] > -50) score++;
-    if (trix18[i] > 0) score++;
+    if (isNum(rsi14[i]) && rsi14[i] > 50) score++;
+    if (isNum(rsi7[i]) && isNum(rsi14[i]) && rsi7[i] > rsi14[i]) score++;
+    if (isNum(rsi14[i]) && isNum(rsi21[i]) && rsi14[i] > rsi21[i]) score++;
+    if (isNum(macd[i]?.histogram) && macd[i]!.histogram > 0) score++;
+    if (isNum(macd[i]?.MACD) && macd[i]!.MACD > 0) score++;
+    if (isNum(stoch[i]?.k) && isNum(stoch[i]?.d) && stoch[i]!.k > stoch[i]!.d) score++;
+    if (isNum(stoch[i]?.k) && stoch[i]!.k > 50) score++;
+    if (isNum(cci20[i]) && cci20[i] > 0) score++;
+    if (isNum(mfi14[i]) && mfi14[i] > 50) score++;
+    if (isNum(roc10[i]) && roc10[i] > 0) score++;
+    if (isNum(willr14[i]) && willr14[i] > -50) score++;
+    if (isNum(trix18[i]) && trix18[i] > 0) score++;
 
     // Trend (12 conditions)
-    if (c > sma20[i]) score++;
-    if (c > sma50[i]) score++;
-    if (c > sma200[i]) score++;
-    if (sma20[i] > sma50[i]) score++;
-    if (sma50[i] > sma200[i]) score++;
-    if (c > ema20[i]) score++;
-    if (c > ema50[i]) score++;
-    if (ema20[i] > ema50[i]) score++;
-    if (adx14[i]?.pdi > adx14[i]?.mdi) score++;
-    if (adx14[i]?.adx > 25 && adx14[i]?.pdi > adx14[i]?.mdi) score++;
+    if (isNum(sma20[i]) && c > sma20[i]) score++;
+    if (isNum(sma50[i]) && c > sma50[i]) score++;
+    if (isNum(sma200[i]) && c > sma200[i]) score++;
+    if (isNum(sma20[i]) && isNum(sma50[i]) && sma20[i] > sma50[i]) score++;
+    if (isNum(sma50[i]) && isNum(sma200[i]) && sma50[i] > sma200[i]) score++;
+    if (isNum(ema20[i]) && c > ema20[i]) score++;
+    if (isNum(ema50[i]) && c > ema50[i]) score++;
+    if (isNum(ema20[i]) && isNum(ema50[i]) && ema20[i] > ema50[i]) score++;
+    if (isNum(adx14[i]?.pdi) && isNum(adx14[i]?.mdi) && adx14[i]!.pdi > adx14[i]!.mdi) score++;
+    if (isNum(adx14[i]?.adx) && isNum(adx14[i]?.pdi) && isNum(adx14[i]?.mdi) && adx14[i]!.adx > 25 && adx14[i]!.pdi > adx14[i]!.mdi) score++;
     if (i >= 1 && c > close[i-1]) score++; 
     if (i >= 5 && c > close[i-5]) score++; 
 
     // Volatility (8 conditions)
-    if (bb20[i]?.upper && c > bb20[i].middle) score++;
-    if (bb20[i]?.upper && c > bb20[i].upper) score++;
-    if (bb50[i]?.upper && c > bb50[i].middle) score++;
-    if (bb20[i]?.upper && c < bb20[i].lower === false) score++; 
+    if (isNum(bb20[i]?.upper) && isNum(bb20[i]?.middle) && c > bb20[i]!.middle) score++;
+    if (isNum(bb20[i]?.upper) && c > bb20[i]!.upper) score++;
+    if (isNum(bb50[i]?.upper) && isNum(bb50[i]?.middle) && c > bb50[i]!.middle) score++;
+    if (isNum(bb20[i]?.lower) && c >= bb20[i]!.lower) score++; 
     
-    if (i >= 5 && atr14[i] > atr14[i-5]) score++; 
-    if (i >= 20 && atr14[i] > atr14[i-20]) score++;
-    if (i >= 1 && (high[i] - low[i]) > atr14[i]) score++;
+    if (i >= 5 && isNum(atr14[i]) && isNum(atr14[i-5]) && atr14[i] > atr14[i-5]) score++; 
+    if (i >= 20 && isNum(atr14[i]) && isNum(atr14[i-20]) && atr14[i] > atr14[i-20]) score++;
+    if (i >= 1 && isNum(atr14[i]) && (high[i] - low[i]) > atr14[i]) score++;
     if (c > (high[i] + low[i]) / 2) score++; 
 
     // Volume & Statistical (8 conditions)
-    if (i >= 1 && obv[i] > obv[i-1]) score++;
-    if (i >= 5 && obv[i] > obv[i-5]) score++;
-    if (fi13[i] > 0) score++;
-    if (i >= 1 && fi13[i] > fi13[i-1]) score++;
+    if (i >= 1 && isNum(obv[i]) && isNum(obv[i-1]) && obv[i] > obv[i-1]) score++;
+    if (i >= 5 && isNum(obv[i]) && isNum(obv[i-5]) && obv[i] > obv[i-5]) score++;
+    if (isNum(fi13[i]) && fi13[i] > 0) score++;
+    if (i >= 1 && isNum(fi13[i]) && isNum(fi13[i-1]) && fi13[i] > fi13[i-1]) score++;
     
     let hh20 = c;
     let ll20 = c;
@@ -104,8 +108,8 @@ export function computePsi40(bars: PriceBar[]): number[] {
     }
     if (c > (hh20 + ll20) / 2) score++;
     if (c === hh20) score++;
-    if (c > ll20 + (hh20 - ll20) * 0.75) score++;
-    if (c > ll20 + (hh20 - ll20) * 0.25) score++;
+    if (hh20 > ll20 && c > ll20 + (hh20 - ll20) * 0.75) score++;
+    if (hh20 > ll20 && c > ll20 + (hh20 - ll20) * 0.25) score++;
 
     // Normalize to 0-100%
     const normalized = (score / 40) * 100;

@@ -259,15 +259,6 @@ export const PsiOptimizationDrawer: React.FC<PsiOptimizationDrawerProps> = ({
                           ATR Dist: <strong className="text-white">{cand.params.atrDistance}x</strong>
                         </span>
                       )}
-                      {cand.params.stoplossLevel !== null && cand.params.stoplossLevel !== undefined ? (
-                        <span className="px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.08]">
-                          Stoploss: <strong className="text-rose-400">{cand.params.stoplossLevel}%</strong>
-                        </span>
-                      ) : (
-                        <span className="px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.08]">
-                          Stoploss: <strong className="text-zinc-500">None</strong>
-                        </span>
-                      )}
                     </div>
                   )}
 

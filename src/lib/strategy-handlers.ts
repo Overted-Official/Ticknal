@@ -41,7 +41,7 @@ export async function handleSignalsGet(request: Request) {
       .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
     if (bars.length < 130) {
-      return NextResponse.json({ signals: [], latestMasterIndex: null, latestMasterIndexAdjusted: null });
+      return NextResponse.json({ signals: [], latestMasterIndex: null });
     }
 
     let result;
@@ -70,10 +70,6 @@ export async function handleSignalsGet(request: Request) {
       if (searchParams.has('aymLimit')) overrides.aymLimit = Number(searchParams.get('aymLimit'));
       if (searchParams.has('useAtr')) overrides.useAtr = searchParams.get('useAtr') === 'true';
       if (searchParams.has('atrDistance')) overrides.atrDistance = Number(searchParams.get('atrDistance'));
-      if (searchParams.has('useStoploss')) overrides.useStoploss = searchParams.get('useStoploss') === 'true';
-      if (searchParams.has('stoplossLevel')) overrides.stoplossLevel = Number(searchParams.get('stoplossLevel'));
-      if (searchParams.has('useStructStop')) overrides.useStructStop = searchParams.get('useStructStop') === 'true';
-      if (searchParams.has('structLookback')) overrides.structLookback = Number(searchParams.get('structLookback'));
       if (searchParams.has('entryLevels')) {
         try {
           overrides.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);

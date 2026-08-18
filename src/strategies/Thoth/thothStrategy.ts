@@ -44,7 +44,6 @@ export async function runThothStrategy(
     return {
       signals: [],
       latestMasterIndex: null,
-      latestMasterIndexAdjusted: null,
       metrics: {
         sysRoi: 0,
         buyHoldRoi: 0,
@@ -113,7 +112,6 @@ export async function runThothStrategy(
         confidence: exh,
         price: entryPrice,
         masterIndex: masterIdx,
-        masterIndexAdjusted: exh,
         medianDailyMove: null,
         entryReason: `Thoth Macro Entry (${direction.toUpperCase()} Exh: ${exh.toFixed(1)}%)`,
         modelVersion: 'thoth-egx-macro-v1',
@@ -148,7 +146,6 @@ export async function runThothStrategy(
           confidence: exh,
           price: exitPrice,
           masterIndex: masterIdx,
-          masterIndexAdjusted: exh,
           medianDailyMove: null,
           exitReason: pendingExitReason || `Take-Profit (${exh.toFixed(1)}% | Net: +${netRoi.toFixed(2)}%)`,
           modelVersion: 'thoth-egx-macro-v1',
@@ -215,7 +212,6 @@ export async function runThothStrategy(
   return {
     signals,
     latestMasterIndex: latestPred?.masterIndex ?? null,
-    latestMasterIndexAdjusted: latestPred?.predictedExhaustion ?? null,
     metrics: {
       sysRoi,
       buyHoldRoi,

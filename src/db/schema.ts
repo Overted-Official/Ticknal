@@ -213,3 +213,29 @@ export const systemLogs = pgTable('system_logs', {
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const psiCombinations = pgTable('psi_combinations', {
+  id: serial('id').primaryKey(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  model: varchar('model', { length: 10 }).notNull(), // 'psi8' | 'psi40'
+  entryLevels: jsonb('entry_levels').notNull(), // e.g. [23.6, 38.2]
+  useAym: boolean('use_aym').default(true).notNull(),
+  aymMultiplier: numeric('aym_multiplier', { precision: 8, scale: 2 }),
+  aymLimit: numeric('aym_limit', { precision: 8, scale: 2 }),
+  useAtr: boolean('use_atr').default(true).notNull(),
+  atrDistance: numeric('atr_distance', { precision: 8, scale: 2 }),
+  inSampleRoiMargin: numeric('in_sample_roi_margin', { precision: 10, scale: 2 }),
+  inSampleWinRate: numeric('in_sample_win_rate', { precision: 6, scale: 2 }),
+  inSampleTrades: integer('in_sample_trades'),
+  outOfSampleRoiMargin: numeric('out_of_sample_roi_margin', { precision: 10, scale: 2 }),
+  outOfSampleWinRate: numeric('out_of_sample_win_rate', { precision: 6, scale: 2 }),
+  outOfSampleTrades: integer('out_of_sample_trades'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    tickerModelUnique: unique('psi_combinations_ticker_model_unique').on(table.tickerSymbol, table.model),
+    tickerIdx: index('psi_combinations_ticker_idx').on(table.tickerSymbol),
+  };
+});

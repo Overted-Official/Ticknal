@@ -2,14 +2,10 @@ import { computePsi40 } from './psi40Indicators';
 import {
   computePsi8,
   computeTrueRange,
-  dynamicEma,
-  rollingMin,
-  rollingMedian,
+  adaptiveRollingMedian,
   isFiniteNumber,
   nullable,
-  clamp,
 } from './psi8Indicators';
-import { getAvailableStrategies, STRATEGIES } from '@/strategies/registry';
 
 export type PriceBar = {
   date: string;
@@ -20,7 +16,7 @@ export type PriceBar = {
   volume?: number;
 };
 
-export type PsiSignalType = "BUY" | "SELL_TP" | "SELL_TRAIL" | "SELL_SL" | "SELL_STRUCT";
+export type PsiSignalType = "BUY" | "SELL_TP" | "SELL_TRAIL";
 
 export type PsiSignal = {
   date: string;
@@ -28,7 +24,6 @@ export type PsiSignal = {
   confidence: number;
   price: number;
   masterIndex: number;
-  masterIndexAdjusted: number;
   medianDailyMove: number | null;
   entryReason?: string;
   exitReason?: string;
@@ -55,7 +50,6 @@ export type PsiBacktestResult = {
   signals: PsiSignal[];
   metrics: PsiMetrics;
   latestMasterIndex: number | null;
-  latestMasterIndexAdjusted: number | null;
 };
 
 export type PsiStrategyParams = {
@@ -66,10 +60,6 @@ export type PsiStrategyParams = {
   aymLimit: number | null;
   useAtr: boolean;
   atrDistance: number | null;
-  useStoploss: boolean;
-  stoplossLevel: number | null;
-  useStructStop: boolean;
-  structLookback: number;
   initialCapital: number;
   startDate: string;
   endDate?: string;
@@ -77,19 +67,16 @@ export type PsiStrategyParams = {
 
 type ComputedPsiBar = PriceBar & {
   masterIndex: number | null;
-  masterIndexAdjusted: number | null;
   masterIndex40: number | null;
-  masterIndexAdjusted40: number | null;
   atr14: number | null;
   medianDailyMove: number | null;
-  structLow: number | null;
 };
 
-const PSI_LEVELS = [14.6, 23.6, 38.2, 50.0, 61.8];
-const ENTRY_PRIORITY = [23.6, 14.6, 38.2, 50.0, 61.8];
+export const PSI_LEVELS = [14.6, 23.6, 38.2, 50.0, 61.8];
+export const ENTRY_PRIORITY = [23.6, 14.6, 38.2, 50.0, 61.8];
 const MODEL_VERSION = "psi-v9-platform";
 
-const DEFAULT_PARAMS: PsiStrategyParams = {
+export const DEFAULT_PARAMS: PsiStrategyParams = {
   model: "psi8",
   entryLevels: [...PSI_LEVELS],
   useAym: true,
@@ -97,21 +84,17 @@ const DEFAULT_PARAMS: PsiStrategyParams = {
   aymLimit: 78.6,
   useAtr: true,
   atrDistance: 3,
-  useStoploss: true,
-  stoplossLevel: 3,
-  useStructStop: false,
-  structLookback: 20,
   initialCapital: 3000,
   startDate: "2025-01-01",
 };
 
 const TICKER_PRESETS: Record<string, Partial<PsiStrategyParams>> = {
-  'GC1!': { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2, useStoploss: true, stoplossLevel: 6 },
-  'SI1!': { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3, useStoploss: true, stoplossLevel: 6 },
-  GOLD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2, useStoploss: true, stoplossLevel: 6 },
-  SILVER: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3, useStoploss: true, stoplossLevel: 6 },
-  XAUUSD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2, useStoploss: true, stoplossLevel: 6 },
-  XAGUSD: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3, useStoploss: true, stoplossLevel: 6 },
+  'GC1!': { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2 },
+  'SI1!': { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3 },
+  GOLD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2 },
+  SILVER: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3 },
+  XAUUSD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2 },
+  XAGUSD: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3 },
 };
 
 export function normalizeTickerSymbol(symbol: string): string {
@@ -173,7 +156,6 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
 
     const previousMaster = is40 ? computed[i - 1].masterIndex40 : computed[i - 1].masterIndex;
     const currentMaster = is40 ? bar.masterIndex40 : bar.masterIndex;
-    const currentMasterAdjusted = is40 ? bar.masterIndexAdjusted40 : bar.masterIndexAdjusted;
     const entryLevel = getCrossedEntryLevel(previousMaster, currentMaster, params.entryLevels);
 
     if (!active && entryLevel !== null) {
@@ -194,7 +176,6 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
           confidence: 1,
           price: bar.close,
           masterIndex: currentMaster ?? 0,
-          masterIndexAdjusted: currentMasterAdjusted ?? 0,
           medianDailyMove: bar.medianDailyMove,
           entryReason: `L-${entryLevel.toFixed(1)}`,
           modelVersion: is40 ? "psi40-platform" : MODEL_VERSION,
@@ -226,7 +207,6 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
           confidence: exitSignal.confidence,
           price: bar.close,
           masterIndex: currentMaster ?? 0,
-          masterIndexAdjusted: currentMasterAdjusted ?? 0,
           medianDailyMove: bar.medianDailyMove,
           exitReason: exitSignal.reason,
           modelVersion: is40 ? "psi40-platform" : MODEL_VERSION,
@@ -259,7 +239,6 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
   return {
     signals,
     latestMasterIndex: latest?.masterIndex ?? null,
-    latestMasterIndexAdjusted: latest?.masterIndexAdjusted ?? null,
     metrics: {
       sysRoi,
       buyHoldRoi,
@@ -304,33 +283,22 @@ export function computePsiSeries(bars: PriceBar[]): ComputedPsiBar[] {
   const low = sorted.map((bar) => bar.low);
 
   const { rawIndex, atr14 } = computePsi8(close, high, low);
-
   const rawIndex40 = computePsi40(sorted);
-  const masterIndex40 = dynamicEma(rawIndex40, 1);
-  const masterIndexAdjusted40 = dynamicEma(rawIndex40, 2);
 
-  const masterIndex = dynamicEma(rawIndex, 1);
-  const masterIndexAdjusted = dynamicEma(rawIndex, 2);
   const trueRange = computeTrueRange(high, low, close);
-  const medianDailyMove = rollingMedian(
-    trueRange.map((value, i) => (isFiniteNumber(value) && close[i] > 0 ? (Number(value) / close[i]) * 100 : null)),
-    252,
-  );
-  const structLow = rollingMin(low, 20);
+  const trPct = trueRange.map((value, i) => (isFiniteNumber(value) && close[i] > 0 ? (Number(value) / close[i]) * 100 : null));
+  const medianDailyMove = adaptiveRollingMedian(trPct, 252, 30);
 
   return sorted.map((bar, i) => ({
     ...bar,
-    masterIndex: nullable(masterIndex[i]),
-    masterIndexAdjusted: nullable(masterIndexAdjusted[i]),
-    masterIndex40: nullable(masterIndex40[i]),
-    masterIndexAdjusted40: nullable(masterIndexAdjusted40[i]),
+    masterIndex: nullable(rawIndex[i]),
+    masterIndex40: nullable(rawIndex40[i]),
     atr14: nullable(atr14[i]),
     medianDailyMove: nullable(medianDailyMove[i]),
-    structLow: nullable(structLow[i]),
   }));
 }
 
-function getCrossedEntryLevel(previous: number | null, current: number | null, enabledLevels: number[]): number | null {
+export function getCrossedEntryLevel(previous: number | null, current: number | null, enabledLevels: number[]): number | null {
   if (!isFiniteNumber(previous) || !isFiniteNumber(current)) return null;
   for (const level of ENTRY_PRIORITY) {
     if (enabledLevels.includes(level) && Number(current) > level && Number(previous) <= level) {
@@ -340,39 +308,34 @@ function getCrossedEntryLevel(previous: number | null, current: number | null, e
   return null;
 }
 
-function getExitSignal(
+export function getExitSignal(
   bar: ComputedPsiBar,
   params: PsiStrategyParams,
   entryPrice: number,
   targetPrice: number,
   highestPrice: number,
 ): { signal: PsiSignalType; reason: string; confidence: number } | null {
-  const medianDailyMove = bar.medianDailyMove;
-  const currentAdjusted = params.model === "psi40" ? bar.masterIndexAdjusted40 : bar.masterIndexAdjusted;
+  const currentRaw = params.model === "psi40" ? bar.masterIndex40 : bar.masterIndex;
+
+  // 1. AYM Take Profit
   const hitTakeProfit =
     params.useAym &&
     isFiniteNumber(targetPrice) &&
     isFiniteNumber(params.aymLimit) &&
-    isFiniteNumber(currentAdjusted) &&
+    isFiniteNumber(currentRaw) &&
     bar.close >= targetPrice &&
-    Number(currentAdjusted) < Number(params.aymLimit);
-  const hitStop =
-    params.useStoploss &&
-    isFiniteNumber(params.stoplossLevel) &&
-    isFiniteNumber(medianDailyMove) &&
-    bar.close <= entryPrice * (1 - (Number(medianDailyMove) * Number(params.stoplossLevel)) / 100);
+    Number(currentRaw) < Number(params.aymLimit);
+
+  // 2. ATR Trailing Stop
   const hitTrail =
     params.useAtr &&
     isFiniteNumber(params.atrDistance) &&
     isFiniteNumber(bar.atr14) &&
     bar.close <= highestPrice - Number(bar.atr14) * Number(params.atrDistance) &&
     bar.close > entryPrice;
-  const hitStruct = params.useStructStop && isFiniteNumber(bar.structLow) && bar.close < Number(bar.structLow);
 
-  if (hitStop) return { signal: "SELL_SL", reason: "SL", confidence: 0.5 };
-  if (hitStruct) return { signal: "SELL_STRUCT", reason: "Crash Stop", confidence: 0.5 };
-  if (hitTrail) return { signal: "SELL_TRAIL", reason: "Trail", confidence: 0.5 };
-  if (hitTakeProfit) return { signal: "SELL_TP", reason: "AYM TP", confidence: 1 };
+  if (hitTakeProfit) return { signal: "SELL_TP", reason: "AYM Target Hit", confidence: 1 };
+  if (hitTrail) return { signal: "SELL_TRAIL", reason: "ATR Trail Stop", confidence: 0.5 };
   return null;
 }
 

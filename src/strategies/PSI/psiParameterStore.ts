@@ -1,42 +1,52 @@
-import fs from "fs";
-import path from "path";
+import { db } from "@/db";
+import { psiCombinations } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { normalizeTickerSymbol, resolvePsiParams, type PsiStrategyParams } from "./psiStrategy";
-
-const BEST_COMBINATION_FILES = [
-  path.join(process.cwd(), "src", "strategies", "PSI", "data", "psi_best_combinations.csv"),
-  path.join(process.cwd(), "src", "strategies", "PSI", "data", "psi8_best_combinations.csv"),
-  path.join(process.cwd(), "src", "strategies", "PSI", "data", "psi40_best_combinations.csv"),
-  path.join(process.cwd(), "Data", "psi_best_combinations.csv"),
-  path.join(process.cwd(), "Data", "psi_egx30_best_combinations.csv"),
-  path.join(process.cwd(), "Data", "psi_comi_best_combination.csv"),
-];
-
-const ENTRY_LEVEL_COLUMNS: Array<[keyof CsvRow, number]> = [
-  ["L-14.6", 14.6],
-  ["L-23.6", 23.6],
-  ["L-38.2", 38.2],
-  ["L-50.0", 50.0],
-  ["L-61.8", 61.8],
-];
-
-type CsvRow = Record<string, string | undefined>;
-
-type OptimizedParams = {
-  params: Partial<PsiStrategyParams>;
-  source: string;
-};
-
-type CachedRows = {
-  cacheKey: string;
-  rows: CsvRow[];
-};
 
 export type PsiParamsResolution = {
   params: PsiStrategyParams;
   parameterSource: string;
 };
 
-const optimizedParamRowsCache = new Map<string, CachedRows>();
+// In-memory cache for ultra-fast synchronous access: key is `${ticker}:${model}`
+const dbParamsCache = new Map<string, { params: Partial<PsiStrategyParams>; source: string; timestamp: number }>();
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+export async function fetchAndCachePsiCombinations(symbol?: string): Promise<void> {
+  try {
+    const cleanSym = symbol ? normalizeTickerSymbol(symbol) : null;
+    const query = cleanSym
+      ? db.select().from(psiCombinations).where(eq(psiCombinations.tickerSymbol, cleanSym))
+      : db.select().from(psiCombinations);
+
+    const rows = await query;
+    for (const row of rows) {
+      const sym = normalizeTickerSymbol(row.tickerSymbol);
+      const model = (row.model?.toLowerCase() === 'psi40' ? 'psi40' : 'psi8') as 'psi8' | 'psi40';
+      const key = `${sym}:${model}`;
+      
+      const entryLevels = Array.isArray(row.entryLevels)
+        ? (row.entryLevels as number[])
+        : [14.6, 23.6, 38.2, 50.0, 61.8];
+
+      dbParamsCache.set(key, {
+        params: {
+          model,
+          entryLevels,
+          useAym: row.useAym,
+          aymMultiplier: row.aymMultiplier !== null ? Number(row.aymMultiplier) : null,
+          aymLimit: row.aymLimit !== null ? Number(row.aymLimit) : null,
+          useAtr: row.useAtr,
+          atrDistance: row.atrDistance !== null ? Number(row.atrDistance) : null,
+        },
+        source: `db:psi_combinations (${model})`,
+        timestamp: Date.now(),
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching psi_combinations from DB:', err);
+  }
+}
 
 export function resolvePsiParamsFromStore(
   symbol: string,
@@ -49,120 +59,40 @@ export function resolvePsiParamsWithSource(
   symbol: string,
   overrides: Partial<PsiStrategyParams> = {},
 ): PsiParamsResolution {
-  const optimizedParams = readOptimizedParams(symbol);
-  return {
-    params: resolvePsiParams(symbol, { ...(optimizedParams?.params ?? {}), ...overrides }),
-    parameterSource: optimizedParams?.source ?? "ticker-preset-or-default",
-  };
-}
-
-function readOptimizedParams(symbol: string): OptimizedParams | null {
   const ticker = normalizeTickerSymbol(symbol);
+  const model = overrides.model ?? "psi8";
+  const cacheKey = `${ticker}:${model}`;
+  const cached = dbParamsCache.get(cacheKey);
 
-  for (const filePath of BEST_COMBINATION_FILES) {
-    const rows = readCsvRows(filePath);
-    if (!rows) continue;
-
-    const row = rows.find((candidate) => normalizeTickerSymbol(candidate.ticker_id ?? "") === ticker);
-    if (row) {
-      return {
-        params: rowToParams(row),
-        source: path.relative(process.cwd(), filePath).replaceAll("\\", "/"),
-      };
-    }
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return {
+      params: resolvePsiParams(ticker, { ...cached.params, ...overrides }),
+      parameterSource: cached.source,
+    };
   }
 
-  return null;
-}
-
-function readCsvRows(filePath: string): CsvRow[] | null {
-  try {
-    const stats = fs.statSync(filePath);
-    const cacheKey = `${stats.size}:${stats.mtimeMs}`;
-    const cached = optimizedParamRowsCache.get(filePath);
-    if (cached?.cacheKey === cacheKey) return cached.rows;
-
-    const csvText = fs.readFileSync(/*turbopackIgnore: true*/ filePath, "utf8");
-    const rows = parseCsvText(csvText);
-    optimizedParamRowsCache.set(filePath, { cacheKey, rows });
-    return rows;
-  } catch (error) {
-    const nodeError = error as NodeJS.ErrnoException;
-    if (nodeError.code === "ENOENT") return null;
-    throw error;
+  // Trigger background fetch if on server side and cache missing
+  if (typeof window === 'undefined') {
+    fetchAndCachePsiCombinations(ticker).catch(() => {});
   }
-}
-
-function parseCsvText(csvText: string): CsvRow[] {
-  const lines = csvText
-    .split(/\r?\n/)
-    .filter((line) => line.trim().length > 0);
-
-  if (lines.length < 2) return [];
-
-  const headers = parseCsvLine(lines[0]);
-  return lines.slice(1).map((line) => {
-    const values = parseCsvLine(line);
-    return headers.reduce<CsvRow>((row, header, index) => {
-      row[header] = values[index];
-      return row;
-    }, {});
-  });
-}
-
-function rowToParams(row: CsvRow): Partial<PsiStrategyParams> {
-  const entryLevels = ENTRY_LEVEL_COLUMNS.filter(([column]) => isTrue(row[column])).map(([, level]) => level);
-  const useAym = isTrue(row["Use AYM"]);
-  const useAtr = isTrue(row["Use ATR"]);
-  const useStoploss = isTrue(row["Use Stoploss"]);
-  const model = row["Model"]?.toLowerCase() === "psi-40" ? ("psi40" as const) : ("psi8" as const);
 
   return {
-    model,
-    ...(entryLevels.length > 0 ? { entryLevels } : {}),
-    useAym,
-    aymMultiplier: useAym ? toNumber(row["AYM TP Multiplier"]) : null,
-    aymLimit: useAym ? toNumber(row["AYM Limit"]) : null,
-    useAtr,
-    atrDistance: useAtr ? toNumber(row["ATR Distance"]) : null,
-    useStoploss,
-    stoplossLevel: useStoploss ? toNumber(row["Stoploss Level"]) : null,
-    useStructStop: false,
+    params: resolvePsiParams(ticker, overrides),
+    parameterSource: "ticker-preset-or-default",
   };
 }
 
-function parseCsvLine(line: string): string[] {
-  const values: string[] = [];
-  let current = "";
-  let insideQuotes = false;
+export async function resolvePsiParamsAsync(
+  symbol: string,
+  overrides: Partial<PsiStrategyParams> = {},
+): Promise<PsiParamsResolution> {
+  const ticker = normalizeTickerSymbol(symbol);
+  const model = overrides.model ?? "psi8";
+  const cacheKey = `${ticker}:${model}`;
 
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    const nextChar = line[index + 1];
-
-    if (char === '"' && insideQuotes && nextChar === '"') {
-      current += '"';
-      index += 1;
-    } else if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
-      values.push(current.trim());
-      current = "";
-    } else {
-      current += char;
-    }
+  if (!dbParamsCache.has(cacheKey)) {
+    await fetchAndCachePsiCombinations(ticker);
   }
 
-  values.push(current.trim());
-  return values;
-}
-
-function isTrue(value: string | undefined): boolean {
-  return value?.trim().toUpperCase() === "TRUE";
-}
-
-function toNumber(value: string | undefined): number | null {
-  if (!value || value.trim().toLowerCase() === "null") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  return resolvePsiParamsWithSource(symbol, overrides);
 }

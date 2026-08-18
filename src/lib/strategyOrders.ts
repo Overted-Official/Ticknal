@@ -52,25 +52,15 @@ export function derivePositionLevels(
       : null;
 
   const stopPrice =
-    params.useStoploss &&
-    isFiniteNumber(params.stoplossLevel) &&
-    isFiniteNumber(medianDailyMove) &&
-    Number(medianDailyMove) > 0
-      ? entryPrice * (1 - (Number(medianDailyMove) * Number(params.stoplossLevel)) / 100)
-      : params.useAtr && isFiniteNumber(params.atrDistance) && isFiniteNumber(atr14)
-        ? entryPrice - Number(atr14) * Number(params.atrDistance)
-        : null;
+    params.useAtr && isFiniteNumber(params.atrDistance) && isFiniteNumber(atr14)
+      ? entryPrice - Number(atr14) * Number(params.atrDistance)
+      : null;
 
   return {
     targetPrice,
     stopPrice: stopPrice !== null && stopPrice > 0 ? stopPrice : null,
     targetLabel: targetPrice === null ? null : 'AYM target',
-    stopLabel:
-      params.useStoploss && stopPrice !== null
-        ? 'strategy stop'
-        : params.useAtr && stopPrice !== null
-          ? 'ATR distance'
-          : null,
+    stopLabel: params.useAtr && stopPrice !== null ? 'ATR trail stop' : null,
     medianDailyMove,
     atr14,
   };

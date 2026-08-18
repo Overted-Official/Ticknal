@@ -260,6 +260,26 @@ export function rollingMedian(values: Array<number | null>, length: number): Arr
   });
 }
 
+export function adaptiveRollingMedian(
+  values: Array<number | null>,
+  maxWindow: number = 252,
+  minWindow: number = 30,
+): Array<number | null> {
+  return values.map((_value, i) => {
+    if (i < minWindow - 1) return null;
+    const windowLength = Math.min(i + 1, maxWindow);
+    const window: number[] = [];
+    for (let j = i - windowLength + 1; j <= i; j += 1) {
+      if (!isFiniteNumber(values[j])) continue;
+      window.push(Number(values[j]));
+    }
+    if (window.length < minWindow) return null;
+    window.sort((a, b) => a - b);
+    const mid = Math.floor(window.length / 2);
+    return window.length % 2 === 0 ? (window[mid - 1] + window[mid]) / 2 : window[mid];
+  });
+}
+
 export function safeSub(left: number | null, right: number | null): number | null {
   return isFiniteNumber(left) && isFiniteNumber(right) ? Number(left) - Number(right) : null;
 }
@@ -318,7 +338,7 @@ export function computePsi8(close: number[], high: number[], low: number[]): { r
     ];
     if (components.some((value) => !isFiniteNumber(value))) return null;
     const weighted =
-      Number(normPrice[i]) * 21 +
+      Number(normPrice[i]) * 22 +
       Number(rsi[i]) * 10 +
       Number(banker[i]) * 5 +
       Number(bbScore[i]) * 4 +
@@ -326,7 +346,7 @@ export function computePsi8(close: number[], high: number[], low: number[]): { r
       Number(adxScore[i]) * 10 +
       Number(maScore[i]) * 4 +
       Number(slopeScore[i]) * 1;
-    return weighted / 99;
+    return weighted / 100;
   });
   
   return { rawIndex, atr14 };

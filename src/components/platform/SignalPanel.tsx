@@ -322,8 +322,8 @@ export default function SignalPanel({
               </span>
             </div>
             <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-rose-400/80 font-medium">Stop Loss</span>
-              <span className="text-[11px] font-mono font-bold text-rose-400 mt-1">
+              <span className="text-[9px] uppercase tracking-wider text-amber-400/80 font-medium">ATR Trail Stop</span>
+              <span className="text-[11px] font-mono font-bold text-amber-400 mt-1">
                 {stopLossPrice ? `${stopLossPrice.toFixed(2)}` : '—'}
               </span>
             </div>

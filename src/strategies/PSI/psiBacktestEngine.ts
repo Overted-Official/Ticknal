@@ -1,9 +1,10 @@
 import {
   computePsiSeries,
+  getCrossedEntryLevel,
+  getExitSignal,
   type PriceBar,
   type PsiStrategyParams,
   type PsiSignal,
-  type PsiSignalType,
 } from "./psiStrategy";
 
 export interface StrategyTrade {
@@ -74,58 +75,6 @@ export interface FullBacktestReport {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
-}
-
-function getCrossedEntryLevel(
-  previousMaster: number | null,
-  currentMaster: number | null,
-  entryLevels: number[]
-): number | null {
-  if (previousMaster === null || currentMaster === null) return null;
-  const sorted = [...entryLevels].sort((a, b) => b - a);
-  for (const level of sorted) {
-    if (previousMaster < level && currentMaster >= level) {
-      return level;
-    }
-  }
-  return null;
-}
-
-function getExitSignal(
-  bar: any,
-  params: PsiStrategyParams,
-  entryPrice: number,
-  targetPrice: number,
-  highestPrice: number
-): { signal: PsiSignalType; reason: string; confidence: number } | null {
-  const medianDailyMove = bar.medianDailyMove;
-  const currentAdjusted = params.model === "psi40" ? bar.masterIndexAdjusted40 : bar.masterIndexAdjusted;
-  const hitTakeProfit =
-    params.useAym &&
-    isFiniteNumber(targetPrice) &&
-    isFiniteNumber(params.aymLimit) &&
-    isFiniteNumber(currentAdjusted) &&
-    bar.close >= targetPrice &&
-    Number(currentAdjusted) < Number(params.aymLimit);
-  const hitStop =
-    params.useStoploss &&
-    isFiniteNumber(params.stoplossLevel) &&
-    isFiniteNumber(medianDailyMove) &&
-    bar.close <= entryPrice * (1 - (Number(medianDailyMove) * Number(params.stoplossLevel)) / 100);
-  const hitTrail =
-    params.useAtr &&
-    isFiniteNumber(params.atrDistance) &&
-    isFiniteNumber(bar.atr14) &&
-    bar.close <= highestPrice - Number(bar.atr14) * Number(params.atrDistance) &&
-    bar.close > entryPrice;
-  const hitStruct = params.useStructStop && isFiniteNumber(bar.structLow) && bar.close < Number(bar.structLow);
-
-  if (hitStop) return { signal: "SELL_SL", reason: "Stoploss Hit", confidence: 0.5 };
-  if (hitStruct) return { signal: "SELL_STRUCT", reason: "Structure Break Stop", confidence: 0.5 };
-  if (hitTrail) return { signal: "SELL_TRAIL", reason: "ATR Trail Stop", confidence: 0.5 };
-  if (hitTakeProfit) return { signal: "SELL_TP", reason: "AYM Target Hit", confidence: 1 };
-
-  return null;
 }
 
 export function runFullStrategyBacktest(
@@ -206,7 +155,6 @@ export function runFullStrategyBacktest(
 
     const prevMaster = is40 ? prevBar.masterIndex40 : prevBar.masterIndex;
     const currentMaster = is40 ? bar.masterIndex40 : bar.masterIndex;
-    const currentMasterAdjusted = is40 ? bar.masterIndexAdjusted40 : bar.masterIndexAdjusted;
 
     let tradeClosedThisBar: StrategyTrade | null = null;
 
@@ -235,7 +183,6 @@ export function runFullStrategyBacktest(
             confidence: 1,
             price: bar.close,
             masterIndex: currentMaster ?? 0,
-            masterIndexAdjusted: currentMasterAdjusted ?? 0,
             medianDailyMove: bar.medianDailyMove,
             entryReason: `L-${entryLevel.toFixed(1)}`,
             modelVersion: is40 ? "psi40-platform" : "psi-v9-platform",
@@ -288,7 +235,6 @@ export function runFullStrategyBacktest(
           confidence: exitSignal?.confidence ?? 1,
           price: exitP,
           masterIndex: currentMaster ?? 0,
-          masterIndexAdjusted: currentMasterAdjusted ?? 0,
           medianDailyMove: bar.medianDailyMove,
           exitReason: exitSignal?.reason ?? "End of period",
           modelVersion: is40 ? "psi40-platform" : "psi-v9-platform",
