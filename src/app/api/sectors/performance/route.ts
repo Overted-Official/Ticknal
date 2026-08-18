@@ -177,23 +177,22 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Filter out market indices and macro currency pairs from the individual stock groups
+      // Filter out market indices, macro currency pairs, and mutual funds from the equity sector heatmap
       const isIndexOrMacro = 
         meta?.sector === 'Indices' || 
         meta?.sector === 'Macro' || 
         ['EGX70', 'EGX100', 'EGX30', 'USDEGP'].includes(sym.toUpperCase());
+
+      const isFund = 
+        ['CI_QUANT', 'OSOUL', 'COF'].includes(sym.toUpperCase()) || 
+        meta?.sector === 'Funds' || 
+        meta?.sector?.toLowerCase().includes('fund');
       
-      if (isIndexOrMacro) {
+      if (isIndexOrMacro || isFund) {
         continue;
       }
 
-      const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(sym.toUpperCase());
-
       let sector = meta?.sector || 'Other';
-      if (isFund || sector.toLowerCase().includes('fund')) {
-        sector = 'Funds';
-      }
-
       const isAdvancing = returnPct > 0;
 
       totalMarketTurnover += turnover;

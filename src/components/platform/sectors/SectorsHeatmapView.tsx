@@ -17,6 +17,7 @@ import {
   X,
   Target,
   Sliders,
+  Info,
 } from 'lucide-react';
 import SectorTreemap from './SectorTreemap';
 import SectorInspector from './SectorInspector';
@@ -223,46 +224,92 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       {/* ---------------------------------------------------- */}
       {marketSummary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
-          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Top Sector</span>
+          {/* Top Sector */}
+          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between group relative">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Top Sector</span>
+                <div className="relative group/tooltip">
+                  <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
+                  <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-48 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                    The highest performing economic sector in this timeframe, weighted by total traded liquidity (EGP volume).
+                  </div>
+                </div>
+              </div>
               <div className="text-xs font-bold text-white mt-0.5 truncate max-w-[140px]">{marketSummary.topSector}</div>
             </div>
-            <span className="text-xs font-mono font-bold text-emerald-400">
+            <span className="text-xs font-mono font-bold text-emerald-400 shrink-0">
               +{marketSummary.topSectorReturn.toFixed(1)}%
             </span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Laggard Sector</span>
+          {/* Laggard Sector */}
+          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between group relative">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Laggard Sector</span>
+                <div className="relative group/tooltip">
+                  <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
+                  <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-48 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                    The weakest performing sector across EGX during this period, based on turnover-weighted returns.
+                  </div>
+                </div>
+              </div>
               <div className="text-xs font-bold text-white mt-0.5 truncate max-w-[140px]">{marketSummary.laggardSector}</div>
             </div>
-            <span className={`text-xs font-mono font-bold ${marketSummary.laggardSectorReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`text-xs font-mono font-bold shrink-0 ${marketSummary.laggardSectorReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {marketSummary.laggardSectorReturn > 0 ? '+' : ''}{marketSummary.laggardSectorReturn.toFixed(1)}%
             </span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Market Turnover</span>
+          {/* Market Turnover */}
+          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between group relative">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Market Turnover</span>
+                <div className="relative group/tooltip">
+                  <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
+                  <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-52 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                    Total traded capital (cash liquidity) that changed hands across all EGX stocks during this time window.
+                  </div>
+                </div>
+              </div>
               <div className="text-xs font-bold font-mono text-white mt-0.5">
                 {(marketSummary.totalTurnover / 1_000_000_000).toFixed(2)}B EGP
               </div>
             </div>
-            <Droplets className="w-4 h-4 text-cyan-400 opacity-60" />
+            <div className="relative group/tooltip">
+              <Info className="w-4 h-4 text-white/30 hover:text-cyan-400 cursor-help transition" />
+              <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-52 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                Sum of (Price × Traded Volume) for every stock over the selected period.
+              </div>
+            </div>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Market Breadth</span>
+          {/* Market Breadth */}
+          <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between group relative">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Market Breadth</span>
+                <div className="relative group/tooltip">
+                  <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
+                  <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-56 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                    Ratio of Advancing stocks (Gainers) vs Declining stocks (Losers). High green breadth confirms a healthy, broad-based market bull rally.
+                  </div>
+                </div>
+              </div>
               <div className="text-xs font-bold font-mono text-white mt-0.5">
                 <span className="text-emerald-400">{marketSummary.totalGainers} Adv</span>
                 <span className="text-white/30 mx-1">/</span>
                 <span className="text-rose-400">{marketSummary.totalLosers} Dec</span>
               </div>
             </div>
-            <Scale className="w-4 h-4 text-plt-orange opacity-60" />
+            <div className="relative group/tooltip">
+              <Info className="w-4 h-4 text-white/30 hover:text-plt-orange cursor-help transition" />
+              <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/tooltip:block w-56 p-2 rounded-md bg-zinc-900 border border-white/10 text-[10px] text-white/80 leading-tight shadow-xl z-50 pointer-events-none">
+                Breadth proves whether the index rally is authentic across all sectors or just propped up by 1 or 2 mega-caps.
+              </div>
+            </div>
           </div>
         </div>
       )}
