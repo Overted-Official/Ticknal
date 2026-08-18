@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["onnxruntime-node"],
+  serverExternalPackages: ["onnxruntime-node", "onnxruntime-web"],
   images: {
     remotePatterns: [
       {
@@ -22,6 +22,8 @@ const nextConfig = {
       "./Data/psi_*best*.csv",
       "./src/tools/kronos/models/**/*.onnx",
       "./node_modules/onnxruntime-web/dist/**/*",
+      "./node_modules/onnxruntime-web/dist/*.wasm",
+      "./node_modules/onnxruntime-web/dist/*.mjs",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.so*",
       "./node_modules/onnxruntime-node/bin/napi-v6/linux/**/*.node",
     ],

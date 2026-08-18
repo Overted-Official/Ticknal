@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import { pathToFileURL } from 'url';
 
 let ortModule: any = null;
 
@@ -15,6 +16,16 @@ export async function getOnnxRuntime() {
     try {
       // @ts-ignore
       ortModule = await import('onnxruntime-web');
+
+      if (ortModule.env?.wasm) {
+        const distDir = path.join(process.cwd(), 'node_modules', 'onnxruntime-web', 'dist');
+        if (fs.existsSync(distDir)) {
+          const distUrl = pathToFileURL(distDir).href + '/';
+          ortModule.env.wasm.wasmPaths = distUrl;
+        }
+        ortModule.env.wasm.numThreads = 1;
+      }
+
       return ortModule;
     } catch (webErr) {
       console.warn('[ONNX Loader] Failed to load ONNX runtime:', (webErr as Error).message);
