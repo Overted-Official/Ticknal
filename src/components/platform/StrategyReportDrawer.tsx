@@ -27,13 +27,10 @@ import {
   type FullBacktestReport,
 } from "@/strategies/PSI/psiBacktestEngine";
 import {
+  resolvePsiParams,
   type PriceBar,
   type PsiStrategyParams,
 } from "@/strategies/PSI/psiStrategy";
-import {
-  resolvePsiParamsFromStore,
-  fetchAndCachePsiCombinations,
-} from "@/strategies/PSI/psiParameterStore";
 
 interface StrategyReportDrawerProps {
   isOpen: boolean;
@@ -75,13 +72,6 @@ export default function StrategyReportDrawer({
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Fetch optimal combination for this ticker from DB
-  useEffect(() => {
-    if (isOpen && symbol) {
-      fetchAndCachePsiCombinations(symbol).catch(() => {});
-    }
-  }, [isOpen, symbol]);
 
   // Update date ranges if chart data changes
   useEffect(() => {
@@ -171,7 +161,7 @@ export default function StrategyReportDrawer({
       volume: d.volume,
     }));
 
-    const resolvedParams = resolvePsiParamsFromStore(symbol, {
+    const resolvedParams = resolvePsiParams(symbol, {
       model,
       initialCapital,
       startDate,
