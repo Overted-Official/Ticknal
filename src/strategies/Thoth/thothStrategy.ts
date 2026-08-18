@@ -1,21 +1,23 @@
 import { ThothEngine, type ThothModelPrediction } from './thothEngine';
 import type { PriceBar, PsiSignal, PsiMetrics, PsiBacktestResult } from '../PSI/psiStrategy';
+import { getBespokeThothParams } from './thothParameterStore';
 
 export interface ThothStrategyParams {
-  buyThreshold?: number;       // default 25.0% (Exhaustion <= 25% on UP, or >= 75% on DOWN)
-  sellThreshold?: number;      // default 90.0% (Bull Exhaustion >= 90% on UP, or <= 10% on DOWN)
-  maxHoldBars?: number;        // default 30 bars
-  minNetProfit?: number;       // default 0.0% (Never exit on a loss)
+  ticker?: string;             // Optional ticker symbol for bespoke tuning
+  buyThreshold?: number;       // default 35.0% (Pure ML Neural Inception)
+  sellThreshold?: number;      // default 85.0% (Pure ML Neural Exhaustion Peak)
+  minNetProfit?: number;       // default 0.0% (Strict Never Exit on a Loss discipline)
+  requireGreen?: boolean;      // default false (or true per bespoke ticker profile)
   startDate?: string;
   endDate?: string;
   initialCapital?: number;
 }
 
-export const DEFAULT_THOTH_PARAMS: Required<ThothStrategyParams> = {
-  buyThreshold: 25.0,
-  sellThreshold: 90.0,
-  maxHoldBars: 30,
+export const DEFAULT_THOTH_PARAMS: Required<Omit<ThothStrategyParams, 'ticker'>> = {
+  buyThreshold: 35.0,
+  sellThreshold: 85.0,
   minNetProfit: 0.0,
+  requireGreen: false,
   startDate: '2025-01-01',
   endDate: '2099-12-31',
   initialCapital: 100000.0,
@@ -25,8 +27,12 @@ export async function runThothStrategy(
   bars: PriceBar[],
   userParams: ThothStrategyParams = {}
 ): Promise<PsiBacktestResult> {
-  const params: Required<ThothStrategyParams> = {
+  // If ticker is provided, resolve bespoke optimal parameters from store
+  const bespoke = userParams.ticker ? getBespokeThothParams(userParams.ticker) : {};
+
+  const params: Required<Omit<ThothStrategyParams, 'ticker'>> = {
     ...DEFAULT_THOTH_PARAMS,
+    ...bespoke,
     ...userParams,
   };
 
@@ -93,6 +99,7 @@ export async function runThothStrategy(
     const exh = pred?.predictedExhaustion ?? 0.0;
     const direction = pred?.direction ?? 'up';
     const masterIdx = pred?.masterIndex ?? 50.0;
+    const isGreen = bar.close >= (bar.open > 0 ? bar.open : bar.close);
 
     lastClose = bar.close;
 
@@ -113,13 +120,13 @@ export async function runThothStrategy(
         price: entryPrice,
         masterIndex: masterIdx,
         medianDailyMove: null,
-        entryReason: `Thoth Macro Entry (${direction.toUpperCase()} Exh: ${exh.toFixed(1)}%)`,
-        modelVersion: 'thoth-egx-macro-v1',
+        entryReason: `Thoth Macro V2 Entry (${direction.toUpperCase()} Exh: ${exh.toFixed(1)}%)`,
+        modelVersion: 'thoth-egx-macro-v2',
       });
     } else if (pendingExit && inPos) {
       const exitPrice = bar.open > 0 ? bar.open : bar.close;
       
-      // Exact Real-World Invoice Fee Model (0.25% + 6.00 EGP)
+      // Exact Real-World EGX Invoice Fee Model (0.25% + 6.00 EGP)
       const buyFee = balance * 0.00125 + 3.00;
       const netInvested = balance - buyFee;
       const shares = netInvested / entryPrice;
@@ -128,7 +135,7 @@ export async function runThothStrategy(
       const netExit = grossExit - sellFee;
       const netRoi = ((netExit - balance) / balance) * 100.0;
 
-      // STRICT NO-LOSS RULE: Never exit on a loss
+      // STRICT NO-LOSS DISCIPLINE: Never exit on a loss
       if (params.minNetProfit === null || netRoi >= params.minNetProfit) {
         tradeCount++;
         balance = netExit;
@@ -147,8 +154,8 @@ export async function runThothStrategy(
           price: exitPrice,
           masterIndex: masterIdx,
           medianDailyMove: null,
-          exitReason: pendingExitReason || `Take-Profit (${exh.toFixed(1)}% | Net: +${netRoi.toFixed(2)}%)`,
-          modelVersion: 'thoth-egx-macro-v1',
+          exitReason: pendingExitReason || `Pure ML Take-Profit (${exh.toFixed(1)}% | Net: +${netRoi.toFixed(2)}%)`,
+          modelVersion: 'thoth-egx-macro-v2',
         });
 
         inPos = false;
@@ -166,29 +173,26 @@ export async function runThothStrategy(
       highestPrice = Math.max(highestPrice, bar.high);
       lowestPrice = Math.min(lowestPrice, bar.low);
 
-      const barsHeld = i - entryBar;
-
-      // User Sell Conditions:
-      // 1. Bull Exhaustion >= 90%
+      // Pure ML Neural Exhaustion Exit Conditions:
+      // 1. Bull Exhaustion >= sellThreshold (default 85%)
       // 2. Bear Exhaustion <= 10%
-      // 3. Bars Held >= 30
       const isBullExhausted = (direction === 'up' && exh >= params.sellThreshold);
       const isBearExhausted = (direction === 'down' && exh <= 10.0);
-      const isMaxHold = barsHeld >= params.maxHoldBars;
 
-      if (isBullExhausted || isBearExhausted || isMaxHold) {
+      if (isBullExhausted || isBearExhausted) {
         pendingExit = true;
         pendingExitReason = isBullExhausted 
           ? `Bull Exhaustion Peak (${exh.toFixed(1)}%)`
-          : isBearExhausted 
-            ? `Bear Exhaustion Low (${exh.toFixed(1)}%)`
-            : `Max Hold Horizon (${barsHeld} bars)`;
+          : `Bear Exhaustion Bottom (${exh.toFixed(1)}%)`;
       }
     } else if (!pendingBuy) {
-      // User Buy Conditions:
-      // 1. Early Bull (direction == up && exh <= 25%)
+      // Pure ML Neural Exhaustion Entry Conditions:
+      // 1. Early Bull (direction == up && exh <= buyThreshold)
       // 2. Oversold Bear Reversal (direction == down && exh >= 75%)
-      if ((direction === 'up' && exh <= params.buyThreshold) || (direction === 'down' && exh >= 75.0)) {
+      const earlyBull = (direction === 'up' && exh <= params.buyThreshold);
+      const bearReversal = (direction === 'down' && exh >= 75.0);
+
+      if ((earlyBull || bearReversal) && (!params.requireGreen || isGreen)) {
         pendingBuy = true;
       }
     }
