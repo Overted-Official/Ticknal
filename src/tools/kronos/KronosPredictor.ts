@@ -1,11 +1,23 @@
-import * as ort from 'onnxruntime-node';
 import path from 'path';
 
+let ortModule: any = null;
+
+async function getOrt() {
+  if (ortModule) return ortModule;
+  try {
+    ortModule = await import('onnxruntime-node');
+    return ortModule;
+  } catch (err) {
+    console.warn('[KronosPredictor] onnxruntime-node native bindings not available:', (err as Error).message);
+    return null;
+  }
+}
+
 export class KronosPredictor {
-  private sessionEnc: ort.InferenceSession | null = null;
-  private sessionDecS1: ort.InferenceSession | null = null;
-  private sessionDecS2: ort.InferenceSession | null = null;
-  private sessionDec: ort.InferenceSession | null = null;
+  private sessionEnc: any = null;
+  private sessionDecS1: any = null;
+  private sessionDecS2: any = null;
+  private sessionDec: any = null;
   private initialized = false;
 
   constructor() {}
@@ -13,7 +25,11 @@ export class KronosPredictor {
   async init() {
     if (this.initialized) return;
 
-    // Use process.cwd() to resolve paths correctly in Vercel/Next.js environments
+    const ort = await getOrt();
+    if (!ort) {
+      throw new Error('onnxruntime-node is not supported in this runtime environment');
+    }
+
     const modelsDir = path.join(process.cwd(), 'src', 'tools', 'kronos', 'models');
 
     this.sessionEnc = await ort.InferenceSession.create(path.join(modelsDir, 'tokenizer_encode.onnx'));
@@ -96,6 +112,10 @@ export class KronosPredictor {
    */
   async predict(x: Float32Array, x_stamp: Float32Array, y_stamp: Float32Array, seq_len: number, pred_len: number): Promise<Float32Array> {
     if (!this.initialized) await this.init();
+    const ort = await getOrt();
+    if (!ort) {
+      throw new Error('onnxruntime-node is not supported in this runtime environment');
+    }
 
     const xTensor = new ort.Tensor('float32', x, [1, seq_len, 6]);
 

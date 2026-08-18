@@ -9,10 +9,9 @@ import {
 } from '@/strategies/PSI/psiStrategy';
 import { runThothStrategy } from '@/strategies/Thoth/thothStrategy';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
-import { KronosPredictor } from '@/tools/kronos/KronosPredictor';
 import { createClient } from '@/lib/supabase/server';
 
-let predictor: KronosPredictor | null = null;
+let predictorInstance: any = null;
 
 export async function handleSignalsGet(request: Request) {
   try {
@@ -289,11 +288,12 @@ export async function handlePredictPost(req: Request) {
       }
     }
 
-    if (!predictor) {
-      predictor = new KronosPredictor();
+    if (!predictorInstance) {
+      const { KronosPredictor } = await import('@/tools/kronos/KronosPredictor');
+      predictorInstance = new KronosPredictor();
     }
 
-    const outNorm = await predictor.predict(x, x_stamp, y_stamp, seqLen, nDays);
+    const outNorm = await predictorInstance.predict(x, x_stamp, y_stamp, seqLen, nDays);
     const predictions = [];
     for (let i = 0; i < nDays; i++) {
       const predCloseNorm = outNorm[i * 6 + 3];
