@@ -323,12 +323,20 @@ export async function GET(request: Request) {
     // Sort sectors by turnover descending
     sectors.sort((a, b) => b.totalTurnover - a.totalTurnover);
 
-    // Identify top and laggard sectors by return
+    // Identify top and laggard sectors by return (prefer named economic sectors over generic 'Other')
+    const namedSectorsByReturn = sectors
+      .filter((s) => s.sector !== 'Other' && s.sector !== 'Unclassified' && s.stockCount > 0)
+      .sort((a, b) => b.turnoverWeightedReturn - a.turnoverWeightedReturn);
+
     const sectorsByReturn = [...sectors].sort((a, b) => b.turnoverWeightedReturn - a.turnoverWeightedReturn);
-    const topSector = sectorsByReturn[0]?.sector || 'N/A';
-    const topSectorReturn = sectorsByReturn[0]?.turnoverWeightedReturn || 0;
-    const laggardSector = sectorsByReturn[sectorsByReturn.length - 1]?.sector || 'N/A';
-    const laggardSectorReturn = sectorsByReturn[sectorsByReturn.length - 1]?.turnoverWeightedReturn || 0;
+
+    const topItem = namedSectorsByReturn[0] || sectorsByReturn[0];
+    const topSector = topItem?.sector || 'N/A';
+    const topSectorReturn = topItem?.turnoverWeightedReturn || 0;
+
+    const laggardItem = namedSectorsByReturn[namedSectorsByReturn.length - 1] || sectorsByReturn[sectorsByReturn.length - 1];
+    const laggardSector = laggardItem?.sector || 'N/A';
+    const laggardSectorReturn = laggardItem?.turnoverWeightedReturn || 0;
 
     const payload: SectorsPerformanceResponse = {
       timeframe: {
