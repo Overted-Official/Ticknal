@@ -27,10 +27,13 @@ import {
   type FullBacktestReport,
 } from "@/strategies/PSI/psiBacktestEngine";
 import {
-  resolvePsiParams,
   type PriceBar,
   type PsiStrategyParams,
 } from "@/strategies/PSI/psiStrategy";
+import {
+  resolvePsiParamsFromStore,
+  fetchAndCachePsiCombinations,
+} from "@/strategies/PSI/psiParameterStore";
 
 interface StrategyReportDrawerProps {
   isOpen: boolean;
@@ -57,13 +60,13 @@ export default function StrategyReportDrawer({
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"stats" | "trades">("stats");
   const [model, setModel] = useState<"psi8" | "psi40">("psi8");
-  const [initialCapital, setInitialCapital] = useState<number>(100000);
+  const [initialCapital, setInitialCapital] = useState<number>(1000);
   const [hoveredPoint, setHoveredPoint] = useState<EquityPoint | null>(null);
 
-  // Date range state
-  const defaultStartDate = chartData.length > 0 ? chartData[0].time : "2020-01-01";
+  // Date range state (default to 2025-01-01)
+  const defaultStartDate = "2025-01-01";
   const defaultEndDate = chartData.length > 0 ? chartData[chartData.length - 1].time : "";
-  const [startDate, setStartDate] = useState<string>(defaultStartDate);
+  const [startDate, setStartDate] = useState<string>("2025-01-01");
   const [endDate, setEndDate] = useState<string>(defaultEndDate);
 
   // Trade list filter
@@ -73,10 +76,17 @@ export default function StrategyReportDrawer({
     setMounted(true);
   }, []);
 
+  // Fetch optimal combination for this ticker from DB
+  useEffect(() => {
+    if (isOpen && symbol) {
+      fetchAndCachePsiCombinations(symbol).catch(() => {});
+    }
+  }, [isOpen, symbol]);
+
   // Update date ranges if chart data changes
   useEffect(() => {
     if (chartData.length > 0) {
-      if (!startDate) setStartDate(chartData[0].time);
+      if (!startDate) setStartDate("2025-01-01");
       if (!endDate) setEndDate(chartData[chartData.length - 1].time);
     }
   }, [chartData]);
@@ -161,7 +171,7 @@ export default function StrategyReportDrawer({
       volume: d.volume,
     }));
 
-    const resolvedParams = resolvePsiParams(symbol, {
+    const resolvedParams = resolvePsiParamsFromStore(symbol, {
       model,
       initialCapital,
       startDate,
@@ -352,10 +362,10 @@ export default function StrategyReportDrawer({
                 <div className="flex items-center gap-1 w-full justify-end">
                   <input
                     type="number"
-                    min="1000"
-                    step="1000"
+                    min="100"
+                    step="100"
                     value={initialCapital}
-                    onChange={(e) => setInitialCapital(Number(e.target.value) || 10000)}
+                    onChange={(e) => setInitialCapital(Math.max(100, Number(e.target.value) || 1000))}
                     className="bg-transparent text-white font-mono text-xs text-right outline-none w-24"
                   />
                   <span className="text-[10px] font-bold text-white/50">{currencySymbol}</span>
