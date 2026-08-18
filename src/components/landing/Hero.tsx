@@ -33,7 +33,7 @@ export default function Hero() {
       />
 
       {/* Layer 4: Ambient Warm Spotlight behind right card */}
-      <div className="absolute top-1/2 right-[5%] -translate-y-1/2 w-[450px] h-[450px] bg-radial from-[#ff640d]/20 via-[#d9480f]/10 to-transparent rounded-full blur-[100px] pointer-events-none z-0" />
+      <div className="absolute top-1/2 right-[5%] -translate-y-1/2 w-[450px] h-[450px] bg-radial from-[#FE5000]/20 via-[#d9480f]/10 to-transparent rounded-full blur-[100px] pointer-events-none z-0" />
 
       {/* Left vignette for maximum headline text readability */}
       <div className="absolute inset-y-0 left-0 w-[45%] bg-gradient-to-r from-black via-black/80 to-transparent z-0 pointer-events-none" />
@@ -52,7 +52,7 @@ export default function Hero() {
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/90 text-xs font-medium hover:bg-white/10 transition-colors w-fit shadow-sm"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-tv-accent shadow-[0_0_6px_#ff640d]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-tv-accent shadow-[0_0_6px_#FE5000]" />
               <span>Real-Time Trading Intelligence</span>
               <span className="text-white/40">→</span>
             </motion.div>
@@ -96,7 +96,7 @@ export default function Hero() {
               
               <Link
                 href="#features"
-                className="px-[22px] py-[10px] text-xs md:text-sm font-semibold text-white bg-gradient-to-r from-[#d9480f] to-[#ff640d] hover:brightness-110 rounded-full transition-all flex items-center justify-center gap-1.5 shadow-[0_0_24px_rgba(255,100,13,0.35)]"
+                className="px-[22px] py-[10px] text-xs md:text-sm font-semibold text-white bg-gradient-to-r from-[#d9480f] to-[#FE5000] hover:brightness-110 rounded-full transition-all flex items-center justify-center gap-1.5 shadow-[0_0_24px_rgba(254,80,0,0.35)]"
               >
                 <Play size={14} fill="currentColor" /> How it works
               </Link>

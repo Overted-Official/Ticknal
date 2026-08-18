@@ -56,7 +56,7 @@ export default function LanguagesSection() {
           {languages.map((lang, idx) => (
             <motion.div
               key={idx}
-              whileHover={{ scale: 1.05, borderColor: 'rgba(255, 100, 13, 0.6)' }}
+              whileHover={{ scale: 1.05, borderColor: 'rgba(254, 80, 0, 0.6)' }}
               transition={{ duration: 0.2 }}
               className="inline-flex items-center gap-2.5 px-[20px] py-[10px] rounded-full bg-[#1a1717]/60 border border-[rgba(255,255,255,0.16)] text-white/85 text-xs sm:text-sm font-medium shadow-sm hover:bg-[#1a1717] hover:text-white transition-all cursor-default"
             >

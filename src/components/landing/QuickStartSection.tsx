@@ -13,7 +13,7 @@ export default function QuickStartSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="relative rounded-2xl p-8 md:p-14 border border-[rgba(255,255,255,0.16)] bg-gradient-to-b from-[#14100e] to-[#0a0a0a] text-center overflow-hidden shadow-[0_0_60px_rgba(255,100,13,0.12)]"
+          className="relative rounded-2xl p-8 md:p-14 border border-[rgba(255,255,255,0.16)] bg-gradient-to-b from-[#14100e] to-[#0a0a0a] text-center overflow-hidden shadow-[0_0_60px_rgba(254,80,0,0.12)]"
         >
           {/* Radial Accent Glows */}
           <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[480px] h-[240px] bg-tv-accent/20 rounded-full blur-[100px] pointer-events-none" />
@@ -36,7 +36,7 @@ export default function QuickStartSection() {
             <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 w-full sm:w-auto">
               <AuthButton
                 variant="primary"
-                className="w-full sm:w-auto px-7 py-3 text-xs md:text-sm font-semibold rounded-full flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(255,100,13,0.3)]"
+                className="w-full sm:w-auto px-7 py-3 text-xs md:text-sm font-semibold rounded-full flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(254,80,0,0.3)]"
               >
                 Get Started Now <ArrowRight size={15} />
               </AuthButton>

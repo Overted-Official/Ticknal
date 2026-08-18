@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import type { SectorPerformanceItem } from '@/app/api/sectors/performance/route';
+import type { SectorPerformanceItem, TickerStrategySignalState, StockPerformanceItem } from '@/lib/sectors-handlers';
 import {
   TrendingUp,
   TrendingDown,
@@ -12,8 +12,6 @@ import {
   LineChart,
   Info,
 } from 'lucide-react';
-
-import type { TickerStrategySignalState } from '@/app/api/sectors/signals/route';
 
 interface SectorInspectorProps {
   sector: SectorPerformanceItem | null;

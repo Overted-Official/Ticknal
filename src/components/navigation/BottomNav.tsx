@@ -106,7 +106,7 @@ export default function BottomNav() {
             className="flex flex-col items-center justify-center group -mt-3 relative"
             title="Quick Add Transaction or Position"
           >
-            <div className="w-10 h-10 rounded-full bg-[#111] border border-plt-orange/50 shadow-[0_0_14px_rgba(255,100,13,0.25)] flex items-center justify-center text-plt-orange transition-all duration-200 group-hover:scale-105 group-hover:border-plt-orange group-active:scale-95">
+            <div className="w-10 h-10 rounded-full bg-[#111] border border-plt-orange/50 shadow-[0_0_14px_rgba(254,80,0,0.25)] flex items-center justify-center text-plt-orange transition-all duration-200 group-hover:scale-105 group-hover:border-plt-orange group-active:scale-95">
               <Plus size={20} strokeWidth={2.4} />
             </div>
             <span className="text-[9px] font-medium text-plt-orange mt-0.5 tracking-tight">

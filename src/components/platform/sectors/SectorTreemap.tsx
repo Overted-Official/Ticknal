@@ -2,10 +2,8 @@
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { computeTreemap, type TreemapNode, type TreemapRect } from './treemapMath';
-import type { SectorPerformanceItem, StockPerformanceItem } from '@/app/api/sectors/performance/route';
+import type { SectorPerformanceItem, StockPerformanceItem, TickerStrategySignalState } from '@/lib/sectors-handlers';
 import { Sparkles, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-
-import type { TickerStrategySignalState } from '@/app/api/sectors/signals/route';
 
 interface SectorTreemapProps {
   sectors: SectorPerformanceItem[];
@@ -162,7 +160,7 @@ export default function SectorTreemap({
             }}
             className={`border transition-all duration-200 overflow-hidden ${
               isSelected
-                ? 'border-plt-orange/80 bg-plt-orange/[0.04] shadow-[0_0_15px_rgba(255,100,13,0.15)] z-10'
+                ? 'border-plt-orange/80 bg-plt-orange/[0.04] shadow-[0_0_15px_rgba(254,80,0,0.15)] z-10'
                 : 'border-white/[0.09] hover:border-white/20 bg-zinc-950/60'
             }`}
             onClick={() => onSelectSector(sectorData.sector)}

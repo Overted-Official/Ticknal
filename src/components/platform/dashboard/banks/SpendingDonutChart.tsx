@@ -7,7 +7,7 @@ import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 const PIE_COLORS = [
   '#22c55e', // green
   '#38bdf8', // sky
-  '#ff640d', // orange
+  '#FE5000', // orange
   '#a855f7', // purple
   '#f59e0b', // amber
   '#ec4899', // pink

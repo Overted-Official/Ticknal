@@ -14,15 +14,15 @@
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
   
-  --accent-blue: rgb(255, 100, 13);
-  --accent-blue-hover: #e55a0b;
+  --accent-blue: rgb(254, 80, 0);
+  --accent-blue-hover: #e04600;
   
   --up-color: #34CF82;
   --down-color: #FF4242;
   
   --border-color: rgba(255, 255, 255, 0.09);
   --border-highlight-soft: rgba(255, 255, 255, 0.15);
-  --border-highlight: #ff640d;
+  --border-highlight: #FE5000;
 
   /* ==========================================================================
      Internal Platform Palette
@@ -35,13 +35,13 @@
 
   --plt-border: rgba(255, 255, 255, 0.09);
   --plt-border-soft: rgba(255, 255, 255, 0.05);
-  --plt-border-active: #ff640d;
+  --plt-border-active: #FE5000;
 
   --plt-accent-red: #ef4444;
   --plt-accent-red-hover: #f87171;
   --plt-accent-red-soft: #7f1d1d;
-  --plt-accent-orange: #ff640d;
-  --plt-accent-orange-hover: #ff7a1a;
+  --plt-accent-orange: #FE5000;
+  --plt-accent-orange-hover: #ff661a;
   --plt-accent-green: #22c55e;
   --plt-accent-cyan: #06b6d4;
   --plt-accent-violet: #a855f7;

@@ -78,7 +78,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.15 }}
-            className="bg-[#120e0c] border-2 border-tv-accent relative rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-[0_0_40px_rgba(255,100,13,0.18)]"
+            className="bg-[#120e0c] border-2 border-tv-accent relative rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-[0_0_40px_rgba(254,80,0,0.18)]"
           >
             {/* Pill */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-tv-accent text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-md">
@@ -113,7 +113,7 @@ export default function Pricing() {
               </ul>
             </div>
 
-            <AuthButton variant="primary" className="w-full py-3 text-xs font-semibold rounded-lg shadow-[0_0_16px_rgba(255,100,13,0.3)]">
+            <AuthButton variant="primary" className="w-full py-3 text-xs font-semibold rounded-lg shadow-[0_0_16px_rgba(254,80,0,0.3)]">
               Upgrade to Pro
             </AuthButton>
           </motion.div>

@@ -838,7 +838,7 @@ export default function SettingsView({
                   onClick={() => handleStrategyScopeChange('all')}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
                     alertStrategyScope === 'all'
-                      ? 'bg-white/[0.06] border-plt-orange/60 shadow-[0_0_15px_rgba(255,100,13,0.12)]'
+                      ? 'bg-white/[0.06] border-plt-orange/60 shadow-[0_0_15px_rgba(254,80,0,0.12)]'
                       : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
                   }`}
                 >

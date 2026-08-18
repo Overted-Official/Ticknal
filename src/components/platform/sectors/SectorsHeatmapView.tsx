@@ -26,8 +26,7 @@ import {
 import SectorTreemap from './SectorTreemap';
 import SectorInspector from './SectorInspector';
 import SectorRotationMatrix from './SectorRotationMatrix';
-import type { SectorsPerformanceResponse, SectorPerformanceItem } from '@/app/api/sectors/performance/route';
-import type { SectorStrategySignalsResponse } from '@/app/api/sectors/signals/route';
+import type { SectorsPerformanceResponse, SectorPerformanceItem, SectorStrategySignalsResponse } from '@/lib/sectors-handlers';
 import { getAvailableStrategies } from '@/strategies/registry';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());

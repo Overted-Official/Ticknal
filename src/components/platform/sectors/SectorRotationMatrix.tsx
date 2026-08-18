@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { SectorPerformanceItem } from '@/app/api/sectors/performance/route';
+import type { SectorPerformanceItem } from '@/lib/sectors-handlers';
 import { TrendingUp, Zap, AlertTriangle, TrendingDown, Info } from 'lucide-react';
 
 interface SectorRotationMatrixProps {

@@ -285,7 +285,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                       isFilled
                         ? isError
                           ? 'bg-rose-500 scale-110 shadow-[0_0_8px_rgba(244,63,94,0.5)]'
-                          : 'bg-plt-orange scale-110 shadow-[0_0_8px_rgba(255,100,13,0.5)]'
+                          : 'bg-plt-orange scale-110 shadow-[0_0_8px_rgba(254,80,0,0.5)]'
                         : 'bg-white/10 border border-white/20'
                     }`}
                   />

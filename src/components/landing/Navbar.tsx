@@ -40,7 +40,7 @@ export default function Navbar() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 rounded-full bg-tv-accent flex items-center justify-center text-black font-bold shadow-[0_0_12px_rgba(255,100,13,0.4)] group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-full bg-tv-accent flex items-center justify-center text-black font-bold shadow-[0_0_12px_rgba(254,80,0,0.4)] group-hover:scale-105 transition-transform">
             <BarChart2 size={15} strokeWidth={2.5} />
           </div>
           <span className="text-white font-bold text-sm tracking-tight">QuantEGX</span>

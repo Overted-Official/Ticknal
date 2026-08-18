@@ -351,7 +351,7 @@ export default function SignalPanel({
               <div className="w-[20%] h-full bg-rose-500/30" title="Overbought / Sell" />
               {masterIndex !== null && (
                 <div 
-                  className="absolute top-0 bottom-0 w-1.5 bg-plt-orange rounded-full shadow-[0_0_8px_rgba(255,100,13,0.8)] -ml-0.5 transition-all duration-300"
+                  className="absolute top-0 bottom-0 w-1.5 bg-plt-orange rounded-full shadow-[0_0_8px_rgba(254,80,0,0.8)] -ml-0.5 transition-all duration-300"
                   style={{ left: `${Math.min(Math.max(masterIndex, 0), 100)}%` }}
                 />
               )}

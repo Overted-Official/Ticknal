@@ -208,7 +208,7 @@ export default function PinLockScreen({
     >
       {/* Top Header */}
       <div className="flex flex-col items-center text-center space-y-3 mt-2">
-        <div className="w-13 h-13 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center shadow-[0_0_24px_rgba(255,100,13,0.15)] relative">
+        <div className="w-13 h-13 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center shadow-[0_0_24px_rgba(254,80,0,0.15)] relative">
           <Lock size={22} className="text-plt-orange" />
           <div className="absolute inset-0 rounded-2xl border border-plt-orange/30 animate-pulse" />
         </div>
@@ -235,7 +235,7 @@ export default function PinLockScreen({
                   isFilled
                     ? isError
                       ? 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)] scale-115'
-                      : 'bg-plt-orange shadow-[0_0_12px_rgba(255,100,13,0.6)] scale-110'
+                      : 'bg-plt-orange shadow-[0_0_12px_rgba(254,80,0,0.6)] scale-110'
                     : 'bg-white/10 border border-white/20'
                 }`}
               />
