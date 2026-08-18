@@ -7,11 +7,17 @@ import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { verifyCronAuth } from '@/lib/cron-auth';
 
+function getTradingViewSymbol(symbol: string, exchange: string | null = 'EGX'): string {
+  if (symbol === 'EGX70') return 'EGX:EGX70EWI';
+  if (symbol === 'EGX100') return 'EGX:EGX100EWI';
+  const ex = exchange || 'EGX';
+  return `${ex}:${symbol.replace('.CA', '')}`;
+}
+
 function fetchSymbolPeriods(client: TradingViewClient, symbol: string, exchange: string | null = 'EGX', rangeBars: number = 30): Promise<TradingViewPeriod[]> {
   return new Promise((resolve) => {
     try {
-      const ex = exchange || 'EGX';
-      const tvSymbol = `${ex}:${symbol.replace('.CA', '')}`;
+      const tvSymbol = getTradingViewSymbol(symbol, exchange);
       const chart = new client.Session.Chart();
       
       chart.setMarket(tvSymbol, { timeframe: 'D', range: rangeBars });
