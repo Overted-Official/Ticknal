@@ -157,6 +157,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Process Stock Metrics & Group by Sector
+    let egx30Return: number | null = null;
     const stockItems: StockPerformanceItem[] = [];
     let totalMarketTurnover = 0;
     let totalMarketGainers = 0;
@@ -165,18 +166,34 @@ export async function GET(request: Request) {
     for (const row of rawRows) {
       const sym = row.ticker_symbol as string;
       const meta = tickerMap.get(sym);
-      const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(sym.toUpperCase());
-
-      let sector = meta?.sector || 'Unclassified';
-      if (isFund || sector.toLowerCase().includes('fund')) {
-        sector = 'Funds';
-      }
-
       const startPrice = Number(row.start_price);
       const endPrice = Number(row.end_price);
       const volume = Number(row.total_volume || 0);
       const turnover = Number(row.total_turnover || (endPrice * volume));
       const returnPct = startPrice > 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
+
+      if (sym.toUpperCase() === 'EGX30') {
+        egx30Return = returnPct;
+        continue;
+      }
+
+      // Filter out market indices and macro currency pairs from the individual stock groups
+      const isIndexOrMacro = 
+        meta?.sector === 'Indices' || 
+        meta?.sector === 'Macro' || 
+        ['EGX70', 'EGX100', 'EGX30', 'USDEGP'].includes(sym.toUpperCase());
+      
+      if (isIndexOrMacro) {
+        continue;
+      }
+
+      const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(sym.toUpperCase());
+
+      let sector = meta?.sector || 'Other';
+      if (isFund || sector.toLowerCase().includes('fund')) {
+        sector = 'Funds';
+      }
+
       const isAdvancing = returnPct > 0;
 
       totalMarketTurnover += turnover;
@@ -215,6 +232,8 @@ export async function GET(request: Request) {
       ? stockItems.reduce((sum, s) => sum + s.returnPct, 0) / stockItems.length
       : 0;
 
+    const benchmarkReturn = egx30Return !== null ? egx30Return : marketWeightedReturn;
+
     const sectors: SectorPerformanceItem[] = [];
 
     for (const [sectorName, stocks] of sectorGroups.entries()) {
@@ -234,7 +253,7 @@ export async function GET(request: Request) {
         : 0;
 
       const equalWeightedReturn = stocks.reduce((sum, s) => sum + s.returnPct, 0) / stocks.length;
-      const relativeStrengthVsBenchmark = turnoverWeightedReturn - marketWeightedReturn;
+      const relativeStrengthVsBenchmark = turnoverWeightedReturn - benchmarkReturn;
 
       // Identify Top Driver (Stock contributing most positively to sector points)
       let topDriver: SectorPerformanceItem['topDriver'] = null;
@@ -271,11 +290,10 @@ export async function GET(request: Request) {
       }
 
       // Determine Sector Rotation Regime (RRG)
-      // Momentum is estimated by outperformance vs equal weighted base
       const momentumSpread = turnoverWeightedReturn - equalWeightedReturn;
       let rotationRegime: SectorPerformanceItem['rotationRegime'] = 'Lagging';
 
-      if (turnoverWeightedReturn >= marketWeightedReturn) {
+      if (turnoverWeightedReturn >= benchmarkReturn) {
         rotationRegime = momentumSpread >= 0 ? 'Leading' : 'Weakening';
       } else {
         rotationRegime = momentumSpread >= 0 ? 'Improving' : 'Lagging';
