@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { extractThothFeatures, type ThothBarFeatures } from './thothFeatureExtractor';
+import { extractThothFeatures } from './thothFeatureExtractor';
 import type { PriceBar } from '../PSI/psiStrategy';
 import { getOnnxRuntime, createSafeInferenceSession } from '@/lib/onnx-loader';
 
@@ -20,6 +20,13 @@ interface ScalerParams {
   up: { mean: number[]; scale: number[] };
   down: { mean: number[]; scale: number[] };
 }
+
+/**
+ * Chunk size for streamed ONNX inference.
+ * 32 windows × 120 seqLen × 18 features = 69,120 floats ≈ 270 KB per direction per chunk.
+ * This keeps peak memory well within Vercel's serverless limit (was OOM-ing at ~11 MB+ per pass).
+ */
+const INFERENCE_CHUNK_SIZE = 32;
 
 export class ThothEngine {
   private static instance: ThothEngine | null = null;
@@ -62,10 +69,7 @@ export class ThothEngine {
           return;
         }
 
-        const scalersContent = fs.readFileSync(scalersPath, 'utf-8');
-        this.scalers = JSON.parse(scalersContent);
-
-        // Load ONNX sessions safely
+        this.scalers = JSON.parse(fs.readFileSync(scalersPath, 'utf-8'));
         this.sessionUp = await createSafeInferenceSession(ort, upPath);
         this.sessionDown = await createSafeInferenceSession(ort, downPath);
       } catch (err) {
@@ -80,7 +84,9 @@ export class ThothEngine {
   }
 
   /**
-   * Runs end-to-end Thoth inference on historical price bars.
+   * Runs chunked Thoth inference on historical price bars.
+   * Instead of one monolithic Float32Array per direction (which caused OOM),
+   * we process INFERENCE_CHUNK_SIZE windows at a time, keeping peak allocation ~270 KB.
    */
   public async predict(bars: PriceBar[]): Promise<ThothModelPrediction[]> {
     await this.initialize();
@@ -94,9 +100,10 @@ export class ThothEngine {
 
     const seqLen = 120;
     const numFeatures = 18;
-    const results: ThothModelPrediction[] = [];
+    const predictions = new Float32Array(featureBars.length);
+    // Default 0.0 — bars before the first full window will have no prediction
 
-    // Separate directional feature history
+    // Partition bars by direction
     const upBars: { idx: number; feat: number[] }[] = [];
     const downBars: { idx: number; feat: number[] }[] = [];
 
@@ -108,68 +115,63 @@ export class ThothEngine {
       }
     }
 
-    const predictions = new Float32Array(featureBars.length);
-    predictions.fill(0.0); // Default to 0.0 before sequence window is filled
+    /**
+     * Runs chunked inference for a single direction.
+     * Each chunk allocates: CHUNK_SIZE × seqLen × numFeatures = max ~270 KB.
+     */
+    const runChunked = async (
+      session: any,
+      dirBars: { idx: number; feat: number[] }[],
+      scalerMean: number[],
+      scalerScale: number[]
+    ) => {
+      const validCount = dirBars.length - seqLen + 1;
+      if (validCount <= 0) return;
 
-    // 1. Infer UP directional sequences
+      for (let chunkStart = 0; chunkStart < validCount; chunkStart += INFERENCE_CHUNK_SIZE) {
+        const chunkEnd = Math.min(chunkStart + INFERENCE_CHUNK_SIZE, validCount);
+        const chunkSize = chunkEnd - chunkStart;
+
+        const inputBuffer = new Float32Array(chunkSize * seqLen * numFeatures);
+
+        for (let b = 0; b < chunkSize; b++) {
+          for (let s = 0; s < seqLen; s++) {
+            const feat = dirBars[chunkStart + b + s].feat;
+            const destOffset = (b * seqLen + s) * numFeatures;
+            for (let f = 0; f < numFeatures; f++) {
+              const scale = scalerScale[f] !== 0 ? scalerScale[f] : 1;
+              inputBuffer[destOffset + f] = (feat[f] - scalerMean[f]) / scale;
+            }
+          }
+        }
+
+        try {
+          const inputTensor = new ort.Tensor('float32', inputBuffer, [chunkSize, seqLen, numFeatures]);
+          const output = await session.run({ input_sequences: inputTensor });
+          const outData = output.predicted_exhaustion.data as Float32Array;
+
+          for (let b = 0; b < chunkSize; b++) {
+            const origIdx = dirBars[chunkStart + b + seqLen - 1].idx;
+            predictions[origIdx] = Math.max(0.0, Math.min(100.0, outData[b]));
+          }
+        } catch (runErr) {
+          console.warn('[ThothEngine] Chunk inference failed:', (runErr as Error).message);
+        }
+      }
+    };
+
+    // 1. UP direction — chunked
     if (upBars.length >= seqLen) {
-      const validUpCount = upBars.length - seqLen + 1;
-      const inputBuffer = new Float32Array(validUpCount * seqLen * numFeatures);
-
-      for (let b = 0; b < validUpCount; b++) {
-        for (let s = 0; s < seqLen; s++) {
-          const feat = upBars[b + s].feat;
-          const destOffset = (b * seqLen + s) * numFeatures;
-          for (let f = 0; f < numFeatures; f++) {
-            inputBuffer[destOffset + f] = (feat[f] - this.scalers.up.mean[f]) / this.scalers.up.scale[f];
-          }
-        }
-      }
-
-      try {
-        const inputTensor = new ort.Tensor('float32', inputBuffer, [validUpCount, seqLen, numFeatures]);
-        const output = await this.sessionUp.run({ input_sequences: inputTensor });
-        const outData = output.predicted_exhaustion.data as Float32Array;
-
-        for (let b = 0; b < validUpCount; b++) {
-          const origIdx = upBars[b + seqLen - 1].idx;
-          predictions[origIdx] = Math.max(0.0, Math.min(100.0, outData[b]));
-        }
-      } catch (runErr) {
-        console.warn('[ThothEngine] UP inference failed:', (runErr as Error).message);
-      }
+      await runChunked(this.sessionUp, upBars, this.scalers.up.mean, this.scalers.up.scale);
     }
 
-    // 2. Infer DOWN directional sequences
+    // 2. DOWN direction — chunked
     if (downBars.length >= seqLen) {
-      const validDownCount = downBars.length - seqLen + 1;
-      const inputBuffer = new Float32Array(validDownCount * seqLen * numFeatures);
-
-      for (let b = 0; b < validDownCount; b++) {
-        for (let s = 0; s < seqLen; s++) {
-          const feat = downBars[b + s].feat;
-          const destOffset = (b * seqLen + s) * numFeatures;
-          for (let f = 0; f < numFeatures; f++) {
-            inputBuffer[destOffset + f] = (feat[f] - this.scalers.down.mean[f]) / this.scalers.down.scale[f];
-          }
-        }
-      }
-
-      try {
-        const inputTensor = new ort.Tensor('float32', inputBuffer, [validDownCount, seqLen, numFeatures]);
-        const output = await this.sessionDown.run({ input_sequences: inputTensor });
-        const outData = output.predicted_exhaustion.data as Float32Array;
-
-        for (let b = 0; b < validDownCount; b++) {
-          const origIdx = downBars[b + seqLen - 1].idx;
-          predictions[origIdx] = Math.max(0.0, Math.min(100.0, outData[b]));
-        }
-      } catch (runErr) {
-        console.warn('[ThothEngine] DOWN inference failed:', (runErr as Error).message);
-      }
+      await runChunked(this.sessionDown, downBars, this.scalers.down.mean, this.scalers.down.scale);
     }
 
-    // Build final results
+    // Build final results array
+    const results: ThothModelPrediction[] = [];
     for (let i = 0; i < featureBars.length; i++) {
       results.push({
         date: featureBars[i].date,
@@ -187,7 +189,7 @@ export class ThothEngine {
   }
 
   /**
-   * Fast single-bar inference on latest sequence.
+   * Convenience: run predict on all bars, return only the last prediction.
    */
   public async predictLatest(bars: PriceBar[]): Promise<ThothModelPrediction | null> {
     const all = await this.predict(bars);
