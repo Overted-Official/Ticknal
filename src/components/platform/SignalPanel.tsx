@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Target,
   Activity,
@@ -83,6 +84,11 @@ export default function SignalPanel({
   const [trainingModel, setTrainingModel] = useState<'psi8' | 'psi40'>('psi8');
   const [trainCutoffPreset, setTrainCutoffPreset] = useState<'2020' | '2022' | '2024' | 'custom'>('2024');
   const [customCutoffDate, setCustomCutoffDate] = useState<string>("2024-12-31");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Optimization Drawer State
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -680,11 +686,11 @@ export default function SignalPanel({
       {/* -------------------------------------------------- */}
       {/* MOBILE EXPANDED BOTTOM SHEET DRAWER                */}
       {/* -------------------------------------------------- */}
-      {expanded && (
-        <div className="md:hidden fixed inset-0 z-50 overflow-hidden flex flex-col justify-end">
+      {expanded && mounted && typeof document !== 'undefined' && createPortal(
+        <div className="md:hidden fixed inset-0 z-50 overflow-hidden flex flex-col justify-end pointer-events-auto">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in"
             onClick={() => setExpanded(false)}
           />
           {/* Bottom Sheet */}
@@ -718,7 +724,8 @@ export default function SignalPanel({
               {renderInspectorBody()}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* -------------------------------------------------- */}
