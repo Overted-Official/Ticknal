@@ -65,19 +65,6 @@ const nextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      { source: '/api/signals', destination: '/api/strategy/signals' },
-      { source: '/api/metrics', destination: '/api/strategy/metrics' },
-      { source: '/api/strategy-levels', destination: '/api/strategy/levels' },
-      { source: '/api/predict', destination: '/api/strategy/predict' },
-      { source: '/api/quote', destination: '/api/market/quote' },
-      { source: '/api/tickers', destination: '/api/market/tickers' },
-      { source: '/api/macro/inflation', destination: '/api/market/inflation' },
-      { source: '/api/positions', destination: '/api/user/positions' },
-      { source: '/api/system-logs', destination: '/api/user/system-logs' },
-    ];
-  },
   eslint: {
     ignoreDuringBuilds: true,
   },
