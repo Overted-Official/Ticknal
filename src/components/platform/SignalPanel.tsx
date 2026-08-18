@@ -409,7 +409,7 @@ export default function SignalPanel({
             </div>
           </div>
 
-          {/* 4-Metric Grid */}
+          {/* 6-Metric Grid */}
           <div className="grid grid-cols-2 gap-1.5">
             <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Win Rate</span>
@@ -433,6 +433,18 @@ export default function SignalPanel({
               <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Avg Return/Trade</span>
               <span className="text-xs font-mono font-bold text-white mt-1">
                 {metrics?.['Avg. Return/Trade'] ? `${metrics['Avg. Return/Trade']}%` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Avg Bars/Trade</span>
+              <span className="text-xs font-mono font-bold text-white mt-1">
+                {metrics?.['Avg Bars/Trade'] ? `${metrics['Avg Bars/Trade']} bars` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-rose-400/80 font-medium">Max Adv Excursion</span>
+              <span className="text-xs font-mono font-bold text-rose-400 mt-1">
+                {metrics?.['Max Adverse Excursion'] ? `${metrics['Max Adverse Excursion']}%` : '—'}
               </span>
             </div>
           </div>
