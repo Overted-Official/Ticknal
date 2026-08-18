@@ -54,5 +54,7 @@ quant_engine/.pytest_cache/
 quant_engine/artifacts/  
 quant_engine/*.txt  
 quant_engine/*.json  
+__pycache__/
+*.py[cod]
 _archived/
 _*/

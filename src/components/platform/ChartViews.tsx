@@ -2,25 +2,25 @@
 
 import React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { LineChart, Briefcase, LayoutGrid } from 'lucide-react';
+import { LineChart, LayoutGrid } from 'lucide-react';
 import SubNavTopRail, { type SubNavTabItem } from '@/components/navigation/SubNavTopRail';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
 interface ChartViewsProps {
-  children: React.ReactNode; // The ChartReplayWorkspace + BottomToolbar
-  positionsView: React.ReactNode; // The TickerPositions component
+  children: React.ReactNode; // The ChartReplayWorkspace + BottomToolbar (Tickers view)
   sectorsView?: React.ReactNode; // The SectorsHeatmapView component
 }
 
-const CHART_VIEWS_TABS = ['chart', 'positions', 'sectors'] as const;
+const CHART_VIEWS_TABS = ['sectors', 'chart'] as const;
 
-export default function ChartViews({ children, positionsView, sectorsView }: ChartViewsProps) {
+export default function ChartViews({ children, sectorsView }: ChartViewsProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
   const rawView = searchParams.get('view');
-  const currentView = (rawView === 'positions' || rawView === 'sectors' ? rawView : 'chart') as 'chart' | 'positions' | 'sectors';
+  // Default to 'sectors' unless view=chart is explicitly set or if a ticker query exists
+  const currentView = (rawView === 'chart' ? 'chart' : 'sectors') as 'sectors' | 'chart';
 
   const setView = (newView: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -35,9 +35,8 @@ export default function ChartViews({ children, positionsView, sectorsView }: Cha
   });
 
   const navItems: SubNavTabItem[] = [
-    { label: 'Chart', value: 'chart', icon: LineChart },
-    { label: 'Positions', value: 'positions', icon: Briefcase },
-    { label: 'Sectors & Heatmap', value: 'sectors', icon: LayoutGrid },
+    { label: 'Sectors', value: 'sectors', icon: LayoutGrid },
+    { label: 'Tickers', value: 'chart', icon: LineChart },
   ];
 
   return (
@@ -51,14 +50,11 @@ export default function ChartViews({ children, positionsView, sectorsView }: Cha
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden relative flex flex-col min-h-0">
-        <div className={`absolute inset-0 flex flex-col ${currentView === 'chart' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
-          {children}
-        </div>
-        <div className={`absolute inset-0 flex flex-col bg-plt-base ${currentView === 'positions' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
-          {positionsView}
-        </div>
         <div className={`absolute inset-0 flex flex-col bg-plt-base ${currentView === 'sectors' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
           {sectorsView}
+        </div>
+        <div className={`absolute inset-0 flex flex-col ${currentView === 'chart' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
+          {children}
         </div>
       </div>
     </div>

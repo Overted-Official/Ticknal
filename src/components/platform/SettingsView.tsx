@@ -457,10 +457,10 @@ export default function SettingsView({
                 <span className="text-plt-orange">→</span>
               </Link>
               <Link
-                href="/charts"
+                href="/invest"
                 className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
               >
-                <span>Open Charts</span>
+                <span>Open Invest</span>
                 <span className="text-plt-orange">→</span>
               </Link>
             </div>
@@ -898,9 +898,9 @@ export default function SettingsView({
 
                         <div className="flex items-center gap-1 shrink-0">
                           <Link
-                            href={`/charts?symbol=${ticker.symbol}`}
+                            href={`/invest?ticker=${ticker.symbol}&view=chart`}
                             className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
-                            title="Open in Charts"
+                            title="Open in Invest"
                           >
                             <TrendingUp size={14} />
                           </Link>
@@ -1012,9 +1012,9 @@ export default function SettingsView({
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <Link
-                                href={`/charts?symbol=${ticker.symbol}`}
+                                href={`/invest?ticker=${ticker.symbol}&view=chart`}
                                 className="p-1 rounded text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
-                                title="Open in Charts"
+                                title="Open in Invest"
                               >
                                 <TrendingUp size={14} />
                               </Link>

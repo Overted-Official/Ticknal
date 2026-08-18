@@ -307,10 +307,10 @@ export default function NotificationsDrawer({
 
                         <div className="flex items-center gap-1">
                           <Link
-                            href={`/charts?symbol=${item.tickerSymbol}`}
+                            href={`/invest?ticker=${item.tickerSymbol}&view=chart`}
                             onClick={onClose}
                             className="p-1 rounded text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors"
-                            title="Open in Charts"
+                            title="Open in Invest"
                           >
                             <ArrowUpRight size={14} />
                           </Link>

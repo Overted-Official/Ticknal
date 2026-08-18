@@ -47,6 +47,9 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
   const [sizingMetric, setSizingMetric] = useState<'turnover' | 'volume' | 'equal'>('turnover');
   const [viewLayout, setViewLayout] = useState<'treemap' | 'matrix'>('treemap');
   
+  // GICS Granularity Level: 'sector' (11 Sectors) | 'industryGroup' (25 Groups) | 'industry' (Granular Industries)
+  const [granularity, setGranularity] = useState<'sector' | 'industryGroup' | 'industry'>('sector');
+  
   // Dual-Mode State: 'macro' (Market Macro) vs 'strategy' (Strategy Signals)
   const [analysisMode, setAnalysisMode] = useState<'macro' | 'strategy'>('macro');
   const [filterActiveSignalsOnly, setFilterActiveSignalsOnly] = useState(false);
@@ -81,9 +84,9 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
 
   const { start, end } = getDates();
 
-  // SWR Query for Market Macro Data
+  // SWR Query for Market Macro Data with Granularity support
   const { data, error, isLoading, mutate } = useSWR<SectorsPerformanceResponse>(
-    `/api/sectors/performance?start=${start}&end=${end}&strategy=${selectedStrategy}`,
+    `/api/sectors/performance?start=${start}&end=${end}&strategy=${selectedStrategy}&granularity=${granularity}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -122,7 +125,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
     if (onOpenTickerChart) {
       onOpenTickerChart(symbol);
     } else {
-      router.push(`/charts?ticker=${symbol}&view=chart`);
+      router.push(`/invest?ticker=${symbol}&view=chart`);
     }
   };
 
@@ -198,6 +201,43 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
             >
               <Zap size={11} />
               <span>Strategy Signals</span>
+            </button>
+          </div>
+
+          {/* Granularity Level Selector (GICS Tier: Sector | Industry Group | Industry) */}
+          <div className="flex bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.06] text-[10px]">
+            <button
+              type="button"
+              onClick={() => {
+                setGranularity('sector');
+                setSelectedSector(null);
+              }}
+              className={`px-2 py-0.5 rounded transition ${granularity === 'sector' ? 'bg-zinc-800 text-white font-bold' : 'text-white/40 hover:text-white/80'}`}
+              title="11 Macro Economic Sectors"
+            >
+              Sector
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGranularity('industryGroup');
+                setSelectedSector(null);
+              }}
+              className={`px-2 py-0.5 rounded transition ${granularity === 'industryGroup' ? 'bg-zinc-800 text-white font-bold' : 'text-white/40 hover:text-white/80'}`}
+              title="25 GICS Industry Groups"
+            >
+              Group
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGranularity('industry');
+                setSelectedSector(null);
+              }}
+              className={`px-2 py-0.5 rounded transition ${granularity === 'industry' ? 'bg-zinc-800 text-white font-bold' : 'text-white/40 hover:text-white/80'}`}
+              title="Granular GICS Industries"
+            >
+              Industry
             </button>
           </div>
 
@@ -379,15 +419,17 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       ) : marketSummary ? (
         /* Market Macro KPI Strip */
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0 relative z-30">
-          {/* Top Sector */}
+          {/* Top Sector / Group / Industry */}
           <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between group relative">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
-                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Top Sector</span>
+                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">
+                  Top {granularity === 'industryGroup' ? 'Group' : granularity === 'industry' ? 'Industry' : 'Sector'}
+                </span>
                 <div className="relative group/tooltip">
                   <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
                   <div className="absolute left-0 top-full mt-1.5 hidden group-hover/tooltip:block w-52 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
-                    The highest performing economic sector in this timeframe, weighted by total traded liquidity (EGP volume).
+                    The highest performing group in this timeframe, weighted by total traded liquidity (EGP volume).
                   </div>
                 </div>
               </div>
@@ -398,15 +440,17 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
             </span>
           </div>
 
-          {/* Laggard Sector */}
+          {/* Laggard Sector / Group / Industry */}
           <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.08] flex items-center justify-between group relative">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
-                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Laggard Sector</span>
+                <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">
+                  Laggard {granularity === 'industryGroup' ? 'Group' : granularity === 'industry' ? 'Industry' : 'Sector'}
+                </span>
                 <div className="relative group/tooltip">
                   <Info className="w-3 h-3 text-white/30 hover:text-white/80 cursor-help transition" />
                   <div className="absolute left-0 top-full mt-1.5 hidden group-hover/tooltip:block w-52 p-2.5 rounded-lg bg-zinc-900/95 backdrop-blur-md border border-white/15 text-[10px] text-white/80 leading-tight shadow-2xl z-50 pointer-events-none">
-                    The lowest performing sector in this timeframe, indicating capital outflows or rotation out of this industry.
+                    The lowest performing group in this timeframe, indicating capital outflows or rotation out of this category.
                   </div>
                 </div>
               </div>
@@ -510,6 +554,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
           <SectorInspector
             sector={activeSectorData}
             selectedTicker={selectedTicker}
+            granularity={granularity}
             analysisMode={analysisMode}
             signalsMap={signalsData?.signalsByTicker}
             onSelectTicker={handleSelectTicker}
@@ -523,7 +568,9 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
         <div className="fixed inset-0 z-50 md:hidden bg-black/80 backdrop-blur-sm flex flex-col justify-end">
           <div className="bg-zinc-950 border-t border-white/20 rounded-t-2xl p-4 max-h-[80vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <span className="font-bold text-sm text-white">Sector Inspector</span>
+              <span className="font-bold text-sm text-white">
+                {granularity === 'industryGroup' ? 'Industry Group' : granularity === 'industry' ? 'Industry' : 'Sector'} Inspector
+              </span>
               <button
                 type="button"
                 onClick={() => setIsMobileDrawerOpen(false)}
@@ -536,6 +583,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
               <SectorInspector
                 sector={activeSectorData}
                 selectedTicker={selectedTicker}
+                granularity={granularity}
                 analysisMode={analysisMode}
                 signalsMap={signalsData?.signalsByTicker}
                 onSelectTicker={handleSelectTicker}

@@ -25,10 +25,11 @@ import {
   type Time,
 } from 'lightweight-charts';
 import { Search, Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Eye, EyeOff, Sparkles, Loader2 } from '@/components/ui/icons';
-import { BarChart2, Check } from 'lucide-react';
+import { BarChart2, Check, Briefcase } from 'lucide-react';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
+import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
 import { INDICATORS, getAvailableIndicators } from '@/indicators';
 import { WatchlistItem } from '@/components/platform/RightSidebar';
 import { useToast } from '@/context/ToastContext';
@@ -152,6 +153,8 @@ interface ChartWidgetProps {
   watchlist?: WatchlistItem[];
   showSignals?: boolean;
   onMetricsChange?: (metrics: Record<string, string> | null) => void;
+  tickerPositions?: TickerOrder[];
+  currentPrice?: number;
 }
 
 const DEFAULT_REPLAY_DATE = '2019-12-31';
@@ -177,7 +180,12 @@ export default function ChartWidget({
   activeIndicators = [],
   showSignals = true,
   onMetricsChange,
+  tickerPositions = [],
+  currentPrice,
 }: ChartWidgetProps) {
+  const [positionsDrawerOpen, setPositionsDrawerOpen] = useState(false);
+  const openPositionsCount = tickerPositions.filter((o) => o.status === 'OPEN').length;
+
   const isFund = useMemo(() => {
     return ['CI_QUANT', 'OSOUL', 'COF'].includes(symbol.toUpperCase());
   }, [symbol]);
@@ -832,31 +840,52 @@ export default function ChartWidget({
 
     const fetchLiveQuote = async () => {
       try {
+        if (!data || data.length === 0) return;
+        const lastCandleTime = data[data.length - 1].time;
+
         const res = await fetch(`/api/quote?symbol=${symbol}`);
         if (!res.ok) return;
         const liveData = (await res.json()) as LiveQuote;
+        if (!liveData || !liveData.date) return;
+
         const close = Number(liveData.close);
         const open = Number(liveData.open);
+        const high = Number(liveData.high);
+        const low = Number(liveData.low);
 
-        if (isFund) {
-          (candlestickSeriesRef.current as ISeriesApi<'Area'>)?.update({
-            time: liveData.date as Time,
-            value: close,
-          });
-        } else {
-          (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>)?.update({
-            time: liveData.date as Time,
-            open,
-            high: Number(liveData.high),
-            low: Number(liveData.low),
-            close,
-          });
+        if (isNaN(close) || isNaN(open)) return;
 
-          volumeSeriesRef.current?.update({
-            time: liveData.date as Time,
-            value: Number(liveData.volume),
-            color: close >= open ? '#08998180' : '#f2364580',
-          });
+        // Lightweight Charts only allows updating the latest bar (time >= last candle time)
+        if (liveData.date < lastCandleTime) return;
+
+        try {
+          if (isFund) {
+            (candlestickSeriesRef.current as ISeriesApi<'Area'>)?.update({
+              time: liveData.date as Time,
+              value: close,
+            });
+          } else {
+            (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>)?.update({
+              time: liveData.date as Time,
+              open,
+              high: isNaN(high) ? Math.max(open, close) : high,
+              low: isNaN(low) ? Math.min(open, close) : low,
+              close,
+            });
+
+            if (volumeSeriesRef.current && liveData.volume !== undefined) {
+              const vol = Number(liveData.volume);
+              if (!isNaN(vol)) {
+                volumeSeriesRef.current.update({
+                  time: liveData.date as Time,
+                  value: vol,
+                  color: close >= open ? '#08998180' : '#f2364580',
+                });
+              }
+            }
+          }
+        } catch {
+          // Safeguard against any unexpected non-monotonic timestamp updates
         }
       } catch (error) {
         console.error('Failed to poll live chart data', error);
@@ -866,7 +895,7 @@ export default function ChartWidget({
     fetchLiveQuote();
     const intervalId = setInterval(fetchLiveQuote, 15000);
     return () => clearInterval(intervalId);
-  }, [replayMode, symbol]);
+  }, [replayMode, symbol, data, isFund]);
 
   useEffect(() => {
     if (!replayMode || !isPlaying) return;
@@ -1428,15 +1457,16 @@ export default function ChartWidget({
                 </div>
                 <div className="space-y-1.5 pt-1">
                   {availableIndicators.map((ind) => {
-                    const isActive = activeIndicators.includes(ind.id);
+                    const isSelected = activeIndicators.includes(ind.id);
                     return (
-                      <div
+                      <button
                         key={ind.id}
+                        type="button"
                         onClick={() => toggleIndicator(ind.id)}
-                        className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-all border ${
-                          isActive 
-                            ? 'bg-plt-orange/10 border-plt-orange/30 text-white' 
-                            : 'bg-white/[0.02] border-white/[0.06] text-white/70 hover:bg-white/[0.05] hover:text-white'
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs transition-colors ${
+                          isSelected
+                            ? 'bg-plt-orange/20 text-plt-orange font-medium'
+                            : 'hover:bg-white/[0.06] text-white/80'
                         }`}
                       >
                         <div>
@@ -1444,11 +1474,11 @@ export default function ChartWidget({
                           <div className="text-[10px] text-white/40 leading-snug">{ind.description}</div>
                         </div>
                         <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors ${
-                          isActive ? 'bg-plt-orange border-plt-orange text-black' : 'border-white/20 bg-transparent'
+                          isSelected ? 'bg-plt-orange border-plt-orange text-black' : 'border-white/20 bg-transparent'
                         }`}>
-                          {isActive && <Check className="w-3 h-3 stroke-[3]" />}
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -1456,7 +1486,27 @@ export default function ChartWidget({
             )}
           </div>
 
-          {/* 4. Add Position CTA */}
+          {/* 4. Positions Drawer Button */}
+          <button
+            type="button"
+            title="View Positions & Orders"
+            onClick={() => setPositionsDrawerOpen(true)}
+            className={`h-7.5 rounded-md px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
+              openPositionsCount > 0
+                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 font-semibold'
+                : 'text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white'
+            }`}
+          >
+            <Briefcase className="h-3.5 w-3.5" />
+            <span>Positions</span>
+            {openPositionsCount > 0 && (
+              <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] bg-emerald-500 text-black font-bold">
+                {openPositionsCount}
+              </span>
+            )}
+          </button>
+
+          {/* 5. Add Position CTA */}
           <button
             type="button"
             onClick={() => setIsAddOrderOpen(true)}
@@ -1644,6 +1694,34 @@ export default function ChartWidget({
         }}
         order={selectedOrderToClose}
       />
+
+      {/* Slide-over Positions Drawer for Current Ticker */}
+      {positionsDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md h-full bg-zinc-950 border-l border-white/15 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="h-12 px-4 flex items-center justify-between border-b border-white/10 shrink-0 bg-black/60">
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-plt-orange" />
+                <span className="font-bold text-sm text-white">{symbol.replace('.CA', '')} Positions & Orders</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPositionsDrawerOpen(false)}
+                className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <TickerPositions
+                symbol={symbol}
+                orders={tickerPositions}
+                currentPrice={currentPrice ?? (data.length > 0 ? data[data.length - 1].close : 0)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

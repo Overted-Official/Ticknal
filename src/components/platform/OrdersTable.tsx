@@ -397,7 +397,7 @@ export default function OrdersTable() {
                       <TickerLogo symbol={group.tickerSymbol} logoUrl={group.logoUrl} size="md" />
                       <div>
                         <div className="flex items-center gap-2">
-                          <Link href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
+                          <Link href={`/invest?ticker=${group.tickerSymbol}&view=chart&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-sm flex items-center gap-1.5">
                             {group.tickerSymbol}
                             <span className="text-[10px] text-white/40 font-normal">({group.sector})</span>
                           </Link>
@@ -753,7 +753,7 @@ export default function OrdersTable() {
                           <div className="flex items-center gap-2.5">
                             <TickerLogo symbol={group.tickerSymbol} logoUrl={group.logoUrl} size="sm" />
                             <Link 
-                              href={`/charts?ticker=${group.tickerSymbol}&timeframe=D`} 
+                              href={`/invest?ticker=${group.tickerSymbol}&view=chart&timeframe=D`} 
                               className="font-semibold text-white group-hover:text-plt-orange transition-colors flex items-center gap-1.5"
                               onClick={(e) => e.stopPropagation()}
                             >

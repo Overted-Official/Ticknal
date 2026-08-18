@@ -7,12 +7,15 @@ import SignalPanel from '@/components/platform/SignalPanel';
 import { STRATEGIES } from '@/strategies/registry';
 
 import { WatchlistItem } from '@/components/platform/RightSidebar';
+import { TickerOrder } from '@/components/platform/TickerPositions';
 
 interface ChartReplayWorkspaceProps {
   data: ChartData[];
   symbol: string;
   watchlist?: WatchlistItem[];
   initialReplayMode?: boolean;
+  tickerPositions?: TickerOrder[];
+  currentPrice?: number;
 }
 
 const EMPTY_REPLAY_STATE: ReplayState = {
@@ -26,6 +29,8 @@ export default function ChartReplayWorkspace({
   symbol,
   watchlist = [],
   initialReplayMode = false,
+  tickerPositions = [],
+  currentPrice = 0,
 }: ChartReplayWorkspaceProps) {
   const [replayState, setReplayState] = useState<ReplayState>(
     initialReplayMode ? { ...EMPTY_REPLAY_STATE, active: true } : EMPTY_REPLAY_STATE,
@@ -136,6 +141,8 @@ export default function ChartReplayWorkspace({
         activeIndicators={activeIndicators}
         showSignals={showSignals}
         onMetricsChange={setMetrics}
+        tickerPositions={tickerPositions}
+        currentPrice={currentPrice}
       />
       <SignalPanel
         activeSymbol={symbol}

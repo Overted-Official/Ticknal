@@ -15,6 +15,9 @@ export interface StockPerformanceItem {
   symbol: string;
   companyName: string;
   sector: string;
+  industryGroup?: string | null;
+  industry?: string | null;
+  subIndustry?: string | null;
   logoUrl: string | null;
   startPrice: number;
   endPrice: number;
@@ -78,6 +81,7 @@ export interface SectorsPerformanceResponse {
     laggardSectorReturn: number;
   };
   sectors: SectorPerformanceItem[];
+  granularity?: 'sector' | 'industryGroup' | 'industry';
 }
 
 export async function GET(request: Request) {
@@ -87,8 +91,9 @@ export async function GET(request: Request) {
     const endDate = searchParams.get('end') || new Date().toISOString().split('T')[0];
     const strategy = searchParams.get('strategy') || 'psi';
     const strategyModel = searchParams.get('model') || 'psi8';
+    const granularity = (searchParams.get('granularity') || 'sector') as 'sector' | 'industryGroup' | 'industry';
 
-    const cacheKey = `${startDate}_${endDate}_${strategy}_${strategyModel}`;
+    const cacheKey = `${startDate}_${endDate}_${strategy}_${strategyModel}_${granularity}`;
     const cached = memCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       return NextResponse.json(cached.data);
@@ -203,6 +208,9 @@ export async function GET(request: Request) {
         symbol: sym,
         companyName: meta?.companyName || sym,
         sector,
+        industryGroup: meta?.industryGroup || null,
+        industry: meta?.industry || null,
+        subIndustry: meta?.subIndustry || null,
         logoUrl: meta?.logoUrl || null,
         startPrice,
         endPrice,
@@ -214,12 +222,16 @@ export async function GET(request: Request) {
       });
     }
 
-    // 4. Sector Level Aggregations
+    // 4. Sector / Industry Group / Industry Level Aggregations
     const sectorGroups = new Map<string, StockPerformanceItem[]>();
     for (const stock of stockItems) {
-      const list = sectorGroups.get(stock.sector) || [];
+      const groupKey =
+        granularity === 'industryGroup' ? (stock.industryGroup || 'Other') :
+        granularity === 'industry' ? (stock.industry || 'Other') :
+        stock.sector;
+      const list = sectorGroups.get(groupKey) || [];
       list.push(stock);
-      sectorGroups.set(stock.sector, list);
+      sectorGroups.set(groupKey, list);
     }
 
     // Compute Market-Wide Weighted Return Benchmark
@@ -357,6 +369,7 @@ export async function GET(request: Request) {
         laggardSectorReturn,
       },
       sectors,
+      granularity,
     };
 
     // Store in in-memory cache

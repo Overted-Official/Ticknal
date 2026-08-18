@@ -140,11 +140,20 @@ const TICKER_PRESETS: Record<string, Partial<PsiStrategyParams>> = {
   OLFI: { entryLevels: [14.6, 50.0], useAym: true, aymMultiplier: 3, aymLimit: 88.6, useAtr: true, atrDistance: 4, useStoploss: false, stoplossLevel: null },
   ORWE: { entryLevels: [14.6, 23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: false, atrDistance: null, useStoploss: false, stoplossLevel: null },
   ETEL: { entryLevels: [14.6, 38.2, 61.8], useAym: true, aymMultiplier: 5, aymLimit: 78.6, useAtr: false, atrDistance: null, useStoploss: false, stoplossLevel: null },
-  XAUUSD: { entryLevels: [14.6, 23.6, 38.2, 50.0], useAym: true, aymMultiplier: 2, aymLimit: 78.6, useAtr: false, atrDistance: null, useStoploss: false, stoplossLevel: null },
+  'GC1!': { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2, useStoploss: true, stoplossLevel: 6 },
+  'SI1!': { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3, useStoploss: true, stoplossLevel: 6 },
+  GOLD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2, useStoploss: true, stoplossLevel: 6 },
+  SILVER: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3, useStoploss: true, stoplossLevel: 6 },
+  XAUUSD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2, useStoploss: true, stoplossLevel: 6 },
+  XAGUSD: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3, useStoploss: true, stoplossLevel: 6 },
 };
 
 export function normalizeTickerSymbol(symbol: string): string {
-  return symbol.trim().toUpperCase().replace(".CA", "");
+  const clean = symbol.trim().toUpperCase().replace('.CA', '').replace('=F', '');
+  if (clean === 'GC' || clean === 'GC1' || clean === 'GC1!' || clean === 'XAUUSD' || clean === 'GOLD') return 'GC1!';
+  if (clean === 'SI' || clean === 'SI1' || clean === 'SI1!' || clean === 'XAGUSD' || clean === 'SILVER') return 'SI1!';
+  if (clean === 'USDEGP' || clean === 'USD/EGP' || clean === 'USD-EGP') return 'USDEGP';
+  return clean.replace('!', '');
 }
 
 export function resolvePsiParams(symbol: string, overrides: Partial<PsiStrategyParams> = {}): PsiStrategyParams {

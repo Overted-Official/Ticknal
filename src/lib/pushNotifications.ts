@@ -129,7 +129,7 @@ export async function dispatchSignalNotifications(options: {
       const payload = JSON.stringify({
         title: buildNotificationTitle(ticker, signal, openOrderExists),
         body: buildNotificationBody(signal),
-        url: `/charts?ticker=${ticker}&timeframe=D`,
+        url: `/invest?ticker=${ticker}&timeframe=D`,
         tag: `psi-${ticker}-${signal.date}-${signal.signal}`,
         symbol: ticker,
         signal: signal.signal,

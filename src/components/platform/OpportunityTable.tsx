@@ -65,7 +65,7 @@ export default function OpportunityTable({
                     )}
                   </div>
                   <div>
-                    <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-xs">
+                    <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-xs">
                       {item.symbol.replace('.CA', '')}
                     </Link>
                     {!compact && <div className="text-[10px] text-white/40">{item.sector}</div>}
@@ -129,7 +129,7 @@ export default function OpportunityTable({
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-semibold text-xs text-white group-hover:text-plt-orange transition-colors">
+                        <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-xs text-white group-hover:text-plt-orange transition-colors">
                           {item.symbol.replace('.CA', '')}
                         </Link>
                         {!compact && <span className="text-[10px] text-white/40 truncate max-w-[130px]">{item.companyName}</span>}

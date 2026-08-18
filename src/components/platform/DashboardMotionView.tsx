@@ -136,10 +136,10 @@ export default function DashboardMotionView({
               <span className="text-plt-orange">→</span>
             </Link>
             <Link
-              href="/charts"
+              href="/invest"
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
             >
-              <span>Open Charts</span>
+              <span>Open Invest</span>
               <span className="text-plt-orange">→</span>
             </Link>
           </div>
@@ -341,7 +341,7 @@ export default function DashboardMotionView({
                                 )}
                               </div>
                               <div className="flex flex-col">
-                                <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-xs text-white group-hover:text-plt-orange transition-colors">
+                                <Link href={`/invest?ticker=${order.tickerSymbol}&view=chart&timeframe=D`} className="font-semibold text-xs text-white group-hover:text-plt-orange transition-colors">
                                   {order.tickerSymbol}
                                 </Link>
                                 <span className="text-[10px] text-white/40 truncate max-w-[120px]">{order.companyName}</span>
@@ -388,7 +388,7 @@ export default function DashboardMotionView({
                           )}
                         </div>
                         <div className="flex flex-col">
-                          <Link href={`/charts?ticker=${order.tickerSymbol}&timeframe=D`} className="font-semibold text-xs text-white hover:text-plt-orange">
+                          <Link href={`/invest?ticker=${order.tickerSymbol}&view=chart&timeframe=D`} className="font-semibold text-xs text-white hover:text-plt-orange">
                             {order.tickerSymbol}
                           </Link>
                           <span className="text-[10px] text-white/40 truncate max-w-[120px]">{order.companyName}</span>

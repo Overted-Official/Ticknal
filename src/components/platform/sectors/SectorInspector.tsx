@@ -18,6 +18,7 @@ import type { TickerStrategySignalState } from '@/app/api/sectors/signals/route'
 interface SectorInspectorProps {
   sector: SectorPerformanceItem | null;
   selectedTicker?: string | null;
+  granularity?: 'sector' | 'industryGroup' | 'industry';
   analysisMode?: 'macro' | 'strategy';
   signalsMap?: Record<string, TickerStrategySignalState>;
   onSelectTicker: (symbol: string) => void;
@@ -27,16 +28,19 @@ interface SectorInspectorProps {
 export default function SectorInspector({
   sector,
   selectedTicker,
+  granularity = 'sector',
   analysisMode = 'macro',
   signalsMap,
   onSelectTicker,
   onOpenTickerChart,
 }: SectorInspectorProps) {
+  const groupLabel = granularity === 'industryGroup' ? 'industry group' : granularity === 'industry' ? 'industry' : 'sector';
+
   if (!sector) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6 text-center text-white/30 border border-white/[0.08] rounded-xl bg-zinc-950/40">
         <Scale className="w-8 h-8 mb-2 opacity-40 text-plt-orange" />
-        <p className="text-xs">Select any sector or stock from the heatmap to view its performance attribution</p>
+        <p className="text-xs">Select any {groupLabel} or stock from the heatmap to view its performance attribution</p>
       </div>
     );
   }
@@ -192,9 +196,14 @@ export default function SectorInspector({
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold font-mono text-white text-[11px]">{stock.symbol}</span>
+                      {stock.subIndustry && (
+                        <span className="px-1 py-0.2 rounded bg-white/[0.05] border border-white/10 text-white/50 text-[8px] font-mono truncate max-w-[130px]" title={`GICS Sub-Industry: ${stock.subIndustry}`}>
+                          {stock.subIndustry}
+                        </span>
+                      )}
                       {analysisMode === 'strategy' && signalsMap?.[stock.symbol] && (
                         signalsMap[stock.symbol].status === 'BUY_FRESH' ? (
                           <span className="px-1 py-0.2 rounded bg-emerald-400 text-black font-extrabold text-[8px] animate-pulse">
@@ -215,11 +224,13 @@ export default function SectorInspector({
                         )
                       )}
                     </div>
-                    <span className="text-[10px] text-white/40 truncate max-w-[120px]">{stock.companyName}</span>
+                    <span className="text-[10px] text-white/40 truncate max-w-[140px]" title={stock.companyName}>
+                      {stock.companyName}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 font-mono">
+                <div className="flex items-center gap-3 font-mono shrink-0">
                   <span className="text-[10px] text-white/40">
                     {(stock.turnover / 1_000_000).toFixed(1)}M
                   </span>

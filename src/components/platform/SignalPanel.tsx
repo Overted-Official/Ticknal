@@ -218,7 +218,7 @@ export default function SignalPanel({
         volume: d.volume
       })),
       model: trainingModel,
-      trainStartDate: strategyStartDate || '2020-01-01',
+      trainStartDate: undefined, // Always train from earliest inception up to cutoff date
       trainEndDate: cutoff,
       testStartDate: testStart,
       testEndDate: undefined,

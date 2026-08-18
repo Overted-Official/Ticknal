@@ -2,7 +2,7 @@
 
 import { ChevronDown, ChevronRight, Search, X } from '@/components/ui/icons';
 import { ExternalLink, Check } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import useSWR from 'swr';
 import { useAlerts } from './AlertProvider';
@@ -18,7 +18,7 @@ export interface WatchlistItem {
   change?: string;
   changePct?: string;
   volume?: string;
-  isUp: boolean;
+  isUp?: boolean;
   hasOpenPosition?: boolean;
   logoUrl?: string | null;
   recentBuyOpportunity?: boolean;
@@ -27,26 +27,35 @@ export interface WatchlistItem {
 interface RightSidebarProps {
   watchlist: WatchlistItem[];
   selectedSymbol: string;
-  timeframe: string;
-  rangeData?: { dayHigh: number; dayLow: number; yearHigh: number; yearLow: number };
+  timeframe?: string;
+  rangeData?: {
+    dayHigh: number;
+    dayLow: number;
+    yearHigh: number;
+    yearLow: number;
+  };
 }
 
-export default function RightSidebar({ watchlist, selectedSymbol, timeframe, rangeData }: RightSidebarProps) {
-  const { data: quoteData } = useSWR(
-    selectedSymbol ? `/api/quote?symbol=${selectedSymbol}` : null,
-    fetcher,
-    { refreshInterval: 15000 }
-  );
+export default function RightSidebar({ 
+  watchlist, 
+  selectedSymbol, 
+  timeframe = 'D',
+  rangeData
+}: RightSidebarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isAlerted, toggleAlert } = useAlerts();
+
+  const { data: quoteData } = useSWR(`/api/quote?symbol=${selectedSymbol}`, fetcher, {
+    refreshInterval: 15000,
+    revalidateOnFocus: true,
+  });
 
   const liveData = useMemo(() => {
-    if (!quoteData || typeof quoteData.close !== 'number' || isNaN(quoteData.close)) return null;
-    const close = Number(quoteData.close);
-    const prevClose = typeof quoteData.previousClose === 'number' && !isNaN(quoteData.previousClose) && quoteData.previousClose > 0 
-      ? Number(quoteData.previousClose) 
-      : close;
-    const change = close - prevClose;
-    const changePct = prevClose ? (change / prevClose) * 100 : 0;
-    
+    if (!quoteData || !quoteData.data) return null;
+    const { close, previous_close } = quoteData.data;
+    const change = close - previous_close;
+    const changePct = previous_close ? (change / previous_close) * 100 : 0;
     return {
       price: close.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
@@ -99,9 +108,6 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     };
   }, [isResizing]);
 
-  const router = useRouter();
-  const { isAlerted, toggleAlert } = useAlerts();
-  
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
 
@@ -146,7 +152,6 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
     });
   };
 
-  const [isPending, startTransition] = useState<[boolean, (fn: () => void) => void]>(() => [false, (fn) => fn()]);
   const [pendingTicker, setPendingTicker] = useState<string | null>(null);
 
   useEffect(() => {
@@ -156,7 +161,11 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
   const openTicker = (symbol: string) => {
     if (symbol === selectedSymbol) return;
     setPendingTicker(symbol);
-    router.push(`?ticker=${symbol}&timeframe=${timeframe}`);
+    const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
+    params.set('ticker', symbol);
+    params.set('timeframe', timeframe);
+    params.set('view', 'chart');
+    router.push(`?${params.toString()}`);
   };
 
   const currentPriceNum = parseFloat(selectedItem?.price || '0');
@@ -372,10 +381,10 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                 <div className="flex items-center text-[10px] text-white/50 space-x-1 mt-0.5">
                   <ExternalLink size={10} className="hover:text-white cursor-pointer" />
                   <span>•</span>
-                  <span>EGX</span>
+                  <span>{['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'COMEX' : selectedSymbol.toUpperCase() === 'USDEGP' ? 'FOREX' : 'EGX'}</span>
                 </div>
                 <div className="text-[10px] text-white/40 mt-0.5">
-                  Finance • {selectedItem.sector}
+                  {selectedItem.sector}
                 </div>
               </div>
 
@@ -387,7 +396,7 @@ export default function RightSidebar({ watchlist, selectedSymbol, timeframe, ran
                   </span>
                   <div className="flex flex-col leading-none">
                     <span className="text-[9px] font-bold text-plt-orange">D</span>
-                    <span className="text-[9px] text-white/40">EGP</span>
+                    <span className="text-[9px] text-white/40">{['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'USD' : 'EGP'}</span>
                   </div>
                   <div className={`ml-2 text-xs font-semibold font-mono ${selectedItem.isUp ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                     {selectedItem.change ? selectedItem.change.split(' ')[0] : ''} {selectedItem.changePct || ''}

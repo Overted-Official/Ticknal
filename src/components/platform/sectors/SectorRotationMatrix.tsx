@@ -27,7 +27,12 @@ export default function SectorRotationMatrix({
   selectedSector,
   onSelectSector,
 }: SectorRotationMatrixProps) {
-  const [hoveredSector, setHoveredSector] = useState<SectorPerformanceItem | null>(null);
+  const [hoveredData, setHoveredData] = useState<{
+    sector: SectorPerformanceItem;
+    x: number;
+    y: number;
+    nodeSize: number;
+  } | null>(null);
 
   // Filter out extreme outliers (like 'Other' with 600%+) from stretching the scale
   const validSectors = sectors.filter((s) => s.stockCount > 0);
@@ -79,14 +84,14 @@ export default function SectorRotationMatrix({
         </div>
 
         {/* Bottom-Left: Lagging (Rose) */}
-        <div className="border-r border-white/[0.08] bg-gradient-to-tr from-rose-500/[0.10] via-rose-500/[0.03] to-transparent flex items-end p-3 pb-8">
+        <div className="border-r border-white/[0.08] bg-gradient-to-tr from-rose-500/[0.10] via-rose-500/[0.03] to-transparent flex items-end p-3">
           <span className="px-2 py-0.5 rounded-md bg-zinc-950/80 border border-rose-500/30 text-[10px] font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
             <TrendingDown size={12} className="text-rose-400" /> Lagging (Avoid)
           </span>
         </div>
 
         {/* Bottom-Right: Weakening (Amber) */}
-        <div className="bg-gradient-to-tl from-amber-500/[0.10] via-amber-500/[0.03] to-transparent flex items-end justify-end p-3 pb-8">
+        <div className="bg-gradient-to-tl from-amber-500/[0.10] via-amber-500/[0.03] to-transparent flex items-end justify-end p-3">
           <span className="px-2 py-0.5 rounded-md bg-zinc-950/80 border border-amber-500/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
             <AlertTriangle size={12} className="text-amber-400" /> Weakening (Take Profit)
           </span>
@@ -118,7 +123,7 @@ export default function SectorRotationMatrix({
           const normalizedY = 50 - (clampedMomentum / maxAbsMomentum) * 40;
 
           const isSelected = selectedSector === sector.sector;
-          const isHovered = hoveredSector?.sector === sector.sector;
+          const isHovered = hoveredData?.sector.sector === sector.sector;
           
           // Node size proportional to turnover share
           const nodeSize = Math.max(Math.min(sector.turnoverShare * 1.2 + 28, 54), 28);
@@ -150,8 +155,8 @@ export default function SectorRotationMatrix({
                   : 'z-20 hover:scale-115'
               } ${regimeBg}`}
               onClick={() => onSelectSector(sector.sector)}
-              onMouseEnter={() => setHoveredSector(sector)}
-              onMouseLeave={() => setHoveredSector(null)}
+              onMouseEnter={() => setHoveredData({ sector, x: normalizedX, y: normalizedY, nodeSize })}
+              onMouseLeave={() => setHoveredData(null)}
             >
               <span className="text-[10px] font-bold font-mono tracking-tight text-center leading-none">
                 {acronym}
@@ -160,20 +165,32 @@ export default function SectorRotationMatrix({
           );
         })}
 
-        {/* Floating Tooltip for Hovered Sector */}
-        {hoveredSector && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-zinc-950/95 backdrop-blur-md border border-white/20 p-2.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+        {/* Floating Tooltip positioned relative to hovered bubble */}
+        {hoveredData && (
+          <div
+            style={{
+              position: 'absolute',
+              left: `${hoveredData.x}%`,
+              top: hoveredData.y < 26
+                ? `calc(${hoveredData.y}% + ${hoveredData.nodeSize / 2 + 10}px)`
+                : `calc(${hoveredData.y}% - ${hoveredData.nodeSize / 2 + 10}px)`,
+              transform: hoveredData.y < 26
+                ? `translate(${hoveredData.x > 75 ? '-85%' : hoveredData.x < 25 ? '-15%' : '-50%'}, 0)`
+                : `translate(${hoveredData.x > 75 ? '-85%' : hoveredData.x < 25 ? '-15%' : '-50%'}, -100%)`,
+            }}
+            className="z-50 bg-zinc-950/95 backdrop-blur-md border border-white/20 p-2.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-150 pointer-events-none whitespace-nowrap"
+          >
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  {hoveredSector.sector}
+                  {hoveredData.sector.sector}
                 </span>
                 <span className="text-[10px] font-mono text-white/40">
-                  ({hoveredSector.stockCount} stocks)
+                  ({hoveredData.sector.stockCount} stocks)
                 </span>
               </div>
               <div className="text-[10px] font-mono text-white/60 mt-0.5">
-                Turnover: {(hoveredSector.totalTurnover / 1_000_000).toFixed(1)}M EGP ({hoveredSector.turnoverShare.toFixed(1)}% of market)
+                Turnover: {(hoveredData.sector.totalTurnover / 1_000_000).toFixed(1)}M EGP ({hoveredData.sector.turnoverShare.toFixed(1)}% of market)
               </div>
             </div>
 
@@ -182,17 +199,17 @@ export default function SectorRotationMatrix({
             <div className="flex items-center gap-3 font-mono text-xs">
               <div>
                 <span className="text-[9px] uppercase tracking-wider text-white/40 block">Alpha</span>
-                <span className={`font-bold ${hoveredSector.relativeStrengthVsBenchmark >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {hoveredSector.relativeStrengthVsBenchmark > 0 ? '+' : ''}
-                  {hoveredSector.relativeStrengthVsBenchmark.toFixed(1)}%
+                <span className={`font-bold ${hoveredData.sector.relativeStrengthVsBenchmark >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {hoveredData.sector.relativeStrengthVsBenchmark > 0 ? '+' : ''}
+                  {hoveredData.sector.relativeStrengthVsBenchmark.toFixed(1)}%
                 </span>
               </div>
 
               <div>
                 <span className="text-[9px] uppercase tracking-wider text-white/40 block">ROI</span>
-                <span className={`font-bold ${hoveredSector.turnoverWeightedReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {hoveredSector.turnoverWeightedReturn > 0 ? '+' : ''}
-                  {hoveredSector.turnoverWeightedReturn.toFixed(1)}%
+                <span className={`font-bold ${hoveredData.sector.turnoverWeightedReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {hoveredData.sector.turnoverWeightedReturn > 0 ? '+' : ''}
+                  {hoveredData.sector.turnoverWeightedReturn.toFixed(1)}%
                 </span>
               </div>
             </div>

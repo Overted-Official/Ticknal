@@ -48,7 +48,7 @@ export default function SidebarNav() {
   }, []);
 
   const isDashboardActive = pathname === '/dashboard';
-  const isChartsActive = pathname === '/charts';
+  const isInvestActive = pathname === '/invest' || pathname === '/charts';
   const isWalletActive = pathname === '/wallet' || pathname === '/positions';
 
   return (
@@ -132,7 +132,7 @@ export default function SidebarNav() {
           )}
         </div>
 
-        {/* 2. Charts with Sub-Menu */}
+        {/* 2. Invest with Sub-Menu */}
         <div className="w-full relative group" ref={chartsMenuRef}>
           <button
             onClick={() => {
@@ -144,62 +144,49 @@ export default function SidebarNav() {
           >
             <div 
               className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 mb-0.5 ${
-                isChartsActive || isChartsMenuOpen
+                isInvestActive || isChartsMenuOpen
                   ? 'bg-white/[0.06] text-white' 
                   : 'text-white/35 group-hover:text-white/70'
               }`}
             >
               <LineChart size={16} strokeWidth={1.5} />
             </div>
-            <span className={`text-[8px] tracking-tight ${isChartsActive || isChartsMenuOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
-              Charts
+            <span className={`text-[8px] tracking-tight ${isInvestActive || isChartsMenuOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
+              Invest
             </span>
           </button>
           
-          {/* Desktop Floating Menu for Charts */}
+          {/* Desktop Floating Menu for Invest */}
           {isChartsMenuOpen && (
-            <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-44 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1 shadow-2xl">
+            <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-40 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1 shadow-2xl">
               <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
-                Charts
+                Invest
               </div>
               <Link 
-                href="/charts?view=chart" 
+                href="/invest?view=sectors" 
                 prefetch={true}
                 onClick={() => setIsChartsMenuOpen(false)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
-                  isChartsActive && (!searchParams.get('view') || searchParams.get('view') === 'chart')
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
-                }`}
-              >
-                <LineChart size={13} className="text-plt-orange" />
-                Chart
-              </Link>
-              <Link 
-                href="/charts?view=positions" 
-                prefetch={true}
-                onClick={() => setIsChartsMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
-                  isChartsActive && searchParams.get('view') === 'positions'
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
-                }`}
-              >
-                <Layers size={13} className="text-sky-400" />
-                Positions
-              </Link>
-              <Link 
-                href="/charts?view=sectors" 
-                prefetch={true}
-                onClick={() => setIsChartsMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
-                  isChartsActive && searchParams.get('view') === 'sectors'
+                  isInvestActive && (!searchParams.get('view') || searchParams.get('view') === 'sectors')
                     ? 'text-white bg-white/[0.08]'
                     : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
                 <LayoutGrid size={13} className="text-emerald-400" />
-                Sectors & Heatmap
+                Sectors
+              </Link>
+              <Link 
+                href="/invest?view=chart" 
+                prefetch={true}
+                onClick={() => setIsChartsMenuOpen(false)}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                  isInvestActive && searchParams.get('view') === 'chart'
+                    ? 'text-white bg-white/[0.08]'
+                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                }`}
+              >
+                <LineChart size={13} className="text-plt-orange" />
+                Tickers
               </Link>
             </div>
           )}

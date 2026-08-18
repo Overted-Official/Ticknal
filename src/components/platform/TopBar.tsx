@@ -74,7 +74,7 @@ export default function TopBar({
               <div className="flex items-center space-x-1.5 text-white/50 text-[11px] leading-tight font-medium">
                 <span className="text-white font-semibold">{displaySymbol}</span>
                 <span className="opacity-40">•</span>
-                <span>EGX</span>
+                <span>{['GC1!', 'SI1!'].includes(symbol.toUpperCase()) ? 'COMEX' : symbol.toUpperCase() === 'USDEGP' ? 'FOREX' : 'EGX'}</span>
               </div>
             </div>
             

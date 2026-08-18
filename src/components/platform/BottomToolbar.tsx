@@ -46,7 +46,7 @@ export default function BottomToolbar({
           {timeframes.map((tf) => (
             <Link
               key={tf}
-              href={`?ticker=${symbol}&timeframe=${tf}${replayQuery}`}
+              href={`?ticker=${symbol}&timeframe=${tf}&view=chart${replayQuery}`}
               className={`px-2 py-0.5 rounded-[4px] text-[11px] font-medium transition-all ${
                 tf === timeframe 
                   ? 'bg-white/[0.08] text-plt-orange font-medium' 

@@ -6,7 +6,9 @@ export const tickers = pgTable('tickers', {
   website: varchar('website', { length: 255 }),
   exchange: varchar('exchange', { length: 50 }).default('EGX'),
   sector: varchar('sector', { length: 100 }),
+  industryGroup: varchar('industry_group', { length: 100 }),
   industry: varchar('industry', { length: 100 }),
+  subIndustry: varchar('sub_industry', { length: 100 }),
   logoUrl: varchar('logo_url', { length: 255 }),
 });
 

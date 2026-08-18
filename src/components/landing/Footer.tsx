@@ -32,7 +32,7 @@ export default function Footer() {
               <li><Link href="#features" className="text-white/60 hover:text-white transition-colors">Features</Link></li>
               <li><Link href="#pricing" className="text-white/60 hover:text-white transition-colors">Pricing</Link></li>
               <li><Link href="/dashboard" className="text-white/60 hover:text-white transition-colors">Dashboard</Link></li>
-              <li><Link href="/charts" className="text-white/60 hover:text-white transition-colors">Interactive Charts</Link></li>
+              <li><Link href="/invest" className="text-white/60 hover:text-white transition-colors">Invest & Charts</Link></li>
             </ul>
           </div>
 

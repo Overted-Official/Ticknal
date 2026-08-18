@@ -19,7 +19,15 @@ export async function GET(req: Request): Promise<Response> {
   }
 
   try {
-    const tvSymbol = `EGX:${symbol.replace('.CA', '')}`;
+    const cleanSym = symbol.trim().toUpperCase().replace('.CA', '');
+    let tvSymbol = `EGX:${cleanSym}`;
+    if (cleanSym === 'GC1!' || cleanSym === 'GC1' || cleanSym === 'GC' || cleanSym === 'GOLD' || cleanSym === 'XAUUSD') {
+      tvSymbol = 'COMEX:GC1!';
+    } else if (cleanSym === 'SI1!' || cleanSym === 'SI1' || cleanSym === 'SI' || cleanSym === 'SILVER' || cleanSym === 'XAGUSD') {
+      tvSymbol = 'COMEX:SI1!';
+    } else if (cleanSym === 'USDEGP' || cleanSym === 'USD/EGP' || cleanSym === 'USD-EGP') {
+      tvSymbol = 'FX_IDC:USDEGP';
+    }
 
     return await new Promise<Response>((resolve) => {
       const client = new TradingView.Client();

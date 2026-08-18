@@ -76,25 +76,25 @@ export default function BottomNav() {
           </span>
         </Link>
 
-        {/* 2. Charts */}
+        {/* 2. Invest */}
         <Link
-          href="/charts"
+          href="/invest"
           prefetch={true}
           className="flex-1 h-full flex flex-col items-center justify-center group"
         >
           <div
             className={`flex items-center justify-center rounded-md w-10 h-6 transition-all duration-200 mb-0.5 ${
-              pathname === '/charts' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
+              pathname === '/invest' || pathname === '/charts' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
             }`}
           >
-            <LineChart size={17} strokeWidth={pathname === '/charts' ? 2 : 1.5} />
+            <LineChart size={17} strokeWidth={pathname === '/invest' || pathname === '/charts' ? 2 : 1.5} />
           </div>
           <span
             className={`text-[9px] font-medium transition-colors ${
-              pathname === '/charts' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
+              pathname === '/invest' || pathname === '/charts' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
             }`}
           >
-            Charts
+            Invest
           </span>
         </Link>
 
