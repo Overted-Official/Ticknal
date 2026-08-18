@@ -296,7 +296,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
         </div>
 
         {/* Right Pane: Desktop Sector Drill-Down Inspector */}
-        <div className="hidden md:block w-80 lg:w-96 h-full shrink-0">
+        <div className="hidden md:block w-80 lg:w-96 xl:w-[420px] h-full shrink-0">
           <SectorInspector
             sector={activeSectorData}
             selectedTicker={selectedTicker}

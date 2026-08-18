@@ -21,7 +21,7 @@ import ChartsSkeleton from './ChartsSkeleton';
 export const dynamic = 'force-dynamic';
 
 interface PlatformPageProps {
-  searchParams: Promise<{ ticker?: string; timeframe?: string; replay?: string }>;
+  searchParams: Promise<{ ticker?: string; timeframe?: string; replay?: string; view?: string }>;
 }
 
 export default async function PlatformPage(props: PlatformPageProps) {
@@ -29,15 +29,26 @@ export default async function PlatformPage(props: PlatformPageProps) {
   const selectedSymbol = normalizeTickerSymbol(searchParams?.ticker || 'COMI');
   const timeframe = searchParams?.timeframe || 'D';
   const initialReplayMode = searchParams?.replay === '1';
+  const view = searchParams?.view || 'chart';
 
   return (
-    <Suspense key={`${selectedSymbol}-${timeframe}-${initialReplayMode}`} fallback={<ChartsSkeleton />}>
-      <PlatformPageContent selectedSymbol={selectedSymbol} timeframe={timeframe} initialReplayMode={initialReplayMode} />
+    <Suspense key={`${selectedSymbol}-${timeframe}-${initialReplayMode}-${view}`} fallback={<ChartsSkeleton />}>
+      <PlatformPageContent selectedSymbol={selectedSymbol} timeframe={timeframe} initialReplayMode={initialReplayMode} view={view} />
     </Suspense>
   );
 }
 
-async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMode }: { selectedSymbol: string; timeframe: string; initialReplayMode: boolean }) {
+async function PlatformPageContent({ 
+  selectedSymbol, 
+  timeframe, 
+  initialReplayMode,
+  view
+}: { 
+  selectedSymbol: string; 
+  timeframe: string; 
+  initialReplayMode: boolean;
+  view: string;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -271,9 +282,11 @@ async function PlatformPageContent({ selectedSymbol, timeframe, initialReplayMod
         </ChartViews>
       </div>
 
-      <div className="hidden lg:flex h-full shrink-0">
-        <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} rangeData={rangeData} />
-      </div>
+      {view !== 'sectors' && (
+        <div className="hidden lg:flex h-full shrink-0">
+          <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} rangeData={rangeData} />
+        </div>
+      )}
     </div>
   );
 }
