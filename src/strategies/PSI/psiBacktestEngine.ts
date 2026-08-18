@@ -125,11 +125,6 @@ function getExitSignal(
   if (hitTrail) return { signal: "SELL_TRAIL", reason: "ATR Trail Stop", confidence: 0.5 };
   if (hitTakeProfit) return { signal: "SELL_TP", reason: "AYM Target Hit", confidence: 1 };
 
-  const master = params.model === "psi40" ? bar.masterIndex40 : bar.masterIndex;
-  if (master !== null && master < 14.6) {
-    return { signal: "SELL_TRAIL", reason: "Signal Exhaustion", confidence: 0.8 };
-  }
-
   return null;
 }
 
