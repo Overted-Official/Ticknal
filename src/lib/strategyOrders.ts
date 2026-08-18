@@ -2,7 +2,7 @@ import { asc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { dailyPrices } from '@/db/schema';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
-import { computePsiSeries, normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
+import { computePsiSeries, normalizeTickerSymbol, type PriceBar, type PsiStrategyParams } from '@/strategies/PSI/psiStrategy';
 
 export type PositionLevels = {
   targetPrice: number | null;
