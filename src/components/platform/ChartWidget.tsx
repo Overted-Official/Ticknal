@@ -402,6 +402,12 @@ export default function ChartWidget({
   }, [onReplayStateChange, replayDate, replayMode, replayStartDate]);
 
   useEffect(() => {
+    if (searchParams?.get('positions') === '1') {
+      setPositionsDrawerOpen(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (!chartContainerRef.current) return;
 
     const computedStyle = getComputedStyle(document.documentElement);

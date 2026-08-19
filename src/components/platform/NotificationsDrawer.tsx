@@ -295,19 +295,23 @@ export default function NotificationsDrawer({
                 </div>
               ) : (
                 notifications.map((item) => {
-                  const badge = getSignalBadge(item.signal);
+                  const isBuy = item.signal.toUpperCase().includes('BUY');
 
                   return (
                     <div
                       key={item.id}
-                      className="p-3 rounded-md bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.04] transition-all group"
+                      className={`p-3 rounded-md transition-all group border ${
+                        isBuy
+                          ? 'bg-emerald-950/20 border-emerald-500/25 hover:border-emerald-500/40 hover:bg-emerald-950/30 shadow-[inset_0_1px_0_0_rgba(52,211,153,0.1)]'
+                          : 'bg-rose-950/20 border-rose-500/25 hover:border-rose-500/40 hover:bg-rose-950/30 shadow-[inset_0_1px_0_0_rgba(244,63,94,0.1)]'
+                      }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <TickerLogo symbol={item.tickerSymbol} logoUrl={item.logoUrl} />
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-mono font-semibold text-white">{item.tickerSymbol}</span>
+                              <span className="text-xs font-mono font-bold text-white">{item.tickerSymbol}</span>
                               <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${
                                 item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth'
                                   ? 'bg-purple-500/10 text-purple-400 border-purple-500/25'
@@ -315,32 +319,48 @@ export default function NotificationsDrawer({
                               }`}>
                                 {item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth' ? 'THOTH' : 'PSI'}
                               </span>
-                              <span
-                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-medium border ${badge.className}`}
-                              >
-                                <span className={`w-1 h-1 rounded-full ${badge.dot}`} />
-                                {badge.label}
-                              </span>
                             </div>
-                            <span className="text-[11px] text-white/40 truncate block max-w-[200px]">
+                            <span className="text-[11px] text-white/40 truncate block max-w-[180px] mt-0.5">
                               {item.companyName ?? item.tickerSymbol}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1">
+                        {/* Right side: Primary Action (BUY / SELL to Positions) + Secondary (Chart) + Delete */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isBuy ? (
+                            <Link
+                              href={`/invest?ticker=${item.tickerSymbol}&view=chart&positions=1`}
+                              onClick={onClose}
+                              className="px-2.5 py-1 rounded text-[10px] font-bold font-mono uppercase bg-emerald-500 hover:bg-emerald-400 text-black flex items-center shadow-sm transition active:scale-95 shrink-0"
+                              title="Open Positions / Buy"
+                            >
+                              <span>BUY</span>
+                            </Link>
+                          ) : (
+                            <Link
+                              href={`/invest?ticker=${item.tickerSymbol}&view=chart&positions=1`}
+                              onClick={onClose}
+                              className="px-2.5 py-1 rounded text-[10px] font-bold font-mono uppercase bg-rose-500 hover:bg-rose-400 text-white flex items-center shadow-sm transition active:scale-95 shrink-0"
+                              title="Open Positions / Sell"
+                            >
+                              <span>SELL</span>
+                            </Link>
+                          )}
+
                           <Link
                             href={`/invest?ticker=${item.tickerSymbol}&view=chart`}
                             onClick={onClose}
-                            className="p-1 rounded text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors"
-                            title="Open in Invest"
+                            className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors"
+                            title="Open Chart"
                           >
                             <ArrowUpRight size={14} />
                           </Link>
+
                           <button
                             type="button"
                             onClick={() => handleDeleteItem(item.id)}
-                            className="p-1 rounded text-white/25 hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-1.5 rounded text-white/25 hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors opacity-0 group-hover:opacity-100"
                             title="Delete"
                           >
                             <Trash2 size={13} />
@@ -348,7 +368,7 @@ export default function NotificationsDrawer({
                         </div>
                       </div>
 
-                      <div className="mt-2.5 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] text-white/30 font-mono">
+                      <div className="mt-2.5 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] text-white/35 font-mono">
                         <span>Triggered on {item.signalDate}</span>
                         <span>{formatTimeAgo(item.sentAt)}</span>
                       </div>
