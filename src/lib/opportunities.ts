@@ -2,7 +2,7 @@ import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
-import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
+import { resolvePsiParamsFromStore, fetchAndCachePsiCombinations } from '@/strategies/PSI/psiParameterStore';
 import { runThothStrategy } from '@/strategies/Thoth/thothStrategy';
 import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
 import { unstable_cache } from 'next/cache';
@@ -66,6 +66,7 @@ export async function _getRecentOpportunities(
           WHERE rn <= ${HISTORY_BARS}
           ORDER BY ticker_symbol, date
         `),
+        fetchAndCachePsiCombinations(),
       ]);
 
       const tickerMap = new Map(

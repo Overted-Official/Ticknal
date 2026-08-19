@@ -268,13 +268,13 @@ export async function handleReportGet(request: Request) {
       const report = await runFullThothBacktest(bars, thothOverrides);
       return NextResponse.json(report);
     } else {
-      const resolvedParams = resolvePsiParams(ticker, {
+      const parameterResolution = await resolvePsiParamsAsync(ticker, {
         model: model as 'psi8' | 'psi40',
         initialCapital,
         startDate,
         endDate,
       });
-      const report = runFullStrategyBacktest(bars, resolvedParams);
+      const report = runFullStrategyBacktest(bars, parameterResolution.params);
       return NextResponse.json(report);
     }
   } catch (error) {

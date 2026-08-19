@@ -4,7 +4,7 @@ import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
 import { getCachedTickers } from '@/lib/data-cache';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
-import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
+import { resolvePsiParamsFromStore, fetchAndCachePsiCombinations } from '@/strategies/PSI/psiParameterStore';
 
 export interface StockPerformanceItem {
   symbol: string;
@@ -423,6 +423,7 @@ export async function handleSignalsGet() {
           WHERE rn <= 300
           ORDER BY ticker_symbol, date ASC
         `),
+        fetchAndCachePsiCombinations(),
       ]);
 
       const tickerMap = new Map(
