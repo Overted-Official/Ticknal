@@ -34,6 +34,7 @@ from .backtest_core import (
     format_result_row,
 )
 from .ranker import rank_train_combinations, select_best_oos_combination
+from .db_seeder import seed_winning_combinations_to_db
 
 
 CANDIDATE_AUDIT_HEADERS = [
@@ -108,7 +109,7 @@ WINNING_SUMMARY_HEADERS = [
 
 def run_walkforward_pipeline(
     tickers_filter: Optional[List[str]] = None,
-    train_start: str = DEFAULT_TRAIN_START,
+    train_start: Optional[str] = DEFAULT_TRAIN_START,
     train_end: str = DEFAULT_TRAIN_END,
     test_start: str = DEFAULT_TEST_START,
     test_end: str = DEFAULT_TEST_END,
@@ -116,6 +117,7 @@ def run_walkforward_pipeline(
     min_trades: int = DEFAULT_MIN_TRAIN_TRADES,
     threads: Optional[int] = None,
     output_dir: Path = DEFAULT_OUTPUT_DIR,
+    seed_db: bool = True,
 ) -> Dict[str, Any]:
     """Executes the complete Walk-Forward In-Sample Training + Out-of-Sample Testing across tickers."""
     start_time = time.time()
@@ -142,11 +144,12 @@ def run_walkforward_pipeline(
     print(" 🚀 PSI STRATEGY WALK-FORWARD OPTIMIZATION & VALIDATION PIPELINE")
     print("=" * 80)
     print(f" Target Universe:          {len(selected_tickers)} tickers (EGX + Gold + Silver)")
-    print(f" In-Sample Training Slice: {train_start} to {train_end}")
+    print(f" In-Sample Training Slice: {'Inception' if not train_start else train_start} to {train_end}")
     print(f" Out-of-Sample Test Slice: {test_start} to {test_end}")
-    print(f" Search Space:             50,220 combinations per ticker")
+    print(f" Search Space:             8,370 combinations per ticker (AYM + ATR only)")
     print(f" Top Candidates (Top-K):   {top_k}")
     print(f" Output Audit Folder:      {run_dir}")
+    print(f" Seed to Database:         {seed_db}")
     print("=" * 80)
 
     # Prepare Grid parameter vectors
@@ -161,6 +164,7 @@ def run_walkforward_pipeline(
     all_winning_param_rows: List[List[str]] = []
     all_winning_summary_rows: List[List[str]] = []
     all_candidate_audit_rows: List[List[str]] = []
+    db_winning_records: List[Dict[str, Any]] = []
 
     successful_tickers = 0
     skipped_tickers = 0
@@ -316,6 +320,26 @@ def run_walkforward_pipeline(
         ]
         all_winning_summary_rows.append(summary_row)
 
+        # 7. Format structured record for PostgreSQL database seeding
+        w_levels = [float(ENTRY_LEVELS[bit]) for bit in range(5) if (w_mask & (1 << bit)) != 0]
+        db_rec = {
+            "ticker_symbol": ticker,
+            "model": "psi8",
+            "entry_levels": w_levels,
+            "use_aym": bool(not np.isnan(winner_train[1])),
+            "aym_multiplier": float(winner_train[1]) if not np.isnan(winner_train[1]) else None,
+            "aym_limit": float(winner_train[2]) if not np.isnan(winner_train[2]) else None,
+            "use_atr": bool(not np.isnan(winner_train[3])),
+            "atr_distance": float(winner_train[3]) if not np.isnan(winner_train[3]) else None,
+            "in_sample_roi_margin": float(winner_train[7]),
+            "in_sample_win_rate": float(winner_train[9]),
+            "in_sample_trades": int(winner_train[8]),
+            "out_of_sample_roi_margin": float(winner_test[7]) if has_test and not np.isnan(winner_test[7]) else None,
+            "out_of_sample_win_rate": float(winner_test[9]) if has_test and not np.isnan(winner_test[9]) else None,
+            "out_of_sample_trades": int(winner_test[8]) if has_test and not np.isnan(winner_test[8]) else None,
+        }
+        db_winning_records.append(db_rec)
+
         successful_tickers += 1
         elapsed = time.time() - ticker_start
         test_margin_str = f"{winner_test[7]:+6.2f}%" if has_test and not np.isnan(winner_test[7]) else "  N/A "
@@ -326,7 +350,7 @@ def run_walkforward_pipeline(
             f"{elapsed:4.1f}s"
         )
 
-    # 7. Write Output CSVs to timestamped run folder and latest symlink
+    # 8. Write Output CSVs to timestamped run folder and latest symlink
     csv_candidates_path = run_dir / "candidates_oos_audit.csv"
     csv_winning_summary_path = run_dir / "winning_combinations_summary.csv"
     csv_best_params_path = run_dir / "psi_best_combinations_tested.csv"
@@ -367,18 +391,40 @@ def run_walkforward_pipeline(
         writer.writerow(CANDIDATE_AUDIT_HEADERS)
         writer.writerows(all_candidate_audit_rows)
 
+    # 9. Seed winning parameters to PostgreSQL database if enabled
+    db_seeded_count = 0
+    if seed_db and db_winning_records:
+        print("\n" + "-" * 80)
+        print(f" 💾 Seeding {len(db_winning_records)} winning combinations into PostgreSQL database...")
+        print("-" * 80)
+        db_seeded_count = seed_winning_combinations_to_db(db_winning_records)
+
     total_duration = time.time() - start_time
+
+    # 10. Compute Alpha Summary Statistics
+    total_valid = len(db_winning_records)
+    pos_train_alpha_count = sum(1 for r in db_winning_records if (r.get("in_sample_roi_margin") or 0) > 0)
+    pos_oos_alpha_count = sum(1 for r in db_winning_records if (r.get("out_of_sample_roi_margin") or 0) > 0)
+    pos_both_alpha_count = sum(
+        1 for r in db_winning_records
+        if (r.get("in_sample_roi_margin") or 0) > 0 and (r.get("out_of_sample_roi_margin") or 0) > 0
+    )
 
     metadata = {
         "timestamp": timestamp_str,
-        "train_period": f"{train_start} to {train_end}",
+        "train_period": f"{'Inception' if not train_start else train_start} to {train_end}",
         "test_period": f"{test_start} to {test_end}",
         "total_tickers_requested": len(selected_tickers),
         "successful_tickers": successful_tickers,
         "skipped_tickers": skipped_tickers,
-        "combinations_per_ticker": 50220,
+        "combinations_per_ticker": 8370,
         "top_k_candidates": top_k,
         "min_train_trades": min_trades,
+        "positive_train_alpha_tickers": pos_train_alpha_count,
+        "positive_train_alpha_pct": round((pos_train_alpha_count / total_valid) * 100, 1) if total_valid > 0 else 0,
+        "positive_oos_alpha_tickers": pos_oos_alpha_count,
+        "positive_oos_alpha_pct": round((pos_oos_alpha_count / total_valid) * 100, 1) if total_valid > 0 else 0,
+        "positive_both_alpha_tickers": pos_both_alpha_count,
         "total_duration_seconds": round(total_duration, 2),
         "output_files": {
             "candidates_audit": str(csv_candidates_path),
@@ -393,12 +439,17 @@ def run_walkforward_pipeline(
     print("\n" + "=" * 80)
     print(" ✅ WALK-FORWARD OPTIMIZATION COMPLETED SUCCESSFULLY")
     print("=" * 80)
-    print(f" Total Elapsed Time:      {total_duration / 60:.2f} minutes")
-    print(f" Processed Tickers:       {successful_tickers} / {len(selected_tickers)}")
-    print(f" 1. Candidate Audit Log:  {csv_candidates_path}")
-    print(f" 2. Winning Summary:      {csv_winning_summary_path}")
-    print(f" 3. Tested Params CSV:    {csv_best_params_path}")
-    print(f" 4. Run Metadata JSON:    {json_metadata_path}")
+    print(f" Total Elapsed Time:              {total_duration / 60:.2f} minutes")
+    print(f" Processed Universe:              {successful_tickers} / {len(selected_tickers)} tickers")
+    if total_valid > 0:
+        print(f" Positive Alpha (In-Sample <=24): {pos_train_alpha_count} / {total_valid} ({pos_train_alpha_count/total_valid*100:.1f}%)")
+        print(f" Positive Alpha (OOS 2025-2026):  {pos_oos_alpha_count} / {total_valid} ({pos_oos_alpha_count/total_valid*100:.1f}%)")
+        print(f" Positive Alpha in Both Periods:  {pos_both_alpha_count} / {total_valid} ({pos_both_alpha_count/total_valid*100:.1f}%)")
+    print("-" * 80)
+    print(f" 1. Candidate Audit Log:          {csv_candidates_path}")
+    print(f" 2. Winning Summary:              {csv_winning_summary_path}")
+    print(f" 3. Tested Params CSV:            {csv_best_params_path}")
+    print(f" 4. Run Metadata JSON:            {json_metadata_path}")
     print("=" * 80)
 
     return metadata

@@ -135,22 +135,22 @@ def compute_ticker_indicators(
     angle = np.degrees(np.arctan(raw_slope))
     df["slope_score"] = np.clip(((angle + 90.0) / 180.0) * 100.0, 0.0, 100.0)
 
-    # Raw Weighted Composite Score (Divided by 99.0, NO 16.18 step quantization)
-    total_weight = 99.0
+    # Raw Weighted Composite Score (Divided by 96.0)
+    total_weight = 96.0
     raw_calc = (
-        df["np_score"] * 21.0
+        df["np_score"] * 15.0
         + df["rsi_score"] * 10.0
         + df["banker_score"] * 5.0
         + df["bb_score"] * 4.0
-        + df["st_score"] * 44.0
+        + df["st_score"] * 47.0
         + df["adx_score"] * 10.0
         + df["ma_score"] * 4.0
-        + df["slope_score"]
+        + df["slope_score"] * 1.0
     ) / total_weight
 
     master_raw = raw_calc.to_numpy(dtype=np.float64)
-    df["master_index"] = dynamic_ema(master_raw, 1)
-    df["master_index_adjusted"] = dynamic_ema(master_raw, 2)
+    df["master_index"] = dynamic_ema(master_raw, 3)
+    df["master_index_adjusted"] = dynamic_ema(master_raw, 3)
 
     # Volatility / Daily Move Baseline
     df["tr"] = true_range(df)
@@ -159,12 +159,17 @@ def compute_ticker_indicators(
     if df["median_daily_move"].isna().any():
         df["median_daily_move"] = df["median_daily_move"].bfill()
 
-    # Slice In-Sample Training Array
-    train_df = df.loc[df["date"].between(pd.Timestamp(train_start), pd.Timestamp(train_end))].copy()
+    # Slice In-Sample Training Array (Inception to train_end)
+    if train_start:
+        train_df = df.loc[df["date"].between(pd.Timestamp(train_start), pd.Timestamp(train_end))].copy()
+    else:
+        train_df = df.loc[df["date"] <= pd.Timestamp(train_end)].copy()
+
     if len(train_df) < 20:
         return None
 
-    train_years = max((train_df["date"].iloc[-1] - pd.Timestamp(train_start)).days / 365.25, 0.001)
+    t_start_date = train_df["date"].iloc[0]
+    train_years = max((train_df["date"].iloc[-1] - t_start_date).days / 365.25, 0.001)
     train_arrays = {
         "master_index": train_df["master_index"].to_numpy(dtype=np.float64),
         "master_index_adjusted": train_df["master_index_adjusted"].to_numpy(dtype=np.float64),
@@ -174,13 +179,17 @@ def compute_ticker_indicators(
         "median_daily_move": train_df["median_daily_move"].to_numpy(dtype=np.float64),
         "atr": train_df["atr_14"].to_numpy(dtype=np.float64),
         "years": float(train_years),
-        "start_date": str(train_df["date"].iloc[0].strftime("%Y-%m-%d")),
+        "start_date": str(t_start_date.strftime("%Y-%m-%d")),
         "end_date": str(train_df["date"].iloc[-1].strftime("%Y-%m-%d")),
         "bars_count": len(train_df),
     }
 
-    # Slice Out-of-Sample Test Array
-    test_df = df.loc[df["date"].between(pd.Timestamp(test_start), pd.Timestamp(test_end))].copy()
+    # Slice Out-of-Sample Test Array (test_start onwards)
+    if test_end:
+        test_df = df.loc[df["date"].between(pd.Timestamp(test_start), pd.Timestamp(test_end))].copy()
+    else:
+        test_df = df.loc[df["date"] >= pd.Timestamp(test_start)].copy()
+
     test_arrays: Optional[Dict[str, Any]] = None
     if len(test_df) >= 2:
         test_years = max((test_df["date"].iloc[-1] - pd.Timestamp(test_start)).days / 365.25, 0.001)

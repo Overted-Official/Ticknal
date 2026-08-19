@@ -69,6 +69,7 @@ type SimSlice = {
   high: Float64Array;
   low: Float64Array;
   masterIndex: Float64Array;
+  masterIndexAdjusted: Float64Array;
   atr14: Float64Array;
   medianDailyMove: Float64Array;
   years: number;
@@ -96,6 +97,7 @@ function buildSimSlice(
   const high = new Float64Array(n);
   const low = new Float64Array(n);
   const masterIndex = new Float64Array(n);
+  const masterIndexAdjusted = new Float64Array(n);
   const atr14 = new Float64Array(n);
   const medianDailyMove = new Float64Array(n);
 
@@ -105,6 +107,7 @@ function buildSimSlice(
     high[i] = b.high;
     low[i] = b.low;
     masterIndex[i] = (model === "psi40" ? b.masterIndex40 : b.masterIndex) ?? 50;
+    masterIndexAdjusted[i] = (model === "psi40" ? b.masterIndex40 : b.masterIndexAdjusted) ?? 50;
     atr14[i] = b.atr14 ?? (b.high - b.low);
     medianDailyMove[i] = b.medianDailyMove ?? 2.0;
   }
@@ -118,6 +121,7 @@ function buildSimSlice(
     high,
     low,
     masterIndex,
+    masterIndexAdjusted,
     atr14,
     medianDailyMove,
     years,
@@ -143,7 +147,7 @@ export function fastSimulate(
   atrDistance: number | null,
   initialCapital: number,
 ): FastBacktestMetrics {
-  const { close, high, low, masterIndex, atr14, medianDailyMove, length: n } = slice;
+  const { close, high, low, masterIndex, masterIndexAdjusted, atr14, medianDailyMove, length: n } = slice;
 
   let balance = initialCapital;
   let active = false;
@@ -200,12 +204,13 @@ export function fastSimulate(
       if (h > highestPrice) highestPrice = h;
 
       const atr = atr14[i];
+      const currSellMaster = masterIndexAdjusted[i];
 
       const hitTakeProfit =
         useAym &&
         !Number.isNaN(targetPrice) &&
         c >= targetPrice &&
-        currMaster < (aymLimit ?? 100);
+        currSellMaster < (aymLimit ?? 100);
 
       const hitTrail =
         useAtr &&

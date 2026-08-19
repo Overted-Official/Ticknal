@@ -50,6 +50,7 @@ export type PsiBacktestResult = {
   signals: PsiSignal[];
   metrics: PsiMetrics;
   latestMasterIndex: number | null;
+  latestMasterIndexAdjusted?: number | null;
 };
 
 export type PsiStrategyParams = {
@@ -65,8 +66,10 @@ export type PsiStrategyParams = {
   endDate?: string;
 };
 
-type ComputedPsiBar = PriceBar & {
+export type ComputedPsiBar = PriceBar & {
   masterIndex: number | null;
+  masterIndexAdjusted: number | null;
+  rawIndex: number | null;
   masterIndex40: number | null;
   atr14: number | null;
   medianDailyMove: number | null;
@@ -80,22 +83,15 @@ export const DEFAULT_PARAMS: PsiStrategyParams = {
   model: "psi8",
   entryLevels: [...PSI_LEVELS],
   useAym: true,
-  aymMultiplier: 9,
+  aymMultiplier: 8,
   aymLimit: 78.6,
   useAtr: true,
-  atrDistance: 3,
+  atrDistance: 4,
   initialCapital: 3000,
   startDate: "2025-01-01",
 };
 
-const TICKER_PRESETS: Record<string, Partial<PsiStrategyParams>> = {
-  'GC1!': { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2 },
-  'SI1!': { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3 },
-  GOLD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2 },
-  SILVER: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3 },
-  XAUUSD: { model: 'psi8', entryLevels: [23.6, 38.2], useAym: true, aymMultiplier: 3, aymLimit: 78.6, useAtr: true, atrDistance: 2 },
-  XAGUSD: { model: 'psi40', entryLevels: [14.6, 23.6, 38.2, 61.8], useAym: true, aymMultiplier: 4, aymLimit: 61.8, useAtr: true, atrDistance: 3 },
-};
+const TICKER_PRESETS: Record<string, Partial<PsiStrategyParams>> = {};
 
 export function normalizeTickerSymbol(symbol: string): string {
   const clean = symbol.trim().toUpperCase().replace('.CA', '').replace('=F', '');
@@ -241,6 +237,7 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
   return {
     signals,
     latestMasterIndex: latest?.masterIndex ?? null,
+    latestMasterIndexAdjusted: latest?.masterIndexAdjusted ?? null,
     metrics: {
       sysRoi,
       buyHoldRoi,
@@ -284,7 +281,7 @@ export function computePsiSeries(bars: PriceBar[]): ComputedPsiBar[] {
   const high = sorted.map((bar) => bar.high);
   const low = sorted.map((bar) => bar.low);
 
-  const { rawIndex, atr14 } = computePsi8(close, high, low);
+  const { rawIndex, masterIndex, masterIndexAdjusted, atr14 } = computePsi8(close, high, low);
   const rawIndex40 = computePsi40(sorted);
 
   const trueRange = computeTrueRange(high, low, close);
@@ -293,7 +290,9 @@ export function computePsiSeries(bars: PriceBar[]): ComputedPsiBar[] {
 
   return sorted.map((bar, i) => ({
     ...bar,
-    masterIndex: nullable(rawIndex[i]),
+    masterIndex: nullable(masterIndex[i]),
+    masterIndexAdjusted: nullable(masterIndexAdjusted[i]),
+    rawIndex: nullable(rawIndex[i]),
     masterIndex40: nullable(rawIndex40[i]),
     atr14: nullable(atr14[i]),
     medianDailyMove: nullable(medianDailyMove[i]),
@@ -317,18 +316,18 @@ export function getExitSignal(
   targetPrice: number,
   highestPrice: number,
 ): { signal: PsiSignalType; reason: string; confidence: number } | null {
-  const currentRaw = params.model === "psi40" ? bar.masterIndex40 : bar.masterIndex;
+  const sellIndex = params.model === "psi40" ? bar.masterIndex40 : bar.masterIndexAdjusted;
 
-  // 1. AYM Take Profit
+  // 1. AYM Take Profit (checks sellIndex < aymLimit as in Pine Script)
   const hitTakeProfit =
     params.useAym &&
     isFiniteNumber(targetPrice) &&
     isFiniteNumber(params.aymLimit) &&
-    isFiniteNumber(currentRaw) &&
+    isFiniteNumber(sellIndex) &&
     bar.close >= targetPrice &&
-    Number(currentRaw) < Number(params.aymLimit);
+    Number(sellIndex) < Number(params.aymLimit);
 
-  // 2. ATR Trailing Stop
+  // 2. ATR Trailing Stop (with Profit Protect: close > entryPrice)
   const hitTrail =
     params.useAtr &&
     isFiniteNumber(params.atrDistance) &&

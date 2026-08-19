@@ -296,7 +296,12 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function computePsi8(close: number[], high: number[], low: number[]): { rawIndex: Array<number | null>, atr14: Array<number | null> } {
+export function computePsi8(close: number[], high: number[], low: number[]): {
+  rawIndex: Array<number | null>;
+  masterIndex: Array<number | null>;
+  masterIndexAdjusted: Array<number | null>;
+  atr14: Array<number | null>;
+} {
   const normHigh = rollingMax(close, 14);
   const normLow = rollingMin(close, 14);
   const normPrice = close.map((value, i) => {
@@ -338,16 +343,19 @@ export function computePsi8(close: number[], high: number[], low: number[]): { r
     ];
     if (components.some((value) => !isFiniteNumber(value))) return null;
     const weighted =
-      Number(normPrice[i]) * 22 +
+      Number(normPrice[i]) * 15 +
       Number(rsi[i]) * 10 +
       Number(banker[i]) * 5 +
       Number(bbScore[i]) * 4 +
-      Number(stScore[i]) * 44 +
+      Number(stScore[i]) * 47 +
       Number(adxScore[i]) * 10 +
       Number(maScore[i]) * 4 +
       Number(slopeScore[i]) * 1;
-    return weighted / 100;
+    return weighted / 96.0;
   });
+
+  const masterIndex = dynamicEma(rawIndex, 3);
+  const masterIndexAdjusted = dynamicEma(rawIndex, 3);
   
-  return { rawIndex, atr14 };
+  return { rawIndex, masterIndex, masterIndexAdjusted, atr14 };
 }

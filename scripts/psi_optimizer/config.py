@@ -16,23 +16,23 @@ DEFAULT_CONSOLIDATED_DATA_PATH = PROJECT_ROOT / "_playground" / "_random" / "con
 # Default output directory for research and traceability (does NOT overwrite live app data)
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "_technical_support" / "psi_walkforward_optimization" / "results"
 
-# Grid search space (50,220 combinations per ticker)
+# Grid search space (31 x 45 x 6 = 8,370 combinations per ticker)
 ENTRY_LEVELS = np.array([14.6, 23.6, 38.2, 50.0, 61.8], dtype=np.float64)
 AYM_LIMITS = [50.0, 61.8, 78.6, 88.6]
 AYM_MULTIPLIERS = list(range(2, 13))
 ATR_DISTANCES = [2.0, 3.0, 4.0, 5.0, 6.0, np.nan]
-STOPLOSS_LEVELS = [4.0, 5.0, 6.0, 8.0, 10.0, np.nan]
+STOPLOSS_LEVELS = [np.nan]  # Exits are exclusively AYM and ATR
 INITIAL_CAPITAL = 3000.0
 
-# Default Walk-Forward Date Slices
-DEFAULT_TRAIN_START = "2020-01-01"
+# Default Walk-Forward Date Slices (All data prior to 2025 for training)
+DEFAULT_TRAIN_START = None
 DEFAULT_TRAIN_END = "2024-12-31"
 DEFAULT_TEST_START = "2025-01-01"
 DEFAULT_TEST_END = "2026-12-31"
 
 # Candidate selection settings
 DEFAULT_TOP_K = 25
-DEFAULT_MIN_TRAIN_TRADES = 4
+DEFAULT_MIN_TRAIN_TRADES = 3
 
 # Multi-objective composite scoring weights for Train phase
 WEIGHT_ROI_MARGIN = 0.50

@@ -80,6 +80,11 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUTPUT_DIR,
         help=f"Directory to save output CSV audit and summary files. Default: {DEFAULT_OUTPUT_DIR}",
     )
+    parser.add_argument(
+        "--no-seed-db",
+        action="store_true",
+        help="Skip upserting winning combinations into PostgreSQL database.",
+    )
     return parser.parse_args()
 
 
@@ -107,6 +112,7 @@ def main() -> None:
         min_trades=args.min_trades,
         threads=args.threads,
         output_dir=args.output_dir,
+        seed_db=not args.no_seed_db,
     )
 
 

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import useSWR from 'swr';
 import { useAlerts } from './AlertProvider';
+import { isPsi50Ticker } from '@/lib/psi50Universe';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -65,7 +66,7 @@ export default function RightSidebar({
   }, [quoteData]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [listFilter, setListFilter] = useState<'ALL' | 'OPEN' | 'OPPORTUNITIES'>('ALL');
+  const [listFilter, setListFilter] = useState<'ALL' | 'OPEN' | 'PSI_50'>('ALL');
 
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
@@ -117,7 +118,7 @@ export default function RightSidebar({
 
   const filteredWatchlist = watchlist.filter(item => {
     if (listFilter === 'OPEN' && !item.hasOpenPosition) return false;
-    if (listFilter === 'OPPORTUNITIES' && !item.recentBuyOpportunity) return false;
+    if (listFilter === 'PSI_50' && !isPsi50Ticker(item.symbol)) return false;
     const q = searchQuery.toLowerCase();
     return (
       item.symbol.toLowerCase().includes(q) || 
@@ -191,12 +192,12 @@ export default function RightSidebar({
 
       {/* Top Header Bar with Filter Switch & Search */}
       <div className="flex flex-col gap-2 p-2.5 border-b border-white/[0.09] bg-white/[0.01] shrink-0">
-        {/* Switch Pill (ALL | OPEN | SIGNALS) */}
+        {/* Switch Pill (ALL | OPEN | PSI 50) */}
         <div className="flex items-center h-7 bg-black border border-white/[0.09] rounded-md p-0.5 gap-0.5 box-border w-full">
           {([
             { id: 'ALL', label: 'ALL' },
             { id: 'OPEN', label: 'OPEN' },
-            { id: 'OPPORTUNITIES', label: 'SIGNALS' }
+            { id: 'PSI_50', label: 'PSI 50' }
           ] as const).map(({ id, label }) => (
             <button
               key={id}
