@@ -127,19 +127,20 @@ export default function NotificationsDrawer({
   const [activeTab, setActiveTab] = useState<'signals' | 'system'>('signals');
 
   const { data: signalsData, mutate: mutateSignals, isLoading: isLoadingSignals } = useSWR<{ notifications: SignalNotificationItem[] }>(
-    isOpen && activeTab === 'signals' ? '/api/notifications' : null,
+    isOpen ? '/api/notifications' : null,
     fetcher,
     { refreshInterval: 15000 }
   );
 
   const { data: logsData, isLoading: isLoadingLogs } = useSWR<{ logs: SystemLogItem[] }>(
-    isOpen && activeTab === 'system' ? '/api/system-logs' : null,
+    isOpen ? '/api/system-logs' : null,
     fetcher,
     { refreshInterval: 15000 }
   );
 
   const notifications = signalsData?.notifications ?? [];
   const systemLogs = logsData?.logs ?? [];
+  const hasErrors = systemLogs.some(l => l.level === 'ERROR');
   const [isClearing, setIsClearing] = useState(false);
 
   const handleClearAll = async () => {
@@ -238,23 +239,37 @@ export default function NotificationsDrawer({
             <div className="flex items-center gap-1 p-2 border-b border-white/[0.06] shrink-0">
               <button
                 onClick={() => setActiveTab('signals')}
-                className={`flex-1 text-[11px] py-1.5 rounded-md font-medium transition-colors ${
+                className={`flex-1 text-[11px] py-1.5 rounded-md font-medium transition-colors flex items-center justify-center gap-1.5 ${
                   activeTab === 'signals'
                     ? 'bg-white/[0.08] text-white'
                     : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
                 }`}
               >
-                Position Alerts
+                <span>Position Alerts</span>
+                {notifications.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-plt-orange/20 text-plt-orange border border-plt-orange/30">
+                    {notifications.length}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('system')}
-                className={`flex-1 text-[11px] py-1.5 rounded-md font-medium transition-colors ${
+                className={`flex-1 text-[11px] py-1.5 rounded-md font-medium transition-colors flex items-center justify-center gap-1.5 ${
                   activeTab === 'system'
                     ? 'bg-white/[0.08] text-white'
                     : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
                 }`}
               >
-                System Logs
+                <span>System Logs</span>
+                {systemLogs.length > 0 && (
+                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono border ${
+                    hasErrors 
+                      ? 'bg-red-500/20 text-red-400 border-red-500/30' 
+                      : 'bg-white/[0.06] text-white/50 border-white/[0.09]'
+                  }`}>
+                    {systemLogs.length}
+                  </span>
+                )}
               </button>
             </div>
 

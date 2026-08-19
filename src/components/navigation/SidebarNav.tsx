@@ -29,7 +29,12 @@ export default function SidebarNav() {
     revalidateOnFocus: true,
   });
 
-  const notificationCount = notifData?.notifications?.length ?? 0;
+  const { data: logsData } = useSWR<{ logs: Array<{ id: number; level: string; createdAt: string }> }>('/api/system-logs', fetcher, {
+    refreshInterval: 30000,
+    revalidateOnFocus: true,
+  });
+
+  const notificationCount = (notifData?.notifications?.length ?? 0) + (logsData?.logs?.some(l => l.level === 'ERROR') ? 1 : 0);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

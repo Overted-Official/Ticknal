@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { tickers, dailyPrices, systemLogs, macroInflationRates } from '@/db/schema';
-import { sql, inArray, desc } from 'drizzle-orm';
+import { sql, inArray, desc, eq } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { verifyCronAuth } from '@/lib/cron-auth';
@@ -61,6 +61,8 @@ export async function handleUpdateStocks(req: Request) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
+  const startTime = Date.now();
+
   try {
     const allTickers = await db.select().from(tickers);
     const stockTickers = allTickers.filter(t => t.sector !== 'Funds' && t.sector !== 'Macro');
@@ -80,58 +82,128 @@ export async function handleUpdateStocks(req: Request) {
       }
     }
 
+    // Prioritize active positions, alerts, and major EGX30/70 tickers
+    const { positions: positionsTable, tickerAlerts: alertsTable } = await import('@/db/schema');
+    const [openPositions, enabledAlerts] = await Promise.all([
+      db.select({ ticker: positionsTable.tickerSymbol }).from(positionsTable).where(eq(positionsTable.status, 'OPEN')).catch(() => []),
+      db.select({ ticker: alertsTable.tickerSymbol }).from(alertsTable).where(eq(alertsTable.enabled, true)).catch(() => []),
+    ]);
+
+    const prioritySet = new Set<string>([
+      'COMI', 'COMI.CA', 'ETEL', 'ETEL.CA', 'EAST', 'EAST.CA', 'EGAL', 'EGAL.CA', 'PHDC', 'PHDC.CA',
+      'HRHO', 'HRHO.CA', 'TMGH', 'TMGH.CA', 'SWDY', 'SWDY.CA', 'FWRY', 'FWRY.CA', 'MFPC', 'MFPC.CA',
+      'EKHO', 'EKHO.CA', 'ORAS', 'ORAS.CA', 'ABUK', 'ABUK.CA', 'ESRS', 'ESRS.CA', 'AMOC', 'AMOC.CA',
+      ...openPositions.map((p: any) => p.ticker),
+      ...enabledAlerts.map((a: any) => a.ticker),
+    ]);
+
+    stockTickers.sort((a, b) => {
+      const aPri = prioritySet.has(a.symbol) ? 1 : 0;
+      const bPri = prioritySet.has(b.symbol) ? 1 : 0;
+      return bPri - aPri;
+    });
+
     const client = new TradingView.Client();
-    const batchSize = 10;
     let totalUpdated = 0;
+    let updatedTickersCount = 0;
     const errors: string[] = [];
 
-    for (let i = 0; i < stockTickers.length; i += batchSize) {
-      const batch = stockTickers.slice(i, i + batchSize);
-      await Promise.all(
-        batch.map(async (ticker) => {
-          try {
-            const periods = await fetchStockSymbolPeriods(client, ticker.symbol, ticker.exchange, 30);
-            if (!periods || periods.length === 0) return;
+    const fetchSymbol = (ticker: typeof stockTickers[0]): Promise<any[]> => {
+      return new Promise((resolve) => {
+        try {
+          const symbol = ticker.symbol.replace('.CA', '');
+          const tvSymbol = symbol === 'EGX70' ? 'EGX:EGX70EWI' : symbol === 'EGX100' ? 'EGX:EGX100EWI' : `EGX:${symbol}`;
+          const chart = new client.Session.Chart();
+          chart.setMarket(tvSymbol, { timeframe: 'D', range: 15 });
+
+          let done = false;
+          const cleanup = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(timeout);
+            try { chart.delete(); } catch {}
+          };
+
+          const timeout = setTimeout(() => {
+            cleanup();
+            resolve([]);
+          }, 2200);
+
+          chart.onUpdate(() => {
+            const periods = chart.periods;
+            cleanup();
+            if (!periods || periods.length === 0) return resolve([]);
 
             const lastDate = lastDateMap.get(ticker.symbol);
-            const newPeriods = periods.filter((p) => {
+            const sorted = [...periods].sort((a, b) => a.time - b.time);
+            const newPeriods = sorted.filter((p) => {
               const dateStr = new Date(p.time * 1000).toISOString().split('T')[0];
               return !lastDate || dateStr > lastDate;
             });
 
-            if (newPeriods.length === 0) return;
+            const rows = newPeriods.map((p) => ({
+              tickerSymbol: ticker.symbol,
+              date: new Date(p.time * 1000).toISOString().split('T')[0],
+              open: sql`${p.open}`,
+              high: sql`${p.max}`,
+              low: sql`${p.min}`,
+              close: sql`${p.close}`,
+              volume: sql`${p.volume || 0}`,
+            }));
 
-            for (const p of newPeriods) {
-              const dateStr = new Date(p.time * 1000).toISOString().split('T')[0];
-              await db
-                .insert(dailyPrices)
-                .values({
-                  tickerSymbol: ticker.symbol,
-                  date: dateStr,
-                  open: sql`${p.open}`,
-                  high: sql`${p.max}`,
-                  low: sql`${p.min}`,
-                  close: sql`${p.close}`,
-                  volume: sql`${p.volume || 0}`,
-                })
-                .onConflictDoUpdate({
-                  target: [dailyPrices.tickerSymbol, dailyPrices.date],
-                  set: {
-                    open: sql`${p.open}`,
-                    high: sql`${p.max}`,
-                    low: sql`${p.min}`,
-                    close: sql`${p.close}`,
-                    volume: sql`${p.volume || 0}`,
-                  },
-                });
-            }
+            resolve(rows);
+          });
 
-            totalUpdated += newPeriods.length;
-          } catch (err: any) {
-            errors.push(`${ticker.symbol}: ${err.message || err}`);
-          }
-        })
-      );
+          chart.onError((err: any) => {
+            cleanup();
+            errors.push(`${ticker.symbol}: ${err?.message || err}`);
+            resolve([]);
+          });
+        } catch (err: any) {
+          errors.push(`${ticker.symbol}: ${err?.message || err}`);
+          resolve([]);
+        }
+      });
+    };
+
+    const BATCH_SIZE = 8;
+    for (let i = 0; i < stockTickers.length; i += BATCH_SIZE) {
+      if (Date.now() - startTime > 45000) {
+        console.warn(`handleUpdateStocks: Time budget reached at ticker index ${i}/${stockTickers.length}`);
+        break;
+      }
+
+      const batch = stockTickers.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(batch.map(fetchSymbol));
+
+      const rowsToInsert: any[] = [];
+      batchResults.forEach((rows) => {
+        if (rows.length > 0) {
+          updatedTickersCount++;
+          totalUpdated += rows.length;
+          rowsToInsert.push(...rows);
+        }
+      });
+
+      if (rowsToInsert.length > 0) {
+        for (let r = 0; r < rowsToInsert.length; r += 50) {
+          const slice = rowsToInsert.slice(r, r + 50);
+          await db.insert(dailyPrices)
+            .values(slice)
+            .onConflictDoUpdate({
+              target: [dailyPrices.tickerSymbol, dailyPrices.date],
+              set: {
+                open: sql`EXCLUDED.open`,
+                high: sql`EXCLUDED.high`,
+                low: sql`EXCLUDED.low`,
+                close: sql`EXCLUDED.close`,
+                volume: sql`EXCLUDED.volume`,
+              }
+            });
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, 50));
     }
 
     client.end();
@@ -143,20 +215,21 @@ export async function handleUpdateStocks(req: Request) {
       revalidatePath('/invest');
     } catch {}
 
+    const elapsed = Date.now() - startTime;
     await db.insert(systemLogs).values({
       source: 'cron-stocks',
       level: 'INFO',
-      message: `Updated stock prices. Total rows inserted/updated: ${totalUpdated}.`,
-      metadata: { totalUpdated, errors: errors.length > 0 ? errors : undefined },
+      message: `Stock sync complete: Updated ${updatedTickersCount} tickers with ${totalUpdated} new price bars in ${Math.round(elapsed / 1000)}s.`,
+      metadata: { totalUpdated, updatedTickersCount, elapsedMs: elapsed, errors: errors.length > 0 ? errors.slice(0, 10) : undefined },
     });
 
-    return NextResponse.json({ message: 'Stock update completed', totalUpdated, errors }, { status: 200 });
+    return NextResponse.json({ message: 'Stock update completed', totalUpdated, updatedTickersCount, elapsedMs: elapsed, errors }, { status: 200 });
   } catch (error) {
     console.error('Error in handleUpdateStocks:', error);
     await db.insert(systemLogs).values({
       source: 'cron-stocks',
       level: 'ERROR',
-      message: 'Failed to update stock prices',
+      message: `Stock sync failed: ${(error as Error).message}`,
       metadata: { error: (error as Error).message },
     });
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
