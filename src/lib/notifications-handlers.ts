@@ -32,7 +32,10 @@ export async function handleNotificationsGet() {
       .orderBy(desc(signalNotifications.sentAt))
       .limit(50);
 
-    if (rows.length === 0) {
+    const newestSentAt = rows[0]?.sentAt ? new Date(rows[0].sentAt).getTime() : 0;
+    const needsRefresh = rows.length === 0 || (Date.now() - newestSentAt > 15 * 60 * 1000);
+
+    if (needsRefresh) {
       try {
         await dispatchSignalNotifications({ lookbackBars: 5 });
 
