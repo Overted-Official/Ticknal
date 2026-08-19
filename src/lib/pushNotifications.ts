@@ -2,7 +2,7 @@ import webPush from 'web-push';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { positions, pushSubscriptions, signalNotifications, tickerAlerts } from '@/db/schema';
-import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
+import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import { getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal } from '@/strategies/PSI/psiStrategy';
 
@@ -91,7 +91,8 @@ export async function dispatchSignalNotifications(options: {
       continue;
     }
 
-    const defaultParams = resolvePsiParamsFromStore(ticker);
+    const paramResolution = await resolvePsiParamsAsync(ticker, {});
+    const defaultParams = paramResolution.params;
     const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
 
     for (const alert of userAlerts) {
@@ -122,7 +123,7 @@ export async function dispatchSignalNotifications(options: {
         signal: PsiSignal;
       }> = [];
 
-      // 1. Evaluate PSI Strategy
+      // 1. Evaluate PSI Strategy (using exact DB-tuned combinations)
       if (userScope === 'all' || userScope === 'psi') {
         const userSettingRow = userSettingsMap[userSettingsKey]?.find(s => s.strategyName === 'psi');
         let userParams = defaultParams;
@@ -147,11 +148,11 @@ export async function dispatchSignalNotifications(options: {
         }
       }
 
-      // 2. Evaluate Thoth EGX Macro Strategy
+      // 2. Evaluate Thoth EGX Macro Strategy (using ticker bespoke parameters)
       if (userScope === 'all' || userScope === 'thoth_egx_macro') {
         try {
           const { runThothStrategy } = await import('@/strategies/Thoth/thothStrategy');
-          const thothResult = await runThothStrategy(bars, { startDate: bars[0].date });
+          const thothResult = await runThothStrategy(bars, { ticker, startDate: bars[0].date });
           const signal = [...thothResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
           if (signal) {
             signalsToDispatch.push({
