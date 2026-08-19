@@ -13,6 +13,8 @@ interface BottomToolbarProps {
   timeframe?: string;
   replay?: boolean;
   strategy?: string;
+  companyName?: string;
+  logoUrl?: string | null;
   chartData?: Array<{
     time: string;
     open: number;
@@ -28,6 +30,8 @@ export default function BottomToolbar({
   timeframe = 'D',
   replay = false,
   strategy,
+  companyName,
+  logoUrl,
   chartData = [],
 }: BottomToolbarProps) {
   const [cairoTime, setCairoTime] = useState('--:--:--');
@@ -124,6 +128,8 @@ export default function BottomToolbar({
         symbol={symbol}
         chartData={chartData}
         activeStrategy={activeStrategy}
+        companyName={companyName}
+        logoUrl={logoUrl}
       />
     </>
   );

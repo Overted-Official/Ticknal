@@ -12,16 +12,10 @@ import {
   TrendingUp,
   Award,
   Zap,
-  ArrowUpRight,
-  ArrowDownRight,
   ShieldAlert,
   Percent,
-  SlidersHorizontal,
-  ChevronDown,
-  Sparkles,
   Activity,
   CheckCircle2,
-  Layers,
 } from "lucide-react";
 import {
   runFullStrategyBacktest,
@@ -38,10 +32,55 @@ import {
   type PsiStrategyParams,
 } from "@/strategies/PSI/psiStrategy";
 
+// ============================================================================
+// TICKER LOGO COMPONENT
+// ============================================================================
+function TickerLogo({
+  symbol,
+  logoUrl,
+  size = "md",
+}: {
+  symbol: string;
+  logoUrl?: string | null;
+  size?: "sm" | "md" | "lg";
+}) {
+  const [imgError, setImgError] = useState(false);
+  const sizeClasses =
+    size === "lg"
+      ? "w-10 h-10 rounded-lg"
+      : size === "md"
+      ? "w-8 h-8 rounded-md"
+      : "w-6 h-6 rounded-md";
+
+  return (
+    <div
+      className={`${sizeClasses} bg-white/[0.04] border border-white/[0.09] p-0.5 shrink-0 flex items-center justify-center overflow-hidden`}
+    >
+      {logoUrl && !imgError ? (
+        <img
+          src={logoUrl}
+          alt={symbol}
+          className="w-full h-full object-contain rounded-[3px] bg-transparent"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <span className="text-[11px] font-bold font-mono text-plt-orange uppercase">
+          {symbol.slice(0, 2)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN STRATEGY REPORT DRAWER
+// ============================================================================
 interface StrategyReportDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   symbol: string;
+  companyName?: string;
+  logoUrl?: string | null;
   chartData: Array<{
     time: string;
     open: number;
@@ -58,6 +97,8 @@ export default function StrategyReportDrawer({
   isOpen,
   onClose,
   symbol,
+  companyName: propCompanyName,
+  logoUrl: propLogoUrl,
   chartData = [],
   activeStrategy = "psi",
   customParams,
@@ -70,6 +111,33 @@ export default function StrategyReportDrawer({
   const [initialCapital, setInitialCapital] = useState<number>(1000);
   const [hoveredPoint, setHoveredPoint] = useState<EquityPoint | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+
+  // Fallback ticker metadata fetching if not provided
+  const [fetchedMeta, setFetchedMeta] = useState<{ companyName?: string; logoUrl?: string | null }>({});
+
+  useEffect(() => {
+    if (!propCompanyName || !propLogoUrl) {
+      fetch("/api/tickers")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const found = data.find(
+              (t: any) => t.symbol?.toUpperCase() === symbol?.toUpperCase()
+            );
+            if (found) {
+              setFetchedMeta({
+                companyName: found.companyName,
+                logoUrl: found.logoUrl,
+              });
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [symbol, propCompanyName, propLogoUrl]);
+
+  const resolvedCompanyName = propCompanyName || fetchedMeta.companyName || "";
+  const resolvedLogoUrl = propLogoUrl || fetchedMeta.logoUrl || null;
 
   // Date range state (default to 2025-01-01 OOS)
   const defaultStartDate = "2025-01-01";
@@ -308,52 +376,64 @@ export default function StrategyReportDrawer({
       />
 
       {/* Spacious Slide-Over Modal Drawer */}
-      <div className="relative z-10 w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-full bg-[#090A0E] border-l border-white/[0.08] text-zinc-100 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.9)] animate-in slide-in-from-right duration-300 overflow-hidden">
+      <div className="relative z-10 w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-full bg-black border-l border-white/[0.09] text-zinc-100 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden">
         
         {/* ================================================================= */}
-        {/* TOP BAR & HEADER                                                  */}
+        {/* COMPACT STREAMLINED HEADER (All settings on right of ticker)      */}
         {/* ================================================================= */}
-        <div className="px-6 py-5 border-b border-white/[0.07] bg-[#0C0D12] shrink-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="px-4 py-2.5 border-b border-white/[0.09] bg-black shrink-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
             
-            {/* Title & Architecture */}
-            <div className="flex items-center gap-3.5">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-plt-orange/20 to-plt-orange/5 border border-plt-orange/30 text-plt-orange shadow-inner">
-                <BarChart3 className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-mono">
-                    {symbol.replace(".CA", "")}
-                  </h2>
-                  <span className="text-xs font-semibold text-white/50">&bull;</span>
-                  <span className="text-sm font-semibold text-white/90">
+            {/* Left: Logo + Eyebrow Title + Ticker & Full Name */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <TickerLogo symbol={symbol} logoUrl={resolvedLogoUrl} size="lg" />
+              
+              <div className="flex flex-col min-w-0">
+                {/* 1) Small title above the ticker name */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-plt-orange">
                     Strategy Performance Report
                   </span>
-                  <span className={`px-2 py-0.5 text-[11px] font-semibold rounded-full border ${
-                    model === "thoth_egx_macro"
-                      ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
-                      : "bg-white/[0.05] text-white/70 border border-white/[0.08]"
-                  }`}>
-                    {model === "thoth_egx_macro" ? "Thoth Macro (AI)" : model === "psi40" ? "PSI-40 Trend" : "PSI-8 Inflection"}
+                  <span
+                    className={`px-1.5 py-0.2 rounded text-[9px] font-semibold border ${
+                      model === "thoth_egx_macro"
+                        ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                        : "bg-white/[0.05] text-white/70 border border-white/[0.08]"
+                    }`}
+                  >
+                    {model === "thoth_egx_macro"
+                      ? "Thoth Macro (AI)"
+                      : model === "psi40"
+                      ? "PSI-40 Trend"
+                      : "PSI-8 Inflection"}
                   </span>
                 </div>
-                <p className="text-xs text-white/40 mt-0.5 font-sans">
-                  TradingView Quantitative Simulation &bull; Zero Lookahead Bias
-                </p>
+
+                {/* 2) Ticker Symbol and Full Name */}
+                <div className="flex items-baseline gap-2 mt-0.5 truncate">
+                  <h2 className="text-lg font-bold tracking-tight text-white font-mono shrink-0">
+                    {symbol.replace(".CA", "")}
+                  </h2>
+                  {resolvedCompanyName && (
+                    <span className="text-xs text-white/40 truncate font-normal">
+                      {resolvedCompanyName}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Model Toggle & Controls */}
-            <div className="flex items-center gap-2.5 self-end sm:self-auto">
+            {/* Right: All Settings, Inputs, Tabs & Actions */}
+            <div className="flex flex-wrap items-center gap-1.5 justify-end">
+              
               {/* Architecture Model Switcher */}
-              <div className="flex bg-zinc-900/80 border border-white/[0.08] p-1 rounded-xl shadow-inner">
+              <div className="flex bg-white/[0.03] border border-white/[0.09] p-0.5 rounded-md">
                 <button
                   type="button"
                   onClick={() => setModel("psi8")}
-                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                  className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
                     model === "psi8"
-                      ? "bg-zinc-800 text-white shadow-sm font-semibold border border-white/[0.12]"
+                      ? "bg-white/[0.12] text-white font-semibold shadow-sm"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
@@ -362,9 +442,9 @@ export default function StrategyReportDrawer({
                 <button
                   type="button"
                   onClick={() => setModel("psi40")}
-                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                  className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
                     model === "psi40"
-                      ? "bg-zinc-800 text-white shadow-sm font-semibold border border-white/[0.12]"
+                      ? "bg-white/[0.12] text-white font-semibold shadow-sm"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
@@ -373,9 +453,9 @@ export default function StrategyReportDrawer({
                 <button
                   type="button"
                   onClick={() => setModel("thoth_egx_macro")}
-                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                  className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
                     model === "thoth_egx_macro"
-                      ? "bg-purple-950/70 text-purple-300 shadow-sm font-semibold border border-purple-500/30"
+                      ? "bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
@@ -383,63 +463,34 @@ export default function StrategyReportDrawer({
                 </button>
               </div>
 
-              {/* Export Button */}
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                title="Export Trades to CSV"
-                className="px-3 py-1.5 rounded-xl border border-white/[0.08] bg-zinc-900/80 hover:bg-zinc-800 text-white/70 hover:text-white text-xs font-medium flex items-center gap-1.5 transition active:scale-[0.98]"
-              >
-                <Download className="w-3.5 h-3.5 text-white/60" />
-                <span className="hidden sm:inline">Export CSV</span>
-              </button>
-
-              {/* Close Button */}
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-2 text-white/40 hover:text-white hover:bg-white/[0.08] rounded-xl transition"
-                title="Close report (Esc)"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* =============================================================== */}
-          {/* UNIFIED CONTROLS TOOLBAR (Date Presets, Capital & Tabs)         */}
-          {/* =============================================================== */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mt-4 pt-3.5 border-t border-white/[0.06]">
-            
-            {/* Left: Date Presets & Custom Inputs */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <div className="flex items-center bg-zinc-900/80 border border-white/[0.08] rounded-lg p-0.5">
+              {/* Date Presets */}
+              <div className="flex items-center bg-white/[0.03] border border-white/[0.09] rounded-md p-0.5">
                 <button
                   type="button"
                   onClick={() => handlePresetDate("2025")}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
                     activePreset === "2025"
                       ? "bg-plt-orange text-white font-semibold shadow-sm"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  2025+ (OOS)
+                  2025+
                 </button>
                 <button
                   type="button"
                   onClick={() => handlePresetDate("1y")}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
                     activePreset === "1y"
                       ? "bg-plt-orange text-white font-semibold shadow-sm"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  1 Year
+                  1Y
                 </button>
                 <button
                   type="button"
                   onClick={() => handlePresetDate("all")}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
                     activePreset === "all"
                       ? "bg-plt-orange text-white font-semibold shadow-sm"
                       : "text-white/40 hover:text-white"
@@ -449,9 +500,8 @@ export default function StrategyReportDrawer({
                 </button>
               </div>
 
-              {/* Range Inputs */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/60 border border-white/[0.08] text-[11px]">
-                <span className="text-white/35 font-mono">From:</span>
+              {/* Compact Date Range Inputs */}
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.09] text-[11px]">
                 <input
                   type="date"
                   value={startDate}
@@ -459,10 +509,9 @@ export default function StrategyReportDrawer({
                     setStartDate(e.target.value);
                     setActivePreset("custom");
                   }}
-                  className="bg-transparent text-white/90 font-mono text-[11px] outline-none w-24"
+                  className="bg-transparent text-white/90 font-mono text-[10px] outline-none w-20"
                 />
-                <span className="text-white/35 font-mono">&rarr;</span>
-                <span className="text-white/35 font-mono">To:</span>
+                <span className="text-white/30 font-mono">&rarr;</span>
                 <input
                   type="date"
                   value={endDate}
@@ -470,55 +519,74 @@ export default function StrategyReportDrawer({
                     setEndDate(e.target.value);
                     setActivePreset("custom");
                   }}
-                  className="bg-transparent text-white/90 font-mono text-[11px] outline-none w-24"
+                  className="bg-transparent text-white/90 font-mono text-[10px] outline-none w-20"
                 />
               </div>
 
-              {/* Capital Input */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/60 border border-white/[0.08] text-[11px]">
-                <DollarSign className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="text-white/35 font-mono">Capital:</span>
+              {/* Compact Capital Input */}
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.09] text-[11px]">
+                <DollarSign className="w-3 h-3 text-emerald-400 shrink-0" />
                 <input
                   type="number"
                   min="100"
                   step="500"
                   value={initialCapital}
                   onChange={(e) => setInitialCapital(Math.max(100, Number(e.target.value) || 1000))}
-                  className="bg-transparent text-white font-mono text-[11px] outline-none w-16 text-right font-medium"
+                  className="bg-transparent text-white font-mono text-[10px] outline-none w-14 text-right font-medium"
                 />
-                <span className="text-white/50 font-mono text-[10px]">{currencySymbol}</span>
+                <span className="text-white/40 font-mono text-[9px]">{currencySymbol}</span>
               </div>
-            </div>
 
-            {/* Right: Tab Navigation Switcher */}
-            <div className="flex items-center bg-zinc-900/80 border border-white/[0.08] p-1 rounded-xl shrink-0">
+              {/* Tab Navigation Switcher */}
+              <div className="flex items-center bg-white/[0.03] border border-white/[0.09] p-0.5 rounded-md">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("stats")}
+                  className={`px-2.5 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
+                    activeTab === "stats"
+                      ? "bg-white/[0.12] text-white shadow-sm"
+                      : "text-white/40 hover:text-white"
+                  }`}
+                >
+                  <BarChart3 className="w-3 h-3 text-plt-orange" />
+                  <span>Key stats</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("trades")}
+                  className={`px-2.5 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
+                    activeTab === "trades"
+                      ? "bg-white/[0.12] text-white shadow-sm"
+                      : "text-white/40 hover:text-white"
+                  }`}
+                >
+                  <ListFilter className="w-3 h-3 text-plt-orange" />
+                  <span>Trades</span>
+                  <span className="px-1 py-0.2 rounded text-[9px] font-mono bg-white/[0.10] text-white/80">
+                    {trades.length}
+                  </span>
+                </button>
+              </div>
+
+              {/* Export Button */}
               <button
                 type="button"
-                onClick={() => setActiveTab("stats")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
-                  activeTab === "stats"
-                    ? "bg-white/[0.10] text-white shadow-sm border border-white/[0.12]"
-                    : "text-white/50 hover:text-white"
-                }`}
+                onClick={handleExportCSV}
+                title="Export Trades to CSV"
+                className="p-1.5 rounded-md border border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.08] text-white/60 hover:text-white transition"
               >
-                <BarChart3 className="w-3.5 h-3.5 text-plt-orange" />
-                <span>Overview & Key Stats</span>
+                <Download className="w-3.5 h-3.5" />
               </button>
 
+              {/* Close Button */}
               <button
                 type="button"
-                onClick={() => setActiveTab("trades")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
-                  activeTab === "trades"
-                    ? "bg-white/[0.10] text-white shadow-sm border border-white/[0.12]"
-                    : "text-white/50 hover:text-white"
-                }`}
+                onClick={onClose}
+                className="p-1.5 text-white/40 hover:text-white hover:bg-white/[0.08] rounded-md transition"
+                title="Close report (Esc)"
               >
-                <ListFilter className="w-3.5 h-3.5 text-plt-orange" />
-                <span>List of Trades</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.10] text-white/80">
-                  {trades.length}
-                </span>
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -526,37 +594,37 @@ export default function StrategyReportDrawer({
         </div>
 
         {/* ================================================================= */}
-        {/* BODY CONTENT                                                      */}
+        {/* BODY CONTENT (Consistent 8px gap between all cards/widgets)       */}
         {/* ================================================================= */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2">
           
           {/* =============================================================== */}
           {/* TAB 1: KEY STATS & PERFORMANCE                                  */}
           {/* =============================================================== */}
           {activeTab === "stats" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-2 animate-in fade-in duration-200">
               
-              {/* 4 Top KPI Cards (TradingView Style) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              {/* 4 Top KPI Cards (Platform Dashboard Consistent Style) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {/* 1. Total Net PnL */}
-                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#13151D] to-[#0E1017] border border-white/[0.08] shadow-lg flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-xs text-white/40 font-medium">
+                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
                     <span>Total Net PnL</span>
                     <TrendingUp className={`w-3.5 h-3.5 ${stats.netProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`} />
                   </div>
-                  <div className="mt-3">
-                    <div className={`text-2xl font-bold font-mono tracking-tight ${
+                  <div className="mt-2">
+                    <div className={`text-xl font-bold font-mono tracking-tight ${
                       stats.netProfit >= 0 ? "text-emerald-400" : "text-rose-400"
                     }`}>
                       {stats.netProfit >= 0 ? "+" : ""}
-                      {stats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal text-white/50">{currencySymbol}</span>
+                      {stats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] font-normal text-white/50">{currencySymbol}</span>
                     </div>
-                    <div className="flex items-center gap-2 mt-1.5 text-xs font-mono">
+                    <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono">
                       <span className={`font-semibold ${stats.netProfitPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                         {stats.netProfitPct >= 0 ? "+" : ""}{stats.netProfitPct.toFixed(2)}%
                       </span>
                       <span className="text-white/20">&bull;</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
                         stats.alphaMargin >= 0 ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/15 text-rose-300 border border-rose-500/30"
                       }`}>
                         {stats.alphaMargin >= 0 ? `+${stats.alphaMargin.toFixed(1)}% α` : `${stats.alphaMargin.toFixed(1)}% α`}
@@ -566,32 +634,32 @@ export default function StrategyReportDrawer({
                 </div>
 
                 {/* 2. Max Drawdown */}
-                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#13151D] to-[#0E1017] border border-white/[0.08] shadow-lg flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-xs text-white/40 font-medium">
+                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
                     <span>Max Drawdown</span>
                     <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
                   </div>
-                  <div className="mt-3">
-                    <div className="text-2xl font-bold font-mono tracking-tight text-rose-400">
-                      {stats.maxDrawdownAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal text-white/50">{currencySymbol}</span>
+                  <div className="mt-2">
+                    <div className="text-xl font-bold font-mono tracking-tight text-rose-400">
+                      {stats.maxDrawdownAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] font-normal text-white/50">{currencySymbol}</span>
                     </div>
-                    <div className="flex items-center gap-2 mt-1.5 text-xs font-mono text-rose-400/90 font-semibold">
-                      <span>{stats.maxDrawdown.toFixed(2)}% of peak capital</span>
+                    <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono text-rose-400/90 font-semibold">
+                      <span>{stats.maxDrawdown.toFixed(2)}% of peak</span>
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Profitable Trades */}
-                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#13151D] to-[#0E1017] border border-white/[0.08] shadow-lg flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-xs text-white/40 font-medium">
+                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
                     <span>Profitable Trades</span>
                     <Percent className="w-3.5 h-3.5 text-emerald-400" />
                   </div>
-                  <div className="mt-3">
-                    <div className="text-2xl font-bold font-mono tracking-tight text-white">
+                  <div className="mt-2">
+                    <div className="text-xl font-bold font-mono tracking-tight text-white">
                       {stats.winRate.toFixed(2)}%
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-xs font-mono text-white/60">
+                    <div className="flex items-center gap-1 mt-1 text-[11px] font-mono text-white/50">
                       <span className="text-emerald-400 font-semibold">{stats.winningTrades} wins</span>
                       <span>/</span>
                       <span className="text-rose-400 font-semibold">{stats.losingTrades} losses</span>
@@ -601,16 +669,16 @@ export default function StrategyReportDrawer({
                 </div>
 
                 {/* 4. Profit Factor */}
-                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#13151D] to-[#0E1017] border border-white/[0.08] shadow-lg flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-xs text-white/40 font-medium">
+                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
                     <span>Profit Factor</span>
                     <Award className="w-3.5 h-3.5 text-amber-400" />
                   </div>
-                  <div className="mt-3">
-                    <div className="text-2xl font-bold font-mono tracking-tight text-white">
+                  <div className="mt-2">
+                    <div className="text-xl font-bold font-mono tracking-tight text-white">
                       {stats.profitFactor >= 99 ? "∞" : stats.profitFactor.toFixed(2)}
                     </div>
-                    <div className="flex items-center gap-1 mt-1.5 text-xs font-mono text-white/50">
+                    <div className="flex items-center gap-1 mt-1 text-[11px] font-mono text-white/50">
                       <span>Gross: +{stats.grossProfit.toFixed(0)} / -{stats.grossLoss.toFixed(0)}</span>
                     </div>
                   </div>
@@ -618,23 +686,23 @@ export default function StrategyReportDrawer({
               </div>
 
               {/* Performance Section: Equity Curve Chart */}
-              <div className="p-5 rounded-2xl bg-[#0E1017] border border-white/[0.08] shadow-xl space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.06]">
+              <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1.5 border-b border-white/[0.06]">
                   <div>
-                    <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                       <span>Performance Equity Curve</span>
-                      <span className="text-xs font-normal text-white/40">&bull; Cumulative Mark-to-Market vs Benchmark</span>
+                      <span className="text-[10px] font-normal text-white/40">&bull; Mark-to-Market vs Benchmark</span>
                     </h3>
                   </div>
                   
                   {/* Legend */}
-                  <div className="flex items-center gap-4 text-xs font-medium">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-1 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  <div className="flex items-center gap-3 text-[11px] font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                       <span className="text-white font-mono">Strategy ({stats.finalEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-1 rounded-full bg-blue-400" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
                       <span className="text-white/60 font-mono">Buy & Hold ({(initialCapital + stats.buyHoldReturn).toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})</span>
                     </div>
                   </div>
@@ -650,14 +718,14 @@ export default function StrategyReportDrawer({
                 />
               </div>
 
-              {/* Deep-Dive Performance Metrics Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {/* Deep-Dive Performance Metrics Grid (3-columns, consistent 8px gap) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {/* Panel 1: Trade Performance */}
-                <div className="p-4 rounded-2xl bg-[#0E1017] border border-white/[0.08] space-y-3">
-                  <div className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-white/[0.06]">
-                    <TrendingUp className="w-4 h-4 text-plt-orange" /> Trade Analytics
+                <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
+                  <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5 pb-1.5 border-b border-white/[0.06]">
+                    <TrendingUp className="w-3.5 h-3.5 text-plt-orange" /> Trade Analytics
                   </div>
-                  <div className="space-y-2.5 text-xs">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between items-center">
                       <span className="text-white/45">Total Trades:</span>
                       <span className="font-mono font-bold text-white">{stats.totalTrades}</span>
@@ -682,11 +750,11 @@ export default function StrategyReportDrawer({
                 </div>
 
                 {/* Panel 2: PnL & Return Breakdown */}
-                <div className="p-4 rounded-2xl bg-[#0E1017] border border-white/[0.08] space-y-3">
-                  <div className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-white/[0.06]">
-                    <DollarSign className="w-4 h-4 text-emerald-400" /> PnL Distribution
+                <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
+                  <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5 pb-1.5 border-b border-white/[0.06]">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-400" /> PnL Distribution
                   </div>
-                  <div className="space-y-2.5 text-xs">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between items-center">
                       <span className="text-white/45">Gross Profit:</span>
                       <span className="font-mono font-bold text-emerald-400">+{stats.grossProfit.toFixed(2)} {currencySymbol}</span>
@@ -713,11 +781,11 @@ export default function StrategyReportDrawer({
                 </div>
 
                 {/* Panel 3: Risk & Efficiency */}
-                <div className="p-4 rounded-2xl bg-[#0E1017] border border-white/[0.08] space-y-3">
-                  <div className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-white/[0.06]">
-                    <Award className="w-4 h-4 text-amber-400" /> Risk & Streaks
+                <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
+                  <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5 pb-1.5 border-b border-white/[0.06]">
+                    <Award className="w-3.5 h-3.5 text-amber-400" /> Risk & Streaks
                   </div>
-                  <div className="space-y-2.5 text-xs">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between items-center">
                       <span className="text-white/45">Max Drawdown:</span>
                       <span className="font-mono font-bold text-rose-400">{stats.maxDrawdown.toFixed(2)}%</span>
@@ -749,19 +817,19 @@ export default function StrategyReportDrawer({
           {/* TAB 2: LIST OF TRADES (TradingView Style Ledger)                */}
           {/* =============================================================== */}
           {activeTab === "trades" && (
-            <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="space-y-2 animate-in fade-in duration-200">
               
               {/* Table Controls */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-white/45">Filter Trades:</span>
-                  <div className="flex bg-zinc-900/80 border border-white/[0.08] p-0.5 rounded-lg">
+                  <div className="flex bg-white/[0.03] border border-white/[0.09] p-0.5 rounded-md">
                     <button
                       type="button"
                       onClick={() => setTradeFilter("all")}
-                      className={`px-3 py-1 rounded-md transition ${
+                      className={`px-2.5 py-0.5 rounded text-[11px] transition ${
                         tradeFilter === "all"
-                          ? "bg-zinc-800 text-white font-semibold"
+                          ? "bg-white/[0.12] text-white font-semibold"
                           : "text-white/40 hover:text-white"
                       }`}
                     >
@@ -770,7 +838,7 @@ export default function StrategyReportDrawer({
                     <button
                       type="button"
                       onClick={() => setTradeFilter("wins")}
-                      className={`px-3 py-1 rounded-md transition ${
+                      className={`px-2.5 py-0.5 rounded text-[11px] transition ${
                         tradeFilter === "wins"
                           ? "bg-emerald-500/20 text-emerald-400 font-semibold"
                           : "text-white/40 hover:text-emerald-400"
@@ -781,7 +849,7 @@ export default function StrategyReportDrawer({
                     <button
                       type="button"
                       onClick={() => setTradeFilter("losses")}
-                      className={`px-3 py-1 rounded-md transition ${
+                      className={`px-2.5 py-0.5 rounded text-[11px] transition ${
                         tradeFilter === "losses"
                           ? "bg-rose-500/20 text-rose-400 font-semibold"
                           : "text-white/40 hover:text-rose-400"
@@ -798,25 +866,25 @@ export default function StrategyReportDrawer({
               </div>
 
               {/* Trades Table */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0E1017] shadow-xl overflow-hidden">
+              <div className="border border-white/[0.09] rounded-md bg-black overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-white/[0.08] bg-zinc-900/60 text-white/50 text-[10px] uppercase font-mono tracking-wider">
-                        <th className="py-3.5 px-4">Trade #</th>
-                        <th className="py-3.5 px-3">Type</th>
-                        <th className="py-3.5 px-4">Date & Time</th>
-                        <th className="py-3.5 px-4">Price</th>
-                        <th className="py-3.5 px-4">Size</th>
-                        <th className="py-3.5 px-4 text-right">Net PnL</th>
-                        <th className="py-3.5 px-4 text-right">Return %</th>
-                        <th className="py-3.5 px-4">Exit Reason</th>
+                      <tr className="border-b border-white/[0.09] bg-white/[0.02] text-white/50 text-[10px] uppercase font-mono tracking-wider">
+                        <th className="py-2.5 px-3">Trade #</th>
+                        <th className="py-2.5 px-2">Type</th>
+                        <th className="py-2.5 px-3">Date & Time</th>
+                        <th className="py-2.5 px-3">Price</th>
+                        <th className="py-2.5 px-3">Size</th>
+                        <th className="py-2.5 px-3 text-right">Net PnL</th>
+                        <th className="py-2.5 px-3 text-right">Return %</th>
+                        <th className="py-2.5 px-3">Exit Reason</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.04]">
                       {filteredTrades.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-16 text-center text-white/40">
+                          <td colSpan={8} className="py-12 text-center text-white/40">
                             No trades recorded matching the selected filter.
                           </td>
                         </tr>
@@ -830,52 +898,52 @@ export default function StrategyReportDrawer({
                               <React.Fragment key={trade.id}>
                                 {/* Exit Row */}
                                 <tr className="hover:bg-white/[0.02] transition-colors">
-                                  <td rowSpan={2} className="py-3.5 px-4 font-mono font-bold align-top pt-3.5 border-r border-white/[0.04]">
-                                    <div className="flex items-center gap-2">
+                                  <td rowSpan={2} className="py-2.5 px-3 font-mono font-bold align-top pt-2.5 border-r border-white/[0.04]">
+                                    <div className="flex items-center gap-1.5">
                                       <span className="text-white/90 font-bold">{trade.tradeNumber}</span>
-                                      <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase tracking-wider">
+                                      <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase tracking-wider">
                                         long
                                       </span>
                                     </div>
-                                    <div className="text-[10px] text-white/40 font-normal mt-1.5 font-sans">
-                                      {trade.barsHeld} days held
+                                    <div className="text-[10px] text-white/40 font-normal mt-1 font-sans">
+                                      {trade.barsHeld} days
                                     </div>
                                   </td>
                                   
                                   {/* Exit info */}
-                                  <td className="py-2 px-3 text-rose-400 font-semibold text-[11px]">
+                                  <td className="py-1.5 px-2 text-rose-400 font-semibold text-[11px]">
                                     Exit
                                   </td>
-                                  <td className="py-2 px-4 font-mono text-white/80">
+                                  <td className="py-1.5 px-3 font-mono text-white/80">
                                     {trade.exitDate}
                                   </td>
-                                  <td className="py-2 px-4 font-mono font-bold text-white">
-                                    {trade.exitPrice.toFixed(2)} <span className="text-[10px] font-normal text-white/40">{currencySymbol}</span>
+                                  <td className="py-1.5 px-3 font-mono font-bold text-white">
+                                    {trade.exitPrice.toFixed(2)} <span className="text-[9px] font-normal text-white/40">{currencySymbol}</span>
                                   </td>
-                                  <td rowSpan={2} className="py-3.5 px-4 font-mono align-top pt-3.5 text-white/80">
+                                  <td rowSpan={2} className="py-2.5 px-3 font-mono align-top pt-2.5 text-white/80">
                                     <div>{trade.shares.toLocaleString()} units</div>
                                     <div className="text-[10px] text-white/40 font-sans mt-0.5">
                                       {(trade.positionValue / 1000).toFixed(2)} K {currencySymbol}
                                     </div>
                                   </td>
-                                  <td rowSpan={2} className={`py-3.5 px-4 font-mono font-bold text-right text-sm align-top pt-3.5 ${
+                                  <td rowSpan={2} className={`py-2.5 px-3 font-mono font-bold text-right text-xs align-top pt-2.5 ${
                                     isWin ? "text-emerald-400" : "text-rose-400"
                                   }`}>
                                     {isWin ? "+" : ""}
-                                    {trade.netPnl.toFixed(2)} <span className="text-[10px] font-normal text-white/40">{currencySymbol}</span>
+                                    {trade.netPnl.toFixed(2)} <span className="text-[9px] font-normal text-white/40">{currencySymbol}</span>
                                   </td>
-                                  <td rowSpan={2} className={`py-3.5 px-4 font-mono font-bold text-right align-top pt-3.5 ${
+                                  <td rowSpan={2} className={`py-2.5 px-3 font-mono font-bold text-right align-top pt-2.5 ${
                                     isWin ? "text-emerald-400" : "text-rose-400"
                                   }`}>
-                                    <span className={`px-2.5 py-1 rounded-md text-xs inline-block font-semibold ${
+                                    <span className={`px-2 py-0.5 rounded text-[11px] inline-block font-semibold ${
                                       isWin ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/15 text-rose-300 border border-rose-500/30"
                                     }`}>
                                       {isWin ? "+" : ""}
                                       {trade.returnPct.toFixed(2)}%
                                     </span>
                                   </td>
-                                  <td rowSpan={2} className="py-3.5 px-4 align-top pt-3.5">
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/[0.05] text-white/70 border border-white/[0.08] whitespace-nowrap">
+                                  <td rowSpan={2} className="py-2.5 px-3 align-top pt-2.5">
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.05] text-white/70 border border-white/[0.08] whitespace-nowrap">
                                       {trade.exitReason}
                                     </span>
                                   </td>
@@ -883,14 +951,14 @@ export default function StrategyReportDrawer({
 
                                 {/* Entry Row */}
                                 <tr className="hover:bg-white/[0.02] transition-colors border-b border-white/[0.06]">
-                                  <td className="py-2 px-3 text-emerald-400 font-semibold text-[11px]">
+                                  <td className="py-1.5 px-2 text-emerald-400 font-semibold text-[11px]">
                                     Entry
                                   </td>
-                                  <td className="py-2 px-4 font-mono text-white/60">
+                                  <td className="py-1.5 px-3 font-mono text-white/60">
                                     {trade.entryDate}
                                   </td>
-                                  <td className="py-2 px-4 font-mono text-white/70">
-                                    {trade.entryPrice.toFixed(2)} <span className="text-[10px] font-normal text-white/40">{currencySymbol}</span>
+                                  <td className="py-1.5 px-3 font-mono text-white/70">
+                                    {trade.entryPrice.toFixed(2)} <span className="text-[9px] font-normal text-white/40">{currencySymbol}</span>
                                   </td>
                                 </tr>
                               </React.Fragment>
@@ -910,17 +978,17 @@ export default function StrategyReportDrawer({
         {/* ================================================================= */}
         {/* FOOTER NOTE                                                       */}
         {/* ================================================================= */}
-        <div className="px-6 py-4 border-t border-white/[0.07] bg-[#0C0D12] text-xs text-white/50 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-plt-orange shrink-0" />
-            <span className="text-xs">
+        <div className="px-4 py-2 border-t border-white/[0.09] bg-black text-xs text-white/50 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-plt-orange shrink-0" />
+            <span className="text-[11px]">
               Simulated using exact point-in-time quantitative execution without lookahead bias.
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold transition text-xs shrink-0 shadow-sm"
+            className="px-4 py-1 rounded-md bg-white/[0.08] hover:bg-white/[0.15] text-white font-medium transition text-xs shrink-0 border border-white/[0.10]"
           >
             Done
           </button>
@@ -952,15 +1020,15 @@ function EquityCurveChart({
 }: EquityCurveChartProps) {
   if (!equityCurve || equityCurve.length < 2) {
     return (
-      <div className="h-72 flex items-center justify-center text-white/40 text-xs">
+      <div className="h-64 flex items-center justify-center text-white/40 text-xs">
         Not enough historical data in selected period to render equity curve.
       </div>
     );
   }
 
   const width = 900;
-  const height = 300;
-  const padding = { top: 25, right: 80, bottom: 45, left: 20 };
+  const height = 260;
+  const padding = { top: 20, right: 75, bottom: 35, left: 15 };
 
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
@@ -1012,16 +1080,11 @@ function EquityCurveChart({
       >
         <defs>
           {/* Strategy Line Gradient */}
-          <linearGradient id="strategyFillModern" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#10B981" stopOpacity="0.22" />
-            <stop offset="60%" stopColor="#10B981" stopOpacity="0.05" />
-            <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
+          <linearGradient id="strategyFillClean" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.20" />
+            <stop offset="60%" stopColor="#22c55e" stopOpacity="0.04" />
+            <stop offset="100%" stopColor="#22c55e" stopOpacity="0.0" />
           </linearGradient>
-
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
         </defs>
 
         {/* Horizontal Grid lines */}
@@ -1035,13 +1098,13 @@ function EquityCurveChart({
                 x2={padding.left + chartWidth}
                 y2={y}
                 stroke="rgba(255, 255, 255, 0.04)"
-                strokeDasharray="4 4"
+                strokeDasharray="3 3"
               />
               <text
-                x={padding.left + chartWidth + 10}
+                x={padding.left + chartWidth + 8}
                 y={y + 3}
                 fill="rgba(255, 255, 255, 0.4)"
-                fontSize="10"
+                fontSize="9"
                 fontFamily="monospace"
                 fontWeight="500"
               >
@@ -1067,7 +1130,7 @@ function EquityCurveChart({
           d={buyHoldPath}
           fill="none"
           stroke="#3B82F6"
-          strokeWidth="2"
+          strokeWidth="1.5"
           strokeOpacity="0.75"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -1076,18 +1139,18 @@ function EquityCurveChart({
         {/* Strategy Equity Area Fill */}
         <path
           d={`${strategyPath} L ${padding.left + chartWidth} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`}
-          fill="url(#strategyFillModern)"
+          fill="url(#strategyFillClean)"
         />
 
         {/* Strategy Equity Line (Green/Emerald) */}
         <path
           d={strategyPath}
           fill="none"
-          stroke="#10B981"
-          strokeWidth="2.75"
+          stroke="#22c55e"
+          strokeWidth="2.25"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+          className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]"
         />
 
         {/* Trade Markers on the Strategy Curve */}
@@ -1099,11 +1162,10 @@ function EquityCurveChart({
               key={i}
               cx={getX(i)}
               cy={getY(pt.equity)}
-              r={4}
-              fill={isWin ? "#10B981" : "#EF4444"}
-              stroke="#090A0E"
-              strokeWidth="2"
-              className="drop-shadow-[0_0_6px_rgba(0,0,0,0.8)]"
+              r={3.5}
+              fill={isWin ? "#22c55e" : "#ef4444"}
+              stroke="#000000"
+              strokeWidth="1.5"
             />
           );
         })}
@@ -1117,14 +1179,14 @@ function EquityCurveChart({
                 x1={x}
                 y1={padding.top + chartHeight}
                 x2={x}
-                y2={padding.top + chartHeight + 5}
+                y2={padding.top + chartHeight + 4}
                 stroke="rgba(255, 255, 255, 0.12)"
               />
               <text
                 x={x}
-                y={padding.top + chartHeight + 18}
-                fill="rgba(255, 255, 255, 0.45)"
-                fontSize="10"
+                y={padding.top + chartHeight + 15}
+                fill="rgba(255, 255, 255, 0.4)"
+                fontSize="9"
                 fontFamily="monospace"
                 textAnchor="middle"
               >
@@ -1166,17 +1228,17 @@ function EquityCurveChart({
                     y1={padding.top}
                     x2={hX}
                     y2={padding.top + chartHeight}
-                    stroke="rgba(255, 255, 255, 0.35)"
-                    strokeDasharray="3 3"
+                    stroke="rgba(255, 255, 255, 0.3)"
+                    strokeDasharray="2 2"
                   />
                   <circle
                     cx={hX}
                     cy={hY}
-                    r={6}
-                    fill="#10B981"
+                    r={5}
+                    fill="#22c55e"
                     stroke="#ffffff"
-                    strokeWidth="2.5"
-                    className="drop-shadow-[0_0_10px_rgba(16,185,129,0.9)]"
+                    strokeWidth="2"
+                    className="drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]"
                   />
                 </>
               );
@@ -1187,27 +1249,27 @@ function EquityCurveChart({
 
       {/* Floating Hover Tooltip */}
       {hoveredPoint && (
-        <div className="absolute top-3 left-4 p-3 rounded-xl bg-black/90 border border-white/[0.15] backdrop-blur-md shadow-2xl text-xs space-y-1.5 font-mono pointer-events-none z-20 min-w-[220px]">
-          <div className="text-[11px] text-white/50 font-bold border-b border-white/[0.08] pb-1 flex items-center justify-between">
+        <div className="absolute top-2 left-3 p-2.5 rounded-md bg-black/95 border border-white/[0.12] backdrop-blur-md shadow-2xl text-xs space-y-1 font-mono pointer-events-none z-20 min-w-[200px]">
+          <div className="text-[10px] text-white/50 font-bold border-b border-white/[0.08] pb-1 flex items-center justify-between">
             <span>Date:</span>
             <span className="text-white">{hoveredPoint.date}</span>
           </div>
-          <div className="flex items-center justify-between gap-4 text-emerald-400 font-bold">
+          <div className="flex items-center justify-between gap-4 text-emerald-400 font-bold text-[11px]">
             <span>Strategy:</span>
             <span>{hoveredPoint.equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
           </div>
-          <div className="flex items-center justify-between gap-4 text-blue-400 font-medium">
+          <div className="flex items-center justify-between gap-4 text-blue-400 font-medium text-[11px]">
             <span>Buy & Hold:</span>
             <span>{hoveredPoint.buyHoldEquity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
           </div>
           {hoveredPoint.drawdown > 0 && (
-            <div className="flex items-center justify-between gap-4 text-rose-400 text-[11px]">
+            <div className="flex items-center justify-between gap-4 text-rose-400 text-[10px]">
               <span>Drawdown:</span>
               <span>-{hoveredPoint.drawdown.toFixed(2)}%</span>
             </div>
           )}
           {hoveredPoint.tradePnl !== undefined && (
-            <div className={`flex items-center justify-between gap-4 text-[11px] pt-1 border-t border-white/[0.08] font-bold ${
+            <div className={`flex items-center justify-between gap-4 text-[10px] pt-1 border-t border-white/[0.08] font-bold ${
               hoveredPoint.tradePnl > 0 ? "text-emerald-400" : "text-rose-400"
             }`}>
               <span>Trade Realized:</span>
