@@ -125,6 +125,7 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
   let balance = initialCapital;
   let active = false;
   let entryPrice = 0;
+  let activeShares = 0;
   let targetPrice = Number.NaN;
   let highestPrice = 0;
   let lowestPrice = 0;
@@ -162,6 +163,7 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
       const shares = Math.floor(balance / bar.close);
       if (shares > 0) {
         active = true;
+        activeShares = shares;
         entryPrice = bar.close;
         highestPrice = bar.high;
         lowestPrice = bar.low;
@@ -190,9 +192,8 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
 
       const exitSignal = getExitSignal(bar, params, entryPrice, targetPrice, highestPrice);
       if (exitSignal !== null) {
-        const shares = Math.floor(balance / entryPrice);
         const tradeReturnPct = ((bar.close - entryPrice) / entryPrice) * 100;
-        balance += shares * (bar.close - entryPrice);
+        balance += activeShares * (bar.close - entryPrice);
         accumulatedReturnPct += tradeReturnPct;
         closedTrades += 1;
         const adverseExcursion = ((lowestPrice - entryPrice) / entryPrice) * 100;
@@ -213,6 +214,7 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
         });
 
         active = false;
+        activeShares = 0;
         entryPrice = 0;
         highestPrice = 0;
         lowestPrice = 0;
@@ -220,7 +222,7 @@ export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): Psi
       }
     }
 
-    finalEquity = active ? markToMarket(balance, entryPrice, bar.close) : balance;
+    finalEquity = active ? balance + activeShares * (bar.close - entryPrice) : balance;
     peakEquity = Math.max(peakEquity, finalEquity);
     if (peakEquity > 0) {
       maxDrawdown = Math.max(maxDrawdown, ((peakEquity - finalEquity) / peakEquity) * 100);

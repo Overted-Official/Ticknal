@@ -756,55 +756,6 @@ export default function ChartWidget({
   useEffect(() => {
     let isActive = true;
 
-    async function fetchMetrics() {
-      try {
-        const params = new URLSearchParams({ 
-          symbol, 
-          strategy: selectedStrategy,
-        });
-
-        Object.entries(strategyParams).forEach(([k, v]) => {
-          if (v !== undefined && v !== null) {
-            params.set(k, String(v));
-          }
-        });
-        if (replayMode && replayDate) {
-          let parsedReplayDate = replayDate;
-          if (typeof replayDate === 'object') {
-             // Handle lightweight-charts BusinessDay object
-             parsedReplayDate = `${(replayDate as any).year}-${String((replayDate as any).month).padStart(2, '0')}-${String((replayDate as any).day).padStart(2, '0')}`;
-          }
-          if (strategyStartDate) params.set('start', strategyStartDate);
-          params.set('end', parsedReplayDate as string);
-        } else {
-          if (strategyStartDate) params.set('start', strategyStartDate);
-          if (strategyEndDate) params.set('end', strategyEndDate);
-        }
-
-        const res = await fetch(`/api/metrics?${params.toString()}`);
-        if (res.ok && isActive) {
-          const json = await res.json();
-          if (isActive && json.metrics) {
-            setMetrics(json.metrics);
-            onMetricsChange?.(json.metrics);
-          }
-        }
-      } catch (error: any) {
-        if (isActive) {
-          console.error('Failed to fetch metrics', error);
-        }
-      }
-    }
-
-    void fetchMetrics();
-    return () => {
-      isActive = false;
-    };
-  }, [data, replayDate, replayMode, replayStartDate, symbol, strategyStartDate, strategyEndDate, selectedStrategy, strategyParams]);
-
-  useEffect(() => {
-    let isActive = true;
-
     async function fetchSignals() {
       try {
         const params = new URLSearchParams({ 
@@ -832,13 +783,20 @@ export default function ChartWidget({
         const res = await fetch(`/api/signals?${params.toString()}`);
         if (!res.ok || !isActive) return;
 
-        const signalResponse = (await res.json()) as SignalsResponse;
-        const signals = signalResponse.signals ?? [];
+        const json = await res.json();
         if (!isActive) return;
+
+        const signals = json.signals ?? [];
         setChartSignals(signals);
+
+        const metricsObj = json.formattedMetrics || json.metrics;
+        if (metricsObj) {
+          setMetrics(metricsObj);
+          onMetricsChange?.(metricsObj);
+        }
       } catch (error: any) {
         if (isActive) {
-          console.error('Failed to fetch signals', error);
+          console.error('Failed to fetch signals & metrics', error);
         }
       }
     }
@@ -856,6 +814,7 @@ export default function ChartWidget({
     strategyEndDate,
     selectedStrategy,
     strategyParams,
+    onMetricsChange,
   ]);
 
   const { indicatorMarkers, indicatorLines } = useMemo(() => {

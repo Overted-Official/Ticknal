@@ -18,6 +18,72 @@ export interface StrategyMetricDef {
   decimals?: number;
 }
 
+export interface StrategyTrade {
+  id: number;
+  tradeNumber: number;
+  type: "long";
+  entryDate: string;
+  entryPrice: number;
+  exitDate: string;
+  exitPrice: number;
+  shares: number;
+  positionValue: number;
+  netPnl: number;
+  returnPct: number;
+  exitReason: string;
+  barsHeld: number;
+  cumulativeEquity: number;
+  favorableExcursion: number;
+  adverseExcursion: number;
+}
+
+export interface EquityPoint {
+  date: string;
+  equity: number;
+  buyHoldEquity: number;
+  drawdown: number;
+  tradePnl?: number;
+  tradeReturnPct?: number;
+}
+
+export interface StrategyKeyStats {
+  initialCapital: number;
+  finalEquity: number;
+  netProfit: number;
+  netProfitPct: number;
+  buyHoldReturn: number;
+  buyHoldReturnPct: number;
+  alphaMargin: number;
+  maxDrawdown: number;
+  maxDrawdownAmount: number;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  winRate: number;
+  profitFactor: number;
+  grossProfit: number;
+  grossLoss: number;
+  avgTradePnl: number;
+  avgTradeReturnPct: number;
+  avgWin: number;
+  avgLoss: number;
+  winLossRatio: number;
+  maxConsecutiveWins: number;
+  maxConsecutiveLosses: number;
+  avgBarsHeld: number;
+  annualCagr: number;
+  sharpeRatio: number;
+  startDate: string;
+  endDate: string;
+}
+
+export interface FullBacktestReport {
+  trades: StrategyTrade[];
+  equityCurve: EquityPoint[];
+  stats: StrategyKeyStats;
+  signals: any[];
+}
+
 export interface StrategyDefinition {
   id: string;
   label: string;
@@ -49,9 +115,10 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
     description: 'Deep Learning Swing Trading Transformer for EGX Daily Timeframe',
     badgeClassName: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
     settings: [
-      { key: 'buyThreshold', label: 'Buy Exhaustion %', type: 'number', default: 65, min: 40, max: 90, step: 5 },
-      { key: 'sellThreshold', label: 'Sell Exhaustion %', type: 'number', default: 80, min: 50, max: 95, step: 5 },
-      { key: 'minNetProfit', label: 'Strict No-Loss Min Net %', type: 'number', default: 0.5, min: 0.0, max: 5.0, step: 0.25 },
+      { key: 'buyThreshold', label: 'Buy Exhaustion %', type: 'number', default: 35, min: 10, max: 90, step: 5 },
+      { key: 'sellThreshold', label: 'Sell Exhaustion %', type: 'number', default: 85, min: 50, max: 95, step: 5 },
+      { key: 'minNetProfit', label: 'Strict No-Loss Min Net %', type: 'number', default: 0.0, min: 0.0, max: 5.0, step: 0.25 },
+      { key: 'requireGreen', label: 'Require Green Candle', type: 'boolean', default: false },
     ],
     metrics: [
       { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },

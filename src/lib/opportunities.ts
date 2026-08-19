@@ -101,6 +101,7 @@ export async function _getRecentOpportunities(
       for (const [symbol, bars] of barsByTicker.entries()) {
         if (bars.length < 130) continue;
         const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
+        const recentStartDate = bars.slice(-limitBars)[0]?.date || bars[0].date;
         const ticker = tickerMap.get(symbol);
         const meta = {
           companyName: ticker?.companyName ?? symbol,
@@ -133,7 +134,11 @@ export async function _getRecentOpportunities(
         // 2. Evaluate Thoth EGX Macro Strategy
         if (includeThoth && bars.length >= 130) {
           try {
-            const thothResult = await runThothStrategy(bars, { startDate: bars[0].date });
+            const recentSlice = bars.slice(-200);
+            const thothResult = await runThothStrategy(recentSlice, {
+              ticker: symbol,
+              startDate: recentStartDate,
+            });
             const signal = [...thothResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
             if (signal) {
               const badge = getStrategyBadge('thoth_egx_macro');

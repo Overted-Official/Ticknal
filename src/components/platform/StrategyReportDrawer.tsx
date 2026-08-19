@@ -25,11 +25,13 @@ import {
 } from "lucide-react";
 import {
   runFullStrategyBacktest,
+} from "@/strategies/PSI/psiBacktestEngine";
+import {
   type StrategyTrade,
   type EquityPoint,
   type StrategyKeyStats,
   type FullBacktestReport,
-} from "@/strategies/PSI/psiBacktestEngine";
+} from "@/strategies/registry";
 import {
   resolvePsiParams,
   type PriceBar,
@@ -48,6 +50,7 @@ interface StrategyReportDrawerProps {
     close: number;
     volume: number;
   }>;
+  activeStrategy?: string;
   customParams?: Partial<PsiStrategyParams>;
 }
 
@@ -56,13 +59,17 @@ export default function StrategyReportDrawer({
   onClose,
   symbol,
   chartData = [],
+  activeStrategy = "psi",
   customParams,
 }: StrategyReportDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"stats" | "trades">("stats");
-  const [model, setModel] = useState<"psi8" | "psi40">("psi8");
+  const [model, setModel] = useState<"psi8" | "psi40" | "thoth_egx_macro">(() => {
+    return activeStrategy === "thoth_egx_macro" ? "thoth_egx_macro" : "psi8";
+  });
   const [initialCapital, setInitialCapital] = useState<number>(1000);
   const [hoveredPoint, setHoveredPoint] = useState<EquityPoint | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // Date range state (default to 2025-01-01 OOS)
   const defaultStartDate = "2025-01-01";
@@ -77,6 +84,12 @@ export default function StrategyReportDrawer({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (activeStrategy === "thoth_egx_macro") {
+      setModel("thoth_egx_macro");
+    }
+  }, [activeStrategy]);
 
   // Update date ranges if chart data changes
   useEffect(() => {
@@ -134,65 +147,101 @@ export default function StrategyReportDrawer({
     }
   };
 
-  // Run backtest calculation
-  const report: FullBacktestReport = useMemo(() => {
-    if (!chartData || chartData.length === 0) {
-      return {
-        trades: [],
-        equityCurve: [],
-        signals: [],
-        stats: {
-          initialCapital,
-          finalEquity: initialCapital,
-          netProfit: 0,
-          netProfitPct: 0,
-          buyHoldReturn: 0,
-          buyHoldReturnPct: 0,
-          alphaMargin: 0,
-          maxDrawdown: 0,
-          maxDrawdownAmount: 0,
-          totalTrades: 0,
-          winningTrades: 0,
-          losingTrades: 0,
-          winRate: 0,
-          profitFactor: 0,
-          grossProfit: 0,
-          grossLoss: 0,
-          avgTradePnl: 0,
-          avgTradeReturnPct: 0,
-          avgWin: 0,
-          avgLoss: 0,
-          winLossRatio: 0,
-          maxConsecutiveWins: 0,
-          maxConsecutiveLosses: 0,
-          avgBarsHeld: 0,
-          annualCagr: 0,
-          sharpeRatio: 0,
-          startDate,
-          endDate,
-        },
-      };
+  const [report, setReport] = useState<FullBacktestReport>({
+    trades: [],
+    equityCurve: [],
+    signals: [],
+    stats: {
+      initialCapital,
+      finalEquity: initialCapital,
+      netProfit: 0,
+      netProfitPct: 0,
+      buyHoldReturn: 0,
+      buyHoldReturnPct: 0,
+      alphaMargin: 0,
+      maxDrawdown: 0,
+      maxDrawdownAmount: 0,
+      totalTrades: 0,
+      winningTrades: 0,
+      losingTrades: 0,
+      winRate: 0,
+      profitFactor: 0,
+      grossProfit: 0,
+      grossLoss: 0,
+      avgTradePnl: 0,
+      avgTradeReturnPct: 0,
+      avgWin: 0,
+      avgLoss: 0,
+      winLossRatio: 0,
+      maxConsecutiveWins: 0,
+      maxConsecutiveLosses: 0,
+      avgBarsHeld: 0,
+      annualCagr: 0,
+      sharpeRatio: 0,
+      startDate,
+      endDate,
+    },
+  });
+
+  useEffect(() => {
+    if (!isOpen || !chartData || chartData.length === 0) return;
+    let isActive = true;
+
+    async function computeReport() {
+      setIsCalculating(true);
+      try {
+        const priceBars: PriceBar[] = chartData.map((d) => ({
+          date: d.time,
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+          volume: d.volume,
+        }));
+
+        let res: FullBacktestReport;
+        if (model === "thoth_egx_macro") {
+          const params = new URLSearchParams({
+            symbol,
+            strategy: "thoth_egx_macro",
+            start: startDate,
+            initialCapital: String(initialCapital),
+          });
+          if (endDate) params.set("end", endDate);
+          if (customParams) {
+            Object.entries(customParams).forEach(([k, v]) => {
+              if (v !== undefined && v !== null) params.set(k, String(v));
+            });
+          }
+          const response = await fetch(`/api/strategy-report?${params.toString()}`);
+          if (!response.ok) throw new Error("Failed to fetch Thoth strategy report");
+          res = await response.json();
+        } else {
+          const resolvedParams = resolvePsiParams(symbol, {
+            model,
+            initialCapital,
+            startDate,
+            endDate: endDate || undefined,
+            ...(customParams || {}),
+          });
+          res = runFullStrategyBacktest(priceBars, resolvedParams);
+        }
+
+        if (isActive) {
+          setReport(res);
+        }
+      } catch (err) {
+        console.error("Error computing strategy report:", err);
+      } finally {
+        if (isActive) setIsCalculating(false);
+      }
     }
 
-    const priceBars: PriceBar[] = chartData.map((d) => ({
-      date: d.time,
-      open: d.open,
-      high: d.high,
-      low: d.low,
-      close: d.close,
-      volume: d.volume,
-    }));
-
-    const resolvedParams = resolvePsiParams(symbol, {
-      model,
-      initialCapital,
-      startDate,
-      endDate: endDate || undefined,
-      ...(customParams || {}),
-    });
-
-    return runFullStrategyBacktest(priceBars, resolvedParams);
-  }, [chartData, symbol, model, initialCapital, startDate, endDate, customParams]);
+    void computeReport();
+    return () => {
+      isActive = false;
+    };
+  }, [isOpen, chartData, symbol, model, initialCapital, startDate, endDate, customParams]);
 
   const { stats, trades, equityCurve } = report;
 
@@ -281,8 +330,12 @@ export default function StrategyReportDrawer({
                   <span className="text-sm font-semibold text-white/90">
                     Strategy Performance Report
                   </span>
-                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-white/[0.05] text-white/70 border border-white/[0.08]">
-                    {model === "psi40" ? "PSI-40 Trend" : "PSI-8 Inflection"}
+                  <span className={`px-2 py-0.5 text-[11px] font-semibold rounded-full border ${
+                    model === "thoth_egx_macro"
+                      ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                      : "bg-white/[0.05] text-white/70 border border-white/[0.08]"
+                  }`}>
+                    {model === "thoth_egx_macro" ? "Thoth Macro (AI)" : model === "psi40" ? "PSI-40 Trend" : "PSI-8 Inflection"}
                   </span>
                 </div>
                 <p className="text-xs text-white/40 mt-0.5 font-sans">
@@ -304,7 +357,7 @@ export default function StrategyReportDrawer({
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  PSI-8 Inflection
+                  PSI-8
                 </button>
                 <button
                   type="button"
@@ -315,7 +368,18 @@ export default function StrategyReportDrawer({
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  PSI-40 Trend
+                  PSI-40
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModel("thoth_egx_macro")}
+                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                    model === "thoth_egx_macro"
+                      ? "bg-purple-950/70 text-purple-300 shadow-sm font-semibold border border-purple-500/30"
+                      : "text-white/40 hover:text-white"
+                  }`}
+                >
+                  Thoth (AI)
                 </button>
               </div>
 

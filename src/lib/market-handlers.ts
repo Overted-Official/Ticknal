@@ -9,6 +9,9 @@ import {
   syncAllMacroInflation 
 } from '@/lib/cbe-inflation';
 
+import { desc, eq } from 'drizzle-orm';
+import { dailyPrices } from '@/db/schema';
+
 type TradingViewPeriod = {
   time: number;
   open: number;
@@ -18,6 +21,42 @@ type TradingViewPeriod = {
   volume: number;
 };
 
+async function fallbackToDbQuote(cleanSym: string): Promise<Response> {
+  try {
+    const rows = await db
+      .select()
+      .from(dailyPrices)
+      .where(eq(dailyPrices.tickerSymbol, cleanSym))
+      .orderBy(desc(dailyPrices.date))
+      .limit(2);
+
+    if (rows && rows.length > 0) {
+      const current = rows[0];
+      const previous = rows.length > 1 ? rows[1] : null;
+      const currentPrice = Number(current.close);
+      const prevPrice = previous ? Number(previous.close) : Number(current.open);
+      const change = currentPrice - prevPrice;
+      const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : 0;
+
+      return NextResponse.json({
+        symbol: cleanSym,
+        price: currentPrice,
+        change: Number(change.toFixed(2)),
+        changePercent: Number(changePercent.toFixed(2)),
+        open: Number(current.open),
+        high: Number(current.high),
+        low: Number(current.low),
+        volume: Number(current.volume || 0),
+        updatedAt: typeof current.date === 'string' ? current.date : new Date(current.date as Date).toISOString(),
+        source: 'database-fallback'
+      });
+    }
+  } catch (err) {
+    console.error('Database fallback error:', err);
+  }
+  return NextResponse.json({ error: 'No quote data available' }, { status: 404 });
+}
+
 export async function handleQuoteGet(req: Request): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const symbol = searchParams.get('symbol');
@@ -26,8 +65,9 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'Symbol is required' }, { status: 400 });
   }
 
+  const cleanSym = symbol.trim().toUpperCase().replace('.CA', '');
+
   try {
-    const cleanSym = symbol.trim().toUpperCase().replace('.CA', '');
     let tvSymbol = `EGX:${cleanSym}`;
     if (cleanSym === 'GC1!' || cleanSym === 'GC1' || cleanSym === 'GC' || cleanSym === 'GOLD' || cleanSym === 'XAUUSD') {
       tvSymbol = 'COMEX:GC1!';
@@ -38,6 +78,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
     }
 
     return await new Promise<Response>((resolve) => {
+      let resolved = false;
       const client = new TradingView.Client();
       const chart = new client.Session.Chart();
       
@@ -46,20 +87,29 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         range: 2
       });
 
-      const timeout = setTimeout(() => {
-        chart.delete();
-        client.end();
-        resolve(NextResponse.json({ error: 'Timeout fetching data from TradingView' }, { status: 504 }));
-      }, 5000);
+      const timeout = setTimeout(async () => {
+        if (resolved) return;
+        resolved = true;
+        try {
+          chart.delete();
+          client.end();
+        } catch {}
+        const fallback = await fallbackToDbQuote(cleanSym);
+        resolve(fallback);
+      }, 3500);
 
       chart.onUpdate(() => {
+        if (resolved) return;
+        resolved = true;
         clearTimeout(timeout);
         const data = chart.periods;
         
         if (!data || data.length === 0) {
-          chart.delete();
-          client.end();
-          return resolve(NextResponse.json({ error: 'No data found' }, { status: 404 }));
+          try {
+            chart.delete();
+            client.end();
+          } catch {}
+          return fallbackToDbQuote(cleanSym).then(resolve);
         }
 
         data.sort((a: TradingViewPeriod, b: TradingViewPeriod) => a.time - b.time);
@@ -71,8 +121,10 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         const change = currentPrice - prevPrice;
         const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : 0;
 
-        chart.delete();
-        client.end();
+        try {
+          chart.delete();
+          client.end();
+        } catch {}
 
         resolve(NextResponse.json({
           symbol: cleanSym,
@@ -87,17 +139,22 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         }));
       });
 
-      chart.onError((err: Error) => {
+      chart.onError(async (err: Error) => {
+        if (resolved) return;
+        resolved = true;
         clearTimeout(timeout);
-        chart.delete();
-        client.end();
-        console.error('TradingView quote error:', err);
-        resolve(NextResponse.json({ error: 'Failed to fetch quote data' }, { status: 500 }));
+        try {
+          chart.delete();
+          client.end();
+        } catch {}
+        console.warn('TradingView quote error, using DB fallback:', err.message);
+        const fallback = await fallbackToDbQuote(cleanSym);
+        resolve(fallback);
       });
     });
   } catch (error) {
-    console.error('Quote handler error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.warn('Quote handler error, falling back to DB:', error);
+    return fallbackToDbQuote(cleanSym);
   }
 }
 

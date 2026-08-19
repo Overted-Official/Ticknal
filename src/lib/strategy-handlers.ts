@@ -4,10 +4,12 @@ import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import {
   formatMetricsForApi,
   normalizeTickerSymbol,
+  resolvePsiParams,
   runPsiStrategy,
   type PriceBar,
 } from '@/strategies/PSI/psiStrategy';
-import { runThothStrategy } from '@/strategies/Thoth/thothStrategy';
+import { runFullStrategyBacktest } from '@/strategies/PSI/psiBacktestEngine';
+import { runThothStrategy, runFullThothBacktest } from '@/strategies/Thoth/thothStrategy';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
 
@@ -46,20 +48,21 @@ export async function handleSignalsGet(request: Request) {
 
     let result;
     if (strategy === 'thoth_egx_macro') {
-      const buyThreshold = searchParams.get('buyThreshold') ? Number(searchParams.get('buyThreshold')) : 65.0;
-      const sellThreshold = searchParams.get('sellThreshold') ? Number(searchParams.get('sellThreshold')) : 80.0;
-      const minNetProfit = searchParams.get('minNetProfit') !== null ? Number(searchParams.get('minNetProfit')) : 0.5;
-
-      const thothResult = await runThothStrategy(bars, {
-        buyThreshold,
-        sellThreshold,
-        minNetProfit,
+      const thothOverrides: Record<string, any> = {
+        ticker,
         startDate,
         endDate,
-      });
+      };
+      if (searchParams.has('buyThreshold')) thothOverrides.buyThreshold = Number(searchParams.get('buyThreshold'));
+      if (searchParams.has('sellThreshold')) thothOverrides.sellThreshold = Number(searchParams.get('sellThreshold'));
+      if (searchParams.has('minNetProfit')) thothOverrides.minNetProfit = Number(searchParams.get('minNetProfit'));
+      if (searchParams.has('requireGreen')) thothOverrides.requireGreen = searchParams.get('requireGreen') === 'true';
+
+      const thothResult = await runThothStrategy(bars, thothOverrides);
 
       result = {
         ...thothResult,
+        formattedMetrics: formatMetricsForApi(thothResult.metrics),
         parameterSource: 'thoth-egx-macro-onnx',
       };
     } else {
@@ -81,6 +84,7 @@ export async function handleSignalsGet(request: Request) {
 
       result = {
         ...psiResult,
+        formattedMetrics: formatMetricsForApi(psiResult.metrics),
         parameterSource: parameterResolution.parameterSource,
       };
     }
@@ -126,18 +130,17 @@ export async function handleMetricsGet(request: Request) {
     let parameterSource;
 
     if (strategy === 'thoth_egx_macro') {
-      const buyThreshold = searchParams.get('buyThreshold') ? Number(searchParams.get('buyThreshold')) : 65.0;
-      const sellThreshold = searchParams.get('sellThreshold') ? Number(searchParams.get('sellThreshold')) : 80.0;
-      const minNetProfit = searchParams.get('minNetProfit') !== null ? Number(searchParams.get('minNetProfit')) : 0.5;
-
-      const thothResult = await runThothStrategy(bars, {
-        buyThreshold,
-        sellThreshold,
-        minNetProfit,
+      const thothOverrides: Record<string, any> = {
+        ticker,
         startDate,
         endDate,
-      });
+      };
+      if (searchParams.has('buyThreshold')) thothOverrides.buyThreshold = Number(searchParams.get('buyThreshold'));
+      if (searchParams.has('sellThreshold')) thothOverrides.sellThreshold = Number(searchParams.get('sellThreshold'));
+      if (searchParams.has('minNetProfit')) thothOverrides.minNetProfit = Number(searchParams.get('minNetProfit'));
+      if (searchParams.has('requireGreen')) thothOverrides.requireGreen = searchParams.get('requireGreen') === 'true';
 
+      const thothResult = await runThothStrategy(bars, thothOverrides);
       metricsPayload = thothResult.metrics;
       parameterSource = 'thoth-egx-macro-onnx';
     } else {
@@ -217,6 +220,67 @@ function formatLevels<T extends { targetPrice: number | null; stopPrice: number 
     targetPrice: levels.targetPrice === null ? null : Number(levels.targetPrice.toFixed(4)),
     stopPrice: levels.stopPrice === null ? null : Number(levels.stopPrice.toFixed(4)),
   };
+}
+
+export async function handleReportGet(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const symbol = searchParams.get('symbol');
+    const strategy = searchParams.get('strategy') || 'psi';
+    const model = searchParams.get('model') || (strategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : 'psi8');
+    const startDate = searchParams.get('start') ?? '2025-01-01';
+    const endDate = searchParams.get('end') ?? undefined;
+    const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 1000;
+
+    if (!symbol) {
+      return NextResponse.json({ error: 'Missing symbol parameter' }, { status: 400 });
+    }
+
+    const ticker = normalizeTickerSymbol(symbol);
+    const rows = await getCachedDailyPrices(ticker);
+    const bars: PriceBar[] = rows
+      .map((record) => ({
+        date: typeof record.date === 'string' ? record.date.split('T')[0] : new Date(record.date as Date).toISOString().split('T')[0],
+        open: Number(record.open),
+        high: Number(record.high),
+        low: Number(record.low),
+        close: Number(record.close),
+        volume: Number(record.volume ?? 0),
+      }))
+      .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
+
+    if (bars.length < 30) {
+      return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
+    }
+
+    if (strategy === 'thoth_egx_macro' || model === 'thoth_egx_macro') {
+      const thothOverrides: Record<string, any> = {
+        ticker,
+        startDate,
+        endDate,
+        initialCapital,
+      };
+      if (searchParams.has('buyThreshold')) thothOverrides.buyThreshold = Number(searchParams.get('buyThreshold'));
+      if (searchParams.has('sellThreshold')) thothOverrides.sellThreshold = Number(searchParams.get('sellThreshold'));
+      if (searchParams.has('minNetProfit')) thothOverrides.minNetProfit = Number(searchParams.get('minNetProfit'));
+      if (searchParams.has('requireGreen')) thothOverrides.requireGreen = searchParams.get('requireGreen') === 'true';
+
+      const report = await runFullThothBacktest(bars, thothOverrides);
+      return NextResponse.json(report);
+    } else {
+      const resolvedParams = resolvePsiParams(ticker, {
+        model: model as 'psi8' | 'psi40',
+        initialCapital,
+        startDate,
+        endDate,
+      });
+      const report = runFullStrategyBacktest(bars, resolvedParams);
+      return NextResponse.json(report);
+    }
+  } catch (error) {
+    console.error('Error generating strategy report:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function handlePredictPost(req: Request) {

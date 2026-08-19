@@ -11,7 +11,7 @@ export interface ThothModelPrediction {
   high: number;
   low: number;
   direction: 'up' | 'down';
-  predictedExhaustion: number; // 0.0 to 100.0%
+  predictedExhaustion: number | null; // null if in warmup window (<120 bars of direction)
   masterIndex: number;
 }
 
@@ -101,7 +101,8 @@ export class ThothEngine {
     const seqLen = 120;
     const numFeatures = 18;
     const predictions = new Float32Array(featureBars.length);
-    // Default 0.0 — bars before the first full window will have no prediction
+    // Initialize with -1.0 to distinguish warmup bars from actual 0.0% exhaustion predictions
+    predictions.fill(-1.0);
 
     // Partition bars by direction
     const upBars: { idx: number; feat: number[] }[] = [];
@@ -173,6 +174,7 @@ export class ThothEngine {
     // Build final results array
     const results: ThothModelPrediction[] = [];
     for (let i = 0; i < featureBars.length; i++) {
+      const isPredicted = predictions[i] >= 0;
       results.push({
         date: featureBars[i].date,
         close: featureBars[i].close,
@@ -180,7 +182,7 @@ export class ThothEngine {
         high: featureBars[i].high,
         low: featureBars[i].low,
         direction: featureBars[i].direction,
-        predictedExhaustion: Number(predictions[i].toFixed(2)),
+        predictedExhaustion: isPredicted ? Number(predictions[i].toFixed(2)) : null,
         masterIndex: featureBars[i].features[15] ?? 50.0,
       });
     }
@@ -189,10 +191,86 @@ export class ThothEngine {
   }
 
   /**
-   * Convenience: run predict on all bars, return only the last prediction.
+   * Fast Single-Window Prediction for real-time live scanner and opportunity detection.
+   * Runs single tensor pass [1, 120, 18] in <1ms without processing unnecessary historical windows.
    */
   public async predictLatest(bars: PriceBar[]): Promise<ThothModelPrediction | null> {
-    const all = await this.predict(bars);
-    return all.length > 0 ? all[all.length - 1] : null;
+    if (!bars || bars.length === 0) return null;
+    await this.initialize();
+    const ort = await getOnnxRuntime();
+    if (!this.isAvailable || !this.sessionUp || !this.sessionDown || !this.scalers || !ort) {
+      return null;
+    }
+
+    // Extract features on recent slice
+    const recentBars = bars.length > 300 ? bars.slice(-300) : bars;
+    const featureBars = extractThothFeatures(recentBars);
+    if (featureBars.length === 0) return null;
+
+    const lastBar = featureBars[featureBars.length - 1];
+    const targetDirection = lastBar.direction;
+    const dirBars = featureBars.filter(b => b.direction === targetDirection);
+
+    const seqLen = 120;
+    const numFeatures = 18;
+
+    if (dirBars.length < seqLen) {
+      // Not enough sequence history for this direction yet
+      return {
+        date: lastBar.date,
+        close: lastBar.close,
+        open: lastBar.open,
+        high: lastBar.high,
+        low: lastBar.low,
+        direction: lastBar.direction,
+        predictedExhaustion: null,
+        masterIndex: lastBar.features[15] ?? 50.0,
+      };
+    }
+
+    const session = targetDirection === 'up' ? this.sessionUp : this.sessionDown;
+    const scaler = targetDirection === 'up' ? this.scalers.up : this.scalers.down;
+
+    const inputBuffer = new Float32Array(seqLen * numFeatures);
+    const windowStart = dirBars.length - seqLen;
+
+    for (let s = 0; s < seqLen; s++) {
+      const feat = dirBars[windowStart + s].features;
+      const destOffset = s * numFeatures;
+      for (let f = 0; f < numFeatures; f++) {
+        const scale = scaler.scale[f] !== 0 ? scaler.scale[f] : 1;
+        inputBuffer[destOffset + f] = (feat[f] - scaler.mean[f]) / scale;
+      }
+    }
+
+    try {
+      const inputTensor = new ort.Tensor('float32', inputBuffer, [1, seqLen, numFeatures]);
+      const output = await session.run({ input_sequences: inputTensor });
+      const outData = output.predicted_exhaustion.data as Float32Array;
+      const exh = Math.max(0.0, Math.min(100.0, outData[0]));
+
+      return {
+        date: lastBar.date,
+        close: lastBar.close,
+        open: lastBar.open,
+        high: lastBar.high,
+        low: lastBar.low,
+        direction: lastBar.direction,
+        predictedExhaustion: Number(exh.toFixed(2)),
+        masterIndex: lastBar.features[15] ?? 50.0,
+      };
+    } catch (err) {
+      console.warn('[ThothEngine] predictLatest fast inference failed:', (err as Error).message);
+      return {
+        date: lastBar.date,
+        close: lastBar.close,
+        open: lastBar.open,
+        high: lastBar.high,
+        low: lastBar.low,
+        direction: lastBar.direction,
+        predictedExhaustion: null,
+        masterIndex: lastBar.features[15] ?? 50.0,
+      };
+    }
   }
 }

@@ -170,7 +170,7 @@ export default function TopBar({
                     className="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors group"
                     onClick={() => {
                       setIsSearchOpen(false);
-                      router.push(`?ticker=${item.symbol}&timeframe=${timeframe}${replayQuery}`);
+                      router.push(`?ticker=${item.symbol}&timeframe=${timeframe}&view=chart${replayQuery}`);
                     }}
                   >
                     <div className="flex items-center space-x-3 min-w-0">

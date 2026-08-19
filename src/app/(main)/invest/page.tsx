@@ -33,7 +33,7 @@ export default async function InvestPage(props: InvestPageProps) {
   const view = searchParams?.view === 'chart' ? 'chart' : 'sectors';
 
   return (
-    <Suspense key={`${selectedSymbol}-${timeframe}-${initialReplayMode}-${view}`} fallback={<InvestSkeleton />}>
+    <Suspense fallback={<InvestSkeleton />}>
       <InvestPageContent selectedSymbol={selectedSymbol} timeframe={timeframe} initialReplayMode={initialReplayMode} view={view} />
     </Suspense>
   );
@@ -261,6 +261,15 @@ async function InvestPageContent({
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <ChartViews 
           sectorsView={<SectorsHeatmapView />}
+          initialView={view as 'sectors' | 'chart'}
+          rightSidebar={
+            <RightSidebar 
+              watchlist={watchlist} 
+              selectedSymbol={selectedSymbol} 
+              timeframe={timeframe} 
+              rangeData={rangeData} 
+            />
+          }
         >
           <ChartReplayWorkspace
             key={`${selectedSymbol}-${timeframe}-${initialReplayMode ? 'replay' : 'live'}`}
@@ -279,12 +288,6 @@ async function InvestPageContent({
           />
         </ChartViews>
       </div>
-
-      {view !== 'sectors' && (
-        <div className="hidden lg:flex h-full shrink-0">
-          <RightSidebar watchlist={watchlist} selectedSymbol={selectedSymbol} timeframe={timeframe} rangeData={rangeData} />
-        </div>
-      )}
     </div>
   );
 }

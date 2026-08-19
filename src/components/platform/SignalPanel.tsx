@@ -110,7 +110,6 @@ export default function SignalPanel({
       try {
         const params = new URLSearchParams({ 
           symbol: activeSymbol, 
-          limit: '1',
           strategy: selectedStrategy,
         });
         
@@ -123,14 +122,22 @@ export default function SignalPanel({
         if (replayActive && replayEndDate) {
           params.set('end', replayEndDate);
           if (replayStartDate) params.set('start', replayStartDate);
+        } else {
+          if (strategyStartDate) params.set('start', strategyStartDate);
+          if (strategyEndDate) params.set('end', strategyEndDate);
         }
 
         const res = await fetch(`/api/signals?${params.toString()}`);
         const data = await res.json();
         if (data.signals && data.signals.length > 0) {
-          setSignalData(data.signals[0]);
+          // Take the most recent signal (latest in chronological array)
+          const latestSignal = data.signals[data.signals.length - 1];
+          setSignalData({
+            ...latestSignal,
+            latestMasterIndex: data.latestMasterIndex ?? latestSignal.masterIndex,
+          });
         } else {
-          setSignalData(null);
+          setSignalData(data.latestMasterIndex !== null ? { masterIndex: data.latestMasterIndex } : null);
         }
       } catch (err) {
         console.error("Error fetching signals:", err);
@@ -140,7 +147,7 @@ export default function SignalPanel({
     };
 
     fetchSignals();
-  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, selectedStrategy, strategyParams]);
+  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, strategyStartDate, strategyEndDate, selectedStrategy, strategyParams]);
 
   if (!activeSymbol) return null;
 

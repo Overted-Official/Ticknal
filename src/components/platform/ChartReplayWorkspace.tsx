@@ -70,21 +70,21 @@ export default function ChartReplayWorkspace({
     }
     setStrategyParams(newParams);
     
-    // Sync to URL
+    // Sync to URL shallowly
     const params = new URLSearchParams(searchParams?.toString() || '');
     params.set('strategy', newStrategy);
     Array.from(params.keys()).forEach(k => {
        if (k.startsWith('s_')) params.delete(k);
     });
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, router, pathname]);
+    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+  }, [searchParams, pathname]);
 
   const updateStrategyParam = useCallback((key: string, value: any) => {
     setStrategyParams(prev => ({ ...prev, [key]: value }));
     const params = new URLSearchParams(searchParams?.toString() || '');
     params.set(`s_${key}`, value.toString());
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, router, pathname]);
+    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+  }, [searchParams, pathname]);
 
   const bulkUpdateStrategyParams = useCallback((newParams: Record<string, any>) => {
     setStrategyParams(prev => ({ ...prev, ...newParams }));
@@ -92,8 +92,8 @@ export default function ChartReplayWorkspace({
     Object.entries(newParams).forEach(([key, value]) => {
       params.set(`s_${key}`, value.toString());
     });
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, router, pathname]);
+    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+  }, [searchParams, pathname]);
 
   const updateGlobalParam = useCallback((key: string, value: string) => {
     if (key === 'strategyStart') setStrategyStartDate(value);
@@ -105,8 +105,8 @@ export default function ChartReplayWorkspace({
     } else {
       params.delete(key);
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, router, pathname]);
+    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+  }, [searchParams, pathname]);
 
   const chartKey = [
     symbol,

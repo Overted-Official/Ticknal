@@ -136,6 +136,7 @@ export function runFullStrategyBacktest(
   let balance = initialCapital;
   let active = false;
   let entryPrice = 0;
+  let activeShares = 0;
   let entryDate = "";
   let targetPrice = Number.NaN;
   let highestPrice = 0;
@@ -165,6 +166,7 @@ export function runFullStrategyBacktest(
         const shares = Math.floor(balance / bar.close);
         if (shares > 0) {
           active = true;
+          activeShares = shares;
           entryPrice = bar.close;
           entryDate = bar.date;
           highestPrice = bar.high;
@@ -199,7 +201,7 @@ export function runFullStrategyBacktest(
 
       const exitSignal = getExitSignal(bar, params, entryPrice, targetPrice, highestPrice);
       if (exitSignal !== null || i === validBars.length - 1) {
-        const shares = Math.floor(balance / entryPrice);
+        const shares = activeShares;
         const exitP = bar.close;
         const pnl = shares * (exitP - entryPrice);
         const returnPct = ((exitP - entryPrice) / entryPrice) * 100;
@@ -241,6 +243,7 @@ export function runFullStrategyBacktest(
         });
 
         active = false;
+        activeShares = 0;
         entryPrice = 0;
         highestPrice = 0;
         lowestPrice = 0;
@@ -252,8 +255,7 @@ export function runFullStrategyBacktest(
     // Compute Mark-to-Market Equity for this date
     let currentDayEquity = balance;
     if (active && entryPrice > 0) {
-      const shares = Math.floor(balance / entryPrice);
-      currentDayEquity = balance + shares * (bar.close - entryPrice);
+      currentDayEquity = balance + activeShares * (bar.close - entryPrice);
     }
 
     peakEquity = Math.max(peakEquity, currentDayEquity);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Bell } from '@/components/ui/icons';
 import { BarChart3 } from 'lucide-react';
 import { useAlerts } from './AlertProvider';
@@ -11,6 +12,7 @@ interface BottomToolbarProps {
   symbol?: string;
   timeframe?: string;
   replay?: boolean;
+  strategy?: string;
   chartData?: Array<{
     time: string;
     open: number;
@@ -25,11 +27,14 @@ export default function BottomToolbar({
   symbol = 'COMI.CA',
   timeframe = 'D',
   replay = false,
+  strategy,
   chartData = [],
 }: BottomToolbarProps) {
   const [cairoTime, setCairoTime] = useState('--:--:--');
   const [reportOpen, setReportOpen] = useState(false);
   const { isAlerted, toggleAlert } = useAlerts();
+  const searchParams = useSearchParams();
+  const activeStrategy = strategy || searchParams?.get('strategy') || 'psi';
 
   const timeframes = ['D', 'W', 'M'];
   const replayQuery = replay ? '&replay=1' : '';
@@ -118,6 +123,7 @@ export default function BottomToolbar({
         onClose={() => setReportOpen(false)}
         symbol={symbol}
         chartData={chartData}
+        activeStrategy={activeStrategy}
       />
     </>
   );

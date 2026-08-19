@@ -55,6 +55,7 @@ import {
   handleSignalsGet,
   handleMetricsGet,
   handleLevelsGet,
+  handleReportGet,
   handlePredictPost,
 } from '@/lib/strategy-handlers';
 import {
@@ -183,6 +184,9 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   }
   if (root === 'strategy-levels' || (root === 'strategy' && sub === 'levels')) {
     return handleLevelsGet(req);
+  }
+  if (root === 'strategy-report' || (root === 'strategy' && sub === 'report')) {
+    return handleReportGet(req);
   }
 
   // 8. Market / Quotes / Tickers / Macro
