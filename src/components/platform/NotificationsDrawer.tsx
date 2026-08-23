@@ -283,7 +283,7 @@ export default function NotificationsDrawer({
                             {/* Right: Chart Icon Button + Buy/Sell Button */}
                             <div className="flex items-center gap-2 shrink-0">
                               <Link
-                                href={`/invest?ticker=${cleanSymbol}&view=chart`}
+                                href={`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}`}
                                 onClick={onClose}
                                 className="p-1.5 rounded-lg bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-muted hover:text-plt-text transition"
                                 title="Open chart"
@@ -294,7 +294,7 @@ export default function NotificationsDrawer({
 
                               {isBuy ? (
                                 <Link
-                                  href={`/invest?ticker=${cleanSymbol}&view=chart&positions=1`}
+                                  href={`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}&positions=1`}
                                   onClick={onClose}
                                   className="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-plt-profit/15 hover:bg-plt-profit text-plt-profit hover:text-white border border-plt-profit/30 transition-all text-center shrink-0"
                                   title="Open positions to buy"
@@ -303,7 +303,7 @@ export default function NotificationsDrawer({
                                 </Link>
                               ) : (
                                 <Link
-                                  href={`/invest?ticker=${cleanSymbol}&view=chart&positions=1`}
+                                  href={`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}&positions=1`}
                                   onClick={onClose}
                                   className="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-plt-risk/15 hover:bg-plt-risk text-plt-risk hover:text-white border border-plt-risk/30 transition-all text-center shrink-0"
                                   title="Open positions to sell"

@@ -19,6 +19,7 @@ export async function handleNotificationsGet() {
       .select({
         id: signalNotifications.id,
         tickerSymbol: signalNotifications.tickerSymbol,
+        strategy: signalNotifications.strategy,
         signalDate: signalNotifications.signalDate,
         signal: signalNotifications.signal,
         sentAt: signalNotifications.sentAt,
@@ -43,6 +44,7 @@ export async function handleNotificationsGet() {
           .select({
             id: signalNotifications.id,
             tickerSymbol: signalNotifications.tickerSymbol,
+            strategy: signalNotifications.strategy,
             signalDate: signalNotifications.signalDate,
             signal: signalNotifications.signal,
             sentAt: signalNotifications.sentAt,

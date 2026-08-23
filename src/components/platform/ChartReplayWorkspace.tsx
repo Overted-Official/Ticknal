@@ -59,6 +59,23 @@ export default function ChartReplayWorkspace({
   const [strategyStartDate, setStrategyStartDate] = useState<string>(searchParams?.get('strategyStart') || '2025-01-01');
   const [strategyEndDate, setStrategyEndDate] = useState<string | undefined>(searchParams?.get('strategyEnd') || undefined);
 
+  // Sync strategy if URL query param changes
+  useEffect(() => {
+    const urlStrat = searchParams?.get('strategy');
+    if (urlStrat && urlStrat !== selectedStrategy && STRATEGIES[urlStrat]) {
+      setSelectedStrategy(urlStrat);
+      const stratDef = STRATEGIES[urlStrat];
+      const newParams: Record<string, any> = {};
+      if (stratDef) {
+        stratDef.settings.forEach(s => {
+          const urlVal = searchParams?.get(`s_${s.key}`);
+          newParams[s.key] = urlVal !== null ? (s.type === 'number' || s.type === 'range' ? Number(urlVal) : urlVal) : s.default;
+        });
+      }
+      setStrategyParams(newParams);
+    }
+  }, [searchParams, selectedStrategy]);
+
   const handleStrategyChange = useCallback((newStrategy: string) => {
     setSelectedStrategy(newStrategy);
     const stratDef = STRATEGIES[newStrategy];

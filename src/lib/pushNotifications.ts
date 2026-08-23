@@ -177,7 +177,7 @@ export async function dispatchSignalNotifications(options: {
       for (const item of signalsToDispatch) {
         const { strategyId, strategyShort, strategyLabel, signal } = item;
 
-        const alreadySent = await hasNotificationBeenSent(alert.userId, ticker, signal);
+        const alreadySent = await hasNotificationBeenSent(alert.userId, ticker, strategyId, signal);
         if (alreadySent) {
           result.skipped += 1;
           continue;
@@ -189,6 +189,7 @@ export async function dispatchSignalNotifications(options: {
           .values({
             userId: alert.userId,
             tickerSymbol: ticker,
+            strategy: strategyId,
             signalDate: signal.date,
             signal: signal.signal,
           })
@@ -200,7 +201,7 @@ export async function dispatchSignalNotifications(options: {
           const payload = JSON.stringify({
             title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
             body: buildNotificationBody(signal, strategyLabel),
-            url: `/invest?ticker=${ticker}&timeframe=D`,
+            url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
             tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
             symbol: ticker,
             strategy: strategyId,
@@ -287,7 +288,7 @@ function configureWebPush() {
 
 
 
-async function hasNotificationBeenSent(userId: string, ticker: string, signal: PsiSignal): Promise<boolean> {
+async function hasNotificationBeenSent(userId: string, ticker: string, strategy: string, signal: PsiSignal): Promise<boolean> {
   const rows = await db
     .select({ id: signalNotifications.id })
     .from(signalNotifications)
@@ -295,6 +296,7 @@ async function hasNotificationBeenSent(userId: string, ticker: string, signal: P
       and(
         eq(signalNotifications.userId, userId),
         eq(signalNotifications.tickerSymbol, ticker),
+        eq(signalNotifications.strategy, strategy),
         eq(signalNotifications.signalDate, signal.date),
         eq(signalNotifications.signal, signal.signal),
       ),

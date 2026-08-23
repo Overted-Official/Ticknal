@@ -68,12 +68,13 @@ export const signalNotifications = pgTable('signal_notifications', {
   tickerSymbol: varchar('ticker_symbol', { length: 20 })
     .notNull()
     .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  strategy: varchar('strategy', { length: 50 }).default('psi').notNull(),
   signalDate: date('signal_date').notNull(),
   signal: varchar('signal', { length: 20 }).notNull(),
   sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
   return {
-    notificationUnique: unique('signal_notifications_unique').on(table.userId, table.tickerSymbol, table.signalDate, table.signal),
+    notificationUnique: unique('signal_notifications_unique').on(table.userId, table.tickerSymbol, table.strategy, table.signalDate, table.signal),
     tickerDateIdx: index('signal_notifications_ticker_date_idx').on(table.tickerSymbol, table.signalDate),
   };
 });
