@@ -17,13 +17,13 @@ self.addEventListener('push', (event) => {
   const payload = event.data.json();
   const title = payload.title || 'QuantEGX signal';
   const options = {
-    body: payload.body || 'A PSI strategy signal is available.',
+    body: payload.body || 'A trading signal is available.',
     icon: '/icon-192x192.png',
     badge: '/badge.png',
     tag: payload.tag || 'quantegx-signal',
     vibrate: [200, 100, 200], // Makes the phone buzz!
     data: {
-      url: payload.url || '/charts',
+      url: payload.url || '/invest?view=chart',
     },
   };
 
@@ -32,7 +32,8 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = new URL(event.notification.data?.url || '/charts', self.location.origin).href;
+  const targetUrl = event.notification.data?.url || '/invest?view=chart';
+  const url = new URL(targetUrl, self.location.origin).href;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -42,7 +43,9 @@ self.addEventListener('notificationclick', (event) => {
           return client.focus();
         }
       }
-      return clients.openWindow(url);
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
     }),
   );
 });
