@@ -14,8 +14,8 @@ const partners = [
 export default function TrustedBy() {
   return (
     <section className="py-12 overflow-hidden w-full">
-      <div className="max-w-[992px] mx-auto px-4 mb-6 text-center">
-        <p className="text-xs font-medium text-white/40 uppercase tracking-widest">
+      <div className="max-w-248 mx-auto px-4 mb-6 text-center">
+        <p className="text-xs font-medium text-plt-muted tracking-widest">
           Trusted By Industry Leaders & Institutional Desks
         </p>
       </div>

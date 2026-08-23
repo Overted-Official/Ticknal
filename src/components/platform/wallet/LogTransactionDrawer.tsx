@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRightLeft, X, Check } from 'lucide-react';
+import { ArrowRightLeft, X, Check } from '@/components/ui/icon-library';
 import { type BankAccount } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
 
@@ -87,7 +87,7 @@ export default function LogTransactionDrawer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-plt-base/75 backdrop-blur-sm"
           />
 
           {/* Sliding Sheet / Drawer */}
@@ -96,39 +96,33 @@ export default function LogTransactionDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-            className="relative w-full max-w-md bg-[#0e0e0e] border-l border-white/10 shadow-2xl flex flex-col h-full z-10"
+            className="relative w-full max-w-md bg-plt-base border-l border-plt-border-soft shadow-2xl flex flex-col h-full z-10 select-none"
           >
             {/* Header */}
-            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <ArrowRightLeft size={18} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white tracking-tight">Log Transaction</h3>
-                  <p className="text-[11px] text-white/40">Record transfers, expenses, income & cash flows</p>
-                </div>
+            <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">Log Transaction</h3>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Record transfers, expenses, income & cash flows</p>
               </div>
 
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition"
+                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
+                title="Close drawer"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
 
             {/* Mode Switcher */}
-            <div className="p-4 border-b border-white/10 bg-white/[0.01]">
-              <div className="grid grid-cols-4 gap-1.5 bg-white/5 p-1 rounded-lg text-xs font-semibold text-center">
+            <div className="px-4 py-2.5 bg-plt-card/50 border-b border-plt-border-soft shrink-0">
+              <div className="pill-switch w-full">
                 <button
                   type="button"
                   onClick={() => setTxMode('EXPENSE')}
-                  className={`py-1.5 rounded-md transition ${
-                    txMode === 'EXPENSE'
-                      ? 'bg-rose-500 text-white shadow-sm'
-                      : 'text-white/50 hover:text-white'
+                  className={`pill-switch-btn flex-1 ${
+                    txMode === 'EXPENSE' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   Expense
@@ -136,10 +130,8 @@ export default function LogTransactionDrawer({
                 <button
                   type="button"
                   onClick={() => setTxMode('INCOME')}
-                  className={`py-1.5 rounded-md transition ${
-                    txMode === 'INCOME'
-                      ? 'bg-emerald-500 text-black shadow-sm'
-                      : 'text-white/50 hover:text-white'
+                  className={`pill-switch-btn flex-1 ${
+                    txMode === 'INCOME' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   Income
@@ -147,10 +139,8 @@ export default function LogTransactionDrawer({
                 <button
                   type="button"
                   onClick={() => setTxMode('TRANSFER')}
-                  className={`py-1.5 rounded-md transition ${
-                    txMode === 'TRANSFER'
-                      ? 'bg-sky-500 text-white shadow-sm'
-                      : 'text-white/50 hover:text-white'
+                  className={`pill-switch-btn flex-1 ${
+                    txMode === 'TRANSFER' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   Transfer
@@ -158,10 +148,8 @@ export default function LogTransactionDrawer({
                 <button
                   type="button"
                   onClick={() => setTxMode('BROKER_INJECTION')}
-                  className={`py-1.5 rounded-md transition ${
-                    txMode === 'BROKER_INJECTION'
-                      ? 'bg-plt-orange text-white shadow-sm'
-                      : 'text-white/50 hover:text-white'
+                  className={`pill-switch-btn flex-1 ${
+                    txMode === 'BROKER_INJECTION' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   To Stocks
@@ -170,10 +158,10 @@ export default function LogTransactionDrawer({
             </div>
 
             {/* Body */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="p-5 flex-1 overflow-y-auto space-y-4 text-xs custom-scrollbar">
               {/* Account Selection */}
               <div className="space-y-1.5">
-                <label className="block text-white/60 font-medium">
+                <label className="text-xs font-semibold text-plt-muted font-sans">
                   {txMode === 'TRANSFER' ? 'From Account (Source)' : 'Bank Account'}
                 </label>
                 <select
@@ -183,10 +171,10 @@ export default function LogTransactionDrawer({
                     const sel = accounts.find((a) => String(a.id) === e.target.value);
                     if (sel) setCurrency(sel.currency);
                   }}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                  className="select-token"
                 >
                   {accounts.map((a) => (
-                    <option key={a.id} value={String(a.id)} className="bg-[#111]">
+                    <option key={a.id} value={String(a.id)}>
                       {a.accountName} ({a.currency}) - Bal: {Number(a.balance).toLocaleString()}
                     </option>
                   ))}
@@ -196,17 +184,17 @@ export default function LogTransactionDrawer({
               {/* Destination Account (Transfers only) */}
               {txMode === 'TRANSFER' && (
                 <div className="space-y-1.5">
-                  <label className="block text-white/60 font-medium">To Account (Destination)</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">To Account (Destination)</label>
                   <select
                     value={toAccountId}
                     onChange={(e) => setToAccountId(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                    className="select-token"
                   >
-                    <option value="" className="bg-[#111]">-- Select Destination Account --</option>
+                    <option value="">-- Select Destination Account --</option>
                     {accounts
                       .filter((a) => String(a.id) !== accountId)
                       .map((a) => (
-                        <option key={a.id} value={String(a.id)} className="bg-[#111]">
+                        <option key={a.id} value={String(a.id)}>
                           {a.accountName} ({a.currency})
                         </option>
                       ))}
@@ -217,7 +205,7 @@ export default function LogTransactionDrawer({
               {/* Amount & Date */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="block text-white/60 font-medium">Amount ({currency}) *</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Amount ({currency}) *</label>
                   <input
                     type="number"
                     step="any"
@@ -225,17 +213,17 @@ export default function LogTransactionDrawer({
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500/50"
+                    className="input-token"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-white/60 font-medium">Date</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Date</label>
                   <input
                     type="date"
                     value={transactionDate}
                     onChange={(e) => setTransactionDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500/50"
+                    className="date-token"
                   />
                 </div>
               </div>
@@ -243,14 +231,14 @@ export default function LogTransactionDrawer({
               {/* Category (if not transfer) */}
               {txMode !== 'TRANSFER' && (
                 <div className="space-y-1.5">
-                  <label className="block text-white/60 font-medium">Category</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Category</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                    className="select-token"
                   >
                     {categories.map((c) => (
-                      <option key={c} value={c} className="bg-[#111]">{c}</option>
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
@@ -258,31 +246,31 @@ export default function LogTransactionDrawer({
 
               {/* Notes */}
               <div className="space-y-1.5">
-                <label className="block text-white/60 font-medium">Notes / Description (Optional)</label>
+                <label className="text-xs font-semibold text-plt-muted font-sans">Notes / Description (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. Salary wire, Monthly rent, Grocery trip"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                  className="input-token"
                 />
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-2.5">
+              <div className="pt-3 border-t border-plt-border-soft flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg text-white/60 hover:text-white transition"
+                  className="btn-token btn-secondary btn-compact font-sans"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black font-bold transition disabled:opacity-50 flex items-center gap-1.5 shadow-lg shadow-emerald-500/10"
+                  className="btn-token btn-primary btn-compact font-sans"
                 >
-                  <Check size={15} strokeWidth={2.5} />
+                  <Check size={14} strokeWidth={2.5} />
                   {isSubmitting ? 'Recording...' : 'Record Transaction'}
                 </button>
               </div>

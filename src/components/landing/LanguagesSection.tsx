@@ -1,36 +1,37 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Globe2 } from '@/components/ui/icon-library';
 
 const languages = [
-  { name: 'Arabic (العربية)', flag: '🇪🇬' },
-  { name: 'English (US)', flag: '🇺🇸' },
-  { name: 'United Kingdom', flag: '🇬🇧' },
-  { name: 'Saudi Arabia', flag: '🇸🇦' },
-  { name: 'United Arab Emirates', flag: '🇦🇪' },
-  { name: 'Germany', flag: '🇩🇪' },
-  { name: 'France', flag: '🇫🇷' },
-  { name: 'Italy', flag: '🇮🇹' },
-  { name: 'Spain', flag: '🇪🇸' },
-  { name: 'Sweden', flag: '🇸🇪' },
-  { name: 'Switzerland', flag: '🇨🇭' },
-  { name: 'Singapore', flag: '🇸🇬' },
-  { name: 'Japan', flag: '🇯🇵' },
-  { name: 'Canada', flag: '🇨🇦' },
+  'Arabic (العربية)',
+  'English (US)',
+  'United Kingdom',
+  'Saudi Arabia',
+  'United Arab Emirates',
+  'Germany',
+  'France',
+  'Italy',
+  'Spain',
+  'Sweden',
+  'Switzerland',
+  'Singapore',
+  'Japan',
+  'Canada',
 ];
 
 export default function LanguagesSection() {
   return (
-    <section className="pt-[128px] px-5 md:px-[40px] pb-[96px] bg-transparent w-full">
-      <div className="max-w-[992px] mx-auto flex flex-col gap-[64px] items-center">
-        
+    <section className="pt-32 px-6 md:px-10 pb-24 bg-transparent w-full">
+      <div className="max-w-248 mx-auto flex flex-col gap-16 items-center">
+
         {/* Heading */}
-        <div className="flex flex-col gap-6 items-center text-center max-w-[654px] w-full">
+        <div className="flex flex-col gap-6 items-center text-center max-w-164 w-full">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-tv-border text-white/80 text-xs font-medium w-fit"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-plt-hover border border-tv-border text-plt-subtle text-xs font-medium w-fit"
           >
             Languages & Coverage
           </motion.div>
@@ -39,7 +40,7 @@ export default function LanguagesSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-[32px] md:text-[45px] font-medium text-white leading-[1.2] tracking-[-0.02em] capitalize"
+            className="text-section md:text-display font-medium text-plt-text leading-display tracking-normal capitalize"
           >
             Customer Support in 18 Languages
           </motion.h2>
@@ -51,17 +52,17 @@ export default function LanguagesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="flex flex-wrap justify-center items-center gap-3 max-w-[800px] mx-auto"
+          className="flex flex-wrap justify-center items-center gap-4 max-w-200 mx-auto"
         >
-          {languages.map((lang, idx) => (
+          {languages.map((language) => (
             <motion.div
-              key={idx}
-              whileHover={{ scale: 1.05, borderColor: 'rgba(254, 80, 0, 0.6)' }}
+              key={language}
+              whileHover={{ scale: 1.05, borderColor: 'var(--plt-accent-border)' }}
               transition={{ duration: 0.2 }}
-              className="inline-flex items-center gap-2.5 px-[20px] py-[10px] rounded-full bg-[#1a1717]/60 border border-[rgba(255,255,255,0.16)] text-white/85 text-xs sm:text-sm font-medium shadow-sm hover:bg-[#1a1717] hover:text-white transition-all cursor-default"
+              className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-plt-muted-surface/60 border border-plt-border-strong text-plt-text/85 text-xs sm:text-sm font-medium shadow-sm hover:bg-plt-muted-surface hover:text-plt-text transition-all cursor-default"
             >
-              <span className="text-base">{lang.flag}</span>
-              <span>{lang.name}</span>
+              <Globe2 className="h-4 w-4 text-plt-muted" aria-hidden="true" />
+              <span>{language}</span>
             </motion.div>
           ))}
         </motion.div>

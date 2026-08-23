@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Flame, Info, Globe } from 'lucide-react';
+import { Flame, Info, Globe } from '@/components/ui/icon-library';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
@@ -33,61 +33,61 @@ export default function InflationRadarChart({
 }: InflationRadarChartProps) {
   const { isPrivacy } = usePrivacyMode();
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
-  const displaySuffix = currencyMode === 'EGP' ? ' EGP' : '';
+  const displaySuffix = currencyMode === 'EGP' ? ' £' : '';
 
   const activeEffectiveRate = effectiveAnnualInflation !== undefined ? effectiveAnnualInflation : cbeAnnualInflation;
 
   return (
-    <div className="glass-panel rounded-xl p-4 md:p-5 space-y-2">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="card-widget select-none space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+          <h3 className="widget-title">
             Multi-Currency Inflation & Purchasing Power Radar
           </h3>
-          <p className="text-[11px] text-white/40 mt-0.5">
+          <p className="widget-subtitle mt-0.5">
             Visualizing nominal wealth vs. real purchasing power using currency-weighted deflator ({activeEffectiveRate}% Effective YoY).
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs flex-wrap">
-          <span className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">
+          <span className="px-2 py-2 rounded-xl bg-plt-warning/10 text-plt-warning border border-plt-warning/20 tabular-nums font-medium">
             Effective: {activeEffectiveRate}%
           </span>
-          <span className="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono text-[11px]">
-            EGP CBE: {cbeAnnualInflation}% {wEgpPct !== undefined && `(${wEgpPct}%)`}
+          <span className="px-2 py-2 rounded-xl bg-plt-risk/10 text-plt-risk border border-plt-risk/20 tabular-nums text-caption">
+            £ CBE: {cbeAnnualInflation}% {wEgpPct !== undefined && `(${wEgpPct}%)`}
           </span>
-          <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[11px]">
+          <span className="px-2 py-2 rounded-xl bg-plt-profit/10 text-plt-profit border border-plt-profit/20 tabular-nums text-caption">
             USD CPI: {usCpiAnnualInflation}% {wUsdPct !== undefined && `(${wUsdPct}%)`}
           </span>
         </div>
       </div>
 
       {/* Area Chart: Nominal vs Real Purchasing Power */}
-      <div className="h-64 w-full">
+      <div className="h-[380px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={points} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
               <linearGradient id="nominalGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--plt-profit)" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="var(--plt-profit)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="realGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--plt-warning)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--plt-warning)" stopOpacity={0} />
               </linearGradient>
             </defs>
 
             <XAxis
               dataKey="month"
-              stroke="#555"
-              tick={{ fill: '#888', fontSize: 10 }}
-              axisLine={{ stroke: '#333' }}
+              stroke="var(--chart-axis)"
+              tick={{ fill: 'var(--plt-text-faint)', fontSize: 'var(--text-size-mini)' }}
+              axisLine={{ stroke: 'var(--chart-grid)' }}
               tickLine={false}
             />
             <YAxis
-              stroke="#555"
-              tick={{ fill: '#888', fontSize: 10 }}
-              axisLine={{ stroke: '#333' }}
+              stroke="var(--chart-axis)"
+              tick={{ fill: 'var(--plt-text-faint)', fontSize: 'var(--text-size-mini)' }}
+              axisLine={{ stroke: 'var(--chart-grid)' }}
               tickLine={false}
               tickFormatter={(v) => isPrivacy ? '***' : `${displaySymbol}${(v / 1000).toFixed(0)}k`}
             />
@@ -96,26 +96,26 @@ export default function InflationRadarChart({
                 if (!active || !payload || !payload.length) return null;
                 const data = payload[0].payload as InflationPoint;
                 return (
-                  <div className="rounded-lg border border-white/10 bg-black/90 p-3 shadow-xl backdrop-blur-md text-xs space-y-1.5 min-w-[190px]">
-                    <div className="font-bold text-white border-b border-white/10 pb-1 flex items-center justify-between">
+                  <div className="rounded-xl border border-plt-border bg-plt-base/90 p-4 shadow-xl backdrop-blur-md text-xs space-y-2 min-w-48">
+                    <div className="font-medium text-plt-text border-b border-plt-border pb-2 flex items-center justify-between">
                       <span>{label}</span>
-                      <span className="text-[10px] text-white/40 font-mono">Real vs Nominal</span>
+                      <span className="text-mini text-plt-muted tabular-nums">Real vs Nominal</span>
                     </div>
-                    <div className="flex justify-between items-center text-emerald-400">
+                    <div className="flex justify-between items-center text-plt-profit">
                       <span>Nominal Value:</span>
-                      <span className="font-mono font-semibold">
+                      <span className="tabular-nums font-medium">
                         {isPrivacy ? '***' : `${displaySymbol}${data.nominal.toLocaleString('en-US', { maximumFractionDigits: 0 })}${displaySuffix}`}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-amber-400">
+                    <div className="flex justify-between items-center text-plt-warning">
                       <span>Real Purchasing Power:</span>
-                      <span className="font-mono font-semibold">
+                      <span className="tabular-nums font-medium">
                         {isPrivacy ? '***' : `${displaySymbol}${data.realValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}${displaySuffix}`}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-rose-400 pt-1 border-t border-white/10">
+                    <div className="flex justify-between items-center text-plt-risk pt-2 border-t border-plt-border">
                       <span>Cumulative Drag:</span>
-                      <span className="font-mono font-bold">
+                      <span className="tabular-nums font-medium">
                         {isPrivacy ? '***' : `-${displaySymbol}${data.inflationDrag.toLocaleString('en-US', { maximumFractionDigits: 0 })}${displaySuffix}`}
                       </span>
                     </div>
@@ -127,13 +127,13 @@ export default function InflationRadarChart({
               verticalAlign="top"
               align="right"
               iconType="circle"
-              wrapperStyle={{ paddingBottom: '10px', fontSize: '11px' }}
+              wrapperStyle={{ paddingBottom: 'var(--space-2)', fontSize: 'var(--text-size-caption)' }}
             />
             <Area
               type="monotone"
               dataKey="nominal"
               name="Nominal Wealth"
-              stroke="#22c55e"
+              stroke="var(--plt-profit)"
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#nominalGrad)"
@@ -142,7 +142,7 @@ export default function InflationRadarChart({
               type="monotone"
               dataKey="realValue"
               name="Inflation-Adjusted Real Wealth"
-              stroke="#f59e0b"
+              stroke="var(--plt-warning)"
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#realGrad)"

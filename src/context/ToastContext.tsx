@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, AlertCircle, Info, X } from '@/components/ui/icon-library';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -86,29 +86,29 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className={`pointer-events-auto p-3.5 rounded-xl border shadow-2xl backdrop-blur-xl flex items-start gap-3 relative overflow-hidden ${
+              className={`pointer-events-auto p-3.5 rounded-md border shadow-popover backdrop-blur-xl flex items-start gap-3 relative overflow-hidden ${
                 t.type === 'success'
-                  ? 'bg-[#0f1712]/95 border-emerald-500/30 text-white'
+                  ? 'bg-plt-profit-soft border-plt-profit-border text-plt-text'
                   : t.type === 'error'
-                  ? 'bg-[#1a0f0f]/95 border-rose-500/30 text-white'
+                  ? 'bg-plt-risk-soft border-plt-risk-border text-plt-text'
                   : t.type === 'warning'
-                  ? 'bg-[#17140b]/95 border-amber-500/30 text-white'
-                  : 'bg-[#0c141d]/95 border-sky-500/30 text-white'
+                  ? 'bg-plt-warning-soft border-plt-warning-border text-plt-text'
+                  : 'bg-plt-info-soft border-plt-info-border text-plt-text'
               }`}
             >
               {/* Type Icon */}
               <div className="shrink-0 mt-0.5">
-                {t.type === 'success' && <CheckCircle2 size={18} className="text-emerald-400" />}
-                {t.type === 'error' && <AlertCircle size={18} className="text-rose-400" />}
-                {t.type === 'warning' && <AlertTriangle size={18} className="text-amber-400" />}
-                {t.type === 'info' && <Info size={18} className="text-sky-400" />}
+                {t.type === 'success' && <CheckCircle2 size={18} className="text-plt-profit" />}
+                {t.type === 'error' && <AlertCircle size={18} className="text-plt-risk" />}
+                {t.type === 'warning' && <AlertTriangle size={18} className="text-plt-warning" />}
+                {t.type === 'info' && <Info size={18} className="text-plt-info" />}
               </div>
 
               {/* Text Body */}
               <div className="flex-1 min-w-0 pr-4">
-                <h4 className="text-xs font-semibold tracking-tight leading-tight">{t.title}</h4>
+                <h4 className="text-xs font-medium leading-tight">{t.title}</h4>
                 {t.message && (
-                  <p className="text-[11px] text-white/60 mt-0.5 leading-snug break-words">
+                  <p className="text-[11px] text-plt-subtle mt-0.5 leading-snug break-words">
                     {t.message}
                   </p>
                 )}
@@ -118,7 +118,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => removeToast(t.id)}
-                className="absolute top-3 right-3 text-white/30 hover:text-white transition"
+                className="absolute top-3 right-3 text-plt-faint hover:text-plt-text transition"
               >
                 <X size={14} />
               </button>

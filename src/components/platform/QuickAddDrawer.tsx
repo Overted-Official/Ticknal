@@ -18,7 +18,7 @@ import {
   Layers,
   ArrowDownLeft,
   ArrowUpRight,
-} from 'lucide-react';
+} from '@/components/ui/icon-library';
 import { useToast } from '@/context/ToastContext';
 import { type BankAccount } from '@/types/bank';
 
@@ -244,7 +244,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-plt-base/75 backdrop-blur-sm"
           />
 
           {/* Slide-over Drawer / Sheet */}
@@ -253,34 +253,33 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
             animate={{ y: 0, x: 0 }}
             exit={{ y: '100%', md: { x: '100%', y: 0 } } as any}
             transition={{ type: 'spring', damping: 26, stiffness: 240 }}
-            className="relative w-full max-w-lg bg-[#0e0e0e] border-t md:border-t-0 md:border-l border-white/10 shadow-2xl flex flex-col max-h-[92vh] md:max-h-full h-full z-10 rounded-t-2xl md:rounded-none mt-auto md:mt-0"
+            className="relative w-full max-w-lg bg-plt-base border-t md:border-t-0 md:border-l border-plt-border-soft shadow-2xl flex flex-col max-h-drawer-mobile md:max-h-full h-full z-10 select-none mt-auto md:mt-0"
           >
             {/* Header */}
-            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-plt-orange" />
-                <h3 className="text-sm font-bold text-white tracking-tight">Quick Action</h3>
+            <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">Quick Action</h3>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Record a ledger entry or buy new stock shares</p>
               </div>
 
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition"
+                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
+                title="Close drawer"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
 
             {/* 2-WAY SWITCHER TABS */}
-            <div className="p-3 bg-black/40 border-b border-white/[0.06] shrink-0">
-              <div className="grid grid-cols-2 gap-1 bg-white/[0.04] p-1 rounded-xl border border-white/[0.06]">
+            <div className="px-4 py-2.5 bg-plt-card/50 border-b border-plt-border-soft shrink-0">
+              <div className="pill-switch w-full">
                 <button
                   type="button"
                   onClick={() => setActiveSwitch('transaction')}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                    activeSwitch === 'transaction'
-                      ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
-                      : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                  className={`pill-switch-btn flex-1 flex items-center justify-center gap-1.5 ${
+                    activeSwitch === 'transaction' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   <ArrowRightLeft size={14} />
@@ -290,10 +289,8 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                 <button
                   type="button"
                   onClick={() => setActiveSwitch('position')}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                    activeSwitch === 'position'
-                      ? 'bg-plt-orange text-black shadow-md shadow-plt-orange/20'
-                      : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                  className={`pill-switch-btn flex-1 flex items-center justify-center gap-1.5 ${
+                    activeSwitch === 'position' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   <TrendingUp size={14} />
@@ -303,50 +300,50 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
             </div>
 
             {/* CONTENT BODY */}
-            <div className="flex-1 overflow-y-auto p-5 text-xs">
+            <div className="p-5 flex-1 overflow-y-auto text-xs space-y-4 custom-scrollbar">
               {/* TAB 1: BANK TRANSACTION */}
               {activeSwitch === 'transaction' && (
                 <form onSubmit={handleTransactionSubmit} className="space-y-4">
                   {/* Transaction Type Pills */}
                   <div className="space-y-1.5">
-                    <label className="block text-white/60 font-medium">Transaction Type</label>
-                    <div className="grid grid-cols-3 gap-1.5">
+                    <label className="text-xs font-semibold text-plt-muted font-sans">Transaction Type</label>
+                    <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
                         onClick={() => setTxMode('EXPENSE')}
-                        className={`py-2 px-2 rounded-lg font-semibold flex items-center justify-center gap-1 transition ${
+                        className={`h-8 rounded-xl font-medium flex items-center justify-center gap-1.5 transition text-xs font-sans ${
                           txMode === 'EXPENSE'
-                            ? 'bg-rose-500/20 border border-rose-500/40 text-rose-400'
-                            : 'bg-white/5 text-white/50 hover:bg-white/10'
+                            ? 'bg-plt-risk/15 border border-plt-risk/30 text-plt-risk font-semibold'
+                            : 'bg-plt-card border border-plt-border-soft text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                         }`}
                       >
-                        <ArrowUpRight size={13} />
+                        <ArrowUpRight size={14} />
                         <span>Expense</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setTxMode('INCOME')}
-                        className={`py-2 px-2 rounded-lg font-semibold flex items-center justify-center gap-1 transition ${
+                        className={`h-8 rounded-xl font-medium flex items-center justify-center gap-1.5 transition text-xs font-sans ${
                           txMode === 'INCOME'
-                            ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400'
-                            : 'bg-white/5 text-white/50 hover:bg-white/10'
+                            ? 'bg-plt-profit/15 border border-plt-profit/30 text-plt-profit font-semibold'
+                            : 'bg-plt-card border border-plt-border-soft text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                         }`}
                       >
-                        <ArrowDownLeft size={13} />
+                        <ArrowDownLeft size={14} />
                         <span>Income</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setTxMode('TRANSFER')}
-                        className={`py-2 px-2 rounded-lg font-semibold flex items-center justify-center gap-1 transition ${
+                        className={`h-8 rounded-xl font-medium flex items-center justify-center gap-1.5 transition text-xs font-sans ${
                           txMode === 'TRANSFER'
-                            ? 'bg-sky-500/20 border border-sky-500/40 text-sky-400'
-                            : 'bg-white/5 text-white/50 hover:bg-white/10'
+                            ? 'bg-plt-info/15 border border-plt-info/30 text-plt-info font-semibold'
+                            : 'bg-plt-card border border-plt-border-soft text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                         }`}
                       >
-                        <ArrowRightLeft size={13} />
+                        <ArrowRightLeft size={14} />
                         <span>Transfer</span>
                       </button>
                     </div>
@@ -354,11 +351,11 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
                   {/* Account Selection */}
                   <div className="space-y-1.5">
-                    <label className="block text-white/60 font-medium">
+                    <label className="text-xs font-semibold text-plt-muted font-sans">
                       {txMode === 'TRANSFER' ? 'From Bank Account' : 'Bank Account'} *
                     </label>
                     {accounts.length === 0 ? (
-                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+                      <div className="p-3 rounded-xl bg-plt-warning/10 border border-plt-warning/20 text-plt-warning text-xs font-sans">
                         No accounts found. Please add a bank account first.
                       </div>
                     ) : (
@@ -366,10 +363,10 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                         required
                         value={accountId}
                         onChange={(e) => handleAccountChange(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                        className="select-token"
                       >
                         {accounts.map((acc) => (
-                          <option key={acc.id} value={acc.id} className="bg-[#111]">
+                          <option key={acc.id} value={acc.id}>
                             {acc.accountName} ({acc.bankName || 'Bank'}) — {Number(acc.balance).toLocaleString()} {acc.currency}
                           </option>
                         ))}
@@ -380,18 +377,18 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Destination Account (If Transfer) */}
                   {txMode === 'TRANSFER' && (
                     <div className="space-y-1.5">
-                      <label className="block text-white/60 font-medium">To Destination Account *</label>
+                      <label className="text-xs font-semibold text-plt-muted font-sans">To Destination Account *</label>
                       <select
                         required
                         value={toAccountId}
                         onChange={(e) => setToAccountId(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-sky-500/50"
+                        className="select-token"
                       >
-                        <option value="" className="bg-[#111]">Select Destination Account...</option>
+                        <option value="">Select Destination Account...</option>
                         {accounts
                           .filter((a) => String(a.id) !== accountId)
                           .map((acc) => (
-                            <option key={acc.id} value={acc.id} className="bg-[#111]">
+                            <option key={acc.id} value={acc.id}>
                               {acc.accountName} ({acc.bankName || 'Bank'}) — {Number(acc.balance).toLocaleString()} {acc.currency}
                             </option>
                           ))}
@@ -401,7 +398,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
                   {/* Amount & Currency */}
                   <div className="space-y-1.5">
-                    <label className="block text-white/60 font-medium">Amount *</label>
+                    <label className="text-xs font-semibold text-plt-muted font-sans">Amount *</label>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -410,9 +407,9 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                         placeholder="0.00"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-base font-mono font-bold focus:outline-none focus:border-emerald-500/50"
+                        className="input-token flex-1"
                       />
-                      <div className="px-3.5 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg text-white font-mono font-bold">
+                      <div className="h-8 px-3 flex items-center justify-center rounded-xl bg-plt-card border border-plt-border-soft text-xs font-sans text-plt-muted">
                         {currency}
                       </div>
                     </div>
@@ -421,14 +418,14 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Category (if not transfer) */}
                   {txMode !== 'TRANSFER' && (
                     <div className="space-y-1.5">
-                      <label className="block text-white/60 font-medium">Category</label>
+                      <label className="text-xs font-semibold text-plt-muted font-sans">Category</label>
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                        className="select-token"
                       >
                         {CATEGORIES.map((c) => (
-                          <option key={c} value={c} className="bg-[#111]">{c}</option>
+                          <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
                     </div>
@@ -436,49 +433,49 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
                   {/* Date & Notes */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="block text-white/60 font-medium">Date</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-plt-muted font-sans">Date</label>
                       <input
                         type="date"
                         required
                         value={transactionDate}
                         onChange={(e) => setTransactionDate(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                        className="date-token"
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="block text-white/60 font-medium">Notes / Description</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-plt-muted font-sans">Notes / Description</label>
                       <input
                         type="text"
-                        placeholder="e.g. Grocery run, bonus..."
+                        placeholder="e.g. Salary wire, Monthly rent, Grocery trip"
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                        className="input-token"
                       />
                     </div>
                   </div>
 
                   {/* Submit Button */}
-                  <div className="pt-3 border-t border-white/10">
+                  <div className="pt-3 border-t border-plt-border-soft">
                     <button
                       type="submit"
-                      disabled={isSubmittingTx || accounts.length === 0}
-                      className="w-full py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs transition shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      disabled={isSubmittingTx}
+                      className="btn-token btn-primary w-full h-9 flex items-center justify-center gap-2 font-sans"
                     >
-                      <ArrowRightLeft size={14} />
-                      <span>{isSubmittingTx ? 'Recording Transaction...' : 'Log Bank Transaction'}</span>
+                      <Check size={14} strokeWidth={2.5} />
+                      <span>{isSubmittingTx ? 'Recording Transaction...' : 'Record Transaction'}</span>
                     </button>
                   </div>
                 </form>
               )}
 
-              {/* TAB 2: INVESTMENT POSITION */}
+              {/* ---------------- 2. POSITION FORM ---------------- */}
               {activeSwitch === 'position' && (
                 <form onSubmit={handlePositionSubmit} className="space-y-4">
                   {/* Ticker Search & Select */}
                   <div className="space-y-1.5 relative" ref={tickerSearchRef}>
-                    <label className="block text-white/60 font-medium">Stock / Ticker Symbol *</label>
+                    <label className="text-xs font-semibold text-plt-muted font-sans">EGX Ticker Symbol *</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -490,14 +487,14 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                           setIsTickerDropdownOpen(true);
                         }}
                         onFocus={() => setIsTickerDropdownOpen(true)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono font-bold focus:outline-none focus:border-plt-orange/50 pl-8 uppercase"
+                        className="input-token pl-8"
                       />
-                      <Search size={14} className="absolute left-2.5 top-3.5 text-white/40" />
+                      <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-plt-muted" />
                     </div>
 
                     {/* Dropdown Results */}
                     {isTickerDropdownOpen && filteredTickers.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-[#141414] border border-white/15 rounded-xl shadow-2xl z-50 divide-y divide-white/[0.06]">
+                      <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-plt-card border border-plt-border-soft rounded-xl shadow-2xl z-50 divide-y divide-plt-border-soft custom-scrollbar">
                         {filteredTickers.map((t) => (
                           <div
                             key={t.symbol}
@@ -505,14 +502,14 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                               setPositionSymbol(t.symbol);
                               setIsTickerDropdownOpen(false);
                             }}
-                            className="p-2.5 hover:bg-white/[0.06] cursor-pointer flex items-center justify-between transition-colors"
+                            className="p-2.5 hover:bg-plt-hover cursor-pointer flex items-center justify-between transition-colors"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-white text-xs">{t.symbol}</span>
-                              <span className="text-white/40 text-[11px] truncate max-w-[200px]">{t.companyName}</span>
+                              <span className="font-bold text-plt-text text-xs font-sans">{t.symbol}</span>
+                              <span className="text-plt-muted text-[11px] truncate max-w-50 font-sans">{t.companyName}</span>
                             </div>
                             {t.sector && (
-                              <span className="text-[10px] text-white/30 px-1.5 py-0.2 rounded bg-white/[0.04]">
+                              <span className="text-[10px] text-plt-muted px-1.5 py-0.5 rounded bg-plt-base border border-plt-border-soft font-sans">
                                 {t.sector}
                               </span>
                             )}
@@ -525,7 +522,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Price & Quantity Grid */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="block text-white/60 font-medium">Entry Price (EGP) *</label>
+                      <label className="text-xs font-semibold text-plt-muted font-sans">Entry Price (EGP) *</label>
                       <input
                         type="number"
                         step="any"
@@ -533,12 +530,12 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                         placeholder="0.00"
                         value={positionPrice}
                         onChange={(e) => setPositionPrice(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono font-bold focus:outline-none focus:border-plt-orange/50"
+                        className="input-token"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="block text-white/60 font-medium">Quantity (Shares) *</label>
+                      <label className="text-xs font-semibold text-plt-muted font-sans">Quantity (Shares) *</label>
                       <input
                         type="number"
                         step="1"
@@ -546,16 +543,16 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                         placeholder="100"
                         value={positionQty}
                         onChange={(e) => setPositionQty(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono font-bold focus:outline-none focus:border-plt-orange/50"
+                        className="input-token"
                       />
                     </div>
                   </div>
 
                   {/* Position Total Market Value Preview */}
                   {positionTotalVal > 0 && (
-                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between">
-                      <div className="text-white/50 text-[11px]">Total Position Value</div>
-                      <div className="text-sm font-bold font-mono text-plt-orange">
+                    <div className="card-widget-compact flex items-center justify-between">
+                      <div className="kpi-title">Total Position Value</div>
+                      <div className="kpi-value text-plt-text font-bold">
                         {positionTotalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
                       </div>
                     </div>
@@ -563,22 +560,22 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
                   {/* Entry Date */}
                   <div className="space-y-1.5">
-                    <label className="block text-white/60 font-medium">Entry Date</label>
+                    <label className="text-xs font-semibold text-plt-muted font-sans">Entry Date</label>
                     <input
                       type="date"
                       required
                       value={positionDate}
                       onChange={(e) => setPositionDate(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-plt-orange/50"
+                      className="date-token"
                     />
                   </div>
 
                   {/* Submit Button */}
-                  <div className="pt-3 border-t border-white/10">
+                  <div className="pt-3 border-t border-plt-border-soft">
                     <button
                       type="submit"
                       disabled={isSubmittingPos}
-                      className="w-full py-3 rounded-lg bg-plt-orange hover:bg-plt-orange/90 text-black font-bold text-xs transition shadow-lg shadow-plt-orange/10 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="btn-token btn-primary w-full h-9 flex items-center justify-center gap-2 font-sans"
                     >
                       <TrendingUp size={14} />
                       <span>{isSubmittingPos ? 'Creating Position...' : 'Create Stock Position'}</span>

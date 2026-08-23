@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
+import { controlHover, controlTap } from '@/lib/motion';
 
 export type SubNavTabItem = {
   label: string;
@@ -27,9 +29,9 @@ export default function SubNavTopRail({
 
   return (
     <div
-      className={`md:hidden w-full shrink-0 flex items-center gap-1.5 border-b bg-black/95 backdrop-blur-md z-30 overflow-x-auto no-scrollbar scroll-smooth transition-all duration-300 ease-out will-change-[transform,max-height,opacity] ${
+      className={`will-change-nav md:hidden w-full shrink-0 flex items-center gap-1.5 border-b border-white/[0.08] bg-black/60 backdrop-blur-2xl z-30 overflow-x-auto no-scrollbar scroll-smooth transition-all duration-300 ease-out ${
         isNavVisible
-          ? 'translate-y-0 max-h-11 h-11 px-3 border-white/[0.08] opacity-100'
+          ? 'translate-y-0 max-h-12 h-12 px-3 opacity-100'
           : '-translate-y-full max-h-0 h-0 px-3 py-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
       } ${className}`}
     >
@@ -38,36 +40,38 @@ export default function SubNavTopRail({
         const Icon = item.icon;
 
         return (
-          <button
+          <motion.button
             key={item.value}
             type="button"
             onClick={() => onChange(item.value)}
-            className={`h-7.5 px-3 rounded-full text-xs font-medium transition-all duration-150 whitespace-nowrap select-none shrink-0 flex items-center gap-1.5 ${
+            whileHover={controlHover}
+            whileTap={controlTap}
+            className={`tab-button shrink-0 select-none ${
               isActive
-                ? 'bg-white text-black font-semibold shadow-sm'
-                : 'bg-white/[0.05] text-white/50 hover:text-white/80 hover:bg-white/[0.09] border border-white/[0.05]'
+                ? 'tab-button-active'
+                : 'text-plt-muted hover:text-plt-text'
             }`}
           >
             {Icon && (
               <Icon
-                size={13}
-                strokeWidth={isActive ? 2.2 : 1.8}
-                className={isActive ? 'text-black' : 'text-white/40'}
+                size={15}
+                strokeWidth={isActive ? 2 : 1.5}
+                className={isActive ? 'text-plt-text' : 'text-plt-muted'}
               />
             )}
             <span>{item.label}</span>
             {item.badge !== undefined && (
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold leading-none ${
+                className={`badge ${
                   isActive
-                    ? 'bg-black/15 text-black'
-                    : 'bg-white/10 text-white/60'
+                    ? 'badge-active'
+                    : 'badge-muted'
                 }`}
               >
                 {item.badge}
               </span>
             )}
-          </button>
+          </motion.button>
         );
       })}
     </div>

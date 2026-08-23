@@ -1,36 +1,20 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
-import {
-  X,
-  BarChart3,
-  ListFilter,
-  Download,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  Award,
-  Zap,
-  ShieldAlert,
-  Percent,
-  Activity,
-  CheckCircle2,
-} from "lucide-react";
-import {
-  runFullStrategyBacktest,
-} from "@/strategies/PSI/psiBacktestEngine";
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Download } from '@/components/ui/icon-library';
+import { runFullStrategyBacktest } from '@/strategies/PSI/psiBacktestEngine';
 import {
   type StrategyTrade,
   type EquityPoint,
   type StrategyKeyStats,
   type FullBacktestReport,
-} from "@/strategies/registry";
+} from '@/strategies/registry';
 import {
   resolvePsiParams,
   type PriceBar,
   type PsiStrategyParams,
-} from "@/strategies/PSI/psiStrategy";
+} from '@/strategies/PSI/psiStrategy';
 
 // ============================================================================
 // TICKER LOGO COMPONENT
@@ -38,34 +22,24 @@ import {
 function TickerLogo({
   symbol,
   logoUrl,
-  size = "md",
 }: {
   symbol: string;
   logoUrl?: string | null;
-  size?: "sm" | "md" | "lg";
 }) {
   const [imgError, setImgError] = useState(false);
-  const sizeClasses =
-    size === "lg"
-      ? "w-10 h-10 rounded-lg"
-      : size === "md"
-      ? "w-8 h-8 rounded-md"
-      : "w-6 h-6 rounded-md";
 
   return (
-    <div
-      className={`${sizeClasses} bg-white/[0.04] border border-white/[0.09] p-0.5 shrink-0 flex items-center justify-center overflow-hidden`}
-    >
+    <div className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.12] shrink-0 flex items-center justify-center overflow-hidden">
       {logoUrl && !imgError ? (
         <img
           src={logoUrl}
           alt={symbol}
-          className="w-full h-full object-contain rounded-[3px] bg-transparent"
+          className="w-full h-full object-contain rounded-full bg-transparent"
           onError={() => setImgError(true)}
         />
       ) : (
-        <span className="text-[11px] font-bold font-mono text-plt-orange uppercase">
-          {symbol.slice(0, 2)}
+        <span className="text-xs font-bold tabular-nums text-plt-profit font-mono">
+          {symbol.replace('.CA', '').slice(0, 2)}
         </span>
       )}
     </div>
@@ -100,24 +74,23 @@ export default function StrategyReportDrawer({
   companyName: propCompanyName,
   logoUrl: propLogoUrl,
   chartData = [],
-  activeStrategy = "psi",
+  activeStrategy = 'psi',
   customParams,
 }: StrategyReportDrawerProps) {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"stats" | "trades">("stats");
-  const [model, setModel] = useState<"psi8" | "psi40" | "thoth_egx_macro">(() => {
-    return activeStrategy === "thoth_egx_macro" ? "thoth_egx_macro" : "psi8";
+  const [activeTab, setActiveTab] = useState<'stats' | 'trades'>('stats');
+  const [model, setModel] = useState<'psi8' | 'psi40' | 'thoth_egx_macro'>(() => {
+    return activeStrategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : 'psi8';
   });
   const [initialCapital, setInitialCapital] = useState<number>(1000);
   const [hoveredPoint, setHoveredPoint] = useState<EquityPoint | null>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
 
   // Fallback ticker metadata fetching if not provided
   const [fetchedMeta, setFetchedMeta] = useState<{ companyName?: string; logoUrl?: string | null }>({});
 
   useEffect(() => {
     if (!propCompanyName || !propLogoUrl) {
-      fetch("/api/tickers")
+      fetch('/api/tickers')
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
@@ -136,81 +109,78 @@ export default function StrategyReportDrawer({
     }
   }, [symbol, propCompanyName, propLogoUrl]);
 
-  const resolvedCompanyName = propCompanyName || fetchedMeta.companyName || "";
+  const resolvedCompanyName = propCompanyName || fetchedMeta.companyName || '';
   const resolvedLogoUrl = propLogoUrl || fetchedMeta.logoUrl || null;
 
-  // Date range state (default to 2025-01-01 OOS)
-  const defaultStartDate = "2025-01-01";
-  const defaultEndDate = chartData.length > 0 ? chartData[chartData.length - 1].time : "";
-  const [startDate, setStartDate] = useState<string>("2025-01-01");
+  // Date range state
+  const defaultEndDate = chartData.length > 0 ? chartData[chartData.length - 1].time : '';
+  const [startDate, setStartDate] = useState<string>('2025-01-01');
   const [endDate, setEndDate] = useState<string>(defaultEndDate);
-  const [activePreset, setActivePreset] = useState<"2025" | "1y" | "all" | "custom">("2025");
+  const [activePreset, setActivePreset] = useState<'2025' | '1y' | 'all' | 'custom'>('2025');
 
   // Trade list filter
-  const [tradeFilter, setTradeFilter] = useState<"all" | "wins" | "losses">("all");
+  const [tradeFilter, setTradeFilter] = useState<'all' | 'wins' | 'losses'>('all');
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (activeStrategy === "thoth_egx_macro") {
-      setModel("thoth_egx_macro");
+    if (activeStrategy === 'thoth_egx_macro') {
+      setModel('thoth_egx_macro');
     }
   }, [activeStrategy]);
 
-  // Update date ranges if chart data changes
   useEffect(() => {
-    if (chartData.length > 0) {
-      if (!endDate) setEndDate(chartData[chartData.length - 1].time);
+    if (chartData.length > 0 && !endDate) {
+      setEndDate(chartData[chartData.length - 1].time);
     }
-  }, [chartData]);
+  }, [chartData, endDate]);
 
-  // Handle ESC key to close drawer
+  // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
+      if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Lock body scroll when drawer is open
+  // Lock body scroll
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [isOpen]);
 
   const currencySymbol = useMemo(() => {
     const clean = symbol.toUpperCase();
-    if (clean.includes("GC") || clean.includes("SI") || clean.includes("GOLD") || clean.includes("SILVER")) {
-      return "USD";
+    if (clean.includes('GC') || clean.includes('SI') || clean.includes('GOLD') || clean.includes('SILVER')) {
+      return 'USD';
     }
-    return "EGP";
+    return 'EGP';
   }, [symbol]);
 
-  // Preset Date Handlers
-  const handlePresetDate = (preset: "2025" | "1y" | "all") => {
+  const handlePresetDate = (preset: '2025' | '1y' | 'all') => {
     setActivePreset(preset);
-    const lastDate = chartData.length > 0 ? chartData[chartData.length - 1].time : new Date().toISOString().split("T")[0];
+    const lastDate = chartData.length > 0 ? chartData[chartData.length - 1].time : new Date().toISOString().split('T')[0];
     setEndDate(lastDate);
 
-    if (preset === "2025") {
-      setStartDate("2025-01-01");
-    } else if (preset === "1y") {
+    if (preset === '2025') {
+      setStartDate('2025-01-01');
+    } else if (preset === '1y') {
       const d = new Date();
       d.setFullYear(d.getFullYear() - 1);
-      setStartDate(d.toISOString().split("T")[0]);
-    } else if (preset === "all") {
-      const firstDate = chartData.length > 0 ? chartData[0].time : "2020-01-01";
+      setStartDate(d.toISOString().split('T')[0]);
+    } else if (preset === 'all') {
+      const firstDate = chartData.length > 0 ? chartData[0].time : '2020-01-01';
       setStartDate(firstDate);
     }
   };
@@ -251,97 +221,86 @@ export default function StrategyReportDrawer({
     },
   });
 
+  // Execute Backtest
   useEffect(() => {
-    if (!isOpen || !chartData || chartData.length === 0) return;
-    let isActive = true;
+    if (!isOpen || chartData.length === 0) return;
 
-    async function computeReport() {
-      setIsCalculating(true);
-      try {
-        const priceBars: PriceBar[] = chartData.map((d) => ({
-          date: d.time,
-          open: d.open,
-          high: d.high,
-          low: d.low,
-          close: d.close,
-          volume: d.volume,
-        }));
+    const bars: PriceBar[] = chartData
+      .map((d) => ({
+        date: d.time,
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+        volume: d.volume,
+      }))
+      .filter((b) => b.open > 0 && b.high > 0 && b.low > 0 && b.close > 0);
 
-        let res: FullBacktestReport;
-        if (model === "thoth_egx_macro") {
-          const params = new URLSearchParams({
-            symbol,
-            strategy: "thoth_egx_macro",
-            start: startDate,
-            initialCapital: String(initialCapital),
-          });
-          if (endDate) params.set("end", endDate);
-          if (customParams) {
-            Object.entries(customParams).forEach(([k, v]) => {
-              if (v !== undefined && v !== null) params.set(k, String(v));
-            });
+    if (bars.length < 5) return;
+
+    if (model === 'thoth_egx_macro') {
+      const params = new URLSearchParams({
+        symbol,
+        strategy: 'thoth_egx_macro',
+        start: startDate,
+      });
+      if (endDate) params.set('end', endDate);
+
+      fetch(`/api/strategy-report?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.stats) {
+            setReport(data);
           }
-          const response = await fetch(`/api/strategy-report?${params.toString()}`);
-          if (!response.ok) throw new Error("Failed to fetch Thoth strategy report");
-          res = await response.json();
-        } else {
-          const resolvedParams = resolvePsiParams(symbol, {
-            model,
-            initialCapital,
-            startDate,
-            endDate: endDate || undefined,
-            ...(customParams || {}),
-          });
-          res = runFullStrategyBacktest(priceBars, resolvedParams);
-        }
-
-        if (isActive) {
-          setReport(res);
-        }
-      } catch (err) {
-        console.error("Error computing strategy report:", err);
-      } finally {
-        if (isActive) setIsCalculating(false);
-      }
+        })
+        .catch((err) => {
+          console.error('Error fetching Thoth report:', err);
+        });
+      return;
     }
 
-    void computeReport();
-    return () => {
-      isActive = false;
-    };
-  }, [isOpen, chartData, symbol, model, initialCapital, startDate, endDate, customParams]);
+    try {
+      const psiParams = resolvePsiParams(symbol, {
+        startDate,
+        endDate,
+        initialCapital,
+        model: model === 'psi40' ? 'psi40' : 'psi8',
+        ...customParams,
+      });
+      const psiResult = runFullStrategyBacktest(bars, psiParams);
+      setReport(psiResult);
+    } catch (e) {
+      console.error('Backtest calculation error:', e);
+    }
+  }, [isOpen, chartData, startDate, endDate, initialCapital, model, customParams, symbol]);
 
   const { stats, trades, equityCurve } = report;
 
-  // Filtered trades list
   const filteredTrades = useMemo(() => {
-    if (tradeFilter === "wins") return trades.filter((t) => t.netPnl > 0);
-    if (tradeFilter === "losses") return trades.filter((t) => t.netPnl <= 0);
+    if (tradeFilter === 'wins') return trades.filter((t) => t.netPnl > 0);
+    if (tradeFilter === 'losses') return trades.filter((t) => t.netPnl <= 0);
     return trades;
   }, [trades, tradeFilter]);
 
-  // Export trades to CSV
   const handleExportCSV = () => {
-    if (trades.length === 0) return;
+    if (!trades || trades.length === 0) return;
     const headers = [
-      "Trade #",
-      "Type",
-      "Entry Date",
-      "Entry Price",
-      "Exit Date",
-      "Exit Price",
-      "Shares",
-      "Position Capital",
-      "Net PnL",
-      "Return %",
-      "Exit Reason",
-      "Bars Held",
-      "Cumulative Equity",
+      'Trade #',
+      'Direction',
+      'Entry Date',
+      'Entry Price',
+      'Exit Date',
+      'Exit Price',
+      'Units',
+      'Position Value',
+      'Net PnL',
+      'Return %',
+      'Bars Held',
+      'Exit Reason',
     ];
-
     const rows = trades.map((t) => [
       t.tradeNumber,
-      t.type.toUpperCase(),
+      'LONG',
       t.entryDate,
       t.entryPrice.toFixed(2),
       t.exitDate,
@@ -350,16 +309,15 @@ export default function StrategyReportDrawer({
       t.positionValue.toFixed(2),
       t.netPnl.toFixed(2),
       `${t.returnPct.toFixed(2)}%`,
-      `"${t.exitReason}"`,
       t.barsHeld,
-      t.cumulativeEquity.toFixed(2),
+      `"${t.exitReason}"`,
     ]);
-
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${symbol.replace(".CA", "")}_Strategy_Trades_${model}.csv`);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${symbol.replace('.CA', '')}_strategy_trades.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -368,225 +326,174 @@ export default function StrategyReportDrawer({
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] overflow-hidden flex justify-end pointer-events-auto select-none">
-      {/* Dark Ambient Backdrop */}
+    <div className="fixed inset-0 z-50 overflow-hidden flex flex-col items-end pointer-events-auto select-none">
+      {/* Dim Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Spacious Slide-Over Modal Drawer */}
-      <div className="relative z-10 w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-full bg-black border-l border-white/[0.09] text-zinc-100 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden">
+      {/* Main Drawer Shell */}
+      <div className="relative w-full max-w-5xl h-full bg-plt-base text-plt-text border-l border-plt-border-soft shadow-2xl flex flex-col z-10 overflow-hidden animate-in slide-in-from-right duration-200">
         
         {/* ================================================================= */}
-        {/* COMPACT STREAMLINED HEADER (All settings on right of ticker)      */}
+        {/* REFINED HEADER                                                    */}
         {/* ================================================================= */}
-        <div className="px-4 py-2.5 border-b border-white/[0.09] bg-black shrink-0">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+        <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card shrink-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             
-            {/* Left: Logo + Eyebrow Title + Ticker & Full Name */}
-            <div className="flex items-center gap-2.5 min-w-0">
-              <TickerLogo symbol={symbol} logoUrl={resolvedLogoUrl} size="lg" />
-              
-              <div className="flex flex-col min-w-0">
-                {/* 1) Small title above the ticker name */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-plt-orange">
-                    Strategy Performance Report
-                  </span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded text-[9px] font-semibold border ${
-                      model === "thoth_egx_macro"
-                        ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
-                        : "bg-white/[0.05] text-white/70 border border-white/[0.08]"
-                    }`}
-                  >
-                    {model === "thoth_egx_macro"
-                      ? "Thoth Macro (AI)"
-                      : model === "psi40"
-                      ? "PSI-40 Trend"
-                      : "PSI-8 Inflection"}
-                  </span>
-                </div>
+            {/* Left: Fully Circular Logo + Ticker + Company Name */}
+            <div className="flex items-center gap-3 min-w-0">
+              <TickerLogo symbol={symbol} logoUrl={resolvedLogoUrl} />
 
-                {/* 2) Ticker Symbol and Full Name */}
-                <div className="flex items-baseline gap-2 mt-0.5 truncate">
-                  <h2 className="text-lg font-bold tracking-tight text-white font-mono shrink-0">
-                    {symbol.replace(".CA", "")}
-                  </h2>
-                  {resolvedCompanyName && (
-                    <span className="text-xs text-white/40 truncate font-normal">
-                      {resolvedCompanyName}
-                    </span>
-                  )}
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-plt-text tracking-tight font-mono">
+                    {symbol.replace('.CA', '')}
+                  </span>
+                  <span className="text-[11px] text-plt-muted font-normal truncate max-w-64 font-sans">
+                    {resolvedCompanyName}
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-plt-base text-plt-muted border border-plt-border-soft">
+                    {model === 'thoth_egx_macro'
+                      ? 'THOTH 3.7P'
+                      : model === 'psi40'
+                      ? 'PSI-40 Trend'
+                      : 'PSI-8 Inflection'}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Right: All Settings, Inputs, Tabs & Actions */}
-            <div className="flex flex-wrap items-center gap-1.5 justify-end">
-              
-              {/* Architecture Model Switcher */}
-              <div className="flex bg-white/[0.03] border border-white/[0.09] p-0.5 rounded-md">
+            {/* Right: Consolidated Tool Controls */}
+            <div className="flex flex-wrap items-center gap-2.5 justify-end">
+              {/* Strategy Model Switcher */}
+              <div className="pill-switch">
                 <button
                   type="button"
-                  onClick={() => setModel("psi8")}
-                  className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
-                    model === "psi8"
-                      ? "bg-white/[0.12] text-white font-semibold shadow-sm"
-                      : "text-white/40 hover:text-white"
+                  onClick={() => setModel('psi8')}
+                  className={`pill-switch-btn ${
+                    model === 'psi8' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   PSI-8
                 </button>
                 <button
                   type="button"
-                  onClick={() => setModel("psi40")}
-                  className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
-                    model === "psi40"
-                      ? "bg-white/[0.12] text-white font-semibold shadow-sm"
-                      : "text-white/40 hover:text-white"
+                  onClick={() => setModel('psi40')}
+                  className={`pill-switch-btn ${
+                    model === 'psi40' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
                   PSI-40
                 </button>
                 <button
                   type="button"
-                  onClick={() => setModel("thoth_egx_macro")}
-                  className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
-                    model === "thoth_egx_macro"
-                      ? "bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30"
-                      : "text-white/40 hover:text-white"
+                  onClick={() => setModel('thoth_egx_macro')}
+                  className={`pill-switch-btn ${
+                    model === 'thoth_egx_macro' ? 'pill-switch-btn-active font-semibold text-plt-purple' : ''
                   }`}
                 >
-                  Thoth (AI)
+                  THOTH 3.7P
                 </button>
               </div>
 
               {/* Date Presets */}
-              <div className="flex items-center bg-white/[0.03] border border-white/[0.09] rounded-md p-0.5">
-                <button
-                  type="button"
-                  onClick={() => handlePresetDate("2025")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
-                    activePreset === "2025"
-                      ? "bg-plt-orange text-white font-semibold shadow-sm"
-                      : "text-white/40 hover:text-white"
-                  }`}
-                >
-                  2025+
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePresetDate("1y")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
-                    activePreset === "1y"
-                      ? "bg-plt-orange text-white font-semibold shadow-sm"
-                      : "text-white/40 hover:text-white"
-                  }`}
-                >
-                  1Y
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePresetDate("all")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
-                    activePreset === "all"
-                      ? "bg-plt-orange text-white font-semibold shadow-sm"
-                      : "text-white/40 hover:text-white"
-                  }`}
-                >
-                  All
-                </button>
+              <div className="pill-switch">
+                {(['2025', '1y', 'all'] as const).map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => handlePresetDate(preset)}
+                    className={`pill-switch-btn ${
+                      activePreset === preset ? 'pill-switch-btn-active font-semibold' : ''
+                    }`}
+                  >
+                    {preset === '2025' ? '2025+' : preset === '1y' ? '1Y' : 'All'}
+                  </button>
+                ))}
               </div>
 
-              {/* Compact Date Range Inputs */}
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.09] text-[11px]">
+              {/* Date Range Inputs */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-plt-base border border-plt-border-soft text-[11px] font-mono">
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => {
                     setStartDate(e.target.value);
-                    setActivePreset("custom");
+                    setActivePreset('custom');
                   }}
-                  className="bg-transparent text-white/90 font-mono text-[10px] outline-none w-20"
+                  className="bg-transparent text-plt-text outline-none w-24"
                 />
-                <span className="text-white/30 font-mono">&rarr;</span>
+                <span className="text-plt-muted">→</span>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => {
                     setEndDate(e.target.value);
-                    setActivePreset("custom");
+                    setActivePreset('custom');
                   }}
-                  className="bg-transparent text-white/90 font-mono text-[10px] outline-none w-20"
+                  className="bg-transparent text-plt-text outline-none w-24"
                 />
               </div>
 
-              {/* Compact Capital Input */}
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.09] text-[11px]">
-                <DollarSign className="w-3 h-3 text-emerald-400 shrink-0" />
+              {/* Capital Input */}
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-plt-base border border-plt-border-soft text-[11px] font-mono">
+                <span className="text-plt-muted">$</span>
                 <input
                   type="number"
                   min="100"
                   step="500"
                   value={initialCapital}
                   onChange={(e) => setInitialCapital(Math.max(100, Number(e.target.value) || 1000))}
-                  className="bg-transparent text-white font-mono text-[10px] outline-none w-14 text-right font-medium"
+                  className="bg-transparent text-plt-text outline-none w-16 text-right font-semibold"
                 />
-                <span className="text-white/40 font-mono text-[9px]">{currencySymbol}</span>
+                <span className="text-plt-muted text-[10px]">{currencySymbol}</span>
               </div>
 
               {/* Tab Navigation Switcher */}
-              <div className="flex items-center bg-white/[0.03] border border-white/[0.09] p-0.5 rounded-md">
+              <div className="pill-switch">
                 <button
                   type="button"
-                  onClick={() => setActiveTab("stats")}
-                  className={`px-2.5 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
-                    activeTab === "stats"
-                      ? "bg-white/[0.12] text-white shadow-sm"
-                      : "text-white/40 hover:text-white"
+                  onClick={() => setActiveTab('stats')}
+                  className={`pill-switch-btn ${
+                    activeTab === 'stats' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
-                  <BarChart3 className="w-3 h-3 text-plt-orange" />
-                  <span>Key stats</span>
+                  Key Stats
                 </button>
-
                 <button
                   type="button"
-                  onClick={() => setActiveTab("trades")}
-                  className={`px-2.5 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
-                    activeTab === "trades"
-                      ? "bg-white/[0.12] text-white shadow-sm"
-                      : "text-white/40 hover:text-white"
+                  onClick={() => setActiveTab('trades')}
+                  className={`pill-switch-btn flex items-center gap-1.5 ${
+                    activeTab === 'trades' ? 'pill-switch-btn-active font-semibold' : ''
                   }`}
                 >
-                  <ListFilter className="w-3 h-3 text-plt-orange" />
                   <span>Trades</span>
-                  <span className="px-1 py-0.2 rounded text-[9px] font-mono bg-white/[0.10] text-white/80">
+                  <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-plt-card border border-plt-border-soft">
                     {trades.length}
                   </span>
                 </button>
               </div>
 
-              {/* Export Button */}
+              {/* Export CSV */}
               <button
                 type="button"
                 onClick={handleExportCSV}
                 title="Export Trades to CSV"
-                className="p-1.5 rounded-md border border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.08] text-white/60 hover:text-white transition"
+                className="p-1.5 rounded-xl bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-muted hover:text-plt-text transition cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download size={14} />
               </button>
 
               {/* Close Button */}
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 text-white/40 hover:text-white hover:bg-white/[0.08] rounded-md transition"
+                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
                 title="Close report (Esc)"
               >
-                <X className="w-4 h-4" />
+                <X size={15} />
               </button>
             </div>
 
@@ -594,38 +501,40 @@ export default function StrategyReportDrawer({
         </div>
 
         {/* ================================================================= */}
-        {/* BODY CONTENT (Consistent 8px gap between all cards/widgets)       */}
+        {/* BODY CONTENT                                                      */}
         {/* ================================================================= */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2">
-          
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+
           {/* =============================================================== */}
           {/* TAB 1: KEY STATS & PERFORMANCE                                  */}
           {/* =============================================================== */}
-          {activeTab === "stats" && (
-            <div className="space-y-2 animate-in fade-in duration-200">
-              
-              {/* 4 Top KPI Cards (Platform Dashboard Consistent Style) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {activeTab === 'stats' && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+
+              {/* 4 Top KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 {/* 1. Total Net PnL */}
-                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
-                    <span>Total Net PnL</span>
-                    <TrendingUp className={`w-3.5 h-3.5 ${stats.netProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`} />
-                  </div>
-                  <div className="mt-2">
-                    <div className={`text-xl font-bold font-mono tracking-tight ${
-                      stats.netProfit >= 0 ? "text-emerald-400" : "text-rose-400"
+                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
+                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
+                    Total Net PnL
+                  </span>
+                  <div className="mt-3">
+                    <div className={`text-2xl font-bold font-mono tracking-tight ${
+                      stats.netProfit >= 0 ? 'text-plt-profit' : 'text-plt-risk'
                     }`}>
-                      {stats.netProfit >= 0 ? "+" : ""}
-                      {stats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] font-normal text-white/50">{currencySymbol}</span>
+                      {stats.netProfit >= 0 ? '+' : ''}
+                      {stats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                      <span className="text-xs font-normal text-plt-muted">{currencySymbol}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono">
-                      <span className={`font-semibold ${stats.netProfitPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                        {stats.netProfitPct >= 0 ? "+" : ""}{stats.netProfitPct.toFixed(2)}%
+                    <div className="flex items-center gap-2 mt-1 text-xs font-mono">
+                      <span className={`font-semibold ${stats.netProfitPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
+                        {stats.netProfitPct >= 0 ? '+' : ''}{stats.netProfitPct.toFixed(2)}%
                       </span>
-                      <span className="text-white/20">&bull;</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                        stats.alphaMargin >= 0 ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                      <span className="text-plt-muted">•</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                        stats.alphaMargin >= 0
+                          ? 'bg-plt-profit-soft text-plt-profit border border-plt-profit-border'
+                          : 'bg-plt-risk-soft text-plt-risk border border-plt-risk-border'
                       }`}>
                         {stats.alphaMargin >= 0 ? `+${stats.alphaMargin.toFixed(1)}% α` : `${stats.alphaMargin.toFixed(1)}% α`}
                       </span>
@@ -634,76 +543,78 @@ export default function StrategyReportDrawer({
                 </div>
 
                 {/* 2. Max Drawdown */}
-                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
-                    <span>Max Drawdown</span>
-                    <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-                  </div>
-                  <div className="mt-2">
-                    <div className="text-xl font-bold font-mono tracking-tight text-rose-400">
-                      {stats.maxDrawdownAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] font-normal text-white/50">{currencySymbol}</span>
+                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
+                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
+                    Max Drawdown
+                  </span>
+                  <div className="mt-3">
+                    <div className="text-2xl font-bold font-mono tracking-tight text-plt-risk">
+                      {stats.maxDrawdownAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                      <span className="text-xs font-normal text-plt-muted">{currencySymbol}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono text-rose-400/90 font-semibold">
-                      <span>{stats.maxDrawdown.toFixed(2)}% of peak</span>
+                    <div className="mt-1 text-xs font-mono text-plt-risk/90 font-medium">
+                      {stats.maxDrawdown.toFixed(2)}% of peak
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Profitable Trades */}
-                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
-                    <span>Profitable Trades</span>
-                    <Percent className="w-3.5 h-3.5 text-emerald-400" />
-                  </div>
-                  <div className="mt-2">
-                    <div className="text-xl font-bold font-mono tracking-tight text-white">
+                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
+                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
+                    Profitable Trades
+                  </span>
+                  <div className="mt-3">
+                    <div className="text-2xl font-bold font-mono tracking-tight text-plt-text">
                       {stats.winRate.toFixed(2)}%
                     </div>
-                    <div className="flex items-center gap-1 mt-1 text-[11px] font-mono text-white/50">
-                      <span className="text-emerald-400 font-semibold">{stats.winningTrades} wins</span>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs font-mono text-plt-muted">
+                      <span className="text-plt-profit font-semibold">{stats.winningTrades} wins</span>
                       <span>/</span>
-                      <span className="text-rose-400 font-semibold">{stats.losingTrades} losses</span>
+                      <span className="text-plt-risk font-semibold">{stats.losingTrades} losses</span>
                       <span>({stats.totalTrades} total)</span>
                     </div>
                   </div>
                 </div>
 
                 {/* 4. Profit Factor */}
-                <div className="p-3 border border-white/[0.09] rounded-md bg-black flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-[11px] text-white/40 font-medium uppercase tracking-wider">
-                    <span>Profit Factor</span>
-                    <Award className="w-3.5 h-3.5 text-amber-400" />
-                  </div>
-                  <div className="mt-2">
-                    <div className="text-xl font-bold font-mono tracking-tight text-white">
-                      {stats.profitFactor >= 99 ? "∞" : stats.profitFactor.toFixed(2)}
+                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
+                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
+                    Profit Factor
+                  </span>
+                  <div className="mt-3">
+                    <div className="text-2xl font-bold font-mono tracking-tight text-plt-text">
+                      {stats.profitFactor >= 99 ? '∞' : stats.profitFactor.toFixed(2)}
                     </div>
-                    <div className="flex items-center gap-1 mt-1 text-[11px] font-mono text-white/50">
-                      <span>Gross: +{stats.grossProfit.toFixed(0)} / -{stats.grossLoss.toFixed(0)}</span>
+                    <div className="mt-1 text-xs font-mono text-plt-muted">
+                      Gross: +{stats.grossProfit.toFixed(0)} / -{stats.grossLoss.toFixed(0)}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Performance Section: Equity Curve Chart */}
-              <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1.5 border-b border-white/[0.06]">
-                  <div>
-                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <span>Performance Equity Curve</span>
-                      <span className="text-[10px] font-normal text-white/40">&bull; Mark-to-Market vs Benchmark</span>
-                    </h3>
+              <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-5 shadow-panel space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-plt-border-soft">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-plt-text font-sans">
+                      Performance Equity Curve
+                    </span>
+                    <span className="text-[11px] text-plt-muted font-normal">• Mark-to-Market vs Benchmark</span>
                   </div>
-                  
+
                   {/* Legend */}
-                  <div className="flex items-center gap-3 text-[11px] font-medium">
+                  <div className="flex items-center gap-4 text-xs font-mono">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-                      <span className="text-white font-mono">Strategy ({stats.finalEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})</span>
+                      <span className="w-2 h-2 rounded-full bg-plt-profit" />
+                      <span className="text-plt-text">
+                        Strategy ({stats.finalEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
-                      <span className="text-white/60 font-mono">Buy & Hold ({(initialCapital + stats.buyHoldReturn).toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})</span>
+                      <span className="w-2 h-2 rounded-full bg-plt-info" />
+                      <span className="text-plt-muted">
+                        Buy & Hold ({(initialCapital + stats.buyHoldReturn).toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -718,93 +629,93 @@ export default function StrategyReportDrawer({
                 />
               </div>
 
-              {/* Deep-Dive Performance Metrics Grid (3-columns, consistent 8px gap) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {/* Panel 1: Trade Performance */}
-                <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
-                  <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5 pb-1.5 border-b border-white/[0.06]">
-                    <TrendingUp className="w-3.5 h-3.5 text-plt-orange" /> Trade Analytics
+              {/* Detailed Breakdown (3 Columns) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                {/* Panel 1: Trade Analytics */}
+                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 space-y-3 shadow-panel">
+                  <div className="text-xs font-bold text-plt-text uppercase tracking-wider pb-2 border-b border-plt-border-soft">
+                    Trade Analytics
                   </div>
-                  <div className="space-y-1.5 text-xs">
+                  <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Total Trades:</span>
-                      <span className="font-mono font-bold text-white">{stats.totalTrades}</span>
+                      <span className="text-plt-muted">Total Trades:</span>
+                      <span className="font-mono font-semibold text-plt-text">{stats.totalTrades}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Win Rate:</span>
-                      <span className="font-mono font-bold text-emerald-400">{stats.winRate.toFixed(2)}%</span>
+                      <span className="text-plt-muted">Win Rate:</span>
+                      <span className="font-mono font-semibold text-plt-profit">{stats.winRate.toFixed(2)}%</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Winning / Losing:</span>
-                      <span className="font-mono text-white/80">{stats.winningTrades} / {stats.losingTrades}</span>
+                      <span className="text-plt-muted">Winning / Losing:</span>
+                      <span className="font-mono text-plt-subtle">{stats.winningTrades} / {stats.losingTrades}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Win / Loss Payoff:</span>
-                      <span className="font-mono text-white/80">{stats.winLossRatio.toFixed(2)}</span>
+                      <span className="text-plt-muted">Win / Loss Payoff:</span>
+                      <span className="font-mono text-plt-subtle">{stats.winLossRatio.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Avg Duration:</span>
-                      <span className="font-mono text-white/80">{stats.avgBarsHeld.toFixed(1)} days</span>
+                      <span className="text-plt-muted">Avg Duration:</span>
+                      <span className="font-mono text-plt-subtle">{stats.avgBarsHeld.toFixed(1)} days</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Panel 2: PnL & Return Breakdown */}
-                <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
-                  <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5 pb-1.5 border-b border-white/[0.06]">
-                    <DollarSign className="w-3.5 h-3.5 text-emerald-400" /> PnL Distribution
+                {/* Panel 2: PnL Distribution */}
+                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 space-y-3 shadow-panel">
+                  <div className="text-xs font-bold text-plt-text uppercase tracking-wider pb-2 border-b border-plt-border-soft">
+                    PnL Distribution
                   </div>
-                  <div className="space-y-1.5 text-xs">
+                  <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Gross Profit:</span>
-                      <span className="font-mono font-bold text-emerald-400">+{stats.grossProfit.toFixed(2)} {currencySymbol}</span>
+                      <span className="text-plt-muted">Gross Profit:</span>
+                      <span className="font-mono font-semibold text-plt-profit">+{stats.grossProfit.toFixed(2)} {currencySymbol}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Gross Loss:</span>
-                      <span className="font-mono font-bold text-rose-400">-{stats.grossLoss.toFixed(2)} {currencySymbol}</span>
+                      <span className="text-plt-muted">Gross Loss:</span>
+                      <span className="font-mono font-semibold text-plt-risk">-{stats.grossLoss.toFixed(2)} {currencySymbol}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Avg Trade PnL:</span>
-                      <span className={`font-mono font-bold ${stats.avgTradePnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      <span className="text-plt-muted">Avg Trade PnL:</span>
+                      <span className={`font-mono font-semibold ${stats.avgTradePnl >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
                         {stats.avgTradePnl >= 0 ? '+' : ''}{stats.avgTradePnl.toFixed(2)} {currencySymbol} ({stats.avgTradeReturnPct.toFixed(2)}%)
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Avg Winning Trade:</span>
-                      <span className="font-mono text-emerald-400">+{stats.avgWin.toFixed(2)} {currencySymbol}</span>
+                      <span className="text-plt-muted">Avg Win:</span>
+                      <span className="font-mono text-plt-profit">+{stats.avgWin.toFixed(2)} {currencySymbol}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Avg Losing Trade:</span>
-                      <span className="font-mono text-rose-400">-{stats.avgLoss.toFixed(2)} {currencySymbol}</span>
+                      <span className="text-plt-muted">Avg Loss:</span>
+                      <span className="font-mono text-plt-risk">-{stats.avgLoss.toFixed(2)} {currencySymbol}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Panel 3: Risk & Efficiency */}
-                <div className="p-3 border border-white/[0.09] rounded-md bg-black space-y-2">
-                  <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5 pb-1.5 border-b border-white/[0.06]">
-                    <Award className="w-3.5 h-3.5 text-amber-400" /> Risk & Streaks
+                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 space-y-3 shadow-panel">
+                  <div className="text-xs font-bold text-plt-text uppercase tracking-wider pb-2 border-b border-plt-border-soft">
+                    Risk & Streaks
                   </div>
-                  <div className="space-y-1.5 text-xs">
+                  <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Max Drawdown:</span>
-                      <span className="font-mono font-bold text-rose-400">{stats.maxDrawdown.toFixed(2)}%</span>
+                      <span className="text-plt-muted">Max Drawdown:</span>
+                      <span className="font-mono font-semibold text-plt-risk">{stats.maxDrawdown.toFixed(2)}%</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Annualized CAGR:</span>
-                      <span className="font-mono font-bold text-emerald-400">{stats.annualCagr.toFixed(2)}% / yr</span>
+                      <span className="text-plt-muted">Annualized CAGR:</span>
+                      <span className="font-mono font-semibold text-plt-profit">{stats.annualCagr.toFixed(2)}% / yr</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Sharpe Ratio:</span>
-                      <span className="font-mono text-white/80">{stats.sharpeRatio.toFixed(2)}</span>
+                      <span className="text-plt-muted">Sharpe Ratio:</span>
+                      <span className="font-mono text-plt-subtle">{stats.sharpeRatio.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Max Consec. Wins:</span>
-                      <span className="font-mono text-emerald-400 font-bold">{stats.maxConsecutiveWins}</span>
+                      <span className="text-plt-muted">Max Consec. Wins:</span>
+                      <span className="font-mono font-semibold text-plt-profit">{stats.maxConsecutiveWins}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/45">Max Consec. Losses:</span>
-                      <span className="font-mono text-rose-400 font-bold">{stats.maxConsecutiveLosses}</span>
+                      <span className="text-plt-muted">Max Consec. Losses:</span>
+                      <span className="font-mono font-semibold text-plt-risk">{stats.maxConsecutiveLosses}</span>
                     </div>
                   </div>
                 </div>
@@ -814,45 +725,39 @@ export default function StrategyReportDrawer({
           )}
 
           {/* =============================================================== */}
-          {/* TAB 2: LIST OF TRADES (TradingView Style Ledger)                */}
+          {/* TAB 2: LIST OF TRADES                                           */}
           {/* =============================================================== */}
-          {activeTab === "trades" && (
-            <div className="space-y-2 animate-in fade-in duration-200">
-              
-              {/* Table Controls */}
+          {activeTab === 'trades' && (
+            <div className="space-y-3.5 animate-in fade-in duration-150">
+
+              {/* Table Filter Controls */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-white/45">Filter Trades:</span>
-                  <div className="flex bg-white/[0.03] border border-white/[0.09] p-0.5 rounded-md">
+                  <span className="text-plt-muted text-xs font-sans">Filter Trades:</span>
+                  <div className="pill-switch">
                     <button
                       type="button"
-                      onClick={() => setTradeFilter("all")}
-                      className={`px-2.5 py-0.5 rounded text-[11px] transition ${
-                        tradeFilter === "all"
-                          ? "bg-white/[0.12] text-white font-semibold"
-                          : "text-white/40 hover:text-white"
+                      onClick={() => setTradeFilter('all')}
+                      className={`pill-switch-btn ${
+                        tradeFilter === 'all' ? 'pill-switch-btn-active font-semibold' : ''
                       }`}
                     >
                       All ({trades.length})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setTradeFilter("wins")}
-                      className={`px-2.5 py-0.5 rounded text-[11px] transition ${
-                        tradeFilter === "wins"
-                          ? "bg-emerald-500/20 text-emerald-400 font-semibold"
-                          : "text-white/40 hover:text-emerald-400"
+                      onClick={() => setTradeFilter('wins')}
+                      className={`pill-switch-btn ${
+                        tradeFilter === 'wins' ? 'pill-switch-btn-active font-semibold text-plt-profit' : ''
                       }`}
                     >
                       Wins ({stats.winningTrades})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setTradeFilter("losses")}
-                      className={`px-2.5 py-0.5 rounded text-[11px] transition ${
-                        tradeFilter === "losses"
-                          ? "bg-rose-500/20 text-rose-400 font-semibold"
-                          : "text-white/40 hover:text-rose-400"
+                      onClick={() => setTradeFilter('losses')}
+                      className={`pill-switch-btn ${
+                        tradeFilter === 'losses' ? 'pill-switch-btn-active font-semibold text-plt-risk' : ''
                       }`}
                     >
                       Losses ({stats.losingTrades})
@@ -860,31 +765,31 @@ export default function StrategyReportDrawer({
                   </div>
                 </div>
 
-                <div className="text-white/40 text-xs font-mono">
+                <div className="text-plt-muted text-xs font-mono">
                   Showing {filteredTrades.length} of {trades.length} closed trades
                 </div>
               </div>
 
               {/* Trades Table */}
-              <div className="border border-white/[0.09] rounded-md bg-black overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+              <div className="bg-plt-card border border-plt-border-soft rounded-2xl overflow-hidden shadow-panel">
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left text-xs border-collapse font-mono">
                     <thead>
-                      <tr className="border-b border-white/[0.09] bg-white/[0.02] text-white/50 text-[10px] uppercase font-mono tracking-wider">
-                        <th className="py-2.5 px-3">Trade #</th>
-                        <th className="py-2.5 px-2">Type</th>
-                        <th className="py-2.5 px-3">Date & Time</th>
-                        <th className="py-2.5 px-3">Price</th>
-                        <th className="py-2.5 px-3">Size</th>
-                        <th className="py-2.5 px-3 text-right">Net PnL</th>
-                        <th className="py-2.5 px-3 text-right">Return %</th>
-                        <th className="py-2.5 px-3">Exit Reason</th>
+                      <tr className="border-b border-plt-border-soft bg-plt-base text-plt-muted text-[10px] uppercase tracking-wider">
+                        <th className="py-2.5 px-4">Trade #</th>
+                        <th className="py-2.5 px-3">Type</th>
+                        <th className="py-2.5 px-4">Date</th>
+                        <th className="py-2.5 px-4">Price</th>
+                        <th className="py-2.5 px-4">Size</th>
+                        <th className="py-2.5 px-4 text-right">Net PnL</th>
+                        <th className="py-2.5 px-4 text-right">Return %</th>
+                        <th className="py-2.5 px-4">Exit Reason</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04]">
+                    <tbody className="divide-y divide-plt-border-soft">
                       {filteredTrades.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-12 text-center text-white/40">
+                          <td colSpan={8} className="py-10 text-center text-plt-muted font-sans">
                             No trades recorded matching the selected filter.
                           </td>
                         </tr>
@@ -898,67 +803,66 @@ export default function StrategyReportDrawer({
                               <React.Fragment key={trade.id}>
                                 {/* Exit Row */}
                                 <tr className="hover:bg-white/[0.02] transition-colors">
-                                  <td rowSpan={2} className="py-2.5 px-3 font-mono font-bold align-top pt-2.5 border-r border-white/[0.04]">
+                                  <td rowSpan={2} className="py-3 px-4 font-semibold align-top border-r border-plt-border-soft">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="text-white/90 font-bold">{trade.tradeNumber}</span>
-                                      <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase tracking-wider">
+                                      <span className="text-plt-text">{trade.tradeNumber}</span>
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded font-mono uppercase bg-plt-info-soft text-plt-info border border-plt-info-border">
                                         long
                                       </span>
                                     </div>
-                                    <div className="text-[10px] text-white/40 font-normal mt-1 font-sans">
+                                    <div className="text-[10px] text-plt-muted font-normal mt-1 font-sans">
                                       {trade.barsHeld} days
                                     </div>
                                   </td>
-                                  
-                                  {/* Exit info */}
-                                  <td className="py-1.5 px-2 text-rose-400 font-semibold text-[11px]">
+
+                                  <td className="py-2 px-3 text-plt-risk font-semibold text-[11px]">
                                     Exit
                                   </td>
-                                  <td className="py-1.5 px-3 font-mono text-white/80">
+                                  <td className="py-2 px-4 text-plt-subtle">
                                     {trade.exitDate}
                                   </td>
-                                  <td className="py-1.5 px-3 font-mono font-bold text-white">
-                                    {trade.exitPrice.toFixed(2)} <span className="text-[9px] font-normal text-white/40">{currencySymbol}</span>
+                                  <td className="py-2 px-4 font-semibold text-plt-text">
+                                    {trade.exitPrice.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
                                   </td>
-                                  <td rowSpan={2} className="py-2.5 px-3 font-mono align-top pt-2.5 text-white/80">
+                                  <td rowSpan={2} className="py-3 px-4 align-top text-plt-subtle">
                                     <div>{trade.shares.toLocaleString()} units</div>
-                                    <div className="text-[10px] text-white/40 font-sans mt-0.5">
+                                    <div className="text-[10px] text-plt-muted font-sans mt-0.5">
                                       {(trade.positionValue / 1000).toFixed(2)} K {currencySymbol}
                                     </div>
                                   </td>
-                                  <td rowSpan={2} className={`py-2.5 px-3 font-mono font-bold text-right text-xs align-top pt-2.5 ${
-                                    isWin ? "text-emerald-400" : "text-rose-400"
+                                  <td rowSpan={2} className={`py-3 px-4 font-semibold text-right align-top ${
+                                    isWin ? 'text-plt-profit' : 'text-plt-risk'
                                   }`}>
-                                    {isWin ? "+" : ""}
-                                    {trade.netPnl.toFixed(2)} <span className="text-[9px] font-normal text-white/40">{currencySymbol}</span>
+                                    {isWin ? '+' : ''}
+                                    {trade.netPnl.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
                                   </td>
-                                  <td rowSpan={2} className={`py-2.5 px-3 font-mono font-bold text-right align-top pt-2.5 ${
-                                    isWin ? "text-emerald-400" : "text-rose-400"
+                                  <td rowSpan={2} className={`py-3 px-4 font-semibold text-right align-top ${
+                                    isWin ? 'text-plt-profit' : 'text-plt-risk'
                                   }`}>
-                                    <span className={`px-2 py-0.5 rounded text-[11px] inline-block font-semibold ${
-                                      isWin ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                                    <span className={`px-2 py-1 rounded-md text-[11px] inline-block font-mono font-semibold ${
+                                      isWin ? 'bg-plt-profit-soft text-plt-profit border border-plt-profit-border' : 'bg-plt-risk-soft text-plt-risk border border-plt-risk-border'
                                     }`}>
-                                      {isWin ? "+" : ""}
+                                      {isWin ? '+' : ''}
                                       {trade.returnPct.toFixed(2)}%
                                     </span>
                                   </td>
-                                  <td rowSpan={2} className="py-2.5 px-3 align-top pt-2.5">
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.05] text-white/70 border border-white/[0.08] whitespace-nowrap">
+                                  <td rowSpan={2} className="py-3 px-4 align-top">
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-medium bg-white/[0.04] text-plt-subtle border border-white/[0.08] whitespace-nowrap">
                                       {trade.exitReason}
                                     </span>
                                   </td>
                                 </tr>
 
                                 {/* Entry Row */}
-                                <tr className="hover:bg-white/[0.02] transition-colors border-b border-white/[0.06]">
-                                  <td className="py-1.5 px-2 text-emerald-400 font-semibold text-[11px]">
+                                <tr className="hover:bg-white/[0.02] transition-colors border-b border-plt-border-soft">
+                                  <td className="py-2 px-3 text-plt-profit font-semibold text-[11px]">
                                     Entry
                                   </td>
-                                  <td className="py-1.5 px-3 font-mono text-white/60">
+                                  <td className="py-2 px-4 text-plt-subtle">
                                     {trade.entryDate}
                                   </td>
-                                  <td className="py-1.5 px-3 font-mono text-white/70">
-                                    {trade.entryPrice.toFixed(2)} <span className="text-[9px] font-normal text-white/40">{currencySymbol}</span>
+                                  <td className="py-2 px-4 text-plt-subtle">
+                                    {trade.entryPrice.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
                                   </td>
                                 </tr>
                               </React.Fragment>
@@ -978,17 +882,14 @@ export default function StrategyReportDrawer({
         {/* ================================================================= */}
         {/* FOOTER NOTE                                                       */}
         {/* ================================================================= */}
-        <div className="px-4 py-2 border-t border-white/[0.09] bg-black text-xs text-white/50 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-plt-orange shrink-0" />
-            <span className="text-[11px]">
-              Simulated using exact point-in-time quantitative execution without lookahead bias.
-            </span>
-          </div>
+        <div className="px-5 py-3 border-t border-plt-border-soft bg-plt-card text-xs text-plt-muted flex items-center justify-between shrink-0">
+          <span className="text-[11px]">
+            Simulated using exact point-in-time quantitative execution without lookahead bias.
+          </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1 rounded-md bg-white/[0.08] hover:bg-white/[0.15] text-white font-medium transition text-xs shrink-0 border border-white/[0.10]"
+            className="px-4 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-plt-text font-medium transition text-xs shrink-0 border border-white/[0.1] cursor-pointer"
           >
             Done
           </button>
@@ -1020,15 +921,15 @@ function EquityCurveChart({
 }: EquityCurveChartProps) {
   if (!equityCurve || equityCurve.length < 2) {
     return (
-      <div className="h-64 flex items-center justify-center text-white/40 text-xs">
+      <div className="h-64 flex items-center justify-center text-plt-muted text-xs font-sans">
         Not enough historical data in selected period to render equity curve.
       </div>
     );
   }
 
   const width = 900;
-  const height = 260;
-  const padding = { top: 20, right: 75, bottom: 35, left: 15 };
+  const height = 240;
+  const padding = { top: 20, right: 75, bottom: 30, left: 15 };
 
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
@@ -1045,14 +946,13 @@ function EquityCurveChart({
 
   // Path generators
   const strategyPath = equityCurve
-    .map((pt, i) => `${i === 0 ? "M" : "L"} ${getX(i).toFixed(1)} ${getY(pt.equity).toFixed(1)}`)
-    .join(" ");
+    .map((pt, i) => `${i === 0 ? 'M' : 'L'} ${getX(i).toFixed(1)} ${getY(pt.equity).toFixed(1)}`)
+    .join(' ');
 
   const buyHoldPath = equityCurve
-    .map((pt, i) => `${i === 0 ? "M" : "L"} ${getX(i).toFixed(1)} ${getY(pt.buyHoldEquity).toFixed(1)}`)
-    .join(" ");
+    .map((pt, i) => `${i === 0 ? 'M' : 'L'} ${getX(i).toFixed(1)} ${getY(pt.buyHoldEquity).toFixed(1)}`)
+    .join(' ');
 
-  // Zero/Initial Capital reference line
   const initialCapitalY = getY(initialCapital);
 
   // Sample Date X-ticks
@@ -1075,15 +975,14 @@ function EquityCurveChart({
     <div className="relative w-full overflow-hidden">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-auto overflow-visible select-none"
+        className="w-full h-auto overflow-visible select-none font-mono"
         onMouseLeave={() => onHoverPoint(null)}
       >
         <defs>
-          {/* Strategy Line Gradient */}
           <linearGradient id="strategyFillClean" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.20" />
-            <stop offset="60%" stopColor="#22c55e" stopOpacity="0.04" />
-            <stop offset="100%" stopColor="#22c55e" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="var(--plt-profit)" stopOpacity="0.25" />
+            <stop offset="80%" stopColor="var(--plt-profit)" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="var(--plt-profit)" stopOpacity="0.0" />
           </linearGradient>
         </defs>
 
@@ -1097,16 +996,15 @@ function EquityCurveChart({
                 y1={y}
                 x2={padding.left + chartWidth}
                 y2={y}
-                stroke="rgba(255, 255, 255, 0.04)"
-                strokeDasharray="3 3"
+                stroke="var(--palette-chart-grid)"
+                strokeWidth={1}
               />
               <text
                 x={padding.left + chartWidth + 8}
-                y={y + 3}
-                fill="rgba(255, 255, 255, 0.4)"
-                fontSize="9"
-                fontFamily="monospace"
-                fontWeight="500"
+                y={y + 3.5}
+                fill="var(--plt-text-faint)"
+                fontSize={10}
+                textAnchor="start"
               >
                 {val >= 1000 ? `${(val / 1000).toFixed(1)}K` : val.toFixed(0)} {currencySymbol}
               </text>
@@ -1114,113 +1012,67 @@ function EquityCurveChart({
           );
         })}
 
-        {/* Initial Capital Reference Line */}
+        {/* Initial Capital Reference Baseline */}
         <line
           x1={padding.left}
           y1={initialCapitalY}
           x2={padding.left + chartWidth}
           y2={initialCapitalY}
-          stroke="rgba(255, 255, 255, 0.12)"
-          strokeWidth="1"
-          strokeDasharray="2 2"
+          stroke="var(--plt-border-strong)"
+          strokeWidth={1}
+          strokeDasharray="3 3"
         />
 
-        {/* Buy & Hold Benchmark Curve (Blue) */}
+        {/* Area under Strategy curve */}
         <path
-          d={buyHoldPath}
-          fill="none"
-          stroke="#3B82F6"
-          strokeWidth="1.5"
-          strokeOpacity="0.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Strategy Equity Area Fill */}
-        <path
-          d={`${strategyPath} L ${padding.left + chartWidth} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`}
+          d={`${strategyPath} L ${getX(equityCurve.length - 1)} ${padding.top + chartHeight} L ${getX(0)} ${padding.top + chartHeight} Z`}
           fill="url(#strategyFillClean)"
         />
 
-        {/* Strategy Equity Line (Green/Emerald) */}
+        {/* Buy & Hold Benchmark line */}
+        <path
+          d={buyHoldPath}
+          fill="none"
+          stroke="var(--plt-info)"
+          strokeWidth={1.5}
+          strokeDasharray="4 4"
+          opacity={0.8}
+        />
+
+        {/* Strategy Main Equity line */}
         <path
           d={strategyPath}
           fill="none"
-          stroke="#22c55e"
-          strokeWidth="2.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]"
+          stroke="var(--plt-profit)"
+          strokeWidth={2}
         />
 
-        {/* Trade Markers on the Strategy Curve */}
-        {equityCurve.map((pt, i) => {
-          if (pt.tradePnl === undefined) return null;
-          const isWin = pt.tradePnl > 0;
-          return (
-            <circle
-              key={i}
-              cx={getX(i)}
-              cy={getY(pt.equity)}
-              r={3.5}
-              fill={isWin ? "#22c55e" : "#ef4444"}
-              stroke="#000000"
-              strokeWidth="1.5"
-            />
-          );
-        })}
-
-        {/* X-Axis Date Ticks */}
-        {xTicks.map((tick, idx) => {
+        {/* X-axis Date Ticks */}
+        {xTicks.map((tick) => {
           const x = getX(tick.index);
           return (
-            <g key={idx}>
-              <line
-                x1={x}
-                y1={padding.top + chartHeight}
-                x2={x}
-                y2={padding.top + chartHeight + 4}
-                stroke="rgba(255, 255, 255, 0.12)"
-              />
-              <text
-                x={x}
-                y={padding.top + chartHeight + 15}
-                fill="rgba(255, 255, 255, 0.4)"
-                fontSize="9"
-                fontFamily="monospace"
-                textAnchor="middle"
-              >
-                {tick.date}
-              </text>
-            </g>
+            <text
+              key={tick.index}
+              x={x}
+              y={padding.top + chartHeight + 18}
+              fill="var(--plt-text-faint)"
+              fontSize={10}
+              textAnchor="middle"
+            >
+              {tick.date}
+            </text>
           );
         })}
 
-        {/* Hover Crosshair Overlay */}
-        {equityCurve.map((pt, i) => {
-          const x = getX(i);
-          return (
-            <rect
-              key={i}
-              x={x - chartWidth / (equityCurve.length * 2)}
-              y={padding.top}
-              width={chartWidth / equityCurve.length}
-              height={chartHeight}
-              fill="transparent"
-              onMouseEnter={() => onHoverPoint(pt)}
-              className="cursor-crosshair"
-            />
-          );
-        })}
-
-        {/* Hover Marker Point */}
+        {/* Interactive Hover Vertical Crosshair */}
         {hoveredPoint && (
           <g>
             {(() => {
               const idx = equityCurve.findIndex((p) => p.date === hoveredPoint.date);
               if (idx === -1) return null;
               const hX = getX(idx);
-              const hY = getY(hoveredPoint.equity);
+              const hStratY = getY(hoveredPoint.equity);
+
               return (
                 <>
                   <line
@@ -1228,56 +1080,35 @@ function EquityCurveChart({
                     y1={padding.top}
                     x2={hX}
                     y2={padding.top + chartHeight}
-                    stroke="rgba(255, 255, 255, 0.3)"
+                    stroke="var(--plt-accent)"
+                    strokeWidth={1}
                     strokeDasharray="2 2"
                   />
-                  <circle
-                    cx={hX}
-                    cy={hY}
-                    r={5}
-                    fill="#22c55e"
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                    className="drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]"
-                  />
+                  <circle cx={hX} cy={hStratY} r={4} fill="var(--plt-accent)" stroke="var(--core-white)" strokeWidth={1.5} />
                 </>
               );
             })()}
           </g>
         )}
-      </svg>
 
-      {/* Floating Hover Tooltip */}
-      {hoveredPoint && (
-        <div className="absolute top-2 left-3 p-2.5 rounded-md bg-black/95 border border-white/[0.12] backdrop-blur-md shadow-2xl text-xs space-y-1 font-mono pointer-events-none z-20 min-w-[200px]">
-          <div className="text-[10px] text-white/50 font-bold border-b border-white/[0.08] pb-1 flex items-center justify-between">
-            <span>Date:</span>
-            <span className="text-white">{hoveredPoint.date}</span>
-          </div>
-          <div className="flex items-center justify-between gap-4 text-emerald-400 font-bold text-[11px]">
-            <span>Strategy:</span>
-            <span>{hoveredPoint.equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
-          </div>
-          <div className="flex items-center justify-between gap-4 text-blue-400 font-medium text-[11px]">
-            <span>Buy & Hold:</span>
-            <span>{hoveredPoint.buyHoldEquity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
-          </div>
-          {hoveredPoint.drawdown > 0 && (
-            <div className="flex items-center justify-between gap-4 text-rose-400 text-[10px]">
-              <span>Drawdown:</span>
-              <span>-{hoveredPoint.drawdown.toFixed(2)}%</span>
-            </div>
-          )}
-          {hoveredPoint.tradePnl !== undefined && (
-            <div className={`flex items-center justify-between gap-4 text-[10px] pt-1 border-t border-white/[0.08] font-bold ${
-              hoveredPoint.tradePnl > 0 ? "text-emerald-400" : "text-rose-400"
-            }`}>
-              <span>Trade Realized:</span>
-              <span>{hoveredPoint.tradePnl > 0 ? "+" : ""}{hoveredPoint.tradePnl.toFixed(2)} {currencySymbol} ({hoveredPoint.tradeReturnPct?.toFixed(2)}%)</span>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Transparent overlay for mouse interaction */}
+        {equityCurve.map((pt, i) => {
+          const x = getX(i);
+          const sliceWidth = chartWidth / equityCurve.length;
+          return (
+            <rect
+              key={pt.date}
+              x={x - sliceWidth / 2}
+              y={padding.top}
+              width={sliceWidth}
+              height={chartHeight}
+              fill="transparent"
+              className="cursor-crosshair"
+              onMouseEnter={() => onHoverPoint(pt)}
+            />
+          );
+        })}
+      </svg>
     </div>
   );
 }

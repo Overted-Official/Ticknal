@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next'
 
+const APP_THEME_COLOR = 'black';
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'QuantEGX Trading Platform',
@@ -7,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Advanced Algorithmic Trading Platform for the EGX',
     start_url: '/dashboard',
     display: 'standalone',
-    background_color: '#000000',
-    theme_color: '#000000',
+    background_color: APP_THEME_COLOR,
+    theme_color: APP_THEME_COLOR,
     icons: [
       {
         src: '/icon-192x192.png',

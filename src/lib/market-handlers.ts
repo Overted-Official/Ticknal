@@ -21,14 +21,14 @@ type TradingViewPeriod = {
   volume: number;
 };
 
-async function fallbackToDbQuote(cleanSym: string): Promise<Response> {
+async function getDbQuoteAndRanges(cleanSym: string) {
   try {
     const rows = await db
       .select()
       .from(dailyPrices)
       .where(eq(dailyPrices.tickerSymbol, cleanSym))
       .orderBy(desc(dailyPrices.date))
-      .limit(2);
+      .limit(365);
 
     if (rows && rows.length > 0) {
       const current = rows[0];
@@ -38,21 +38,38 @@ async function fallbackToDbQuote(cleanSym: string): Promise<Response> {
       const change = currentPrice - prevPrice;
       const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : 0;
 
-      return NextResponse.json({
+      const dayHigh = Number(current.high);
+      const dayLow = Number(current.low);
+      const yearHigh = Math.max(...rows.map((r) => Number(r.high)));
+      const yearLow = Math.min(...rows.map((r) => Number(r.low)));
+
+      return {
         symbol: cleanSym,
         price: currentPrice,
         change: Number(change.toFixed(2)),
         changePercent: Number(changePercent.toFixed(2)),
         open: Number(current.open),
-        high: Number(current.high),
-        low: Number(current.low),
+        high: dayHigh,
+        low: dayLow,
+        dayHigh,
+        dayLow,
+        yearHigh,
+        yearLow,
         volume: Number(current.volume || 0),
         updatedAt: typeof current.date === 'string' ? current.date : new Date(current.date as Date).toISOString(),
-        source: 'database-fallback'
-      });
+        source: 'database'
+      };
     }
   } catch (err) {
-    console.error('Database fallback error:', err);
+    console.error('Database quote error:', err);
+  }
+  return null;
+}
+
+async function fallbackToDbQuote(cleanSym: string): Promise<Response> {
+  const data = await getDbQuoteAndRanges(cleanSym);
+  if (data) {
+    return NextResponse.json(data);
   }
   return NextResponse.json({ error: 'No quote data available' }, { status: 404 });
 }
@@ -98,7 +115,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         resolve(fallback);
       }, 3500);
 
-      chart.onUpdate(() => {
+      chart.onUpdate(async () => {
         if (resolved) return;
         resolved = true;
         clearTimeout(timeout);
@@ -121,6 +138,8 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         const change = currentPrice - prevPrice;
         const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : 0;
 
+        const dbRanges = await getDbQuoteAndRanges(cleanSym);
+
         try {
           chart.delete();
           client.end();
@@ -134,6 +153,10 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
           open: current.open,
           high: current.max,
           low: current.min,
+          dayHigh: current.max || dbRanges?.dayHigh || currentPrice,
+          dayLow: current.min || dbRanges?.dayLow || currentPrice,
+          yearHigh: dbRanges?.yearHigh || current.max || currentPrice,
+          yearLow: dbRanges?.yearLow || current.min || currentPrice,
           volume: current.volume,
           updatedAt: new Date(current.time * 1000).toISOString()
         }));

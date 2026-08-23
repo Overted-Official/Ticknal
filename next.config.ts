@@ -17,7 +17,7 @@ const nextConfig = {
   },
   outputFileTracingIncludes: {
     "/api/[[...slug]]": [
-      "./src/strategies/Thoth/models/**/*",
+      "./src/strategies/THOTH_EGX_V3_7P/artifacts/**/*",
       "./src/strategies/PSI/data/**/*",
       "./Data/psi_*best*.csv",
       "./src/tools/kronos/models/**/*.onnx",

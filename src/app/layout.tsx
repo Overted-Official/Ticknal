@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
 import "./globals.css";
 
@@ -8,10 +8,7 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const APP_THEME_COLOR = "black";
 
 export const metadata: Metadata = {
   title: "QuantEGX | Trading Platform",
@@ -31,15 +28,15 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "mobile-web-app-capable": "yes",
-    "msapplication-navbutton-color": "#000000",
-    "theme-color": "#000000",
+    "msapplication-navbutton-color": APP_THEME_COLOR,
+    "theme-color": APP_THEME_COLOR,
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#000000" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: APP_THEME_COLOR },
+    { media: "(prefers-color-scheme: dark)", color: APP_THEME_COLOR },
   ],
   colorScheme: "dark",
   width: "device-width",
@@ -52,13 +49,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased font-sans bg-black`}
-      style={{ backgroundColor: "#000000", colorScheme: "dark" }}
+      className={`${geistSans.variable} h-full antialiased font-sans bg-plt-base`}
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex flex-col font-sans bg-black text-white"
-        style={{ backgroundColor: "#000000", colorScheme: "dark" }}
+        className="min-h-full flex flex-col font-sans bg-plt-base text-plt-text"
         suppressHydrationWarning
       >
         {children}

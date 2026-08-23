@@ -1,15 +1,25 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { LayoutDashboard, LineChart, Wallet, Settings, Bell, Plus } from 'lucide-react';
+import { LayoutDashboard, LineChart, Wallet, Settings, Bell, Plus, Bot } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
+import { controlHover, controlTap } from '@/lib/motion';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const NAV_ITEMS = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, isActive: (p: string) => p === '/dashboard' },
+  { href: '/invest', label: 'Invest', icon: LineChart, isActive: (p: string) => p === '/invest' || p === '/charts' },
+  { href: '/bot', label: 'Bot', icon: Bot, isActive: (p: string) => p === '/bot' },
+  { href: '/wallet', label: 'Wallet', icon: Wallet, isActive: (p: string) => p === '/wallet' || p === '/positions' },
+  { href: '/settings', label: 'Settings', icon: Settings, isActive: (p: string) => p === '/settings' },
+];
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -26,138 +36,79 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Floating Persistent Alerts Button on Mobile */}
+      {/* Independent Floating Action Buttons on Mobile (Stacked in Bottom Right) */}
       <div
-        className={`fixed bottom-[calc(4.2rem+env(safe-area-inset-bottom,0px))] right-3.5 z-40 md:hidden transition-all duration-300 ease-out will-change-transform ${
+        className={`fixed bottom-20 right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
           isNavVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-16 opacity-0 pointer-events-none'
         }`}
       >
-        <button
+        {/* 1. Floating Alerts / Notifications Button */}
+        <motion.button
           type="button"
           onClick={() => setIsNotificationsOpen(true)}
-          className="w-10 h-10 rounded-full bg-[#111]/95 border border-plt-orange/40 shadow-xl shadow-black/80 flex items-center justify-center text-plt-orange hover:scale-105 active:scale-95 transition-all relative backdrop-blur-md"
+          whileHover={controlHover}
+          whileTap={controlTap}
+          className="w-10 h-10 rounded-full bg-plt-card/95 hover:bg-plt-card backdrop-blur-2xl border border-plt-border-strong text-plt-text shadow-xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
           title="Trade Notifications & Alerts"
         >
-          <Bell size={18} strokeWidth={2} />
+          <Bell size={17} className="text-plt-text" />
           {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-plt-orange text-black text-[9px] font-mono font-bold flex items-center justify-center ring-2 ring-black">
+            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-plt-profit text-plt-inverse text-[9px] font-mono font-bold flex items-center justify-center ring-2 ring-plt-card">
               {notificationCount > 9 ? '9+' : notificationCount}
             </span>
           )}
-        </button>
+        </motion.button>
+
+        {/* 2. Floating Add Position / Quick Add Button */}
+        <motion.button
+          type="button"
+          onClick={() => setIsQuickAddOpen(true)}
+          whileHover={controlHover}
+          whileTap={controlTap}
+          className="w-10 h-10 rounded-full bg-plt-surface-elevated hover:bg-plt-surface border border-plt-border-strong text-plt-text shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition-all"
+          title="Quick Add Position or Transaction"
+        >
+          <Plus size={18} strokeWidth={2} />
+        </motion.button>
       </div>
 
       {/* Main Bottom Bar */}
       <div
-        className={`w-full bg-black/95 backdrop-blur-xl border-t border-white/[0.08] flex items-center justify-around z-50 px-1 pb-[env(safe-area-inset-bottom)] relative transition-all duration-300 ease-out will-change-transform ${
+        className={`fixed bottom-0 left-0 right-0 w-full bg-black/70 backdrop-blur-2xl border-t border-white/[0.08] shadow-[0_-8px_30px_rgba(0,0,0,0.4)] flex items-center justify-around z-50 px-2 safe-area-bottom select-none transition-all duration-300 ease-out will-change-transform ${
           isNavVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'
         }`}
       >
         <div className="h-14 w-full flex items-center justify-around">
-        {/* 1. Dashboard */}
-        <Link
-          href="/dashboard"
-          prefetch={true}
-          className="flex-1 h-full flex flex-col items-center justify-center group"
-        >
-          <div
-            className={`flex items-center justify-center rounded-md w-10 h-6 transition-all duration-200 mb-0.5 ${
-              pathname === '/dashboard' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            <LayoutDashboard size={17} strokeWidth={pathname === '/dashboard' ? 2 : 1.5} />
-          </div>
-          <span
-            className={`text-[9px] font-medium transition-colors ${
-              pathname === '/dashboard' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            Dashboard
-          </span>
-        </Link>
+          {NAV_ITEMS.map((item) => {
+            const active = item.isActive(pathname);
+            const Icon = item.icon;
 
-        {/* 2. Invest */}
-        <Link
-          href="/invest"
-          prefetch={true}
-          className="flex-1 h-full flex flex-col items-center justify-center group"
-        >
-          <div
-            className={`flex items-center justify-center rounded-md w-10 h-6 transition-all duration-200 mb-0.5 ${
-              pathname === '/invest' || pathname === '/charts' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            <LineChart size={17} strokeWidth={pathname === '/invest' || pathname === '/charts' ? 2 : 1.5} />
-          </div>
-          <span
-            className={`text-[9px] font-medium transition-colors ${
-              pathname === '/invest' || pathname === '/charts' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            Invest
-          </span>
-        </Link>
-
-        {/* 3. Middle Prominent Action: + Quick Add (Transactions & Positions) */}
-        <div className="flex-1 h-full flex flex-col items-center justify-center relative">
-          <button
-            type="button"
-            onClick={() => setIsQuickAddOpen(true)}
-            className="flex flex-col items-center justify-center group -mt-3 relative"
-            title="Quick Add Transaction or Position"
-          >
-            <div className="w-10 h-10 rounded-full bg-[#111] border border-plt-orange/50 shadow-[0_0_14px_rgba(254,80,0,0.25)] flex items-center justify-center text-plt-orange transition-all duration-200 group-hover:scale-105 group-hover:border-plt-orange group-active:scale-95">
-              <Plus size={20} strokeWidth={2.4} />
-            </div>
-            <span className="text-[9px] font-medium text-plt-orange mt-0.5 tracking-tight">
-              Add
-            </span>
-          </button>
-        </div>
-
-        {/* 4. Wallet */}
-        <Link
-          href="/wallet"
-          prefetch={true}
-          className="flex-1 h-full flex flex-col items-center justify-center group"
-        >
-          <div
-            className={`flex items-center justify-center rounded-md w-10 h-6 transition-all duration-200 mb-0.5 ${
-              pathname === '/wallet' || pathname === '/positions' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            <Wallet size={17} strokeWidth={pathname === '/wallet' || pathname === '/positions' ? 2 : 1.5} />
-          </div>
-          <span
-            className={`text-[9px] font-medium transition-colors ${
-              pathname === '/wallet' || pathname === '/positions' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            Wallet
-          </span>
-        </Link>
-
-        {/* 5. Settings */}
-        <Link
-          href="/settings"
-          prefetch={true}
-          className="flex-1 h-full flex flex-col items-center justify-center group"
-        >
-          <div
-            className={`flex items-center justify-center rounded-md w-10 h-6 transition-all duration-200 mb-0.5 ${
-              pathname === '/settings' ? 'bg-white/[0.08] text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            <Settings size={17} strokeWidth={pathname === '/settings' ? 2 : 1.5} />
-          </div>
-          <span
-            className={`text-[9px] font-medium transition-colors ${
-              pathname === '/settings' ? 'text-white' : 'text-white/35 group-hover:text-white/60'
-            }`}
-          >
-            Settings
-          </span>
-          </Link>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch={true}
+                className="flex-1 h-full flex flex-col items-center justify-center py-1 group"
+              >
+                <div
+                  className={`flex items-center justify-center rounded-xl px-2.5 py-1 transition-all duration-150 ${
+                    active
+                      ? 'nav-icon-active'
+                      : 'text-plt-muted group-hover:text-plt-text'
+                  }`}
+                >
+                  <Icon size={18} strokeWidth={active ? 2 : 1.5} />
+                </div>
+                <span
+                  className={`text-[10px] font-sans font-medium mt-0.5 transition-colors ${
+                    active ? 'text-plt-text' : 'text-plt-muted group-hover:text-plt-text'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
 

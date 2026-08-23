@@ -1,10 +1,14 @@
 export default function InvestSkeleton() {
   return (
-    <div className="flex-1 w-full p-4 lg:p-6 space-y-6 animate-pulse">
-      <div className="h-10 bg-white/5 rounded-lg w-1/3" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 h-[450px] bg-white/5 rounded-xl" />
-        <div className="h-[450px] bg-white/5 rounded-xl" />
+    <div className="flex-1 h-full w-full flex flex-row bg-plt-base animate-pulse overflow-hidden">
+      <div className="flex-1 h-full flex flex-col bg-tv-chart p-4">
+        <div className="h-8 bg-plt-hover rounded-xl w-48 mb-4" />
+        <div className="flex-1 bg-plt-hover/30 rounded-lg" />
+      </div>
+      <div className="hidden lg:flex w-72 h-full bg-plt-raised border-l border-plt-border flex-col p-3 space-y-3">
+        <div className="h-8 bg-plt-hover rounded-xl w-full" />
+        <div className="h-8 bg-plt-hover rounded-xl w-full" />
+        <div className="flex-1 bg-plt-hover/20 rounded-lg" />
       </div>
     </div>
   );

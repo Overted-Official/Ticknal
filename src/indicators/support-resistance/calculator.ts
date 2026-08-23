@@ -66,7 +66,7 @@ export function calculateDynamicStepChannels(
     {
       id: 'sr-step-res',
       name: 'Step Resistance',
-      color: '#ef5350', // Red
+      color: 'var(--plt-risk)',
       lineWidth: 2,
       lineStyle: 0, // Solid
       data: resData,
@@ -74,7 +74,7 @@ export function calculateDynamicStepChannels(
     {
       id: 'sr-step-sup',
       name: 'Step Support',
-      color: '#26a69a', // Green
+      color: 'var(--plt-profit)',
       lineWidth: 2,
       lineStyle: 0, // Solid
       data: supData,
@@ -82,7 +82,7 @@ export function calculateDynamicStepChannels(
     {
       id: 'sr-step-mid',
       name: 'Step Midline',
-      color: '#a855f7', // Purple
+      color: 'var(--plt-violet)',
       lineWidth: 1,
       lineStyle: 1, // Dotted
       data: midData,
@@ -155,7 +155,7 @@ export function calculateClusteredZones(
   selectedClusters.forEach((cluster, idx) => {
     const isAboveCurrent = cluster.centerPrice >= currentPrice;
     const isResistance = isAboveCurrent || cluster.swings.filter((s) => s.type === 'high').length > cluster.swings.length / 2;
-    const color = isResistance ? '#f43f5e' : '#10b981'; // Rose for Resistance, Emerald for Support
+    const color = isResistance ? 'var(--plt-risk)' : 'var(--plt-profit)';
 
     // Draw horizontal line spanning from first swing touch to the latest candle
     const lineData: { time: Time; value: number }[] = [];
@@ -200,7 +200,7 @@ export function calculateTrendlineChannels(
   // 1. Build Upper Trendline (connecting consecutive swing highs)
   if (highSwings.length >= 2) {
     const firstHigh = highSwings[0];
-    
+
     // Backfill from bar 0 to first swing high with first high price
     for (let i = 0; i < firstHigh.index; i++) {
       upperData.push({
@@ -289,7 +289,7 @@ export function calculateTrendlineChannels(
     lines.push({
       id: 'sr-trend-res',
       name: 'Upper Channel Trendline',
-      color: '#f59e0b', // Amber
+      color: 'var(--plt-warning)',
       lineWidth: 2,
       lineStyle: 0, // Solid
       data: upperData,
@@ -300,7 +300,7 @@ export function calculateTrendlineChannels(
     lines.push({
       id: 'sr-trend-sup',
       name: 'Lower Channel Trendline',
-      color: '#06b6d4', // Cyan
+      color: 'var(--plt-info)',
       lineWidth: 2,
       lineStyle: 0, // Solid
       data: lowerData,

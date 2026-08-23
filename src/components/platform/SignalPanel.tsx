@@ -1,29 +1,20 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Target,
-  Activity,
-  ShieldCheck,
   ChevronDown,
   Eye,
   EyeOff,
   X,
   Zap,
-  TrendingUp,
-  Sliders,
   Sparkles,
-  Layers,
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
   BarChart3,
-  Cpu,
-  Scale,
-  CheckCircle2,
-  AlertTriangle,
-} from 'lucide-react';
+  Calendar,
+  Layers,
+  Activity,
+} from '@/components/ui/icon-library';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { STRATEGIES, getAvailableStrategies } from '@/strategies/registry';
@@ -31,7 +22,6 @@ import type { ChartData } from '@/components/platform/ChartWidget';
 import { useToast } from '@/context/ToastContext';
 import { PsiOptimizationDrawer } from './PsiOptimizationDrawer';
 import type { CandidateOptimizationResult } from '@/strategies/PSI/psiOptimizer.worker';
-import type { PsiStrategyParams } from '@/strategies/PSI/psiStrategy';
 
 type SignalData = Record<string, any>;
 
@@ -83,23 +73,31 @@ export default function SignalPanel({
   const [activeTab, setActiveTab] = useState<'signal' | 'alpha' | 'optimizer'>('signal');
   const [trainingModel, setTrainingModel] = useState<'psi8' | 'psi40'>('psi8');
   const [trainCutoffPreset, setTrainCutoffPreset] = useState<'2020' | '2022' | '2024' | 'custom'>('2024');
-  const [customCutoffDate, setCustomCutoffDate] = useState<string>("2024-12-31");
-  const [mounted, setMounted] = useState(false);
+  const [customCutoffDate, setCustomCutoffDate] = useState<string>('2024-12-31');
+  const [isStrategyDropdownOpen, setIsStrategyDropdownOpen] = useState(false);
+  const strategyDropdownRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!isStrategyDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (strategyDropdownRef.current && !strategyDropdownRef.current.contains(e.target as Node)) {
+        setIsStrategyDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isStrategyDropdownOpen]);
 
   // Optimization Drawer State
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerCandidates, setDrawerCandidates] = useState<CandidateOptimizationResult[]>([]);
-  const [drawerTrainPeriod, setDrawerTrainPeriod] = useState("2020-01-01 to 2024-12-31");
-  const [drawerTestPeriod, setDrawerTestPeriod] = useState("2025-01-01 to Present");
+  const [drawerTrainPeriod, setDrawerTrainPeriod] = useState('2020-01-01 to 2024-12-31');
+  const [drawerTestPeriod, setDrawerTestPeriod] = useState('2025-01-01 to Present');
   const [drawerTotalEvaluated, setDrawerTotalEvaluated] = useState(50220);
 
   const strategies = getAvailableStrategies();
   const activeStratDef = STRATEGIES[selectedStrategy] || STRATEGIES['psi'];
-  const selectedLabel = activeStratDef.label;
 
   useEffect(() => {
     if (!activeSymbol) return;
@@ -108,11 +106,11 @@ export default function SignalPanel({
     const fetchSignals = async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ 
-          symbol: activeSymbol, 
+        const params = new URLSearchParams({
+          symbol: activeSymbol,
           strategy: selectedStrategy,
         });
-        
+
         Object.entries(strategyParams).forEach(([k, v]) => {
           if (v !== undefined && v !== null) {
             params.set(k, String(v));
@@ -129,9 +127,8 @@ export default function SignalPanel({
 
         const res = await fetch(`/api/signals?${params.toString()}`);
         const data = await res.json();
-        if (data.signals && data.signals.length > 0) {
-          // Take the most recent signal (latest in chronological array)
-          const latestSignal = data.signals[data.signals.length - 1];
+        if (data.latestSignal || (data.signals && data.signals.length > 0)) {
+          const latestSignal = data.latestSignal ?? data.signals[data.signals.length - 1];
           setSignalData({
             ...latestSignal,
             latestMasterIndex: data.latestMasterIndex ?? latestSignal.masterIndex,
@@ -140,7 +137,7 @@ export default function SignalPanel({
           setSignalData(data.latestMasterIndex !== null ? { masterIndex: data.latestMasterIndex } : null);
         }
       } catch (err) {
-        console.error("Error fetching signals:", err);
+        console.error('Error fetching signals:', err);
       } finally {
         setLoading(false);
       }
@@ -155,15 +152,14 @@ export default function SignalPanel({
   const rawSignal = visibleSignalData?.signal || 'NEUTRAL';
   const isBuy = rawSignal.toUpperCase().includes('BUY');
   const isExit = rawSignal.toUpperCase().includes('SELL') || rawSignal.toUpperCase().includes('EXIT');
-  const isNeutral = !isBuy && !isExit;
   const reason = isExit ? visibleSignalData?.exitReason : visibleSignalData?.entryReason;
 
   // Master Index Score
-  const masterIndex = visibleSignalData?.masterIndex !== undefined && visibleSignalData?.masterIndex !== null 
-    ? Number(visibleSignalData.masterIndex) 
+  const masterIndex = visibleSignalData?.masterIndex !== undefined && visibleSignalData?.masterIndex !== null
+    ? Number(visibleSignalData.masterIndex)
     : null;
-  const mdm = visibleSignalData?.medianDailyMove !== undefined && visibleSignalData?.medianDailyMove !== null 
-    ? Number(visibleSignalData.medianDailyMove) 
+  const mdm = visibleSignalData?.medianDailyMove !== undefined && visibleSignalData?.medianDailyMove !== null
+    ? Number(visibleSignalData.medianDailyMove)
     : null;
 
   // Key execution levels
@@ -194,7 +190,6 @@ export default function SignalPanel({
     setOptimProgress(0);
 
     const worker = new Worker(new URL('../../strategies/PSI/psiOptimizer.worker.ts', import.meta.url));
-
     const cutoff = getEffectiveCutoffDate();
     const cutoffDate = new Date(cutoff);
     const testStart = new Date(cutoffDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -210,28 +205,28 @@ export default function SignalPanel({
         setDrawerTotalEvaluated(e.data.totalEvaluated);
         setDrawerOpen(true);
         toast.success(
-          "Walk-Forward Complete",
+          'Walk-Forward Complete',
           `Evaluated ${e.data.totalEvaluated.toLocaleString()} combinations for ${activeSymbol} on ${trainingModel.toUpperCase()}.`
         );
         worker.terminate();
       } else if (e.data.type === 'error') {
         setOptimizing(false);
-        toast.error("Optimization Error", e.data.message);
+        toast.error('Optimization Error', e.data.message);
         worker.terminate();
       }
     };
 
     worker.postMessage({
-      bars: chartData.map(d => ({
+      bars: chartData.map((d) => ({
         date: d.time,
         open: d.open,
         high: d.high,
         low: d.low,
         close: d.close,
-        volume: d.volume
+        volume: d.volume,
       })),
       model: trainingModel,
-      trainStartDate: undefined, // Always train from earliest inception up to cutoff date
+      trainStartDate: undefined,
       trainEndDate: cutoff,
       testStartDate: testStart,
       testEndDate: undefined,
@@ -239,141 +234,158 @@ export default function SignalPanel({
     });
   };
 
-  // ----------------------------------------------------
-  // RENDER: Inspector Body (Tabs: Signal / Alpha / Optimizer)
-  // ----------------------------------------------------
   const renderInspectorBody = () => (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 pt-2">
       {/* 3-Tab Segmented Controller */}
-      <div className="flex bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.08] relative">
+      <div className="flex bg-white/[0.04] p-1 rounded-xl border border-white/[0.08]">
         <button
           type="button"
           onClick={() => setActiveTab('signal')}
-          className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'signal'
-              ? 'bg-zinc-800 text-white font-semibold shadow-sm'
-              : 'text-white/40 hover:text-white/70'
+              ? 'bg-white/[0.12] text-plt-text shadow-sm'
+              : 'text-plt-muted hover:text-plt-text'
           }`}
         >
-          <Target className="w-3.5 h-3.5 text-plt-orange" />
+          <Target size={13} className="text-plt-muted" />
           <span>Signal</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('alpha')}
-          className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'alpha'
-              ? 'bg-zinc-800 text-white font-semibold shadow-sm'
-              : 'text-white/40 hover:text-white/70'
+              ? 'bg-white/[0.12] text-plt-text shadow-sm'
+              : 'text-plt-muted hover:text-plt-text'
           }`}
         >
-          <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+          <BarChart3 size={13} className="text-plt-profit" />
           <span>Alpha</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('optimizer')}
-          className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'optimizer'
-              ? 'bg-zinc-800 text-white font-semibold shadow-sm'
-              : 'text-white/40 hover:text-white/70'
+              ? 'bg-white/[0.12] text-plt-text shadow-sm'
+              : 'text-plt-muted hover:text-plt-text'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <Sparkles size={13} className="text-plt-muted" />
           <span>Optimizer</span>
         </button>
       </div>
 
       {/* TAB 1: SIGNAL & LIVE LEVELS */}
       {activeTab === 'signal' && (
-        <div className="flex flex-col gap-2.5 animate-in fade-in duration-200">
-          {/* Hero Verdict Box */}
-          <div className={`p-3 rounded-lg border flex flex-col gap-1.5 relative overflow-hidden ${
-            isBuy 
-              ? 'bg-emerald-950/20 border-emerald-500/30' 
-              : isExit 
-                ? 'bg-rose-950/20 border-rose-500/30' 
-                : 'bg-zinc-900/40 border-white/[0.08]'
+        <div className="flex flex-col gap-2.5">
+          {/* Signal Header Banner */}
+          <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 ${
+            isBuy
+              ? 'bg-plt-profit/10 border-plt-profit/25'
+              : isExit
+                ? 'bg-plt-risk/10 border-plt-risk/25'
+                : 'bg-white/[0.03] border-white/[0.08]'
           }`}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${
-                  isBuy ? 'bg-emerald-400 animate-pulse' : isExit ? 'bg-rose-500' : 'bg-amber-400'
+              <div className="flex items-center gap-1.5 font-mono text-[11px] font-semibold">
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  isBuy ? 'bg-plt-profit animate-pulse' : isExit ? 'bg-plt-risk' : 'bg-plt-muted'
                 }`} />
-                <span className={`text-xs font-bold font-mono tracking-tight uppercase ${
-                  isBuy ? 'text-emerald-400' : isExit ? 'text-rose-400' : 'text-zinc-300'
-                }`}>
-                  {rawSignal}
+                <span className={isBuy ? 'text-plt-profit' : isExit ? 'text-plt-risk' : 'text-plt-text'}>
+                  {displaySignal}
                 </span>
               </div>
               {triggerPrice && (
-                <span className="text-xs font-mono font-bold text-white">
+                <span className="text-[11px] font-mono tabular-nums font-medium text-plt-text">
                   {triggerPrice.toFixed(2)} EGP
                 </span>
               )}
             </div>
 
             {reason && (
-              <p className="text-[10px] text-white/50 leading-relaxed font-sans mt-0.5">
+              <p className="text-[10px] text-plt-muted leading-relaxed font-sans">
                 {reason}
               </p>
             )}
           </div>
 
           {/* Execution Coordinates 3-Card Grid */}
-          <div className="grid grid-cols-3 gap-1.5">
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Trigger</span>
-              <span className="text-[11px] font-mono font-bold text-white mt-1">
-                {triggerPrice ? `${triggerPrice.toFixed(2)}` : '—'}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Trigger</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-1">
+                {triggerPrice ? triggerPrice.toFixed(2) : '—'}
               </span>
             </div>
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-amber-400/80 font-medium">ATR Trail Stop</span>
-              <span className="text-[11px] font-mono font-bold text-amber-400 mt-1">
-                {stopLossPrice ? `${stopLossPrice.toFixed(2)}` : '—'}
-              </span>
-            </div>
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-emerald-400/80 font-medium">AYM Target</span>
-              <span className="text-[11px] font-mono font-bold text-emerald-400 mt-1">
-                {targetPrice ? `${targetPrice.toFixed(2)}` : '—'}
-              </span>
-            </div>
+            {selectedStrategy === 'thoth_egx_macro' ? (
+              <>
+                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-purple-300/80 font-medium">Pred Exhaustion</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-purple-300 mt-1">
+                    {visibleSignalData?.predictedExhaustion !== undefined && visibleSignalData?.predictedExhaustion !== null
+                      ? `${Number(visibleSignalData.predictedExhaustion).toFixed(1)}%`
+                      : visibleSignalData?.masterIndexAdjusted !== undefined && visibleSignalData?.masterIndexAdjusted !== null
+                        ? `${Number(visibleSignalData.masterIndexAdjusted).toFixed(1)}%`
+                        : '—'}
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-plt-profit/80 font-medium">Conviction</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-plt-profit mt-1">
+                    {visibleSignalData?.convictionScore !== undefined && visibleSignalData?.convictionScore !== null
+                      ? `${Number(visibleSignalData.convictionScore).toFixed(1)}`
+                      : '—'}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium">Stop Loss</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-1">
+                    {stopLossPrice ? stopLossPrice.toFixed(2) : '—'}
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-plt-profit/80 font-medium">AYM Target</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-plt-profit mt-1">
+                    {targetPrice ? targetPrice.toFixed(2) : '—'}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Master Index (0-100 Gauge) */}
-          <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.08] flex flex-col gap-2">
+          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-[10px]">
-              <span className="text-white/60 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <Scale className="w-3 h-3 text-plt-orange" />
-                Master Index (0-100)
+              <span className="text-plt-muted font-medium uppercase tracking-wider">
+                Master Index (0–100)
               </span>
               <div className="flex items-center gap-2 font-mono">
-                <span className="text-white font-bold">{masterIndex !== null ? masterIndex.toFixed(1) : '—'}</span>
+                <span className="text-plt-text font-semibold">{masterIndex !== null ? masterIndex.toFixed(1) : '—'}</span>
                 {mdm !== null && (
-                  <span className="text-[9px] text-white/40">MDM: {mdm.toFixed(2)}%</span>
+                  <span className="text-plt-muted text-[9px]">MDM: {mdm.toFixed(2)}%</span>
                 )}
               </div>
             </div>
 
             {/* Gauge Track */}
-            <div className="relative w-full h-2 rounded-full bg-zinc-900 border border-white/[0.08] overflow-hidden flex">
-              <div className="w-[20%] h-full bg-emerald-500/30" title="Oversold / Buy" />
-              <div className="w-[60%] h-full bg-white/[0.03]" title="Equilibrium" />
-              <div className="w-[20%] h-full bg-rose-500/30" title="Overbought / Sell" />
+            <div className="relative w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+              <div className="w-full h-full bg-gradient-to-r from-plt-profit/40 via-white/10 to-plt-risk/40" />
               {masterIndex !== null && (
-                <div 
-                  className="absolute top-0 bottom-0 w-1.5 bg-plt-orange rounded-full shadow-[0_0_8px_rgba(254,80,0,0.8)] -ml-0.5 transition-all duration-300"
+                <div
+                  className="absolute top-0 bottom-0 w-1.5 bg-white rounded-full shadow-sm -ml-0.5 transition-all duration-300"
                   style={{ left: `${Math.min(Math.max(masterIndex, 0), 100)}%` }}
                 />
               )}
             </div>
 
-            <div className="flex justify-between text-[8px] font-mono text-white/30 px-0.5">
-              <span>0 (Oversold)</span>
+            <div className="flex justify-between text-[9px] font-mono text-plt-muted pt-0.5">
+              <span>0 Oversold</span>
               <span>50</span>
-              <span>100 (Overbought)</span>
+              <span>100 Overbought</span>
             </div>
           </div>
         </div>
@@ -381,102 +393,84 @@ export default function SignalPanel({
 
       {/* TAB 2: ALPHA & BACKTEST SCORECARD */}
       {activeTab === 'alpha' && (
-        <div className="flex flex-col gap-2.5 animate-in fade-in duration-200">
-          {/* 3-Card Alpha Grid (System ROI, Buy & Hold, Alpha Spread) */}
-          <div className="grid grid-cols-3 gap-1.5">
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">System ROI</span>
-              <span className={`text-[11px] font-mono font-bold mt-1 ${
-                metrics?.['Sys ROI'] && parseFloat(metrics['Sys ROI']) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+        <div className="flex flex-col gap-2.5">
+          {/* 3-Card Alpha Grid */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">System ROI</span>
+              <span className={`text-xs font-mono tabular-nums font-semibold mt-1 ${
+                metrics?.['Sys ROI'] && parseFloat(metrics['Sys ROI']) >= 0 ? 'text-plt-profit' : 'text-plt-risk'
               }`}>
                 {metrics?.['Sys ROI'] ? `${parseFloat(metrics['Sys ROI']) > 0 ? '+' : ''}${metrics['Sys ROI']}%` : '—'}
               </span>
             </div>
 
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Buy & Hold</span>
-              <span className="text-[11px] font-mono font-bold text-zinc-200 mt-1">
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Buy & Hold</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-plt-muted mt-1">
                 {metrics?.['B&H ROI'] ? `${parseFloat(metrics['B&H ROI']) > 0 ? '+' : ''}${metrics['B&H ROI']}%` : '—'}
               </span>
             </div>
 
-            <div className={`p-2 rounded-md border flex flex-col justify-between ${
-              roiMarginVal !== null && roiMarginVal >= 0 
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-            }`}>
-              <span className={`text-[9px] uppercase tracking-wider font-semibold ${
-                roiMarginVal !== null && roiMarginVal >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Alpha (α)</span>
+              <span className={`text-xs font-mono tabular-nums font-semibold mt-1 ${
+                roiMarginVal !== null && roiMarginVal >= 0 ? 'text-plt-profit' : 'text-plt-risk'
               }`}>
-                Alpha (α)
-              </span>
-              <span className="text-[11px] font-mono font-bold mt-1">
-                {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(2)}%` : `${roiMarginVal.toFixed(2)}%`) : '—'}
+                {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(1)}%` : `${roiMarginVal.toFixed(1)}%`) : '—'}
               </span>
             </div>
           </div>
 
           {/* 6-Metric Grid */}
-          <div className="grid grid-cols-2 gap-1.5">
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Win Rate</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 mt-1">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Win Rate</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-plt-profit mt-0.5">
                 {metrics?.['Win Rate'] ? `${metrics['Win Rate']}%` : '—'}
               </span>
             </div>
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Annual CAGR</span>
-              <span className="text-xs font-mono font-bold text-white mt-1">
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Annual CAGR</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-0.5">
                 {metrics?.['Annual CAGR'] ? `${metrics['Annual CAGR']}%` : '—'}
               </span>
             </div>
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-rose-400/80 font-medium">Max Drawdown</span>
-              <span className="text-xs font-mono font-bold text-rose-400 mt-1">
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium">Max Drawdown</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-0.5">
                 {metrics?.['Max Drawdown'] ? `${metrics['Max Drawdown']}%` : '—'}
               </span>
             </div>
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Avg Return/Trade</span>
-              <span className="text-xs font-mono font-bold text-white mt-1">
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Avg/Trade</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-0.5">
                 {metrics?.['Avg. Return/Trade'] ? `${metrics['Avg. Return/Trade']}%` : '—'}
-              </span>
-            </div>
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-white/40 font-medium">Avg Bars/Trade</span>
-              <span className="text-xs font-mono font-bold text-white mt-1">
-                {metrics?.['Avg Bars/Trade'] ? `${metrics['Avg Bars/Trade']} bars` : '—'}
-              </span>
-            </div>
-            <div className="p-2 rounded-md bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-rose-400/80 font-medium">Max Adv Excursion</span>
-              <span className="text-xs font-mono font-bold text-rose-400 mt-1">
-                {metrics?.['Max Adverse Excursion'] ? `${metrics['Max Adverse Excursion']}%` : '—'}
               </span>
             </div>
           </div>
 
           {/* Chart Backtest Horizon Controls */}
-          <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.08] flex flex-col gap-2">
-            <span className="text-[9px] font-medium uppercase tracking-wider text-white/40 flex items-center gap-1.5">
-              <Calendar className="w-3 h-3 text-plt-orange" />
-              Chart Backtest Horizon
+          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col gap-1.5">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-plt-muted flex items-center gap-1.5">
+              <Calendar size={12} className="text-plt-muted" />
+              Backtest Horizon
             </span>
-            <div className="grid grid-cols-2 gap-2 text-[10px]">
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div className="flex flex-col gap-1">
-                <label className="text-white/40 text-[9px]">Start Date</label>
-                <input 
-                  type="date" 
-                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-1 text-white text-[10px] focus:outline-none focus:border-plt-orange font-mono"
+                <label className="text-plt-muted text-[10px]">Start Date</label>
+                <input
+                  type="date"
+                  className="date-token font-mono"
                   value={strategyStartDate || '2025-01-01'}
                   onChange={(e) => setStrategyStartDate?.(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-white/40 text-[9px]">End Date</label>
-                <input 
-                  type="date" 
-                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-1 text-white text-[10px] focus:outline-none focus:border-plt-orange font-mono"
+                <label className="text-plt-muted text-[10px]">End Date</label>
+                <input
+                  type="date"
+                  className="date-token font-mono"
                   value={strategyEndDate || ''}
                   placeholder="Present"
                   onChange={(e) => setStrategyEndDate?.(e.target.value)}
@@ -487,265 +481,302 @@ export default function SignalPanel({
         </div>
       )}
 
-      {/* TAB 3: WALK-FORWARD OPTIMIZER STUDIO */}
+      {/* TAB 3: WALK-FORWARD OPTIMIZER / PRODUCTION ARCHITECTURE */}
       {activeTab === 'optimizer' && (
-        <div className="flex flex-col gap-2.5 animate-in fade-in duration-200">
-          {/* Model Architecture Toggle */}
-          <div className="flex bg-white/[0.02] border border-white/[0.08] p-0.5 rounded-lg">
-            <button
-              type="button"
-              className={`flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all ${
-                trainingModel === 'psi8' 
-                  ? 'bg-zinc-800 text-white shadow-sm font-semibold' 
-                  : 'text-white/40 hover:text-white'
-              }`}
-              onClick={() => setTrainingModel('psi8')}
-            >
-              PSI-8 (Inflection)
-            </button>
-            <button
-              type="button"
-              className={`flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all ${
-                trainingModel === 'psi40' 
-                  ? 'bg-zinc-800 text-white shadow-sm font-semibold' 
-                  : 'text-white/40 hover:text-white'
-              }`}
-              onClick={() => setTrainingModel('psi40')}
-            >
-              PSI-40 (Trend)
-            </button>
-          </div>
-
-          {/* Interactive Split-Timeline Visualizer */}
-          <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.08] flex flex-col gap-2">
-            <div className="flex items-center justify-between text-[9px] text-white/40">
-              <span className="font-semibold uppercase tracking-wider">In-Sample Cutoff</span>
-              <div className="flex gap-1">
-                {(['2020', '2022', '2024', 'custom'] as const).map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setTrainCutoffPreset(preset)}
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition ${
-                      trainCutoffPreset === preset
-                        ? 'bg-plt-orange text-white font-semibold'
-                        : 'bg-white/[0.04] text-white/40 hover:text-white'
-                    }`}
-                  >
-                    {preset === 'custom' ? 'Custom' : `≤ ${preset}`}
-                  </button>
-                ))}
+        selectedStrategy === 'thoth_egx_macro' ? (
+          <div className="flex flex-col gap-2 p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/20 text-[11px]">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-purple-400">Primary Growth Champion</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">FROZEN V3.7P</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono pt-1">
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Signal Entry</span>
+                <span className="text-plt-text font-semibold">Conviction ≥ 70</span>
+              </div>
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Exit Rule</span>
+                <span className="text-plt-text font-semibold">Dynamic Velocity</span>
+              </div>
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Constraints</span>
+                <span className="text-plt-text font-semibold">Hold ≥3, Cool 10</span>
+              </div>
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Universe</span>
+                <span className="text-plt-text font-semibold">Full EGX (216)</span>
               </div>
             </div>
-
-            {trainCutoffPreset === 'custom' && (
-              <div className="flex items-center justify-between text-[10px] pt-1">
-                <label className="text-white/40 text-[9px]">Custom Cutoff Date</label>
-                <input 
-                  type="date" 
-                  className="bg-white/[0.04] border border-white/[0.09] rounded-md px-1.5 py-0.5 text-white text-[10px] focus:outline-none focus:border-plt-orange w-28 font-mono"
-                  value={customCutoffDate}
-                  onChange={(e) => setCustomCutoffDate(e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* Visual Slices Bar */}
-            <div className="px-2 py-1.5 rounded-md bg-zinc-950/80 border border-white/[0.06] text-[9px] text-white/50 flex flex-col gap-1 font-mono">
-              <div className="flex justify-between">
-                <span className="text-amber-400/90 font-medium">Train (In-Sample):</span>
-                <span>Inception → {getEffectiveCutoffDate()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-emerald-400/90 font-medium">Test (Out-of-Sample):</span>
-                <span>{new Date(new Date(getEffectiveCutoffDate()).getTime() + 86400000).toISOString().split('T')[0]} → Present</span>
-              </div>
-            </div>
+            <p className="text-[9.5px] text-plt-muted leading-relaxed pt-0.5">
+              Production candidate frozen model using lookback synthesis (UP: 21 bars, DOWN: 126 bars) and calibrated momentum delta hazard scoring.
+            </p>
           </div>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {/* Model Toggle */}
+            <div className="flex bg-white/[0.04] border border-white/[0.08] p-1 rounded-xl">
+              <button
+                type="button"
+                className={`flex-1 py-1 text-[11px] font-medium rounded-lg transition-all ${
+                  trainingModel === 'psi8'
+                    ? 'bg-white/[0.12] text-plt-text shadow-sm'
+                    : 'text-plt-muted hover:text-plt-text'
+                }`}
+                onClick={() => setTrainingModel('psi8')}
+              >
+                PSI-8 (Inflection)
+              </button>
+              <button
+                type="button"
+                className={`flex-1 py-1 text-[11px] font-medium rounded-lg transition-all ${
+                  trainingModel === 'psi40'
+                    ? 'bg-white/[0.12] text-plt-text shadow-sm'
+                    : 'text-plt-muted hover:text-plt-text'
+                }`}
+                onClick={() => setTrainingModel('psi40')}
+              >
+                PSI-40 (Trend)
+              </button>
+            </div>
 
-          {/* Run Optimizer CTA */}
-          <button 
-            type="button"
-            className="w-full bg-plt-orange text-white hover:bg-plt-orange-hover transition-all rounded-lg py-2 text-xs font-semibold disabled:opacity-50 relative overflow-hidden flex items-center justify-center gap-1.5 shadow-lg shadow-orange-950/30 active:scale-[0.99]"
-            onClick={startTraining}
-            disabled={optimizing}
-          >
-            {optimizing ? (
-              <>
-                <span className="relative z-10 font-mono">Evaluating 50,220 Combos... {optimProgress.toFixed(0)}%</span>
-                <div 
-                  className="absolute left-0 top-0 bottom-0 bg-white/25 z-0 transition-all duration-300" 
-                  style={{ width: `${optimProgress}%` }}
-                />
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>⚡ Run Walk-Forward Optimizer (50k)</span>
-              </>
-            )}
-          </button>
-        </div>
+            {/* Cutoff Selector */}
+            <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col gap-2">
+              <div className="flex items-center justify-between text-[10px] text-plt-muted">
+                <span className="font-medium uppercase tracking-wider">In-Sample Cutoff</span>
+                <div className="flex gap-1 font-mono">
+                  {(['2020', '2022', '2024', 'custom'] as const).map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setTrainCutoffPreset(preset)}
+                      className={`px-1.5 py-0.5 rounded-md text-[10px] transition ${
+                        trainCutoffPreset === preset
+                          ? 'bg-white/[0.15] text-plt-text font-medium'
+                          : 'bg-white/[0.06] text-plt-muted hover:text-plt-text'
+                      }`}
+                    >
+                      {preset === 'custom' ? 'Custom' : `≤${preset}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {trainCutoffPreset === 'custom' && (
+                <div className="flex items-center justify-between text-[11px]">
+                  <label className="text-plt-muted text-[10px]">Custom Date</label>
+                  <input
+                    type="date"
+                    className="date-token w-32 font-mono"
+                    value={customCutoffDate}
+                    onChange={(e) => setCustomCutoffDate(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Run Optimizer CTA */}
+            <button
+              type="button"
+              className="w-full bg-white text-black hover:bg-white/90 transition-all rounded-xl py-2 text-[11px] font-semibold disabled:opacity-50 relative overflow-hidden flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+              onClick={startTraining}
+              disabled={optimizing}
+            >
+              {optimizing ? (
+                <>
+                  <span className="relative z-10 font-mono">50k Combos... {optimProgress.toFixed(0)}%</span>
+                  <div
+                    className="absolute left-0 top-0 bottom-0 bg-white/20 z-0 transition-all duration-300"
+                    style={{ width: `${optimProgress}%` }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Zap size={13} />
+                  <span>Run Walk-Forward Optimizer (50k)</span>
+                </>
+              )}
+            </button>
+          </div>
+        )
       )}
 
       {/* Footer Info */}
-      <div className="flex items-center justify-between pt-2 border-t border-white/[0.08] text-[9px] text-white/40">
-        <span className="flex items-center gap-1">
-          <ShieldCheck className="w-3 h-3 text-plt-orange" /> {visibleSignalData?.modelVersion || 'v1.0'}
-        </span>
+      <div className="flex items-center justify-between pt-2 border-t border-white/[0.08] text-[9px] text-plt-muted font-mono">
+        <span>{visibleSignalData?.modelVersion || 'PSI v1.0'}</span>
         <span>Updated {visibleSignalData?.date ? new Date(visibleSignalData.date).toLocaleDateString() : 'Live'}</span>
       </div>
     </div>
   );
 
+  const displaySignal = isBuy ? 'Buy' : isExit ? 'Sell' : 'Hold';
+
   return (
-    <div className="absolute top-4 right-[68px] z-30 w-72 md:w-80 bg-[#09090b]/80 hover:bg-[#09090b]/95 backdrop-blur-2xl border border-white/[0.12] hover:border-white/[0.22] rounded-xl shadow-2xl flex flex-col transition-all">
+    <div className="absolute top-3 right-3 z-30 w-auto min-w-[280px] max-w-[380px] bg-white/[0.06] hover:bg-white/[0.08] backdrop-blur-2xl border border-white/[0.16] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.37)] flex flex-col transition-all select-none">
       {/* -------------------------------------------------- */}
-      {/* FLOATING HUD (COLLAPSED HEADER)                   */}
+      {/* FLOATING HUD (COLLAPSED HEADER - SINGLE ROW)      */}
       {/* -------------------------------------------------- */}
-      <div 
-        className={`p-3 cursor-pointer hover:bg-white/[0.03] transition-colors flex flex-col gap-2 ${expanded ? 'rounded-t-xl' : 'rounded-xl'}`}
+      <div
+        className="p-2 cursor-pointer flex items-center justify-between gap-2"
         onClick={() => setExpanded(!expanded)}
       >
-        {/* Row 1: Strategy Label + Strategy Dropdown + Alpha Spread Badge + Eye Toggle */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-white/80" onClick={(e) => e.stopPropagation()}>
-            <Target className="w-3.5 h-3.5 text-plt-orange shrink-0" />
-            <select
-              value={selectedStrategy}
-              onChange={(e) => setSelectedStrategy(e.target.value)}
-              className="bg-zinc-900 border border-white/10 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-plt-orange cursor-pointer tracking-wide uppercase"
-            >
-              {strategies.map((strat) => (
-                <option key={strat.id} value={strat.id} className="bg-zinc-900 text-white">
-                  {strat.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Left: Custom Strategy Selector Dropdown */}
+        <div className="relative flex items-center min-w-0" ref={strategyDropdownRef} onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setIsStrategyDropdownOpen((prev) => !prev)}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 -ml-1 rounded-md text-xs font-semibold text-plt-text hover:bg-white/[0.08] active:bg-white/[0.12] transition-colors cursor-pointer tracking-tight"
+          >
+            <span className="truncate max-w-[130px] sm:max-w-[160px]">{activeStratDef?.label || 'Select Strategy'}</span>
+            <ChevronDown
+              size={12}
+              className={`text-plt-muted transition-transform duration-200 shrink-0 ${isStrategyDropdownOpen ? 'rotate-180 text-plt-text' : ''}`}
+            />
+          </button>
 
-          <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            {roiMarginVal !== null && (
-              <span 
-                className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] border ${
-                  roiMarginVal >= 0 
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                    : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                }`}
-                title={`Alpha Margin: ${roiMarginVal > 0 ? '+' : ''}${roiMarginVal.toFixed(2)}%`}
+          <AnimatePresence>
+            {isStrategyDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="absolute top-full left-0 mt-1.5 min-w-[210px] w-max max-w-[260px] bg-plt-raised/95 backdrop-blur-2xl border border-plt-border-strong rounded-xl shadow-[0_12px_32px_rgba(0,0,0,0.5)] p-1 z-50 overflow-hidden"
               >
-                {roiMarginVal > 0 ? `+${roiMarginVal.toFixed(1)}% α` : `${roiMarginVal.toFixed(1)}% α`}
-              </span>
+                <div className="px-2 py-1 text-[9px] font-mono uppercase tracking-wider text-plt-muted border-b border-plt-border/50 mb-1">
+                  Active Strategies
+                </div>
+                <div className="space-y-0.5">
+                  {strategies.map((strat) => {
+                    const isSelected = strat.id === selectedStrategy;
+                    return (
+                      <button
+                        key={strat.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedStrategy(strat.id);
+                          setIsStrategyDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left text-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-white/[0.12] text-white font-medium shadow-sm'
+                            : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.06]'
+                        }`}
+                      >
+                        <div className="flex flex-col min-w-0 pr-2">
+                          <span className={`text-xs ${isSelected ? 'font-semibold text-white' : 'text-plt-text'}`}>
+                            {strat.label}
+                          </span>
+                          {strat.description && (
+                            <span className="text-[10px] text-plt-muted font-normal leading-tight line-clamp-1 mt-0.5">
+                              {strat.description}
+                            </span>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-plt-profit shrink-0 shadow-[0_0_8px_var(--plt-profit)]" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
             )}
-            {setShowSignals && (
-              <button
-                type="button"
-                onClick={() => setShowSignals(!showSignals)}
-                className={`p-1 rounded-[4px] transition-colors ${
-                  !showSignals
-                    ? 'text-plt-orange bg-plt-orange/15 border border-plt-orange/30'
-                    : 'text-white/40 hover:text-white hover:bg-white/[0.06] border border-transparent'
-                }`}
-                title={showSignals ? "Hide Signals" : "Show Signals"}
-              >
-                {showSignals ? <Eye size={13} /> : <EyeOff size={13} />}
-              </button>
-            )}
-          </div>
+          </AnimatePresence>
         </div>
 
-        {/* Row 2: Live Signal Status + Master Index + Expand Chevron */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {loading ? (
-              <div className="flex items-center gap-1.5 text-white/40 text-[11px] font-mono">
-                <Activity className="w-3 h-3 animate-spin text-plt-orange" />
-                <span>Scanning...</span>
-              </div>
-            ) : (
-              <div className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono flex items-center gap-1.5 border ${
-                isBuy 
-                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
-                  : isExit 
-                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' 
-                    : 'bg-white/[0.05] text-zinc-300 border-white/[0.08]'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  isBuy ? 'bg-emerald-400 animate-pulse' : isExit ? 'bg-rose-500' : 'bg-amber-400'
-                }`} />
-                <span className="truncate">{rawSignal}</span>
-              </div>
-            )}
-          </div>
+        {/* Right: Signal Badge + MI + Alpha + Eye + Chevron */}
+        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* Signal Status Badge (Buy / Sell / Hold) */}
+          {loading ? (
+            <div className="flex items-center gap-1 text-plt-muted text-[10px] font-mono">
+              <Activity size={11} className="animate-spin text-plt-muted" />
+            </div>
+          ) : (
+            <div
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold flex items-center gap-1 border ${
+                isBuy
+                  ? 'bg-plt-profit/15 text-plt-profit border-plt-profit/30'
+                  : isExit
+                    ? 'bg-plt-risk/15 text-plt-risk border-plt-risk/30'
+                    : 'bg-white/[0.06] text-plt-muted border-white/[0.1]'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isBuy ? 'bg-plt-profit animate-pulse' : isExit ? 'bg-plt-risk' : 'bg-plt-muted'
+                }`}
+              />
+              <span>{displaySignal}</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-2 shrink-0">
-            {masterIndex !== null && (
-              <span className="text-[10px] font-mono font-semibold text-white/50 bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/[0.06]">
-                MI: <strong className="text-white">{masterIndex.toFixed(0)}</strong>
-              </span>
-            )}
-            <ChevronDown className={`w-3.5 h-3.5 text-white/40 transition-transform duration-200 ${expanded ? 'rotate-180 text-white' : ''}`} />
-          </div>
+          {/* Master Index (MI) */}
+          {masterIndex !== null && (
+            <span className="text-[10px] font-mono text-plt-muted whitespace-nowrap">
+              MI: <strong className="text-plt-text font-semibold">{masterIndex.toFixed(0)}</strong>
+            </span>
+          )}
+
+          {/* Alpha Margin Pill */}
+          {roiMarginVal !== null && (
+            <span
+              className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${
+                roiMarginVal >= 0
+                  ? 'bg-plt-profit/15 text-plt-profit border-plt-profit/30'
+                  : 'bg-plt-risk/15 text-plt-risk border-plt-risk/30'
+              }`}
+              title={`Alpha Margin: ${roiMarginVal > 0 ? '+' : ''}${roiMarginVal.toFixed(2)}%`}
+            >
+              {roiMarginVal > 0 ? `+${roiMarginVal.toFixed(1)}% α` : `${roiMarginVal.toFixed(1)}% α`}
+            </span>
+          )}
+
+          {/* Eye Toggle Button */}
+          {setShowSignals && (
+            <button
+              type="button"
+              onClick={() => setShowSignals(!showSignals)}
+              className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                !showSignals
+                  ? 'text-plt-text bg-white/[0.10]'
+                  : 'text-plt-muted hover:text-plt-text hover:bg-white/10'
+              }`}
+              title={showSignals ? 'Hide Signals' : 'Show Signals'}
+            >
+              {showSignals ? <Eye size={14} /> : <EyeOff size={14} />}
+            </button>
+          )}
+
+          {/* Expand Chevron */}
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="p-0.5 text-plt-muted hover:text-plt-text transition-colors cursor-pointer"
+          >
+            <ChevronDown
+              size={14}
+              className={`transition-transform duration-200 ${expanded ? 'rotate-180 text-plt-text' : ''}`}
+            />
+          </button>
         </div>
       </div>
 
       {/* -------------------------------------------------- */}
-      {/* DESKTOP EXPANDED INSPECTOR BODY                    */}
+      {/* EXPANDED INSPECTOR BODY                            */}
       {/* -------------------------------------------------- */}
-      <motion.div 
-        initial={{ height: 0, opacity: 0 }}
-        animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0 }}
-        className="hidden md:block overflow-hidden border-t border-white/[0.09]"
-      >
-        <div className="p-3 bg-[#09090b]/90 backdrop-blur-2xl">
-          {renderInspectorBody()}
-        </div>
-      </motion.div>
-
-      {/* -------------------------------------------------- */}
-      {/* MOBILE EXPANDED BOTTOM SHEET DRAWER                */}
-      {/* -------------------------------------------------- */}
-      {expanded && mounted && typeof document !== 'undefined' && createPortal(
-        <div className="md:hidden fixed inset-0 z-50 overflow-hidden flex flex-col justify-end pointer-events-auto">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in"
-            onClick={() => setExpanded(false)}
-          />
-          {/* Bottom Sheet */}
-          <div className="relative w-full max-h-[85vh] bg-zinc-950 border-t border-zinc-800 rounded-t-2xl shadow-2xl z-10 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
-            {/* Drag Handle & Header */}
-            <div className="p-3 border-b border-zinc-800/80 flex flex-col items-center gap-2 bg-zinc-900/60 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-zinc-700" />
-              <div className="w-full flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-plt-orange" />
-                  <span className="text-sm font-bold text-zinc-100 uppercase tracking-wider">
-                    {trainingModel === 'psi40' ? 'PSI-40 TREND' : 'PSI-8 INFLECTION'}
-                  </span>
-                  {roiMarginVal !== null && (
-                    <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.05] ${roiMarginVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {roiMarginVal > 0 ? `+${roiMarginVal.toFixed(1)}% α` : `${roiMarginVal.toFixed(1)}% α`}
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setExpanded(false)}
-                  className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {renderInspectorBody()}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden border-t border-white/[0.08] px-2.5 pb-2.5"
+          >
+            {renderInspectorBody()}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* -------------------------------------------------- */}
       {/* WALK-FORWARD CANDIDATE COMBINATIONS DRAWER         */}
@@ -770,7 +801,7 @@ export default function SignalPanel({
             try {
               localStorage.setItem(`quantegx_custom_psi_${activeSymbol}`, JSON.stringify({ ...params, model: chosenModel }));
             } catch (e) {}
-            toast.success("Strategy Updated", `Applied combination for ${activeSymbol} on ${chosenModel.toUpperCase()}.`);
+            toast.success('Strategy Updated', `Applied combination for ${activeSymbol} on ${chosenModel.toUpperCase()}.`);
           }
         }}
       />

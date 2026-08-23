@@ -66,6 +66,17 @@ import {
   handleAvatarPost,
   handleSystemLogsGet,
 } from '@/lib/user-handlers';
+import {
+  handleBotStatusGet,
+  handleBotSettingsPost,
+  handleBotTickersGet,
+  handleBotTickerTogglePost,
+  handleBotTickerBudgetPost,
+  handleBotPositionClosePost,
+  handleBotActivityGet,
+  handleBotTradesGet,
+  handleBotSystemLogsGet,
+} from '@/lib/intraday-bot-handlers';
 
 import { createClient } from '@/lib/supabase/server';
 
@@ -171,7 +182,7 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   // 6. Sectors
   if (root === 'sectors') {
     if (sub === 'performance') return handlePerformanceGet(req);
-    if (sub === 'signals') return handleSectorSignalsGet();
+    if (sub === 'signals') return handleSectorSignalsGet(req);
     return NextResponse.json({ error: `Unknown sectors action: ${sub}` }, { status: 404 });
   }
 
@@ -210,6 +221,16 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   }
   if (root === 'system-logs' || (root === 'user' && sub === 'system-logs')) {
     return handleSystemLogsGet();
+  }
+
+  // 10. Intraday Trading Bot
+  if (root === 'bot') {
+    if (sub === 'status' || !sub) return handleBotStatusGet();
+    if (sub === 'tickers') return handleBotTickersGet(req);
+    if (sub === 'trades') return handleBotTradesGet(req);
+    if (sub === 'logs' || sub === 'system-logs') return handleBotSystemLogsGet(req);
+    if (sub === 'activity') return handleBotActivityGet();
+    return NextResponse.json({ error: `Unknown bot action: ${sub}` }, { status: 404 });
   }
 
   return NextResponse.json({ error: `API route not found: /api/${segments.join('/')}` }, { status: 404 });
@@ -269,6 +290,15 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
   }
   if (root === 'user' && sub === 'avatar') {
     return handleAvatarPost(req);
+  }
+
+  // 7. Intraday Trading Bot
+  if (root === 'bot') {
+    if (sub === 'settings' || sub === 'toggle') return handleBotSettingsPost(req);
+    if (sub === 'tickers' && segments[2] === 'toggle') return handleBotTickerTogglePost(req);
+    if (sub === 'tickers' && segments[2] === 'budget') return handleBotTickerBudgetPost(req);
+    if (sub === 'positions' && segments[2] === 'close') return handleBotPositionClosePost(req);
+    return NextResponse.json({ error: `Unknown bot action: ${sub}` }, { status: 404 });
   }
 
   return NextResponse.json({ error: `API route not found: /api/${segments.join('/')}` }, { status: 404 });

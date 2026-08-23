@@ -110,16 +110,11 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
   },
   thoth_egx_macro: {
     id: 'thoth_egx_macro',
-    label: 'Thoth EGX Macro',
-    shortName: 'THOTH',
-    description: 'Deep Learning Swing Trading Transformer for EGX Daily Timeframe',
+    label: 'THOTH EGX V3.7P',
+    shortName: 'THOTH 3.7P',
+    description: 'Frozen V3.7P Primary Growth Champion for EGX daily swing exhaustion',
     badgeClassName: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
-    settings: [
-      { key: 'buyThreshold', label: 'Buy Exhaustion %', type: 'number', default: 35, min: 10, max: 90, step: 5 },
-      { key: 'sellThreshold', label: 'Sell Exhaustion %', type: 'number', default: 85, min: 50, max: 95, step: 5 },
-      { key: 'minNetProfit', label: 'Strict No-Loss Min Net %', type: 'number', default: 0.0, min: 0.0, max: 5.0, step: 0.25 },
-      { key: 'requireGreen', label: 'Require Green Candle', type: 'boolean', default: false },
-    ],
+    settings: [],
     metrics: [
       { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },
       { key: 'masterIndexAdjusted', label: 'Pred Exhaustion', format: 'percentage', decimals: 1 },
@@ -133,7 +128,6 @@ export function getStrategyBadge(strategyId: string = 'psi'): { label: string; c
   const strat = STRATEGIES[strategyId] || STRATEGIES['psi'];
   return {
     label: strat.shortName || strat.label,
-    className: strat.badgeClassName || 'bg-white/[0.08] text-white border-white/[0.15]',
+    className: strat.badgeClassName || 'bg-plt-hover text-plt-text border-plt-border-strong',
   };
 }
-

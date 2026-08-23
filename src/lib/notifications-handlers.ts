@@ -29,7 +29,7 @@ export async function handleNotificationsGet() {
       .from(signalNotifications)
       .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
       .where(eq(signalNotifications.userId, user.id))
-      .orderBy(desc(signalNotifications.sentAt))
+      .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
       .limit(50);
 
     const newestSentAt = rows[0]?.sentAt ? new Date(rows[0].sentAt).getTime() : 0;
@@ -53,7 +53,7 @@ export async function handleNotificationsGet() {
           .from(signalNotifications)
           .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
           .where(eq(signalNotifications.userId, user.id))
-          .orderBy(desc(signalNotifications.sentAt))
+          .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
           .limit(50);
       } catch (syncErr) {
         console.error('Error during notifications lazy sync:', syncErr);

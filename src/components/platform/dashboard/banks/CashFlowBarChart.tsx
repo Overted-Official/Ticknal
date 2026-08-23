@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
-import { Landmark } from 'lucide-react';
+import Link from 'next/link';
+import { Landmark } from '@/components/ui/icon-library';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
@@ -13,60 +13,71 @@ export type MonthlyFlowPoint = {
   net: number;
 };
 
+const CHART_AXIS_COLOR = 'var(--chart-axis)';
+const COLOR_PROFIT = '#10b981';
+const COLOR_RISK = '#ef4444';
+
 interface CashFlowBarChartProps {
   data: MonthlyFlowPoint[];
 }
 
 export default function CashFlowBarChart({ data }: CashFlowBarChartProps) {
-  const router = useRouter();
   const { isPrivacy } = usePrivacyMode();
 
   return (
-    <div className="lg:col-span-2 glass-panel rounded-xl p-4 md:p-5 space-y-2 flex flex-col">
-      <div>
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-          Monthly Cash Flow Activity (Inflows vs. Outflows)
+    <div className="card-widget select-none h-full flex flex-col justify-between">
+      <div className="mb-3">
+        <h3 className="widget-title">
+          Monthly Cash Flow Activity
         </h3>
-        <p className="text-[11px] text-white/40 mt-0.5 truncate">
-          Monthly deposits & income vs. expenses and transfers
+        <p className="widget-subtitle mt-0.5">
+          Deposits & income vs expenses & outflows
         </p>
       </div>
 
       {data.length === 0 ? (
-        <div className="h-64 flex flex-col items-center justify-center text-xs text-white/40 space-y-2">
-          <Landmark size={32} className="text-white/20" />
+        <div className="h-[320px] flex flex-col items-center justify-center text-xs text-plt-muted space-y-2 font-sans">
+          <Landmark size={32} className="text-plt-faint" />
           <p>No transaction history logged yet.</p>
-          <button
-            type="button"
-            onClick={() => router.push('/wallet?tab=banks')}
-            className="text-emerald-400 hover:underline font-medium"
+          <Link
+            href="/wallet?tab=banks"
+            className="text-white/60 hover:text-white hover:underline font-semibold"
           >
             Log transactions in Wallet &rarr;
-          </button>
+          </Link>
         </div>
       ) : (
-        <div className="h-64 w-full">
+        <div className="h-[320px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <BarChart data={data} margin={{ top: 12, right: 12, left: -16, bottom: 0 }} barCategoryGap="20%">
               <XAxis
                 dataKey="month"
-                stroke="#666"
-                tick={{ fill: '#888', fontSize: 11 }}
-                axisLine={{ stroke: '#333' }}
+                stroke={CHART_AXIS_COLOR}
+                fontSize={10}
+                tickLine={false}
+                axisLine={{ stroke: 'var(--palette-chart-grid)' }}
               />
               <YAxis
-                stroke="#666"
-                tick={{ fill: '#888', fontSize: 11 }}
-                axisLine={{ stroke: '#333' }}
+                stroke={CHART_AXIS_COLOR}
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
                 tickFormatter={(v) => (isPrivacy ? '***' : `${(v / 1000).toFixed(0)}k`)}
+                width={42}
               />
               <Tooltip
-                contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: 8, fontSize: 12 }}
-                formatter={(val: any, name: any) => [isPrivacy ? '****** EGP' : `${Number(val).toLocaleString()} EGP`, name]}
+                contentStyle={{
+                  backgroundColor: 'var(--plt-bg-surface-elevated)',
+                  borderColor: 'var(--plt-border)',
+                  borderRadius: 'var(--radius-surface)',
+                  fontSize: 'var(--text-12)',
+                  fontFamily: 'var(--font-sans-token)',
+                }}
+                formatter={(val: any, name: any) => [isPrivacy ? '****** £' : `${Number(val).toLocaleString()} £`, name]}
               />
-              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
-              <Bar dataKey="inflows" name="Inflows (Income/Deposits)" fill="#22c55e" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="outflows" name="Outflows (Expenses/Injections)" fill="#ef4444" radius={[4, 4, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px', fontFamily: 'var(--font-sans-token)' }} iconType="circle" iconSize={8} />
+              <Bar dataKey="inflows" name="Inflows (Income/Deposits)" fill={COLOR_PROFIT} radius={[3, 3, 0, 0]} maxBarSize={22} />
+              <Bar dataKey="outflows" name="Outflows (Expenses/Injections)" fill={COLOR_RISK} radius={[3, 3, 0, 0]} maxBarSize={22} />
             </BarChart>
           </ResponsiveContainer>
         </div>

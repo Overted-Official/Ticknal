@@ -27,13 +27,13 @@ export const swingMapperIndicator: IndicatorDefinition = {
   compute: (bars: ChartData[]): IndicatorResult => {
     if (bars.length < 2) return { markers: [] };
     const threshold = computeSwingThreshold(bars);
-    
+
     const markers: SeriesMarker<Time>[] = [];
-    
+
     let state = 1;
     let extremumIndex = 0;
     let extremumPrice = bars[0].close;
-    
+
     for (let i = 1; i < bars.length; i++) {
       const price = bars[i].close;
       if (state === 1) {
@@ -45,7 +45,7 @@ export const swingMapperIndicator: IndicatorDefinition = {
           markers.push({
             time: bars[extremumIndex].time as Time,
             position: 'aboveBar',
-            color: '#ef5350', // Red
+            color: 'var(--plt-risk)',
             shape: 'circle',
             size: 1,
           });
@@ -62,7 +62,7 @@ export const swingMapperIndicator: IndicatorDefinition = {
           markers.push({
             time: bars[extremumIndex].time as Time,
             position: 'belowBar',
-            color: '#26a69a', // Green
+            color: 'var(--plt-profit)',
             shape: 'circle',
             size: 1,
           });
@@ -72,7 +72,7 @@ export const swingMapperIndicator: IndicatorDefinition = {
         }
       }
     }
-    
+
     return { markers };
   }
 };

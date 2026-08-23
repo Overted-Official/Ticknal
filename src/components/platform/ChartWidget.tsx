@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import {
   createChart,
   ColorType,
@@ -11,159 +10,55 @@ import {
   AreaSeries,
   HistogramSeries,
   LineSeries,
-  LineStyle,
   createSeriesMarkers,
-  type CandlestickData,
-  type AreaData,
-  type HistogramData,
   type IChartApi,
   type IPriceLine,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   type MouseEventParams,
-  type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Search, Pause, Play, RotateCcw, SkipBack, SkipForward, StepBack, StepForward, X, ChevronDown, Eye, EyeOff, Sparkles, Loader2 } from '@/components/ui/icons';
-import { BarChart2, Check, Briefcase, Plus } from 'lucide-react';
+import { Sparkles, Briefcase, X } from '@/components/ui/icon-library';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
-import { INDICATORS, getAvailableIndicators, IndicatorLine } from '@/indicators';
-import { WatchlistItem } from '@/components/platform/RightSidebar';
+import { INDICATORS, type IndicatorLine } from '@/indicators';
 import { useToast } from '@/context/ToastContext';
 
-export interface ChartData {
-  time: string; // "YYYY-MM-DD"
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
+// Modular Chart Imports
+import type {
+  ChartData,
+  ReplayState,
+  ChartOrder,
+  OrderDraft,
+  OrderOverlay,
+  StrategySignal,
+  ChartWidgetProps,
+} from './chart/types';
+import {
+  PLAYBACK_SPEEDS,
+} from './chart/types';
+import {
+  cssTokenColor,
+  resolveChartColor,
+  clampNumber,
+  buildMarkers,
+  getDefaultReplayIndex,
+  findIndexAtOrBefore,
+  parseOptionalNumber,
+} from './chart/utils';
+import ChartTickerHeader from './chart/ChartTickerHeader';
+import ChartFloatingControls from './chart/ChartFloatingControls';
+import ChartReplayControls from './chart/ChartReplayControls';
+import ChartIndicatorsPopover from './chart/ChartIndicatorsPopover';
+import ChartPredictPopover from './chart/ChartPredictPopover';
+import ChartOrderOverlays from './chart/ChartOrderOverlays';
+import ChartOrderDraftPopover from './chart/ChartOrderDraftPopover';
+import ChartLoadingSkeleton from './chart/ChartLoadingSkeleton';
 
-interface SignalBadge {
-  id: string;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  label: string;
-  detail: string;
-  kind: 'buy' | 'sell';
-}
-
-interface StrategySignal {
-  date: string;
-  signal: string;
-  price?: number;
-  entryReason?: string;
-  exitReason?: string;
-}
-
-interface SignalsResponse {
-  signals?: StrategySignal[];
-}
-
-type StrategyLevelsResponse = {
-  targetPrice: number | null;
-  stopPrice: number | null;
-  targetLabel: string | null;
-  stopLabel: string | null;
-};
-
-type ChartOrder = {
-  id: number;
-  tickerSymbol: string;
-  status: string;
-  entryDate: string;
-  entryPrice: number;
-  quantity: number;
-  targetPrice: number | null;
-  stopPrice: number | null;
-  currentPrice: number;
-  profitLoss: number;
-  profitLossPct: number;
-};
-
-type OrderDraft = {
-  date: string;
-  entryPrice: string;
-  quantity: string;
-  targetPrice: string;
-  stopPrice: string;
-  targetLabel: string | null;
-  stopLabel: string | null;
-  x: number;
-  y: number;
-  loadingLevels: boolean;
-};
-
-type OrderOverlay = {
-  id: number;
-  order: ChartOrder;
-  left: number;
-  width: number;
-  entryTop: number;
-  targetTop: number | null;
-  stopTop: number | null;
-  currentTop: number | null;
-  profitBoxTop: number | null;
-  profitBoxHeight: number;
-  stopBoxTop: number | null;
-  stopBoxHeight: number;
-  isProfit: boolean;
-  entryPrice: number;
-  currentPrice: number;
-  quantity: number;
-  marketValue: number;
-  profitLoss: number;
-  profitLossPct: number;
-};
-
-
-interface LiveQuote {
-  date: string;
-  open: number | string;
-  high: number | string;
-  low: number | string;
-  close: number | string;
-  volume: number | string;
-}
-
-export type ReplayState = {
-  active: boolean;
-  startDate: string | null;
-  endDate: string | null;
-};
-
-interface ChartWidgetProps {
-  data: ChartData[];
-  symbol: string;
-  initialReplayMode?: boolean;
-  onReplayStateChange?: (state: ReplayState) => void;
-  selectedStrategy?: string;
-  strategyParams?: Record<string, any>;
-  strategyStartDate?: string;
-  strategyEndDate?: string;
-  setStrategyStartDate?: (d: string) => void;
-  setStrategyEndDate?: (d: string) => void;
-  activeIndicators?: string[];
-  watchlist?: WatchlistItem[];
-  showSignals?: boolean;
-  onMetricsChange?: (metrics: Record<string, string> | null) => void;
-  tickerPositions?: TickerOrder[];
-  currentPrice?: number;
-}
-
-const DEFAULT_REPLAY_DATE = '2019-12-31';
-const PLAYBACK_SPEEDS = [
-  { label: '1x', delay: 900 },
-  { label: '2x', delay: 450 },
-  { label: '4x', delay: 180 },
-];
-const MAX_VISIBLE_SIGNAL_BADGES = 7;
+// Re-export shared types for backward compatibility across the app
+export type { ChartData, ReplayState };
 
 export default function ChartWidget({
   data,
@@ -183,6 +78,8 @@ export default function ChartWidget({
   tickerPositions = [],
   currentPrice,
 }: ChartWidgetProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [positionsDrawerOpen, setPositionsDrawerOpen] = useState(false);
   const openPositionsCount = tickerPositions.filter((o) => o.status === 'OPEN').length;
 
@@ -197,7 +94,6 @@ export default function ChartWidget({
   const markerApiRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const orderPriceLineRefs = useRef<Map<number, IPriceLine[]>>(new Map());
 
-  const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
   const [orders, setOrders] = useState<ChartOrder[]>([]);
   const [orderDraft, setOrderDraft] = useState<OrderDraft | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -212,11 +108,35 @@ export default function ChartWidget({
     initialReplayMode ? getDefaultReplayIndex(data) : Math.max(0, data.length - 1),
   );
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(PLAYBACK_SPEEDS[0].delay);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(PLAYBACK_SPEEDS[0].delay);
 
   const [isPredicting, setIsPredicting] = useState(false);
-  const predictionSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const predictionSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const [isChartLoading, setIsChartLoading] = useState(true);
+
+  const [predictPopoverOpen, setPredictPopoverOpen] = useState(false);
+  const [predictDaysInput, setPredictDaysInput] = useState('10');
+  const [indicatorsPopoverOpen, setIndicatorsPopoverOpen] = useState(false);
+  const [expandedIndicators, setExpandedIndicators] = useState<Record<string, boolean>>({ supportResistance: true });
+  const indicatorLineSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
+  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+
+  // Active hovered candle for live OHLCV legend
+  const [hoveredCandle, setHoveredCandle] = useState<ChartData | null>(null);
+
+  // Close positions drawer on ESC key
+  useEffect(() => {
+    if (!positionsDrawerOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPositionsDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [positionsDrawerOpen]);
+
+  const displaySymbol = symbol.replace('.CA', '');
 
   // Clear previous predictions and trigger loading skeleton on symbol/data change
   useEffect(() => {
@@ -234,867 +154,528 @@ export default function ChartWidget({
     return () => clearTimeout(timer);
   }, [symbol, data]);
 
-  const [predictPopoverOpen, setPredictPopoverOpen] = useState(false);
-  const [predictDaysInput, setPredictDaysInput] = useState("10");
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [indicatorsPopoverOpen, setIndicatorsPopoverOpen] = useState(false);
-  const [expandedIndicators, setExpandedIndicators] = useState<Record<string, boolean>>({ supportResistance: true });
-  const indicatorLineSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
-  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
-
   const toggleIndicatorExpanded = useCallback((id: string) => {
     setExpandedIndicators((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  // In-place Ticker Search State
-  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchDropdownRef = useRef<HTMLDivElement>(null);
-
-  const displaySymbol = symbol.replace('.CA', '');
-  const currentTickerItem = useMemo(() => {
-    return watchlist.find(item => item.symbol === symbol) || {
-      symbol,
-      companyName: displaySymbol,
-      logoUrl: null,
-      website: null,
-      price: data[data.length - 1]?.close ? Number(data[data.length - 1].close).toFixed(2) : '0.00',
-      isUp: true,
-      changePct: '0.00%',
-      sector: 'EGX'
-    };
-  }, [watchlist, symbol, displaySymbol, data]);
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return watchlist.slice(0, 10);
-    const q = searchQuery.toLowerCase();
-    return watchlist.filter(item => 
-      item.symbol.toLowerCase().includes(q) ||
-      item.companyName.toLowerCase().includes(q) ||
-      item.sector.toLowerCase().includes(q)
-    ).slice(0, 15);
-  }, [searchQuery, watchlist]);
-
-  // Focus search input on open
-  useEffect(() => {
-    if (isSearchDropdownOpen) {
-      setTimeout(() => searchInputRef.current?.focus(), 50);
-    }
-  }, [isSearchDropdownOpen]);
-
-  // Click outside to close dropdown
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
-        setIsSearchDropdownOpen(false);
-      }
-    }
-    if (isSearchDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isSearchDropdownOpen]);
-
-  // Keyboard shortcut ⌘K / Ctrl+K and Esc
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsSearchDropdownOpen(prev => !prev);
-      }
-      if (e.key === 'Escape' && isSearchDropdownOpen) {
-        setIsSearchDropdownOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchDropdownOpen]);
-
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const { toast } = useToast();
-  const availableIndicators = useMemo(() => getAvailableIndicators(), []);
-
-  const toggleIndicator = useCallback((id: string) => {
-    const current = new Set(activeIndicators);
-    const params = new URLSearchParams(searchParams?.toString() || '');
-    if (current.has(id)) {
-      current.delete(id);
-      params.delete(`ind_${id}_opts`);
-    } else {
-      current.add(id);
-      const ind = INDICATORS[id];
-      if (ind?.options) {
-        const defaultOpts = ind.options.filter((o) => o.defaultActive ?? true).map((o) => o.id);
-        params.set(`ind_${id}_opts`, defaultOpts.join(','));
-      }
-    }
-    if (current.size > 0) {
-      params.set('indicators', Array.from(current).join(','));
+  const handleToggleIndicator = (id: string) => {
+    const next = activeIndicators.includes(id)
+      ? activeIndicators.filter((i) => i !== id)
+      : [...activeIndicators, id];
+    const params = new URLSearchParams(window.location.search);
+    if (next.length > 0) {
+      params.set('indicators', next.join(','));
     } else {
       params.delete('indicators');
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [activeIndicators, searchParams, pathname, router]);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
-  const toggleIndicatorOption = useCallback((indicatorId: string, optionId: string) => {
-    const ind = INDICATORS[indicatorId];
-    if (!ind || !ind.options) return;
+  const handleUpdateStrategyParam = (key: string, val: any) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set(key, String(val));
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
-    const params = new URLSearchParams(searchParams?.toString() || '');
-    const rawOpts = searchParams?.get(`ind_${indicatorId}_opts`);
-    const currentActiveOpts = rawOpts
-      ? new Set(rawOpts.split(',').filter(Boolean))
-      : new Set(ind.options.filter((o) => o.defaultActive ?? true).map((o) => o.id));
+  // Replay slice
+  const visibleData = useMemo(() => {
+    if (!replayMode) return data;
+    const clampedIndex = clampNumber(replayIndex, 0, Math.max(0, data.length - 1));
+    return data.slice(0, clampedIndex + 1);
+  }, [data, replayIndex, replayMode]);
 
-    if (currentActiveOpts.has(optionId)) {
-      currentActiveOpts.delete(optionId);
-    } else {
-      currentActiveOpts.add(optionId);
-    }
+  const replayDate = replayMode ? visibleData[visibleData.length - 1]?.time ?? null : null;
+  const activeCandle = hoveredCandle ?? visibleData[visibleData.length - 1] ?? null;
 
-    const currentIndicators = new Set(activeIndicators);
-    if (currentActiveOpts.size === 0) {
-      currentIndicators.delete(indicatorId);
-      params.delete(`ind_${indicatorId}_opts`);
-    } else {
-      currentIndicators.add(indicatorId);
-      params.set(`ind_${indicatorId}_opts`, Array.from(currentActiveOpts).join(','));
-    }
-
-    if (currentIndicators.size > 0) {
-      params.set('indicators', Array.from(currentIndicators).join(','));
-    } else {
-      params.delete('indicators');
-    }
-
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [activeIndicators, searchParams, pathname, router]);
-
-  const replayDate = replayMode ? data[replayIndex]?.time ?? null : null;
-  const replayStartDate = replayMode ? data[0]?.time ?? null : null;
-  const visibleData = useMemo(
-    () => (replayMode ? data.slice(0, replayIndex + 1) : data),
-    [data, replayIndex, replayMode],
-  );
-  const hasReplayRoom = data.length > 1;
-
-  const clearOrderPriceLines = useCallback(() => {
-    const candlestickSeries = candlestickSeriesRef.current;
-    if (candlestickSeries) {
-      for (const lines of orderPriceLineRefs.current.values()) {
-        for (const line of lines) {
-          candlestickSeries.removePriceLine(line);
-        }
-      }
-    }
-    orderPriceLineRefs.current.clear();
-  }, []);
-
+  // Sync replay state upward
   useEffect(() => {
     onReplayStateChange?.({
       active: replayMode,
-      startDate: replayStartDate,
+      startDate: replayMode ? visibleData[0]?.time ?? null : null,
       endDate: replayDate,
     });
-  }, [onReplayStateChange, replayDate, replayMode, replayStartDate]);
+  }, [onReplayStateChange, replayDate, replayMode, visibleData]);
 
+  // Fetch signals
   useEffect(() => {
-    if (searchParams?.get('positions') === '1') {
-      setPositionsDrawerOpen(true);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-
-    const computedStyle = getComputedStyle(document.documentElement);
-    const bgBase = computedStyle.getPropertyValue('--bg-chart').trim() || '#171B26';
-    const textMuted = computedStyle.getPropertyValue('--text-secondary').trim() || '#8b929f';
-    const borderColor = computedStyle.getPropertyValue('--border-color').trim() || 'rgba(255, 255, 255, 0.08)';
-    const upColor = computedStyle.getPropertyValue('--up-color').trim() || '#22c55e';
-    const downColor = computedStyle.getPropertyValue('--down-color').trim() || '#ef4444';
-
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: bgBase },
-        textColor: textMuted,
-        attributionLogo: false,
-      },
-      grid: {
-        vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-        horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-      },
-      autoSize: true,
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-        borderColor,
-      },
-      rightPriceScale: {
-        borderColor,
-        scaleMargins: {
-          top: 0.1,
-          bottom: 0.12,
-        },
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: {
-          color: textMuted,
-          width: 1,
-          style: 3,
-          labelBackgroundColor: borderColor,
-        },
-        horzLine: {
-          color: textMuted,
-          width: 1,
-          style: 3,
-          labelBackgroundColor: borderColor,
-        },
-      },
-    });
-
-    let mainSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>;
-    let volumeSeries: ISeriesApi<'Histogram'> | null = null;
-
-    if (isFund) {
-      mainSeries = chart.addSeries(AreaSeries, {
-        topColor: 'rgba(59, 130, 246, 0.35)',
-        bottomColor: 'rgba(59, 130, 246, 0.02)',
-        lineColor: '#3b82f6',
-        lineWidth: 2,
-        priceFormat: {
-          type: 'price',
-          precision: 4,
-          minMove: 0.0001,
-        },
-      });
-    } else {
-      mainSeries = chart.addSeries(CandlestickSeries, {
-        upColor,
-        downColor,
-        borderVisible: false,
-        wickUpColor: upColor,
-        wickDownColor: downColor,
-      });
-
-      volumeSeries = chart.addSeries(HistogramSeries, {
-        color: '#6A2CFF',
-        priceFormat: { type: 'volume' },
-        priceScaleId: '',
-      });
-
-      chart.priceScale('').applyOptions({
-        scaleMargins: {
-          top: 0.8,
-          bottom: 0,
-        },
-      });
+    if (!showSignals) {
+      setChartSignals([]);
+      return;
     }
 
-    chartRef.current = chart;
-    candlestickSeriesRef.current = mainSeries;
-    volumeSeriesRef.current = volumeSeries;
-    markerApiRef.current = createSeriesMarkers(mainSeries as any, []);
-
-    return () => {
-      markerApiRef.current?.detach();
-      clearOrderPriceLines();
-      indicatorLineSeriesRef.current.clear();
-      markerApiRef.current = null;
-      candlestickSeriesRef.current = null;
-      volumeSeriesRef.current = null;
-      chartRef.current = null;
-      chart.remove();
-    };
-  }, [clearOrderPriceLines, symbol, isFund]);
-
-  useEffect(() => {
-    const candlestickSeries = candlestickSeriesRef.current;
-    const volumeSeries = volumeSeriesRef.current;
-    const timeScale = chartRef.current?.timeScale();
-    if (!candlestickSeries || !timeScale) return;
-
-    const currentLogicalRange = timeScale.getVisibleLogicalRange();
-
-    const upColor = '#089981';
-    const downColor = '#f23645';
-
-    if (isFund) {
-      const aData: AreaData<Time>[] = visibleData.map((d) => ({
-        time: d.time as Time,
-        value: d.close,
-      }));
-      (candlestickSeries as ISeriesApi<'Area'>).setData(aData);
-    } else {
-      const cData: CandlestickData<Time>[] = visibleData.map((d) => ({
-        time: d.time as Time,
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-      }));
-      (candlestickSeries as ISeriesApi<'Candlestick'>).setData(cData);
-
-      if (volumeSeries) {
-        const vData: HistogramData<Time>[] = visibleData.map((d) => ({
-          time: d.time as Time,
-          value: d.volume,
-          color: d.close >= d.open ? `${upColor}80` : `${downColor}80`,
-        }));
-        volumeSeries.setData(vData);
-      }
-    }
-
-    if (visibleData.length > 0) {
-      const newLastIndex = visibleData.length - 1;
-      const currentYear = new Date().getFullYear();
-      const startOfYearDate = `${currentYear}-01-01`;
-      let startOfYearIndex = visibleData.findIndex((d) => d.time >= startOfYearDate);
-      if (startOfYearIndex === -1) {
-        startOfYearIndex = Math.max(0, newLastIndex - 60);
-      }
-
-      if (replayMode) {
-        if (currentLogicalRange) {
-          const barsVisible = currentLogicalRange.to - currentLogicalRange.from;
-          const half = Math.floor(barsVisible / 2);
-          timeScale.setVisibleLogicalRange({
-            from: newLastIndex - half,
-            to: newLastIndex + half,
-          });
-        } else {
-          timeScale.setVisibleLogicalRange({
-            from: startOfYearIndex,
-            to: newLastIndex + 6,
-          });
-        }
-      } else {
-        // Default zoom: from start of current year to latest candle with right margin
-        timeScale.setVisibleLogicalRange({
-          from: startOfYearIndex,
-          to: newLastIndex + 6,
-        });
-      }
-    }
-  }, [visibleData, replayMode]);
-
-  useEffect(() => {
-    const recenterChart = () => {
-      chartRef.current?.priceScale('right').applyOptions({ autoScale: true });
-      const lastIndex = visibleData.length - 1;
-      if (lastIndex >= 0) {
-        const currentYear = new Date().getFullYear();
-        const startOfYearDate = `${currentYear}-01-01`;
-        let startOfYearIndex = visibleData.findIndex((d) => d.time >= startOfYearDate);
-        if (startOfYearIndex === -1) {
-          startOfYearIndex = Math.max(0, lastIndex - 60);
-        }
-        chartRef.current?.timeScale().setVisibleLogicalRange({
-          from: startOfYearIndex,
-          to: lastIndex + 6,
-        });
-      }
-    };
-
-    window.addEventListener('quantegx:chart-recenter', recenterChart);
-    return () => window.removeEventListener('quantegx:chart-recenter', recenterChart);
-  }, [visibleData]);
-
-  useEffect(() => {
-    const chart = chartRef.current;
-    const candlestickSeries = candlestickSeriesRef.current;
-    if (!chart || !candlestickSeries) return;
-
-    const handleChartClick = (param: MouseEventParams<Time>) => {
-      if (!param.point || !param.time) return;
-      const seriesData = param.seriesData.get(candlestickSeries) as CandlestickData<Time> | undefined;
-      const candle = seriesData ?? visibleData.find((item) => item.time === String(param.time));
-      if (!candle || !('close' in candle)) return;
-
-      const containerWidth = chartContainerRef.current?.clientWidth ?? 0;
-      const containerHeight = chartContainerRef.current?.clientHeight ?? 0;
-      const date = String(candle.time);
-      const entryPrice = Number(candle.close);
-      const x = Math.min(Math.max(param.point.x, 12), Math.max(12, containerWidth - 300));
-      const y = Math.min(Math.max(param.point.y, 12), Math.max(12, containerHeight - 210));
-      const entryPriceText = entryPrice.toFixed(2);
-
-      setOrderError(null);
-      setOrderDraft({
-        date,
-        entryPrice: entryPriceText,
-        quantity: '1',
-        targetPrice: '',
-        stopPrice: '',
-        targetLabel: null,
-        stopLabel: null,
-        x,
-        y,
-        loadingLevels: true,
-      });
-
-      fetch(`/api/strategy-levels?symbol=${encodeURIComponent(symbol)}&date=${date}&entryPrice=${entryPrice}`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((levels: StrategyLevelsResponse | null) => {
-          if (!levels) return;
-          setOrderDraft((current) => {
-            if (!current || current.date !== date || current.entryPrice !== entryPriceText) return current;
-            return {
-              ...current,
-              targetPrice: levels.targetPrice === null ? '' : levels.targetPrice.toFixed(2),
-              stopPrice: levels.stopPrice === null ? '' : levels.stopPrice.toFixed(2),
-              targetLabel: levels.targetLabel,
-              stopLabel: levels.stopLabel,
-              loadingLevels: false,
-            };
-          });
-        })
-        .catch((error) => {
-          console.error('Failed to derive strategy order levels:', error);
-          setOrderDraft((current) => (current?.date === date ? { ...current, loadingLevels: false } : current));
-        });
-    };
-
-    chart.subscribeClick(handleChartClick);
-    return () => chart.unsubscribeClick(handleChartClick);
-  }, [symbol, visibleData]);
-
-  useEffect(() => {
-    let isActive = true;
-
-    async function fetchOrders() {
+    let active = true;
+    const fetchSignals = async () => {
       try {
-        const res = await fetch(`/api/positions?symbol=${encodeURIComponent(symbol)}&status=OPEN`);
-        if (!res.ok || !isActive) return;
-        const json = await res.json();
-        if (isActive) setOrders(json.orders ?? []);
-      } catch (error) {
-        if (isActive) {
-          console.error('Failed to fetch chart orders', error);
-        }
-      }
-    }
+        const queryParams = new URLSearchParams({
+          symbol,
+          strategy: selectedStrategy,
+          ...Object.fromEntries(
+            Object.entries(strategyParams).map(([k, v]) => [k, String(v)])
+          ),
+        });
 
-    void fetchOrders();
+        if (strategyStartDate) queryParams.set('startDate', strategyStartDate);
+        if (strategyEndDate) queryParams.set('endDate', strategyEndDate);
+
+        const res = await fetch(`/api/signals?${queryParams.toString()}`);
+        if (!res.ok) throw new Error('Signals fetch failed');
+        const json = await res.json();
+        if (active) {
+          setChartSignals(Array.isArray(json.signals) ? json.signals : []);
+          onMetricsChange?.(
+            json.formattedMetrics && typeof json.formattedMetrics === 'object'
+              ? json.formattedMetrics
+              : null,
+          );
+        }
+      } catch (err) {
+        console.error('Signals loading error:', err);
+      }
+    };
+
+    fetchSignals();
     return () => {
-      isActive = false;
+      active = false;
+    };
+  }, [onMetricsChange, selectedStrategy, showSignals, strategyEndDate, strategyParams, strategyStartDate, symbol]);
+
+  // Fetch active orders for overlays
+  useEffect(() => {
+    let active = true;
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch(`/api/positions?symbol=${encodeURIComponent(symbol)}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (active && Array.isArray(json.orders)) {
+          setOrders(json.orders);
+        }
+      } catch (err) {
+        console.error('Failed to fetch orders for chart overlay', err);
+      }
+    };
+    fetchOrders();
+    return () => {
+      active = false;
     };
   }, [symbol, positionsRefreshKey]);
 
+  // Core Chart Canvas Lifecycle
   useEffect(() => {
-    const candlestickSeries = candlestickSeriesRef.current;
-    if (!candlestickSeries) return;
+    if (!chartContainerRef.current) return;
 
-    clearOrderPriceLines();
-
-    for (const order of orders) {
-      const lines: IPriceLine[] = [
-        candlestickSeries.createPriceLine({
-          price: order.entryPrice,
-          color: '#6A2CFF',
-          lineWidth: 2,
-          lineStyle: LineStyle.Solid,
-          axisLabelVisible: true,
-          title: `${order.tickerSymbol} entry`,
-        }),
-      ];
-
-      if (order.targetPrice !== null) {
-        lines.push(
-          candlestickSeries.createPriceLine({
-            price: order.targetPrice,
-            color: '#B36BFF',
-            lineWidth: 1,
-            lineStyle: LineStyle.Dashed,
-            axisLabelVisible: true,
-            title: 'target',
-          }),
-        );
-      }
-
-      if (order.stopPrice !== null) {
-        lines.push(
-          candlestickSeries.createPriceLine({
-            price: order.stopPrice,
-            color: '#F23645',
-            lineWidth: 1,
-            lineStyle: LineStyle.Dashed,
-            axisLabelVisible: true,
-            title: 'stop',
-          }),
-        );
-      }
-
-      orderPriceLineRefs.current.set(order.id, lines);
-    }
-
-    return clearOrderPriceLines;
-  }, [clearOrderPriceLines, orders]);
-
-  useEffect(() => {
-    const chart = chartRef.current;
-    const candlestickSeries = candlestickSeriesRef.current;
     const container = chartContainerRef.current;
-    if (!chart || !candlestickSeries || !container) return;
+    container.innerHTML = '';
 
-    const updateOverlays = () => {
-      const nextOrderOverlays = orders
-        .map((order) => buildOrderOverlay(order, chart, candlestickSeries, container, visibleData))
-        .filter((overlay): overlay is OrderOverlay => overlay !== null);
-
-      setOrderOverlays(nextOrderOverlays);
-    };
-
-    updateOverlays();
-    chart.timeScale().subscribeVisibleTimeRangeChange(updateOverlays);
-    window.addEventListener('resize', updateOverlays);
-
-    return () => {
-      chart.timeScale().unsubscribeVisibleTimeRangeChange(updateOverlays);
-      window.removeEventListener('resize', updateOverlays);
-    };
-  }, [chartSignals, orders, visibleData]);
-
-  useEffect(() => {
-    let isActive = true;
-
-    async function fetchSignals() {
-      try {
-        const params = new URLSearchParams({ 
-          symbol, 
-          strategy: selectedStrategy,
-        });
-        
-        Object.entries(strategyParams).forEach(([k, v]) => {
-          if (v !== undefined && v !== null) {
-            params.set(k, String(v));
-          }
-        });
-        if (replayMode && replayDate) {
-          let parsedReplayDate = replayDate;
-          if (typeof replayDate === 'object') {
-             parsedReplayDate = `${(replayDate as any).year}-${String((replayDate as any).month).padStart(2, '0')}-${String((replayDate as any).day).padStart(2, '0')}`;
-          }
-          if (strategyStartDate) params.set('start', strategyStartDate);
-          params.set('end', parsedReplayDate as string);
-        } else {
-          if (strategyStartDate) params.set('start', strategyStartDate);
-          if (strategyEndDate) params.set('end', strategyEndDate);
-        }
-
-        const res = await fetch(`/api/signals?${params.toString()}`);
-        if (!res.ok || !isActive) return;
-
-        const json = await res.json();
-        if (!isActive) return;
-
-        const signals = json.signals ?? [];
-        setChartSignals(signals);
-
-        const metricsObj = json.formattedMetrics || json.metrics;
-        if (metricsObj) {
-          setMetrics(metricsObj);
-          onMetricsChange?.(metricsObj);
-        }
-      } catch (error: any) {
-        if (isActive) {
-          console.error('Failed to fetch signals & metrics', error);
-        }
-      }
-    }
-    void fetchSignals();
-    return () => {
-      isActive = false;
-    };
-  }, [
-    symbol,
-    data,
-    replayMode,
-    replayDate,
-    replayStartDate,
-    strategyStartDate,
-    strategyEndDate,
-    selectedStrategy,
-    strategyParams,
-    onMetricsChange,
-  ]);
-
-  const { indicatorMarkers, indicatorLines } = useMemo(() => {
-    let combinedMarkers: SeriesMarker<Time>[] = [];
-    let combinedLines: IndicatorLine[] = [];
-    if (!activeIndicators || activeIndicators.length === 0) {
-      return { indicatorMarkers: combinedMarkers, indicatorLines: combinedLines };
-    }
-    for (const id of activeIndicators) {
-      const ind = INDICATORS[id];
-      if (ind) {
-        let optionsState: Record<string, boolean> | undefined;
-        if (ind.options && ind.options.length > 0) {
-          const rawOpts = searchParams?.get(`ind_${id}_opts`);
-          if (rawOpts) {
-            const activeSet = new Set(rawOpts.split(',').filter(Boolean));
-            optionsState = {};
-            ind.options.forEach((opt) => {
-              optionsState![opt.id] = activeSet.has(opt.id);
-            });
-          } else {
-            optionsState = {};
-            ind.options.forEach((opt) => {
-              optionsState![opt.id] = opt.defaultActive ?? true;
-            });
-          }
-        }
-        const res = ind.compute(visibleData, optionsState);
-        if (res.markers) combinedMarkers = [...combinedMarkers, ...res.markers];
-        if (res.lines) combinedLines = [...combinedLines, ...res.lines];
-      }
-    }
-    return { indicatorMarkers: combinedMarkers, indicatorLines: combinedLines };
-  }, [visibleData, activeIndicators, searchParams]);
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const chart = chartRef.current;
-    const currentSeriesMap = indicatorLineSeriesRef.current;
-    const activeLineIds = new Set(indicatorLines.map((l) => l.id));
-
-    // Remove obsolete line series
-    for (const [id, series] of Array.from(currentSeriesMap.entries())) {
-      if (!activeLineIds.has(id)) {
-        try {
-          chart.removeSeries(series);
-        } catch {}
-        currentSeriesMap.delete(id);
-      }
-    }
-
-    // Add or update active line series
-    for (const line of indicatorLines) {
-      let series = currentSeriesMap.get(line.id);
-      if (!series) {
-        series = chart.addSeries(LineSeries, {
-          color: line.color,
-          lineWidth: (line.lineWidth as any) ?? 2,
-          lineStyle: (line.lineStyle as any) ?? 0,
-          priceLineVisible: false,
-          lastValueVisible: false,
-          crosshairMarkerVisible: true,
-        });
-        currentSeriesMap.set(line.id, series);
-      } else {
-        series.applyOptions({
-          color: line.color,
-          lineWidth: (line.lineWidth as any) ?? 2,
-          lineStyle: (line.lineStyle as any) ?? 0,
-        });
-      }
-      series.setData(line.data as any);
-    }
-  }, [indicatorLines]);
-
-  useEffect(() => {
-    if (!markerApiRef.current) return;
-    
-    const strategyMarkers = showSignals ? buildMarkers(chartSignals) : [];
-    
-    // Sort all markers by time as required by lightweight-charts
-    const allMarkers = [...strategyMarkers, ...indicatorMarkers].sort((a, b) => {
-      if (a.time < b.time) return -1;
-      if (a.time > b.time) return 1;
-      return 0;
+    const chart = createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
+      layout: {
+        background: { type: ColorType.Solid, color: cssTokenColor('--palette-chart', '#141B28') },
+        textColor: cssTokenColor('--plt-muted', '#737373'),
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: cssTokenColor('--palette-chart-grid', '#1D2431') },
+        horzLines: { color: cssTokenColor('--palette-chart-grid', '#1D2431') },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
+      rightPriceScale: {
+        borderColor: cssTokenColor('--palette-chart-grid', '#1D2431'),
+      },
+      timeScale: {
+        borderColor: cssTokenColor('--palette-chart-grid', '#1D2431'),
+        timeVisible: true,
+        secondsVisible: false,
+      },
     });
-    
-    markerApiRef.current.setMarkers(allMarkers);
-  }, [chartSignals, indicatorMarkers, buildMarkers, showSignals]);
 
+    chartRef.current = chart;
+
+    let mainSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>;
+    if (isFund) {
+      mainSeries = chart.addSeries(AreaSeries, {
+        topColor: 'rgba(255, 255, 255, 0.14)',
+        bottomColor: 'rgba(255, 255, 255, 0.02)',
+        lineColor: cssTokenColor('--plt-text-primary', '#ffffff'),
+        lineWidth: 2,
+      });
+    } else {
+      mainSeries = chart.addSeries(CandlestickSeries, {
+        upColor: cssTokenColor('--plt-profit', '#089981'),
+        downColor: cssTokenColor('--plt-risk', '#f23645'),
+        borderUpColor: cssTokenColor('--plt-profit', '#089981'),
+        borderDownColor: cssTokenColor('--plt-risk', '#f23645'),
+        wickUpColor: cssTokenColor('--plt-profit', '#089981'),
+        wickDownColor: cssTokenColor('--plt-risk', '#f23645'),
+      });
+    }
+    candlestickSeriesRef.current = mainSeries;
+
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      color: cssTokenColor('--palette-chart-grid', '#1D2431'),
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+    });
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: { top: 0.82, bottom: 0 },
+    });
+    volumeSeriesRef.current = volumeSeries;
+
+    // Crosshair movement tracking for live OHLCV legend
+    chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
+      if (
+        !param.point ||
+        !param.time ||
+        param.point.x < 0 ||
+        param.point.x > container.clientWidth ||
+        param.point.y < 0 ||
+        param.point.y > container.clientHeight
+      ) {
+        setHoveredCandle(null);
+      } else {
+        const timeStr = typeof param.time === 'string' ? param.time : String(param.time);
+        const candle = (data || []).find((d) => d.time === timeStr);
+        if (candle) {
+          setHoveredCandle(candle);
+        }
+      }
+    });
+
+    // Chart Click Handler: click on any candle to draft an open position
+    chart.subscribeClick((param: MouseEventParams<Time>) => {
+      if (!param.point || !param.time || !candlestickSeriesRef.current) {
+        return;
+      }
+      const timeStr = typeof param.time === 'string'
+        ? param.time
+        : (param.time as any).year
+        ? `${(param.time as any).year}-${String((param.time as any).month).padStart(2, '0')}-${String((param.time as any).day).padStart(2, '0')}`
+        : String(param.time);
+
+      const allData = data && data.length > 0 ? data : [];
+      const bar = allData.find((d) => d.time === timeStr);
+      const clickPrice = bar ? bar.close : (candlestickSeriesRef.current.coordinateToPrice(param.point.y) ?? 0);
+      if (!clickPrice || clickPrice <= 0) return;
+
+      const chartWidth = container.clientWidth;
+      const chartHeight = container.clientHeight;
+
+      const popoverX = Math.min(Math.max(16, param.point.x - 140), chartWidth - 300);
+      const popoverY = Math.min(Math.max(16, param.point.y - 120), chartHeight - 340);
+
+      const estimatedStop = (clickPrice * 0.95).toFixed(2);
+      const estimatedTarget = (clickPrice * 1.08).toFixed(2);
+
+      setOrderDraft({
+        x: popoverX,
+        y: popoverY,
+        date: timeStr,
+        entryPrice: clickPrice.toFixed(2),
+        quantity: '10',
+        targetPrice: estimatedTarget,
+        stopPrice: estimatedStop,
+        targetLabel: '+8% Target',
+        stopLabel: '-5% Stop',
+        loadingLevels: false,
+      });
+    });
+
+    // Resize Observer
+    const handleResize = () => {
+      if (chartContainerRef.current && chartRef.current) {
+        chartRef.current.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+          height: chartContainerRef.current.clientHeight,
+        });
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+      chartRef.current = null;
+    };
+  }, [data, isFund]);
+
+  // Sync data to series
   useEffect(() => {
-    if (replayMode) return;
+    if (!candlestickSeriesRef.current || !volumeSeriesRef.current) return;
 
-    const fetchLiveQuote = async () => {
+    if (isFund) {
+      (candlestickSeriesRef.current as ISeriesApi<'Area'>).setData(
+        visibleData.map((d) => ({ time: d.time as Time, value: d.close }))
+      );
+    } else {
+      (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>).setData(
+        visibleData.map((d) => ({
+          time: d.time as Time,
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+        }))
+      );
+    }
+
+    volumeSeriesRef.current.setData(
+      visibleData.map((d) => ({
+        time: d.time as Time,
+        value: d.volume,
+        color: d.close >= d.open ? 'rgba(8, 153, 129, 0.4)' : 'rgba(242, 54, 69, 0.4)',
+      }))
+    );
+  }, [isFund, visibleData]);
+
+  // Signal Markers
+  useEffect(() => {
+    if (!candlestickSeriesRef.current) return;
+
+    if (!showSignals || chartSignals.length === 0) {
+      if (markerApiRef.current) {
+        markerApiRef.current.setMarkers([]);
+      }
+      return;
+    }
+
+    const markers = buildMarkers(chartSignals);
+    if (!markerApiRef.current) {
+      markerApiRef.current = createSeriesMarkers(candlestickSeriesRef.current, markers);
+    } else {
+      markerApiRef.current.setMarkers(markers);
+    }
+  }, [chartSignals, showSignals]);
+
+  // Dynamic Indicators Rendering
+  useEffect(() => {
+    if (!chartRef.current || visibleData.length === 0) return;
+
+    const chart = chartRef.current;
+    const currentLines = indicatorLineSeriesRef.current;
+
+    // Clear stale indicator series
+    currentLines.forEach((series) => {
       try {
-        if (!data || data.length === 0) return;
-        const lastCandleTime = data[data.length - 1].time;
+        chart.removeSeries(series);
+      } catch {}
+    });
+    currentLines.clear();
 
-        const res = await fetch(`/api/quote?symbol=${symbol}`);
-        if (!res.ok) return;
-        const liveData = (await res.json()) as LiveQuote;
-        if (!liveData || !liveData.date) return;
+    activeIndicators.forEach((indId) => {
+      const config = INDICATORS[indId];
+      if (!config) return;
 
-        const close = Number(liveData.close);
-        const open = Number(liveData.open);
-        const high = Number(liveData.high);
-        const low = Number(liveData.low);
+      try {
+        const optionsState = Object.fromEntries(
+          (config.options || []).map((opt) => [
+            opt.id,
+            Boolean(strategyParams[`${indId}_${opt.id}`] ?? opt.defaultActive),
+          ])
+        );
 
-        if (isNaN(close) || isNaN(open)) return;
+        const result = config.compute(visibleData, optionsState);
 
-        // Lightweight Charts only allows updating the latest bar (time >= last candle time)
-        if (liveData.date < lastCandleTime) return;
-
-        try {
-          if (isFund) {
-            (candlestickSeriesRef.current as ISeriesApi<'Area'>)?.update({
-              time: liveData.date as Time,
-              value: close,
+        if (result.lines) {
+          result.lines.forEach((line: IndicatorLine) => {
+            const series = chart.addSeries(LineSeries, {
+              color: resolveChartColor(line.color),
+              lineWidth: (line.lineWidth as any) || 1,
+              lineStyle: line.lineStyle ?? 0,
+              title: line.name,
             });
-          } else {
-            (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>)?.update({
-              time: liveData.date as Time,
-              open,
-              high: isNaN(high) ? Math.max(open, close) : high,
-              low: isNaN(low) ? Math.min(open, close) : low,
-              close,
-            });
+            series.setData(line.data.map((d) => ({ time: d.time, value: d.value })));
+            currentLines.set(`${indId}_${line.id || line.name}`, series);
+          });
+        }
+      } catch (err) {
+        console.error(`Error calculating indicator ${indId}:`, err);
+      }
+    });
+  }, [activeIndicators, strategyParams, visibleData]);
 
-            if (volumeSeriesRef.current && liveData.volume !== undefined) {
-              const vol = Number(liveData.volume);
-              if (!isNaN(vol)) {
-                volumeSeriesRef.current.update({
-                  time: liveData.date as Time,
-                  value: vol,
-                  color: close >= open ? '#08998180' : '#f2364580',
-                });
-              }
+  // Calculate position overlays coordinates
+  const updateOrderOverlays = useCallback(() => {
+    if (!chartRef.current || !candlestickSeriesRef.current || !chartContainerRef.current) {
+      setOrderOverlays([]);
+      return;
+    }
+
+    const chart = chartRef.current;
+    const series = candlestickSeriesRef.current;
+    const timeScale = chart.timeScale();
+    const width = chartContainerRef.current.clientWidth;
+
+    const overlays: OrderOverlay[] = [];
+
+    orders
+      .filter((o) => o.status === 'OPEN')
+      .forEach((order) => {
+        const entryCoordinate = series.priceToCoordinate(order.entryPrice);
+        if (entryCoordinate === null) return;
+
+        const targetCoordinate = order.targetPrice !== null ? series.priceToCoordinate(order.targetPrice) : null;
+        const stopCoordinate = order.stopPrice !== null ? series.priceToCoordinate(order.stopPrice) : null;
+        const currentCoordinate = series.priceToCoordinate(order.currentPrice);
+
+        const entryDateClean = (order.entryDate || '').split('T')[0].split(' ')[0];
+        let xCoordinate = timeScale.timeToCoordinate(entryDateClean as Time);
+
+        if (xCoordinate === null && data && data.length > 0) {
+          const targetTime = new Date(entryDateClean).getTime();
+          let closestBar = data[0];
+          let minDiff = Math.abs(new Date(data[0].time).getTime() - targetTime);
+          for (let i = 1; i < data.length; i++) {
+            const diff = Math.abs(new Date(data[i].time).getTime() - targetTime);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closestBar = data[i];
             }
           }
-        } catch {
-          // Safeguard against any unexpected non-monotonic timestamp updates
+          xCoordinate = timeScale.timeToCoordinate(closestBar.time as Time);
         }
-      } catch (error) {
-        console.error('Failed to poll live chart data', error);
-      }
+
+        const left = xCoordinate !== null ? xCoordinate : 10;
+        const boxWidth = Math.max(100, width - left - 55);
+
+        let profitBoxTop: number | null = null;
+        let profitBoxHeight = 0;
+        if (targetCoordinate !== null) {
+          profitBoxTop = Math.min(entryCoordinate, targetCoordinate);
+          profitBoxHeight = Math.abs(entryCoordinate - targetCoordinate);
+        }
+
+        let stopBoxTop: number | null = null;
+        let stopBoxHeight = 0;
+        if (stopCoordinate !== null) {
+          stopBoxTop = Math.min(entryCoordinate, stopCoordinate);
+          stopBoxHeight = Math.abs(entryCoordinate - stopCoordinate);
+        }
+
+        overlays.push({
+          id: order.id,
+          order,
+          left,
+          width: boxWidth,
+          entryTop: entryCoordinate,
+          targetTop: targetCoordinate,
+          stopTop: stopCoordinate,
+          currentTop: currentCoordinate,
+          profitBoxTop,
+          profitBoxHeight,
+          stopBoxTop,
+          stopBoxHeight,
+          isProfit: order.profitLoss >= 0,
+          entryPrice: order.entryPrice,
+          currentPrice: order.currentPrice,
+          quantity: order.quantity,
+          marketValue: order.quantity * order.currentPrice,
+          profitLoss: order.profitLoss,
+          profitLossPct: order.profitLossPct,
+        });
+      });
+
+    setOrderOverlays(overlays);
+  }, [orders, data]);
+
+  // Subscribe to time scale changes (pan, zoom) so overlays stay locked to candles
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const timeScale = chartRef.current.timeScale();
+    const handleRangeChange = () => {
+      updateOrderOverlays();
     };
 
-    fetchLiveQuote();
-    const intervalId = setInterval(fetchLiveQuote, 15000);
-    return () => clearInterval(intervalId);
-  }, [replayMode, symbol, data, isFund]);
+    timeScale.subscribeVisibleLogicalRangeChange(handleRangeChange);
+    timeScale.subscribeVisibleTimeRangeChange(handleRangeChange);
 
+    updateOrderOverlays();
+
+    return () => {
+      try {
+        timeScale.unsubscribeVisibleLogicalRangeChange(handleRangeChange);
+        timeScale.unsubscribeVisibleTimeRangeChange(handleRangeChange);
+      } catch {}
+    };
+  }, [updateOrderOverlays, visibleData]);
+
+  // Replay playback timer
   useEffect(() => {
     if (!replayMode || !isPlaying) return;
-    if (replayIndex >= data.length - 1) return;
 
-    const intervalId = window.setInterval(() => {
+    const timer = setInterval(() => {
       setReplayIndex((current) => {
-        if (current >= data.length - 2) {
-          // Pause when reaching the end
-          window.setTimeout(() => setIsPlaying(false), 0);
-          return current + 1;
+        if (current >= data.length - 1) {
+          setIsPlaying(false);
+          return current;
         }
         return current + 1;
       });
     }, playbackSpeed);
 
-    return () => window.clearInterval(intervalId);
-  }, [data.length, isPlaying, playbackSpeed, replayIndex, replayMode]);
+    return () => clearInterval(timer);
+  }, [data.length, isPlaying, playbackSpeed, replayMode]);
 
-  const handlePredict = async () => {
-    const days = parseInt(predictDaysInput, 10);
-    if (isNaN(days) || days <= 0) return;
-
-    setPredictPopoverOpen(false);
+  // AI Prediction Handler
+  const handleRunPrediction = async (days: number) => {
+    if (isPredicting || !symbol || !data || data.length === 0) return;
     setIsPredicting(true);
     try {
-      // Use up to 90 days of history for context
-      const historySize = Math.min(90, visibleData.length);
-      const history = visibleData.slice(visibleData.length - historySize);
-      
       const res = await fetch('/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ history, predictDays: days })
+        body: JSON.stringify({
+          history: visibleData.slice(-60),
+          predictDays: days,
+        }),
       });
-      
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status}`);
+      if (!res.ok) throw new Error('Prediction request failed');
+      const json = await res.json();
+      if (!json.predictions || !Array.isArray(json.predictions) || json.predictions.length === 0) {
+        toast.info('No forecast data returned');
+        return;
       }
-      
-      const { predictions } = await res.json();
-      
-      if (chartRef.current) {
-        if (!predictionSeriesRef.current) {
-          predictionSeriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
-            upColor: 'rgba(245, 158, 11, 0.4)',    // TV Accent orange (transparent)
-            downColor: 'rgba(245, 158, 11, 0.4)',  // TV Accent orange (transparent)
-            borderVisible: true,
-            borderColor: '#F59E0B',
-            wickUpColor: '#F59E0B',
-            wickDownColor: '#F59E0B',
-          });
-        }
-        
-        // Connect the prediction line to the last candle
-        const lineData = predictions.map((p: any) => ({
-          time: p.date as Time,
-          open: p.open,
-          high: p.high,
-          low: p.low,
-          close: p.close
-        }));
-        
-        if (predictionSeriesRef.current) {
-          predictionSeriesRef.current.setData(lineData);
-        }
+      if (!chartRef.current) return;
+      if (predictionSeriesRef.current) {
+        try {
+          chartRef.current.removeSeries(predictionSeriesRef.current);
+        } catch {}
+        predictionSeriesRef.current = null;
       }
-    } catch (err) {
-      console.error("Prediction failed:", err);
-      toast.error("Prediction Failed", "Check console for details.");
+      const predSeries = chartRef.current.addSeries(CandlestickSeries, {
+        upColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 0.7)'),
+        downColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 0.7)'),
+        borderUpColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 1)'),
+        borderDownColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 1)'),
+        wickUpColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 1)'),
+        wickDownColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 1)'),
+      });
+      predSeries.setData(json.predictions);
+      predictionSeriesRef.current = predSeries;
+      toast.success(`Forecasted next ${json.predictions.length} trading days`);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to generate prediction');
     } finally {
       setIsPredicting(false);
     }
   };
 
-  const enableReplay = () => {
-    if (!hasReplayRoom) return;
-    setIsPlaying(false);
-    setReplayMode(true);
-    setReplayIndex((current) => (current >= data.length - 1 ? getDefaultReplayIndex(data) : current));
-    syncReplayUrl(true);
-  };
-
-  const exitReplay = () => {
-    setIsPlaying(false);
-    setReplayMode(false);
-    setReplayIndex(Math.max(0, data.length - 1));
-    syncReplayUrl(false);
-  };
-
-  const jumpToStart = () => {
-    setIsPlaying(false);
-    setReplayIndex(getDefaultReplayIndex(data));
-  };
-
-  const jumpToLatest = () => {
-    setIsPlaying(false);
-    setReplayIndex(Math.max(0, data.length - 1));
-  };
-
-  const stepReplay = (step: number) => {
-    setIsPlaying(false);
-    setReplayIndex((current) => Math.min(Math.max(current + step, 0), Math.max(0, data.length - 1)));
-  };
-
-  const handleDateChange = (value: string) => {
-    setIsPlaying(false);
-    setReplayIndex(findIndexAtOrBefore(data, value));
-    if (setStrategyStartDate) {
-      setStrategyStartDate(value);
-    }
-  };
-
-  const saveOrderDraft = async () => {
+  // Save Order Draft Handler
+  const handleSaveOrderDraft = async () => {
     if (!orderDraft) return;
-
-    const entryPrice = Number(orderDraft.entryPrice);
-    const quantity = Number(orderDraft.quantity);
+    const entryPrice = parseOptionalNumber(orderDraft.entryPrice);
+    const quantity = parseOptionalNumber(orderDraft.quantity);
     const targetPrice = parseOptionalNumber(orderDraft.targetPrice);
     const stopPrice = parseOptionalNumber(orderDraft.stopPrice);
 
-    if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
-      setOrderError('Entry price must be greater than zero.');
+    if (entryPrice === null || entryPrice <= 0) {
+      setOrderError('Enter a valid entry price');
+      return;
+    }
+    if (quantity === null || quantity <= 0) {
+      setOrderError('Enter a valid quantity');
       return;
     }
 
@@ -1106,1051 +687,239 @@ export default function ChartWidget({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          symbol,
+          tickerSymbol: symbol,
           entryDate: orderDraft.date,
           entryPrice,
-          quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+          quantity,
           targetPrice,
           stopPrice,
+          status: 'OPEN',
         }),
       });
 
-      const json = await res.json();
       if (!res.ok) {
-        setOrderError(json.error ?? 'Could not save the order.');
-        return;
+        const errJson = await res.json();
+        throw new Error(errJson.error || 'Failed to save position');
       }
 
-      setOrders((current) => [json.order, ...current.filter((order) => order.id !== json.order.id)]);
       setOrderDraft(null);
-    } catch (error) {
-      console.error('Failed to save order:', error);
-      setOrderError('Could not save the order.');
+      setPositionsRefreshKey((k) => k + 1);
+      toast.success('Position opened successfully');
+    } catch (err: any) {
+      setOrderError(err.message || 'Failed to save position');
     } finally {
       setSavingOrder(false);
     }
   };
 
+  // Predict button UI element
   const predictButtonUI = (
     <div className="relative">
       <button
         type="button"
-        title="Predict Future"
-        onClick={() => setPredictPopoverOpen(true)}
-        disabled={isPredicting || data.length === 0}
-        className="h-7.5 rounded-md border border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.18] px-2 sm:px-3 text-xs font-medium text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center"
+        title="AI Forecast"
+        aria-label="AI Forecast"
+        disabled={isPredicting || !data || data.length === 0}
+        onClick={() => setPredictPopoverOpen((prev) => !prev)}
+        className={`h-8 rounded-full px-2.5 sm:px-3 text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+          predictionSeriesRef.current
+            ? 'bg-plt-info/15 text-plt-info border border-plt-info/30 font-semibold'
+            : 'text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08]'
+        } disabled:cursor-not-allowed disabled:opacity-40`}
       >
-        <span className="flex items-center gap-1.5">
-          {isPredicting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-plt-orange" />
-          ) : (
-            <Sparkles className="h-3.5 w-3.5 text-plt-orange" />
-          )}
-          <span className="hidden sm:inline">{isPredicting ? 'Predicting...' : 'Predict N Days'}</span>
-          <span className="sm:hidden">{isPredicting ? '...' : 'Predict'}</span>
-        </span>
+        <Sparkles size={13} className={isPredicting ? 'animate-spin text-plt-text' : 'text-plt-muted'} />
+        <span className="hidden sm:inline">Predict</span>
       </button>
-
-      {predictPopoverOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-md border border-white/[0.15] bg-black/85 backdrop-blur-2xl p-3.5 text-xs text-white shadow-2xl z-[60]">
-          <div className="mb-2.5 flex items-center justify-between">
-            <div className="font-semibold text-white/90 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-plt-orange" /> AI Forecast
-            </div>
-            <button
-              type="button"
-              onClick={() => setPredictPopoverOpen(false)}
-              className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 hover:bg-white/[0.08] hover:text-white transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-          
-          <div className="space-y-2.5">
-            <div>
-              <label className="mb-1 block text-[10px] uppercase tracking-wider text-white/50">Forecast Horizon (Days)</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={predictDaysInput}
-                onChange={(e) => setPredictDaysInput(e.target.value)}
-                className="h-7 w-full rounded-md border border-white/[0.09] bg-white/[0.03] px-2.5 text-xs text-white outline-none transition-colors focus:border-plt-orange"
-              />
-            </div>
-            
-            <button
-              type="button"
-              onClick={handlePredict}
-              className="h-8 w-full rounded-md bg-plt-orange text-xs font-medium text-white transition-all hover:bg-plt-orange-hover"
-            >
-              Run Prediction
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 
   return (
-    <div className="flex-1 w-full h-full relative bg-tv-chart">
-      <div className="absolute inset-0" ref={chartContainerRef} />
-
-      {/* Top-Left In-Place Ticker Selector Pill & Search Dropdown */}
-      <div className="absolute top-4 left-4 z-30" ref={searchDropdownRef}>
-        {/* Interactive Trigger Pill */}
-        <button
-          type="button"
-          onClick={() => setIsSearchDropdownOpen((prev) => !prev)}
-          className="group flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-black/60 hover:bg-black/75 border border-white/[0.12] hover:border-white/[0.22] shadow-2xl backdrop-blur-xl transition-all text-left cursor-pointer select-none"
-        >
-          {/* Logo / Initials */}
-          <div className="w-5 h-5 rounded-[4px] bg-white/[0.04] border border-white/[0.09] flex items-center justify-center overflow-hidden shrink-0">
-            {currentTickerItem.logoUrl ? (
-              <img src={currentTickerItem.logoUrl} alt={displaySymbol} className="w-full h-full object-contain bg-transparent" />
-            ) : (
-              <span className="text-[9px] font-bold text-white">{displaySymbol.substring(0, 2)}</span>
-            )}
-          </div>
-
-          {/* Symbol & Name */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="font-semibold text-white text-xs tracking-tight group-hover:text-plt-orange transition-colors">
-              {displaySymbol}
-            </span>
-            <span className="text-[11px] text-white/40 font-normal hidden sm:inline truncate max-w-[140px]">
-              {currentTickerItem.companyName}
-            </span>
-          </div>
-
-          {/* Quick Search ⌘K Indicator */}
-          <div className="flex items-center gap-1 text-white/40 group-hover:text-white/80 transition-colors pl-1 border-l border-white/[0.08]">
-            <Search size={11} />
-            <ChevronDown size={11} className={`transition-transform duration-150 ${isSearchDropdownOpen ? 'rotate-180 text-white' : ''}`} />
-          </div>
-        </button>
-
-        {/* In-Place Dropdown Menu */}
-        {isSearchDropdownOpen && (
-          <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-black/85 border border-white/[0.15] rounded-md shadow-2xl backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-            {/* Search Input */}
-            <div className="flex items-center px-3 py-2 border-b border-white/[0.09] bg-white/[0.02]">
-              <Search size={13} className="text-white/40 mr-2 shrink-0" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search EGX tickers or names..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent border-none outline-none text-white text-xs placeholder:text-white/30"
-              />
-              <div className="text-[9px] font-mono text-white/30 px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08]">
-                ESC
-              </div>
-            </div>
-
-            {/* List of Tickers */}
-            <div className="max-h-64 overflow-y-auto no-scrollbar p-1 space-y-0.5">
-              {searchResults.length === 0 ? (
-                <div className="p-4 text-center text-white/40 text-xs">No tickers found</div>
-              ) : (
-                searchResults.map((item) => {
-                  const isSelected = item.symbol === symbol;
-                  const itemDisplay = item.symbol.replace('.CA', '');
-                  return (
-                    <div
-                      key={item.symbol}
-                      onClick={() => {
-                        setIsSearchDropdownOpen(false);
-                        router.push(`?ticker=${item.symbol}`);
-                      }}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-white/[0.08] text-white font-medium border border-white/[0.12]'
-                          : 'hover:bg-white/[0.04] text-white/80 hover:text-white border border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-5 h-5 rounded-[4px] bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
-                          {item.logoUrl ? (
-                            <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain" />
-                          ) : (
-                            <span className="text-[8px] font-bold text-white">{itemDisplay.substring(0, 2)}</span>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-medium text-white flex items-center gap-1.5">
-                            <span className={isSelected ? 'text-plt-orange font-semibold' : ''}>{itemDisplay}</span>
-                            <span className="text-[10px] text-white/40 font-normal truncate max-w-[120px]">{item.companyName}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0 pl-2">
-                        <div className="text-[11px] font-mono font-medium text-white">{item.price}</div>
-                        {item.changePct && (
-                          <div className={`text-[9px] font-mono ${item.isUp ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                            {item.changePct}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {orderOverlays.map((overlay) => (
-        <div key={overlay.id} className="absolute inset-0 z-10 pointer-events-none">
-          {/* Target / Profit Zone (Subtle green tint, NO blur so candlesticks are completely crisp) */}
-          {overlay.profitBoxTop !== null && overlay.profitBoxHeight > 0 && (
-            <div
-              className="absolute border-t border-l border-r border-[#22c55e]/30 bg-[#22c55e]/[0.08] pointer-events-none rounded-t-sm"
-              style={{
-                left: overlay.left,
-                width: overlay.width,
-                top: overlay.profitBoxTop,
-                height: overlay.profitBoxHeight,
-              }}
-            />
-          )}
-
-          {/* Stop / Loss Zone (Subtle red tint, NO blur) */}
-          {overlay.stopBoxTop !== null && overlay.stopBoxHeight > 0 && (
-            <div
-              className="absolute border-b border-l border-r border-[#ef4444]/30 bg-[#ef4444]/[0.08] pointer-events-none rounded-b-sm"
-              style={{
-                left: overlay.left,
-                width: overlay.width,
-                top: overlay.stopBoxTop,
-                height: overlay.stopBoxHeight,
-              }}
-            />
-          )}
-
-          {/* Center Entry Price Line */}
-          <div
-            className="absolute border-b border-white/20 pointer-events-none"
-            style={{
-              left: overlay.left,
-              width: overlay.width,
-              top: overlay.entryTop,
-            }}
-          />
-
-          {/* Interactive Informative Position Card (Condensed Multi-line) */}
-          <div
-            onClick={() => setSelectedOrderToEdit(overlay.order)}
-            className="group pointer-events-auto cursor-pointer absolute flex flex-col -translate-y-1/2 rounded-lg border border-white/[0.16] bg-black/90 hover:bg-black/95 hover:border-plt-orange/60 p-2 text-white shadow-2xl backdrop-blur-xl transition-all select-none z-30 min-w-[170px] max-w-[215px]"
-            style={{ left: overlay.left, top: overlay.entryTop }}
-            title="Click to Edit Position"
-          >
-            {/* Top Row: [LONG] Tag, Quantity @ Entry Price, and Quick Close Button */}
-            <div className="flex items-center justify-between gap-1.5 pb-1 border-b border-white/[0.08]">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-plt-orange bg-plt-orange/15 px-1.5 py-0.5 rounded border border-plt-orange/30 shrink-0">
-                  LONG
-                </span>
-                <span className="text-[10px] font-mono text-white/80 font-medium truncate">
-                  {overlay.quantity.toLocaleString()} <span className="text-[9px] text-white/40 font-sans">units @</span> {overlay.entryPrice.toFixed(2)}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedOrderToClose(overlay.order);
-                }}
-                className="px-1.5 py-0.5 text-[9px] rounded bg-[#ef4444]/15 hover:bg-[#ef4444] text-[#ef4444] hover:text-white border border-[#ef4444]/30 transition-all font-sans font-medium shrink-0"
-                title="Close Position"
-              >
-                Close
-              </button>
-            </div>
-
-            {/* Bottom Row: Position Market Value and Real-Time P/L */}
-            <div className="pt-1.5 flex items-center justify-between gap-2 text-[10px] font-mono">
-              <div className="flex flex-col">
-                <span className="text-[8.5px] text-white/40 font-sans leading-none">Position Val</span>
-                <span className="text-white/90 text-[10.5px] mt-0.5 font-medium">
-                  {overlay.marketValue.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                </span>
-              </div>
-
-              <div className="flex flex-col items-end">
-                <span className="text-[8.5px] text-white/40 font-sans leading-none">Unrealized P/L</span>
-                <span className={`font-semibold text-[10.5px] mt-0.5 flex items-center gap-0.5 ${overlay.isProfit ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                  <span>{overlay.profitLoss >= 0 ? '+' : ''}{overlay.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
-                  <span className="text-[9.5px]">({overlay.profitLossPct >= 0 ? '+' : ''}{overlay.profitLossPct.toFixed(2)}%)</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-
-
-
-      {orderDraft && (
-        <div
-          className="absolute z-[70] w-72 rounded-tv-lg border border-tv-highlight/60 bg-tv-surface/95 p-3 text-xs text-tv-text shadow-2xl backdrop-blur-md"
-          style={{ left: orderDraft.x, top: orderDraft.y }}
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <div className="font-weight-medium">Open Long Position</div>
-              <div className="mt-0.5 text-[11px] text-tv-muted">{symbol} · {orderDraft.date}</div>
-            </div>
-            <button
-              type="button"
-              aria-label="Close order popover"
-              onClick={() => setOrderDraft(null)}
-              className="flex h-7 w-7 items-center justify-center rounded-tv-sm text-tv-muted transition-colors hover:bg-tv-hover hover:text-tv-text"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <label className="text-[11px] text-tv-muted">
-              Entry
-              <input
-                type="number"
-                step="0.01"
-                value={orderDraft.entryPrice}
-                onChange={(event) => setOrderDraft((current) => current ? { ...current, entryPrice: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none focus:border-tv-highlight"
-              />
-            </label>
-            <label className="text-[11px] text-tv-muted">
-              Quantity
-              <input
-                type="number"
-                step="1"
-                min="0"
-                value={orderDraft.quantity}
-                onChange={(event) => setOrderDraft((current) => current ? { ...current, quantity: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none focus:border-tv-highlight"
-              />
-            </label>
-            <label className="text-[11px] text-tv-muted">
-              Target
-              <input
-                type="number"
-                step="0.01"
-                value={orderDraft.targetPrice}
-                placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
-                onChange={(event) => setOrderDraft((current) => current ? { ...current, targetPrice: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none placeholder:text-tv-muted/60 focus:border-tv-highlight"
-              />
-            </label>
-            <label className="text-[11px] text-tv-muted">
-              Stop
-              <input
-                type="number"
-                step="0.01"
-                value={orderDraft.stopPrice}
-                placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
-                onChange={(event) => setOrderDraft((current) => current ? { ...current, stopPrice: event.target.value } : current)}
-                className="mt-1 h-8 w-full rounded-tv-sm border border-tv-border bg-tv-base px-2 text-sm text-tv-text outline-none placeholder:text-tv-muted/60 focus:border-tv-highlight"
-              />
-            </label>
-          </div>
-
-          {(orderDraft.targetLabel || orderDraft.stopLabel || orderError) && (
-            <div className="mt-2 text-[11px] text-tv-muted">
-              {[orderDraft.targetLabel, orderDraft.stopLabel].filter(Boolean).join(' · ')}
-              {orderError && <div className="mt-1 text-tv-down">{orderError}</div>}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={saveOrderDraft}
-            disabled={savingOrder}
-            className="mt-3 h-9 w-full rounded-tv-sm bg-tv-accent text-sm font-weight-medium text-tv-base transition-colors hover:bg-tv-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {savingOrder ? 'Saving' : 'Save Position'}
-          </button>
-        </div>
-      )}
-
-      {!replayMode ? (
-        <div className="absolute bottom-8 sm:bottom-9 left-2 sm:left-4 z-40 flex items-center gap-1 sm:gap-1.5 rounded-md border border-white/[0.12] bg-black/70 backdrop-blur-xl p-1 shadow-2xl">
-          {/* 1. Bar Replay */}
-          <button
-            type="button"
-            title="Bar Replay"
-            aria-label="Bar Replay"
-            disabled={!hasReplayRoom}
-            onClick={enableReplay}
-            className="h-7.5 rounded-md px-2 sm:px-2.5 text-xs font-medium text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-1.5"
-          >
-            <RotateCcw className="h-3.5 w-3.5 text-white/60" />
-            <span className="hidden sm:inline">Replay</span>
-          </button>
-
-          {/* 2. Predict N Days */}
-          {predictButtonUI}
-
-          {/* 3. Indicators Popover */}
-          <div className="relative">
-            <button
-              type="button"
-              title="Technical Indicators"
-              onClick={() => setIndicatorsPopoverOpen(!indicatorsPopoverOpen)}
-              className={`h-7.5 rounded-md px-2 sm:px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
-                activeIndicators.length > 0
-                  ? 'bg-plt-orange/15 text-plt-orange border border-plt-orange/40 font-semibold'
-                  : 'text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white'
-              }`}
-            >
-              <BarChart2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Indicators</span>
-              {activeIndicators.length > 0 && (
-                <span className="ml-0.5 px-1 py-0.2 rounded text-[9px] bg-plt-orange text-black font-bold">
-                  {activeIndicators.length}
-                </span>
-              )}
-            </button>
-
-            {indicatorsPopoverOpen && (
-              <div className="absolute bottom-full left-0 mb-2 w-72 sm:w-80 rounded-xl border border-white/[0.15] bg-black/90 backdrop-blur-2xl p-3 text-xs text-white shadow-2xl z-[60]">
-                <div className="mb-2.5 flex items-center justify-between border-b border-white/[0.09] pb-2">
-                  <div className="font-semibold text-white flex items-center gap-1.5">
-                    <BarChart2 className="w-3.5 h-3.5 text-plt-orange" /> Technical Indicators
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIndicatorsPopoverOpen(false)}
-                    className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 hover:bg-white/[0.08] hover:text-white transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-                <div className="space-y-2 pt-0.5 max-h-[420px] overflow-y-auto pr-0.5 custom-scrollbar">
-                  {availableIndicators.map((ind) => {
-                    const isSelected = activeIndicators.includes(ind.id);
-                    const hasOptions = !!(ind.options && ind.options.length > 0);
-                    const isExpanded = expandedIndicators[ind.id] ?? true;
-
-                    const rawOpts = searchParams?.get(`ind_${ind.id}_opts`);
-                    const activeOptsSet = hasOptions
-                      ? rawOpts
-                        ? new Set(rawOpts.split(',').filter(Boolean))
-                        : new Set(ind.options!.filter((o) => o.defaultActive ?? true).map((o) => o.id))
-                      : new Set();
-
-                    return (
-                      <div
-                        key={ind.id}
-                        className={`rounded-lg border transition-all ${
-                          isSelected
-                            ? 'border-plt-orange/40 bg-plt-orange/[0.04]'
-                            : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14]'
-                        }`}
-                      >
-                        {/* Main indicator header row */}
-                        <div className="flex items-center justify-between p-2">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            {hasOptions && (
-                              <button
-                                type="button"
-                                title={isExpanded ? 'Collapse options' : 'Expand options'}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleIndicatorExpanded(ind.id);
-                                }}
-                                className="flex h-5 w-5 items-center justify-center rounded text-white/50 hover:bg-white/[0.08] hover:text-white transition-colors shrink-0"
-                              >
-                                <ChevronDown
-                                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                                    isExpanded ? 'rotate-180 text-plt-orange' : 'rotate-0'
-                                  }`}
-                                />
-                              </button>
-                            )}
-                            <div
-                              className="cursor-pointer select-none min-w-0 flex-1"
-                              onClick={() => toggleIndicator(ind.id)}
-                            >
-                              <div className="font-medium text-xs text-white truncate">{ind.name}</div>
-                              <div className="text-[10px] text-white/40 leading-snug truncate">{ind.description}</div>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => toggleIndicator(ind.id)}
-                            className={`ml-2 w-4.5 h-4.5 rounded-[4px] border flex items-center justify-center transition-all shrink-0 ${
-                              isSelected
-                                ? 'bg-plt-orange border-plt-orange text-black font-bold'
-                                : 'border-white/25 bg-white/[0.04] hover:border-white/40'
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                          </button>
-                        </div>
-
-                        {/* Expandable sub-options list */}
-                        {hasOptions && isExpanded && (
-                          <div className="border-t border-white/[0.06] bg-black/40 p-2 space-y-1.5 rounded-b-lg">
-                            <div className="text-[9px] uppercase tracking-wider text-white/40 font-semibold px-1">
-                              Channels & Levels
-                            </div>
-                            {ind.options!.map((opt) => {
-                              const isOptActive = isSelected && activeOptsSet.has(opt.id);
-                              return (
-                                <button
-                                  key={opt.id}
-                                  type="button"
-                                  onClick={() => toggleIndicatorOption(ind.id, opt.id)}
-                                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left transition-colors ${
-                                    isOptActive
-                                      ? 'bg-white/[0.08] text-white'
-                                      : 'hover:bg-white/[0.04] text-white/70'
-                                  }`}
-                                >
-                                  <div className="min-w-0 pr-2">
-                                    <div className="text-[11px] font-medium text-white/90 truncate">{opt.name}</div>
-                                    {opt.description && (
-                                      <div className="text-[9px] text-white/40 leading-tight truncate">{opt.description}</div>
-                                    )}
-                                  </div>
-                                  <div
-                                    className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 transition-colors ${
-                                      isOptActive
-                                        ? 'bg-plt-orange border-plt-orange text-black'
-                                        : 'border-white/20 bg-transparent'
-                                    }`}
-                                  >
-                                    {isOptActive && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 4. Positions Drawer Button */}
-          <button
-            type="button"
-            title="View Positions & Orders"
-            onClick={() => setPositionsDrawerOpen(true)}
-            className={`h-7.5 rounded-md px-2 sm:px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
-              openPositionsCount > 0
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 font-semibold'
-                : 'text-white/80 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:border-white/[0.18] hover:text-white'
-            }`}
-          >
-            <Briefcase className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Positions</span>
-            {openPositionsCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] bg-emerald-500 text-black font-bold">
-                {openPositionsCount}
-              </span>
-            )}
-          </button>
-
-          {/* 5. Add Position CTA */}
-          <button
-            type="button"
-            onClick={() => setIsAddOrderOpen(true)}
-            className="h-7.5 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white px-2.5 sm:px-3 text-xs font-medium transition-colors flex items-center justify-center gap-1 shadow-sm shrink-0"
-            title="Add Position"
-            aria-label="Add Position"
-          >
-            <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-            <span className="hidden sm:inline">Add Position</span>
-          </button>
-        </div>
-      ) : (
-        <div className="absolute bottom-8 sm:bottom-9 left-2 sm:left-4 z-40 flex max-w-[calc(100vw-32px)] sm:max-w-[calc(100vw-120px)] flex-wrap items-center gap-1.5 rounded-md border border-white/[0.12] bg-black/70 backdrop-blur-xl p-1.5 text-xs text-white shadow-2xl">
-          <button
-            type="button"
-            title="Reset replay point"
-            aria-label="Reset replay point"
-            onClick={jumpToStart}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
-          >
-            <SkipBack className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            title="Step back"
-            aria-label="Step back"
-            disabled={replayIndex <= 0}
-            onClick={() => stepReplay(-1)}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
-          >
-            <StepBack className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            title={isPlaying ? 'Pause replay' : 'Play replay'}
-            aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
-            disabled={replayIndex >= data.length - 1}
-            onClick={() => setIsPlaying((value) => !value)}
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-plt-orange text-white transition-all hover:bg-plt-orange-hover disabled:opacity-30"
-          >
-            {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-          </button>
-          <button
-            type="button"
-            title="Step forward"
-            aria-label="Step forward"
-            disabled={replayIndex >= data.length - 1}
-            onClick={() => stepReplay(1)}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30"
-          >
-            <StepForward className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            title="Jump to latest"
-            aria-label="Jump to latest"
-            onClick={jumpToLatest}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white"
-          >
-            <SkipForward className="h-3.5 w-3.5" />
-          </button>
-
-          <div className="mx-1 h-4 w-px bg-white/10" />
-
-          <input
-            type="date"
-            title="Replay date"
-            aria-label="Replay date"
-            min={data[0]?.time}
-            max={data[data.length - 1]?.time}
-            value={replayDate ?? ''}
-            onChange={(event) => handleDateChange(event.target.value)}
-            className="h-7 w-32 rounded-md border border-white/[0.09] bg-white/[0.03] px-2 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
-          />
-          <input
-            type="range"
-            title="Replay position"
-            aria-label="Replay position"
-            min={0}
-            max={Math.max(0, data.length - 1)}
-            value={replayIndex}
-            onChange={(event) => handleDateChange(data[Number(event.target.value)]?.time ?? replayDate ?? '')}
-            className="h-7 w-28 accent-plt-orange cursor-pointer"
-          />
-          <select
-            title="Replay speed"
-            aria-label="Replay speed"
-            value={playbackSpeed}
-            onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-            className="h-7 rounded-md border border-white/[0.09] bg-white/[0.03] px-1.5 text-[10px] text-white outline-none transition-colors focus:border-plt-orange"
-          >
-            {PLAYBACK_SPEEDS.map((speed) => (
-              <option key={speed.label} value={speed.delay}>
-                {speed.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={exitReplay}
-            className="h-7 rounded-md px-2.5 text-xs font-medium text-white/70 bg-white/[0.03] border border-white/[0.09] hover:bg-white/[0.06] hover:text-white transition-colors"
-          >
-            Live
-          </button>
-          {predictButtonUI}
-        </div>
-      )}
-
-      {replayMode && replayDate && (
-        <div className="absolute right-4 bottom-4 z-40 rounded-tv-sm border border-plt-border bg-plt-card px-2 py-1 text-[11px] text-plt-muted shadow-lg">
-          <span className="text-plt-red">Replay</span> {data[0]?.time} to {replayDate}
-        </div>
-      )}
-
-      {/* Ticker-Switching Loading Skeleton Overlay */}
-      <AnimatePresence>
-        {isChartLoading && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 z-30 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden"
-          >
-            {/* Grid Line Shimmer */}
-            <div className="absolute inset-0 flex flex-col justify-between py-12 px-6 opacity-15">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="w-full h-px bg-white/25" />
-              ))}
-            </div>
-
-            {/* Shimmering Candlestick Bars */}
-            <div className="absolute bottom-12 left-10 right-10 h-3/5 flex items-end gap-1 px-4 opacity-20">
-              {[45, 62, 55, 78, 50, 70, 60, 88, 45, 74, 82, 60, 72, 54, 86, 64, 48, 76, 62, 94, 55, 70, 46, 80, 60, 84, 50, 68, 76, 58].map((h, i) => (
-                <motion.div
-                  key={i}
-                  animate={{ opacity: [0.15, 0.65, 0.15] }}
-                  transition={{ duration: 1.2, repeat: Infinity, delay: (i % 6) * 0.1 }}
-                  className="flex-1 bg-white rounded-[1px]"
-                  style={{ height: `${h}%` }}
-                />
-              ))}
-            </div>
-
-            {/* Center Loading Badge */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="relative z-10 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-black/80 border border-white/[0.12] backdrop-blur-md shadow-2xl"
-            >
-              <div className="w-2.5 h-2.5 rounded-full bg-plt-orange animate-pulse" />
-              <span className="text-xs font-mono font-medium text-white tracking-wide">
-                Loading {displaySymbol}...
-              </span>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AddOrderModal
-        isOpen={isAddOrderOpen}
-        onClose={() => setIsAddOrderOpen(false)}
-        initialData={{
-          symbol,
-          price: data[data.length - 1]?.close,
-          date: data[data.length - 1]?.time,
-        }}
+    <div className="relative w-full h-full bg-plt-card overflow-hidden select-none">
+      {/* 1. Top-Left In-Place Ticker & Live OHLCV Legend (No background, directly on chart) */}
+      <ChartTickerHeader
+        symbol={symbol}
+        watchlist={watchlist}
+        activeCandle={activeCandle}
+        timeframe="1D"
       />
 
-      <EditOrderModal
-        isOpen={Boolean(selectedOrderToEdit)}
-        onClose={() => setSelectedOrderToEdit(null)}
-        onSuccess={() => {
-          setSelectedOrderToEdit(null);
-          setPositionsRefreshKey((k) => k + 1);
-        }}
-        order={selectedOrderToEdit}
+      {/* 2. Main Lightweight-Charts Container Canvas */}
+      <div ref={chartContainerRef} className="w-full h-full" />
+
+      {/* 3. Position Visual Overlays on Canvas */}
+      <ChartOrderOverlays
+        overlays={orderOverlays}
+        onSelectOrderToEdit={setSelectedOrderToEdit}
+        onSelectOrderToClose={setSelectedOrderToClose}
       />
 
-      <CloseOrderModal
-        isOpen={Boolean(selectedOrderToClose)}
-        onClose={() => setSelectedOrderToClose(null)}
-        onSuccess={() => {
-          setSelectedOrderToClose(null);
-          setPositionsRefreshKey((k) => k + 1);
-        }}
-        order={selectedOrderToClose}
+      {/* 4. Order Drafting Popover */}
+      <ChartOrderDraftPopover
+        orderDraft={orderDraft}
+        symbol={symbol}
+        savingOrder={savingOrder}
+        orderError={orderError}
+        onUpdateDraft={setOrderDraft}
+        onClose={() => setOrderDraft(null)}
+        onSave={handleSaveOrderDraft}
       />
 
-      {/* Slide-over Positions Drawer for Current Ticker */}
+      {/* 5. Bottom Floating Controls (When NOT in replay mode) */}
+      {!replayMode && (
+        <ChartFloatingControls
+          hasReplayRoom={data.length > 1}
+          onEnableReplay={() => {
+            setReplayMode(true);
+            setReplayIndex(getDefaultReplayIndex(data));
+          }}
+          predictButtonUI={predictButtonUI}
+          activeIndicatorsCount={activeIndicators.length}
+          onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
+          openPositionsCount={openPositionsCount}
+          onOpenPositionsDrawer={() => setPositionsDrawerOpen(true)}
+          onOpenAddOrder={() => setIsAddOrderOpen(true)}
+        />
+      )}
+
+      {/* 6. Bottom Replay Controls Toolbar (When in replay mode) */}
+      {replayMode && (
+        <ChartReplayControls
+          data={data}
+          replayIndex={replayIndex}
+          replayDate={replayDate}
+          isPlaying={isPlaying}
+          playbackSpeed={playbackSpeed}
+          onJumpToStart={() => setReplayIndex(0)}
+          onStepReplay={(step) => setReplayIndex((curr) => clampNumber(curr + step, 0, data.length - 1))}
+          onTogglePlay={() => setIsPlaying((p) => !p)}
+          onJumpToLatest={() => setReplayIndex(Math.max(0, data.length - 1))}
+          onDateChange={(d) => setReplayIndex(findIndexAtOrBefore(data, d))}
+          onSpeedChange={setPlaybackSpeed}
+          onExitReplay={() => {
+            setReplayMode(false);
+            setIsPlaying(false);
+            setReplayIndex(Math.max(0, data.length - 1));
+          }}
+          predictButtonUI={predictButtonUI}
+        />
+      )}
+
+      {/* 7. Technical Indicators Selection Popover */}
+      <ChartIndicatorsPopover
+        isOpen={indicatorsPopoverOpen}
+        onClose={() => setIndicatorsPopoverOpen(false)}
+        activeIndicators={activeIndicators}
+        onToggleIndicator={handleToggleIndicator}
+        expandedIndicators={expandedIndicators}
+        onToggleExpanded={toggleIndicatorExpanded}
+        strategyParams={strategyParams}
+        onUpdateStrategyParam={handleUpdateStrategyParam}
+      />
+
+      {/* 8. AI Predict Popover */}
+      <ChartPredictPopover
+        isOpen={predictPopoverOpen}
+        onClose={() => setPredictPopoverOpen(false)}
+        predictDaysInput={predictDaysInput}
+        onChangePredictDays={setPredictDaysInput}
+        onRunPrediction={handleRunPrediction}
+        isPredicting={isPredicting}
+      />
+
+      {/* 9. Loading Shimmer Overlay */}
+      <ChartLoadingSkeleton isLoading={isChartLoading} displaySymbol={displaySymbol} />
+
+      {/* 10. Positions & Orders Slide-over Drawer (Responsive Sheet on Mobile, 50% Screen on Desktop) */}
       {positionsDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md h-full bg-zinc-950 border-l border-white/15 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
-            <div className="h-12 px-4 flex items-center justify-between border-b border-white/10 shrink-0 bg-black/60">
-              <div className="flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-plt-orange" />
-                <span className="font-bold text-sm text-white">{symbol.replace('.CA', '')} Positions & Orders</span>
+        <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-end overflow-hidden">
+          {/* Backdrop (Tapping closes drawer) */}
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity duration-150 animate-in fade-in cursor-pointer"
+            onClick={() => setPositionsDrawerOpen(false)}
+            aria-label="Close drawer overlay"
+          />
+
+          {/* Drawer Sheet */}
+          <div className="relative w-full lg:w-1/2 max-w-none h-[88vh] md:h-full bg-plt-base text-plt-text rounded-t-2xl md:rounded-none border-t md:border-t-0 md:border-l border-plt-border flex flex-col shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-right duration-200 z-10 overflow-hidden">
+            {/* Mobile Sheet Drag / Swipe Indicator */}
+            <div
+              className="md:hidden w-full flex items-center justify-center pt-2.5 pb-1 shrink-0 bg-plt-raised cursor-pointer"
+              onClick={() => setPositionsDrawerOpen(false)}
+            >
+              <div className="w-10 h-1 rounded-full bg-white/20 hover:bg-white/40 transition-colors" />
+            </div>
+
+            {/* Header */}
+            <div className="h-14 px-4 sm:px-6 flex items-center justify-between border-b border-plt-border shrink-0 bg-plt-raised">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.12] flex items-center justify-center text-xs font-bold text-plt-text">
+                  {displaySymbol.slice(0, 2)}
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-bold text-sm text-plt-text">{displaySymbol}</span>
+                  <span className="text-xs text-plt-muted font-normal">Positions & Orders</span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setPositionsDrawerOpen(false)}
-                className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition"
+                className="w-10 h-10 -mr-2 rounded-xl text-plt-muted hover:text-plt-text hover:bg-white/[0.08] active:bg-white/[0.15] transition cursor-pointer flex items-center justify-center"
+                title="Close (Esc)"
+                aria-label="Close Positions Drawer"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto">
+
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6 safe-area-bottom">
               <TickerPositions
                 symbol={symbol}
                 orders={tickerPositions}
-                currentPrice={currentPrice ?? (data.length > 0 ? data[data.length - 1].close : 0)}
+                currentPrice={currentPrice ?? data[data.length - 1]?.close ?? 0}
+                chartData={data}
+                onEditOrder={(order) => setSelectedOrderToEdit(order as any)}
+                onCloseOrder={(order) => setSelectedOrderToClose(order as any)}
+                onAddNew={() => setIsAddOrderOpen(true)}
               />
             </div>
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <AddOrderModal
+        isOpen={isAddOrderOpen}
+        onClose={() => setIsAddOrderOpen(false)}
+        onSuccess={() => setPositionsRefreshKey((k) => k + 1)}
+        initialData={{
+          symbol,
+          price: data[data.length - 1]?.close,
+        }}
+      />
+
+      {selectedOrderToEdit && (
+        <EditOrderModal
+          isOpen={!!selectedOrderToEdit}
+          order={selectedOrderToEdit as any}
+          onClose={() => setSelectedOrderToEdit(null)}
+          onSuccess={() => {
+            setSelectedOrderToEdit(null);
+            setPositionsRefreshKey((k) => k + 1);
+          }}
+        />
+      )}
+
+      {selectedOrderToClose && (
+        <CloseOrderModal
+          isOpen={!!selectedOrderToClose}
+          order={selectedOrderToClose as any}
+          onClose={() => setSelectedOrderToClose(null)}
+          onSuccess={() => {
+            setSelectedOrderToClose(null);
+            setPositionsRefreshKey((k) => k + 1);
+          }}
+        />
+      )}
     </div>
   );
-}
-
-function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
-  const sortedSignals = [...signals].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const markers: SeriesMarker<Time>[] = [];
-  let currentPosition: 'CASH' | 'LONG' = 'CASH';
-
-  for (const signal of sortedSignals) {
-    if (signal.signal === 'HOLD') continue;
-
-    if (currentPosition === 'CASH' && signal.signal === 'BUY') {
-      currentPosition = 'LONG';
-      markers.push({
-        time: signal.date as Time,
-        position: 'belowBar',
-        color: '#22c55e',
-        shape: 'arrowUp',
-        text: 'BUY',
-        size: 1.25,
-      });
-    } else if (currentPosition === 'LONG' && signal.signal.startsWith('SELL')) {
-      currentPosition = 'CASH';
-      const exitMarker = getExitMarker(signal.signal);
-      markers.push({
-        time: signal.date as Time,
-        position: 'aboveBar',
-        color: exitMarker.color,
-        shape: 'arrowDown',
-        text: exitMarker.text,
-        size: 1.25,
-      });
-    }
-  }
-
-  return markers;
-}
-
-function buildOrderOverlay(
-  order: ChartOrder,
-  chart: IChartApi,
-  candlestickSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>,
-  container: HTMLDivElement,
-  visibleData: ChartData[],
-): OrderOverlay | null {
-  const left = chart.timeScale().timeToCoordinate(order.entryDate as Time);
-  const entryTop = candlestickSeries.priceToCoordinate(order.entryPrice);
-  if (left === null || entryTop === null) return null;
-
-  const lastCandle = visibleData[visibleData.length - 1];
-  const lastCandleX = lastCandle
-    ? chart.timeScale().timeToCoordinate(lastCandle.time as Time)
-    : null;
-
-  // The box stops precisely at the latest current candle!
-  const rightX = lastCandleX !== null ? lastCandleX : left + 120;
-  const width = Math.max(24, rightX - left);
-
-  const effectiveCurrentPrice = order.currentPrice || (lastCandle ? Number(lastCandle.close) : order.entryPrice);
-  const currentTop = candlestickSeries.priceToCoordinate(effectiveCurrentPrice);
-  const targetTop = order.targetPrice !== null ? candlestickSeries.priceToCoordinate(order.targetPrice) : null;
-  const stopTop = order.stopPrice !== null ? candlestickSeries.priceToCoordinate(order.stopPrice) : null;
-
-  const isProfit = effectiveCurrentPrice >= order.entryPrice;
-
-  // Determine upper green box (Target / Unrealized Profit zone)
-  let profitBoxTop: number | null = null;
-  let profitBoxHeight = 0;
-  if (targetTop !== null && targetTop < entryTop) {
-    profitBoxTop = targetTop;
-    profitBoxHeight = entryTop - targetTop;
-  } else if (isProfit && currentTop !== null && currentTop < entryTop) {
-    profitBoxTop = currentTop;
-    profitBoxHeight = entryTop - currentTop;
-  }
-
-  // Determine lower red box (Stop / Loss zone)
-  let stopBoxTop: number | null = null;
-  let stopBoxHeight = 0;
-  if (stopTop !== null && stopTop > entryTop) {
-    stopBoxTop = entryTop;
-    stopBoxHeight = stopTop - entryTop;
-  } else if (!isProfit && currentTop !== null && currentTop > entryTop) {
-    stopBoxTop = entryTop;
-    stopBoxHeight = currentTop - entryTop;
-  }
-
-  const marketValue = order.quantity * effectiveCurrentPrice;
-  const pnl = order.quantity * (effectiveCurrentPrice - order.entryPrice);
-  const pnlPct = order.entryPrice ? ((effectiveCurrentPrice - order.entryPrice) / order.entryPrice) * 100 : 0;
-
-  return {
-    id: order.id,
-    order,
-    left,
-    width,
-    entryTop: clampNumber(entryTop, 8, container.clientHeight - 8),
-    profitBoxTop: profitBoxTop !== null ? clampNumber(profitBoxTop, 8, container.clientHeight - 8) : null,
-    profitBoxHeight,
-    stopBoxTop: stopBoxTop !== null ? clampNumber(stopBoxTop, 8, container.clientHeight - 8) : null,
-    stopBoxHeight,
-    targetTop: targetTop !== null ? clampNumber(targetTop, 8, container.clientHeight - 8) : null,
-    stopTop: stopTop !== null ? clampNumber(stopTop, 8, container.clientHeight - 8) : null,
-    currentTop: currentTop !== null ? clampNumber(currentTop, 8, container.clientHeight - 8) : null,
-    isProfit,
-    entryPrice: order.entryPrice,
-    currentPrice: effectiveCurrentPrice,
-    quantity: order.quantity,
-    marketValue,
-    profitLoss: pnl,
-    profitLossPct: pnlPct,
-  };
-}
-
-function arrangeSignalBadges(
-  signals: StrategySignal[],
-  visibleData: ChartData[],
-  chart: IChartApi,
-  candlestickSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>,
-  container: HTMLDivElement,
-): SignalBadge[] {
-  const reservedRects: Rect[] = [];
-  if (container.clientWidth >= 560) {
-    reservedRects.push({
-      left: Math.max(0, container.clientWidth - 330),
-      top: 8,
-      right: container.clientWidth - 56,
-      bottom: 300,
-    });
-  }
-
-  const placedRects = [...reservedRects];
-  const selected: SignalBadge[] = [];
-  const candidates = signals.filter((signal) => signal.signal !== 'HOLD').slice().reverse();
-
-  for (const signal of candidates) {
-    const badge = buildSignalBadge(signal, visibleData, chart, candlestickSeries, container);
-    if (!badge) continue;
-
-    const rect = getSignalBadgeRect(badge);
-    if (placedRects.some((placedRect) => rectsOverlap(rect, placedRect))) continue;
-
-    selected.push(badge);
-    placedRects.push(rect);
-
-    if (selected.length >= MAX_VISIBLE_SIGNAL_BADGES) break;
-  }
-
-  return selected.sort((a, b) => a.left - b.left);
-}
-
-function buildSignalBadge(
-  signal: StrategySignal,
-  visibleData: ChartData[],
-  chart: IChartApi,
-  candlestickSeries: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>,
-  container: HTMLDivElement,
-): SignalBadge | null {
-  if (signal.signal === 'HOLD') return null;
-
-  const x = chart.timeScale().timeToCoordinate(signal.date as Time);
-  const candle = visibleData.find((item) => item.time === signal.date);
-  const signalPrice = Number(signal.price ?? candle?.close);
-  if (x === null || !Number.isFinite(signalPrice)) return null;
-  if (x < -80 || x > container.clientWidth + 80) return null;
-
-  const priceTop = candlestickSeries.priceToCoordinate(signalPrice);
-  if (priceTop === null) return null;
-
-  const kind = signal.signal === 'BUY' ? 'buy' : 'sell';
-  const width = kind === 'buy' ? 104 : 112;
-  const height = 36;
-  const y = kind === 'buy' ? priceTop + 18 : priceTop - 46;
-  const priceDetail = signalPrice.toFixed(2);
-  const reason = signal.entryReason ?? signal.exitReason;
-
-  return {
-    id: `${signal.date}-${signal.signal}`,
-    left: clampNumber(x, width / 2 + 8, container.clientWidth - width / 2 - 8),
-    top: clampNumber(y, 48, container.clientHeight - height - 8),
-    width,
-    height,
-    label: formatSignalLabel(signal.signal),
-    detail: reason ? `${reason} · ${priceDetail}` : priceDetail,
-    kind,
-  };
-}
-
-type Rect = {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-};
-
-function getSignalBadgeRect(badge: SignalBadge): Rect {
-  return {
-    left: badge.left - badge.width / 2 - 6,
-    top: badge.top - 6,
-    right: badge.left + badge.width / 2 + 6,
-    bottom: badge.top + badge.height + 6,
-  };
-}
-
-function rectsOverlap(a: Rect, b: Rect): boolean {
-  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-}
-
-function parseOptionalNumber(value: string): number | null {
-  if (!value.trim()) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function clampNumber(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-function formatSignalLabel(signal: string): string {
-  if (signal === 'BUY') return 'BUY';
-  if (signal === 'SELL_TP') return 'TP';
-  if (signal === 'SELL_TRAIL') return 'TRAIL';
-  if (signal === 'SELL_SL') return 'STOP';
-  if (signal === 'SELL_STRUCT') return 'STRUCT';
-  return 'EXIT';
-}
-
-function getExitMarker(signal: string): { text: string; color: string } {
-  if (signal === 'SELL_TP') return { text: 'TP', color: '#3b82f6' };
-  if (signal === 'SELL_TRAIL') return { text: 'TRAIL', color: '#f59e0b' };
-  if (signal === 'SELL_SL') return { text: 'STOP', color: '#ef4444' };
-  if (signal === 'SELL_STRUCT') return { text: 'STRUCT', color: '#ef4444' };
-  return { text: 'EXIT', color: '#ef4444' };
-}
-
-function getDefaultReplayIndex(data: ChartData[]): number {
-  if (data.length <= 1) return 0;
-  const targetIndex = findIndexAtOrBefore(data, DEFAULT_REPLAY_DATE);
-  if (targetIndex > 0 && targetIndex < data.length - 1) return targetIndex;
-  if (targetIndex >= data.length - 1) return Math.max(0, data.length - 2);
-  return 0;
-}
-
-function findIndexAtOrBefore(data: ChartData[], date: string): number {
-  if (data.length === 0) return 0;
-  let low = 0;
-  let high = data.length - 1;
-  let answer = 0;
-
-  while (low <= high) {
-    const middle = Math.floor((low + high) / 2);
-    if (data[middle].time <= date) {
-      answer = middle;
-      low = middle + 1;
-    } else {
-      high = middle - 1;
-    }
-  }
-
-  return answer;
-}
-
-function syncReplayUrl(active: boolean) {
-  if (typeof window === 'undefined') return;
-  const params = new URLSearchParams(window.location.search);
-  if (active) {
-    params.set('replay', '1');
-  } else {
-    params.delete('replay');
-  }
-  const query = params.toString();
-  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
 }

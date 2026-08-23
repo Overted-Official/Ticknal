@@ -1,0 +1,8 @@
+name: Institutional_Risk_Champion
+model: THOTH_V3.7
+universe: bayesian_top_50
+conviction_threshold: 70
+sector_limit: 0.30
+slots: 10
+exit: fixed_exhaustion_90
+priority: exhaustion_only

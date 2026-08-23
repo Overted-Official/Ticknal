@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Search } from '@/components/ui/icons';
+import { X, Search } from '@/components/ui/icon-library';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/context/ToastContext';
 
@@ -15,23 +15,23 @@ export type InitialOrderData = {
 
 type Ticker = { symbol: string; companyName: string };
 
-export default function AddOrderModal({ 
-  isOpen, 
-  onClose, 
+export default function AddOrderModal({
+  isOpen,
+  onClose,
   onSuccess,
   initialData
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
   onSuccess?: () => void;
   initialData?: InitialOrderData | null;
 }) {
   const { toast } = useToast();
-  const [newOrderForm, setNewOrderForm] = useState({ 
-    symbol: '', 
-    entryDate: new Date().toISOString().split('T')[0], 
-    entryPrice: '', 
-    quantity: '100' 
+  const [newOrderForm, setNewOrderForm] = useState({
+    symbol: '',
+    entryDate: new Date().toISOString().split('T')[0],
+    entryPrice: '',
+    quantity: '100'
   });
 
   const [tickers, setTickers] = useState<Ticker[]>([]);
@@ -93,7 +93,7 @@ export default function AddOrderModal({
       setFilteredTickers(tickers.slice(0, 50));
     } else {
       const filtered = tickers.filter(
-        t => t.symbol.toLowerCase().includes(val.toLowerCase()) || 
+        t => t.symbol.toLowerCase().includes(val.toLowerCase()) ||
              t.companyName.toLowerCase().includes(val.toLowerCase())
       ).slice(0, 50);
       setFilteredTickers(filtered);
@@ -142,56 +142,54 @@ export default function AddOrderModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
+        <div className="fixed inset-0 z-modal flex justify-end">
           {/* Backdrop */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 bg-plt-base/70 backdrop-blur-sm"
             onClick={onClose}
           />
 
           {/* Slide-over Drawer */}
-          <motion.div 
+          <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="relative z-[101] w-full max-w-md bg-black border-l border-white/[0.09] shadow-2xl h-full flex flex-col text-white"
+            className="relative z-modal-content w-full max-w-md bg-plt-base border-l border-plt-border-soft shadow-2xl h-full flex flex-col text-plt-text select-none"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.09] bg-white/[0.02] shrink-0">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-plt-orange" />
-                <div>
-                  <h2 className="font-semibold text-white text-sm">{title}</h2>
-                  <p className="text-[11px] text-white/40 mt-0.5">Record a new lot or stock entry</p>
-                </div>
+            <div className="px-5 py-3.5 flex items-center justify-between border-b border-plt-border-soft bg-plt-card shrink-0">
+              <div>
+                <h2 className="text-xs font-bold text-plt-text tracking-tight font-sans">{title}</h2>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Record a new lot or stock entry</p>
               </div>
-              <button 
-                onClick={onClose} 
-                className="text-white/40 hover:text-white transition-colors p-1.5 rounded-md hover:bg-white/[0.06]"
+              <button
+                onClick={onClose}
+                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
+                title="Close"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
-            
+
             {/* Body (Scrollable) */}
-            <div className="p-6 space-y-4 overflow-y-auto flex-1 font-mono">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 tabular-nums custom-scrollbar text-xs">
               {/* Ticker Section */}
-              <div className="border-b border-white/[0.09] pb-4 relative" ref={searchRef}>
+              <div className="border-b border-plt-border-soft pb-3 relative" ref={searchRef}>
                 {initialData?.companyName ? (
                   <div>
-                    <h3 className="text-xl font-bold tracking-tight text-white">{initialData.symbol.replace('.CA', '')}</h3>
-                    <p className="text-xs text-white/40 truncate max-w-[280px] mt-0.5">{initialData.companyName}</p>
+                    <h3 className="text-lg font-bold tracking-tight text-plt-text font-mono">{initialData.symbol.replace('.CA', '')}</h3>
+                    <p className="text-xs text-plt-muted truncate max-w-70 font-sans mt-0.5">{initialData.companyName}</p>
                   </div>
                 ) : (
-                  <div className="w-full relative font-sans">
-                    <label className="block text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1.5">Ticker Symbol</label>
+                  <div className="w-full relative font-sans space-y-1.5">
+                    <label className="text-xs font-semibold text-plt-muted">Ticker Symbol</label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/40">
+                      <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-plt-muted">
                         <Search size={14} />
                       </div>
                       <input
@@ -200,23 +198,23 @@ export default function AddOrderModal({
                         value={newOrderForm.symbol}
                         onChange={(e) => handleSymbolChange(e.target.value)}
                         onFocus={() => setIsSearchOpen(true)}
-                        className="w-full bg-white/[0.04] border border-white/[0.09] rounded-md pl-9 pr-3 py-2 text-xs text-white font-semibold focus:outline-none focus:border-white/20 transition-all placeholder:text-white/30"
+                        className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft pl-8 pr-3 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
                       />
                     </div>
                     {/* Search Dropdown */}
                     {isSearchOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#141414] border border-white/[0.1] rounded-md shadow-2xl z-50 max-h-48 overflow-y-auto p-1">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-plt-card border border-plt-border-soft rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto divide-y divide-plt-border-soft custom-scrollbar">
                         {filteredTickers.length === 0 ? (
-                          <div className="px-3 py-3 text-xs text-white/40 text-center">No tickers found</div>
+                          <div className="px-4 py-4 text-xs text-plt-muted text-center font-sans">No tickers found</div>
                         ) : (
                           filteredTickers.map((t) => (
-                            <div 
-                              key={t.symbol} 
-                              className="px-3 py-2 hover:bg-white/[0.06] rounded-md cursor-pointer transition-colors"
+                            <div
+                              key={t.symbol}
+                              className="px-3 py-2 hover:bg-plt-hover cursor-pointer transition-colors"
                               onClick={() => handleSelectTicker(t)}
                             >
-                              <div className="font-semibold text-xs text-white">{t.symbol.replace('.CA', '')}</div>
-                              <div className="text-[10px] text-white/40 truncate">{t.companyName}</div>
+                              <div className="font-bold text-xs text-plt-text font-mono">{t.symbol.replace('.CA', '')}</div>
+                              <div className="text-[11px] text-plt-muted truncate font-sans">{t.companyName}</div>
                             </div>
                           ))
                         )}
@@ -228,87 +226,81 @@ export default function AddOrderModal({
 
               {/* Entry Info */}
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 font-sans">Entry Date</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Entry Date</label>
                   <input
                     type="date"
                     value={newOrderForm.entryDate}
                     onChange={(e) => setNewOrderForm({ ...newOrderForm, entryDate: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.09] rounded-md px-3 py-2 text-xs text-white focus:outline-none focus:border-white/20 transition-all"
+                    className="date-token"
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 font-sans">Entry Price</label>
-                  <div className="flex items-center bg-white/[0.04] border border-white/[0.09] rounded-md px-3 focus-within:border-white/20 transition-all">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Entry Price</label>
+                  <div className="flex items-center h-8 rounded-xl bg-plt-surface border border-plt-border px-3 focus-within:border-plt-border-active transition-all">
                     <input
                       type="number"
                       step="0.01"
                       placeholder="0.00"
                       value={newOrderForm.entryPrice}
                       onChange={(e) => setNewOrderForm({ ...newOrderForm, entryPrice: e.target.value })}
-                      className="w-full bg-transparent py-2 text-xs text-white font-semibold focus:outline-none"
+                      className="w-full bg-transparent text-xs text-plt-text font-mono focus:outline-none"
                     />
-                    <span className="ml-1 text-[10px] text-white/40">EGP</span>
+                    <span className="ml-2 text-[11px] text-plt-muted font-sans">EGP</span>
                   </div>
                 </div>
               </div>
-              
+
               {/* Estimates */}
-              <div className="grid grid-cols-2 gap-3 bg-white/[0.02] border border-white/[0.06] rounded-md p-3">
+              <div className="card-widget-compact grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[9px] uppercase font-semibold tracking-wider text-white/40 mb-0.5 font-sans">Target (Est. +15%)</label>
-                  <div className="text-[#22c55e] text-xs font-semibold">
+                  <div className="kpi-title">Target (Est. +15%)</div>
+                  <div className="kpi-value text-plt-profit mt-1">
                     {(entryPriceNum * 1.15).toFixed(2)} EGP
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[9px] uppercase font-semibold tracking-wider text-white/40 mb-0.5 font-sans">Stop (Est. -5%)</label>
-                  <div className="text-[#ef4444] text-xs font-semibold">
+                  <div className="kpi-title">Stop (Est. -5%)</div>
+                  <div className="kpi-value text-plt-risk mt-1">
                     {(entryPriceNum * 0.95).toFixed(2)} EGP
                   </div>
                 </div>
               </div>
 
               {/* Quantity */}
-              <div>
-                <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-1 font-sans">Quantity (Shares)</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-plt-muted font-sans">Quantity (Shares)</label>
                 <input
                   type="number"
                   value={newOrderForm.quantity}
                   onChange={(e) => setNewOrderForm({ ...newOrderForm, quantity: e.target.value })}
-                  className="w-full bg-white/[0.04] border border-white/[0.09] rounded-md px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-white/20 transition-all"
+                  className="input-token"
                   min="1"
                 />
               </div>
 
               {/* Required Margin */}
-              <div className="bg-white/[0.03] rounded-md p-3.5 flex justify-between items-center text-xs border border-white/[0.09]">
-                <span className="text-white/40 font-sans text-[11px]">Total Position Value</span>
-                <span className="font-bold text-white text-sm">
+              <div className="card-widget-compact flex justify-between items-center text-xs">
+                <span className="kpi-title">Total Position Value</span>
+                <span className="kpi-value text-plt-text font-bold">
                   {(entryPriceNum * quantityNum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
                 </span>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="p-5 border-t border-white/[0.09] bg-white/[0.02] shrink-0 flex gap-2.5">
+            <div className="p-4 border-t border-plt-border-soft bg-plt-card shrink-0 flex gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-md border border-white/[0.09] bg-white/[0.04] hover:bg-white/[0.08] text-white/80 font-medium text-xs transition-all"
+                className="btn-token btn-secondary btn-compact flex-1 font-sans"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleAddOrder}
-                className={`flex-1 py-2.5 rounded-md font-medium text-xs transition-all shadow-md ${
-                  isBuy 
-                    ? 'bg-[#22c55e] hover:bg-[#22c55e]/90 text-black font-semibold' 
-                    : isSell 
-                      ? 'bg-[#ef4444] hover:bg-[#ef4444]/90 text-white font-semibold'
-                      : 'bg-plt-orange hover:bg-plt-orange-hover text-white'
-                }`}
+                className="btn-token btn-primary btn-compact flex-1 font-sans"
               >
                 Save Position
               </button>

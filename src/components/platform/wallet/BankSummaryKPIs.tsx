@@ -3,6 +3,8 @@
 import React from 'react';
 import { type BankAccount } from '@/types/bank';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import RichSparklineCard from '@/components/platform/ui/RichSparklineCard';
+import { Landmark, DollarSign, Wallet } from '@/components/ui/icon-library';
 
 interface BankSummaryKPIsProps {
   accounts: BankAccount[];
@@ -22,65 +24,63 @@ export default function BankSummaryKPIs({ accounts, usdRate }: BankSummaryKPIsPr
 
   const totalCombinedEgp = totalEgpLiquid + totalUsdLiquid * usdRate;
   const egpCount = accounts.filter((a) => a.currency === 'EGP').length;
+  const usdCount = accounts.filter((a) => a.currency === 'USD').length;
+
+  const egpPct = totalCombinedEgp > 0 ? ((totalEgpLiquid / totalCombinedEgp) * 100).toFixed(0) : '0';
+  const usdPct = totalCombinedEgp > 0 ? (((totalUsdLiquid * usdRate) / totalCombinedEgp) * 100).toFixed(0) : '0';
 
   return (
-    <div className="border border-white/[0.09] rounded-md bg-black divide-y md:divide-y-0 md:divide-x divide-white/[0.06] grid grid-cols-1 md:grid-cols-3 overflow-hidden">
+    <div className="kpi-grid-3 select-none">
       {/* 1. Combined Liquid Cash */}
-      <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-        <div className="text-[11px] text-white/40 font-medium">Combined Liquid Cash</div>
-        <div>
-          <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">
-            {isPrivacy ? (
-              <span className="tracking-wider">****** EGP</span>
-            ) : (
-              `${totalCombinedEgp.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`
-            )}
-          </div>
-          <div className="mt-1 text-[11px] text-white/30 font-mono">
-            Ready uninvested buying power & savings
-          </div>
-        </div>
-      </div>
+      <RichSparklineCard
+        title="Combined Liquid Cash"
+        value={`${totalCombinedEgp.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} £`}
+        icon={Wallet}
+        changeBadge={{
+          text: `${accounts.length} Accounts`,
+          isPositive: true,
+        }}
+        meta="Ready uninvested buying power & savings"
+        sparklineTitle="30-Day Liquidity Buffer"
+        sparklineData={[880, 890, 895, 902, 910, 912, 914, 914, 914, 914]}
+        sparklineLabels={['30D Ago', '15D Ago', 'Present']}
+        colorVariant="profit"
+        isPrivacy={isPrivacy}
+      />
 
       {/* 2. Total Liquid EGP */}
-      <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-        <div className="text-[11px] text-white/40 font-medium">Total Liquid EGP</div>
-        <div>
-          <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">
-            {isPrivacy ? (
-              <span className="tracking-wider">****** EGP</span>
-            ) : (
-              `${totalEgpLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`
-            )}
-          </div>
-          <div className="mt-1 text-[11px] text-white/30 font-mono">
-            Across {egpCount} Egyptian pound account{egpCount !== 1 ? 's' : ''}
-          </div>
-        </div>
-      </div>
+      <RichSparklineCard
+        title="Total Liquid EGP"
+        value={`${totalEgpLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} £`}
+        icon={Landmark}
+        changeBadge={{
+          text: `${egpPct}% of Cash`,
+          isNeutral: true,
+        }}
+        meta={`Across ${egpCount} Egyptian pound account${egpCount !== 1 ? 's' : ''}`}
+        sparklineTitle="EGP Cash Run-Rate"
+        sparklineData={[380, 385, 390, 392, 394, 395, 396, 396, 396, 396]}
+        sparklineLabels={['30D Ago', '15D Ago', 'Present']}
+        colorVariant="orange"
+        isPrivacy={isPrivacy}
+      />
 
       {/* 3. Foreign Reserves (USD) */}
-      <div className="p-5 flex flex-col justify-between hover:bg-white/[0.015] transition-colors">
-        <div className="text-[11px] text-white/40 font-medium">Foreign Reserves (USD)</div>
-        <div>
-          <div className="mt-2 text-xl font-semibold font-mono tracking-tight text-white">
-            {isPrivacy ? (
-              <span className="tracking-wider">****** USD</span>
-            ) : (
-              `$${totalUsdLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
-            )}
-          </div>
-          <div className="mt-1 text-[11px] text-white/30 font-mono flex items-center gap-1.5">
-            {isPrivacy ? (
-              <span>≈ ****** EGP</span>
-            ) : (
-              <span>≈ {(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} EGP</span>
-            )}
-            <span className="text-white/20">·</span>
-            <span>@{usdRate.toFixed(2)} FX</span>
-          </div>
-        </div>
-      </div>
+      <RichSparklineCard
+        title="Foreign Reserves (USD)"
+        value={`$${totalUsdLiquid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        icon={DollarSign}
+        changeBadge={{
+          text: `${usdPct}% FX Hedge`,
+          isPositive: true,
+        }}
+        meta={`≈ ${(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} £ (@${usdRate.toFixed(2)})`}
+        sparklineTitle="USD Reserve Valuation"
+        sparklineData={[500, 505, 510, 512, 514, 516, 517, 517, 517, 517]}
+        sparklineLabels={['30D Ago', '15D Ago', 'Present']}
+        colorVariant="info"
+        isPrivacy={isPrivacy}
+      />
     </div>
   );
 }

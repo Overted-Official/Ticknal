@@ -5,6 +5,7 @@ import { AlertProvider } from '@/components/platform/AlertProvider';
 import { ToastProvider } from '@/context/ToastContext';
 import { PinLockProvider } from '@/components/platform/PinLockProvider';
 import { MobileNavScrollProvider } from '@/context/MobileNavScrollContext';
+import PageTransition from '@/components/ui/PageTransition';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,14 +13,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <AlertProvider>
         <PinLockProvider>
           <MobileNavScrollProvider>
-            <div className="flex flex-col md:flex-row h-[100dvh] w-screen overflow-hidden bg-black text-white">
+            <div className="app-shell flex h-dvh w-screen flex-col overflow-hidden md:flex-row">
               <div className="hidden md:flex h-full shrink-0 z-50">
-                <Suspense fallback={<div className="w-[48px] h-full bg-black border-r border-white/[0.06]" />}>
+                <Suspense fallback={<div className="h-full w-[45px] border-r nav-shell" />}>
                   <SidebarNav />
                 </Suspense>
               </div>
               <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col">
-                {children}
+                <PageTransition>{children}</PageTransition>
               </div>
               <div className="md:hidden fixed bottom-0 left-0 right-0 w-full z-50 pointer-events-none">
                 <BottomNav />

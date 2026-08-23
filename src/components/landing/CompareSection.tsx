@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Check, X, Sparkles } from 'lucide-react';
+import { Check, X, Sparkles } from '@/components/ui/icon-library';
 
 const comparisonData = [
   {
@@ -50,25 +50,25 @@ const comparisonData = [
 
 export default function CompareSection() {
   return (
-    <section className="pt-[128px] px-5 md:px-[40px] pb-0 bg-transparent w-full">
-      <div className="max-w-[992px] mx-auto flex flex-col gap-[48px] items-center">
-        
+    <section className="pt-32 px-6 md:px-10 pb-0 bg-transparent w-full">
+      <div className="max-w-248 mx-auto flex flex-col gap-12 items-center">
+
         {/* Heading */}
-        <div className="flex flex-col gap-6 items-center text-center max-w-[654px] w-full">
+        <div className="flex flex-col gap-6 items-center text-center max-w-164 w-full">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-tv-border text-white/80 text-xs font-medium w-fit"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-plt-hover border border-tv-border text-plt-subtle text-xs font-medium w-fit"
           >
-            <Sparkles size={13} className="text-tv-accent" /> Platform Comparison
+            <Sparkles size={16} className="text-tv-accent" /> Platform Comparison
           </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-[32px] md:text-[45px] font-medium text-white leading-[1.2] tracking-[-0.02em] capitalize"
+            className="text-section md:text-display font-medium text-plt-text leading-display tracking-normal capitalize"
           >
             Why QuantEGX Leaves Others Behind
           </motion.h2>
@@ -80,44 +80,44 @@ export default function CompareSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="w-full overflow-x-auto rounded-xl border border-[rgba(255,255,255,0.16)] bg-[#0a0a0a]/80 backdrop-blur-md shadow-xl"
+          className="card-shell surface-flush w-full overflow-x-auto backdrop-blur-md"
         >
-          <table className="w-full min-w-[600px] text-left border-collapse">
+          <table className="data-table w-full min-w-150 text-left border-collapse">
             <thead>
-              <tr className="border-b border-[rgba(255,255,255,0.12)] bg-[#1a1717]/80">
-                <th className="py-4 px-6 text-sm font-semibold text-white/90">Features & Capabilities</th>
-                <th className="py-4 px-6 text-sm font-bold text-tv-accent bg-tv-accent/10 border-x border-tv-accent/20">
+              <tr className="border-b border-plt-border bg-plt-muted-surface/80">
+                <th className="p-2 text-sm font-medium text-plt-text/90">Features & Capabilities</th>
+                <th className="p-2 text-sm font-medium text-tv-accent bg-tv-accent/10 border-x border-tv-accent/20">
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-tv-accent animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-tv-accent animate-pulse" />
                     QuantEGX
                   </div>
                 </th>
-                <th className="py-4 px-6 text-xs font-medium text-white/60">Manual Trading</th>
-                <th className="py-4 px-6 text-xs font-medium text-white/60">Legacy Screeners</th>
+                <th className="p-2 text-xs font-medium text-plt-subtle">Manual Trading</th>
+                <th className="p-2 text-xs font-medium text-plt-subtle">Legacy Screeners</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-xs sm:text-[13px]">
+            <tbody className="divide-y divide-plt-border-soft text-xs sm:text-body">
               {comparisonData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="py-3.5 px-6 font-medium text-white/90">{row.feature}</td>
-                  
+                <tr key={idx} className="hover:bg-plt-hover transition-colors">
+                  <td className="p-2 font-medium text-plt-text/90">{row.feature}</td>
+
                   {/* QuantEGX Column */}
-                  <td className="py-3.5 px-6 bg-tv-accent/5 border-x border-tv-accent/20">
-                    <div className="flex items-center gap-2 text-tv-accent font-semibold text-xs">
-                      <div className="w-5 h-5 rounded-full bg-tv-accent/20 flex items-center justify-center">
-                        <Check size={12} className="text-tv-accent" />
+                  <td className="p-2 bg-tv-accent/5 border-x border-tv-accent/20">
+                    <div className="flex items-center gap-2 text-tv-accent font-medium text-xs">
+                      <div className="w-6 h-6 rounded-full bg-tv-accent/20 flex items-center justify-center">
+                        <Check size={16} className="text-tv-accent" />
                       </div>
                       Included
                     </div>
                   </td>
 
                   {/* Manual Trading */}
-                  <td className="py-3.5 px-6 text-white/50">
+                  <td className="p-2 text-plt-muted">
                     {typeof row.manual === 'boolean' ? (
                       row.manual ? (
-                        <Check size={14} className="text-emerald-400" />
+                        <Check size={16} className="text-plt-profit" />
                       ) : (
-                        <X size={14} className="text-white/30" />
+                        <X size={16} className="text-plt-faint" />
                       )
                     ) : (
                       <span>{row.manual}</span>
@@ -125,12 +125,12 @@ export default function CompareSection() {
                   </td>
 
                   {/* Legacy Screeners */}
-                  <td className="py-3.5 px-6 text-white/50">
+                  <td className="p-2 text-plt-muted">
                     {typeof row.others === 'boolean' ? (
                       row.others ? (
-                        <Check size={14} className="text-emerald-400" />
+                        <Check size={16} className="text-plt-profit" />
                       ) : (
-                        <X size={14} className="text-white/30" />
+                        <X size={16} className="text-plt-faint" />
                       )
                     ) : (
                       <span>{row.others}</span>

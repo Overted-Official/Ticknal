@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, ChevronDown, Check, X, Landmark } from 'lucide-react';
+import { Search, ChevronDown, Check, X, Landmark } from '@/components/ui/icon-library';
 import { type BankItem } from '@/types/bank';
 
 interface BankSearchSelectProps {
@@ -65,42 +65,39 @@ export default function BankSearchSelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left text-xs transition-all ${
+        className={`h-8 w-full flex items-center justify-between px-3 rounded-xl border text-left text-xs font-sans transition-all cursor-pointer ${
           isOpen
-            ? 'bg-white/[0.08] border-emerald-500/50 ring-1 ring-emerald-500/20'
-            : 'bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20'
+            ? 'bg-plt-card border-white/40 ring-1 ring-white/10'
+            : 'bg-plt-card border-plt-border-soft hover:border-plt-border-strong text-plt-text'
         }`}
       >
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {selectedBank ? (
             <>
-              <div className="w-6 h-6 rounded bg-white/[0.06] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-5 h-5 rounded-md bg-plt-base border border-plt-border-soft flex items-center justify-center overflow-hidden shrink-0">
                 {selectedBank.logoUrl ? (
                   <Image
                     src={selectedBank.logoUrl}
                     alt={selectedBank.name}
-                    width={20}
-                    height={20}
+                    width={18}
+                    height={18}
                     className="object-contain"
                     unoptimized
                   />
                 ) : (
-                  <Landmark size={12} className="text-white/40" />
+                  <Landmark size={12} className="text-plt-muted" />
                 )}
               </div>
-              <span className="font-medium text-white truncate">{selectedBank.name}</span>
+              <span className="font-semibold text-plt-text truncate font-sans">{selectedBank.name}</span>
             </>
           ) : (
-            <>
-              <Landmark size={15} className="text-white/40 shrink-0" />
-              <span className="text-white/40 truncate">{placeholder}</span>
-            </>
+            <span className="text-plt-muted truncate font-sans">{placeholder}</span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+        <div className="flex items-center gap-1 shrink-0 ml-2">
           {selectedBank && (
-            <div
+            <span
               role="button"
               tabIndex={0}
               onClick={(e) => {
@@ -113,46 +110,46 @@ export default function BankSearchSelect({
                   onSelectBank(null);
                 }
               }}
-              className="p-1 hover:bg-white/10 rounded-md text-white/40 hover:text-white transition"
+              className="p-1 hover:bg-plt-hover rounded text-plt-muted hover:text-plt-text transition cursor-pointer"
               title="Clear selection"
             >
               <X size={13} />
-            </div>
+            </span>
           )}
           <ChevronDown
             size={14}
-            className={`text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-180 text-white' : ''}`}
+            className={`text-plt-muted transition-transform duration-200 ${isOpen ? 'rotate-180 text-plt-text' : ''}`}
           />
         </div>
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[#121212] border border-white/15 rounded-xl shadow-2xl overflow-hidden p-2 space-y-1.5 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-modal-content bg-plt-card border border-plt-border-soft rounded-xl shadow-2xl overflow-hidden p-2 space-y-2 animate-in fade-in zoom-in-95 duration-100">
           {/* Search Input */}
           <div className="relative flex items-center">
-            <Search size={13} className="absolute left-2.5 text-white/40 pointer-events-none" />
+            <Search size={14} className="absolute left-2.5 text-plt-muted pointer-events-none" />
             <input
               ref={searchInputRef}
               type="text"
               placeholder="Search Egyptian banks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/[0.06] border border-white/10 rounded-lg pl-8 pr-7 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.08]"
+              className="h-7 w-full bg-plt-base border border-plt-border-soft rounded-lg pl-7 pr-7 text-xs font-sans text-plt-text placeholder:text-plt-muted focus:outline-none focus:border-plt-border-active"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2 p-1 text-white/40 hover:text-white"
+                className="absolute right-2 p-1 text-plt-muted hover:text-plt-text cursor-pointer"
               >
-                <X size={12} />
+                <X size={13} />
               </button>
             )}
           </div>
 
           {/* Banks List */}
-          <div className="max-h-56 overflow-y-auto space-y-0.5 pr-1 scrollbar-thin">
+          <div className="max-h-56 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
             {/* Option to clear / custom bank */}
             <button
               type="button"
@@ -160,23 +157,23 @@ export default function BankSearchSelect({
                 onSelectBank(null);
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-colors ${
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs font-sans transition-colors cursor-pointer ${
                 !selectedBank
-                  ? 'bg-emerald-500/10 text-emerald-400 font-medium'
-                  : 'text-white/60 hover:bg-white/5 hover:text-white'
+                  ? 'bg-white/[0.08] text-white font-semibold'
+                  : 'text-plt-text hover:bg-plt-hover'
               }`}
             >
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-white/[0.04] flex items-center justify-center text-white/40">
+                <div className="w-5 h-5 rounded-md bg-plt-base border border-plt-border-soft flex items-center justify-center text-plt-muted">
                   <Landmark size={12} />
                 </div>
                 <span>None / Custom Institution</span>
               </div>
-              {!selectedBank && <Check size={13} className="text-emerald-400" />}
+              {!selectedBank && <Check size={14} className="text-plt-profit" />}
             </button>
 
             {filteredBanks.length === 0 ? (
-              <div className="py-6 text-center text-xs text-white/40">
+              <div className="py-5 text-center text-xs text-plt-muted font-sans">
                 No banks matching &quot;{searchTerm}&quot;
               </div>
             ) : (
@@ -190,31 +187,31 @@ export default function BankSearchSelect({
                       onSelectBank(bank);
                       setIsOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-colors ${
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs font-sans transition-colors cursor-pointer ${
                       isSelected
-                        ? 'bg-emerald-500/15 text-emerald-300 font-medium border border-emerald-500/20'
-                        : 'text-white/80 hover:bg-white/[0.06] hover:text-white'
+                        ? 'bg-white/[0.08] text-white font-semibold border border-white/[0.15]'
+                        : 'text-plt-text hover:bg-plt-hover'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-6 h-6 rounded bg-white/[0.06] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="w-5 h-5 rounded-md bg-plt-base border border-plt-border-soft flex items-center justify-center overflow-hidden shrink-0">
                         {bank.logoUrl ? (
                           <Image
                             src={bank.logoUrl}
                             alt={bank.name}
-                            width={20}
-                            height={20}
+                            width={18}
+                            height={18}
                             className="object-contain"
                             unoptimized
                           />
                         ) : (
-                          <Landmark size={12} className="text-white/40" />
+                          <Landmark size={12} className="text-plt-muted" />
                         )}
                       </div>
                       <span className="truncate">{bank.name}</span>
                     </div>
 
-                    {isSelected && <Check size={13} className="text-emerald-400 shrink-0 ml-2" />}
+                    {isSelected && <Check size={14} className="text-plt-profit shrink-0 ml-2" />}
                   </button>
                 );
               })
@@ -222,7 +219,7 @@ export default function BankSearchSelect({
           </div>
 
           {/* Footer Count */}
-          <div className="pt-1.5 px-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-white/30">
+          <div className="pt-2 px-2 border-t border-plt-border-soft flex items-center justify-between text-[10px] text-plt-muted font-sans">
             <span>{filteredBanks.length} bank{filteredBanks.length !== 1 ? 's' : ''} available</span>
             <span>Egyptian Banking Sector</span>
           </div>

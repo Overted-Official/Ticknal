@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Landmark, X, Plus, Trash2, Calendar, TrendingUp, Save, CheckCircle2, History } from 'lucide-react';
+import { Landmark, X, Plus, Trash2, Calendar, TrendingUp, Save, CheckCircle2, History } from '@/components/ui/icon-library';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { type BankAccount, type BankMonthlySnapshot } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
@@ -33,7 +33,7 @@ export default function EditAccountHistoryDrawer({
   onAccountUpdated,
 }: EditAccountHistoryDrawerProps) {
   const { toast } = useToast();
-  
+
   // Account state
   const [accountName, setAccountName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -173,7 +173,7 @@ export default function EditAccountHistoryDrawer({
 
       // 2. Save Snapshots
       const validSnapshots = snapshots.filter((s) => s.closingBalance !== '' && !isNaN(Number(s.closingBalance)));
-      
+
       const snapRes = await fetch('/api/banks/snapshots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -199,152 +199,125 @@ export default function EditAccountHistoryDrawer({
     }
   }
 
-  const isUsd = currency === 'USD';
-
   return (
     <AnimatePresence>
       {isOpen && account && (
         <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-plt-base/75 backdrop-blur-sm"
           />
 
-          {/* Sliding Sheet / Drawer */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-            className="relative w-full max-w-lg bg-[#0e0e0e] border-l border-white/10 shadow-2xl flex flex-col h-full z-10"
+            className="relative w-full max-w-lg bg-plt-base border-l border-plt-border-soft shadow-2xl flex flex-col h-full z-10 select-none"
           >
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {account.bankLogoUrl ? (
-                    <Image
-                      src={account.bankLogoUrl}
-                      alt={account.bankName || account.accountName}
-                      width={28}
-                      height={28}
-                      className="object-contain"
-                      unoptimized
-                    />
-                  ) : (
-                    <Landmark size={18} className="text-white/40" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white tracking-tight">{account.accountName}</h3>
-                  <p className="text-[11px] text-white/40">{account.bankName || account.customBankName || 'Bank Account'}</p>
-                </div>
+            <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">{account.accountName}</h3>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">{account.bankName || account.customBankName || 'Bank Account'}</p>
               </div>
 
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition"
+                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
+                title="Close drawer"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 px-5 pt-3 pb-2 border-b border-white/[0.06] text-xs">
-              <button
-                type="button"
-                onClick={() => setActiveTab('history')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
-                  activeTab === 'history'
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <History size={13} />
-                <span>Monthly Balance History</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/10 text-white/70">
-                  {snapshots.length}
-                </span>
-              </button>
+            <div className="px-4 py-2.5 bg-plt-card/50 border-b border-plt-border-soft shrink-0">
+              <div className="pill-switch w-full flex">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('history')}
+                  className={`pill-switch-btn flex-1 flex items-center justify-center gap-1.5 ${
+                    activeTab === 'history' ? 'pill-switch-btn-active font-semibold' : ''
+                  }`}
+                >
+                  <History size={14} />
+                  <span>Monthly History</span>
+                  <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-plt-base border border-plt-border-soft">
+                    {snapshots.length}
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('details')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
-                  activeTab === 'details'
-                    ? 'bg-white/15 text-white border border-white/20'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>Account Info</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('details')}
+                  className={`pill-switch-btn flex-1 flex items-center justify-center gap-1.5 ${
+                    activeTab === 'details' ? 'pill-switch-btn-active font-semibold' : ''
+                  }`}
+                >
+                  <span>Account Info</span>
+                </button>
+              </div>
             </div>
 
-            {/* Content Body */}
-            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+            <form onSubmit={handleSave} className="p-5 flex-1 overflow-y-auto space-y-4 text-xs custom-scrollbar">
               {activeTab === 'history' && (
                 <div className="space-y-4">
-                  {/* Trajectory Banner & Sparkline */}
                   {chartData.length > 1 && (
-                    <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.08] space-y-2.5">
+                    <div className="card-widget-compact space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[10px] text-white/40 uppercase font-medium">Balance Growth Trajectory</div>
+                          <div className="kpi-title">Balance Growth Trajectory</div>
                           {totalGrowth && (
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`text-sm font-bold font-mono ${totalGrowth.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`kpi-value ${totalGrowth.diff >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
                                 {totalGrowth.diff >= 0 ? '+' : ''}
                                 {totalGrowth.diff.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                               </span>
-                              <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${totalGrowth.diff >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${totalGrowth.diff >= 0 ? 'bg-plt-profit/15 text-plt-profit border border-plt-profit/30' : 'bg-plt-risk/15 text-plt-risk border border-plt-risk/30'}`}>
                                 {totalGrowth.diff >= 0 ? '↑' : '↓'} {totalGrowth.pct.toFixed(1)}%
                               </span>
                             </div>
                           )}
                         </div>
-                        <TrendingUp size={16} className="text-emerald-400" />
+                        <TrendingUp size={16} className="text-plt-profit" />
                       </div>
 
-                      {/* Mini Area Chart */}
                       <div className="h-28 w-full pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                             <defs>
                               <linearGradient id="balanceGrowthGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                                <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                                <stop offset="5%" stopColor="var(--plt-profit)" stopOpacity={0.4} />
+                                <stop offset="95%" stopColor="var(--plt-profit)" stopOpacity={0.0} />
                               </linearGradient>
                             </defs>
-                            <XAxis dataKey="monthLabel" stroke="#666" fontSize={9} tickLine={false} />
-                            <YAxis stroke="#666" fontSize={9} tickLine={false} domain={['auto', 'auto']} />
+                            <XAxis dataKey="monthLabel" stroke="var(--chart-axis)" fontSize="var(--text-size-compact)" tickLine={false} />
+                            <YAxis stroke="var(--chart-axis)" fontSize="var(--text-size-compact)" tickLine={false} domain={['auto', 'auto']} />
                             <Tooltip
-                              contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', fontSize: '11px', borderRadius: '8px' }}
+                              contentStyle={{ backgroundColor: 'var(--plt-bg-surface-elevated)', borderColor: 'var(--plt-border)', fontSize: 'var(--text-size-caption)', borderRadius: 'var(--radius-lg)' }}
                               formatter={(val: any) => [`${Number(val || 0).toLocaleString()} ${currency}`, 'Balance']}
                             />
-                            <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#balanceGrowthGrad)" />
+                            <Area type="monotone" dataKey="balance" stroke="var(--plt-profit)" strokeWidth={2} fillOpacity={1} fill="url(#balanceGrowthGrad)" />
                           </AreaChart>
                         </ResponsiveContainer>
                       </div>
                     </div>
                   )}
 
-                  {/* Monthly Snapshots Input List */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-white/70 font-semibold uppercase tracking-wider text-[11px]">
+                    <div className="flex items-center justify-between pb-1">
+                      <label className="text-xs font-semibold text-plt-muted font-sans">
                         Monthly Closing Balances ({currency})
                       </label>
-                      <span className="text-[10px] text-white/40">Enter month-end balance</span>
+                      <span className="text-[10px] text-plt-muted font-sans">Enter month-end balance</span>
                     </div>
 
                     {isLoadingSnapshots ? (
-                      <div className="py-8 text-center text-white/40">Loading balance history...</div>
+                      <div className="py-8 text-center text-plt-muted font-sans">Loading balance history...</div>
                     ) : (
                       <div className="space-y-1.5">
                         {snapshots.map((snap, idx) => {
@@ -357,10 +330,10 @@ export default function EditAccountHistoryDrawer({
                           return (
                             <div
                               key={snap.yearMonth}
-                              className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.07] hover:border-white/15 transition-all"
+                              className="flex items-center gap-2 p-2 rounded-xl bg-plt-card border border-plt-border-soft hover:bg-plt-hover/60 transition-all"
                             >
-                              <div className="w-24 shrink-0 flex items-center gap-1.5 font-medium text-white/80">
-                                <Calendar size={12} className="text-white/40" />
+                              <div className="w-24 shrink-0 flex items-center gap-1.5 font-medium text-plt-text font-sans">
+                                <Calendar size={14} className="text-plt-muted" />
                                 <span>{formatYearMonthDisplay(snap.yearMonth)}</span>
                               </div>
 
@@ -371,13 +344,13 @@ export default function EditAccountHistoryDrawer({
                                   placeholder="0.00"
                                   value={snap.closingBalance}
                                   onChange={(e) => handleSnapshotValueChange(snap.yearMonth, e.target.value)}
-                                  className="w-full bg-white/5 border border-white/10 rounded-md py-1.5 px-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/50"
+                                  className="h-7 w-full rounded-lg bg-plt-base border border-plt-border-soft px-2 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
                                 />
                               </div>
 
                               {hasPrev && (
-                                <div className="w-20 text-right font-mono text-[10px] shrink-0">
-                                  <span className={diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                <div className="w-20 text-right font-mono text-[11px] shrink-0 font-semibold">
+                                  <span className={diff >= 0 ? 'text-plt-profit' : 'text-plt-risk'}>
                                     {diff >= 0 ? '+' : ''}{pct.toFixed(1)}%
                                   </span>
                                 </div>
@@ -386,10 +359,10 @@ export default function EditAccountHistoryDrawer({
                               <button
                                 type="button"
                                 onClick={() => handleRemoveSnapshot(snap.yearMonth)}
-                                className="p-1 text-white/30 hover:text-rose-400 hover:bg-rose-500/10 rounded transition"
+                                className="p-1.5 text-plt-muted hover:text-plt-risk hover:bg-plt-risk/10 rounded-lg transition"
                                 title="Remove Month"
                               >
-                                <Trash2 size={13} />
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           );
@@ -398,13 +371,12 @@ export default function EditAccountHistoryDrawer({
                     )}
                   </div>
 
-                  {/* Add Another Month */}
-                  <div className="pt-2 border-t border-white/[0.06] flex items-center gap-2">
+                  <div className="pt-2 border-t border-plt-border-soft flex items-center gap-2">
                     <input
                       type="month"
                       value={newMonthInput}
                       onChange={(e) => setNewMonthInput(e.target.value)}
-                      className="bg-white/5 border border-white/10 rounded-lg p-2 text-white text-xs focus:outline-none focus:border-emerald-500/50"
+                      className="date-token w-36"
                     />
                     <input
                       type="number"
@@ -412,14 +384,14 @@ export default function EditAccountHistoryDrawer({
                       placeholder={`Balance in ${currency}`}
                       value={newBalanceInput}
                       onChange={(e) => setNewBalanceInput(e.target.value)}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg p-2 text-white text-xs font-mono focus:outline-none focus:border-emerald-500/50"
+                      className="input-token flex-1"
                     />
                     <button
                       type="button"
                       onClick={handleAddMonth}
-                      className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium text-xs flex items-center gap-1 transition"
+                      className="btn-token btn-secondary btn-compact font-sans flex items-center gap-1.5"
                     >
-                      <Plus size={13} />
+                      <Plus size={14} />
                       <span>Add</span>
                     </button>
                   </div>
@@ -427,89 +399,84 @@ export default function EditAccountHistoryDrawer({
               )}
 
               {activeTab === 'details' && (
-                <div className="space-y-3.5">
-                  {/* Account Name */}
-                  <div className="space-y-1">
-                    <label className="block text-white/60 font-medium">Account Label *</label>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-plt-muted font-sans">Account Label *</label>
                     <input
                       type="text"
                       required
                       value={accountName}
                       onChange={(e) => setAccountName(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                      className="input-token"
                     />
                   </div>
 
-                  {/* Account Number */}
-                  <div className="space-y-1">
-                    <label className="block text-white/60 font-medium">Account Number / IBAN</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-plt-muted font-sans">Account Number / IBAN</label>
                     <input
                       type="text"
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500/50"
+                      className="input-token"
                     />
                   </div>
 
-                  {/* Currency & Type */}
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div className="space-y-1">
-                      <label className="block text-white/60 font-medium">Currency</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-plt-muted font-sans">Currency</label>
                       <select
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                        className="select-token"
                       >
-                        <option value="EGP" className="bg-[#111]">EGP</option>
-                        <option value="USD" className="bg-[#111]">USD</option>
+                        <option value="EGP">EGP</option>
+                        <option value="USD">USD</option>
                       </select>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="block text-white/60 font-medium">Type</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-plt-muted font-sans">Type</label>
                       <select
                         value={accountType}
                         onChange={(e) => setAccountType(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                        className="select-token"
                       >
-                        <option value="CURRENT" className="bg-[#111]">Current Account</option>
-                        <option value="SAVINGS" className="bg-[#111]">Savings Account</option>
-                        <option value="CD_TIME_DEPOSIT" className="bg-[#111]">Certificates (CD)</option>
-                        <option value="BROKER_CASH" className="bg-[#111]">Brokerage Cash</option>
-                        <option value="WALLET" className="bg-[#111]">Digital Wallet</option>
+                        <option value="CURRENT">Current Account</option>
+                        <option value="SAVINGS">Savings Account</option>
+                        <option value="CD_TIME_DEPOSIT">Certificates (CD)</option>
+                        <option value="BROKER_CASH">Brokerage Cash</option>
+                        <option value="WALLET">Digital Wallet</option>
                       </select>
                     </div>
                   </div>
 
-                  {/* Current Balance */}
-                  <div className="space-y-1">
-                    <label className="block text-white/60 font-medium">Current Balance ({currency})</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-plt-muted font-sans">Current Balance ({currency})</label>
                     <input
                       type="number"
                       step="any"
                       value={balance}
                       onChange={(e) => setBalance(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500/50"
+                      className="input-token"
                     />
                   </div>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-2.5">
+              <div className="pt-3 border-t border-plt-border-soft flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg text-white/60 hover:text-white transition"
+                  className="btn-token btn-secondary btn-compact font-sans"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black font-bold transition disabled:opacity-50 flex items-center gap-1.5 shadow-lg shadow-emerald-500/10"
+                  className="btn-token btn-primary btn-compact font-sans"
                 >
-                  <Save size={15} />
+                  <Save size={14} />
                   <span>{isSaving ? 'Saving...' : 'Save Changes & History'}</span>
                 </button>
               </div>

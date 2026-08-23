@@ -89,7 +89,7 @@ export async function handleAccountsPost(req: Request) {
         accountType,
         currency: currency || 'EGP',
         balance: balance ? String(balance) : '0',
-        color: color || '#FF640D',
+        color: color || 'var(--plt-accent)',
         isArchived: false,
       })
       .returning();

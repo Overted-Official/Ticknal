@@ -56,6 +56,8 @@ quant_engine/artifacts/
 quant_engine/*.txt  
 quant_engine/*.json  
 __pycache__/
+.pytest_cache/
 *.py[cod]
+drop_tables.ts
 _archived/
 _*/

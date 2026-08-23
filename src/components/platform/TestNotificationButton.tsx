@@ -19,7 +19,7 @@ export default function TestNotificationButton() {
   const handleTestNotification = async () => {
     try {
       setLoading(true);
-      
+
       // Ensure the device is subscribed to push notifications first
       const subscribed = await ensurePushSubscription();
       if (!subscribed.success) {
@@ -33,9 +33,9 @@ export default function TestNotificationButton() {
       const res = await fetch('/api/notifications/test', {
         method: 'POST',
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         toast.error('Notification Dispatch Failed', data.error || 'Unknown error occurred.');
       } else {
@@ -56,9 +56,9 @@ export default function TestNotificationButton() {
     <button
       onClick={handleTestNotification}
       disabled={!isMounted || loading || permission === 'unsupported'}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/[0.06] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-plt-subtle hover:text-plt-text bg-plt-hover border border-plt-border hover:border-plt-border-strong hover:bg-plt-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed"
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-plt-orange animate-ping' : 'bg-plt-orange'}`} />
+      <span className={`w-2 h-2 rounded-full ${loading ? 'bg-plt-profit animate-ping' : 'bg-plt-profit'}`} />
       <span>{loading ? 'Sending...' : 'Test Alert'}</span>
     </button>
   );

@@ -208,9 +208,9 @@ export default function PinLockScreen({
     >
       {/* Top Header */}
       <div className="flex flex-col items-center text-center space-y-3 mt-2">
-        <div className="w-13 h-13 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center shadow-[0_0_24px_rgba(254,80,0,0.15)] relative">
-          <Lock size={22} className="text-plt-orange" />
-          <div className="absolute inset-0 rounded-2xl border border-plt-orange/30 animate-pulse" />
+        <div className="w-13 h-13 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center shadow-[0_0_24px_rgba(255,255,255,0.10)] relative">
+          <Lock size={22} className="text-white" />
+          <div className="absolute inset-0 rounded-2xl border border-white/20 animate-pulse" />
         </div>
 
         <div>
@@ -235,7 +235,7 @@ export default function PinLockScreen({
                   isFilled
                     ? isError
                       ? 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)] scale-115'
-                      : 'bg-plt-orange shadow-[0_0_12px_rgba(254,80,0,0.6)] scale-110'
+                      : 'bg-white shadow-[0_0_12px_rgba(255,255,255,0.4)] scale-110'
                     : 'bg-white/10 border border-white/20'
                 }`}
               />
@@ -316,7 +316,7 @@ export default function PinLockScreen({
             setRecoveryError(null);
             setShowRecoveryModal(true);
           }}
-          className="text-white/40 hover:text-plt-orange transition-colors flex items-center gap-1"
+          className="text-white/40 hover:text-white transition-colors flex items-center gap-1"
         >
           <span>Forgot PIN?</span>
         </button>
@@ -363,7 +363,7 @@ export default function PinLockScreen({
               ) : (
                 <>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-plt-orange/10 border border-plt-orange/20 flex items-center justify-center text-plt-orange shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.12] flex items-center justify-center text-white shrink-0">
                       <ShieldCheck size={20} />
                     </div>
                     <div>
@@ -426,7 +426,7 @@ export default function PinLockScreen({
                             setRecoveryError(null);
                           }}
                           placeholder="Enter your secret answer"
-                          className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-plt-orange"
+                          className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/30"
                           required
                           autoFocus
                         />
@@ -450,7 +450,7 @@ export default function PinLockScreen({
                         <button
                           type="submit"
                           disabled={isRecovering || !recoveryAnswer.trim()}
-                          className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-plt-orange hover:bg-plt-orange/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-white/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
                         >
                           <span>{isRecovering ? 'Verifying...' : 'Verify & Unlock'}</span>
                           <ArrowRight size={14} />
@@ -468,7 +468,7 @@ export default function PinLockScreen({
                             value={authEmail}
                             onChange={(e) => setAuthEmail(e.target.value)}
                             placeholder="your@email.com"
-                            className="w-full bg-black/60 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-plt-orange"
+                            className="w-full bg-black/60 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/30"
                             required
                           />
                           <Mail size={14} className="absolute left-3 top-3 text-white/30" />
@@ -486,7 +486,7 @@ export default function PinLockScreen({
                               setRecoveryError(null);
                             }}
                             placeholder="••••••••••••"
-                            className="w-full bg-black/60 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-plt-orange"
+                            className="w-full bg-black/60 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/30"
                             required
                             autoFocus
                           />
@@ -512,7 +512,7 @@ export default function PinLockScreen({
                         <button
                           type="submit"
                           disabled={isRecovering || !authPassword}
-                          className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-plt-orange hover:bg-plt-orange/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-white/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
                         >
                           <span>{isRecovering ? 'Verifying...' : 'Verify Password'}</span>
                           <ArrowRight size={14} />

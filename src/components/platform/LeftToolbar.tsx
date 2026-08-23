@@ -11,7 +11,7 @@ import {
   Lock, 
   EyeOff, 
   Trash2 
-} from '@/components/ui/icons';
+} from '@/components/ui/icon-library';
 
 export default function LeftToolbar() {
   const tools = [
@@ -34,26 +34,26 @@ export default function LeftToolbar() {
 
   return (
     <div className="w-12 bg-tv-base flex flex-col items-center py-2 border-r border-tv-border">
-      <div className="flex-1 flex flex-col space-y-3 w-full items-center">
+      <div className="flex-1 flex flex-col space-y-4 w-full items-center">
         {tools.map((Tool) => (
           <button 
             key={Tool.id} 
-            className={`p-2 rounded-tv-sm transition-colors ${
+            className={`p-2 rounded-full transition-colors ${
               Tool.id === 'cursor' ? 'text-tv-accent bg-tv-hover' : 'text-tv-muted hover:text-tv-text hover:bg-tv-hover'
             }`}
           >
-            <Tool.icon size={20} strokeWidth={1.5} />
+            <Tool.icon size={24} strokeWidth={1.5} />
           </button>
         ))}
       </div>
       
-      <div className="flex flex-col space-y-3 w-full items-center pb-4">
+      <div className="flex flex-col space-y-4 w-full items-center pb-4">
         {bottomTools.map((Tool) => (
           <button 
             key={Tool.id} 
-            className="p-2 rounded-tv-sm transition-colors text-tv-muted hover:text-tv-text hover:bg-tv-hover"
+            className="p-2 rounded-full transition-colors text-tv-muted hover:text-tv-text hover:bg-tv-hover"
           >
-            <Tool.icon size={20} strokeWidth={1.5} />
+            <Tool.icon size={24} strokeWidth={1.5} />
           </button>
         ))}
       </div>

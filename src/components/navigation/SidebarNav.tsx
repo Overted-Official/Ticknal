@@ -5,8 +5,25 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
-import { LayoutDashboard, LineChart, Wallet, Settings, Bell, TrendingUp, Landmark, ShieldCheck, Layers, LayoutGrid } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  LayoutDashboard,
+  LineChart,
+  Wallet,
+  Settings,
+  Bell,
+  TrendingUp,
+  Landmark,
+  ShieldCheck,
+  Layers,
+  LayoutGrid,
+  Bot,
+  Cpu,
+  History,
+  Terminal,
+} from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
+import { flyoutReveal } from '@/lib/motion';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -17,11 +34,13 @@ export default function SidebarNav() {
 
   const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
   const [isChartsMenuOpen, setIsChartsMenuOpen] = useState(false);
+  const [isBotMenuOpen, setIsBotMenuOpen] = useState(false);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const dashboardMenuRef = useRef<HTMLDivElement>(null);
   const chartsMenuRef = useRef<HTMLDivElement>(null);
+  const botMenuRef = useRef<HTMLDivElement>(null);
   const walletMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
@@ -34,7 +53,7 @@ export default function SidebarNav() {
     revalidateOnFocus: true,
   });
 
-  const notificationCount = (notifData?.notifications?.length ?? 0) + (logsData?.logs?.some(l => l.level === 'ERROR') ? 1 : 0);
+  const notificationCount = (notifData?.notifications?.length ?? 0) + (logsData?.logs?.some((l) => l.level === 'ERROR') ? 1 : 0);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -43,6 +62,9 @@ export default function SidebarNav() {
       }
       if (chartsMenuRef.current && !chartsMenuRef.current.contains(event.target as Node)) {
         setIsChartsMenuOpen(false);
+      }
+      if (botMenuRef.current && !botMenuRef.current.contains(event.target as Node)) {
+        setIsBotMenuOpen(false);
       }
       if (walletMenuRef.current && !walletMenuRef.current.contains(event.target as Node)) {
         setIsWalletMenuOpen(false);
@@ -54,255 +76,360 @@ export default function SidebarNav() {
 
   const isDashboardActive = pathname === '/dashboard';
   const isInvestActive = pathname === '/invest' || pathname === '/charts';
+  const isBotActive = pathname === '/bot';
   const isWalletActive = pathname === '/wallet' || pathname === '/positions';
 
   return (
-    <div className="w-[48px] h-full flex flex-col items-center py-3 bg-black border-r border-white/[0.06] select-none text-white">
+    <div className="nav-shell w-[45px] h-full flex flex-col items-center py-2.5 border-r select-none">
       {/* Brand Logo */}
-      <Link href="/dashboard" className="mb-4 w-6 h-6 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center">
+      <Link
+        href="/dashboard"
+        className="mb-3 w-8 h-8 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center"
+        title="QuantEGX Dashboard"
+      >
         <Image src="/logo.svg" alt="QuantEGX" width={22} height={22} className="object-contain" priority />
       </Link>
 
-      <div className="flex-1 flex flex-col space-y-3 w-full items-center">
+      <div className="flex-1 flex flex-col space-y-2.5 w-full items-center">
         {/* 1. Dashboard with Sub-Menu */}
-        <div className="w-full relative group" ref={dashboardMenuRef}>
+        <div className="w-full relative flex items-center justify-center group" ref={dashboardMenuRef}>
           <button
+            type="button"
             onClick={() => {
               setIsDashboardMenuOpen(!isDashboardMenuOpen);
               setIsChartsMenuOpen(false);
+              setIsBotMenuOpen(false);
               setIsWalletMenuOpen(false);
             }}
-            className="w-full py-0.5 flex flex-col items-center justify-center relative"
+            className="flex items-center justify-center relative"
+            title="Dashboard"
           >
-            <div 
-              className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 mb-0.5 ${
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
                 isDashboardActive || isDashboardMenuOpen
-                  ? 'bg-white/[0.06] text-white' 
-                  : 'text-white/35 group-hover:text-white/70'
+                  ? 'nav-icon-active'
+                  : 'text-plt-muted hover:text-plt-text'
               }`}
             >
-              <LayoutDashboard size={16} strokeWidth={1.5} />
+              <LayoutDashboard size={20} strokeWidth={1.5} />
             </div>
-            <span className={`text-[8px] tracking-tight ${isDashboardActive || isDashboardMenuOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
-              Dashboard
-            </span>
           </button>
-          
+
           {/* Desktop Floating Menu for Dashboard */}
           {isDashboardMenuOpen && (
-            <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-36 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1 shadow-2xl">
-              <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
-                Dashboard
-              </div>
-              <Link 
-                href="/dashboard?tab=net-worth" 
+            <motion.div
+              variants={flyoutReveal}
+              initial="hidden"
+              animate="visible"
+              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-44 overflow-hidden"
+            >
+              <div className="nav-flyout-title">Dashboard</div>
+              <Link
+                href="/dashboard?tab=net-worth"
                 prefetch={true}
                 onClick={() => setIsDashboardMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                className={`nav-flyout-link ${
                   isDashboardActive && (!currentTab || currentTab === 'net-worth')
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                    ? 'nav-flyout-link-active'
+                    : ''
                 }`}
               >
-                <ShieldCheck size={13} className="text-emerald-400" />
-                Net Worth
+                <ShieldCheck size={16} />
+                <span>Net Worth</span>
               </Link>
-              <Link 
-                href="/dashboard?tab=investments" 
+              <Link
+                href="/dashboard?tab=investments"
                 prefetch={true}
                 onClick={() => setIsDashboardMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                className={`nav-flyout-link ${
                   isDashboardActive && currentTab === 'investments'
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                    ? 'nav-flyout-link-active'
+                    : ''
                 }`}
               >
-                <TrendingUp size={13} className="text-plt-orange" />
-                Investments
+                <TrendingUp size={16} />
+                <span>Investments</span>
               </Link>
-              <Link 
-                href="/dashboard?tab=banks" 
+              <Link
+                href="/dashboard?tab=banks"
                 prefetch={true}
                 onClick={() => setIsDashboardMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                className={`nav-flyout-link ${
                   isDashboardActive && currentTab === 'banks'
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                    ? 'nav-flyout-link-active'
+                    : ''
                 }`}
               >
-                <Landmark size={13} className="text-sky-400" />
-                Bank Accounts
+                <Landmark size={16} />
+                <span>Bank Accounts</span>
               </Link>
-            </div>
+            </motion.div>
           )}
         </div>
 
         {/* 2. Invest with Sub-Menu */}
-        <div className="w-full relative group" ref={chartsMenuRef}>
+        <div className="w-full relative flex items-center justify-center group" ref={chartsMenuRef}>
           <button
+            type="button"
             onClick={() => {
               setIsChartsMenuOpen(!isChartsMenuOpen);
               setIsDashboardMenuOpen(false);
+              setIsBotMenuOpen(false);
               setIsWalletMenuOpen(false);
             }}
-            className="w-full py-0.5 flex flex-col items-center justify-center relative"
+            className="flex items-center justify-center relative"
+            title="Invest"
           >
-            <div 
-              className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 mb-0.5 ${
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
                 isInvestActive || isChartsMenuOpen
-                  ? 'bg-white/[0.06] text-white' 
-                  : 'text-white/35 group-hover:text-white/70'
+                  ? 'nav-icon-active'
+                  : 'text-plt-muted hover:text-plt-text'
               }`}
             >
-              <LineChart size={16} strokeWidth={1.5} />
+              <LineChart size={20} strokeWidth={1.5} />
             </div>
-            <span className={`text-[8px] tracking-tight ${isInvestActive || isChartsMenuOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
-              Invest
-            </span>
           </button>
-          
+
           {/* Desktop Floating Menu for Invest */}
           {isChartsMenuOpen && (
-            <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-40 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1 shadow-2xl">
-              <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
-                Invest
-              </div>
-              <Link 
-                href="/invest?view=sectors" 
+            <motion.div
+              variants={flyoutReveal}
+              initial="hidden"
+              animate="visible"
+              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-40 overflow-hidden"
+            >
+              <div className="nav-flyout-title">Invest</div>
+              <Link
+                href="/invest?view=sectors"
                 prefetch={true}
                 onClick={() => setIsChartsMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                className={`nav-flyout-link ${
                   isInvestActive && (!searchParams.get('view') || searchParams.get('view') === 'sectors')
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                    ? 'nav-flyout-link-active'
+                    : ''
                 }`}
               >
-                <LayoutGrid size={13} className="text-emerald-400" />
-                Sectors
+                <LayoutGrid size={16} />
+                <span>Sectors</span>
               </Link>
-              <Link 
-                href="/invest?view=chart" 
+              <Link
+                href="/invest?view=chart"
                 prefetch={true}
                 onClick={() => setIsChartsMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                className={`nav-flyout-link ${
                   isInvestActive && searchParams.get('view') === 'chart'
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                    ? 'nav-flyout-link-active'
+                    : ''
                 }`}
               >
-                <LineChart size={13} className="text-plt-orange" />
-                Tickers
+                <LineChart size={16} />
+                <span>Tickers</span>
               </Link>
-            </div>
+            </motion.div>
           )}
         </div>
 
-        {/* 3. Wallet with Sub-Menu */}
-        <div className="w-full relative group" ref={walletMenuRef}>
+        {/* 3. Intraday Trading Bot with Sub-Menu */}
+        <div className="w-full relative flex items-center justify-center group" ref={botMenuRef}>
           <button
+            type="button"
+            onClick={() => {
+              setIsBotMenuOpen(!isBotMenuOpen);
+              setIsDashboardMenuOpen(false);
+              setIsChartsMenuOpen(false);
+              setIsWalletMenuOpen(false);
+            }}
+            className="flex items-center justify-center relative"
+            title="Trading Bot"
+          >
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
+                isBotActive || isBotMenuOpen
+                  ? 'nav-icon-active'
+                  : 'text-plt-muted hover:text-plt-text'
+              }`}
+            >
+              <Bot size={20} strokeWidth={1.5} />
+            </div>
+          </button>
+
+          {/* Desktop Floating Menu for Bot */}
+          {isBotMenuOpen && (
+            <motion.div
+              variants={flyoutReveal}
+              initial="hidden"
+              animate="visible"
+              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-44 overflow-hidden"
+            >
+              <div className="nav-flyout-title">Trading Bot</div>
+              <Link
+                href="/bot?tab=analytics"
+                prefetch={true}
+                onClick={() => setIsBotMenuOpen(false)}
+                className={`nav-flyout-link ${
+                  isBotActive && (!currentTab || currentTab === 'analytics' || currentTab === 'cockpit')
+                    ? 'nav-flyout-link-active'
+                    : ''
+                }`}
+              >
+                <Cpu size={16} />
+                <span>Analytics</span>
+              </Link>
+              <Link
+                href="/bot?tab=history"
+                prefetch={true}
+                onClick={() => setIsBotMenuOpen(false)}
+                className={`nav-flyout-link ${
+                  isBotActive && (currentTab === 'history' || currentTab === 'trades')
+                    ? 'nav-flyout-link-active'
+                    : ''
+                }`}
+              >
+                <History size={16} />
+                <span>History</span>
+              </Link>
+              <Link
+                href="/bot?tab=settings"
+                prefetch={true}
+                onClick={() => setIsBotMenuOpen(false)}
+                className={`nav-flyout-link ${
+                  isBotActive && (currentTab === 'settings' || currentTab === 'basket')
+                    ? 'nav-flyout-link-active'
+                    : ''
+                }`}
+              >
+                <Settings size={16} />
+                <span>Settings</span>
+              </Link>
+              <Link
+                href="/bot?tab=logs"
+                prefetch={true}
+                onClick={() => setIsBotMenuOpen(false)}
+                className={`nav-flyout-link ${
+                  isBotActive && currentTab === 'logs'
+                    ? 'nav-flyout-link-active'
+                    : ''
+                }`}
+              >
+                <Terminal size={16} />
+                <span>Logs</span>
+              </Link>
+            </motion.div>
+          )}
+        </div>
+
+        {/* 4. Wallet with Sub-Menu */}
+        <div className="w-full relative flex items-center justify-center group" ref={walletMenuRef}>
+          <button
+            type="button"
             onClick={() => {
               setIsWalletMenuOpen(!isWalletMenuOpen);
               setIsDashboardMenuOpen(false);
               setIsChartsMenuOpen(false);
+              setIsBotMenuOpen(false);
             }}
-            className="w-full py-0.5 flex flex-col items-center justify-center relative"
+            className="flex items-center justify-center relative"
+            title="Wallet"
           >
-            <div 
-              className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 mb-0.5 ${
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
                 isWalletActive || isWalletMenuOpen
-                  ? 'bg-white/[0.06] text-white' 
-                  : 'text-white/35 group-hover:text-white/70'
+                  ? 'nav-icon-active'
+                  : 'text-plt-muted hover:text-plt-text'
               }`}
             >
-              <Wallet size={16} strokeWidth={1.5} />
+              <Wallet size={20} strokeWidth={1.5} />
             </div>
-            <span className={`text-[8px] tracking-tight ${isWalletActive || isWalletMenuOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
-              Wallet
-            </span>
           </button>
-          
+
           {/* Desktop Floating Menu for Wallet */}
           {isWalletMenuOpen && (
-            <div className="absolute left-full top-0 ml-2 hidden lg:flex flex-col bg-[#111] border border-white/[0.06] rounded-md z-50 w-36 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150 p-1 shadow-2xl">
-              <div className="px-2.5 py-1 text-[8px] font-bold text-white/40 uppercase tracking-wider">
-                Wallet
-              </div>
-              <Link 
-                href="/wallet?tab=positions" 
+            <motion.div
+              variants={flyoutReveal}
+              initial="hidden"
+              animate="visible"
+              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-40 overflow-hidden"
+            >
+              <div className="nav-flyout-title">Wallet</div>
+              <Link
+                href="/wallet?tab=positions"
                 prefetch={true}
                 onClick={() => setIsWalletMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                className={`nav-flyout-link ${
                   isWalletActive && (!currentTab || currentTab === 'positions')
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                    ? 'nav-flyout-link-active'
+                    : ''
                 }`}
               >
-                <Layers size={13} className="text-plt-orange" />
-                Positions
+                <Layers size={16} />
+                <span>Positions</span>
               </Link>
-              <Link 
-                href="/wallet?tab=banks" 
+              <Link
+                href="/wallet?tab=banks"
                 prefetch={true}
                 onClick={() => setIsWalletMenuOpen(false)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                className={`nav-flyout-link ${
                   isWalletActive && currentTab === 'banks'
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                    ? 'nav-flyout-link-active'
+                    : ''
                 }`}
               >
-                <Landmark size={13} className="text-emerald-400" />
-                Bank Accounts
+                <Landmark size={16} />
+                <span>Bank Accounts</span>
               </Link>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
 
       {/* Notifications & Settings at the bottom */}
       <div className="w-full flex flex-col items-center space-y-2 mt-auto">
+        {/* Subtle Divider */}
+        <div className="w-5 h-px bg-plt-border my-0.5" />
+
         {/* Notifications Bell */}
-        <button
-          type="button"
-          onClick={() => setIsNotificationsOpen(true)}
-          className="w-full py-0.5 flex flex-col items-center justify-center group relative"
-          title="Trade Notifications & Alerts"
-        >
-          <div 
-            className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 relative ${
-              isNotificationsOpen 
-                ? 'bg-white/[0.06] text-white' 
-                : 'text-white/35 group-hover:text-white/70'
-            }`}
+        <div className="w-full flex items-center justify-center relative group">
+          <button
+            type="button"
+            onClick={() => setIsNotificationsOpen(true)}
+            className="flex items-center justify-center relative"
+            title="Trade Notifications & Alerts"
           >
-            <Bell size={16} strokeWidth={1.5} />
-            {notificationCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-plt-orange ring-2 ring-black" />
-            )}
-          </div>
-          <span className={`text-[8px] tracking-tight mt-0.5 ${isNotificationsOpen ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
-            Alerts
-          </span>
-        </button>
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 relative ${
+                isNotificationsOpen
+                  ? 'nav-icon-active'
+                  : 'text-plt-muted hover:text-plt-text'
+              }`}
+            >
+              <Bell size={20} strokeWidth={1.5} />
+              {notificationCount > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-plt-profit ring-2 ring-plt-base" />
+              )}
+            </div>
+          </button>
+        </div>
 
         {/* Settings */}
-        <Link
-          href="/settings"
-          prefetch={true}
-          className="w-full py-0.5 flex flex-col items-center justify-center group"
-        >
-          <div 
-            className={`flex items-center justify-center rounded-md w-8 h-8 transition-all duration-150 ${
-              pathname === '/settings' 
-                ? 'bg-white/[0.06] text-white' 
-                : 'text-white/35 group-hover:text-white/70'
-            }`}
+        <div className="w-full flex items-center justify-center relative group">
+          <Link
+            href="/settings"
+            prefetch={true}
+            className="flex items-center justify-center relative"
+            title="Settings"
           >
-            <Settings size={16} strokeWidth={1.5} />
-          </div>
-          <span className={`text-[8px] tracking-tight mt-0.5 ${pathname === '/settings' ? 'text-white font-medium' : 'text-white/35 group-hover:text-white/60'}`}>
-            Settings
-          </span>
-        </Link>
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
+                pathname === '/settings'
+                  ? 'nav-icon-active'
+                  : 'text-plt-muted hover:text-plt-text'
+              }`}
+            >
+              <Settings size={20} strokeWidth={1.5} />
+            </div>
+          </Link>
+        </div>
       </div>
 
       <NotificationsDrawer

@@ -148,17 +148,17 @@ export async function dispatchSignalNotifications(options: {
         }
       }
 
-      // 2. Evaluate Thoth EGX Macro Strategy (using ticker bespoke parameters)
+      // 2. Evaluate the frozen THOTH EGX V3.7P production strategy
       if (userScope === 'all' || userScope === 'thoth_egx_macro') {
         try {
-          const { runThothStrategy } = await import('@/strategies/Thoth/thothStrategy');
-          const thothResult = await runThothStrategy(bars, { ticker, startDate: bars[0].date });
+          const { runThothV37PStrategy } = await import('@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy');
+          const thothResult = await runThothV37PStrategy(bars, { ticker, startDate: bars[0].date });
           const signal = [...thothResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
           if (signal) {
             signalsToDispatch.push({
               strategyId: 'thoth_egx_macro',
               strategyShort: 'THOTH',
-              strategyLabel: 'Thoth EGX Macro',
+              strategyLabel: 'THOTH EGX V3.7P',
               signal,
             });
           }

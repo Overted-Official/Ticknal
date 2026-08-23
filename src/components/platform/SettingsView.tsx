@@ -488,7 +488,7 @@ export default function SettingsView({
           <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="w-2 h-2 rounded-full bg-plt-orange" />
+                <span className="w-2 h-2 rounded-full bg-white/60" />
                 <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Settings</h1>
               </div>
               <p className="mt-0.5 text-[13px] text-white/30 truncate">
@@ -502,21 +502,21 @@ export default function SettingsView({
                 className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
               >
                 <span>Dashboard</span>
-                <span className="text-plt-orange">→</span>
+                <span className="text-white/40">→</span>
               </Link>
               <Link
                 href="/positions"
                 className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
               >
                 <span>Manage Positions</span>
-                <span className="text-plt-orange">→</span>
+                <span className="text-white/40">→</span>
               </Link>
               <Link
                 href="/invest"
                 className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
               >
                 <span>Open Invest</span>
-                <span className="text-plt-orange">→</span>
+                <span className="text-white/40">→</span>
               </Link>
             </div>
           </motion.div>
@@ -535,7 +535,7 @@ export default function SettingsView({
                   : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
               }`}
             >
-              <User size={14} className={activeTab === 'profile' ? 'text-plt-orange' : 'text-white/40'} />
+              <User size={14} className={activeTab === 'profile' ? 'text-white' : 'text-white/40'} />
               <span>Account Profile</span>
             </button>
 
@@ -548,7 +548,7 @@ export default function SettingsView({
                   : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
               }`}
             >
-              <ShieldCheck size={14} className={activeTab === 'security' ? 'text-plt-orange' : 'text-white/40'} />
+              <ShieldCheck size={14} className={activeTab === 'security' ? 'text-white' : 'text-white/40'} />
               <span>Security & PIN</span>
             </button>
 
@@ -561,7 +561,7 @@ export default function SettingsView({
                   : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
               }`}
             >
-              <Smartphone size={14} className={activeTab === 'devices' ? 'text-plt-orange' : 'text-white/40'} />
+              <Smartphone size={14} className={activeTab === 'devices' ? 'text-white' : 'text-white/40'} />
               <span>Connected Devices</span>
               <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
                 {devices.length}
@@ -577,7 +577,7 @@ export default function SettingsView({
                   : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
               }`}
             >
-              <Bell size={14} className={activeTab === 'alerts' ? 'text-plt-orange' : 'text-white/40'} />
+              <Bell size={14} className={activeTab === 'alerts' ? 'text-white' : 'text-white/40'} />
               <span>Monitored Tickers & Alerts</span>
               <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
                 {monitoredTickers.length}
@@ -650,7 +650,7 @@ export default function SettingsView({
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploadingAvatar}
-                        className="text-plt-orange hover:underline inline-flex items-center gap-1"
+                        className="text-white/60 hover:text-white hover:underline inline-flex items-center gap-1"
                       >
                         <Camera size={11} />
                         <span>{isUploadingAvatar ? 'Uploading...' : 'Change Photo'}</span>
@@ -658,7 +658,7 @@ export default function SettingsView({
                     </div>
 
                     {avatarUploadStatus && (
-                      <div className="mt-2 text-[11px] text-plt-orange font-mono flex items-center gap-1">
+                      <div className="mt-2 text-[11px] text-plt-profit font-mono flex items-center gap-1">
                         <CheckCircle2 size={12} />
                         <span>{avatarUploadStatus}</span>
                       </div>
@@ -701,7 +701,7 @@ export default function SettingsView({
 
                 <div className="p-4 rounded-md bg-white/[0.02] border border-white/[0.06]">
                   <span className="text-[11px] font-medium text-white/35 block mb-1">Portfolio Mode</span>
-                  <div className="text-xs font-mono font-medium text-plt-orange">Automated PSI Triggers</div>
+                  <div className="text-xs font-mono font-medium text-plt-text">Automated PSI Triggers</div>
                 </div>
               </div>
             </div>
@@ -735,7 +735,7 @@ export default function SettingsView({
                   type="button"
                   onClick={handleEnablePush}
                   disabled={isEnablingPush}
-                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white bg-plt-orange hover:bg-plt-orange/90 transition-all shrink-0"
+                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-black bg-white hover:bg-white/90 transition-all shrink-0"
                 >
                   <Bell size={14} />
                   <span>{isEnablingPush ? 'Registering...' : 'Enable on This Device'}</span>
@@ -744,7 +744,7 @@ export default function SettingsView({
 
               {pushStatus && (
                 <div className="mb-4 p-3 rounded-md bg-white/[0.03] border border-white/[0.08] text-xs text-white/70 flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-plt-orange shrink-0" />
+                  <CheckCircle2 size={14} className="text-plt-profit shrink-0" />
                   <span>{pushStatus}</span>
                 </div>
               )}
@@ -816,13 +816,13 @@ export default function SettingsView({
             <div className="border border-white/[0.09] rounded-md bg-black p-6">
               <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-white/[0.08]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-plt-orange/10 border border-plt-orange/20 flex items-center justify-center text-plt-orange">
+                  <div className="w-8 h-8 rounded-lg bg-white/[0.06] border border-white/[0.12] flex items-center justify-center text-white/60">
                     <Layers className="w-4 h-4" />
                   </div>
                   <div>
                     <h2 className="text-[13px] font-medium text-white tracking-[-0.02em] flex items-center gap-2">
                       <span>Signal & Alert Strategy Scope</span>
-                      {isSavingScope && <span className="text-[10px] text-plt-orange animate-pulse font-mono">Syncing...</span>}
+                      {isSavingScope && <span className="text-[10px] text-plt-muted animate-pulse font-mono">Syncing...</span>}
                     </h2>
                     <p className="mt-0.5 text-xs text-white/40">
                       Choose which models send push notifications and populate the dashboard Buy/Sell Opportunity tables.
@@ -838,14 +838,14 @@ export default function SettingsView({
                   onClick={() => handleStrategyScopeChange('all')}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
                     alertStrategyScope === 'all'
-                      ? 'bg-white/[0.06] border-plt-orange/60 shadow-[0_0_15px_rgba(254,80,0,0.12)]'
+                      ? 'bg-white/[0.06] border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.10)]'
                       : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Zap className={`w-4 h-4 ${alertStrategyScope === 'all' ? 'text-plt-orange' : 'text-white/40'}`} />
+                        <Zap className={`w-4 h-4 ${alertStrategyScope === 'all' ? 'text-white' : 'text-white/40'}`} />
                         <span className="text-xs font-bold text-white">All Strategies</span>
                       </div>
                       <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
@@ -859,9 +859,9 @@ export default function SettingsView({
                   <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
                     <span className="text-[9px] font-mono text-white/30">Scope: Multi-Model</span>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                      alertStrategyScope === 'all' ? 'border-plt-orange bg-plt-orange' : 'border-white/30'
+                      alertStrategyScope === 'all' ? 'border-white bg-white' : 'border-white/30'
                     }`}>
-                      {alertStrategyScope === 'all' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      {alertStrategyScope === 'all' && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
                     </div>
                   </div>
                 </div>
@@ -948,7 +948,7 @@ export default function SettingsView({
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white bg-plt-orange hover:bg-plt-orange/90 transition-all shrink-0"
+                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-black bg-white hover:bg-white/90 transition-all shrink-0"
                 >
                   <Plus size={14} />
                   <span>Add Ticker Alert</span>
@@ -1061,7 +1061,7 @@ export default function SettingsView({
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.03]">
                         <div className="flex flex-wrap items-center gap-1.5">
                           {ticker.isPosition && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-orange/10 border border-plt-orange/20 text-plt-orange">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-profit/10 border border-plt-profit/20 text-plt-profit">
                               <Lock size={10} />
                               Active Holding
                             </span>
@@ -1144,7 +1144,7 @@ export default function SettingsView({
                           <td className="py-3 px-3">
                             <div className="flex flex-wrap items-center gap-1.5">
                               {ticker.isPosition && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-orange/10 border border-plt-orange/20 text-plt-orange">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-profit/10 border border-plt-profit/20 text-plt-profit">
                                   <Lock size={10} />
                                   Active Holding
                                 </span>
@@ -1234,7 +1234,7 @@ export default function SettingsView({
             >
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                 <div className="flex items-center gap-2">
-                  <Bell size={16} className="text-plt-orange" />
+                  <Bell size={16} className="text-white/80" />
                   <h3 className="text-sm font-medium text-white">Add Stock Trigger Alert</h3>
                 </div>
                 <button
@@ -1284,7 +1284,7 @@ export default function SettingsView({
                           type="button"
                           onClick={() => handleAddAlert(t)}
                           disabled={togglingSymbol === t.symbol}
-                          className="px-3 py-1 rounded bg-plt-orange hover:bg-plt-orange/90 text-white text-xs font-medium shrink-0 transition-colors"
+                          className="px-3 py-1 rounded bg-white hover:bg-white/90 text-black text-xs font-medium shrink-0 transition-colors"
                         >
                           + Add Alert
                         </button>

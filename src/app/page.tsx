@@ -16,7 +16,7 @@ import Footer from '@/components/landing/Footer';
 export default function LandingPage() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-black overflow-x-hidden font-sans text-white selection:bg-tv-accent selection:text-black">
+      <div className="min-h-screen bg-plt-base overflow-x-hidden font-sans text-plt-text selection:bg-tv-accent selection:text-plt-inverse">
         <Navbar />
         <Hero />
         <Stats />

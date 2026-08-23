@@ -1,20 +1,17 @@
-import TopBar from '@/components/platform/TopBar';
-import RightSidebar, { WatchlistItem } from '@/components/platform/RightSidebar';
-import BottomToolbar from '@/components/platform/BottomToolbar';
-import ChartReplayWorkspace from '@/components/platform/ChartReplayWorkspace';
 import { db } from '@/db';
 import { dailyPrices, tickers, positions } from '@/db/schema';
 import { eq, asc, sql, and } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
-import ChartViews from '@/components/platform/ChartViews';
 import { TickerOrder } from '@/components/platform/TickerPositions';
 import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices } from '@/lib/data-cache';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-
 import { Suspense } from 'react';
-import SectorsHeatmapView from '@/components/platform/sectors/SectorsHeatmapView';
+import InvestClientView from '@/components/platform/invest/InvestClientView';
+import InvestSectorsView from '@/components/platform/invest/InvestSectorsView';
+import InvestTickersView from '@/components/platform/invest/InvestTickersView';
+import { type WatchlistItem } from '@/components/platform/RightSidebar';
 import InvestSkeleton from './InvestSkeleton';
 
 export const dynamic = 'force-dynamic';
@@ -115,17 +112,18 @@ async function InvestPageContent({
     const change = lastPrice - prevPrice;
     const changePct = prevPrice ? (change / prevPrice) * 100 : 0;
     
+    // Use GICS industry group (25 groups) instead of sector (11 groups) for finer grouping
     const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(t.symbol.toUpperCase());
-    let sector = t.sector || 'Unclassified';
-    if (isFund || sector.toLowerCase().includes('fund')) {
-      sector = 'Funds';
+    let group = t.industryGroup || t.sector || 'Unclassified';
+    if (isFund || group.toLowerCase().includes('fund')) {
+      group = 'Funds';
     }
 
     return {
       symbol: t.symbol,
       companyName: t.companyName || t.symbol,
       website: t.website || undefined,
-      sector: sector,
+      sector: group,
       price: lastPrice.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
       changePct: `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}%`,
@@ -260,38 +258,25 @@ async function InvestPageContent({
 
   return (
     <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-14 md:pb-0">
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <ChartViews 
-          sectorsView={<SectorsHeatmapView />}
-          initialView={view as 'sectors' | 'chart'}
-          rightSidebar={
-            <RightSidebar 
-              watchlist={watchlist} 
-              selectedSymbol={selectedSymbol} 
-              timeframe={timeframe} 
-              rangeData={rangeData} 
-            />
-          }
-        >
-          <ChartReplayWorkspace
-            key={`${selectedSymbol}-${timeframe}-${initialReplayMode ? 'replay' : 'live'}`}
-            data={chartData}
+      <InvestClientView
+        sectorsView={<InvestSectorsView />}
+        tickersView={
+          <InvestTickersView
             symbol={selectedSymbol}
-            watchlist={watchlist}
+            timeframe={timeframe}
             initialReplayMode={initialReplayMode}
+            chartData={chartData}
+            dailyChartData={dailyChartData}
+            watchlist={watchlist}
             tickerPositions={tickerPositions}
             currentPrice={currentPriceForSymbol}
-          />
-          <BottomToolbar 
-            symbol={selectedSymbol} 
-            timeframe={timeframe} 
-            replay={initialReplayMode}
-            chartData={dailyChartData}
             companyName={currentTicker?.companyName}
             logoUrl={currentTicker?.logoUrl}
+            rangeData={rangeData}
           />
-        </ChartViews>
-      </div>
+        }
+        initialView={view as 'sectors' | 'chart'}
+      />
     </div>
   );
 }

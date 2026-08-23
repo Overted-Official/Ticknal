@@ -5,11 +5,11 @@ import { db } from '@/db';
 import { positions, pushSubscriptions, tickerAlerts } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
-import SettingsView, { 
-  type SettingsUserProfile, 
-  type DeviceInfo, 
+import SettingsView, {
+  type SettingsUserProfile,
+  type DeviceInfo,
   type MonitoredTicker,
-  type TickerOption 
+  type TickerOption
 } from '@/components/platform/SettingsView';
 
 export const dynamic = 'force-dynamic';
@@ -22,9 +22,9 @@ export default async function SettingsPage() {
   if (!user) {
     return (
       <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text items-center justify-center p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">QuantEGX Settings</h2>
+        <h2 className="text-2xl font-medium mb-4">QuantEGX Settings</h2>
         <p className="text-tv-muted mb-6">Please sign in to manage your account profile, devices, and alert triggers.</p>
-        <Link href="/" className="bg-tv-accent text-white px-6 py-2 rounded-tv-sm hover:bg-tv-accent/90 transition">
+        <Link href="/" className="btn-token btn-primary">
           Sign In
         </Link>
       </div>
@@ -83,19 +83,19 @@ export default async function SettingsPage() {
   // Extract Google / OAuth profile details
   const metadata = user.user_metadata ?? {};
   const identityData = user.identities?.[0]?.identity_data ?? {};
-  const avatarUrl = 
+  const avatarUrl =
     (typeof metadata.avatar_url === 'string' && metadata.avatar_url) ||
     (typeof metadata.picture === 'string' && metadata.picture) ||
     (typeof identityData.avatar_url === 'string' && identityData.avatar_url) ||
     (typeof identityData.picture === 'string' && identityData.picture) ||
     null;
 
-  const name = 
+  const name =
     (typeof metadata.full_name === 'string' && metadata.full_name) ||
     (typeof metadata.name === 'string' && metadata.name) ||
     (typeof identityData.full_name === 'string' && identityData.full_name) ||
     (typeof identityData.name === 'string' && identityData.name) ||
-    user.email?.split('@')[0] || 
+    user.email?.split('@')[0] ||
     'Trader';
 
   const userProfile: SettingsUserProfile = {

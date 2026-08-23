@@ -239,3 +239,144 @@ export const psiCombinations = pgTable('psi_combinations', {
     tickerIdx: index('psi_combinations_ticker_idx').on(table.tickerSymbol),
   };
 });
+
+// ==========================================
+// INTRADAY TRADING BOT TABLES (STRATEGY-AGNOSTIC)
+// ==========================================
+
+export const intradayBotSettings = pgTable('intraday_bot_settings', {
+  id: serial('id').primaryKey(),
+  botActive: boolean('bot_active').default(false).notNull(),
+  activeStrategy: varchar('active_strategy', { length: 50 }).default('PSI_PURE').notNull(),
+  timeframe: varchar('timeframe', { length: 10 }).default('15m').notNull(),
+  maxConcurrentPositions: integer('max_concurrent_positions').default(5).notNull(),
+  allocationPerTradeEgp: numeric('allocation_per_trade_egp', { precision: 12, scale: 2 }).default('1000.00').notNull(),
+  eodRule: varchar('eod_rule', { length: 30 }).default('CARRY_OVERNIGHT').notNull(), // 'CARRY_OVERNIGHT' | 'HARD_CLOSE_EOD' | 'PROFIT_CLOSE_EOD'
+  dailyLossHaltPct: numeric('daily_loss_halt_pct', { precision: 6, scale: 2 }).default('3.00').notNull(),
+  brokerMode: varchar('broker_mode', { length: 20 }).default('PAPER').notNull(), // 'PAPER' | 'THNDR_LIVE'
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const intradayBotTickers = pgTable('intraday_bot_tickers', {
+  id: serial('id').primaryKey(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  strategyId: varchar('strategy_id', { length: 50 }).default('PSI_PURE').notNull(),
+  timeframe: varchar('timeframe', { length: 10 }).default('15m').notNull(),
+  isEnabled: boolean('is_enabled').default(true).notNull(),
+  allocatedBudgetEgp: numeric('allocated_budget_egp', { precision: 12, scale: 2 }).default('1000.00').notNull(),
+  maxLossHaltPct: numeric('max_loss_halt_pct', { precision: 6, scale: 2 }).default('5.00').notNull(),
+  status: varchar('status', { length: 20 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'CIRCUIT_HALTED' | 'PAUSED'
+  strategyParams: jsonb('strategy_params').notNull(), // Dynamic strategy parameters e.g. { entryLevels: [50.0, 61.8], aymMultiplier: 4.0, aymLimit: 50.0, atrDistance: 6.0 }
+  entryLevels: jsonb('entry_levels'), // Backward compatibility helper
+  aymMultiplier: numeric('aym_multiplier', { precision: 8, scale: 2 }),
+  aymLimit: numeric('aym_limit', { precision: 8, scale: 2 }),
+  atrDistance: numeric('atr_distance', { precision: 8, scale: 2 }),
+  testAlphaMargin: numeric('test_alpha_margin', { precision: 10, scale: 2 }),
+  testWinRate: numeric('test_win_rate', { precision: 6, scale: 2 }),
+  testTrades: integer('test_trades'),
+  avgBars: numeric('avg_bars', { precision: 8, scale: 2 }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    tickerStratTfUnique: unique('intraday_bot_tickers_sym_strat_tf_unique').on(
+      table.tickerSymbol,
+      table.strategyId,
+      table.timeframe
+    ),
+    tickerIdx: index('intraday_bot_tickers_ticker_idx').on(table.tickerSymbol),
+  };
+});
+
+export const intradayPositions = pgTable('intraday_positions', {
+  id: serial('id').primaryKey(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  strategyId: varchar('strategy_id', { length: 50 }).default('PSI_PURE').notNull(),
+  timeframe: varchar('timeframe', { length: 10 }).default('15m').notNull(),
+  status: varchar('status', { length: 20 }).default('OPEN').notNull(), // 'OPEN' | 'CLOSED' | 'CANCELLED'
+  entryPrice: numeric('entry_price', { precision: 12, scale: 4 }).notNull(),
+  entryTime: timestamp('entry_time', { withTimezone: true }).defaultNow().notNull(),
+  quantity: numeric('quantity', { precision: 16, scale: 4 }).default('1').notNull(),
+  highestPrice: numeric('highest_price', { precision: 12, scale: 4 }),
+  targetPrice: numeric('target_price', { precision: 12, scale: 4 }),
+  trailingStopPrice: numeric('trailing_stop_price', { precision: 12, scale: 4 }),
+  currentPrice: numeric('current_price', { precision: 12, scale: 4 }),
+  unrealizedPnlPct: numeric('unrealized_pnl_pct', { precision: 8, scale: 2 }).default('0.00'),
+  exitPrice: numeric('exit_price', { precision: 12, scale: 4 }),
+  exitTime: timestamp('exit_time', { withTimezone: true }),
+  exitReason: varchar('exit_reason', { length: 50 }), // 'AYM_TARGET' | 'ATR_TRAIL' | 'EOD_CLOSE' | 'MANUAL_FORCE_CLOSE'
+  realizedPnlPct: numeric('realized_pnl_pct', { precision: 8, scale: 2 }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    tickerStatusIdx: index('intraday_positions_ticker_status_idx').on(table.tickerSymbol, table.status),
+  };
+});
+
+export const intradaySignalsLog = pgTable('intraday_signals_log', {
+  id: serial('id').primaryKey(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  strategyId: varchar('strategy_id', { length: 50 }).default('PSI_PURE').notNull(),
+  timeframe: varchar('timeframe', { length: 10 }).default('15m').notNull(),
+  signalType: varchar('signal_type', { length: 20 }).notNull(), // 'BUY' | 'SELL_TP' | 'SELL_TRAIL' | 'SELL_EOD' | 'SELL_MANUAL'
+  signalPrice: numeric('signal_price', { precision: 12, scale: 4 }).notNull(),
+  masterIndex: numeric('master_index', { precision: 8, scale: 2 }),
+  masterIndexAdjusted: numeric('master_index_adjusted', { precision: 8, scale: 2 }),
+  signalTime: timestamp('signal_time', { withTimezone: true }).defaultNow().notNull(),
+  executed: boolean('executed').default(false).notNull(),
+  executionStatus: varchar('execution_status', { length: 20 }).default('FILLED').notNull(), // 'FILLED' | 'MISSED' | 'REJECTED' | 'PENDING'
+  errorMessage: text('error_message'),
+  metadata: jsonb('metadata'),
+}, (table) => {
+  return {
+    tickerTimeIdx: index('intraday_signals_log_ticker_time_idx').on(table.tickerSymbol, table.signalTime),
+  };
+});
+
+export const intradaySystemLogs = pgTable('intraday_system_logs', {
+  id: serial('id').primaryKey(),
+  level: varchar('level', { length: 10 }).default('INFO').notNull(), // 'INFO' | 'WARN' | 'ERROR' | 'DEBUG'
+  source: varchar('source', { length: 50 }).notNull(), // 'CANDLE_INGESTION' | 'PSI_ENGINE' | 'BROKER_BRIDGE' | 'RISK_GUARD'
+  message: text('message').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    createdIdx: index('intraday_system_logs_created_idx').on(table.createdAt),
+    levelIdx: index('intraday_system_logs_level_idx').on(table.level),
+  };
+});
+
+export const intradayCandles = pgTable('intraday_candles', {
+  id: serial('id').primaryKey(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  timeframe: varchar('timeframe', { length: 10 }).default('15m').notNull(),
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
+  open: numeric('open', { precision: 12, scale: 4 }).notNull(),
+  high: numeric('high', { precision: 12, scale: 4 }).notNull(),
+  low: numeric('low', { precision: 12, scale: 4 }).notNull(),
+  close: numeric('close', { precision: 12, scale: 4 }).notNull(),
+  volume: numeric('volume', { precision: 15, scale: 2 }).default('0').notNull(),
+}, (table) => {
+  return {
+    uniqueCandle: unique('intraday_candles_sym_tf_ts_unique').on(
+      table.tickerSymbol,
+      table.timeframe,
+      table.timestamp
+    ),
+    tickerTimeIdx: index('intraday_candles_ticker_time_idx').on(
+      table.tickerSymbol,
+      table.timeframe,
+      table.timestamp
+    ),
+  };
+});

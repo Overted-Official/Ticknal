@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthButton from './AuthButton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, BarChart2 } from 'lucide-react';
+import { Menu, X, BarChart2 } from '@/components/ui/icon-library';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -27,32 +27,32 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-tv-nav pointer-events-none flex justify-center px-4 pt-3 md:pt-5">
+    <header className="fixed top-0 left-0 right-0 z-tv-nav pointer-events-none flex justify-center px-4 pt-4 md:pt-6">
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className={`pointer-events-auto w-full max-w-[680px] rounded-full transition-all duration-300 px-4 py-2 flex items-center justify-between border ${
+        className={`pointer-events-auto w-full max-w-170 rounded-full transition-all duration-300 px-4 py-2 flex items-center justify-between border ${
           isScrolled
-            ? 'bg-black/75 backdrop-blur-xl border-white/15 shadow-[0_6px_26px_rgba(0,0,0,0.6)]'
-            : 'bg-black/40 backdrop-blur-md border-white/10 shadow-[0_3px_20px_rgba(0,0,0,0.4)]'
+            ? 'bg-plt-base/75 backdrop-blur-xl border-plt-border-strong shadow-panel'
+            : 'bg-plt-base/40 backdrop-blur-md border-plt-border shadow-panel'
         }`}
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 rounded-full bg-tv-accent flex items-center justify-center text-black font-bold shadow-[0_0_12px_rgba(254,80,0,0.4)] group-hover:scale-105 transition-transform">
-            <BarChart2 size={15} strokeWidth={2.5} />
+          <div className="w-8 h-8 rounded-full bg-tv-accent flex items-center justify-center text-plt-inverse font-medium shadow-accent group-hover:scale-105 transition-transform">
+            <BarChart2 size={16} strokeWidth={2.5} />
           </div>
-          <span className="text-white font-bold text-sm tracking-tight">QuantEGX</span>
+          <span className="text-plt-text font-medium text-sm tracking-tight">QuantEGX</span>
         </Link>
 
         {/* Desktop Links */}
-        <nav className="hidden md:flex items-center gap-5">
+        <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
-              className="text-[11px] font-medium text-white/70 hover:text-white transition-colors"
+              className="text-caption font-medium text-plt-subtle hover:text-plt-text transition-colors"
             >
               {link.name}
             </Link>
@@ -60,13 +60,13 @@ export default function Navbar() {
         </nav>
 
         {/* Actions */}
-        <div className="hidden md:flex items-center gap-2.5">
-          <AuthButton variant="ghost" className="text-[11px] py-1 px-2.5">
+        <div className="hidden md:flex items-center gap-2">
+          <AuthButton variant="ghost">
             Sign In
           </AuthButton>
           <AuthButton
             variant="primary"
-            className="text-[11px] py-1.5 px-3.5 rounded-full font-medium"
+            className="text-caption"
           >
             Get Started
           </AuthButton>
@@ -74,11 +74,11 @@ export default function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden text-white p-1"
+          className="md:hidden text-plt-text p-2"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle Navigation"
         >
-          {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
         </button>
       </motion.div>
 
@@ -89,7 +89,7 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto fixed top-16 left-4 right-4 max-w-[320px] mx-auto bg-black/95 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 shadow-2xl flex flex-col gap-3 md:hidden"
+            className="surface-popover pointer-events-auto fixed top-16 left-4 right-4 max-w-80 mx-auto flex flex-col gap-2 md:hidden"
           >
             <div className="flex flex-col gap-2">
               {navLinks.map((link) => (
@@ -97,17 +97,17 @@ export default function Navbar() {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-xs font-medium text-white/80 hover:text-white py-1.5 px-2.5 rounded-lg hover:bg-white/5 transition-colors"
+                  className="text-xs font-medium text-plt-subtle hover:text-plt-text py-2 px-2 rounded-xl hover:bg-plt-hover transition-colors"
                 >
                   {link.name}
                 </Link>
               ))}
             </div>
-            <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
-              <AuthButton variant="ghost" className="text-xs w-full py-2">
+            <div className="pt-2 border-t border-plt-border flex flex-col gap-2">
+              <AuthButton variant="ghost" className="w-full">
                 Sign In
               </AuthButton>
-              <AuthButton variant="primary" className="w-full py-2 text-xs rounded-lg">
+              <AuthButton variant="primary" className="w-full">
                 Get Started
               </AuthButton>
             </div>

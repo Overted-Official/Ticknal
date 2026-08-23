@@ -3,11 +3,11 @@ import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { resolvePsiParamsFromStore, fetchAndCachePsiCombinations } from '@/strategies/PSI/psiParameterStore';
-import { runThothStrategy } from '@/strategies/Thoth/thothStrategy';
+import { runThothV37PStrategy } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
 import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
 import { unstable_cache } from 'next/cache';
 
-const HISTORY_BARS = 320;
+const HISTORY_BARS = 450;
 
 export type OpportunitySignal = {
   symbol: string;
@@ -132,11 +132,10 @@ export async function _getRecentOpportunities(
           }
         }
 
-        // 2. Evaluate Thoth EGX Macro Strategy
+        // 2. Evaluate the frozen THOTH EGX V3.7P production strategy
         if (includeThoth && bars.length >= 130) {
           try {
-            const recentSlice = bars.slice(-200);
-            const thothResult = await runThothStrategy(recentSlice, {
+            const thothResult = await runThothV37PStrategy(bars, {
               ticker: symbol,
               startDate: recentStartDate,
             });
@@ -147,7 +146,7 @@ export async function _getRecentOpportunities(
                 symbol,
                 ...meta,
                 strategyId: 'thoth_egx_macro',
-                strategyLabel: STRATEGIES.thoth_egx_macro?.label ?? 'Thoth EGX Macro',
+                strategyLabel: STRATEGIES.thoth_egx_macro?.label ?? 'THOTH EGX V3.7P',
                 strategyShortName: badge.label,
                 strategyBadgeClassName: badge.className,
                 signal,

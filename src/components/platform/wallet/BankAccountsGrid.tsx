@@ -15,7 +15,7 @@ import {
   Building2,
   CreditCard,
   Plus,
-} from 'lucide-react';
+} from '@/components/ui/icon-library';
 import { type BankAccount } from '@/types/bank';
 import { maskAccountNumber } from '@/lib/masking';
 
@@ -118,13 +118,13 @@ export default function BankAccountsGrid({
 
   if (accounts.length === 0) {
     return (
-      <div className="glass-panel rounded-xl p-8 text-center flex flex-col items-center justify-center space-y-3">
-        <Landmark size={36} className="text-white/20" />
-        <p className="text-sm text-white/60">No bank accounts added yet.</p>
+      <div className="glass-panel text-center flex flex-col items-center justify-center space-y-2">
+        <Landmark size={40} className="text-plt-faint" />
+        <p className="text-sm text-plt-subtle">No bank accounts added yet.</p>
         <button
           type="button"
           onClick={onOpenAddModal}
-          className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black font-semibold text-xs transition shadow-lg shadow-emerald-500/10"
+          className="px-4 py-2 rounded-xl bg-white hover:bg-white/90 text-black font-medium text-xs transition font-semibold"
         >
           + Add Your First Bank Account
         </button>
@@ -133,11 +133,11 @@ export default function BankAccountsGrid({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="widget-stack">
       {/* Header Controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-1 select-none">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
+          <h2 className="section-title">
             Connected Institutions ({groupedBanks.length} Banks · {accounts.length} Accounts)
           </h2>
         </div>
@@ -147,19 +147,19 @@ export default function BankAccountsGrid({
             <button
               type="button"
               onClick={toggleAll}
-              className="text-[11px] text-white/40 hover:text-white transition px-2 py-1 rounded bg-white/[0.03] hover:bg-white/[0.08]"
+              className="btn-token btn-secondary btn-compact font-sans text-xs"
             >
               {expandedKeys.size === groupedBanks.length ? 'Collapse All' : 'Expand All'}
             </button>
           )}
 
           {/* View Mode Switcher */}
-          <div className="flex items-center bg-black border border-white/[0.08] rounded-lg p-0.5">
+          <div className="pill-switch">
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md text-xs transition ${
-                viewMode === 'table' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-white/40 hover:text-white'
+              className={`pill-switch-btn p-1.5 ${
+                viewMode === 'table' ? 'pill-switch-btn-active' : ''
               }`}
               title="Grouped Table View"
             >
@@ -168,8 +168,8 @@ export default function BankAccountsGrid({
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md text-xs transition ${
-                viewMode === 'grid' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-white/40 hover:text-white'
+              className={`pill-switch-btn p-1.5 ${
+                viewMode === 'grid' ? 'pill-switch-btn-active' : ''
               }`}
               title="Cards Grid View"
             >
@@ -181,7 +181,7 @@ export default function BankAccountsGrid({
 
       {/* TABLE / COLLAPSIBLE GROUPED VIEW */}
       {viewMode === 'table' && (
-        <div className="border border-white/[0.08] rounded-xl bg-black overflow-hidden divide-y divide-white/[0.06]">
+        <div className="bg-plt-card border border-plt-border-soft rounded-2xl overflow-hidden divide-y divide-plt-border-soft shadow-panel select-none">
           {groupedBanks.map((group) => {
             const isExpanded = expandedKeys.has(group.key);
             const hasMultipleAccounts = group.accounts.length > 1;
@@ -192,92 +192,92 @@ export default function BankAccountsGrid({
                 {/* Master Bank Row Header */}
                 <div
                   onClick={() => toggleExpand(group.key)}
-                  className="p-3.5 md:p-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] select-none transition-colors"
+                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-plt-hover select-none transition-colors"
                 >
                   {/* Left: Bank Logo + Name + Account Badges */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 overflow-hidden relative">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-plt-hover border border-plt-border-soft flex items-center justify-center shrink-0 overflow-hidden relative">
                       {group.logoUrl ? (
                         <Image
                           src={group.logoUrl}
                           alt={group.name}
-                          width={30}
-                          height={30}
-                          className="object-contain p-0.5"
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-contain p-1.5 rounded-full"
                           unoptimized
                         />
                       ) : (
-                        <Landmark size={18} className="text-white/40" />
+                        <Landmark size={18} className="text-plt-muted" />
                       )}
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-bold text-white tracking-tight truncate">{group.name}</h3>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/[0.06] text-white/70 border border-white/[0.06]">
+                        <h3 className="text-sm font-bold text-plt-text tracking-tight truncate font-sans">{group.name}</h3>
+                        <span className="badge badge-muted font-sans">
                           {group.accounts.length} {group.accounts.length === 1 ? 'account' : 'accounts'}
                         </span>
                         {group.totalEgp > 0 && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="badge badge-profit font-sans">
                             EGP
                           </span>
                         )}
                         {group.totalUsd > 0 && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                          <span className="badge badge-info font-sans">
                             USD
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-white/35 mt-0.5">
+                      <p className="text-[11px] text-plt-muted truncate max-w-md mt-0.5 font-sans">
                         {group.accounts.map((a) => a.accountName).join(' · ')}
                       </p>
                     </div>
                   </div>
 
                   {/* Right: Total Balance & Accordion Trigger */}
-                  <div className="flex items-center gap-4 shrink-0 pl-3">
+                  <div className="flex items-center gap-3 shrink-0 pl-4">
                     <div className="text-right">
-                      <div className="text-[10px] text-white/40 font-medium uppercase">
+                      <div className="text-[10px] uppercase tracking-wider text-plt-muted font-sans">
                         {hasMultipleAccounts ? 'Total Bank Holdings' : 'Account Balance'}
                       </div>
-                      <div className="text-sm md:text-base font-bold font-mono text-white tracking-tight">
+                      <div className="text-sm md:text-base font-bold font-sans tabular-nums text-plt-text tracking-tight">
                         {hasBothCurrencies ? (
                           <span>
                             {group.totalCombinedEgp.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}{' '}
-                            <span className="text-xs font-normal text-white/40">EGP</span>
+                            <span className="text-xs font-normal text-plt-muted font-sans">£</span>
                           </span>
                         ) : group.totalUsd > 0 ? (
-                          <span className="text-sky-400">
+                          <span className="text-plt-info">
                             ${group.totalUsd.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
                           </span>
                         ) : (
-                          <span className="text-emerald-400">
+                          <span className="text-plt-text">
                             {group.totalEgp.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}{' '}
-                            <span className="text-xs font-normal text-emerald-400/60">EGP</span>
+                            <span className="text-xs font-normal text-plt-muted font-sans">£</span>
                           </span>
                         )}
                       </div>
                       {hasBothCurrencies && (
-                        <div className="text-[10px] font-mono text-white/40 mt-0.5">
-                          {group.totalEgp.toLocaleString('en-US', { maximumFractionDigits: 0 })} EGP + $
+                        <div className="text-[10px] font-sans tabular-nums text-plt-muted mt-0.5">
+                          {group.totalEgp.toLocaleString('en-US', { maximumFractionDigits: 0 })} £ + $
                           {group.totalUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </div>
                       )}
                     </div>
 
-                    <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/40 group-hover:text-white">
+                    <div className="w-7 h-7 rounded-lg bg-plt-card border border-plt-border-soft flex items-center justify-center text-plt-muted group-hover:text-plt-text">
                       <ChevronDown
-                        size={15}
-                        className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-white' : ''}`}
+                        size={14}
+                        className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-plt-text' : ''}`}
                       />
                     </div>
                   </div>
@@ -291,9 +291,9 @@ export default function BankAccountsGrid({
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.18 }}
-                      className="overflow-hidden bg-white/[0.015] border-t border-white/[0.04]"
+                      className="overflow-hidden bg-plt-hover border-t border-plt-border-soft"
                     >
-                      <div className="divide-y divide-white/[0.04]">
+                      <div className="divide-y divide-plt-border-soft">
                         {group.accounts.map((acc) => {
                           const bal = Number(acc.balance) || 0;
                           const isUsd = acc.currency === 'USD';
@@ -302,21 +302,21 @@ export default function BankAccountsGrid({
                           return (
                             <div
                               key={acc.id}
-                              className="px-4 md:px-6 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
+                              className="px-4 md:px-6 py-4 flex items-center justify-between gap-4 hover:bg-plt-hover transition-colors"
                             >
                               {/* Account Info */}
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-2 h-2 rounded-full bg-white/20 shrink-0" />
+                              <div className="flex items-center gap-4 min-w-0">
+                                <div className="w-2 h-2 rounded-full bg-plt-hover shrink-0" />
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-bold text-white tracking-tight truncate">
+                                    <span className="text-xs font-medium text-plt-text tracking-tight truncate">
                                       {acc.accountName}
                                     </span>
-                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/[0.06] text-white/60">
+                                    <span className="px-2 leading-none min-h-6 inline-flex items-center rounded-xl text-compact tabular-nums bg-plt-hover text-plt-subtle">
                                       {typeLabel}
                                     </span>
                                     {acc.accountNumber && (
-                                      <span className="text-[10px] font-mono text-white/30 hidden sm:inline">
+                                      <span className="text-mini tabular-nums text-plt-faint hidden sm:inline">
                                         • {maskAccountNumber(acc.accountNumber)}
                                       </span>
                                     )}
@@ -326,10 +326,10 @@ export default function BankAccountsGrid({
 
                               {/* Balance & Actions */}
                               <div className="flex items-center gap-4 shrink-0">
-                                <div className="text-right font-mono">
+                                <div className="text-right tabular-nums">
                                   <span
-                                    className={`text-xs md:text-sm font-bold ${
-                                      isUsd ? 'text-sky-400' : 'text-emerald-400'
+                                    className={`text-xs md:text-sm font-medium ${
+                                      isUsd ? 'text-plt-info' : 'text-plt-profit'
                                     }`}
                                   >
                                     {isUsd ? '$' : ''}
@@ -341,23 +341,23 @@ export default function BankAccountsGrid({
                                   </span>
                                 </div>
 
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-2">
                                   <button
                                     type="button"
                                     onClick={() => onEditAccount(acc)}
-                                    className="px-2.5 py-1 rounded-md bg-white/[0.06] hover:bg-emerald-500/20 text-white/70 hover:text-emerald-400 text-[11px] font-medium transition flex items-center gap-1 border border-white/[0.08]"
+                                    className="px-2 py-2 rounded-xl bg-plt-hover hover:bg-plt-profit/20 text-plt-subtle hover:text-plt-profit text-caption font-medium transition flex items-center gap-2 border border-plt-border"
                                     title="Edit & Monthly Balance History"
                                   >
-                                    <History size={12} />
+                                    <History size={16} />
                                     <span>History / Edit</span>
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => onDeleteAccount(acc.id)}
-                                    className="p-1.5 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-white/30 hover:text-rose-400 transition"
+                                    className="p-2 rounded-xl bg-plt-hover hover:bg-plt-risk/20 text-plt-faint hover:text-plt-risk transition"
                                     title="Delete Account"
                                   >
-                                    <Trash2 size={13} />
+                                    <Trash2 size={16} />
                                   </button>
                                 </div>
                               </div>
@@ -376,7 +376,7 @@ export default function BankAccountsGrid({
 
       {/* GRID CARDS VIEW */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div className="widget-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {accounts.map((acc) => {
             const bal = Number(acc.balance);
             const isUsd = acc.currency === 'USD';
@@ -384,42 +384,42 @@ export default function BankAccountsGrid({
             return (
               <div
                 key={acc.id}
-                className="glass-panel rounded-xl p-4 flex flex-col justify-between group hover:border-white/20 transition-all relative overflow-hidden cursor-pointer"
+                className="glass-panel flex flex-col justify-between group hover:border-plt-border-strong transition-all relative overflow-hidden cursor-pointer"
                 onClick={() => onEditAccount(acc)}
               >
                 {/* Header: Bank Logo + Name + Account Type */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-plt-hover border border-plt-border flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                       {acc.bankLogoUrl ? (
                         <Image
                           src={acc.bankLogoUrl}
                           alt={acc.bankName || acc.accountName}
                           width={36}
                           height={36}
-                          className="object-contain p-1"
+                          className="object-contain p-2"
                           unoptimized
                         />
                       ) : (
-                        <Landmark size={20} className="text-white/40" />
+                        <Landmark size={24} className="text-plt-muted" />
                       )}
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-bold text-white tracking-tight line-clamp-1 group-hover:text-emerald-400 transition-colors">
+                      <h3 className="text-sm font-medium text-plt-text tracking-tight line-clamp-2 group-hover:text-plt-profit transition-colors">
                         {acc.accountName}
                       </h3>
-                      <p className="text-[11px] text-white/40 line-clamp-1">
+                      <p className="text-caption text-plt-muted line-clamp-2">
                         {acc.bankName || acc.customBankName || 'Egyptian Bank'}
                       </p>
                     </div>
                   </div>
 
                   <span
-                    className={`text-[9px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                    className={`text-compact tabular-nums px-2 py-2 rounded-xl font-medium tracking-wider ${
                       isUsd
-                        ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
-                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        ? 'bg-plt-info/10 text-plt-info border border-plt-info/20'
+                        : 'bg-plt-profit/10 text-plt-profit border border-plt-profit/20'
                     }`}
                   >
                     {acc.currency}
@@ -427,27 +427,27 @@ export default function BankAccountsGrid({
                 </div>
 
                 {/* Balance & Actions */}
-                <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-baseline justify-between">
+                <div className="mt-4 pt-4 border-t border-plt-border-soft flex items-baseline justify-between">
                   <div>
-                    <div className="text-[10px] text-white/40 font-medium uppercase">Balance</div>
-                    <div className="text-lg md:text-xl font-bold font-mono text-white tracking-tight">
+                    <div className="text-mini text-plt-muted font-medium ">Balance</div>
+                    <div className="text-lg md:text-xl font-medium tabular-nums text-plt-text tracking-tight">
                       {isUsd ? '$' : ''}
                       {bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       {!isUsd ? ' EGP' : ''}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onEditAccount(acc);
                       }}
-                      className="px-2 py-1 rounded bg-white/10 hover:bg-emerald-500/20 text-white/70 hover:text-emerald-400 text-[11px] font-medium transition flex items-center gap-1 border border-white/10"
+                      className="px-2 py-2 rounded-xl bg-plt-hover hover:bg-plt-profit/20 text-plt-subtle hover:text-plt-profit text-caption font-medium transition flex items-center gap-2 border border-plt-border"
                       title="Edit & Monthly History"
                     >
-                      <History size={12} />
+                      <History size={16} />
                       <span>History</span>
                     </button>
                     <button
@@ -456,10 +456,10 @@ export default function BankAccountsGrid({
                         e.stopPropagation();
                         onDeleteAccount(acc.id);
                       }}
-                      className="p-1.5 rounded bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-400 transition"
+                      className="p-2 rounded-xl bg-plt-hover hover:bg-plt-risk/20 text-plt-muted hover:text-plt-risk transition"
                       title="Delete Account"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>

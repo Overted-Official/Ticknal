@@ -11,8 +11,8 @@ import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import OpportunityTable, { type Opportunity } from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
 import DashboardCharts from '@/components/platform/DashboardCharts';
-import DashboardMotionView from '@/components/platform/DashboardMotionView';
-import DashboardBanksView from '@/components/platform/DashboardBanksView';
+import DashboardInvestmentsView from '@/components/platform/DashboardInvestmentsView';
+import DashboardBankAccountsView from '@/components/platform/DashboardBankAccountsView';
 import DashboardNetWorthView from '@/components/platform/DashboardNetWorthView';
 import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
@@ -92,7 +92,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
     }
 
     return (
-      <DashboardBanksView
+      <DashboardBankAccountsView
         initialAccounts={accounts}
         initialTransactions={transactions}
         usdRate={usdRate}
@@ -182,7 +182,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
   const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
 
   return (
-    <DashboardMotionView
+    <DashboardInvestmentsView
       orderStats={orderStats}
       buyOpportunities={buyOpportunities}
       exitSignals={exitSignals}
@@ -498,11 +498,11 @@ async function getTickerMap(): Promise<Record<string, { companyName: string; sec
 function formatMoney(value: number, showSign: boolean): string {
   const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const sign = showSign && value >= 0 ? '+' : value < 0 ? '-' : '';
-  return `${sign}${formatted} EGP`;
+  return `${sign}${formatted} £`;
 }
 
 function formatPrice(value: number): string {
-  return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
+  return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} £`;
 }
 
 function formatSignal(signal: string): string {

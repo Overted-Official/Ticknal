@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Landmark, X, Plus } from 'lucide-react';
+import { Landmark, X, Plus } from '@/components/ui/icon-library';
 import { type BankItem } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
 import BankSearchSelect from './BankSearchSelect';
@@ -81,7 +81,7 @@ export default function AddAccountDrawer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-plt-base/75 backdrop-blur-sm"
           />
 
           {/* Sliding Sheet / Drawer */}
@@ -90,34 +90,30 @@ export default function AddAccountDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-            className="relative w-full max-w-md bg-[#0e0e0e] border-l border-white/10 shadow-2xl flex flex-col h-full z-10"
+            className="relative w-full max-w-md bg-plt-base border-l border-plt-border-soft shadow-2xl flex flex-col h-full z-10 select-none"
           >
             {/* Header */}
-            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <Landmark size={18} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white tracking-tight">Add Bank Account</h3>
-                  <p className="text-[11px] text-white/40">Connect Egyptian or foreign liquid cash accounts</p>
-                </div>
+            <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">Add Bank Account</h3>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Connect Egyptian or foreign liquid cash accounts</p>
               </div>
 
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition"
+                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
+                title="Close drawer"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
 
             {/* Body */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="p-5 flex-1 overflow-y-auto space-y-4 text-xs custom-scrollbar">
               {/* Bank Selector */}
               <div className="space-y-1.5">
-                <label className="block text-white/60 font-medium">Select Egyptian Bank</label>
+                <label className="text-xs font-semibold text-plt-muted font-sans">Select Egyptian Bank</label>
                 <BankSearchSelect
                   banks={availableBanks}
                   selectedBankId={bankId}
@@ -137,100 +133,100 @@ export default function AddAccountDrawer({
               {/* Custom Institution Name */}
               {!bankId && (
                 <div className="space-y-1.5">
-                  <label className="block text-white/60 font-medium">Custom Institution / Wallet Name</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Custom Institution / Wallet Name</label>
                   <input
                     type="text"
                     placeholder="e.g. Wise, Revolut, Cash Vault, Telda"
                     value={customBankName}
                     onChange={(e) => setNewAccCustomBankHelper(e.target.value, setCustomBankName)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                    className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-3 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
                   />
                 </div>
               )}
 
               {/* Account Label */}
               <div className="space-y-1.5">
-                <label className="block text-white/60 font-medium">Account Label *</label>
+                <label className="text-xs font-semibold text-plt-muted font-sans">Account Label *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. CIB Salary, HSBC USD Savings"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                  className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-3 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
                 />
               </div>
 
               {/* Account Number / IBAN (Optional) */}
               <div className="space-y-1.5">
-                <label className="block text-white/60 font-medium">Account Number / IBAN (Optional)</label>
+                <label className="text-xs font-semibold text-plt-muted font-sans">Account Number / IBAN (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. EG3800..."
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500/50"
+                  className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-3 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
                 />
               </div>
 
               {/* Currency & Type */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="block text-white/60 font-medium">Currency</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Currency</label>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                    className="select-token"
                   >
-                    <option value="EGP" className="bg-[#111]">EGP (Egyptian Pound)</option>
-                    <option value="USD" className="bg-[#111]">USD (US Dollar)</option>
+                    <option value="EGP">EGP (Egyptian Pound)</option>
+                    <option value="USD">USD (US Dollar)</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-white/60 font-medium">Account Type</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Account Type</label>
                   <select
                     value={accountType}
                     onChange={(e) => setAccountType(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+                    className="select-token"
                   >
-                    <option value="CURRENT" className="bg-[#111]">Current Account</option>
-                    <option value="SAVINGS" className="bg-[#111]">Savings Account</option>
-                    <option value="CD_TIME_DEPOSIT" className="bg-[#111]">Certificates (CD)</option>
-                    <option value="BROKER_CASH" className="bg-[#111]">Brokerage Cash</option>
-                    <option value="WALLET" className="bg-[#111]">Digital Wallet</option>
+                    <option value="CURRENT">Current Account</option>
+                    <option value="SAVINGS">Savings Account</option>
+                    <option value="CD_TIME_DEPOSIT">Certificates (CD)</option>
+                    <option value="BROKER_CASH">Brokerage Cash</option>
+                    <option value="WALLET">Digital Wallet</option>
                   </select>
                 </div>
               </div>
 
               {/* Initial Balance */}
               <div className="space-y-1.5">
-                <label className="block text-white/60 font-medium">Current Balance ({currency})</label>
+                <label className="text-xs font-semibold text-plt-muted font-sans">Current Balance ({currency})</label>
                 <input
                   type="number"
                   step="any"
                   placeholder="0.00"
                   value={balance}
                   onChange={(e) => setBalance(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500/50"
+                  className="input-token"
                 />
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-2.5">
+              <div className="pt-3 border-t border-plt-border-soft flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg text-white/60 hover:text-white transition"
+                  className="btn-token btn-secondary btn-compact font-sans"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black font-bold transition disabled:opacity-50 flex items-center gap-1.5 shadow-lg shadow-emerald-500/10"
+                  className="btn-token btn-primary btn-compact font-sans"
                 >
-                  <Plus size={15} />
+                  <Plus size={14} />
                   {isSubmitting ? 'Creating...' : 'Create Account'}
                 </button>
               </div>

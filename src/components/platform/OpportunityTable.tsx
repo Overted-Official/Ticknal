@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import AddOrderModal, { InitialOrderData } from '@/components/platform/AddOrderModal';
-import { Layers, Sparkles } from 'lucide-react';
+import { Layers, Sparkles } from '@/components/ui/icon-library';
 
 export type Opportunity = {
   symbol: string;
@@ -26,10 +26,11 @@ export type Opportunity = {
 };
 
 function formatSignal(sig: string) {
-  if (sig === 'SELL_TP') return 'TAKE PROFIT';
-  if (sig === 'SELL_SL') return 'STOP LOSS';
-  if (sig === 'SELL') return 'SELL';
-  return sig;
+  if (sig === 'SELL_TP') return 'Take profit';
+  if (sig === 'SELL_SL') return 'Stop loss';
+  if (sig === 'SELL') return 'Sell';
+  if (sig === 'BUY') return 'Buy';
+  return sig.charAt(0).toUpperCase() + sig.slice(1).toLowerCase();
 }
 
 export default function OpportunityTable({
@@ -72,14 +73,14 @@ export default function OpportunityTable({
     <>
       {/* Optional Strategy Filter Pill Bar */}
       {showFilter && availableStrategies.length > 1 && (
-        <div className="flex items-center gap-1 px-3 pt-2.5 pb-1 border-b border-white/[0.04] bg-white/[0.01]">
+        <div className="flex items-center gap-2 px-4 pt-2 pb-2 border-b border-plt-border-soft bg-plt-hover">
           <button
             type="button"
             onClick={() => setStrategyFilter('ALL')}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+            className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
               strategyFilter === 'ALL'
-                ? 'bg-white/[0.12] text-white font-semibold shadow-sm'
-                : 'text-white/40 hover:text-white'
+                ? 'bg-plt-hover text-plt-text font-medium shadow-sm'
+                : 'text-plt-muted hover:text-plt-text'
             }`}
           >
             All ({opportunities.length})
@@ -88,10 +89,10 @@ export default function OpportunityTable({
             <button
               type="button"
               onClick={() => setStrategyFilter('psi')}
-              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+              className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
                 strategyFilter === 'psi'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold shadow-sm'
-                  : 'text-white/40 hover:text-cyan-400'
+                  ? 'bg-plt-info/20 text-plt-info border border-plt-info/30 font-medium shadow-sm'
+                  : 'text-plt-muted hover:text-plt-info'
               }`}
             >
               PSI ({opportunities.filter((o) => (o.strategyId || 'psi') === 'psi').length})
@@ -101,66 +102,68 @@ export default function OpportunityTable({
             <button
               type="button"
               onClick={() => setStrategyFilter('thoth_egx_macro')}
-              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+              className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
                 strategyFilter === 'thoth_egx_macro'
-                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold shadow-sm'
-                  : 'text-white/40 hover:text-purple-400'
+                  ? 'bg-plt-violet/20 text-plt-violet border border-plt-violet/30 font-medium shadow-sm'
+                  : 'text-plt-muted hover:text-plt-violet'
               }`}
             >
-              Thoth ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
+              THOTH 3.7P ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
             </button>
           )}
         </div>
       )}
 
+
+
       {/* Mobile View (Cards) */}
-      <div className="md:hidden flex flex-col space-y-2 p-3">
+      <div className="md:hidden flex flex-col space-y-2 p-4">
         {filteredOpportunities.length === 0 ? (
-          <div className="p-6 text-center text-white/40 text-xs font-normal">{emptyText}</div>
+          <div className="empty-state text-xs font-normal">{emptyText}</div>
         ) : (
           filteredOpportunities.map((item) => (
-            <div key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="bg-transparent rounded-md border border-white/[0.09] p-3">
+            <div key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="surface-widget-soft">
               <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-plt-hover flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
                     {item.logoUrl ? (
                       <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain bg-transparent" />
                     ) : (
-                      <span className="text-[9px] font-bold text-white">
+                      <span className="text-compact font-medium text-plt-text">
                         {item.symbol.substring(0, 2)}
                       </span>
                     )}
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
-                      <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-white hover:text-plt-orange text-xs">
+                    <div className="flex items-center gap-2">
+                      <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-medium text-plt-text hover:text-white text-xs">
                         {item.symbol.replace('.CA', '')}
                       </Link>
                       {item.strategyShortName && (
-                        <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${item.strategyBadgeClassName || 'bg-white/[0.06] text-white/70 border-white/10'}`}>
+                        <span className={`text-micro tabular-nums font-medium px-2 leading-none min-h-6 inline-flex items-center rounded-xl border ${item.strategyBadgeClassName || 'bg-plt-hover text-plt-subtle border-plt-border'}`}>
                           {item.strategyShortName}
                         </span>
                       )}
                     </div>
-                    {!compact && <div className="text-[10px] text-white/40">{item.companyName || item.sector}</div>}
+                    {!compact && <div className="text-mini text-plt-muted">{item.companyName || item.sector}</div>}
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedOpp(item)}
-                  className={`rounded-[4px] px-2.5 py-0.5 text-[10px] font-medium transition-all ${
-                    item.signal.signal === 'BUY' 
-                      ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/25 hover:bg-[#22c55e]/25' 
-                      : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/25 hover:bg-[#ef4444]/25'
+                  className={`rounded-xl px-2 py-2 text-mini font-medium transition-all ${
+                    item.signal.signal === 'BUY'
+                      ? 'bg-plt-profit/15 text-plt-profit border border-plt-profit-border hover:bg-plt-profit/25'
+                      : 'bg-plt-risk/15 text-plt-risk border border-plt-risk-border hover:bg-plt-risk/25'
                   }`}
                 >
                   {formatSignal(item.signal.signal)}
                 </button>
               </div>
-              <div className="flex justify-between items-end mt-2 pt-2 border-t border-white/[0.04]">
-                <div className="text-[10px] text-white/40 font-mono">{item.signal.date}</div>
+              <div className="flex justify-between items-end mt-2 pt-2 border-t border-plt-border-soft">
+                <div className="text-mini text-plt-muted tabular-nums">{item.signal.date}</div>
                 <div className="text-right">
-                  <div className={`font-mono font-semibold text-xs ${item.signal.signal === 'BUY' ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                    {item.signal.price.toFixed(2)} EGP
+                  <div className={`tabular-nums font-medium text-xs ${item.signal.signal === 'BUY' ? 'text-plt-profit' : 'text-plt-risk'}`}>
+                    {item.signal.price.toFixed(2)} £
                   </div>
                 </div>
               </div>
@@ -170,66 +173,66 @@ export default function OpportunityTable({
       </div>
 
       {/* Desktop View (Table) */}
-      <div className="hidden md:block w-full">
-        <table className="w-full text-left text-xs text-white">
-          <thead className="bg-transparent border-b border-white/[0.09] text-[11px] font-medium text-white/30">
-            <tr>
-              <th className="px-6 py-3.5">Ticker</th>
-              <th className="px-4 py-3.5">Strategy</th>
-              {!compact && <th className="px-6 py-3.5">Sector</th>}
-              <th className="px-6 py-3.5">Date</th>
-              <th className="px-6 py-3.5 text-right">Price</th>
-              <th className="px-6 py-3.5 text-right">Action</th>
+      <div className="hidden md:block w-full overflow-y-auto max-h-[340px] custom-scrollbar">
+        <table className="w-full text-left text-xs text-plt-text border-separate border-spacing-y-1 font-sans">
+          <thead className="sticky top-0 bg-plt-base z-10">
+            <tr className="text-plt-muted text-[10px] font-semibold uppercase tracking-wider">
+              <th className="px-3 py-2">Ticker</th>
+              <th className="px-3 py-2">Strategy</th>
+              {!compact && <th className="px-3 py-2">Sector</th>}
+              <th className="px-3 py-2">Date</th>
+              <th className="px-3 py-2 text-right">Price</th>
+              <th className="px-3 py-2 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.04]">
+          <tbody>
             {filteredOpportunities.length === 0 ? (
               <tr>
-                <td colSpan={compact ? 5 : 6} className="px-6 py-8 text-center text-white/40 text-xs">
+                <td colSpan={compact ? 5 : 6} className="px-3 py-8 text-center text-plt-muted text-xs">
                   {emptyText}
                 </td>
               </tr>
             ) : (
               filteredOpportunities.map((item) => (
-                <tr key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="px-6 py-3.5 whitespace-nowrap">
+                <tr key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="hover:bg-plt-hover/50 transition-colors group">
+                  <td className="px-3 py-2 whitespace-nowrap rounded-l-xl">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.09]">
+                      <div className="w-7 h-7 rounded-lg bg-plt-card/90 border border-plt-border-soft flex items-center justify-center p-0.5 shrink-0 overflow-hidden shadow-xs">
                         {item.logoUrl ? (
                           <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain bg-transparent" />
                         ) : (
-                          <span className="text-[9px] font-bold text-white">
-                            {item.symbol.substring(0, 2)}
+                          <span className="text-[10px] font-bold text-plt-info font-sans">
+                            {item.symbol.substring(0, 3)}
                           </span>
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-xs text-white group-hover:text-plt-orange transition-colors">
+                        <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-xs text-plt-text group-hover:text-white transition-colors">
                           {item.symbol.replace('.CA', '')}
                         </Link>
-                        {!compact && <span className="text-[10px] text-white/40 truncate max-w-[130px]">{item.companyName}</span>}
+                        {!compact && <span className="text-[10px] text-plt-muted truncate max-w-32">{item.companyName}</span>}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
-                      item.strategyBadgeClassName || 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25'
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <span className={`text-[10px] tabular-nums font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ${
+                      item.strategyBadgeClassName || 'bg-plt-info/10 text-plt-info'
                     }`}>
                       {item.strategyShortName || 'PSI'}
                     </span>
                   </td>
-                  {!compact && <td className="px-6 py-3.5 whitespace-nowrap text-white/50 text-[11px]">{item.sector}</td>}
-                  <td className="px-6 py-3.5 whitespace-nowrap text-white/40 font-mono text-[11px]">{item.signal.date}</td>
-                  <td className={`px-6 py-3.5 whitespace-nowrap text-right font-mono text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                    {item.signal.price.toFixed(2)} EGP
+                  {!compact && <td className="px-3 py-2 whitespace-nowrap text-plt-muted text-[11px]">{item.sector}</td>}
+                  <td className="px-3 py-2 whitespace-nowrap text-plt-muted tabular-nums text-[11px]">{item.signal.date}</td>
+                  <td className={`px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-plt-profit' : 'text-plt-risk'}`}>
+                    {item.signal.price.toFixed(2)} £
                   </td>
-                  <td className="px-6 py-3.5 whitespace-nowrap text-right">
+                  <td className="px-3 py-2 whitespace-nowrap text-right rounded-r-xl">
                     <button
                       onClick={() => setSelectedOpp(item)}
-                      className={`inline-block rounded-[4px] px-2.5 py-0.5 text-[10px] font-medium transition-all ${
-                        item.signal.signal === 'BUY' 
-                          ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/25 hover:bg-[#22c55e]/25' 
-                          : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/25 hover:bg-[#ef4444]/25'
+                      className={`inline-block rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
+                        item.signal.signal === 'BUY'
+                          ? 'bg-plt-profit/15 text-plt-profit hover:bg-plt-profit/25'
+                          : 'bg-plt-risk/15 text-plt-risk hover:bg-plt-risk/25'
                       }`}
                     >
                       {formatSignal(item.signal.signal)}

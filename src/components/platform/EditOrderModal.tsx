@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X } from '@/components/ui/icons';
+import { X } from '@/components/ui/icon-library';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/context/ToastContext';
 
@@ -20,16 +20,16 @@ interface EditOrderModalProps {
   order: OrderRow | null;
 }
 
-export default function EditOrderModal({ 
-  isOpen, 
-  onClose, 
+export default function EditOrderModal({
+  isOpen,
+  onClose,
   onSuccess,
   order
 }: EditOrderModalProps) {
   const { toast } = useToast();
-  const [form, setForm] = useState({ 
-    entryDate: '', 
-    entryPrice: '', 
+  const [form, setForm] = useState({
+    entryDate: '',
+    entryPrice: '',
     quantity: ''
   });
 
@@ -90,103 +90,101 @@ export default function EditOrderModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
+        <div className="fixed inset-0 z-modal flex justify-end">
           {/* Backdrop */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 bg-plt-base/70 backdrop-blur-sm"
             onClick={onClose}
           />
 
           {/* Slide-over Drawer */}
-          <motion.div 
+          <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="relative z-[101] w-full max-w-md bg-black border-l border-white/[0.09] shadow-2xl h-full flex flex-col text-white"
+            className="relative z-modal-content w-full max-w-md bg-plt-base border-l border-plt-border-soft shadow-2xl h-full flex flex-col text-plt-text select-none"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.09] bg-white/[0.02] shrink-0">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-plt-orange" />
-                <div>
-                  <h2 className="font-semibold text-white text-sm">Edit {order.tickerSymbol.replace('.CA', '')} Position</h2>
-                  <p className="text-[11px] text-white/40 mt-0.5">Modify entry price, quantity, or date</p>
-                </div>
+            <div className="px-5 py-3.5 flex items-center justify-between border-b border-plt-border-soft bg-plt-card shrink-0">
+              <div>
+                <h2 className="text-xs font-bold text-plt-text tracking-tight font-sans">Edit {order.tickerSymbol.replace('.CA', '')} Position</h2>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Modify entry price, quantity, or date</p>
               </div>
-              <button 
-                onClick={onClose} 
-                className="text-white/40 hover:text-white transition-colors p-1.5 rounded-md hover:bg-white/[0.06]"
+              <button
+                onClick={onClose}
+                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
+                title="Close"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
-            
+
             {/* Body */}
-            <div className="p-6 space-y-4 overflow-y-auto flex-1 font-mono">
-              <div>
-                <label className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 block font-sans">Entry Date</label>
-                <input 
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 tabular-nums custom-scrollbar text-xs">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-plt-muted font-sans">Entry Date</label>
+                <input
                   type="date"
-                  className="w-full bg-white/[0.04] border border-white/[0.09] rounded-md px-3 py-2 text-xs text-white outline-none focus:border-white/20 transition-all"
+                  className="date-token"
                   value={form.entryDate}
                   onChange={e => setForm({ ...form, entryDate: e.target.value })}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 block font-sans">Entry Price</label>
-                  <div className="flex items-center bg-white/[0.04] border border-white/[0.09] rounded-md px-3 focus-within:border-white/20 transition-all">
-                    <input 
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Entry Price</label>
+                  <div className="flex items-center h-8 rounded-xl bg-plt-surface border border-plt-border px-3 focus-within:border-plt-border-active transition-all">
+                    <input
                       type="number"
                       step="0.01"
                       min="0"
-                      className="w-full bg-transparent py-2 text-xs text-white font-semibold outline-none"
+                      className="w-full bg-transparent text-xs text-plt-text font-mono focus:outline-none"
                       value={form.entryPrice}
                       onChange={e => setForm({ ...form, entryPrice: e.target.value })}
                     />
-                    <span className="ml-1 text-[10px] text-white/40">EGP</span>
+                    <span className="ml-2 text-[11px] text-plt-muted font-sans">EGP</span>
                   </div>
                 </div>
-                <div>
-                  <label className="text-[10px] uppercase font-semibold tracking-wider text-white/40 mb-1 block font-sans">Quantity</label>
-                  <input 
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Quantity</label>
+                  <input
                     type="number"
                     min="1"
-                    className="w-full bg-white/[0.04] border border-white/[0.09] rounded-md px-3 py-2 text-xs font-semibold text-white outline-none focus:border-white/20 transition-all"
+                    className="input-token"
                     value={form.quantity}
                     onChange={e => setForm({ ...form, quantity: e.target.value })}
                   />
                 </div>
               </div>
-              
+
               {/* Estimated Value */}
-              <div className="bg-white/[0.03] rounded-md p-3.5 flex justify-between items-center text-xs border border-white/[0.09]">
-                <span className="text-white/40 font-sans text-[11px]">Total Position Cost</span>
-                <span className="font-bold text-white text-sm">
+              <div className="card-widget-compact flex justify-between items-center text-xs">
+                <span className="kpi-title">Total Position Cost</span>
+                <span className="kpi-value text-plt-text font-bold">
                   {(entryPriceNum * quantityNum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
                 </span>
               </div>
             </div>
-            
+
             {/* Footer */}
-            <div className="p-5 border-t border-white/[0.09] bg-white/[0.02] shrink-0 flex gap-2.5">
+            <div className="p-4 border-t border-plt-border-soft bg-plt-card shrink-0 flex gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-md border border-white/[0.09] bg-white/[0.04] hover:bg-white/[0.08] text-white/80 font-medium text-xs transition-all"
+                className="btn-token btn-secondary btn-compact flex-1 font-sans"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleEditOrder}
-                className="flex-1 py-2.5 rounded-md bg-plt-orange hover:bg-plt-orange-hover text-white font-medium text-xs transition-all shadow-md"
+                className="btn-token btn-primary btn-compact flex-1 font-sans"
               >
                 Save Changes
               </button>
