@@ -652,9 +652,20 @@ export default function ChartWidget({
         wickUpColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 1)'),
         wickDownColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 1)'),
       });
-      predSeries.setData(json.predictions);
+      const formattedPredictions = json.predictions
+        .map((p: any) => ({
+          time: String(p.time || p.date),
+          open: Number(p.open),
+          high: Number(p.high),
+          low: Number(p.low),
+          close: Number(p.close),
+        }))
+        .filter((p: any) => Boolean(p.time) && !isNaN(p.open) && !isNaN(p.close))
+        .sort((a: any, b: any) => (a.time > b.time ? 1 : -1));
+
+      predSeries.setData(formattedPredictions);
       predictionSeriesRef.current = predSeries;
-      toast.success(`Forecasted next ${json.predictions.length} trading days`);
+      toast.success(`Forecasted next ${formattedPredictions.length} trading days`);
     } catch (e: any) {
       toast.error(e.message || 'Failed to generate prediction');
     } finally {

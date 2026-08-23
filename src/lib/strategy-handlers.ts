@@ -409,6 +409,7 @@ export async function handlePredictPost(req: Request) {
       const scaledLow = Math.min(p.low * scaleRatio, scaledOpen, scaledClose);
 
       return {
+        time: p.date,
         date: p.date,
         open: Number(scaledOpen.toFixed(2)),
         high: Number(scaledHigh.toFixed(2)),
