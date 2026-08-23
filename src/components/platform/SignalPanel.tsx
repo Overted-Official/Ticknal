@@ -611,12 +611,12 @@ export default function SignalPanel({
   const displaySignal = isBuy ? 'Buy' : isExit ? 'Sell' : 'Hold';
 
   return (
-    <div className="absolute top-3 right-3 z-30 w-auto min-w-[280px] max-w-[380px] bg-white/[0.06] hover:bg-white/[0.08] backdrop-blur-2xl border border-white/[0.16] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.37)] flex flex-col transition-all select-none">
+    <div className="absolute top-[50px] left-3 right-3 sm:top-3 sm:right-3 sm:left-auto z-30 w-auto max-w-[calc(100vw-24px)] sm:max-w-[380px] sm:min-w-[280px] bg-white/[0.06] hover:bg-white/[0.08] backdrop-blur-2xl border border-white/[0.16] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.37)] flex flex-col transition-all select-none">
       {/* -------------------------------------------------- */}
       {/* FLOATING HUD (COLLAPSED HEADER - SINGLE ROW)      */}
       {/* -------------------------------------------------- */}
       <div
-        className="p-2 cursor-pointer flex items-center justify-between gap-2"
+        className="p-1.5 sm:p-2 cursor-pointer flex items-center justify-between gap-2"
         onClick={() => setExpanded(!expanded)}
       >
         {/* Left: Custom Strategy Selector Dropdown */}

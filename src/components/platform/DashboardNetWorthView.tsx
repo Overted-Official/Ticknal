@@ -288,8 +288,8 @@ export default function DashboardNetWorthView({
               <p className="section-subtitle">Interactive asset class distribution and constituent holdings breakdown</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1 min-h-0">
-              <div className="lg:col-span-4 flex flex-col">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-stretch flex-1 min-h-0 w-full">
+              <div className="lg:col-span-4 flex flex-col w-full">
                 <PortfolioSplitCard
                   slices={assetSlices}
                   currencyMode={currencyMode}

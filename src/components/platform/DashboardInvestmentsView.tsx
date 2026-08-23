@@ -127,7 +127,7 @@ export default function DashboardInvestmentsView({
               <p className="section-subtitle">Live open market holdings alongside real-time algorithmic entry and risk management alerts</p>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch flex-1 min-h-0">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch flex-1 min-h-0 w-full">
               <DashboardPositionsCard orders={orderStats.openOrders} />
               <DashboardSignalsCard
                 buyOpportunities={buyOpportunities}

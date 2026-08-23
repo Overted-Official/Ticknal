@@ -304,6 +304,19 @@
   --glass-bg: transparent;
 }
 
+@media (max-width: 640px) {
+  :root {
+    --space-page-x: 0.75rem;
+    --space-page-y: 0.875rem;
+    --padding-card: 0.875rem;
+    --gap-page-sections: 1.25rem;
+    --gap-section-header: 0.75rem;
+    --gap-kpi-grid: 0.625rem;
+    --gap-widget-grid: 1rem;
+    --section-min-height: auto;
+  }
+}
+
 @theme inline {
   --spacing: 0.25rem;
   --font-sans: var(--font-sans-token);

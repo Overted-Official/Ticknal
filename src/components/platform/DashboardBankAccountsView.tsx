@@ -172,11 +172,11 @@ export default function DashboardBankAccountsView({
               <p className="section-subtitle">Monthly inflows versus outflows trajectory and category expense allocation</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch flex-1 min-h-0">
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 items-stretch flex-1 min-h-0 w-full">
+              <div className="lg:col-span-2 w-full">
                 <CashFlowBarChart data={monthlyFlowData} />
               </div>
-              <div className="lg:col-span-1">
+              <div className="lg:col-span-1 w-full">
                 <SpendingDonutChart splits={categorySplits} />
               </div>
             </div>

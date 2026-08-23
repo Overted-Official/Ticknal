@@ -108,42 +108,42 @@ export default function ChartTickerHeader({
 
           {/* Title */}
           <span className="text-[13px] font-semibold text-plt-text tracking-tight group-hover:text-white transition-colors flex items-center gap-1">
-            <span>{currentTickerItem.companyName || displaySymbol}</span>
-            <span className="text-plt-muted font-normal">· {timeframe} · EGX</span>
-            <ChevronDown size={14} className={`text-plt-muted transition-transform duration-150 ${isSearchOpen ? 'rotate-180 text-plt-text' : ''}`} />
+            <span className="truncate max-w-[150px] sm:max-w-none">{currentTickerItem.companyName || displaySymbol}</span>
+            <span className="text-plt-muted font-normal text-xs shrink-0">· {timeframe} · EGX</span>
+            <ChevronDown size={14} className={`text-plt-muted shrink-0 transition-transform duration-150 ${isSearchOpen ? 'rotate-180 text-plt-text' : ''}`} />
           </span>
         </button>
       </div>
 
       {/* Bottom Row: OHLCV + Change Metrics */}
       {activeCandle && (
-        <div className="mt-0.5 flex items-center gap-2.5 font-mono text-[11px] leading-tight tabular-nums">
+        <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] sm:text-[11px] leading-tight tabular-nums overflow-x-auto no-scrollbar max-w-[calc(100vw-24px)]">
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[11px]">O</span>
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">O</span>
             <span className="text-plt-info font-medium">{open.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[11px]">H</span>
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">H</span>
             <span className="text-plt-info font-medium">{high.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[11px]">L</span>
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">L</span>
             <span className="text-plt-info font-medium">{low.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[11px]">C</span>
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">C</span>
             <span className="text-plt-info font-medium">{close.toFixed(2)}</span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1">
             <span className="text-plt-muted font-sans text-[11px]">Vol</span>
             <span className="text-plt-info font-medium">{formatVolume(volume)}</span>
           </div>
 
-          <div className={`font-medium ${isUp ? 'text-plt-profit' : 'text-plt-risk'}`}>
+          <div className={`font-medium shrink-0 ${isUp ? 'text-plt-profit' : 'text-plt-risk'}`}>
             {isUp ? '+' : ''}{diff.toFixed(2)} ({isUp ? '+' : ''}{diffPct.toFixed(2)}%)
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function ChartTickerHeader({
 
       {/* Dropdown Menu */}
       {isSearchOpen && (
-        <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-plt-card border border-plt-border-soft rounded-2xl shadow-popover backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-plt-card border border-plt-border-soft rounded-2xl shadow-popover backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
           {/* Search Input */}
           <div className="flex items-center px-3.5 py-2.5 border-b border-plt-border-soft bg-plt-card">
             <Search size={14} className="text-plt-muted mr-2 shrink-0" />
