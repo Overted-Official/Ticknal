@@ -130,7 +130,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
     if (onOpenTickerChart) {
       onOpenTickerChart(symbol);
     } else {
-      router.push(`/invest?ticker=${symbol}&view=chart`);
+      router.push(`/invest?ticker=${symbol}&view=chart${analysisMode === 'strategy' ? `&strategy=${selectedStrategy}` : ''}`);
     }
   };
 

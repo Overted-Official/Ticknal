@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 import { getCachedTickers } from '@/lib/data-cache';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { resolvePsiParamsFromStore, fetchAndCachePsiCombinations } from '@/strategies/PSI/psiParameterStore';
+import { runPsiV2Strategy } from '@/strategies/PSI_V2/psiV2Strategy';
 import { runThothV37PStrategy } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
 
 import {
@@ -303,6 +304,19 @@ export async function handleSignalsGet(request?: Request) {
             avgBars = (thothRes as any)?.metrics?.avgBarsHeld || (thothRes as any)?.metrics?.avgBarsPerTrade || 0;
             maxAdverseExcursion = thothRes.metrics?.maxAdverseExcursion || 0;
             avgAdverseExcursion = thothRes.metrics?.avgAdverseExcursion || 0;
+          } catch (e) {
+            signals = [];
+          }
+        } else if (strategy === 'psi_v2' || strategy === 'psiv2') {
+          try {
+            const psiV2Result = runPsiV2Strategy(bars, { startDate });
+            signals = psiV2Result.signals.filter((s) => s.signal === 'BUY' || s.signal === 'SELL');
+            sysRoi = psiV2Result.metrics?.sysRoi || 0;
+            winRate = psiV2Result.metrics?.winRate || 0;
+            tradesCount = psiV2Result.metrics?.trades || 0;
+            avgBars = psiV2Result.metrics?.avgBarsPerTrade || 0;
+            maxAdverseExcursion = psiV2Result.metrics?.maxAdverseExcursion || 0;
+            avgAdverseExcursion = psiV2Result.metrics?.avgAdverseExcursion || 0;
           } catch (e) {
             signals = [];
           }
