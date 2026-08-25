@@ -1,5 +1,6 @@
 import { normalizeTickerSymbol, resolvePsiParams, type PsiStrategyParams } from "./psiStrategy";
 import optimizedIntraday1hParams from "./optimized_intraday_1h_params.json";
+import optimizedDailyParams from "./optimized_daily_params.json";
 
 export type PsiParamsResolution = {
   params: PsiStrategyParams;
@@ -104,6 +105,24 @@ export function resolvePsiParamsWithSource(
     return {
       params: resolvePsiParams(ticker, { ...cached.params, ...overrides }),
       parameterSource: cached.source,
+    };
+  }
+
+  // Check optimized daily parameter store
+  const pDaily = (optimizedDailyParams as Record<string, any>)[ticker];
+  if (pDaily) {
+    return {
+      params: resolvePsiParams(ticker, {
+        model: (pDaily.model as 'psi8' | 'psi40') || model,
+        entryLevels: pDaily.entryLevels ?? [14.6, 23.6, 38.2, 50.0, 61.8],
+        useAym: pDaily.useAym ?? true,
+        aymMultiplier: pDaily.aymMultiplier ?? 8,
+        aymLimit: pDaily.aymLimit ?? 78.6,
+        useAtr: pDaily.useAtr ?? true,
+        atrDistance: pDaily.atrDistance ?? 4.0,
+        ...overrides,
+      }),
+      parameterSource: "optimized-daily-preset",
     };
   }
 

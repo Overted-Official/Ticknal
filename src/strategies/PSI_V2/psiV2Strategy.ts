@@ -10,6 +10,7 @@ import {
   type PsiV2BarMetrics,
 } from './psiV2Engine';
 import optimizedIntraday1hParams from './optimized_intraday_1h_params.json';
+import optimizedDailyParams from './optimized_daily_params.json';
 
 export interface PsiV2StrategyOverrides {
   ticker?: string;
@@ -486,9 +487,9 @@ export function runPsiV2Strategy(
   // 3. Resolve Ticker-Specific or Overridden Threshold Levels
   const tickerKey = (overrides?.ticker || 'DEFAULT').toUpperCase();
   const is1H = overrides?.timeframe === '1H' || overrides?.timeframe === '60' || overrides?.timeframe === '1h';
-  const defaultLevels = (is1H && (optimizedIntraday1hParams as Record<string, any>)[tickerKey])
-    ? (optimizedIntraday1hParams as Record<string, any>)[tickerKey]
-    : (TICKER_PSI_LEVEL_CONFIGS[tickerKey] || TICKER_PSI_LEVEL_CONFIGS['DEFAULT']);
+  const defaultLevels = is1H
+    ? ((optimizedIntraday1hParams as Record<string, any>)[tickerKey] || TICKER_PSI_LEVEL_CONFIGS['DEFAULT'])
+    : ((optimizedDailyParams as Record<string, any>)[tickerKey] || TICKER_PSI_LEVEL_CONFIGS[tickerKey] || TICKER_PSI_LEVEL_CONFIGS['DEFAULT']);
   const buyZoneLevel = overrides?.buyZoneCrossUp ?? defaultLevels.buyZoneCrossUp;
   const buyUpLevel = overrides?.buyPsiUpThreshold ?? defaultLevels.buyPsiUpThreshold;
   const sellZoneLevel = overrides?.sellZoneCrossUnder ?? defaultLevels.sellZoneCrossUnder;
