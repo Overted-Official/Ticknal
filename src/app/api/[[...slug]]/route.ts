@@ -329,6 +329,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ slug?: st
   const root = segments[0] || '';
   const sub = segments[1] || '';
 
+  if (root === 'banks' && sub === 'accounts') {
+    return handleAccountsPut(req);
+  }
+
   if (root === 'positions' || (root === 'user' && sub === 'positions')) {
     return handlePositionsPatch(req);
   }

@@ -4,7 +4,7 @@ import { eq, asc, sql, and } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { getRecentOpportunities } from '@/lib/opportunities';
 import { TickerOrder } from '@/components/platform/TickerPositions';
-import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices } from '@/lib/data-cache';
+import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices, getCachedHourlyPrices } from '@/lib/data-cache';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
@@ -158,7 +158,10 @@ async function InvestPageContent({
   const currentPriceForSymbol = priceMap[selectedSymbol]?.lastPrice || 0;
 
   // Fetch chart data for the selected symbol
-  const dbData = await getCachedDailyPrices(selectedSymbol);
+  const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
+  const dbData = is1H
+    ? await getCachedHourlyPrices(selectedSymbol)
+    : await getCachedDailyPrices(selectedSymbol);
 
   let dayHigh = 0;
   let dayLow = 0;
@@ -186,15 +189,22 @@ async function InvestPageContent({
 
   const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(selectedSymbol.toUpperCase());
 
-  const dailyChartData = dbData
+  const formattedChartData = dbData
     .filter(record => isFund ? Number(record.close) > 0 : (Number(record.volume) > 0 || Number(record.close) > 0))
     .map(record => {
-      const strictDateString = typeof record.date === 'string' 
-        ? record.date.split('T')[0] 
-        : new Date(record.date as Date).toISOString().split('T')[0];
+      let timeVal: any;
+      if (is1H) {
+        const d = typeof record.date === 'string' ? new Date(record.date) : (record.date as Date);
+        // Epoch timestamp in seconds for intraday Lightweight Charts
+        timeVal = Math.floor(d.getTime() / 1000);
+      } else {
+        timeVal = typeof record.date === 'string' 
+          ? record.date.split('T')[0] 
+          : new Date(record.date as Date).toISOString().split('T')[0];
+      }
 
       return {
-        time: strictDateString,
+        time: timeVal,
         open: Number(record.open),
         high: Number(record.high),
         low: Number(record.low),
@@ -203,7 +213,8 @@ async function InvestPageContent({
       };
     });
 
-  let chartData = dailyChartData;
+  const dailyChartData = formattedChartData;
+  let chartData = formattedChartData;
 
   if (timeframe === 'W') {
     const weeklyData: typeof chartData = [];

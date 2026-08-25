@@ -179,6 +179,13 @@ export default function EditAccountHistoryDrawer({
         }),
       });
 
+      if (!accRes.ok) {
+        const errData = await accRes.json().catch(() => ({}));
+        console.error('Account update error:', errData);
+        toast.error('Save Failed', errData.error || 'Could not update account details.');
+        return;
+      }
+
       // 2. Save Snapshots
       const validSnapshots = snapshots.filter((s) => s.closingBalance !== '' && !isNaN(Number(s.closingBalance)));
 
@@ -192,13 +199,16 @@ export default function EditAccountHistoryDrawer({
         }),
       });
 
-      if (accRes.ok && snapRes.ok) {
-        toast.success('Account & History Saved', `Updated monthly trajectory for ${accountName}.`);
-        onAccountUpdated();
-        onClose();
-      } else {
-        toast.error('Save Failed', 'Could not save balance history.');
+      if (!snapRes.ok) {
+        const errData = await snapRes.json().catch(() => ({}));
+        console.error('Snapshots save error:', errData);
+        toast.error('Save Failed', errData.error || 'Could not save balance history.');
+        return;
       }
+
+      toast.success('Account & History Saved', `Updated monthly trajectory for ${accountName}.`);
+      onAccountUpdated();
+      onClose();
     } catch (err) {
       console.error('Error saving account history:', err);
       toast.error('Connection Error', 'Failed to reach server.');
