@@ -268,7 +268,11 @@ export default function NotificationsDrawer({
                                     {item.companyName ?? cleanSymbol}
                                   </span>
                                   <span className="text-[9px] font-mono text-plt-muted px-1.5 py-0.2 rounded bg-plt-card border border-plt-border-soft shrink-0">
-                                    {item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth' ? 'THOTH 3.7P' : 'PSI'}
+                                    {item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth'
+                                      ? 'THOTH 3.7P'
+                                      : item.strategy === 'psi_v2'
+                                      ? 'PSI V2'
+                                      : 'PSI'}
                                   </span>
                                 </div>
 

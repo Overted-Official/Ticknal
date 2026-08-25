@@ -309,7 +309,7 @@ export async function handleSignalsGet(request?: Request) {
           }
         } else if (strategy === 'psi_v2' || strategy === 'psiv2') {
           try {
-            const psiV2Result = runPsiV2Strategy(bars, { startDate });
+            const psiV2Result = runPsiV2Strategy(bars, { ticker: symbol, startDate });
             signals = psiV2Result.signals.filter((s) => s.signal === 'BUY' || s.signal === 'SELL');
             sysRoi = psiV2Result.metrics?.sysRoi || 0;
             winRate = psiV2Result.metrics?.winRate || 0;

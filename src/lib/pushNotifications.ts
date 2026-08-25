@@ -120,7 +120,7 @@ export async function dispatchSignalNotifications(options: {
         strategyId: string;
         strategyShort: string;
         strategyLabel: string;
-        signal: PsiSignal;
+        signal: any;
       }> = [];
 
       // 1. Evaluate PSI Strategy (using exact DB-tuned combinations)
@@ -164,6 +164,25 @@ export async function dispatchSignalNotifications(options: {
           }
         } catch (e) {
           console.error('Failed to run Thoth strategy for alert', e);
+        }
+      }
+
+      // 3. Evaluate the PSI V2 Strategy (GPT 3-PSI Architecture)
+      if (userScope === 'all' || userScope === 'psi_v2') {
+        try {
+          const { runPsiV2Strategy } = await import('@/strategies/PSI_V2/psiV2Strategy');
+          const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: bars[0].date });
+          const signal = [...psiV2Result.signals].reverse().find((s) => dateWindow.has(s.date) && (s.signal === 'BUY' || s.signal === 'SELL')) ?? null;
+          if (signal) {
+            signalsToDispatch.push({
+              strategyId: 'psi_v2',
+              strategyShort: 'PSI V2',
+              strategyLabel: 'PSI V2 Strategy',
+              signal,
+            });
+          }
+        } catch (e) {
+          console.error('Failed to run PSI v2 strategy for alert', e);
         }
       }
 
