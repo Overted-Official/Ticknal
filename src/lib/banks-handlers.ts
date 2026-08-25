@@ -236,6 +236,26 @@ export async function handleSnapshotsPost(req: Request) {
       return NextResponse.json({ error: 'Invalid payload: accountId and snapshots array required' }, { status: 400 });
     }
 
+    const keepMonths = new Set(snapshots.map((s) => s.yearMonth));
+    const existing = await db
+      .select({ yearMonth: bankMonthlySnapshots.yearMonth })
+      .from(bankMonthlySnapshots)
+      .where(and(eq(bankMonthlySnapshots.userId, user.id), eq(bankMonthlySnapshots.accountId, Number(accountId))));
+
+    for (const ex of existing) {
+      if (!keepMonths.has(ex.yearMonth)) {
+        await db
+          .delete(bankMonthlySnapshots)
+          .where(
+            and(
+              eq(bankMonthlySnapshots.userId, user.id),
+              eq(bankMonthlySnapshots.accountId, Number(accountId)),
+              eq(bankMonthlySnapshots.yearMonth, ex.yearMonth)
+            )
+          );
+      }
+    }
+
     for (const snap of snapshots) {
       await db
         .insert(bankMonthlySnapshots)
@@ -246,7 +266,7 @@ export async function handleSnapshotsPost(req: Request) {
           closingBalance: String(snap.closingBalance),
         })
         .onConflictDoUpdate({
-          target: [bankMonthlySnapshots.userId, bankMonthlySnapshots.accountId, bankMonthlySnapshots.yearMonth],
+          target: [bankMonthlySnapshots.accountId, bankMonthlySnapshots.yearMonth],
           set: {
             closingBalance: String(snap.closingBalance),
           },

@@ -91,7 +91,7 @@ export default function EditAccountHistoryDrawer({
   // Handle adding new snapshot month
   const handleAddMonth = () => {
     if (!newMonthInput) {
-      toast.warning('Select Month', 'Please select a month first.');
+      toast.warning('Select Month', 'Please select a year and month first.');
       return;
     }
 
@@ -100,13 +100,21 @@ export default function EditAccountHistoryDrawer({
       return;
     }
 
-    const updated = [...snapshots, { yearMonth: newMonthInput, closingBalance: newBalanceInput || '0' }].sort((a, b) =>
+    const valToAdd =
+      newBalanceInput.trim() !== ''
+        ? newBalanceInput.trim()
+        : snapshots.length > 0 && snapshots[snapshots.length - 1].closingBalance !== ''
+        ? snapshots[snapshots.length - 1].closingBalance
+        : String(account?.balance || '0');
+
+    const updated = [...snapshots, { yearMonth: newMonthInput, closingBalance: valToAdd }].sort((a, b) =>
       a.yearMonth.localeCompare(b.yearMonth)
     );
 
     setSnapshots(updated);
     setNewMonthInput('');
     setNewBalanceInput('');
+    toast.success('Month Added', `Added ${formatYearMonthDisplay(newMonthInput)} to history.`);
   };
 
   const handleRemoveSnapshot = (ym: string) => {
@@ -332,24 +340,24 @@ export default function EditAccountHistoryDrawer({
                               key={snap.yearMonth}
                               className="flex items-center gap-2 p-2 rounded-xl bg-plt-card border border-plt-border-soft hover:bg-plt-hover/60 transition-all"
                             >
-                              <div className="w-24 shrink-0 flex items-center gap-1.5 font-medium text-plt-text font-sans">
-                                <Calendar size={14} className="text-plt-muted" />
-                                <span>{formatYearMonthDisplay(snap.yearMonth)}</span>
+                              <div className="w-24 shrink-0 flex items-center gap-1.5 font-medium text-plt-text font-sans text-xs">
+                                <Calendar size={14} className="text-plt-muted shrink-0" />
+                                <span className="truncate">{formatYearMonthDisplay(snap.yearMonth)}</span>
                               </div>
 
-                              <div className="flex-1 relative">
+                              <div className="flex-1 min-w-0 relative">
                                 <input
                                   type="number"
                                   step="any"
                                   placeholder="0.00"
                                   value={snap.closingBalance}
                                   onChange={(e) => handleSnapshotValueChange(snap.yearMonth, e.target.value)}
-                                  className="h-7 w-full rounded-lg bg-plt-base border border-plt-border-soft px-2 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
+                                  className="h-8 w-full rounded-lg bg-plt-base border border-plt-border-soft px-2.5 text-xs font-mono tabular-nums text-plt-text focus:border-plt-border-strong focus:outline-hidden transition"
                                 />
                               </div>
 
                               {hasPrev && (
-                                <div className="w-20 text-right font-mono text-[11px] shrink-0 font-semibold">
+                                <div className="w-16 text-right font-mono text-[11px] shrink-0 font-semibold">
                                   <span className={diff >= 0 ? 'text-plt-profit' : 'text-plt-risk'}>
                                     {diff >= 0 ? '+' : ''}{pct.toFixed(1)}%
                                   </span>
@@ -359,7 +367,7 @@ export default function EditAccountHistoryDrawer({
                               <button
                                 type="button"
                                 onClick={() => handleRemoveSnapshot(snap.yearMonth)}
-                                className="p-1.5 text-plt-muted hover:text-plt-risk hover:bg-plt-risk/10 rounded-lg transition"
+                                className="p-1.5 text-plt-muted hover:text-plt-risk hover:bg-plt-risk/10 rounded-lg transition shrink-0 cursor-pointer"
                                 title="Remove Month"
                               >
                                 <Trash2 size={14} />
@@ -371,25 +379,35 @@ export default function EditAccountHistoryDrawer({
                     )}
                   </div>
 
-                  <div className="pt-2 border-t border-plt-border-soft flex items-center gap-2">
-                    <input
-                      type="month"
-                      value={newMonthInput}
-                      onChange={(e) => setNewMonthInput(e.target.value)}
-                      className="date-token w-36"
-                    />
-                    <input
-                      type="number"
-                      step="any"
-                      placeholder={`Balance in ${currency}`}
-                      value={newBalanceInput}
-                      onChange={(e) => setNewBalanceInput(e.target.value)}
-                      className="input-token flex-1"
-                    />
+                  <div className="pt-3 border-t border-plt-border-soft flex items-center gap-2">
+                    <div className="w-36 shrink-0">
+                      <input
+                        type="month"
+                        value={newMonthInput}
+                        onChange={(e) => setNewMonthInput(e.target.value)}
+                        className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-2.5 text-xs font-sans text-plt-text focus:border-plt-border-strong focus:outline-hidden transition cursor-pointer [color-scheme:dark]"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder={`Balance (${currency})`}
+                        value={newBalanceInput}
+                        onChange={(e) => setNewBalanceInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddMonth();
+                          }
+                        }}
+                        className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-2.5 text-xs font-mono tabular-nums text-plt-text placeholder:text-plt-muted focus:border-plt-border-strong focus:outline-hidden transition"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={handleAddMonth}
-                      className="btn-token btn-secondary btn-compact font-sans flex items-center gap-1.5"
+                      className="h-8 px-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] text-white border border-white/20 text-xs font-semibold flex items-center gap-1.5 shrink-0 transition cursor-pointer"
                     >
                       <Plus size={14} />
                       <span>Add</span>
