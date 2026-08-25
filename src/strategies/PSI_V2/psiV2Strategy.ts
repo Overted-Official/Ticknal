@@ -23,6 +23,7 @@ export interface PsiV2StrategyOverrides {
   sellPsiDownThreshold?: number;
   aymMultiplier?: number;
   atrMultiplier?: number;
+  profitProtect?: boolean;
 }
 
 export interface PsiLevelThresholds {
@@ -558,9 +559,11 @@ export function runPsiV2Strategy(
         priceGateMet = (closePrice >= aymThreshold) || (closePrice >= atrThreshold);
       }
 
-      const isLastBar = i === bars.length - 1 || (endDate && bars[i + 1]?.date > endDate);
+      const isLastBar = i === bars.length - 1 || (Boolean(endDate) && bars[i + 1]?.date > (endDate as string));
+      const profitProtect = overrides?.profitProtect !== false;
+      const isProfit = closePrice > entryPrice;
 
-      if ((baseTechnicalExit && priceGateMet) || isLastBar) {
+      if (((baseTechnicalExit && priceGateMet && (!profitProtect || isProfit)) || isLastBar)) {
         signalType = 'SELL';
         triggeredExitReason = zoneCrossUnder
           ? `PSI_ZONE Cross Under ${sellZoneLevel} (Overbought Deceleration)`

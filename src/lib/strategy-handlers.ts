@@ -60,11 +60,13 @@ export async function handleSignalsGet(request: Request) {
       return NextResponse.json({ signals: [], latestMasterIndex: null });
     }
 
+    const effectiveStartDate = startDate ?? (is1H ? (bars[0]?.date || '2020-01-01') : '2025-01-01');
+
     let result;
     if (strategy === 'psi_v2') {
       const psiV2Overrides: Record<string, any> = {
         ticker,
-        startDate,
+        startDate: effectiveStartDate,
         endDate,
         timeframe,
       };
@@ -74,12 +76,12 @@ export async function handleSignalsGet(request: Request) {
       result = {
         ...psiV2Result,
         formattedMetrics: formatPsiV2MetricsForApi(psiV2Result.metrics),
-        parameterSource: is1H ? 'gpt-3psi-v2-1h-intraday' : 'gpt-3psi-v2-production',
+        parameterSource: `psi-v2-levels-${ticker}`,
       };
     } else if (strategy === 'thoth_egx_macro') {
       const thothOverrides: Record<string, any> = {
         ticker,
-        startDate,
+        startDate: effectiveStartDate,
         endDate,
       };
 
@@ -91,7 +93,7 @@ export async function handleSignalsGet(request: Request) {
         parameterSource: 'thoth-egx-v3.7p-production-frozen',
       };
     } else {
-      const overrides: Record<string, any> = { startDate, endDate };
+      const overrides: Record<string, any> = { startDate: effectiveStartDate, endDate };
       if (searchParams.has('model')) overrides.model = searchParams.get('model');
       if (searchParams.has('useAym')) overrides.useAym = searchParams.get('useAym') === 'true';
       if (searchParams.has('aymMultiplier')) overrides.aymMultiplier = Number(searchParams.get('aymMultiplier'));
@@ -161,10 +163,12 @@ export async function handleMetricsGet(request: Request) {
     let formattedMetrics: Record<string, string>;
     let parameterSource: string;
 
+    const effectiveStartDate = startDate ?? (is1H ? (bars[0]?.date || '2020-01-01') : '2025-01-01');
+
     if (strategy === 'psi_v2') {
       const psiV2Overrides: Record<string, any> = {
         ticker,
-        startDate,
+        startDate: effectiveStartDate,
         endDate,
         timeframe,
       };
@@ -175,7 +179,7 @@ export async function handleMetricsGet(request: Request) {
     } else if (strategy === 'thoth_egx_macro') {
       const thothOverrides: Record<string, any> = {
         ticker,
-        startDate,
+        startDate: effectiveStartDate,
         endDate,
       };
 
@@ -183,7 +187,7 @@ export async function handleMetricsGet(request: Request) {
       formattedMetrics = formatMetricsForApi(thothResult.metrics);
       parameterSource = 'thoth-egx-v3.7p-production-frozen';
     } else {
-      const overrides: Record<string, any> = { startDate, endDate };
+      const overrides: Record<string, any> = { startDate: effectiveStartDate, endDate };
       if (searchParams.has('model')) overrides.model = searchParams.get('model');
       if (searchParams.has('useAym')) overrides.useAym = searchParams.get('useAym') === 'true';
       if (searchParams.has('aymMultiplier')) overrides.aymMultiplier = Number(searchParams.get('aymMultiplier'));
