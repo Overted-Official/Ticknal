@@ -98,17 +98,7 @@ export function resolvePsiParamsWithSource(
     }
   }
 
-  const cacheKey = `${ticker}:${model}:D`;
-  const cached = dbParamsCache.get(cacheKey);
-
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return {
-      params: resolvePsiParams(ticker, { ...cached.params, ...overrides }),
-      parameterSource: cached.source,
-    };
-  }
-
-  // Check optimized daily parameter store
+  // 1. Prioritize optimized daily parameter file for Daily timeframe
   const pDaily = (optimizedDailyParams as Record<string, any>)[ticker];
   if (pDaily) {
     return {
@@ -119,10 +109,20 @@ export function resolvePsiParamsWithSource(
         aymMultiplier: pDaily.aymMultiplier ?? 8,
         aymLimit: pDaily.aymLimit ?? 78.6,
         useAtr: pDaily.useAtr ?? true,
-        atrDistance: pDaily.atrDistance ?? 4.0,
+        atrDistance: pDaily.useAtr ? (pDaily.atrDistance ?? 4.0) : null,
         ...overrides,
       }),
-      parameterSource: "optimized-daily-preset",
+      parameterSource: "optimized-daily-file",
+    };
+  }
+
+  // 2. Fallback to cached DB combinations
+  const cacheKey = `${ticker}:${model}:D`;
+  const cached = dbParamsCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return {
+      params: resolvePsiParams(ticker, { ...cached.params, ...overrides }),
+      parameterSource: cached.source,
     };
   }
 
@@ -146,7 +146,10 @@ export async function resolvePsiParamsAsync(
   const model = overrides.model ?? "psi8";
   const cacheKey = `${ticker}:${model}:D`;
 
-  if (!dbParamsCache.has(cacheKey) && timeframe !== '1H' && timeframe !== '60') {
+  const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
+  const hasDailyFile = Boolean((optimizedDailyParams as Record<string, any>)[ticker]);
+
+  if (!is1H && !hasDailyFile && !dbParamsCache.has(cacheKey)) {
     await fetchAndCachePsiCombinations(ticker);
   }
 
