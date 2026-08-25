@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCachedDailyPrices } from '@/lib/data-cache';
+import { getCachedDailyPrices, getCachedHourlyPrices } from '@/lib/data-cache';
 import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import {
   formatMetricsForApi,
@@ -28,20 +28,26 @@ export async function handleSignalsGet(request: Request) {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategy = searchParams.get('strategy') || 'psi';
+    const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
+    const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
 
     if (!symbol) {
       return NextResponse.json({ error: 'Missing symbol parameter' }, { status: 400 });
     }
 
     const ticker = normalizeTickerSymbol(symbol);
-    const startDate = searchParams.get('start') ?? searchParams.get('startDate') ?? '2025-01-01';
+    const startDate = searchParams.get('start') ?? searchParams.get('startDate') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? searchParams.get('endDate') ?? undefined;
 
-    const rows = await getCachedDailyPrices(ticker);
+    const rows = is1H
+      ? await getCachedHourlyPrices(ticker)
+      : await getCachedDailyPrices(ticker);
 
     const bars: PriceBar[] = rows
       .map((record) => ({
-        date: typeof record.date === 'string' ? record.date.split('T')[0] : new Date(record.date as Date).toISOString().split('T')[0],
+        date: typeof record.date === 'string'
+          ? (is1H ? record.date : record.date.split('T')[0])
+          : (is1H ? (record.date as Date).toISOString() : (record.date as Date).toISOString().split('T')[0]),
         open: Number(record.open),
         high: Number(record.high),
         low: Number(record.low),
@@ -50,7 +56,7 @@ export async function handleSignalsGet(request: Request) {
       }))
       .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
-    if (bars.length < 130) {
+    if (bars.length < 30) {
       return NextResponse.json({ signals: [], latestMasterIndex: null });
     }
 
@@ -60,6 +66,7 @@ export async function handleSignalsGet(request: Request) {
         ticker,
         startDate,
         endDate,
+        timeframe,
       };
 
       const psiV2Result = runPsiV2Strategy(bars, psiV2Overrides);
@@ -67,7 +74,7 @@ export async function handleSignalsGet(request: Request) {
       result = {
         ...psiV2Result,
         formattedMetrics: formatPsiV2MetricsForApi(psiV2Result.metrics),
-        parameterSource: 'gpt-3psi-v2-production',
+        parameterSource: is1H ? 'gpt-3psi-v2-1h-intraday' : 'gpt-3psi-v2-production',
       };
     } else if (strategy === 'thoth_egx_macro') {
       const thothOverrides: Record<string, any> = {
@@ -97,7 +104,7 @@ export async function handleSignalsGet(request: Request) {
         } catch (e) {}
       }
 
-      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides);
+      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides, timeframe);
       const psiResult = runPsiStrategy(bars, parameterResolution.params);
 
       result = {
@@ -119,19 +126,26 @@ export async function handleMetricsGet(request: Request) {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategy = searchParams.get('strategy') || 'psi';
+    const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
+    const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
 
     if (!symbol) {
       return NextResponse.json({ error: 'Missing symbol parameter' }, { status: 400 });
     }
 
     const ticker = normalizeTickerSymbol(symbol);
-    const startDate = searchParams.get('start') ?? '2025-01-01';
+    const startDate = searchParams.get('start') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? undefined;
-    const rows = await getCachedDailyPrices(ticker);
+
+    const rows = is1H
+      ? await getCachedHourlyPrices(ticker)
+      : await getCachedDailyPrices(ticker);
 
     const bars: PriceBar[] = rows
       .map((record) => ({
-        date: typeof record.date === 'string' ? record.date.split('T')[0] : new Date(record.date as Date).toISOString().split('T')[0],
+        date: typeof record.date === 'string'
+          ? (is1H ? record.date : record.date.split('T')[0])
+          : (is1H ? (record.date as Date).toISOString() : (record.date as Date).toISOString().split('T')[0]),
         open: Number(record.open),
         high: Number(record.high),
         low: Number(record.low),
@@ -140,7 +154,7 @@ export async function handleMetricsGet(request: Request) {
       }))
       .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
-    if (bars.length < 130) {
+    if (bars.length < 30) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
 
@@ -152,11 +166,12 @@ export async function handleMetricsGet(request: Request) {
         ticker,
         startDate,
         endDate,
+        timeframe,
       };
 
       const psiV2Result = runPsiV2Strategy(bars, psiV2Overrides);
       formattedMetrics = formatPsiV2MetricsForApi(psiV2Result.metrics);
-      parameterSource = 'gpt-3psi-v2-production';
+      parameterSource = is1H ? 'gpt-3psi-v2-1h-intraday' : 'gpt-3psi-v2-production';
     } else if (strategy === 'thoth_egx_macro') {
       const thothOverrides: Record<string, any> = {
         ticker,
@@ -181,7 +196,7 @@ export async function handleMetricsGet(request: Request) {
         } catch (e) {}
       }
 
-      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides);
+      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides, timeframe);
       const psiResult = runPsiStrategy(bars, parameterResolution.params);
       formattedMetrics = formatMetricsForApi(psiResult.metrics);
       parameterSource = parameterResolution.parameterSource;
@@ -251,8 +266,10 @@ export async function handleReportGet(request: Request) {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategy = searchParams.get('strategy') || 'psi';
+    const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
+    const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
     const model = searchParams.get('model') || (strategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : strategy === 'psi_v2' ? 'psi_v2' : 'psi8');
-    const startDate = searchParams.get('start') ?? '2025-01-01';
+    const startDate = searchParams.get('start') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? undefined;
     const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 1000;
 
@@ -261,10 +278,15 @@ export async function handleReportGet(request: Request) {
     }
 
     const ticker = normalizeTickerSymbol(symbol);
-    const rows = await getCachedDailyPrices(ticker);
+    const rows = is1H
+      ? await getCachedHourlyPrices(ticker)
+      : await getCachedDailyPrices(ticker);
+
     const bars: PriceBar[] = rows
       .map((record) => ({
-        date: typeof record.date === 'string' ? record.date.split('T')[0] : new Date(record.date as Date).toISOString().split('T')[0],
+        date: typeof record.date === 'string'
+          ? (is1H ? record.date : record.date.split('T')[0])
+          : (is1H ? (record.date as Date).toISOString() : (record.date as Date).toISOString().split('T')[0]),
         open: Number(record.open),
         high: Number(record.high),
         low: Number(record.low),
@@ -283,6 +305,7 @@ export async function handleReportGet(request: Request) {
         startDate,
         endDate,
         initialCapital,
+        timeframe,
       };
 
       const report = runFullPsiV2Backtest(bars, psiV2Overrides);
@@ -303,7 +326,7 @@ export async function handleReportGet(request: Request) {
         initialCapital,
         startDate,
         endDate,
-      });
+      }, timeframe);
       const report = runFullStrategyBacktest(bars, parameterResolution.params);
       return NextResponse.json(report);
     }

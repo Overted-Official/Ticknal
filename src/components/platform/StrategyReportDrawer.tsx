@@ -16,6 +16,7 @@ import {
   type PriceBar,
   type PsiStrategyParams,
 } from '@/strategies/PSI/psiStrategy';
+import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 
 // ============================================================================
 // TICKER LOGO COMPONENT
@@ -54,6 +55,7 @@ interface StrategyReportDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   symbol: string;
+  timeframe?: string;
   companyName?: string;
   logoUrl?: string | null;
   chartData: Array<{
@@ -72,6 +74,7 @@ export default function StrategyReportDrawer({
   isOpen,
   onClose,
   symbol,
+  timeframe = 'D',
   companyName: propCompanyName,
   logoUrl: propLogoUrl,
   chartData = [],
@@ -249,6 +252,7 @@ export default function StrategyReportDrawer({
           startDate,
           endDate,
           initialCapital,
+          timeframe,
         });
         setReport(psiV2Report);
       } catch (err) {
@@ -261,6 +265,7 @@ export default function StrategyReportDrawer({
       const params = new URLSearchParams({
         symbol,
         strategy: 'thoth_egx_macro',
+        timeframe,
         start: startDate,
       });
       if (endDate) params.set('end', endDate);
@@ -279,19 +284,19 @@ export default function StrategyReportDrawer({
     }
 
     try {
-      const psiParams = resolvePsiParams(symbol, {
+      const psiParams = resolvePsiParamsFromStore(symbol, {
         startDate,
         endDate,
         initialCapital,
         model: model === 'psi40' ? 'psi40' : 'psi8',
         ...customParams,
-      });
+      }, timeframe);
       const psiResult = runFullStrategyBacktest(bars, psiParams);
       setReport(psiResult);
     } catch (e) {
       console.error('Backtest calculation error:', e);
     }
-  }, [isOpen, chartData, startDate, endDate, initialCapital, model, customParams, symbol]);
+  }, [isOpen, chartData, startDate, endDate, initialCapital, model, customParams, symbol, timeframe]);
 
   const { stats, trades, equityCurve } = report;
 

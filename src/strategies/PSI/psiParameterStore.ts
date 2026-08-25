@@ -1,14 +1,12 @@
-import { db } from "@/db";
-import { psiCombinations } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { normalizeTickerSymbol, resolvePsiParams, type PsiStrategyParams } from "./psiStrategy";
+import optimizedIntraday1hParams from "./optimized_intraday_1h_params.json";
 
 export type PsiParamsResolution = {
   params: PsiStrategyParams;
   parameterSource: string;
 };
 
-// In-memory cache for ultra-fast synchronous access: key is `${ticker}:${model}`
+// In-memory cache for ultra-fast synchronous access: key is `${ticker}:${model}:${timeframe}`
 const dbParamsCache = new Map<string, { params: Partial<PsiStrategyParams>; source: string; timestamp: number }>();
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -24,7 +22,12 @@ function parseEntryLevels(raw: unknown): number[] {
 }
 
 export async function fetchAndCachePsiCombinations(symbol?: string): Promise<void> {
+  if (typeof window !== 'undefined') return;
   try {
+    const { db } = await import('@/db');
+    const { psiCombinations } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
     const cleanSym = symbol ? normalizeTickerSymbol(symbol) : null;
     const query = cleanSym
       ? db.select().from(psiCombinations).where(eq(psiCombinations.tickerSymbol, cleanSym))
@@ -34,7 +37,7 @@ export async function fetchAndCachePsiCombinations(symbol?: string): Promise<voi
     for (const row of rows) {
       const sym = normalizeTickerSymbol(row.tickerSymbol);
       const model = (row.model?.toLowerCase() === 'psi40' ? 'psi40' : 'psi8') as 'psi8' | 'psi40';
-      const key = `${sym}:${model}`;
+      const key = `${sym}:${model}:D`;
       
       const entryLevels = parseEntryLevels(row.entryLevels);
 
@@ -60,17 +63,41 @@ export async function fetchAndCachePsiCombinations(symbol?: string): Promise<voi
 export function resolvePsiParamsFromStore(
   symbol: string,
   overrides: Partial<PsiStrategyParams> = {},
+  timeframe: string = 'D'
 ): PsiStrategyParams {
-  return resolvePsiParamsWithSource(symbol, overrides).params;
+  return resolvePsiParamsWithSource(symbol, overrides, timeframe).params;
 }
 
 export function resolvePsiParamsWithSource(
   symbol: string,
   overrides: Partial<PsiStrategyParams> = {},
+  timeframe: string = 'D'
 ): PsiParamsResolution {
   const ticker = normalizeTickerSymbol(symbol);
   const model = overrides.model ?? "psi8";
-  const cacheKey = `${ticker}:${model}`;
+
+  // Check if 1-Hour Intraday
+  const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
+  if (is1H) {
+    const p1h = (optimizedIntraday1hParams as Record<string, any>)[ticker];
+    if (p1h) {
+      return {
+        params: resolvePsiParams(ticker, {
+          model: (p1h.model as 'psi8' | 'psi40') || 'psi8',
+          entryLevels: p1h.entryLevels ?? [14.6],
+          useAym: p1h.useAym ?? false,
+          aymMultiplier: p1h.aymMultiplier ?? 8,
+          aymLimit: p1h.aymLimit ?? 78.6,
+          useAtr: p1h.useAtr ?? true,
+          atrDistance: p1h.atrDistance ?? 4.0,
+          ...overrides,
+        }),
+        parameterSource: "optimized-1h-intraday",
+      };
+    }
+  }
+
+  const cacheKey = `${ticker}:${model}:D`;
   const cached = dbParamsCache.get(cacheKey);
 
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -94,14 +121,15 @@ export function resolvePsiParamsWithSource(
 export async function resolvePsiParamsAsync(
   symbol: string,
   overrides: Partial<PsiStrategyParams> = {},
+  timeframe: string = 'D'
 ): Promise<PsiParamsResolution> {
   const ticker = normalizeTickerSymbol(symbol);
   const model = overrides.model ?? "psi8";
-  const cacheKey = `${ticker}:${model}`;
+  const cacheKey = `${ticker}:${model}:D`;
 
-  if (!dbParamsCache.has(cacheKey)) {
+  if (!dbParamsCache.has(cacheKey) && timeframe !== '1H' && timeframe !== '60') {
     await fetchAndCachePsiCombinations(ticker);
   }
 
-  return resolvePsiParamsWithSource(symbol, overrides);
+  return resolvePsiParamsWithSource(symbol, overrides, timeframe);
 }

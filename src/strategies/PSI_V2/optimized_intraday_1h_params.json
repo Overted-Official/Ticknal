@@ -1,0 +1,2616 @@
+{
+  "AALR": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 449.66,
+    "roi": 837.54,
+    "winRate": 44.5,
+    "trades": 263
+  },
+  "ABUK": {
+    "buyThreshold": 20,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": 81.98,
+    "roi": 190.38,
+    "winRate": 46.2,
+    "trades": 158
+  },
+  "ACAMD": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 88.81,
+    "roi": 217.31,
+    "winRate": 41,
+    "trades": 217
+  },
+  "ACAP": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -764.48,
+    "roi": 2085.52,
+    "winRate": 52.4,
+    "trades": 168
+  },
+  "ACFR": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ACGC": {
+    "buyThreshold": 25,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": -110.93,
+    "roi": 310.1,
+    "winRate": 51.1,
+    "trades": 131
+  },
+  "ACTF": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 10.96,
+    "roi": -15.21,
+    "winRate": 33.8,
+    "trades": 77
+  },
+  "ADCI": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -434.18,
+    "roi": 357.85,
+    "winRate": 48.4,
+    "trades": 184
+  },
+  "ADIB": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -152.26,
+    "roi": 328.99,
+    "winRate": 52.9,
+    "trades": 138
+  },
+  "ADPC": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 11.96,
+    "roi": 48.05,
+    "winRate": 46,
+    "trades": 163
+  },
+  "ADRI": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": 2169.7,
+    "roi": 3016.01,
+    "winRate": 52.3,
+    "trades": 176
+  },
+  "AFDI": {
+    "buyThreshold": 25,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 166.82,
+    "roi": 364.03,
+    "winRate": 53.3,
+    "trades": 137
+  },
+  "AFMC": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 16.05,
+    "roi": 703.46,
+    "winRate": 51.7,
+    "trades": 143
+  },
+  "AIDC": {
+    "buyThreshold": 15,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": -14.11,
+    "roi": 102,
+    "winRate": 50,
+    "trades": 54
+  },
+  "AIFI": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -198.38,
+    "roi": 402.76,
+    "winRate": 42.7,
+    "trades": 185
+  },
+  "AIH": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 64.03,
+    "roi": 148.15,
+    "winRate": 56,
+    "trades": 134
+  },
+  "AJWA": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -310.52,
+    "roi": 644.83,
+    "winRate": 60.7,
+    "trades": 145
+  },
+  "ALCN": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 8,
+    "alpha": 21.71,
+    "roi": 469.42,
+    "winRate": 57.4,
+    "trades": 141
+  },
+  "ALEX": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 326.2,
+    "roi": 412.37,
+    "winRate": 63.6,
+    "trades": 11
+  },
+  "ALUM": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 353.24,
+    "roi": 726,
+    "winRate": 55.7,
+    "trades": 131
+  },
+  "AMER": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 265.78,
+    "roi": 379.44,
+    "winRate": 47.3,
+    "trades": 201
+  },
+  "AMES": {
+    "buyThreshold": 25,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -3873.2,
+    "roi": 1013.58,
+    "winRate": 44.8,
+    "trades": 163
+  },
+  "AMIA": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 205.38,
+    "roi": 434.99,
+    "winRate": 54.6,
+    "trades": 141
+  },
+  "AMII": {
+    "buyThreshold": 15,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 264.39,
+    "roi": 986.04,
+    "winRate": 58.6,
+    "trades": 145
+  },
+  "AMOC": {
+    "buyThreshold": 15,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -17.56,
+    "roi": 68.38,
+    "winRate": 40.9,
+    "trades": 137
+  },
+  "AMPI": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 515.02,
+    "roi": 892,
+    "winRate": 39.8,
+    "trades": 221
+  },
+  "ANCC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "APPC": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 13.71,
+    "roi": -7.07,
+    "winRate": 35,
+    "trades": 20
+  },
+  "APSW": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 177.83,
+    "roi": 384.02,
+    "winRate": 46.9,
+    "trades": 177
+  },
+  "ARAB": {
+    "buyThreshold": 25,
+    "sellThreshold": 15,
+    "minHoldBars": 1,
+    "alpha": 106.5,
+    "roi": 411.65,
+    "winRate": 43.7,
+    "trades": 213
+  },
+  "ARCC": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": -743.38,
+    "roi": 242.66,
+    "winRate": 47.9,
+    "trades": 140
+  },
+  "AREH": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 414.69,
+    "roi": 406.54,
+    "winRate": 37.8,
+    "trades": 230
+  },
+  "ASCM": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -164.32,
+    "roi": 509.63,
+    "winRate": 46.1,
+    "trades": 178
+  },
+  "ASPI": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 270.73,
+    "roi": 294.78,
+    "winRate": 41.9,
+    "trades": 198
+  },
+  "ATLC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 226.02,
+    "roi": 301.57,
+    "winRate": 47.2,
+    "trades": 159
+  },
+  "ATQA": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 8,
+    "alpha": -613.53,
+    "roi": 493.21,
+    "winRate": 54.5,
+    "trades": 154
+  },
+  "AXPH": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -0.32,
+    "roi": 427.64,
+    "winRate": 58,
+    "trades": 112
+  },
+  "BIDI": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 1387.14,
+    "roi": 1551.79,
+    "winRate": 48.6,
+    "trades": 144
+  },
+  "BIGP": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -1.31,
+    "roi": 61.31,
+    "winRate": 42.5,
+    "trades": 134
+  },
+  "BINV": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 88.66,
+    "roi": 353.54,
+    "winRate": 50,
+    "trades": 168
+  },
+  "BIOC": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": -22.6,
+    "roi": 160.68,
+    "winRate": 44.4,
+    "trades": 135
+  },
+  "BONY": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 13.27,
+    "roi": 20.32,
+    "winRate": 39.4,
+    "trades": 33
+  },
+  "BTFH": {
+    "buyThreshold": 20,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": 214.49,
+    "roi": 845.3,
+    "winRate": 47,
+    "trades": 183
+  },
+  "CAED": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -1542.82,
+    "roi": 601.69,
+    "winRate": 49.7,
+    "trades": 153
+  },
+  "CANA": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -502.67,
+    "roi": 244.65,
+    "winRate": 51.8,
+    "trades": 139
+  },
+  "CCAP": {
+    "buyThreshold": 25,
+    "sellThreshold": 15,
+    "minHoldBars": 1,
+    "alpha": 33.78,
+    "roi": 153.35,
+    "winRate": 38.8,
+    "trades": 237
+  },
+  "CCRS": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 1137.6,
+    "roi": 1102.12,
+    "winRate": 43.8,
+    "trades": 226
+  },
+  "CEFM": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -206.06,
+    "roi": 99.97,
+    "winRate": 49.2,
+    "trades": 132
+  },
+  "CERA": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -34.44,
+    "roi": 192.1,
+    "winRate": 42.9,
+    "trades": 177
+  },
+  "CFGH": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 58.12,
+    "roi": 44.07,
+    "winRate": 37.8,
+    "trades": 201
+  },
+  "CICH": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 21.66,
+    "roi": 113.51,
+    "winRate": 54.8,
+    "trades": 135
+  },
+  "CID": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "CIEB": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -22.41,
+    "roi": 206.26,
+    "winRate": 53.3,
+    "trades": 120
+  },
+  "CIRA": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -5.8,
+    "roi": 46.41,
+    "winRate": 46.1,
+    "trades": 141
+  },
+  "CLHO": {
+    "buyThreshold": 15,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -1.16,
+    "roi": 124.5,
+    "winRate": 47.6,
+    "trades": 166
+  },
+  "CNFN": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 39.71,
+    "roi": 80.8,
+    "winRate": 39.1,
+    "trades": 274
+  },
+  "COMI": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 149.21,
+    "roi": 442.59,
+    "winRate": 53.5,
+    "trades": 114
+  },
+  "COPR": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 914.49,
+    "roi": 1050.3,
+    "winRate": 43.4,
+    "trades": 228
+  },
+  "COSG": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 1,
+    "alpha": 341.69,
+    "roi": 290.14,
+    "winRate": 38.6,
+    "trades": 210
+  },
+  "CPCI": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -332.76,
+    "roi": 342.24,
+    "winRate": 52.2,
+    "trades": 134
+  },
+  "CPME": {
+    "buyThreshold": 25,
+    "sellThreshold": 20,
+    "minHoldBars": 1,
+    "alpha": 31.23,
+    "roi": 246.13,
+    "winRate": 50,
+    "trades": 18
+  },
+  "CRST": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 156.2,
+    "roi": 308.97,
+    "winRate": 46.8,
+    "trades": 158
+  },
+  "CSAG": {
+    "buyThreshold": 25,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": 94.52,
+    "roi": 409,
+    "winRate": 45.9,
+    "trades": 172
+  },
+  "DAPH": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -335.57,
+    "roi": 117.95,
+    "winRate": 43.4,
+    "trades": 143
+  },
+  "DCCC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "DCRC": {
+    "buyThreshold": 15,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": 124.58,
+    "roi": 263.47,
+    "winRate": 85.7,
+    "trades": 7
+  },
+  "DEIN": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -931.34,
+    "roi": 323.5,
+    "winRate": 47.5,
+    "trades": 177
+  },
+  "DGTZ": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 2237.97,
+    "roi": 3597.35,
+    "winRate": 48.9,
+    "trades": 94
+  },
+  "DOMT": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -16.41,
+    "roi": 385.87,
+    "winRate": 56.4,
+    "trades": 117
+  },
+  "DSCW": {
+    "buyThreshold": 25,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -79.37,
+    "roi": 814.13,
+    "winRate": 46,
+    "trades": 189
+  },
+  "DTPP": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -51.41,
+    "roi": 244.82,
+    "winRate": 44,
+    "trades": 184
+  },
+  "EALR": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -2250.29,
+    "roi": 856.38,
+    "winRate": 45.5,
+    "trades": 143
+  },
+  "EASB": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 921.49,
+    "roi": 1291.74,
+    "winRate": 43.9,
+    "trades": 164
+  },
+  "EAST": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -107.6,
+    "roi": 318.29,
+    "winRate": 47.4,
+    "trades": 215
+  },
+  "EBSC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 225.37,
+    "roi": 396.79,
+    "winRate": 47.9,
+    "trades": 144
+  },
+  "ECAP": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -181.06,
+    "roi": 94.82,
+    "winRate": 48.2,
+    "trades": 141
+  },
+  "EDFM": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -161.63,
+    "roi": 19.87,
+    "winRate": 50.6,
+    "trades": 162
+  },
+  "EEII": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 1,
+    "alpha": 208.11,
+    "roi": 401.53,
+    "winRate": 41.6,
+    "trades": 233
+  },
+  "EEP": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EFAC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EFIC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 225.86,
+    "roi": 1528.17,
+    "winRate": 54.4,
+    "trades": 160
+  },
+  "EFID": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -6.52,
+    "roi": 509.27,
+    "winRate": 56.6,
+    "trades": 122
+  },
+  "EFIH": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 224.65,
+    "roi": 278.86,
+    "winRate": 45.9,
+    "trades": 183
+  },
+  "EGAL": {
+    "buyThreshold": 25,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -324.88,
+    "roi": 611.68,
+    "winRate": 53.5,
+    "trades": 142
+  },
+  "EGAS": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -28.2,
+    "roi": 73.34,
+    "winRate": 46.8,
+    "trades": 126
+  },
+  "EGBE": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 16.75,
+    "roi": -26.37,
+    "winRate": 45.1,
+    "trades": 122
+  },
+  "EGCH": {
+    "buyThreshold": 25,
+    "sellThreshold": 20,
+    "minHoldBars": 8,
+    "alpha": 273.4,
+    "roi": 563.43,
+    "winRate": 55.9,
+    "trades": 136
+  },
+  "EGOTH": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGREF": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 29.84,
+    "roi": 28.72,
+    "winRate": 43.5,
+    "trades": 69
+  },
+  "EGS30AJ1C016-EGP": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 1,
+    "alpha": -1148.15,
+    "roi": 51.85,
+    "winRate": 42.9,
+    "trades": 14
+  },
+  "EGS370O1C013": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 27.44,
+    "roi": 35.3,
+    "winRate": 45.9,
+    "trades": 37
+  },
+  "EGS385S1C012": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": 67.67,
+    "roi": 105.88,
+    "winRate": 36.4,
+    "trades": 33
+  },
+  "EGS3E071C013-EGP": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS48271C018-EGP": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 17.28,
+    "roi": -28.17,
+    "winRate": 36.4,
+    "trades": 11
+  },
+  "EGS65101C015": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS65621C012": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS65861C014": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS72L31C011": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS73M81C012": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGSA": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": 24.71,
+    "roi": -9.27,
+    "winRate": 44.9,
+    "trades": 176
+  },
+  "EGTS": {
+    "buyThreshold": 20,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 1042.18,
+    "roi": 1619.16,
+    "winRate": 59,
+    "trades": 144
+  },
+  "EGWA": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGX30": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 34.14,
+    "roi": 311.5,
+    "winRate": 58.5,
+    "trades": 53
+  },
+  "EHDR": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 1,
+    "alpha": 123.9,
+    "roi": 138.61,
+    "winRate": 41.8,
+    "trades": 194
+  },
+  "EITP": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -312.08,
+    "roi": -30.91,
+    "winRate": 20,
+    "trades": 5
+  },
+  "ELAB": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ELEC": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 247.12,
+    "roi": 1013.99,
+    "winRate": 56.5,
+    "trades": 124
+  },
+  "ELKA": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 254.98,
+    "roi": 340.32,
+    "winRate": 52.5,
+    "trades": 141
+  },
+  "ELNA": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 1.16,
+    "roi": 69.69,
+    "winRate": 40.1,
+    "trades": 182
+  },
+  "ELSH": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 104.58,
+    "roi": 174.17,
+    "winRate": 46.2,
+    "trades": 156
+  },
+  "ELWA": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 138.12,
+    "roi": 229.58,
+    "winRate": 43.3,
+    "trades": 247
+  },
+  "EMFD": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 1,
+    "alpha": -68.25,
+    "roi": 190.48,
+    "winRate": 43.7,
+    "trades": 199
+  },
+  "ENGC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -55.99,
+    "roi": 594.35,
+    "winRate": 52.5,
+    "trades": 183
+  },
+  "ENPI": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EOSB": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -10.6,
+    "roi": 30.73,
+    "winRate": 48.5,
+    "trades": 132
+  },
+  "EPCO": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -18.62,
+    "roi": 103.6,
+    "winRate": 47.9,
+    "trades": 144
+  },
+  "EPPK": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 300.68,
+    "roi": 304.11,
+    "winRate": 50.7,
+    "trades": 136
+  },
+  "ETEL": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -134.59,
+    "roi": 94.19,
+    "winRate": 46.8,
+    "trades": 171
+  },
+  "ETRS": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": 94.51,
+    "roi": 388.86,
+    "winRate": 45,
+    "trades": 211
+  },
+  "EXPA": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -21.94,
+    "roi": 304.82,
+    "winRate": 57.3,
+    "trades": 131
+  },
+  "FAIT": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 129.75,
+    "roi": 264.36,
+    "winRate": 57.1,
+    "trades": 77
+  },
+  "FAITA": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 10.18,
+    "roi": 26.06,
+    "winRate": 57.9,
+    "trades": 19
+  },
+  "FCMD": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 8,
+    "alpha": 7.54,
+    "roi": 195.98,
+    "winRate": 50.7,
+    "trades": 150
+  },
+  "FIRE": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 725.04,
+    "roi": 950.15,
+    "winRate": 46,
+    "trades": 252
+  },
+  "FNAR": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -364.47,
+    "roi": 376.91,
+    "winRate": 41.3,
+    "trades": 247
+  },
+  "FTNS": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 113.14,
+    "roi": 125.86,
+    "winRate": 40.3,
+    "trades": 67
+  },
+  "FWRY": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 27.42,
+    "roi": 264.12,
+    "winRate": 46.7,
+    "trades": 184
+  },
+  "GBCO": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": -232.34,
+    "roi": 404.71,
+    "winRate": 47.8,
+    "trades": 203
+  },
+  "GDWA": {
+    "buyThreshold": 25,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": -228.12,
+    "roi": 662.14,
+    "winRate": 53.4,
+    "trades": 176
+  },
+  "GEOS": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "GGCC": {
+    "buyThreshold": 25,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": 2.34,
+    "roi": 94.56,
+    "winRate": 44.8,
+    "trades": 174
+  },
+  "GGRN": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 107.79,
+    "roi": 132.66,
+    "winRate": 42.7,
+    "trades": 82
+  },
+  "GIHD": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 51.9,
+    "roi": 241,
+    "winRate": 54.1,
+    "trades": 148
+  },
+  "GMCI": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 44.78,
+    "roi": 231.49,
+    "winRate": 44.8,
+    "trades": 163
+  },
+  "GOUR": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 19.94,
+    "roi": 77.46,
+    "winRate": 64.7,
+    "trades": 17
+  },
+  "GPIM": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 3586.82,
+    "roi": 5832.24,
+    "winRate": 50,
+    "trades": 154
+  },
+  "GPPL": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 5.84,
+    "roi": -13.88,
+    "winRate": 37.5,
+    "trades": 24
+  },
+  "GRCA": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -25.79,
+    "roi": 127.9,
+    "winRate": 46.8,
+    "trades": 190
+  },
+  "GSSC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 681.05,
+    "roi": 1100.48,
+    "winRate": 53.6,
+    "trades": 224
+  },
+  "GTEX": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": 46.36,
+    "roi": 40.81,
+    "winRate": 33.3,
+    "trades": 57
+  },
+  "GTHE": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 414.08,
+    "roi": 594.08,
+    "winRate": 53.8,
+    "trades": 13
+  },
+  "GTWL": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 2026.01,
+    "roi": 2981.7,
+    "winRate": 47.2,
+    "trades": 248
+  },
+  "HAVC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "HBCO": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 1,
+    "alpha": 265.35,
+    "roi": 564.84,
+    "winRate": 42.7,
+    "trades": 82
+  },
+  "HDBK": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 388.56,
+    "roi": 1061.46,
+    "winRate": 57.8,
+    "trades": 116
+  },
+  "HDST": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "HELI": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": -31.93,
+    "roi": 66.21,
+    "winRate": 51.3,
+    "trades": 119
+  },
+  "HRHO": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -25.55,
+    "roi": 199.1,
+    "winRate": 50.8,
+    "trades": 130
+  },
+  "IBCT": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 402.75,
+    "roi": 655.25,
+    "winRate": 52.8,
+    "trades": 127
+  },
+  "ICFC": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 543.35,
+    "roi": 2329.88,
+    "winRate": 48.3,
+    "trades": 267
+  },
+  "ICID": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -153.45,
+    "roi": 153.78,
+    "winRate": 45.3,
+    "trades": 150
+  },
+  "ICLE": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": -29.74,
+    "roi": -90.39,
+    "winRate": 12.5,
+    "trades": 8
+  },
+  "IDRE": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 378.59,
+    "roi": 409.53,
+    "winRate": 41,
+    "trades": 234
+  },
+  "IEEC": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 309.71,
+    "roi": 416.12,
+    "winRate": 42.5,
+    "trades": 221
+  },
+  "IFAP": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -2568.29,
+    "roi": 1216.82,
+    "winRate": 50.8,
+    "trades": 197
+  },
+  "INEG": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 142.36,
+    "roi": 395.07,
+    "winRate": 44.8,
+    "trades": 232
+  },
+  "INFI": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -345.38,
+    "roi": 136.57,
+    "winRate": 43.4,
+    "trades": 175
+  },
+  "IRAX": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 1981.98,
+    "roi": 2031.91,
+    "winRate": 50,
+    "trades": 4
+  },
+  "IRON": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 23636.39,
+    "roi": 25536.56,
+    "winRate": 50,
+    "trades": 228
+  },
+  "ISMA": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 13.81,
+    "roi": 195.59,
+    "winRate": 44,
+    "trades": 182
+  },
+  "ISMQ": {
+    "buyThreshold": 15,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 176.56,
+    "roi": 686.43,
+    "winRate": 49.2,
+    "trades": 132
+  },
+  "ISPH": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -360.82,
+    "roi": 218.27,
+    "winRate": 50.3,
+    "trades": 153
+  },
+  "JUFO": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 56.91,
+    "roi": 325.79,
+    "winRate": 53.8,
+    "trades": 132
+  },
+  "KABO": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 681.36,
+    "roi": 1663.63,
+    "winRate": 59.2,
+    "trades": 147
+  },
+  "KNGC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "KORA": {
+    "buyThreshold": 20,
+    "sellThreshold": 25,
+    "minHoldBars": 1,
+    "alpha": 11.96,
+    "roi": 0.94,
+    "winRate": 33.3,
+    "trades": 6
+  },
+  "KRDI": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 176.35,
+    "roi": 284.59,
+    "winRate": 50.4,
+    "trades": 123
+  },
+  "KWIN": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 209.45,
+    "roi": 1185.96,
+    "winRate": 50.9,
+    "trades": 161
+  },
+  "KZPC": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -58.82,
+    "roi": 508.28,
+    "winRate": 57.1,
+    "trades": 133
+  },
+  "LCSW": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 96.86,
+    "roi": 727.4,
+    "winRate": 57.1,
+    "trades": 140
+  },
+  "LKGP": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": 172.42,
+    "roi": 256.25,
+    "winRate": 50,
+    "trades": 14
+  },
+  "LUTS": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 12,
+    "roi": 140,
+    "winRate": 49.2,
+    "trades": 120
+  },
+  "MAAL": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 73.54,
+    "roi": 416.54,
+    "winRate": 51.7,
+    "trades": 143
+  },
+  "MASR": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 59.72,
+    "roi": 177.12,
+    "winRate": 45.7,
+    "trades": 151
+  },
+  "MBEG": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 98.55,
+    "roi": 393.74,
+    "winRate": 39.6,
+    "trades": 235
+  },
+  "MBSC": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -164.94,
+    "roi": 414.41,
+    "winRate": 49.5,
+    "trades": 190
+  },
+  "MCQE": {
+    "buyThreshold": 20,
+    "sellThreshold": 20,
+    "minHoldBars": 8,
+    "alpha": -227.44,
+    "roi": 577.71,
+    "winRate": 50.7,
+    "trades": 138
+  },
+  "MCRO": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 107.14,
+    "roi": 102.11,
+    "winRate": 48.5,
+    "trades": 167
+  },
+  "MEGM": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MENA": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 79.35,
+    "roi": 607.62,
+    "winRate": 50.9,
+    "trades": 173
+  },
+  "MEPA": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 151.55,
+    "roi": 744.12,
+    "winRate": 41.6,
+    "trades": 221
+  },
+  "MFPC": {
+    "buyThreshold": 25,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": 222.32,
+    "roi": 494.21,
+    "winRate": 45.7,
+    "trades": 138
+  },
+  "MFSC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -174.13,
+    "roi": 191.14,
+    "winRate": 51.8,
+    "trades": 164
+  },
+  "MHOT": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -970.97,
+    "roi": 427.58,
+    "winRate": 49.2,
+    "trades": 130
+  },
+  "MICH": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 232.71,
+    "roi": 682.29,
+    "winRate": 58.2,
+    "trades": 122
+  },
+  "MILS": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 497.65,
+    "roi": 1393.8,
+    "winRate": 55.8,
+    "trades": 156
+  },
+  "MIPH": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -38.2,
+    "roi": 112.94,
+    "winRate": 46.3,
+    "trades": 136
+  },
+  "MISR": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -9.68,
+    "roi": 14.08,
+    "winRate": 46.3,
+    "trades": 41
+  },
+  "MITR": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MKIT": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 489.43,
+    "roi": 589.43,
+    "winRate": 38.2,
+    "trades": 165
+  },
+  "MLIC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MMAT": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 1776.07,
+    "roi": 1915.2,
+    "winRate": 51.5,
+    "trades": 163
+  },
+  "MMHC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MOED": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 83.96,
+    "roi": 357.54,
+    "winRate": 49.2,
+    "trades": 130
+  },
+  "MOIL": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": 721.49,
+    "roi": 939.14,
+    "winRate": 50.7,
+    "trades": 150
+  },
+  "MOIN": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -1820.89,
+    "roi": 1716.33,
+    "winRate": 54.8,
+    "trades": 157
+  },
+  "MOSC": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 181.83,
+    "roi": 1539.52,
+    "winRate": 47.5,
+    "trades": 158
+  },
+  "MPCI": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -2421.32,
+    "roi": 1097.44,
+    "winRate": 50.4,
+    "trades": 139
+  },
+  "MPCO": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 169.33,
+    "roi": 411.81,
+    "winRate": 42.1,
+    "trades": 216
+  },
+  "MPRC": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": -16.62,
+    "roi": 469.43,
+    "winRate": 60.3,
+    "trades": 146
+  },
+  "MTIE": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 243.36,
+    "roi": 628.87,
+    "winRate": 56.4,
+    "trades": 149
+  },
+  "NAHO": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 147.59,
+    "roi": 121.3,
+    "winRate": 41.7,
+    "trades": 223
+  },
+  "NARE": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 1247.08,
+    "roi": 1731.93,
+    "winRate": 47.6,
+    "trades": 273
+  },
+  "NBKE": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -3306.23,
+    "roi": -67.23,
+    "winRate": 42.9,
+    "trades": 14
+  },
+  "NCCW": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -226.84,
+    "roi": 250.1,
+    "winRate": 53.3,
+    "trades": 135
+  },
+  "NCGC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 595.73,
+    "roi": 545.74,
+    "winRate": 100,
+    "trades": 4
+  },
+  "NDRL": {
+    "buyThreshold": 25,
+    "sellThreshold": 25,
+    "minHoldBars": 1,
+    "alpha": 0.21,
+    "roi": -98.68,
+    "winRate": 20,
+    "trades": 5
+  },
+  "NEDA": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 1,
+    "alpha": 304.71,
+    "roi": 429.94,
+    "winRate": 43.5,
+    "trades": 223
+  },
+  "NFCI": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "NHPS": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 563.12,
+    "roi": 977.42,
+    "winRate": 47.8,
+    "trades": 134
+  },
+  "NINH": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -124.23,
+    "roi": -12.39,
+    "winRate": 40.9,
+    "trades": 149
+  },
+  "NIPH": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -205.76,
+    "roi": 877.67,
+    "winRate": 47.6,
+    "trades": 143
+  },
+  "NMIN": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "OBRI": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": 212.54,
+    "roi": 386.38,
+    "winRate": 44.9,
+    "trades": 185
+  },
+  "OCAP": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "OCDI": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -228.15,
+    "roi": 250.05,
+    "winRate": 50.3,
+    "trades": 143
+  },
+  "OCPH": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -5493.27,
+    "roi": 439.66,
+    "winRate": 52,
+    "trades": 123
+  },
+  "ODIN": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 384.45,
+    "roi": 565.37,
+    "winRate": 42.6,
+    "trades": 230
+  },
+  "OFH": {
+    "buyThreshold": 20,
+    "sellThreshold": 20,
+    "minHoldBars": 1,
+    "alpha": 263.66,
+    "roi": 509.16,
+    "winRate": 44.4,
+    "trades": 225
+  },
+  "OIH": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 74.99,
+    "roi": 489.28,
+    "winRate": 51.9,
+    "trades": 158
+  },
+  "OLFI": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 78.76,
+    "roi": 407.36,
+    "winRate": 52.9,
+    "trades": 136
+  },
+  "ORAS": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -34.22,
+    "roi": 554.5,
+    "winRate": 52.9,
+    "trades": 119
+  },
+  "ORHD": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -197.7,
+    "roi": 282.45,
+    "winRate": 54.9,
+    "trades": 142
+  },
+  "ORWE": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -12.66,
+    "roi": 230.38,
+    "winRate": 46.1,
+    "trades": 165
+  },
+  "PACH": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 24.51,
+    "roi": 201.3,
+    "winRate": 55.6,
+    "trades": 9
+  },
+  "PHAR": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -101.88,
+    "roi": 149.06,
+    "winRate": 54.8,
+    "trades": 124
+  },
+  "PHDC": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -166.27,
+    "roi": 344.58,
+    "winRate": 48.1,
+    "trades": 181
+  },
+  "PHGC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 139.25,
+    "roi": 435.2,
+    "winRate": 36.4,
+    "trades": 118
+  },
+  "PHTV": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -868.67,
+    "roi": 400.41,
+    "winRate": 49.1,
+    "trades": 220
+  },
+  "PMSC": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "POCO": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "POUL": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -368.42,
+    "roi": 709.16,
+    "winRate": 55.9,
+    "trades": 145
+  },
+  "PRCL": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 128.19,
+    "roi": 622.66,
+    "winRate": 48.9,
+    "trades": 184
+  },
+  "PRDC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 14.03,
+    "roi": 115.14,
+    "winRate": 49.2,
+    "trades": 177
+  },
+  "PRMH": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 99.59,
+    "roi": 211.87,
+    "winRate": 39.8,
+    "trades": 171
+  },
+  "QNBE": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 95.7,
+    "roi": 171.97,
+    "winRate": 51.4,
+    "trades": 138
+  },
+  "RACC": {
+    "buyThreshold": 15,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": 222.17,
+    "roi": 565.29,
+    "winRate": 48.3,
+    "trades": 176
+  },
+  "RAKT": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 100.34,
+    "roi": 339.48,
+    "winRate": 49.3,
+    "trades": 152
+  },
+  "RAYA": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": -22.81,
+    "roi": 181.49,
+    "winRate": 41.1,
+    "trades": 180
+  },
+  "RKAZ": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 1783.41,
+    "roi": 1966.34,
+    "winRate": 49.7,
+    "trades": 153
+  },
+  "RMDA": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 11.61,
+    "roi": 231.84,
+    "winRate": 55.2,
+    "trades": 134
+  },
+  "RMTV": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ROTO": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 700.61,
+    "roi": 739.06,
+    "winRate": 46,
+    "trades": 263
+  },
+  "RREI": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 302.91,
+    "roi": 642.69,
+    "winRate": 55,
+    "trades": 151
+  },
+  "RTVC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 734.41,
+    "roi": 830.06,
+    "winRate": 40,
+    "trades": 225
+  },
+  "RUBX": {
+    "buyThreshold": 15,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": -74.79,
+    "roi": 68.9,
+    "winRate": 44,
+    "trades": 193
+  },
+  "SAIB": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 132.16,
+    "roi": 63.66,
+    "winRate": 46.2,
+    "trades": 13
+  },
+  "SAUD": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -82.29,
+    "roi": 118.13,
+    "winRate": 45.3,
+    "trades": 161
+  },
+  "SCEM": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -294.99,
+    "roi": 904.1,
+    "winRate": 41.3,
+    "trades": 121
+  },
+  "SCFM": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -402.95,
+    "roi": 49.11,
+    "winRate": 40.7,
+    "trades": 145
+  },
+  "SCTS": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -1001.02,
+    "roi": 194.52,
+    "winRate": 47,
+    "trades": 134
+  },
+  "SDTI": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 124.89,
+    "roi": 253.07,
+    "winRate": 50.4,
+    "trades": 135
+  },
+  "SEIG": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -326.22,
+    "roi": 240.45,
+    "winRate": 45.1,
+    "trades": 215
+  },
+  "SEIGA": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SIEG": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SINA": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SIPC": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 26.83,
+    "roi": 181.68,
+    "winRate": 48.3,
+    "trades": 143
+  },
+  "SKPC": {
+    "buyThreshold": 25,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 67.99,
+    "roi": 319.87,
+    "winRate": 54.4,
+    "trades": 114
+  },
+  "SMFR": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -1722.16,
+    "roi": 274.68,
+    "winRate": 42.6,
+    "trades": 242
+  },
+  "SMPP": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -3045.49,
+    "roi": 6378.32,
+    "winRate": 50,
+    "trades": 12
+  },
+  "SNFC": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": 225.49,
+    "roi": 1643.78,
+    "winRate": 59.9,
+    "trades": 137
+  },
+  "SNFI": {
+    "buyThreshold": 20,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -4.2,
+    "roi": 51.8,
+    "winRate": 47.1,
+    "trades": 17
+  },
+  "SPHT": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -3.75,
+    "roi": -19.3,
+    "winRate": 0,
+    "trades": 2
+  },
+  "SPIN": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -127.59,
+    "roi": 587.06,
+    "winRate": 51.7,
+    "trades": 151
+  },
+  "SPMD": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 120.78,
+    "roi": 87.97,
+    "winRate": 57,
+    "trades": 114
+  },
+  "SUCE": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 42.07,
+    "roi": 98.07,
+    "winRate": 66.7,
+    "trades": 12
+  },
+  "SUGR": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": -42.01,
+    "roi": 311.28,
+    "winRate": 46,
+    "trades": 202
+  },
+  "SVCE": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -149.37,
+    "roi": 428.91,
+    "winRate": 43.1,
+    "trades": 204
+  },
+  "SWDY": {
+    "buyThreshold": 15,
+    "sellThreshold": 25,
+    "minHoldBars": 4,
+    "alpha": -377.32,
+    "roi": 580.96,
+    "winRate": 48.6,
+    "trades": 185
+  },
+  "TALM": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -195.94,
+    "roi": 230.31,
+    "winRate": 51.5,
+    "trades": 136
+  },
+  "TANM": {
+    "buyThreshold": 15,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 375.33,
+    "roi": 535.42,
+    "winRate": 51.4,
+    "trades": 148
+  },
+  "TAQA": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 88.6,
+    "roi": 52.84,
+    "winRate": 39.6,
+    "trades": 101
+  },
+  "TMGH": {
+    "buyThreshold": 20,
+    "sellThreshold": 15,
+    "minHoldBars": 8,
+    "alpha": 5.96,
+    "roi": 615.27,
+    "winRate": 55.9,
+    "trades": 118
+  },
+  "TORA": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 6.05,
+    "roi": 770.88,
+    "winRate": 78.6,
+    "trades": 14
+  },
+  "TRTO": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -0.06,
+    "roi": -71.49,
+    "winRate": 26.1,
+    "trades": 176
+  },
+  "TWSA": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 4,
+    "alpha": 179.51,
+    "roi": 569.32,
+    "winRate": 56.8,
+    "trades": 37
+  },
+  "TYCN": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -1094.24,
+    "roi": 484.33,
+    "winRate": 53.4,
+    "trades": 131
+  },
+  "UBEE": {
+    "buyThreshold": 20,
+    "sellThreshold": 25,
+    "minHoldBars": 1,
+    "alpha": 20.08,
+    "roi": 16.49,
+    "winRate": 30.4,
+    "trades": 23
+  },
+  "UEFM": {
+    "buyThreshold": 5,
+    "sellThreshold": 25,
+    "minHoldBars": 8,
+    "alpha": -47.26,
+    "roi": 224.89,
+    "winRate": 53.3,
+    "trades": 150
+  },
+  "UEGC": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 52.35,
+    "roi": 160.04,
+    "winRate": 47.6,
+    "trades": 143
+  },
+  "UNIP": {
+    "buyThreshold": 5,
+    "sellThreshold": 20,
+    "minHoldBars": 1,
+    "alpha": 26.93,
+    "roi": 108.93,
+    "winRate": 41.2,
+    "trades": 226
+  },
+  "UNIT": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 538.78,
+    "roi": 855.02,
+    "winRate": 51.3,
+    "trades": 234
+  },
+  "UPMS": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 1,
+    "alpha": 513.71,
+    "roi": 672.15,
+    "winRate": 45,
+    "trades": 222
+  },
+  "UTOP": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 562.13,
+    "roi": 868.29,
+    "winRate": 44.4,
+    "trades": 198
+  },
+  "VALU": {
+    "buyThreshold": 15,
+    "sellThreshold": 20,
+    "minHoldBars": 4,
+    "alpha": 3.54,
+    "roi": 65.03,
+    "winRate": 47.2,
+    "trades": 53
+  },
+  "VERT": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 23389.41,
+    "roi": 26652.77,
+    "winRate": 54.2,
+    "trades": 120
+  },
+  "VLMR": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 45.67,
+    "roi": 2.89,
+    "winRate": 36.4,
+    "trades": 33
+  },
+  "VLMRA": {
+    "buyThreshold": 15,
+    "sellThreshold": 20,
+    "minHoldBars": 1,
+    "alpha": 10.72,
+    "roi": 32.29,
+    "winRate": 41.3,
+    "trades": 184
+  },
+  "WATP": {
+    "buyThreshold": 20,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": 1638.24,
+    "roi": 2177.62,
+    "winRate": 60,
+    "trades": 5
+  },
+  "WCDF": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 4,
+    "alpha": 55.53,
+    "roi": 410.07,
+    "winRate": 54.5,
+    "trades": 167
+  },
+  "WKOL": {
+    "buyThreshold": 25,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -607,
+    "roi": 198.92,
+    "winRate": 43.1,
+    "trades": 137
+  },
+  "YAYT": {
+    "buyThreshold": 10,
+    "sellThreshold": 10,
+    "minHoldBars": 4,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ZEOT": {
+    "buyThreshold": 5,
+    "sellThreshold": 5,
+    "minHoldBars": 8,
+    "alpha": -57.85,
+    "roi": 195.49,
+    "winRate": 56.6,
+    "trades": 143
+  },
+  "ZMID": {
+    "buyThreshold": 5,
+    "sellThreshold": 15,
+    "minHoldBars": 1,
+    "alpha": 243.43,
+    "roi": 361.57,
+    "winRate": 45.5,
+    "trades": 202
+  }
+}

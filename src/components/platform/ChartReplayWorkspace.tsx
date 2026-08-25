@@ -139,6 +139,7 @@ export default function ChartReplayWorkspace({
 
   const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
   const [showSignals, setShowSignals] = useState(true);
+  const timeframe = searchParams?.get('timeframe') || 'D';
 
   return (
     <>
@@ -146,6 +147,7 @@ export default function ChartReplayWorkspace({
         key={chartKey}
         data={data}
         symbol={symbol}
+        timeframe={timeframe}
         watchlist={watchlist}
         initialReplayMode={initialReplayMode}
         onReplayStateChange={handleReplayStateChange}
@@ -163,6 +165,7 @@ export default function ChartReplayWorkspace({
       />
       <SignalPanel
         activeSymbol={symbol}
+        timeframe={timeframe}
         replayActive={replayState.active}
         replayStartDate={replayState.startDate}
         replayEndDate={replayState.endDate}

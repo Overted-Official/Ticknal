@@ -24,6 +24,7 @@ interface BottomToolbarProps {
 }
 
 const RANGES = [
+  { label: '1H', tf: '1H' },
   { label: '1D', tf: 'D' },
   { label: '1W', tf: 'W' },
   { label: '1M', tf: 'M' },
@@ -40,11 +41,21 @@ export default function BottomToolbar({
   chartData = [],
 }: BottomToolbarProps) {
   const [cairoTime, setCairoTime] = useState('--:--:--');
-  const [selectedRange, setSelectedRange] = useState<string>('1D');
+  const [selectedRange, setSelectedRange] = useState<string>(
+    timeframe === '1H' || timeframe === '60' ? '1H' : timeframe === 'W' ? '1W' : timeframe === 'M' ? '1M' : timeframe === '1Y' ? '1Y' : '1D'
+  );
   const [reportOpen, setReportOpen] = useState(false);
   const searchParams = useSearchParams();
   const activeStrategy = strategy || searchParams?.get('strategy') || 'psi';
   const replayQuery = replay ? '&replay=1' : '';
+
+  useEffect(() => {
+    if (timeframe === '1H' || timeframe === '60') setSelectedRange('1H');
+    else if (timeframe === 'W') setSelectedRange('1W');
+    else if (timeframe === 'M') setSelectedRange('1M');
+    else if (timeframe === '1Y') setSelectedRange('1Y');
+    else setSelectedRange('1D');
+  }, [timeframe]);
 
   useEffect(() => {
     const updateClock = () => setCairoTime(formatCairoTime());
@@ -122,6 +133,7 @@ export default function BottomToolbar({
         isOpen={reportOpen}
         onClose={() => setReportOpen(false)}
         symbol={symbol}
+        timeframe={timeframe}
         chartData={chartData}
         activeStrategy={activeStrategy}
         companyName={companyName}

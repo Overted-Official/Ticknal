@@ -63,6 +63,7 @@ export type { ChartData, ReplayState };
 export default function ChartWidget({
   data,
   symbol,
+  timeframe = 'D',
   watchlist = [],
   initialReplayMode = false,
   onReplayStateChange,
@@ -209,6 +210,7 @@ export default function ChartWidget({
         const queryParams = new URLSearchParams({
           symbol,
           strategy: selectedStrategy,
+          timeframe,
           ...Object.fromEntries(
             Object.entries(strategyParams).map(([k, v]) => [k, String(v)])
           ),
@@ -237,7 +239,7 @@ export default function ChartWidget({
     return () => {
       active = false;
     };
-  }, [onMetricsChange, selectedStrategy, showSignals, strategyEndDate, strategyParams, strategyStartDate, symbol]);
+  }, [onMetricsChange, selectedStrategy, showSignals, strategyEndDate, strategyParams, strategyStartDate, symbol, timeframe]);
 
   // Fetch active orders for overlays
   useEffect(() => {

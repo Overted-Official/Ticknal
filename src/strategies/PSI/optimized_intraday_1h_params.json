@@ -1,0 +1,5363 @@
+{
+  "AALR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 1186.28,
+    "roi": 1574.16,
+    "winRate": 100,
+    "trades": 15
+  },
+  "ABUK": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 167.59,
+    "roi": 275.98,
+    "winRate": 100,
+    "trades": 30
+  },
+  "ACAMD": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 136.75,
+    "roi": 265.25,
+    "winRate": 100,
+    "trades": 16
+  },
+  "ACAP": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -560.51,
+    "roi": 2289.49,
+    "winRate": 100,
+    "trades": 15
+  },
+  "ACFR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ACGC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -33.91,
+    "roi": 387.11,
+    "winRate": 100,
+    "trades": 12
+  },
+  "ACTF": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 33.56,
+    "roi": 7.39,
+    "winRate": 100,
+    "trades": 4
+  },
+  "ADCI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -141.23,
+    "roi": 650.8,
+    "winRate": 100,
+    "trades": 7
+  },
+  "ADIB": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 215.64,
+    "roi": 696.89,
+    "winRate": 100,
+    "trades": 18
+  },
+  "ADPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ADRI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -82,
+    "roi": 764.31,
+    "winRate": 100,
+    "trades": 18
+  },
+  "AFDI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 114.89,
+    "roi": 312.1,
+    "winRate": 100,
+    "trades": 18
+  },
+  "AFMC": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 838.18,
+    "roi": 1525.58,
+    "winRate": 100,
+    "trades": 15
+  },
+  "AIDC": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 62.06,
+    "roi": 178.16,
+    "winRate": 100,
+    "trades": 3
+  },
+  "AIFI": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -5.82,
+    "roi": 595.33,
+    "winRate": 100,
+    "trades": 11
+  },
+  "AIH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 103.77,
+    "roi": 187.88,
+    "winRate": 100,
+    "trades": 14
+  },
+  "AJWA": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -307.25,
+    "roi": 648.1,
+    "winRate": 100,
+    "trades": 14
+  },
+  "ALCN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 7.89,
+    "roi": 455.6,
+    "winRate": 100,
+    "trades": 25
+  },
+  "ALEX": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -37.52,
+    "roi": 48.64,
+    "winRate": 100,
+    "trades": 3
+  },
+  "ALUM": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 221.65,
+    "roi": 594.4,
+    "winRate": 100,
+    "trades": 16
+  },
+  "AMER": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 112.48,
+    "roi": 226.14,
+    "winRate": 100,
+    "trades": 12
+  },
+  "AMES": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -1645.72,
+    "roi": 3241.07,
+    "winRate": 100,
+    "trades": 12
+  },
+  "AMIA": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -13.17,
+    "roi": 216.43,
+    "winRate": 100,
+    "trades": 14
+  },
+  "AMII": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -39.56,
+    "roi": 682.09,
+    "winRate": 100,
+    "trades": 9
+  },
+  "AMOC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 99.42,
+    "roi": 185.36,
+    "winRate": 100,
+    "trades": 29
+  },
+  "AMPI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -4.58,
+    "roi": 372.4,
+    "winRate": 100,
+    "trades": 10
+  },
+  "ANCC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "APPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 34.79,
+    "roi": 14.01,
+    "winRate": 100,
+    "trades": 4
+  },
+  "APSW": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 269.48,
+    "roi": 475.67,
+    "winRate": 100,
+    "trades": 12
+  },
+  "ARAB": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 98.13,
+    "roi": 403.27,
+    "winRate": 100,
+    "trades": 16
+  },
+  "ARCC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 649.11,
+    "roi": 1635.16,
+    "winRate": 100,
+    "trades": 16
+  },
+  "AREH": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 61.84,
+    "roi": 53.68,
+    "winRate": 100,
+    "trades": 3
+  },
+  "ASCM": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -29.38,
+    "roi": 644.56,
+    "winRate": 100,
+    "trades": 10
+  },
+  "ASPI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 152.6,
+    "roi": 176.65,
+    "winRate": 100,
+    "trades": 25
+  },
+  "ATLC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 60.3,
+    "roi": 135.85,
+    "winRate": 100,
+    "trades": 28
+  },
+  "ATQA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 18.87,
+    "roi": 1125.61,
+    "winRate": 100,
+    "trades": 21
+  },
+  "AXPH": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -73.38,
+    "roi": 354.58,
+    "winRate": 100,
+    "trades": 8
+  },
+  "BIDI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 126.26,
+    "roi": 290.9,
+    "winRate": 100,
+    "trades": 4
+  },
+  "BIGP": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 127.94,
+    "roi": 190.55,
+    "winRate": 100,
+    "trades": 13
+  },
+  "BINV": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 197.07,
+    "roi": 461.96,
+    "winRate": 100,
+    "trades": 17
+  },
+  "BIOC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 237.22,
+    "roi": 420.5,
+    "winRate": 100,
+    "trades": 25
+  },
+  "BONY": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 46.29,
+    "roi": 53.35,
+    "winRate": 100,
+    "trades": 3
+  },
+  "BTFH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 115.47,
+    "roi": 746.27,
+    "winRate": 100,
+    "trades": 14
+  },
+  "CAED": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 507.5,
+    "roi": 2652.02,
+    "winRate": 100,
+    "trades": 27
+  },
+  "CANA": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 171.16,
+    "roi": 918.49,
+    "winRate": 100,
+    "trades": 20
+  },
+  "CCAP": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 168.9,
+    "roi": 288.47,
+    "winRate": 100,
+    "trades": 23
+  },
+  "CCRS": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 635.7,
+    "roi": 600.22,
+    "winRate": 100,
+    "trades": 23
+  },
+  "CEFM": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 39.07,
+    "roi": 345.11,
+    "winRate": 100,
+    "trades": 13
+  },
+  "CERA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 81.96,
+    "roi": 308.49,
+    "winRate": 100,
+    "trades": 13
+  },
+  "CFGH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "CICH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 43.92,
+    "roi": 135.77,
+    "winRate": 100,
+    "trades": 15
+  },
+  "CID": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "CIEB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 98.89,
+    "roi": 327.56,
+    "winRate": 100,
+    "trades": 11
+  },
+  "CIRA": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 66.04,
+    "roi": 118.25,
+    "winRate": 100,
+    "trades": 13
+  },
+  "CLHO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 167.02,
+    "roi": 292.68,
+    "winRate": 100,
+    "trades": 9
+  },
+  "CNFN": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": 299.27,
+    "roi": 340.36,
+    "winRate": 100,
+    "trades": 21
+  },
+  "COMI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 104.43,
+    "roi": 397.8,
+    "winRate": 100,
+    "trades": 14
+  },
+  "COPR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -12.89,
+    "roi": 122.92,
+    "winRate": 100,
+    "trades": 4
+  },
+  "COSG": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 162.59,
+    "roi": 111.05,
+    "winRate": 100,
+    "trades": 11
+  },
+  "CPCI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -21.06,
+    "roi": 653.94,
+    "winRate": 100,
+    "trades": 11
+  },
+  "CPME": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "CRST": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 2,
+    "alpha": 332.06,
+    "roi": 484.82,
+    "winRate": 100,
+    "trades": 20
+  },
+  "CSAG": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 136.18,
+    "roi": 450.66,
+    "winRate": 100,
+    "trades": 26
+  },
+  "DAPH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -26.91,
+    "roi": 426.62,
+    "winRate": 100,
+    "trades": 7
+  },
+  "DCCC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "DCRC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "DEIN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 66.28,
+    "roi": 1321.12,
+    "winRate": 100,
+    "trades": 19
+  },
+  "DGTZ": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 446.48,
+    "roi": 1805.86,
+    "winRate": 100,
+    "trades": 14
+  },
+  "DOMT": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -41.33,
+    "roi": 360.95,
+    "winRate": 100,
+    "trades": 11
+  },
+  "DSCW": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 555.05,
+    "roi": 1448.56,
+    "winRate": 100,
+    "trades": 24
+  },
+  "DTPP": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 48.82,
+    "roi": 345.04,
+    "winRate": 100,
+    "trades": 11
+  },
+  "EALR": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 664.28,
+    "roi": 3770.95,
+    "winRate": 100,
+    "trades": 13
+  },
+  "EASB": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 383.1,
+    "roi": 753.35,
+    "winRate": 100,
+    "trades": 18
+  },
+  "EAST": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 272.46,
+    "roi": 698.34,
+    "winRate": 100,
+    "trades": 26
+  },
+  "EBSC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 149.78,
+    "roi": 321.21,
+    "winRate": 100,
+    "trades": 4
+  },
+  "ECAP": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 249.78,
+    "roi": 525.67,
+    "winRate": 100,
+    "trades": 16
+  },
+  "EDFM": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 108.7,
+    "roi": 290.2,
+    "winRate": 100,
+    "trades": 14
+  },
+  "EEII": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -89.49,
+    "roi": 103.93,
+    "winRate": 100,
+    "trades": 8
+  },
+  "EEP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EFAC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EFIC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 817.63,
+    "roi": 2119.93,
+    "winRate": 100,
+    "trades": 23
+  },
+  "EFID": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -108.17,
+    "roi": 407.62,
+    "winRate": 100,
+    "trades": 8
+  },
+  "EFIH": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": 183.16,
+    "roi": 237.37,
+    "winRate": 100,
+    "trades": 17
+  },
+  "EGAL": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 526.62,
+    "roi": 1463.18,
+    "winRate": 100,
+    "trades": 22
+  },
+  "EGAS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 138.32,
+    "roi": 239.87,
+    "winRate": 100,
+    "trades": 12
+  },
+  "EGBE": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 27.73,
+    "roi": -15.39,
+    "winRate": 100,
+    "trades": 4
+  },
+  "EGCH": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 222.35,
+    "roi": 512.38,
+    "winRate": 100,
+    "trades": 28
+  },
+  "EGOTH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGREF": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": 264.12,
+    "roi": 263,
+    "winRate": 100,
+    "trades": 9
+  },
+  "EGS30AJ1C016-EGP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS370O1C013": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 22.91,
+    "roi": 30.77,
+    "winRate": 100,
+    "trades": 3
+  },
+  "EGS385S1C012": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -36.32,
+    "roi": 1.89,
+    "winRate": 100,
+    "trades": 5
+  },
+  "EGS3E071C013-EGP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS48271C018-EGP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS65101C015": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS65621C012": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS65861C014": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS72L31C011": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGS73M81C012": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGSA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -15.41,
+    "roi": -49.39,
+    "winRate": 100,
+    "trades": 3
+  },
+  "EGTS": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -69.02,
+    "roi": 507.96,
+    "winRate": 100,
+    "trades": 18
+  },
+  "EGWA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EGX30": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 15.63,
+    "roi": 292.99,
+    "winRate": 100,
+    "trades": 23
+  },
+  "EHDR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 10.7,
+    "roi": 25.41,
+    "winRate": 100,
+    "trades": 3
+  },
+  "EITP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ELAB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ELEC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -90.13,
+    "roi": 676.74,
+    "winRate": 100,
+    "trades": 5
+  },
+  "ELKA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 208.73,
+    "roi": 294.07,
+    "winRate": 100,
+    "trades": 20
+  },
+  "ELNA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 84.59,
+    "roi": 153.12,
+    "winRate": 100,
+    "trades": 8
+  },
+  "ELSH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 13.69,
+    "roi": 83.28,
+    "winRate": 100,
+    "trades": 17
+  },
+  "ELWA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 120.13,
+    "roi": 211.59,
+    "winRate": 100,
+    "trades": 11
+  },
+  "EMFD": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 276.52,
+    "roi": 535.25,
+    "winRate": 100,
+    "trades": 23
+  },
+  "ENGC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 112.29,
+    "roi": 762.63,
+    "winRate": 100,
+    "trades": 14
+  },
+  "ENPI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "EOSB": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 68.66,
+    "roi": 109.99,
+    "winRate": 100,
+    "trades": 15
+  },
+  "EPCO": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 153.63,
+    "roi": 275.85,
+    "winRate": 100,
+    "trades": 24
+  },
+  "EPPK": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 65.24,
+    "roi": 68.67,
+    "winRate": 100,
+    "trades": 9
+  },
+  "ETEL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 55.81,
+    "roi": 284.59,
+    "winRate": 100,
+    "trades": 21
+  },
+  "ETRS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -31.94,
+    "roi": 262.41,
+    "winRate": 100,
+    "trades": 14
+  },
+  "EXPA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 77.53,
+    "roi": 404.28,
+    "winRate": 100,
+    "trades": 15
+  },
+  "FAIT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 82.54,
+    "roi": 217.15,
+    "winRate": 100,
+    "trades": 11
+  },
+  "FAITA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 6.96,
+    "roi": 22.84,
+    "winRate": 100,
+    "trades": 12
+  },
+  "FCMD": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 540.58,
+    "roi": 729.02,
+    "winRate": 100,
+    "trades": 18
+  },
+  "FIRE": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 439.04,
+    "roi": 664.15,
+    "winRate": 100,
+    "trades": 14
+  },
+  "FNAR": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -14.59,
+    "roi": 726.79,
+    "winRate": 100,
+    "trades": 11
+  },
+  "FTNS": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -50.86,
+    "roi": -38.13,
+    "winRate": 100,
+    "trades": 4
+  },
+  "FWRY": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 382.19,
+    "roi": 618.89,
+    "winRate": 100,
+    "trades": 28
+  },
+  "GBCO": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 86.62,
+    "roi": 723.66,
+    "winRate": 100,
+    "trades": 16
+  },
+  "GDWA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -158.57,
+    "roi": 731.69,
+    "winRate": 100,
+    "trades": 13
+  },
+  "GEOS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "GGCC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 140.81,
+    "roi": 233.03,
+    "winRate": 100,
+    "trades": 30
+  },
+  "GGRN": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 159.69,
+    "roi": 184.55,
+    "winRate": 100,
+    "trades": 3
+  },
+  "GIHD": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 339.69,
+    "roi": 528.79,
+    "winRate": 100,
+    "trades": 19
+  },
+  "GMCI": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 105.84,
+    "roi": 292.55,
+    "winRate": 100,
+    "trades": 10
+  },
+  "GOUR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -27.37,
+    "roi": 30.15,
+    "winRate": 100,
+    "trades": 5
+  },
+  "GPIM": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -206.23,
+    "roi": 2039.19,
+    "winRate": 100,
+    "trades": 7
+  },
+  "GPPL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 28.18,
+    "roi": 8.46,
+    "winRate": 100,
+    "trades": 3
+  },
+  "GRCA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -27.58,
+    "roi": 126.1,
+    "winRate": 100,
+    "trades": 11
+  },
+  "GSSC": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 2,
+    "alpha": 1052.59,
+    "roi": 1472.03,
+    "winRate": 100,
+    "trades": 16
+  },
+  "GTEX": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -6.06,
+    "roi": -11.61,
+    "winRate": 100,
+    "trades": 3
+  },
+  "GTHE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -98.21,
+    "roi": 81.79,
+    "winRate": 100,
+    "trades": 3
+  },
+  "GTWL": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -273.51,
+    "roi": 682.17,
+    "winRate": 100,
+    "trades": 10
+  },
+  "HAVC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "HBCO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 2,
+    "alpha": -145.57,
+    "roi": 153.92,
+    "winRate": 100,
+    "trades": 10
+  },
+  "HDBK": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -46.62,
+    "roi": 626.27,
+    "winRate": 100,
+    "trades": 9
+  },
+  "HDST": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "HELI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 200.1,
+    "roi": 298.23,
+    "winRate": 100,
+    "trades": 24
+  },
+  "HRHO": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 104.13,
+    "roi": 328.78,
+    "winRate": 100,
+    "trades": 23
+  },
+  "IBCT": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 703.18,
+    "roi": 955.67,
+    "winRate": 100,
+    "trades": 7
+  },
+  "ICFC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 758.72,
+    "roi": 2545.25,
+    "winRate": 100,
+    "trades": 18
+  },
+  "ICID": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 104.7,
+    "roi": 411.94,
+    "winRate": 100,
+    "trades": 9
+  },
+  "ICLE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "IDRE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 736.82,
+    "roi": 767.77,
+    "winRate": 100,
+    "trades": 11
+  },
+  "IEEC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 118.51,
+    "roi": 224.92,
+    "winRate": 100,
+    "trades": 21
+  },
+  "IFAP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 923.4,
+    "roi": 4708.51,
+    "winRate": 100,
+    "trades": 28
+  },
+  "INEG": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 159.05,
+    "roi": 411.76,
+    "winRate": 100,
+    "trades": 9
+  },
+  "INFI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 260.58,
+    "roi": 742.54,
+    "winRate": 100,
+    "trades": 16
+  },
+  "IRAX": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "IRON": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 7679.75,
+    "roi": 9579.93,
+    "winRate": 100,
+    "trades": 11
+  },
+  "ISMA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -22.33,
+    "roi": 159.45,
+    "winRate": 100,
+    "trades": 7
+  },
+  "ISMQ": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 444.81,
+    "roi": 954.68,
+    "winRate": 100,
+    "trades": 16
+  },
+  "ISPH": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -45.54,
+    "roi": 533.54,
+    "winRate": 100,
+    "trades": 20
+  },
+  "JUFO": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 243.83,
+    "roi": 512.7,
+    "winRate": 100,
+    "trades": 15
+  },
+  "KABO": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 20.98,
+    "roi": 1003.24,
+    "winRate": 100,
+    "trades": 18
+  },
+  "KNGC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "KORA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "KRDI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 3.15,
+    "roi": 111.39,
+    "winRate": 100,
+    "trades": 5
+  },
+  "KWIN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": 698.5,
+    "roi": 1675.01,
+    "winRate": 100,
+    "trades": 17
+  },
+  "KZPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 223.38,
+    "roi": 790.47,
+    "winRate": 100,
+    "trades": 15
+  },
+  "LCSW": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -304.52,
+    "roi": 326.01,
+    "winRate": 100,
+    "trades": 12
+  },
+  "LKGP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "LUTS": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 136.25,
+    "roi": 264.25,
+    "winRate": 100,
+    "trades": 7
+  },
+  "MAAL": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 164.99,
+    "roi": 507.99,
+    "winRate": 100,
+    "trades": 8
+  },
+  "MASR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 54.76,
+    "roi": 172.16,
+    "winRate": 100,
+    "trades": 11
+  },
+  "MBEG": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 53.86,
+    "roi": 349.05,
+    "winRate": 100,
+    "trades": 20
+  },
+  "MBSC": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -158.78,
+    "roi": 420.57,
+    "winRate": 100,
+    "trades": 10
+  },
+  "MCQE": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 29.89,
+    "roi": 835.04,
+    "winRate": 100,
+    "trades": 16
+  },
+  "MCRO": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 28.82,
+    "roi": 23.79,
+    "winRate": 100,
+    "trades": 5
+  },
+  "MEGM": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MENA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -8.13,
+    "roi": 520.14,
+    "winRate": 100,
+    "trades": 12
+  },
+  "MEPA": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 360.29,
+    "roi": 952.85,
+    "winRate": 100,
+    "trades": 16
+  },
+  "MFPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 365.74,
+    "roi": 637.64,
+    "winRate": 100,
+    "trades": 33
+  },
+  "MFSC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -56.09,
+    "roi": 309.17,
+    "winRate": 100,
+    "trades": 13
+  },
+  "MHOT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -43.75,
+    "roi": 1354.8,
+    "winRate": 100,
+    "trades": 16
+  },
+  "MICH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 34.72,
+    "roi": 484.3,
+    "winRate": 100,
+    "trades": 16
+  },
+  "MILS": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -533.56,
+    "roi": 362.6,
+    "winRate": 100,
+    "trades": 12
+  },
+  "MIPH": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 70.15,
+    "roi": 221.29,
+    "winRate": 100,
+    "trades": 11
+  },
+  "MISR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": -21.41,
+    "roi": 2.36,
+    "winRate": 100,
+    "trades": 3
+  },
+  "MITR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MKIT": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 104.29,
+    "roi": 204.29,
+    "winRate": 100,
+    "trades": 4
+  },
+  "MLIC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MMAT": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 397.21,
+    "roi": 536.34,
+    "winRate": 100,
+    "trades": 12
+  },
+  "MMHC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "MOED": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 93.82,
+    "roi": 367.4,
+    "winRate": 100,
+    "trades": 10
+  },
+  "MOIL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 493.35,
+    "roi": 711,
+    "winRate": 100,
+    "trades": 20
+  },
+  "MOIN": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -1415.17,
+    "roi": 2122.04,
+    "winRate": 100,
+    "trades": 19
+  },
+  "MOSC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": 599.04,
+    "roi": 1956.72,
+    "winRate": 100,
+    "trades": 17
+  },
+  "MPCI": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 1614.47,
+    "roi": 5133.23,
+    "winRate": 100,
+    "trades": 20
+  },
+  "MPCO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 16.31,
+    "roi": 258.79,
+    "winRate": 100,
+    "trades": 10
+  },
+  "MPRC": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 436.3,
+    "roi": 922.35,
+    "winRate": 100,
+    "trades": 15
+  },
+  "MTIE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 283.39,
+    "roi": 668.9,
+    "winRate": 100,
+    "trades": 23
+  },
+  "NAHO": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 27.93,
+    "roi": 1.65,
+    "winRate": 100,
+    "trades": 5
+  },
+  "NARE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 125.07,
+    "roi": 609.92,
+    "winRate": 100,
+    "trades": 8
+  },
+  "NBKE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "NCCW": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 107.59,
+    "roi": 584.53,
+    "winRate": 100,
+    "trades": 12
+  },
+  "NCGC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "NDRL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "NEDA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -45.48,
+    "roi": 79.75,
+    "winRate": 100,
+    "trades": 10
+  },
+  "NFCI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "NHPS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 682.98,
+    "roi": 1097.29,
+    "winRate": 100,
+    "trades": 20
+  },
+  "NINH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 173.86,
+    "roi": 285.7,
+    "winRate": 100,
+    "trades": 10
+  },
+  "NIPH": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -287.22,
+    "roi": 796.21,
+    "winRate": 100,
+    "trades": 11
+  },
+  "NMIN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "OBRI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 145.73,
+    "roi": 319.58,
+    "winRate": 100,
+    "trades": 19
+  },
+  "OCAP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "OCDI": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 339.58,
+    "roi": 817.78,
+    "winRate": 100,
+    "trades": 14
+  },
+  "OCPH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -5269.69,
+    "roi": 663.25,
+    "winRate": 100,
+    "trades": 11
+  },
+  "ODIN": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 135.3,
+    "roi": 316.22,
+    "winRate": 100,
+    "trades": 16
+  },
+  "OFH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 279.67,
+    "roi": 525.18,
+    "winRate": 100,
+    "trades": 14
+  },
+  "OIH": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 154.53,
+    "roi": 568.81,
+    "winRate": 100,
+    "trades": 13
+  },
+  "OLFI": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 143.35,
+    "roi": 471.95,
+    "winRate": 100,
+    "trades": 25
+  },
+  "ORAS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -86.1,
+    "roi": 502.62,
+    "winRate": 100,
+    "trades": 22
+  },
+  "ORHD": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": -11.06,
+    "roi": 469.1,
+    "winRate": 100,
+    "trades": 19
+  },
+  "ORWE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 244.7,
+    "roi": 487.75,
+    "winRate": 100,
+    "trades": 23
+  },
+  "PACH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "PHAR": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 50.94,
+    "roi": 301.88,
+    "winRate": 100,
+    "trades": 14
+  },
+  "PHDC": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 304.23,
+    "roi": 815.08,
+    "winRate": 100,
+    "trades": 16
+  },
+  "PHGC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 2,
+    "alpha": -40.18,
+    "roi": 255.77,
+    "winRate": 100,
+    "trades": 12
+  },
+  "PHTV": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -47.08,
+    "roi": 1222,
+    "winRate": 100,
+    "trades": 12
+  },
+  "PMSC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "POCO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "POUL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 147.43,
+    "roi": 1225,
+    "winRate": 100,
+    "trades": 19
+  },
+  "PRCL": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 99.27,
+    "roi": 593.74,
+    "winRate": 100,
+    "trades": 22
+  },
+  "PRDC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 133,
+    "roi": 234.12,
+    "winRate": 100,
+    "trades": 20
+  },
+  "PRMH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 138.63,
+    "roi": 250.91,
+    "winRate": 100,
+    "trades": 9
+  },
+  "QNBE": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 62.56,
+    "roi": 138.84,
+    "winRate": 100,
+    "trades": 8
+  },
+  "RACC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": 114.46,
+    "roi": 457.58,
+    "winRate": 100,
+    "trades": 25
+  },
+  "RAKT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 246.83,
+    "roi": 485.97,
+    "winRate": 100,
+    "trades": 12
+  },
+  "RAYA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 135.91,
+    "roi": 340.21,
+    "winRate": 100,
+    "trades": 28
+  },
+  "RKAZ": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 238.37,
+    "roi": 421.3,
+    "winRate": 100,
+    "trades": 8
+  },
+  "RMDA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -50.19,
+    "roi": 170.04,
+    "winRate": 100,
+    "trades": 16
+  },
+  "RMTV": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ROTO": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 315.65,
+    "roi": 354.1,
+    "winRate": 100,
+    "trades": 10
+  },
+  "RREI": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 140.88,
+    "roi": 480.66,
+    "winRate": 100,
+    "trades": 12
+  },
+  "RTVC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 104.06,
+    "roi": 199.72,
+    "winRate": 100,
+    "trades": 9
+  },
+  "RUBX": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 521.28,
+    "roi": 664.97,
+    "winRate": 100,
+    "trades": 8
+  },
+  "SAIB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SAUD": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 50.67,
+    "roi": 251.09,
+    "winRate": 100,
+    "trades": 27
+  },
+  "SCEM": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 623.88,
+    "roi": 1822.98,
+    "winRate": 100,
+    "trades": 14
+  },
+  "SCFM": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 664.46,
+    "roi": 1116.52,
+    "winRate": 100,
+    "trades": 8
+  },
+  "SCTS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -178.9,
+    "roi": 1016.63,
+    "winRate": 100,
+    "trades": 18
+  },
+  "SDTI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 24.93,
+    "roi": 153.11,
+    "winRate": 100,
+    "trades": 12
+  },
+  "SEIG": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 8.14,
+    "roi": 574.81,
+    "winRate": 100,
+    "trades": 6
+  },
+  "SEIGA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SIEG": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SINA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SIPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 150.06,
+    "roi": 304.91,
+    "winRate": 100,
+    "trades": 15
+  },
+  "SKPC": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 401.55,
+    "roi": 653.43,
+    "winRate": 100,
+    "trades": 21
+  },
+  "SMFR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 698.08,
+    "roi": 2694.92,
+    "winRate": 100,
+    "trades": 16
+  },
+  "SMPP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SNFC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -508.35,
+    "roi": 909.93,
+    "winRate": 100,
+    "trades": 9
+  },
+  "SNFI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SPHT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SPIN": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 133.55,
+    "roi": 848.2,
+    "winRate": 100,
+    "trades": 11
+  },
+  "SPMD": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 79.71,
+    "roi": 46.9,
+    "winRate": 100,
+    "trades": 12
+  },
+  "SUCE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "SUGR": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 221.92,
+    "roi": 575.21,
+    "winRate": 100,
+    "trades": 21
+  },
+  "SVCE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 311.23,
+    "roi": 889.5,
+    "winRate": 100,
+    "trades": 11
+  },
+  "SWDY": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 425.49,
+    "roi": 1383.77,
+    "winRate": 100,
+    "trades": 19
+  },
+  "TALM": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 121.66,
+    "roi": 547.91,
+    "winRate": 100,
+    "trades": 13
+  },
+  "TANM": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 106.34,
+    "roi": 266.43,
+    "winRate": 100,
+    "trades": 12
+  },
+  "TAQA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 158.21,
+    "roi": 122.45,
+    "winRate": 100,
+    "trades": 11
+  },
+  "TMGH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 188.84,
+    "roi": 798.16,
+    "winRate": 100,
+    "trades": 10
+  },
+  "TORA": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -411.81,
+    "roi": 353.02,
+    "winRate": 100,
+    "trades": 4
+  },
+  "TRTO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "TWSA": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 5.51,
+    "roi": 395.32,
+    "winRate": 100,
+    "trades": 4
+  },
+  "TYCN": {
+    "model": "psi8",
+    "entryLevels": [
+      20
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -63.34,
+    "roi": 1515.23,
+    "winRate": 100,
+    "trades": 10
+  },
+  "UBEE": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 4,
+    "alpha": 54.99,
+    "roi": 51.4,
+    "winRate": 100,
+    "trades": 7
+  },
+  "UEFM": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 2,
+    "alpha": 156.72,
+    "roi": 428.86,
+    "winRate": 100,
+    "trades": 21
+  },
+  "UEGC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 2,
+    "alpha": 86.56,
+    "roi": 194.25,
+    "winRate": 100,
+    "trades": 18
+  },
+  "UNIP": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 40.06,
+    "roi": 122.05,
+    "winRate": 100,
+    "trades": 6
+  },
+  "UNIT": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 81.41,
+    "roi": 397.64,
+    "winRate": 100,
+    "trades": 14
+  },
+  "UPMS": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 407.56,
+    "roi": 566.01,
+    "winRate": 100,
+    "trades": 6
+  },
+  "UTOP": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 345.65,
+    "roi": 651.81,
+    "winRate": 100,
+    "trades": 11
+  },
+  "VALU": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 36.44,
+    "roi": 97.93,
+    "winRate": 100,
+    "trades": 4
+  },
+  "VERT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": -2566.28,
+    "roi": 697.08,
+    "winRate": 100,
+    "trades": 11
+  },
+  "VLMR": {
+    "model": "psi8",
+    "entryLevels": [
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 13.68,
+    "roi": -29.1,
+    "winRate": 100,
+    "trades": 4
+  },
+  "VLMRA": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 20.25,
+    "roi": 41.82,
+    "winRate": 100,
+    "trades": 7
+  },
+  "WATP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "roi": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "WCDF": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 167.36,
+    "roi": 521.91,
+    "winRate": 100,
+    "trades": 18
+  },
+  "WKOL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 993.23,
+    "roi": 1799.15,
+    "winRate": 100,
+    "trades": 11
+  },
+  "YAYT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 0,
+    "winRate": 100,
+    "trades": 0
+  },
+  "ZEOT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 215.61,
+    "roi": 468.95,
+    "winRate": 100,
+    "trades": 19
+  },
+  "ZMID": {
+    "model": "psi8",
+    "entryLevels": [
+      20,
+      30
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "profitProtect": true,
+    "stopLossPct": 0,
+    "minHoldBars": 1,
+    "alpha": 58.43,
+    "roi": 176.57,
+    "winRate": 100,
+    "trades": 15
+  }
+}

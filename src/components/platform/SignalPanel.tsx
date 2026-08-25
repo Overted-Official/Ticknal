@@ -27,6 +27,7 @@ type SignalData = Record<string, any>;
 
 interface SignalPanelProps {
   activeSymbol: string | null;
+  timeframe?: string;
   replayActive?: boolean;
   replayStartDate?: string | null;
   replayEndDate?: string | null;
@@ -47,6 +48,7 @@ interface SignalPanelProps {
 
 export default function SignalPanel({
   activeSymbol,
+  timeframe = 'D',
   replayActive = false,
   replayStartDate = null,
   replayEndDate = null,
@@ -110,6 +112,7 @@ export default function SignalPanel({
         const params = new URLSearchParams({
           symbol: activeSymbol,
           strategy: selectedStrategy,
+          timeframe,
         });
 
         Object.entries(strategyParams).forEach(([k, v]) => {
@@ -148,7 +151,7 @@ export default function SignalPanel({
     };
 
     fetchSignals();
-  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, strategyStartDate, strategyEndDate, selectedStrategy, strategyParams]);
+  }, [activeSymbol, replayActive, replayEndDate, replayStartDate, strategyStartDate, strategyEndDate, selectedStrategy, strategyParams, timeframe]);
 
   if (!activeSymbol) return null;
 

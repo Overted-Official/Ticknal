@@ -84,6 +84,7 @@ export type ReplayState = {
 export interface ChartWidgetProps {
   data: ChartData[];
   symbol: string;
+  timeframe?: string;
   initialReplayMode?: boolean;
   onReplayStateChange?: (state: ReplayState) => void;
   selectedStrategy?: string;
