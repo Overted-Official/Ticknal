@@ -34,7 +34,8 @@ import {
   Target,
   Zap,
   Sparkles,
-  Cpu
+  Cpu,
+  Compass
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAlerts } from '@/components/platform/AlertProvider';
@@ -178,14 +179,14 @@ export default function SettingsView({
   const [togglingSymbol, setTogglingSymbol] = useState<string | null>(null);
 
   const { toast } = useToast();
-  const [alertStrategyScope, setAlertStrategyScope] = useState<'all' | 'psi' | 'thoth_egx_macro'>('all');
+  const [alertStrategyScope, setAlertStrategyScope] = useState<'all' | 'psi' | 'psi_v2' | 'thoth_egx_macro'>('all');
   const [isSavingScope, setIsSavingScope] = useState(false);
 
   // Load saved strategy scope preference
   useEffect(() => {
     try {
       const saved = localStorage.getItem('quantegx_alert_strategy_scope');
-      if (saved && (saved === 'all' || saved === 'psi' || saved === 'thoth_egx_macro')) {
+      if (saved && (saved === 'all' || saved === 'psi' || saved === 'psi_v2' || saved === 'thoth_egx_macro')) {
         setAlertStrategyScope(saved as any);
       }
     } catch (e) {}
@@ -193,7 +194,7 @@ export default function SettingsView({
     fetch('/api/alerts/preferences')
       .then((r) => r.json())
       .then((data) => {
-        if (data?.scope && (data.scope === 'all' || data.scope === 'psi' || data.scope === 'thoth_egx_macro')) {
+        if (data?.scope && (data.scope === 'all' || data.scope === 'psi' || data.scope === 'psi_v2' || data.scope === 'thoth_egx_macro')) {
           setAlertStrategyScope(data.scope);
           try {
             localStorage.setItem('quantegx_alert_strategy_scope', data.scope);
@@ -203,7 +204,7 @@ export default function SettingsView({
       .catch(() => {});
   }, []);
 
-  const handleStrategyScopeChange = async (newScope: 'all' | 'psi' | 'thoth_egx_macro') => {
+  const handleStrategyScopeChange = async (newScope: 'all' | 'psi' | 'psi_v2' | 'thoth_egx_macro') => {
     setAlertStrategyScope(newScope);
     try {
       localStorage.setItem('quantegx_alert_strategy_scope', newScope);
@@ -217,7 +218,14 @@ export default function SettingsView({
         body: JSON.stringify({ scope: newScope }),
       });
       if (res.ok) {
-        const label = newScope === 'all' ? 'All Active Strategies' : newScope === 'psi' ? 'PSI Strategy Only' : 'Thoth EGX Macro Only';
+        const label =
+          newScope === 'all'
+            ? 'All Active Strategies'
+            : newScope === 'psi'
+            ? 'PSI Strategy Only'
+            : newScope === 'psi_v2'
+            ? 'PSI V2 Strategy Only'
+            : 'Thoth EGX Macro Only';
         toast.success('Strategy Scope Updated', `Alerts and opportunities set to ${label}.`);
       }
     } catch (e) {
@@ -831,8 +839,8 @@ export default function SettingsView({
                 </div>
               </div>
 
-              {/* 3 Strategy Scope Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* 4 Strategy Scope Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 {/* 1. All Strategies */}
                 <div
                   onClick={() => handleStrategyScopeChange('all')}
@@ -853,7 +861,7 @@ export default function SettingsView({
                       </span>
                     </div>
                     <p className="text-[11px] text-white/40 leading-relaxed">
-                      Receive alerts from both PSI Inflection & Thoth EGX Macro. Each alert is clearly tagged with its originating model.
+                      Receive alerts from PSI, PSI V2, and Thoth EGX Macro. Each alert is clearly tagged with its originating model.
                     </p>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
@@ -899,7 +907,40 @@ export default function SettingsView({
                   </div>
                 </div>
 
-                {/* 3. Thoth EGX Macro */}
+                {/* 3. PSI V2 Strategy */}
+                <div
+                  onClick={() => handleStrategyScopeChange('psi_v2')}
+                  className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+                    alertStrategyScope === 'psi_v2'
+                      ? 'bg-emerald-500/10 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.12)]'
+                      : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Compass className={`w-4 h-4 ${alertStrategyScope === 'psi_v2' ? 'text-emerald-400' : 'text-white/40'}`} />
+                        <span className="text-xs font-bold text-white">PSI V2 Strategy Only</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                        PSI V2
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-white/40 leading-relaxed">
+                      Only trigger alerts and opportunities from the 3-PSI Vector Architecture (PSI Zone & Up/Down Momentum).
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
+                    <span className="text-[9px] font-mono text-white/30">Scope: 3-PSI Vector</span>
+                    <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      alertStrategyScope === 'psi_v2' ? 'border-emerald-400 bg-emerald-400' : 'border-white/30'
+                    }`}>
+                      {alertStrategyScope === 'psi_v2' && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Thoth EGX Macro */}
                 <div
                   onClick={() => handleStrategyScopeChange('thoth_egx_macro')}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
