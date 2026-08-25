@@ -13,6 +13,11 @@ import {
   runFullThothV37PBacktest,
   runThothV37PStrategy,
 } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
+import {
+  runFullPsiV2Backtest,
+  runPsiV2Strategy,
+  formatPsiV2MetricsForApi,
+} from '@/strategies/PSI_V2';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
 
@@ -50,7 +55,21 @@ export async function handleSignalsGet(request: Request) {
     }
 
     let result;
-    if (strategy === 'thoth_egx_macro') {
+    if (strategy === 'psi_v2') {
+      const psiV2Overrides: Record<string, any> = {
+        ticker,
+        startDate,
+        endDate,
+      };
+
+      const psiV2Result = runPsiV2Strategy(bars, psiV2Overrides);
+
+      result = {
+        ...psiV2Result,
+        formattedMetrics: formatPsiV2MetricsForApi(psiV2Result.metrics),
+        parameterSource: 'gpt-3psi-v2-production',
+      };
+    } else if (strategy === 'thoth_egx_macro') {
       const thothOverrides: Record<string, any> = {
         ticker,
         startDate,
@@ -125,10 +144,20 @@ export async function handleMetricsGet(request: Request) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
 
-    let metricsPayload;
-    let parameterSource;
+    let formattedMetrics: Record<string, string>;
+    let parameterSource: string;
 
-    if (strategy === 'thoth_egx_macro') {
+    if (strategy === 'psi_v2') {
+      const psiV2Overrides: Record<string, any> = {
+        ticker,
+        startDate,
+        endDate,
+      };
+
+      const psiV2Result = runPsiV2Strategy(bars, psiV2Overrides);
+      formattedMetrics = formatPsiV2MetricsForApi(psiV2Result.metrics);
+      parameterSource = 'gpt-3psi-v2-production';
+    } else if (strategy === 'thoth_egx_macro') {
       const thothOverrides: Record<string, any> = {
         ticker,
         startDate,
@@ -136,7 +165,7 @@ export async function handleMetricsGet(request: Request) {
       };
 
       const thothResult = await runThothV37PStrategy(bars, thothOverrides);
-      metricsPayload = thothResult.metrics;
+      formattedMetrics = formatMetricsForApi(thothResult.metrics);
       parameterSource = 'thoth-egx-v3.7p-production-frozen';
     } else {
       const overrides: Record<string, any> = { startDate, endDate };
@@ -154,7 +183,7 @@ export async function handleMetricsGet(request: Request) {
 
       const parameterResolution = await resolvePsiParamsAsync(ticker, overrides);
       const psiResult = runPsiStrategy(bars, parameterResolution.params);
-      metricsPayload = psiResult.metrics;
+      formattedMetrics = formatMetricsForApi(psiResult.metrics);
       parameterSource = parameterResolution.parameterSource;
     }
 
@@ -163,7 +192,7 @@ export async function handleMetricsGet(request: Request) {
       startDate: bars[0].date,
       endDate: bars[bars.length - 1].date,
       parameterSource,
-      metrics: formatMetricsForApi(metricsPayload),
+      metrics: formattedMetrics,
     });
   } catch (error) {
     console.error('Error calculating metrics:', error);
@@ -222,7 +251,7 @@ export async function handleReportGet(request: Request) {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategy = searchParams.get('strategy') || 'psi';
-    const model = searchParams.get('model') || (strategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : 'psi8');
+    const model = searchParams.get('model') || (strategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : strategy === 'psi_v2' ? 'psi_v2' : 'psi8');
     const startDate = searchParams.get('start') ?? '2025-01-01';
     const endDate = searchParams.get('end') ?? undefined;
     const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 1000;
@@ -248,7 +277,17 @@ export async function handleReportGet(request: Request) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
 
-    if (strategy === 'thoth_egx_macro' || model === 'thoth_egx_macro') {
+    if (strategy === 'psi_v2' || model === 'psi_v2') {
+      const psiV2Overrides: Record<string, any> = {
+        ticker,
+        startDate,
+        endDate,
+        initialCapital,
+      };
+
+      const report = runFullPsiV2Backtest(bars, psiV2Overrides);
+      return NextResponse.json(report);
+    } else if (strategy === 'thoth_egx_macro' || model === 'thoth_egx_macro') {
       const thothOverrides: Record<string, any> = {
         ticker,
         startDate,

@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { resolvePsiParamsFromStore, fetchAndCachePsiCombinations } from '@/strategies/PSI/psiParameterStore';
 import { runThothV37PStrategy } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
+import { runPsiV2Strategy } from '@/strategies/PSI_V2';
 import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
 import { unstable_cache } from 'next/cache';
 
@@ -98,6 +99,7 @@ export async function _getRecentOpportunities(
       const opportunities: OpportunitySignal[] = [];
       const includePsi = strategyScope === 'all' || strategyScope === 'psi';
       const includeThoth = strategyScope === 'all' || strategyScope === 'thoth_egx_macro';
+      const includePsiV2 = strategyScope === 'all' || strategyScope === 'psi_v2';
 
       for (const [symbol, bars] of barsByTicker.entries()) {
         if (bars.length < 130) continue;
@@ -147,6 +149,31 @@ export async function _getRecentOpportunities(
                 ...meta,
                 strategyId: 'thoth_egx_macro',
                 strategyLabel: STRATEGIES.thoth_egx_macro?.label ?? 'THOTH EGX V3.7P',
+                strategyShortName: badge.label,
+                strategyBadgeClassName: badge.className,
+                signal,
+              });
+            }
+          } catch (e) {
+            // Ignore individual ticker calculation failures
+          }
+        }
+
+        // 3. Evaluate the new PSI V2 Strategy (GPT 3-PSI Architecture)
+        if (includePsiV2 && bars.length >= 130) {
+          try {
+            const psiV2Result = runPsiV2Strategy(bars, {
+              ticker: symbol,
+              startDate: recentStartDate,
+            });
+            const signal = [...psiV2Result.signals].reverse().find((candidate) => recentDates.has(candidate.date) && (candidate.signal === 'BUY' || candidate.signal === 'SELL'));
+            if (signal) {
+              const badge = getStrategyBadge('psi_v2');
+              opportunities.push({
+                symbol,
+                ...meta,
+                strategyId: 'psi_v2',
+                strategyLabel: STRATEGIES.psi_v2?.label ?? 'PSI V2 Strategy',
                 strategyShortName: badge.label,
                 strategyBadgeClassName: badge.className,
                 signal,

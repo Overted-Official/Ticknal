@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Download } from '@/components/ui/icon-library';
 import { runFullStrategyBacktest } from '@/strategies/PSI/psiBacktestEngine';
+import { runFullPsiV2Backtest } from '@/strategies/PSI_V2';
 import {
   type StrategyTrade,
   type EquityPoint,
@@ -79,8 +80,10 @@ export default function StrategyReportDrawer({
 }: StrategyReportDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'stats' | 'trades'>('stats');
-  const [model, setModel] = useState<'psi8' | 'psi40' | 'thoth_egx_macro'>(() => {
-    return activeStrategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : 'psi8';
+  const [model, setModel] = useState<'psi8' | 'psi40' | 'thoth_egx_macro' | 'psi_v2'>(() => {
+    if (activeStrategy === 'psi_v2') return 'psi_v2';
+    if (activeStrategy === 'thoth_egx_macro') return 'thoth_egx_macro';
+    return 'psi8';
   });
   const [initialCapital, setInitialCapital] = useState<number>(1000);
   const [hoveredPoint, setHoveredPoint] = useState<EquityPoint | null>(null);
@@ -126,7 +129,9 @@ export default function StrategyReportDrawer({
   }, []);
 
   useEffect(() => {
-    if (activeStrategy === 'thoth_egx_macro') {
+    if (activeStrategy === 'psi_v2') {
+      setModel('psi_v2');
+    } else if (activeStrategy === 'thoth_egx_macro') {
       setModel('thoth_egx_macro');
     }
   }, [activeStrategy]);
@@ -237,6 +242,20 @@ export default function StrategyReportDrawer({
       .filter((b) => b.open > 0 && b.high > 0 && b.low > 0 && b.close > 0);
 
     if (bars.length < 5) return;
+
+    if (model === 'psi_v2') {
+      try {
+        const psiV2Report = runFullPsiV2Backtest(bars, {
+          startDate,
+          endDate,
+          initialCapital,
+        });
+        setReport(psiV2Report);
+      } catch (err) {
+        console.error('Error calculating PSI V2 report:', err);
+      }
+      return;
+    }
 
     if (model === 'thoth_egx_macro') {
       const params = new URLSearchParams({
@@ -355,7 +374,9 @@ export default function StrategyReportDrawer({
                     {resolvedCompanyName}
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-plt-base text-plt-muted border border-plt-border-soft">
-                    {model === 'thoth_egx_macro'
+                    {model === 'psi_v2'
+                      ? 'PSI V2'
+                      : model === 'thoth_egx_macro'
                       ? 'THOTH 3.7P'
                       : model === 'psi40'
                       ? 'PSI-40 Trend'
@@ -395,6 +416,15 @@ export default function StrategyReportDrawer({
                   }`}
                 >
                   THOTH 3.7P
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModel('psi_v2')}
+                  className={`pill-switch-btn ${
+                    model === 'psi_v2' ? 'pill-switch-btn-active font-semibold text-emerald-400' : ''
+                  }`}
+                >
+                  PSI V2
                 </button>
               </div>
 

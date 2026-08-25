@@ -45,7 +45,7 @@ export default function OpportunityTable({
   showFilter?: boolean;
 }) {
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
-  const [strategyFilter, setStrategyFilter] = useState<'ALL' | 'psi' | 'thoth_egx_macro'>('ALL');
+  const [strategyFilter, setStrategyFilter] = useState<string>('ALL');
 
   // Extract unique strategies present
   const availableStrategies = useMemo(() => {
@@ -73,7 +73,7 @@ export default function OpportunityTable({
     <>
       {/* Optional Strategy Filter Pill Bar */}
       {showFilter && availableStrategies.length > 1 && (
-        <div className="flex items-center gap-2 px-4 pt-2 pb-2 border-b border-plt-border-soft bg-plt-hover">
+        <div className="flex items-center gap-2 px-4 pt-2 pb-2 border-b border-plt-border-soft bg-plt-hover flex-wrap">
           <button
             type="button"
             onClick={() => setStrategyFilter('ALL')}
@@ -111,10 +111,21 @@ export default function OpportunityTable({
               THOTH 3.7P ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
             </button>
           )}
+          {availableStrategies.includes('psi_v2') && (
+            <button
+              type="button"
+              onClick={() => setStrategyFilter('psi_v2')}
+              className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
+                strategyFilter === 'psi_v2'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium shadow-sm'
+                  : 'text-plt-muted hover:text-emerald-400'
+              }`}
+            >
+              PSI V2 ({opportunities.filter((o) => o.strategyId === 'psi_v2').length})
+            </button>
+          )}
         </div>
       )}
-
-
 
       {/* Mobile View (Cards) */}
       <div className="md:hidden flex flex-col space-y-2 p-4">

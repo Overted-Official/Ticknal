@@ -119,6 +119,20 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
       { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },
       { key: 'masterIndexAdjusted', label: 'Pred Exhaustion', format: 'percentage', decimals: 1 },
     ]
+  },
+  psi_v2: {
+    id: 'psi_v2',
+    label: 'PSI V2 Strategy',
+    shortName: 'PSI V2',
+    description: 'GPT 3-PSI Architecture (PSI_ZONE, PSI_UP, PSI_DOWN)',
+    badgeClassName: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
+    settings: [],
+    metrics: [
+      { key: 'psiZone', label: 'PSI Zone', format: 'number', decimals: 2 },
+      { key: 'psiUp', label: 'PSI UP', format: 'number', decimals: 2 },
+      { key: 'psiDown', label: 'PSI DOWN', format: 'number', decimals: 2 },
+      { key: 'regimeDirection', label: 'Regime', format: 'text' },
+    ]
   }
 };
 

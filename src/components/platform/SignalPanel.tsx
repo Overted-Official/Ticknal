@@ -66,6 +66,7 @@ export default function SignalPanel({
 }: SignalPanelProps) {
   const { toast } = useToast();
   const [signalData, setSignalData] = useState<SignalData | null>(null);
+  const [internalMetrics, setInternalMetrics] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [optimProgress, setOptimProgress] = useState(0);
@@ -127,6 +128,9 @@ export default function SignalPanel({
 
         const res = await fetch(`/api/signals?${params.toString()}`);
         const data = await res.json();
+        if (data.formattedMetrics && typeof data.formattedMetrics === 'object') {
+          setInternalMetrics(data.formattedMetrics);
+        }
         if (data.latestSignal || (data.signals && data.signals.length > 0)) {
           const latestSignal = data.latestSignal ?? data.signals[data.signals.length - 1];
           setSignalData({
@@ -152,6 +156,7 @@ export default function SignalPanel({
   const rawSignal = visibleSignalData?.signal || 'NEUTRAL';
   const isBuy = rawSignal.toUpperCase().includes('BUY');
   const isExit = rawSignal.toUpperCase().includes('SELL') || rawSignal.toUpperCase().includes('EXIT');
+  const bannerSignal = isBuy ? 'BUY' : isExit ? 'SELL / EXIT' : rawSignal.toUpperCase();
   const reason = isExit ? visibleSignalData?.exitReason : visibleSignalData?.entryReason;
 
   // Master Index Score
@@ -167,11 +172,12 @@ export default function SignalPanel({
   const stopLossPrice = visibleSignalData?.stopLoss !== undefined ? Number(visibleSignalData.stopLoss) : null;
   const targetPrice = visibleSignalData?.targetPrice !== undefined ? Number(visibleSignalData.targetPrice) : null;
 
-  // ROI Margin & Performance Alpha
-  const sysRoi = metrics?.['Sys ROI'] ? parseFloat(metrics['Sys ROI']) : null;
-  const bnHroi = metrics?.['B&H ROI'] ? parseFloat(metrics['B&H ROI']) : 0;
-  const roiMarginVal = metrics?.['ROI Margin']
-    ? parseFloat(metrics['ROI Margin'])
+  // ROI Margin & Performance Alpha (fallback to internal metrics fetched from /api/signals)
+  const effectiveMetrics = metrics || internalMetrics;
+  const sysRoi = effectiveMetrics?.['Sys ROI'] ? parseFloat(effectiveMetrics['Sys ROI']) : null;
+  const bnHroi = effectiveMetrics?.['B&H ROI'] ? parseFloat(effectiveMetrics['B&H ROI']) : 0;
+  const roiMarginVal = effectiveMetrics?.['ROI Margin']
+    ? parseFloat(effectiveMetrics['ROI Margin'])
     : sysRoi !== null
       ? sysRoi - bnHroi
       : null;
@@ -293,7 +299,7 @@ export default function SignalPanel({
                   isBuy ? 'bg-plt-profit animate-pulse' : isExit ? 'bg-plt-risk' : 'bg-plt-muted'
                 }`} />
                 <span className={isBuy ? 'text-plt-profit' : isExit ? 'text-plt-risk' : 'text-plt-text'}>
-                  {displaySignal}
+                  {bannerSignal}
                 </span>
               </div>
               {triggerPrice && (
@@ -318,7 +324,26 @@ export default function SignalPanel({
                 {triggerPrice ? triggerPrice.toFixed(2) : '—'}
               </span>
             </div>
-            {selectedStrategy === 'thoth_egx_macro' ? (
+            {selectedStrategy === 'psi_v2' ? (
+              <>
+                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-medium">PSI UP</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-emerald-400 mt-1">
+                    {visibleSignalData?.psiUp !== undefined && visibleSignalData?.psiUp !== null
+                      ? Number(visibleSignalData.psiUp).toFixed(1)
+                      : '0.0'}
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-rose-400 font-medium">PSI DOWN</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-rose-400 mt-1">
+                    {visibleSignalData?.psiDown !== undefined && visibleSignalData?.psiDown !== null
+                      ? Number(visibleSignalData.psiDown).toFixed(1)
+                      : '0.0'}
+                  </span>
+                </div>
+              </>
+            ) : selectedStrategy === 'thoth_egx_macro' ? (
               <>
                 <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
                   <span className="text-[9px] uppercase tracking-wider text-purple-300/80 font-medium">Pred Exhaustion</span>
@@ -361,11 +386,18 @@ export default function SignalPanel({
           <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-[10px]">
               <span className="text-plt-muted font-medium uppercase tracking-wider">
-                Master Index (0–100)
+                {selectedStrategy === 'psi_v2' ? 'PSI Zone (0–100)' : 'Master Index (0–100)'}
               </span>
               <div className="flex items-center gap-2 font-mono">
                 <span className="text-plt-text font-semibold">{masterIndex !== null ? masterIndex.toFixed(1) : '—'}</span>
-                {mdm !== null && (
+                {selectedStrategy === 'psi_v2' && visibleSignalData?.regimeDirection && (
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                    visibleSignalData.regimeDirection === 'up' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                  }`}>
+                    {String(visibleSignalData.regimeDirection).toUpperCase()}
+                  </span>
+                )}
+                {mdm !== null && selectedStrategy !== 'psi_v2' && (
                   <span className="text-plt-muted text-[9px]">MDM: {mdm.toFixed(2)}%</span>
                 )}
               </div>
@@ -399,16 +431,16 @@ export default function SignalPanel({
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">System ROI</span>
               <span className={`text-xs font-mono tabular-nums font-semibold mt-1 ${
-                metrics?.['Sys ROI'] && parseFloat(metrics['Sys ROI']) >= 0 ? 'text-plt-profit' : 'text-plt-risk'
+                effectiveMetrics?.['Sys ROI'] && parseFloat(effectiveMetrics['Sys ROI']) >= 0 ? 'text-plt-profit' : 'text-plt-risk'
               }`}>
-                {metrics?.['Sys ROI'] ? `${parseFloat(metrics['Sys ROI']) > 0 ? '+' : ''}${metrics['Sys ROI']}%` : '—'}
+                {effectiveMetrics?.['Sys ROI'] ? `${parseFloat(effectiveMetrics['Sys ROI']) > 0 ? '+' : ''}${effectiveMetrics['Sys ROI']}%` : '—'}
               </span>
             </div>
 
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Buy & Hold</span>
               <span className="text-xs font-mono tabular-nums font-semibold text-plt-muted mt-1">
-                {metrics?.['B&H ROI'] ? `${parseFloat(metrics['B&H ROI']) > 0 ? '+' : ''}${metrics['B&H ROI']}%` : '—'}
+                {effectiveMetrics?.['B&H ROI'] ? `${parseFloat(effectiveMetrics['B&H ROI']) > 0 ? '+' : ''}${effectiveMetrics['B&H ROI']}%` : '—'}
               </span>
             </div>
 
@@ -427,25 +459,25 @@ export default function SignalPanel({
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Win Rate</span>
               <span className="text-xs font-mono tabular-nums font-semibold text-plt-profit mt-0.5">
-                {metrics?.['Win Rate'] ? `${metrics['Win Rate']}%` : '—'}
+                {effectiveMetrics?.['Win Rate'] ? `${effectiveMetrics['Win Rate']}%` : '—'}
               </span>
             </div>
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Annual CAGR</span>
               <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-0.5">
-                {metrics?.['Annual CAGR'] ? `${metrics['Annual CAGR']}%` : '—'}
+                {effectiveMetrics?.['Annual CAGR'] ? `${effectiveMetrics['Annual CAGR']}%` : '—'}
               </span>
             </div>
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium">Max Drawdown</span>
               <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-0.5">
-                {metrics?.['Max Drawdown'] ? `${metrics['Max Drawdown']}%` : '—'}
+                {effectiveMetrics?.['Max Drawdown'] ? `${effectiveMetrics['Max Drawdown']}%` : '—'}
               </span>
             </div>
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Avg/Trade</span>
               <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-0.5">
-                {metrics?.['Avg. Return/Trade'] ? `${metrics['Avg. Return/Trade']}%` : '—'}
+                {effectiveMetrics?.['Avg. Return/Trade'] ? `${effectiveMetrics['Avg. Return/Trade']}%` : '—'}
               </span>
             </div>
           </div>
@@ -483,7 +515,35 @@ export default function SignalPanel({
 
       {/* TAB 3: WALK-FORWARD OPTIMIZER / PRODUCTION ARCHITECTURE */}
       {activeTab === 'optimizer' && (
-        selectedStrategy === 'thoth_egx_macro' ? (
+        selectedStrategy === 'psi_v2' ? (
+          <div className="flex flex-col gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-[11px]">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-emerald-400">GPT 3-PSI Architecture</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">PRODUCTION V2</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono pt-1">
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Zone Model</span>
+                <span className="text-plt-text font-semibold">8 Features (63d)</span>
+              </div>
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Bull / Bear Gauges</span>
+                <span className="text-plt-text font-semibold">PSI_UP / DOWN</span>
+              </div>
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Entry Rules</span>
+                <span className="text-plt-text font-semibold">Zone &gt; 20 | UP &gt; 10</span>
+              </div>
+              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
+                <span className="text-plt-muted block text-[9px] uppercase">Exit Rules</span>
+                <span className="text-plt-text font-semibold">Zone &lt; 80 | DOWN &gt; 10</span>
+              </div>
+            </div>
+            <p className="text-[9.5px] text-plt-muted leading-relaxed pt-0.5">
+              Strictly causal, non-lookahead 3-PSI model calibrated on Egyptian market dynamics for optimal tops/bottoms and swing progression tracking.
+            </p>
+          </div>
+        ) : selectedStrategy === 'thoth_egx_macro' ? (
           <div className="flex flex-col gap-2 p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/20 text-[11px]">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-purple-400">Primary Growth Champion</span>
