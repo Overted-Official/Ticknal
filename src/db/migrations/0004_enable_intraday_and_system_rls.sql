@@ -1,5 +1,5 @@
 -- Migration 0004: Enable Row Level Security (RLS) & Policies for Intraday & System Tables
--- Resolves Supabase linter 0013_rls_disabled_in_public for all public tables
+-- Resolves Supabase linter 0013_rls_disabled_in_public & 0024_permissive_rls_policy for all public tables
 
 -- 1. system_logs
 ALTER TABLE IF EXISTS public.system_logs ENABLE ROW LEVEL SECURITY;
@@ -33,10 +33,6 @@ DROP POLICY IF EXISTS "intraday_bot_settings_service_role_all" ON public.intrada
 CREATE POLICY "intraday_bot_settings_read_all" ON public.intraday_bot_settings
   FOR SELECT TO authenticated, anon
   USING (true);
-CREATE POLICY "intraday_bot_settings_authenticated_all" ON public.intraday_bot_settings
-  FOR ALL TO authenticated
-  USING (true)
-  WITH CHECK (true);
 CREATE POLICY "intraday_bot_settings_service_role_all" ON public.intraday_bot_settings
   FOR ALL TO service_role
   USING (true)
@@ -50,10 +46,6 @@ DROP POLICY IF EXISTS "intraday_bot_tickers_service_role_all" ON public.intraday
 CREATE POLICY "intraday_bot_tickers_read_all" ON public.intraday_bot_tickers
   FOR SELECT TO authenticated, anon
   USING (true);
-CREATE POLICY "intraday_bot_tickers_authenticated_all" ON public.intraday_bot_tickers
-  FOR ALL TO authenticated
-  USING (true)
-  WITH CHECK (true);
 CREATE POLICY "intraday_bot_tickers_service_role_all" ON public.intraday_bot_tickers
   FOR ALL TO service_role
   USING (true)
@@ -67,10 +59,6 @@ DROP POLICY IF EXISTS "intraday_positions_service_role_all" ON public.intraday_p
 CREATE POLICY "intraday_positions_read_all" ON public.intraday_positions
   FOR SELECT TO authenticated, anon
   USING (true);
-CREATE POLICY "intraday_positions_authenticated_all" ON public.intraday_positions
-  FOR ALL TO authenticated
-  USING (true)
-  WITH CHECK (true);
 CREATE POLICY "intraday_positions_service_role_all" ON public.intraday_positions
   FOR ALL TO service_role
   USING (true)
@@ -84,10 +72,6 @@ DROP POLICY IF EXISTS "intraday_signals_log_service_role_all" ON public.intraday
 CREATE POLICY "intraday_signals_log_read_all" ON public.intraday_signals_log
   FOR SELECT TO authenticated, anon
   USING (true);
-CREATE POLICY "intraday_signals_log_authenticated_all" ON public.intraday_signals_log
-  FOR ALL TO authenticated
-  USING (true)
-  WITH CHECK (true);
 CREATE POLICY "intraday_signals_log_service_role_all" ON public.intraday_signals_log
   FOR ALL TO service_role
   USING (true)
@@ -101,10 +85,6 @@ DROP POLICY IF EXISTS "intraday_system_logs_service_role_all" ON public.intraday
 CREATE POLICY "intraday_system_logs_read_all" ON public.intraday_system_logs
   FOR SELECT TO authenticated, anon
   USING (true);
-CREATE POLICY "intraday_system_logs_authenticated_all" ON public.intraday_system_logs
-  FOR ALL TO authenticated
-  USING (true)
-  WITH CHECK (true);
 CREATE POLICY "intraday_system_logs_service_role_all" ON public.intraday_system_logs
   FOR ALL TO service_role
   USING (true)
