@@ -91,7 +91,7 @@ export async function dispatchSignalNotifications(options: {
       continue;
     }
 
-    const paramResolution = await resolvePsiParamsAsync(ticker, {});
+    const paramResolution = await resolvePsiParamsAsync(ticker, { startDate: '2025-01-01' });
     const defaultParams = paramResolution.params;
     const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
 
@@ -152,7 +152,7 @@ export async function dispatchSignalNotifications(options: {
       if (userScope === 'all' || userScope === 'thoth_egx_macro') {
         try {
           const { runThothV37PStrategy } = await import('@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy');
-          const thothResult = await runThothV37PStrategy(bars, { ticker, startDate: bars[0].date });
+          const thothResult = await runThothV37PStrategy(bars, { ticker, startDate: '2025-01-01' });
           const signal = [...thothResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
           if (signal) {
             signalsToDispatch.push({
@@ -171,7 +171,7 @@ export async function dispatchSignalNotifications(options: {
       if (userScope === 'all' || userScope === 'psi_v2') {
         try {
           const { runPsiV2Strategy } = await import('@/strategies/PSI_V2/psiV2Strategy');
-          const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: bars[0].date });
+          const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: '2025-01-01' });
           const signal = [...psiV2Result.signals].reverse().find((s) => dateWindow.has(s.date) && (s.signal === 'BUY' || s.signal === 'SELL')) ?? null;
           if (signal) {
             signalsToDispatch.push({

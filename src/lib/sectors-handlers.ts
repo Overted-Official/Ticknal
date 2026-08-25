@@ -186,7 +186,7 @@ export async function handleSignalsGet(request?: Request) {
   try {
     const url = request ? new URL(request.url) : null;
     const strategy = url?.searchParams.get('strategy') || 'psi';
-    const startDate = url?.searchParams.get('start') || `${new Date().getFullYear()}-01-01`;
+    const startDate = url?.searchParams.get('start') || '2025-01-01';
     const endDate = url?.searchParams.get('end') || new Date().toISOString().split('T')[0];
     const cacheKey = `signals_${strategy}_${startDate}_${endDate}`;
     const now = Date.now();
@@ -214,7 +214,7 @@ export async function handleSignalsGet(request?: Request) {
           )
           SELECT ticker_symbol, date, open, high, low, close, volume
           FROM ranked_prices
-          WHERE rn <= 350
+          WHERE rn <= 500
           ORDER BY ticker_symbol, date ASC
         `),
         fetchAndCachePsiCombinations(),

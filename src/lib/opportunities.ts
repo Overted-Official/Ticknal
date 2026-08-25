@@ -115,7 +115,7 @@ export async function _getRecentOpportunities(
         // 1. Evaluate PSI Strategy
         if (includePsi && bars.length >= 130) {
           try {
-            const psiResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: bars[0].date }));
+            const psiResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: '2025-01-01' }));
             const signal = [...psiResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
             if (signal) {
               const badge = getStrategyBadge('psi');
@@ -139,7 +139,7 @@ export async function _getRecentOpportunities(
           try {
             const thothResult = await runThothV37PStrategy(bars, {
               ticker: symbol,
-              startDate: recentStartDate,
+              startDate: '2025-01-01',
             });
             const signal = [...thothResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
             if (signal) {
@@ -164,7 +164,7 @@ export async function _getRecentOpportunities(
           try {
             const psiV2Result = runPsiV2Strategy(bars, {
               ticker: symbol,
-              startDate: recentStartDate,
+              startDate: '2025-01-01',
             });
             const signal = [...psiV2Result.signals].reverse().find((candidate) => recentDates.has(candidate.date) && (candidate.signal === 'BUY' || candidate.signal === 'SELL'));
             if (signal) {
