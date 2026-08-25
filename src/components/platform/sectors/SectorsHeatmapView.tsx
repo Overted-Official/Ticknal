@@ -41,7 +41,14 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
   const [analysisMode, setAnalysisMode] = useState<'macro' | 'strategy'>('macro');
   const [filterActiveSignalsOnly, setFilterActiveSignalsOnly] = useState(false);
   const [activeStrategyFilter, setActiveStrategyFilter] = useState<
-    'ALL' | 'BUY_FRESH' | 'LONG_ACTIVE' | 'LONG_WINNERS' | 'LONG_LOSERS' | 'EXIT_RECENT'
+    | 'ALL'
+    | 'BUY_FRESH'
+    | 'LONG_ACTIVE'
+    | 'LONG_WINNERS'
+    | 'LONG_LOSERS'
+    | 'EXIT_RECENT'
+    | 'ALPHA_POSITIVE'
+    | 'ALPHA_NEGATIVE'
   >('ALL');
   const [selectedStrategy, setSelectedStrategy] = useState<string>('psi');
 
@@ -173,6 +180,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
         <SectorsKPIStrip
           analysisMode={analysisMode}
           granularity={granularity}
+          sectors={sectors}
           marketSummary={marketSummary}
           signalsData={signalsData}
           activeStrategyFilter={activeStrategyFilter}

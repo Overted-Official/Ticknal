@@ -1,7 +1,5 @@
-"use client";
-
-import React from 'react';
-import type { SectorsPerformanceResponse, SectorStrategySignalsResponse } from '@/lib/sectors-math';
+import React, { useMemo } from 'react';
+import type { SectorsPerformanceResponse, SectorStrategySignalsResponse, SectorPerformanceItem } from '@/lib/sectors-math';
 import {
   TrendingUp,
   TrendingDown,
@@ -10,11 +8,13 @@ import {
   Zap,
   LogOut,
   Layers,
+  Compass,
 } from '@/components/ui/icon-library';
 
 interface SectorsKPIStripProps {
   analysisMode: 'macro' | 'strategy';
   granularity: 'sector' | 'industryGroup' | 'industry' | 'ticker';
+  sectors?: SectorPerformanceItem[];
   marketSummary?: SectorsPerformanceResponse['marketSummary'];
   signalsData?: SectorStrategySignalsResponse;
   activeStrategyFilter?:
@@ -23,7 +23,9 @@ interface SectorsKPIStripProps {
     | 'LONG_ACTIVE'
     | 'LONG_WINNERS'
     | 'LONG_LOSERS'
-    | 'EXIT_RECENT';
+    | 'EXIT_RECENT'
+    | 'ALPHA_POSITIVE'
+    | 'ALPHA_NEGATIVE';
   onSetStrategyFilter?: (
     filter:
       | 'ALL'
@@ -32,6 +34,8 @@ interface SectorsKPIStripProps {
       | 'LONG_WINNERS'
       | 'LONG_LOSERS'
       | 'EXIT_RECENT'
+      | 'ALPHA_POSITIVE'
+      | 'ALPHA_NEGATIVE'
   ) => void;
   onSelectSector?: (sector: string) => void;
 }
@@ -39,6 +43,7 @@ interface SectorsKPIStripProps {
 export default function SectorsKPIStrip({
   analysisMode,
   granularity,
+  sectors,
   marketSummary,
   signalsData,
   activeStrategyFilter = 'ALL',
@@ -54,9 +59,41 @@ export default function SectorsKPIStrip({
       ? 'Industry'
       : 'Sector';
 
+  // Compute Alpha Breadth (Positive vs Negative Alpha counts)
+  const alphaStats = useMemo(() => {
+    if (!sectors || !signalsData?.signalsByTicker) {
+      return { positiveCount: 0, negativeCount: 0, total: 0 };
+    }
+    let positiveCount = 0;
+    let negativeCount = 0;
+    for (const sec of sectors) {
+      for (const st of sec.stocks) {
+        const sig = signalsData.signalsByTicker[st.symbol];
+        if (sig) {
+          const stratRoi = sig.sysRoi ?? 0;
+          const alpha = stratRoi - st.returnPct;
+          if (alpha > 0) {
+            positiveCount++;
+          } else {
+            negativeCount++;
+          }
+        }
+      }
+    }
+    return { positiveCount, negativeCount, total: positiveCount + negativeCount };
+  }, [sectors, signalsData]);
+
   if (analysisMode === 'strategy' && signalsData?.summary) {
     const handleToggle = (
-      filter: 'BUY_FRESH' | 'LONG_ACTIVE' | 'LONG_WINNERS' | 'LONG_LOSERS' | 'EXIT_RECENT'
+      filter:
+        | 'ALL'
+        | 'BUY_FRESH'
+        | 'LONG_ACTIVE'
+        | 'LONG_WINNERS'
+        | 'LONG_LOSERS'
+        | 'EXIT_RECENT'
+        | 'ALPHA_POSITIVE'
+        | 'ALPHA_NEGATIVE'
     ) => {
       if (onSetStrategyFilter) {
         onSetStrategyFilter(activeStrategyFilter === filter ? 'ALL' : filter);
@@ -93,6 +130,103 @@ export default function SectorsKPIStrip({
                 <span className="text-[10px] text-rose-400/90 tabular-nums font-medium bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20" title="Average Max Adverse Excursion (Intra-trade drawdown risk)">
                   MAE {signalsData.summary.avgMae.toFixed(1)}%
                 </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden md:block h-6 w-px bg-plt-border-soft/60" />
+
+        {/* 2. Alpha Breadth (Positive vs Negative Alpha) Button */}
+        <div
+          className={`flex items-center gap-2.5 min-w-[195px] p-1.5 px-2.5 rounded-xl border transition-all ${
+            activeStrategyFilter === 'ALPHA_POSITIVE'
+              ? 'bg-plt-profit/15 border-plt-profit/80 ring-2 ring-plt-profit/60 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
+              : activeStrategyFilter === 'ALPHA_NEGATIVE'
+              ? 'bg-plt-risk/15 border-plt-risk/80 ring-2 ring-plt-risk/60 shadow-[0_0_15px_rgba(239,68,68,0.25)]'
+              : 'bg-transparent border-transparent hover:bg-white/[0.04]'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => handleToggle(activeStrategyFilter === 'ALPHA_POSITIVE' ? 'ALL' : 'ALPHA_POSITIVE')}
+            className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0 cursor-pointer hover:scale-105 transition-transform"
+            title="Filter to all Positive Alpha tickers"
+          >
+            <Compass size={14} />
+          </button>
+          
+          <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleToggle(activeStrategyFilter === 'ALPHA_POSITIVE' ? 'ALL' : 'ALPHA_POSITIVE')}
+                className="text-[10px] uppercase tracking-wider text-plt-muted hover:text-plt-text font-semibold cursor-pointer text-left truncate"
+                title="Strategy Alpha Breadth (Alpha = Strategy ROI - Buy & Hold)"
+              >
+                Alpha Breadth
+              </button>
+
+              <div className="flex items-center gap-1 shrink-0">
+                {/* Positive Alpha Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggle('ALPHA_POSITIVE');
+                  }}
+                  className={`px-1.5 py-0.2 rounded text-[10px] font-bold tabular-nums transition-all cursor-pointer border ${
+                    activeStrategyFilter === 'ALPHA_POSITIVE'
+                      ? 'bg-plt-profit text-black border-plt-profit shadow-xs scale-105'
+                      : 'text-plt-profit bg-plt-profit/10 border-plt-profit/25 hover:bg-plt-profit/25'
+                  }`}
+                  title={`Filter to only ${alphaStats.positiveCount} Positive Alpha tickers`}
+                >
+                  +{alphaStats.positiveCount} α
+                </button>
+
+                {/* Negative Alpha Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggle('ALPHA_NEGATIVE');
+                  }}
+                  className={`px-1.5 py-0.2 rounded text-[10px] font-bold tabular-nums transition-all cursor-pointer border ${
+                    activeStrategyFilter === 'ALPHA_NEGATIVE'
+                      ? 'bg-plt-risk text-white border-plt-risk shadow-xs scale-105'
+                      : 'text-plt-risk bg-plt-risk/10 border-plt-risk/25 hover:bg-plt-risk/25'
+                  }`}
+                  title={`Filter to only ${alphaStats.negativeCount} Negative Alpha tickers`}
+                >
+                  -{alphaStats.negativeCount} α
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 mt-0.5">
+              <button
+                type="button"
+                onClick={() => handleToggle(activeStrategyFilter === 'ALPHA_POSITIVE' ? 'ALL' : 'ALPHA_POSITIVE')}
+                className="font-bold text-sm text-emerald-400 hover:text-white tabular-nums cursor-pointer text-left"
+                title="Click to toggle Positive Alpha filter"
+              >
+                {alphaStats.positiveCount} <span className="text-[10px] font-normal text-plt-muted">Outperforming</span>
+              </button>
+
+              {alphaStats.total > 0 && (
+                <div
+                  className="w-14 h-1.5 rounded-full bg-plt-risk/40 overflow-hidden flex shrink-0 cursor-pointer border border-white/10"
+                  onClick={() => handleToggle(activeStrategyFilter === 'ALPHA_POSITIVE' ? 'ALPHA_NEGATIVE' : 'ALPHA_POSITIVE')}
+                  title="Click to toggle Positive/Negative Alpha filter"
+                >
+                  <div
+                    className="h-full bg-plt-profit transition-all duration-300"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, (alphaStats.positiveCount / alphaStats.total) * 100))}%`,
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>

@@ -19,7 +19,9 @@ interface SectorTreemapProps {
     | 'LONG_ACTIVE'
     | 'LONG_WINNERS'
     | 'LONG_LOSERS'
-    | 'EXIT_RECENT';
+    | 'EXIT_RECENT'
+    | 'ALPHA_POSITIVE'
+    | 'ALPHA_NEGATIVE';
   searchQuery?: string;
   selectedSector: string | null;
   onSelectSector: (sectorName: string) => void;
@@ -236,6 +238,40 @@ export default function SectorTreemap({
               <span className="text-white font-bold truncate">{selectedSector}</span>
             </>
           )}
+          {activeStrategyFilter && activeStrategyFilter !== 'ALL' && (
+            <>
+              <span className="text-plt-faint">/</span>
+              <span className={`font-semibold px-1.5 py-0.2 rounded text-[10px] ${
+                activeStrategyFilter === 'ALPHA_POSITIVE'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : activeStrategyFilter === 'ALPHA_NEGATIVE'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  : activeStrategyFilter === 'LONG_WINNERS'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : activeStrategyFilter === 'LONG_LOSERS'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  : activeStrategyFilter === 'BUY_FRESH'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-white/10 text-white border border-white/20'
+              }`}>
+                {activeStrategyFilter === 'ALPHA_POSITIVE'
+                  ? 'Positive Alpha (+α)'
+                  : activeStrategyFilter === 'ALPHA_NEGATIVE'
+                  ? 'Negative Alpha (-α)'
+                  : activeStrategyFilter === 'LONG_WINNERS'
+                  ? 'Winning Longs'
+                  : activeStrategyFilter === 'LONG_LOSERS'
+                  ? 'Losing Longs'
+                  : activeStrategyFilter === 'BUY_FRESH'
+                  ? 'Fresh Buys'
+                  : activeStrategyFilter === 'LONG_ACTIVE'
+                  ? 'Active Longs'
+                  : activeStrategyFilter === 'EXIT_RECENT'
+                  ? 'Recent Exits'
+                  : activeStrategyFilter}
+              </span>
+            </>
+          )}
           {cleanQuery && (
             <>
               <span className="text-plt-faint">/</span>
@@ -346,6 +382,10 @@ export default function SectorTreemap({
                 const isLong = signalState?.status === 'LONG_ACTIVE';
                 const isExit = signalState?.status === 'EXIT_RECENT';
 
+                const stratRoi = signalState?.sysRoi ?? 0;
+                const stratTradesCount = signalState?.tradesCount ?? 0;
+                const stratAlpha = stratRoi - stock.returnPct;
+
                 const isStrategyMatch =
                   !activeStrategyFilter || activeStrategyFilter === 'ALL'
                     ? true
@@ -353,6 +393,10 @@ export default function SectorTreemap({
                     ? (isLong || isBuy) && (signalState?.tradeReturnPct ?? 0) > 0
                     : activeStrategyFilter === 'LONG_LOSERS'
                     ? (isLong || isBuy) && (signalState?.tradeReturnPct ?? 0) < 0
+                    : activeStrategyFilter === 'ALPHA_POSITIVE'
+                    ? stratAlpha > 0
+                    : activeStrategyFilter === 'ALPHA_NEGATIVE'
+                    ? stratAlpha <= 0
                     : signalState?.status === activeStrategyFilter;
 
                 const isSignalDimmed = filterActiveSignalsOnly && !isBuy && !isLong && !isExit;
@@ -369,10 +413,6 @@ export default function SectorTreemap({
                 let tileBg = colors.bg;
                 let tileBorder = 'border-black/40';
                 let tileTextColor = 'text-white';
-
-                const stratRoi = signalState?.sysRoi ?? 0;
-                const stratTradesCount = signalState?.tradesCount ?? 0;
-                const stratAlpha = stratRoi - stock.returnPct;
 
                 if (analysisMode === 'strategy') {
                   const alphaColors = getHeatmapColor(stratAlpha);
