@@ -18,7 +18,7 @@ export interface TickerOrder {
 }
 
 export interface ChartBar {
-  time: string;
+  time: string | number;
   open: number;
   high: number;
   low: number;
@@ -58,13 +58,13 @@ function formatPrice(value: number, currency: string): string {
   })} ${currency}`;
 }
 
-function formatDateLabel(dateStr: string): string {
+function formatDateLabel(dateVal: string | number): string {
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
+    const d = typeof dateVal === 'number' ? new Date(dateVal * 1000) : new Date(dateVal);
+    if (isNaN(d.getTime())) return String(dateVal);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   } catch {
-    return dateStr;
+    return String(dateVal);
   }
 }
 

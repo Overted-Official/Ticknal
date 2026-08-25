@@ -3,7 +3,7 @@ import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import type { TickerOrder } from '@/components/platform/TickerPositions';
 
 export interface ChartData {
-  time: string; // "YYYY-MM-DD"
+  time: string | number; // "YYYY-MM-DD" or numeric epoch seconds
   open: number;
   high: number;
   low: number;
@@ -77,8 +77,8 @@ export type OrderOverlay = {
 
 export type ReplayState = {
   active: boolean;
-  startDate: string | null;
-  endDate: string | null;
+  startDate: string | number | null;
+  endDate: string | number | null;
 };
 
 export interface ChartWidgetProps {

@@ -67,15 +67,33 @@ export function getExitMarker(signal: string): { text: string; color: string } {
   return { text: 'Exit', color: cssTokenColor('--plt-risk', 'var(--plt-risk)') };
 }
 
+export function parseChartTime(timeInput: string | number | Time): Time {
+  if (typeof timeInput === 'number') {
+    return timeInput as unknown as Time;
+  }
+  if (typeof timeInput === 'string') {
+    const trimmed = timeInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed as unknown as Time;
+    }
+    const ms = new Date(trimmed).getTime();
+    if (!isNaN(ms)) {
+      return Math.floor(ms / 1000) as unknown as Time;
+    }
+  }
+  return timeInput as unknown as Time;
+}
+
 export function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
   const markers: SeriesMarker<Time>[] = [];
   let currentPosition: 'NONE' | 'LONG' = 'NONE';
 
   for (const signal of signals) {
+    const markerTime = parseChartTime(signal.date);
     if (signal.signal === 'BUY' && currentPosition === 'NONE') {
       currentPosition = 'LONG';
       markers.push({
-        time: signal.date as Time,
+        time: markerTime,
         position: 'belowBar',
         color: cssTokenColor('--plt-profit', 'var(--plt-profit)'),
         shape: 'arrowUp',
@@ -86,7 +104,7 @@ export function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
       currentPosition = 'NONE';
       const marker = getExitMarker(signal.signal);
       markers.push({
-        time: signal.date as Time,
+        time: markerTime,
         position: 'aboveBar',
         color: marker.color,
         shape: 'arrowDown',
@@ -104,14 +122,17 @@ export function getDefaultReplayIndex(data: ChartData[]): number {
   return Math.max(0, Math.floor(data.length * 0.7));
 }
 
-export function findIndexAtOrBefore(data: ChartData[], date: string): number {
+export function findIndexAtOrBefore(data: ChartData[], date: string | number | Time): number {
+  if (data.length === 0) return 0;
+  const targetTime = parseChartTime(date);
   let low = 0;
   let high = data.length - 1;
   let result = -1;
 
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    if (data[mid].time <= date) {
+    const currTime = data[mid].time;
+    if (currTime <= targetTime) {
       result = mid;
       low = mid + 1;
     } else {

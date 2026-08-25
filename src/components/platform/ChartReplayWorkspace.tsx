@@ -167,8 +167,8 @@ export default function ChartReplayWorkspace({
         activeSymbol={symbol}
         timeframe={timeframe}
         replayActive={replayState.active}
-        replayStartDate={replayState.startDate}
-        replayEndDate={replayState.endDate}
+        replayStartDate={replayState.startDate !== null ? String(replayState.startDate) : null}
+        replayEndDate={replayState.endDate !== null ? String(replayState.endDate) : null}
         selectedStrategy={selectedStrategy}
         setSelectedStrategy={handleStrategyChange}
         strategyParams={strategyParams}

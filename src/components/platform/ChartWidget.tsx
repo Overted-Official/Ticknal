@@ -44,6 +44,7 @@ import {
   resolveChartColor,
   clampNumber,
   buildMarkers,
+  parseChartTime,
   getDefaultReplayIndex,
   findIndexAtOrBefore,
   parseOptionalNumber,
@@ -192,8 +193,8 @@ export default function ChartWidget({
   useEffect(() => {
     onReplayStateChange?.({
       active: replayMode,
-      startDate: replayMode ? visibleData[0]?.time ?? null : null,
-      endDate: replayDate,
+      startDate: replayMode && visibleData[0] ? String(visibleData[0].time) : null,
+      endDate: replayDate !== null ? String(replayDate) : null,
     });
   }, [onReplayStateChange, replayDate, replayMode, visibleData]);
 
@@ -409,12 +410,12 @@ export default function ChartWidget({
 
     if (isFund) {
       (candlestickSeriesRef.current as ISeriesApi<'Area'>).setData(
-        visibleData.map((d) => ({ time: d.time as Time, value: d.close }))
+        visibleData.map((d) => ({ time: parseChartTime(d.time), value: d.close }))
       );
     } else {
       (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>).setData(
         visibleData.map((d) => ({
-          time: d.time as Time,
+          time: parseChartTime(d.time),
           open: d.open,
           high: d.high,
           low: d.low,
@@ -425,7 +426,7 @@ export default function ChartWidget({
 
     volumeSeriesRef.current.setData(
       visibleData.map((d) => ({
-        time: d.time as Time,
+        time: parseChartTime(d.time),
         value: d.volume,
         color: d.close >= d.open ? 'rgba(8, 153, 129, 0.4)' : 'rgba(242, 54, 69, 0.4)',
       }))
@@ -488,7 +489,7 @@ export default function ChartWidget({
               lineStyle: line.lineStyle ?? 0,
               title: line.name,
             });
-            series.setData(line.data.map((d) => ({ time: d.time, value: d.value })));
+            series.setData(line.data.map((d) => ({ time: parseChartTime(d.time), value: d.value })));
             currentLines.set(`${indId}_${line.id || line.name}`, series);
           });
         }
@@ -523,20 +524,22 @@ export default function ChartWidget({
         const currentCoordinate = series.priceToCoordinate(order.currentPrice);
 
         const entryDateClean = (order.entryDate || '').split('T')[0].split(' ')[0];
-        let xCoordinate = timeScale.timeToCoordinate(entryDateClean as Time);
+        let xCoordinate = timeScale.timeToCoordinate(parseChartTime(entryDateClean));
 
         if (xCoordinate === null && data && data.length > 0) {
           const targetTime = new Date(entryDateClean).getTime();
           let closestBar = data[0];
-          let minDiff = Math.abs(new Date(data[0].time).getTime() - targetTime);
+          const firstBarMs = typeof data[0].time === 'number' ? data[0].time * 1000 : new Date(data[0].time).getTime();
+          let minDiff = Math.abs(firstBarMs - targetTime);
           for (let i = 1; i < data.length; i++) {
-            const diff = Math.abs(new Date(data[i].time).getTime() - targetTime);
+            const barMs = typeof data[i].time === 'number' ? (data[i].time as number) * 1000 : new Date(data[i].time).getTime();
+            const diff = Math.abs(barMs - targetTime);
             if (diff < minDiff) {
               minDiff = diff;
               closestBar = data[i];
             }
           }
-          xCoordinate = timeScale.timeToCoordinate(closestBar.time as Time);
+          xCoordinate = timeScale.timeToCoordinate(parseChartTime(closestBar.time));
         }
 
         const left = xCoordinate !== null ? xCoordinate : 10;
@@ -656,7 +659,7 @@ export default function ChartWidget({
       });
       const formattedPredictions = json.predictions
         .map((p: any) => ({
-          time: String(p.time || p.date),
+          time: parseChartTime(p.time || p.date),
           open: Number(p.open),
           high: Number(p.high),
           low: Number(p.low),
@@ -799,7 +802,7 @@ export default function ChartWidget({
         <ChartReplayControls
           data={data}
           replayIndex={replayIndex}
-          replayDate={replayDate}
+          replayDate={replayDate ? String(replayDate) : null}
           isPlaying={isPlaying}
           playbackSpeed={playbackSpeed}
           onJumpToStart={() => setReplayIndex(0)}

@@ -96,9 +96,9 @@ export default function ChartReplayControls({
         type="date"
         title="Replay date"
         aria-label="Replay date"
-        min={data[0]?.time}
-        max={data[data.length - 1]?.time}
-        value={replayDate ?? ''}
+        min={data[0] ? (typeof data[0].time === 'number' ? new Date(data[0].time * 1000).toISOString().split('T')[0] : String(data[0].time).split('T')[0]) : ''}
+        max={data[data.length - 1] ? (typeof data[data.length - 1].time === 'number' ? new Date((data[data.length - 1].time as number) * 1000).toISOString().split('T')[0] : String(data[data.length - 1].time).split('T')[0]) : ''}
+        value={replayDate ? (typeof replayDate === 'number' ? new Date(replayDate * 1000).toISOString().split('T')[0] : String(replayDate).split('T')[0]) : ''}
         onChange={(event) => onDateChange(event.target.value)}
         className="date-token w-32"
       />
@@ -110,7 +110,7 @@ export default function ChartReplayControls({
         min={0}
         max={Math.max(0, data.length - 1)}
         value={replayIndex}
-        onChange={(event) => onDateChange(data[Number(event.target.value)]?.time ?? replayDate ?? '')}
+        onChange={(event) => onDateChange(String(data[Number(event.target.value)]?.time ?? replayDate ?? ''))}
         className="h-8 w-28 accent-white cursor-pointer"
       />
 

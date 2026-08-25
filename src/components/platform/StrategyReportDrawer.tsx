@@ -59,7 +59,7 @@ interface StrategyReportDrawerProps {
   companyName?: string;
   logoUrl?: string | null;
   chartData: Array<{
-    time: string;
+    time: string | number;
     open: number;
     high: number;
     low: number;
@@ -119,8 +119,20 @@ export default function StrategyReportDrawer({
   const resolvedLogoUrl = propLogoUrl || fetchedMeta.logoUrl || null;
 
   // Date range state
-  const defaultEndDate = chartData.length > 0 ? chartData[chartData.length - 1].time : '';
-  const [startDate, setStartDate] = useState<string>('2025-01-01');
+  const defaultEndDate = chartData.length > 0
+    ? (typeof chartData[chartData.length - 1].time === 'number'
+        ? new Date((chartData[chartData.length - 1].time as number) * 1000).toISOString()
+        : String(chartData[chartData.length - 1].time))
+    : '';
+  const [startDate, setStartDate] = useState<string>(
+    timeframe === '1H' || timeframe === '60'
+      ? (chartData.length > 0
+          ? (typeof chartData[0].time === 'number'
+              ? new Date((chartData[0].time as number) * 1000).toISOString()
+              : String(chartData[0].time))
+          : '')
+      : '2025-01-01'
+  );
   const [endDate, setEndDate] = useState<string>(defaultEndDate);
   const [activePreset, setActivePreset] = useState<'2025' | '1y' | 'all' | 'custom'>('2025');
 
@@ -141,7 +153,12 @@ export default function StrategyReportDrawer({
 
   useEffect(() => {
     if (chartData.length > 0 && !endDate) {
-      setEndDate(chartData[chartData.length - 1].time);
+      const lastTime = chartData[chartData.length - 1].time;
+      setEndDate(
+        typeof lastTime === 'number'
+          ? new Date(lastTime * 1000).toISOString()
+          : String(lastTime)
+      );
     }
   }, [chartData, endDate]);
 
@@ -178,7 +195,11 @@ export default function StrategyReportDrawer({
 
   const handlePresetDate = (preset: '2025' | '1y' | 'all') => {
     setActivePreset(preset);
-    const lastDate = chartData.length > 0 ? chartData[chartData.length - 1].time : new Date().toISOString().split('T')[0];
+    const lastDate = chartData.length > 0
+      ? (typeof chartData[chartData.length - 1].time === 'number'
+          ? new Date((chartData[chartData.length - 1].time as number) * 1000).toISOString()
+          : String(chartData[chartData.length - 1].time))
+      : new Date().toISOString().split('T')[0];
     setEndDate(lastDate);
 
     if (preset === '2025') {
@@ -188,7 +209,11 @@ export default function StrategyReportDrawer({
       d.setFullYear(d.getFullYear() - 1);
       setStartDate(d.toISOString().split('T')[0]);
     } else if (preset === 'all') {
-      const firstDate = chartData.length > 0 ? chartData[0].time : '2020-01-01';
+      const firstDate = chartData.length > 0
+        ? (typeof chartData[0].time === 'number'
+            ? new Date((chartData[0].time as number) * 1000).toISOString()
+            : String(chartData[0].time))
+        : '2020-01-01';
       setStartDate(firstDate);
     }
   };
@@ -235,7 +260,9 @@ export default function StrategyReportDrawer({
 
     const bars: PriceBar[] = chartData
       .map((d) => ({
-        date: d.time,
+        date: typeof d.time === 'number'
+          ? new Date(d.time * 1000).toISOString()
+          : String(d.time),
         open: d.open,
         high: d.high,
         low: d.low,
