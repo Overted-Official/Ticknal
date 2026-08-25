@@ -13,17 +13,8 @@ CREATE POLICY "system_logs_service_role_all" ON public.system_logs
   USING (true)
   WITH CHECK (true);
 
--- 2. psi_combinations
-ALTER TABLE IF EXISTS public.psi_combinations ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "psi_combinations_read_all" ON public.psi_combinations;
-DROP POLICY IF EXISTS "psi_combinations_service_role_all" ON public.psi_combinations;
-CREATE POLICY "psi_combinations_read_all" ON public.psi_combinations
-  FOR SELECT TO authenticated, anon
-  USING (true);
-CREATE POLICY "psi_combinations_service_role_all" ON public.psi_combinations
-  FOR ALL TO service_role
-  USING (true)
-  WITH CHECK (true);
+-- 2. psi_combinations (redundant: replaced by static unified parameter files)
+DROP TABLE IF EXISTS public.psi_combinations CASCADE;
 
 -- 3. intraday_bot_settings
 ALTER TABLE IF EXISTS public.intraday_bot_settings ENABLE ROW LEVEL SECURITY;
