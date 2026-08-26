@@ -127,7 +127,7 @@ export async function handleUpdateStocks(req: Request) {
           const timeout = setTimeout(() => {
             cleanup();
             resolve([]);
-          }, 2200);
+          }, 2000);
 
           chart.onUpdate(() => {
             const periods = chart.periods;
@@ -166,9 +166,9 @@ export async function handleUpdateStocks(req: Request) {
       });
     };
 
-    const BATCH_SIZE = 8;
+    const BATCH_SIZE = 16;
     for (let i = 0; i < stockTickers.length; i += BATCH_SIZE) {
-      if (Date.now() - startTime > 45000) {
+      if (Date.now() - startTime > 52000) {
         console.warn(`handleUpdateStocks: Time budget reached at ticker index ${i}/${stockTickers.length}`);
         break;
       }
@@ -612,18 +612,29 @@ export async function handleWatchdog(req: Request) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
-  const cronSecret = process.env.CRON_SECRET!;
-  const host = req.headers.get('host') || 'localhost:3000';
-  
   try {
     const now = new Date();
-    const dayOfWeek = now.getDay();
+    const dayOfWeek = now.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+    const todayStr = now.toISOString().split('T')[0];
 
     const isEgxTradingDay = dayOfWeek >= 0 && dayOfWeek <= 4;
     const isGlobalTradingDay = dayOfWeek >= 1 && dayOfWeek <= 5;
 
     if (!isEgxTradingDay && !isGlobalTradingDay) {
       return NextResponse.json({ message: 'Saturday (full market close), watchdog skipping.' }, { status: 200 });
+    }
+
+    // Determine expected latest date for EGX stocks (Market closes at 14:30 Cairo = 11:30 or 12:30 UTC)
+    let expectedEgxDate = todayStr;
+    if (now.getUTCHours() < 15) {
+      // If before 15:00 UTC, expected date is the previous trading session
+      const prevSession = new Date(now);
+      if (dayOfWeek === 0) {
+        prevSession.setDate(now.getDate() - 3); // Sunday morning -> expects Thursday
+      } else {
+        prevSession.setDate(now.getDate() - 1);
+      }
+      expectedEgxDate = prevSession.toISOString().split('T')[0];
     }
 
     const maxDates = await db
@@ -634,7 +645,7 @@ export async function handleWatchdog(req: Request) {
       .from(dailyPrices)
       .groupBy(dailyPrices.tickerSymbol);
 
-    let stocksMissing = false;
+    let stocksMissingCount = 0;
     let fundsMissing = false;
     let commoditiesMissing = false;
 
@@ -643,37 +654,57 @@ export async function handleWatchdog(req: Request) {
       
       const isGlobal = GLOBAL_COMMODITIES.has(row.tickerSymbol);
       const isFund = FUNDS.has(row.tickerSymbol);
-      const lastDate = new Date(row.maxDate);
-      const daysSince = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      const rowDateStr = typeof row.maxDate === 'string' ? row.maxDate.split('T')[0] : new Date(row.maxDate).toISOString().split('T')[0];
 
-      if (isGlobal && isGlobalTradingDay && daysSince >= 2) commoditiesMissing = true;
-      else if (isFund && isEgxTradingDay && daysSince >= 2) fundsMissing = true;
-      else if (!isGlobal && !isFund && isEgxTradingDay && daysSince >= 2) stocksMissing = true;
+      if (isGlobal && isGlobalTradingDay && rowDateStr < todayStr) {
+        commoditiesMissing = true;
+      } else if (isFund && isEgxTradingDay && rowDateStr < expectedEgxDate) {
+        fundsMissing = true;
+      } else if (!isGlobal && !isFund && isEgxTradingDay && rowDateStr < expectedEgxDate) {
+        stocksMissingCount++;
+      }
     }
 
+    const stocksMissing = stocksMissingCount > 10;
     const triggersTriggered: string[] = [];
 
+    // Directly execute missing syncs in-process with zero network dependency
     if (stocksMissing && isEgxTradingDay) {
-      await triggerEndpoint('/api/cron/update-stocks', host, cronSecret);
-      triggersTriggered.push('update-stocks');
+      try {
+        await handleUpdateStocks(req);
+        await handleProcessSignals(req);
+        triggersTriggered.push('update-stocks', 'process-signals');
+      } catch (e) {
+        console.error('Watchdog failed to run handleUpdateStocks:', e);
+      }
     }
+
     if (fundsMissing && isEgxTradingDay) {
-      await triggerEndpoint('/api/cron/update-funds', host, cronSecret);
-      triggersTriggered.push('update-funds');
+      try {
+        await handleUpdateFunds(req);
+        triggersTriggered.push('update-funds');
+      } catch (e) {
+        console.error('Watchdog failed to run handleUpdateFunds:', e);
+      }
     }
+
     if (commoditiesMissing && isGlobalTradingDay) {
-      await triggerEndpoint('/api/cron/update-commodities', host, cronSecret);
-      triggersTriggered.push('update-commodities');
+      try {
+        await handleUpdateCommodities(req);
+        triggersTriggered.push('update-commodities');
+      } catch (e) {
+        console.error('Watchdog failed to run handleUpdateCommodities:', e);
+      }
     }
 
     await db.insert(systemLogs).values({
       source: 'cron-watchdog',
       level: 'INFO',
-      message: `Watchdog health check completed. Triggers triggered: ${triggersTriggered.join(', ') || 'None'}.`,
-      metadata: { triggersTriggered, stocksMissing, fundsMissing, commoditiesMissing }
+      message: `Watchdog health check completed. Triggers triggered: ${triggersTriggered.join(', ') || 'None'}. (Missing stocks: ${stocksMissingCount})`,
+      metadata: { triggersTriggered, stocksMissingCount, stocksMissing, fundsMissing, commoditiesMissing, expectedEgxDate }
     });
 
-    return NextResponse.json({ message: 'Watchdog check completed', triggersTriggered }, { status: 200 });
+    return NextResponse.json({ message: 'Watchdog check completed', triggersTriggered, stocksMissingCount, expectedEgxDate }, { status: 200 });
   } catch (error) {
     console.error('Error in handleWatchdog:', error);
     await db.insert(systemLogs).values({
