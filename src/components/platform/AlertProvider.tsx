@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { isNativePlatform, initNativeBridge } from '@/lib/native/capacitor-bridge';
+import { isNativePlatform, requestNativePushPermission } from '@/lib/native/capacitor-bridge';
 
 type AlertContextValue = {
   alertedSymbols: Set<string>;
@@ -28,14 +28,6 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
     window.setTimeout(() => {
       setDeviceId(getOrCreateDeviceId());
       setPermission(getNotificationPermission());
-
-      if (isNativePlatform()) {
-        initNativeBridge({
-          onNavigate: (url) => {
-            window.location.href = url;
-          },
-        });
-      }
     }, 0);
   }, []);
 
@@ -63,6 +55,17 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
   }, [deviceId]);
 
   const ensurePushSubscription = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    if (isNativePlatform()) {
+      const res = await requestNativePushPermission();
+      if (res.success) {
+        setPermission('granted');
+        setStatusMessage('Native push notifications enabled!');
+      } else {
+        setStatusMessage(res.error || 'Failed to enable notifications');
+      }
+      return res;
+    }
+
     if (!deviceId) return { success: false, error: 'Device ID not initialized.' };
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       setPermission('unsupported');
