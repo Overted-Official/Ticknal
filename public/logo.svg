@@ -1,11 +1,6 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="96" fill="#000000"/>
-  <svg x="64" y="64" width="384" height="384" viewBox="0 0 24 24"
-       fill="none" stroke="#FFFFFF" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round"
-       xmlns="http://www.w3.org/2000/svg">
-    <path d="M5 21v-6"/>
-    <path d="M12 21V9"/>
-    <path d="M19 21V3"/>
-  </svg>
+  <rect width="512" height="512" fill="#000000"/>
+  <rect x="152" y="280" width="32" height="110" rx="16" fill="#FFFFFF"/>
+  <rect x="240" y="200" width="32" height="190" rx="16" fill="#FFFFFF"/>
+  <rect x="328" y="120" width="32" height="270" rx="16" fill="#FFFFFF"/>
 </svg>
