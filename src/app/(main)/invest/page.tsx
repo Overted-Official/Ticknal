@@ -68,17 +68,35 @@ async function InvestPageContent({
   }
   const openPositionsSet = new Set(openPositionsRows.map(o => o.tickerSymbol));
 
-  // Fetch opportunities to show thunder icon on watchlist
-  const [recentPricesRows, recentOpportunities] = await Promise.all([
-    getCachedRecentPrices(),
-    getRecentOpportunities(5)
-  ]);
-  
-  const recentBuySymbols = new Set(
-    recentOpportunities
-      .filter(opp => opp.signal.signal === 'BUY')
-      .map(opp => opp.symbol)
-  );
+  // Fetch opportunities to show thunder icon on watchlist with fast fallback
+  let recentPricesRows: any[] = [];
+  let recentBuySymbols = new Set<string>();
+
+  try {
+    const pricesPromise = getCachedRecentPrices();
+    const opportunitiesPromise = Promise.race([
+      getRecentOpportunities(5),
+      new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 1500)),
+    ]);
+
+    const [pricesRes, opportunitiesRes] = await Promise.allSettled([
+      pricesPromise,
+      opportunitiesPromise,
+    ]);
+
+    if (pricesRes.status === 'fulfilled') {
+      recentPricesRows = pricesRes.value || [];
+    }
+    if (opportunitiesRes.status === 'fulfilled' && Array.isArray(opportunitiesRes.value)) {
+      recentBuySymbols = new Set(
+        opportunitiesRes.value
+          .filter((opp: any) => opp?.signal?.signal === 'BUY')
+          .map((opp: any) => opp.symbol)
+      );
+    }
+  } catch (err) {
+    console.error('Error fetching prices/opportunities in invest:', err);
+  }
 
   // Group by ticker symbol for O(1) lookup
   const priceMap: Record<string, { lastPrice: number, prevPrice: number, volume: number }> = {};

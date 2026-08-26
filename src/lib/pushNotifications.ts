@@ -38,12 +38,11 @@ export async function dispatchSignalNotifications(options: {
     messages: [],
   };
 
-  if (!result.configured) {
-    result.messages.push('Web Push is not configured. Set NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.');
-    return result;
+  if (result.configured) {
+    configureWebPush();
+  } else {
+    result.messages.push('Web Push not configured, proceeding with Native Device & In-App notification dispatches.');
   }
-
-  configureWebPush();
 
   const symbolFilter = new Set((options.symbols ?? []).map(normalizeTickerSymbol));
   
