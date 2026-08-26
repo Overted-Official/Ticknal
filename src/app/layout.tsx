@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
+import NativeBridgeProvider from "@/components/platform/NativeBridgeProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         {children}
         <ServiceWorkerRegistration />
+        <NativeBridgeProvider />
       </body>
     </html>
   );
