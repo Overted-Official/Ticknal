@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { LayoutDashboard, LineChart, Wallet, Settings, Bell, Plus, Bot } from '@/components/ui/icon-library';
+import { LayoutDashboard, LineChart, Wallet, Settings, Bell, Plus } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
@@ -16,7 +16,6 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, isActive: (p: string) => p === '/dashboard' },
   { href: '/invest', label: 'Invest', icon: LineChart, isActive: (p: string) => p === '/invest' || p === '/charts' },
-  { href: '/bot', label: 'Bot', icon: Bot, isActive: (p: string) => p === '/bot' },
   { href: '/wallet', label: 'Wallet', icon: Wallet, isActive: (p: string) => p === '/wallet' || p === '/positions' },
   { href: '/settings', label: 'Settings', icon: Settings, isActive: (p: string) => p === '/settings' },
 ];

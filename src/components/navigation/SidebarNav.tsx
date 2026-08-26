@@ -17,10 +17,6 @@ import {
   ShieldCheck,
   Layers,
   LayoutGrid,
-  Bot,
-  Cpu,
-  History,
-  Terminal,
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import { flyoutReveal } from '@/lib/motion';
@@ -34,13 +30,11 @@ export default function SidebarNav() {
 
   const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
   const [isChartsMenuOpen, setIsChartsMenuOpen] = useState(false);
-  const [isBotMenuOpen, setIsBotMenuOpen] = useState(false);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const dashboardMenuRef = useRef<HTMLDivElement>(null);
   const chartsMenuRef = useRef<HTMLDivElement>(null);
-  const botMenuRef = useRef<HTMLDivElement>(null);
   const walletMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
@@ -63,9 +57,6 @@ export default function SidebarNav() {
       if (chartsMenuRef.current && !chartsMenuRef.current.contains(event.target as Node)) {
         setIsChartsMenuOpen(false);
       }
-      if (botMenuRef.current && !botMenuRef.current.contains(event.target as Node)) {
-        setIsBotMenuOpen(false);
-      }
       if (walletMenuRef.current && !walletMenuRef.current.contains(event.target as Node)) {
         setIsWalletMenuOpen(false);
       }
@@ -76,7 +67,6 @@ export default function SidebarNav() {
 
   const isDashboardActive = pathname === '/dashboard';
   const isInvestActive = pathname === '/invest' || pathname === '/charts';
-  const isBotActive = pathname === '/bot';
   const isWalletActive = pathname === '/wallet' || pathname === '/positions';
 
   return (
@@ -98,7 +88,6 @@ export default function SidebarNav() {
             onClick={() => {
               setIsDashboardMenuOpen(!isDashboardMenuOpen);
               setIsChartsMenuOpen(false);
-              setIsBotMenuOpen(false);
               setIsWalletMenuOpen(false);
             }}
             className="flex items-center justify-center relative"
@@ -174,7 +163,6 @@ export default function SidebarNav() {
             onClick={() => {
               setIsChartsMenuOpen(!isChartsMenuOpen);
               setIsDashboardMenuOpen(false);
-              setIsBotMenuOpen(false);
               setIsWalletMenuOpen(false);
             }}
             className="flex items-center justify-center relative"
@@ -197,7 +185,7 @@ export default function SidebarNav() {
               variants={flyoutReveal}
               initial="hidden"
               animate="visible"
-              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-40 overflow-hidden"
+              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-44 overflow-hidden"
             >
               <div className="nav-flyout-title">Invest</div>
               <Link
@@ -210,7 +198,7 @@ export default function SidebarNav() {
                     : ''
                 }`}
               >
-                <LayoutGrid size={16} />
+                <Layers size={16} />
                 <span>Sectors</span>
               </Link>
               <Link
@@ -230,96 +218,7 @@ export default function SidebarNav() {
           )}
         </div>
 
-        {/* 3. Intraday Trading Bot with Sub-Menu */}
-        <div className="w-full relative flex items-center justify-center group" ref={botMenuRef}>
-          <button
-            type="button"
-            onClick={() => {
-              setIsBotMenuOpen(!isBotMenuOpen);
-              setIsDashboardMenuOpen(false);
-              setIsChartsMenuOpen(false);
-              setIsWalletMenuOpen(false);
-            }}
-            className="flex items-center justify-center relative"
-            title="Trading Bot"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isBotActive || isBotMenuOpen
-                  ? 'nav-icon-active'
-                  : 'text-plt-muted hover:text-plt-text'
-              }`}
-            >
-              <Bot size={20} strokeWidth={1.5} />
-            </div>
-          </button>
-
-          {/* Desktop Floating Menu for Bot */}
-          {isBotMenuOpen && (
-            <motion.div
-              variants={flyoutReveal}
-              initial="hidden"
-              animate="visible"
-              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-44 overflow-hidden"
-            >
-              <div className="nav-flyout-title">Trading Bot</div>
-              <Link
-                href="/bot?tab=analytics"
-                prefetch={true}
-                onClick={() => setIsBotMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isBotActive && (!currentTab || currentTab === 'analytics' || currentTab === 'cockpit')
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <Cpu size={16} />
-                <span>Analytics</span>
-              </Link>
-              <Link
-                href="/bot?tab=history"
-                prefetch={true}
-                onClick={() => setIsBotMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isBotActive && (currentTab === 'history' || currentTab === 'trades')
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <History size={16} />
-                <span>History</span>
-              </Link>
-              <Link
-                href="/bot?tab=settings"
-                prefetch={true}
-                onClick={() => setIsBotMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isBotActive && (currentTab === 'settings' || currentTab === 'basket')
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <Settings size={16} />
-                <span>Settings</span>
-              </Link>
-              <Link
-                href="/bot?tab=logs"
-                prefetch={true}
-                onClick={() => setIsBotMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isBotActive && currentTab === 'logs'
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <Terminal size={16} />
-                <span>Logs</span>
-              </Link>
-            </motion.div>
-          )}
-        </div>
-
-        {/* 4. Wallet with Sub-Menu */}
+        {/* 3. Wallet with Sub-Menu */}
         <div className="w-full relative flex items-center justify-center group" ref={walletMenuRef}>
           <button
             type="button"
@@ -327,7 +226,6 @@ export default function SidebarNav() {
               setIsWalletMenuOpen(!isWalletMenuOpen);
               setIsDashboardMenuOpen(false);
               setIsChartsMenuOpen(false);
-              setIsBotMenuOpen(false);
             }}
             className="flex items-center justify-center relative"
             title="Wallet"
