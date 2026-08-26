@@ -239,23 +239,23 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       </div>
 
       {/* ---------------------------------------------------- */}
-      {/* MOBILE BOTTOM SHEET DRAWER                           */}
+      {/* MOBILE BOTTOM SHEET DRAWER (SOLID OPAQUE SURFACE)     */}
       {/* ---------------------------------------------------- */}
       {isMobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-plt-card border-t border-plt-border-strong rounded-t-2xl max-h-[85vh] flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-plt-border/40">
+        <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end bg-black/80 animate-in fade-in duration-200">
+          <div className="bg-[#0f0f12] border-t border-plt-border-strong rounded-t-2xl max-h-[85vh] flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-plt-border/40 shrink-0">
               <span className="font-bold text-sm text-plt-text">Sector Performance Attribution</span>
               <button
                 type="button"
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="p-1 rounded-full text-plt-muted hover:text-plt-text hover:bg-white/[0.08]"
+                className="p-1 rounded-full text-plt-muted hover:text-plt-text hover:bg-white/[0.08] cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto pt-3">
+            <div className="flex-1 overflow-y-auto pt-3 custom-scrollbar">
               <SectorInspector
                 sector={activeSectorData}
                 selectedTicker={selectedTicker}
