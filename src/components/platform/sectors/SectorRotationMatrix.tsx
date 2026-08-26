@@ -122,7 +122,7 @@ export default function SectorRotationMatrix({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="card-widget relative w-full h-full min-h-106 overflow-hidden flex flex-col justify-between select-none font-sans"
+      className="card-widget relative w-full h-full min-h-106 overflow-hidden flex flex-col justify-between select-none font-sans touch-pan-y"
     >
       {/* 1. Main Matrix Canvas Area (Flex-1 Separated from Footer) */}
       <div className="flex-1 min-h-0 relative w-full h-full overflow-hidden">

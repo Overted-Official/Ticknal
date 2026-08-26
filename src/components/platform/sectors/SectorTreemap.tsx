@@ -226,7 +226,7 @@ export default function SectorTreemap({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="w-full h-full relative select-none overflow-hidden bg-plt-base flex flex-col font-sans"
+      className="w-full h-full relative select-none overflow-hidden bg-plt-base flex flex-col font-sans touch-pan-y"
     >
       {/* 1. Treemap Visual Breadcrumb & Focus Status Bar */}
       <div className="h-7 px-3 flex items-center justify-between bg-plt-surface/90 backdrop-blur-md border-b border-plt-border-soft text-xs text-plt-muted shrink-0 z-30">

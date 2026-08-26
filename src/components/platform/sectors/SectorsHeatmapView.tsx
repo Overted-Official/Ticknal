@@ -147,7 +147,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
   };
 
   return (
-    <div className="flex-1 h-full w-full overflow-hidden select-none bg-plt-base text-plt-text font-sans flex flex-col p-3 md:p-5 gap-3">
+    <div className="flex-1 h-full w-full overflow-y-auto md:overflow-hidden select-none bg-plt-base text-plt-text font-sans flex flex-col p-3 md:p-5 gap-3 pb-24 md:pb-5 touch-pan-y custom-scrollbar">
       {/* ---------------------------------------------------- */}
       {/* 1. TOP CONTROLS & KPI STRIP (SHRINK-0)               */}
       {/* ---------------------------------------------------- */}
@@ -192,9 +192,9 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       {/* ---------------------------------------------------- */}
       {/* 2. DEDICATED MAIN WORKSPACE CANVAS (FLEX-1 VIEWPORT) */}
       {/* ---------------------------------------------------- */}
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-5 overflow-hidden">
+      <div className="flex-1 min-h-[500px] md:min-h-0 h-[520px] md:h-full flex flex-col md:flex-row gap-5 overflow-hidden shrink-0 md:shrink">
         {/* Left Pane: Treemap or Rotation Matrix */}
-        <div className="flex-1 h-full min-h-0 overflow-hidden relative border border-plt-border-soft bg-plt-base">
+        <div className="flex-1 h-full min-h-[460px] md:min-h-0 overflow-hidden relative border border-plt-border-soft bg-plt-base rounded-xl">
           {isLoading ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
               <RefreshCw className="w-6 h-6 animate-spin text-plt-muted" />
