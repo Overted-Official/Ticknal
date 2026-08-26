@@ -19,6 +19,7 @@ import {
   handleSnapshotsPost,
   handleTransactionsGet,
   handleTransactionsPost,
+  handleTransactionsPut,
   handleTransactionsDelete,
 } from '@/lib/banks-handlers';
 import {
@@ -313,8 +314,9 @@ export async function PUT(req: Request, context: { params: Promise<{ slug?: stri
   const root = segments[0] || '';
   const sub = segments[1] || '';
 
-  if (root === 'banks' && sub === 'accounts') {
-    return handleAccountsPut(req);
+  if (root === 'banks') {
+    if (sub === 'accounts') return handleAccountsPut(req);
+    if (sub === 'transactions') return handleTransactionsPut(req);
   }
 
   return NextResponse.json({ error: `API route not found: /api/${segments.join('/')}` }, { status: 404 });
@@ -329,8 +331,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ slug?: st
   const root = segments[0] || '';
   const sub = segments[1] || '';
 
-  if (root === 'banks' && sub === 'accounts') {
-    return handleAccountsPut(req);
+  if (root === 'banks') {
+    if (sub === 'accounts') return handleAccountsPut(req);
+    if (sub === 'transactions') return handleTransactionsPut(req);
   }
 
   if (root === 'positions' || (root === 'user' && sub === 'positions')) {

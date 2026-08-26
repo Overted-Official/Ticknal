@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRightLeft, X, Check } from '@/components/ui/icon-library';
-import { type BankAccount } from '@/types/bank';
+import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
 
 interface LogTransactionDrawerProps {
@@ -12,6 +12,7 @@ interface LogTransactionDrawerProps {
   accounts: BankAccount[];
   categories: string[];
   onTransactionLogged: () => void;
+  transactionToEdit?: BankTransaction | null;
 }
 
 export default function LogTransactionDrawer({
@@ -20,8 +21,11 @@ export default function LogTransactionDrawer({
   accounts,
   categories,
   onTransactionLogged,
+  transactionToEdit,
 }: LogTransactionDrawerProps) {
   const { toast } = useToast();
+  const isEditMode = Boolean(transactionToEdit);
+
   const [txMode, setTxMode] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION'>('EXPENSE');
   const [accountId, setAccountId] = useState<string>(accounts[0] ? String(accounts[0].id) : '');
   const [toAccountId, setToAccountId] = useState<string>('');
@@ -31,6 +35,30 @@ export default function LogTransactionDrawer({
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    if (transactionToEdit) {
+      setTxMode((transactionToEdit.type as any) || 'EXPENSE');
+      setAccountId(String(transactionToEdit.accountId));
+      setToAccountId(transactionToEdit.toAccountId ? String(transactionToEdit.toAccountId) : '');
+      setAmount(String(transactionToEdit.amount));
+      setCurrency(transactionToEdit.currency || 'EGP');
+      setCategory(transactionToEdit.category || categories[0] || 'Living & Bills');
+      setTransactionDate(transactionToEdit.transactionDate || new Date().toISOString().split('T')[0]);
+      setNotes(transactionToEdit.notes || '');
+    } else {
+      setTxMode('EXPENSE');
+      setAccountId(accounts[0] ? String(accounts[0].id) : '');
+      setToAccountId('');
+      setAmount('');
+      setCurrency(accounts[0]?.currency || 'EGP');
+      setCategory(categories[0] || 'Living & Bills');
+      setTransactionDate(new Date().toISOString().split('T')[0]);
+      setNotes('');
+    }
+  }, [isOpen, transactionToEdit, accounts, categories]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,9 +70,10 @@ export default function LogTransactionDrawer({
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/banks/transactions', {
-        method: 'POST',
+        method: isEditMode ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          ...(isEditMode && transactionToEdit ? { id: transactionToEdit.id } : {}),
           accountId: Number(accountId),
           toAccountId: txMode === 'TRANSFER' && toAccountId ? Number(toAccountId) : null,
           type: txMode,
@@ -58,15 +87,15 @@ export default function LogTransactionDrawer({
 
       if (res.ok) {
         toast.success(
-          'Transaction Recorded',
-          `${txMode === 'TRANSFER' ? 'Transfer' : txMode} of ${Number(amount).toLocaleString()} ${currency} completed.`
+          isEditMode ? 'Transaction Updated' : 'Transaction Recorded',
+          `${txMode === 'TRANSFER' ? 'Transfer' : txMode} of ${Number(amount).toLocaleString()} ${currency} ${isEditMode ? 'updated' : 'completed'}.`
         );
         onTransactionLogged();
         onClose();
         setAmount('');
         setNotes('');
       } else {
-        toast.error('Transaction Failed', 'Could not record the transaction. Please try again.');
+        toast.error('Transaction Failed', 'Could not save the transaction. Please try again.');
       }
     } catch (err) {
       console.error('Failed to log transaction:', err);
@@ -101,8 +130,12 @@ export default function LogTransactionDrawer({
             {/* Header */}
             <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">Log Transaction</h3>
-                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Record transfers, expenses, income & cash flows</p>
+                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">
+                  {isEditMode ? 'Edit Transaction' : 'Log Transaction'}
+                </h3>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">
+                  {isEditMode ? 'Modify transaction details & recalculate balances' : 'Record transfers, expenses, income & cash flows'}
+                </p>
               </div>
 
               <button
@@ -271,7 +304,7 @@ export default function LogTransactionDrawer({
                   className="btn-token btn-primary btn-compact font-sans"
                 >
                   <Check size={14} strokeWidth={2.5} />
-                  {isSubmitting ? 'Recording...' : 'Record Transaction'}
+                  {isSubmitting ? (isEditMode ? 'Saving...' : 'Recording...') : (isEditMode ? 'Save Changes' : 'Record Transaction')}
                 </button>
               </div>
             </form>

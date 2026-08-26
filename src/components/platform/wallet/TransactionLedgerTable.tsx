@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRightLeft, Search, Trash2, ChevronDown, Check, X, Filter } from '@/components/ui/icon-library';
+import { ArrowRightLeft, Search, Trash2, ChevronDown, Check, X, Filter, Edit2 } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { formatUiLabel } from '@/lib/format-ui-label';
 
@@ -11,6 +11,7 @@ interface TransactionLedgerTableProps {
   accounts: BankAccount[];
   categories: string[];
   onDeleteTransaction: (id: number) => void;
+  onEditTransaction?: (tx: BankTransaction) => void;
 }
 
 // Custom Dropdown Popover Component
@@ -106,6 +107,7 @@ export default function TransactionLedgerTable({
   accounts,
   categories,
   onDeleteTransaction,
+  onEditTransaction,
 }: TransactionLedgerTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
@@ -171,7 +173,7 @@ export default function TransactionLedgerTable({
               placeholder="Search notes, categories, accounts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 pl-8 pr-7 w-48 sm:w-60 rounded-xl bg-plt-card border border-plt-border-soft hover:border-plt-border focus:border-plt-border-active focus:outline-none text-xs font-sans text-plt-text placeholder:text-plt-muted transition-all"
+              className="h-8 pl-8 pr-7 w-48 sm:w-60 rounded-xl bg-plt-card border border-plt-border-soft hover:border-plt-border focus:border-plt-border-active focus:outline-none text-[11px] font-sans text-plt-text placeholder:text-plt-muted placeholder:text-[11px] transition-all"
             />
             {searchQuery && (
               <button
@@ -278,14 +280,26 @@ export default function TransactionLedgerTable({
                       {tx.notes || '—'}
                     </td>
                     <td className="py-2.5 px-3.5 text-right last:rounded-r-xl">
-                      <button
-                        type="button"
-                        onClick={() => onDeleteTransaction(tx.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded-md bg-plt-hover hover:bg-plt-risk/20 text-plt-muted hover:text-plt-risk transition-all cursor-pointer"
-                        title="Delete entry & revert balance"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {onEditTransaction && (
+                          <button
+                            type="button"
+                            onClick={() => onEditTransaction(tx)}
+                            className="p-1 rounded-md bg-plt-hover hover:bg-plt-info/20 text-plt-muted hover:text-plt-info transition-all cursor-pointer"
+                            title="Edit transaction details"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onDeleteTransaction(tx.id)}
+                          className="p-1 rounded-md bg-plt-hover hover:bg-plt-risk/20 text-plt-muted hover:text-plt-risk transition-all cursor-pointer"
+                          title="Delete entry & revert balance"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

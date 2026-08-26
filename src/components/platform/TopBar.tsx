@@ -130,12 +130,12 @@ export default function TopBar({
           onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}
         >
           <div className="bg-plt-base/95 backdrop-blur-2xl border border-plt-border rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-search-results overflow-hidden animate-in zoom-in-95 duration-150 text-plt-text">
-            <div className="flex items-center px-4 py-4 border-b border-plt-border bg-plt-hover">
-              <Search size={16} className="text-plt-muted mr-4 shrink-0" />
+            <div className="flex items-center px-4 py-3 border-b border-plt-border bg-plt-hover">
+              <Search size={14} className="text-plt-muted mr-3 shrink-0" />
               <input
                 type="text"
                 placeholder="Search Egyptian stocks, indices, commodities..."
-                className="flex-1 bg-transparent border-none outline-none text-plt-text text-sm placeholder:text-plt-muted"
+                className="flex-1 bg-transparent border-none outline-none text-plt-text text-xs font-sans placeholder:text-plt-muted placeholder:text-xs"
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

@@ -70,6 +70,7 @@ export default function WalletBankAccountsView({
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isTxDrawerOpen, setIsTxDrawerOpen] = useState(false);
   const [selectedAccountForEdit, setSelectedAccountForEdit] = useState<BankAccount | null>(null);
+  const [selectedTxForEdit, setSelectedTxForEdit] = useState<BankTransaction | null>(null);
 
   // Handle Delete Account
   async function handleDeleteAccount(id: number) {
@@ -113,6 +114,7 @@ export default function WalletBankAccountsView({
                   toast.warning('No Accounts Found', 'Please add a bank account first before logging transactions.');
                   return;
                 }
+                setSelectedTxForEdit(null);
                 setIsTxDrawerOpen(true);
               }}
               onAddAccount={() => setIsAccountDrawerOpen(true)}
@@ -149,6 +151,10 @@ export default function WalletBankAccountsView({
                   accounts={accounts}
                   categories={CATEGORIES}
                   onDeleteTransaction={handleDeleteTransaction}
+                  onEditTransaction={(tx) => {
+                    setSelectedTxForEdit(tx);
+                    setIsTxDrawerOpen(true);
+                  }}
                 />
               </div>
             </section>
@@ -176,9 +182,13 @@ export default function WalletBankAccountsView({
 
       <LogTransactionDrawer
         isOpen={isTxDrawerOpen}
-        onClose={() => setIsTxDrawerOpen(false)}
+        onClose={() => {
+          setIsTxDrawerOpen(false);
+          setSelectedTxForEdit(null);
+        }}
         accounts={accounts}
         categories={CATEGORIES}
+        transactionToEdit={selectedTxForEdit}
         onTransactionLogged={() => {
           mutateAccounts();
           mutateTx();

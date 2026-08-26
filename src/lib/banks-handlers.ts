@@ -510,6 +510,122 @@ export async function handleTransactionsPost(req: Request) {
   }
 }
 
+export async function handleTransactionsPut(req: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const {
+      id,
+      accountId,
+      toAccountId,
+      type,
+      amount,
+      currency,
+      category,
+      transactionDate,
+      notes,
+    } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Transaction ID required' }, { status: 400 });
+    }
+
+    // 1. Fetch old transaction
+    const [oldTx] = await db
+      .select()
+      .from(bankTransactions)
+      .where(and(eq(bankTransactions.id, Number(id)), eq(bankTransactions.userId, user.id)));
+
+    if (!oldTx) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
+    }
+
+    // 2. Revert old balance impact
+    const oldAmt = Number(oldTx.amount) || 0;
+    if (oldTx.type === 'INCOME') {
+      await db
+        .update(userBankAccounts)
+        .set({ balance: sql`${userBankAccounts.balance} - ${oldAmt}`, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, oldTx.accountId));
+    } else if (oldTx.type === 'EXPENSE') {
+      await db
+        .update(userBankAccounts)
+        .set({ balance: sql`${userBankAccounts.balance} + ${oldAmt}`, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, oldTx.accountId));
+    } else if (oldTx.type === 'TRANSFER') {
+      await db
+        .update(userBankAccounts)
+        .set({ balance: sql`${userBankAccounts.balance} + ${oldAmt}`, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, oldTx.accountId));
+      if (oldTx.toAccountId) {
+        await db
+          .update(userBankAccounts)
+          .set({ balance: sql`${userBankAccounts.balance} - ${oldAmt}`, updatedAt: new Date() })
+          .where(eq(userBankAccounts.id, oldTx.toAccountId));
+      }
+    }
+
+    // 3. Update the transaction record
+    const targetAccountId = accountId ? Number(accountId) : oldTx.accountId;
+    const targetToAccountId = toAccountId !== undefined ? (toAccountId ? Number(toAccountId) : null) : oldTx.toAccountId;
+    const targetType = type || oldTx.type;
+    const targetAmount = amount !== undefined ? Number(amount) : oldAmt;
+    const targetCurrency = currency || oldTx.currency;
+    const targetCategory = category !== undefined ? category : oldTx.category;
+    const targetDate = transactionDate || oldTx.transactionDate;
+    const targetNotes = notes !== undefined ? notes : oldTx.notes;
+
+    const [updatedTx] = await db
+      .update(bankTransactions)
+      .set({
+        accountId: targetAccountId,
+        toAccountId: targetType === 'TRANSFER' ? targetToAccountId : null,
+        type: targetType,
+        amount: String(targetAmount),
+        currency: targetCurrency,
+        category: targetCategory,
+        transactionDate: targetDate,
+        notes: targetNotes,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(bankTransactions.id, Number(id)), eq(bankTransactions.userId, user.id)))
+      .returning();
+
+    // 4. Apply new balance impact
+    if (targetType === 'INCOME') {
+      await db
+        .update(userBankAccounts)
+        .set({ balance: sql`${userBankAccounts.balance} + ${targetAmount}`, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, targetAccountId));
+    } else if (targetType === 'EXPENSE') {
+      await db
+        .update(userBankAccounts)
+        .set({ balance: sql`${userBankAccounts.balance} - ${targetAmount}`, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, targetAccountId));
+    } else if (targetType === 'TRANSFER' && targetToAccountId) {
+      await db
+        .update(userBankAccounts)
+        .set({ balance: sql`${userBankAccounts.balance} - ${targetAmount}`, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, targetAccountId));
+      await db
+        .update(userBankAccounts)
+        .set({ balance: sql`${userBankAccounts.balance} + ${targetAmount}`, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, targetToAccountId));
+    }
+
+    return NextResponse.json({ transaction: updatedTx });
+  } catch (error) {
+    console.error('Error updating bank transaction:', error);
+    return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 });
+  }
+}
+
 export async function handleTransactionsDelete(req: Request) {
   try {
     const supabase = await createClient();
@@ -526,9 +642,40 @@ export async function handleTransactionsDelete(req: Request) {
       return NextResponse.json({ error: 'Transaction ID required' }, { status: 400 });
     }
 
-    await db
-      .delete(bankTransactions)
+    const [oldTx] = await db
+      .select()
+      .from(bankTransactions)
       .where(and(eq(bankTransactions.id, Number(id)), eq(bankTransactions.userId, user.id)));
+
+    if (oldTx) {
+      const oldAmt = Number(oldTx.amount) || 0;
+      if (oldTx.type === 'INCOME') {
+        await db
+          .update(userBankAccounts)
+          .set({ balance: sql`${userBankAccounts.balance} - ${oldAmt}`, updatedAt: new Date() })
+          .where(eq(userBankAccounts.id, oldTx.accountId));
+      } else if (oldTx.type === 'EXPENSE') {
+        await db
+          .update(userBankAccounts)
+          .set({ balance: sql`${userBankAccounts.balance} + ${oldAmt}`, updatedAt: new Date() })
+          .where(eq(userBankAccounts.id, oldTx.accountId));
+      } else if (oldTx.type === 'TRANSFER') {
+        await db
+          .update(userBankAccounts)
+          .set({ balance: sql`${userBankAccounts.balance} + ${oldAmt}`, updatedAt: new Date() })
+          .where(eq(userBankAccounts.id, oldTx.accountId));
+        if (oldTx.toAccountId) {
+          await db
+            .update(userBankAccounts)
+            .set({ balance: sql`${userBankAccounts.balance} - ${oldAmt}`, updatedAt: new Date() })
+            .where(eq(userBankAccounts.id, oldTx.toAccountId));
+        }
+      }
+
+      await db
+        .delete(bankTransactions)
+        .where(and(eq(bankTransactions.id, Number(id)), eq(bankTransactions.userId, user.id)));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
