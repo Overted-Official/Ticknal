@@ -30,9 +30,12 @@ export default async function InvestPage(props: InvestPageProps) {
   const view = searchParams?.view === 'chart' ? 'chart' : 'sectors';
 
   return (
-    <Suspense fallback={<InvestSkeleton />}>
-      <InvestPageContent selectedSymbol={selectedSymbol} timeframe={timeframe} initialReplayMode={initialReplayMode} view={view} />
-    </Suspense>
+    <InvestPageContent 
+      selectedSymbol={selectedSymbol} 
+      timeframe={timeframe} 
+      initialReplayMode={initialReplayMode} 
+      view={view} 
+    />
   );
 }
 
@@ -54,49 +57,34 @@ async function InvestPageContent({
     redirect('/');
   }
 
-  // Fetch all tickers to build the watchlist
-  const allTickers = await getCachedTickers();
+  const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
 
-  // Fetch open positions
-  let openPositionsRows: { tickerSymbol: string }[] = [];
-  try {
-    openPositionsRows = await db.select({ tickerSymbol: positions.tickerSymbol })
+  // Parallel fetch of all page dependencies with zero serial blocking
+  const [
+    allTickersRes,
+    openPositionsRes,
+    recentPricesRes,
+    tickerPositionsRes,
+    dbDataRes,
+  ] = await Promise.allSettled([
+    getCachedTickers(),
+    db.select({ tickerSymbol: positions.tickerSymbol })
       .from(positions)
-      .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, user.id)));
-  } catch (err) {
-    console.error('Error fetching openPositionsRows in invest:', err);
-  }
-  const openPositionsSet = new Set(openPositionsRows.map(o => o.tickerSymbol));
+      .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, user.id))),
+    getCachedRecentPrices(),
+    db.select()
+      .from(positions)
+      .where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, user.id))),
+    is1H ? getCachedHourlyPrices(selectedSymbol) : getCachedDailyPrices(selectedSymbol),
+  ]);
 
-  // Fetch opportunities to show thunder icon on watchlist with fast fallback
-  let recentPricesRows: any[] = [];
-  let recentBuySymbols = new Set<string>();
+  const allTickers = allTickersRes.status === 'fulfilled' && Array.isArray(allTickersRes.value) ? allTickersRes.value : [];
+  const openPositionsRows = openPositionsRes.status === 'fulfilled' && Array.isArray(openPositionsRes.value) ? openPositionsRes.value : [];
+  const recentPricesRows = recentPricesRes.status === 'fulfilled' && Array.isArray(recentPricesRes.value) ? recentPricesRes.value : [];
+  const tickerPositionsData = tickerPositionsRes.status === 'fulfilled' && Array.isArray(tickerPositionsRes.value) ? tickerPositionsRes.value : [];
+  const dbData = dbDataRes.status === 'fulfilled' && Array.isArray(dbDataRes.value) ? dbDataRes.value : [];
 
-  try {
-    const pricesPromise = getCachedRecentPrices();
-    const opportunitiesPromise = Promise.race([
-      getRecentOpportunities(5),
-      new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 1500)),
-    ]);
-
-    const [pricesRes, opportunitiesRes] = await Promise.allSettled([
-      pricesPromise,
-      opportunitiesPromise,
-    ]);
-
-    if (pricesRes.status === 'fulfilled') {
-      recentPricesRows = pricesRes.value || [];
-    }
-    if (opportunitiesRes.status === 'fulfilled' && Array.isArray(opportunitiesRes.value)) {
-      recentBuySymbols = new Set(
-        opportunitiesRes.value
-          .filter((opp: any) => opp?.signal?.signal === 'BUY')
-          .map((opp: any) => opp.symbol)
-      );
-    }
-  } catch (err) {
-    console.error('Error fetching prices/opportunities in invest:', err);
-  }
+  const openPositionsSet = new Set(openPositionsRows.map((o: any) => o.tickerSymbol));
 
   // Group by ticker symbol for O(1) lookup
   const priceMap: Record<string, { lastPrice: number, prevPrice: number, volume: number }> = {};
@@ -149,18 +137,11 @@ async function InvestPageContent({
       isUp: change >= 0,
       hasOpenPosition: openPositionsSet.has(t.symbol),
       logoUrl: t.logoUrl,
-      recentBuyOpportunity: recentBuySymbols.has(t.symbol),
+      recentBuyOpportunity: false,
     };
   });
 
-  // Fetch orders specifically for the selected symbol for the Positions drawer
-  let tickerPositionsData: (typeof positions.$inferSelect)[] = [];
-  try {
-    tickerPositionsData = await db.select().from(positions).where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, user.id)));
-  } catch (err) {
-    console.error('Error fetching tickerPositionsData in invest:', err);
-  }
-  const tickerPositions: TickerOrder[] = tickerPositionsData.map(o => ({
+  const tickerPositions: TickerOrder[] = tickerPositionsData.map((o: any) => ({
     id: o.id,
     status: o.status,
     side: o.side,
@@ -174,12 +155,6 @@ async function InvestPageContent({
   }));
 
   const currentPriceForSymbol = priceMap[selectedSymbol]?.lastPrice || 0;
-
-  // Fetch chart data for the selected symbol
-  const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
-  const dbData = is1H
-    ? await getCachedHourlyPrices(selectedSymbol)
-    : await getCachedDailyPrices(selectedSymbol);
 
   let dayHigh = 0;
   let dayLow = 0;
