@@ -324,6 +324,24 @@ export default function SettingsView({
     }
   };
 
+  const handleTestPush = async () => {
+    setIsEnablingPush(true);
+    setPushStatus(null);
+    try {
+      const res = await fetch('/api/notifications/test', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setPushStatus('🟢 Test notification sent! Check your notification tray.');
+      } else {
+        setPushStatus(data.error || 'Failed to send test notification.');
+      }
+    } catch {
+      setPushStatus('Failed to dispatch test notification.');
+    } finally {
+      setIsEnablingPush(false);
+    }
+  };
+
   const handleDeleteDevice = async (id: number) => {
     setDeletingDeviceId(id);
     try {
@@ -741,12 +759,18 @@ export default function SettingsView({
 
                 <button
                   type="button"
-                  onClick={handleEnablePush}
+                  onClick={permission === 'granted' ? handleTestPush : handleEnablePush}
                   disabled={isEnablingPush}
                   className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-black bg-white hover:bg-white/90 transition-all shrink-0"
                 >
                   <Bell size={14} />
-                  <span>{isEnablingPush ? 'Registering...' : 'Enable on This Device'}</span>
+                  <span>
+                    {isEnablingPush
+                      ? 'Processing...'
+                      : permission === 'granted'
+                      ? 'Test Push Notification'
+                      : 'Enable on This Device'}
+                  </span>
                 </button>
               </div>
 

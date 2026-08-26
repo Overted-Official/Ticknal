@@ -757,8 +757,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .max-h-sheet { max-height: var(--height-sheet); }
 .max-h-sheet-compact { max-height: var(--height-sheet-compact); }
 .max-h-drawer-mobile { max-height: var(--height-drawer-mobile); }
-.max-h-search-results { max-height: var(--height-search-results); }
-.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .safe-area-drawer-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-7)); }
 .safe-area-action-bottom { bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px)); }
 .floating-action-dock { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-widget-inner); border: var(--border-width-default) solid var(--plt-border); border-radius: var(--radius-surface); background: var(--plt-bg-surface-elevated); box-shadow: var(--shadow-popover); }

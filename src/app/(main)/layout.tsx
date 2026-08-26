@@ -19,7 +19,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   <SidebarNav />
                 </Suspense>
               </div>
-              <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col">
+              <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col safe-area-top">
                 <PageTransition>{children}</PageTransition>
               </div>
               <div className="md:hidden fixed bottom-0 left-0 right-0 w-full z-50 pointer-events-none">

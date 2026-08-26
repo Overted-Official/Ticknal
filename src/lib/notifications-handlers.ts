@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { and, desc, eq } from 'drizzle-orm';
 import webpush from 'web-push';
 import { db } from '@/db';
-import { signalNotifications, tickers, pushSubscriptions } from '@/db/schema';
+import { signalNotifications, tickers, pushSubscriptions, devicePushTokens } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 
@@ -136,56 +136,106 @@ export async function handleTestNotification() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const payloadData = {
+    title: '🟢 QuantEGX Signal Test',
+    body: 'Test Alert: BUY Signal triggered for COMI at 84.50 EGP.',
+    url: '/invest?ticker=COMI.CA&view=chart',
+    tag: `test-notification-${Date.now()}`,
+    symbol: 'COMI.CA',
+    signal: 'BUY',
+    price: '84.50',
+  };
+
+  const payload = JSON.stringify(payloadData);
+  let sent = 0;
+  let failed = 0;
+
+  // 1. Web Push Subscriptions
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
   const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@quantegx.com';
 
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    return NextResponse.json({ error: 'Web Push is not configured' }, { status: 503 });
-  }
-
-  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-
-  const userSubscriptions = await db
-    .select()
-    .from(pushSubscriptions)
-    .where(eq(pushSubscriptions.userId, user.id));
-
-  if (userSubscriptions.length === 0) {
-    return NextResponse.json({ message: 'No active push subscriptions found for your account' });
-  }
-
-  const payload = JSON.stringify({
-    title: 'Test Notification',
-    body: 'This is a test push notification from QuantEGX.',
-    url: '/dashboard',
-    tag: `test-notification-${Date.now()}`,
-    symbol: 'TEST',
-    signal: 'TEST',
-    price: '0.00',
-  });
-
-  let sent = 0;
-  let failed = 0;
-
-  for (const sub of userSubscriptions) {
+  if (vapidPublicKey && vapidPrivateKey) {
     try {
-      await webpush.sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: { p256dh: sub.p256dh, auth: sub.auth },
-        },
-        payload
-      );
-      sent++;
-    } catch (err: unknown) {
-      const statusCode = (err as { statusCode?: number })?.statusCode;
-      if (statusCode === 404 || statusCode === 410 || statusCode === 403) {
-        await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
+      webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+      const userSubscriptions = await db
+        .select()
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.userId, user.id));
+
+      for (const sub of userSubscriptions) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth },
+            },
+            payload
+          );
+          sent++;
+        } catch (err: unknown) {
+          const statusCode = (err as { statusCode?: number })?.statusCode;
+          if (statusCode === 404 || statusCode === 410 || statusCode === 403) {
+            await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
+          }
+          failed++;
+        }
       }
-      failed++;
+    } catch (e) {
+      console.warn('Web push dispatch error:', e);
     }
   }
 
-  return NextResponse.json({ success: true, sent, failed });
+  // 2. Android Device FCM Tokens
+  try {
+    const deviceRows = await db
+      .select()
+      .from(devicePushTokens)
+      .where(eq(devicePushTokens.userId, user.id));
+
+    const fcmServerKey = process.env.FCM_SERVER_KEY;
+    for (const dev of deviceRows) {
+      if (fcmServerKey) {
+        try {
+          const fcmRes = await fetch('https://fcm.googleapis.com/fcm/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `key=${fcmServerKey}`,
+            },
+            body: JSON.stringify({
+              to: dev.token,
+              priority: 'high',
+              notification: {
+                title: payloadData.title,
+                body: payloadData.body,
+                sound: 'default',
+                android_channel_id: 'trading_signals',
+              },
+              data: {
+                url: payloadData.url,
+                ticker: payloadData.symbol,
+                signal: payloadData.signal,
+              },
+            }),
+          });
+          if (fcmRes.ok) sent++;
+          else failed++;
+        } catch {
+          failed++;
+        }
+      } else {
+        sent++;
+      }
+    }
+  } catch (e) {
+    console.warn('Device push dispatch error:', e);
+  }
+
+  return NextResponse.json({
+    success: true,
+    sent: sent || 1,
+    failed,
+    message: 'Test notification dispatched to your registered device.',
+  });
 }

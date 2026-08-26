@@ -26,6 +26,7 @@ export async function initNativeBridge(options?: {
     try {
       await StatusBar.setStyle({ style: Style.Dark });
       await StatusBar.setBackgroundColor({ color: '#000000' });
+      await StatusBar.setOverlaysWebView({ overlay: false });
     } catch (e) {
       console.debug('StatusBar configuration not supported in current environment', e);
     }

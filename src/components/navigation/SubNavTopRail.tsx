@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import { controlHover, controlTap } from '@/lib/motion';
 
 export type SubNavTabItem = {
@@ -27,7 +26,7 @@ export default function SubNavTopRail({
 }: SubNavTopRailProps) {
   return (
     <div
-      className={`md:hidden w-full shrink-0 flex items-center gap-1.5 border-b border-plt-border bg-plt-base/95 backdrop-blur-2xl z-30 overflow-x-auto no-scrollbar scroll-smooth h-12 px-3 opacity-100 select-none ${className}`}
+      className={`md:hidden w-full shrink-0 flex items-center gap-1.5 border-b border-plt-border bg-plt-base/95 backdrop-blur-2xl z-30 overflow-x-auto no-scrollbar scroll-smooth min-h-12 h-12 px-3 safe-area-top opacity-100 select-none ${className}`}
     >
       {items.map((item) => {
         const isActive = activeTab === item.value;
