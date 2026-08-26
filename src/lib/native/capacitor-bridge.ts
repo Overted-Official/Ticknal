@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications, type Token, type ActionPerformed, type PushNotificationSchema } from '@capacitor/push-notifications';
 import { App } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
@@ -57,11 +56,6 @@ export async function initNativeBridge(options?: {
         const supabase = createClient();
 
         try {
-          // Supabase sends tokens in the hash fragment: #access_token=...&refresh_token=...
-          // OR sends a code in query params: ?code=...
-          // The URL looks like: com.quantegx.app://auth/callback#access_token=...&refresh_token=...
-          // or: com.quantegx.app://auth/callback?code=...
-
           // Replace custom scheme with https to make URL parsing work
           const parsableUrl = event.url.replace('com.quantegx.app://', 'https://placeholder/');
           const urlObj = new URL(parsableUrl);
@@ -104,91 +98,8 @@ export async function initNativeBridge(options?: {
         window.location.href = targetPath;
       }
     });
-
-    // 4. Initialize Native Push Notifications
-    await setupNativePushNotifications(options?.onNavigate, options?.userId);
   } catch (error) {
     console.error('Failed to initialize native bridge:', error);
-  }
-}
-
-async function setupNativePushNotifications(
-  onNavigate?: (url: string) => void,
-  userId?: string
-): Promise<void> {
-  if (!isNativePlatform()) return;
-
-  try {
-    // Only register if PushNotifications plugin is supported
-    if (!Capacitor.isPluginAvailable('PushNotifications')) {
-      console.log('PushNotifications plugin not available');
-      return;
-    }
-
-    // Set up listeners first
-    try {
-      PushNotifications.addListener('registration', async (token: Token) => {
-        console.log('Native Push Registration Token:', token.value);
-        try {
-          await fetch('/api/notifications/register-device', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              token: token.value,
-              platform: Capacitor.getPlatform(),
-              userId: userId ?? null,
-            }),
-          });
-        } catch (err) {
-          console.error('Failed to save device token on server:', err);
-        }
-      });
-
-      PushNotifications.addListener('registrationError', (error: any) => {
-        console.warn('Native Push registration notice:', error);
-      });
-
-      PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
-        console.log('Push notification received in foreground:', notification);
-        triggerNativeHaptic('medium');
-      });
-
-      PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
-        const data = notification.notification.data;
-        const targetUrl = data?.url || (data?.ticker ? `/invest?ticker=${data.ticker}&view=chart` : null);
-
-        if (targetUrl) {
-          if (onNavigate) {
-            onNavigate(targetUrl);
-          } else if (typeof window !== 'undefined') {
-            window.location.href = targetUrl;
-          }
-        }
-      });
-    } catch (listenerErr) {
-      console.warn('Push notification listeners attachment notice:', listenerErr);
-    }
-
-    // Request permissions safely
-    try {
-      let permStatus = await PushNotifications.checkPermissions();
-
-      if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
-        permStatus = await PushNotifications.requestPermissions();
-      }
-
-      if (permStatus.receive === 'granted') {
-        try {
-          await PushNotifications.register();
-        } catch (regErr) {
-          console.warn('PushNotifications.register notice (FCM config):', regErr);
-        }
-      }
-    } catch (permErr) {
-      console.warn('Push notification permission notice:', permErr);
-    }
-  } catch (error) {
-    console.warn('Push notification setup notice:', error);
   }
 }
 

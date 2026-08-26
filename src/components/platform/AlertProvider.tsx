@@ -63,12 +63,6 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
   }, [deviceId]);
 
   const ensurePushSubscription = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    if (isNativePlatform()) {
-      await initNativeBridge();
-      setPermission('granted');
-      return { success: true };
-    }
-
     if (!deviceId) return { success: false, error: 'Device ID not initialized.' };
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       setPermission('unsupported');
