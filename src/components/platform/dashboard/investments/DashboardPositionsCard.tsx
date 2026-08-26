@@ -12,7 +12,7 @@ interface DashboardPositionsCardProps {
 
 export default function DashboardPositionsCard({ orders }: DashboardPositionsCardProps) {
   const { isPrivacy } = usePrivacyMode();
-  const [isExpandedMobile, setIsExpandedMobile] = useState(false);
+  const [isExpandedMobile, setIsExpandedMobile] = useState(true);
 
   const formatMoney = (value: number, showSign: boolean = false): string => {
     if (isPrivacy) {

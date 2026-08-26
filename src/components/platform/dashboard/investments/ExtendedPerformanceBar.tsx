@@ -17,7 +17,7 @@ export default function ExtendedPerformanceBar({ orderStats }: ExtendedPerforman
   const totalLosses = (orderStats.openLosing || 0) + (orderStats.closedLosing || 0);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 select-none">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 select-none">
       {/* 1. Win Rate Card */}
       <div className="card-widget p-4 flex flex-col justify-between hover:bg-plt-hover/40 transition-all group">
         <div>
