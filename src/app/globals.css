@@ -226,10 +226,10 @@
   --asset-hero-console: url("https://framerusercontent.com/images/AhQ73PjsAiqYpcQkGyFxkp8hyY.png");
 
   /* Card & Widget Semantic Tokens */
-  --surface-card: transparent;
+  --surface-card: rgba(255, 255, 255, 0.025);
   --surface-card-hover: var(--plt-bg-hover);
   --surface-card-elevated: var(--plt-bg-surface-elevated);
-  --border-card: transparent;
+  --border-card: var(--plt-border-soft);
   --border-card-strong: var(--plt-border-strong);
   --border-card-active: var(--plt-border-active);
   --radius-card: var(--radius-surface);

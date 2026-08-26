@@ -8,7 +8,7 @@ import { runPsiV2Strategy } from '@/strategies/PSI_V2';
 import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
 import { unstable_cache } from 'next/cache';
 
-const HISTORY_BARS = 450;
+const HISTORY_BARS = 220;
 
 export type OpportunitySignal = {
   symbol: string;
@@ -33,7 +33,7 @@ export type OpportunitySignal = {
 // In-memory module-level cache for instantaneous (<1ms) response across routes
 const memCache = new Map<string, { data: OpportunitySignal[]; timestamp: number }>();
 const inFlightPromises = new Map<string, Promise<OpportunitySignal[]>>();
-const MEM_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const MEM_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 export async function _getRecentOpportunities(
   limitBars: number = 5,
@@ -65,7 +65,7 @@ export async function _getRecentOpportunities(
           SELECT ticker_symbol, date, open, high, low, close, volume
           FROM ranked_prices
           WHERE rn <= ${HISTORY_BARS}
-          ORDER BY ticker_symbol, date
+          ORDER BY ticker_symbol, date ASC
         `),
       ]);
 

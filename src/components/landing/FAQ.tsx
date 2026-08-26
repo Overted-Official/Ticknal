@@ -31,15 +31,15 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-28 px-6 md:px-10 bg-transparent w-full" id="faq">
+    <section className="py-20 sm:py-28 px-4 sm:px-6 md:px-10 bg-transparent w-full" id="faq">
       <div className="max-w-170 mx-auto">
 
         {/* Heading */}
-        <div className="text-center mb-12 flex flex-col gap-4 items-center">
+        <div className="text-center mb-8 sm:mb-12 flex flex-col gap-4 items-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-plt-hover border border-plt-border text-plt-subtle text-xs tracking-widest font-medium">
             <HelpCircle size={16} className="text-tv-accent" /> Questions & Answers
           </div>
-          <h2 className="text-section md:text-display font-medium text-plt-text leading-display tracking-normal capitalize">
+          <h2 className="text-2xl sm:text-3xl md:text-display font-medium text-plt-text leading-tight tracking-normal capitalize">
             Frequently Asked Questions
           </h2>
           <p className="text-plt-subtle text-xs sm:text-sm max-w-md">
@@ -47,8 +47,8 @@ export default function FAQ() {
           </p>
         </div>
 
-        {/* Accordion List (scaled 80%) */}
-        <div className="space-y-4">
+        {/* Accordion List */}
+        <div className="space-y-3 sm:space-y-4">
           {faqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
@@ -61,10 +61,11 @@ export default function FAQ() {
                 }`}
               >
                 <button
+                  type="button"
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between p-2 text-left gap-2"
+                  className="w-full flex items-center justify-between p-4 sm:p-5 text-left gap-3 cursor-pointer"
                 >
-                  <span className="text-sm md:text-lead font-medium text-plt-text/90 leading-snug">
+                  <span className="text-sm sm:text-base font-medium text-plt-text leading-snug">
                     {faq.question}
                   </span>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
@@ -82,7 +83,7 @@ export default function FAQ() {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="p-2 text-plt-subtle text-xs sm:text-sm leading-relaxed border-t border-plt-border">
+                      <div className="p-4 sm:p-5 pt-0 text-plt-subtle text-xs sm:text-sm leading-relaxed border-t border-plt-border/50">
                         {faq.answer}
                       </div>
                     </motion.div>

@@ -6,11 +6,11 @@ import AuthButton from './AuthButton';
 
 export default function Pricing() {
   return (
-    <section className="pt-32 px-6 md:px-10 pb-0 bg-transparent w-full" id="pricing">
-      <div className="max-w-248 mx-auto flex flex-col gap-14 items-center">
+    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full" id="pricing">
+      <div className="max-w-248 mx-auto flex flex-col gap-8 sm:gap-14 items-center">
 
         {/* Heading */}
-        <div className="flex flex-col gap-6 items-center text-center max-w-130 w-full">
+        <div className="flex flex-col gap-4 sm:gap-6 items-center text-center max-w-130 w-full">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -24,21 +24,21 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-section md:text-display font-medium text-plt-text leading-display tracking-normal capitalize"
+            className="text-2xl sm:text-3xl md:text-display font-medium text-plt-text leading-tight tracking-normal capitalize"
           >
             Discover the Perfect Fit for Your Strategy
           </motion.h2>
         </div>
 
-        {/* Pricing Cards Grid (scaled 80%: max-w-180) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-180 mx-auto w-full items-stretch">
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-180 mx-auto w-full items-stretch">
 
           {/* Basic Free Plan */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="card-shell flex flex-col justify-between"
+            className="card-shell p-6 sm:p-8 flex flex-col justify-between"
           >
             <div>
               <h3 className="text-xl font-medium text-plt-text mb-2">Basic Tier</h3>
@@ -78,7 +78,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.15 }}
-            className="card-shell relative flex flex-col justify-between"
+            className="card-shell p-6 sm:p-8 relative flex flex-col justify-between"
           >
             {/* Pill */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-tv-accent text-plt-text text-mini font-medium px-4 py-2 rounded-full tracking-wider shadow-md">
@@ -113,8 +113,8 @@ export default function Pricing() {
               </ul>
             </div>
 
-            <AuthButton variant="primary" className="w-full">
-              Upgrade to Pro
+            <AuthButton variant="primary" className="w-full shadow-accent">
+              Unlock Pro Access
             </AuthButton>
           </motion.div>
 

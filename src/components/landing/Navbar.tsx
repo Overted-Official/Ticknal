@@ -27,19 +27,19 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-tv-nav pointer-events-none flex justify-center px-4 pt-4 md:pt-6">
+    <header className="fixed top-0 left-0 right-0 z-tv-nav pointer-events-none flex justify-center px-4 pt-3 sm:pt-4 md:pt-6">
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className={`pointer-events-auto w-full max-w-170 rounded-full transition-all duration-300 px-4 py-2 flex items-center justify-between border ${
+        className={`pointer-events-auto w-full max-w-4xl rounded-full transition-all duration-300 px-3 sm:px-4 py-2 flex items-center justify-between border ${
           isScrolled
-            ? 'bg-plt-base/75 backdrop-blur-xl border-plt-border-strong shadow-panel'
-            : 'bg-plt-base/40 backdrop-blur-md border-plt-border shadow-panel'
+            ? 'bg-plt-base/85 backdrop-blur-xl border-plt-border-strong shadow-panel'
+            : 'bg-plt-base/60 backdrop-blur-md border-plt-border shadow-panel'
         }`}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-2 group shrink-0">
           <div className="w-8 h-8 rounded-full bg-tv-accent flex items-center justify-center text-plt-inverse font-medium shadow-accent group-hover:scale-105 transition-transform">
             <BarChart2 size={16} strokeWidth={2.5} />
           </div>
@@ -74,11 +74,12 @@ export default function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden text-plt-text p-2"
+          type="button"
+          className="md:hidden text-plt-text p-1.5 rounded-full hover:bg-white/[0.08] transition-colors shrink-0 cursor-pointer"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle Navigation"
         >
-          {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+          {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </motion.div>
 

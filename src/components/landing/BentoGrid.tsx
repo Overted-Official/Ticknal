@@ -29,11 +29,11 @@ const tickerRow3 = [
 
 export default function BentoGrid() {
   return (
-    <section className="pt-32 px-6 md:px-10 pb-0 bg-transparent w-full" id="features">
-      <div className="max-w-248 mx-auto flex flex-col gap-12 items-center">
+    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full" id="features">
+      <div className="max-w-248 mx-auto flex flex-col items-center">
 
         {/* Heading */}
-        <div className="flex flex-col gap-6 items-center text-center max-w-164 w-full">
+        <div className="flex flex-col gap-4 sm:gap-6 items-center text-center max-w-164 w-full mb-8 sm:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -47,32 +47,32 @@ export default function BentoGrid() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-section-sm md:text-display font-medium text-plt-text leading-display tracking-normal capitalize"
+            className="text-2xl sm:text-3xl md:text-display font-medium text-plt-text leading-tight tracking-normal capitalize"
           >
             Our Powerful Dashboard Enables over 234,000 Analytics Everyday
           </motion.h2>
         </div>
 
         {/* Grid Body */}
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-4 sm:gap-6 w-full">
 
           {/* Top Row */}
-          <div className="flex flex-col lg:flex-row gap-6 w-full items-stretch">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 w-full items-stretch">
 
             {/* FeatureBox 1 (60%) */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="card-shell lg:w-3/5 flex-shrink-0 relative overflow-hidden flex flex-col gap-6 justify-start items-start"
+              className="card-shell p-5 sm:p-7 lg:w-3/5 flex-shrink-0 relative overflow-hidden flex flex-col gap-6 justify-start items-start"
             >
-              <div className="max-w-94 flex flex-col gap-4 relative z-10">
-                <h5 className="text-card-title font-medium text-plt-text leading-title tracking-normal">Real-time Market Insight</h5>
-                <p className="text-body font-medium text-plt-subtle leading-copy tracking-normal">
+              <div className="max-w-94 flex flex-col gap-3 relative z-10">
+                <h5 className="text-base sm:text-card-title font-medium text-plt-text leading-snug tracking-normal">Real-time Market Insight</h5>
+                <p className="text-xs sm:text-body font-normal text-plt-subtle leading-relaxed">
                   QuantEGX processes live EGX market data and volume metrics so you can spot momentum shifts before they hit the mainstream news.
                 </p>
               </div>
-              <div className="w-full relative h-74 mt-auto">
+              <div className="w-full relative h-56 sm:h-74 mt-auto">
                 <Image src="https://framerusercontent.com/images/zTqDSkCJXFOajXZDvE21gUe2ccc.png" alt="Market Insight" fill className="object-cover object-top rounded-xl" />
               </div>
             </motion.div>
@@ -83,11 +83,11 @@ export default function BentoGrid() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="card-shell lg:flex-1 relative overflow-hidden flex flex-col justify-start h-108"
+              className="card-shell p-5 sm:p-7 lg:flex-1 relative overflow-hidden flex flex-col justify-start min-h-[380px] lg:h-108"
             >
-              <div className="flex flex-col gap-4 relative z-10">
-                <h5 className="text-card-title font-medium text-plt-text leading-title tracking-normal">Advanced Account Analysis</h5>
-                <p className="text-body font-medium text-plt-subtle leading-copy tracking-normal">
+              <div className="flex flex-col gap-3 relative z-10">
+                <h5 className="text-base sm:text-card-title font-medium text-plt-text leading-snug tracking-normal">Advanced Account Analysis</h5>
+                <p className="text-xs sm:text-body font-normal text-plt-subtle leading-relaxed">
                   Customize the lookback periods and entry levels to match your exact risk profile.
                 </p>
               </div>
@@ -102,7 +102,7 @@ export default function BentoGrid() {
           </div>
 
           {/* Bottom Row */}
-          <div className="flex flex-col lg:flex-row gap-6 w-full items-stretch">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 w-full items-stretch">
 
             {/* FeatureBox 3 (40%) */}
             <motion.div
@@ -110,16 +110,16 @@ export default function BentoGrid() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="card-shell lg:flex-1 relative overflow-hidden flex flex-col justify-start h-108"
+              className="card-shell p-5 sm:p-7 lg:flex-1 relative overflow-hidden flex flex-col justify-start min-h-[380px] lg:h-108"
             >
-              <div className="flex flex-col gap-4 mb-4 relative z-10">
-                <h5 className="text-card-title font-medium text-plt-text leading-title tracking-normal">Portfolio Management</h5>
-                <p className="text-body font-medium text-plt-subtle leading-copy tracking-normal">
+              <div className="flex flex-col gap-3 mb-4 relative z-10">
+                <h5 className="text-base sm:text-card-title font-medium text-plt-text leading-snug tracking-normal">Portfolio Management</h5>
+                <p className="text-xs sm:text-body font-normal text-plt-subtle leading-relaxed">
                   Easily tweak your trading journey with our interactive dashboard!
                 </p>
               </div>
 
-              {/* 3 Real SVG Ticker Rows (scaled 80%: 144px x 76px) */}
+              {/* 3 Real SVG Ticker Rows */}
               <div className="flex flex-col gap-2 w-full mt-auto mb-4 overflow-hidden">
                 {/* Row 1 */}
                 <div className="flex gap-2 w-max animate-marquee">
@@ -156,11 +156,11 @@ export default function BentoGrid() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="card-shell lg:w-3/5 flex-shrink-0 relative overflow-hidden flex flex-col h-108"
+              className="card-shell p-5 sm:p-7 lg:w-3/5 flex-shrink-0 relative overflow-hidden flex flex-col min-h-[380px] lg:h-108"
             >
-              <div className="flex flex-col gap-4 max-w-94 relative z-10">
-                <h5 className="text-card-title font-medium text-plt-text leading-title tracking-normal">Advanced Charting Tools</h5>
-                <p className="text-body font-medium text-plt-subtle leading-copy tracking-normal">
+              <div className="flex flex-col gap-3 max-w-94 relative z-10">
+                <h5 className="text-base sm:text-card-title font-medium text-plt-text leading-snug tracking-normal">Advanced Charting Tools</h5>
+                <p className="text-xs sm:text-body font-normal text-plt-subtle leading-relaxed">
                   Integrated natively with TradingView's Lightweight Charts for buttery smooth historical data replays and real-time visualization of signals.
                 </p>
               </div>

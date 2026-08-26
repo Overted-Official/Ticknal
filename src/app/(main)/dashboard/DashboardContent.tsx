@@ -149,10 +149,17 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
   let opportunities: Opportunity[] = [];
   let activeAlertCount = 0;
 
+  const fetchWithTimeout = <T,>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((resolve) => setTimeout(() => resolve(fallback), timeoutMs)),
+    ]);
+  };
+
   try {
     const [statsResult, oppsResult, alertResult] = await Promise.allSettled([
       getOrderStats(user.id),
-      getRecentOpportunities(),
+      fetchWithTimeout(getRecentOpportunities(), 2500, [] as Opportunity[]),
       getActiveAlertCount(user.id),
     ]);
 

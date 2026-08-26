@@ -61,6 +61,8 @@ export default function Stats() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: idx * 0.08 }}
               className={`flex flex-col items-center justify-center text-center gap-2 px-4 ${
+                idx === stats.length - 1 ? 'col-span-2 md:col-span-1' : ''
+              } ${
                 idx !== stats.length - 1 ? 'md:border-r md:border-plt-border' : ''
               }`}
             >
