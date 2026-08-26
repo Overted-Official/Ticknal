@@ -17,6 +17,9 @@ export type BankAccount = {
   accountType: string;
   currency: string;
   balance: string | number;
+  interestRate?: number | string | null;
+  interestFrequency?: 'DAILY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY' | 'NONE' | string | null;
+  lastInterestCalcDate?: string | null;
   color?: string | null;
   isArchived: boolean;
   bankName?: string | null;

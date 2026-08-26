@@ -5,6 +5,87 @@ import { banks, userBankAccounts, bankMonthlySnapshots, bankTransactions } from 
 import { createClient } from '@/lib/supabase/server';
 import { maskAccountNumber } from '@/lib/masking';
 
+// Helper function: Process daily interest accruals for savings accounts
+async function processAccountInterestAccruals(userId: string, accounts: any[]) {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const updatedAccounts = [...accounts];
+
+  for (let i = 0; i < updatedAccounts.length; i++) {
+    const acc = updatedAccounts[i];
+    const rate = Number(acc.interestRate);
+    const isQualifyingType = ['SAVINGS', 'CD_TIME_DEPOSIT'].includes(acc.accountType);
+    const isDaily = acc.interestFrequency === 'DAILY';
+
+    if (!isQualifyingType || !rate || rate <= 0 || !isDaily) {
+      continue;
+    }
+
+    // If last calc date is not set, initialize to today so calculation starts
+    if (!acc.lastInterestCalcDate) {
+      await db
+        .update(userBankAccounts)
+        .set({ lastInterestCalcDate: todayStr, updatedAt: new Date() })
+        .where(eq(userBankAccounts.id, acc.id));
+      acc.lastInterestCalcDate = todayStr;
+      continue;
+    }
+
+    const lastCalc = new Date(acc.lastInterestCalcDate + 'T00:00:00Z');
+    const nowUtc = new Date(todayStr + 'T00:00:00Z');
+    const diffMs = nowUtc.getTime() - lastCalc.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) {
+      continue;
+    }
+
+    // Cap max catch-up to 365 days to prevent performance issues
+    const daysToProcess = Math.min(diffDays, 365);
+    let currentBalance = Number(acc.balance) || 0;
+
+    for (let dayOffset = 1; dayOffset <= daysToProcess; dayOffset++) {
+      if (currentBalance <= 0) break;
+
+      const calcDate = new Date(lastCalc.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+      const calcDateStr = calcDate.toISOString().split('T')[0];
+
+      // Daily interest = Balance * (Annual Rate % / 36500)
+      const dailyYield = currentBalance * (rate / (100 * 365));
+      if (dailyYield > 0.0001) {
+        currentBalance += dailyYield;
+
+        // Log transaction for audit and cash flow tracking
+        await db.insert(bankTransactions).values({
+          userId,
+          accountId: acc.id,
+          type: 'INCOME',
+          amount: String(dailyYield.toFixed(2)),
+          currency: acc.currency || 'EGP',
+          category: 'Interest & Yield',
+          transactionDate: calcDateStr,
+          notes: `${acc.accountName} Daily Interest (${rate.toFixed(2)}% APR)`,
+        });
+      }
+    }
+
+    // Update account with compounded balance and latest calculation date
+    await db
+      .update(userBankAccounts)
+      .set({
+        balance: String(currentBalance.toFixed(4)),
+        lastInterestCalcDate: todayStr,
+        updatedAt: new Date(),
+      })
+      .where(eq(userBankAccounts.id, acc.id));
+
+    acc.balance = String(currentBalance.toFixed(4));
+    acc.lastInterestCalcDate = todayStr;
+  }
+
+  return updatedAccounts;
+}
+
 // ----------------------------------------------------
 // ACCOUNTS HANDLER
 // ----------------------------------------------------
@@ -17,7 +98,7 @@ export async function handleAccountsGet() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const accounts = await db
+    let accounts = await db
       .select({
         id: userBankAccounts.id,
         userId: userBankAccounts.userId,
@@ -28,6 +109,9 @@ export async function handleAccountsGet() {
         accountType: userBankAccounts.accountType,
         currency: userBankAccounts.currency,
         balance: userBankAccounts.balance,
+        interestRate: userBankAccounts.interestRate,
+        interestFrequency: userBankAccounts.interestFrequency,
+        lastInterestCalcDate: userBankAccounts.lastInterestCalcDate,
         color: userBankAccounts.color,
         isArchived: userBankAccounts.isArchived,
         createdAt: userBankAccounts.createdAt,
@@ -40,6 +124,9 @@ export async function handleAccountsGet() {
       .leftJoin(banks, eq(userBankAccounts.bankId, banks.id))
       .where(and(eq(userBankAccounts.userId, user.id), eq(userBankAccounts.isArchived, false)))
       .orderBy(desc(userBankAccounts.balance));
+
+    // Automatically process any pending daily interest compounding
+    accounts = await processAccountInterestAccruals(user.id, accounts);
 
     const maskedAccounts = (accounts || []).map((acc) => ({
       ...acc,
@@ -71,12 +158,16 @@ export async function handleAccountsPost(req: Request) {
       accountType,
       currency,
       balance,
+      interestRate,
+      interestFrequency,
       color,
     } = body;
 
     if (!accountName || !accountType) {
       return NextResponse.json({ error: 'Missing required account fields' }, { status: 400 });
     }
+
+    const todayStr = new Date().toISOString().split('T')[0];
 
     const [newAccount] = await db
       .insert(userBankAccounts)
@@ -89,6 +180,9 @@ export async function handleAccountsPost(req: Request) {
         accountType,
         currency: currency || 'EGP',
         balance: balance ? String(balance) : '0',
+        interestRate: interestRate ? String(interestRate) : null,
+        interestFrequency: interestFrequency || (interestRate ? 'DAILY' : 'NONE'),
+        lastInterestCalcDate: interestRate ? todayStr : null,
         color: color || 'var(--plt-accent)',
         isArchived: false,
       })
@@ -117,12 +211,17 @@ export async function handleAccountsPut(req: Request) {
       return NextResponse.json({ error: 'Account ID required' }, { status: 400 });
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     const [updatedAccount] = await db
       .update(userBankAccounts)
       .set({
         ...updates,
         bankId: updates.bankId !== undefined ? (updates.bankId ? Number(updates.bankId) : null) : undefined,
         balance: updates.balance !== undefined ? String(updates.balance) : undefined,
+        interestRate: updates.interestRate !== undefined ? (updates.interestRate ? String(updates.interestRate) : null) : undefined,
+        interestFrequency: updates.interestFrequency !== undefined ? updates.interestFrequency : undefined,
+        lastInterestCalcDate: updates.lastInterestCalcDate !== undefined ? updates.lastInterestCalcDate : (updates.interestRate && !updates.lastInterestCalcDate ? todayStr : undefined),
         updatedAt: new Date(),
       })
       .where(and(eq(userBankAccounts.id, Number(id)), eq(userBankAccounts.userId, user.id)))

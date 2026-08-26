@@ -147,6 +147,9 @@ export const userBankAccounts = pgTable('user_bank_accounts', {
   accountType: varchar('account_type', { length: 50 }).default('CURRENT').notNull(), // CURRENT, SAVINGS, CD_TIME_DEPOSIT, BROKER_CASH, WALLET
   currency: varchar('currency', { length: 10 }).default('EGP').notNull(), // EGP, USD
   balance: numeric('balance', { precision: 16, scale: 4 }).default('0').notNull(),
+  interestRate: numeric('interest_rate', { precision: 6, scale: 2 }), // e.g. 6.00 for 6.00% APR
+  interestFrequency: varchar('interest_frequency', { length: 30 }).default('NONE'), // DAILY, MONTHLY, QUARTERLY, ANNUALLY, NONE
+  lastInterestCalcDate: date('last_interest_calc_date'), // YYYY-MM-DD
   color: varchar('color', { length: 30 }),
   isArchived: boolean('is_archived').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

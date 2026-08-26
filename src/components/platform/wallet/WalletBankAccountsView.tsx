@@ -20,6 +20,7 @@ const CATEGORIES = [
   'Housing & Rent',
   'Food & Groceries',
   'Salary & Income',
+  'Interest & Yield',
   'Trading Injection',
   'Trading Withdrawal',
   'Savings & CD',

@@ -315,6 +315,12 @@ export default function BankAccountsGrid({
                                     <span className="px-2 py-0.5 rounded-md text-[10px] font-medium tabular-nums bg-white/[0.04] text-plt-muted border border-white/[0.06] font-sans">
                                       {typeLabel}
                                     </span>
+                                    {acc.interestRate && Number(acc.interestRate) > 0 && (
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold tabular-nums bg-plt-profit/10 text-plt-profit border border-plt-profit/25 font-sans flex items-center gap-1">
+                                        <span className="w-1 h-1 rounded-full bg-plt-profit animate-pulse" />
+                                        {Number(acc.interestRate).toFixed(1)}% APR
+                                      </span>
+                                    )}
                                     {acc.accountNumber && (
                                       <span className="text-mini tabular-nums text-plt-faint hidden sm:inline font-sans">
                                         • {maskAccountNumber(acc.accountNumber)}
@@ -339,6 +345,11 @@ export default function BankAccountsGrid({
                                     })}
                                     {!isUsd ? ' EGP' : ''}
                                   </span>
+                                  {acc.interestRate && Number(acc.interestRate) > 0 && bal > 0 && (
+                                    <div className="text-[10px] text-plt-profit/90 font-sans tabular-nums mt-0.5">
+                                      +{((bal * Number(acc.interestRate)) / 36500).toFixed(2)}/day
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -415,26 +426,38 @@ export default function BankAccountsGrid({
                     </div>
                   </div>
 
-                  <span
-                    className={`text-compact tabular-nums px-2 py-2 rounded-xl font-medium tracking-wider ${
-                      isUsd
-                        ? 'bg-plt-info/10 text-plt-info border border-plt-info/20'
-                        : 'bg-plt-profit/10 text-plt-profit border border-plt-profit/20'
-                    }`}
-                  >
-                    {acc.currency}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {acc.interestRate && Number(acc.interestRate) > 0 && (
+                      <span className="text-[10px] font-semibold tabular-nums px-2 py-1 rounded-lg bg-plt-profit/10 text-plt-profit border border-plt-profit/25 font-sans">
+                        {Number(acc.interestRate).toFixed(1)}% APR
+                      </span>
+                    )}
+                    <span
+                      className={`text-compact tabular-nums px-2 py-2 rounded-xl font-medium tracking-wider ${
+                        isUsd
+                          ? 'bg-plt-info/10 text-plt-info border border-plt-info/20'
+                          : 'bg-plt-profit/10 text-plt-profit border border-plt-profit/20'
+                      }`}
+                    >
+                      {acc.currency}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Balance & Actions */}
                 <div className="mt-4 pt-4 border-t border-plt-border-soft flex items-baseline justify-between">
                   <div>
-                    <div className="text-mini text-plt-muted font-medium ">Balance</div>
+                    <div className="text-mini text-plt-muted font-medium">Balance</div>
                     <div className="text-lg md:text-xl font-medium tabular-nums text-plt-text tracking-tight">
                       {isUsd ? '$' : ''}
                       {bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       {!isUsd ? ' EGP' : ''}
                     </div>
+                    {acc.interestRate && Number(acc.interestRate) > 0 && bal > 0 && (
+                      <div className="text-[11px] text-plt-profit/90 font-sans tabular-nums mt-0.5">
+                        +{((bal * Number(acc.interestRate)) / 36500).toFixed(2)} {acc.currency}/day
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

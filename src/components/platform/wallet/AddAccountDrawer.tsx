@@ -28,6 +28,8 @@ export default function AddAccountDrawer({
   const [accountType, setAccountType] = useState('CURRENT');
   const [currency, setCurrency] = useState('EGP');
   const [balance, setBalance] = useState('');
+  const [interestRate, setInterestRate] = useState('');
+  const [interestFrequency, setInterestFrequency] = useState('DAILY');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,6 +49,8 @@ export default function AddAccountDrawer({
           accountType,
           currency,
           balance: Number(balance) || 0,
+          interestRate: (accountType === 'SAVINGS' || accountType === 'CD_TIME_DEPOSIT') && interestRate ? Number(interestRate) : null,
+          interestFrequency: (accountType === 'SAVINGS' || accountType === 'CD_TIME_DEPOSIT') && interestRate ? interestFrequency : 'NONE',
         }),
       });
 
@@ -59,6 +63,8 @@ export default function AddAccountDrawer({
         setAccountName('');
         setAccountNumber('');
         setBalance('');
+        setInterestRate('');
+        setInterestFrequency('DAILY');
       } else {
         toast.error('Failed to create account', 'Please verify your inputs and try again.');
       }
@@ -211,6 +217,56 @@ export default function AddAccountDrawer({
                   className="input-token"
                 />
               </div>
+
+              {/* Optional Savings / CD Interest Configuration */}
+              {(accountType === 'SAVINGS' || accountType === 'CD_TIME_DEPOSIT') && (
+                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-plt-text font-sans flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-plt-profit" />
+                      Interest & Yield Automation
+                    </span>
+                    <span className="text-[10px] text-plt-muted font-sans">Optional</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium text-plt-muted font-sans">Annual Rate (% APR)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="e.g. 6.00"
+                        value={interestRate}
+                        onChange={(e) => setInterestRate(e.target.value)}
+                        className="input-token"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium text-plt-muted font-sans">Compounding</label>
+                      <select
+                        value={interestFrequency}
+                        onChange={(e) => setInterestFrequency(e.target.value)}
+                        className="select-token"
+                      >
+                        <option value="DAILY">Daily (Added Daily)</option>
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="QUARTERLY">Quarterly</option>
+                        <option value="ANNUALLY">Annually</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {interestRate && Number(interestRate) > 0 && balance && Number(balance) > 0 && (
+                    <div className="text-[10px] text-plt-profit font-sans flex items-center justify-between pt-1 border-t border-white/[0.05]">
+                      <span>Projected Daily Yield:</span>
+                      <span className="font-semibold tabular-nums">
+                        +{((Number(balance) * (Number(interestRate) / 36500))).toFixed(2)} {currency}/day
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="pt-3 border-t border-plt-border-soft flex items-center justify-end gap-2">
