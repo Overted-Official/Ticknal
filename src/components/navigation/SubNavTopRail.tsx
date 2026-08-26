@@ -25,15 +25,9 @@ export default function SubNavTopRail({
   onChange,
   className = '',
 }: SubNavTopRailProps) {
-  const { isNavVisible } = useMobileNavScroll();
-
   return (
     <div
-      className={`will-change-nav md:hidden w-full shrink-0 flex items-center gap-1.5 border-b border-white/[0.08] bg-black/60 backdrop-blur-2xl z-30 overflow-x-auto no-scrollbar scroll-smooth transition-all duration-300 ease-out ${
-        isNavVisible
-          ? 'translate-y-0 max-h-12 h-12 px-3 opacity-100'
-          : '-translate-y-full max-h-0 h-0 px-3 py-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
-      } ${className}`}
+      className={`md:hidden w-full shrink-0 flex items-center gap-1.5 border-b border-plt-border bg-plt-base/95 backdrop-blur-2xl z-30 overflow-x-auto no-scrollbar scroll-smooth h-12 px-3 opacity-100 select-none ${className}`}
     >
       {items.map((item) => {
         const isActive = activeTab === item.value;
