@@ -151,9 +151,9 @@ export default function ChartTickerHeader({
 
       {/* Dropdown Menu */}
       {isSearchOpen && (
-        <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-plt-card border border-plt-border-soft rounded-2xl shadow-popover backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-[#121216] border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
           {/* Search Input */}
-          <div className="flex items-center px-3.5 py-2.5 border-b border-plt-border-soft bg-plt-card">
+          <div className="flex items-center px-3.5 py-2.5 border-b border-white/[0.08] bg-white/[0.03]">
             <Search size={14} className="text-plt-muted mr-2 shrink-0" />
             <input
               ref={searchInputRef}

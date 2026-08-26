@@ -139,7 +139,7 @@ export default function AddAccountDrawer({
                     placeholder="e.g. Wise, Revolut, Cash Vault, Telda"
                     value={customBankName}
                     onChange={(e) => setNewAccCustomBankHelper(e.target.value, setCustomBankName)}
-                    className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-3 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
+                    className="input-token"
                   />
                 </div>
               )}
@@ -153,7 +153,7 @@ export default function AddAccountDrawer({
                   placeholder="e.g. CIB Salary, HSBC USD Savings"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
-                  className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-3 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
+                  className="input-token"
                 />
               </div>
 
@@ -165,7 +165,7 @@ export default function AddAccountDrawer({
                   placeholder="e.g. EG3800..."
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="h-8 w-full rounded-xl bg-plt-card border border-plt-border-soft px-3 text-xs font-sans text-plt-text focus:border-plt-border-active focus:outline-none"
+                  className="input-token"
                 />
               </div>
 

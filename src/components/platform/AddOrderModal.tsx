@@ -203,7 +203,7 @@ export default function AddOrderModal({
                     </div>
                     {/* Search Dropdown */}
                     {isSearchOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-plt-card border border-plt-border-soft rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto divide-y divide-plt-border-soft custom-scrollbar">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-[#121216] border border-white/[0.14] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 max-h-48 overflow-y-auto divide-y divide-white/[0.08] custom-scrollbar">
                         {filteredTickers.length === 0 ? (
                           <div className="px-4 py-4 text-xs text-plt-muted text-center font-sans">No tickers found</div>
                         ) : (
