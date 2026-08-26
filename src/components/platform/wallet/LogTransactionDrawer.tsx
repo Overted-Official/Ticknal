@@ -109,7 +109,7 @@ export default function LogTransactionDrawer({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+        <div className="fixed inset-0 z-modal overflow-hidden flex justify-end pointer-events-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -117,16 +117,16 @@ export default function LogTransactionDrawer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-plt-base/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/75 z-0 cursor-pointer"
           />
 
           {/* Sliding Sheet / Drawer */}
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-            className="relative w-full max-w-md bg-plt-base border-l border-plt-border-soft shadow-2xl flex flex-col h-full z-10 select-none"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+            className="relative z-modal-content w-full max-w-md bg-[#0f0f12] text-plt-text border-t md:border-t-0 md:border-l border-plt-border-strong shadow-2xl flex flex-col max-h-[90vh] md:max-h-full h-full mt-auto md:mt-0"
           >
             {/* Header */}
             <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">

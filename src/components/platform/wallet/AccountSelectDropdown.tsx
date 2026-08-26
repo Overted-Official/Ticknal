@@ -25,14 +25,18 @@ export default function AccountSelectDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
+      };
     }
   }, [isOpen]);
 
@@ -133,7 +137,7 @@ export default function AccountSelectDropdown({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[#121216] border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-2xl max-h-64 overflow-y-auto custom-scrollbar">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-[70] bg-[#121216] border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-2xl max-h-64 overflow-y-auto custom-scrollbar">
           {filteredAccounts.length === 0 ? (
             <div className="py-4 text-center text-xs text-plt-muted font-sans">
               No accounts available

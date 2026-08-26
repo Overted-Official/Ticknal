@@ -239,7 +239,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+        <div className="fixed inset-0 z-modal overflow-hidden flex justify-end pointer-events-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -247,16 +247,16 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-plt-base/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/75 z-0 cursor-pointer"
           />
 
           {/* Slide-over Drawer / Sheet */}
           <motion.div
-            initial={{ y: '100%', md: { x: '100%', y: 0 } } as any}
-            animate={{ y: 0, x: 0 }}
-            exit={{ y: '100%', md: { x: '100%', y: 0 } } as any}
-            transition={{ type: 'spring', damping: 26, stiffness: 240 }}
-            className="relative w-full max-w-lg bg-plt-base border-t md:border-t-0 md:border-l border-plt-border-soft shadow-2xl flex flex-col max-h-drawer-mobile md:max-h-full h-full z-10 select-none mt-auto md:mt-0"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+            className="relative z-modal-content w-full max-w-lg bg-[#0f0f12] text-plt-text border-t md:border-t-0 md:border-l border-plt-border-strong shadow-2xl flex flex-col max-h-[90vh] md:max-h-full h-full mt-auto md:mt-0"
           >
             {/* Header */}
             <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
