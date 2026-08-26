@@ -501,7 +501,13 @@ body {
   letter-spacing: var(--tracking-normal);
 }
 
-body { margin: 0; }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
 button, input, select, textarea { font: inherit; }
 button { border-radius: var(--radius-button) !important; font-family: var(--font-sans-token) !important; font-size: var(--text-12); font-weight: var(--font-weight-medium-token); letter-spacing: var(--tracking-normal); }
 button:not(:disabled) { cursor: pointer; }

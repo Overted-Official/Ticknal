@@ -50,11 +50,11 @@ const comparisonData = [
 
 export default function CompareSection() {
   return (
-    <section className="pt-32 px-6 md:px-10 pb-0 bg-transparent w-full">
-      <div className="max-w-248 mx-auto flex flex-col gap-12 items-center">
+    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full overflow-hidden" id="compare">
+      <div className="max-w-248 mx-auto flex flex-col gap-8 sm:gap-12 items-center">
 
         {/* Heading */}
-        <div className="flex flex-col gap-6 items-center text-center max-w-164 w-full">
+        <div className="flex flex-col gap-4 sm:gap-6 items-center text-center max-w-164 w-full">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -68,13 +68,13 @@ export default function CompareSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-section md:text-display font-medium text-plt-text leading-display tracking-normal capitalize"
+            className="text-2xl sm:text-3xl md:text-display font-medium text-plt-text leading-tight tracking-normal capitalize"
           >
             Why QuantEGX Leaves Others Behind
           </motion.h2>
         </div>
 
-        {/* Table (scaled 80%) */}
+        {/* Table */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -85,34 +85,34 @@ export default function CompareSection() {
           <table className="data-table w-full min-w-150 text-left border-collapse">
             <thead>
               <tr className="border-b border-plt-border bg-plt-muted-surface/80">
-                <th className="p-2 text-sm font-medium text-plt-text/90">Features & Capabilities</th>
-                <th className="p-2 text-sm font-medium text-tv-accent bg-tv-accent/10 border-x border-tv-accent/20">
+                <th className="p-3 sm:p-4 text-xs sm:text-sm font-medium text-plt-text/90">Features & Capabilities</th>
+                <th className="p-3 sm:p-4 text-xs sm:text-sm font-medium text-tv-accent bg-tv-accent/10 border-x border-tv-accent/20">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-tv-accent animate-pulse" />
                     QuantEGX
                   </div>
                 </th>
-                <th className="p-2 text-xs font-medium text-plt-subtle">Manual Trading</th>
-                <th className="p-2 text-xs font-medium text-plt-subtle">Legacy Screeners</th>
+                <th className="p-3 sm:p-4 text-xs font-medium text-plt-subtle">Manual Trading</th>
+                <th className="p-3 sm:p-4 text-xs font-medium text-plt-subtle">Legacy Screeners</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-plt-border-soft text-xs sm:text-body">
               {comparisonData.map((row, idx) => (
                 <tr key={idx} className="hover:bg-plt-hover transition-colors">
-                  <td className="p-2 font-medium text-plt-text/90">{row.feature}</td>
+                  <td className="p-3 sm:p-4 font-medium text-plt-text/90">{row.feature}</td>
 
                   {/* QuantEGX Column */}
-                  <td className="p-2 bg-tv-accent/5 border-x border-tv-accent/20">
-                    <div className="flex items-center gap-2 text-tv-accent font-medium text-xs">
-                      <div className="w-6 h-6 rounded-full bg-tv-accent/20 flex items-center justify-center">
-                        <Check size={16} className="text-tv-accent" />
+                  <td className="p-3 sm:p-4 bg-tv-accent/5 border-x border-tv-accent/20">
+                    <div className="flex items-center gap-2 text-tv-accent font-medium text-xs sm:text-sm">
+                      <div className="w-5 h-5 rounded-full bg-tv-accent/20 flex items-center justify-center">
+                        <Check size={14} className="text-tv-accent" />
                       </div>
                       Included
                     </div>
                   </td>
 
                   {/* Manual Trading */}
-                  <td className="p-2 text-plt-muted">
+                  <td className="p-3 sm:p-4 text-plt-muted">
                     {typeof row.manual === 'boolean' ? (
                       row.manual ? (
                         <Check size={16} className="text-plt-profit" />
@@ -125,7 +125,7 @@ export default function CompareSection() {
                   </td>
 
                   {/* Legacy Screeners */}
-                  <td className="p-2 text-plt-muted">
+                  <td className="p-3 sm:p-4 text-plt-muted">
                     {typeof row.others === 'boolean' ? (
                       row.others ? (
                         <Check size={16} className="text-plt-profit" />

@@ -25,7 +25,7 @@ export default async function LandingPage() {
 
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-plt-base overflow-x-hidden font-sans text-plt-text selection:bg-tv-accent selection:text-plt-inverse">
+      <div className="min-h-screen w-full max-w-full overflow-x-clip font-sans text-plt-text selection:bg-tv-accent selection:text-plt-inverse">
         <Navbar />
         <Hero />
         <Stats />
