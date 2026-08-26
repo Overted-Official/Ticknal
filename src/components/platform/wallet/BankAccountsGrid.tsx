@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/icon-library';
 import { type BankAccount } from '@/types/bank';
 import { maskAccountNumber } from '@/lib/masking';
+import { getBankShortName, formatCleanAccountTitle } from '@/lib/format-bank-name';
 
 interface BankAccountsGridProps {
   accounts: BankAccount[];
@@ -213,7 +214,7 @@ export default function BankAccountsGrid({
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-bold text-plt-text tracking-tight truncate font-sans">{group.name}</h3>
+                        <h3 className="text-sm font-bold text-plt-text tracking-tight truncate font-sans">{getBankShortName(group.name)}</h3>
                         <span className="badge badge-muted font-sans">
                           {group.accounts.length} {group.accounts.length === 1 ? 'account' : 'accounts'}
                         </span>
@@ -229,7 +230,7 @@ export default function BankAccountsGrid({
                         )}
                       </div>
                       <p className="text-[11px] text-plt-muted truncate max-w-md mt-0.5 font-sans">
-                        {group.accounts.map((a) => a.accountName).join(' · ')}
+                        {group.accounts.map((a) => formatCleanAccountTitle(a).subName).join(' · ')}
                       </p>
                     </div>
                   </div>
@@ -305,12 +306,24 @@ export default function BankAccountsGrid({
                               className="px-4 md:px-6 py-3.5 flex items-center justify-between gap-4 bg-transparent hover:bg-white/[0.04] transition-colors"
                             >
                               {/* Account Info */}
-                              <div className="flex items-center gap-4 min-w-0">
+                              <div className="flex items-center gap-3 min-w-0">
                                 <div className="w-1.5 h-1.5 rounded-full bg-white/20 shrink-0" />
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-medium text-plt-text tracking-tight truncate font-sans">
-                                      {acc.accountName}
+                                    <span className="text-xs font-bold text-plt-text tracking-tight font-sans shrink-0">
+                                      {formatCleanAccountTitle(acc).bankShort}
+                                    </span>
+                                    <span className="text-xs text-plt-muted font-sans truncate">
+                                      {formatCleanAccountTitle(acc).subName}
+                                    </span>
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider font-sans ${
+                                        isUsd
+                                          ? 'bg-plt-info/15 text-plt-info border border-plt-info/30'
+                                          : 'bg-plt-profit/15 text-plt-profit border border-plt-profit/30'
+                                      }`}
+                                    >
+                                      {acc.currency}
                                     </span>
                                     <span className="px-2 py-0.5 rounded-md text-[10px] font-medium tabular-nums bg-white/[0.04] text-plt-muted border border-white/[0.06] font-sans">
                                       {typeLabel}
@@ -417,11 +430,11 @@ export default function BankAccountsGrid({
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-medium text-plt-text tracking-tight line-clamp-2 group-hover:text-plt-profit transition-colors">
-                        {acc.accountName}
+                      <h3 className="text-sm font-bold text-plt-text tracking-tight group-hover:text-plt-profit transition-colors font-sans">
+                        {formatCleanAccountTitle(acc).bankShort}
                       </h3>
-                      <p className="text-caption text-plt-muted line-clamp-2">
-                        {acc.bankName || acc.customBankName || 'Egyptian Bank'}
+                      <p className="text-caption text-plt-muted line-clamp-1 font-sans">
+                        {formatCleanAccountTitle(acc).subName}
                       </p>
                     </div>
                   </div>
@@ -433,10 +446,10 @@ export default function BankAccountsGrid({
                       </span>
                     )}
                     <span
-                      className={`text-compact tabular-nums px-2 py-2 rounded-xl font-medium tracking-wider ${
+                      className={`text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-lg tracking-wider font-sans ${
                         isUsd
-                          ? 'bg-plt-info/10 text-plt-info border border-plt-info/20'
-                          : 'bg-plt-profit/10 text-plt-profit border border-plt-profit/20'
+                          ? 'bg-plt-info/15 text-plt-info border border-plt-info/30'
+                          : 'bg-plt-profit/15 text-plt-profit border border-plt-profit/30'
                       }`}
                     >
                       {acc.currency}

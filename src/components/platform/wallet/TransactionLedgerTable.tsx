@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRightLeft, Search, Trash2, ChevronDown, Check, X, Filter, Edit2 } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { formatUiLabel } from '@/lib/format-ui-label';
+import { formatCleanAccountTitle } from '@/lib/format-bank-name';
 
 interface TransactionLedgerTableProps {
   transactions: BankTransaction[];
@@ -120,10 +121,13 @@ export default function TransactionLedgerTable({
 
   const accountOptions = [
     { id: 'ALL', label: 'All Accounts' },
-    ...accounts.map((a) => ({
-      id: String(a.id),
-      label: `${a.accountName} (${a.currency})`,
-    })),
+    ...accounts.map((a) => {
+      const meta = formatCleanAccountTitle(a);
+      return {
+        id: String(a.id),
+        label: `${meta.bankShort} (${meta.subName})`,
+      };
+    }),
   ];
 
   const hasActiveFilters =
@@ -250,7 +254,18 @@ export default function TransactionLedgerTable({
                       {tx.transactionDate}
                     </td>
                     <td className="py-2.5 px-3.5 text-plt-text font-medium whitespace-nowrap">
-                      {tx.accountName || 'Bank Account'}
+                      {tx.accountName ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs text-plt-text">
+                            {formatCleanAccountTitle({ accountName: tx.accountName }).bankShort}
+                          </span>
+                          <span className="text-[11px] text-plt-muted truncate max-w-[130px]">
+                            {formatCleanAccountTitle({ accountName: tx.accountName }).subName}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-plt-muted text-xs">Bank Account</span>
+                      )}
                     </td>
                     <td className="py-2.5 px-3.5 whitespace-nowrap">
                       <span

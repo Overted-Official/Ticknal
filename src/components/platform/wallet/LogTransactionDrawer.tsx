@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRightLeft, X, Check } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
+import AccountSelectDropdown from './AccountSelectDropdown';
 
 interface LogTransactionDrawerProps {
   isOpen: boolean;
@@ -197,41 +198,29 @@ export default function LogTransactionDrawer({
                 <label className="text-xs font-semibold text-plt-muted font-sans">
                   {txMode === 'TRANSFER' ? 'From Account (Source)' : 'Bank Account'}
                 </label>
-                <select
-                  value={accountId}
-                  onChange={(e) => {
-                    setAccountId(e.target.value);
-                    const sel = accounts.find((a) => String(a.id) === e.target.value);
+                <AccountSelectDropdown
+                  accounts={accounts}
+                  selectedAccountId={accountId}
+                  onSelectAccount={(accId) => {
+                    setAccountId(accId);
+                    const sel = accounts.find((a) => String(a.id) === accId);
                     if (sel) setCurrency(sel.currency);
                   }}
-                  className="select-token"
-                >
-                  {accounts.map((a) => (
-                    <option key={a.id} value={String(a.id)}>
-                      {a.accountName} ({a.currency}) - Bal: {Number(a.balance).toLocaleString()}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select source bank account..."
+                />
               </div>
 
               {/* Destination Account (Transfers only) */}
               {txMode === 'TRANSFER' && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-plt-muted font-sans">To Account (Destination)</label>
-                  <select
-                    value={toAccountId}
-                    onChange={(e) => setToAccountId(e.target.value)}
-                    className="select-token"
-                  >
-                    <option value="">-- Select Destination Account --</option>
-                    {accounts
-                      .filter((a) => String(a.id) !== accountId)
-                      .map((a) => (
-                        <option key={a.id} value={String(a.id)}>
-                          {a.accountName} ({a.currency})
-                        </option>
-                      ))}
-                  </select>
+                  <AccountSelectDropdown
+                    accounts={accounts}
+                    selectedAccountId={toAccountId}
+                    onSelectAccount={setToAccountId}
+                    excludeAccountId={accountId}
+                    placeholder="Select destination bank account..."
+                  />
                 </div>
               )}
 

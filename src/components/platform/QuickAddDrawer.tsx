@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/icon-library';
 import { useToast } from '@/context/ToastContext';
 import { type BankAccount } from '@/types/bank';
+import AccountSelectDropdown from './wallet/AccountSelectDropdown';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -361,18 +362,12 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                         No accounts found. Please add a bank account first.
                       </div>
                     ) : (
-                      <select
-                        required
-                        value={accountId}
-                        onChange={(e) => handleAccountChange(e.target.value)}
-                        className="select-token"
-                      >
-                        {accounts.map((acc) => (
-                          <option key={acc.id} value={acc.id}>
-                            {acc.accountName} ({acc.bankName || 'Bank'}) — {Number(acc.balance).toLocaleString()} {acc.currency}
-                          </option>
-                        ))}
-                      </select>
+                      <AccountSelectDropdown
+                        accounts={accounts}
+                        selectedAccountId={accountId}
+                        onSelectAccount={handleAccountChange}
+                        placeholder="Select Bank Account..."
+                      />
                     )}
                   </div>
 
@@ -380,21 +375,13 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {txMode === 'TRANSFER' && (
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-plt-muted font-sans">To Destination Account *</label>
-                      <select
-                        required
-                        value={toAccountId}
-                        onChange={(e) => setToAccountId(e.target.value)}
-                        className="select-token"
-                      >
-                        <option value="">Select Destination Account...</option>
-                        {accounts
-                          .filter((a) => String(a.id) !== accountId)
-                          .map((acc) => (
-                            <option key={acc.id} value={acc.id}>
-                              {acc.accountName} ({acc.bankName || 'Bank'}) — {Number(acc.balance).toLocaleString()} {acc.currency}
-                            </option>
-                          ))}
-                      </select>
+                      <AccountSelectDropdown
+                        accounts={accounts}
+                        selectedAccountId={toAccountId}
+                        onSelectAccount={setToAccountId}
+                        excludeAccountId={accountId}
+                        placeholder="Select Destination Account..."
+                      />
                     </div>
                   )}
 
