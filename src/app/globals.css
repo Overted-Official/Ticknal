@@ -757,7 +757,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .max-h-sheet { max-height: var(--height-sheet); }
 .max-h-sheet-compact { max-height: var(--height-sheet-compact); }
 .max-h-drawer-mobile { max-height: var(--height-drawer-mobile); }
-.safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-area-top { padding-top: max(env(safe-area-inset-top, 0px), 6px); }
 .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .safe-area-drawer-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-7)); }
 .safe-area-action-bottom { bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px)); }

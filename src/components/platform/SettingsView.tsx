@@ -43,6 +43,7 @@ import { useToast } from '@/context/ToastContext';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 import PinSecurityCard from '@/components/platform/settings/PinSecurityCard';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
+import { triggerNativeTestNotification } from '@/lib/native/capacitor-bridge';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
 export type SettingsUserProfile = {
@@ -328,10 +329,23 @@ export default function SettingsView({
     setIsEnablingPush(true);
     setPushStatus(null);
     try {
+      // 1. Trigger immediate native heads-up notification if running on Android device
+      await triggerNativeTestNotification(
+        '🟢 QuantEGX Signal Test',
+        'BUY Signal triggered for COMI at 84.50 EGP (Target: 92.00, Stop: 81.00)'
+      );
+
+      // 2. Dispatch server-side push alert
       const res = await fetch('/api/notifications/test', { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
-        setPushStatus('🟢 Test notification sent! Check your notification tray.');
+        setPushStatus('🟢 Test notification dispatched! Check your status bar & notification tray.');
+        // Refresh device list
+        const devRes = await fetch('/api/push/subscribe');
+        if (devRes.ok) {
+          const devData = await devRes.json();
+          setDevices(devData.subscriptions || devData.devices || []);
+        }
       } else {
         setPushStatus(data.error || 'Failed to send test notification.');
       }

@@ -22,18 +22,51 @@ export async function handleSubscribeGet() {
   }
 
   try {
-    const rows = await db
-      .select({
-        id: pushSubscriptions.id,
-        endpoint: pushSubscriptions.endpoint,
-        userAgent: pushSubscriptions.userAgent,
-        createdAt: pushSubscriptions.createdAt,
-        updatedAt: pushSubscriptions.updatedAt,
-      })
-      .from(pushSubscriptions)
-      .where(eq(pushSubscriptions.userId, user.id));
+    const [webRows, deviceRows] = await Promise.all([
+      db
+        .select({
+          id: pushSubscriptions.id,
+          endpoint: pushSubscriptions.endpoint,
+          userAgent: pushSubscriptions.userAgent,
+          createdAt: pushSubscriptions.createdAt,
+          updatedAt: pushSubscriptions.updatedAt,
+        })
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.userId, user.id)),
+      db
+        .select({
+          id: devicePushTokens.id,
+          token: devicePushTokens.token,
+          platform: devicePushTokens.platform,
+          deviceModel: devicePushTokens.deviceModel,
+          createdAt: devicePushTokens.createdAt,
+          updatedAt: devicePushTokens.updatedAt,
+        })
+        .from(devicePushTokens)
+        .where(eq(devicePushTokens.userId, user.id)),
+    ]);
 
-    return NextResponse.json({ devices: rows });
+    const formattedDevices = [
+      ...webRows.map((r) => ({
+        id: r.id,
+        endpoint: r.endpoint,
+        userAgent: r.userAgent,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      })),
+      ...deviceRows.map((d) => ({
+        id: d.id,
+        endpoint: d.token,
+        userAgent: `Android Native App (${d.deviceModel || 'Mobile Device'})`,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      })),
+    ];
+
+    return NextResponse.json({
+      devices: formattedDevices,
+      subscriptions: formattedDevices,
+    });
   } catch (error) {
     console.error('Error fetching push subscriptions:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

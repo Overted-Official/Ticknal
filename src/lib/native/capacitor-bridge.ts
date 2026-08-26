@@ -4,6 +4,7 @@ import { App } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Browser } from '@capacitor/browser';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { createClient } from '@/lib/supabase/client';
 
 export function isNativePlatform(): boolean {
@@ -213,3 +214,33 @@ export async function triggerNativeHaptic(
     // Haptics unavailable on emulator or unsupported hardware
   }
 }
+
+export async function triggerNativeTestNotification(title?: string, body?: string): Promise<void> {
+  if (!isNativePlatform()) return;
+  try {
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') {
+      await LocalNotifications.requestPermissions();
+    }
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title: title || '🟢 QuantEGX Signal Test',
+          body: body || 'Test Alert: BUY Signal triggered for COMI at 84.50 EGP.',
+          id: Math.floor(Math.random() * 100000),
+          schedule: { at: new Date(Date.now() + 500) },
+          sound: undefined,
+          actionTypeId: '',
+          extra: {
+            url: '/invest?ticker=COMI.CA&view=chart',
+          },
+        },
+      ],
+    });
+    await triggerNativeHaptic('heavy');
+  } catch (err) {
+    console.error('Failed to schedule local test notification:', err);
+  }
+}
+
