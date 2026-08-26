@@ -42,46 +42,66 @@ export async function initNativeBridge(options?: {
     // 3. Handle App URL Open (OAuth Redirects & Deep Links)
     App.addListener('appUrlOpen', async (event) => {
       console.log('App received URL scheme event:', event.url);
+
+      // Always close the Chrome Custom Tab first
       try {
         await Browser.close();
-      } catch (e) {}
+      } catch (e) {
+        // Browser may already be closed
+      }
 
-      if (event.url) {
-        // Handle OAuth callback tokens or query
-        if (event.url.includes('auth/callback') || event.url.includes('code=') || event.url.includes('access_token=')) {
-          const supabase = createClient();
-          const cleanUrl = event.url.replace('com.quantegx.app://', 'https://quantegx.vercel.app/');
-          
-          try {
-            const urlObj = new URL(cleanUrl);
-            const code = urlObj.searchParams.get('code');
-            if (code) {
-              await supabase.auth.exchangeCodeForSession(code);
-            }
+      if (!event.url) return;
 
-            const hash = urlObj.hash ? urlObj.hash.substring(1) : '';
+      // Handle OAuth callback (Supabase sends tokens via hash fragment or code via query)
+      if (event.url.includes('auth/callback') || event.url.includes('access_token') || event.url.includes('code=')) {
+        const supabase = createClient();
+
+        try {
+          // Supabase sends tokens in the hash fragment: #access_token=...&refresh_token=...
+          // OR sends a code in query params: ?code=...
+          // The URL looks like: com.quantegx.app://auth/callback#access_token=...&refresh_token=...
+          // or: com.quantegx.app://auth/callback?code=...
+
+          // Replace custom scheme with https to make URL parsing work
+          const parsableUrl = event.url.replace('com.quantegx.app://', 'https://placeholder/');
+          const urlObj = new URL(parsableUrl);
+
+          // Check for hash fragment tokens (implicit flow)
+          const hash = urlObj.hash ? urlObj.hash.substring(1) : '';
+          if (hash) {
             const hashParams = new URLSearchParams(hash);
             const accessToken = hashParams.get('access_token');
             const refreshToken = hashParams.get('refresh_token');
             if (accessToken && refreshToken) {
-              await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+              const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (error) console.error('setSession error:', error);
             }
-          } catch (err) {
-            console.error('Error handling OAuth callback in app:', err);
           }
 
-          // Force page reload to dashboard so session cookies/state initialize
-          window.location.href = '/dashboard';
-          return;
+          // Check for authorization code (PKCE flow)
+          const code = urlObj.searchParams.get('code');
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) console.error('exchangeCodeForSession error:', error);
+          }
+        } catch (err) {
+          console.error('Error handling OAuth callback in app:', err);
         }
 
-        // Handle general deep link
-        const targetPath = event.url.replace('com.quantegx.app://', '/');
-        if (options?.onNavigate) {
-          options.onNavigate(targetPath);
-        } else {
-          window.location.href = targetPath;
-        }
+        // Navigate to dashboard inside the WebView
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      // Handle general deep links
+      const targetPath = event.url.replace('com.quantegx.app://', '/');
+      if (options?.onNavigate) {
+        options.onNavigate(targetPath);
+      } else {
+        window.location.href = targetPath;
       }
     });
 

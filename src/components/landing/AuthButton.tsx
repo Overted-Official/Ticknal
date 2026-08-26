@@ -19,11 +19,10 @@ export default function AuthButton({
 
   const handleLogin = async () => {
     if (isNativePlatform()) {
-      const liveOrigin = 'https://quantegx.vercel.app';
       const { data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${liveOrigin}/auth/callback?next=${encodeURIComponent(nextPath)}&source=app`,
+          redirectTo: `com.quantegx.app://auth/callback`,
           skipBrowserRedirect: true,
         },
       });
