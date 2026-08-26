@@ -70,7 +70,7 @@ export default function InvestClientView({
       {/* Main Tab Canvas */}
       <div {...swipeHandlers} className="flex-1 overflow-hidden relative flex flex-col min-h-0 touch-pan-y">
         <div className={`absolute inset-0 flex flex-col bg-plt-base transition-opacity duration-150 ${currentView === 'sectors' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
-          {hasVisitedSectors ? sectorsView : null}
+          {sectorsView}
         </div>
         <div className={`absolute inset-0 flex flex-col transition-opacity duration-150 ${currentView === 'chart' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
           {tickersView}

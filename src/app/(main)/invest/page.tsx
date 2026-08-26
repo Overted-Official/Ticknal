@@ -50,11 +50,13 @@ async function InvestPageContent({
   initialReplayMode: boolean;
   view: string;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/');
+  let userId: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id || null;
+  } catch (err) {
+    console.warn('InvestPageContent auth check skipped/failed:', err);
   }
 
   const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
@@ -68,13 +70,17 @@ async function InvestPageContent({
     dbDataRes,
   ] = await Promise.allSettled([
     getCachedTickers(),
-    db.select({ tickerSymbol: positions.tickerSymbol })
-      .from(positions)
-      .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, user.id))),
+    userId
+      ? db.select({ tickerSymbol: positions.tickerSymbol })
+          .from(positions)
+          .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, userId)))
+      : Promise.resolve([]),
     getCachedRecentPrices(),
-    db.select()
-      .from(positions)
-      .where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, user.id))),
+    userId
+      ? db.select()
+          .from(positions)
+          .where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, userId)))
+      : Promise.resolve([]),
     is1H ? getCachedHourlyPrices(selectedSymbol) : getCachedDailyPrices(selectedSymbol),
   ]);
 
