@@ -128,22 +128,39 @@ export async function handleCheckNotifications(request: Request) {
   }
 }
 
-export async function handleTestNotification() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export async function handleTestNotification(req?: Request) {
+  let user: any = null;
+  const authHeader = req?.headers.get('authorization');
+
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '').trim();
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data } = await supabase.auth.getUser(token);
+    user = data?.user;
+  }
+
+  if (!user) {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  }
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const payloadData = {
-    title: '🟢 QuantEGX Signal Test',
-    body: 'Test Alert: BUY Signal triggered for COMI at 84.50 EGP.',
+    title: '🟢 [PSI V2] COMI Buy Opportunity',
+    body: 'Commercial International Bank triggered a BUY signal at 139.50 EGP (Target: 152.00, Stop: 134.00)',
     url: '/invest?ticker=COMI.CA&view=chart',
     tag: `test-notification-${Date.now()}`,
     symbol: 'COMI.CA',
     signal: 'BUY',
-    price: '84.50',
+    price: '139.50',
   };
 
   const payload = JSON.stringify(payloadData);

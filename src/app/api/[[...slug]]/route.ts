@@ -277,7 +277,7 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
   // 3. Notifications
   if (root === 'notifications') {
     if (sub === 'check') return handleCheckNotifications(req);
-    if (sub === 'test') return handleTestNotification();
+    if (sub === 'test') return handleTestNotification(req);
     if (sub === 'register-device') return handleRegisterDeviceTokenPost(req);
     return NextResponse.json({ error: `Unknown notification action: ${sub}` }, { status: 404 });
   }
