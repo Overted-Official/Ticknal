@@ -318,8 +318,12 @@ function configureWebPush() {
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   if (!publicKey || !privateKey) return;
 
+  const subject = (process.env.WEB_PUSH_SUBJECT && !process.env.WEB_PUSH_SUBJECT.includes('.local'))
+    ? process.env.WEB_PUSH_SUBJECT
+    : 'mailto:support@quantegx.com';
+
   webPush.setVapidDetails(
-    process.env.WEB_PUSH_SUBJECT ?? 'mailto:alerts@quantegx.local',
+    subject,
     publicKey,
     privateKey,
   );
