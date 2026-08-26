@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { connection } from 'next/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, pushSubscriptions, tickerAlerts } from '@/db/schema';
+import { positions, pushSubscriptions, devicePushTokens, tickerAlerts } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import SettingsView, {
@@ -32,14 +32,16 @@ export default async function SettingsPage() {
   }
 
   let deviceRows: (typeof pushSubscriptions.$inferSelect)[] = [];
+  let mobileDeviceRows: (typeof devicePushTokens.$inferSelect)[] = [];
   let openRows: (typeof positions.$inferSelect)[] = [];
   let alertRows: (typeof tickerAlerts.$inferSelect)[] = [];
   let cachedTickers: Awaited<ReturnType<typeof getCachedTickers>> = [];
   let cachedPrices: Array<Record<string, unknown>> = [];
 
   try {
-    const [devRes, openRes, alertRes, tickRes, priceRes] = await Promise.allSettled([
+    const [devRes, mobileRes, openRes, alertRes, tickRes, priceRes] = await Promise.allSettled([
       db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, user.id)).orderBy(desc(pushSubscriptions.createdAt)),
+      db.select().from(devicePushTokens).where(eq(devicePushTokens.userId, user.id)).orderBy(desc(devicePushTokens.createdAt)),
       db.select().from(positions).where(and(eq(positions.userId, user.id), eq(positions.status, 'OPEN'))),
       db.select().from(tickerAlerts).where(eq(tickerAlerts.userId, user.id)),
       getCachedTickers(),
@@ -47,6 +49,7 @@ export default async function SettingsPage() {
     ]);
 
     if (devRes.status === 'fulfilled') deviceRows = devRes.value;
+    if (mobileRes.status === 'fulfilled') mobileDeviceRows = mobileRes.value;
     if (openRes.status === 'fulfilled') openRows = openRes.value;
     if (alertRes.status === 'fulfilled') alertRows = alertRes.value;
     if (tickRes.status === 'fulfilled') cachedTickers = tickRes.value;
@@ -109,13 +112,22 @@ export default async function SettingsPage() {
     provider: user.app_metadata?.provider ?? user.identities?.[0]?.provider ?? 'email',
   };
 
-  const devices: DeviceInfo[] = deviceRows.map((d) => ({
-    id: d.id,
-    endpoint: d.endpoint,
-    userAgent: d.userAgent,
-    createdAt: d.createdAt.toISOString(),
-    updatedAt: d.updatedAt.toISOString(),
-  }));
+  const devices: DeviceInfo[] = [
+    ...deviceRows.map((d) => ({
+      id: d.id,
+      endpoint: d.endpoint,
+      userAgent: d.userAgent,
+      createdAt: d.createdAt.toISOString(),
+      updatedAt: d.updatedAt.toISOString(),
+    })),
+    ...mobileDeviceRows.map((m) => ({
+      id: m.id,
+      endpoint: m.token,
+      userAgent: `Native App (${m.deviceModel || (m.platform === 'ios' ? 'Apple iPhone' : 'Android Device')})`,
+      createdAt: m.createdAt.toISOString(),
+      updatedAt: m.updatedAt.toISOString(),
+    })),
+  ];
 
   // Build monitored tickers map
   const monitoredMap = new Map<string, MonitoredTicker>();
