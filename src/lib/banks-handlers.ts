@@ -441,6 +441,14 @@ export async function handleTransactionsGet(req: Request) {
   }
 }
 
+function isPositiveCashFlow(type: string): boolean {
+  return ['INCOME', 'DEPOSIT', 'BROKER_WITHDRAWAL'].includes(type);
+}
+
+function isNegativeCashFlow(type: string): boolean {
+  return ['EXPENSE', 'WITHDRAWAL', 'BROKER_INJECTION'].includes(type);
+}
+
 export async function handleTransactionsPost(req: Request) {
   try {
     const supabase = await createClient();
@@ -482,12 +490,12 @@ export async function handleTransactionsPost(req: Request) {
       .returning();
 
     // Auto-update account balances
-    if (type === 'INCOME') {
+    if (isPositiveCashFlow(type)) {
       await db
         .update(userBankAccounts)
         .set({ balance: sql`${userBankAccounts.balance} + ${Number(amount)}`, updatedAt: new Date() })
         .where(eq(userBankAccounts.id, Number(accountId)));
-    } else if (type === 'EXPENSE') {
+    } else if (isNegativeCashFlow(type)) {
       await db
         .update(userBankAccounts)
         .set({ balance: sql`${userBankAccounts.balance} - ${Number(amount)}`, updatedAt: new Date() })
@@ -548,12 +556,12 @@ export async function handleTransactionsPut(req: Request) {
 
     // 2. Revert old balance impact
     const oldAmt = Number(oldTx.amount) || 0;
-    if (oldTx.type === 'INCOME') {
+    if (isPositiveCashFlow(oldTx.type)) {
       await db
         .update(userBankAccounts)
         .set({ balance: sql`${userBankAccounts.balance} - ${oldAmt}`, updatedAt: new Date() })
         .where(eq(userBankAccounts.id, oldTx.accountId));
-    } else if (oldTx.type === 'EXPENSE') {
+    } else if (isNegativeCashFlow(oldTx.type)) {
       await db
         .update(userBankAccounts)
         .set({ balance: sql`${userBankAccounts.balance} + ${oldAmt}`, updatedAt: new Date() })
@@ -598,12 +606,12 @@ export async function handleTransactionsPut(req: Request) {
       .returning();
 
     // 4. Apply new balance impact
-    if (targetType === 'INCOME') {
+    if (isPositiveCashFlow(targetType)) {
       await db
         .update(userBankAccounts)
         .set({ balance: sql`${userBankAccounts.balance} + ${targetAmount}`, updatedAt: new Date() })
         .where(eq(userBankAccounts.id, targetAccountId));
-    } else if (targetType === 'EXPENSE') {
+    } else if (isNegativeCashFlow(targetType)) {
       await db
         .update(userBankAccounts)
         .set({ balance: sql`${userBankAccounts.balance} - ${targetAmount}`, updatedAt: new Date() })
@@ -649,12 +657,12 @@ export async function handleTransactionsDelete(req: Request) {
 
     if (oldTx) {
       const oldAmt = Number(oldTx.amount) || 0;
-      if (oldTx.type === 'INCOME') {
+      if (isPositiveCashFlow(oldTx.type)) {
         await db
           .update(userBankAccounts)
           .set({ balance: sql`${userBankAccounts.balance} - ${oldAmt}`, updatedAt: new Date() })
           .where(eq(userBankAccounts.id, oldTx.accountId));
-      } else if (oldTx.type === 'EXPENSE') {
+      } else if (isNegativeCashFlow(oldTx.type)) {
         await db
           .update(userBankAccounts)
           .set({ balance: sql`${userBankAccounts.balance} + ${oldAmt}`, updatedAt: new Date() })
