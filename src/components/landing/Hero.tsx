@@ -99,10 +99,10 @@ export default function Hero() {
 
         {/* Right Content: Interactive Globe */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, x: 20 }}
-          animate={{ opacity: 1, scale: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-90 lg:w-88 h-100 lg:h-112 relative flex-shrink-0"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="w-full max-w-[340px] sm:max-w-90 lg:w-88 h-72 sm:h-96 lg:h-112 relative flex-shrink-0 overflow-hidden mx-auto"
         >
           <Globe
             oceanColor="rgba(0,0,0,0)"

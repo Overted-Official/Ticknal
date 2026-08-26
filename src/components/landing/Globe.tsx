@@ -240,9 +240,9 @@ export default function Globe({
         if (!containerRef.current) return;
         const container = containerRef.current;
         const containerWidth =
-            container.clientWidth || container.offsetWidth || 800;
+            container.clientWidth || container.offsetWidth || container.parentElement?.clientWidth || 320;
         const containerHeight =
-            container.clientHeight || container.offsetHeight || 600;
+            container.clientHeight || container.offsetHeight || container.parentElement?.clientHeight || 320;
 
         const scene = new Scene();
         const camera = new PerspectiveCamera(
@@ -899,9 +899,9 @@ export default function Globe({
 
         const resizeObserver = new ResizeObserver(() => {
             const newWidth =
-                container.clientWidth || container.offsetWidth || 800;
+                container.clientWidth || container.offsetWidth || container.parentElement?.clientWidth || 320;
             const newHeight =
-                container.clientHeight || container.offsetHeight || 600;
+                container.clientHeight || container.offsetHeight || container.parentElement?.clientHeight || 320;
             camera.aspect = newWidth / newHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(newWidth, newHeight);

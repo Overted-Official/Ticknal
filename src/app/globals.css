@@ -489,9 +489,12 @@
 
 html,
 body {
+  margin: 0;
+  padding: 0;
   width: 100%;
+  max-width: 100vw;
   min-height: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--plt-bg-base);
   color: var(--plt-text-primary);
   font-family: var(--font-sans-token);
@@ -499,14 +502,6 @@ body {
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-body);
   letter-spacing: var(--tracking-normal);
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: clip;
 }
 button, input, select, textarea { font: inherit; }
 button { border-radius: var(--radius-button) !important; font-family: var(--font-sans-token) !important; font-size: var(--text-12); font-weight: var(--font-weight-medium-token); letter-spacing: var(--tracking-normal); }
