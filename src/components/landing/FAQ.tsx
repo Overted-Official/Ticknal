@@ -31,8 +31,8 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-20 sm:py-28 px-4 sm:px-6 md:px-10 bg-transparent w-full" id="faq">
-      <div className="max-w-170 mx-auto">
+    <section className="py-20 sm:py-28 px-4 sm:px-6 md:px-10 bg-transparent w-full max-w-full overflow-hidden" id="faq">
+      <div className="max-w-170 w-full max-w-full min-w-0 mx-auto">
 
         {/* Heading */}
         <div className="text-center mb-8 sm:mb-12 flex flex-col gap-4 items-center">

@@ -8,7 +8,7 @@ import Globe from './Globe';
 
 export default function Hero() {
   return (
-    <section className="relative w-full min-h-174 lg:h-174 bg-plt-base overflow-hidden pt-20 md:pt-24 px-6 md:px-10 pb-10 flex items-center justify-center">
+    <section className="relative w-full max-w-full min-h-174 lg:h-174 bg-plt-base overflow-hidden pt-16 sm:pt-20 md:pt-24 px-4 sm:px-6 md:px-10 pb-10 flex items-center justify-center">
       {/* Layer 1: Base Candlesticks Grid with Screen blend */}
       <div
         className="hero-market-primary absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-30 mix-blend-screen"
@@ -30,11 +30,11 @@ export default function Hero() {
       {/* Left vignette for maximum headline text readability */}
       <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/80 to-transparent z-0 pointer-events-none" />
 
-      {/* Content Wrapper (scaled 80%: 992px) */}
-      <div className="max-w-248 w-full mx-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 h-full">
+      {/* Content Wrapper */}
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 h-full">
 
-        {/* Left Content (scaled 80%: 420px) */}
-        <div className="flex flex-col items-start text-left max-w-106 gap-6 z-10">
+        {/* Left Content */}
+        <div className="flex flex-col items-start text-left w-full max-w-full lg:max-w-106 gap-6 z-10 min-w-0">
 
           <div className="flex flex-col gap-4">
             {/* Pre-title Badge */}

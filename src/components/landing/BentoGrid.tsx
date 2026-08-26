@@ -29,8 +29,8 @@ const tickerRow3 = [
 
 export default function BentoGrid() {
   return (
-    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full" id="features">
-      <div className="max-w-248 mx-auto flex flex-col items-center">
+    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full max-w-full overflow-hidden" id="features">
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto flex flex-col items-center">
 
         {/* Heading */}
         <div className="flex flex-col gap-4 sm:gap-6 items-center text-center max-w-164 w-full mb-8 sm:mb-12">

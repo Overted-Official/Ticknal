@@ -5,9 +5,9 @@ import { BarChart2 } from '@/components/ui/icon-library';
 
 export default function Footer() {
   return (
-    <footer className="bg-plt-base pt-12 pb-10 border-t border-plt-border-soft w-full">
-      <div className="max-w-248 mx-auto px-6">
-        {/* Links Grid (scaled 80%) */}
+    <footer className="bg-plt-base pt-12 pb-10 border-t border-plt-border-soft w-full max-w-full overflow-hidden">
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto px-4 sm:px-6">
+        {/* Links Grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4 group w-fit">

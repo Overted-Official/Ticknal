@@ -50,8 +50,8 @@ const comparisonData = [
 
 export default function CompareSection() {
   return (
-    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full overflow-hidden" id="compare">
-      <div className="max-w-248 mx-auto flex flex-col gap-8 sm:gap-12 items-center">
+    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full max-w-full overflow-hidden" id="compare">
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto flex flex-col gap-8 sm:gap-12 items-center">
 
         {/* Heading */}
         <div className="flex flex-col gap-4 sm:gap-6 items-center text-center max-w-164 w-full">
@@ -80,7 +80,7 @@ export default function CompareSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="card-shell surface-flush w-full overflow-x-auto backdrop-blur-md"
+          className="card-shell surface-flush w-full max-w-full min-w-0 overflow-x-auto backdrop-blur-md"
         >
           <table className="data-table w-full min-w-150 text-left border-collapse">
             <thead>

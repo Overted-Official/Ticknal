@@ -6,8 +6,8 @@ import AuthButton from './AuthButton';
 
 export default function Pricing() {
   return (
-    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full" id="pricing">
-      <div className="max-w-248 mx-auto flex flex-col gap-8 sm:gap-14 items-center">
+    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full max-w-full overflow-hidden" id="pricing">
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto flex flex-col gap-8 sm:gap-14 items-center">
 
         {/* Heading */}
         <div className="flex flex-col gap-4 sm:gap-6 items-center text-center max-w-130 w-full">

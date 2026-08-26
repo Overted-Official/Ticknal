@@ -35,8 +35,8 @@ function Counter({ from = 0, to, duration = 2, prefix = '', suffix = '' }: any) 
 
 export default function Stats() {
   return (
-    <section className="pt-8 px-4 md:px-10 pb-6 bg-transparent w-full">
-      <div className="max-w-248 mx-auto flex flex-col items-center gap-8">
+    <section className="pt-8 px-4 md:px-10 pb-6 bg-transparent w-full max-w-full overflow-hidden">
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto flex flex-col items-center gap-6 sm:gap-8">
 
         {/* Heading Pill */}
         <div className="bg-plt-hover border border-plt-border rounded-xl py-2 px-6 flex flex-row items-center justify-center gap-4 shadow-sm">

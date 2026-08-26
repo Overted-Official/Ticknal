@@ -13,14 +13,14 @@ const partners = [
 
 export default function TrustedBy() {
   return (
-    <section className="py-12 overflow-hidden w-full">
-      <div className="max-w-248 mx-auto px-4 mb-6 text-center">
+    <section className="py-12 overflow-hidden w-full max-w-full">
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto px-4 mb-6 text-center">
         <p className="text-xs font-medium text-plt-muted tracking-widest">
           Trusted By Industry Leaders & Institutional Desks
         </p>
       </div>
 
-      <div className="relative flex overflow-x-hidden w-full group">
+      <div className="relative flex overflow-hidden w-full max-w-full min-w-0 group">
         <div className="animate-marquee flex whitespace-nowrap items-center group-hover:pause">
           {[...partners, ...partners, ...partners].map((logo, idx) => (
             <div key={idx} className="mx-6 md:mx-12 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-300">

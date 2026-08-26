@@ -35,22 +35,22 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section className="py-28 px-6 md:px-10 bg-transparent overflow-hidden relative w-full">
+    <section className="py-20 sm:py-28 px-4 sm:px-6 md:px-10 bg-transparent overflow-hidden relative w-full max-w-full">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-120 h-120 bg-tv-accent/5 rounded-full blur-28 pointer-events-none" />
 
       {/* Heading */}
-      <div className="max-w-248 mx-auto mb-12 text-center relative z-10 flex flex-col gap-4 items-center">
+      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto mb-8 sm:mb-12 text-center relative z-10 flex flex-col gap-4 items-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-plt-hover border border-plt-border text-plt-subtle text-xs tracking-widest font-medium">
           Community Feedback
         </div>
-        <h2 className="text-section md:text-display font-medium text-plt-text leading-display tracking-normal capitalize">
+        <h2 className="text-2xl sm:text-3xl md:text-display font-medium text-plt-text leading-tight tracking-normal capitalize">
           What Our Traders Say
         </h2>
       </div>
 
-      {/* Infinite Marquee Strip (scaled cards: 304px) */}
-      <div className="relative flex overflow-x-hidden w-full group">
-        <div className="animate-marquee flex gap-6 px-4 group-hover:pause">
+      {/* Infinite Marquee Strip */}
+      <div className="relative flex overflow-hidden w-full max-w-full min-w-0 group">
+        <div className="animate-marquee flex gap-4 sm:gap-6 px-4 group-hover:pause min-w-0">
           {[...testimonials, ...testimonials].map((t, idx) => (
             <div
               key={idx}
