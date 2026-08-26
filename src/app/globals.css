@@ -747,6 +747,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .glass-pill { border: var(--border-width-default) solid var(--plt-border); background: var(--plt-bg-hover); transition: background-color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard); }
 .glass-pill:hover { border-color: var(--plt-border-strong); background: var(--plt-bg-muted); }
 
+.z-tv-nav { z-index: var(--z-tv-nav); }
 .z-floating { z-index: var(--z-floating); }
 .z-drawer { z-index: var(--z-drawer); }
 .z-modal { z-index: var(--z-modal); }
@@ -768,8 +769,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .chart-label { user-select: none; }
 .modal-search-offset { padding-top: var(--offset-modal-search); }
 .watchlist-grid { grid-template-columns: minmax(0, 1fr) var(--width-watchlist-price) var(--width-watchlist-change) var(--width-watchlist-action); }
-.hero-market-primary { background-image: var(--asset-market-grid); filter: contrast(1.4) brightness(0.8); }
-.hero-market-secondary { background-image: var(--asset-market-grid); filter: sepia(1) hue-rotate(-25deg) saturate(4); }
+.hero-market-primary { background-image: var(--asset-market-grid); filter: contrast(1.2) brightness(0.9); }
+.hero-market-secondary { background-image: var(--asset-market-grid); filter: hue-rotate(205deg) saturate(2) brightness(0.85); }
 .hero-beam { background-image: var(--asset-hero-beam); filter: hue-rotate(210deg) saturate(1.3) brightness(1.05); }
 .hero-console { background-image: var(--asset-hero-console); }
 .marquee-reverse { animation-direction: reverse; animation-duration: var(--duration-marquee-reverse); }

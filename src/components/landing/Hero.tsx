@@ -9,23 +9,23 @@ import Globe from './Globe';
 export default function Hero() {
   return (
     <section className="relative w-full min-h-174 lg:h-174 bg-plt-base overflow-hidden pt-20 md:pt-24 px-6 md:px-10 pb-10 flex items-center justify-center">
-      {/* Layer 1: Base Candlesticks with Overlay Blend so they are colored by the glow */}
+      {/* Layer 1: Base Candlesticks Grid with Screen blend */}
       <div
-        className="hero-market-primary absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-40 mix-blend-overlay"
+        className="hero-market-primary absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-30 mix-blend-screen"
       />
 
       {/* Layer 2: Secondary subtle candlesticks for depth and texture */}
       <div
-        className="hero-market-secondary absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-25 mix-blend-color-dodge"
+        className="hero-market-secondary absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-20 mix-blend-screen"
       />
 
-      {/* Layer 3: Main Glowing Blue Laser Light Beam (on top of candles so beam illuminates them) */}
+      {/* Layer 3: Main Glowing Blue Laser Light Beam */}
       <div
         className="hero-beam absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-100"
       />
 
-      {/* Layer 4: Ambient Spotlight behind right globe */}
-      <div className="absolute top-1/2 right-0 -translate-y-1/2 w-112 h-112 bg-radial from-white/10 via-white/5 to-transparent rounded-full blur-26 pointer-events-none z-0" />
+      {/* Layer 4: Ambient Glow behind right globe */}
+      <div className="absolute top-1/2 right-12 -translate-y-1/2 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none z-0" />
 
       {/* Left vignette for maximum headline text readability */}
       <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/80 to-transparent z-0 pointer-events-none" />
@@ -69,7 +69,7 @@ export default function Hero() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-sm sm:text-base text-plt-text/75 font-normal leading-body tracking-normal"
             >
-              Access live analytics, staking insights, and portfolio performance tools designed for fast-moving crypto markets.
+              Access live analytics, quantitative signals, and portfolio intelligence tools designed for the Egyptian Exchange (EGX).
             </motion.p>
 
             {/* Buttons */}
