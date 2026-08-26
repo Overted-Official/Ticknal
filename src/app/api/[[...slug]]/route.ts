@@ -47,6 +47,7 @@ import {
   handleSubscribePost,
   handleSubscribeDelete,
   handleVapidKeyGet,
+  handleRegisterDeviceTokenPost,
 } from '@/lib/push-handlers';
 import {
   handlePerformanceGet,
@@ -115,6 +116,12 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (!error) {
         const destination = next.startsWith('/') ? next : `/${next}`;
+        const source = requestUrl.searchParams.get('source');
+
+        if (source === 'app') {
+          return NextResponse.redirect(`com.quantegx.app://auth/callback?next=${encodeURIComponent(destination)}`);
+        }
+
         return NextResponse.redirect(new URL(destination, siteOrigin).toString());
       }
     }
@@ -271,12 +278,14 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
   if (root === 'notifications') {
     if (sub === 'check') return handleCheckNotifications(req);
     if (sub === 'test') return handleTestNotification();
+    if (sub === 'register-device') return handleRegisterDeviceTokenPost(req);
     return NextResponse.json({ error: `Unknown notification action: ${sub}` }, { status: 404 });
   }
 
   // 4. Push
   if (root === 'push') {
     if (sub === 'subscribe') return handleSubscribePost(req);
+    if (sub === 'register-device') return handleRegisterDeviceTokenPost(req);
     return NextResponse.json({ error: `Unknown push action: ${sub}` }, { status: 404 });
   }
 

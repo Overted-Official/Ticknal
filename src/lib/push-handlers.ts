@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { pushSubscriptions } from '@/db/schema';
+import { pushSubscriptions, devicePushTokens } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { getVapidPublicKey, isPushConfigured } from '@/lib/pushNotifications';
 
@@ -130,3 +130,48 @@ export async function handleVapidKeyGet() {
     configured: isPushConfigured(),
   });
 }
+
+export async function handleRegisterDeviceTokenPost(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  try {
+    const body = await request.json();
+    const token = typeof body.token === 'string' ? body.token.trim() : '';
+    const platform = typeof body.platform === 'string' ? body.platform.trim() : 'android';
+    const deviceModel = typeof body.deviceModel === 'string' ? body.deviceModel.trim() : null;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Device token is required' }, { status: 400 });
+    }
+
+    const userId = user?.id || body.userId || null;
+
+    await db
+      .insert(devicePushTokens)
+      .values({
+        userId: userId,
+        token: token,
+        platform: platform,
+        deviceModel: deviceModel,
+        isActive: true,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: devicePushTokens.token,
+        set: {
+          userId: userId ?? undefined,
+          platform: platform,
+          deviceModel: deviceModel,
+          isActive: true,
+          updatedAt: new Date(),
+        },
+      });
+
+    return NextResponse.json({ success: true, registered: true });
+  } catch (error) {
+    console.error('Error saving device push token:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+

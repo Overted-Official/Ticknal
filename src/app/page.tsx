@@ -13,7 +13,16 @@ import FAQ from '@/components/landing/FAQ';
 import QuickStartSection from '@/components/landing/QuickStartSection';
 import Footer from '@/components/landing/Footer';
 
-export default function LandingPage() {
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    redirect('/dashboard');
+  }
+
   return (
     <SmoothScroll>
       <div className="min-h-screen bg-plt-base overflow-x-hidden font-sans text-plt-text selection:bg-tv-accent selection:text-plt-inverse">

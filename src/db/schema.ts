@@ -46,6 +46,22 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
   };
 });
 
+export const devicePushTokens = pgTable('device_push_tokens', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id'),
+  token: text('token').notNull(),
+  platform: varchar('platform', { length: 20 }).default('android').notNull(), // 'android' | 'ios'
+  deviceModel: text('device_model'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    tokenUnique: unique('device_push_tokens_token_unique').on(table.token),
+    userIdIdx: index('device_push_tokens_user_id_idx').on(table.userId),
+  };
+});
+
 export const tickerAlerts = pgTable('ticker_alerts', {
   id: serial('id').primaryKey(),
   userId: uuid('user_id').notNull(),

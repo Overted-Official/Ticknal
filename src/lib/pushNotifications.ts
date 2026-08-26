@@ -1,7 +1,7 @@
 import webPush from 'web-push';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, pushSubscriptions, signalNotifications, tickerAlerts } from '@/db/schema';
+import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens } from '@/db/schema';
 import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import { getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal } from '@/strategies/PSI/psiStrategy';
@@ -73,6 +73,12 @@ export async function dispatchSignalNotifications(options: {
 
   const subscriptionRows = await db.select().from(pushSubscriptions);
   const subscriptionsByUser = groupBy(subscriptionRows, (subscription) => subscription.userId);
+
+  const deviceTokenRows = await db.select().from(devicePushTokens).where(eq(devicePushTokens.isActive, true));
+  const deviceTokensByUser = groupBy(
+    deviceTokenRows.filter((d): d is typeof d & { userId: string } => Boolean(d.userId)),
+    (d) => d.userId
+  );
 
   // Group by ticker so we can fetch bars once per ticker
   const alertsByTicker = groupBy(alertRows, (alert) => alert.tickerSymbol);
@@ -238,6 +244,21 @@ export async function dispatchSignalNotifications(options: {
             }
           }
         }
+
+        // 3. If user has active Android native tokens, dispatch high-priority FCM notification
+        const nativeTokens = deviceTokensByUser[alert.userId] ?? [];
+        if (nativeTokens.length > 0) {
+          for (const device of nativeTokens) {
+            await sendFCMNotification(device.token, {
+              title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
+              body: buildNotificationBody(signal, strategyLabel),
+              url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
+              ticker,
+              strategy: strategyId,
+              signal: signal.signal,
+            });
+          }
+        }
       }
     }
   }
@@ -377,3 +398,47 @@ function groupBy<T>(items: T[], getKey: (item: T) => string): Record<string, T[]
     return groups;
   }, {});
 }
+
+async function sendFCMNotification(
+  deviceToken: string,
+  payload: {
+    title: string;
+    body: string;
+    url: string;
+    ticker: string;
+    strategy: string;
+    signal: string;
+  }
+) {
+  const fcmServerKey = process.env.FCM_SERVER_KEY;
+  if (!fcmServerKey) return;
+
+  try {
+    await fetch('https://fcm.googleapis.com/fcm/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `key=${fcmServerKey}`,
+      },
+      body: JSON.stringify({
+        to: deviceToken,
+        priority: 'high',
+        notification: {
+          title: payload.title,
+          body: payload.body,
+          sound: 'default',
+          android_channel_id: 'trading_signals',
+        },
+        data: {
+          url: payload.url,
+          ticker: payload.ticker,
+          strategy: payload.strategy,
+          signal: payload.signal,
+        },
+      }),
+    });
+  } catch (err) {
+    console.error('Failed to send FCM notification:', err);
+  }
+}
+
