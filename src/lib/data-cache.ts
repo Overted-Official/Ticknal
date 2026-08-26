@@ -159,11 +159,11 @@ export const getCachedHourlyPrices = async (ticker: string, limitBars?: number) 
 
 /**
  * Fetches the latest 2 prices for all tickers using a Window Function.
- * Caches in memory for 30 seconds.
+ * Caches in memory for 5 minutes.
  */
 export async function getCachedRecentPrices(): Promise<any[]> {
   const now = Date.now();
-  if (recentPricesMemCache && now - recentPricesMemCache.timestamp < 30 * 1000) {
+  if (recentPricesMemCache && now - recentPricesMemCache.timestamp < 5 * 60 * 1000) {
     return recentPricesMemCache.data;
   }
   if (recentPricesInFlight) return recentPricesInFlight;
@@ -175,6 +175,7 @@ export async function getCachedRecentPrices(): Promise<any[]> {
           SELECT ticker_symbol, close, volume,
                  ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) as rn
           FROM daily_prices
+          WHERE date >= CURRENT_DATE - INTERVAL '45 days'
         )
         SELECT ticker_symbol, close, volume, rn
         FROM RankedPrices

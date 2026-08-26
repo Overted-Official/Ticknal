@@ -35,6 +35,12 @@ const memCache = new Map<string, { data: OpportunitySignal[]; timestamp: number 
 const inFlightPromises = new Map<string, Promise<OpportunitySignal[]>>();
 const MEM_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
+const THOTH_FOCUS_TICKERS = new Set([
+  'COMI', 'FWRY', 'EAST', 'TMGH', 'HRHO', 'SWDY', 'ETEL', 'ABUK',
+  'EKHO', 'ORAS', 'ISPH', 'CIEB', 'AMOC', 'ESRS', 'ADIB', 'HELI',
+  'AUTO', 'JUFO', 'SKPC', 'MNHD', 'EFID', 'ALCN', 'CERA', 'MFPC',
+]);
+
 export async function _getRecentOpportunities(
   limitBars: number = 5,
   strategyScope: string = 'all'
@@ -56,15 +62,9 @@ export async function _getRecentOpportunities(
       const [tickerRows, priceRows] = await Promise.all([
         db.select().from(tickers),
         db.execute(sql`
-          WITH ranked_prices AS (
-            SELECT ticker_symbol, date, open, high, low, close, volume,
-                   ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) AS rn
-            FROM ${dailyPrices}
-            WHERE volume > 0
-          )
           SELECT ticker_symbol, date, open, high, low, close, volume
-          FROM ranked_prices
-          WHERE rn <= ${HISTORY_BARS}
+          FROM ${dailyPrices}
+          WHERE date >= CURRENT_DATE - INTERVAL '14 months' AND volume > 0
           ORDER BY ticker_symbol, date ASC
         `),
       ]);
@@ -101,9 +101,8 @@ export async function _getRecentOpportunities(
       const includePsiV2 = strategyScope === 'all' || strategyScope === 'psi_v2';
 
       for (const [symbol, bars] of barsByTicker.entries()) {
-        if (bars.length < 130) continue;
+        if (bars.length < 80) continue;
         const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
-        const recentStartDate = bars.slice(-limitBars)[0]?.date || bars[0].date;
         const ticker = tickerMap.get(symbol);
         const meta = {
           companyName: ticker?.companyName ?? symbol,
@@ -112,7 +111,7 @@ export async function _getRecentOpportunities(
         };
 
         // 1. Evaluate PSI Strategy
-        if (includePsi && bars.length >= 130) {
+        if (includePsi && bars.length >= 80) {
           try {
             const psiResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: '2025-01-01' }));
             const signal = [...psiResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
@@ -133,33 +132,8 @@ export async function _getRecentOpportunities(
           }
         }
 
-        // 2. Evaluate the frozen THOTH EGX V3.7P production strategy
-        if (includeThoth && bars.length >= 130) {
-          try {
-            const thothResult = await runThothV37PStrategy(bars, {
-              ticker: symbol,
-              startDate: '2025-01-01',
-            });
-            const signal = [...thothResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
-            if (signal) {
-              const badge = getStrategyBadge('thoth_egx_macro');
-              opportunities.push({
-                symbol,
-                ...meta,
-                strategyId: 'thoth_egx_macro',
-                strategyLabel: STRATEGIES.thoth_egx_macro?.label ?? 'THOTH EGX V3.7P',
-                strategyShortName: badge.label,
-                strategyBadgeClassName: badge.className,
-                signal,
-              });
-            }
-          } catch (e) {
-            // Ignore individual ticker calculation failures
-          }
-        }
-
-        // 3. Evaluate the new PSI V2 Strategy (GPT 3-PSI Architecture)
-        if (includePsiV2 && bars.length >= 130) {
+        // 2. Evaluate PSI V2 Strategy (GPT 3-PSI Architecture)
+        if (includePsiV2 && bars.length >= 80) {
           try {
             const psiV2Result = runPsiV2Strategy(bars, {
               ticker: symbol,
@@ -173,6 +147,31 @@ export async function _getRecentOpportunities(
                 ...meta,
                 strategyId: 'psi_v2',
                 strategyLabel: STRATEGIES.psi_v2?.label ?? 'PSI V2 Strategy',
+                strategyShortName: badge.label,
+                strategyBadgeClassName: badge.className,
+                signal,
+              });
+            }
+          } catch (e) {
+            // Ignore individual ticker calculation failures
+          }
+        }
+
+        // 3. Evaluate THOTH EGX V3.7P only when explicitly requested to preserve sub-second response
+        if (strategyScope === 'thoth_egx_macro' && bars.length >= 130) {
+          try {
+            const thothResult = await runThothV37PStrategy(bars, {
+              ticker: symbol,
+              startDate: '2025-01-01',
+            });
+            const signal = [...thothResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
+            if (signal) {
+              const badge = getStrategyBadge('thoth_egx_macro');
+              opportunities.push({
+                symbol,
+                ...meta,
+                strategyId: 'thoth_egx_macro',
+                strategyLabel: STRATEGIES.thoth_egx_macro?.label ?? 'THOTH EGX V3.7P',
                 strategyShortName: badge.label,
                 strategyBadgeClassName: badge.className,
                 signal,
@@ -196,10 +195,15 @@ export async function _getRecentOpportunities(
   return promise;
 }
 
-export const getRecentOpportunities = (limitBars: number = 5, strategyScope: string = 'all') => {
-  return unstable_cache(
-    async () => _getRecentOpportunities(limitBars, strategyScope),
-    [`recent-opportunities-${limitBars}-${strategyScope}`],
-    { tags: ['opportunities'], revalidate: 3600 }
-  )();
+export const getRecentOpportunities = async (limitBars: number = 5, strategyScope: string = 'all'): Promise<OpportunitySignal[]> => {
+  try {
+    const cachedFn = unstable_cache(
+      async () => _getRecentOpportunities(limitBars, strategyScope),
+      [`recent-opportunities-${limitBars}-${strategyScope}`],
+      { tags: ['opportunities'], revalidate: 3600 }
+    );
+    return await cachedFn();
+  } catch {
+    return await _getRecentOpportunities(limitBars, strategyScope);
+  }
 };
