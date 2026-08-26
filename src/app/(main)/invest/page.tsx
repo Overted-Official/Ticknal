@@ -189,18 +189,23 @@ async function InvestPageContent({
 
   const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(selectedSymbol.toUpperCase());
 
-  const formattedChartData = dbData
+  const rawChartData = dbData
     .filter(record => isFund ? Number(record.close) > 0 : (Number(record.volume) > 0 || Number(record.close) > 0))
     .map(record => {
       let timeVal: any;
+      let sortKey = 0;
       if (is1H) {
         const d = typeof record.date === 'string' ? new Date(record.date) : (record.date as Date);
         // Epoch timestamp in seconds for intraday Lightweight Charts
         timeVal = Math.floor(d.getTime() / 1000);
+        sortKey = timeVal;
       } else {
-        timeVal = typeof record.date === 'string' 
+        const dStr = typeof record.date === 'string' 
           ? record.date.split('T')[0] 
           : new Date(record.date as Date).toISOString().split('T')[0];
+        timeVal = dStr;
+        const [y, m, d] = dStr.split('-').map(Number);
+        sortKey = Date.UTC(y, m - 1, d) / 1000;
       }
 
       return {
@@ -209,9 +214,44 @@ async function InvestPageContent({
         high: Number(record.high),
         low: Number(record.low),
         close: Number(record.close),
-        volume: Number(record.volume)
+        volume: Number(record.volume),
+        _sortKey: sortKey,
       };
-    });
+    })
+    .sort((a, b) => a._sortKey - b._sortKey);
+
+  const formattedChartData: Array<{
+    time: any;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }> = [];
+
+  let lastKey = -Infinity;
+  for (const item of rawChartData) {
+    if (item._sortKey > lastKey) {
+      formattedChartData.push({
+        time: item.time,
+        open: item.open,
+        high: item.high,
+        low: item.low,
+        close: item.close,
+        volume: item.volume,
+      });
+      lastKey = item._sortKey;
+    } else if (item._sortKey === lastKey && formattedChartData.length > 0) {
+      formattedChartData[formattedChartData.length - 1] = {
+        time: item.time,
+        open: item.open,
+        high: item.high,
+        low: item.low,
+        close: item.close,
+        volume: item.volume,
+      };
+    }
+  }
 
   const dailyChartData = formattedChartData;
   let chartData = formattedChartData;

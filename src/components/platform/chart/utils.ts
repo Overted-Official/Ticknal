@@ -67,6 +67,24 @@ export function getExitMarker(signal: string): { text: string; color: string } {
   return { text: 'Exit', color: cssTokenColor('--plt-risk', 'var(--plt-risk)') };
 }
 
+export function toComparableTimeNumber(timeInput: string | number | Time): number {
+  if (typeof timeInput === 'number') {
+    return timeInput;
+  }
+  if (typeof timeInput === 'string') {
+    const trimmed = timeInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [y, m, d] = trimmed.split('-').map(Number);
+      return Date.UTC(y, m - 1, d) / 1000;
+    }
+    const ms = new Date(trimmed).getTime();
+    if (!isNaN(ms)) {
+      return Math.floor(ms / 1000);
+    }
+  }
+  return 0;
+}
+
 export function parseChartTime(timeInput: string | number | Time): Time {
   if (typeof timeInput === 'number') {
     return timeInput as unknown as Time;
@@ -84,15 +102,45 @@ export function parseChartTime(timeInput: string | number | Time): Time {
   return timeInput as unknown as Time;
 }
 
+export function sanitizeChartSeriesData<T extends { time: any }>(items: T[]): T[] {
+  if (!items || items.length === 0) return [];
+
+  // Sort by strictly comparable timestamp ascendingly
+  const sorted = [...items].sort((a, b) => {
+    const ta = toComparableTimeNumber(a.time);
+    const tb = toComparableTimeNumber(b.time);
+    return ta - tb;
+  });
+
+  // Deduplicate items with identical or backwards timestamps
+  const result: T[] = [];
+  let lastTimeNum = -Infinity;
+
+  for (let i = 0; i < sorted.length; i++) {
+    const item = sorted[i];
+    const tNum = toComparableTimeNumber(item.time);
+    if (isNaN(tNum) || !isFinite(tNum)) continue;
+
+    if (tNum > lastTimeNum) {
+      result.push(item);
+      lastTimeNum = tNum;
+    } else if (tNum === lastTimeNum && result.length > 0) {
+      result[result.length - 1] = item;
+    }
+  }
+
+  return result;
+}
+
 export function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
-  const markers: SeriesMarker<Time>[] = [];
+  const rawMarkers: SeriesMarker<Time>[] = [];
   let currentPosition: 'NONE' | 'LONG' = 'NONE';
 
   for (const signal of signals) {
     const markerTime = parseChartTime(signal.date);
     if (signal.signal === 'BUY' && currentPosition === 'NONE') {
       currentPosition = 'LONG';
-      markers.push({
+      rawMarkers.push({
         time: markerTime,
         position: 'belowBar',
         color: cssTokenColor('--plt-profit', 'var(--plt-profit)'),
@@ -103,7 +151,7 @@ export function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
     } else if (currentPosition === 'LONG' && signal.signal.startsWith('SELL')) {
       currentPosition = 'NONE';
       const marker = getExitMarker(signal.signal);
-      markers.push({
+      rawMarkers.push({
         time: markerTime,
         position: 'aboveBar',
         color: marker.color,
@@ -114,7 +162,7 @@ export function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
     }
   }
 
-  return markers;
+  return sanitizeChartSeriesData(rawMarkers);
 }
 
 export function getDefaultReplayIndex(data: ChartData[]): number {

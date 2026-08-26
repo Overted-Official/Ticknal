@@ -45,6 +45,7 @@ import {
   clampNumber,
   buildMarkers,
   parseChartTime,
+  sanitizeChartSeriesData,
   getDefaultReplayIndex,
   findIndexAtOrBefore,
   parseOptionalNumber,
@@ -409,11 +410,12 @@ export default function ChartWidget({
     if (!candlestickSeriesRef.current || !volumeSeriesRef.current) return;
 
     if (isFund) {
-      (candlestickSeriesRef.current as ISeriesApi<'Area'>).setData(
+      const areaData = sanitizeChartSeriesData(
         visibleData.map((d) => ({ time: parseChartTime(d.time), value: d.close }))
       );
+      (candlestickSeriesRef.current as ISeriesApi<'Area'>).setData(areaData);
     } else {
-      (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>).setData(
+      const candleData = sanitizeChartSeriesData(
         visibleData.map((d) => ({
           time: parseChartTime(d.time),
           open: d.open,
@@ -422,15 +424,17 @@ export default function ChartWidget({
           close: d.close,
         }))
       );
+      (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>).setData(candleData);
     }
 
-    volumeSeriesRef.current.setData(
+    const volumeData = sanitizeChartSeriesData(
       visibleData.map((d) => ({
         time: parseChartTime(d.time),
         value: d.volume,
         color: d.close >= d.open ? 'rgba(8, 153, 129, 0.4)' : 'rgba(242, 54, 69, 0.4)',
       }))
     );
+    volumeSeriesRef.current.setData(volumeData);
   }, [isFund, visibleData]);
 
   // Signal Markers
@@ -489,7 +493,10 @@ export default function ChartWidget({
               lineStyle: line.lineStyle ?? 0,
               title: line.name,
             });
-            series.setData(line.data.map((d) => ({ time: parseChartTime(d.time), value: d.value })));
+            const lineData = sanitizeChartSeriesData(
+              line.data.map((d) => ({ time: parseChartTime(d.time), value: d.value }))
+            );
+            series.setData(lineData);
             currentLines.set(`${indId}_${line.id || line.name}`, series);
           });
         }
