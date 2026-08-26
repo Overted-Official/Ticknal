@@ -19,6 +19,7 @@ const CATEGORIES = [
   'Living & Bills',
   'Housing & Rent',
   'Food & Groceries',
+  'Smoking',
   'Salary & Income',
   'Interest & Yield',
   'Trading Injection',
