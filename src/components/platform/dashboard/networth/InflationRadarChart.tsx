@@ -7,6 +7,7 @@ import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type InflationPoint = {
   month: string;
+  fullDate?: string;
   nominal: number;
   realValue: number;
   inflationDrag: number;
@@ -98,7 +99,7 @@ export default function InflationRadarChart({
                 return (
                   <div className="rounded-xl border border-plt-border bg-plt-base/90 p-4 shadow-xl backdrop-blur-md text-xs space-y-2 min-w-48">
                     <div className="font-medium text-plt-text border-b border-plt-border pb-2 flex items-center justify-between">
-                      <span>{label}</span>
+                      <span>{data.fullDate || label}</span>
                       <span className="text-mini text-plt-muted tabular-nums">Real vs Nominal</span>
                     </div>
                     <div className="flex justify-between items-center text-plt-profit">

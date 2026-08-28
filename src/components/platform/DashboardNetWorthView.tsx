@@ -152,6 +152,11 @@ export default function DashboardNetWorthView({
       const mNum = String(d.getMonth() + 1).padStart(2, '0');
       const ymKey = `${y}-${mNum}`;
       const monthLabel = monthNames[d.getMonth()];
+      const yearShort = String(y).slice(-2);
+      const axisLabel = (d.getMonth() === 0 || step === 0 || step === 11)
+        ? `${monthLabel} '${yearShort}`
+        : monthLabel;
+      const fullDate = `${monthLabel} ${y}`;
 
       const monthCbeRate = cbeRateMap.get(ymKey) ?? latestCbeRate;
       const monthUsRate = usCpiRateMap.get(ymKey) ?? latestUsCpiRate;
@@ -168,7 +173,8 @@ export default function DashboardNetWorthView({
       const inflationDrag = nominalAcc - realValue;
 
       points.push({
-        month: monthLabel,
+        month: axisLabel,
+        fullDate,
         nominal: nominalAcc,
         realValue: realValue,
         inflationDrag: inflationDrag,
@@ -277,6 +283,9 @@ export default function DashboardNetWorthView({
                 slices={assetSlices}
                 currencyMode={currencyMode}
                 usdRate={usdRate}
+                cbeAnnualInflation={cbeAnnualInflation}
+                usCpiAnnualInflation={usCpiAnnualInflation}
+                initialInflationSeries={initialInflationSeries}
               />
             </div>
           </section>

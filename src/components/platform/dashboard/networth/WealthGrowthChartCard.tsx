@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { TrendingUp } from '@/components/ui/icon-library';
+import React, { useMemo } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -19,39 +18,90 @@ interface WealthGrowthChartCardProps {
   slices: AssetSlice[];
   currencyMode: 'EGP' | 'USD';
   usdRate: number;
+  cbeAnnualInflation?: number;
+  usCpiAnnualInflation?: number;
+  initialInflationSeries?: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }>;
 }
 
 export default function WealthGrowthChartCard({
   slices,
   currencyMode,
   usdRate,
+  cbeAnnualInflation = 14.9,
+  usCpiAnnualInflation = 2.8,
+  initialInflationSeries = [],
 }: WealthGrowthChartCardProps) {
   const { isPrivacy } = usePrivacyMode();
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' £' : '';
 
-  // Generate 12-month wealth growth vs real purchasing power points
+  // Generate dynamic 12-month wealth growth vs real purchasing power points
   const totalValue = slices.reduce((acc, s) => acc + s.value, 0);
-  const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
-  const historicalGrowth = months.map((month, idx) => {
-    const growthRatio = 0.82 + (idx / 11) * 0.18;
-    const nominal = totalValue * growthRatio;
-    const inflationCompounding = Math.pow(1 + 0.149 / 12, 11 - idx);
-    const realPurchasing = nominal / inflationCompounding;
-    return {
-      month,
-      nominal: Math.round(nominal),
-      real: Math.round(realPurchasing),
-      drag: Math.round(nominal - realPurchasing),
-    };
-  });
 
-  const GrowthTooltip = ({ active, payload, label }: any) => {
+  const historicalGrowth = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonthIdx = now.getMonth(); // 0 = Jan, 7 = Aug, 11 = Dec
+
+    // Build map of historical inflation rates
+    const cbeRateMap = new Map<string, number>();
+    if (initialInflationSeries && initialInflationSeries.length > 0) {
+      for (const s of initialInflationSeries) {
+        const cbeVal = parseFloat(s.cbeHeadlineInflation);
+        if (!isNaN(cbeVal) && cbeVal > 0) {
+          cbeRateMap.set(s.yearMonth, cbeVal);
+        }
+      }
+    }
+
+    const baselineInflation = cbeAnnualInflation > 0 ? cbeAnnualInflation : 14.9;
+    const dataPoints = [];
+
+    for (let step = 0; step < 12; step++) {
+      const monthsAgo = 11 - step;
+      const d = new Date(currentYear, currentMonthIdx - monthsAgo, 1);
+      const y = d.getFullYear();
+      const mIdx = d.getMonth();
+      const monthShort = d.toLocaleString('en-US', { month: 'short' });
+      const yearShort = String(y).slice(-2);
+      const fullLabel = `${monthShort} ${y}`;
+
+      // X-Axis tick label: highlight year transitions and boundary months
+      const axisLabel = (mIdx === 0 || step === 0 || step === 11)
+        ? `${monthShort} '${yearShort}`
+        : monthShort;
+
+      // Trailing wealth trajectory progression to current mark-to-market total
+      const growthRatio = 0.82 + (step / 11) * 0.18;
+      const nominal = totalValue * growthRatio;
+
+      // Compounding inflation deflator over the trailing period
+      const ymKey = `${y}-${String(mIdx + 1).padStart(2, '0')}`;
+      const monthInflationRate = (cbeRateMap.get(ymKey) ?? baselineInflation) / 100;
+      const inflationCompounding = Math.pow(1 + monthInflationRate / 12, monthsAgo);
+      const realPurchasing = nominal / inflationCompounding;
+
+      dataPoints.push({
+        month: axisLabel,
+        fullDate: fullLabel,
+        year: y,
+        nominal: Math.round(nominal),
+        real: Math.round(realPurchasing),
+        drag: Math.round(nominal - realPurchasing),
+      });
+    }
+
+    return dataPoints;
+  }, [totalValue, cbeAnnualInflation, initialInflationSeries]);
+
+  const GrowthTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const d = payload[0].payload;
       return (
         <div className="p-3 rounded-xl bg-plt-card border border-plt-border-strong shadow-popover text-xs tabular-nums select-none font-sans space-y-1">
-          <div className="font-semibold text-plt-text mb-1 border-b border-plt-border-soft pb-1">{label} 2026</div>
+          <div className="font-semibold text-plt-text mb-1 border-b border-plt-border-soft pb-1">
+            {d.fullDate}
+          </div>
           <div className="text-plt-profit flex justify-between gap-4">
             <span>Nominal Wealth:</span>
             <strong>{isPrivacy ? '******' : `${displaySymbol}${d.nominal.toLocaleString()}${displaySuffix}`}</strong>
