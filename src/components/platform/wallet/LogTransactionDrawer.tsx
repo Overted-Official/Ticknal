@@ -27,11 +27,13 @@ export default function LogTransactionDrawer({
   const { toast } = useToast();
   const isEditMode = Boolean(transactionToEdit);
 
+  const defaultAccount = accounts.find((a) => a.isDefaultExpense) || accounts[0];
+
   const [txMode, setTxMode] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION'>('EXPENSE');
-  const [accountId, setAccountId] = useState<string>(accounts[0] ? String(accounts[0].id) : '');
+  const [accountId, setAccountId] = useState<string>(defaultAccount ? String(defaultAccount.id) : '');
   const [toAccountId, setToAccountId] = useState<string>('');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState(accounts[0]?.currency || 'EGP');
+  const [currency, setCurrency] = useState(defaultAccount?.currency || 'EGP');
   const [category, setCategory] = useState(categories[0] || 'Living & Bills');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
@@ -50,11 +52,12 @@ export default function LogTransactionDrawer({
       setTransactionDate(transactionToEdit.transactionDate || new Date().toISOString().split('T')[0]);
       setNotes(transactionToEdit.notes || '');
     } else {
+      const defAcc = accounts.find((a) => a.isDefaultExpense) || accounts[0];
       setTxMode('EXPENSE');
-      setAccountId(accounts[0] ? String(accounts[0].id) : '');
+      setAccountId(defAcc ? String(defAcc.id) : '');
       setToAccountId('');
       setAmount('');
-      setCurrency(accounts[0]?.currency || 'EGP');
+      setCurrency(defAcc?.currency || 'EGP');
       setCategory(categories[0] || 'Living & Bills');
       setTransactionDate(new Date().toISOString().split('T')[0]);
       setNotes('');

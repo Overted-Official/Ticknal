@@ -167,6 +167,7 @@ export const userBankAccounts = pgTable('user_bank_accounts', {
   interestFrequency: varchar('interest_frequency', { length: 30 }).default('NONE'), // DAILY, MONTHLY, QUARTERLY, ANNUALLY, NONE
   lastInterestCalcDate: date('last_interest_calc_date'), // YYYY-MM-DD
   color: varchar('color', { length: 30 }),
+  isDefaultExpense: boolean('is_default_expense').default(false).notNull(),
   isArchived: boolean('is_archived').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

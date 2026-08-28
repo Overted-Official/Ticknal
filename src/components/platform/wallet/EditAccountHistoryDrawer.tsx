@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Landmark, X, Plus, Trash2, Calendar, TrendingUp, Save, CheckCircle2, History } from '@/components/ui/icon-library';
+import { Landmark, X, Plus, Trash2, Calendar, TrendingUp, Save, CheckCircle2, History, Star } from '@/components/ui/icon-library';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { type BankAccount, type BankMonthlySnapshot } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
@@ -42,6 +42,7 @@ export default function EditAccountHistoryDrawer({
   const [balance, setBalance] = useState('');
   const [interestRate, setInterestRate] = useState('');
   const [interestFrequency, setInterestFrequency] = useState('DAILY');
+  const [isDefaultExpense, setIsDefaultExpense] = useState(false);
 
   // Snapshots state
   const [snapshots, setSnapshots] = useState<Array<{ yearMonth: string; closingBalance: string }>>([]);
@@ -62,6 +63,7 @@ export default function EditAccountHistoryDrawer({
     setBalance(String(account.balance || '0'));
     setInterestRate(account.interestRate ? String(account.interestRate) : '');
     setInterestFrequency(account.interestFrequency || 'DAILY');
+    setIsDefaultExpense(Boolean(account.isDefaultExpense));
 
     setIsLoadingSnapshots(true);
     fetch(`/api/banks/snapshots?accountId=${account.id}`)
@@ -182,6 +184,7 @@ export default function EditAccountHistoryDrawer({
           balance: Number(balance) || 0,
           interestRate: (accountType === 'SAVINGS' || accountType === 'CD_TIME_DEPOSIT') && interestRate ? Number(interestRate) : null,
           interestFrequency: (accountType === 'SAVINGS' || accountType === 'CD_TIME_DEPOSIT') && interestRate ? interestFrequency : 'NONE',
+          isDefaultExpense,
         }),
       });
 
@@ -544,6 +547,32 @@ export default function EditAccountHistoryDrawer({
                       )}
                     </div>
                   )}
+
+                  {/* Main Expense Account Switch */}
+                  <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-3">
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-plt-text font-sans flex items-center gap-1.5">
+                        <Star size={13} className={isDefaultExpense ? "fill-plt-warning text-plt-warning" : "text-plt-muted"} />
+                        <span>Main Expense Account</span>
+                      </div>
+                      <p className="text-[10px] text-plt-muted font-sans">
+                        Automatically pre-select this account when logging expenses & transactions
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsDefaultExpense(!isDefaultExpense)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        isDefaultExpense ? 'bg-plt-warning' : 'bg-white/20'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          isDefaultExpense ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               )}
 

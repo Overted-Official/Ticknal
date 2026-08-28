@@ -100,6 +100,26 @@ export default function WalletBankAccountsView({
     }
   }
 
+  // Handle Set Default Expense Account
+  async function handleSetDefaultAccount(id: number) {
+    try {
+      const res = await fetch('/api/banks/accounts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isDefaultExpense: true }),
+      });
+      if (res.ok) {
+        toast.success('Main Account Set', 'This account is now automatically selected when logging transactions.');
+        mutateAccounts();
+      } else {
+        toast.error('Update Failed', 'Could not set default account.');
+      }
+    } catch (err) {
+      console.error('Failed to set default account:', err);
+      toast.error('Error', 'Could not reach server.');
+    }
+  }
+
   return (
     <div className="flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y select-none">
       <div className="app-page page-sections-stack pb-28 md:pb-20">
@@ -135,6 +155,7 @@ export default function WalletBankAccountsView({
                 onOpenAddModal={() => setIsAccountDrawerOpen(true)}
                 onEditAccount={(acc) => setSelectedAccountForEdit(acc)}
                 onDeleteAccount={handleDeleteAccount}
+                onSetDefaultAccount={handleSetDefaultAccount}
               />
             </section>
 

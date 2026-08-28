@@ -15,6 +15,7 @@ import {
   Building2,
   CreditCard,
   Plus,
+  Star,
 } from '@/components/ui/icon-library';
 import { type BankAccount } from '@/types/bank';
 import { maskAccountNumber } from '@/lib/masking';
@@ -26,6 +27,7 @@ interface BankAccountsGridProps {
   onOpenAddModal: () => void;
   onEditAccount: (account: BankAccount) => void;
   onDeleteAccount: (id: number) => void;
+  onSetDefaultAccount?: (id: number) => void;
 }
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
@@ -42,6 +44,7 @@ export default function BankAccountsGrid({
   onOpenAddModal,
   onEditAccount,
   onDeleteAccount,
+  onSetDefaultAccount,
 }: BankAccountsGridProps) {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
@@ -334,6 +337,12 @@ export default function BankAccountsGrid({
                                         {Number(acc.interestRate).toFixed(1)}% APR
                                       </span>
                                     )}
+                                    {acc.isDefaultExpense && (
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-plt-warning/15 text-plt-warning border border-plt-warning/30 font-sans flex items-center gap-1">
+                                        <Star size={11} className="fill-plt-warning text-plt-warning" />
+                                        <span>Main Expense</span>
+                                      </span>
+                                    )}
                                     {acc.accountNumber && (
                                       <span className="text-mini tabular-nums text-plt-faint hidden sm:inline font-sans">
                                         • {maskAccountNumber(acc.accountNumber)}
@@ -366,6 +375,17 @@ export default function BankAccountsGrid({
                                 </div>
 
                                 <div className="flex items-center gap-2">
+                                  {!acc.isDefaultExpense && onSetDefaultAccount && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onSetDefaultAccount(acc.id)}
+                                      className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-plt-warning/15 hover:text-plt-warning text-plt-muted text-xs font-medium transition flex items-center gap-1.5 border border-white/[0.08] hover:border-plt-warning/30 cursor-pointer"
+                                      title="Set as Main Account for Logging Expenses"
+                                    >
+                                      <Star size={13} />
+                                      <span className="hidden sm:inline">Set Main</span>
+                                    </button>
+                                  )}
                                   <button
                                     type="button"
                                     onClick={() => onEditAccount(acc)}
@@ -439,7 +459,13 @@ export default function BankAccountsGrid({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    {acc.isDefaultExpense && (
+                      <span className="text-[10px] font-semibold tabular-nums px-2 py-0.5 rounded-lg bg-plt-warning/15 text-plt-warning border border-plt-warning/30 font-sans inline-flex items-center gap-1">
+                        <Star size={10} className="fill-plt-warning text-plt-warning" />
+                        <span>Main</span>
+                      </span>
+                    )}
                     {acc.interestRate && Number(acc.interestRate) > 0 && (
                       <span className="text-[10px] font-semibold tabular-nums px-2 py-1 rounded-lg bg-plt-profit/10 text-plt-profit border border-plt-profit/25 font-sans">
                         {Number(acc.interestRate).toFixed(1)}% APR
@@ -474,6 +500,20 @@ export default function BankAccountsGrid({
                   </div>
 
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!acc.isDefaultExpense && onSetDefaultAccount && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSetDefaultAccount(acc.id);
+                        }}
+                        className="px-2 py-2 rounded-xl bg-plt-hover hover:bg-plt-warning/20 text-plt-muted hover:text-plt-warning text-caption font-medium transition flex items-center gap-1.5 border border-plt-border"
+                        title="Set as Main Account for Logging Expenses"
+                      >
+                        <Star size={14} />
+                        <span>Set Main</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {

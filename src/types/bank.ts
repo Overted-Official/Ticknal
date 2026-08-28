@@ -21,6 +21,7 @@ export type BankAccount = {
   interestFrequency?: 'DAILY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY' | 'NONE' | string | null;
   lastInterestCalcDate?: string | null;
   color?: string | null;
+  isDefaultExpense?: boolean | null;
   isArchived: boolean;
   bankName?: string | null;
   bankLogoUrl?: string | null;

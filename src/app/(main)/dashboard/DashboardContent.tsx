@@ -534,6 +534,7 @@ async function getUserBankAccounts(userId: string): Promise<BankAccount[]> {
         currency: userBankAccounts.currency,
         balance: userBankAccounts.balance,
         color: userBankAccounts.color,
+        isDefaultExpense: userBankAccounts.isDefaultExpense,
         isArchived: userBankAccounts.isArchived,
         bankName: banks.name,
         bankLogoUrl: banks.logoUrl,

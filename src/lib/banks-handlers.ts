@@ -113,6 +113,7 @@ export async function handleAccountsGet() {
         interestFrequency: userBankAccounts.interestFrequency,
         lastInterestCalcDate: userBankAccounts.lastInterestCalcDate,
         color: userBankAccounts.color,
+        isDefaultExpense: userBankAccounts.isDefaultExpense,
         isArchived: userBankAccounts.isArchived,
         createdAt: userBankAccounts.createdAt,
         updatedAt: userBankAccounts.updatedAt,
@@ -161,6 +162,7 @@ export async function handleAccountsPost(req: Request) {
       interestRate,
       interestFrequency,
       color,
+      isDefaultExpense,
     } = body;
 
     if (!accountName || !accountType) {
@@ -168,6 +170,14 @@ export async function handleAccountsPost(req: Request) {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
+
+    // If set as default expense account, clear any existing default for this user
+    if (isDefaultExpense) {
+      await db
+        .update(userBankAccounts)
+        .set({ isDefaultExpense: false, updatedAt: new Date() })
+        .where(eq(userBankAccounts.userId, user.id));
+    }
 
     const [newAccount] = await db
       .insert(userBankAccounts)
@@ -184,6 +194,7 @@ export async function handleAccountsPost(req: Request) {
         interestFrequency: interestFrequency || (interestRate ? 'DAILY' : 'NONE'),
         lastInterestCalcDate: interestRate ? todayStr : null,
         color: color || 'var(--plt-accent)',
+        isDefaultExpense: Boolean(isDefaultExpense),
         isArchived: false,
       })
       .returning();
@@ -213,6 +224,14 @@ export async function handleAccountsPut(req: Request) {
 
     const todayStr = new Date().toISOString().split('T')[0];
 
+    // If setting this account as default expense account, unset any other default
+    if (updates.isDefaultExpense === true) {
+      await db
+        .update(userBankAccounts)
+        .set({ isDefaultExpense: false, updatedAt: new Date() })
+        .where(eq(userBankAccounts.userId, user.id));
+    }
+
     const [updatedAccount] = await db
       .update(userBankAccounts)
       .set({
@@ -222,6 +241,7 @@ export async function handleAccountsPut(req: Request) {
         interestRate: updates.interestRate !== undefined ? (updates.interestRate ? String(updates.interestRate) : null) : undefined,
         interestFrequency: updates.interestFrequency !== undefined ? updates.interestFrequency : undefined,
         lastInterestCalcDate: updates.lastInterestCalcDate !== undefined ? updates.lastInterestCalcDate : (updates.interestRate && !updates.lastInterestCalcDate ? todayStr : undefined),
+        isDefaultExpense: updates.isDefaultExpense !== undefined ? Boolean(updates.isDefaultExpense) : undefined,
         updatedAt: new Date(),
       })
       .where(and(eq(userBankAccounts.id, Number(id)), eq(userBankAccounts.userId, user.id)))

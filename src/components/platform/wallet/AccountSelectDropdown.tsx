@@ -104,6 +104,12 @@ export default function AccountSelectDropdown({
               >
                 {selectedAccount.currency}
               </span>
+
+              {selectedAccount.isDefaultExpense && (
+                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-plt-warning/15 text-plt-warning border border-plt-warning/30 shrink-0 font-sans inline-flex items-center gap-0.5">
+                  ⭐ Main
+                </span>
+              )}
             </>
           ) : (
             <span className="text-plt-muted truncate font-sans">{placeholder}</span>
@@ -197,6 +203,12 @@ export default function AccountSelectDropdown({
                     >
                       {acc.currency}
                     </span>
+
+                    {acc.isDefaultExpense && (
+                      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-plt-warning/15 text-plt-warning border border-plt-warning/30 shrink-0 font-sans inline-flex items-center gap-0.5">
+                        ⭐ Main
+                      </span>
+                    )}
                   </div>
 
                   {/* Right: Balance + Checkmark */}
