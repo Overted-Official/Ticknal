@@ -25,6 +25,8 @@ export type SignalNotificationItem = {
   companyName?: string | null;
   logoUrl?: string | null;
   sector?: string | null;
+  industryGroup?: string | null;
+  rotationRegime?: 'Leading' | 'Improving' | 'Weakening' | 'Lagging' | null;
 };
 
 export type SystemLogItem = {
@@ -88,6 +90,35 @@ function normalizeStrategyId(strategy?: string | null): 'psi' | 'psi_v2' | 'thot
   return 'psi';
 }
 
+function getRegimeBadge(regime?: string | null) {
+  if (regime === 'Leading') {
+    return {
+      label: 'Leading',
+      icon: '🟢',
+      className: 'bg-plt-profit/15 text-plt-profit border-plt-profit/30',
+    };
+  }
+  if (regime === 'Improving') {
+    return {
+      label: 'Improving',
+      icon: '🔵',
+      className: 'bg-plt-info/15 text-plt-info border-plt-info/30',
+    };
+  }
+  if (regime === 'Weakening') {
+    return {
+      label: 'Weakening',
+      icon: '🟡',
+      className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    };
+  }
+  return {
+    label: 'Lagging',
+    icon: '🔴',
+    className: 'bg-plt-risk/15 text-plt-risk border-plt-risk/30',
+  };
+}
+
 export default function NotificationsDrawer({
   isOpen,
   onClose,
@@ -97,6 +128,7 @@ export default function NotificationsDrawer({
 }) {
   const [activeTab, setActiveTab] = useState<'signals' | 'system'>('signals');
   const [selectedStrategy, setSelectedStrategy] = useState<'all' | 'psi' | 'psi_v2' | 'thoth'>('all');
+  const [selectedRegime, setSelectedRegime] = useState<'all' | 'alpha' | 'Leading' | 'Improving' | 'Weakening' | 'Lagging'>('all');
 
   const { data: signalsData, mutate: mutateSignals, isLoading: isLoadingSignals } = useSWR<{
     notifications: SignalNotificationItem[];
@@ -131,10 +163,39 @@ export default function NotificationsDrawer({
     return counts;
   }, [notifications]);
 
+  const regimeCounts = useMemo(() => {
+    const counts = {
+      all: notifications.length,
+      alpha: 0,
+      Leading: 0,
+      Improving: 0,
+      Weakening: 0,
+      Lagging: 0,
+    };
+    for (const n of notifications) {
+      const r = (n.rotationRegime || 'Leading') as 'Leading' | 'Improving' | 'Weakening' | 'Lagging';
+      counts[r] = (counts[r] || 0) + 1;
+      if (r === 'Leading' || r === 'Improving') counts.alpha++;
+    }
+    return counts;
+  }, [notifications]);
+
   const filteredNotifications = useMemo(() => {
-    if (selectedStrategy === 'all') return notifications;
-    return notifications.filter((n) => normalizeStrategyId(n.strategy) === selectedStrategy);
-  }, [notifications, selectedStrategy]);
+    return notifications.filter((n) => {
+      // 1. Strategy filter
+      if (selectedStrategy !== 'all') {
+        if (normalizeStrategyId(n.strategy) !== selectedStrategy) return false;
+      }
+      // 2. Regime filter
+      if (selectedRegime === 'alpha') {
+        const r = n.rotationRegime || 'Leading';
+        if (r !== 'Leading' && r !== 'Improving') return false;
+      } else if (selectedRegime !== 'all') {
+        if ((n.rotationRegime || 'Leading') !== selectedRegime) return false;
+      }
+      return true;
+    });
+  }, [notifications, selectedStrategy, selectedRegime]);
 
   const systemLogs = logsData?.logs ?? [];
   const [isClearing, setIsClearing] = useState(false);
@@ -250,40 +311,87 @@ export default function NotificationsDrawer({
               </div>
             </div>
 
-            {/* Strategy Filter Rail for Position Alerts */}
+            {/* Strategy & Rotation Filter Rails */}
             {activeTab === 'signals' && notifications.length > 0 && (
-              <div className="px-4 py-2 border-b border-plt-border-soft bg-plt-card/30 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-                {[
-                  { id: 'all', label: 'All', count: strategyCounts.all },
-                  { id: 'psi', label: 'PSI', count: strategyCounts.psi },
-                  { id: 'psi_v2', label: 'PSI V2', count: strategyCounts.psi_v2 },
-                  { id: 'thoth', label: 'THOTH', count: strategyCounts.thoth },
-                ].map((tab) => {
-                  const isActive = selectedStrategy === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setSelectedStrategy(tab.id as any)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                        isActive
-                          ? 'bg-plt-card border border-plt-border-soft text-plt-text font-bold shadow-xs'
-                          : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      <span
-                        className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+              <div className="border-b border-plt-border-soft bg-plt-card/30 flex flex-col divide-y divide-plt-border-soft/60 shrink-0">
+                {/* 1. Strategy Rail */}
+                <div className="px-4 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  {[
+                    { id: 'all', label: 'All Strategies', count: strategyCounts.all },
+                    { id: 'psi', label: 'PSI', count: strategyCounts.psi },
+                    { id: 'psi_v2', label: 'PSI V2', count: strategyCounts.psi_v2 },
+                    { id: 'thoth', label: 'THOTH', count: strategyCounts.thoth },
+                  ].map((tab) => {
+                    const isActive = selectedStrategy === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setSelectedStrategy(tab.id as any)}
+                        className={`px-2 py-0.5 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                           isActive
-                            ? 'bg-plt-base text-plt-text font-bold border border-plt-border-soft'
-                            : 'text-plt-muted bg-plt-base/40'
+                            ? 'bg-plt-card border border-plt-border-soft text-plt-text font-bold shadow-xs'
+                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                         }`}
                       >
-                        {tab.count}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span>{tab.label}</span>
+                        <span
+                          className={`px-1 py-0.1 rounded text-[10px] font-mono ${
+                            isActive
+                              ? 'bg-plt-base text-plt-text font-bold border border-plt-border-soft'
+                              : 'text-plt-muted bg-plt-base/40'
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 2. Industry Rotation Regime Filter */}
+                <div className="px-4 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  <span className="text-[10px] text-plt-muted/70 font-mono uppercase tracking-wider shrink-0 mr-1">
+                    Regime:
+                  </span>
+                  {[
+                    { id: 'all', label: 'All Regimes', count: regimeCounts.all },
+                    { id: 'alpha', label: '🟢 Alpha Wave', count: regimeCounts.alpha, special: true },
+                    { id: 'Leading', label: 'Leading', count: regimeCounts.Leading },
+                    { id: 'Improving', label: 'Improving', count: regimeCounts.Improving },
+                    { id: 'Weakening', label: 'Weakening', count: regimeCounts.Weakening },
+                    { id: 'Lagging', label: 'Lagging', count: regimeCounts.Lagging },
+                  ].map((rTab) => {
+                    const isActive = selectedRegime === rTab.id;
+                    return (
+                      <button
+                        key={rTab.id}
+                        type="button"
+                        onClick={() => setSelectedRegime(rTab.id as any)}
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-mono transition-all flex items-center gap-1 shrink-0 cursor-pointer ${
+                          isActive
+                            ? rTab.id === 'alpha'
+                              ? 'bg-plt-profit/20 text-plt-profit border border-plt-profit/40 font-bold shadow-xs'
+                              : 'bg-plt-card border border-plt-border-soft text-plt-text font-bold shadow-xs'
+                            : rTab.id === 'alpha'
+                            ? 'text-plt-profit hover:bg-plt-profit/10 border border-plt-profit/20'
+                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+                        }`}
+                      >
+                        <span>{rTab.label}</span>
+                        <span
+                          className={`px-1 py-0.1 rounded text-[9px] font-mono ${
+                            isActive
+                              ? 'bg-plt-base text-plt-text font-bold border border-plt-border-soft'
+                              : 'text-plt-muted bg-plt-base/40'
+                          }`}
+                        >
+                          {rTab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -326,6 +434,7 @@ export default function NotificationsDrawer({
                     {filteredNotifications.map((item, index) => {
                       const isBuy = item.signal.toUpperCase().includes('BUY');
                       const cleanSymbol = item.tickerSymbol.replace('.CA', '');
+                      const regime = getRegimeBadge(item.rotationRegime);
 
                       return (
                         <div key={item.id}>
@@ -336,26 +445,37 @@ export default function NotificationsDrawer({
                               <TickerLogo symbol={item.tickerSymbol} logoUrl={item.logoUrl} />
 
                               <div className="flex flex-col min-w-0">
-                                <div className="flex items-baseline gap-2 min-w-0">
+                                <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                                   <span className="text-xs font-bold font-mono text-plt-text tracking-tight shrink-0">
                                     {cleanSymbol}
                                   </span>
-                                  <span className="text-[11px] text-plt-muted truncate font-normal font-sans">
+                                  <span className="text-[11px] text-plt-muted truncate font-normal font-sans max-w-[120px]">
                                     {item.companyName ?? cleanSymbol}
                                   </span>
                                   <span className="text-[9px] font-mono text-plt-muted px-1.5 py-0.2 rounded bg-plt-card border border-plt-border-soft shrink-0">
                                     {item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth'
-                                      ? 'THOTH 3.7P'
+                                      ? 'THOTH'
                                       : item.strategy === 'psi_v2'
                                       ? 'PSI V2'
                                       : 'PSI'}
                                   </span>
+                                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border shrink-0 font-medium ${regime.className}`}>
+                                    {regime.icon} {regime.label}
+                                  </span>
                                 </div>
 
-                                <div className="text-[10px] font-mono text-plt-muted mt-1">
+                                <div className="text-[10px] font-mono text-plt-muted mt-1 flex items-center gap-1.5 flex-wrap">
                                   <span>{item.signalDate}</span>
-                                  <span className="mx-1.5 text-plt-muted/60">•</span>
+                                  <span className="text-plt-muted/40">•</span>
                                   <span>{formatTimeAgo(item.sentAt)}</span>
+                                  {item.industryGroup && (
+                                    <>
+                                      <span className="text-plt-muted/40">•</span>
+                                      <span className="text-plt-muted/70 truncate max-w-[130px]" title={item.industryGroup}>
+                                        {item.industryGroup}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>

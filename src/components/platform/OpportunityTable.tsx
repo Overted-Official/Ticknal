@@ -1,4 +1,5 @@
 'use client';
+'use client';
 
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
@@ -9,6 +10,8 @@ export type Opportunity = {
   symbol: string;
   companyName: string;
   sector: string;
+  industryGroup?: string;
+  rotationRegime?: 'Leading' | 'Improving' | 'Weakening' | 'Lagging';
   logoUrl?: string | null;
   strategyId?: string;
   strategyLabel?: string;
@@ -33,6 +36,35 @@ function formatSignal(sig: string) {
   return sig.charAt(0).toUpperCase() + sig.slice(1).toLowerCase();
 }
 
+function getRegimeBadge(regime?: string | null) {
+  if (regime === 'Leading') {
+    return {
+      label: 'Leading',
+      icon: '🟢',
+      className: 'bg-plt-profit/15 text-plt-profit border-plt-profit/30',
+    };
+  }
+  if (regime === 'Improving') {
+    return {
+      label: 'Improving',
+      icon: '🔵',
+      className: 'bg-plt-info/15 text-plt-info border-plt-info/30',
+    };
+  }
+  if (regime === 'Weakening') {
+    return {
+      label: 'Weakening',
+      icon: '🟡',
+      className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    };
+  }
+  return {
+    label: 'Lagging',
+    icon: '🔴',
+    className: 'bg-plt-risk/15 text-plt-risk border-plt-risk/30',
+  };
+}
+
 export default function OpportunityTable({
   opportunities,
   emptyText,
@@ -46,6 +78,7 @@ export default function OpportunityTable({
 }) {
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const [strategyFilter, setStrategyFilter] = useState<string>('ALL');
+  const [regimeFilter, setRegimeFilter] = useState<'ALL' | 'ALPHA'>('ALL');
 
   // Extract unique strategies present
   const availableStrategies = useMemo(() => {
@@ -56,10 +89,26 @@ export default function OpportunityTable({
     return Array.from(set);
   }, [opportunities]);
 
+  const alphaCount = useMemo(() => {
+    return opportunities.filter(
+      (o) => o.rotationRegime === 'Leading' || o.rotationRegime === 'Improving'
+    ).length;
+  }, [opportunities]);
+
   const filteredOpportunities = useMemo(() => {
-    if (strategyFilter === 'ALL') return opportunities;
-    return opportunities.filter((o) => (o.strategyId || 'psi') === strategyFilter);
-  }, [opportunities, strategyFilter]);
+    return opportunities.filter((o) => {
+      // 1. Strategy filter
+      if (strategyFilter !== 'ALL' && (o.strategyId || 'psi') !== strategyFilter) {
+        return false;
+      }
+      // 2. Regime filter
+      if (regimeFilter === 'ALPHA') {
+        const r = o.rotationRegime || 'Leading';
+        if (r !== 'Leading' && r !== 'Improving') return false;
+      }
+      return true;
+    });
+  }, [opportunities, strategyFilter, regimeFilter]);
 
   const initialOrderData: InitialOrderData | null = selectedOpp ? {
     symbol: selectedOpp.symbol,
@@ -71,59 +120,76 @@ export default function OpportunityTable({
 
   return (
     <>
-      {/* Optional Strategy Filter Pill Bar */}
-      {showFilter && availableStrategies.length > 1 && (
-        <div className="flex items-center gap-2 px-4 pt-2 pb-2 border-b border-plt-border-soft bg-plt-hover flex-wrap">
+      {/* Strategy & Rotation Filter Pill Bar */}
+      {showFilter && (
+        <div className="flex items-center justify-between gap-2 px-4 pt-2 pb-2 border-b border-plt-border-soft bg-plt-hover flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setStrategyFilter('ALL')}
+              className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+                strategyFilter === 'ALL'
+                  ? 'bg-plt-card border border-plt-border-soft text-plt-text font-semibold shadow-xs'
+                  : 'text-plt-muted hover:text-plt-text'
+              }`}
+            >
+              All ({opportunities.length})
+            </button>
+            {availableStrategies.includes('psi') && (
+              <button
+                type="button"
+                onClick={() => setStrategyFilter('psi')}
+                className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+                  strategyFilter === 'psi'
+                    ? 'bg-plt-info/20 text-plt-info border border-plt-info/30 font-semibold shadow-xs'
+                    : 'text-plt-muted hover:text-plt-info'
+                }`}
+              >
+                PSI ({opportunities.filter((o) => (o.strategyId || 'psi') === 'psi').length})
+              </button>
+            )}
+            {availableStrategies.includes('thoth_egx_macro') && (
+              <button
+                type="button"
+                onClick={() => setStrategyFilter('thoth_egx_macro')}
+                className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+                  strategyFilter === 'thoth_egx_macro'
+                    ? 'bg-plt-violet/20 text-plt-violet border border-plt-violet/30 font-semibold shadow-xs'
+                    : 'text-plt-muted hover:text-plt-violet'
+                }`}
+              >
+                THOTH ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
+              </button>
+            )}
+            {availableStrategies.includes('psi_v2') && (
+              <button
+                type="button"
+                onClick={() => setStrategyFilter('psi_v2')}
+                className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+                  strategyFilter === 'psi_v2'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold shadow-xs'
+                    : 'text-plt-muted hover:text-emerald-400'
+                }`}
+              >
+                PSI V2 ({opportunities.filter((o) => o.strategyId === 'psi_v2').length})
+              </button>
+            )}
+          </div>
+
+          {/* Alpha Wave Filter Toggle */}
           <button
             type="button"
-            onClick={() => setStrategyFilter('ALL')}
-            className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
-              strategyFilter === 'ALL'
-                ? 'bg-plt-hover text-plt-text font-medium shadow-sm'
-                : 'text-plt-muted hover:text-plt-text'
+            onClick={() => setRegimeFilter((prev) => (prev === 'ALPHA' ? 'ALL' : 'ALPHA'))}
+            className={`px-2 py-1 rounded-lg text-mini font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
+              regimeFilter === 'ALPHA'
+                ? 'bg-plt-profit/20 text-plt-profit border border-plt-profit/40 font-bold shadow-xs'
+                : 'text-plt-muted hover:text-plt-profit border border-plt-border-soft bg-plt-card/50'
             }`}
+            title="Filter to stocks in Leading and Improving Industry Groups"
           >
-            All ({opportunities.length})
+            <span>🟢 Alpha Wave</span>
+            <span className="text-[10px] opacity-80">({alphaCount})</span>
           </button>
-          {availableStrategies.includes('psi') && (
-            <button
-              type="button"
-              onClick={() => setStrategyFilter('psi')}
-              className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
-                strategyFilter === 'psi'
-                  ? 'bg-plt-info/20 text-plt-info border border-plt-info/30 font-medium shadow-sm'
-                  : 'text-plt-muted hover:text-plt-info'
-              }`}
-            >
-              PSI ({opportunities.filter((o) => (o.strategyId || 'psi') === 'psi').length})
-            </button>
-          )}
-          {availableStrategies.includes('thoth_egx_macro') && (
-            <button
-              type="button"
-              onClick={() => setStrategyFilter('thoth_egx_macro')}
-              className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
-                strategyFilter === 'thoth_egx_macro'
-                  ? 'bg-plt-violet/20 text-plt-violet border border-plt-violet/30 font-medium shadow-sm'
-                  : 'text-plt-muted hover:text-plt-violet'
-              }`}
-            >
-              THOTH 3.7P ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
-            </button>
-          )}
-          {availableStrategies.includes('psi_v2') && (
-            <button
-              type="button"
-              onClick={() => setStrategyFilter('psi_v2')}
-              className={`px-2 py-2 rounded-xl text-mini font-medium transition-all ${
-                strategyFilter === 'psi_v2'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium shadow-sm'
-                  : 'text-plt-muted hover:text-emerald-400'
-              }`}
-            >
-              PSI V2 ({opportunities.filter((o) => o.strategyId === 'psi_v2').length})
-            </button>
-          )}
         </div>
       )}
 
@@ -156,7 +222,22 @@ export default function OpportunityTable({
                         </span>
                       )}
                     </div>
-                    {!compact && <div className="text-mini text-plt-muted">{item.companyName || item.sector}</div>}
+                    {!compact && (
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className="text-mini text-plt-muted truncate max-w-[150px]">
+                          {item.companyName || item.industryGroup || item.sector}
+                        </span>
+                        {item.rotationRegime && (
+                          <span
+                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-medium ${
+                              getRegimeBadge(item.rotationRegime).className
+                            }`}
+                          >
+                            {getRegimeBadge(item.rotationRegime).icon} {getRegimeBadge(item.rotationRegime).label}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button
@@ -190,7 +271,7 @@ export default function OpportunityTable({
             <tr className="text-plt-muted text-[10px] font-semibold uppercase tracking-wider">
               <th className="px-3 py-2">Ticker</th>
               <th className="px-3 py-2">Strategy</th>
-              {!compact && <th className="px-3 py-2">Sector</th>}
+              {!compact && <th className="px-3 py-2">Industry & Regime</th>}
               <th className="px-3 py-2">Date</th>
               <th className="px-3 py-2 text-right">Price</th>
               <th className="px-3 py-2 text-right">Action</th>
@@ -232,7 +313,24 @@ export default function OpportunityTable({
                       {item.strategyShortName || 'PSI'}
                     </span>
                   </td>
-                  {!compact && <td className="px-3 py-2 whitespace-nowrap text-plt-muted text-[11px]">{item.sector}</td>}
+                  {!compact && (
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-plt-muted text-[11px] truncate max-w-[130px]" title={item.industryGroup || item.sector}>
+                          {item.industryGroup || item.sector}
+                        </span>
+                        {item.rotationRegime && (
+                          <span
+                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-medium ${
+                              getRegimeBadge(item.rotationRegime).className
+                            }`}
+                          >
+                            {getRegimeBadge(item.rotationRegime).icon} {getRegimeBadge(item.rotationRegime).label}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  )}
                   <td className="px-3 py-2 whitespace-nowrap text-plt-muted tabular-nums text-[11px]">{item.signal.date}</td>
                   <td className={`px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs font-semibold ${item.signal.signal === 'BUY' ? 'text-plt-profit' : 'text-plt-risk'}`}>
                     {item.signal.price.toFixed(2)} £

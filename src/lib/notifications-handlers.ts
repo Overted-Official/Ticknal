@@ -63,7 +63,20 @@ export async function handleNotificationsGet() {
       }
     }
 
-    return NextResponse.json({ notifications: rows });
+    const { getCachedIndustryRotationMap } = await import('@/lib/industry-rotation');
+    const { tickerMap } = await getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map() }));
+
+    const enhancedRows = rows.map((r) => {
+      const cleanSym = r.tickerSymbol.replace('.CA', '').toUpperCase();
+      const meta = tickerMap.get(cleanSym) || tickerMap.get(r.tickerSymbol);
+      return {
+        ...r,
+        industryGroup: meta?.industryGroup ?? r.sector ?? 'Unclassified',
+        rotationRegime: meta?.rotationRegime ?? 'Leading',
+      };
+    });
+
+    return NextResponse.json({ notifications: enhancedRows });
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

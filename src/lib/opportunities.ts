@@ -14,6 +14,8 @@ export type OpportunitySignal = {
   symbol: string;
   companyName: string;
   sector: string;
+  industryGroup?: string;
+  rotationRegime?: 'Leading' | 'Improving' | 'Weakening' | 'Lagging';
   logoUrl: string | null;
   strategyId: string;
   strategyLabel: string;
@@ -69,15 +71,24 @@ export async function _getRecentOpportunities(
         `),
       ]);
 
+      const { getCachedIndustryRotationMap } = await import('@/lib/industry-rotation');
+      const { tickerMap: rotationMap } = await getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map() }));
+
       const tickerMap = new Map(
-        tickerRows.map((ticker) => [
-          normalizeTickerSymbol(ticker.symbol),
-          {
-            companyName: ticker.companyName ?? ticker.symbol,
-            sector: ticker.sector ?? 'Unclassified',
-            logoUrl: ticker.logoUrl ?? null,
-          },
-        ]),
+        tickerRows.map((ticker) => {
+          const sym = normalizeTickerSymbol(ticker.symbol);
+          const rot = rotationMap.get(sym);
+          return [
+            sym,
+            {
+              companyName: ticker.companyName ?? ticker.symbol,
+              sector: ticker.sector ?? 'Unclassified',
+              industryGroup: rot?.industryGroup ?? ticker.industryGroup ?? ticker.sector ?? 'Unclassified',
+              rotationRegime: rot?.rotationRegime ?? 'Leading',
+              logoUrl: ticker.logoUrl ?? null,
+            },
+          ];
+        }),
       );
       const barsByTicker = new Map<string, PriceBar[]>();
 
@@ -107,6 +118,8 @@ export async function _getRecentOpportunities(
         const meta = {
           companyName: ticker?.companyName ?? symbol,
           sector: ticker?.sector ?? 'Unclassified',
+          industryGroup: ticker?.industryGroup,
+          rotationRegime: ticker?.rotationRegime,
           logoUrl: ticker?.logoUrl ?? null,
         };
 
