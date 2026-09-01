@@ -1,10 +1,10 @@
 import webPush from 'web-push';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens } from '@/db/schema';
 import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import { getDailyPriceBars } from '@/lib/strategyOrders';
-import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
@@ -47,74 +47,123 @@ export async function dispatchSignalNotifications(options: {
 
   const symbolFilter = new Set((options.symbols ?? []).map(normalizeTickerSymbol));
   
-  // 1. Get explicit alerts from users who tapped the bell icon
-  const explicitAlertRows = (await db.select().from(tickerAlerts).where(eq(tickerAlerts.enabled, true))).filter((alert) =>
-    symbolFilter.size === 0 ? true : symbolFilter.has(alert.tickerSymbol),
-  );
+  // 1. Fetch user alerts and open positions
+  const [explicitAlertRows, openOrderRows, subscriptionRows, deviceTokenRows] = await Promise.all([
+    db.select().from(tickerAlerts).where(eq(tickerAlerts.enabled, true)),
+    db.select({ tickerSymbol: positions.tickerSymbol, userId: positions.userId }).from(positions).where(eq(positions.status, 'OPEN')),
+    db.select().from(pushSubscriptions),
+    db.select().from(devicePushTokens).where(eq(devicePushTokens.isActive, true)),
+  ]);
 
-  // 2. Automatically include any ticker that currently has an open position for that specific user
-  const openOrderRows = await db.select({ tickerSymbol: positions.tickerSymbol, userId: positions.userId }).from(positions).where(eq(positions.status, 'OPEN'));
-  
-  // Merge explicit alerts and open positions directly
-  const alertRows: { userId: string; tickerSymbol: string }[] = [...explicitAlertRows];
-  
-  for (const openOrder of openOrderRows) {
-    if (symbolFilter.size === 0 || symbolFilter.has(openOrder.tickerSymbol)) {
-      if (!alertRows.some(a => a.userId === openOrder.userId && a.tickerSymbol === openOrder.tickerSymbol)) {
-        alertRows.push({ userId: openOrder.userId, tickerSymbol: openOrder.tickerSymbol });
-      }
-    }
-  }
+  // Collect all distinct active user IDs
+  const userIds = new Set<string>();
+  subscriptionRows.forEach(s => { if (s.userId) userIds.add(s.userId); });
+  deviceTokenRows.forEach(d => { if (d.userId) userIds.add(d.userId); });
+  openOrderRows.forEach(o => { if (o.userId) userIds.add(o.userId); });
+  explicitAlertRows.forEach(a => { if (a.userId) userIds.add(a.userId); });
 
-  if (alertRows.length === 0) {
-    result.messages.push('No enabled ticker alerts or open positions matched.');
+  if (userIds.size === 0) {
+    result.messages.push('No active users found for notification dispatch.');
     return result;
   }
 
-  const subscriptionRows = await db.select().from(pushSubscriptions);
   const subscriptionsByUser = groupBy(subscriptionRows, (subscription) => subscription.userId);
-
-  const deviceTokenRows = await db.select().from(devicePushTokens).where(eq(devicePushTokens.isActive, true));
   const deviceTokensByUser = groupBy(
     deviceTokenRows.filter((d): d is typeof d & { userId: string } => Boolean(d.userId)),
     (d) => d.userId
   );
 
-  // Group by ticker so we can fetch bars once per ticker
-  const alertsByTicker = groupBy(alertRows, (alert) => alert.tickerSymbol);
   const lookbackBars = Math.max(1, options.lookbackBars ?? 5);
 
   // Fetch custom user strategy settings
-  const { userStrategySettings } = await import('@/db/schema');
+  const { userStrategySettings, tickers: tickersTable, dailyPrices } = await import('@/db/schema');
   const userSettingsRows = await db.select().from(userStrategySettings);
   const userSettingsMap = groupBy(userSettingsRows, (setting) => `${setting.userId}-${setting.tickerSymbol}`);
 
-  for (const [ticker, userAlerts] of Object.entries(alertsByTicker)) {
-    result.checkedSymbols += 1;
-    const bars = await getDailyPriceBars(ticker);
-    if (bars.length === 0) {
-      result.skipped += userAlerts.length;
-      continue;
+  // Fetch all stock price bars in a single high-performance bulk query
+  const priceRows = await db.execute(sql`
+    SELECT ticker_symbol, date, open, high, low, close, volume
+    FROM ${dailyPrices}
+    WHERE date >= CURRENT_DATE - INTERVAL '14 months' AND volume > 0
+    ORDER BY ticker_symbol, date ASC
+  `) as any[];
+
+  const barsByTicker = new Map<string, PriceBar[]>();
+  for (const row of priceRows) {
+    const sym = normalizeTickerSymbol(String(row.ticker_symbol));
+    if (symbolFilter.size > 0 && !symbolFilter.has(sym)) continue;
+
+    const bars = barsByTicker.get(sym) ?? [];
+    bars.push({
+      date: typeof row.date === 'string' ? row.date.split('T')[0] : new Date(row.date as Date).toISOString().split('T')[0],
+      open: Number(row.open),
+      high: Number(row.high),
+      low: Number(row.low),
+      close: Number(row.close),
+      volume: Number(row.volume),
+    });
+    barsByTicker.set(sym, bars);
+  }
+
+  const { resolvePsiParamsFromStore } = await import('@/strategies/PSI/psiParameterStore');
+  const { runThothV37PStrategy } = await import('@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy');
+  const { runPsiV2Strategy } = await import('@/strategies/PSI_V2/psiV2Strategy');
+
+  const THOTH_FOCUS_TICKERS = new Set([
+    'COMI', 'FWRY', 'EAST', 'TMGH', 'HRHO', 'SWDY', 'ETEL', 'ABUK',
+    'EKHO', 'ORAS', 'ISPH', 'CIEB', 'AMOC', 'ESRS', 'ADIB', 'HELI',
+    'AUTO', 'JUFO', 'SKPC', 'MNHD', 'EFID', 'ALCN', 'CERA', 'MFPC',
+  ]);
+
+  const newNotificationsToInsert: Array<{
+    userId: string;
+    tickerSymbol: string;
+    strategy: string;
+    signalDate: string;
+    signal: string;
+  }> = [];
+
+  const pushTasks: Array<() => Promise<void>> = [];
+
+  for (const userId of userIds) {
+    const [userOpenRows, userAlertRows, existingNotifs] = await Promise.all([
+      db.select({ tickerSymbol: positions.tickerSymbol }).from(positions).where(and(eq(positions.userId, userId), eq(positions.status, 'OPEN'))),
+      db.select({ tickerSymbol: tickerAlerts.tickerSymbol }).from(tickerAlerts).where(and(eq(tickerAlerts.userId, userId), eq(tickerAlerts.enabled, true))),
+      db.select({
+        tickerSymbol: signalNotifications.tickerSymbol,
+        strategy: signalNotifications.strategy,
+        signalDate: signalNotifications.signalDate,
+        signal: signalNotifications.signal,
+      }).from(signalNotifications).where(eq(signalNotifications.userId, userId)),
+    ]);
+
+    const userOpenSymbols = new Set(userOpenRows.map(o => normalizeTickerSymbol(o.tickerSymbol)));
+    const userAlertedSymbols = new Set(userAlertRows.map(a => normalizeTickerSymbol(a.tickerSymbol)));
+    const sentSet = new Set(existingNotifs.map(n => `${n.tickerSymbol}-${n.strategy}-${n.signalDate}-${n.signal}`));
+
+    const userGlobalScopeRow = userSettingsMap[`${userId}-GLOBAL`]?.find(s => s.strategyName === 'alert_scope');
+    let userDefaultScope = 'all';
+    if (userGlobalScopeRow) {
+      try {
+        const parsed = JSON.parse(userGlobalScopeRow.params);
+        userDefaultScope = parsed.scope || 'all';
+      } catch (e) {}
     }
 
-    const paramResolution = await resolvePsiParamsAsync(ticker, { startDate: '2025-01-01' });
-    const defaultParams = paramResolution.params;
-    const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
+    const subscriptions = subscriptionsByUser[userId] ?? [];
+    const nativeTokens = deviceTokensByUser[userId] ?? [];
 
-    for (const alert of userAlerts) {
-      // Resolve user's global alert scope preference ('all' | 'psi' | 'thoth_egx_macro')
-      const userGlobalScopeRow = userSettingsMap[`${alert.userId}-GLOBAL`]?.find(s => s.strategyName === 'alert_scope');
-      let userScope: string = 'all';
-      if (userGlobalScopeRow) {
-        try {
-          const parsed = JSON.parse(userGlobalScopeRow.params);
-          userScope = parsed.scope || 'all';
-        } catch (e) {}
-      }
+    for (const [ticker, bars] of barsByTicker.entries()) {
+      if (bars.length < 80) continue;
+      result.checkedSymbols += 1;
 
-      // Check per-ticker alert scope if set
-      const userSettingsKey = `${alert.userId}-${ticker}`;
-      const userTickerScopeRow = userSettingsMap[userSettingsKey]?.find(s => s.strategyName === 'alert_scope');
+      const isPositionOpen = userOpenSymbols.has(ticker);
+      const isAlerted = userAlertedSymbols.has(ticker);
+      const isTracked = isPositionOpen || isAlerted;
+
+      // Determine strategy scope for this ticker
+      let userScope = userDefaultScope;
+      const userTickerScopeRow = userSettingsMap[`${userId}-${ticker}`]?.find(s => s.strategyName === 'alert_scope');
       if (userTickerScopeRow) {
         try {
           const parsed = JSON.parse(userTickerScopeRow.params);
@@ -122,6 +171,7 @@ export async function dispatchSignalNotifications(options: {
         } catch (e) {}
       }
 
+      const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
       const signalsToDispatch: Array<{
         strategyId: string;
         strategyShort: string;
@@ -129,67 +179,60 @@ export async function dispatchSignalNotifications(options: {
         signal: any;
       }> = [];
 
-      // 1. Evaluate PSI Strategy (using exact DB-tuned combinations)
+      // 1. Evaluate PSI Strategy
       if (userScope === 'all' || userScope === 'psi') {
-        const userSettingRow = userSettingsMap[userSettingsKey]?.find(s => s.strategyName === 'psi');
-        let userParams = defaultParams;
-        if (userSettingRow) {
-          try {
-            const parsed = JSON.parse(userSettingRow.params);
-            userParams = { ...defaultParams, ...parsed };
-          } catch (e) {
-            console.error('Failed to parse user strategy settings', e);
+        try {
+          const psiParams = resolvePsiParamsFromStore(ticker, { startDate: '2025-01-01' });
+          const psiResult = runPsiStrategy(bars, psiParams);
+          const signal = [...psiResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
+          if (signal) {
+            // If tracked (held or alerted), dispatch both BUY and SELL. If untracked, dispatch BUY opportunities.
+            if (signal.signal === 'BUY' || isTracked) {
+              signalsToDispatch.push({
+                strategyId: 'psi',
+                strategyShort: 'PSI',
+                strategyLabel: 'PSI Strategy',
+                signal,
+              });
+            }
           }
-        }
-
-        const psiResult = runPsiStrategy(bars, userParams);
-        const signal = [...psiResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
-        if (signal) {
-          signalsToDispatch.push({
-            strategyId: 'psi',
-            strategyShort: 'PSI',
-            strategyLabel: 'PSI Strategy',
-            signal,
-          });
-        }
+        } catch (e) {}
       }
 
-      // 2. Evaluate the frozen THOTH EGX V3.7P production strategy
-      if (userScope === 'all' || userScope === 'thoth_egx_macro') {
+      // 2. Evaluate THOTH Strategy (targeted to focus tickers and tracked positions)
+      if ((userScope === 'all' || userScope === 'thoth_egx_macro') && (isTracked || THOTH_FOCUS_TICKERS.has(ticker))) {
         try {
-          const { runThothV37PStrategy } = await import('@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy');
           const thothResult = await runThothV37PStrategy(bars, { ticker, startDate: '2025-01-01' });
           const signal = [...thothResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
           if (signal) {
-            signalsToDispatch.push({
-              strategyId: 'thoth_egx_macro',
-              strategyShort: 'THOTH',
-              strategyLabel: 'THOTH EGX V3.7P',
-              signal,
-            });
+            if (signal.signal === 'BUY' || isTracked) {
+              signalsToDispatch.push({
+                strategyId: 'thoth_egx_macro',
+                strategyShort: 'THOTH',
+                strategyLabel: 'THOTH EGX V3.7P',
+                signal,
+              });
+            }
           }
-        } catch (e) {
-          console.error('Failed to run Thoth strategy for alert', e);
-        }
+        } catch (e) {}
       }
 
-      // 3. Evaluate the PSI V2 Strategy (GPT 3-PSI Architecture)
+      // 3. Evaluate PSI V2 Strategy
       if (userScope === 'all' || userScope === 'psi_v2') {
         try {
-          const { runPsiV2Strategy } = await import('@/strategies/PSI_V2/psiV2Strategy');
           const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: '2025-01-01' });
           const signal = [...psiV2Result.signals].reverse().find((s) => dateWindow.has(s.date) && (s.signal === 'BUY' || s.signal === 'SELL')) ?? null;
           if (signal) {
-            signalsToDispatch.push({
-              strategyId: 'psi_v2',
-              strategyShort: 'PSI V2',
-              strategyLabel: 'PSI V2 Strategy',
-              signal,
-            });
+            if (signal.signal === 'BUY' || isTracked) {
+              signalsToDispatch.push({
+                strategyId: 'psi_v2',
+                strategyShort: 'PSI V2',
+                strategyLabel: 'PSI V2 Strategy',
+                signal,
+              });
+            }
           }
-        } catch (e) {
-          console.error('Failed to run PSI v2 strategy for alert', e);
-        }
+        } catch (e) {}
       }
 
       if (signalsToDispatch.length === 0) {
@@ -197,34 +240,29 @@ export async function dispatchSignalNotifications(options: {
         continue;
       }
 
-      const openOrderExists = openOrderRows.some(o => o.userId === alert.userId && o.tickerSymbol === ticker);
-
       for (const item of signalsToDispatch) {
         const { strategyId, strategyShort, strategyLabel, signal } = item;
 
-        const alreadySent = await hasNotificationBeenSent(alert.userId, ticker, strategyId, signal);
-        if (alreadySent) {
+        const notifKey = `${ticker}-${strategyId}-${signal.date}-${signal.signal}`;
+        if (sentSet.has(notifKey)) {
           result.skipped += 1;
           continue;
         }
+        sentSet.add(notifKey);
 
-        // 1. Always record in-app notification in database for Notifications Drawer
-        await db
-          .insert(signalNotifications)
-          .values({
-            userId: alert.userId,
-            tickerSymbol: ticker,
-            strategy: strategyId,
-            signalDate: signal.date,
-            signal: signal.signal,
-          })
-          .onConflictDoNothing();
+        // Queue in-app notification row
+        newNotificationsToInsert.push({
+          userId: userId,
+          tickerSymbol: ticker,
+          strategy: strategyId,
+          signalDate: signal.date,
+          signal: signal.signal,
+        });
 
-        // 2. If user has active Web Push subscriptions, send push notification to their devices
-        const subscriptions = subscriptionsByUser[alert.userId] ?? [];
+        // Queue push deliveries
         if (subscriptions.length > 0) {
           const payload = JSON.stringify({
-            title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
+            title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort),
             body: buildNotificationBody(signal, strategyLabel),
             url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
             tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
@@ -234,35 +272,54 @@ export async function dispatchSignalNotifications(options: {
             price: signal.price,
           });
 
-          for (const subscription of subscriptions) {
-            const sent = await sendToSubscription(subscription, payload);
-            if (sent === 'expired') {
-              result.expiredSubscriptions += 1;
-              await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
-            } else if (sent === 'sent') {
-              result.sent += 1;
-            }
+          for (const sub of subscriptions) {
+            pushTasks.push(async () => {
+              const sent = await sendToSubscription(sub, payload);
+              if (sent === 'expired') {
+                result.expiredSubscriptions += 1;
+                await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint)).catch(() => {});
+              } else if (sent === 'sent') {
+                result.sent += 1;
+              }
+            });
           }
         }
 
-        // 3. If user has active Android native tokens, dispatch high-priority FCM notification
-        const nativeTokens = deviceTokensByUser[alert.userId] ?? [];
         if (nativeTokens.length > 0) {
           for (const device of nativeTokens) {
-            const fcmSent = await sendFCMMessage(device.token, {
-              title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
-              body: buildNotificationBody(signal, strategyLabel),
-              url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
-              ticker,
-              strategy: strategyId,
-              signal: signal.signal,
+            pushTasks.push(async () => {
+              const fcmSent = await sendFCMMessage(device.token, {
+                title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort),
+                body: buildNotificationBody(signal, strategyLabel),
+                url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
+                ticker,
+                strategy: strategyId,
+                signal: signal.signal,
+              });
+              if (fcmSent) {
+                result.sent += 1;
+              }
             });
-            if (fcmSent) {
-              result.sent += 1;
-            }
           }
         }
       }
+    }
+  }
+
+  // 1. Batch insert in-app notifications
+  if (newNotificationsToInsert.length > 0) {
+    for (let i = 0; i < newNotificationsToInsert.length; i += 50) {
+      const slice = newNotificationsToInsert.slice(i, i + 50);
+      await db.insert(signalNotifications).values(slice).onConflictDoNothing();
+    }
+  }
+
+  // 2. Parallel dispatch of push messages
+  if (pushTasks.length > 0) {
+    const PUSH_CONCURRENCY = 15;
+    for (let i = 0; i < pushTasks.length; i += PUSH_CONCURRENCY) {
+      const batch = pushTasks.slice(i, i + PUSH_CONCURRENCY);
+      await Promise.allSettled(batch.map(fn => fn()));
     }
   }
 
