@@ -14,11 +14,11 @@ let recentPricesInFlight: Promise<any[]> | null = null;
 
 /**
  * Fetches all tickers from the database.
- * Caches in memory for 15 minutes, Next.js cache for 1 hour.
+ * Caches in memory for 60 seconds.
  */
 export async function getCachedTickers(): Promise<any[]> {
   const now = Date.now();
-  if (tickersMemCache && now - tickersMemCache.timestamp < 15 * 60 * 1000) {
+  if (tickersMemCache && now - tickersMemCache.timestamp < 60 * 1000) {
     return tickersMemCache.data;
   }
   if (tickersInFlight) return tickersInFlight;
@@ -38,7 +38,7 @@ export async function getCachedTickers(): Promise<any[]> {
 
 /**
  * Fetches the complete price history for a specific ticker.
- * Caches the result for 1 hour.
+ * Caches the result for 30 seconds.
  */
 export const getCachedDailyPrices = async (ticker: string, limitBars?: number) => {
   const fetchPrices = async () => {
@@ -63,7 +63,7 @@ export const getCachedDailyPrices = async (ticker: string, limitBars?: number) =
     const cachedFn = unstable_cache(
       fetchPrices,
       [`daily-prices-${ticker}-${limitBars ?? 'all'}`],
-      { tags: [`prices-${ticker}`, 'prices'], revalidate: 3600 }
+      { tags: [`prices-${ticker}`, 'prices'], revalidate: 30 }
     );
     return await cachedFn();
   } catch (error) {
@@ -149,7 +149,7 @@ export const getCachedHourlyPrices = async (ticker: string, limitBars?: number) 
     const cachedFn = unstable_cache(
       fetchHourly,
       [`hourly-prices-${ticker}-${limitBars ?? 'all'}`],
-      { tags: [`prices-${ticker}-1h`, 'prices'], revalidate: 3600 }
+      { tags: [`prices-${ticker}-1h`, 'prices'], revalidate: 30 }
     );
     return await cachedFn();
   } catch {
@@ -159,11 +159,11 @@ export const getCachedHourlyPrices = async (ticker: string, limitBars?: number) 
 
 /**
  * Fetches the latest 2 prices for all tickers using a Window Function.
- * Caches in memory for 5 minutes.
+ * Caches in memory for 60 seconds.
  */
 export async function getCachedRecentPrices(): Promise<any[]> {
   const now = Date.now();
-  if (recentPricesMemCache && now - recentPricesMemCache.timestamp < 5 * 60 * 1000) {
+  if (recentPricesMemCache && now - recentPricesMemCache.timestamp < 60 * 1000) {
     return recentPricesMemCache.data;
   }
   if (recentPricesInFlight) return recentPricesInFlight;
