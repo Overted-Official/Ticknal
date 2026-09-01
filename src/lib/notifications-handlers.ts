@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { signalNotifications, tickers, pushSubscriptions, devicePushTokens } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
+import { sendFCMMessage } from '@/lib/fcm-v1';
 
 export async function handleNotificationsGet() {
   const supabase = await createClient();
@@ -210,39 +211,19 @@ export async function handleTestNotification(req?: Request) {
       .from(devicePushTokens)
       .where(eq(devicePushTokens.userId, user.id));
 
-    const fcmServerKey = process.env.FCM_SERVER_KEY;
     for (const dev of deviceRows) {
-      if (fcmServerKey) {
-        try {
-          const fcmRes = await fetch('https://fcm.googleapis.com/fcm/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `key=${fcmServerKey}`,
-            },
-            body: JSON.stringify({
-              to: dev.token,
-              priority: 'high',
-              notification: {
-                title: payloadData.title,
-                body: payloadData.body,
-                sound: 'default',
-                android_channel_id: 'trading_signals',
-              },
-              data: {
-                url: payloadData.url,
-                ticker: payloadData.symbol,
-                signal: payloadData.signal,
-              },
-            }),
-          });
-          if (fcmRes.ok) sent++;
-          else failed++;
-        } catch {
-          failed++;
-        }
-      } else {
+      const fcmOk = await sendFCMMessage(dev.token, {
+        title: payloadData.title,
+        body: payloadData.body,
+        url: payloadData.url,
+        ticker: payloadData.symbol,
+        signal: payloadData.signal,
+      });
+      if (fcmOk) {
         sent++;
+      } else {
+        // If not sent because neither Firebase SA nor FCM Key configured
+        console.info(`FCM message skipped for device ${dev.id}: No Firebase credentials or token expired.`);
       }
     }
   } catch (e) {

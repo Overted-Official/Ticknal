@@ -14,14 +14,32 @@ self.addEventListener('fetch', () => {
 self.addEventListener('push', (event) => {
   if (!event.data) return;
 
-  const payload = event.data.json();
-  const title = payload.title || 'QuantEGX signal';
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    try {
+      payload = {
+        title: 'QuantEGX Signal Alert',
+        body: event.data.text() || 'A new trading signal is available.',
+      };
+    } catch {
+      payload = {
+        title: 'QuantEGX Signal Alert',
+        body: 'A new trading signal is available.',
+      };
+    }
+  }
+
+  const title = payload.title || 'QuantEGX Signal Alert';
   const options = {
     body: payload.body || 'A trading signal is available.',
     icon: '/icon-192x192.png',
     badge: '/badge.png',
-    tag: payload.tag || 'quantegx-signal',
-    vibrate: [200, 100, 200], // Makes the phone buzz!
+    tag: payload.tag || `quantegx-${Date.now()}`,
+    renotify: true,
+    requireInteraction: true,
+    vibrate: [200, 100, 200, 100, 200], // Vibration pattern for mobile
     data: {
       url: payload.url || '/invest?view=chart',
     },

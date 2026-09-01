@@ -5,6 +5,7 @@ import { positions, pushSubscriptions, signalNotifications, tickerAlerts, device
 import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import { getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal } from '@/strategies/PSI/psiStrategy';
+import { sendFCMMessage } from '@/lib/fcm-v1';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 
@@ -248,7 +249,7 @@ export async function dispatchSignalNotifications(options: {
         const nativeTokens = deviceTokensByUser[alert.userId] ?? [];
         if (nativeTokens.length > 0) {
           for (const device of nativeTokens) {
-            await sendFCMNotification(device.token, {
+            const fcmSent = await sendFCMMessage(device.token, {
               title: buildNotificationTitle(ticker, signal, openOrderExists, strategyShort),
               body: buildNotificationBody(signal, strategyLabel),
               url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
@@ -256,6 +257,9 @@ export async function dispatchSignalNotifications(options: {
               strategy: strategyId,
               signal: signal.signal,
             });
+            if (fcmSent) {
+              result.sent += 1;
+            }
           }
         }
       }
@@ -400,48 +404,5 @@ function groupBy<T>(items: T[], getKey: (item: T) => string): Record<string, T[]
     groups[key].push(item);
     return groups;
   }, {});
-}
-
-async function sendFCMNotification(
-  deviceToken: string,
-  payload: {
-    title: string;
-    body: string;
-    url: string;
-    ticker: string;
-    strategy: string;
-    signal: string;
-  }
-) {
-  const fcmServerKey = process.env.FCM_SERVER_KEY;
-  if (!fcmServerKey) return;
-
-  try {
-    await fetch('https://fcm.googleapis.com/fcm/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `key=${fcmServerKey}`,
-      },
-      body: JSON.stringify({
-        to: deviceToken,
-        priority: 'high',
-        notification: {
-          title: payload.title,
-          body: payload.body,
-          sound: 'default',
-          android_channel_id: 'trading_signals',
-        },
-        data: {
-          url: payload.url,
-          ticker: payload.ticker,
-          strategy: payload.strategy,
-          signal: payload.signal,
-        },
-      }),
-    });
-  } catch (err) {
-    console.error('Failed to send FCM notification:', err);
-  }
 }
 

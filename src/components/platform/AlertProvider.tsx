@@ -10,7 +10,7 @@ type AlertContextValue = {
   ready: boolean;
   isAlerted: (symbol: string) => boolean;
   toggleAlert: (symbol: string) => Promise<boolean>;
-  ensurePushSubscription: () => Promise<{ success: boolean; error?: string }>;
+  ensurePushSubscription: (options?: { forceResubscribe?: boolean }) => Promise<{ success: boolean; error?: string }>;
 };
 
 const AlertContext = createContext<AlertContextValue | null>(null);
@@ -54,7 +54,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
     return () => controller.abort();
   }, [deviceId]);
 
-  const ensurePushSubscription = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+  const ensurePushSubscription = useCallback(async (options?: { forceResubscribe?: boolean }): Promise<{ success: boolean; error?: string }> => {
     if (isNativePlatform()) {
       const res = await requestNativePushPermission();
       if (res.success) {
@@ -98,12 +98,33 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const registration = await navigator.serviceWorker.ready;
-      const existingSubscription = await registration.pushManager.getSubscription();
+      let existingSubscription = await registration.pushManager.getSubscription();
+      const serverKeyUint8 = urlBase64ToUint8Array(keyData.publicKey);
+
+      // Check if existingSubscription exists and whether its applicationServerKey matches the server key
+      let isKeyMatch = false;
+      if (existingSubscription && existingSubscription.options && existingSubscription.options.applicationServerKey) {
+        const existingKey = new Uint8Array(existingSubscription.options.applicationServerKey);
+        if (existingKey.length === serverKeyUint8.length) {
+          isKeyMatch = existingKey.every((byte, idx) => byte === serverKeyUint8[idx]);
+        }
+      }
+
+      // If key does not match or if forceResubscribe is requested, unsubscribe and re-subscribe cleanly
+      if (existingSubscription && (!isKeyMatch || options?.forceResubscribe)) {
+        try {
+          await existingSubscription.unsubscribe();
+        } catch (unsubErr) {
+          console.warn('Failed to unsubscribe stale push subscription:', unsubErr);
+        }
+        existingSubscription = null;
+      }
+
       const subscription =
         existingSubscription ??
         (await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
+          applicationServerKey: serverKeyUint8,
         }));
 
       const res = await fetch('/api/push/subscribe', {

@@ -324,14 +324,14 @@ export default function SettingsView({
     setIsEnablingPush(true);
     setPushStatus(null);
     try {
-      const res = await ensurePushSubscription();
+      const res = await ensurePushSubscription({ forceResubscribe: true });
       if (res.success) {
         setPushStatus('Notifications enabled successfully on this device!');
         // Refresh device list
         const devRes = await fetch('/api/push/subscribe');
         if (devRes.ok) {
           const data = await devRes.json();
-          setDevices(data.subscriptions ?? []);
+          setDevices(data.subscriptions || data.devices || []);
         }
       } else {
         setPushStatus(res.error || 'Failed to enable notifications. Please check browser permissions.');
@@ -347,6 +347,9 @@ export default function SettingsView({
     setIsEnablingPush(true);
     setPushStatus(null);
     try {
+      // Ensure subscription is active and synced with current VAPID keys
+      await ensurePushSubscription({ forceResubscribe: false }).catch(() => {});
+
       // 1. Trigger immediate native heads-up notification if running on Android device
       await triggerNativeTestNotification(
         '🟢 QuantEGX Signal Test',
