@@ -57,7 +57,7 @@ function fetchStockSymbolPeriods(client: TradingViewClient, symbol: string, exch
   });
 }
 
-export async function handleUpdateStocks(req: Request) {
+export async function handleUpdateStocks(req: Request, options?: { specificSymbols?: string[] }) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
@@ -65,7 +65,12 @@ export async function handleUpdateStocks(req: Request) {
 
   try {
     const allTickers = await db.select().from(tickers);
-    const stockTickers = allTickers.filter(t => t.sector !== 'Funds' && t.sector !== 'Macro');
+    let stockTickers = allTickers.filter(t => t.sector !== 'Funds' && t.sector !== 'Macro');
+
+    if (options?.specificSymbols && options.specificSymbols.length > 0) {
+      const specificSet = new Set(options.specificSymbols.map(s => s.toUpperCase()));
+      stockTickers = stockTickers.filter(t => specificSet.has(t.symbol.toUpperCase()));
+    }
 
     const lastDates = await db
       .select({
@@ -82,7 +87,7 @@ export async function handleUpdateStocks(req: Request) {
       }
     }
 
-    // Prioritize active positions, alerts, and major EGX30/70 tickers
+    // Prioritize active positions, alerts, and major EGX30/70 tickers, then sort remaining by oldest updated date first
     const { positions: positionsTable, tickerAlerts: alertsTable } = await import('@/db/schema');
     const [openPositions, enabledAlerts] = await Promise.all([
       db.select({ ticker: positionsTable.tickerSymbol }).from(positionsTable).where(eq(positionsTable.status, 'OPEN')).catch(() => []),
@@ -100,73 +105,20 @@ export async function handleUpdateStocks(req: Request) {
     stockTickers.sort((a, b) => {
       const aPri = prioritySet.has(a.symbol) ? 1 : 0;
       const bPri = prioritySet.has(b.symbol) ? 1 : 0;
-      return bPri - aPri;
+      if (bPri !== aPri) return bPri - aPri;
+
+      // Secondary sort: Oldest last date first (ensures out-of-date stocks get processed immediately with zero starvation)
+      const dateA = lastDateMap.get(a.symbol) || '1970-01-01';
+      const dateB = lastDateMap.get(b.symbol) || '1970-01-01';
+      return dateA.localeCompare(dateB);
     });
 
-    const client = new TradingView.Client();
     let totalUpdated = 0;
     let updatedTickersCount = 0;
     const errors: string[] = [];
 
-    const fetchSymbol = (ticker: typeof stockTickers[0]): Promise<any[]> => {
-      return new Promise((resolve) => {
-        try {
-          const symbol = ticker.symbol.replace('.CA', '');
-          const tvSymbol = symbol === 'EGX70' ? 'EGX:EGX70EWI' : symbol === 'EGX100' ? 'EGX:EGX100EWI' : `EGX:${symbol}`;
-          const chart = new client.Session.Chart();
-          chart.setMarket(tvSymbol, { timeframe: 'D', range: 15 });
-
-          let done = false;
-          const cleanup = () => {
-            if (done) return;
-            done = true;
-            clearTimeout(timeout);
-            try { chart.delete(); } catch {}
-          };
-
-          const timeout = setTimeout(() => {
-            cleanup();
-            resolve([]);
-          }, 2000);
-
-          chart.onUpdate(() => {
-            const periods = chart.periods;
-            cleanup();
-            if (!periods || periods.length === 0) return resolve([]);
-
-            const lastDate = lastDateMap.get(ticker.symbol);
-            const sorted = [...periods].sort((a, b) => a.time - b.time);
-            const newPeriods = sorted.filter((p) => {
-              const dateStr = new Date(p.time * 1000).toISOString().split('T')[0];
-              return !lastDate || dateStr > lastDate;
-            });
-
-            const rows = newPeriods.map((p) => ({
-              tickerSymbol: ticker.symbol,
-              date: new Date(p.time * 1000).toISOString().split('T')[0],
-              open: sql`${p.open}`,
-              high: sql`${p.max}`,
-              low: sql`${p.min}`,
-              close: sql`${p.close}`,
-              volume: sql`${p.volume || 0}`,
-            }));
-
-            resolve(rows);
-          });
-
-          chart.onError((err: any) => {
-            cleanup();
-            errors.push(`${ticker.symbol}: ${err?.message || err}`);
-            resolve([]);
-          });
-        } catch (err: any) {
-          errors.push(`${ticker.symbol}: ${err?.message || err}`);
-          resolve([]);
-        }
-      });
-    };
-
-    const BATCH_SIZE = 16;
+    // Recycled client per batch (30 charts max per WebSocket session to avoid TradingView connection rate limits)
+    const BATCH_SIZE = 30;
     for (let i = 0; i < stockTickers.length; i += BATCH_SIZE) {
       if (Date.now() - startTime > 52000) {
         console.warn(`handleUpdateStocks: Time budget reached at ticker index ${i}/${stockTickers.length}`);
@@ -174,7 +126,68 @@ export async function handleUpdateStocks(req: Request) {
       }
 
       const batch = stockTickers.slice(i, i + BATCH_SIZE);
+      const client = new TradingView.Client();
+
+      const fetchSymbol = (ticker: typeof stockTickers[0]): Promise<any[]> => {
+        return new Promise((resolve) => {
+          try {
+            const symbol = ticker.symbol.replace('.CA', '');
+            const tvSymbol = symbol === 'EGX70' ? 'EGX:EGX70EWI' : symbol === 'EGX100' ? 'EGX:EGX100EWI' : `EGX:${symbol}`;
+            const chart = new client.Session.Chart();
+            chart.setMarket(tvSymbol, { timeframe: 'D', range: 15 });
+
+            let done = false;
+            const cleanup = () => {
+              if (done) return;
+              done = true;
+              clearTimeout(timeout);
+              try { chart.delete(); } catch {}
+            };
+
+            const timeout = setTimeout(() => {
+              cleanup();
+              resolve([]);
+            }, 2500);
+
+            chart.onUpdate(() => {
+              const periods = chart.periods;
+              cleanup();
+              if (!periods || periods.length === 0) return resolve([]);
+
+              const lastDate = lastDateMap.get(ticker.symbol);
+              const sorted = [...periods].sort((a, b) => a.time - b.time);
+              const newPeriods = sorted.filter((p) => {
+                const dateStr = new Date(p.time * 1000).toISOString().split('T')[0];
+                return !lastDate || dateStr > lastDate;
+              });
+
+              const rows = newPeriods.map((p) => ({
+                tickerSymbol: ticker.symbol,
+                date: new Date(p.time * 1000).toISOString().split('T')[0],
+                open: sql`${p.open}`,
+                high: sql`${p.max}`,
+                low: sql`${p.min}`,
+                close: sql`${p.close}`,
+                volume: sql`${p.volume || 0}`,
+              }));
+
+              resolve(rows);
+            });
+
+            chart.onError((err: any) => {
+              cleanup();
+              errors.push(`${ticker.symbol}: ${err?.message || err}`);
+              resolve([]);
+            });
+          } catch (err: any) {
+            errors.push(`${ticker.symbol}: ${err?.message || err}`);
+            resolve([]);
+          }
+        });
+      };
+
       const batchResults = await Promise.all(batch.map(fetchSymbol));
+      client.end();
 
       const rowsToInsert: any[] = [];
       batchResults.forEach((rows) => {
@@ -203,16 +216,15 @@ export async function handleUpdateStocks(req: Request) {
         }
       }
 
-      await new Promise((r) => setTimeout(r, 50));
+      await new Promise((r) => setTimeout(r, 20));
     }
-
-    client.end();
 
     try {
       (revalidateTag as any)('prices');
       (revalidateTag as any)('opportunities');
       revalidatePath('/dashboard');
       revalidatePath('/invest');
+      revalidatePath('/sectors');
     } catch {}
 
     const elapsed = Date.now() - startTime;
@@ -645,7 +657,7 @@ export async function handleWatchdog(req: Request) {
       .from(dailyPrices)
       .groupBy(dailyPrices.tickerSymbol);
 
-    let stocksMissingCount = 0;
+    const missingStockSymbols: string[] = [];
     let fundsMissing = false;
     let commoditiesMissing = false;
 
@@ -661,19 +673,20 @@ export async function handleWatchdog(req: Request) {
       } else if (isFund && isEgxTradingDay && rowDateStr < expectedEgxDate) {
         fundsMissing = true;
       } else if (!isGlobal && !isFund && isEgxTradingDay && rowDateStr < expectedEgxDate) {
-        stocksMissingCount++;
+        missingStockSymbols.push(row.tickerSymbol);
       }
     }
 
-    const stocksMissing = stocksMissingCount > 10;
+    const stocksMissingCount = missingStockSymbols.length;
+    const stocksMissing = stocksMissingCount > 0;
     const triggersTriggered: string[] = [];
 
     // Directly execute missing syncs in-process with zero network dependency
     if (stocksMissing && isEgxTradingDay) {
       try {
-        await handleUpdateStocks(req);
+        await handleUpdateStocks(req, { specificSymbols: missingStockSymbols });
         await handleProcessSignals(req);
-        triggersTriggered.push('update-stocks', 'process-signals');
+        triggersTriggered.push(`update-stocks (${stocksMissingCount} missing)`, 'process-signals');
       } catch (e) {
         console.error('Watchdog failed to run handleUpdateStocks:', e);
       }
