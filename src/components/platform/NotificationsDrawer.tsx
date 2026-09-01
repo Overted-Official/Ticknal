@@ -80,6 +80,14 @@ function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | nu
   );
 }
 
+function normalizeStrategyId(strategy?: string | null): 'psi' | 'psi_v2' | 'thoth' {
+  if (!strategy) return 'psi';
+  const lower = strategy.toLowerCase();
+  if (lower.includes('thoth')) return 'thoth';
+  if (lower.includes('psi_v2') || lower.includes('psiv2')) return 'psi_v2';
+  return 'psi';
+}
+
 export default function NotificationsDrawer({
   isOpen,
   onClose,
@@ -88,6 +96,7 @@ export default function NotificationsDrawer({
   onClose: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<'signals' | 'system'>('signals');
+  const [selectedStrategy, setSelectedStrategy] = useState<'all' | 'psi' | 'psi_v2' | 'thoth'>('all');
 
   const { data: signalsData, mutate: mutateSignals, isLoading: isLoadingSignals } = useSWR<{
     notifications: SignalNotificationItem[];
@@ -112,6 +121,20 @@ export default function NotificationsDrawer({
       return sentB - sentA;
     });
   }, [signalsData?.notifications]);
+
+  const strategyCounts = useMemo(() => {
+    const counts = { all: notifications.length, psi: 0, psi_v2: 0, thoth: 0 };
+    for (const n of notifications) {
+      const s = normalizeStrategyId(n.strategy);
+      counts[s]++;
+    }
+    return counts;
+  }, [notifications]);
+
+  const filteredNotifications = useMemo(() => {
+    if (selectedStrategy === 'all') return notifications;
+    return notifications.filter((n) => normalizeStrategyId(n.strategy) === selectedStrategy);
+  }, [notifications, selectedStrategy]);
 
   const systemLogs = logsData?.logs ?? [];
   const [isClearing, setIsClearing] = useState(false);
@@ -227,6 +250,43 @@ export default function NotificationsDrawer({
               </div>
             </div>
 
+            {/* Strategy Filter Rail for Position Alerts */}
+            {activeTab === 'signals' && notifications.length > 0 && (
+              <div className="px-4 py-2 border-b border-plt-border-soft bg-plt-card/30 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                {[
+                  { id: 'all', label: 'All', count: strategyCounts.all },
+                  { id: 'psi', label: 'PSI', count: strategyCounts.psi },
+                  { id: 'psi_v2', label: 'PSI V2', count: strategyCounts.psi_v2 },
+                  { id: 'thoth', label: 'THOTH', count: strategyCounts.thoth },
+                ].map((tab) => {
+                  const isActive = selectedStrategy === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setSelectedStrategy(tab.id as any)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        isActive
+                          ? 'bg-plt-card border border-plt-border-soft text-plt-text font-bold shadow-xs'
+                          : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                          isActive
+                            ? 'bg-plt-base text-plt-text font-bold border border-plt-border-soft'
+                            : 'text-plt-muted bg-plt-base/40'
+                        }`}
+                      >
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Notification Items List */}
             <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y py-2 custom-scrollbar">
               {activeTab === 'signals' ? (
@@ -245,9 +305,25 @@ export default function NotificationsDrawer({
                       New buy, sell, or stop triggers on your stocks will appear here in real-time.
                     </span>
                   </div>
+                ) : filteredNotifications.length === 0 ? (
+                  <div className="py-20 text-center text-plt-muted text-xs flex flex-col items-center justify-center gap-2 px-6">
+                    <div className="w-9 h-9 rounded-full bg-plt-card border border-plt-border-soft flex items-center justify-center text-plt-muted mb-1">
+                      <Bell size={16} />
+                    </div>
+                    <span className="font-semibold text-plt-text block font-sans">
+                      No {selectedStrategy === 'psi' ? 'PSI' : selectedStrategy === 'psi_v2' ? 'PSI V2' : 'THOTH'} signals
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStrategy('all')}
+                      className="mt-1 px-3 py-1 text-[11px] font-mono rounded-lg bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-text transition cursor-pointer"
+                    >
+                      View all ({notifications.length})
+                    </button>
+                  </div>
                 ) : (
                   <div>
-                    {notifications.map((item, index) => {
+                    {filteredNotifications.map((item, index) => {
                       const isBuy = item.signal.toUpperCase().includes('BUY');
                       const cleanSymbol = item.tickerSymbol.replace('.CA', '');
 
@@ -319,7 +395,7 @@ export default function NotificationsDrawer({
                           </div>
 
                           {/* Thin separator line */}
-                          {index < notifications.length - 1 && (
+                          {index < filteredNotifications.length - 1 && (
                             <div className="h-px bg-plt-border-soft mx-4" />
                           )}
                         </div>
