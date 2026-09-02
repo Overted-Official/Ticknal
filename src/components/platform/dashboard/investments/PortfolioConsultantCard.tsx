@@ -195,27 +195,22 @@ export default function PortfolioConsultantCard({
         className="flex items-center justify-between pb-3 border-b border-plt-border-soft cursor-pointer md:cursor-default"
         onClick={() => setIsExpandedMobile(!isExpandedMobile)}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-plt-accent/10 border border-plt-accent/25 flex items-center justify-center text-plt-accent shrink-0">
-            <Sparkles size={16} />
-          </div>
-          <div>
-            <h2 className="widget-title flex items-center gap-2">
-              Portfolio Consultant
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
-                healthDiagnostics.level === 'high_risk'
-                  ? 'bg-red-500/15 text-red-400 border-red-500/30'
-                  : healthDiagnostics.level === 'moderate'
-                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-              }`}>
-                {healthDiagnostics.badgeText}
-              </span>
-            </h2>
-            <p className="widget-subtitle mt-0.5">
-              Concentration risk diagnostics & rotation rebalancing
-            </p>
-          </div>
+        <div>
+          <h2 className="widget-title flex items-center gap-2">
+            Portfolio Consultant
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
+              healthDiagnostics.level === 'high_risk'
+                ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                : healthDiagnostics.level === 'moderate'
+                  ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                  : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+            }`}>
+              {healthDiagnostics.badgeText}
+            </span>
+          </h2>
+          <p className="widget-subtitle mt-0.5">
+            Concentration risk diagnostics & rotation rebalancing
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -252,8 +247,8 @@ export default function PortfolioConsultantCard({
       </div>
 
       {/* Diagnostics Alert Banner */}
-      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:block pt-3`}>
-        <div className={`p-3 rounded-xl border flex items-start gap-3 transition-colors ${
+      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:block pt-2 shrink-0`}>
+        <div className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition-colors ${
           healthDiagnostics.level === 'high_risk'
             ? 'bg-red-500/10 border-red-500/25 text-red-300'
             : healthDiagnostics.level === 'moderate'
@@ -262,18 +257,18 @@ export default function PortfolioConsultantCard({
         }`}>
           <div className="mt-0.5 shrink-0">
             {healthDiagnostics.level === 'high_risk' ? (
-              <AlertTriangle size={16} className="text-red-400" />
+              <AlertTriangle size={15} className="text-red-400" />
             ) : healthDiagnostics.level === 'moderate' ? (
-              <ShieldAlert size={16} className="text-amber-400" />
+              <ShieldAlert size={15} className="text-amber-400" />
             ) : (
-              <ShieldCheck size={16} className="text-emerald-400" />
+              <ShieldCheck size={15} className="text-emerald-400" />
             )}
           </div>
           <div className="text-xs min-w-0">
-            <div className="font-semibold text-plt-text font-sans">
+            <div className="font-semibold text-plt-text font-sans leading-tight">
               {healthDiagnostics.headline}
             </div>
-            <p className="text-[11px] text-plt-muted font-sans mt-0.5 leading-relaxed">
+            <p className="text-[11px] text-plt-muted font-sans mt-0.5 leading-snug">
               {healthDiagnostics.description}
             </p>
           </div>
@@ -281,7 +276,7 @@ export default function PortfolioConsultantCard({
       </div>
 
       {/* Content Body */}
-      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar pt-3 space-y-2`}>
+      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar pt-2 space-y-2 pr-1`}>
         {activeTab === 'stakes' ? (
           /* VIEW 1: Active Stakes Breakdown */
           stakes.length === 0 ? (

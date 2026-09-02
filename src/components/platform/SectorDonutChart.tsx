@@ -135,12 +135,12 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
   }, [data]);
 
   return (
-    <div className="flex h-full flex-col justify-between select-none">
+    <div className="flex h-full flex-col select-none overflow-hidden">
       {/* Header */}
-      <div className="mb-2 flex items-center justify-between gap-2 pb-2 border-b border-plt-border-soft">
+      <div className="mb-2 flex items-center justify-between gap-2 pb-2 border-b border-plt-border-soft shrink-0">
         <div>
-          <h2 className="widget-title">Sector Allocation</h2>
-          <p className="widget-subtitle mt-0.5">Asset weight distribution by industry sector</p>
+          <h2 className="widget-title">Capital Allocation</h2>
+          <p className="widget-subtitle mt-0.5">Asset weight distribution across 25 GICS Industry Groups</p>
         </div>
         <div className="pill-switch">
           <button
@@ -163,7 +163,7 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
       </div>
 
       {/* Main Chart Area */}
-      <div className="relative h-[290px] w-full flex items-center">
+      <div className="relative flex-1 min-h-0 w-full flex items-center">
         {!data.length ? (
           <div className="flex h-full w-full items-center justify-center text-xs text-plt-muted font-sans">
             No open positions to allocate
@@ -202,13 +202,13 @@ export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
                   {formatEGP(totalValue, isPrivacy)}
                 </span>
                 <span className="text-[10px] text-plt-muted font-sans font-medium mt-0.5">
-                  {data.length} {data.length === 1 ? 'Sector' : 'Sectors'}
+                  {data.length} {data.length === 1 ? 'Industry' : 'Industries'}
                 </span>
               </div>
             </div>
 
             {/* Clean Modern Custom Legend on Right */}
-            <div className="w-[45%] h-full flex flex-col justify-center gap-2 pl-2 pr-1 overflow-y-auto max-h-[280px] custom-scrollbar">
+            <div className="w-[45%] h-full flex flex-col justify-center gap-2 pl-2 pr-1 overflow-y-auto custom-scrollbar">
               {sortedData.map((entry, idx) => {
                 const color = SECTOR_COLORS[idx % SECTOR_COLORS.length];
                 return (

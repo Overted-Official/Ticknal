@@ -122,19 +122,21 @@ export default function DashboardInvestmentsView({
               <p className="section-subtitle">25 GICS Industry Group exposure, concentration risk diagnostics, and rotation-driven rebalancing</p>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch flex-1 min-h-0 w-full">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch w-full">
               {/* 25 GICS Industry Group Capital Allocation */}
-              <div className="card-widget h-full flex flex-col justify-between">
+              <div className="card-widget h-[460px] flex flex-col overflow-hidden">
                 <SectorDonutChart data={orderStats.sectorData} />
               </div>
 
               {/* Dedicated Portfolio Allocation Consultant & Health Advisor */}
-              <PortfolioConsultantCard
-                stakes={orderStats.industryGroupData}
-                totalPortfolioValue={orderStats.openMarketValue}
-                buyOpportunities={buyOpportunities}
-                rotationMap={orderStats.rotationMap}
-              />
+              <div className="h-[460px]">
+                <PortfolioConsultantCard
+                  stakes={orderStats.industryGroupData}
+                  totalPortfolioValue={orderStats.openMarketValue}
+                  buyOpportunities={buyOpportunities}
+                  rotationMap={orderStats.rotationMap}
+                />
+              </div>
             </div>
           </section>
 
@@ -145,15 +147,19 @@ export default function DashboardInvestmentsView({
               <p className="section-subtitle">Live open market holdings alongside real-time algorithmic entry and risk management alerts</p>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch flex-1 min-h-0 w-full">
-              <DashboardPositionsCard
-                orders={orderStats.openOrders}
-                exitSignals={exitSignals}
-              />
-              <DashboardSignalsCard
-                buyOpportunities={buyOpportunities}
-                exitSignals={exitSignals}
-              />
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch w-full">
+              <div className="h-[460px]">
+                <DashboardPositionsCard
+                  orders={orderStats.openOrders}
+                  exitSignals={exitSignals}
+                />
+              </div>
+              <div className="h-[460px]">
+                <DashboardSignalsCard
+                  buyOpportunities={buyOpportunities}
+                  exitSignals={exitSignals}
+                />
+              </div>
             </div>
           </section>
         </div>
