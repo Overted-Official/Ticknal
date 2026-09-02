@@ -228,14 +228,31 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
     } catch {}
 
     const elapsed = Date.now() - startTime;
+
+    // Direct Signal Pipeline: If new price data was inserted and budget permits (< 42s), immediately process signals and push notifications
+    let notificationResult: any = null;
+    if (totalUpdated > 0 && Date.now() - startTime < 42000) {
+      try {
+        notificationResult = await dispatchSignalNotifications({ lookbackBars: 5 });
+        await db.insert(systemLogs).values({
+          source: 'cron-stocks-signals',
+          level: 'INFO',
+          message: `Post-update signals processed: ${notificationResult.sent} notifications sent, ${notificationResult.checkedSymbols} symbols analyzed.`,
+          metadata: { notificationResult },
+        });
+      } catch (sigErr: any) {
+        console.error('Post-update signal processing error:', sigErr);
+      }
+    }
+
     await db.insert(systemLogs).values({
       source: 'cron-stocks',
       level: 'INFO',
       message: `Stock sync complete: Updated ${updatedTickersCount} tickers with ${totalUpdated} new price bars in ${Math.round(elapsed / 1000)}s.`,
-      metadata: { totalUpdated, updatedTickersCount, elapsedMs: elapsed, errors: errors.length > 0 ? errors.slice(0, 10) : undefined },
+      metadata: { totalUpdated, updatedTickersCount, elapsedMs: elapsed, notificationResult, errors: errors.length > 0 ? errors.slice(0, 10) : undefined },
     });
 
-    return NextResponse.json({ message: 'Stock update completed', totalUpdated, updatedTickersCount, elapsedMs: elapsed, errors }, { status: 200 });
+    return NextResponse.json({ message: 'Stock update completed', totalUpdated, updatedTickersCount, elapsedMs: elapsed, notificationResult, errors }, { status: 200 });
   } catch (error) {
     console.error('Error in handleUpdateStocks:', error);
     await db.insert(systemLogs).values({

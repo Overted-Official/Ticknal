@@ -84,7 +84,7 @@ export async function dispatchSignalNotifications(options: {
   const priceRows = await db.execute(sql`
     SELECT ticker_symbol, date, open, high, low, close, volume
     FROM ${dailyPrices}
-    WHERE date >= CURRENT_DATE - INTERVAL '14 months' AND volume > 0
+    WHERE date >= CURRENT_DATE - INTERVAL '14 months' AND (close > 0 OR volume > 0)
     ORDER BY ticker_symbol, date ASC
   `) as any[];
 
