@@ -184,9 +184,14 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
     console.error('Unexpected error in DashboardContent:', err);
   }
 
-  const openPositionTickers = new Set(orderStats.openOrders.map(o => o.tickerSymbol));
+  const openPositionTickers = new Set(
+    orderStats.openOrders.map((o) => o.tickerSymbol.replace('.CA', '').trim().toUpperCase())
+  );
   const buyOpportunities = opportunities.filter((item) => item.signal.signal === 'BUY').slice(0, 12);
-  const exitSignals = opportunities.filter((item) => item.signal.signal !== 'BUY' && openPositionTickers.has(item.symbol)).slice(0, 8);
+  const exitSignals = opportunities.filter((item) => {
+    const sym = item.symbol.replace('.CA', '').trim().toUpperCase();
+    return item.signal.signal !== 'BUY' && openPositionTickers.has(sym);
+  });
 
   return (
     <DashboardInvestmentsView

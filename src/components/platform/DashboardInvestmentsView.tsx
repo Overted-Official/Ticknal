@@ -128,7 +128,10 @@ export default function DashboardInvestmentsView({
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch flex-1 min-h-0 w-full">
-              <DashboardPositionsCard orders={orderStats.openOrders} />
+              <DashboardPositionsCard
+                orders={orderStats.openOrders}
+                exitSignals={exitSignals}
+              />
               <DashboardSignalsCard
                 buyOpportunities={buyOpportunities}
                 exitSignals={exitSignals}
