@@ -18,12 +18,15 @@ import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 import { type BankAccount, type BankTransaction, type PositionItem } from '@/types/bank';
 import { getLatestInflationRate, getLatestUsCpiRate, getHistoricalInflationSeries } from '@/lib/cbe-inflation';
+import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
+import { type IndustryGroupStake } from '@/components/platform/dashboard/investments/PortfolioConsultantCard';
 
 type DashboardOrder = {
   id: number;
   tickerSymbol: string;
   companyName: string;
   sector: string;
+  industryGroup?: string;
   logoUrl?: string | null;
   entryDate: string;
   entryPrice: number;
@@ -40,6 +43,8 @@ const emptyOrderStats = {
   realized: 0,
   totalRoi: 0,
   sectorData: [] as SectorDataItem[],
+  industryGroupData: [] as IndustryGroupStake[],
+  rotationMap: {} as Record<string, string>,
   monthlyData: [] as MonthlyDataItem[],
   winRate: 0,
   avgBarsPerTrade: 0,
@@ -205,7 +210,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
 
 async function getOrderStats(userId: string) {
   try {
-    const [openRows, closedRows, latestPrices, tickerMap, avgAdverseExcursion] = await Promise.all([
+    const [openRows, closedRows, latestPrices, tickerMap, avgAdverseExcursion, rotationMeta] = await Promise.all([
       db.select().from(positions).where(
         and(eq(positions.status, 'OPEN'), eq(positions.userId, userId))
       ).orderBy(desc(positions.createdAt)),
@@ -213,17 +218,20 @@ async function getOrderStats(userId: string) {
         and(eq(positions.status, 'CLOSED'), eq(positions.userId, userId))
       ).orderBy(desc(positions.createdAt)),
       getLatestPriceMap().catch(() => ({} as Record<string, number>)),
-      getTickerMap().catch(() => ({} as Record<string, { companyName: string; sector: string; logoUrl: string | null }>)),
+      getTickerMap().catch(() => ({} as Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }>)),
       getAvgAdverseExcursion(userId).catch(() => 0),
+      getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map(), industryMap: new Map() })),
     ]);
 
   const openOrdersMap = new Map<string, DashboardOrder>();
   for (const order of openRows) {
     const symbol = order.tickerSymbol.trim().toUpperCase();
+    const cleanSym = symbol.replace('.CA', '');
     const entryPrice = Number(order.entryPrice);
     const quantity = Number(order.quantity);
     const currentPrice = latestPrices[symbol] ?? entryPrice;
     const profitLoss = (currentPrice - entryPrice) * quantity;
+    const industryGroup = tickerMap[symbol]?.industryGroup || rotationMeta.tickerMap.get(cleanSym)?.industryGroup || tickerMap[symbol]?.sector || 'Unclassified';
 
     if (openOrdersMap.has(symbol)) {
       const existing = openOrdersMap.get(symbol)!;
@@ -241,6 +249,7 @@ async function getOrderStats(userId: string) {
         tickerSymbol: symbol,
         companyName: tickerMap[symbol]?.companyName ?? symbol,
         sector: tickerMap[symbol]?.sector ?? 'Unclassified',
+        industryGroup,
         logoUrl: tickerMap[symbol]?.logoUrl ?? null,
         entryDate: order.entryDate,
         entryPrice,
@@ -252,21 +261,47 @@ async function getOrderStats(userId: string) {
     }
   }
   const openOrders = Array.from(openOrdersMap.values());
-
-  // --- Sector Distribution ---
-  const sectorMap = new Map<string, number>();
-  for (const order of openOrders) {
-    const sectorValue = order.currentPrice * order.quantity;
-    sectorMap.set(order.sector, (sectorMap.get(order.sector) ?? 0) + sectorValue);
-  }
   const totalMarketValue = openOrders.reduce((sum, o) => sum + o.currentPrice * o.quantity, 0);
-  const sectorData: SectorDataItem[] = Array.from(sectorMap.entries())
-    .map(([sector, value]) => ({
-      sector,
-      value,
-      percentage: totalMarketValue > 0 ? (value / totalMarketValue) * 100 : 0,
-    }))
+
+  // --- 25 GICS Industry Group Capital Allocation & Stakes ---
+  const industryGroupMap = new Map<string, { value: number; count: number; tickers: Set<string> }>();
+  for (const order of openOrders) {
+    const ig = order.industryGroup || order.sector || 'Unclassified';
+    const val = order.currentPrice * order.quantity;
+    if (!industryGroupMap.has(ig)) {
+      industryGroupMap.set(ig, { value: 0, count: 0, tickers: new Set() });
+    }
+    const item = industryGroupMap.get(ig)!;
+    item.value += val;
+    item.count += 1;
+    item.tickers.add(order.tickerSymbol.replace('.CA', ''));
+  }
+
+  const industryGroupData: IndustryGroupStake[] = Array.from(industryGroupMap.entries())
+    .map(([industryGroup, info]) => {
+      const regime = rotationMeta.industryMap.get(industryGroup) || 'Improving';
+      return {
+        industryGroup,
+        value: info.value,
+        percentage: totalMarketValue > 0 ? (info.value / totalMarketValue) * 100 : 0,
+        positionsCount: info.count,
+        tickers: Array.from(info.tickers),
+        rotationRegime: regime as any,
+      };
+    })
     .sort((a, b) => b.value - a.value);
+
+  // SectorData mapped from 25 GICS Industry Groups
+  const sectorData: SectorDataItem[] = industryGroupData.map((ig) => ({
+    sector: ig.industryGroup,
+    value: ig.value,
+    percentage: ig.percentage,
+  }));
+
+  const rotationMapRecord: Record<string, string> = {};
+  for (const [ig, reg] of rotationMeta.industryMap.entries()) {
+    rotationMapRecord[ig] = reg;
+  }
 
   // --- Monthly Investment & Realized/Unrealized P/L (Activity-based) ---
   type MonthlyBucket = { invested: number; realizedPL: number; unrealizedPL: number };
@@ -419,6 +454,8 @@ async function getOrderStats(userId: string) {
       realized,
       totalRoi,
       sectorData,
+      industryGroupData,
+      rotationMap: rotationMapRecord,
       monthlyData,
       winRate,
       avgBarsPerTrade,
@@ -489,14 +526,15 @@ async function getLatestPriceMap(): Promise<Record<string, number>> {
   }
 }
 
-async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; logoUrl: string | null }>> {
+async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }>> {
   try {
     const rows = await getCachedTickers();
-    const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }> = {};
+    const tickerMap: Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }> = {};
     for (const ticker of rows) {
       tickerMap[ticker.symbol] = {
         companyName: ticker.companyName ?? ticker.symbol,
         sector: ticker.sector ?? 'Unclassified',
+        industryGroup: ticker.industryGroup ?? ticker.sector ?? 'Unclassified',
         logoUrl: ticker.logoUrl,
       };
     }

@@ -8,12 +8,12 @@ import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import InvestmentsHeader from './dashboard/investments/InvestmentsHeader';
 import InvestmentsKPIs from './dashboard/investments/InvestmentsKPIs';
 import ExtendedPerformanceBar from './dashboard/investments/ExtendedPerformanceBar';
-import DashboardCharts from '@/components/platform/DashboardCharts';
+import SectorDonutChart, { type SectorDataItem } from '@/components/platform/SectorDonutChart';
+import MonthlyInvestmentChart, { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
+import PortfolioConsultantCard, { type IndustryGroupStake } from './dashboard/investments/PortfolioConsultantCard';
 import DashboardPositionsCard from './dashboard/investments/DashboardPositionsCard';
 import DashboardSignalsCard from './dashboard/investments/DashboardSignalsCard';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
-import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
-import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 
 const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 
@@ -22,6 +22,7 @@ export type DashboardOrder = {
   tickerSymbol: string;
   companyName: string;
   sector: string;
+  industryGroup?: string;
   logoUrl?: string | null;
   entryDate: string;
   entryPrice: number;
@@ -38,6 +39,8 @@ export type OrderStats = {
   realized: number;
   totalRoi: number;
   sectorData: SectorDataItem[];
+  industryGroupData: IndustryGroupStake[];
+  rotationMap?: Record<string, string>;
   monthlyData: MonthlyDataItem[];
   winRate: number;
   avgBarsPerTrade: number;
@@ -68,7 +71,9 @@ export default function DashboardInvestmentsView({
   const { swipeHandlers } = useSwipeableTabs({
     tabs: DASHBOARD_TABS,
     activeTab: 'investments',
-    onTabChange: (val) => router.push(`/dashboard?tab=${val}`),
+    onTabChange: (tab) => {
+      router.push(`/dashboard?tab=${tab}`);
+    },
   });
 
   return (
@@ -85,7 +90,7 @@ export default function DashboardInvestmentsView({
       />
 
       {/* 2. Main Page Scroll Canvas */}
-      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y">
+      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y custom-scrollbar">
         <div className="app-page page-sections-stack pb-28 md:pb-20">
           {/* Header */}
           <InvestmentsHeader />
@@ -94,7 +99,7 @@ export default function DashboardInvestmentsView({
           <section className="section-container section-viewport-fit">
             <div className="flex flex-col gap-0.5">
               <h2 className="section-title">Performance Overview</h2>
-              <p className="section-subtitle">Mark-to-market portfolio returns, win rates, and capital distribution</p>
+              <p className="section-subtitle">Mark-to-market portfolio returns, win rates, and monthly capital progression</p>
             </div>
 
             <InvestmentsKPIs
@@ -103,19 +108,32 @@ export default function DashboardInvestmentsView({
             />
 
             <ExtendedPerformanceBar orderStats={orderStats} />
+
+            {/* Monthly Performance Progression Chart */}
+            <div className="card-widget w-full mt-1">
+              <MonthlyInvestmentChart data={orderStats.monthlyData} />
+            </div>
           </section>
 
-          {/* SECTION 2: Allocation & Capital Flow */}
+          {/* SECTION 2: Capital Allocation & Portfolio Health */}
           <section className="section-container section-viewport-fit">
             <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Allocation & Capital Flow</h2>
-              <p className="section-subtitle">EGX sector exposure and historical monthly capital deployment</p>
+              <h2 className="section-title">Capital Allocation & Portfolio Health</h2>
+              <p className="section-subtitle">25 GICS Industry Group exposure, concentration risk diagnostics, and rotation-driven rebalancing</p>
             </div>
 
-            <div className="flex-1 min-h-0 flex flex-col">
-              <DashboardCharts
-                sectorData={orderStats.sectorData}
-                monthlyData={orderStats.monthlyData}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch flex-1 min-h-0 w-full">
+              {/* 25 GICS Industry Group Capital Allocation */}
+              <div className="card-widget h-full flex flex-col justify-between">
+                <SectorDonutChart data={orderStats.sectorData} />
+              </div>
+
+              {/* Dedicated Portfolio Allocation Consultant & Health Advisor */}
+              <PortfolioConsultantCard
+                stakes={orderStats.industryGroupData}
+                totalPortfolioValue={orderStats.openMarketValue}
+                buyOpportunities={buyOpportunities}
+                rotationMap={orderStats.rotationMap}
               />
             </div>
           </section>
