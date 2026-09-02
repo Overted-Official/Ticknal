@@ -45,7 +45,7 @@ export const swingMapperIndicator: IndicatorDefinition = {
           markers.push({
             time: bars[extremumIndex].time as Time,
             position: 'aboveBar',
-            color: 'var(--plt-risk)',
+            color: '#ef4444',
             shape: 'circle',
             size: 1,
           });
@@ -62,7 +62,7 @@ export const swingMapperIndicator: IndicatorDefinition = {
           markers.push({
             time: bars[extremumIndex].time as Time,
             position: 'belowBar',
-            color: 'var(--plt-profit)',
+            color: '#10b981',
             shape: 'circle',
             size: 1,
           });

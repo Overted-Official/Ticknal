@@ -94,6 +94,8 @@ export interface ChartWidgetProps {
   setStrategyStartDate?: (d: string) => void;
   setStrategyEndDate?: (d: string) => void;
   activeIndicators?: string[];
+  onToggleIndicator?: (id: string) => void;
+  onUpdateStrategyParam?: (key: string, val: any) => void;
   watchlist?: WatchlistItem[];
   showSignals?: boolean;
   onMetricsChange?: (metrics: Record<string, string> | null) => void;

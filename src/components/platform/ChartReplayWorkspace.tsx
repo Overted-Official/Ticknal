@@ -39,7 +39,23 @@ export default function ChartReplayWorkspace({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const activeIndicators = searchParams?.get('indicators')?.split(',').filter(Boolean) || [];
+  const [activeIndicators, setActiveIndicators] = useState<string[]>(() => {
+    return searchParams?.get('indicators')?.split(',').filter(Boolean) || [];
+  });
+
+  const handleToggleIndicator = useCallback((id: string) => {
+    setActiveIndicators((prev) => {
+      const next = prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id];
+      const params = new URLSearchParams(window.location.search);
+      if (next.length > 0) {
+        params.set('indicators', next.join(','));
+      } else {
+        params.delete('indicators');
+      }
+      window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+      return next;
+    });
+  }, [pathname]);
   
   const initialStrategy = searchParams?.get('strategy') || 'psi';
   const [selectedStrategy, setSelectedStrategy] = useState(initialStrategy);
@@ -158,6 +174,8 @@ export default function ChartReplayWorkspace({
         setStrategyStartDate={(val) => updateGlobalParam('strategyStart', val)}
         setStrategyEndDate={(val) => updateGlobalParam('strategyEnd', val)}
         activeIndicators={activeIndicators}
+        onToggleIndicator={handleToggleIndicator}
+        onUpdateStrategyParam={updateStrategyParam}
         showSignals={showSignals}
         onMetricsChange={setMetrics}
         tickerPositions={tickerPositions}

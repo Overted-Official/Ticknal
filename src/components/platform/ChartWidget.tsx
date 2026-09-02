@@ -16,6 +16,7 @@ import {
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   type MouseEventParams,
+  type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
 import { Sparkles, Briefcase, X } from '@/components/ui/icon-library';
@@ -76,6 +77,8 @@ export default function ChartWidget({
   setStrategyStartDate,
   setStrategyEndDate,
   activeIndicators = [],
+  onToggleIndicator,
+  onUpdateStrategyParam,
   showSignals = true,
   onMetricsChange,
   tickerPositions = [],
@@ -96,6 +99,9 @@ export default function ChartWidget({
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const markerApiRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const orderPriceLineRefs = useRef<Map<number, IPriceLine[]>>(new Map());
+
+  const [seriesReadyKey, setSeriesReadyKey] = useState(0);
+  const [indicatorMarkers, setIndicatorMarkers] = useState<SeriesMarker<Time>[]>([]);
 
   const [orders, setOrders] = useState<ChartOrder[]>([]);
   const [orderDraft, setOrderDraft] = useState<OrderDraft | null>(null);
@@ -162,6 +168,10 @@ export default function ChartWidget({
   }, []);
 
   const handleToggleIndicator = (id: string) => {
+    if (onToggleIndicator) {
+      onToggleIndicator(id);
+      return;
+    }
     const next = activeIndicators.includes(id)
       ? activeIndicators.filter((i) => i !== id)
       : [...activeIndicators, id];
@@ -171,13 +181,17 @@ export default function ChartWidget({
     } else {
       params.delete('indicators');
     }
-    router.replace(`?${params.toString()}`, { scroll: false });
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
   };
 
   const handleUpdateStrategyParam = (key: string, val: any) => {
+    if (onUpdateStrategyParam) {
+      onUpdateStrategyParam(key, val);
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
     params.set(key, String(val));
-    router.replace(`?${params.toString()}`, { scroll: false });
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
   };
 
   // Replay slice
@@ -327,6 +341,7 @@ export default function ChartWidget({
       scaleMargins: { top: 0.82, bottom: 0 },
     });
     volumeSeriesRef.current = volumeSeries;
+    setSeriesReadyKey((k) => k + 1);
 
     // Crosshair movement tracking for live OHLCV legend
     chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
@@ -402,6 +417,11 @@ export default function ChartWidget({
       window.removeEventListener('resize', handleResize);
       chart.remove();
       chartRef.current = null;
+      candlestickSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+      markerApiRef.current = null;
+      predictionSeriesRef.current = null;
+      indicatorLineSeriesRef.current.clear();
     };
   }, [data, isFund]);
 
@@ -437,26 +457,37 @@ export default function ChartWidget({
     volumeSeriesRef.current.setData(volumeData);
   }, [isFund, visibleData]);
 
-  // Signal Markers
+  // Combined Signal & Indicator Markers
   useEffect(() => {
     if (!candlestickSeriesRef.current) return;
 
-    if (!showSignals || chartSignals.length === 0) {
+    const strategyMarkers = showSignals ? buildMarkers(chartSignals) : [];
+    const allMarkers = sanitizeChartSeriesData([...strategyMarkers, ...indicatorMarkers]);
+
+    if (allMarkers.length === 0) {
       if (markerApiRef.current) {
-        markerApiRef.current.setMarkers([]);
+        try {
+          markerApiRef.current.setMarkers([]);
+        } catch {}
       }
       return;
     }
 
-    const markers = buildMarkers(chartSignals);
-    if (!markerApiRef.current) {
-      markerApiRef.current = createSeriesMarkers(candlestickSeriesRef.current, markers);
-    } else {
-      markerApiRef.current.setMarkers(markers);
+    try {
+      if (!markerApiRef.current) {
+        markerApiRef.current = createSeriesMarkers(candlestickSeriesRef.current, allMarkers);
+      } else {
+        markerApiRef.current.setMarkers(allMarkers);
+      }
+    } catch (err) {
+      console.warn('Failed to update series markers, re-creating marker API:', err);
+      try {
+        markerApiRef.current = createSeriesMarkers(candlestickSeriesRef.current, allMarkers);
+      } catch {}
     }
-  }, [chartSignals, showSignals]);
+  }, [chartSignals, showSignals, indicatorMarkers, seriesReadyKey]);
 
-  // Dynamic Indicators Rendering
+  // Dynamic Indicators Rendering (lines and markers)
   useEffect(() => {
     if (!chartRef.current || visibleData.length === 0) return;
 
@@ -470,6 +501,8 @@ export default function ChartWidget({
       } catch {}
     });
     currentLines.clear();
+
+    const gatheredMarkers: SeriesMarker<Time>[] = [];
 
     activeIndicators.forEach((indId) => {
       const config = INDICATORS[indId];
@@ -500,11 +533,27 @@ export default function ChartWidget({
             currentLines.set(`${indId}_${line.id || line.name}`, series);
           });
         }
+
+        if (result.markers && result.markers.length > 0) {
+          result.markers.forEach((m) => {
+            gatheredMarkers.push({
+              ...(m as any),
+              time: parseChartTime(m.time),
+              position: m.position,
+              color: resolveChartColor(m.color),
+              shape: m.shape,
+              size: m.size ?? 1,
+              text: m.text,
+            } as SeriesMarker<Time>);
+          });
+        }
       } catch (err) {
         console.error(`Error calculating indicator ${indId}:`, err);
       }
     });
-  }, [activeIndicators, strategyParams, visibleData]);
+
+    setIndicatorMarkers(gatheredMarkers);
+  }, [activeIndicators, strategyParams, visibleData, seriesReadyKey]);
 
   // Calculate position overlays coordinates
   const updateOrderOverlays = useCallback(() => {
@@ -590,7 +639,7 @@ export default function ChartWidget({
       });
 
     setOrderOverlays(overlays);
-  }, [orders, data]);
+  }, [orders, data, seriesReadyKey]);
 
   // Subscribe to time scale changes (pan, zoom) so overlays stay locked to candles
   useEffect(() => {
@@ -611,7 +660,7 @@ export default function ChartWidget({
         timeScale.unsubscribeVisibleTimeRangeChange(handleRangeChange);
       } catch {}
     };
-  }, [updateOrderOverlays, visibleData]);
+  }, [updateOrderOverlays, visibleData, seriesReadyKey]);
 
   // Replay playback timer
   useEffect(() => {
