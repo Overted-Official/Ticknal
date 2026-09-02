@@ -72,7 +72,7 @@ export default function DashboardSignalsCard({
       </div>
 
       {/* Content Table */}
-      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:block flex-1 overflow-y-auto overflow-x-auto h-[380px] custom-scrollbar pt-2`}>
+      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:flex flex-col flex-1 min-h-0 overflow-hidden pt-2`}>
         <OpportunityTable
           opportunities={currentOpportunities}
           emptyText={emptyText}

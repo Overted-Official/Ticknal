@@ -16,9 +16,9 @@ const TIME_FILTERS = ['All', 'Y', 'Q', 'M'] as const;
 export type TimeFilter = typeof TIME_FILTERS[number];
 
 const CHART_AXIS_COLOR = 'var(--chart-axis)';
-const CHART_GRID_COLOR = 'var(--chart-grid)';
+const CHART_GRID_COLOR = 'rgba(255, 255, 255, 0.06)';
 
-// High-contrast distinct visual series colors
+// High-contrast refined financial series colors
 const COLOR_INVESTED = 'rgba(255, 255, 255, 0.16)';
 const COLOR_PROFIT = '#10b981';
 const COLOR_RISK = '#ef4444';
@@ -42,8 +42,10 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label, isPrivacy }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-plt-border bg-plt-surface px-4 py-2 text-xs shadow-popover backdrop-blur-md min-w-42">
-      <div className="font-medium text-plt-text mb-2 pb-2 border-b border-plt-border-soft">{label}</div>
+    <div className="rounded-xl border border-plt-border bg-plt-card/95 px-3.5 py-2 text-xs shadow-xl backdrop-blur-md min-w-44 select-none">
+      <div className="font-semibold text-plt-text font-sans mb-1.5 pb-1.5 border-b border-plt-border-soft flex items-center justify-between">
+        <span>{label}</span>
+      </div>
       {payload.map((entry, index) => {
         const value = entry.value as number;
         const isRoi = entry.name === 'Cumulative ROI';
@@ -59,7 +61,7 @@ function CustomTooltip({ active, payload, label, isPrivacy }: CustomTooltipProps
         } else if (isUnrealized) {
           color = value >= 0 ? COLOR_UNREALIZED : COLOR_RISK;
         } else if (isInvested) {
-          color = 'rgba(255, 255, 255, 0.65)';
+          color = 'rgba(255, 255, 255, 0.7)';
         }
 
         const formatted = isRoi
@@ -69,9 +71,9 @@ function CustomTooltip({ active, payload, label, isPrivacy }: CustomTooltipProps
             : `${value >= 0 && (isRealized || isUnrealized) ? '+' : ''}${value.toLocaleString('en-US', { maximumFractionDigits: 0 })} £`;
 
         return (
-          <div key={index} style={{ color }} className="mt-1.5 flex items-center justify-between gap-4 text-caption">
-            <span className="opacity-90">{entry.name}:</span>
-            <span className="tabular-nums font-medium">{formatted}</span>
+          <div key={index} style={{ color }} className="mt-1 flex items-center justify-between gap-3 text-[11px] font-sans">
+            <span className="opacity-80">{entry.name}:</span>
+            <span className="tabular-nums font-mono font-semibold">{formatted}</span>
           </div>
         );
       })}
@@ -83,27 +85,69 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
   const [filter, setFilter] = useState<TimeFilter>('All');
   const { isPrivacy } = usePrivacyMode();
 
+  // Filter out leading & trailing empty zero-months to give active months full proportional width
   const filteredData = useMemo(() => {
-    if (filter === 'All' || !data.length) return data;
+    if (!data || !data.length) return [];
 
-    const now = new Date();
-    const currentYearStr = now.getFullYear().toString();
-    
-    if (filter === 'Y') {
-      return data.filter(d => d.month.endsWith(currentYearStr.slice(2)) || d.month.endsWith(currentYearStr));
+    let dataset = data;
+
+    if (filter === 'All') {
+      let firstIdx = -1;
+      let lastIdx = -1;
+      for (let i = 0; i < data.length; i++) {
+        const d = data[i];
+        if (d.invested > 0 || d.pl !== 0 || (d.unrealizedPl && d.unrealizedPl !== 0)) {
+          if (firstIdx === -1) firstIdx = i;
+          lastIdx = i;
+        }
+      }
+      if (firstIdx !== -1) {
+        // Keep 1 buffer month before and after for natural chart framing
+        const start = Math.max(0, firstIdx - 1);
+        const end = Math.min(data.length, lastIdx + 2);
+        dataset = data.slice(start, end);
+      } else {
+        dataset = data.slice(-6);
+      }
+    } else if (filter === 'Y') {
+      const now = new Date();
+      const currentYearStr = now.getFullYear().toString();
+      dataset = data.filter(d => d.month.endsWith(currentYearStr.slice(2)) || d.month.endsWith(currentYearStr));
+      if (!dataset.length) dataset = data.slice(-12);
+    } else if (filter === 'Q') {
+      dataset = data.slice(-3);
+    } else if (filter === 'M') {
+      dataset = data.slice(-1);
     }
-    if (filter === 'Q') {
-      return data.slice(-3);
-    }
-    if (filter === 'M') {
-      return data.slice(-1);
-    }
-    return data;
+
+    return dataset;
   }, [data, filter]);
 
+  // Summary Metrics Header
+  const summary = useMemo(() => {
+    let totalInvested = 0;
+    let totalRealized = 0;
+    let totalUnrealized = 0;
+    let latestRoi = 0;
+
+    for (const d of data) {
+      totalInvested += d.invested;
+      totalRealized += d.pl;
+      totalUnrealized += (d.unrealizedPl ?? 0);
+      latestRoi = d.roi;
+    }
+    return {
+      totalInvested,
+      totalRealized,
+      totalUnrealized,
+      latestRoi,
+    };
+  }, [data]);
+
   return (
-    <div className="flex h-full flex-col justify-between">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <div className="flex h-full flex-col justify-between select-none">
+      {/* Header */}
+      <div className="mb-2 flex items-center justify-between gap-2 pb-2 border-b border-plt-border-soft">
         <div>
           <h2 className="widget-title">Monthly Performance</h2>
           <p className="widget-subtitle mt-0.5">Capital deployment and cumulative return progression</p>
@@ -114,8 +158,8 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
               key={tf}
               type="button"
               onClick={() => setFilter(tf)}
-              className={`pill-switch-btn text-[11px] ${
-                filter === tf ? 'pill-switch-btn-active' : ''
+              className={`pill-switch-btn text-[11px] cursor-pointer ${
+                filter === tf ? 'pill-switch-btn-active font-semibold' : ''
               }`}
             >
               {tf}
@@ -124,59 +168,95 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         </div>
       </div>
 
-      <div className="relative h-[320px] w-full">
+      {/* Micro Metrics Strip */}
+      <div className="flex items-center gap-3 text-xs font-mono mb-2 px-1 flex-wrap">
+        <div className="flex items-center gap-1">
+          <span className="text-plt-muted text-[10px]">Invested:</span>
+          <span className="text-plt-text font-semibold text-[11px]">
+            {isPrivacy ? '******' : `${formatEGP(summary.totalInvested)} £`}
+          </span>
+        </div>
+        <span className="text-plt-border-soft">•</span>
+        <div className="flex items-center gap-1">
+          <span className="text-plt-muted text-[10px]">Realized:</span>
+          <span className={`font-semibold text-[11px] ${summary.totalRealized >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
+            {isPrivacy ? '******' : `${summary.totalRealized >= 0 ? '+' : ''}${formatEGP(summary.totalRealized)} £`}
+          </span>
+        </div>
+        <span className="text-plt-border-soft">•</span>
+        <div className="flex items-center gap-1">
+          <span className="text-plt-muted text-[10px]">Unrealized:</span>
+          <span className={`font-semibold text-[11px] ${summary.totalUnrealized >= 0 ? 'text-cyan-400' : 'text-plt-risk'}`}>
+            {isPrivacy ? '******' : `${summary.totalUnrealized >= 0 ? '+' : ''}${formatEGP(summary.totalUnrealized)} £`}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 ml-auto">
+          <span className="text-plt-muted text-[10px]">Total ROI:</span>
+          <span className={`font-bold font-mono text-[11px] ${summary.latestRoi >= 0 ? 'text-amber-400' : 'text-plt-risk'}`}>
+            {summary.latestRoi >= 0 ? '+' : ''}{summary.latestRoi.toFixed(1)}%
+          </span>
+        </div>
+      </div>
+
+      {/* Main Chart Area */}
+      <div className="relative h-[255px] w-full">
         {!filteredData.length ? (
-          <div className="flex h-full items-center justify-center text-xs text-plt-faint">
+          <div className="flex h-full items-center justify-center text-xs text-plt-muted font-sans">
             No data for this {filter === 'Y' ? 'year' : filter === 'Q' ? 'quarter' : filter === 'M' ? 'month' : 'period'}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={filteredData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
+            <ComposedChart
+              data={filteredData}
+              margin={{ top: 8, right: 8, left: -10, bottom: 0 }}
+              barCategoryGap="18%"
+              barGap={3}
+            >
               <CartesianGrid vertical={false} stroke={CHART_GRID_COLOR} strokeDasharray="3 3" />
               <XAxis
                 dataKey="month"
-                tick={{ fill: CHART_AXIS_COLOR, fontSize: 'var(--text-size-mini)' }}
+                tick={{ fill: CHART_AXIS_COLOR, fontSize: 10, fontFamily: 'monospace' }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 yAxisId="left"
-                tick={{ fill: CHART_AXIS_COLOR, fontSize: 'var(--text-size-mini)' }}
+                tick={{ fill: CHART_AXIS_COLOR, fontSize: 10, fontFamily: 'monospace' }}
                 tickFormatter={(val) => formatEGP(val, isPrivacy)}
                 axisLine={false}
                 tickLine={false}
-                width={42}
+                width={38}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fill: COLOR_ROI_LINE, fontSize: 'var(--text-size-mini)' }}
+                tick={{ fill: COLOR_ROI_LINE, fontSize: 10, fontFamily: 'monospace' }}
                 tickFormatter={(val) => `${val}%`}
                 axisLine={false}
                 tickLine={false}
-                width={42}
+                width={38}
               />
-              <Tooltip content={<CustomTooltip isPrivacy={isPrivacy} />} cursor={{ fill: 'var(--plt-bg-hover)' }} />
+              <Tooltip content={<CustomTooltip isPrivacy={isPrivacy} />} cursor={{ fill: 'var(--plt-bg-hover)', opacity: 0.5 }} />
               <Legend
-                wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }}
                 iconType="circle"
-                iconSize={8}
+                iconSize={6}
               />
               <Bar
                 yAxisId="left"
                 dataKey="invested"
                 name="Invested Capital"
                 fill={COLOR_INVESTED}
-                radius={[3, 3, 0, 0]}
-                maxBarSize={20}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
               />
               <Bar
                 yAxisId="left"
                 dataKey="pl"
                 name="Realized P/L"
                 fill={COLOR_PROFIT}
-                radius={[3, 3, 0, 0]}
-                maxBarSize={20}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
               >
                 {filteredData.map((entry, index) => (
                   <Cell key={`cell-realized-${index}`} fill={entry.pl >= 0 ? COLOR_PROFIT : COLOR_RISK} />
@@ -187,8 +267,8 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
                 dataKey="unrealizedPl"
                 name="Unrealized P/L"
                 fill={COLOR_UNREALIZED}
-                radius={[3, 3, 0, 0]}
-                maxBarSize={20}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
               >
                 {filteredData.map((entry, index) => (
                   <Cell key={`cell-unrealized-${index}`} fill={(entry.unrealizedPl ?? 0) >= 0 ? COLOR_UNREALIZED : COLOR_RISK} />
@@ -201,8 +281,8 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
                 name="Cumulative ROI"
                 stroke={COLOR_ROI_LINE}
                 strokeWidth={2.5}
-                dot={{ r: 3.5, fill: COLOR_ROI_LINE, stroke: 'var(--plt-bg-base)', strokeWidth: 1.5 }}
-                activeDot={{ r: 6, fill: COLOR_ROI_LINE }}
+                dot={{ r: 3, fill: COLOR_ROI_LINE, stroke: 'var(--plt-bg-base)', strokeWidth: 1.5 }}
+                activeDot={{ r: 5, fill: COLOR_ROI_LINE }}
               />
             </ComposedChart>
           </ResponsiveContainer>

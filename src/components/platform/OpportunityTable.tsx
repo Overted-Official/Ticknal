@@ -119,7 +119,7 @@ export default function OpportunityTable({
   } : null;
 
   return (
-    <>
+    <div className="w-full flex-1 flex flex-col min-h-0">
       {/* Strategy & Rotation Filter Pill Bar */}
       {showFilter && (
         <div className="flex items-center justify-between gap-2 px-4 pt-2 pb-2 border-b border-plt-border-soft bg-plt-hover flex-wrap">
@@ -265,7 +265,7 @@ export default function OpportunityTable({
       </div>
 
       {/* Desktop View (Table) */}
-      <div className="hidden md:block w-full overflow-y-auto max-h-[340px] custom-scrollbar">
+      <div className="hidden md:block w-full flex-1 min-h-0 overflow-y-auto custom-scrollbar">
         <table className="w-full text-left text-xs text-plt-text border-separate border-spacing-y-1 font-sans">
           <thead className="sticky top-0 bg-plt-base z-10">
             <tr className="text-plt-muted text-[10px] font-semibold uppercase tracking-wider">
@@ -365,6 +365,6 @@ export default function OpportunityTable({
           initialData={initialOrderData}
         />
       )}
-    </>
+    </div>
   );
 }

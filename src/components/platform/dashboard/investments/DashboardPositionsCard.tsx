@@ -69,7 +69,7 @@ export default function DashboardPositionsCard({ orders }: DashboardPositionsCar
       </div>
 
       {/* Content Table */}
-      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:block flex-1 overflow-y-auto overflow-x-auto h-[380px] custom-scrollbar pt-2`}>
+      <div className={`${isExpandedMobile ? 'block' : 'hidden'} md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scrollbar pt-2`}>
         {/* Desktop View */}
         <div className="hidden md:block">
           <table className="w-full text-left text-xs border-separate border-spacing-y-1 font-sans">

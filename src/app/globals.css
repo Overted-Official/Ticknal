@@ -279,11 +279,11 @@
   --title-kpi-color: var(--plt-text-muted);
 
   /* Layout Spacing & Gap Tokens */
-  --gap-page-sections: 2.5rem;
-  --gap-section-header: 1rem;
-  --gap-widget-grid: 2rem;
+  --gap-page-sections: 1.5rem;
+  --gap-section-header: 0.75rem;
+  --gap-widget-grid: 1.5rem;
   --gap-kpi-grid: 0.75rem;
-  --section-min-height: calc(100vh - 8.5rem);
+  --section-min-height: auto;
 
   /* Compatibility aliases */
   --font-tv-sans: var(--font-sans-token);
