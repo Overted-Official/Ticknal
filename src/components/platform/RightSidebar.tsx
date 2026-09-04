@@ -4,6 +4,11 @@ import { ChevronDown, ChevronRight, Search, SlidersHorizontal, X } from '@/compo
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
+import type { OpportunitySignal } from '@/lib/opportunities';
+import WatchlistSignalFilterPopover, {
+  type SignalFilterConfig,
+  DEFAULT_SIGNAL_FILTER,
+} from './sidebar/WatchlistSignalFilterPopover';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -103,6 +108,70 @@ export default function RightSidebar({
     };
   }, [isResizing]);
 
+  // Signal Screener & Filter state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [signalFilter, setSignalFilter] = useState<SignalFilterConfig>(DEFAULT_SIGNAL_FILTER);
+
+  // Fetch opportunities/signals across all tickers (cached server-side)
+  const { data: oppsData } = useSWR<{ opportunities: OpportunitySignal[] }>(
+    '/api/opportunities?bars=15',
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000,
+    }
+  );
+  const opportunities = oppsData?.opportunities || [];
+
+  // Group opportunities by clean symbol
+  const signalsBySymbol = useMemo(() => {
+    const map = new Map<string, OpportunitySignal[]>();
+    for (const opp of opportunities) {
+      const sym = opp.symbol.toUpperCase().replace('.CA', '');
+      const list = map.get(sym) || [];
+      list.push(opp);
+      map.set(sym, list);
+    }
+    return map;
+  }, [opportunities]);
+
+  // Compute matching signals based on active filter config
+  const matchingSignalsBySymbol = useMemo(() => {
+    if (!signalFilter.isActive) return new Map<string, OpportunitySignal>();
+
+    const result = new Map<string, OpportunitySignal>();
+    const stratSet = new Set(signalFilter.strategies);
+    const sigSet = new Set(signalFilter.signals);
+    const maxBars = signalFilter.lookbackDays;
+
+    for (const [sym, oppList] of signalsBySymbol.entries()) {
+      // Find matching signals within selected strategies, directions, and lookback
+      const matched = oppList.find((opp) => {
+        if (!stratSet.has(opp.strategyId)) return false;
+        const isBuy = opp.signal.signal === 'BUY';
+        const isSell = opp.signal.signal === 'SELL' || opp.signal.signal.startsWith('SELL_');
+        const matchesSig = (isBuy && sigSet.has('BUY')) || (isSell && sigSet.has('SELL'));
+        if (!matchesSig) return false;
+
+        const barsAgo = opp.signal.barsAgo ?? 0;
+        return barsAgo < maxBars;
+      });
+
+      if (matched) {
+        result.set(sym, matched);
+      }
+    }
+    return result;
+  }, [signalFilter, signalsBySymbol]);
+
+  // Matching tickers count in the watchlist
+  const matchingCount = useMemo(() => {
+    return watchlist.filter((item) => {
+      const sym = item.symbol.toUpperCase().replace('.CA', '');
+      return matchingSignalsBySymbol.has(sym);
+    }).length;
+  }, [watchlist, matchingSignalsBySymbol]);
+
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
 
@@ -110,14 +179,28 @@ export default function RightSidebar({
     ? { ...baseSelectedItem, ...liveData }
     : baseSelectedItem;
 
-  const filteredWatchlist = watchlist.filter(item => {
-    const q = searchQuery.toLowerCase();
-    return (
-      item.symbol.toLowerCase().includes(q) ||
-      item.companyName.toLowerCase().includes(q) ||
-      item.sector.toLowerCase().includes(q)
-    );
-  });
+  const filteredWatchlist = useMemo(() => {
+    return watchlist.filter(item => {
+      const sym = item.symbol.toUpperCase().replace('.CA', '');
+
+      // 1. Signal Filter
+      if (signalFilter.isActive && !matchingSignalsBySymbol.has(sym)) {
+        return false;
+      }
+
+      // 2. Search Query
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          item.symbol.toLowerCase().includes(q) ||
+          item.companyName.toLowerCase().includes(q) ||
+          item.sector.toLowerCase().includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [watchlist, signalFilter.isActive, matchingSignalsBySymbol, searchQuery]);
 
   const groupedWatchlist = useMemo(() => {
     const groups = new Map<string, WatchlistItem[]>();
@@ -144,13 +227,16 @@ export default function RightSidebar({
 
   const [pendingTicker, setPendingTicker] = useState<string | null>(null);
 
-  const openTicker = (symbol: string) => {
+  const openTicker = (symbol: string, strategyId?: string) => {
     if (symbol === selectedSymbol) return;
     setPendingTicker(symbol);
     const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
     params.set('ticker', symbol);
     params.set('timeframe', timeframe);
     params.set('view', 'chart');
+    if (strategyId) {
+      params.set('strategy', strategyId);
+    }
     router.push(`?${params.toString()}`);
   };
 
@@ -196,16 +282,70 @@ export default function RightSidebar({
             </button>
           )}
         </div>
-        <button
-          type="button"
-          disabled
-          title="Filter tickers (Coming soon)"
-          aria-label="Filter tickers"
-          className="h-7 w-7 rounded-md border border-plt-border bg-plt-raised flex items-center justify-center text-plt-muted opacity-45 cursor-not-allowed shrink-0 transition-colors hover:bg-plt-hover"
-        >
-          <SlidersHorizontal size={13} />
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen((prev) => !prev)}
+            title={
+              signalFilter.isActive
+                ? `Signal Filter Active (${matchingCount} tickers matched)`
+                : 'Filter tickers by strategy signals'
+            }
+            aria-label="Filter tickers"
+            className={`h-7 w-7 rounded-md border flex items-center justify-center shrink-0 transition-all relative ${
+              signalFilter.isActive
+                ? 'bg-plt-accent/15 border-plt-accent text-plt-accent shadow-sm'
+                : isFilterOpen
+                ? 'bg-plt-hover border-plt-border-strong text-plt-text'
+                : 'border-plt-border bg-plt-raised text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+            }`}
+          >
+            <SlidersHorizontal size={13} />
+            {signalFilter.isActive && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-plt-accent border-2 border-plt-raised animate-pulse" />
+            )}
+          </button>
+
+          <WatchlistSignalFilterPopover
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            filter={signalFilter}
+            onChange={setSignalFilter}
+            matchingCount={matchingCount}
+            totalCount={watchlist.length}
+          />
+        </div>
       </div>
+
+      {/* Active Filter Banner */}
+      {signalFilter.isActive && (
+        <div className="px-3 py-1 bg-plt-bg/90 border-b border-plt-border flex items-center justify-between text-[10px]">
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-plt-accent shrink-0 animate-pulse" />
+            <span className="text-plt-muted truncate">
+              Signals:{' '}
+              <span className="text-plt-text font-medium">
+                {signalFilter.signals.join('/')}
+              </span>{' '}
+              ·{' '}
+              <span className="text-plt-text font-medium">
+                {signalFilter.strategies
+                  .map((s) => (s === 'thoth_egx_macro' ? 'THOTH' : s.toUpperCase()))
+                  .join(', ')}
+              </span>{' '}
+              ({signalFilter.lookbackDays}D)
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
+            className="text-[9px] font-medium text-plt-muted hover:text-plt-risk px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-plt-hover"
+            title="Clear filter"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* Columns Header */}
       <div className="watchlist-header shrink-0">
@@ -216,71 +356,108 @@ export default function RightSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        {groupedWatchlist.map(([sector, items]) => {
-          const collapsed = collapsedSectors.has(sector) && searchQuery.length === 0;
-          return (
-            <div key={sector}>
+        {groupedWatchlist.length === 0 ? (
+          <div className="p-6 text-center text-plt-muted flex flex-col items-center justify-center space-y-2 h-52">
+            <SlidersHorizontal size={22} className="text-plt-faint stroke-1" />
+            <p className="text-[11px] font-medium text-plt-text">No matching tickers</p>
+            <p className="text-[10px] text-plt-muted max-w-[200px] leading-relaxed">
+              {signalFilter.isActive
+                ? `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map(s => s === 'thoth_egx_macro' ? 'THOTH' : s.toUpperCase()).join(', ')} in the last ${signalFilter.lookbackDays} days.`
+                : 'Try a different search query.'}
+            </p>
+            {signalFilter.isActive && (
               <button
                 type="button"
-                onClick={() => toggleSector(sector)}
-                className="flex w-full items-center gap-1.5 px-3 py-1 text-left text-[11px] tracking-wider text-plt-muted transition-colors hover:text-plt-text group border-b border-plt-border/40"
+                onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
+                className="mt-1 text-[10px] text-plt-accent hover:underline font-medium"
               >
-                {collapsed ? <ChevronRight size={14} className="text-plt-faint group-hover:text-plt-text" /> : <ChevronDown size={14} className="text-plt-faint group-hover:text-plt-text" />}
-                <span className="min-w-0 flex-1 truncate font-medium">{sector}</span>
-                <span className="text-[10px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-plt-hover text-plt-muted">{items.length}</span>
+                Clear signal filter
               </button>
+            )}
+          </div>
+        ) : (
+          groupedWatchlist.map(([sector, items]) => {
+            const collapsed = collapsedSectors.has(sector) && searchQuery.length === 0;
+            return (
+              <div key={sector}>
+                <button
+                  type="button"
+                  onClick={() => toggleSector(sector)}
+                  className="flex w-full items-center gap-1.5 px-3 py-1 text-left text-[11px] tracking-wider text-plt-muted transition-colors hover:text-plt-text group border-b border-plt-border/40"
+                >
+                  {collapsed ? <ChevronRight size={14} className="text-plt-faint group-hover:text-plt-text" /> : <ChevronDown size={14} className="text-plt-faint group-hover:text-plt-text" />}
+                  <span className="min-w-0 flex-1 truncate font-medium">{sector}</span>
+                  <span className="text-[10px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-plt-hover text-plt-muted">{items.length}</span>
+                </button>
 
-              {!collapsed && items.map((item) => {
-                const isSelected = item.symbol === selectedSymbol;
-                const changePctDisplay = item.changePct || (item.change ? item.change.split('(')[1]?.replace(')', '') : '0.00%');
-                const isPositive = item.isUp;
-                const isPendingThis = pendingTicker === item.symbol && selectedSymbol !== item.symbol;
-                
-                return (
-                  <div
-                    key={item.symbol}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openTicker(item.symbol)}
-                    className={`watchlist-row cursor-pointer group ${
-                      isPendingThis
-                        ? 'bg-plt-hover animate-pulse'
-                        : isSelected
-                          ? 'watchlist-row-active'
-                          : ''
-                    }`}
-                  >
-                    <div className="flex min-w-0 items-center space-x-1.5">
-                      {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.symbol} className="h-3.5 w-3.5 rounded-full bg-transparent object-contain shrink-0" />
-                      ) : item.website ? (
-                        <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-3.5 w-3.5 rounded-full border border-plt-border bg-plt-hover object-cover shrink-0" />
-                      ) : (
-                        <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border border-plt-border bg-plt-hover text-[8px] font-medium text-plt-text">
-                          {item.symbol.substring(0, 2)}
+                {!collapsed && items.map((item) => {
+                  const isSelected = item.symbol === selectedSymbol;
+                  const changePctDisplay = item.changePct || (item.change ? item.change.split('(')[1]?.replace(')', '') : '0.00%');
+                  const isPositive = item.isUp;
+                  const isPendingThis = pendingTicker === item.symbol && selectedSymbol !== item.symbol;
+                  const symClean = item.symbol.toUpperCase().replace('.CA', '');
+                  const matchingSignal = matchingSignalsBySymbol.get(symClean);
+                  
+                  return (
+                    <div
+                      key={item.symbol}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openTicker(item.symbol, matchingSignal?.strategyId)}
+                      className={`watchlist-row cursor-pointer group ${
+                        isPendingThis
+                          ? 'bg-plt-hover animate-pulse'
+                          : isSelected
+                            ? 'watchlist-row-active'
+                            : ''
+                      }`}
+                    >
+                      <div className="flex min-w-0 items-center space-x-1.5">
+                        {item.logoUrl ? (
+                          <img src={item.logoUrl} alt={item.symbol} className="h-3.5 w-3.5 rounded-full bg-transparent object-contain shrink-0" />
+                        ) : item.website ? (
+                          <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-3.5 w-3.5 rounded-full border border-plt-border bg-plt-hover object-cover shrink-0" />
+                        ) : (
+                          <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border border-plt-border bg-plt-hover text-[8px] font-medium text-plt-text">
+                            {item.symbol.substring(0, 2)}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 min-w-0">
+                          <span className={`truncate text-[11px] font-medium leading-none ${isSelected ? 'text-plt-text font-semibold' : 'text-plt-text group-hover:text-plt-text'}`}>
+                            {item.symbol.replace('.CA', '')}
+                          </span>
+                          {matchingSignal && (
+                            <span
+                              title={`${matchingSignal.strategyLabel}: ${matchingSignal.signal.signal} on ${matchingSignal.signal.date} (${matchingSignal.signal.barsAgo ?? 0} bars ago)`}
+                              className={`text-[8px] font-mono font-semibold px-1 py-0.5 rounded leading-none border shrink-0 ${
+                                matchingSignal.signal.signal === 'BUY'
+                                  ? 'bg-plt-profit/15 text-plt-profit border-plt-profit/30'
+                                  : 'bg-plt-risk/15 text-plt-risk border-plt-risk/30'
+                              }`}
+                            >
+                              {matchingSignal.signal.signal}
+                            </span>
+                          )}
                         </div>
-                      )}
-                      <span className={`truncate text-[11px] font-medium leading-none ${isSelected ? 'text-plt-text font-semibold' : 'text-plt-text group-hover:text-plt-text'}`}>
-                        {item.symbol.replace('.CA', '')}
-                      </span>
+                      </div>
+                      <div className="text-right font-sans font-medium text-plt-text text-[11px] tabular-nums whitespace-nowrap leading-none">
+                        {item.price}
+                      </div>
+                      <div className={`text-right font-sans font-medium text-[11px] tabular-nums whitespace-nowrap leading-none ${
+                        isPositive ? 'text-plt-profit' : 'text-plt-risk'
+                      }`}>
+                        {changePctDisplay}
+                      </div>
+                      <div className="text-right font-sans font-medium text-plt-muted text-[11px] tabular-nums whitespace-nowrap truncate leading-none">
+                        {item.volume || '-'}
+                      </div>
                     </div>
-                    <div className="text-right font-sans font-medium text-plt-text text-[11px] tabular-nums whitespace-nowrap leading-none">
-                      {item.price}
-                    </div>
-                    <div className={`text-right font-sans font-medium text-[11px] tabular-nums whitespace-nowrap leading-none ${
-                      isPositive ? 'text-plt-profit' : 'text-plt-risk'
-                    }`}>
-                      {changePctDisplay}
-                    </div>
-                    <div className="text-right font-sans font-medium text-plt-muted text-[11px] tabular-nums whitespace-nowrap truncate leading-none">
-                      {item.volume || '-'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+                  );
+                })}
+              </div>
+            );
+          })
+        )}
       </div>
 
       {selectedItem && (

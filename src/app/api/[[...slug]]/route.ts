@@ -35,6 +35,7 @@ import {
   handleQuoteGet,
   handleTickersGet,
   handleInflationGet,
+  handleOpportunitiesGet,
 } from '@/lib/market-handlers';
 import {
   handleNotificationsGet,
@@ -208,7 +209,10 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     return handleReportGet(req);
   }
 
-  // 8. Market / Quotes / Tickers / Macro
+  // 8. Market / Quotes / Tickers / Macro / Opportunities
+  if (root === 'opportunities' || (root === 'market' && sub === 'opportunities')) {
+    return handleOpportunitiesGet(req);
+  }
   if (root === 'quote' || (root === 'market' && sub === 'quote')) {
     return handleQuoteGet(req);
   }

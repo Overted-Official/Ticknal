@@ -26,6 +26,7 @@ export type OpportunitySignal = {
     level?: string;
     date: string;
     price: number;
+    barsAgo?: number;
     reasoning?: string;
     exitReason?: string;
     entryReason?: string;
@@ -66,7 +67,7 @@ export async function _getRecentOpportunities(
         db.execute(sql`
           SELECT ticker_symbol, date, open, high, low, close, volume
           FROM ${dailyPrices}
-          WHERE date >= CURRENT_DATE - INTERVAL '14 months' AND volume > 0
+          WHERE date >= CURRENT_DATE - INTERVAL '14 months' AND (close > 0 OR volume > 0)
           ORDER BY ticker_symbol, date ASC
         `),
       ]);
@@ -127,9 +128,15 @@ export async function _getRecentOpportunities(
         if (includePsi && bars.length >= 80) {
           try {
             const psiResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: '2025-01-01' }));
-            const signal = [...psiResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
-            if (signal) {
+            const matchingSignals = psiResult.signals.filter((candidate) => recentDates.has(candidate.date));
+            const latestBuy = [...matchingSignals].reverse().find((s) => s.signal === 'BUY');
+            const latestSell = [...matchingSignals].reverse().find((s) => String(s.signal).startsWith('SELL'));
+            const signalsToAdd = [latestBuy, latestSell].filter((s): s is NonNullable<typeof s> => Boolean(s));
+
+            for (const signal of signalsToAdd) {
               const badge = getStrategyBadge('psi');
+              const entryIdx = bars.findIndex((b) => b.date >= signal.date);
+              const barsAgo = entryIdx !== -1 ? bars.length - 1 - entryIdx : 0;
               opportunities.push({
                 symbol,
                 ...meta,
@@ -137,7 +144,10 @@ export async function _getRecentOpportunities(
                 strategyLabel: STRATEGIES.psi?.label ?? 'PSI Strategy',
                 strategyShortName: badge.label,
                 strategyBadgeClassName: badge.className,
-                signal,
+                signal: {
+                  ...signal,
+                  barsAgo,
+                },
               });
             }
           } catch (e) {
@@ -152,9 +162,15 @@ export async function _getRecentOpportunities(
               ticker: symbol,
               startDate: '2025-01-01',
             });
-            const signal = [...psiV2Result.signals].reverse().find((candidate) => recentDates.has(candidate.date) && (candidate.signal === 'BUY' || candidate.signal === 'SELL'));
-            if (signal) {
+            const matchingSignals = psiV2Result.signals.filter((candidate) => recentDates.has(candidate.date) && (candidate.signal === 'BUY' || candidate.signal === 'SELL'));
+            const latestBuy = [...matchingSignals].reverse().find((s) => s.signal === 'BUY');
+            const latestSell = [...matchingSignals].reverse().find((s) => s.signal === 'SELL');
+            const signalsToAdd = [latestBuy, latestSell].filter((s): s is NonNullable<typeof s> => Boolean(s));
+
+            for (const signal of signalsToAdd) {
               const badge = getStrategyBadge('psi_v2');
+              const entryIdx = bars.findIndex((b) => b.date >= signal.date);
+              const barsAgo = entryIdx !== -1 ? bars.length - 1 - entryIdx : 0;
               opportunities.push({
                 symbol,
                 ...meta,
@@ -162,7 +178,10 @@ export async function _getRecentOpportunities(
                 strategyLabel: STRATEGIES.psi_v2?.label ?? 'PSI V2 Strategy',
                 strategyShortName: badge.label,
                 strategyBadgeClassName: badge.className,
-                signal,
+                signal: {
+                  ...signal,
+                  barsAgo,
+                },
               });
             }
           } catch (e) {
@@ -170,16 +189,22 @@ export async function _getRecentOpportunities(
           }
         }
 
-        // 3. Evaluate THOTH EGX V3.7P only when explicitly requested to preserve sub-second response
-        if (strategyScope === 'thoth_egx_macro' && bars.length >= 130) {
+        // 3. Evaluate THOTH EGX V3.7P
+        if (includeThoth && (strategyScope === 'thoth_egx_macro' || THOTH_FOCUS_TICKERS.has(symbol)) && bars.length >= 130) {
           try {
             const thothResult = await runThothV37PStrategy(bars, {
               ticker: symbol,
               startDate: '2025-01-01',
             });
-            const signal = [...thothResult.signals].reverse().find((candidate) => recentDates.has(candidate.date));
-            if (signal) {
+            const matchingSignals = thothResult.signals.filter((candidate) => recentDates.has(candidate.date));
+            const latestBuy = [...matchingSignals].reverse().find((s) => s.signal === 'BUY');
+            const latestSell = [...matchingSignals].reverse().find((s) => String(s.signal).startsWith('SELL'));
+            const signalsToAdd = [latestBuy, latestSell].filter((s): s is NonNullable<typeof s> => Boolean(s));
+
+            for (const signal of signalsToAdd) {
               const badge = getStrategyBadge('thoth_egx_macro');
+              const entryIdx = bars.findIndex((b) => b.date >= signal.date);
+              const barsAgo = entryIdx !== -1 ? bars.length - 1 - entryIdx : 0;
               opportunities.push({
                 symbol,
                 ...meta,
@@ -187,7 +212,10 @@ export async function _getRecentOpportunities(
                 strategyLabel: STRATEGIES.thoth_egx_macro?.label ?? 'THOTH EGX V3.7P',
                 strategyShortName: badge.label,
                 strategyBadgeClassName: badge.className,
-                signal,
+                signal: {
+                  ...signal,
+                  barsAgo,
+                },
               });
             }
           } catch (e) {

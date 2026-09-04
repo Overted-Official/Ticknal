@@ -215,3 +215,20 @@ export async function handleInflationGet(request: Request) {
     return NextResponse.json({ success: false, error: 'Failed to fetch inflation data' }, { status: 500 });
   }
 }
+
+export async function handleOpportunitiesGet(request: Request): Promise<Response> {
+  try {
+    const { searchParams } = new URL(request.url);
+    const limitBars = parseInt(searchParams.get('bars') || searchParams.get('limitBars') || '15', 10);
+    const strategyScope = searchParams.get('strategy') || searchParams.get('scope') || 'all';
+
+    const { getRecentOpportunities } = await import('@/lib/opportunities');
+    const opportunities = await getRecentOpportunities(limitBars, strategyScope);
+
+    return NextResponse.json({ opportunities }, { status: 200 });
+  } catch (err: any) {
+    console.error('API /api/opportunities error:', err);
+    return NextResponse.json({ error: 'Failed to fetch opportunities', details: err?.message }, { status: 500 });
+  }
+}
+
