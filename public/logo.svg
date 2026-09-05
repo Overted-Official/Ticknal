@@ -1,6 +1,13 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="512" height="512" fill="#000000"/>
-  <rect x="152" y="280" width="32" height="110" rx="16" fill="#FFFFFF"/>
-  <rect x="240" y="200" width="32" height="190" rx="16" fill="#FFFFFF"/>
-  <rect x="328" y="120" width="32" height="270" rx="16" fill="#FFFFFF"/>
+  <!-- Left Candle -->
+  <rect x="106" y="131" width="80" height="80" fill="#FFFFFF"/>
+  <rect x="136" y="211" width="20" height="75" fill="#FFFFFF"/>
+  <!-- Center Candle (T stem) -->
+  <rect x="246" y="56" width="20" height="75" fill="#FFFFFF"/>
+  <rect x="216" y="131" width="80" height="250" fill="#FFFFFF"/>
+  <rect x="246" y="381" width="20" height="75" fill="#FFFFFF"/>
+  <!-- Right Candle -->
+  <rect x="326" y="131" width="80" height="80" fill="#FFFFFF"/>
+  <rect x="356" y="211" width="20" height="75" fill="#FFFFFF"/>
 </svg>

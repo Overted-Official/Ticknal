@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BarChart2 } from '@/components/ui/icon-library';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -11,8 +11,8 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4 group w-fit">
-              <div className="w-8 h-8 rounded-full bg-tv-accent flex items-center justify-center text-plt-inverse font-medium">
-                <BarChart2 size={16} strokeWidth={2.5} />
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center border border-white/10">
+                <Image src="/logo.svg" alt="Ticknal" width={22} height={22} className="object-contain" />
               </div>
               <span className="text-plt-text font-medium text-base tracking-tight">Ticknal</span>
             </Link>

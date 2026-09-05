@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import AuthButton from './AuthButton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, BarChart2 } from '@/components/ui/icon-library';
+import { Menu, X } from '@/components/ui/icon-library';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -40,8 +41,8 @@ export default function Navbar() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <div className="w-8 h-8 rounded-full bg-tv-accent flex items-center justify-center text-plt-inverse font-medium shadow-accent group-hover:scale-105 transition-transform">
-            <BarChart2 size={16} strokeWidth={2.5} />
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform">
+            <Image src="/logo.svg" alt="Ticknal" width={22} height={22} className="object-contain" priority />
           </div>
           <span className="text-plt-text font-medium text-sm tracking-tight">Ticknal</span>
         </Link>
