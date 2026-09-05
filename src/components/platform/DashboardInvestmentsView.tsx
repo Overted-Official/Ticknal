@@ -68,6 +68,35 @@ export default function DashboardInvestmentsView({
 }: DashboardInvestmentsViewProps) {
   const router = useRouter();
 
+  const [liveBuyOpps, setLiveBuyOpps] = React.useState<Opportunity[]>(buyOpportunities ?? []);
+  const [isLoadingOpps, setIsLoadingOpps] = React.useState(!buyOpportunities || buyOpportunities.length === 0);
+
+  React.useEffect(() => {
+    if (buyOpportunities && buyOpportunities.length > 0) {
+      setLiveBuyOpps(buyOpportunities);
+      setIsLoadingOpps(false);
+      return;
+    }
+
+    let isMounted = true;
+    fetch('/api/opportunities?bars=15&strategy=all')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data?.opportunities && Array.isArray(data.opportunities)) {
+          const buys = data.opportunities.filter((o: any) => o.signal?.signal === 'BUY').slice(0, 12);
+          setLiveBuyOpps(buys);
+        }
+      })
+      .catch((err) => console.warn('Background opportunities load error:', err))
+      .finally(() => {
+        if (isMounted) setIsLoadingOpps(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [buyOpportunities]);
+
   const { swipeHandlers } = useSwipeableTabs({
     tabs: DASHBOARD_TABS,
     activeTab: 'investments',
@@ -133,7 +162,7 @@ export default function DashboardInvestmentsView({
                 <PortfolioConsultantCard
                   stakes={orderStats.industryGroupData}
                   totalPortfolioValue={orderStats.openMarketValue}
-                  buyOpportunities={buyOpportunities}
+                  buyOpportunities={liveBuyOpps}
                   rotationMap={orderStats.rotationMap}
                 />
               </div>
@@ -156,8 +185,9 @@ export default function DashboardInvestmentsView({
               </div>
               <div className="h-[460px]">
                 <DashboardSignalsCard
-                  buyOpportunities={buyOpportunities}
+                  buyOpportunities={liveBuyOpps}
                   exitSignals={exitSignals}
+                  isLoadingBuyOpportunities={isLoadingOpps}
                 />
               </div>
             </div>

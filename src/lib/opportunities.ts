@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
-import { sql } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { runThothV37PStrategy } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
@@ -112,7 +112,14 @@ export async function _getRecentOpportunities(
       const includeThoth = strategyScope === 'all' || strategyScope === 'thoth_egx_macro';
       const includePsiV2 = strategyScope === 'all' || strategyScope === 'psi_v2';
 
+      let tickerIndex = 0;
       for (const [symbol, bars] of barsByTicker.entries()) {
+        tickerIndex++;
+        if (tickerIndex % 8 === 0) {
+          // Cooperative yielding to prevent locking Node.js event loop
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+
         if (bars.length < 80) continue;
         const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
         const ticker = tickerMap.get(symbol);
@@ -190,7 +197,11 @@ export async function _getRecentOpportunities(
         }
 
         // 3. Evaluate THOTH EGX V3.7P
-        if (includeThoth && (strategyScope === 'thoth_egx_macro' || THOTH_FOCUS_TICKERS.has(symbol)) && bars.length >= 130) {
+        const isThothTarget = strategyScope === 'thoth_egx_macro'
+          ? THOTH_FOCUS_TICKERS.has(symbol)
+          : ['COMI', 'FWRY', 'EAST', 'TMGH', 'HRHO', 'SWDY'].includes(symbol);
+
+        if (includeThoth && isThothTarget && bars.length >= 130) {
           try {
             const thothResult = await runThothV37PStrategy(bars, {
               ticker: symbol,
@@ -248,3 +259,148 @@ export const getRecentOpportunities = async (limitBars: number = 5, strategyScop
     return await _getRecentOpportunities(limitBars, strategyScope);
   }
 };
+
+export function getCachedOpportunitiesSync(
+  limitBars: number = 5,
+  strategyScope: string = 'all'
+): OpportunitySignal[] | null {
+  const cacheKey = `${limitBars}-${strategyScope}`;
+  const cached = memCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < MEM_CACHE_TTL) {
+    return cached.data;
+  }
+  return null;
+}
+
+export async function getExitSignalsForHoldings(
+  symbols: string[],
+  limitBars: number = 5
+): Promise<OpportunitySignal[]> {
+  if (!symbols || symbols.length === 0) return [];
+  const cleanSymbols = Array.from(new Set(symbols.map((s) => normalizeTickerSymbol(s)))).filter(Boolean);
+  if (cleanSymbols.length === 0) return [];
+
+  try {
+    const { getCachedIndustryRotationMap } = await import('@/lib/industry-rotation');
+    const [{ tickerMap: rotationMap }, tickerRows, priceRows] = await Promise.all([
+      getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map() })),
+      db.select().from(tickers).where(inArray(tickers.symbol, cleanSymbols)),
+      db.execute(sql`
+        SELECT ticker_symbol, date, open, high, low, close, volume
+        FROM ${dailyPrices}
+        WHERE ticker_symbol IN (${sql.join(cleanSymbols.map((s) => sql`${s}`), sql`, `)})
+          AND date >= CURRENT_DATE - INTERVAL '14 months'
+          AND (close > 0 OR volume > 0)
+        ORDER BY ticker_symbol, date ASC
+      `),
+    ]);
+
+    const tickerMap = new Map(
+      tickerRows.map((ticker) => {
+        const sym = normalizeTickerSymbol(ticker.symbol);
+        const rot = rotationMap.get(sym);
+        return [
+          sym,
+          {
+            companyName: ticker.companyName ?? ticker.symbol,
+            sector: ticker.sector ?? 'Unclassified',
+            industryGroup: rot?.industryGroup ?? ticker.industryGroup ?? ticker.sector ?? 'Unclassified',
+            rotationRegime: rot?.rotationRegime ?? 'Leading',
+            logoUrl: ticker.logoUrl ?? null,
+          },
+        ];
+      }),
+    );
+
+    const barsByTicker = new Map<string, PriceBar[]>();
+    for (const row of priceRows as any[]) {
+      const symbol = normalizeTickerSymbol(String(row.ticker_symbol));
+      const bars = barsByTicker.get(symbol) ?? [];
+      bars.push({
+        date: typeof row.date === 'string' ? row.date.split('T')[0] : new Date(row.date as Date).toISOString().split('T')[0],
+        open: Number(row.open),
+        high: Number(row.high),
+        low: Number(row.low),
+        close: Number(row.close),
+        volume: Number(row.volume),
+      });
+      barsByTicker.set(symbol, bars);
+    }
+
+    const exitSignals: OpportunitySignal[] = [];
+
+    for (const [symbol, bars] of barsByTicker.entries()) {
+      if (bars.length < 80) continue;
+      const recentDates = new Set(bars.slice(-limitBars).map((bar) => bar.date));
+      const ticker = tickerMap.get(symbol);
+      const meta = {
+        companyName: ticker?.companyName ?? symbol,
+        sector: ticker?.sector ?? 'Unclassified',
+        industryGroup: ticker?.industryGroup,
+        rotationRegime: ticker?.rotationRegime,
+        logoUrl: ticker?.logoUrl ?? null,
+      };
+
+      // 1. Evaluate PSI Strategy
+      try {
+        const psiResult = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate: '2025-01-01' }));
+        const matchingSignals = psiResult.signals.filter((candidate) => recentDates.has(candidate.date));
+        const latestSell = [...matchingSignals].reverse().find((s) => String(s.signal).startsWith('SELL'));
+        if (latestSell) {
+          const badge = getStrategyBadge('psi');
+          const entryIdx = bars.findIndex((b) => b.date >= latestSell.date);
+          const barsAgo = entryIdx !== -1 ? bars.length - 1 - entryIdx : 0;
+          exitSignals.push({
+            symbol,
+            ...meta,
+            strategyId: 'psi',
+            strategyLabel: STRATEGIES.psi?.label ?? 'PSI Strategy',
+            strategyShortName: badge.label,
+            strategyBadgeClassName: badge.className,
+            signal: {
+              ...latestSell,
+              barsAgo,
+            },
+          });
+        }
+      } catch (e) {
+        // Ignore individual ticker calculation failures
+      }
+
+      // 2. Evaluate PSI V2 Strategy (GPT 3-PSI Architecture)
+      try {
+        const psiV2Result = runPsiV2Strategy(bars, {
+          ticker: symbol,
+          startDate: '2025-01-01',
+        });
+        const matchingSignals = psiV2Result.signals.filter((candidate) => recentDates.has(candidate.date) && candidate.signal === 'SELL');
+        const latestSell = [...matchingSignals].reverse().find((s) => s.signal === 'SELL');
+        if (latestSell) {
+          const badge = getStrategyBadge('psi_v2');
+          const entryIdx = bars.findIndex((b) => b.date >= latestSell.date);
+          const barsAgo = entryIdx !== -1 ? bars.length - 1 - entryIdx : 0;
+          exitSignals.push({
+            symbol,
+            ...meta,
+            strategyId: 'psi_v2',
+            strategyLabel: STRATEGIES.psi_v2?.label ?? 'PSI V2 Strategy',
+            strategyShortName: badge.label,
+            strategyBadgeClassName: badge.className,
+            signal: {
+              ...latestSell,
+              barsAgo,
+            },
+          });
+        }
+      } catch (e) {
+        // Ignore individual ticker calculation failures
+      }
+    }
+
+    return exitSignals.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
+  } catch (err) {
+    console.error('Error in getExitSignalsForHoldings:', err);
+    return [];
+  }
+}
+

@@ -60,6 +60,21 @@ const nextConfig = {
         destination: '/invest',
         permanent: true,
       },
+      {
+        source: '/dashboard/investments',
+        destination: '/dashboard?tab=investments',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/net-worth',
+        destination: '/dashboard?tab=net-worth',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/banks',
+        destination: '/dashboard?tab=banks',
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

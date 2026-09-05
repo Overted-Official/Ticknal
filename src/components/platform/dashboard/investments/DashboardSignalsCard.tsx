@@ -7,18 +7,22 @@ import OpportunityTable, { type Opportunity } from '@/components/platform/Opport
 interface DashboardSignalsCardProps {
   buyOpportunities: Opportunity[];
   exitSignals: Opportunity[];
+  isLoadingBuyOpportunities?: boolean;
 }
 
 export default function DashboardSignalsCard({
   buyOpportunities,
   exitSignals,
+  isLoadingBuyOpportunities = false,
 }: DashboardSignalsCardProps) {
   const [activeTab, setActiveTab] = useState<'buy' | 'exit'>('buy');
   const [isExpandedMobile, setIsExpandedMobile] = useState(true);
 
   const currentOpportunities = activeTab === 'buy' ? buyOpportunities : exitSignals;
   const emptyText = activeTab === 'buy'
-    ? 'No buy opportunities in the last 5 bars'
+    ? isLoadingBuyOpportunities
+      ? 'Scanning live market opportunities...'
+      : 'No buy opportunities in the last 5 bars'
     : 'No exit signals in the last 5 bars';
 
   return (
@@ -49,7 +53,7 @@ export default function DashboardSignalsCard({
               className={`pill-switch-btn text-[11px] gap-1.5 ${activeTab === 'buy' ? 'pill-switch-btn-active text-plt-profit' : ''}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'buy' ? 'bg-plt-profit' : 'bg-plt-muted'}`} />
-              <span>Buy ({buyOpportunities.length})</span>
+              <span>Buy ({isLoadingBuyOpportunities && buyOpportunities.length === 0 ? '...' : buyOpportunities.length})</span>
             </button>
             <button
               type="button"

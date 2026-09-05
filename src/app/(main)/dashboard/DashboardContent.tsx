@@ -6,7 +6,7 @@ import { banks, dailyPrices, macroInflationRates, positions, tickerAlerts, ticke
 import { createClient } from '@/lib/supabase/server';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar, type PsiSignal } from '@/strategies/PSI/psiStrategy';
-import { getRecentOpportunities } from '@/lib/opportunities';
+import { getCachedOpportunitiesSync, getExitSignalsForHoldings } from '@/lib/opportunities';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import OpportunityTable, { type Opportunity } from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
@@ -151,20 +151,11 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
 
   // Tab 1: Investments View (Default)
   let orderStats = emptyOrderStats;
-  let opportunities: Opportunity[] = [];
   let activeAlertCount = 0;
 
-  const fetchWithTimeout = <T,>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> => {
-    return Promise.race([
-      promise,
-      new Promise<T>((resolve) => setTimeout(() => resolve(fallback), timeoutMs)),
-    ]);
-  };
-
   try {
-    const [statsResult, oppsResult, alertResult] = await Promise.allSettled([
+    const [statsResult, alertResult] = await Promise.allSettled([
       getOrderStats(user.id),
-      fetchWithTimeout(getRecentOpportunities(), 2500, [] as Opportunity[]),
       getActiveAlertCount(user.id),
     ]);
 
@@ -172,12 +163,6 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
       orderStats = statsResult.value;
     } else {
       console.error('Error fetching orderStats:', statsResult.reason);
-    }
-
-    if (oppsResult.status === 'fulfilled') {
-      opportunities = oppsResult.value;
-    } else {
-      console.error('Error fetching opportunities:', oppsResult.reason);
     }
 
     if (alertResult.status === 'fulfilled') {
@@ -189,19 +174,25 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
     console.error('Unexpected error in DashboardContent:', err);
   }
 
-  const openPositionTickers = new Set(
-    orderStats.openOrders.map((o) => o.tickerSymbol.replace('.CA', '').trim().toUpperCase())
-  );
-  const buyOpportunities = opportunities.filter((item) => item.signal.signal === 'BUY').slice(0, 12);
-  const exitSignals = opportunities.filter((item) => {
-    const sym = item.symbol.replace('.CA', '').trim().toUpperCase();
-    return item.signal.signal !== 'BUY' && openPositionTickers.has(sym);
-  });
+  // Fast targeted exit signals computation ONLY for user's open holdings (~30ms)
+  const openSymbols = orderStats.openOrders.map((o) => o.tickerSymbol);
+  let exitSignals: Opportunity[] = [];
+  try {
+    exitSignals = (await getExitSignalsForHoldings(openSymbols, 5)) as Opportunity[];
+  } catch (err) {
+    console.error('Error fetching exit signals for holdings:', err);
+  }
+
+  // Fast synchronous check if full market opportunities are already warmed in memory
+  const cachedOpps = getCachedOpportunitiesSync(15, 'all');
+  const initialBuyOpportunities = cachedOpps
+    ? (cachedOpps.filter((item) => item.signal.signal === 'BUY').slice(0, 12) as Opportunity[])
+    : [];
 
   return (
     <DashboardInvestmentsView
       orderStats={orderStats}
-      buyOpportunities={buyOpportunities}
+      buyOpportunities={initialBuyOpportunities}
       exitSignals={exitSignals}
       activeAlertCount={activeAlertCount}
     />
