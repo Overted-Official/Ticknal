@@ -12,11 +12,11 @@ const geistSans = Geist({
 const APP_THEME_COLOR = "black";
 
 export const metadata: Metadata = {
-  title: "QuantEGX | Trading Platform",
+  title: "Ticknal | Trading Platform",
   description: "Advanced EGX Trading Platform",
   icons: {
     icon: [
-      { url: "/QuantEGX_icon.svg", type: "image/svg+xml" },
+      { url: "/Ticknal_icon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],

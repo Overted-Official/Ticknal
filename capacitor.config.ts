@@ -1,11 +1,11 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.quantegx.app',
-  appName: 'QuantEGX',
+  appId: 'com.ticknal.app',
+  appName: 'Ticknal',
   webDir: 'public',
   server: {
-    url: 'https://quantegx.vercel.app',
+    url: 'https://ticknal.vercel.app',
     androidScheme: 'https',
     cleartext: true,
   },

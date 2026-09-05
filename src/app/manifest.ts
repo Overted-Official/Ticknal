@@ -4,8 +4,8 @@ const APP_THEME_COLOR = 'black';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'QuantEGX Trading Platform',
-    short_name: 'QuantEGX',
+    name: 'Ticknal Trading Platform',
+    short_name: 'Ticknal',
     description: 'Advanced Algorithmic Trading Platform for the EGX',
     start_url: '/dashboard',
     display: 'standalone',
@@ -37,7 +37,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       {
-        src: '/QuantEGX_icon.svg',
+        src: '/Ticknal_icon.svg',
         sizes: 'any',
         type: 'image/svg+xml',
       },
