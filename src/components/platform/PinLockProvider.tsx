@@ -75,9 +75,11 @@ export function PinLockProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     syncState();
+    window.addEventListener('ticknal_pin_settings_changed', syncState);
     window.addEventListener('quantegx_pin_settings_changed', syncState);
     window.addEventListener('storage', syncState);
     return () => {
+      window.removeEventListener('ticknal_pin_settings_changed', syncState);
       window.removeEventListener('quantegx_pin_settings_changed', syncState);
       window.removeEventListener('storage', syncState);
     };

@@ -4,7 +4,7 @@ const testimonials = [
   {
     name: 'Ahmed El-Sayed',
     role: 'Quantitative EGX Day Trader',
-    content: 'QuantEGX completely transformed my approach to the EGX30. The real-time signals are mathematically sound, and the push notifications mean I never miss an inflection point.',
+    content: 'Ticknal completely transformed my approach to the EGX30. The real-time signals are mathematically sound, and the push notifications mean I never miss an inflection point.',
     avatar: 'A',
   },
   {

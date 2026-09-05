@@ -23,7 +23,7 @@ export async function initNativeBridge(options?: {
   if (!isNativePlatform()) return;
 
   try {
-    // 1. Configure Dark Status Bar to match QuantEGX dark theme
+    // 1. Configure Dark Status Bar to match Ticknal dark theme
     try {
       await StatusBar.setStyle({ style: Style.Dark });
       await StatusBar.setBackgroundColor({ color: '#000000' });
@@ -230,7 +230,7 @@ export async function triggerNativeTestNotification(title?: string, body?: strin
     await LocalNotifications.schedule({
       notifications: [
         {
-          title: title || '🟢 QuantEGX Signal Test',
+          title: title || '🟢 Ticknal Signal Test',
           body: body || 'Test Alert: BUY Signal triggered for COMI at 84.50 EGP.',
           id: Math.floor(Math.random() * 100000),
           schedule: { at: new Date(Date.now() + 500) },

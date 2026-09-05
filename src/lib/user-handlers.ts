@@ -321,8 +321,9 @@ export async function handleAvatarPost(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'QuantEGX Public';
     const { error: uploadError } = await adminSupabase.storage
-      .from('QuantEGX Public')
+      .from(bucketName)
       .upload(filePath, buffer, {
         contentType: file.type || 'image/jpeg',
         upsert: true,
@@ -338,7 +339,7 @@ export async function handleAvatarPost(request: Request) {
     }
 
     const { data: urlData } = adminSupabase.storage
-      .from('QuantEGX Public')
+      .from(bucketName)
       .getPublicUrl(filePath);
 
     const publicUrl = urlData.publicUrl;

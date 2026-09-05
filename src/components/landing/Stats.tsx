@@ -48,7 +48,7 @@ export default function Stats() {
               </svg>
             ))}
           </div>
-          <span className="text-xs md:text-sm font-medium text-plt-text/90 tracking-wider ml-2">QuantEGX</span>
+          <span className="text-xs md:text-sm font-medium text-plt-text/90 tracking-wider ml-2">Ticknal</span>
         </div>
 
         {/* Stats Row */}

@@ -69,7 +69,7 @@ export default function BentoGrid() {
               <div className="max-w-94 flex flex-col gap-3 relative z-10">
                 <h5 className="text-base sm:text-card-title font-medium text-plt-text leading-snug tracking-normal">Real-time Market Insight</h5>
                 <p className="text-xs sm:text-body font-normal text-plt-subtle leading-relaxed">
-                  QuantEGX processes live EGX market data and volume metrics so you can spot momentum shifts before they hit the mainstream news.
+                  Ticknal processes live EGX market data and volume metrics so you can spot momentum shifts before they hit the mainstream news.
                 </p>
               </div>
               <div className="w-full relative h-56 sm:h-74 mt-auto">

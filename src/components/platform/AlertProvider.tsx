@@ -15,7 +15,7 @@ type AlertContextValue = {
 
 const AlertContext = createContext<AlertContextValue | null>(null);
 
-const DEVICE_ID_KEY = 'quantegx-device-id';
+const DEVICE_ID_KEY = 'ticknal-device-id';
 
 export function AlertProvider({ children }: { children: React.ReactNode }) {
   const [deviceId, setDeviceId] = useState<string | null>(null);
@@ -210,8 +210,11 @@ export function useAlerts() {
 }
 
 function getOrCreateDeviceId(): string {
-  const existing = window.localStorage.getItem(DEVICE_ID_KEY);
-  if (existing) return existing;
+  const existing = window.localStorage.getItem(DEVICE_ID_KEY) ?? window.localStorage.getItem('quantegx-device-id');
+  if (existing) {
+    window.localStorage.setItem(DEVICE_ID_KEY, existing);
+    return existing;
+  }
 
   const id = typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()

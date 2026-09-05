@@ -6,7 +6,7 @@ import { Plus, Minus, HelpCircle } from '@/components/ui/icon-library';
 
 const faqs = [
   {
-    question: 'How accurate is the QuantEGX PSI strategy?',
+    question: 'How accurate is the Ticknal PSI strategy?',
     answer: 'The PSI (Price-Structure-Index) strategy has been rigorously backtested across 15 years of Egyptian Stock Exchange (EGX) historical data. While past performance does not guarantee future results, our algorithms consistently achieve a win rate above 65% with strict adherence to the calculated stop-loss and profit target rules.',
   },
   {
@@ -14,8 +14,8 @@ const faqs = [
     answer: 'No! Our signal engine operates 24/7 on dedicated cloud infrastructure. Once you enable push notifications in your browser or on mobile, you will receive real-time alerts the moment a buy or sell trigger condition is met during EGX trading hours (10:00 AM – 2:30 PM Cairo time).',
   },
   {
-    question: 'Does QuantEGX execute trades directly with my broker?',
-    answer: 'QuantEGX is an institutional-grade decision intelligence and signal generation platform. We provide precise entry points, stop-loss levels, and dynamic position sizing. You execute trades directly with your preferred EGX broker (such as Thndr, EFG Hermes, CI Capital, or Beltone).',
+    question: 'Does Ticknal execute trades directly with my broker?',
+    answer: 'Ticknal is an institutional-grade decision intelligence and signal generation platform. We provide precise entry points, stop-loss levels, and dynamic position sizing. You execute trades directly with your preferred EGX broker (such as Thndr, EFG Hermes, CI Capital, or Beltone).',
   },
   {
     question: 'Can I customize the strategy parameters for specific tickers?',

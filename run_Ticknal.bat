@@ -8,9 +8,9 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000 " ^| findstr "LISTENIN
 )
 
 echo.
-echo Starting QuantEGX dev server...
+echo Starting Ticknal dev server...
 :: Start the Next.js dev server in a new command window so it runs independently
-start "QuantEGX Server" cmd /k "npm run dev"
+start "Ticknal Server" cmd /k "npm run dev"
 
 :: Wait 5 seconds to ensure the server is ready to accept connections
 timeout /t 5 /nobreak >nul

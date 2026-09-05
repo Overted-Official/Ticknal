@@ -43,7 +43,7 @@ export default function Navbar() {
           <div className="w-8 h-8 rounded-full bg-tv-accent flex items-center justify-center text-plt-inverse font-medium shadow-accent group-hover:scale-105 transition-transform">
             <BarChart2 size={16} strokeWidth={2.5} />
           </div>
-          <span className="text-plt-text font-medium text-sm tracking-tight">QuantEGX</span>
+          <span className="text-plt-text font-medium text-sm tracking-tight">Ticknal</span>
         </Link>
 
         {/* Desktop Links */}

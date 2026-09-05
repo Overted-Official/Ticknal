@@ -30,7 +30,7 @@ export default function QuickStartSection() {
             </h2>
 
             <p className="text-xs sm:text-base text-plt-subtle max-w-lg leading-relaxed">
-              Join QuantEGX today and get immediate access to proprietary signals, mark-to-market backtests, and real-time alerts for the Egyptian Stock Exchange.
+              Join Ticknal today and get immediate access to proprietary signals, mark-to-market backtests, and real-time alerts for the Egyptian Stock Exchange.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-2 mt-4 w-full sm:w-auto">

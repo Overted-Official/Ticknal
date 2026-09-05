@@ -118,7 +118,7 @@ export async function fetchLatestUsCpiSeries(): Promise<Map<string, number>> {
     const res = await fetch(BLS_CPI_URL, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'QuantEGX/1.0',
+        'User-Agent': 'Ticknal/1.0',
       },
       next: { revalidate: 86400 },
     });

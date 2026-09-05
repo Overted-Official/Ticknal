@@ -862,7 +862,7 @@ export default function SignalPanel({
           if (bulkUpdateStrategyParams) {
             bulkUpdateStrategyParams({ ...params, model: chosenModel });
             try {
-              localStorage.setItem(`quantegx_custom_psi_${activeSymbol}`, JSON.stringify({ ...params, model: chosenModel }));
+              localStorage.setItem(`ticknal_custom_psi_${activeSymbol}`, JSON.stringify({ ...params, model: chosenModel }));
             } catch (e) {}
             toast.success('Strategy Updated', `Applied combination for ${activeSymbol} on ${chosenModel.toUpperCase()}.`);
           }

@@ -67,7 +67,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
   if (!user) {
     return (
       <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text items-center justify-center p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Welcome to QuantEGX</h2>
+        <h2 className="text-2xl font-bold mb-4">Welcome to Ticknal</h2>
         <p className="text-tv-muted mb-6">Please sign in to view your personalized dashboard and portfolio.</p>
         <Link href="/" className="bg-tv-accent text-white px-6 py-2 rounded-tv-sm hover:bg-tv-accent/90 transition">
           Sign In

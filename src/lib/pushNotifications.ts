@@ -381,7 +381,7 @@ function configureWebPush() {
 
   const subject = (process.env.WEB_PUSH_SUBJECT && !process.env.WEB_PUSH_SUBJECT.includes('.local'))
     ? process.env.WEB_PUSH_SUBJECT
-    : 'mailto:support@quantegx.com';
+    : 'mailto:overted.technologies@gmail.com';
 
   webPush.setVapidDetails(
     subject,

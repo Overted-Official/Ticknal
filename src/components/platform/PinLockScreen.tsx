@@ -214,7 +214,7 @@ export default function PinLockScreen({
         </div>
 
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-white">QuantEGX Security</h2>
+          <h2 className="text-xl font-bold tracking-tight text-white">Ticknal Security</h2>
           <p className="text-xs text-white/50 mt-1">Enter your 4-digit passcode to unlock</p>
         </div>
       </div>

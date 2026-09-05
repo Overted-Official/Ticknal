@@ -70,6 +70,11 @@ export default function BottomToolbar({
   const handleRangeClick = (range: typeof RANGES[number]) => {
     setSelectedRange(range.label);
     window.dispatchEvent(
+      new CustomEvent('ticknal:set-range', {
+        detail: { range: range.label, timeframe: range.tf },
+      })
+    );
+    window.dispatchEvent(
       new CustomEvent('quantegx:set-range', {
         detail: { range: range.label, timeframe: range.tf },
       })

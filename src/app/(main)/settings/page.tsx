@@ -22,7 +22,7 @@ export default async function SettingsPage() {
   if (!user) {
     return (
       <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text items-center justify-center p-8 text-center">
-        <h2 className="text-2xl font-medium mb-4">QuantEGX Settings</h2>
+        <h2 className="text-2xl font-medium mb-4">Ticknal Settings</h2>
         <p className="text-tv-muted mb-6">Please sign in to manage your account profile, devices, and alert triggers.</p>
         <Link href="/" className="btn-token btn-primary">
           Sign In

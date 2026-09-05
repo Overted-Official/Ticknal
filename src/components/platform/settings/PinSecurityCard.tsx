@@ -44,7 +44,7 @@ export default function PinSecurityCard() {
                 )}
               </div>
               <p className="text-xs text-plt-muted mt-2 leading-relaxed">
-                Lock QuantEGX behind a 4-digit PIN to secure your portfolio on mobile and shared devices.
+                Lock Ticknal behind a 4-digit PIN to secure your portfolio on mobile and shared devices.
               </p>
             </div>
           </div>

@@ -186,7 +186,7 @@ export default function SettingsView({
   // Load saved strategy scope preference
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('quantegx_alert_strategy_scope');
+      const saved = localStorage.getItem('ticknal_alert_strategy_scope') ?? localStorage.getItem('quantegx_alert_strategy_scope');
       if (saved && (saved === 'all' || saved === 'psi' || saved === 'psi_v2' || saved === 'thoth_egx_macro')) {
         setAlertStrategyScope(saved as any);
       }
@@ -198,7 +198,7 @@ export default function SettingsView({
         if (data?.scope && (data.scope === 'all' || data.scope === 'psi' || data.scope === 'psi_v2' || data.scope === 'thoth_egx_macro')) {
           setAlertStrategyScope(data.scope);
           try {
-            localStorage.setItem('quantegx_alert_strategy_scope', data.scope);
+            localStorage.setItem('ticknal_alert_strategy_scope', data.scope);
           } catch (e) {}
         }
       })
@@ -208,7 +208,7 @@ export default function SettingsView({
   const handleStrategyScopeChange = async (newScope: 'all' | 'psi' | 'psi_v2' | 'thoth_egx_macro') => {
     setAlertStrategyScope(newScope);
     try {
-      localStorage.setItem('quantegx_alert_strategy_scope', newScope);
+      localStorage.setItem('ticknal_alert_strategy_scope', newScope);
     } catch (e) {}
 
     setIsSavingScope(true);
@@ -352,7 +352,7 @@ export default function SettingsView({
 
       // 1. Trigger immediate native heads-up notification if running on Android device
       await triggerNativeTestNotification(
-        '🟢 QuantEGX Signal Test',
+        '🟢 Ticknal Signal Test',
         'BUY Signal triggered for COMI at 84.50 EGP (Target: 92.00, Stop: 81.00)'
       );
 
@@ -875,7 +875,7 @@ export default function SettingsView({
                       Linked Notification Devices ({devices.length})
                     </h2>
                     <p className="mt-1 text-xs text-white/40">
-                      All browsers and mobile apps linked to your QuantEGX account for real-time trade signals.
+                      All browsers and mobile apps linked to your Ticknal account for real-time trade signals.
                     </p>
                   </div>
                 </div>
@@ -885,7 +885,7 @@ export default function SettingsView({
                     <Smartphone size={28} className="mx-auto mb-2 text-white/20" />
                     <p className="text-xs text-white/50 font-medium">No additional background devices registered</p>
                     <p className="text-[11px] text-white/30 mt-1 max-w-sm mx-auto">
-                      Click &quot;Enable Push on This Device&quot; above to link this browser, or log in from the QuantEGX Android app to receive instant trade notifications.
+                      Click &quot;Enable Push on This Device&quot; above to link this browser, or log in from the Ticknal Android app to receive instant trade notifications.
                     </p>
                   </div>
                 ) : (

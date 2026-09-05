@@ -1,13 +1,13 @@
 'use client';
 
-const PIN_STORAGE_KEY = 'quantegx_pin_hash';
-const PIN_SALT_KEY = 'quantegx_pin_salt';
-const PIN_SETTINGS_KEY = 'quantegx_pin_settings';
-const SESSION_UNLOCKED_KEY = 'quantegx_session_unlocked';
+const PIN_STORAGE_KEY = 'ticknal_pin_hash';
+const PIN_SALT_KEY = 'ticknal_pin_salt';
+const PIN_SETTINGS_KEY = 'ticknal_pin_settings';
+const SESSION_UNLOCKED_KEY = 'ticknal_session_unlocked';
 
-const RECOVERY_QUESTION_KEY = 'quantegx_recovery_question';
-const RECOVERY_ANSWER_HASH_KEY = 'quantegx_recovery_answer_hash';
-const RECOVERY_SALT_KEY = 'quantegx_recovery_salt';
+const RECOVERY_QUESTION_KEY = 'ticknal_recovery_question';
+const RECOVERY_ANSWER_HASH_KEY = 'ticknal_recovery_answer_hash';
+const RECOVERY_SALT_KEY = 'ticknal_recovery_salt';
 
 export type PinSecuritySettings = {
   enabled: boolean;
@@ -50,8 +50,11 @@ function generateSalt(): string {
 function getOrCreateSalt(): string {
   if (typeof window === 'undefined') return '';
   try {
-    const existing = localStorage.getItem(PIN_SALT_KEY);
-    if (existing) return existing;
+    const existing = localStorage.getItem(PIN_SALT_KEY) ?? localStorage.getItem('quantegx_pin_salt');
+    if (existing) {
+      localStorage.setItem(PIN_SALT_KEY, existing);
+      return existing;
+    }
     const newSalt = generateSalt();
     localStorage.setItem(PIN_SALT_KEY, newSalt);
     return newSalt;
@@ -101,7 +104,7 @@ export async function hashSecurityAnswer(answer: string, salt: string): Promise<
 export function getStoredPinHash(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return localStorage.getItem(PIN_STORAGE_KEY);
+    return localStorage.getItem(PIN_STORAGE_KEY) ?? localStorage.getItem('quantegx_pin_hash');
   } catch {
     return null;
   }
@@ -110,7 +113,7 @@ export function getStoredPinHash(): string | null {
 export function getPinSettings(): PinSecuritySettings {
   if (typeof window === 'undefined') return DEFAULT_PIN_SETTINGS;
   try {
-    const raw = localStorage.getItem(PIN_SETTINGS_KEY);
+    const raw = localStorage.getItem(PIN_SETTINGS_KEY) ?? localStorage.getItem('quantegx_pin_settings');
     if (!raw) return DEFAULT_PIN_SETTINGS;
     return { ...DEFAULT_PIN_SETTINGS, ...JSON.parse(raw) };
   } catch {
@@ -122,6 +125,7 @@ export function savePinSettings(settings: PinSecuritySettings): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(PIN_SETTINGS_KEY, JSON.stringify(settings));
+    window.dispatchEvent(new Event('ticknal_pin_settings_changed'));
     window.dispatchEvent(new Event('quantegx_pin_settings_changed'));
   } catch {}
 }
@@ -223,7 +227,7 @@ export async function verifyAppPin(inputPin: string): Promise<boolean> {
 export function isSessionUnlocked(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    return sessionStorage.getItem(SESSION_UNLOCKED_KEY) === 'true';
+    return sessionStorage.getItem(SESSION_UNLOCKED_KEY) === 'true' || sessionStorage.getItem('quantegx_session_unlocked') === 'true';
   } catch {
     return false;
   }

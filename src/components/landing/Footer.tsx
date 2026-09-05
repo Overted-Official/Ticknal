@@ -14,7 +14,7 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-full bg-tv-accent flex items-center justify-center text-plt-inverse font-medium">
                 <BarChart2 size={16} strokeWidth={2.5} />
               </div>
-              <span className="text-plt-text font-medium text-base tracking-tight">QuantEGX</span>
+              <span className="text-plt-text font-medium text-base tracking-tight">Ticknal</span>
             </Link>
             <p className="text-plt-muted text-xs leading-relaxed max-w-xs mb-6">
               The premier quantitative research and algorithmic trading platform engineered specifically for the Egyptian Stock Exchange (EGX).
@@ -39,7 +39,7 @@ export default function Footer() {
           <div>
             <h4 className="text-plt-text font-medium text-xs tracking-wider mb-4">Resources</h4>
             <ul className="space-y-2 text-xs">
-              <li><Link href="#about" className="text-plt-subtle hover:text-plt-text transition-colors">Why QuantEGX</Link></li>
+              <li><Link href="#about" className="text-plt-subtle hover:text-plt-text transition-colors">Why Ticknal</Link></li>
               <li><Link href="#faq" className="text-plt-subtle hover:text-plt-text transition-colors">FAQ</Link></li>
               <li><Link href="/positions" className="text-plt-subtle hover:text-plt-text transition-colors">Portfolio Tracker</Link></li>
             </ul>
@@ -57,7 +57,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-plt-border flex flex-col md:flex-row items-center justify-between gap-4 text-caption text-plt-muted">
-          <p>&copy; {new Date().getFullYear()} QuantEGX Inc. All algorithmic data is for informational purposes only.</p>
+          <p>&copy; {new Date().getFullYear()} Ticknal Inc. All algorithmic data is for informational purposes only.</p>
           <div className="flex items-center gap-4">
             <span>Built for Egyptian Capital Markets</span>
           </div>

@@ -6,43 +6,43 @@ import { Check, X, Sparkles } from '@/components/ui/icon-library';
 const comparisonData = [
   {
     feature: 'Real-Time EGX Ingestion',
-    quantEGX: true,
+    ticknal: true,
     manual: false,
     others: 'Delayed (15m+)',
   },
   {
     feature: 'Proprietary PSI & Kronos Models',
-    quantEGX: true,
+    ticknal: true,
     manual: false,
     others: false,
   },
   {
     feature: 'Automated Push Notifications',
-    quantEGX: true,
+    ticknal: true,
     manual: false,
     others: 'Email Only',
   },
   {
     feature: '15-Year Backtested Win Rates',
-    quantEGX: true,
+    ticknal: true,
     manual: false,
     others: false,
   },
   {
     feature: 'Interactive TradingView Integration',
-    quantEGX: true,
+    ticknal: true,
     manual: 'Basic Static',
     others: 'Separate Tab',
   },
   {
     feature: 'Intraday Strategy Confluence (15m, 1h, 1D)',
-    quantEGX: true,
+    ticknal: true,
     manual: false,
     others: 'End of Day Only',
   },
   {
     feature: 'Automated Portfolio Growth Snapshots',
-    quantEGX: true,
+    ticknal: true,
     manual: 'Manual Excel',
     others: 'Basic PnL',
   },
@@ -70,7 +70,7 @@ export default function CompareSection() {
             transition={{ delay: 0.1 }}
             className="text-2xl sm:text-3xl md:text-display font-medium text-plt-text leading-tight tracking-normal capitalize"
           >
-            Why QuantEGX Leaves Others Behind
+            Why Ticknal Leaves Others Behind
           </motion.h2>
         </div>
 
@@ -89,7 +89,7 @@ export default function CompareSection() {
                 <th className="p-3 sm:p-4 text-xs sm:text-sm font-medium text-tv-accent bg-tv-accent/10 border-x border-tv-accent/20">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-tv-accent animate-pulse" />
-                    QuantEGX
+                    Ticknal
                   </div>
                 </th>
                 <th className="p-3 sm:p-4 text-xs font-medium text-plt-subtle">Manual Trading</th>
@@ -101,7 +101,7 @@ export default function CompareSection() {
                 <tr key={idx} className="hover:bg-plt-hover transition-colors">
                   <td className="p-3 sm:p-4 font-medium text-plt-text/90">{row.feature}</td>
 
-                  {/* QuantEGX Column */}
+                  {/* Ticknal Column */}
                   <td className="p-3 sm:p-4 bg-tv-accent/5 border-x border-tv-accent/20">
                     <div className="flex items-center gap-2 text-tv-accent font-medium text-xs sm:text-sm">
                       <div className="w-5 h-5 rounded-full bg-tv-accent/20 flex items-center justify-center">

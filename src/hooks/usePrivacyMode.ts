@@ -2,13 +2,15 @@
 
 import { useSyncExternalStore, useCallback } from 'react';
 
-const STORAGE_KEY = 'quantegx_privacy_mode';
+const STORAGE_KEY = 'ticknal_privacy_mode';
 
 function subscribe(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
+  window.addEventListener('ticknal_privacy_mode_changed', callback);
   window.addEventListener('quantegx_privacy_mode_changed', callback);
   window.addEventListener('storage', callback);
   return () => {
+    window.removeEventListener('ticknal_privacy_mode_changed', callback);
     window.removeEventListener('quantegx_privacy_mode_changed', callback);
     window.removeEventListener('storage', callback);
   };
@@ -17,7 +19,7 @@ function subscribe(callback: () => void) {
 function getSnapshot(): boolean {
   if (typeof window === 'undefined') return true;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem('quantegx_privacy_mode');
     if (stored !== null) {
       return stored === 'true';
     }
@@ -40,6 +42,7 @@ export function usePrivacyMode() {
       const next = !current;
       localStorage.setItem(STORAGE_KEY, String(next));
       // Dispatch event outside render phase
+      window.dispatchEvent(new Event('ticknal_privacy_mode_changed'));
       window.dispatchEvent(new Event('quantegx_privacy_mode_changed'));
     } catch {}
   }, []);

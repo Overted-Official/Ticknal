@@ -20,23 +20,23 @@ self.addEventListener('push', (event) => {
   } catch {
     try {
       payload = {
-        title: 'QuantEGX Signal Alert',
+        title: 'Ticknal Signal Alert',
         body: event.data.text() || 'A new trading signal is available.',
       };
     } catch {
       payload = {
-        title: 'QuantEGX Signal Alert',
+        title: 'Ticknal Signal Alert',
         body: 'A new trading signal is available.',
       };
     }
   }
 
-  const title = payload.title || 'QuantEGX Signal Alert';
+  const title = payload.title || 'Ticknal Signal Alert';
   const options = {
     body: payload.body || 'A trading signal is available.',
     icon: '/icon-192x192.png',
     badge: '/badge.png',
-    tag: payload.tag || `quantegx-${Date.now()}`,
+    tag: payload.tag || `ticknal-${Date.now()}`,
     renotify: true,
     requireInteraction: true,
     vibrate: [200, 100, 200, 100, 200], // Vibration pattern for mobile

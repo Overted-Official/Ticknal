@@ -9,7 +9,7 @@ export default function Loading() {
         <div className="w-16 h-16 rounded-full border-2 border-tv-accent/20 border-t-tv-accent animate-spin" />
         {/* Inner pulsing core with logo */}
         <div className="absolute w-8 h-8 flex items-center justify-center animate-pulse">
-           <Image src="/logo.svg" alt="QuantEGX" width={24} height={24} />
+           <Image src="/logo.svg" alt="Ticknal" width={24} height={24} />
         </div>
       </div>
     </div>
