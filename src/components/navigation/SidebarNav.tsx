@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Layers,
   LayoutGrid,
+  PieChart,
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import { flyoutReveal } from '@/lib/motion';
@@ -213,6 +214,19 @@ export default function SidebarNav() {
               >
                 <LineChart size={16} />
                 <span>Tickers</span>
+              </Link>
+              <Link
+                href="/invest?view=portfolio"
+                prefetch={true}
+                onClick={() => setIsChartsMenuOpen(false)}
+                className={`nav-flyout-link ${
+                  isInvestActive && searchParams.get('view') === 'portfolio'
+                    ? 'nav-flyout-link-active'
+                    : ''
+                }`}
+              >
+                <PieChart size={16} />
+                <span>Portfolio</span>
               </Link>
             </motion.div>
           )}

@@ -1,8 +1,10 @@
 import { db } from '@/db';
 import { dailyPrices, tickers, positions } from '@/db/schema';
 import { eq, asc, sql, and } from 'drizzle-orm';
-import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
-import { getRecentOpportunities } from '@/lib/opportunities';
+import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
+import { getCachedOpportunitiesSync } from '@/lib/opportunities';
+import { evaluateHoldingConsensus, type HoldingConsensus } from '@/lib/multi-strategy-consensus';
+import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
 import { TickerOrder } from '@/components/platform/TickerPositions';
 import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices, getCachedHourlyPrices } from '@/lib/data-cache';
 import { createClient } from '@/lib/supabase/server';
@@ -11,6 +13,7 @@ import { Suspense } from 'react';
 import InvestClientView from '@/components/platform/invest/InvestClientView';
 import InvestSectorsView from '@/components/platform/invest/InvestSectorsView';
 import InvestTickersView from '@/components/platform/invest/InvestTickersView';
+import PortfolioArchitectView from '@/components/platform/invest/portfolio/PortfolioArchitectView';
 import { type WatchlistItem } from '@/components/platform/RightSidebar';
 import InvestSkeleton from './InvestSkeleton';
 
@@ -26,8 +29,9 @@ export default async function InvestPage(props: InvestPageProps) {
   const timeframe = searchParams?.timeframe || 'D';
   const initialReplayMode = searchParams?.replay === '1';
   
-  // Default to 'sectors' unless explicitly set to 'chart'
-  const view = searchParams?.view === 'chart' ? 'chart' : 'sectors';
+  // Default to 'sectors' unless explicitly set to 'chart' or 'portfolio'
+  const rawView = searchParams?.view;
+  const view = rawView === 'chart' ? 'chart' : rawView === 'portfolio' ? 'portfolio' : 'sectors';
 
   return (
     <InvestPageContent 
@@ -68,10 +72,11 @@ async function InvestPageContent({
     recentPricesRes,
     tickerPositionsRes,
     dbDataRes,
+    industryRotationRes,
   ] = await Promise.allSettled([
     getCachedTickers(),
     userId
-      ? db.select({ tickerSymbol: positions.tickerSymbol })
+      ? db.select()
           .from(positions)
           .where(and(eq(positions.status, 'OPEN'), eq(positions.userId, userId)))
       : Promise.resolve([]),
@@ -82,6 +87,7 @@ async function InvestPageContent({
           .where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, userId)))
       : Promise.resolve([]),
     is1H ? getCachedHourlyPrices(selectedSymbol) : getCachedDailyPrices(selectedSymbol),
+    getCachedIndustryRotationMap().catch(() => null),
   ]);
 
   const allTickers = allTickersRes.status === 'fulfilled' && Array.isArray(allTickersRes.value) ? allTickersRes.value : [];
@@ -306,6 +312,74 @@ async function InvestPageContent({
 
   const currentTicker = watchlist.find((item) => item.symbol.toUpperCase() === selectedSymbol.toUpperCase());
 
+  const industryRotation = industryRotationRes.status === 'fulfilled' ? industryRotationRes.value : null;
+
+  const latestPriceMap: Record<string, number> = {};
+  for (const [sym, p] of Object.entries(priceMap)) {
+    latestPriceMap[sym] = p.lastPrice;
+  }
+
+  const tickerMap: Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }> = {};
+  for (const t of allTickers) {
+    const sym = t.symbol.toUpperCase();
+    const cleanSym = normalizeTickerSymbol(sym);
+    const meta = {
+      companyName: t.companyName || sym,
+      sector: t.sector || 'Unclassified',
+      industryGroup: t.industryGroup || t.sector || 'Unclassified',
+      logoUrl: t.logoUrl || null,
+    };
+    tickerMap[sym] = meta;
+    tickerMap[cleanSym] = meta;
+  }
+
+  const rotationMap: Record<string, { industryGroup: string; rotationRegime?: 'Leading' | 'Improving' | 'Weakening' | 'Lagging' }> = {};
+  if (industryRotation?.tickerMap) {
+    for (const [sym, meta] of industryRotation.tickerMap.entries()) {
+      rotationMap[sym] = {
+        industryGroup: meta.industryGroup,
+        rotationRegime: meta.rotationRegime,
+      };
+    }
+  }
+
+  // Multi-strategy consensus for active holdings
+  const positionSymbols = Array.from(new Set(openPositionsRows.map((p: any) => normalizeTickerSymbol(p.tickerSymbol))));
+  const consensusMap: Record<string, HoldingConsensus> = {};
+
+  if (positionSymbols.length > 0) {
+    const priceHistories = await Promise.allSettled(
+      positionSymbols.map(async (sym) => {
+        if (sym === normalizeTickerSymbol(selectedSymbol) && dbData.length > 0 && !is1H) {
+          return { sym, rows: dbData };
+        }
+        const rows = await getCachedDailyPrices(sym, 120);
+        return { sym, rows };
+      })
+    );
+
+    for (const res of priceHistories) {
+      if (res.status === 'fulfilled' && res.value) {
+        const { sym, rows } = res.value;
+        const bars: PriceBar[] = (rows || []).map((r: any) => ({
+          date: r.date,
+          open: Number(r.open),
+          high: Number(r.high),
+          low: Number(r.low),
+          close: Number(r.close),
+          volume: Number(r.volume || 0),
+        }));
+        if (bars.length >= 10) {
+          consensusMap[sym] = evaluateHoldingConsensus(sym, bars);
+        }
+      }
+    }
+  }
+
+  const initialOpportunities = (getCachedOpportunitiesSync(15, 'all') || []).filter(
+    (o) => o.signal.signal === 'BUY'
+  );
+
   return (
     <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-14 md:pb-0">
       <InvestClientView
@@ -325,7 +399,24 @@ async function InvestPageContent({
             rangeData={rangeData}
           />
         }
-        initialView={view as 'sectors' | 'chart'}
+        portfolioView={
+          <PortfolioArchitectView
+            initialPositions={openPositionsRows.map((p: any) => ({
+              id: p.id,
+              tickerSymbol: p.tickerSymbol,
+              entryPrice: Number(p.entryPrice),
+              quantity: Number(p.quantity),
+              createdAt: p.createdAt,
+              entryDate: p.entryDate ? (typeof p.entryDate === 'string' ? p.entryDate : new Date(p.entryDate).toISOString()) : undefined,
+            }))}
+            latestPriceMap={latestPriceMap}
+            tickerMap={tickerMap}
+            rotationMap={rotationMap}
+            initialConsensusMap={consensusMap}
+            initialOpportunities={initialOpportunities}
+          />
+        }
+        initialView={view as 'sectors' | 'chart' | 'portfolio'}
       />
     </div>
   );
