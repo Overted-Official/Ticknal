@@ -22,7 +22,7 @@ export default function AuthButton({
       const { data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `com.quantegx.app://auth/callback`,
+          redirectTo: `com.ticknal.app://auth/callback`,
           skipBrowserRedirect: true,
         },
       });

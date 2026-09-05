@@ -60,7 +60,9 @@ export async function initNativeBridge(options?: {
 
         try {
           // Replace custom scheme with https to make URL parsing work
-          const parsableUrl = event.url.replace('com.quantegx.app://', 'https://placeholder/');
+          const parsableUrl = event.url
+            .replace('com.ticknal.app://', 'https://placeholder/')
+            .replace('com.quantegx.app://', 'https://placeholder/');
           const urlObj = new URL(parsableUrl);
 
           // Check for hash fragment tokens (implicit flow)
@@ -94,7 +96,9 @@ export async function initNativeBridge(options?: {
       }
 
       // Handle general deep links
-      const targetPath = event.url.replace('com.quantegx.app://', '/');
+      const targetPath = event.url
+        .replace('com.ticknal.app://', '/')
+        .replace('com.quantegx.app://', '/');
       if (options?.onNavigate) {
         options.onNavigate(targetPath);
       } else {

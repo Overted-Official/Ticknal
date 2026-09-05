@@ -120,7 +120,7 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
         const source = requestUrl.searchParams.get('source');
 
         if (source === 'app') {
-          return NextResponse.redirect(`com.quantegx.app://auth/callback?next=${encodeURIComponent(destination)}`);
+          return NextResponse.redirect(`com.ticknal.app://auth/callback?next=${encodeURIComponent(destination)}`);
         }
 
         return NextResponse.redirect(new URL(destination, siteOrigin).toString());
