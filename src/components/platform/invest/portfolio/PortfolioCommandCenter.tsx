@@ -584,7 +584,6 @@ export default function PortfolioCommandCenter({
         </section>
 
         <section className="section-container">
-          <div className="widget-grid grid-cols-1 items-start xl:grid-cols-2">
         <section className="min-w-0">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-plt-accent">02 · Current portfolio</p><h2 className="mt-1 text-base font-semibold text-plt-text">Open positions, one row per ticker</h2><p className="mt-1 text-xs text-plt-muted">Multiple lots and accounts are aggregated here; use the account detail before selling.</p></div><span className="text-[11px] text-plt-muted">{holdings.length} active ticker{holdings.length === 1 ? '' : 's'} · {initialPositions.length} lot{initialPositions.length === 1 ? '' : 's'}</span></div>
           <div className="hidden overflow-x-auto rounded-xl bg-plt-card/25 md:block">
@@ -598,6 +597,9 @@ export default function PortfolioCommandCenter({
           </div>
         </section>
 
+        </section>
+
+        <section className="section-container">
         <section className="min-w-0">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-plt-accent">03 · Buy opportunities</p><h2 className="mt-1 text-base font-semibold text-plt-text">Find the best candidates to add</h2><p className="mt-1 text-xs text-plt-muted">Unheld tickers by default · BUY signals from the last {freshness} trading sessions · sorted {sort === 'alpha' ? 'by alpha' : 'by your selected sort'}.</p></div><span className="inline-flex items-center gap-1.5 rounded-md bg-plt-accent-soft px-2.5 py-1.5 text-[11px] font-semibold text-plt-accent"><Filter size={13} /> {strategyOpportunities.length} qualifying ticker{strategyOpportunities.length === 1 ? '' : 's'}</span></div>
           <div className="hidden overflow-x-auto rounded-xl bg-plt-card/25 md:block">
@@ -610,7 +612,6 @@ export default function PortfolioCommandCenter({
             {isLoadingOpportunities ? <div className="flex items-center justify-center gap-2 rounded-xl bg-plt-card/25 px-3 py-10 text-xs text-plt-muted"><Loader2 size={14} className="animate-spin" /> Scanning the market…</div> : groupedOpportunities.length === 0 ? <div className="rounded-xl bg-plt-card/25 px-3 py-10 text-center text-xs text-plt-muted">No candidates match the current filters.</div> : groupedOpportunities.map(([group, rows]) => { const allocatedValue = holdings.filter((holding) => (grouping === 'sector' ? holding.sector : grouping === 'industryGroup' ? holding.industryGroup : holding.industry) === group).reduce((sum, holding) => sum + holding.marketValue, 0); const allocationPct = investedValue > 0 ? (allocatedValue / investedValue) * 100 : 0; const isCollapsed = collapsedGroups[group] === true; return <div key={group} className="space-y-2"><button type="button" onClick={() => toggleGroup(group)} aria-expanded={!isCollapsed} aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${group} opportunities`} className="flex w-full items-center justify-between border-b border-plt-border-soft px-1 py-2 text-left hover:bg-plt-hover/40"><span className="flex min-w-0 items-center gap-2"><ChevronDown size={14} className={`shrink-0 text-plt-muted transition-transform ${isCollapsed ? '-rotate-90' : ''}`} /><span className="truncate text-xs font-semibold text-plt-text">{group}</span><span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] ${regimeTone(rows[0]?.rotationRegime)}`}>{rows[0]?.rotationRegime || 'Unclassified'}</span></span><span className="shrink-0 text-[10px] text-plt-muted">{rows.length} · {allocatedValue > 0 ? `${number(allocationPct)}%` : 'No allocation'}</span></button>{!isCollapsed && rows.map((opportunity) => <MobileOpportunityCard key={cleanSymbol(opportunity.symbol)} opportunity={opportunity} strategy={strategy} freshness={freshness} opportunities={opportunities} latestPriceMap={latestPriceMap} onBuy={setBuyOpportunity} />)}</div>; })}
           </div>
         </section>
-        </div>
         </section>
 
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-plt-card/35 px-4 py-3 text-[11px] text-plt-muted"><div className="flex items-center gap-2"><ShieldCheck size={15} className="text-plt-profit" /><span>Metric definitions: alpha is strategy return minus benchmark over {opportunities[0]?.analysisStart || '2025-01-01'} → {latestData}; “Unavailable” means the engine did not return a value.</span></div><a href="/wallet?tab=banks" className="inline-flex items-center gap-1.5 font-semibold text-plt-accent hover:text-plt-text">Manage Accounts <ExternalLink size={13} /></a></section>
