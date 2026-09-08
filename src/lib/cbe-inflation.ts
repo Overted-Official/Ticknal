@@ -202,7 +202,7 @@ export async function syncAllMacroInflation(): Promise<{ cbeSynced: boolean; usC
           .insert(macroInflationRates)
           .values({
             yearMonth: ym,
-            cbeHeadlineInflation: '14.90',
+            cbeHeadlineInflation: null,
             usCpiInflation: String(rate),
           })
           .onConflictDoUpdate({
@@ -230,6 +230,7 @@ export async function getLatestInflationRate(): Promise<number> {
     const rows = await db
       .select()
       .from(macroInflationRates)
+      .where(sql`${macroInflationRates.cbeHeadlineInflation} IS NOT NULL AND ${macroInflationRates.cbeHeadlineInflation} > 0`)
       .orderBy(desc(macroInflationRates.yearMonth))
       .limit(1);
 

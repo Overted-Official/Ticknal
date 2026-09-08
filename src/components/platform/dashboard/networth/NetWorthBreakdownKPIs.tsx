@@ -14,6 +14,12 @@ interface NetWorthBreakdownKPIsProps {
   connectedAccountsCount: number;
   dragDisplay: number;
   cbeAnnualInflation: number;
+  trendData?: {
+    invested: number[];
+    cash: number[];
+    drag: number[];
+    labels: string[];
+  };
 }
 
 export default function NetWorthBreakdownKPIs({
@@ -26,6 +32,7 @@ export default function NetWorthBreakdownKPIs({
   connectedAccountsCount,
   dragDisplay,
   cbeAnnualInflation,
+  trendData,
 }: NetWorthBreakdownKPIsProps) {
   const { isPrivacy } = usePrivacyMode();
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
@@ -47,8 +54,8 @@ export default function NetWorthBreakdownKPIs({
         }}
         meta={`${openPositionsCount} active holdings & funds`}
         sparklineTitle="Portfolio Capital Curve"
-        sparklineData={[22, 24, 23, 27, 29, 31, 30, 32, 33, 34]}
-        sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+        sparklineData={trendData?.invested ?? []}
+        sparklineLabels={trendData?.labels ?? []}
         colorVariant="orange"
         isPrivacy={isPrivacy}
       />
@@ -63,8 +70,8 @@ export default function NetWorthBreakdownKPIs({
         }}
         meta={`${connectedAccountsCount} connected bank account(s)`}
         sparklineTitle="Cash Balance Run-Rate"
-        sparklineData={[890, 895, 900, 905, 910, 912, 913, 914, 914, 914]}
-        sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+        sparklineData={trendData?.cash ?? []}
+        sparklineLabels={trendData?.labels ?? []}
         colorVariant="info"
         isPrivacy={isPrivacy}
       />
@@ -79,8 +86,8 @@ export default function NetWorthBreakdownKPIs({
         }}
         meta="Purchasing power deflator"
         sparklineTitle="Cumulative Purchasing Drag"
-        sparklineData={[10, 18, 25, 34, 42, 51, 58, 65, 71, 75]}
-        sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+        sparklineData={trendData?.drag ?? []}
+        sparklineLabels={trendData?.labels ?? []}
         colorVariant="risk"
         isPrivacy={isPrivacy}
       />

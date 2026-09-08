@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { desc, eq, and } from 'drizzle-orm';
+import { desc, eq, and, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, systemLogs } from '@/db/schema';
+import { positions, systemLogs, userBankAccounts } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { createClient } from '@/lib/supabase/server';
@@ -57,6 +57,11 @@ function formatPosition(
   return {
     id: position.id,
     tickerSymbol: position.tickerSymbol,
+    accountId: position.accountId,
+    entryStrategyId: position.entryStrategyId,
+    entrySignalDate: position.entrySignalDate,
+    entrySignalPrice: toNullableNumber(position.entrySignalPrice),
+    entrySource: position.entrySource,
     companyName: tickerMap[position.tickerSymbol]?.companyName ?? position.tickerSymbol,
     sector: tickerMap[position.tickerSymbol]?.sector ?? 'Unclassified',
     logoUrl: tickerMap[position.tickerSymbol]?.logoUrl ?? null,
@@ -167,6 +172,46 @@ export async function handlePositionsPost(request: Request) {
   } catch (error) {
     console.error('Error creating position:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+/** Assign existing unlinked open lots to a brokerage account without changing cash. */
+export async function handlePositionsAssignAccountPost(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const body = await request.json();
+    const accountId = Number(body.accountId);
+    if (!Number.isInteger(accountId) || accountId <= 0) {
+      return NextResponse.json({ error: 'A brokerage account is required' }, { status: 400 });
+    }
+
+    const [account] = await db.select()
+      .from(userBankAccounts)
+      .where(and(
+        eq(userBankAccounts.id, accountId),
+        eq(userBankAccounts.userId, user.id),
+        eq(userBankAccounts.isArchived, false),
+      ));
+    if (!account || !['BROKERAGE', 'BROKER_CASH'].includes(account.accountType)) {
+      return NextResponse.json({ error: 'Brokerage account not found' }, { status: 404 });
+    }
+
+    const assigned = await db.update(positions)
+      .set({ accountId, updatedAt: new Date() })
+      .where(and(
+        eq(positions.userId, user.id),
+        eq(positions.status, 'OPEN'),
+        sql`${positions.accountId} IS NULL`,
+      ))
+      .returning({ id: positions.id });
+
+    return NextResponse.json({ assignedCount: assigned.length, accountId });
+  } catch (error) {
+    console.error('Error assigning positions to brokerage:', error);
+    return NextResponse.json({ error: 'Could not assign existing positions' }, { status: 500 });
   }
 }
 

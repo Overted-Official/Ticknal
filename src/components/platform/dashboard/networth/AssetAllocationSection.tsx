@@ -30,34 +30,20 @@ interface AssetAllocationSectionProps {
   slices: AssetSlice[];
   currencyMode: 'EGP' | 'USD';
   usdRate: number;
+  historicalGrowth?: Array<{ month: string; nominal: number; real: number; drag: number }>;
 }
 
 export default function AssetAllocationSection({
   slices,
   currencyMode,
   usdRate,
+  historicalGrowth = [],
 }: AssetAllocationSectionProps) {
   const [chartType, setChartType] = useState<'donut' | 'treemap'>('donut');
   const { isPrivacy } = usePrivacyMode();
 
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' £' : '';
-
-  // Generate 12-month wealth growth vs real purchasing power points
-  const totalValue = slices.reduce((acc, s) => acc + s.value, 0);
-  const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
-  const historicalGrowth = months.map((month, idx) => {
-    const growthRatio = 0.82 + (idx / 11) * 0.18;
-    const nominal = totalValue * growthRatio;
-    const inflationCompounding = Math.pow(1 + 0.149 / 12, 11 - idx);
-    const realPurchasing = nominal / inflationCompounding;
-    return {
-      month,
-      nominal: Math.round(nominal),
-      real: Math.round(realPurchasing),
-      drag: Math.round(nominal - realPurchasing),
-    };
-  });
 
   // Custom Sleek Tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -144,8 +130,13 @@ export default function AssetAllocationSection({
         </div>
 
         <div className="h-56 w-full my-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={historicalGrowth} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          {historicalGrowth.length < 2 ? (
+            <div className="flex h-full items-center justify-center text-xs text-plt-muted font-sans">
+              Historical wealth data is not available.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={historicalGrowth} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="nominalArea" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--plt-profit)" stopOpacity={0.35} />
@@ -177,8 +168,9 @@ export default function AssetAllocationSection({
                 strokeDasharray="4 4"
                 dot={false}
               />
-            </AreaChart>
-          </ResponsiveContainer>
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div className="pt-2 border-t border-plt-border-soft flex items-center justify-between text-[11px] font-sans text-plt-muted">

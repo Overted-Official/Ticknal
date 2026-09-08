@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import BankSummaryKPIs from './BankSummaryKPIs';
 import BankAccountsGrid from './BankAccountsGrid';
@@ -14,6 +14,13 @@ import { type BankAccount, type BankTransaction, type BankItem } from '@/types/b
 import { useToast } from '@/context/ToastContext';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+type BrokeragePosition = {
+  accountId?: number | null;
+  tickerSymbol: string;
+  quantity?: number;
+  currentPrice?: number;
+};
 
 const CATEGORIES = [
   'Living & Bills',
@@ -60,11 +67,31 @@ export default function WalletBankAccountsView({
   );
 
   const { data: banksListData } = useSWR<{ banks: BankItem[] }>('/api/banks/list', fetcher);
+  const { data: positionsData } = useSWR<{ orders: BrokeragePosition[] }>(
+    '/api/positions?status=OPEN',
+    fetcher,
+    { refreshInterval: 10000 },
+  );
 
   const accounts = accountsData?.accounts ?? initialAccounts;
   const transactions = txData?.transactions ?? initialTransactions;
   const availableBanks = banksListData?.banks ?? [];
+  const openPositions = positionsData?.orders ?? [];
   const isInitialLoading = !accountsData && accounts.length === 0;
+
+  const brokerageSummaries = useMemo(() => {
+    return accounts
+      .filter((account) => !account.isArchived && ['BROKERAGE', 'BROKER_CASH'].includes(account.accountType))
+      .map((account) => {
+        const positions = openPositions.filter((position) => position.accountId === account.id);
+        const symbols = Array.from(new Set(positions.map((position) => position.tickerSymbol)));
+        const investedValue = positions.reduce(
+          (sum, position) => sum + Number(position.quantity || 0) * Number(position.currentPrice || 0),
+          0,
+        );
+        return { account, positions, symbols, investedValue };
+      });
+  }, [accounts, openPositions]);
 
   // Drawers state
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
@@ -157,6 +184,33 @@ export default function WalletBankAccountsView({
                 onDeleteAccount={handleDeleteAccount}
                 onSetDefaultAccount={handleSetDefaultAccount}
               />
+
+              {brokerageSummaries.length > 0 && (
+                <div className="mt-5 rounded-xl bg-plt-card/35 px-4 py-3">
+                  <div className="mb-3 flex items-end justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-plt-text">Invested holdings by brokerage</h3>
+                      <p className="mt-0.5 text-[11px] text-plt-muted">Open positions linked to each brokerage account. Historical unlinked lots stay outside these totals.</p>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-[0.14em] text-plt-muted">Live positions</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <div className="account-summary-table-min">
+                      <div className="table-layout-account-summary border-b border-plt-border-soft px-2 py-2 text-[9px] font-semibold uppercase tracking-wider text-plt-muted">
+                        <span>Brokerage</span><span>Positions</span><span>Tickers</span><span className="text-right">Market value</span>
+                      </div>
+                      {brokerageSummaries.map(({ account, positions, symbols, investedValue }) => (
+                        <div key={account.id} className="table-layout-account-summary items-center border-b border-plt-border-soft px-2 py-2.5 text-xs last:border-b-0">
+                          <span className="truncate font-semibold text-plt-text">{account.accountName || account.customBankName || account.bankName || 'Brokerage account'}</span>
+                          <span className="text-plt-muted">{positions.length}</span>
+                          <span className="text-plt-muted">{symbols.length}</span>
+                          <span className="text-right font-semibold text-plt-text">{investedValue.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} {account.currency}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* SECTION 2: Transaction Ledger & Activity */}

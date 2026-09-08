@@ -50,7 +50,7 @@ export default function WalletClientView({
 
   const navItems = [
     { label: 'Stock Positions', value: 'positions', icon: Wallet },
-    { label: 'Bank Accounts & Ledger', value: 'banks', icon: Landmark },
+    { label: 'Accounts', value: 'banks', icon: Landmark },
   ];
 
   return (

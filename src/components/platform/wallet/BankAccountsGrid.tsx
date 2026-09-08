@@ -34,7 +34,8 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   CURRENT: 'Current',
   SAVINGS: 'Savings',
   CD_TIME_DEPOSIT: 'Certificates (CD)',
-  BROKER_CASH: 'Brokerage Cash',
+  BROKERAGE: 'Brokerage account',
+  BROKER_CASH: 'Brokerage account',
   WALLET: 'Digital Wallet',
 };
 
@@ -130,7 +131,7 @@ export default function BankAccountsGrid({
           onClick={onOpenAddModal}
           className="px-4 py-2 rounded-xl bg-white hover:bg-white/90 text-black font-medium text-xs transition font-semibold"
         >
-          + Add Your First Bank Account
+          + Add Your First Account
         </button>
       </div>
     );

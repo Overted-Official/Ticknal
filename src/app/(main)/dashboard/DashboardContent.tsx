@@ -20,6 +20,8 @@ import { type BankAccount, type BankTransaction, type PositionItem } from '@/typ
 import { getLatestInflationRate, getLatestUsCpiRate, getHistoricalInflationSeries } from '@/lib/cbe-inflation';
 import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
 import { type IndustryGroupStake } from '@/components/platform/dashboard/investments/PortfolioConsultantCard';
+import { buildCashTrend, monthEnd, recentMonthKeys } from '@/lib/portfolio-finance';
+import type { NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 
 type DashboardOrder = {
   id: number;
@@ -39,6 +41,7 @@ type DashboardOrder = {
 const emptyOrderStats = {
   openOrders: [] as DashboardOrder[],
   openMarketValue: 0,
+  openCostBasis: 0,
   unrealized: 0,
   realized: 0,
   totalRoi: 0,
@@ -46,10 +49,10 @@ const emptyOrderStats = {
   industryGroupData: [] as IndustryGroupStake[],
   rotationMap: {} as Record<string, string>,
   monthlyData: [] as MonthlyDataItem[],
-  winRate: 0,
-  avgBarsPerTrade: 0,
-  maxDrawdownPct: 0,
-  avgAdverseExcursion: 0,
+  winRate: null,
+  avgBarsPerTrade: null,
+  maxDrawdownPct: null,
+  avgAdverseExcursion: null,
   openWinning: 0,
   openLosing: 0,
   closedWinning: 0,
@@ -66,10 +69,10 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
 
   if (!user) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text items-center justify-center p-8 text-center">
+      <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-auto bg-plt-base p-8 text-center text-plt-text">
         <h2 className="text-2xl font-bold mb-4">Welcome to Ticknal</h2>
-        <p className="text-tv-muted mb-6">Please sign in to view your personalized dashboard and portfolio.</p>
-        <Link href="/" className="bg-tv-accent text-white px-6 py-2 rounded-tv-sm hover:bg-tv-accent/90 transition">
+        <p className="mb-6 text-plt-muted">Please sign in to view your personalized dashboard and portfolio.</p>
+        <Link href="/" className="rounded-xl bg-plt-accent px-6 py-2 text-plt-base transition hover:opacity-90">
           Sign In
         </Link>
       </div>
@@ -108,15 +111,18 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
   // Tab 3: Net Worth & Inflation View
   if (tab === 'net-worth') {
     let accounts: BankAccount[] = [];
+    let transactions: BankTransaction[] = [];
     let openPositions: PositionItem[] = [];
+    let netWorthHistory: NetWorthHistoryPoint[] = [];
     let cbeInflation = 14.9;
     let usCpiInflation = 2.8;
     let inflationSeries: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }> = [];
 
     try {
-      const [accRes, posRes, infRes, usCpiRes, seriesRes] = await Promise.allSettled([
+      const [accRes, posRes, txRes, infRes, usCpiRes, seriesRes] = await Promise.allSettled([
         getUserBankAccounts(user.id),
         getOpenPositionsForNetWorth(user.id),
+        getUserBankTransactions(user.id),
         getLatestInflationRate(),
         getLatestUsCpiRate(),
         getHistoricalInflationSeries(),
@@ -124,6 +130,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
 
       if (accRes.status === 'fulfilled') accounts = accRes.value;
       if (posRes.status === 'fulfilled') openPositions = posRes.value;
+      if (txRes.status === 'fulfilled') transactions = txRes.value;
       if (infRes.status === 'fulfilled') cbeInflation = infRes.value;
       if (usCpiRes.status === 'fulfilled') usCpiInflation = usCpiRes.value;
       if (seriesRes.status === 'fulfilled') {
@@ -137,10 +144,13 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
       console.error('Error fetching net worth data:', err);
     }
 
+    netWorthHistory = await getNetWorthHistory(user.id, accounts, transactions, usdRate);
+
     return (
       <DashboardNetWorthView
         initialAccounts={accounts}
         openPositions={openPositions}
+        netWorthHistory={netWorthHistory}
         usdRate={usdRate}
         cbeAnnualInflation={cbeInflation}
         usCpiAnnualInflation={usCpiInflation}
@@ -150,7 +160,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
   }
 
   // Tab 1: Investments View (Default)
-  let orderStats = emptyOrderStats;
+  let orderStats: Awaited<ReturnType<typeof getOrderStats>> = emptyOrderStats;
   let activeAlertCount = 0;
 
   try {
@@ -184,7 +194,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
   }
 
   // Fast synchronous check if full market opportunities are already warmed in memory
-  const cachedOpps = getCachedOpportunitiesSync(15, 'all');
+  const cachedOpps = getCachedOpportunitiesSync(5, 'all');
   const initialBuyOpportunities = cachedOpps
     ? (cachedOpps.filter((item) => item.signal.signal === 'BUY').slice(0, 12) as Opportunity[])
     : [];
@@ -201,7 +211,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
 
 async function getOrderStats(userId: string) {
   try {
-    const [openRows, closedRows, latestPrices, tickerMap, avgAdverseExcursion, rotationMeta] = await Promise.all([
+    const [openRows, closedRows, latestPrices, tickerMap, rotationMeta] = await Promise.all([
       db.select().from(positions).where(
         and(eq(positions.status, 'OPEN'), eq(positions.userId, userId))
       ).orderBy(desc(positions.createdAt)),
@@ -210,9 +220,10 @@ async function getOrderStats(userId: string) {
       ).orderBy(desc(positions.createdAt)),
       getLatestPriceMap().catch(() => ({} as Record<string, number>)),
       getTickerMap().catch(() => ({} as Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }>)),
-      getAvgAdverseExcursion(userId).catch(() => 0),
       getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map(), industryMap: new Map() })),
     ]);
+
+  const positionPerformance = await getPortfolioPerformanceMetrics(openRows, closedRows);
 
   const openOrdersMap = new Map<string, DashboardOrder>();
   for (const order of openRows) {
@@ -221,7 +232,8 @@ async function getOrderStats(userId: string) {
     const entryPrice = Number(order.entryPrice);
     const quantity = Number(order.quantity);
     const currentPrice = latestPrices[symbol] ?? entryPrice;
-    const profitLoss = (currentPrice - entryPrice) * quantity;
+    const direction = String(order.side).toUpperCase() === 'SHORT' ? -1 : 1;
+    const profitLoss = (currentPrice - entryPrice) * quantity * direction;
     const industryGroup = tickerMap[symbol]?.industryGroup || rotationMeta.tickerMap.get(cleanSym)?.industryGroup || tickerMap[symbol]?.sector || 'Unclassified';
 
     if (openOrdersMap.has(symbol)) {
@@ -233,7 +245,7 @@ async function getOrderStats(userId: string) {
       existing.quantity = newQuantity;
       existing.entryPrice = avgEntryPrice;
       existing.profitLoss += profitLoss;
-      existing.profitLossPct = avgEntryPrice > 0 ? ((currentPrice - avgEntryPrice) / avgEntryPrice) * 100 : 0;
+      existing.profitLossPct = totalCost > 0 ? (existing.profitLoss / totalCost) * 100 : 0;
     } else {
       openOrdersMap.set(symbol, {
         id: order.id,
@@ -247,12 +259,13 @@ async function getOrderStats(userId: string) {
         quantity,
         currentPrice,
         profitLoss,
-        profitLossPct: entryPrice > 0 ? ((currentPrice - entryPrice) / entryPrice) * 100 : 0,
+        profitLossPct: entryPrice > 0 ? (profitLoss / (entryPrice * quantity)) * 100 : 0,
       });
     }
   }
   const openOrders = Array.from(openOrdersMap.values());
   const totalMarketValue = openOrders.reduce((sum, o) => sum + o.currentPrice * o.quantity, 0);
+  const openCostBasis = openRows.reduce((sum, order) => sum + Number(order.entryPrice) * Number(order.quantity), 0);
 
   // --- 25 GICS Industry Group Capital Allocation & Stakes ---
   const industryGroupMap = new Map<string, { value: number; count: number; tickers: Set<string> }>();
@@ -294,153 +307,150 @@ async function getOrderStats(userId: string) {
     rotationMapRecord[ig] = reg;
   }
 
-  // --- Monthly Investment & Realized/Unrealized P/L (Activity-based) ---
-  type MonthlyBucket = { invested: number; realizedPL: number; unrealizedPL: number };
-  const monthlyBucketMap = new Map<string, MonthlyBucket>();
-
-  const getLabel = (dateStr: string) => {
-    const [year, month] = dateStr.split('-');
-    return `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(month) - 1]} '${year.slice(2)}`;
+  // --- Monthly Investment Performance ---
+  // Activity and mark-to-market values are kept separate. The old chart added
+  // today's unrealized P/L to the entry month, which made historical bars and
+  // cumulative ROI change whenever the current price changed.
+  type MonthlyBucket = {
+    invested: number;
+    realizedPL: number;
+    marketValue: number;
+    unrealizedPL: number;
+    closedWins: number;
+    closedCount: number;
   };
 
   const allOrders = [...openRows, ...closedRows];
   const getIsoDate = (d: any) => typeof d === 'string' ? d : new Date(d as unknown as string).toISOString().split('T')[0];
+  const getMonthKey = (dateStr: string) => dateStr.slice(0, 7);
+  const getLabel = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    return `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(month) - 1]} '${year.slice(2)}`;
+  };
+  const getMonthEnd = (monthKey: string) => {
+    const [year, month] = monthKey.split('-').map(Number);
+    return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+  };
 
-  // 1. Determine the full date span across all entry and exit dates
-  if (allOrders.length > 0) {
-    let minDateStr = getIsoDate(allOrders[0].entryDate);
-    let maxDateStr = getIsoDate(allOrders[0].entryDate);
-
-    for (const order of allOrders) {
-      const entryStr = getIsoDate(order.entryDate);
-      if (entryStr < minDateStr) minDateStr = entryStr;
-      if (entryStr > maxDateStr) maxDateStr = entryStr;
-      if (order.exitDate) {
-        const exitStr = getIsoDate(order.exitDate);
-        if (exitStr > maxDateStr) maxDateStr = exitStr;
-      }
-    }
-
-    // Generate empty monthly buckets from earliest date to today
-    let current = new Date(minDateStr);
-    current.setDate(1);
-    const end = new Date(maxDateStr);
-    end.setDate(1);
-    const today = new Date();
-    today.setDate(1);
-    if (today > end) end.setTime(today.getTime());
-
-    while (current <= end) {
-      const year = current.getFullYear();
-      const month = String(current.getMonth() + 1).padStart(2, '0');
-      const label = getLabel(`${year}-${month}`);
-      if (!monthlyBucketMap.has(label)) {
-        monthlyBucketMap.set(label, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
-      }
-      current.setMonth(current.getMonth() + 1);
-    }
-  }
-
-  // 2. Invested: group by entryDate month (capital deployed)
+  const monthlyBucketMap = new Map<string, MonthlyBucket>();
+  let minEntryDate = '';
   for (const order of allOrders) {
-    const entryLabel = getLabel(getIsoDate(order.entryDate));
-    const cost = Number(order.entryPrice) * Number(order.quantity);
-    if (!monthlyBucketMap.has(entryLabel)) monthlyBucketMap.set(entryLabel, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
-    monthlyBucketMap.get(entryLabel)!.invested += cost;
+    const entryDate = getIsoDate(order.entryDate);
+    if (!minEntryDate || entryDate < minEntryDate) minEntryDate = entryDate;
   }
 
-  // 3. Realized P/L: group by exitDate month (gains/losses booked)
+  if (minEntryDate) {
+    const cursor = new Date(`${getMonthKey(minEntryDate)}-01T00:00:00Z`);
+    const today = new Date();
+    const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+    while (cursor <= end) {
+      const monthKey = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, '0')}`;
+      monthlyBucketMap.set(monthKey, {
+        invested: 0,
+        realizedPL: 0,
+        marketValue: 0,
+        unrealizedPL: 0,
+        closedWins: 0,
+        closedCount: 0,
+      });
+      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+    }
+  }
+
+  const symbols = Array.from(new Set(allOrders.map((order) => order.tickerSymbol.trim().toUpperCase())));
+  const monthlyCloseMap = await getMonthlyCloseMap(symbols, minEntryDate || new Date().toISOString().slice(0, 10));
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+
+  for (const order of allOrders) {
+    const entryMonth = getMonthKey(getIsoDate(order.entryDate));
+    const bucket = monthlyBucketMap.get(entryMonth);
+    if (bucket) bucket.invested += Number(order.entryPrice) * Number(order.quantity);
+  }
+
   for (const order of closedRows) {
     if (!order.exitDate) continue;
-    const exitLabel = getLabel(getIsoDate(order.exitDate));
+    const exitMonth = getMonthKey(getIsoDate(order.exitDate));
+    const bucket = monthlyBucketMap.get(exitMonth);
+    if (!bucket) continue;
     const entryPrice = Number(order.entryPrice);
     const exitPrice = Number(order.exitPrice ?? entryPrice);
     const quantity = Number(order.quantity);
-    const pl = (exitPrice - entryPrice) * quantity;
-    if (!monthlyBucketMap.has(exitLabel)) monthlyBucketMap.set(exitLabel, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
-    monthlyBucketMap.get(exitLabel)!.realizedPL += pl;
+      bucket.realizedPL += positionPnl(order);
+      bucket.closedCount += 1;
+      if (positionPnl(order) > 0) bucket.closedWins += 1;
   }
 
-  // 4. Unrealized P/L: group by entryDate month for active open positions
-  for (const order of openRows) {
-    const entryLabel = getLabel(getIsoDate(order.entryDate));
-    const symbol = order.tickerSymbol.trim().toUpperCase();
-    const entryPrice = Number(order.entryPrice);
-    const currentPrice = latestPrices[symbol] ?? entryPrice;
-    const quantity = Number(order.quantity);
-    const unpl = (currentPrice - entryPrice) * quantity;
-    if (!monthlyBucketMap.has(entryLabel)) monthlyBucketMap.set(entryLabel, { invested: 0, realizedPL: 0, unrealizedPL: 0 });
-    monthlyBucketMap.get(entryLabel)!.unrealizedPL += unpl;
-  }
+  for (const [monthKey, bucket] of monthlyBucketMap.entries()) {
+    const asOfDate = getMonthEnd(monthKey);
+    for (const order of allOrders) {
+      const entryDate = getIsoDate(order.entryDate);
+      const exitDate = order.exitDate ? getIsoDate(order.exitDate) : null;
+      const isActiveAtMonthEnd = entryDate <= asOfDate && (!exitDate || exitDate > asOfDate);
+      if (!isActiveAtMonthEnd) continue;
 
-  // 5. Sort chronologically and compute cumulative ROI line
-  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const sortedBuckets = Array.from(monthlyBucketMap.entries())
-    .sort((a, b) => {
-      const [aM, aY] = [a[0].slice(0, 3), a[0].slice(-2)];
-      const [bM, bY] = [b[0].slice(0, 3), b[0].slice(-2)];
-      if (aY !== bY) return Number(aY) - Number(bY);
-      return monthOrder.indexOf(aM) - monthOrder.indexOf(bM);
-    });
+      const symbol = order.tickerSymbol.trim().toUpperCase();
+      const entryPrice = Number(order.entryPrice);
+      const quantity = Number(order.quantity);
+      const price = monthKey === currentMonthKey
+        ? (latestPrices[symbol] ?? entryPrice)
+        : (monthlyCloseMap.get(`${symbol}|${monthKey}`) ?? entryPrice);
+      bucket.marketValue += price * quantity;
+      const direction = String(order.side).toUpperCase() === 'SHORT' ? -1 : 1;
+      bucket.unrealizedPL += (price - entryPrice) * quantity * direction;
+    }
+  }
 
   let cumInvested = 0;
   let cumRealizedPL = 0;
-  let cumUnrealizedPL = 0;
-  const monthlyData: MonthlyDataItem[] = sortedBuckets.map(([month, bucket]) => {
+  let cumClosedWins = 0;
+  let cumClosedCount = 0;
+  const monthlyData: MonthlyDataItem[] = Array.from(monthlyBucketMap.entries()).map(([monthKey, bucket]) => {
     cumInvested += bucket.invested;
     cumRealizedPL += bucket.realizedPL;
-    cumUnrealizedPL += bucket.unrealizedPL;
-    const totalPL = cumRealizedPL + cumUnrealizedPL;
+    cumClosedWins += bucket.closedWins;
+    cumClosedCount += bucket.closedCount;
+    const totalPL = cumRealizedPL + bucket.unrealizedPL;
     return {
-      month,
+      month: getLabel(monthKey),
       invested: bucket.invested,
       pl: bucket.realizedPL,
       unrealizedPl: bucket.unrealizedPL,
+      marketValue: bucket.marketValue,
+      cumulativeRealizedPl: cumRealizedPL,
+      winRate: cumClosedCount > 0 ? (cumClosedWins / cumClosedCount) * 100 : null,
       roi: cumInvested > 0 ? (totalPL / cumInvested) * 100 : 0,
     };
   });
 
   let winningTrades = 0;
-  let totalHoldDays = 0;
-  let maxDrawdownPct = 0;
 
   let closedLosing = 0;
 
   const realized = closedRows.reduce((sum, order) => {
-    const entryPrice = Number(order.entryPrice);
-    const exitPrice = Number(order.exitPrice ?? entryPrice);
-    const quantity = Number(order.quantity);
     
-    if (exitPrice > entryPrice) {
+    const tradePnl = positionPnl(order);
+    if (tradePnl > 0) {
       winningTrades++;
-    } else if (exitPrice < entryPrice) {
+    } else if (tradePnl < 0) {
       closedLosing++;
     }
 
-    const tradePct = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 : 0;
-    if (tradePct < maxDrawdownPct) maxDrawdownPct = tradePct;
-
-    if (order.exitDate) {
-      const t1 = new Date(order.entryDate).getTime();
-      const t2 = new Date(order.exitDate).getTime();
-      const days = (t2 - t1) / (1000 * 3600 * 24);
-      totalHoldDays += Math.max(0, days);
-    }
-
-    return sum + (exitPrice - entryPrice) * quantity;
+    return sum + tradePnl;
   }, 0);
 
   const closedCount = closedRows.length;
-  const winRate = closedCount > 0 ? (winningTrades / closedCount) * 100 : 0;
-  const avgBarsPerTrade = closedCount > 0 ? (totalHoldDays / closedCount) * (5/7) : 0;
+  const winRate = closedCount > 0 ? (winningTrades / closedCount) * 100 : null;
 
-  const totalCostBasis = openRows.reduce((sum, order) => sum + Number(order.entryPrice) * Number(order.quantity), 0);
+  // Return is measured against all capital deployed, not only the still-open
+  // lots. Using open cost as the denominator overstated ROI after any sale.
+  const totalCostBasis = allOrders.reduce((sum, order) => sum + Number(order.entryPrice) * Number(order.quantity), 0);
   const unrealized = openOrders.reduce((sum, order) => sum + order.profitLoss, 0);
   const totalRoi = totalCostBasis > 0 ? ((unrealized + realized) / totalCostBasis) * 100 : 0;
 
     return {
       openOrders,
       openMarketValue: totalMarketValue,
+      openCostBasis,
       unrealized,
       realized,
       totalRoi,
@@ -449,9 +459,9 @@ async function getOrderStats(userId: string) {
       rotationMap: rotationMapRecord,
       monthlyData,
       winRate,
-      avgBarsPerTrade,
-      maxDrawdownPct,
-      avgAdverseExcursion,
+      avgBarsPerTrade: positionPerformance.avgBarsPerTrade,
+      maxDrawdownPct: positionPerformance.maxDrawdownPct,
+      avgAdverseExcursion: positionPerformance.avgAdverseExcursion,
       openWinning: openOrders.filter(o => o.profitLoss > 0).length,
       openLosing: openOrders.filter(o => o.profitLoss < 0).length,
       closedWinning: winningTrades,
@@ -464,26 +474,255 @@ async function getOrderStats(userId: string) {
   }
 }
 
-async function getAvgAdverseExcursion(userId: string): Promise<number> {
+type PortfolioPerformanceMetrics = {
+  avgBarsPerTrade: number | null;
+  avgAdverseExcursion: number | null;
+  maxDrawdownPct: number | null;
+};
+
+type PerformancePosition = {
+  tickerSymbol: string;
+  side: string;
+  entryDate: string | Date;
+  entryPrice: string | number;
+  quantity: string | number;
+  exitDate?: string | Date | null;
+  exitPrice?: string | number | null;
+};
+
+type PerformanceBar = {
+  date: string;
+  high: number;
+  low: number;
+  close: number;
+};
+
+function isoDate(value: string | Date): string {
+  return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
+}
+
+function positionPnl(position: PerformancePosition): number {
+  const entry = Number(position.entryPrice);
+  const exit = Number(position.exitPrice ?? position.entryPrice);
+  const quantity = Number(position.quantity);
+  const direction = String(position.side).toUpperCase() === 'SHORT' ? -1 : 1;
+  return (exit - entry) * quantity * direction;
+}
+
+/**
+ * Calculates portfolio risk from actual daily market bars. The equity curve is
+ * the capital deployed to date plus realized P/L plus mark-to-market P/L on
+ * active lots. New entries therefore add capital rather than being mistaken
+ * for an investment gain.
+ */
+async function getPortfolioPerformanceMetrics(
+  openRows: PerformancePosition[],
+  closedRows: PerformancePosition[],
+): Promise<PortfolioPerformanceMetrics> {
+  const allRows = [...openRows, ...closedRows];
+  if (allRows.length === 0) {
+    return { avgBarsPerTrade: null, avgAdverseExcursion: null, maxDrawdownPct: null };
+  }
+
+  const symbols = Array.from(new Set(allRows.map((row) => row.tickerSymbol.trim().toUpperCase())));
+  const firstEntry = allRows.map((row) => isoDate(row.entryDate)).sort()[0];
+  const symbolList = sql.join(symbols.map((symbol) => sql`${symbol}`), sql`, `);
+
   try {
-    const result = await db.execute(sql`
-      SELECT AVG(mae) AS avg_mae FROM (
-        SELECT (MIN(dp.low) - p.entry_price) / NULLIF(p.entry_price, 0) * 100 AS mae
-        FROM ${positions} p
-        JOIN ${dailyPrices} dp
-          ON dp.ticker_symbol = p.ticker_symbol
-          AND dp.date >= p.entry_date
-          AND dp.date <= p.exit_date
-        WHERE p.user_id = ${userId}::uuid AND p.status = 'CLOSED'
-        GROUP BY p.id, p.entry_price
-      ) sub
+    const rows = await db.execute(sql`
+      SELECT ticker_symbol, date, high, low, close
+      FROM daily_prices
+      WHERE ticker_symbol IN (${symbolList})
+        AND date >= ${firstEntry}
+        AND date <= CURRENT_DATE
+        AND high IS NOT NULL
+        AND low IS NOT NULL
+        AND close IS NOT NULL
+      ORDER BY ticker_symbol, date
     `);
-    const row = result[0] as Record<string, unknown> | undefined;
-    const avgMae = Number(row?.avg_mae ?? 0);
-    return isNaN(avgMae) ? 0 : avgMae;
-  } catch (err) {
-    console.error('Error calculating avgAdverseExcursion:', err);
-    return 0;
+
+    const barsBySymbol = new Map<string, PerformanceBar[]>();
+    for (const row of rows as Array<Record<string, unknown>>) {
+      const symbol = String(row.ticker_symbol || '').trim().toUpperCase();
+      const bar = {
+        date: String(row.date).slice(0, 10),
+        high: Number(row.high),
+        low: Number(row.low),
+        close: Number(row.close),
+      };
+      if (!symbol || !Number.isFinite(bar.high) || !Number.isFinite(bar.low) || !Number.isFinite(bar.close)) continue;
+      const list = barsBySymbol.get(symbol) ?? [];
+      list.push(bar);
+      barsBySymbol.set(symbol, list);
+    }
+
+    const measuredBars: number[] = [];
+    const adverseExcursions: number[] = [];
+    for (const position of closedRows) {
+      const symbol = position.tickerSymbol.trim().toUpperCase();
+      const entryDate = isoDate(position.entryDate);
+      const exitDate = position.exitDate ? isoDate(position.exitDate) : entryDate;
+      const entryPrice = Number(position.entryPrice);
+      const side = String(position.side).toUpperCase();
+      const tradeBars = (barsBySymbol.get(symbol) ?? []).filter((bar) => bar.date >= entryDate && bar.date <= exitDate);
+      if (tradeBars.length > 0) measuredBars.push(tradeBars.length);
+      if (tradeBars.length > 0 && entryPrice > 0) {
+        const adversePrice = side === 'SHORT'
+          ? Math.max(...tradeBars.map((bar) => bar.high))
+          : Math.min(...tradeBars.map((bar) => bar.low));
+        const direction = side === 'SHORT' ? 1 : -1;
+        adverseExcursions.push(((adversePrice - entryPrice) / entryPrice) * 100 * direction);
+      }
+    }
+
+    const dates = Array.from(new Set(Array.from(barsBySymbol.values()).flat().map((bar) => bar.date))).sort();
+    const lastCloseBySymbol = new Map<string, number>();
+    let peakEquity = 0;
+    let maxDrawdownPct = 0;
+
+    for (const date of dates) {
+      for (const [symbol, bars] of barsBySymbol.entries()) {
+        const bar = bars.find((candidate) => candidate.date === date);
+        if (bar) lastCloseBySymbol.set(symbol, bar.close);
+      }
+
+      let deployedCapital = 0;
+      let realizedPnl = 0;
+      let activeMarkToMarketPnl = 0;
+
+      for (const position of allRows) {
+        const entryDate = isoDate(position.entryDate);
+        if (entryDate > date) continue;
+
+        const entryPrice = Number(position.entryPrice);
+        const quantity = Number(position.quantity);
+        const direction = String(position.side).toUpperCase() === 'SHORT' ? -1 : 1;
+        deployedCapital += entryPrice * quantity;
+
+        if (position.exitDate && isoDate(position.exitDate) <= date) {
+          realizedPnl += positionPnl(position);
+          continue;
+        }
+
+        const currentClose = lastCloseBySymbol.get(position.tickerSymbol.trim().toUpperCase());
+        if (currentClose !== undefined && Number.isFinite(currentClose)) {
+          activeMarkToMarketPnl += (currentClose - entryPrice) * quantity * direction;
+        }
+      }
+
+      const equity = deployedCapital + realizedPnl + activeMarkToMarketPnl;
+      if (equity <= 0) continue;
+      peakEquity = Math.max(peakEquity, equity);
+      const drawdownPct = peakEquity > 0 ? ((peakEquity - equity) / peakEquity) * 100 : 0;
+      maxDrawdownPct = Math.max(maxDrawdownPct, drawdownPct);
+    }
+
+    return {
+      avgBarsPerTrade: measuredBars.length > 0 ? measuredBars.reduce((sum, bars) => sum + bars, 0) / measuredBars.length : null,
+      avgAdverseExcursion: adverseExcursions.length > 0 ? adverseExcursions.reduce((sum, value) => sum + value, 0) / adverseExcursions.length : null,
+      maxDrawdownPct: dates.length > 0 ? maxDrawdownPct : null,
+    };
+  } catch (error) {
+    console.error('Error calculating portfolio performance metrics:', error);
+    return { avgBarsPerTrade: null, avgAdverseExcursion: null, maxDrawdownPct: null };
+  }
+}
+
+async function getMonthlyCloseMap(symbols: string[], startDate: string): Promise<Map<string, number>> {
+  if (symbols.length === 0) return new Map();
+
+  try {
+    const symbolList = sql.join(symbols.map((symbol) => sql`${symbol}`), sql`, `);
+    const rows = await db.execute(sql`
+      SELECT ticker_symbol, year_month, close
+      FROM (
+        SELECT DISTINCT ON (ticker_symbol, DATE_TRUNC('month', date))
+          ticker_symbol,
+          TO_CHAR(DATE_TRUNC('month', date), 'YYYY-MM') AS year_month,
+          close
+        FROM daily_prices
+        WHERE ticker_symbol IN (${symbolList})
+          AND date >= ${startDate}
+          AND close IS NOT NULL
+        ORDER BY ticker_symbol, DATE_TRUNC('month', date), date DESC
+      ) AS monthly_closes
+    `);
+
+    const result = new Map<string, number>();
+    for (const row of rows as Array<Record<string, unknown>>) {
+      const symbol = String(row.ticker_symbol || '').trim().toUpperCase();
+      const yearMonth = String(row.year_month || '');
+      const close = Number(row.close);
+      if (symbol && yearMonth && Number.isFinite(close) && close > 0) {
+        result.set(`${symbol}|${yearMonth}`, close);
+      }
+    }
+    return result;
+  } catch (error) {
+    console.error('Error fetching monthly investment prices:', error);
+    return new Map();
+  }
+}
+
+async function getNetWorthHistory(
+  userId: string,
+  accounts: BankAccount[],
+  transactions: BankTransaction[],
+  usdRate: number,
+): Promise<NetWorthHistoryPoint[]> {
+  const monthKeys = recentMonthKeys(12);
+  const cashTrend = buildCashTrend(accounts, transactions, usdRate, 12);
+
+  try {
+    const positionRows = await db.select({
+      tickerSymbol: positions.tickerSymbol,
+      status: positions.status,
+      entryDate: positions.entryDate,
+      entryPrice: positions.entryPrice,
+      quantity: positions.quantity,
+      exitDate: positions.exitDate,
+    }).from(positions).where(eq(positions.userId, userId));
+
+    const symbols = Array.from(new Set(positionRows.map((row) => row.tickerSymbol.trim().toUpperCase())));
+    const monthlyCloseMap = await getMonthlyCloseMap(symbols, `${monthKeys[0]}-01`);
+    const latestPrices = await getLatestPriceMap();
+    const currentMonth = monthKeys[monthKeys.length - 1];
+    const lastKnownCloseBySymbol = new Map<string, number>();
+
+    return monthKeys.map((yearMonth, index) => {
+      const asOfDate = monthEnd(yearMonth);
+      let investedEgp = 0;
+
+      for (const row of positionRows) {
+        const entryDate = String(row.entryDate).slice(0, 10);
+        const exitDate = row.exitDate ? String(row.exitDate).slice(0, 10) : null;
+        const activeAtMonthEnd = entryDate <= asOfDate && (!exitDate || exitDate > asOfDate);
+        if (!activeAtMonthEnd) continue;
+
+        const symbol = row.tickerSymbol.trim().toUpperCase();
+        const entryPrice = Number(row.entryPrice) || 0;
+        const quantity = Number(row.quantity) || 0;
+        const monthlyClose = monthlyCloseMap.get(`${symbol}|${yearMonth}`);
+        if (monthlyClose !== undefined) lastKnownCloseBySymbol.set(symbol, monthlyClose);
+        const price = yearMonth === currentMonth
+          ? (latestPrices[symbol] ?? lastKnownCloseBySymbol.get(symbol) ?? entryPrice)
+          : (monthlyClose ?? lastKnownCloseBySymbol.get(symbol) ?? entryPrice);
+        investedEgp += price * quantity;
+      }
+
+      const cashEgp = cashTrend[index]?.totalEgp ?? 0;
+      return {
+        yearMonth,
+        month: cashTrend[index]?.month ?? yearMonth,
+        nominalEgp: cashEgp + investedEgp,
+        cashEgp,
+        brokerageCashEgp: cashTrend[index]?.brokerageCashEgp ?? 0,
+        investedEgp,
+      };
+    });
+  } catch (error) {
+    console.error('Error calculating net worth history:', error);
+    return [];
   }
 }
 
@@ -570,6 +809,8 @@ async function getUserBankAccounts(userId: string): Promise<BankAccount[]> {
         color: userBankAccounts.color,
         isDefaultExpense: userBankAccounts.isDefaultExpense,
         isArchived: userBankAccounts.isArchived,
+        createdAt: userBankAccounts.createdAt,
+        updatedAt: userBankAccounts.updatedAt,
         bankName: banks.name,
         bankLogoUrl: banks.logoUrl,
         bankSlug: banks.slug,
@@ -608,8 +849,7 @@ async function getUserBankTransactions(userId: string): Promise<BankTransaction[
       .innerJoin(userBankAccounts, eq(bankTransactions.accountId, userBankAccounts.id))
       .leftJoin(banks, eq(userBankAccounts.bankId, banks.id))
       .where(eq(bankTransactions.userId, userId))
-      .orderBy(desc(bankTransactions.transactionDate), desc(bankTransactions.createdAt))
-      .limit(100);
+      .orderBy(desc(bankTransactions.transactionDate), desc(bankTransactions.createdAt));
     return rows;
   } catch (err) {
     console.error('Error fetching bankTransactions:', err);

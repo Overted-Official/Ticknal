@@ -66,9 +66,11 @@ import {
   handlePositionsPost,
   handlePositionsPatch,
   handlePositionsDelete,
+  handlePositionsAssignAccountPost,
   handleAvatarPost,
   handleSystemLogsGet,
 } from '@/lib/user-handlers';
+import { handlePortfolioAnalysisGet, handlePortfolioTradesPost } from '@/lib/portfolio-trade-handlers';
 import {
   handleBotStatusGet,
   handleBotSettingsPost,
@@ -208,6 +210,9 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   if (root === 'strategy-report' || (root === 'strategy' && sub === 'report')) {
     return handleReportGet(req);
   }
+  if (root === 'portfolio' && sub === 'analysis') {
+    return handlePortfolioAnalysisGet(req);
+  }
 
   // 8. Market / Quotes / Tickers / Macro / Opportunities
   if (root === 'opportunities' || (root === 'market' && sub === 'opportunities')) {
@@ -299,7 +304,11 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
   }
 
   // 6. User / Positions / Avatar
+  if (root === 'portfolio' && sub === 'trades') {
+    return handlePortfolioTradesPost(req);
+  }
   if (root === 'positions' || (root === 'user' && sub === 'positions')) {
+    if (sub === 'assign-account') return handlePositionsAssignAccountPost(req);
     return handlePositionsPost(req);
   }
   if (root === 'user' && sub === 'avatar') {

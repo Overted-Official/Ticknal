@@ -23,6 +23,8 @@ export type BankAccount = {
   color?: string | null;
   isDefaultExpense?: boolean | null;
   isArchived: boolean;
+  createdAt?: string | Date | null;
+  updatedAt?: string | Date | null;
   bankName?: string | null;
   bankLogoUrl?: string | null;
   bankSlug?: string | null;
@@ -64,4 +66,3 @@ export type BankMonthlySnapshot = {
   closingBalance: number | string;
   createdAt?: string;
 };
-

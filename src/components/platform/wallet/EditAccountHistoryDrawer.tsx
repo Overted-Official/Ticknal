@@ -481,7 +481,7 @@ export default function EditAccountHistoryDrawer({
                         <option value="CURRENT">Current Account</option>
                         <option value="SAVINGS">Savings Account</option>
                         <option value="CD_TIME_DEPOSIT">Certificates (CD)</option>
-                        <option value="BROKER_CASH">Brokerage Cash</option>
+                        <option value="BROKERAGE">Brokerage account</option>
                         <option value="WALLET">Digital Wallet</option>
                       </select>
                     </div>

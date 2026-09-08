@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type BankTransaction } from '@/types/bank';
+import { getDashboardCashFlowKind } from '@/lib/portfolio-finance';
 
 export type MonthlyFlowPoint = {
   month: string;
@@ -147,11 +148,12 @@ export default function CashFlowBarChart({
         const egpVal = tx.currency === 'USD' ? amt * usdRate : amt;
         const cat = tx.category || 'Other';
 
-        if (tx.type === 'INCOME' || tx.type === 'DEPOSIT' || tx.type === 'BROKER_WITHDRAWAL') {
+        const flowKind = getDashboardCashFlowKind(tx.type);
+        if (flowKind === 'INFLOW') {
           row.inflows += egpVal;
           row.inflowCategories[cat] = (row.inflowCategories[cat] || 0) + egpVal;
           row[`inflow_cat_${cat}`] = (row[`inflow_cat_${cat}`] || 0) + egpVal;
-        } else if (tx.type === 'EXPENSE' || tx.type === 'WITHDRAWAL' || tx.type === 'BROKER_INJECTION') {
+        } else if (flowKind === 'OUTFLOW') {
           row.outflows += egpVal;
           row.outflowCategories[cat] = (row.outflowCategories[cat] || 0) + egpVal;
           row[`outflow_cat_${cat}`] = (row[`outflow_cat_${cat}`] || 0) + egpVal;
@@ -225,11 +227,12 @@ export default function CashFlowBarChart({
       const egpVal = tx.currency === 'USD' ? amt * usdRate : amt;
       const cat = tx.category || 'Other';
 
-      if (tx.type === 'INCOME' || tx.type === 'DEPOSIT' || tx.type === 'BROKER_WITHDRAWAL') {
+      const flowKind = getDashboardCashFlowKind(tx.type);
+      if (flowKind === 'INFLOW') {
         row.inflows += egpVal;
         row.inflowCategories[cat] = (row.inflowCategories[cat] || 0) + egpVal;
         row[`inflow_cat_${cat}`] = (row[`inflow_cat_${cat}`] || 0) + egpVal;
-      } else if (tx.type === 'EXPENSE' || tx.type === 'WITHDRAWAL' || tx.type === 'BROKER_INJECTION') {
+      } else if (flowKind === 'OUTFLOW') {
         row.outflows += egpVal;
         row.outflowCategories[cat] = (row.outflowCategories[cat] || 0) + egpVal;
         row[`outflow_cat_${cat}`] = (row[`outflow_cat_${cat}`] || 0) + egpVal;
@@ -593,4 +596,3 @@ export default function CashFlowBarChart({
     </div>
   );
 }
-

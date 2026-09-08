@@ -43,10 +43,10 @@ export default function InflationRadarChart({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="widget-title">
-            Multi-Currency Inflation & Purchasing Power Radar
+            Historical Purchasing Power
           </h3>
           <p className="widget-subtitle mt-0.5">
-            Visualizing nominal wealth vs. real purchasing power using currency-weighted deflator ({activeEffectiveRate}% Effective YoY).
+            Recorded nominal net worth versus inflation-adjusted purchasing power using the same currency-weighted deflator as the wealth trajectory ({activeEffectiveRate}% effective annual rate).
           </p>
         </div>
 
@@ -65,8 +65,13 @@ export default function InflationRadarChart({
 
       {/* Area Chart: Nominal vs Real Purchasing Power */}
       <div className="h-[380px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={points} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        {points.length < 2 ? (
+          <div className="flex h-full items-center justify-center text-xs text-plt-muted font-sans">
+            Historical purchasing-power data is not available.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={points} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
               <linearGradient id="nominalGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--plt-profit)" stopOpacity={0.25} />
@@ -148,8 +153,9 @@ export default function InflationRadarChart({
               fillOpacity={1}
               fill="url(#realGrad)"
             />
-          </AreaChart>
-        </ResponsiveContainer>
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

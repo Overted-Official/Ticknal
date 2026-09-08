@@ -21,9 +21,9 @@ export default async function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-auto bg-tv-base text-tv-text items-center justify-center p-8 text-center">
+      <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-auto bg-plt-base p-8 text-center text-plt-text">
         <h2 className="text-2xl font-medium mb-4">Ticknal Settings</h2>
-        <p className="text-tv-muted mb-6">Please sign in to manage your account profile, devices, and alert triggers.</p>
+        <p className="mb-6 text-plt-muted">Please sign in to manage your account profile, devices, and alert triggers.</p>
         <Link href="/" className="btn-token btn-primary">
           Sign In
         </Link>

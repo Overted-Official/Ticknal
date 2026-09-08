@@ -9,6 +9,7 @@ import SectorsKPIStrip from './SectorsKPIStrip';
 import SectorTreemap from './SectorTreemap';
 import SectorInspector from './SectorInspector';
 import SectorRotationMatrix from './SectorRotationMatrix';
+import PageHeader from '@/components/platform/ui/PageHeader';
 import {
   type SectorsPerformanceResponse,
   type SectorPerformanceItem,
@@ -147,11 +148,15 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
   };
 
   return (
-    <div className="flex-1 h-full w-full overflow-y-auto md:overflow-hidden select-none bg-plt-base text-plt-text font-sans flex flex-col p-3 md:p-5 gap-3 pb-24 md:pb-5 touch-pan-y custom-scrollbar">
+    <div className="app-page page-sections-stack flex min-h-0 flex-1 flex-col overflow-y-auto bg-plt-base text-plt-text touch-pan-y custom-scrollbar md:overflow-hidden md:pb-5">
       {/* ---------------------------------------------------- */}
       {/* 1. TOP CONTROLS & KPI STRIP (SHRINK-0)               */}
       {/* ---------------------------------------------------- */}
       <div className="shrink-0 flex flex-col gap-2.5">
+        <PageHeader
+          title="Market Sectors"
+          description="Compare sector momentum, rotation, and strategy signals."
+        />
         <SectorsHeader
           timeframePreset={timeframePreset}
           setTimeframePreset={setTimeframePreset}
@@ -192,9 +197,9 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       {/* ---------------------------------------------------- */}
       {/* 2. DEDICATED MAIN WORKSPACE CANVAS (FLEX-1 VIEWPORT) */}
       {/* ---------------------------------------------------- */}
-      <div className="flex-1 min-h-[500px] md:min-h-0 h-[520px] md:h-full flex flex-col md:flex-row gap-5 overflow-hidden shrink-0 md:shrink">
+      <div className="heatmap-workspace flex-1 md:min-h-0 md:h-full flex flex-col md:flex-row widget-row-gap overflow-hidden shrink-0 md:shrink">
         {/* Left Pane: Treemap or Rotation Matrix */}
-        <div className="flex-1 h-full min-h-[460px] md:min-h-0 overflow-hidden relative border border-plt-border-soft bg-plt-base rounded-xl">
+        <div className="heatmap-pane flex-1 h-full md:min-h-0 overflow-hidden relative border border-plt-border-soft bg-plt-base rounded-xl">
           {isLoading ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
               <RefreshCw className="w-6 h-6 animate-spin text-plt-muted" />
@@ -224,7 +229,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
         </div>
 
         {/* Right Pane: Sector Inspector & Attribution Panel */}
-        <div className="hidden md:flex w-full md:w-80 lg:w-96 xl:w-[420px] shrink-0 h-full min-h-0 flex-col overflow-hidden">
+        <div className="hidden md:flex w-full md:w-80 lg:w-96 heatmap-inspector-width shrink-0 h-full min-h-0 flex-col overflow-hidden">
           <SectorInspector
             sector={activeSectorData}
             selectedTicker={selectedTicker}
@@ -242,8 +247,8 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       {/* MOBILE BOTTOM SHEET DRAWER (SOLID OPAQUE SURFACE)     */}
       {/* ---------------------------------------------------- */}
       {isMobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end bg-black/80 animate-in fade-in duration-200">
-          <div className="bg-[#0f0f12] border-t border-plt-border-strong rounded-t-2xl max-h-[85vh] flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-plt-overlay animate-in fade-in duration-200 md:hidden">
+          <div className="flex max-h-drawer-mobile flex-col rounded-t-xl border-t border-plt-border-strong bg-plt-base p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-plt-border/40 shrink-0">
               <span className="font-bold text-sm text-plt-text">Sector Performance Attribution</span>
               <button

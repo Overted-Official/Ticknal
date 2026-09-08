@@ -8,6 +8,7 @@ import useSWR from 'swr';
 import { LayoutDashboard, LineChart, Wallet, Settings, Bell, Plus } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
+import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import { controlHover, controlTap } from '@/lib/motion';
 
@@ -69,6 +70,12 @@ export default function BottomNav() {
         >
           <Plus size={18} strokeWidth={2} />
         </motion.button>
+
+        {/* 3. Floating Value Visibility Button */}
+        <PrivacyToggleButton
+          iconOnly
+          className="w-10 h-10 rounded-full bg-plt-card/95 hover:bg-plt-card backdrop-blur-2xl border border-plt-border-strong text-plt-text shadow-xl cursor-pointer active:scale-95 transition-all"
+        />
       </div>
 
       {/* Main Bottom Bar */}

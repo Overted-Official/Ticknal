@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { type PositionItem, type BankAccount } from '@/types/bank';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
-export type PortfolioCategory = 'ALL' | 'STOCKS' | 'FUNDS' | 'USD_CASH' | 'EGP_CASH';
+export type PortfolioCategory = 'ALL' | 'STOCKS' | 'FUNDS' | 'USD_CASH' | 'EGP_CASH' | 'BROKERAGE_CASH';
 
 interface PortfolioBreakdownTableProps {
   openPositions: PositionItem[];
@@ -39,11 +39,12 @@ export default function PortfolioBreakdownTable({
   };
 
   const mutualFundSymbols = new Set(['OSOUL', 'CI_QUANT', 'COF']);
+  const isBrokerageAccount = (account: BankAccount) => ['BROKERAGE', 'BROKER_CASH'].includes(account.accountType);
 
   // Build unified constituent items
   const items: Array<{
     id: string;
-    category: 'STOCKS' | 'FUNDS' | 'USD_CASH' | 'EGP_CASH';
+    category: 'STOCKS' | 'FUNDS' | 'USD_CASH' | 'EGP_CASH' | 'BROKERAGE_CASH';
     title: string;
     subtitle: string;
     typeLabel: string;
@@ -78,15 +79,16 @@ export default function PortfolioBreakdownTable({
   // 2. USD Cash Reserves
   for (const acc of accounts.filter((a) => a.currency === 'USD')) {
     const valEgp = Number(acc.balance) * usdRate;
+    const isBrokerage = isBrokerageAccount(acc);
     items.push({
       id: `acc-${acc.id}`,
-      category: 'USD_CASH',
+      category: isBrokerage ? 'BROKERAGE_CASH' : 'USD_CASH',
       title: acc.bankName || 'Bank Account',
       subtitle: acc.accountName || 'USD Foreign Reserve',
-      typeLabel: 'USD Cash',
+      typeLabel: isBrokerage ? 'Brokerage Cash' : 'USD Cash',
       quantityOrUnits: `$${Number(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       rawEgp: valEgp,
-      color: 'var(--plt-profit)',
+      color: isBrokerage ? 'var(--plt-accent)' : 'var(--plt-profit)',
       logoUrl: acc.bankLogoUrl || null,
     });
   }
@@ -94,15 +96,16 @@ export default function PortfolioBreakdownTable({
   // 3. EGP Liquid Cash
   for (const acc of accounts.filter((a) => a.currency === 'EGP')) {
     const valEgp = Number(acc.balance);
+    const isBrokerage = isBrokerageAccount(acc);
     items.push({
       id: `acc-${acc.id}`,
-      category: 'EGP_CASH',
+      category: isBrokerage ? 'BROKERAGE_CASH' : 'EGP_CASH',
       title: acc.bankName || 'Bank Account',
       subtitle: acc.accountName || 'EGP Liquid Balance',
-      typeLabel: 'EGP Cash',
+      typeLabel: isBrokerage ? 'Brokerage Cash' : 'EGP Cash',
       quantityOrUnits: `${Number(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} £`,
       rawEgp: valEgp,
-      color: 'var(--plt-warning)',
+      color: isBrokerage ? 'var(--plt-accent)' : 'var(--plt-warning)',
       logoUrl: acc.bankLogoUrl || null,
     });
   }
@@ -121,6 +124,7 @@ export default function PortfolioBreakdownTable({
     { key: 'FUNDS', label: 'Mutual Funds' },
     { key: 'USD_CASH', label: 'USD Reserves' },
     { key: 'EGP_CASH', label: 'EGP Cash' },
+    { key: 'BROKERAGE_CASH', label: 'Brokerage Cash' },
   ];
 
   return (

@@ -103,6 +103,7 @@ export const positions = pgTable('positions', {
     .references(() => tickers.symbol, { onDelete: 'cascade' }),
   status: varchar('status', { length: 12 }).default('OPEN').notNull(),
   side: varchar('side', { length: 10 }).default('LONG').notNull(),
+  accountId: integer('account_id').references(() => userBankAccounts.id, { onDelete: 'set null' }),
   entryDate: date('entry_date').notNull(),
   entryPrice: numeric('entry_price', { precision: 12, scale: 4 }).notNull(),
   quantity: numeric('quantity', { precision: 16, scale: 4 }).default('1').notNull(),
@@ -110,6 +111,10 @@ export const positions = pgTable('positions', {
   stopPrice: numeric('stop_price', { precision: 12, scale: 4 }),
   exitDate: date('exit_date'),
   exitPrice: numeric('exit_price', { precision: 12, scale: 4 }),
+  entryStrategyId: varchar('entry_strategy_id', { length: 50 }),
+  entrySignalDate: date('entry_signal_date'),
+  entrySignalPrice: numeric('entry_signal_price', { precision: 12, scale: 4 }),
+  entrySource: varchar('entry_source', { length: 30 }).default('IMPORT'),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -117,6 +122,7 @@ export const positions = pgTable('positions', {
   return {
     statusIdx: index('positions_status_idx').on(table.status),
     userTickerStatusIdx: index('positions_user_ticker_status_idx').on(table.userId, table.tickerSymbol, table.status),
+    accountIdx: index('positions_account_idx').on(table.accountId),
   };
 });
 
@@ -160,7 +166,7 @@ export const userBankAccounts = pgTable('user_bank_accounts', {
   customBankName: varchar('custom_bank_name', { length: 255 }),
   accountName: varchar('account_name', { length: 255 }).notNull(),
   accountNumber: varchar('account_number', { length: 50 }),
-  accountType: varchar('account_type', { length: 50 }).default('CURRENT').notNull(), // CURRENT, SAVINGS, CD_TIME_DEPOSIT, BROKER_CASH, WALLET
+  accountType: varchar('account_type', { length: 50 }).default('CURRENT').notNull(), // CURRENT, SAVINGS, CD_TIME_DEPOSIT, BROKERAGE, BROKER_CASH (legacy), WALLET
   currency: varchar('currency', { length: 10 }).default('EGP').notNull(), // EGP, USD
   balance: numeric('balance', { precision: 16, scale: 4 }).default('0').notNull(),
   interestRate: numeric('interest_rate', { precision: 6, scale: 2 }), // e.g. 6.00 for 6.00% APR
@@ -182,11 +188,12 @@ export const bankTransactions = pgTable('bank_transactions', {
   userId: uuid('user_id').notNull(),
   accountId: integer('account_id').references(() => userBankAccounts.id, { onDelete: 'cascade' }).notNull(),
   toAccountId: integer('to_account_id').references(() => userBankAccounts.id, { onDelete: 'set null' }), // for transfers
-  type: varchar('type', { length: 30 }).notNull(), // DEPOSIT, WITHDRAWAL, TRANSFER, EXPENSE, INCOME, BROKER_INJECTION, BROKER_WITHDRAWAL
+  type: varchar('type', { length: 30 }).notNull(), // DEPOSIT, WITHDRAWAL, TRANSFER, EXPENSE, INCOME, BROKERAGE_BUY, BROKERAGE_SELL, BROKER_INJECTION, BROKER_WITHDRAWAL
   amount: numeric('amount', { precision: 16, scale: 4 }).notNull(),
   currency: varchar('currency', { length: 10 }).default('EGP').notNull(),
   category: varchar('category', { length: 100 }).default('Other').notNull(), // Living, Housing, Food, Trading, Salary, Savings, Investments, Other
   transactionDate: date('transaction_date').notNull(), // YYYY-MM-DD
+  positionId: integer('position_id').references(() => positions.id, { onDelete: 'set null' }),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -194,6 +201,7 @@ export const bankTransactions = pgTable('bank_transactions', {
   return {
     userIdDateIdx: index('bank_transactions_user_id_date_idx').on(table.userId, table.transactionDate),
     accountIdIdx: index('bank_transactions_account_id_idx').on(table.accountId),
+    positionIdIdx: index('bank_transactions_position_id_idx').on(table.positionId),
   };
 });
 
@@ -214,7 +222,7 @@ export const bankMonthlySnapshots = pgTable('bank_monthly_snapshots', {
 export const macroInflationRates = pgTable('macro_inflation_rates', {
   id: serial('id').primaryKey(),
   yearMonth: varchar('year_month', { length: 7 }).notNull(), // YYYY-MM
-  cbeHeadlineInflation: numeric('cbe_headline_inflation', { precision: 6, scale: 2 }).notNull(), // e.g. 15.20 for 15.2%
+  cbeHeadlineInflation: numeric('cbe_headline_inflation', { precision: 6, scale: 2 }), // e.g. 15.20 for 15.2%; null when only US CPI is available
   cbeCoreInflation: numeric('cbe_core_inflation', { precision: 6, scale: 2 }),
   usCpiInflation: numeric('us_cpi_inflation', { precision: 6, scale: 2 }), // e.g. 2.80 for 2.8%
   notes: text('notes'),

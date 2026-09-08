@@ -42,6 +42,7 @@ import { useAlerts } from '@/components/platform/AlertProvider';
 import { useToast } from '@/context/ToastContext';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 import PinSecurityCard from '@/components/platform/settings/PinSecurityCard';
+import PageHeader from '@/components/platform/ui/PageHeader';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import { triggerNativeTestNotification } from '@/lib/native/capacitor-bridge';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
@@ -529,7 +530,7 @@ export default function SettingsView({
       initial="hidden"
       animate="visible"
       variants={containerStagger}
-      className="flex-1 h-full w-full min-h-0 flex flex-col overflow-hidden bg-transparent text-white relative z-10"
+      className="relative z-10 flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-plt-base text-plt-text"
     >
       {/* 1. Mobile Top Rail */}
       <SubNavTopRail
@@ -543,48 +544,33 @@ export default function SettingsView({
         ]}
       />
 
-      <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto pb-28 md:pb-24 touch-pan-y">
+      <div {...swipeHandlers} className="app-page page-sections-stack flex h-full min-h-0 w-full flex-1 overflow-y-auto pb-28 touch-pan-y md:pb-24">
         {/* Top Header Banner */}
-        <div className="border-b border-white/[0.09] px-4 md:px-6 py-4 md:py-5 shrink-0">
-          <motion.div variants={itemFadeInUp} className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="w-2 h-2 rounded-full bg-white/60" />
-                <h1 className="text-lg font-medium tracking-[-0.02em] text-white">Settings</h1>
+        <motion.div variants={itemFadeInUp} className="shrink-0">
+          <PageHeader
+            title="Settings"
+            description="Manage your profile, security, devices, and alert subscriptions."
+            actions={(
+              <div className="hidden md:flex items-center gap-2">
+                <Link href="/dashboard" className="btn-token btn-secondary btn-compact">
+                  <span>Dashboard</span>
+                  <span className="text-white/40">→</span>
+                </Link>
+                <Link href="/positions" className="btn-token btn-secondary btn-compact">
+                  <span>Manage Positions</span>
+                  <span className="text-white/40">→</span>
+                </Link>
+                <Link href="/invest" className="btn-token btn-primary btn-compact">
+                  <span>Open Invest</span>
+                  <span className="text-plt-text-inverse">→</span>
+                </Link>
               </div>
-              <p className="mt-0.5 text-[13px] text-white/30 truncate">
-                Account profile, security PIN, devices, and alert triggers
-              </p>
-            </div>
-
-            <div className="hidden md:flex items-center gap-2">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
-              >
-                <span>Dashboard</span>
-                <span className="text-white/40">→</span>
-              </Link>
-              <Link
-                href="/positions"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
-              >
-                <span>Manage Positions</span>
-                <span className="text-white/40">→</span>
-              </Link>
-              <Link
-                href="/invest"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] border border-white/[0.09] hover:border-white/[0.18] hover:bg-white/[0.06] transition-all"
-              >
-                <span>Open Invest</span>
-                <span className="text-white/40">→</span>
-              </Link>
-            </div>
-          </motion.div>
-        </div>
+            )}
+          />
+        </motion.div>
 
         {/* Main Settings Canvas */}
-        <div className="p-4 md:p-6 space-y-2 w-full">
+        <div className="section-container w-full">
           {/* Navigation Tabs (Desktop Only) */}
           <motion.div variants={itemFadeInUp} className="hidden md:flex items-center gap-2 border-b border-white/[0.09] pb-3">
             <button
@@ -687,13 +673,13 @@ export default function SettingsView({
                       )}
                     </div>
 
-                    <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#22c55e] border-2 border-black" />
+                    <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-plt-profit border-2 border-plt-base" />
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <h2 className="text-base font-semibold text-white tracking-tight truncate">{userProfile.name}</h2>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e] shrink-0">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-plt-profit-soft border border-plt-profit-border text-plt-profit shrink-0">
                         <ShieldCheck size={11} />
                         Verified
                       </span>
@@ -731,7 +717,7 @@ export default function SettingsView({
                   type="button"
                   onClick={handleSignOut}
                   disabled={isLoggingOut}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium text-[#ef4444] bg-[#ef4444]/10 hover:bg-[#ef4444]/15 border border-[#ef4444]/25 transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium text-plt-risk bg-plt-risk-soft hover:bg-plt-risk-soft border border-plt-risk-border transition-all"
                 >
                   <LogOut size={14} />
                   <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
@@ -755,7 +741,7 @@ export default function SettingsView({
                       className="p-1 rounded text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors shrink-0"
                       title="Copy User ID"
                     >
-                      {copiedUid ? <Check size={13} className="text-[#22c55e]" /> : <Copy size={13} />}
+                      {copiedUid ? <Check size={13} className="text-plt-profit" /> : <Copy size={13} />}
                     </button>
                   </div>
                 </div>
@@ -798,10 +784,10 @@ export default function SettingsView({
               <div className="border border-white/[0.09] rounded-md bg-black p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-white/[0.08]">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-plt-profit animate-pulse" />
                     <h2 className="text-[13px] font-medium text-white tracking-[-0.02em]">Current Active Session</h2>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#22c55e]/15 border border-[#22c55e]/30 text-[#22c55e]">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-plt-profit-soft border border-plt-profit-border text-plt-profit">
                     Connected Now
                   </span>
                 </div>
@@ -822,7 +808,7 @@ export default function SettingsView({
                       </div>
                       <div className="text-[11px] text-white/40 mt-0.5 truncate font-mono">
                         {isCurrentDeviceSubscribed ? (
-                          <span className="text-[#22c55e] flex items-center gap-1.5">
+                          <span className="text-plt-profit flex items-center gap-1.5">
                             <CheckCircle2 size={12} />
                             Subscribed to instantaneous trade signals & stop-loss alerts
                           </span>
@@ -915,7 +901,7 @@ export default function SettingsView({
                                   {device.userAgent?.startsWith('Native App') ? device.userAgent : `${browser} on ${os}`}
                                 </span>
                                 {isCurrent && (
-                                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-[#22c55e]/15 border border-[#22c55e]/30 text-[#22c55e] shrink-0">
+                                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-sans bg-plt-profit-soft border border-plt-profit-border text-plt-profit shrink-0">
                                     Current
                                   </span>
                                 )}
@@ -930,7 +916,7 @@ export default function SettingsView({
                             type="button"
                             onClick={() => handleDeleteDevice(device.id)}
                             disabled={deletingDeviceId === device.id}
-                            className="p-1.5 rounded text-white/30 hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors shrink-0"
+                            className="p-1.5 rounded text-white/30 hover:text-plt-risk hover:bg-plt-risk-soft transition-colors shrink-0"
                             title="Disconnect Device"
                           >
                             <Trash2 size={14} />
@@ -974,7 +960,7 @@ export default function SettingsView({
                   onClick={() => handleStrategyScopeChange('all')}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
                     alertStrategyScope === 'all'
-                      ? 'bg-white/[0.06] border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.10)]'
+                      ? 'bg-white/[0.06] border-white/60 shadow-inset'
                       : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
                   }`}
                 >
@@ -1007,7 +993,7 @@ export default function SettingsView({
                   onClick={() => handleStrategyScopeChange('psi')}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
                     alertStrategyScope === 'psi'
-                      ? 'bg-cyan-500/10 border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.12)]'
+                      ? 'bg-cyan-500/10 border-cyan-500/60 shadow-accent'
                       : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
                   }`}
                 >
@@ -1040,7 +1026,7 @@ export default function SettingsView({
                   onClick={() => handleStrategyScopeChange('psi_v2')}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
                     alertStrategyScope === 'psi_v2'
-                      ? 'bg-emerald-500/10 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.12)]'
+                      ? 'bg-emerald-500/10 border-emerald-500/60 shadow-accent'
                       : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
                   }`}
                 >
@@ -1073,7 +1059,7 @@ export default function SettingsView({
                   onClick={() => handleStrategyScopeChange('thoth_egx_macro')}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
                     alertStrategyScope === 'thoth_egx_macro'
-                      ? 'bg-purple-500/10 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.12)]'
+                      ? 'bg-purple-500/10 border-purple-500/60 shadow-accent'
                       : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
                   }`}
                 >
@@ -1190,7 +1176,7 @@ export default function SettingsView({
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="font-mono font-bold text-xs text-white">{ticker.symbol}</span>
-                              <span className="text-[10px] font-mono text-white/35 px-1.5 py-0.2 rounded bg-white/[0.03] border border-white/[0.05] truncate max-w-[110px]">
+                              <span className="text-[10px] font-mono text-white/35 px-1.5 py-0.2 rounded bg-white/[0.03] border border-white/[0.05] truncate settings-ticker-meta">
                                 {ticker.sector}
                               </span>
                             </div>
@@ -1205,8 +1191,8 @@ export default function SettingsView({
                             {ticker.currentPrice ? `${ticker.currentPrice.toFixed(2)} EGP` : '—'}
                           </div>
                           {ticker.isPosition ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-[#22c55e] font-mono font-medium mt-0.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                            <span className="inline-flex items-center gap-1 text-[10px] text-plt-profit font-sans font-medium mt-0.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-plt-profit" />
                               Always ON
                             </span>
                           ) : (
@@ -1216,7 +1202,7 @@ export default function SettingsView({
                               disabled={togglingSymbol === ticker.symbol}
                               className={`mt-0.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium transition-all ${
                                 ticker.alertEnabled
-                                  ? 'bg-[#22c55e]/10 border border-[#22c55e]/25 text-[#22c55e]'
+                                  ? 'bg-plt-profit-soft border border-plt-profit-border text-plt-profit'
                                   : 'bg-white/[0.03] border border-white/[0.08] text-white/40'
                               }`}
                             >
@@ -1257,7 +1243,7 @@ export default function SettingsView({
                               type="button"
                               onClick={() => handleDeleteCustomAlert(ticker.symbol)}
                               disabled={togglingSymbol === ticker.symbol}
-                              className="p-1.5 rounded text-white/30 hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
+                              className="p-1.5 rounded text-white/30 hover:text-plt-risk hover:bg-plt-risk-soft transition-colors"
                               title="Remove Alert"
                             >
                               <Trash2 size={14} />
@@ -1299,7 +1285,7 @@ export default function SettingsView({
                               <TickerLogo symbol={ticker.symbol} logoUrl={ticker.logoUrl} />
                               <div>
                                 <span className="font-mono font-semibold text-white block">{ticker.symbol}</span>
-                                <span className="text-[11px] text-white/40 truncate max-w-[160px] block">
+                                <span className="text-[11px] text-white/40 truncate settings-company-width block">
                                   {ticker.companyName}
                                 </span>
                               </div>
@@ -1307,7 +1293,7 @@ export default function SettingsView({
                           </td>
 
                           {/* Sector */}
-                          <td className="py-3 px-3 text-white/50 truncate max-w-[140px]">{ticker.sector}</td>
+                          <td className="py-3 px-3 text-white/50 truncate settings-sector-width">{ticker.sector}</td>
 
                           {/* Monitoring Type Badge */}
                           <td className="py-3 px-3">
@@ -1335,8 +1321,8 @@ export default function SettingsView({
                           {/* Alert Trigger Status Toggle */}
                           <td className="py-3 px-3 text-center">
                             {ticker.isPosition ? (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] text-[#22c55e] font-mono font-medium whitespace-nowrap" title="Auto-enabled for open portfolio holding">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                                <span className="inline-flex items-center gap-1.5 text-[11px] text-plt-profit font-sans font-medium whitespace-nowrap" title="Auto-enabled for open portfolio holding">
+                                <span className="w-1.5 h-1.5 rounded-full bg-plt-profit" />
                                 Always ON
                               </span>
                             ) : (
@@ -1346,7 +1332,7 @@ export default function SettingsView({
                                 disabled={togglingSymbol === ticker.symbol}
                                 className={`px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-all whitespace-nowrap ${
                                   ticker.alertEnabled
-                                    ? 'bg-[#22c55e]/10 border border-[#22c55e]/25 text-[#22c55e] hover:bg-[#22c55e]/20'
+                                    ? 'bg-plt-profit-soft border border-plt-profit-border text-plt-profit hover:bg-plt-profit-soft'
                                     : 'bg-white/[0.03] border border-white/[0.08] text-white/40 hover:text-white/70'
                                 }`}
                               >
@@ -1371,7 +1357,7 @@ export default function SettingsView({
                                   type="button"
                                   onClick={() => handleDeleteCustomAlert(ticker.symbol)}
                                   disabled={togglingSymbol === ticker.symbol}
-                                  className="p-1 rounded text-white/30 hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
+                                  className="p-1 rounded text-white/30 hover:text-plt-risk hover:bg-plt-risk-soft transition-colors"
                                   title="Remove Alert"
                                 >
                                   <Trash2 size={14} />
@@ -1399,7 +1385,7 @@ export default function SettingsView({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md rounded-md bg-[#0a0a0a] border border-white/[0.12] shadow-2xl p-5 flex flex-col max-h-[85vh]"
+              className="w-full max-w-md rounded-md bg-plt-base border border-white/[0.12] shadow-popover p-5 flex flex-col max-h-drawer-mobile"
             >
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                 <div className="flex items-center gap-2">
@@ -1445,7 +1431,7 @@ export default function SettingsView({
                       </div>
 
                       {isAlreadyMonitored ? (
-                        <span className="text-[11px] font-mono text-[#22c55e] px-2 py-1 bg-[#22c55e]/10 rounded border border-[#22c55e]/20 shrink-0">
+                        <span className="text-[11px] font-sans text-plt-profit px-2 py-1 bg-plt-profit-soft rounded border border-plt-profit-border shrink-0">
                           Subscribed
                         </span>
                       ) : (

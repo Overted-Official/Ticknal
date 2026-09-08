@@ -2,24 +2,15 @@ import { NextResponse } from 'next/server';
 import { getCachedDailyPrices, getCachedHourlyPrices } from '@/lib/data-cache';
 import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import {
-  formatMetricsForApi,
   normalizeTickerSymbol,
-  resolvePsiParams,
-  runPsiStrategy,
   type PriceBar,
 } from '@/strategies/PSI/psiStrategy';
 import { runFullStrategyBacktest } from '@/strategies/PSI/psiBacktestEngine';
-import {
-  runFullThothV37PBacktest,
-  runThothV37PStrategy,
-} from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
-import {
-  runFullPsiV2Backtest,
-  runPsiV2Strategy,
-  formatPsiV2MetricsForApi,
-} from '@/strategies/PSI_V2';
+import { runFullThothV37PBacktest } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
+import { runFullPsiV2Backtest } from '@/strategies/PSI_V2';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
+import { analyzeStrategy, type StrategyId } from '@/lib/strategy-analysis';
 
 let predictorInstance: any = null;
 
@@ -27,7 +18,10 @@ export async function handleSignalsGet(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
-    const strategy = searchParams.get('strategy') || 'psi';
+    const strategyParam = searchParams.get('strategy') || 'psi';
+    const strategy: StrategyId = strategyParam === 'psi_v2' || strategyParam === 'thoth_egx_macro'
+      ? strategyParam
+      : 'psi';
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
 
@@ -56,67 +50,54 @@ export async function handleSignalsGet(request: Request) {
       }))
       .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
-    if (bars.length < 30) {
-      return NextResponse.json({ signals: [], latestMasterIndex: null });
-    }
-
     const effectiveStartDate = startDate ?? (is1H ? (bars[0]?.date || '2020-01-01') : '2025-01-01');
+    const strategyParams: Record<string, unknown> = {};
+    if (searchParams.has('model')) strategyParams.model = searchParams.get('model');
+    if (searchParams.has('useAym')) strategyParams.useAym = searchParams.get('useAym') === 'true';
+    if (searchParams.has('aymMultiplier')) strategyParams.aymMultiplier = Number(searchParams.get('aymMultiplier'));
+    if (searchParams.has('aymLimit')) strategyParams.aymLimit = Number(searchParams.get('aymLimit'));
+    if (searchParams.has('useAtr')) strategyParams.useAtr = searchParams.get('useAtr') === 'true';
+    if (searchParams.has('atrDistance')) strategyParams.atrDistance = Number(searchParams.get('atrDistance'));
+    if (searchParams.has('entryLevels')) strategyParams.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);
 
-    let result;
-    if (strategy === 'psi_v2') {
-      const psiV2Overrides: Record<string, any> = {
-        ticker,
-        startDate: effectiveStartDate,
-        endDate,
-        timeframe,
-      };
+    const analysis = await analyzeStrategy(ticker, bars, strategy, {
+      startDate: effectiveStartDate,
+      endDate,
+      timeframe,
+      strategyParams,
+      lookbackBars: Number(searchParams.get('lookbackBars') || 5),
+    });
 
-      const psiV2Result = runPsiV2Strategy(bars, psiV2Overrides);
+    const raw = (analysis.rawResult && typeof analysis.rawResult === 'object')
+      ? analysis.rawResult as Record<string, unknown>
+      : {};
 
-      result = {
-        ...psiV2Result,
-        formattedMetrics: formatPsiV2MetricsForApi(psiV2Result.metrics),
-        parameterSource: `psi-v2-levels-${ticker}`,
-      };
-    } else if (strategy === 'thoth_egx_macro') {
-      const thothOverrides: Record<string, any> = {
-        ticker,
-        startDate: effectiveStartDate,
-        endDate,
-      };
+    const latestSignal = analysis.latestActionableSignal
+      ? {
+          ...analysis.latestActionableSignal,
+          ...(analysis.latestActionableSignal.signal === 'BUY'
+            ? { entryReason: analysis.latestActionableSignal.reason }
+            : { exitReason: analysis.latestActionableSignal.reason }),
+        }
+      : null;
 
-      const thothResult = await runThothV37PStrategy(bars, thothOverrides);
-
-      result = {
-        ...thothResult,
-        formattedMetrics: formatMetricsForApi(thothResult.metrics),
-        parameterSource: 'thoth-egx-v3.7p-production-frozen',
-      };
-    } else {
-      const overrides: Record<string, any> = { startDate: effectiveStartDate, endDate };
-      if (searchParams.has('model')) overrides.model = searchParams.get('model');
-      if (searchParams.has('useAym')) overrides.useAym = searchParams.get('useAym') === 'true';
-      if (searchParams.has('aymMultiplier')) overrides.aymMultiplier = Number(searchParams.get('aymMultiplier'));
-      if (searchParams.has('aymLimit')) overrides.aymLimit = Number(searchParams.get('aymLimit'));
-      if (searchParams.has('useAtr')) overrides.useAtr = searchParams.get('useAtr') === 'true';
-      if (searchParams.has('atrDistance')) overrides.atrDistance = Number(searchParams.get('atrDistance'));
-      if (searchParams.has('entryLevels')) {
-        try {
-          overrides.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);
-        } catch (e) {}
-      }
-
-      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides, timeframe);
-      const psiResult = runPsiStrategy(bars, parameterResolution.params);
-
-      result = {
-        ...psiResult,
-        formattedMetrics: formatMetricsForApi(psiResult.metrics),
-        parameterSource: parameterResolution.parameterSource,
-      };
-    }
-
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...raw,
+      signals: analysis.signalEvents,
+      latestSignal,
+      latestActionableSignal: analysis.latestActionableSignal,
+      signalAgeBars: analysis.signalAgeBars,
+      analysisStart: analysis.analysisStart,
+      analysisEnd: analysis.analysisEnd,
+      dataAsOf: analysis.dataAsOf,
+      strategyId: analysis.strategyId,
+      parameterVersion: analysis.parameterVersion,
+      parameterSource: analysis.parameterVersion,
+      formattedMetrics: analysis.formattedMetrics,
+      canonicalMetrics: analysis.metrics,
+      trades: analysis.trades,
+      equityCurve: analysis.equityCurve,
+    });
   } catch (error) {
     console.error('Error calculating signals:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -160,58 +141,34 @@ export async function handleMetricsGet(request: Request) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
 
-    let formattedMetrics: Record<string, string>;
-    let parameterSource: string;
-
+    const strategyId: StrategyId = strategy === 'psi_v2' || strategy === 'thoth_egx_macro'
+      ? strategy
+      : 'psi';
     const effectiveStartDate = startDate ?? (is1H ? (bars[0]?.date || '2020-01-01') : '2025-01-01');
+    const strategyParams: Record<string, unknown> = {};
+    if (searchParams.has('model')) strategyParams.model = searchParams.get('model');
+    if (searchParams.has('useAym')) strategyParams.useAym = searchParams.get('useAym') === 'true';
+    if (searchParams.has('aymMultiplier')) strategyParams.aymMultiplier = Number(searchParams.get('aymMultiplier'));
+    if (searchParams.has('aymLimit')) strategyParams.aymLimit = Number(searchParams.get('aymLimit'));
+    if (searchParams.has('useAtr')) strategyParams.useAtr = searchParams.get('useAtr') === 'true';
+    if (searchParams.has('atrDistance')) strategyParams.atrDistance = Number(searchParams.get('atrDistance'));
+    if (searchParams.has('entryLevels')) strategyParams.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);
 
-    if (strategy === 'psi_v2') {
-      const psiV2Overrides: Record<string, any> = {
-        ticker,
-        startDate: effectiveStartDate,
-        endDate,
-        timeframe,
-      };
-
-      const psiV2Result = runPsiV2Strategy(bars, psiV2Overrides);
-      formattedMetrics = formatPsiV2MetricsForApi(psiV2Result.metrics);
-      parameterSource = is1H ? 'gpt-3psi-v2-1h-intraday' : 'gpt-3psi-v2-production';
-    } else if (strategy === 'thoth_egx_macro') {
-      const thothOverrides: Record<string, any> = {
-        ticker,
-        startDate: effectiveStartDate,
-        endDate,
-      };
-
-      const thothResult = await runThothV37PStrategy(bars, thothOverrides);
-      formattedMetrics = formatMetricsForApi(thothResult.metrics);
-      parameterSource = 'thoth-egx-v3.7p-production-frozen';
-    } else {
-      const overrides: Record<string, any> = { startDate: effectiveStartDate, endDate };
-      if (searchParams.has('model')) overrides.model = searchParams.get('model');
-      if (searchParams.has('useAym')) overrides.useAym = searchParams.get('useAym') === 'true';
-      if (searchParams.has('aymMultiplier')) overrides.aymMultiplier = Number(searchParams.get('aymMultiplier'));
-      if (searchParams.has('aymLimit')) overrides.aymLimit = Number(searchParams.get('aymLimit'));
-      if (searchParams.has('useAtr')) overrides.useAtr = searchParams.get('useAtr') === 'true';
-      if (searchParams.has('atrDistance')) overrides.atrDistance = Number(searchParams.get('atrDistance'));
-      if (searchParams.has('entryLevels')) {
-        try {
-          overrides.entryLevels = searchParams.get('entryLevels')?.split(',').map(Number);
-        } catch (e) {}
-      }
-
-      const parameterResolution = await resolvePsiParamsAsync(ticker, overrides, timeframe);
-      const psiResult = runPsiStrategy(bars, parameterResolution.params);
-      formattedMetrics = formatMetricsForApi(psiResult.metrics);
-      parameterSource = parameterResolution.parameterSource;
-    }
+    const analysis = await analyzeStrategy(ticker, bars, strategyId, {
+      startDate: effectiveStartDate,
+      endDate,
+      timeframe,
+      strategyParams,
+    });
 
     return NextResponse.json({
       ticker,
-      startDate: bars[0].date,
-      endDate: bars[bars.length - 1].date,
-      parameterSource,
-      metrics: formattedMetrics,
+      startDate: analysis.analysisStart,
+      endDate: analysis.analysisEnd,
+      dataAsOf: analysis.dataAsOf,
+      parameterSource: analysis.parameterVersion,
+      metrics: analysis.formattedMetrics,
+      canonicalMetrics: analysis.metrics,
     });
   } catch (error) {
     console.error('Error calculating metrics:', error);
@@ -265,6 +222,42 @@ function formatLevels<T extends { targetPrice: number | null; stopPrice: number 
   };
 }
 
+function addCanonicalReportContext(report: any, analysis: Awaited<ReturnType<typeof analyzeStrategy>>) {
+  const canonical = analysis.metrics;
+  const stats = {
+    ...report.stats,
+    startDate: analysis.analysisStart,
+    endDate: analysis.analysisEnd,
+    ...(canonical.totalReturn !== null ? {
+      netProfitPct: canonical.totalReturn,
+      finalEquity: report.stats.initialCapital * (1 + canonical.totalReturn / 100),
+      netProfit: report.stats.initialCapital * (canonical.totalReturn / 100),
+    } : {}),
+    ...(canonical.buyHoldReturn !== null ? {
+      buyHoldReturnPct: canonical.buyHoldReturn,
+      buyHoldReturn: report.stats.initialCapital * (canonical.buyHoldReturn / 100),
+    } : {}),
+    ...(canonical.alpha !== null ? { alphaMargin: canonical.alpha } : {}),
+    ...(canonical.maxDrawdown !== null ? { maxDrawdown: canonical.maxDrawdown } : {}),
+    ...(canonical.avgBarsPerTrade !== null ? { avgBarsHeld: canonical.avgBarsPerTrade } : {}),
+    ...(canonical.winRate !== null ? { winRate: canonical.winRate } : {}),
+    ...(canonical.trades !== null ? { totalTrades: canonical.trades } : {}),
+    ...(canonical.annualCagr !== null ? { annualCagr: canonical.annualCagr } : {}),
+  };
+
+  return {
+    ...report,
+    stats,
+    signals: analysis.signalEvents,
+    canonicalMetrics: canonical,
+    analysisStart: analysis.analysisStart,
+    analysisEnd: analysis.analysisEnd,
+    dataAsOf: analysis.dataAsOf,
+    strategyId: analysis.strategyId,
+    parameterVersion: analysis.parameterVersion,
+  };
+}
+
 export async function handleReportGet(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -272,10 +265,11 @@ export async function handleReportGet(request: Request) {
     const strategy = searchParams.get('strategy') || 'psi';
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
-    const model = searchParams.get('model') || (strategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : strategy === 'psi_v2' ? 'psi_v2' : 'psi8');
+    const requestedModel = searchParams.get('model');
+    const model = requestedModel || (strategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : strategy === 'psi_v2' ? 'psi_v2' : 'canonical');
     const startDate = searchParams.get('start') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? undefined;
-    const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 1000;
+    const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 3000;
 
     if (!symbol) {
       return NextResponse.json({ error: 'Missing symbol parameter' }, { status: 400 });
@@ -303,7 +297,12 @@ export async function handleReportGet(request: Request) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
 
+    let report: any;
+    let strategyId: StrategyId = 'psi';
+    let strategyParams: Record<string, unknown> = {};
+
     if (strategy === 'psi_v2' || model === 'psi_v2') {
+      strategyId = 'psi_v2';
       const psiV2Overrides: Record<string, any> = {
         ticker,
         startDate,
@@ -312,9 +311,9 @@ export async function handleReportGet(request: Request) {
         timeframe,
       };
 
-      const report = runFullPsiV2Backtest(bars, psiV2Overrides);
-      return NextResponse.json(report);
+      report = runFullPsiV2Backtest(bars, psiV2Overrides);
     } else if (strategy === 'thoth_egx_macro' || model === 'thoth_egx_macro') {
+      strategyId = 'thoth_egx_macro';
       const thothOverrides: Record<string, any> = {
         ticker,
         startDate,
@@ -322,18 +321,27 @@ export async function handleReportGet(request: Request) {
         initialCapital,
       };
 
-      const report = await runFullThothV37PBacktest(bars, thothOverrides);
-      return NextResponse.json(report);
+      report = await runFullThothV37PBacktest(bars, thothOverrides);
     } else {
+      const psiModel = model === 'psi8' || model === 'psi40' ? model : undefined;
       const parameterResolution = await resolvePsiParamsAsync(ticker, {
-        model: model as 'psi8' | 'psi40',
+        ...(psiModel ? { model: psiModel } : {}),
         initialCapital,
         startDate,
         endDate,
       }, timeframe);
-      const report = runFullStrategyBacktest(bars, parameterResolution.params);
-      return NextResponse.json(report);
+      strategyId = 'psi';
+      strategyParams = { ...(psiModel ? { model: psiModel } : {}), ...parameterResolution.params };
+      report = runFullStrategyBacktest(bars, parameterResolution.params);
     }
+
+    const analysis = await analyzeStrategy(ticker, bars, strategyId, {
+      startDate: startDate || '2025-01-01',
+      endDate,
+      timeframe,
+      strategyParams,
+    });
+    return NextResponse.json(addCanonicalReportContext(report, analysis));
   } catch (error) {
     console.error('Error generating strategy report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -16,6 +16,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type BankTransaction } from '@/types/bank';
+import { isDashboardSpending } from '@/lib/portfolio-finance';
 import { CATEGORY_COLORS } from './CashFlowBarChart';
 import { computeTreemap, type TreemapNode, type TreemapRect } from '@/components/platform/sectors/treemapMath';
 
@@ -83,10 +84,8 @@ export default function SpendingDonutChart({
   const categoryTransactions = useMemo(() => {
     if (!selectedCategoryForModal) return [];
     return transactions.filter((tx) => {
-      const isOutflow =
-        tx.type === 'EXPENSE' || tx.type === 'WITHDRAWAL' || tx.type === 'BROKER_INJECTION';
       const cat = tx.category || 'Other';
-      return isOutflow && cat === selectedCategoryForModal;
+      return isDashboardSpending(tx.type) && cat === selectedCategoryForModal;
     }).sort((a, b) => (b.transactionDate || '').localeCompare(a.transactionDate || ''));
   }, [transactions, selectedCategoryForModal]);
 
@@ -475,4 +474,3 @@ export default function SpendingDonutChart({
     </div>
   );
 }
-

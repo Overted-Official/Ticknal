@@ -101,7 +101,7 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
     label: 'PSI Strategy',
     shortName: 'PSI',
     description: 'Proprietary System Indicator',
-    badgeClassName: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25',
+    badgeClassName: 'bg-plt-info-soft text-plt-info border-plt-info-border',
     settings: [], // PSI has no configurable settings on the frontend right now
     metrics: [
       { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },
@@ -113,7 +113,7 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
     label: 'THOTH EGX V3.7P',
     shortName: 'THOTH 3.7P',
     description: 'Frozen V3.7P Primary Growth Champion for EGX daily swing exhaustion',
-    badgeClassName: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
+    badgeClassName: 'bg-plt-violet-soft text-plt-violet border-plt-violet-border',
     settings: [],
     metrics: [
       { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },
@@ -125,7 +125,7 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
     label: 'PSI V2 Strategy',
     shortName: 'PSI V2',
     description: 'GPT 3-PSI Architecture (PSI_ZONE, PSI_UP, PSI_DOWN)',
-    badgeClassName: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
+    badgeClassName: 'bg-plt-profit-soft text-plt-profit border-plt-profit-border',
     settings: [],
     metrics: [
       { key: 'psiZone', label: 'PSI Zone', format: 'number', decimals: 2 },

@@ -19,7 +19,7 @@ export interface RichSparklineCardProps {
   };
   meta?: string;
   sparklineTitle?: string;
-  sparklineData?: number[];
+  sparklineData?: Array<number | null | undefined>;
   sparklineLabels?: string[];
   colorVariant?: 'profit' | 'risk' | 'orange' | 'info' | 'violet' | 'neutral';
   isPrivacy?: boolean;
@@ -32,14 +32,17 @@ export default function RichSparklineCard({
   changeBadge,
   meta,
   sparklineTitle = 'Historical Trend',
-  sparklineData = [180, 175, 172, 178, 185, 192, 188, 195, 202, 207],
+  sparklineData = [],
   sparklineLabels = ['Jan', 'Jul'],
   colorVariant = 'orange',
   isPrivacy = false,
 }: RichSparklineCardProps) {
-  // Generate SVG path for sparkline
-  const minVal = Math.min(...sparklineData);
-  const maxVal = Math.max(...sparklineData);
+  // A missing history is different from a zero-valued history. Do not draw a
+  // fabricated trend when the source has no observations for this metric.
+  const trend = sparklineData.filter((value): value is number => Number.isFinite(value));
+  const hasTrend = trend.length >= 2;
+  const minVal = Math.min(...trend);
+  const maxVal = Math.max(...trend);
   const range = maxVal - minVal || 1;
 
   const svgWidth = 240;
@@ -47,8 +50,8 @@ export default function RichSparklineCard({
   const paddingX = 4;
   const paddingY = 6;
 
-  const points = sparklineData.map((val, idx) => {
-    const x = paddingX + (idx / (sparklineData.length - 1)) * (svgWidth - 2 * paddingX);
+  const points = trend.map((val, idx) => {
+    const x = paddingX + (idx / Math.max(1, trend.length - 1)) * (svgWidth - 2 * paddingX);
     const y = svgHeight - paddingY - ((val - minVal) / range) * (svgHeight - 2 * paddingY);
     return `${x},${y}`;
   });
@@ -149,31 +152,34 @@ export default function RichSparklineCard({
         </div>
 
         <div className="w-full h-12 relative overflow-hidden">
-          <svg
-            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            className="w-full h-full overflow-visible"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={colorConfig.fillStart} />
-                <stop offset="100%" stopColor={colorConfig.fillEnd} />
-              </linearGradient>
-            </defs>
+          {hasTrend ? (
+            <svg
+              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+              className="w-full h-full overflow-visible"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={colorConfig.fillStart} />
+                  <stop offset="100%" stopColor={colorConfig.fillEnd} />
+                </linearGradient>
+              </defs>
 
-            {/* Area */}
-            <path d={areaPath} fill={`url(#${gradientId})`} />
-
-            {/* Stroke Line */}
-            <path
-              d={linePath}
-              fill="none"
-              stroke={colorConfig.stroke}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+              <path d={areaPath} fill={`url(#${gradientId})`} />
+              <path
+                d={linePath}
+                fill="none"
+                stroke={colorConfig.stroke}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <div className="flex h-full items-center text-[10px] text-plt-muted/70 font-sans">
+              Trend unavailable
+            </div>
+          )}
         </div>
 
         {/* Month labels at bottom */}

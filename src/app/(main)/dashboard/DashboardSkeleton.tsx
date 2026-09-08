@@ -29,7 +29,7 @@ export default function DashboardSkeleton() {
         </div>
       </div>
 
-      <div className="app-page app-page-stack flex-1">
+      <div className="app-page page-sections-stack flex-1">
         {/* 1. Master Metric Strip Skeleton */}
         <div className="card-shell surface-flush divide-y md:divide-y-0 md:divide-x divide-plt-border-soft grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 overflow-hidden animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((i) => (

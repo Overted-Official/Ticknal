@@ -264,7 +264,7 @@ export default function TransactionLedgerTable({
                           </span>
                         </div>
                       ) : (
-                        <span className="text-plt-muted text-xs">Bank Account</span>
+                        <span className="text-plt-muted text-xs">Account</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3.5 whitespace-nowrap">

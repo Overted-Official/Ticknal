@@ -18,7 +18,7 @@ export default function AccountSelectDropdown({
   accounts,
   selectedAccountId,
   onSelectAccount,
-  placeholder = 'Select Bank Account...',
+  placeholder = 'Select Account...',
   excludeAccountId,
 }: AccountSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);

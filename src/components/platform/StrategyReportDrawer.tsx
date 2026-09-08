@@ -3,20 +3,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Download } from '@/components/ui/icon-library';
-import { runFullStrategyBacktest } from '@/strategies/PSI/psiBacktestEngine';
-import { runFullPsiV2Backtest } from '@/strategies/PSI_V2';
 import {
-  type StrategyTrade,
   type EquityPoint,
-  type StrategyKeyStats,
   type FullBacktestReport,
 } from '@/strategies/registry';
-import {
-  resolvePsiParams,
-  type PriceBar,
-  type PsiStrategyParams,
-} from '@/strategies/PSI/psiStrategy';
-import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
+import type { PsiStrategyParams } from '@/strategies/PSI/psiStrategy';
 
 // ============================================================================
 // TICKER LOGO COMPONENT
@@ -83,12 +74,12 @@ export default function StrategyReportDrawer({
 }: StrategyReportDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'stats' | 'trades'>('stats');
-  const [model, setModel] = useState<'psi8' | 'psi40' | 'thoth_egx_macro' | 'psi_v2'>(() => {
+  const [model, setModel] = useState<'canonical' | 'psi8' | 'psi40' | 'thoth_egx_macro' | 'psi_v2'>(() => {
     if (activeStrategy === 'psi_v2') return 'psi_v2';
     if (activeStrategy === 'thoth_egx_macro') return 'thoth_egx_macro';
-    return 'psi8';
+    return 'canonical';
   });
-  const [initialCapital, setInitialCapital] = useState<number>(1000);
+  const [initialCapital, setInitialCapital] = useState<number>(3000);
   const [hoveredPoint, setHoveredPoint] = useState<EquityPoint | null>(null);
 
   // Fallback ticker metadata fetching if not provided
@@ -148,6 +139,8 @@ export default function StrategyReportDrawer({
       setModel('psi_v2');
     } else if (activeStrategy === 'thoth_egx_macro') {
       setModel('thoth_egx_macro');
+    } else {
+      setModel('canonical');
     }
   }, [activeStrategy]);
 
@@ -254,76 +247,40 @@ export default function StrategyReportDrawer({
     },
   });
 
-  // Execute Backtest
+  // Fetch the server-side report so the drawer uses the same canonical
+  // strategy/range contract as the chart and command center.
   useEffect(() => {
-    if (!isOpen || chartData.length === 0) return;
+    if (!isOpen) return;
 
-    const bars: PriceBar[] = chartData
-      .map((d) => ({
-        date: typeof d.time === 'number'
-          ? new Date(d.time * 1000).toISOString()
-          : String(d.time),
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-        volume: d.volume,
-      }))
-      .filter((b) => b.open > 0 && b.high > 0 && b.low > 0 && b.close > 0);
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      symbol,
+      strategy: model === 'canonical' || model === 'psi40' || model === 'psi8' ? 'psi' : model,
+      ...(model !== 'canonical' ? { model } : {}),
+      timeframe,
+      start: startDate || '2025-01-01',
+      initialCapital: String(initialCapital),
+    });
+    if (endDate) params.set('end', endDate);
+    Object.entries(customParams || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
 
-    if (bars.length < 5) return;
-
-    if (model === 'psi_v2') {
-      try {
-        const psiV2Report = runFullPsiV2Backtest(bars, {
-          startDate,
-          endDate,
-          initialCapital,
-          timeframe,
-        });
-        setReport(psiV2Report);
-      } catch (err) {
-        console.error('Error calculating PSI V2 report:', err);
-      }
-      return;
-    }
-
-    if (model === 'thoth_egx_macro') {
-      const params = new URLSearchParams({
-        symbol,
-        strategy: 'thoth_egx_macro',
-        timeframe,
-        start: startDate,
+    fetch(`/api/strategy-report?${params.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || 'Could not load strategy report');
+        return data;
+      })
+      .then((data) => {
+        if (data?.stats) setReport(data as FullBacktestReport);
+      })
+      .catch((error) => {
+        if (error?.name !== 'AbortError') console.error('Error fetching strategy report:', error);
       });
-      if (endDate) params.set('end', endDate);
 
-      fetch(`/api/strategy-report?${params.toString()}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.stats) {
-            setReport(data);
-          }
-        })
-        .catch((err) => {
-          console.error('Error fetching Thoth report:', err);
-        });
-      return;
-    }
-
-    try {
-      const psiParams = resolvePsiParamsFromStore(symbol, {
-        startDate,
-        endDate,
-        initialCapital,
-        model: model === 'psi40' ? 'psi40' : 'psi8',
-        ...customParams,
-      }, timeframe);
-      const psiResult = runFullStrategyBacktest(bars, psiParams);
-      setReport(psiResult);
-    } catch (e) {
-      console.error('Backtest calculation error:', e);
-    }
-  }, [isOpen, chartData, startDate, endDate, initialCapital, model, customParams, symbol, timeframe]);
+    return () => controller.abort();
+  }, [isOpen, endDate, initialCapital, model, customParams, startDate, symbol, timeframe]);
 
   const { stats, trades, equityCurve } = report;
 
@@ -406,8 +363,10 @@ export default function StrategyReportDrawer({
                     {resolvedCompanyName}
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-plt-base text-plt-muted border border-plt-border-soft">
-                    {model === 'psi_v2'
-                      ? 'PSI V2'
+                     {model === 'canonical'
+                       ? 'PSI (canonical)'
+                       : model === 'psi_v2'
+                       ? 'PSI V2'
                       : model === 'thoth_egx_macro'
                       ? 'THOTH 3.7P'
                       : model === 'psi40'
@@ -422,6 +381,15 @@ export default function StrategyReportDrawer({
             <div className="flex flex-wrap items-center gap-2.5 justify-end">
               {/* Strategy Model Switcher */}
               <div className="pill-switch">
+                <button
+                  type="button"
+                  onClick={() => setModel('canonical')}
+                  className={`pill-switch-btn ${
+                    model === 'canonical' ? 'pill-switch-btn-active font-semibold' : ''
+                  }`}
+                >
+                  PSI
+                </button>
                 <button
                   type="button"
                   onClick={() => setModel('psi8')}
@@ -501,7 +469,7 @@ export default function StrategyReportDrawer({
 
               {/* Capital Input */}
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-plt-base border border-plt-border-soft text-[11px] font-mono">
-                <span className="text-plt-muted">$</span>
+                 <span className="text-plt-muted">{currencySymbol}</span>
                 <input
                   type="number"
                   min="100"
@@ -510,7 +478,6 @@ export default function StrategyReportDrawer({
                   onChange={(e) => setInitialCapital(Math.max(100, Number(e.target.value) || 1000))}
                   className="bg-transparent text-plt-text outline-none w-16 text-right font-semibold"
                 />
-                <span className="text-plt-muted text-[10px]">{currencySymbol}</span>
               </div>
 
               {/* Tab Navigation Switcher */}

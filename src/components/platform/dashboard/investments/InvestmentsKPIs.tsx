@@ -29,9 +29,19 @@ export default function InvestmentsKPIs({
     return `${sign}${formatted} £`;
   };
 
-  const unrealizedPct = orderStats.openMarketValue > 0
-    ? ((orderStats.unrealized / (orderStats.openMarketValue - orderStats.unrealized || 1)) * 100).toFixed(1)
+  const unrealizedPct = orderStats.openCostBasis > 0
+    ? ((orderStats.unrealized / orderStats.openCostBasis) * 100).toFixed(1)
     : '0.0';
+  const history = orderStats.monthlyData ?? [];
+  const historyLabels = history.length >= 2
+    ? [history[0].month, history[Math.floor(history.length / 2)].month, history[history.length - 1].month]
+    : [];
+  const marketValueTrend = history.map((point) => point.marketValue ?? 0);
+  const unrealizedTrend = history.map((point) => point.unrealizedPl ?? 0);
+  const realizedTrend = history.map((point) => point.cumulativeRealizedPl ?? 0);
+  const winRateTrend = history.map((point) => point.winRate);
+  const closedTradeWinRate = orderStats.closedCount > 0 ? orderStats.winRate : null;
+  const hasClosedTrades = closedTradeWinRate !== null;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 select-none">
@@ -45,9 +55,9 @@ export default function InvestmentsKPIs({
           isPositive: true,
         }}
         meta="Total active stock & fund holdings"
-        sparklineTitle="30-Day Valuation Trend"
-        sparklineData={[28, 29, 31, 30, 32, 33, 35, 34, 36, 38]}
-        sparklineLabels={['30D Ago', '15D Ago', 'Present']}
+        sparklineTitle="Monthly mark-to-market value"
+        sparklineData={marketValueTrend}
+        sparklineLabels={historyLabels}
         colorVariant="orange"
         isPrivacy={isPrivacy}
       />
@@ -62,9 +72,9 @@ export default function InvestmentsKPIs({
           isPositive: orderStats.unrealized >= 0,
         }}
         meta={`${orderStats.openWinning}W · ${orderStats.openLosing}L open trades`}
-        sparklineTitle="Open Floating Return"
-        sparklineData={[120, 180, 240, 310, 420, 390, 520, 640, 712, 780]}
-        sparklineLabels={['Entry', 'Holding', 'Present']}
+        sparklineTitle="Month-end unrealized P/L"
+        sparklineData={unrealizedTrend}
+        sparklineLabels={historyLabels}
         colorVariant={orderStats.unrealized >= 0 ? 'profit' : 'risk'}
         isPrivacy={isPrivacy}
       />
@@ -80,9 +90,9 @@ export default function InvestmentsKPIs({
           isNeutral: orderStats.realized === 0,
         }}
         meta={`${orderStats.closedWinning}W · ${orderStats.closedLosing}L closed trades`}
-        sparklineTitle="Cumulative Realized Return"
-        sparklineData={[0, 45, 90, 140, 210, 280, 350, 410, 460, 510]}
-        sparklineLabels={['Start', 'Mid', 'Present']}
+        sparklineTitle="Cumulative realized P/L"
+        sparklineData={realizedTrend}
+        sparklineLabels={historyLabels}
         colorVariant={orderStats.realized >= 0 ? 'profit' : 'risk'}
         isPrivacy={isPrivacy}
       />
@@ -90,16 +100,19 @@ export default function InvestmentsKPIs({
       {/* Card 4: Strategy Execution */}
       <RichSparklineCard
         title="System Win Rate"
-        value={`${orderStats.winRate.toFixed(1)}%`}
+        value={hasClosedTrades ? `${closedTradeWinRate.toFixed(1)}%` : '—'}
         icon={CheckCircle}
         changeBadge={{
-          text: `${activeAlertCount} Signals`,
-          isPositive: true,
+          text: hasClosedTrades ? `${activeAlertCount} Signals` : 'No closed trades',
+          isPositive: hasClosedTrades,
+          isNeutral: !hasClosedTrades,
         }}
-        meta={`Avg. ${Math.round(orderStats.avgBarsPerTrade || 14)} bars/trade`}
-        sparklineTitle="Hit Rate Stability"
-        sparklineData={[60, 62, 65, 68, 70, 72, 74, 75, 76, 78]}
-        sparklineLabels={['Historical', 'Average', 'Live']}
+        meta={hasClosedTrades
+          ? `Avg. ${orderStats.avgBarsPerTrade !== null ? Math.round(orderStats.avgBarsPerTrade) : '—'} bars/trade`
+          : 'Closed-trade performance required'}
+        sparklineTitle="Cumulative closed-trade win rate"
+        sparklineData={winRateTrend}
+        sparklineLabels={historyLabels}
         colorVariant="info"
         isPrivacy={isPrivacy}
       />

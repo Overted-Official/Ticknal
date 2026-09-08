@@ -199,7 +199,7 @@ export default function LogTransactionDrawer({
               {/* Account Selection */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-plt-muted font-sans">
-                  {txMode === 'TRANSFER' ? 'From Account (Source)' : 'Bank Account'}
+                  {txMode === 'TRANSFER' ? 'From Account (Source)' : 'Account'}
                 </label>
                 <AccountSelectDropdown
                   accounts={accounts}

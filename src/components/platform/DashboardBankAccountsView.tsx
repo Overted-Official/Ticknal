@@ -12,6 +12,7 @@ import CashFlowBarChart from './dashboard/banks/CashFlowBarChart';
 import SpendingDonutChart from './dashboard/banks/SpendingDonutChart';
 import BankAllocationMatrix from './dashboard/banks/BankAllocationMatrix';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
+import { buildCashTrend, getDashboardCashFlowKind, isDashboardSpending, toEgp } from '@/lib/portfolio-finance';
 
 const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 
@@ -45,10 +46,16 @@ export default function DashboardBankAccountsView({
   const accounts = accountsData?.accounts ?? initialAccounts;
   const transactions = txData?.transactions ?? initialTransactions;
 
+  const cashTrend = useMemo(
+    () => buildCashTrend(accounts, transactions, usdRate),
+    [accounts, transactions, usdRate],
+  );
+
   const totalCombinedEgp = useMemo(() => {
-    const egp = accounts.filter((a) => a.currency === 'EGP').reduce((sum, a) => sum + Number(a.balance), 0);
-    const usd = accounts.filter((a) => a.currency === 'USD').reduce((sum, a) => sum + Number(a.balance), 0);
-    return egp + usd * usdRate;
+    return accounts.reduce(
+      (sum, account) => sum + toEgp(Number(account.balance) || 0, account.currency, usdRate),
+      0,
+    );
   }, [accounts, usdRate]);
 
   // Monthly Cash Flow Aggregation (Inflows vs Outflows)
@@ -71,9 +78,10 @@ export default function DashboardBankAccountsView({
       const isUsd = tx.currency === 'USD';
       const egpVal = isUsd ? amt * usdRate : amt;
 
-      if (tx.type === 'INCOME' || tx.type === 'DEPOSIT' || tx.type === 'BROKER_WITHDRAWAL') {
+      const flowKind = getDashboardCashFlowKind(tx.type);
+      if (flowKind === 'INFLOW') {
         entry.inflows += egpVal;
-      } else if (tx.type === 'EXPENSE' || tx.type === 'WITHDRAWAL' || tx.type === 'BROKER_INJECTION') {
+      } else if (flowKind === 'OUTFLOW') {
         entry.outflows += egpVal;
       }
     }
@@ -92,7 +100,7 @@ export default function DashboardBankAccountsView({
     let totalExpense = 0;
 
     for (const tx of transactions) {
-      if (tx.type === 'EXPENSE' || tx.type === 'WITHDRAWAL' || tx.type === 'BROKER_INJECTION') {
+      if (isDashboardSpending(tx.type)) {
         const amt = Number(tx.amount);
         const egpVal = tx.currency === 'USD' ? amt * usdRate : amt;
         const cat = tx.category || 'Other';
@@ -114,11 +122,12 @@ export default function DashboardBankAccountsView({
   const bankDistribution = useMemo(() => {
     return accounts.map((acc) => {
       const bal = Number(acc.balance);
-      const egpVal = acc.currency === 'USD' ? bal * usdRate : bal;
+      const egpVal = toEgp(bal, acc.currency, usdRate);
       return {
         id: acc.id,
         name: acc.accountName,
         bankName: acc.bankName || acc.customBankName || 'Bank',
+        accountType: acc.accountType,
         currency: acc.currency,
         rawBalance: bal,
         egpVal,
@@ -135,7 +144,7 @@ export default function DashboardBankAccountsView({
   });
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
+    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-plt-base text-plt-text select-none">
       {/* 1. Mobile Top Rail */}
       <SubNavTopRail
         activeTab="banks"
@@ -143,7 +152,7 @@ export default function DashboardBankAccountsView({
         items={[
           { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
           { label: 'Investments', value: 'investments', icon: TrendingUp },
-          { label: 'Bank Accounts', value: 'banks', icon: Landmark },
+          { label: 'Accounts', value: 'banks', icon: Landmark },
         ]}
       />
 
@@ -160,7 +169,7 @@ export default function DashboardBankAccountsView({
               <p className="section-subtitle">Aggregated liquid cash balances, currency allocation, and FX reserve hedging</p>
             </div>
 
-            <BankSummaryKPIs accounts={accounts} usdRate={usdRate} />
+            <BankSummaryKPIs accounts={accounts} usdRate={usdRate} cashTrend={cashTrend} />
 
             <BankAllocationMatrix distribution={bankDistribution} />
           </section>
@@ -172,7 +181,7 @@ export default function DashboardBankAccountsView({
               <p className="section-subtitle">Monthly inflows versus outflows trajectory and category expense allocation</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 items-stretch flex-1 min-h-0 w-full">
+            <div className="widget-grid grid-cols-1 lg:grid-cols-3 items-stretch flex-1 min-h-0 w-full">
               <div className="lg:col-span-2 w-full">
                 <CashFlowBarChart
                   data={monthlyFlowData}

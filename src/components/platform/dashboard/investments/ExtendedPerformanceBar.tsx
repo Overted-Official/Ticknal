@@ -8,13 +8,14 @@ interface ExtendedPerformanceBarProps {
 }
 
 export default function ExtendedPerformanceBar({ orderStats }: ExtendedPerformanceBarProps) {
-  const winRate = orderStats.winRate || 68.5;
-  const avgBars = Math.round(orderStats.avgBarsPerTrade) || 14;
-  const mae = orderStats.avgAdverseExcursion || -1.82;
-  const maxLoss = orderStats.maxDrawdownPct || -4.2;
+  const hasClosedTrades = orderStats.closedCount > 0;
+  const winRate = orderStats.winRate;
+  const avgBars = orderStats.avgBarsPerTrade === null ? null : Math.round(orderStats.avgBarsPerTrade);
+  const mae = orderStats.avgAdverseExcursion;
+  const maxDrawdown = orderStats.maxDrawdownPct;
 
-  const totalWins = (orderStats.openWinning || 0) + (orderStats.closedWinning || 0);
-  const totalLosses = (orderStats.openLosing || 0) + (orderStats.closedLosing || 0);
+  const closedWins = orderStats.closedWinning || 0;
+  const closedLosses = orderStats.closedLosing || 0;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 select-none">
@@ -24,16 +25,16 @@ export default function ExtendedPerformanceBar({ orderStats }: ExtendedPerforman
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="kpi-title">Win Rate</span>
             <span className="text-[10px] font-semibold text-plt-profit bg-plt-profit/10 px-1.5 py-0.5 rounded">
-              {winRate >= 60 ? 'Optimal' : 'Active'}
+              {!hasClosedTrades || winRate === null ? 'No data' : winRate >= 60 ? 'Optimal' : 'Active'}
             </span>
           </div>
 
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-xl font-bold tabular-nums text-plt-text font-sans">
-              {winRate.toFixed(1)}%
+              {hasClosedTrades && winRate !== null ? `${winRate.toFixed(1)}%` : '—'}
             </span>
             <span className="text-[11px] text-plt-muted font-sans">
-              {totalWins}W · {totalLosses}L
+              {hasClosedTrades ? `${closedWins}W · ${closedLosses}L closed` : 'Completed trades required'}
             </span>
           </div>
         </div>
@@ -41,13 +42,13 @@ export default function ExtendedPerformanceBar({ orderStats }: ExtendedPerforman
         {/* Micro Win-Loss Ratio Chart */}
         <div className="pt-2 border-t border-plt-border-soft/60">
           <div className="flex items-center justify-between text-[10px] text-plt-muted mb-1 font-sans">
-            <span>Win Ratio</span>
-            <span className="tabular-nums font-medium text-plt-text">{winRate.toFixed(0)}% / {(100 - winRate).toFixed(0)}%</span>
+            <span>Closed win / loss ratio</span>
+            <span className="tabular-nums font-medium text-plt-text">{hasClosedTrades && winRate !== null ? `${winRate.toFixed(0)}% / ${(100 - winRate).toFixed(0)}%` : '—'}</span>
           </div>
           <div className="h-1.5 w-full bg-plt-risk/25 rounded-full overflow-hidden flex">
             <div
               className="bg-plt-profit h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(Math.max(winRate, 5), 95)}%` }}
+              style={{ width: `${hasClosedTrades && winRate !== null ? Math.min(Math.max(winRate, 0), 100) : 0}%` }}
             />
           </div>
         </div>
@@ -65,26 +66,21 @@ export default function ExtendedPerformanceBar({ orderStats }: ExtendedPerforman
 
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-xl font-bold tabular-nums text-plt-text font-sans">
-              {avgBars}
+              {avgBars !== null ? avgBars : '—'}
             </span>
             <span className="text-[11px] text-plt-muted font-sans">
-              Bars (~{Math.round(avgBars * 0.9)} Days)
+              {avgBars !== null ? 'Trading bars' : 'Actual market bars required'}
             </span>
           </div>
         </div>
 
-        {/* Micro Histogram Sparkline */}
+        {/* Metric provenance */}
         <div className="pt-2 border-t border-plt-border-soft/60">
-          <div className="flex items-end justify-between gap-1 h-4 w-full">
-            {[8, 12, 16, 14, 18, 11, avgBars].map((height, i) => (
-              <div
-                key={i}
-                className={`w-full rounded-xs transition-all ${
-                  i === 6 ? 'bg-plt-info' : 'bg-plt-info/30 group-hover:bg-plt-info/50'
-                }`}
-                style={{ height: `${Math.min((height / 20) * 100, 100)}%` }}
-              />
-            ))}
+          <div className="flex items-center justify-between text-[10px] text-plt-muted font-sans">
+            <span>Completed trades</span>
+            <span className="tabular-nums font-medium text-plt-text">
+              {hasClosedTrades ? orderStats.closedCount : '—'}
+            </span>
           </div>
         </div>
       </div>
@@ -95,16 +91,16 @@ export default function ExtendedPerformanceBar({ orderStats }: ExtendedPerforman
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="kpi-title">Adverse Excursion</span>
             <span className="text-[10px] font-semibold text-plt-risk bg-plt-risk/10 px-1.5 py-0.5 rounded">
-              {Math.abs(mae) < 2.5 ? 'Low Risk' : 'Moderate'}
+              {!hasClosedTrades || mae === null ? 'No data' : Math.abs(mae) < 2.5 ? 'Low Risk' : 'Moderate'}
             </span>
           </div>
 
           <div className="flex items-baseline gap-2 mb-2">
-            <span className={`text-xl font-bold tabular-nums font-sans ${mae < 0 ? 'text-plt-risk' : 'text-plt-text'}`}>
-              {mae.toFixed(2)}%
+            <span className={`text-xl font-bold tabular-nums font-sans ${mae !== null && Math.abs(mae) > 0 ? 'text-plt-risk' : 'text-plt-text'}`}>
+              {mae !== null ? `-${Math.abs(mae).toFixed(2)}%` : '—'}
             </span>
             <span className="text-[10px] text-plt-muted font-sans">
-              Peak drawdown
+              Average worst move
             </span>
           </div>
         </div>
@@ -112,49 +108,37 @@ export default function ExtendedPerformanceBar({ orderStats }: ExtendedPerforman
         {/* Micro Excursion Depth Meter */}
         <div className="pt-2 border-t border-plt-border-soft/60">
           <div className="flex items-center justify-between text-[10px] text-plt-muted mb-1 font-sans">
-            <span>Excursion Depth</span>
-            <span className="tabular-nums font-medium text-plt-text">{(5 - Math.abs(mae)).toFixed(1)}% Safe</span>
-          </div>
-          <div className="h-1.5 w-full bg-plt-hover rounded-full overflow-hidden flex">
-            <div
-              className="bg-plt-risk h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((Math.abs(mae) / 5) * 100, 100)}%` }}
-            />
+            <span>Closed-trade MAE</span>
+            <span className="tabular-nums font-medium text-plt-text">{mae !== null ? `${orderStats.closedCount} trades` : 'Price history required'}</span>
           </div>
         </div>
       </div>
 
-      {/* 4. Max Trade Loss */}
+      {/* 4. Portfolio Max Drawdown */}
       <div className="card-widget p-4 flex flex-col justify-between hover:bg-plt-hover/40 transition-all group">
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="kpi-title">Max Trade Loss</span>
+            <span className="kpi-title">Portfolio Max Drawdown</span>
             <span className="text-[10px] font-semibold text-plt-text bg-white/10 px-1.5 py-0.5 rounded">
-              Stop ≤ 5%
+              Peak to trough
             </span>
           </div>
 
           <div className="flex items-baseline gap-2 mb-2">
-            <span className={`text-xl font-bold tabular-nums font-sans ${maxLoss < 0 ? 'text-plt-risk' : 'text-plt-text'}`}>
-              {maxLoss < 0 ? '' : '+'}{maxLoss.toFixed(2)}%
+            <span className={`text-xl font-bold tabular-nums font-sans ${maxDrawdown !== null && maxDrawdown > 0 ? 'text-plt-risk' : 'text-plt-text'}`}>
+              {maxDrawdown !== null ? `-${maxDrawdown.toFixed(2)}%` : '—'}
             </span>
             <span className="text-[10px] text-plt-muted font-sans">
-              Worst trade
+              Daily mark-to-market equity
             </span>
           </div>
         </div>
 
-        {/* Micro Safety Barrier Meter */}
+        {/* Metric provenance */}
         <div className="pt-2 border-t border-plt-border-soft/60">
           <div className="flex items-center justify-between text-[10px] text-plt-muted mb-1 font-sans">
-            <span>Safety Buffer</span>
-            <span className="tabular-nums font-medium text-plt-text">{(5 - Math.abs(maxLoss)).toFixed(1)}% to Stop</span>
-          </div>
-          <div className="h-1.5 w-full bg-plt-hover rounded-full overflow-hidden flex">
-            <div
-              className="bg-white h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((Math.abs(maxLoss) / 5) * 100, 100)}%` }}
-            />
+            <span>Definition</span>
+            <span className="tabular-nums font-medium text-plt-text">{maxDrawdown !== null ? 'Equity peak → trough' : 'Price history required'}</span>
           </div>
         </div>
       </div>

@@ -10,6 +10,9 @@ export type MonthlyDataItem = {
   pl: number;
   unrealizedPl?: number;
   roi: number;
+  marketValue?: number;
+  cumulativeRealizedPl?: number;
+  winRate?: number | null;
 };
 
 const TIME_FILTERS = ['All', 'Y', 'Q', 'M'] as const;
@@ -127,19 +130,21 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
   const summary = useMemo(() => {
     let totalInvested = 0;
     let totalRealized = 0;
-    let totalUnrealized = 0;
+    let latestUnrealized = 0;
     let latestRoi = 0;
 
     for (const d of data) {
       totalInvested += d.invested;
       totalRealized += d.pl;
-      totalUnrealized += (d.unrealizedPl ?? 0);
+      // unrealizedPl is a month-end snapshot, not a monthly flow. Summing it
+      // across months double-counts the same open position repeatedly.
+      latestUnrealized = d.unrealizedPl ?? 0;
       latestRoi = d.roi;
     }
     return {
       totalInvested,
       totalRealized,
-      totalUnrealized,
+      latestUnrealized,
       latestRoi,
     };
   }, [data]);
@@ -185,9 +190,9 @@ export default function MonthlyInvestmentChart({ data }: { data: MonthlyDataItem
         </div>
         <span className="text-plt-border-soft">•</span>
         <div className="flex items-center gap-1">
-          <span className="text-plt-muted text-[10px]">Unrealized:</span>
-          <span className={`font-semibold text-[11px] ${summary.totalUnrealized >= 0 ? 'text-cyan-400' : 'text-plt-risk'}`}>
-            {isPrivacy ? '******' : `${summary.totalUnrealized >= 0 ? '+' : ''}${formatEGP(summary.totalUnrealized)} £`}
+          <span className="text-plt-muted text-[10px]">Unrealized (latest):</span>
+          <span className={`font-semibold text-[11px] ${summary.latestUnrealized >= 0 ? 'text-cyan-400' : 'text-plt-risk'}`}>
+            {isPrivacy ? '******' : `${summary.latestUnrealized >= 0 ? '+' : ''}${formatEGP(summary.latestUnrealized)} £`}
           </span>
         </div>
         <div className="flex items-center gap-1 ml-auto">

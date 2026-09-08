@@ -1,9 +1,8 @@
 import { db } from '@/db';
-import { dailyPrices, tickers, positions } from '@/db/schema';
-import { eq, asc, sql, and } from 'drizzle-orm';
-import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
-import { getCachedOpportunitiesSync } from '@/lib/opportunities';
-import { evaluateHoldingConsensus, type HoldingConsensus } from '@/lib/multi-strategy-consensus';
+import { positions, userBankAccounts } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
+import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import type { HoldingConsensus } from '@/lib/multi-strategy-consensus';
 import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
 import { TickerOrder } from '@/components/platform/TickerPositions';
 import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices, getCachedHourlyPrices } from '@/lib/data-cache';
@@ -13,8 +12,9 @@ import { Suspense } from 'react';
 import InvestClientView from '@/components/platform/invest/InvestClientView';
 import InvestSectorsView from '@/components/platform/invest/InvestSectorsView';
 import InvestTickersView from '@/components/platform/invest/InvestTickersView';
-import PortfolioArchitectView from '@/components/platform/invest/portfolio/PortfolioArchitectView';
+import PortfolioCommandCenter from '@/components/platform/invest/portfolio/PortfolioCommandCenter';
 import { type WatchlistItem } from '@/components/platform/RightSidebar';
+import type { OpportunitySignal } from '@/lib/opportunities';
 import InvestSkeleton from './InvestSkeleton';
 
 export const dynamic = 'force-dynamic';
@@ -73,6 +73,7 @@ async function InvestPageContent({
     tickerPositionsRes,
     dbDataRes,
     industryRotationRes,
+    brokerageAccountsRes,
   ] = await Promise.allSettled([
     getCachedTickers(),
     userId
@@ -88,6 +89,9 @@ async function InvestPageContent({
       : Promise.resolve([]),
     is1H ? getCachedHourlyPrices(selectedSymbol) : getCachedDailyPrices(selectedSymbol),
     getCachedIndustryRotationMap().catch(() => null),
+    userId
+      ? db.select().from(userBankAccounts).where(and(eq(userBankAccounts.userId, userId), eq(userBankAccounts.isArchived, false)))
+      : Promise.resolve([]),
   ]);
 
   const allTickers = allTickersRes.status === 'fulfilled' && Array.isArray(allTickersRes.value) ? allTickersRes.value : [];
@@ -95,6 +99,7 @@ async function InvestPageContent({
   const recentPricesRows = recentPricesRes.status === 'fulfilled' && Array.isArray(recentPricesRes.value) ? recentPricesRes.value : [];
   const tickerPositionsData = tickerPositionsRes.status === 'fulfilled' && Array.isArray(tickerPositionsRes.value) ? tickerPositionsRes.value : [];
   const dbData = dbDataRes.status === 'fulfilled' && Array.isArray(dbDataRes.value) ? dbDataRes.value : [];
+  const brokerageAccounts = brokerageAccountsRes.status === 'fulfilled' && Array.isArray(brokerageAccountsRes.value) ? brokerageAccountsRes.value : [];
 
   const openPositionsSet = new Set(openPositionsRows.map((o: any) => o.tickerSymbol));
 
@@ -343,42 +348,15 @@ async function InvestPageContent({
     }
   }
 
-  // Multi-strategy consensus for active holdings
-  const positionSymbols = Array.from(new Set(openPositionsRows.map((p: any) => normalizeTickerSymbol(p.tickerSymbol))));
+  // Holding consensus loads client-side through the same canonical analysis
+  // endpoint used by the chart. Keeping it out of the page render prevents a
+  // full multi-strategy scan from blocking the command center shell.
   const consensusMap: Record<string, HoldingConsensus> = {};
 
-  if (positionSymbols.length > 0) {
-    const priceHistories = await Promise.allSettled(
-      positionSymbols.map(async (sym) => {
-        if (sym === normalizeTickerSymbol(selectedSymbol) && dbData.length > 0 && !is1H) {
-          return { sym, rows: dbData };
-        }
-        const rows = await getCachedDailyPrices(sym, 120);
-        return { sym, rows };
-      })
-    );
-
-    for (const res of priceHistories) {
-      if (res.status === 'fulfilled' && res.value) {
-        const { sym, rows } = res.value;
-        const bars: PriceBar[] = (rows || []).map((r: any) => ({
-          date: r.date,
-          open: Number(r.open),
-          high: Number(r.high),
-          low: Number(r.low),
-          close: Number(r.close),
-          volume: Number(r.volume || 0),
-        }));
-        if (bars.length >= 10) {
-          consensusMap[sym] = evaluateHoldingConsensus(sym, bars);
-        }
-      }
-    }
-  }
-
-  const initialOpportunities = (getCachedOpportunitiesSync(15, 'all') || []).filter(
-    (o) => o.signal.signal === 'BUY'
-  );
+  // The full market scan is intentionally loaded by the command center after
+  // the page shell renders. This keeps navigation responsive while preserving
+  // the canonical analyzer for every opportunity row.
+  const initialOpportunities: OpportunitySignal[] = [];
 
   return (
     <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-14 md:pb-0">
@@ -400,7 +378,7 @@ async function InvestPageContent({
           />
         }
         portfolioView={
-          <PortfolioArchitectView
+          <PortfolioCommandCenter
             initialPositions={openPositionsRows.map((p: any) => ({
               id: p.id,
               tickerSymbol: p.tickerSymbol,
@@ -408,12 +386,25 @@ async function InvestPageContent({
               quantity: Number(p.quantity),
               createdAt: p.createdAt,
               entryDate: p.entryDate ? (typeof p.entryDate === 'string' ? p.entryDate : new Date(p.entryDate).toISOString()) : undefined,
+              accountId: p.accountId ?? null,
+              entryStrategyId: p.entryStrategyId ?? null,
             }))}
             latestPriceMap={latestPriceMap}
             tickerMap={tickerMap}
             rotationMap={rotationMap}
             initialConsensusMap={consensusMap}
             initialOpportunities={initialOpportunities}
+            accounts={brokerageAccounts.map((account: any) => ({
+              id: account.id,
+              accountName: account.accountName,
+              customBankName: account.customBankName,
+              bankName: account.bankName,
+              accountType: account.accountType === 'BROKER_CASH' ? 'BROKERAGE' : account.accountType,
+              currency: account.currency,
+              balance: account.balance,
+              isArchived: account.isArchived,
+            }))}
+            dataAsOf={initialOpportunities[0]?.dataAsOf}
           />
         }
         initialView={view as 'sectors' | 'chart' | 'portfolio'}

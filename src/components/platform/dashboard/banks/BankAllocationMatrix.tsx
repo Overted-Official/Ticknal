@@ -9,6 +9,7 @@ export type BankDistributionItem = {
   id: number;
   name: string;
   bankName: string;
+  accountType: string;
   currency: string;
   rawBalance: number;
   egpVal: number;
@@ -28,17 +29,17 @@ export default function BankAllocationMatrix({ distribution }: BankAllocationMat
       <div className="flex items-center justify-between pb-2 border-b border-plt-border-soft">
         <div>
           <h3 className="widget-title">
-            Bank-by-Bank Allocation Matrix
+            Account-by-Account Allocation Matrix
           </h3>
           <p className="widget-subtitle mt-0.5">
-            Distribution and percentage allocation across all connected bank accounts
+            Distribution and percentage allocation across all connected bank and brokerage accounts
           </p>
         </div>
       </div>
 
       {distribution.length === 0 ? (
         <div className="py-8 text-center text-xs text-plt-muted font-sans">
-          No bank accounts found.
+          No accounts found.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -58,7 +59,9 @@ export default function BankAllocationMatrix({ distribution }: BankAllocationMat
                   </div>
                   <div className="truncate">
                     <h4 className="text-xs font-semibold text-plt-text font-sans truncate">{b.name}</h4>
-                    <p className="text-[10px] text-plt-muted font-sans truncate">{b.bankName}</p>
+                    <p className="text-[10px] text-plt-muted font-sans truncate">
+                      {['BROKERAGE', 'BROKER_CASH'].includes(b.accountType) ? 'Brokerage account' : b.bankName}
+                    </p>
                   </div>
                 </div>
                 <span className="text-xs tabular-nums font-semibold text-plt-text font-sans shrink-0 ml-2">

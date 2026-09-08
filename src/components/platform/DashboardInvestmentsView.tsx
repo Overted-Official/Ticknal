@@ -35,6 +35,7 @@ export type DashboardOrder = {
 export type OrderStats = {
   openOrders: DashboardOrder[];
   openMarketValue: number;
+  openCostBasis: number;
   unrealized: number;
   realized: number;
   totalRoi: number;
@@ -42,10 +43,10 @@ export type OrderStats = {
   industryGroupData: IndustryGroupStake[];
   rotationMap?: Record<string, string>;
   monthlyData: MonthlyDataItem[];
-  winRate: number;
-  avgBarsPerTrade: number;
-  maxDrawdownPct: number;
-  avgAdverseExcursion: number;
+  winRate: number | null;
+  avgBarsPerTrade: number | null;
+  maxDrawdownPct: number | null;
+  avgAdverseExcursion: number | null;
   openWinning: number;
   openLosing: number;
   closedWinning: number;
@@ -106,7 +107,7 @@ export default function DashboardInvestmentsView({
   });
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-tv-base text-tv-text select-none">
+    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-plt-base text-plt-text select-none">
       {/* 1. Mobile Top Rail */}
       <SubNavTopRail
         activeTab="investments"
@@ -114,7 +115,7 @@ export default function DashboardInvestmentsView({
         items={[
           { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
           { label: 'Investments', value: 'investments', icon: TrendingUp },
-          { label: 'Bank Accounts', value: 'banks', icon: Landmark },
+          { label: 'Accounts', value: 'banks', icon: Landmark },
         ]}
       />
 
@@ -151,14 +152,14 @@ export default function DashboardInvestmentsView({
               <p className="section-subtitle">25 GICS Industry Group exposure, concentration risk diagnostics, and rotation-driven rebalancing</p>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch w-full">
+            <div className="widget-grid grid-cols-1 xl:grid-cols-2 items-stretch w-full">
               {/* 25 GICS Industry Group Capital Allocation */}
-              <div className="card-widget h-[460px] flex flex-col overflow-hidden">
+              <div className="card-widget dashboard-widget-height flex flex-col overflow-hidden">
                 <SectorDonutChart data={orderStats.sectorData} />
               </div>
 
               {/* Dedicated Portfolio Allocation Consultant & Health Advisor */}
-              <div className="h-[460px]">
+              <div className="dashboard-widget-height">
                 <PortfolioConsultantCard
                   stakes={orderStats.industryGroupData}
                   totalPortfolioValue={orderStats.openMarketValue}
@@ -176,14 +177,14 @@ export default function DashboardInvestmentsView({
               <p className="section-subtitle">Live open market holdings alongside real-time algorithmic entry and risk management alerts</p>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-stretch w-full">
-              <div className="h-[460px]">
+            <div className="widget-grid grid-cols-1 xl:grid-cols-2 items-stretch w-full">
+              <div className="dashboard-widget-height">
                 <DashboardPositionsCard
                   orders={orderStats.openOrders}
                   exitSignals={exitSignals}
                 />
               </div>
-              <div className="h-[460px]">
+              <div className="dashboard-widget-height">
                 <DashboardSignalsCard
                   buyOpportunities={liveBuyOpps}
                   exitSignals={exitSignals}

@@ -20,6 +20,7 @@ import {
   PieChart,
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
+import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import { flyoutReveal } from '@/lib/motion';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -78,7 +79,7 @@ export default function SidebarNav() {
         className="mb-3 w-8 h-8 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center"
         title="Ticknal Dashboard"
       >
-        <Image src="/logo.svg" alt="Ticknal" width={22} height={22} className="object-contain" priority />
+        <Image src="/logo-mark.svg" alt="Ticknal" width={22} height={22} className="object-contain" priority />
       </Link>
 
       <div className="flex-1 flex flex-col space-y-2.5 w-full items-center">
@@ -151,7 +152,7 @@ export default function SidebarNav() {
                 }`}
               >
                 <Landmark size={16} />
-                <span>Bank Accounts</span>
+                <span>Accounts</span>
               </Link>
             </motion.div>
           )}
@@ -288,7 +289,7 @@ export default function SidebarNav() {
                 }`}
               >
                 <Landmark size={16} />
-                <span>Bank Accounts</span>
+                <span>Accounts</span>
               </Link>
             </motion.div>
           )}
@@ -299,6 +300,14 @@ export default function SidebarNav() {
       <div className="w-full flex flex-col items-center space-y-2 mt-auto">
         {/* Subtle Divider */}
         <div className="w-5 h-px bg-plt-border my-0.5" />
+
+        {/* Global value visibility */}
+        <div className="w-full flex items-center justify-center relative group">
+          <PrivacyToggleButton
+            iconOnly
+            className="nav-icon"
+          />
+        </div>
 
         {/* Notifications Bell */}
         <div className="w-full flex items-center justify-center relative group">

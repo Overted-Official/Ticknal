@@ -4,6 +4,7 @@ import React from 'react';
 import { ShieldCheck, TrendingUp, Landmark, Flame } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import RichSparklineCard from '@/components/platform/ui/RichSparklineCard';
+import type { NetWorthTrendPoint } from '@/lib/portfolio-finance';
 
 interface NetWorthKPIsProps {
   currencyMode: 'EGP' | 'USD';
@@ -13,11 +14,14 @@ interface NetWorthKPIsProps {
   totalFundsMarketValue: number;
   totalEgpLiquidCash: number;
   totalUsdCashInEgp: number;
+  brokerageCashInEgp: number;
+  brokerageAccountsCount: number;
   fxMultiplier: number;
   openPositionsCount: number;
   connectedAccountsCount: number;
   currentYearDrag: number;
-  cbeAnnualInflation: number;
+  effectiveAnnualInflation: number;
+  trendData: NetWorthTrendPoint[];
 }
 
 export default function NetWorthKPIs({
@@ -28,11 +32,14 @@ export default function NetWorthKPIs({
   totalFundsMarketValue,
   totalEgpLiquidCash,
   totalUsdCashInEgp,
+  brokerageCashInEgp,
+  brokerageAccountsCount,
   fxMultiplier,
   openPositionsCount,
   connectedAccountsCount,
   currentYearDrag,
-  cbeAnnualInflation,
+  effectiveAnnualInflation,
+  trendData,
 }: NetWorthKPIsProps) {
   const { isPrivacy } = usePrivacyMode();
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
@@ -44,12 +51,17 @@ export default function NetWorthKPIs({
 
   const investedTotal = (totalEquitiesMarketValue + totalFundsMarketValue) * fxMultiplier;
   const liquidCashTotal = (totalEgpLiquidCash + totalUsdCashInEgp) * fxMultiplier;
+  const brokerageCashTotal = brokerageCashInEgp * fxMultiplier;
   const dragDisplay = currentYearDrag * fxMultiplier;
 
   const investedPct = totalNetWorthEgp > 0 ? (((totalEquitiesMarketValue + totalFundsMarketValue) / totalNetWorthEgp) * 100).toFixed(1) : '0.0';
   const cashPct = totalNetWorthEgp > 0 ? (((totalEgpLiquidCash + totalUsdCashInEgp) / totalNetWorthEgp) * 100).toFixed(1) : '0.0';
+  const brokeragePct = totalNetWorthEgp > 0 ? ((brokerageCashInEgp / totalNetWorthEgp) * 100).toFixed(1) : '0.0';
 
   const realPurchasingPower = displayTotalNetWorth - dragDisplay;
+  const trendLabels = trendData.length >= 2
+    ? [trendData[0].month, trendData[Math.floor(trendData.length / 2)].month, trendData[trendData.length - 1].month]
+    : [];
 
   return (
     <div className="space-y-6">
@@ -60,36 +72,36 @@ export default function NetWorthKPIs({
           title="Total Net Worth"
           value={formatCurrency(displayTotalNetWorth)}
           changeBadge={{
-            text: `+${(investedTotal > 0 ? 12.4 : 8.1).toFixed(1)}% ROI`,
-            isPositive: true,
+            text: 'Current mark',
+            isNeutral: true,
           }}
           meta="Mark-to-market live valuation"
-          sparklineTitle="12M Wealth Trajectory"
-          sparklineData={[720, 745, 730, 780, 810, 840, 890, 915, 930, 948]}
-          sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+          sparklineTitle="Recorded monthly net worth"
+          sparklineData={trendData.map((point) => point.nominal)}
+          sparklineLabels={trendLabels}
           colorVariant="profit"
           isPrivacy={isPrivacy}
         />
 
         {/* Card 2: Real Purchasing Power */}
         <RichSparklineCard
-          title={`Real Purchasing Power (${cbeAnnualInflation}% Defl.)`}
+          title={`Real Purchasing Power (${effectiveAnnualInflation}% Defl.)`}
           value={formatCurrency(realPurchasingPower)}
           changeBadge={{
-            text: `-${cbeAnnualInflation}% Defl.`,
+            text: `-${effectiveAnnualInflation}% Defl.`,
             isPositive: false,
           }}
           meta={`Inflation drag: -${formatCurrency(dragDisplay)}`}
-          sparklineTitle="Deflated Purchasing Curve"
-          sparklineData={[680, 695, 675, 715, 738, 760, 805, 825, 840, 852]}
-          sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+          sparklineTitle="Inflation-adjusted monthly value"
+          sparklineData={trendData.map((point) => point.real)}
+          sparklineLabels={trendLabels}
           colorVariant="orange"
           isPrivacy={isPrivacy}
         />
       </div>
 
-      {/* Row 2: 3 Breakdown Cards (Investments, Liquidity, Inflation Drag) */}
-      <div className="kpi-grid-3">
+      {/* Row 2: 4 Breakdown Cards (Investments, Bank Liquidity, Brokerage Cash, Inflation Drag) */}
+      <div className="kpi-grid-4">
         {/* Card 3: Equities & Mutual Funds */}
         <RichSparklineCard
           title="Investments (Equities & Funds)"
@@ -99,41 +111,59 @@ export default function NetWorthKPIs({
             isPositive: true,
           }}
           meta={`${openPositionsCount} active holdings & funds`}
-          sparklineTitle="Portfolio Capital Curve"
-          sparklineData={[22, 24, 23, 27, 29, 31, 30, 32, 33, 34]}
-          sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+          sparklineTitle="Month-end invested value"
+          sparklineData={trendData.map((point) => point.invested)}
+          sparklineLabels={trendLabels}
           colorVariant="orange"
           isPrivacy={isPrivacy}
         />
 
         {/* Card 4: Liquid Bank Reserves */}
         <RichSparklineCard
-          title="Liquidity (Bank Cash)"
+          title="Cash Reserves (Bank + USD)"
           value={formatCurrency(liquidCashTotal)}
           changeBadge={{
             text: `${cashPct}% Liquidity`,
             isNeutral: true,
           }}
-          meta={`${connectedAccountsCount} connected bank account(s)`}
-          sparklineTitle="Cash Balance Run-Rate"
-          sparklineData={[890, 895, 900, 905, 910, 912, 913, 914, 914, 914]}
-          sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+          meta={`${connectedAccountsCount} connected cash account${connectedAccountsCount !== 1 ? 's' : ''} · brokerage cash excluded`}
+          sparklineTitle="Recorded monthly cash balance"
+          sparklineData={trendData.map((point) => point.cash - point.brokerageCash)}
+          sparklineLabels={trendLabels}
           colorVariant="info"
           isPrivacy={isPrivacy}
         />
 
-        {/* Card 5: Inflation Drag */}
+        {/* Card 5: Brokerage Cash */}
         <RichSparklineCard
-          title={`Inflation Drag (1Y @ ${cbeAnnualInflation}% Eff.)`}
+          title="Brokerage Cash"
+          value={brokerageAccountsCount > 0 ? formatCurrency(brokerageCashTotal) : 'Not linked'}
+          changeBadge={{
+            text: brokerageAccountsCount > 0 ? `${brokeragePct}% of Net Worth` : 'No account',
+            isNeutral: brokerageAccountsCount === 0,
+          }}
+          meta={brokerageAccountsCount > 0
+            ? `${brokerageAccountsCount} brokerage account${brokerageAccountsCount !== 1 ? 's' : ''} · Available trading cash`
+            : 'Add a brokerage account to track trading cash'}
+          sparklineTitle="Brokerage Cash Run-Rate"
+          sparklineData={trendData.map((point) => point.brokerageCash)}
+          sparklineLabels={trendLabels}
+          colorVariant="profit"
+          isPrivacy={isPrivacy && brokerageAccountsCount > 0}
+        />
+
+        {/* Card 6: Inflation Drag */}
+        <RichSparklineCard
+          title={`Inflation Drag (1Y @ ${effectiveAnnualInflation}% Eff.)`}
           value={`-${formatCurrency(dragDisplay)}`}
           changeBadge={{
-            text: `-${cbeAnnualInflation}% Drag`,
+            text: `-${effectiveAnnualInflation}% Drag`,
             isPositive: false,
           }}
           meta="Purchasing power deflator"
           sparklineTitle="Cumulative Purchasing Drag"
-          sparklineData={[10, 18, 25, 34, 42, 51, 58, 65, 71, 75]}
-          sparklineLabels={['Jan 2026', 'Jul 2026', 'Present']}
+          sparklineData={trendData.map((point) => point.drag)}
+          sparklineLabels={trendLabels}
           colorVariant="risk"
           isPrivacy={isPrivacy}
         />

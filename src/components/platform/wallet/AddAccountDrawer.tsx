@@ -57,7 +57,7 @@ export default function AddAccountDrawer({
       });
 
       if (res.ok) {
-        toast.success('Bank Account Created', `${accountName} is now tracked in your wallet.`);
+        toast.success('Account Created', `${accountName} is now tracked in your wallet.`);
         onAccountCreated();
         onClose();
         setBankId('');
@@ -104,8 +104,8 @@ export default function AddAccountDrawer({
             {/* Header */}
             <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">Add Bank Account</h3>
-                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Connect Egyptian or foreign liquid cash accounts</p>
+                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">Add Account</h3>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Add a cash, wallet, savings, or brokerage account</p>
               </div>
 
               <button
@@ -122,7 +122,7 @@ export default function AddAccountDrawer({
             <form onSubmit={handleSubmit} className="p-5 flex-1 overflow-y-auto space-y-4 text-xs custom-scrollbar">
               {/* Bank Selector */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-plt-muted font-sans">Select Egyptian Bank</label>
+                <label className="text-xs font-semibold text-plt-muted font-sans">Select institution</label>
                 <BankSearchSelect
                   banks={availableBanks}
                   selectedBankId={bankId}
@@ -145,7 +145,7 @@ export default function AddAccountDrawer({
                   <label className="text-xs font-semibold text-plt-muted font-sans">Custom Institution / Wallet Name</label>
                   <input
                     type="text"
-                    placeholder="e.g. Wise, Revolut, Cash Vault, Telda"
+                    placeholder={accountType === 'BROKERAGE' ? 'e.g. Mubasher, Thndr, CI Capital' : 'e.g. Wise, Revolut, Cash Vault, Telda'}
                     value={customBankName}
                     onChange={(e) => setNewAccCustomBankHelper(e.target.value, setCustomBankName)}
                     className="input-token"
@@ -155,11 +155,11 @@ export default function AddAccountDrawer({
 
               {/* Account Label */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-plt-muted font-sans">Account Label *</label>
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Account Label *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. CIB Salary, HSBC USD Savings"
+                  placeholder={accountType === 'BROKERAGE' ? 'e.g. Thndr EGX portfolio' : 'e.g. CIB Salary, HSBC USD Savings'}
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
                   className="input-token"
@@ -202,7 +202,7 @@ export default function AddAccountDrawer({
                     <option value="CURRENT">Current Account</option>
                     <option value="SAVINGS">Savings Account</option>
                     <option value="CD_TIME_DEPOSIT">Certificates (CD)</option>
-                    <option value="BROKER_CASH">Brokerage Cash</option>
+                    <option value="BROKERAGE">Brokerage account</option>
                     <option value="WALLET">Digital Wallet</option>
                   </select>
                 </div>
@@ -220,6 +220,13 @@ export default function AddAccountDrawer({
                   className="input-token"
                 />
               </div>
+
+              {accountType === 'BROKERAGE' && (
+                <div className="rounded-2xl bg-plt-accent-soft p-3.5 text-[11px] text-plt-muted">
+                  <p className="font-semibold text-plt-text">Brokerage account</p>
+                  <p className="mt-1">Live EGX buys and sells require an EGP brokerage account. Opening cash is recorded as the current balance; fund it later with an explicit transfer.</p>
+                </div>
+              )}
 
               {/* Optional Savings / CD Interest Configuration */}
               {(accountType === 'SAVINGS' || accountType === 'CD_TIME_DEPOSIT') && (
@@ -272,7 +279,7 @@ export default function AddAccountDrawer({
               )}
 
               {/* Main Expense Account Switch */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-3">
+              {accountType !== 'BROKERAGE' && <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-3">
                 <div className="space-y-0.5 flex-1 min-w-0">
                   <div className="text-xs font-semibold text-plt-text font-sans flex items-center gap-1.5">
                     <Star size={13} className={isDefaultExpense ? "fill-plt-warning text-plt-warning" : "text-plt-muted"} />
@@ -295,7 +302,7 @@ export default function AddAccountDrawer({
                     }`}
                   />
                 </button>
-              </div>
+              </div>}
 
               {/* Action Buttons */}
               <div className="pt-3 border-t border-plt-border-soft flex items-center justify-end gap-2">

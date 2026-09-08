@@ -134,14 +134,16 @@ export default function SignalPanel({
         if (data.formattedMetrics && typeof data.formattedMetrics === 'object') {
           setInternalMetrics(data.formattedMetrics);
         }
-        if (data.latestSignal || (data.signals && data.signals.length > 0)) {
-          const latestSignal = data.latestSignal ?? data.signals[data.signals.length - 1];
+        if (data.latestActionableSignal) {
+          const latestSignal = data.latestActionableSignal;
           setSignalData({
             ...latestSignal,
             latestMasterIndex: data.latestMasterIndex ?? latestSignal.masterIndex,
           });
         } else {
-          setSignalData(data.latestMasterIndex !== null ? { masterIndex: data.latestMasterIndex } : null);
+          setSignalData(data.latestMasterIndex !== null
+            ? { signal: 'NO FRESH SIGNAL', masterIndex: data.latestMasterIndex }
+            : { signal: 'NO FRESH SIGNAL' });
         }
       } catch (err) {
         console.error('Error fetching signals:', err);

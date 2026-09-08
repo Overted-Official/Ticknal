@@ -131,6 +131,7 @@ export async function handleAccountsGet() {
 
     const maskedAccounts = (accounts || []).map((acc) => ({
       ...acc,
+      accountType: acc.accountType === 'BROKER_CASH' ? 'BROKERAGE' : acc.accountType,
       accountNumber: maskAccountNumber(acc.accountNumber),
     }));
 
@@ -187,7 +188,7 @@ export async function handleAccountsPost(req: Request) {
         customBankName: customBankName || null,
         accountName,
         accountNumber: accountNumber || null,
-        accountType,
+        accountType: accountType === 'BROKER_CASH' ? 'BROKERAGE' : accountType,
         currency: currency || 'EGP',
         balance: balance ? String(balance) : '0',
         interestRate: interestRate ? String(interestRate) : null,
@@ -236,6 +237,7 @@ export async function handleAccountsPut(req: Request) {
       .update(userBankAccounts)
       .set({
         ...updates,
+        accountType: updates.accountType === 'BROKER_CASH' ? 'BROKERAGE' : updates.accountType,
         bankId: updates.bankId !== undefined ? (updates.bankId ? Number(updates.bankId) : null) : undefined,
         balance: updates.balance !== undefined ? String(updates.balance) : undefined,
         interestRate: updates.interestRate !== undefined ? (updates.interestRate ? String(updates.interestRate) : null) : undefined,
@@ -462,11 +464,11 @@ export async function handleTransactionsGet(req: Request) {
 }
 
 function isPositiveCashFlow(type: string): boolean {
-  return ['INCOME', 'DEPOSIT', 'BROKER_WITHDRAWAL'].includes(type);
+  return ['INCOME', 'DEPOSIT', 'BROKER_WITHDRAWAL', 'BROKERAGE_SELL'].includes(type);
 }
 
 function isNegativeCashFlow(type: string): boolean {
-  return ['EXPENSE', 'WITHDRAWAL', 'BROKER_INJECTION'].includes(type);
+  return ['EXPENSE', 'WITHDRAWAL', 'BROKER_INJECTION', 'BROKERAGE_BUY'].includes(type);
 }
 
 export async function handleTransactionsPost(req: Request) {
