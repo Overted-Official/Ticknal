@@ -59,11 +59,11 @@ export default function TopBar({
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Circular Logo */}
-            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-xl bg-plt-hover border border-plt-border overflow-hidden p-px">
+            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-plt-hover border border-plt-border overflow-hidden">
               {currentTicker.logoUrl ? (
-                <img src={currentTicker.logoUrl} alt={displaySymbol} className="w-full h-full object-contain rounded-xl bg-transparent" />
+                <img src={currentTicker.logoUrl} alt={displaySymbol} className="ticker-logo-image" />
               ) : currentTicker.website ? (
-                <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="w-full h-full object-cover rounded-xl" />
+                <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="ticker-logo-image" />
               ) : (
                 <span className="text-compact font-medium text-plt-text">{displaySymbol.substring(0, 2)}</span>
               )}
@@ -163,7 +163,7 @@ export default function TopBar({
                   >
                     <div className="flex items-center space-x-4 min-w-0">
                       {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.symbol} className="h-8 w-8 rounded-full bg-transparent object-contain p-px shrink-0" />
+                        <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image h-8 w-8 shrink-0" />
                       ) : (
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-plt-border bg-plt-hover text-mini font-medium text-plt-text">
                           {item.symbol.substring(0, 2)}

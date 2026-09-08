@@ -57,7 +57,7 @@ function StockLogo({
         <img
           src={logoUrl}
           alt={symbol}
-          className="w-full h-full object-contain"
+          className="ticker-logo-image"
           onError={() => setImgError(true)}
           loading="lazy"
         />

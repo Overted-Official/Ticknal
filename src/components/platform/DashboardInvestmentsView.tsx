@@ -80,7 +80,7 @@ export default function DashboardInvestmentsView({
     }
 
     let isMounted = true;
-    fetch('/api/opportunities?bars=15&strategy=all')
+    fetch('/api/opportunities?bars=5&strategy=all')
       .then((res) => res.json())
       .then((data) => {
         if (isMounted && data?.opportunities && Array.isArray(data.opportunities)) {
@@ -107,7 +107,7 @@ export default function DashboardInvestmentsView({
   });
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-plt-base text-plt-text select-none">
+    <div className="command-surface-page flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-plt-base text-plt-text select-none">
       {/* 1. Mobile Top Rail */}
       <SubNavTopRail
         activeTab="investments"

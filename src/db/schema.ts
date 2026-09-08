@@ -87,6 +87,15 @@ export const signalNotifications = pgTable('signal_notifications', {
   strategy: varchar('strategy', { length: 50 }).default('psi').notNull(),
   signalDate: date('signal_date').notNull(),
   signal: varchar('signal', { length: 20 }).notNull(),
+  // Canonical analysis snapshot written by the scheduled signal processor.
+  signalPrice: numeric('signal_price', { precision: 12, scale: 4 }),
+  signalBarsAgo: integer('signal_bars_ago'),
+  signalReason: text('signal_reason'),
+  analysisStart: date('analysis_start'),
+  analysisEnd: date('analysis_end'),
+  dataAsOf: date('data_as_of'),
+  metrics: jsonb('metrics'),
+  parameterVersion: varchar('parameter_version', { length: 100 }),
   sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
   return {

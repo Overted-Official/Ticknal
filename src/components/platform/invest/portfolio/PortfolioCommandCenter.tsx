@@ -231,7 +231,7 @@ function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | nu
     <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-plt-hover text-[10px] font-semibold text-plt-muted">
       {logoUrl && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logoUrl} alt="" className="h-full w-full object-contain p-1" onError={() => setFailed(true)} />
+        <img src={logoUrl} alt="" className="ticker-logo-image" onError={() => setFailed(true)} />
       ) : symbol.slice(0, 2)}
     </span>
   );
@@ -311,13 +311,15 @@ export default function PortfolioCommandCenter({
   };
 
   useEffect(() => {
-    if (initialOpportunities.length > 0) {
+    const canUseInitialOpportunities = initialOpportunities.length > 0 && strategy === 'all' && freshness === 5;
+    if (canUseInitialOpportunities) {
       setOpportunities(initialOpportunities);
       setIsLoadingOpportunities(false);
       return;
     }
     let mounted = true;
-    fetch('/api/opportunities?bars=20&strategy=all')
+    setIsLoadingOpportunities(true);
+    fetch(`/api/opportunities?bars=${freshness}&strategy=${encodeURIComponent(strategy)}`)
       .then((response) => response.json())
       .then((payload) => {
         if (!mounted) return;
@@ -330,7 +332,7 @@ export default function PortfolioCommandCenter({
         if (mounted) setIsLoadingOpportunities(false);
       });
     return () => { mounted = false; };
-  }, [initialOpportunities]);
+  }, [freshness, initialOpportunities, strategy]);
 
   useEffect(() => {
     const symbols = Array.from(new Set(initialPositions.map((position) => cleanSymbol(position.tickerSymbol))));

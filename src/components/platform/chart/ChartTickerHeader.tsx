@@ -99,7 +99,7 @@ export default function ChartTickerHeader({
               <img
                 src={currentTickerItem.logoUrl}
                 alt={displaySymbol}
-                className="w-full h-full object-contain"
+                className="ticker-logo-image"
               />
             ) : (
               <Globe size={15} className="text-plt-info" />
@@ -195,7 +195,7 @@ export default function ChartTickerHeader({
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-5 h-5 rounded-full bg-transparent flex items-center justify-center overflow-hidden shrink-0">
                           {item.logoUrl ? (
-                            <img src={item.logoUrl} alt={item.symbol} className="w-full h-full object-contain" />
+                            <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image" />
                           ) : (
                             <div className="w-full h-full rounded-full bg-plt-hover flex items-center justify-center text-[9px] font-semibold text-plt-text">
                               {itemDisplay.substring(0, 2)}

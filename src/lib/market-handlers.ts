@@ -219,7 +219,8 @@ export async function handleInflationGet(request: Request) {
 export async function handleOpportunitiesGet(request: Request): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
-    const limitBars = parseInt(searchParams.get('bars') || searchParams.get('limitBars') || '15', 10);
+    const requestedBars = parseInt(searchParams.get('bars') || searchParams.get('limitBars') || '5', 10);
+    const limitBars = Math.min(20, Math.max(1, Number.isFinite(requestedBars) ? requestedBars : 5));
     const strategyScope = searchParams.get('strategy') || searchParams.get('scope') || 'all';
 
     const { getRecentOpportunities } = await import('@/lib/opportunities');
@@ -231,4 +232,3 @@ export async function handleOpportunitiesGet(request: Request): Promise<Response
     return NextResponse.json({ error: 'Failed to fetch opportunities', details: err?.message }, { status: 500 });
   }
 }
-

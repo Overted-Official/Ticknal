@@ -414,9 +414,9 @@ export default function RightSidebar({
                     >
                       <div className="flex min-w-0 items-center space-x-1.5">
                         {item.logoUrl ? (
-                          <img src={item.logoUrl} alt={item.symbol} className="h-3.5 w-3.5 rounded-full bg-transparent object-contain shrink-0" />
+                          <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image h-3.5 w-3.5 shrink-0" />
                         ) : item.website ? (
-                          <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="h-3.5 w-3.5 rounded-full border border-plt-border bg-plt-hover object-cover shrink-0" />
+                          <img src={`https://logo.clearbit.com/${item.website}`} alt={item.symbol} className="ticker-logo-image h-3.5 w-3.5 shrink-0" />
                         ) : (
                           <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border border-plt-border bg-plt-hover text-[8px] font-medium text-plt-text">
                             {item.symbol.substring(0, 2)}
@@ -478,7 +478,7 @@ export default function RightSidebar({
           >
             <div className="flex items-center space-x-2 min-w-0">
               {selectedItem.logoUrl ? (
-                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="w-6 h-6 rounded-xl bg-transparent object-contain shrink-0" />
+                <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="ticker-logo-image w-6 h-6 shrink-0" />
               ) : (
                 <div className="w-6 h-6 rounded-xl bg-plt-hover flex items-center justify-center font-medium text-plt-text border border-plt-border text-compact shrink-0">
                   {displaySelectedSymbol.substring(0, 2)}

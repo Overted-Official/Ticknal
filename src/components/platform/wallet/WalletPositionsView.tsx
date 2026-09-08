@@ -52,7 +52,7 @@ function TickerLogo({ symbol, logoUrl, size = 'sm' }: { symbol: string; logoUrl?
         <img
           src={logoUrl}
           alt={symbol}
-          className="w-full h-full object-contain rounded-full bg-transparent"
+          className="ticker-logo-image"
           onError={() => setImgError(true)}
         />
       ) : (
@@ -286,7 +286,7 @@ export default function WalletPositionsView() {
   };
 
   return (
-    <div className="flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y select-none">
+    <div className="command-surface-page flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y select-none">
       <div className="app-page page-sections-stack pb-28 md:pb-20">
         {/* Header */}
         <PositionsHeader

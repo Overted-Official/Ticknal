@@ -97,7 +97,7 @@ function barsAgoForDate(date: string, bars: PriceBar[]): number {
   return 0;
 }
 
-function mapMetrics(metrics: Record<string, unknown>): StrategyMetrics {
+export function mapStrategyMetrics(metrics: Record<string, unknown>): StrategyMetrics {
   return {
     totalReturn: numberOrNull(metrics.sysRoi),
     alpha: numberOrNull(metrics.roiMargin),
@@ -228,7 +228,7 @@ export async function analyzeStrategy(
     signalEvents,
     latestActionableSignal: latest,
     signalAgeBars: latest?.barsAgo ?? null,
-    metrics: mapMetrics(metrics),
+    metrics: mapStrategyMetrics(metrics),
     trades,
     equityCurve,
     parameterVersion,

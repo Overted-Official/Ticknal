@@ -248,7 +248,7 @@ export default function DashboardNetWorthView({
   });
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-plt-base text-plt-text select-none">
+    <div className="command-surface-page flex-1 h-full w-full flex flex-col min-h-0 overflow-hidden bg-plt-base text-plt-text select-none">
       {/* 1. Mobile Top Rail */}
       <SubNavTopRail
         activeTab="net-worth"

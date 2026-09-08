@@ -6,6 +6,7 @@ import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
 import { getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
+import { mapStrategyMetrics } from '@/lib/strategy-analysis';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 
@@ -84,7 +85,7 @@ export async function dispatchSignalNotifications(options: {
   const priceRows = await db.execute(sql`
     SELECT ticker_symbol, date, open, high, low, close, volume
     FROM ${dailyPrices}
-    WHERE date >= CURRENT_DATE - INTERVAL '14 months' AND (close > 0 OR volume > 0)
+    WHERE date >= DATE '2025-01-01' AND (close > 0 OR volume > 0)
     ORDER BY ticker_symbol, date ASC
   `) as any[];
 
@@ -121,6 +122,22 @@ export async function dispatchSignalNotifications(options: {
     strategy: string;
     signalDate: string;
     signal: string;
+  }> = [];
+
+  const signalSnapshotsToUpsert: Array<{
+    userId: string;
+    tickerSymbol: string;
+    strategy: string;
+    signalDate: string;
+    signal: string;
+    signalPrice: string;
+    signalBarsAgo: number;
+    signalReason: string | null;
+    analysisStart: string;
+    analysisEnd: string;
+    dataAsOf: string;
+    metrics: ReturnType<typeof mapStrategyMetrics>;
+    parameterVersion: string;
   }> = [];
 
   const pushTasks: Array<() => Promise<void>> = [];
@@ -177,6 +194,8 @@ export async function dispatchSignalNotifications(options: {
         strategyShort: string;
         strategyLabel: string;
         signal: any;
+        metrics: Record<string, unknown>;
+        parameterVersion: string;
       }> = [];
 
       // 1. Evaluate PSI Strategy
@@ -193,6 +212,8 @@ export async function dispatchSignalNotifications(options: {
                 strategyShort: 'PSI',
                 strategyLabel: 'PSI Strategy',
                 signal,
+                metrics: psiResult.metrics,
+                parameterVersion: 'psi-parameter-store',
               });
             }
           }
@@ -211,6 +232,8 @@ export async function dispatchSignalNotifications(options: {
                 strategyShort: 'THOTH',
                 strategyLabel: 'THOTH EGX V3.7P',
                 signal,
+                metrics: thothResult.metrics,
+                parameterVersion: 'thoth-egx-v3.7p-production-frozen',
               });
             }
           }
@@ -229,6 +252,8 @@ export async function dispatchSignalNotifications(options: {
                 strategyShort: 'PSI V2',
                 strategyLabel: 'PSI V2 Strategy',
                 signal,
+                metrics: psiV2Result.metrics,
+                parameterVersion: `psi-v2-levels-${ticker}`,
               });
             }
           }
@@ -241,7 +266,31 @@ export async function dispatchSignalNotifications(options: {
       }
 
       for (const item of signalsToDispatch) {
-        const { strategyId, strategyShort, strategyLabel, signal } = item;
+        const { strategyId, strategyShort, strategyLabel, signal, metrics, parameterVersion } = item;
+
+        const signalIndex = bars.findIndex((bar) => bar.date === signal.date);
+        const signalBarsAgo = signalIndex >= 0 ? Math.max(0, bars.length - 1 - signalIndex) : 0;
+        const analysisStart = '2025-01-01';
+        const dataAsOf = bars[bars.length - 1]?.date ?? signal.date;
+
+        // Refresh the canonical snapshot even when this notification was
+        // already delivered. The opportunities endpoint can then read the
+        // latest metrics without re-running the strategy during a request.
+        signalSnapshotsToUpsert.push({
+          userId,
+          tickerSymbol: ticker,
+          strategy: strategyId,
+          signalDate: signal.date,
+          signal: signal.signal,
+          signalPrice: String(signal.price),
+          signalBarsAgo,
+          signalReason: signal.entryReason || signal.exitReason || signal.reasoning || null,
+          analysisStart,
+          analysisEnd: dataAsOf,
+          dataAsOf,
+          metrics: mapStrategyMetrics(metrics),
+          parameterVersion,
+        });
 
         const notifKey = `${ticker}-${strategyId}-${signal.date}-${signal.signal}`;
         if (sentSet.has(notifKey)) {
@@ -311,6 +360,38 @@ export async function dispatchSignalNotifications(options: {
     for (let i = 0; i < newNotificationsToInsert.length; i += 50) {
       const slice = newNotificationsToInsert.slice(i, i + 50);
       await db.insert(signalNotifications).values(slice).onConflictDoNothing();
+    }
+  }
+
+  // Migration 0007 adds the snapshot columns. Keep this processor compatible
+  // while that migration is being applied: notifications still deliver and
+  // the opportunities reader falls back to canonical request-time analysis.
+  if (signalSnapshotsToUpsert.length > 0) {
+    try {
+      for (let i = 0; i < signalSnapshotsToUpsert.length; i += 50) {
+        const slice = signalSnapshotsToUpsert.slice(i, i + 50);
+        await db.insert(signalNotifications).values(slice).onConflictDoUpdate({
+          target: [
+            signalNotifications.userId,
+            signalNotifications.tickerSymbol,
+            signalNotifications.strategy,
+            signalNotifications.signalDate,
+            signalNotifications.signal,
+          ],
+          set: {
+            signalPrice: sql`excluded.signal_price`,
+            signalBarsAgo: sql`excluded.signal_bars_ago`,
+            signalReason: sql`excluded.signal_reason`,
+            analysisStart: sql`excluded.analysis_start`,
+            analysisEnd: sql`excluded.analysis_end`,
+            dataAsOf: sql`excluded.data_as_of`,
+            metrics: sql`excluded.metrics`,
+            parameterVersion: sql`excluded.parameter_version`,
+          },
+        });
+      }
+    } catch (error) {
+      console.warn('Signal analysis snapshot persistence skipped; migration 0007 may be pending.', error);
     }
   }
 

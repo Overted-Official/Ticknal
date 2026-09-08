@@ -130,7 +130,7 @@ function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | nu
         <img
           src={logoUrl}
           alt={symbol}
-          className="w-full h-full object-contain rounded-[3px] bg-transparent"
+          className="ticker-logo-image"
           onError={() => setImgError(true)}
         />
       ) : (

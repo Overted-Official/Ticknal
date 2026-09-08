@@ -1,16 +1,17 @@
 import { db } from '@/db';
-import { dailyPrices, tickers } from '@/db/schema';
-import { inArray, sql } from 'drizzle-orm';
+import { dailyPrices, signalNotifications, tickers } from '@/db/schema';
+import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
 import { analyzeStrategy, strategyLabel, type StrategyId, type StrategyMetrics } from '@/lib/strategy-analysis';
 import { unstable_cache } from 'next/cache';
 
-const SIGNAL_PIPELINE_VERSION = 'canonical-analysis-2026-09-08';
+const SIGNAL_PIPELINE_VERSION = 'canonical-analysis-indexed-2026-09-09';
 const DEFAULT_START_DATE = '2025-01-01';
+const MAX_INDEXED_CANDIDATES = 120;
 
 type OpportunityPriceRow = {
-  ticker_symbol: unknown;
+  tickerSymbol: unknown;
   date: unknown;
   open: unknown;
   high: unknown;
@@ -63,6 +64,152 @@ function strategyScopeToIds(strategyScope: string): StrategyId[] {
   return ['psi', 'psi_v2', 'thoth_egx_macro'];
 }
 
+type IndexedBuySignal = {
+  symbol: string;
+  strategyId: StrategyId;
+  signalDate: string;
+  snapshot: {
+    signalPrice: number | null;
+    signalBarsAgo: number | null;
+    signalReason: string | null;
+    analysisStart: string | null;
+    analysisEnd: string | null;
+    dataAsOf: string | null;
+    metrics: StrategyMetrics | null;
+  } | null;
+};
+
+function storedMetric(value: unknown): number | null {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function normalizeStoredMetrics(value: unknown): StrategyMetrics | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  return {
+    totalReturn: storedMetric(raw.totalReturn),
+    alpha: storedMetric(raw.alpha),
+    avgBarsPerTrade: storedMetric(raw.avgBarsPerTrade),
+    maxDrawdown: storedMetric(raw.maxDrawdown),
+    maxAdverseExcursion: storedMetric(raw.maxAdverseExcursion),
+    avgAdverseExcursion: storedMetric(raw.avgAdverseExcursion),
+    winRate: storedMetric(raw.winRate),
+    trades: storedMetric(raw.trades),
+    buyHoldReturn: storedMetric(raw.buyHoldReturn),
+    annualCagr: storedMetric(raw.annualCagr),
+  };
+}
+
+/**
+ * The scheduled signal processor already evaluates the market and persists
+ * recent BUY events in signal_notifications. Use that durable index to narrow
+ * the request-time work to actual candidates. The canonical analyzer still
+ * validates each candidate before it reaches the UI, so charts and tables
+ * remain backed by the exact same signal event and metrics.
+ */
+async function getIndexedBuySignals(limitBars: number, strategyScope: string): Promise<{
+  signals: IndexedBuySignal[];
+  recentMarketDates: Set<string>;
+}> {
+  const recentDateRows = await db.execute(sql`
+    SELECT DISTINCT date::text AS date
+    FROM ${dailyPrices}
+    WHERE (close > 0 OR volume > 0)
+    ORDER BY date DESC
+    LIMIT ${limitBars}
+  `);
+  const recentMarketDates = new Set(
+    (recentDateRows as unknown as Array<{ date: unknown }>)
+      .map((row) => toSignalDate(row.date))
+      .filter(Boolean),
+  );
+  const oldestRecentDate = Array.from(recentMarketDates).sort()[0];
+  if (!oldestRecentDate) return { signals: [], recentMarketDates };
+
+  const allowedStrategies = new Set(strategyScopeToIds(strategyScope));
+  let rows: Array<{
+    tickerSymbol: unknown;
+    strategy: unknown;
+    signalDate: unknown;
+    signal: unknown;
+    signalPrice?: unknown;
+    signalBarsAgo?: unknown;
+    signalReason?: unknown;
+    analysisStart?: unknown;
+    analysisEnd?: unknown;
+    dataAsOf?: unknown;
+    metrics?: unknown;
+  }>;
+
+  try {
+    rows = await db
+      .select({
+        tickerSymbol: signalNotifications.tickerSymbol,
+        strategy: signalNotifications.strategy,
+        signalDate: signalNotifications.signalDate,
+        signal: signalNotifications.signal,
+        signalPrice: signalNotifications.signalPrice,
+        signalBarsAgo: signalNotifications.signalBarsAgo,
+        signalReason: signalNotifications.signalReason,
+        analysisStart: signalNotifications.analysisStart,
+        analysisEnd: signalNotifications.analysisEnd,
+        dataAsOf: signalNotifications.dataAsOf,
+        metrics: signalNotifications.metrics,
+      })
+      .from(signalNotifications)
+      .where(and(eq(signalNotifications.signal, 'BUY'), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .orderBy(desc(signalNotifications.signalDate))
+      .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
+  } catch {
+    // The application remains deployable before migration 0007 is applied.
+    rows = await db
+      .select({
+        tickerSymbol: signalNotifications.tickerSymbol,
+        strategy: signalNotifications.strategy,
+        signalDate: signalNotifications.signalDate,
+        signal: signalNotifications.signal,
+      })
+      .from(signalNotifications)
+      .where(and(eq(signalNotifications.signal, 'BUY'), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .orderBy(desc(signalNotifications.signalDate))
+      .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
+  }
+
+  const latestByStrategy = new Map<string, IndexedBuySignal>();
+  for (const row of rows) {
+    const strategyId = String(row.strategy) as StrategyId;
+    const signalDate = toSignalDate(row.signalDate);
+    const symbol = normalizeTickerSymbol(String(row.tickerSymbol));
+    if (!symbol || !allowedStrategies.has(strategyId) || !recentMarketDates.has(signalDate)) continue;
+    const key = `${symbol}:${strategyId}`;
+    const existing = latestByStrategy.get(key);
+    if (!existing || signalDate > existing.signalDate) {
+      latestByStrategy.set(key, {
+        symbol,
+        strategyId,
+        signalDate,
+        snapshot: row.metrics && row.signalPrice != null ? {
+          signalPrice: Number(row.signalPrice),
+          signalBarsAgo: row.signalBarsAgo == null ? null : Number(row.signalBarsAgo),
+          signalReason: row.signalReason == null ? null : String(row.signalReason),
+          analysisStart: row.analysisStart == null ? null : toSignalDate(row.analysisStart),
+          analysisEnd: row.analysisEnd == null ? null : toSignalDate(row.analysisEnd),
+          dataAsOf: row.dataAsOf == null ? null : toSignalDate(row.dataAsOf),
+          metrics: normalizeStoredMetrics(row.metrics),
+        } : null,
+      });
+    }
+  }
+
+  return {
+    signals: Array.from(latestByStrategy.values())
+      .sort((a, b) => b.signalDate.localeCompare(a.signalDate))
+      .slice(0, MAX_INDEXED_CANDIDATES),
+    recentMarketDates,
+  };
+}
+
 export async function _getRecentOpportunities(
   limitBars: number = 5,
   strategyScope: string = 'all',
@@ -74,15 +221,21 @@ export async function _getRecentOpportunities(
 
   const promise = (async () => {
     try {
-      const [tickerRows, priceRows] = await Promise.all([
-        db.select().from(tickers),
-        db.execute(sql`
-          SELECT ticker_symbol, date, open, high, low, close, volume
-          FROM ${dailyPrices}
-          WHERE date >= DATE '2025-01-01' AND (close > 0 OR volume > 0)
-          ORDER BY ticker_symbol, date ASC
-        `),
-      ]);
+      const { signals: indexedSignals, recentMarketDates } = await getIndexedBuySignals(limitBars, strategyScope);
+      if (indexedSignals.length === 0) {
+        memCache.set(cacheKey, { data: [], timestamp: Date.now() });
+        return [];
+      }
+
+      const candidateSymbols = Array.from(new Set(indexedSignals.map((signal) => signal.symbol)));
+      const tickerRows = await db.select().from(tickers).where(inArray(tickers.symbol, candidateSymbols));
+      const needsRequestAnalysis = indexedSignals.some((signal) => !signal.snapshot?.metrics);
+      const priceRows = needsRequestAnalysis
+        ? await db.select()
+          .from(dailyPrices)
+          .where(and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, DEFAULT_START_DATE)))
+          .orderBy(dailyPrices.tickerSymbol, dailyPrices.date)
+        : [];
 
       const { getCachedIndustryRotationMap } = await import('@/lib/industry-rotation');
       const { tickerMap: rotationMap } = await getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map() }));
@@ -100,11 +253,9 @@ export async function _getRecentOpportunities(
       }));
 
       const rows = priceRows as unknown as OpportunityPriceRow[];
-      const marketDates = Array.from(new Set(rows.map((row) => toSignalDate(row.date)))).sort();
-      const recentMarketDates = new Set(marketDates.slice(-limitBars));
       const barsByTicker = new Map<string, PriceBar[]>();
       for (const row of rows) {
-        const symbol = normalizeTickerSymbol(String(row.ticker_symbol));
+        const symbol = normalizeTickerSymbol(String(row.tickerSymbol));
         const bars = barsByTicker.get(symbol) ?? [];
         bars.push({
           date: toSignalDate(row.date),
@@ -118,53 +269,64 @@ export async function _getRecentOpportunities(
       }
 
       const opportunities: OpportunitySignal[] = [];
-      const strategyIds = strategyScopeToIds(strategyScope);
-      let index = 0;
-      for (const [symbol, bars] of barsByTicker.entries()) {
-        index += 1;
-        if (index % 8 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
-        if (bars.length < 80) continue;
+      for (const indexedSignal of indexedSignals) {
+        const symbol = indexedSignal.symbol;
         const meta = metadata.get(symbol);
-        const tickerAnalyses = await Promise.allSettled(
-          strategyIds.map((strategyId) => analyzeStrategy(symbol, bars, strategyId, {
+        let analysis = null;
+        let latest = null;
+        const snapshot = indexedSignal.snapshot;
+        if (!snapshot?.metrics) {
+          const bars = barsByTicker.get(symbol) ?? [];
+          if (bars.length < 80) continue;
+          analysis = await analyzeStrategy(symbol, bars, indexedSignal.strategyId, {
             startDate: DEFAULT_START_DATE,
             lookbackBars: limitBars,
-          })),
-        );
-        for (let strategyIndex = 0; strategyIndex < tickerAnalyses.length; strategyIndex += 1) {
-          const result = tickerAnalyses[strategyIndex];
-          if (result.status !== 'fulfilled') continue;
-          const strategyId = strategyIds[strategyIndex];
-          const analysis = result.value;
-          const latest = analysis.latestActionableSignal;
-          if (!latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date)) continue;
-          const badge = getStrategyBadge(strategyId);
-          opportunities.push({
-            symbol,
-            companyName: meta?.companyName ?? symbol,
-            sector: meta?.sector ?? 'Unclassified',
-            industryGroup: meta?.industryGroup,
-            industry: meta?.industry,
-            rotationRegime: meta?.rotationRegime,
-            logoUrl: meta?.logoUrl ?? null,
-            strategyId,
-            strategyLabel: STRATEGIES[strategyId]?.label ?? strategyLabel(strategyId),
-            strategyShortName: badge.label,
-            strategyBadgeClassName: badge.className,
-            analysisStart: analysis.analysisStart,
-            analysisEnd: analysis.analysisEnd,
-            dataAsOf: analysis.dataAsOf,
-            signalAgeBars: analysis.signalAgeBars,
-            metrics: analysis.metrics,
-            signal: {
-              signal: 'BUY',
-              date: latest.date,
-              price: latest.price,
-              barsAgo: latest.barsAgo,
-              reasoning: latest.reason,
-            },
-          });
+          }).catch(() => null);
+          latest = analysis?.latestActionableSignal ?? null;
+          if (!analysis || !latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date)) continue;
+        } else {
+          if (!recentMarketDates.has(indexedSignal.signalDate)) continue;
+          latest = {
+            signal: 'BUY' as const,
+            date: indexedSignal.signalDate,
+            price: snapshot.signalPrice ?? 0,
+            barsAgo: snapshot.signalBarsAgo ?? 0,
+            reason: snapshot.signalReason ?? undefined,
+          };
+          analysis = {
+            analysisStart: snapshot.analysisStart ?? DEFAULT_START_DATE,
+            analysisEnd: snapshot.analysisEnd ?? snapshot.dataAsOf ?? indexedSignal.signalDate,
+            dataAsOf: snapshot.dataAsOf ?? snapshot.analysisEnd ?? indexedSignal.signalDate,
+            signalAgeBars: snapshot.signalBarsAgo,
+            metrics: snapshot.metrics,
+          };
         }
+        const badge = getStrategyBadge(indexedSignal.strategyId);
+        opportunities.push({
+          symbol,
+          companyName: meta?.companyName ?? symbol,
+          sector: meta?.sector ?? 'Unclassified',
+          industryGroup: meta?.industryGroup,
+          industry: meta?.industry,
+          rotationRegime: meta?.rotationRegime,
+          logoUrl: meta?.logoUrl ?? null,
+          strategyId: indexedSignal.strategyId,
+          strategyLabel: STRATEGIES[indexedSignal.strategyId]?.label ?? strategyLabel(indexedSignal.strategyId),
+          strategyShortName: badge.label,
+          strategyBadgeClassName: badge.className,
+          analysisStart: analysis.analysisStart,
+          analysisEnd: analysis.analysisEnd,
+          dataAsOf: analysis.dataAsOf,
+          signalAgeBars: analysis.signalAgeBars,
+          metrics: analysis.metrics,
+          signal: {
+            signal: 'BUY',
+            date: latest.date,
+            price: latest.price,
+            barsAgo: latest.barsAgo,
+            reasoning: latest.reason,
+          },
+        });
       }
 
       opportunities.sort((a, b) => {
