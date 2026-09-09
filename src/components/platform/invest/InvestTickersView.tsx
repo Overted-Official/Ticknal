@@ -5,6 +5,7 @@ import ChartReplayWorkspace from '@/components/platform/ChartReplayWorkspace';
 import BottomToolbar from '@/components/platform/BottomToolbar';
 import RightSidebar, { WatchlistItem } from '@/components/platform/RightSidebar';
 import { TickerOrder } from '@/components/platform/TickerPositions';
+import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 
 interface InvestTickersViewProps {
   symbol: string;
@@ -18,6 +19,7 @@ interface InvestTickersViewProps {
   companyName?: string;
   logoUrl?: string | null;
   rangeData: { dayHigh: number; dayLow: number; yearHigh: number; yearLow: number };
+  brokerageAccounts?: BrokerageAccountOption[];
 }
 
 export default function InvestTickersView({
@@ -32,6 +34,7 @@ export default function InvestTickersView({
   companyName,
   logoUrl,
   rangeData,
+  brokerageAccounts = [],
 }: InvestTickersViewProps) {
   return (
     <div className="flex-1 h-full w-full flex flex-row overflow-hidden select-none">
@@ -45,6 +48,7 @@ export default function InvestTickersView({
           initialReplayMode={initialReplayMode}
           tickerPositions={tickerPositions}
           currentPrice={currentPrice}
+          brokerageAccounts={brokerageAccounts}
         />
         <BottomToolbar
           symbol={symbol}

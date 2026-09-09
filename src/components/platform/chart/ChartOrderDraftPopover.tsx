@@ -1,11 +1,13 @@
 'use client';
 
 import { X, Loader2 } from '@/components/ui/icon-library';
+import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 import type { OrderDraft } from './types';
 
 interface ChartOrderDraftPopoverProps {
   orderDraft: OrderDraft | null;
   symbol: string;
+  brokerageAccounts: BrokerageAccountOption[];
   savingOrder: boolean;
   orderError: string | null;
   onUpdateDraft: (updater: (draft: OrderDraft | null) => OrderDraft | null) => void;
@@ -16,6 +18,7 @@ interface ChartOrderDraftPopoverProps {
 export default function ChartOrderDraftPopover({
   orderDraft,
   symbol,
+  brokerageAccounts,
   savingOrder,
   orderError,
   onUpdateDraft,
@@ -43,6 +46,31 @@ export default function ChartOrderDraftPopover({
           <X size={14} />
         </button>
       </div>
+
+      {brokerageAccounts.length > 0 ? (
+        <label className="mb-3 block text-[10px] uppercase font-semibold text-plt-muted font-sans">
+          Brokerage account
+          <select
+            required
+            value={orderDraft.accountId}
+            onChange={(event) =>
+              onUpdateDraft((current) => (current ? { ...current, accountId: event.target.value } : current))
+            }
+            className="mt-1 h-8 w-full rounded-xl border border-white/[0.12] bg-plt-card px-2.5 text-xs font-sans font-semibold text-plt-text outline-none focus:border-plt-border-active"
+          >
+            <option value="">Select EGP brokerage account</option>
+            {brokerageAccounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.accountName || account.customBankName || account.bankName || `Account ${account.id}`} · {Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <div className="mb-3 rounded-lg bg-plt-risk-soft px-2.5 py-2 text-[10px] text-plt-risk">
+          An EGP brokerage account is required. <a href="/wallet?tab=banks" className="font-semibold underline">Open Accounts</a> to create one.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2.5">
         <label className="text-[10px] uppercase font-semibold text-plt-muted font-sans block">
@@ -108,7 +136,7 @@ export default function ChartOrderDraftPopover({
       <button
         type="button"
         onClick={onSave}
-        disabled={savingOrder}
+        disabled={savingOrder || !orderDraft.accountId || brokerageAccounts.length === 0}
         className="w-full h-8 mt-3 rounded-xl bg-white hover:bg-white/90 text-black font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer disabled:opacity-50 active:scale-98"
       >
         {savingOrder ? (
@@ -117,7 +145,7 @@ export default function ChartOrderDraftPopover({
             <span>Saving Position...</span>
           </>
         ) : (
-          <span>Save Position</span>
+            <span>{brokerageAccounts.length > 0 ? 'Execute live buy' : 'Select brokerage account'}</span>
         )}
       </button>
     </div>

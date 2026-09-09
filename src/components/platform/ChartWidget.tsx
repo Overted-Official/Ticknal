@@ -83,6 +83,7 @@ export default function ChartWidget({
   onMetricsChange,
   tickerPositions = [],
   currentPrice,
+  brokerageAccounts = [],
 }: ChartWidgetProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -129,6 +130,10 @@ export default function ChartWidget({
   const [expandedIndicators, setExpandedIndicators] = useState<Record<string, boolean>>({ supportResistance: true });
   const indicatorLineSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+  const liveBrokerageAccounts = useMemo(
+    () => brokerageAccounts.filter((account) => !account.isArchived && account.currency === 'EGP' && ['BROKERAGE', 'BROKER_CASH'].includes(account.accountType)),
+    [brokerageAccounts],
+  );
 
   // Active hovered candle for live OHLCV legend
   const [hoveredCandle, setHoveredCandle] = useState<ChartData | null>(null);
@@ -394,6 +399,7 @@ export default function ChartWidget({
         date: timeStr,
         entryPrice: clickPrice.toFixed(2),
         quantity: '10',
+        accountId: liveBrokerageAccounts[0] ? String(liveBrokerageAccounts[0].id) : '',
         targetPrice: estimatedTarget,
         stopPrice: estimatedStop,
         targetLabel: '+8% Target',
@@ -750,22 +756,31 @@ export default function ChartWidget({
       setOrderError('Enter a valid quantity');
       return;
     }
+    if (!orderDraft.accountId) {
+      setOrderError('Select an EGP brokerage account before opening a live position');
+      return;
+    }
 
     setSavingOrder(true);
     setOrderError(null);
 
     try {
-      const res = await fetch('/api/positions', {
+      const res = await fetch('/api/portfolio/trades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'BUY',
+          accountId: Number(orderDraft.accountId),
           tickerSymbol: symbol,
+          symbol,
+          date: orderDraft.date,
           entryDate: orderDraft.date,
-          entryPrice,
+          price: entryPrice,
           quantity,
           targetPrice,
           stopPrice,
-          status: 'OPEN',
+          entrySource: 'CHART',
+          strategyId: selectedStrategy,
         }),
       });
 
@@ -776,7 +791,7 @@ export default function ChartWidget({
 
       setOrderDraft(null);
       setPositionsRefreshKey((k) => k + 1);
-      toast.success('Position opened successfully');
+      toast.success('Live position opened', 'Brokerage cash was debited and the trade was recorded.');
     } catch (err: any) {
       setOrderError(err.message || 'Failed to save position');
     } finally {
@@ -829,6 +844,7 @@ export default function ChartWidget({
       <ChartOrderDraftPopover
         orderDraft={orderDraft}
         symbol={symbol}
+        brokerageAccounts={liveBrokerageAccounts}
         savingOrder={savingOrder}
         orderError={orderError}
         onUpdateDraft={setOrderDraft}
@@ -967,6 +983,9 @@ export default function ChartWidget({
           symbol,
           price: data[data.length - 1]?.close,
         }}
+        mode="live"
+        brokerageAccounts={brokerageAccounts}
+        entrySource="CHART"
       />
 
       {selectedOrderToEdit && (

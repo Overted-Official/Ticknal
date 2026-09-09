@@ -8,6 +8,7 @@ import { STRATEGIES } from '@/strategies/registry';
 
 import { WatchlistItem } from '@/components/platform/RightSidebar';
 import { TickerOrder } from '@/components/platform/TickerPositions';
+import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 
 interface ChartReplayWorkspaceProps {
   data: ChartData[];
@@ -16,6 +17,7 @@ interface ChartReplayWorkspaceProps {
   initialReplayMode?: boolean;
   tickerPositions?: TickerOrder[];
   currentPrice?: number;
+  brokerageAccounts?: BrokerageAccountOption[];
 }
 
 const EMPTY_REPLAY_STATE: ReplayState = {
@@ -31,6 +33,7 @@ export default function ChartReplayWorkspace({
   initialReplayMode = false,
   tickerPositions = [],
   currentPrice = 0,
+  brokerageAccounts = [],
 }: ChartReplayWorkspaceProps) {
   const [replayState, setReplayState] = useState<ReplayState>(
     initialReplayMode ? { ...EMPTY_REPLAY_STATE, active: true } : EMPTY_REPLAY_STATE,
@@ -180,6 +183,7 @@ export default function ChartReplayWorkspace({
         onMetricsChange={setMetrics}
         tickerPositions={tickerPositions}
         currentPrice={currentPrice}
+        brokerageAccounts={brokerageAccounts}
       />
       <SignalPanel
         activeSymbol={symbol}

@@ -93,6 +93,7 @@ export async function handlePortfolioTradesPost(request: Request) {
     const signalDate = body.signalDate ? dateOnly(body.signalDate) : null;
     const signalPrice = optionalNumber(body.signalPrice);
     const notes = typeof body.notes === 'string' && body.notes.trim() ? body.notes.trim() : null;
+    const entrySource = body.entrySource === 'CHART' ? 'CHART' : 'COMMAND_CENTER';
 
     const result = await db.transaction(async (tx) => {
       const [account] = await tx.select()
@@ -134,7 +135,7 @@ export async function handlePortfolioTradesPost(request: Request) {
           entryStrategyId: strategyId,
           entrySignalDate: signalDate,
           entrySignalPrice: signalPrice,
-          entrySource: 'COMMAND_CENTER',
+          entrySource,
           notes,
           updatedAt: new Date(),
         }).returning();

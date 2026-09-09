@@ -375,6 +375,16 @@ async function InvestPageContent({
             companyName={currentTicker?.companyName}
             logoUrl={currentTicker?.logoUrl}
             rangeData={rangeData}
+            brokerageAccounts={brokerageAccounts.map((account: any) => ({
+              id: account.id,
+              accountName: account.accountName,
+              customBankName: account.customBankName,
+              bankName: account.bankName,
+              accountType: account.accountType === 'BROKER_CASH' ? 'BROKERAGE' : account.accountType,
+              currency: account.currency,
+              balance: account.balance,
+              isArchived: account.isArchived,
+            }))}
           />
         }
         portfolioView={

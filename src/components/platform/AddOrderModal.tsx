@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { X, Search } from '@/components/ui/icon-library';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/context/ToastContext';
@@ -11,27 +11,63 @@ export type InitialOrderData = {
   signal?: string; // e.g. 'BUY' or 'SELL'
   price?: number;
   date?: string;
+  strategyId?: string;
+  signalDate?: string;
+  signalPrice?: number;
 };
 
 type Ticker = { symbol: string; companyName: string };
+const EMPTY_BROKERAGE_ACCOUNTS: BrokerageAccountOption[] = [];
+
+export type BrokerageAccountOption = {
+  id: number;
+  accountName: string;
+  customBankName?: string | null;
+  bankName?: string | null;
+  accountType: string;
+  currency: string;
+  balance: string | number;
+  isArchived?: boolean;
+};
+
+function accountLabel(account: BrokerageAccountOption): string {
+  return account.accountName || account.customBankName || account.bankName || `Account ${account.id}`;
+}
+
+function isEgpBrokerageAccount(account: BrokerageAccountOption): boolean {
+  return !account.isArchived
+    && account.currency === 'EGP'
+    && ['BROKERAGE', 'BROKER_CASH'].includes(account.accountType);
+}
 
 export default function AddOrderModal({
   isOpen,
   onClose,
   onSuccess,
-  initialData
+  initialData,
+  mode = 'import',
+  brokerageAccounts = EMPTY_BROKERAGE_ACCOUNTS,
+  entrySource = 'CHART',
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
   initialData?: InitialOrderData | null;
+  mode?: 'import' | 'live';
+  brokerageAccounts?: BrokerageAccountOption[];
+  entrySource?: 'CHART' | 'COMMAND_CENTER';
 }) {
   const { toast } = useToast();
+  const liveAccounts = useMemo(
+    () => brokerageAccounts.filter(isEgpBrokerageAccount),
+    [brokerageAccounts],
+  );
   const [newOrderForm, setNewOrderForm] = useState({
     symbol: '',
     entryDate: new Date().toISOString().split('T')[0],
     entryPrice: '',
-    quantity: '100'
+    quantity: '100',
+    accountId: '',
   });
 
   const [tickers, setTickers] = useState<Ticker[]>([]);
@@ -69,7 +105,8 @@ export default function AddOrderModal({
           symbol: initialData?.symbol || '',
           entryDate: initialData?.date || new Date().toISOString().split('T')[0],
           entryPrice: initialData?.price ? initialData.price.toString() : '',
-          quantity: '100'
+          quantity: '100',
+          accountId: liveAccounts[0] ? String(liveAccounts[0].id) : '',
         });
         setIsSearchOpen(false);
       }, 0);
@@ -84,7 +121,7 @@ export default function AddOrderModal({
         })
         .catch(console.error);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, liveAccounts]);
 
   const handleSymbolChange = (val: string) => {
     const sym = val.toUpperCase();
@@ -108,27 +145,51 @@ export default function AddOrderModal({
 
   const handleAddOrder = async () => {
     if (!newOrderForm.symbol || !newOrderForm.entryPrice) return;
+    if (mode === 'live' && !newOrderForm.accountId) {
+      toast.error('Brokerage account required', 'Select an EGP brokerage account before executing the buy.');
+      return;
+    }
+
     try {
-      const res = await fetch('/api/positions', {
+      const res = await fetch(mode === 'live' ? '/api/portfolio/trades' : '/api/positions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: newOrderForm.symbol,
-          entryDate: newOrderForm.entryDate,
-          entryPrice: Number(newOrderForm.entryPrice),
-          quantity: Number(newOrderForm.quantity)
-        })
+        body: JSON.stringify(mode === 'live'
+          ? {
+              action: 'BUY',
+              accountId: Number(newOrderForm.accountId),
+              symbol: newOrderForm.symbol,
+              date: newOrderForm.entryDate,
+              price: Number(newOrderForm.entryPrice),
+              quantity: Number(newOrderForm.quantity),
+              strategyId: initialData?.strategyId,
+              signalDate: initialData?.signalDate,
+              signalPrice: initialData?.signalPrice,
+              entrySource,
+            }
+          : {
+              symbol: newOrderForm.symbol,
+              entryDate: newOrderForm.entryDate,
+              entryPrice: Number(newOrderForm.entryPrice),
+              quantity: Number(newOrderForm.quantity),
+            }),
       });
       if (res.ok) {
-        toast.success('Position Added', `${newOrderForm.symbol} position created successfully.`);
+        toast.success(
+          mode === 'live' ? 'Live position opened' : 'Position Added',
+          mode === 'live'
+            ? `${newOrderForm.symbol} was opened and brokerage cash was debited.`
+            : `${newOrderForm.symbol} position created successfully.`,
+        );
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        toast.error('Position Failed', 'Failed to add position.');
+        const payload = await res.json().catch(() => ({}));
+        toast.error('Position Failed', payload.error || 'Failed to add position.');
       }
     } catch (e) {
       console.error(e);
-      toast.error('Error', 'Error adding position.');
+      toast.error('Error', mode === 'live' ? 'The live buy could not be completed.' : 'Error adding position.');
     }
   };
 
@@ -137,7 +198,9 @@ export default function AddOrderModal({
 
   const isBuy = initialData?.signal === 'BUY';
   const isSell = initialData?.signal && initialData.signal.includes('SELL');
-  const title = isBuy ? `Buy ${initialData?.symbol.replace('.CA', '') || ''} Position` : isSell ? `Exit ${initialData?.symbol.replace('.CA', '') || ''} Position` : 'Add Tracked Position';
+  const title = mode === 'live'
+    ? `Buy ${initialData?.symbol.replace('.CA', '') || newOrderForm.symbol.replace('.CA', '') || ''} Position`
+    : isBuy ? `Buy ${initialData?.symbol.replace('.CA', '') || ''} Position` : isSell ? `Exit ${initialData?.symbol.replace('.CA', '') || ''} Position` : 'Add Tracked Position';
 
   return (
     <AnimatePresence>
@@ -165,7 +228,7 @@ export default function AddOrderModal({
             <div className="px-5 py-3.5 flex items-center justify-between border-b border-plt-border-soft bg-plt-card shrink-0">
               <div>
                 <h2 className="text-xs font-bold text-plt-text tracking-tight font-sans">{title}</h2>
-                <p className="text-[10px] text-plt-muted font-sans mt-0.5">Record a new lot or stock entry</p>
+                <p className="text-[10px] text-plt-muted font-sans mt-0.5">{mode === 'live' ? 'Create a live position from brokerage cash' : 'Record a new lot or stock entry'}</p>
               </div>
               <button
                 onClick={onClose}
@@ -223,6 +286,31 @@ export default function AddOrderModal({
                   </div>
                 )}
               </div>
+
+              {mode === 'live' && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-plt-muted font-sans">Brokerage Account</label>
+                  {liveAccounts.length > 0 ? (
+                    <select
+                      required
+                      value={newOrderForm.accountId}
+                      onChange={(e) => setNewOrderForm({ ...newOrderForm, accountId: e.target.value })}
+                      className="input-token"
+                    >
+                      <option value="">Select an EGP brokerage account</option>
+                      {liveAccounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {accountLabel(account)} · {Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP available
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="rounded-lg bg-plt-risk-soft px-3 py-2.5 text-[11px] text-plt-risk">
+                      An EGP brokerage account is required. <a href="/wallet?tab=banks" className="font-semibold underline">Open Accounts</a> to create one.
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Entry Info */}
               <div className="grid grid-cols-2 gap-3">
@@ -302,7 +390,7 @@ export default function AddOrderModal({
                 onClick={handleAddOrder}
                 className="btn-token btn-primary btn-compact flex-1 font-sans"
               >
-                Save Position
+                {mode === 'live' ? 'Execute Live Buy' : 'Save Position'}
               </button>
             </div>
           </motion.div>

@@ -1,6 +1,7 @@
 import type { SeriesMarker, Time } from 'lightweight-charts';
 import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import type { TickerOrder } from '@/components/platform/TickerPositions';
+import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 
 export interface ChartData {
   time: string | number; // "YYYY-MM-DD" or numeric epoch seconds
@@ -44,6 +45,7 @@ export type OrderDraft = {
   date: string;
   entryPrice: string;
   quantity: string;
+  accountId: string;
   targetPrice: string;
   stopPrice: string;
   targetLabel: string | null;
@@ -101,6 +103,7 @@ export interface ChartWidgetProps {
   onMetricsChange?: (metrics: Record<string, string> | null) => void;
   tickerPositions?: TickerOrder[];
   currentPrice?: number;
+  brokerageAccounts?: BrokerageAccountOption[];
 }
 
 export const PLAYBACK_SPEEDS = [
