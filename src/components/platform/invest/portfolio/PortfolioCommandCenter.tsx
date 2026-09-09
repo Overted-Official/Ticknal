@@ -249,6 +249,91 @@ function DecisionChip({ strategy, opinion, loading = false }: { strategy: string
   );
 }
 
+function StrategyDecisionCell({
+  label,
+  opinion,
+  loading,
+  active = false,
+}: {
+  label: string;
+  opinion?: StrategyOpinion | null;
+  loading?: boolean;
+  active?: boolean;
+}) {
+  const hasSignal = Boolean(opinion?.signalDate);
+  const signal = hasSignal ? opinion?.verdict : 'NONE';
+  const value = loading ? 'Analyzing…' : hasSignal ? opinion?.verdict : 'No fresh signal';
+  const meta = loading
+    ? 'Loading canonical analysis'
+    : hasSignal
+      ? `${opinion?.signalDate} · ${opinion?.barsAgo ?? 0} sessions ago`
+      : 'Outside selected window';
+
+  return (
+    <div className={`strategy-decision-cell ${active ? 'strategy-decision-cell-active' : ''}`} title={opinion?.reason}>
+      <div className="strategy-decision-head">
+        <span className="strategy-decision-tag">{label}</span>
+        <span className={`strategy-decision-value ${signalTone(signal)}`}>{value}</span>
+      </div>
+      <span className="strategy-decision-meta">{meta}</span>
+    </div>
+  );
+}
+
+function DesktopHoldingRow({
+  holding,
+  strategy,
+  freshness,
+  grouping,
+  consensus,
+  isLoadingConsensus,
+  onOpenChart,
+  onBuyMore,
+  onSell,
+}: {
+  holding: HoldingRow;
+  strategy: StrategyFilter;
+  freshness: number;
+  grouping: Grouping;
+  consensus?: HoldingConsensus;
+  isLoadingConsensus: boolean;
+  onOpenChart: (symbol: string, strategyId?: StrategyId) => void;
+  onBuyMore: (holding: HoldingRow) => void;
+  onSell: (holding: HoldingRow) => void;
+}) {
+  const group = grouping === 'sector' ? holding.sector : grouping === 'industryGroup' ? holding.industryGroup : holding.industry;
+
+  return (
+    <div className="table-layout-portfolio items-center border-b border-plt-border-soft px-3 py-3 last:border-b-0 hover:bg-plt-hover/40">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <TickerLogo symbol={holding.symbol} logoUrl={holding.logoUrl} />
+        <div className="min-w-0">
+          <p className="portfolio-ticker-name">{holding.symbol}</p>
+          <p className="truncate text-[11px] text-plt-muted">{holding.companyName}</p>
+        </div>
+      </div>
+      <div className="min-w-0 text-[11px] text-plt-muted" title={holding.accountNames.join(', ')}>
+        {holding.accountNames.length ? `${holding.accountNames.length} account${holding.accountNames.length === 1 ? '' : 's'}` : <span className="text-plt-warning">Not linked</span>}
+      </div>
+      <div className="holding-position-cell">
+        <div className="holding-position-line"><span className="holding-position-label">Qty</span><span className="holding-position-value">{number(holding.quantity, 2)}</span></div>
+        <div className="holding-position-line"><span className="holding-position-label">Value</span><span className="holding-position-value">{money(holding.marketValue)}</span></div>
+        <div className="holding-position-line"><span className="holding-position-label">P/L</span><span className={`holding-position-value ${holding.unrealizedPnl >= 0 ? 'holding-position-value-profit' : 'holding-position-value-risk'}`}>{pct(holding.unrealizedPnlPct)} · {money(holding.unrealizedPnl)}</span></div>
+      </div>
+      <span className="text-xs text-plt-muted">{number(holding.weightPct)}%</span>
+      <div className="text-[11px]"><span className="block truncate text-plt-text">{group}</span><span className={`mt-1 inline-flex rounded-md px-1.5 py-0.5 text-[10px] ${regimeTone(holding.regime)}`}>{holding.regime}</span></div>
+      <StrategyDecisionCell label="PSI" opinion={opinionFor(consensus, 'psi', freshness)} loading={isLoadingConsensus} active={strategy === 'psi'} />
+      <StrategyDecisionCell label="PSI V2" opinion={opinionFor(consensus, 'psi_v2', freshness)} loading={isLoadingConsensus} active={strategy === 'psi_v2'} />
+      <StrategyDecisionCell label="THOTH" opinion={opinionFor(consensus, 'thoth_egx_macro', freshness)} loading={isLoadingConsensus} active={strategy === 'thoth_egx_macro'} />
+      <div className="flex items-center justify-end gap-1">
+        <button type="button" onClick={() => onOpenChart(holding.symbol)} className="rounded-md p-1.5 text-plt-muted hover:bg-plt-hover hover:text-plt-text" title="Open chart"><LineChart size={14} /></button>
+        <button type="button" onClick={() => onBuyMore(holding)} className="rounded-md p-1.5 text-plt-accent hover:bg-plt-accent-soft" title="Buy more"><ArrowUpRight size={14} /></button>
+        <button type="button" onClick={() => onSell(holding)} className="rounded-md p-1.5 text-plt-risk hover:bg-plt-risk-soft" title="Sell"><ArrowDownRight size={14} /></button>
+      </div>
+    </div>
+  );
+}
+
 function DrawerShell({ title, eyebrow, onClose, children }: { title: string; eyebrow: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-[80] flex justify-end bg-plt-overlay" onMouseDown={onClose}>
@@ -587,6 +672,12 @@ export default function PortfolioCommandCenter({
         <section className="min-w-0">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-plt-accent">02 · Current portfolio</p><h2 className="mt-1 text-base font-semibold text-plt-text">Open positions, one row per ticker</h2><p className="mt-1 text-xs text-plt-muted">Multiple lots and accounts are aggregated here; use the account detail before selling.</p></div><span className="text-[11px] text-plt-muted">{holdings.length} active ticker{holdings.length === 1 ? '' : 's'} · {initialPositions.length} lot{initialPositions.length === 1 ? '' : 's'}</span></div>
           <div className="hidden overflow-x-auto rounded-xl bg-plt-card/25 md:block">
+            <div className="portfolio-table-min">
+              <div className="table-layout-portfolio border-b border-plt-border-soft px-3 py-2 text-[9px] font-semibold uppercase tracking-wider text-plt-muted"><span>Ticker</span><span>Accounts</span><span>Position</span><span>Weight</span><span>Group / regime</span><span>PSI</span><span>PSI V2</span><span>THOTH</span><span>Actions</span></div>
+              {holdings.length === 0 ? <div className="px-3 py-10 text-center text-xs text-plt-muted">No open positions yet.</div> : holdings.map((holding) => <DesktopHoldingRow key={holding.symbol} holding={holding} strategy={strategy} freshness={freshness} grouping={grouping} consensus={consensusMap[holding.symbol]} isLoadingConsensus={isLoadingConsensus} onOpenChart={openChart} onBuyMore={(item) => { const opportunity = buyOpportunityForHolding(item, consensusMap[item.symbol], strategy, freshness, latestData); if (opportunity) setBuyOpportunity(opportunity); else setTradeError(`No fresh BUY signal for ${item.symbol} in the selected strategy window.`); }} onSell={setSellHolding} />)}
+            </div>
+          </div>
+          <div className="hidden legacy-portfolio-table">
             <div className="portfolio-table-min">
               <div className="table-layout-portfolio border-b border-plt-border-soft px-3 py-2 text-[9px] font-semibold uppercase tracking-wider text-plt-muted"><span>Ticker</span><span>Accounts</span><span>Qty</span><span>Last</span><span>Market value</span><span>Weight</span><span>Unrealized P/L</span><span>Group / regime</span><span>Signal date</span><span>Signal age</span><span>Strategy alpha</span><span>Decision</span><span>Actions</span></div>
               {holdings.length === 0 ? <div className="px-3 py-10 text-center text-xs text-plt-muted">No open positions yet.</div> : holdings.map((holding) => { const consensus = consensusMap[holding.symbol]; const selectedOpinion = opinionFor(consensus, strategy, freshness); const latestDecision = strategy === 'all' ? latestFreshOpinion(consensus, freshness) : selectedOpinion; const selectedMetrics = strategyMetricsFor(consensus, strategy); return <div key={holding.symbol} className="table-layout-portfolio items-center border-b border-plt-border-soft px-3 py-3 last:border-b-0 hover:bg-plt-hover/40"><div className="flex min-w-0 items-center gap-2.5"><TickerLogo symbol={holding.symbol} logoUrl={holding.logoUrl} /><div className="min-w-0"><p className="portfolio-ticker-name">{holding.symbol}</p><p className="truncate text-[11px] text-plt-muted">{holding.companyName}</p></div></div><div className="min-w-0 text-[11px] text-plt-muted" title={holding.accountNames.join(', ')}>{holding.accountNames.length ? <>{holding.accountNames.length} account{holding.accountNames.length === 1 ? '' : 's'}</> : <span className="text-plt-warning">Not linked</span>}</div><span className="text-xs text-plt-text">{number(holding.quantity, 2)}</span><span className="text-xs text-plt-text">{number(holding.currentPrice, 2)}</span><span className="text-xs font-semibold text-plt-text">{money(holding.marketValue)}</span><span className="text-xs text-plt-muted">{number(holding.weightPct)}%</span><span className={`text-xs font-semibold ${holding.unrealizedPnl >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>{pct(holding.unrealizedPnlPct)}<span className="block text-[10px] font-normal">{money(holding.unrealizedPnl)}</span></span><div className="text-[11px]"><span className="block truncate text-plt-text">{grouping === 'sector' ? holding.sector : grouping === 'industryGroup' ? holding.industryGroup : holding.industry}</span><span className={`mt-1 inline-flex rounded-md px-1.5 py-0.5 text-[10px] ${regimeTone(holding.regime)}`}>{holding.regime}</span></div><span className="text-[11px] text-plt-muted">{isLoadingConsensus ? 'Analyzing…' : latestDecision?.signalDate || 'No fresh signal'}</span><span className="text-[11px] text-plt-muted">{isLoadingConsensus ? '—' : latestDecision ? `${latestDecision.barsAgo ?? 0} sessions` : '—'}</span><div className="text-[11px]">{isLoadingConsensus ? <span>Analyzing…</span> : strategy === 'all' ? <><span className="block">PSI {pct(consensus?.strategyMetrics.psi.alpha)}</span><span className="block">V2 {pct(consensus?.strategyMetrics.psiV2.alpha)}</span><span className="block">THOTH {pct(consensus?.strategyMetrics.thoth.alpha)}</span></> : <span>{pct(selectedMetrics?.alpha)}</span>}</div><div className="flex flex-wrap gap-1.5">{strategy === 'all' ? <><DecisionChip strategy="PSI" opinion={opinionFor(consensus, 'psi', freshness) || undefined} loading={isLoadingConsensus} /><DecisionChip strategy="V2" opinion={opinionFor(consensus, 'psi_v2', freshness) || undefined} loading={isLoadingConsensus} /><DecisionChip strategy="THOTH" opinion={opinionFor(consensus, 'thoth_egx_macro', freshness) || undefined} loading={isLoadingConsensus} /></> : <DecisionChip strategy={STRATEGIES.find((item) => item.id === strategy)?.label || 'Strategy'} opinion={selectedOpinion || undefined} loading={isLoadingConsensus} />}</div><div className="flex items-center gap-1"><button type="button" onClick={() => openChart(holding.symbol)} className="rounded-md p-1.5 text-plt-muted hover:bg-plt-hover hover:text-plt-text" title="Open chart"><LineChart size={14} /></button><button type="button" onClick={() => { const opportunity = buyOpportunityForHolding(holding, consensus, strategy, freshness, latestData); if (opportunity) setBuyOpportunity(opportunity); else setTradeError(`No fresh BUY signal for ${holding.symbol} in the selected strategy window.`); }} className="rounded-md p-1.5 text-plt-accent hover:bg-plt-accent-soft" title="Buy more"><ArrowUpRight size={14} /></button><button type="button" onClick={() => setSellHolding(holding)} className="rounded-md p-1.5 text-plt-risk hover:bg-plt-risk-soft" title="Sell"><ArrowDownRight size={14} /></button></div></div>; })}

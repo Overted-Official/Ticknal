@@ -223,7 +223,7 @@
   --width-command-center: 112.5rem;
   --width-trade-drawer: 28.75rem;
   --width-heatmap-inspector: 26.25rem;
-  --width-portfolio-table: 91.875rem;
+  --width-portfolio-table: 87.5rem;
   --width-opportunity-table: 78.125rem;
   --width-account-summary-table: 38.75rem;
   --width-settings-ticker-meta: 6.875rem;
@@ -231,7 +231,7 @@
   --width-settings-sector: 8.75rem;
   --grid-account-summary-columns: 1.6fr 0.8fr 0.9fr 1fr;
   --grid-insights-columns: 1.2fr 0.8fr;
-  --grid-portfolio-columns: 190px 150px 90px 90px 130px 80px 110px 150px 110px 110px 130px 300px 130px;
+  --grid-portfolio-columns: 190px 140px 185px 72px 150px 155px 155px 155px 100px;
   --grid-opportunity-columns: 170px 190px 90px 110px 110px 90px 100px 100px 110px 110px 100px;
   --gap-table: 0.75rem;
   --width-copy-measure: 40rem;
@@ -573,6 +573,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .table-layout-portfolio, .table-layout-opportunity { display: grid; gap: var(--gap-table); }
 .table-layout-portfolio { grid-template-columns: var(--grid-portfolio-columns); }
 .table-layout-opportunity { grid-template-columns: var(--grid-opportunity-columns); }
+.strategy-decision-cell { min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.strategy-decision-cell-active { border-radius: var(--radius-control); background: var(--plt-accent-softer); padding: var(--space-1); margin: calc(var(--space-1) * -1); }
+.strategy-decision-head { display: flex; min-width: 0; align-items: center; gap: var(--space-1); }
+.strategy-decision-tag { flex: 0 0 auto; border-radius: var(--radius-control); background: var(--plt-bg-hover); color: var(--plt-text-secondary); padding: 0 var(--space-1); font-size: var(--text-9); font-weight: var(--font-weight-medium-token); line-height: 1.6; }
+.strategy-decision-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: var(--radius-control); padding: 0 var(--space-1); font-size: var(--text-9); font-weight: var(--font-weight-medium-token); line-height: 1.6; }
+.strategy-decision-meta { color: var(--plt-text-muted); font-size: var(--text-10); line-height: var(--line-height-tight); white-space: nowrap; }
+.holding-position-cell { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); font-size: var(--text-10); line-height: var(--line-height-tight); }
+.holding-position-line { display: flex; min-width: 0; align-items: baseline; justify-content: space-between; gap: var(--space-1); }
+.holding-position-label { color: var(--plt-text-muted); }
+.holding-position-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--plt-text-primary); font-weight: var(--font-weight-medium-token); }
+.holding-position-value-profit { color: var(--plt-profit); }
+.holding-position-value-risk { color: var(--plt-risk); }
+.table-layout-opportunity > button:last-child { display: inline-flex; width: 100%; min-width: 0; min-height: var(--size-control-compact); align-items: center; justify-content: center; gap: var(--space-1); border: var(--border-width-default) solid var(--plt-accent-border); border-radius: var(--radius-control) !important; background: var(--plt-accent-soft); color: var(--plt-accent); padding: 0 var(--space-2); font-family: var(--font-sans-token); font-size: var(--text-11); font-weight: var(--font-weight-medium-token); line-height: 1; white-space: nowrap; transition: background-color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard); }
+.table-layout-opportunity > button:last-child:hover { border-color: var(--plt-accent); background: var(--plt-accent); color: var(--plt-text-inverse); }
 .insights-grid { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1024px) { .insights-grid { grid-template-columns: var(--grid-insights-columns); } }
 .widget-row-gap { gap: var(--space-widget); }
@@ -631,7 +645,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: inherit;
+  border-radius: var(--radius-full);
 }
 .card-header-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-bottom: var(--space-1); }
 .card-title-text { color: var(--plt-text-primary); font-family: var(--font-sans-token); font-size: var(--text-16); font-weight: var(--font-weight-medium-token); line-height: var(--line-height-tight); }
