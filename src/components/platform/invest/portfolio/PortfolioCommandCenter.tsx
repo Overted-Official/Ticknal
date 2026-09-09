@@ -231,7 +231,7 @@ function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | nu
     <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-plt-hover text-[10px] font-semibold text-plt-muted">
       {logoUrl && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logoUrl} alt="" className="ticker-logo-image" onError={() => setFailed(true)} />
+        <img src={logoUrl} alt="" className="ticker-logo-image ticker-logo-fill" onError={() => setFailed(true)} />
       ) : symbol.slice(0, 2)}
     </span>
   );

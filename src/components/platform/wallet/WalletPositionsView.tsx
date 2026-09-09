@@ -52,7 +52,7 @@ function TickerLogo({ symbol, logoUrl, size = 'sm' }: { symbol: string; logoUrl?
         <img
           src={logoUrl}
           alt={symbol}
-          className="ticker-logo-image"
+          className="ticker-logo-image ticker-logo-fill"
           onError={() => setImgError(true)}
         />
       ) : (

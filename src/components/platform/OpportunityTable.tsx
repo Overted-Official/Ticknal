@@ -204,7 +204,7 @@ export default function OpportunityTable({
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 rounded-full bg-plt-hover flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
                     {item.logoUrl ? (
-                      <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image" />
+                      <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image ticker-logo-fill" />
                     ) : (
                       <span className="text-compact font-medium text-plt-text">
                         {item.symbol.substring(0, 2)}
@@ -291,7 +291,7 @@ export default function OpportunityTable({
                     <div className="flex items-center space-x-2.5">
                       <div className="w-7 h-7 rounded-lg bg-plt-card/90 border border-plt-border-soft flex items-center justify-center p-0.5 shrink-0 overflow-hidden shadow-xs">
                         {item.logoUrl ? (
-                          <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image" />
+                          <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image ticker-logo-fill" />
                         ) : (
                           <span className="text-[10px] font-bold text-plt-info font-sans">
                             {item.symbol.substring(0, 3)}

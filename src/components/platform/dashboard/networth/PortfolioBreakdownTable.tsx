@@ -255,7 +255,7 @@ function AssetLogo({
         <img
           src={logoUrl}
           alt={title}
-          className="ticker-logo-image"
+          className="ticker-logo-image ticker-logo-fill"
           onError={() => setImgError(true)}
           loading="lazy"
         />

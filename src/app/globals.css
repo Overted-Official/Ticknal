@@ -642,11 +642,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .ticker-logo-image {
   display: block;
-  width: 100%;
-  height: 100%;
   object-fit: cover;
   border-radius: var(--radius-full);
 }
+.ticker-logo-fill { width: 100%; height: 100%; }
 .card-header-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-bottom: var(--space-1); }
 .card-title-text { color: var(--plt-text-primary); font-family: var(--font-sans-token); font-size: var(--text-16); font-weight: var(--font-weight-medium-token); line-height: var(--line-height-tight); }
 

@@ -186,7 +186,7 @@ export default function DashboardPositionsCard({ orders, exitSignals }: Dashboar
                   <div className="flex items-center space-x-2 min-w-0">
                     <div className="w-7 h-7 rounded-full bg-plt-hover flex items-center justify-center overflow-hidden shrink-0 border border-plt-border-soft">
                       {order.logoUrl ? (
-                        <img src={order.logoUrl} alt={order.tickerSymbol} className="ticker-logo-image" />
+                        <img src={order.logoUrl} alt={order.tickerSymbol} className="ticker-logo-image ticker-logo-fill" />
                       ) : (
                         <span className="text-xs font-semibold text-plt-text font-sans">
                           {order.tickerSymbol.slice(0, 2)}
@@ -244,7 +244,7 @@ function PositionLogo({
         <img
           src={logoUrl}
           alt={symbol}
-          className="ticker-logo-image"
+          className="ticker-logo-image ticker-logo-fill"
           onError={() => setImgError(true)}
           loading="lazy"
         />

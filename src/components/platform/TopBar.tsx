@@ -61,9 +61,9 @@ export default function TopBar({
             {/* Circular Logo */}
             <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-plt-hover border border-plt-border overflow-hidden">
               {currentTicker.logoUrl ? (
-                <img src={currentTicker.logoUrl} alt={displaySymbol} className="ticker-logo-image" />
+                <img src={currentTicker.logoUrl} alt={displaySymbol} className="ticker-logo-image ticker-logo-fill" />
               ) : currentTicker.website ? (
-                <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="ticker-logo-image" />
+                <img src={`https://logo.clearbit.com/${currentTicker.website}`} alt={displaySymbol} className="ticker-logo-image ticker-logo-fill" />
               ) : (
                 <span className="text-compact font-medium text-plt-text">{displaySymbol.substring(0, 2)}</span>
               )}
