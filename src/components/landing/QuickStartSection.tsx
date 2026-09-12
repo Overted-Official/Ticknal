@@ -1,49 +1,63 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import AuthButton from './AuthButton';
-import { ArrowRight, Sparkles } from '@/components/ui/icon-library';
+import Link from 'next/link';
 
 export default function QuickStartSection() {
   return (
-    <section className="pt-20 sm:pt-28 px-4 sm:px-6 md:px-10 pb-12 sm:pb-16 bg-transparent w-full">
-      <div className="max-w-248 mx-auto">
+    <section className="bg-[#F9F9F9] py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-10 w-full max-w-full overflow-hidden flex justify-center items-center">
+      <div className="max-w-[1360px] w-full mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="relative rounded-2xl p-6 sm:p-10 md:p-14 border border-plt-border-strong bg-gradient-to-b from-plt-accent-soft to-plt-base text-center overflow-hidden shadow-accent"
+          className="relative rounded-[20px] bg-[#191919] p-3 sm:p-4 overflow-hidden flex flex-col lg:flex-row items-stretch border border-white/[0.06] shadow-2xl"
         >
-          {/* Radial Accent Glows */}
-          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-120 h-60 bg-tv-accent/20 rounded-full blur-26 pointer-events-none" />
-          <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-80 h-40 bg-tv-accent/15 rounded-full blur-20 pointer-events-none" />
+          {/* Left: Text & Button */}
+          <div className="flex-1 p-6 sm:p-10 lg:p-12 flex flex-col justify-center items-start gap-8 z-10">
+            <div className="flex flex-col gap-4">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-mono text-[#969290]">
+                <span className="w-1.5 h-1.5 bg-[#969290] inline-block rounded-none" />
+                <span>Start Trading</span>
+              </div>
 
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center gap-6 max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-plt-hover border border-plt-border text-plt-subtle text-caption tracking-widest font-medium">
-              <Sparkles size={16} className="text-tv-accent" /> Start Trading Quantitative Models
+              {/* Heading */}
+              <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-serif font-light text-white tracking-[-0.05em] leading-[1.2] max-w-md">
+                See Why Top Traders Rely on Ticknal
+              </h3>
+
+              {/* Subtitle */}
+              <p className="text-sm sm:text-base text-white/60 font-sans font-normal leading-relaxed max-w-sm">
+                Access high-conviction signals, quantitative backtesting, and automated risk analytics today.
+              </p>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl md:text-hero-sm font-medium text-plt-text tracking-tight leading-hero">
-              Ready to automate your trading?
-            </h2>
-
-            <p className="text-xs sm:text-base text-plt-subtle max-w-lg leading-relaxed">
-              Join Ticknal today and get immediate access to proprietary signals, mark-to-market backtests, and real-time alerts for the Egyptian Stock Exchange.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-2 mt-4 w-full sm:w-auto">
-              <AuthButton
-                variant="primary"
-                className="w-full sm:w-auto"
+            {/* CTA Button */}
+            <div>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-[#080808] font-medium text-sm hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans"
               >
-                Get Started Now <ArrowRight size={16} />
-              </AuthButton>
+                Launch Terminal
+              </Link>
             </div>
+          </div>
+
+          {/* Right: Dashboard UI Image */}
+          <div className="lg:w-[58%] rounded-[12px] overflow-hidden bg-black/40 flex items-center justify-center relative min-h-[260px] sm:min-h-[340px] lg:min-h-[420px]">
+            <img
+              src="/images/landing/xDRVUBMMcJprOBkxsznD23x3Oc.png"
+              alt="Ticknal Terminal Preview"
+              className="w-full h-full object-cover object-left"
+              loading="lazy"
+            />
           </div>
         </motion.div>
       </div>
     </section>
   );
 }
+
+

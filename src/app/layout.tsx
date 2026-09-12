@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Spectral } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
 import NativeBridgeProvider from "@/components/platform/NativeBridgeProvider";
 import "./globals.css";
@@ -9,11 +9,19 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+const spectral = Spectral({
+  variable: "--font-spectral",
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+});
+
 const APP_THEME_COLOR = "black";
 
+
 export const metadata: Metadata = {
-  title: "Ticknal | Trading Platform",
-  description: "Advanced EGX Trading Platform",
+  title: "Ticknal — The Hyperintelligent Quantitative Trading Platform",
+  description: "Algorithmic signals, proprietary PSI & Thoth models, live EGX ingestion, and institutional risk analytics for high-conviction traders.",
   icons: {
     icon: [
       { url: "/Ticknal_icon.svg", type: "image/svg+xml" },
@@ -50,9 +58,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} h-full antialiased font-sans bg-plt-base`}
+      className={`${geistSans.variable} ${spectral.variable} h-full antialiased font-sans bg-plt-base`}
       suppressHydrationWarning
     >
+
       <body
         className="min-h-full flex flex-col font-sans bg-plt-base text-plt-text"
         suppressHydrationWarning

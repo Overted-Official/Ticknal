@@ -1,68 +1,162 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <footer className="bg-plt-base pt-12 pb-10 border-t border-plt-border-soft w-full max-w-full overflow-hidden">
-      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto px-4 sm:px-6">
-        {/* Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
-          <div className="col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4 group w-fit">
-              <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center border border-white/10">
-                <Image src="/logo.svg" alt="Ticknal" width={22} height={22} className="object-contain" />
-              </div>
-              <span className="text-plt-text font-medium text-base tracking-tight">Ticknal</span>
+    <footer className="bg-[#000000] text-white w-full max-w-full overflow-hidden relative">
+      <div className="max-w-[1440px] w-full mx-auto">
+        {/* Top Banner */}
+        <div className="px-6 sm:px-10 lg:px-12 py-12 sm:py-16 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-serif font-light text-white tracking-[-0.05em]">
+            Supercharge Your Trading Performance
+          </h3>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-[#080808] font-medium text-sm hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans whitespace-nowrap"
+          >
+            Start Trading
+          </Link>
+        </div>
+
+        {/* Divider */}
+        <div className="w-full h-[1px] bg-white/[0.1]" />
+
+        {/* Main Navigation */}
+        <div className="px-6 sm:px-10 lg:px-12 py-12 sm:py-16 flex flex-col md:flex-row justify-between items-start gap-12">
+          {/* Logo */}
+          <div className="md:w-1/3">
+            <Link href="/" className="inline-block w-[26px] h-[26px]">
+              <img
+                src="/logo-mark.svg"
+                alt="Ticknal"
+                className="w-full h-full object-contain"
+              />
             </Link>
-            <p className="text-plt-muted text-xs leading-relaxed max-w-xs mb-6">
-              The premier quantitative research and algorithmic trading platform engineered specifically for the Egyptian Stock Exchange (EGX).
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-2 py-2 rounded-full bg-plt-profit/10 border border-plt-profit/20 text-plt-profit text-mini font-medium">
-                <span className="w-2 h-2 rounded-full bg-plt-profit animate-pulse" /> EGX Live Feed Active
-              </span>
+          </div>
+
+          {/* Links Columns */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-10 sm:gap-16 lg:gap-24 md:w-2/3 justify-between">
+            {/* Product */}
+            <div>
+              <p className="text-sm font-medium text-white/50 mb-4 font-sans">Platform</p>
+              <ul className="space-y-3 text-sm font-medium font-sans">
+                <li>
+                  <Link href="#signals" className="text-white hover:text-white/80 transition-colors">
+                    Signals
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#strategies" className="text-white hover:text-white/80 transition-colors">
+                    Strategies
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#solutions" className="text-white hover:text-white/80 transition-colors">
+                    Markets
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#customers" className="text-white hover:text-white/80 transition-colors">
+                    Performance
+                  </Link>
+                </li>
+              </ul>
             </div>
-          </div>
 
-          <div>
-            <h4 className="text-plt-text font-medium text-xs tracking-wider mb-4">Platform</h4>
-            <ul className="space-y-2 text-xs">
-              <li><Link href="#features" className="text-plt-subtle hover:text-plt-text transition-colors">Features</Link></li>
-              <li><Link href="#pricing" className="text-plt-subtle hover:text-plt-text transition-colors">Pricing</Link></li>
-              <li><Link href="/dashboard" className="text-plt-subtle hover:text-plt-text transition-colors">Dashboard</Link></li>
-              <li><Link href="/invest" className="text-plt-subtle hover:text-plt-text transition-colors">Invest & Charts</Link></li>
-            </ul>
-          </div>
+            {/* Company */}
+            <div>
+              <p className="text-sm font-medium text-white/50 mb-4 font-sans">Company</p>
+              <ul className="space-y-3 text-sm font-medium font-sans">
+                <li>
+                  <Link href="#signals" className="text-white hover:text-white/80 transition-colors">
+                    About Ticknal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#product" className="text-white hover:text-white/80 transition-colors">
+                    Methodology
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#faq" className="text-white hover:text-white/80 transition-colors">
+                    Security
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="text-white hover:text-white/80 transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          <div>
-            <h4 className="text-plt-text font-medium text-xs tracking-wider mb-4">Resources</h4>
-            <ul className="space-y-2 text-xs">
-              <li><Link href="#about" className="text-plt-subtle hover:text-plt-text transition-colors">Why Ticknal</Link></li>
-              <li><Link href="#faq" className="text-plt-subtle hover:text-plt-text transition-colors">FAQ</Link></li>
-              <li><Link href="/positions" className="text-plt-subtle hover:text-plt-text transition-colors">Portfolio Tracker</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-plt-text font-medium text-xs tracking-wider mb-4">Legal</h4>
-            <ul className="space-y-2 text-xs">
-              <li><Link href="#" className="text-plt-subtle hover:text-plt-text transition-colors">Privacy Policy</Link></li>
-              <li><Link href="#" className="text-plt-subtle hover:text-plt-text transition-colors">Terms of Service</Link></li>
-              <li><Link href="#" className="text-plt-subtle hover:text-plt-text transition-colors">Risk Disclaimer</Link></li>
-            </ul>
+            {/* Connect */}
+            <div>
+              <p className="text-sm font-medium text-white/50 mb-4 font-sans">Connect</p>
+              <ul className="space-y-3 text-sm font-medium font-sans">
+                <li>
+                  <Link href="/login" className="text-white hover:text-white/80 transition-colors">
+                    Terminal Login
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="https://t.me"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-white hover:text-white/80 transition-colors"
+                  >
+                    Telegram
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://x.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-white hover:text-white/80 transition-colors"
+                  >
+                    X (Twitter)
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://linkedin.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-white hover:text-white/80 transition-colors"
+                  >
+                    LinkedIn
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-6 border-t border-plt-border flex flex-col md:flex-row items-center justify-between gap-4 text-caption text-plt-muted">
-          <p>&copy; {new Date().getFullYear()} Ticknal Inc. All algorithmic data is for informational purposes only.</p>
-          <div className="flex items-center gap-4">
-            <span>Built for Egyptian Capital Markets</span>
+        {/* Bottom Bar with Giant Watermark */}
+        <div className="px-6 sm:px-10 lg:px-12 py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative min-h-[140px] sm:min-h-[220px]">
+          {/* Copyright Info */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 text-xs relative z-10 font-sans">
+            <span className="text-white/90 font-medium">
+              Ticknal Quantitative Technologies
+            </span>
+            <span className="text-white/60">© Copyright 2026 Ticknal. All rights reserved.</span>
+          </div>
+
+          {/* Faded Watermark Logo */}
+          <div className="absolute right-0 bottom-0 pointer-events-none opacity-10 select-none overflow-hidden max-w-full flex justify-end items-end">
+            <img
+              src="/images/landing/ticknal_watermark.svg"
+              alt="Ticknal"
+              className="w-[450px] sm:w-[650px] md:w-[911px] h-auto object-contain translate-y-[10%]"
+            />
           </div>
         </div>
       </div>
     </footer>
   );
 }
+
+

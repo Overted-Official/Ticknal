@@ -1,14 +1,10 @@
 import SmoothScroll from '@/components/landing/SmoothScroll';
 import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
-import Stats from '@/components/landing/Stats';
-import TrustedBy from '@/components/landing/TrustedBy';
 import WhyChooseUs from '@/components/landing/WhyChooseUs';
 import BentoGrid from '@/components/landing/BentoGrid';
 import LanguagesSection from '@/components/landing/LanguagesSection';
 import Testimonials from '@/components/landing/Testimonials';
-import Pricing from '@/components/landing/Pricing';
-import CompareSection from '@/components/landing/CompareSection';
 import FAQ from '@/components/landing/FAQ';
 import QuickStartSection from '@/components/landing/QuickStartSection';
 import Footer from '@/components/landing/Footer';
@@ -25,17 +21,13 @@ export default async function LandingPage() {
 
   return (
     <SmoothScroll>
-      <div className="min-h-screen w-full max-w-full overflow-x-clip font-sans text-plt-text selection:bg-tv-accent selection:text-plt-inverse">
+      <div className="min-h-screen w-full max-w-full overflow-x-clip bg-[#030303] text-white selection:bg-white selection:text-black">
         <Navbar />
         <Hero />
-        <Stats />
-        <TrustedBy />
         <WhyChooseUs />
         <BentoGrid />
         <LanguagesSection />
         <Testimonials />
-        <Pricing />
-        <CompareSection />
         <FAQ />
         <QuickStartSection />
         <Footer />
@@ -43,3 +35,4 @@ export default async function LandingPage() {
     </SmoothScroll>
   );
 }
+

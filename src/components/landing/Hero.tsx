@@ -2,136 +2,112 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import AuthButton from './AuthButton';
-import { ArrowUpRight, Play } from '@/components/ui/icon-library';
-import Globe from './Globe';
+import Image from 'next/image';
+
+const partnerLogos = [
+  { name: 'Westbridge', src: '/images/landing/bynHVo7ZvHysBYU8fxv4A87JLU.svg', width: 140, height: 26 },
+  { name: 'Lattice', src: '/images/landing/rVnY8H86KzqwZXZe8e6z9JDA4.svg', width: 140, height: 26 },
+  { name: 'Gantry', src: '/images/landing/RKHz1mTbGeFr3dPLIsJLak.svg', width: 115, height: 24 },
+  { name: '53 CAPITAL', src: '/images/landing/YVvnfFSHAbI8EwOuHwLdToqCzBY.svg', width: 105, height: 20 },
+  { name: 'NORTHRIDGE', src: '/images/landing/R4DQ1pneIOA2Hn64yiHexN2BgI.svg', width: 145, height: 22 },
+  { name: 'Greythorne', src: '/images/landing/QtfbMcpLNJxzcqop0YvedvV2haA.svg', width: 145, height: 24 },
+];
 
 export default function Hero() {
   return (
-    <section className="relative w-full max-w-full min-h-174 lg:h-174 bg-plt-base overflow-hidden pt-16 sm:pt-20 md:pt-24 px-4 sm:px-6 md:px-10 pb-10 flex items-center justify-center">
-      {/* Layer 1: Base Candlesticks Grid with Screen blend */}
-      <div
-        className="hero-market-primary absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-30 mix-blend-screen"
-      />
+    <section className="relative w-full min-h-[900px] lg:h-[950px] bg-black text-white overflow-hidden flex flex-col justify-between pt-28 sm:pt-36 pb-8 px-6 sm:px-10 lg:px-14">
+      {/* Background Hero Image (Trading Terminal Desk) */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/landing/hero1.jpg"
+          alt="Ticknal Trading Terminal"
+          fill
+          priority
+          className="object-cover object-[center_right] lg:object-right select-none pointer-events-none brightness-90"
+        />
+        {/* Gradient vignette to ensure crystal-clear headline readability and dramatic candle glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black via-black/70 to-transparent" />
+      </div>
 
-      {/* Layer 2: Secondary subtle candlesticks for depth and texture */}
-      <div
-        className="hero-market-secondary absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-20 mix-blend-screen"
-      />
-
-      {/* Layer 3: Main Glowing Blue Laser Light Beam */}
-      <div
-        className="hero-beam absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-100"
-      />
-
-      {/* Layer 4: Ambient Glow behind right globe */}
-      <div className="absolute top-1/2 right-12 -translate-y-1/2 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none z-0" />
-
-      {/* Left vignette for maximum headline text readability */}
-      <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/80 to-transparent z-0 pointer-events-none" />
-
-      {/* Content Wrapper */}
-      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 h-full">
-
-        {/* Left Content */}
-        <div className="flex flex-col items-start text-left w-full max-w-full lg:max-w-106 gap-6 z-10 min-w-0">
-
-          <div className="flex flex-col gap-4">
-            {/* Pre-title Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-plt-hover border border-plt-border text-plt-text/90 text-xs font-medium hover:bg-plt-hover transition-colors w-fit shadow-sm"
-            >
-              <span className="w-2 h-2 rounded-full bg-tv-accent shadow-accent" />
-              <span>Real-Time Trading Intelligence</span>
-              <span className="text-plt-muted">→</span>
-            </motion.div>
-
-            {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-stat sm:text-hero-sm lg:text-hero font-medium text-plt-text tracking-normal leading-hero capitalize"
-            >
-              Trade Smarter.<br />
-              Scale Faster.
-            </motion.h1>
-          </div>
-
-          <div className="flex flex-col gap-6 w-full">
-            {/* Subheadline */}
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-sm sm:text-base text-plt-text/75 font-normal leading-body tracking-normal"
-            >
-              Access live analytics, quantitative signals, and portfolio intelligence tools designed for the Egyptian Exchange (EGX).
-            </motion.p>
-
-            {/* Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-row items-center gap-2 w-full sm:w-auto"
-            >
-              <AuthButton
-                variant="secondary"
-                className="shadow-lg"
-              >
-                Get Started <ArrowUpRight size={16} />
-              </AuthButton>
-
-              <Link
-                href="#features"
-                className="btn-token btn-primary"
-              >
-                <Play size={16} fill="currentColor" /> How it works
-              </Link>
-            </motion.div>
-          </div>
-
-        </div>
-
-        {/* Right Content: Interactive Globe */}
+      {/* Main Left-Aligned Hero Content */}
+      <div className="relative z-10 max-w-[1440px] w-full mx-auto my-auto py-12 flex flex-col items-start text-left">
+        {/* Announcement Pill Tag */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="w-full max-w-[340px] sm:max-w-90 lg:w-88 h-72 sm:h-96 lg:h-112 relative flex-shrink-0 overflow-hidden mx-auto"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
         >
-          <Globe
-            oceanColor="rgba(0,0,0,0)"
-            outlineColor="#3b82f6"
-            showOutline={true}
-            graticuleColor="rgba(59,130,246,0.15)"
-            showGrid={true}
-            dots={{ color: "#3b82f6", size: 4, density: 7, allDots: false }}
-            fill="dots"
-            scale={8}
-            speed={2}
-            smoothing={8}
-            direction="left"
-            stopOnHover={true}
-            outlineWidth={1}
-            detail={5}
-            markerConfig={{
-              markers: [
-                { lat: 30.0444, lng: 31.2357 },  // Cairo
-                { lat: 25.2048, lng: 55.2708 },  // Dubai
-                { lat: 51.5074, lng: -0.1278 },  // London
-                { lat: 40.7128, lng: -74.006 },  // New York
-              ],
-              color: "#60a5fa",
-              size: 30,
-            }}
-          />
+          <Link
+            href="#strategies"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.06] border border-white/15 hover:border-white/30 hover:bg-white/[0.1] transition-all text-[13px] text-white/90 backdrop-blur-md font-sans tracking-tight"
+          >
+            <span>Proprietary PSI V2 &amp; Thoth Models Live</span>
+            <span className="text-white/60">→</span>
+          </Link>
         </motion.div>
 
+        {/* Dual-Tone Serif Headline */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-6 flex flex-col items-start max-w-2xl"
+        >
+          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] font-serif font-normal text-white tracking-[-0.03em] leading-[1.06]">
+            Your Hyperintelligent
+          </h1>
+          <span className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] font-serif font-normal text-white/40 tracking-[-0.03em] leading-[1.06] mt-1">
+            Trading Terminal
+          </span>
+        </motion.div>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-base sm:text-lg text-white/70 font-sans font-normal max-w-md leading-relaxed mb-8"
+        >
+          Deploy algorithmic strategies, live EGX signals, and institutional risk analytics built for high-conviction traders.
+        </motion.p>
+
+        {/* Primary CTA Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-white text-black text-[14px] font-medium hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans shadow-[0_4px_24px_rgba(255,255,255,0.18)]"
+          >
+            Start Trading
+          </Link>
+        </motion.div>
+      </div>
+
+      {/* Enterprise Partner Ticker across the bottom edge */}
+      <div className="relative z-10 max-w-[1440px] w-full mx-auto pt-6 border-t border-white/10">
+        <div className="flex items-center justify-between gap-8 overflow-hidden py-3">
+          <div className="animate-marquee flex items-center shrink-0 gap-12 sm:gap-16">
+            {[...partnerLogos, ...partnerLogos].map((logo, idx) => (
+              <div
+                key={idx}
+                className="shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-300"
+              >
+                <Image
+                  src={logo.src}
+                  alt={logo.name}
+                  width={logo.width}
+                  height={logo.height}
+                  className="h-5 sm:h-6 w-auto object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

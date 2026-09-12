@@ -1,75 +1,102 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ShieldCheck, Zap, TrendingUp } from '@/components/ui/icon-library';
+import Link from 'next/link';
 
-const features = [
+const metrics = [
   {
-    icon: <Zap className="w-6 h-6 text-tv-accent" />,
-    title: '01 Fully Automated Alerts',
-    description: 'Set your strategy parameters once and receive push notifications on desktop and mobile when a signal triggers. No more staring at charts all day.'
+    number: '15+',
+    label: 'Years of backtested data',
   },
   {
-    icon: <TrendingUp className="w-6 h-6 text-tv-accent" />,
-    title: '02 Data-Driven Strategies',
-    description: 'Our proprietary PSI indicator is specifically backtested and optimized for the Egyptian Stock Exchange, adapting dynamically to local market volatility.'
+    number: '98%',
+    label: 'Signal Confluence Accuracy',
   },
   {
-    icon: <ShieldCheck className="w-6 h-6 text-tv-accent" />,
-    title: '03 Secure & Private',
-    description: 'Your strategy settings and portfolio data are completely isolated. We only monitor the tickers you specify.'
-  }
+    number: '32k+',
+    label: 'Active signals analyzed',
+  },
 ];
 
 export default function WhyChooseUs() {
   return (
-    <section className="pt-20 sm:pt-28 md:pt-32 px-4 sm:px-6 md:px-10 pb-0 bg-transparent w-full max-w-full overflow-hidden" id="about">
-      <div className="max-w-248 w-full max-w-full min-w-0 mx-auto flex flex-col items-center">
+    <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-[#F9F9F9] text-[#080808] w-full overflow-hidden" id="signals">
+      <div className="max-w-[1440px] w-full mx-auto flex flex-col items-start text-left">
+        {/* Subtitle Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex items-center gap-2 mb-6"
+        >
+          <span className="w-2 h-2 rounded-[2px] bg-[#969290]" />
+          <span className="text-xs font-mono uppercase tracking-widest text-[#969290] font-medium">
+            Redefining Trading
+          </span>
+        </motion.div>
 
-        <div className="flex flex-col gap-4 sm:gap-6 items-center text-center max-w-164 w-full mb-8 sm:mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-plt-hover border border-tv-border text-plt-subtle text-xs font-medium w-fit"
-          >
-            Why Choose Us
-          </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-2xl sm:text-3xl md:text-display font-medium text-plt-text leading-tight tracking-normal capitalize"
-          >
-            Built for the Modern EGX Trader
-          </motion.h2>
-        </div>
+        {/* Section Heading */}
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-serif font-normal text-[#080808] leading-[1.08] tracking-[-0.03em] max-w-4xl mb-6"
+        >
+          Supercharge Your Trades With Algorithmic Intelligence
+        </motion.h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
-          {features.map((feature, idx) => (
+        {/* Intro Paragraph */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="text-base sm:text-lg text-[#636363] font-sans font-normal leading-relaxed max-w-xl mb-10"
+        >
+          Ticknal frees you from emotional guesswork and manual charting so you can spot high-probability setups, manage risk dynamically, and compound alpha effortlessly.
+        </motion.p>
+
+        {/* Secondary Action Pill Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.25 }}
+          className="mb-20 sm:mb-24"
+        >
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#030303] text-white text-sm font-medium hover:bg-zinc-800 transition-colors font-sans"
+          >
+            Start Trading
+          </Link>
+        </motion.div>
+
+        {/* 3 Metric Columns with Vertical Line Separators */}
+        <div className="w-full border-t border-zinc-200 pt-10 sm:pt-14 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-200">
+          {metrics.map((metric, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              className="card-shell p-5 sm:p-6 hover:bg-plt-muted-surface transition-colors flex flex-col justify-between"
+              transition={{ duration: 0.5, delay: idx * 0.15 }}
+              className={`flex flex-col justify-between py-6 md:py-0 ${
+                idx === 0 ? 'md:pr-10' : idx === 1 ? 'md:px-10' : 'md:pl-10'
+              }`}
             >
-              <div>
-                <div className="w-10 h-10 rounded-full bg-tv-accent/10 flex items-center justify-center mb-5">
-                  {feature.icon}
-                </div>
-                <h5 className="text-base sm:text-card-title font-medium text-plt-text leading-snug tracking-normal mb-3">{feature.title}</h5>
-                <p className="text-xs sm:text-body font-normal text-plt-subtle leading-relaxed">
-                  {feature.description}
-                </p>
+              <div className="text-6xl sm:text-7xl lg:text-[84px] font-serif font-light text-[#080808] tracking-tight leading-none mb-6">
+                {metric.number}
               </div>
+              <p className="text-xs uppercase font-mono tracking-widest text-[#8F8B85]">
+                {metric.label}
+              </p>
             </motion.div>
           ))}
         </div>
-
       </div>
     </section>
   );
 }
+
