@@ -311,7 +311,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
             </div>
 
             {/* Circular Keypad (3x4) */}
-            <div className="w-full max-w-[260px] sm:max-w-[270px] mx-auto space-y-3 sm:space-y-3.5">
+            <div className="w-full max-w-[270px] sm:max-w-[290px] mx-auto space-y-3 sm:space-y-3.5">
               {[
                 ['1', '2', '3'],
                 ['4', '5', '6'],
@@ -323,7 +323,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                       key={digit}
                       type="button"
                       onClick={() => handleDigit(digit)}
-                      className="w-16 h-16 sm:w-[68px] sm:h-[68px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.25] flex items-center justify-center text-2xl sm:text-[26px] font-sans font-medium text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
+                      className="w-[66px] h-[66px] sm:w-[72px] sm:h-[72px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.25] flex items-center justify-center text-[30px] sm:text-[34px] font-sans font-medium leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
                     >
                       {digit}
                     </button>
@@ -332,11 +332,11 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
               ))}
 
               <div className="grid grid-cols-3 gap-3.5 sm:gap-4 justify-items-center items-center">
-                <div className="w-16 h-16 sm:w-[68px] sm:h-[68px]" />
+                <div className="w-[66px] h-[66px] sm:w-[72px] sm:h-[72px]" />
                 <button
                   type="button"
                   onClick={() => handleDigit('0')}
-                  className="w-16 h-16 sm:w-[68px] sm:h-[68px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.25] flex items-center justify-center text-2xl sm:text-[26px] font-sans font-medium text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
+                  className="w-[66px] h-[66px] sm:w-[72px] sm:h-[72px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.25] flex items-center justify-center text-[30px] sm:text-[34px] font-sans font-medium leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
                 >
                   0
                 </button>
@@ -344,10 +344,10 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                   type="button"
                   onClick={handleBackspace}
                   disabled={currentDigits.length === 0}
-                  className="w-16 h-16 sm:w-[68px] sm:h-[68px] rounded-full aspect-square bg-white/[0.02] hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 border border-white/[0.06] hover:border-white/[0.15] flex items-center justify-center text-white/60 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
+                  className="w-[66px] h-[66px] sm:w-[72px] sm:h-[72px] rounded-full aspect-square bg-white/[0.02] hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 border border-white/[0.06] hover:border-white/[0.15] flex items-center justify-center text-white/60 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
                   title="Delete"
                 >
-                  <Delete size={20} />
+                  <Delete size={24} className="sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>

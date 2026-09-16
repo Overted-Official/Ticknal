@@ -261,7 +261,7 @@ export default function PinLockScreen({
       </div>
 
       {/* Numeric Keypad (3x4) */}
-      <div className="w-full max-w-[270px] sm:max-w-[290px] mx-auto space-y-3.5 sm:space-y-4 mb-4">
+      <div className="w-full max-w-[280px] sm:max-w-[300px] mx-auto space-y-3.5 sm:space-y-4 mb-4">
         {/* Rows 1-3 */}
         {[
           ['1', '2', '3'],
@@ -275,7 +275,7 @@ export default function PinLockScreen({
                 type="button"
                 onClick={() => handleDigit(digit)}
                 disabled={isVerifying}
-                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.24] flex items-center justify-center text-2xl sm:text-[28px] font-sans font-medium text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
+                className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.24] flex items-center justify-center text-[32px] sm:text-[38px] font-sans font-medium leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
               >
                 {digit}
               </button>
@@ -285,13 +285,13 @@ export default function PinLockScreen({
 
         {/* Row 4: Blank, '0', Backspace */}
         <div className="grid grid-cols-3 gap-3.5 sm:gap-4 justify-items-center items-center">
-          <div className="w-16 h-16 sm:w-[72px] sm:h-[72px]" />
+          <div className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px]" />
 
           <button
             type="button"
             onClick={() => handleDigit('0')}
             disabled={isVerifying}
-            className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.24] flex items-center justify-center text-2xl sm:text-[28px] font-sans font-medium text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
+            className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.24] flex items-center justify-center text-[32px] sm:text-[38px] font-sans font-medium leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
           >
             0
           </button>
@@ -300,10 +300,10 @@ export default function PinLockScreen({
             type="button"
             onClick={handleBackspace}
             disabled={pin.length === 0 || isVerifying}
-            className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full aspect-square bg-white/[0.02] hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 border border-white/[0.06] hover:border-white/[0.15] flex items-center justify-center text-white/60 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
+            className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.02] hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 border border-white/[0.06] hover:border-white/[0.15] flex items-center justify-center text-white/60 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
             title="Delete"
           >
-            <Delete size={20} />
+            <Delete size={26} className="sm:w-7 sm:h-7" />
           </button>
         </div>
       </div>
