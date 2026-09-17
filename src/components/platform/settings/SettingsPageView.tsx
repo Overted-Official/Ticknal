@@ -51,6 +51,8 @@ export default function SettingsPageView({
       <SubNavTopRail
         activeTab={activeTab}
         onChange={(val) => setActiveTab(val as SettingsTabType)}
+        userName={userProfile.name}
+        userAvatarUrl={userProfile.avatarUrl || undefined}
         items={[
           { label: 'Profile', value: 'profile', icon: User },
           { label: 'Security & PIN', value: 'security', icon: ShieldCheck },

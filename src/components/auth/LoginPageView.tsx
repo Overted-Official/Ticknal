@@ -129,7 +129,7 @@ export default function LoginPageView() {
 
       {/* Central Auth Container */}
       <div className="relative z-10 w-full max-w-md my-auto py-8">
-        <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-2xl p-6 sm:p-10 shadow-[0_16px_64px_rgba(0,0,0,0.8)] flex flex-col items-center">
+        <div className="rounded-2xl border border-white/10 bg-plt-base/80 backdrop-blur-2xl p-6 sm:p-10 shadow-[0_16px_64px_rgba(0,0,0,0.8)] flex flex-col items-center">
           <AuthCardHeaderWidget isSignUp={isSignUp} error={error} message={message} />
           <OAuthButtonsWidget onGoogleLogin={handleGoogleLogin} loading={oauthLoading} />
           <EmailAuthFormWidget

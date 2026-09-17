@@ -548,7 +548,7 @@ export default function SectorInspector({
                               Exit {sig.tradeReturnPct !== undefined ? `(${sig.tradeReturnPct > 0 ? '+' : ''}${sig.tradeReturnPct.toFixed(1)}%)` : ''}
                             </span>
                           ) : (
-                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-normal bg-white/[0.04] text-zinc-500">
+                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-normal bg-white/[0.04] text-plt-muted">
                               Flat
                             </span>
                           )

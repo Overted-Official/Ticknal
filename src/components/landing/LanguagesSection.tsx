@@ -65,7 +65,7 @@ export default function LanguagesSection() {
   const current = solutions[activeTab];
 
   return (
-    <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-[#F9F9F9] text-[#080808] w-full overflow-hidden" id="solutions">
+    <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-editorial-light text-editorial-primary w-full overflow-hidden" id="solutions">
       <div className="max-w-[1440px] w-full mx-auto flex flex-col items-start text-left">
         {/* Subtitle Badge */}
         <motion.div
@@ -74,8 +74,8 @@ export default function LanguagesSection() {
           viewport={{ once: true }}
           className="flex items-center gap-2 mb-6"
         >
-          <span className="w-2 h-2 rounded-[2px] bg-[#969290]" />
-          <span className="text-xs font-mono uppercase tracking-widest text-[#969290] font-medium">
+          <span className="w-2 h-2 rounded-[2px] bg-editorial-muted" />
+          <span className="text-xs font-mono uppercase tracking-widest text-editorial-muted font-medium">
             Market Solutions
           </span>
         </motion.div>
@@ -86,7 +86,7 @@ export default function LanguagesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-serif font-normal text-[#080808] leading-[1.08] tracking-[-0.03em] max-w-4xl mb-6"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-serif font-normal text-editorial-primary leading-[1.08] tracking-[-0.03em] max-w-4xl mb-6"
         >
           Built for Every Style of Trading
         </motion.h2>
@@ -97,7 +97,7 @@ export default function LanguagesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-base sm:text-lg text-[#636363] font-sans font-normal leading-relaxed max-w-xl mb-8"
+          className="text-base sm:text-lg text-editorial-secondary font-sans font-normal leading-relaxed max-w-xl mb-8"
         >
           Whether you trade intraday momentum or build multi-month sector portfolios, Ticknal delivers systematic conviction.
         </motion.p>
@@ -112,14 +112,14 @@ export default function LanguagesSection() {
         >
           <Link
             href="/login"
-            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#030303] text-white text-sm font-medium hover:bg-zinc-800 transition-colors font-sans"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-editorial-dark text-white text-sm font-medium hover:bg-editorial-btn-hover transition-colors font-sans"
           >
             Start Trading
           </Link>
         </motion.div>
 
         {/* 4 Horizontal Underline Tabs */}
-        <div className="w-full border-b border-zinc-200 flex items-center gap-8 sm:gap-12 mb-10 overflow-x-auto no-scrollbar">
+        <div className="w-full border-b border-editorial-border flex items-center gap-8 sm:gap-12 mb-10 overflow-x-auto no-scrollbar">
           {solutions.map((item, idx) => {
             const isActive = activeTab === idx;
             return (
@@ -128,14 +128,14 @@ export default function LanguagesSection() {
                 type="button"
                 onClick={() => setActiveTab(idx)}
                 className={`pb-4 text-base sm:text-lg font-sans transition-colors relative cursor-pointer shrink-0 ${
-                  isActive ? 'text-[#080808] font-medium' : 'text-[#636363] hover:text-[#080808] font-normal'
+                  isActive ? 'text-editorial-primary font-medium' : 'text-editorial-secondary hover:text-editorial-primary font-normal'
                 }`}
               >
                 <span>{item.tabTitle}</span>
                 {isActive && (
                   <motion.div
                     layoutId="solutionsUnderline"
-                    className="absolute bottom-0 inset-x-0 h-0.5 bg-[#080808]"
+                    className="absolute bottom-0 inset-x-0 h-0.5 bg-editorial-primary"
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
                 )}
@@ -153,15 +153,15 @@ export default function LanguagesSection() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.35 }}
-              className="w-full rounded-3xl bg-[#E5E5E3] p-8 sm:p-12 lg:p-14 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center"
+              className="w-full rounded-3xl bg-editorial-subtle p-8 sm:p-12 lg:p-14 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center"
             >
               {/* Left Details */}
               <div className="flex flex-col justify-between h-full space-y-8">
                 <div>
-                  <h3 className="text-3xl sm:text-4xl font-serif font-normal text-[#080808] mb-4">
+                  <h3 className="text-3xl sm:text-4xl font-serif font-normal text-editorial-primary mb-4">
                     {current.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-[#636363] font-sans leading-relaxed">
+                  <p className="text-sm sm:text-base text-editorial-secondary font-sans leading-relaxed">
                     {current.description}
                   </p>
                 </div>
@@ -169,7 +169,7 @@ export default function LanguagesSection() {
                 <div>
                   <Link
                     href="/login"
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#030303] text-white text-sm font-medium hover:bg-zinc-800 transition-colors font-sans"
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-editorial-dark text-white text-sm font-medium hover:bg-editorial-btn-hover transition-colors font-sans"
                   >
                     Explore Strategy
                   </Link>

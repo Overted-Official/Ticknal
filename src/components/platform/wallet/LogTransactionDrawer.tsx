@@ -129,7 +129,7 @@ export default function LogTransactionDrawer({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="relative z-modal-content w-full max-w-md bg-[#0f0f12] text-plt-text border-t md:border-t-0 md:border-l border-plt-border-strong shadow-2xl flex flex-col max-h-[90vh] md:max-h-full h-full mt-auto md:mt-0"
+            className="relative z-modal-content w-full max-w-md bg-plt-surface text-plt-text border-t md:border-t-0 md:border-l border-plt-border-strong shadow-2xl flex flex-col max-h-[90vh] md:max-h-full h-full mt-auto md:mt-0"
           >
             {/* Header */}
             <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">

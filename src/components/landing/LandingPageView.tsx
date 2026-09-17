@@ -12,7 +12,7 @@ import Footer from '@/components/landing/Footer';
 export default function LandingPageView() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen w-full max-w-full overflow-x-clip bg-[#030303] text-white selection:bg-white selection:text-black">
+      <div className="min-h-screen w-full max-w-full overflow-x-clip bg-editorial-dark text-white selection:bg-white selection:text-black">
         <Navbar />
         <Hero />
         <WhyChooseUs />

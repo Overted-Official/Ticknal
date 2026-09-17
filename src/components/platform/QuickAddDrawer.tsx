@@ -256,7 +256,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="relative z-modal-content w-full max-w-lg bg-[#0f0f12] text-plt-text border-t md:border-t-0 md:border-l border-plt-border-strong shadow-2xl flex flex-col max-h-[90vh] md:max-h-full h-full mt-auto md:mt-0"
+            className="relative z-modal-content w-full max-w-lg bg-plt-surface text-plt-text border-t md:border-t-0 md:border-l border-plt-border-strong shadow-2xl flex flex-col max-h-[90vh] md:max-h-full h-full mt-auto md:mt-0"
           >
             {/* Header */}
             <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
@@ -483,7 +483,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
                     {/* Dropdown Results */}
                     {isTickerDropdownOpen && filteredTickers.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-[#121216] border border-white/[0.14] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 divide-y divide-white/[0.08] custom-scrollbar">
+                      <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-plt-elevated border border-white/[0.14] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 divide-y divide-white/[0.08] custom-scrollbar">
                         {filteredTickers.map((t) => (
                           <div
                             key={t.symbol}

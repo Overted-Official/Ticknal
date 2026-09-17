@@ -20,7 +20,7 @@ const metrics = [
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-[#F9F9F9] text-[#080808] w-full overflow-hidden" id="signals">
+    <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-editorial-light text-editorial-primary w-full overflow-hidden" id="signals">
       <div className="max-w-[1440px] w-full mx-auto flex flex-col items-start text-left">
         {/* Subtitle Badge */}
         <motion.div
@@ -29,8 +29,8 @@ export default function WhyChooseUs() {
           viewport={{ once: true }}
           className="flex items-center gap-2 mb-6"
         >
-          <span className="w-2 h-2 rounded-[2px] bg-[#969290]" />
-          <span className="text-xs font-mono uppercase tracking-widest text-[#969290] font-medium">
+          <span className="w-2 h-2 rounded-[2px] bg-editorial-muted" />
+          <span className="text-xs font-mono uppercase tracking-widest text-editorial-muted font-medium">
             Redefining Trading
           </span>
         </motion.div>
@@ -41,7 +41,7 @@ export default function WhyChooseUs() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-serif font-normal text-[#080808] leading-[1.08] tracking-[-0.03em] max-w-4xl mb-6"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-serif font-normal text-editorial-primary leading-[1.08] tracking-[-0.03em] max-w-4xl mb-6"
         >
           Supercharge Your Trades With Algorithmic Intelligence
         </motion.h2>
@@ -52,7 +52,7 @@ export default function WhyChooseUs() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-base sm:text-lg text-[#636363] font-sans font-normal leading-relaxed max-w-xl mb-10"
+          className="text-base sm:text-lg text-editorial-secondary font-sans font-normal leading-relaxed max-w-xl mb-10"
         >
           Ticknal frees you from emotional guesswork and manual charting so you can spot high-probability setups, manage risk dynamically, and compound alpha effortlessly.
         </motion.p>
@@ -67,14 +67,14 @@ export default function WhyChooseUs() {
         >
           <Link
             href="/login"
-            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#030303] text-white text-sm font-medium hover:bg-zinc-800 transition-colors font-sans"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-editorial-dark text-white text-sm font-medium hover:bg-editorial-btn-hover transition-colors font-sans"
           >
             Start Trading
           </Link>
         </motion.div>
 
         {/* 3 Metric Columns with Vertical Line Separators */}
-        <div className="w-full border-t border-zinc-200 pt-10 sm:pt-14 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-200">
+        <div className="w-full border-t border-editorial-border pt-10 sm:pt-14 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-editorial-border">
           {metrics.map((metric, idx) => (
             <motion.div
               key={idx}
@@ -86,10 +86,10 @@ export default function WhyChooseUs() {
                 idx === 0 ? 'md:pr-10' : idx === 1 ? 'md:px-10' : 'md:pl-10'
               }`}
             >
-              <div className="text-6xl sm:text-7xl lg:text-[84px] font-serif font-light text-[#080808] tracking-tight leading-none mb-6">
+              <div className="text-6xl sm:text-7xl lg:text-[84px] font-serif font-light text-editorial-primary tracking-tight leading-none mb-6">
                 {metric.number}
               </div>
-              <p className="text-xs uppercase font-mono tracking-widest text-[#8F8B85]">
+              <p className="text-xs uppercase font-mono tracking-widest text-editorial-faint">
                 {metric.label}
               </p>
             </motion.div>

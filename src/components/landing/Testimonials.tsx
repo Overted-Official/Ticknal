@@ -62,8 +62,8 @@ export default function Testimonials() {
             viewport={{ once: true }}
             className="flex items-center gap-2 mb-6"
           >
-            <span className="w-2 h-2 rounded-[2px] bg-[#969290]" />
-            <span className="text-xs font-mono uppercase tracking-widest text-[#969290] font-medium">
+            <span className="w-2 h-2 rounded-[2px] bg-editorial-muted" />
+            <span className="text-xs font-mono uppercase tracking-widest text-editorial-muted font-medium">
               Trader Performance
             </span>
           </motion.div>
@@ -114,7 +114,7 @@ export default function Testimonials() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.15 }}
-                className="relative rounded-3xl overflow-hidden border border-white/10 bg-[#0e0e0e] min-h-[480px] sm:min-h-[540px] flex flex-col justify-between p-8 group"
+                className="relative rounded-3xl overflow-hidden border border-white/10 bg-plt-surface min-h-[480px] sm:min-h-[540px] flex flex-col justify-between p-8 group"
               >
                 {/* Background Image with Dark Vignette */}
                 <div className="absolute inset-0 z-0">

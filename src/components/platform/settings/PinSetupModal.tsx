@@ -139,7 +139,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="card-shell w-full max-w-[340px] sm:max-w-[360px] p-6 sm:p-7 flex flex-col items-center text-plt-text relative rounded-3xl bg-[#0e0e11]/95 backdrop-blur-2xl border border-white/[0.14] shadow-[0_24px_64px_rgba(0,0,0,0.7)]"
+        className="card-shell w-full max-w-[340px] sm:max-w-[360px] p-6 sm:p-7 flex flex-col items-center text-plt-text relative rounded-3xl bg-plt-surface/95 backdrop-blur-2xl border border-white/[0.14] shadow-[0_24px_64px_rgba(0,0,0,0.7)]"
       >
         <button
           type="button"

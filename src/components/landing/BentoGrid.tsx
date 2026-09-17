@@ -70,8 +70,8 @@ export default function BentoGrid() {
             viewport={{ once: true }}
             className="flex items-center gap-2 mb-6"
           >
-            <span className="w-2 h-2 rounded-[2px] bg-[#969290]" />
-            <span className="text-xs font-mono uppercase tracking-widest text-[#969290] font-medium">
+            <span className="w-2 h-2 rounded-[2px] bg-editorial-muted" />
+            <span className="text-xs font-mono uppercase tracking-widest text-editorial-muted font-medium">
               Platform Intelligence
             </span>
           </motion.div>
@@ -159,7 +159,7 @@ export default function BentoGrid() {
           <div className="flex-1 w-full space-y-28 lg:space-y-36">
             {/* Card 1: Spot Setups Instantly */}
             <div id="card1" ref={card1Ref} className="space-y-8 scroll-mt-28">
-              <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 bg-[#0e0e0e]">
+              <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 bg-plt-surface">
                 <Image
                   src="/images/landing/a2p0UBSYnVNgrzFlVZJHkuWtS9c.png"
                   alt="Signals & Analytics UI"
@@ -201,7 +201,7 @@ export default function BentoGrid() {
 
             {/* Card 2: Trade With Disciplined Rules */}
             <div id="card2" ref={card2Ref} className="space-y-8 scroll-mt-28">
-              <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 bg-[#0e0e0e]">
+              <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 bg-plt-surface">
                 <Image
                   src="/images/landing/Xqc6dokkglA8JUl1GKk6RK4Ajw.png"
                   alt="Execution & Strategy UI"
@@ -228,20 +228,20 @@ export default function BentoGrid() {
               </div>
 
               {/* Light Testimonial Card */}
-              <div className="bg-[#EBEBEB] text-[#080808] rounded-2xl p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="bg-editorial-card text-editorial-primary rounded-2xl p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-                    <span className="font-mono text-xs uppercase tracking-widest text-zinc-600 font-semibold">Trader Spotlight</span>
+                    <span className="font-mono text-xs uppercase tracking-widest text-editorial-secondary font-semibold">Trader Spotlight</span>
                   </div>
-                  <blockquote className="font-serif text-base sm:text-lg text-zinc-900 leading-relaxed mb-6 italic">
+                  <blockquote className="font-serif text-base sm:text-lg text-editorial-primary leading-relaxed mb-6 italic">
                     &quot;Before Ticknal, I was stuck monitoring 15 different charts and missing critical breakouts. With the PSI indicator alerts, I caught the early banking rally and protected my downside with zero stress.&quot;
                   </blockquote>
                   <div>
-                    <h4 className="text-sm font-medium text-zinc-900 font-sans">
+                    <h4 className="text-sm font-medium text-editorial-primary font-sans">
                       Ahmed El-Sayed
                     </h4>
-                    <p className="text-xs uppercase font-mono tracking-wider text-zinc-500 mt-0.5">
+                    <p className="text-xs uppercase font-mono tracking-wider text-editorial-muted mt-0.5">
                       Head of Equity Trading, Cairo Capital
                     </p>
                   </div>
@@ -260,7 +260,7 @@ export default function BentoGrid() {
 
             {/* Card 3: Institutional Risk Intelligence */}
             <div id="card3" ref={card3Ref} className="space-y-8 scroll-mt-28">
-              <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 bg-[#0e0e0e]">
+              <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 bg-plt-surface">
                 <Image
                   src="/images/landing/NRv6P1BzvwLSLxmTA6JDSRppPg.png"
                   alt="Portfolio Intelligence UI"

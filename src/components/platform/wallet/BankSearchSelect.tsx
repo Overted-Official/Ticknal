@@ -125,7 +125,7 @@ export default function BankSearchSelect({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[#121216] border border-white/[0.14] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-2 space-y-2 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-xl">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-plt-elevated border border-white/[0.14] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-2 space-y-2 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-xl">
           {/* Search Input */}
           <div className="relative flex items-center">
             <Search size={14} className="absolute left-2.5 text-plt-muted pointer-events-none" />

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Delete, LogOut, ShieldCheck, KeyRound, Mail, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Lock, Delete, LogOut, ShieldCheck, KeyRound, Mail, AlertCircle, CheckCircle2, ArrowRight } from '@/components/ui/icon-library';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -346,7 +346,7 @@ export default function PinLockScreen({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#121212] border border-white/[0.12] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left"
+              className="bg-plt-surface border border-white/[0.12] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left"
             >
               {recoverySuccess ? (
                 <motion.div

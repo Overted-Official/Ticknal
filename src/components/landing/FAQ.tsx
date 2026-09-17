@@ -40,7 +40,7 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-[#F9F9F9] text-[#080808] w-full overflow-hidden" id="faq">
+    <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-editorial-light text-editorial-primary w-full overflow-hidden" id="faq">
       <div className="max-w-[1440px] w-full mx-auto flex flex-col lg:flex-row items-start justify-between gap-12 lg:gap-20">
         {/* Left Column Header */}
         <div className="lg:w-[420px] shrink-0 flex flex-col items-start text-left">
@@ -50,8 +50,8 @@ export default function FAQ() {
             viewport={{ once: true }}
             className="flex items-center gap-2 mb-6"
           >
-            <span className="w-2 h-2 rounded-[2px] bg-[#969290]" />
-            <span className="text-xs font-mono uppercase tracking-widest text-[#969290] font-medium">
+            <span className="w-2 h-2 rounded-[2px] bg-editorial-muted" />
+            <span className="text-xs font-mono uppercase tracking-widest text-editorial-muted font-medium">
               FAQ
             </span>
           </motion.div>
@@ -61,7 +61,7 @@ export default function FAQ() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl font-serif font-normal text-[#080808] leading-[1.08] tracking-[-0.03em] mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl font-serif font-normal text-editorial-primary leading-[1.08] tracking-[-0.03em] mb-6"
           >
             Your Questions<br className="hidden sm:inline" /> Answered
           </motion.h2>
@@ -71,7 +71,7 @@ export default function FAQ() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-base sm:text-lg text-[#636363] font-sans font-normal leading-relaxed mb-8 max-w-sm"
+            className="text-base sm:text-lg text-editorial-secondary font-sans font-normal leading-relaxed mb-8 max-w-sm"
           >
             Everything you need to know about Ticknal&apos;s algorithmic signals, market coverage, and execution security.
           </motion.p>
@@ -84,7 +84,7 @@ export default function FAQ() {
           >
             <Link
               href="/login"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#030303] text-white text-sm font-medium hover:bg-zinc-800 transition-colors font-sans"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-editorial-dark text-white text-sm font-medium hover:bg-editorial-btn-hover transition-colors font-sans"
             >
               Start Trading
             </Link>
@@ -92,7 +92,7 @@ export default function FAQ() {
         </div>
 
         {/* Right Column Accordion */}
-        <div className="flex-1 w-full border-t border-b border-zinc-200 divide-y divide-zinc-200">
+        <div className="flex-1 w-full border-t border-b border-editorial-border divide-y divide-editorial-border">
           {faqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
@@ -102,10 +102,10 @@ export default function FAQ() {
                   onClick={() => toggleAccordion(idx)}
                   className="w-full py-6 flex items-center justify-between text-left gap-4 group cursor-pointer"
                 >
-                  <span className="text-base sm:text-lg font-sans font-medium text-[#080808] group-hover:text-zinc-600 transition-colors">
+                  <span className="text-base sm:text-lg font-sans font-medium text-editorial-primary group-hover:text-editorial-secondary transition-colors">
                     {faq.question}
                   </span>
-                  <div className="w-6 h-6 flex items-center justify-center text-[#080808] shrink-0">
+                  <div className="w-6 h-6 flex items-center justify-center text-editorial-primary shrink-0">
                     <svg
                       width="16"
                       height="16"
@@ -132,7 +132,7 @@ export default function FAQ() {
                       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-6 text-sm sm:text-base text-[#636363] font-sans font-normal leading-relaxed">
+                      <p className="pb-6 text-sm sm:text-base text-editorial-secondary font-sans font-normal leading-relaxed">
                         {faq.answer}
                       </p>
                     </motion.div>

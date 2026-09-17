@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#000000] text-white w-full max-w-full overflow-hidden relative">
+    <footer className="bg-plt-base text-white w-full max-w-full overflow-hidden relative">
       <div className="max-w-[1440px] w-full mx-auto">
         {/* Top Banner */}
         <div className="px-6 sm:px-10 lg:px-12 py-12 sm:py-16 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -13,7 +13,7 @@ export default function Footer() {
           </h3>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-[#080808] font-medium text-sm hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans whitespace-nowrap"
+            className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-editorial-primary font-medium text-sm hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans whitespace-nowrap"
           >
             Start Trading
           </Link>

@@ -421,7 +421,7 @@ export default function SectorTreemap({
                     tileTextColor = alphaColors.text;
                   } else {
                     tileBg = '#18181b'; // Zinc 900 / dark neutral slate for non-traded stocks
-                    tileTextColor = 'text-zinc-500';
+                    tileTextColor = 'text-plt-muted';
                   }
 
                   tileBorder = isBuy
@@ -465,7 +465,7 @@ export default function SectorTreemap({
                           {stock.symbol}
                         </span>
                         {!isTiny && (
-                          <span className={`text-[11px] font-semibold tabular-nums mt-0.5 ${analysisMode === 'strategy' && stratTradesCount === 0 && !isBuy && !isLong ? 'text-zinc-500' : 'text-white/90'}`}>
+                          <span className={`text-[11px] font-semibold tabular-nums mt-0.5 ${analysisMode === 'strategy' && stratTradesCount === 0 && !isBuy && !isLong ? 'text-plt-muted' : 'text-white/90'}`}>
                             {analysisMode === 'strategy'
                               ? `${stratAlpha > 0 ? '+' : ''}${stratAlpha.toFixed(1)}% α`
                               : stock.returnPct > 0
@@ -549,7 +549,7 @@ export default function SectorTreemap({
                     RECENT EXIT
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-white/[0.06] text-zinc-400">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-white/[0.06] text-plt-muted">
                     FLAT / CASH
                   </span>
                 )}
@@ -632,7 +632,7 @@ export default function SectorTreemap({
               ) : (
                 <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-2 flex items-center justify-between text-[11px] text-plt-muted">
                   <span>Open Trade Status:</span>
-                  <span className="text-zinc-400 font-medium">No open position (Flat)</span>
+                  <span className="text-plt-muted font-medium">No open position (Flat)</span>
                 </div>
               )}
 

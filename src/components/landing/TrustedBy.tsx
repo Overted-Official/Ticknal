@@ -14,10 +14,10 @@ const logos = [
 
 export default function TrustedBy() {
   return (
-    <section className="py-12 sm:py-16 overflow-hidden w-full max-w-full bg-[#030303] relative border-b border-white/[0.06]">
+    <section className="py-12 sm:py-16 overflow-hidden w-full max-w-full bg-editorial-dark relative border-b border-white/[0.06]">
       {/* Edge gradient fade masks */}
-      <div className="absolute inset-y-0 left-0 w-24 sm:w-48 bg-gradient-to-r from-[#030303] to-transparent z-10 pointer-events-none" />
-      <div className="absolute inset-y-0 right-0 w-24 sm:w-48 bg-gradient-to-l from-[#030303] to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 left-0 w-24 sm:w-48 bg-gradient-to-r from-editorial-dark to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-24 sm:w-48 bg-gradient-to-l from-editorial-dark to-transparent z-10 pointer-events-none" />
 
       <div className="relative flex overflow-hidden w-full">
         <div className="animate-marquee flex items-center shrink-0">

@@ -96,6 +96,19 @@
   --plt-violet-soft: rgba(139, 92, 246, 0.12);
   --plt-violet-border: rgba(139, 92, 246, 0.25);
 
+  /* Editorial & Landing Page Color Tokens */
+  --editorial-bg-light: #f9f9f9;
+  --editorial-bg-subtle: #e5e5e3;
+  --editorial-bg-card: #ebebeb;
+  --editorial-bg-dark: #030303;
+  --editorial-bg-card-dark: #191919;
+  --editorial-text-primary: #080808;
+  --editorial-text-secondary: #636363;
+  --editorial-text-muted: #969290;
+  --editorial-text-faint: #8f8b85;
+  --editorial-border: #e4e4e7;
+  --editorial-btn-hover: #27272a;
+
   /* Chart Colors */
   --chart-series-1: var(--plt-accent);
   --chart-axis: var(--plt-text-faint);
@@ -332,6 +345,19 @@
   --color-plt-muted: var(--plt-text-muted);
   --color-plt-faint: var(--plt-text-faint);
   --color-plt-inverse: var(--plt-text-inverse);
+
+  /* Editorial & Landing Theme Tokens */
+  --color-editorial-light: var(--editorial-bg-light);
+  --color-editorial-subtle: var(--editorial-bg-subtle);
+  --color-editorial-card: var(--editorial-bg-card);
+  --color-editorial-dark: var(--editorial-bg-dark);
+  --color-editorial-card-dark: var(--editorial-bg-card-dark);
+  --color-editorial-primary: var(--editorial-text-primary);
+  --color-editorial-secondary: var(--editorial-text-secondary);
+  --color-editorial-muted: var(--editorial-text-muted);
+  --color-editorial-faint: var(--editorial-text-faint);
+  --color-editorial-border: var(--editorial-border);
+  --color-editorial-btn-hover: var(--editorial-btn-hover);
 
   /* Depths & Radii */
   --radius-surface: var(--radius-surface);

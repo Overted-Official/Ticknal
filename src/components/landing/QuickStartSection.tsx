@@ -5,21 +5,21 @@ import Link from 'next/link';
 
 export default function QuickStartSection() {
   return (
-    <section className="bg-[#F9F9F9] py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-10 w-full max-w-full overflow-hidden flex justify-center items-center">
+    <section className="bg-editorial-light py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-10 w-full max-w-full overflow-hidden flex justify-center items-center">
       <div className="max-w-[1360px] w-full mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="relative rounded-[20px] bg-[#191919] p-3 sm:p-4 overflow-hidden flex flex-col lg:flex-row items-stretch border border-white/[0.06] shadow-2xl"
+          className="relative rounded-[20px] bg-editorial-card-dark p-3 sm:p-4 overflow-hidden flex flex-col lg:flex-row items-stretch border border-white/[0.06] shadow-2xl"
         >
           {/* Left: Text & Button */}
           <div className="flex-1 p-6 sm:p-10 lg:p-12 flex flex-col justify-center items-start gap-8 z-10">
             <div className="flex flex-col gap-4">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-mono text-[#969290]">
-                <span className="w-1.5 h-1.5 bg-[#969290] inline-block rounded-none" />
+              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-mono text-editorial-muted">
+                <span className="w-1.5 h-1.5 bg-editorial-muted inline-block rounded-none" />
                 <span>Start Trading</span>
               </div>
 
@@ -38,7 +38,7 @@ export default function QuickStartSection() {
             <div>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-[#080808] font-medium text-sm hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-editorial-primary font-medium text-sm hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans"
               >
                 Launch Terminal
               </Link>

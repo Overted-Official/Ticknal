@@ -143,7 +143,7 @@ export default function AccountSelectDropdown({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-[70] bg-[#121216] border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-2xl max-h-64 overflow-y-auto custom-scrollbar">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-[70] bg-plt-elevated border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-2xl max-h-64 overflow-y-auto custom-scrollbar">
           {filteredAccounts.length === 0 ? (
             <div className="py-4 text-center text-xs text-plt-muted font-sans">
               No accounts available
