@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRightLeft, Search, Trash2, ChevronDown, Check, X, Filter, Edit2 } from '@/components/ui/icon-library';
+import { ArrowRightLeft, Search, Trash2, ChevronDown, Check, X, Filter, Edit2, SlidersHorizontal } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { formatUiLabel } from '@/lib/format-ui-label';
 import { formatCleanAccountTitle } from '@/lib/format-bank-name';
@@ -24,81 +24,66 @@ function LedgerFilterDropdown({
 }: {
   label: string;
   value: string;
-  options: Array<{ id: string; label: string }>;
+  options: { id: string; label: string }[];
   onChange: (val: string) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
       }
     }
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isOpen]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const selectedOption = options.find((o) => o.id === value);
-  const isFiltered = value !== 'ALL';
+  const activeOption = options.find((opt) => opt.id === value);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative font-sans text-xs" ref={ref}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`h-8 px-3 rounded-xl border flex items-center justify-between gap-2 text-xs font-sans transition-all cursor-pointer select-none ${
-          isFiltered
-            ? 'bg-white/[0.08] border-white/20 text-white font-medium shadow-sm'
-            : 'bg-plt-card border-plt-border-soft hover:border-plt-border text-plt-text hover:bg-plt-hover'
+        onClick={() => setOpen(!open)}
+        className={`h-8 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer select-none ${
+          value !== 'ALL'
+            ? 'bg-plt-card border-plt-border-active text-plt-text font-medium shadow-xs'
+            : 'bg-plt-card border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border'
         }`}
       >
-        <span className="truncate max-w-[140px] font-sans">
-          {selectedOption ? selectedOption.label : label}
+        <span className="truncate max-w-[130px]">
+          {activeOption ? (value === 'ALL' ? label : activeOption.label) : label}
         </span>
-        <ChevronDown
-          size={13}
-          className={`text-plt-muted transition-transform duration-200 shrink-0 ${
-            isOpen ? 'rotate-180 text-plt-text' : ''
-          }`}
-        />
+        <ChevronDown size={12} className={`text-plt-muted transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 4, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[180px] max-h-60 overflow-y-auto bg-plt-base border border-plt-border rounded-xl shadow-2xl z-50 p-1 divide-y divide-plt-border-soft/40 custom-scrollbar"
-          >
-            {options.map((opt) => {
-              const isSelected = opt.id === value;
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() => {
-                    onChange(opt.id);
-                    setIsOpen(false);
-                  }}
-                  className={`px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs font-sans cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-white/[0.08] text-white font-medium'
-                      : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
-                  }`}
-                >
-                  <span className="truncate pr-2">{opt.label}</span>
-                  {isSelected && <Check size={13} className="text-plt-profit shrink-0" />}
-                </div>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {open && (
+        <div className="absolute right-0 sm:left-0 top-full mt-1.5 w-48 max-h-60 overflow-y-auto rounded-xl bg-plt-card/95 border border-plt-border-strong p-1 shadow-2xl backdrop-blur-md z-50 flex flex-col gap-0.5 custom-scrollbar">
+          {options.map((option) => {
+            const isSelected = option.id === value;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  onChange(option.id);
+                  setOpen(false);
+                }}
+                className={`px-2.5 py-1.5 rounded-lg text-left text-xs transition flex items-center justify-between cursor-pointer ${
+                  isSelected
+                    ? 'bg-plt-hover text-plt-text font-semibold'
+                    : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover/60'
+                }`}
+              >
+                <span className="truncate">{option.label}</span>
+                {isSelected && <Check size={12} className="text-plt-profit shrink-0 ml-1.5" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -113,6 +98,7 @@ export default function TransactionLedgerTable({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
   const [selectedAccountFilter, setSelectedAccountFilter] = useState('ALL');
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   const categoryOptions = [
     { id: 'ALL', label: 'All Categories' },
@@ -167,8 +153,8 @@ export default function TransactionLedgerTable({
           </span>
         </div>
 
-        {/* Filters Toolbar */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Desktop Filters Toolbar (sm and up) */}
+        <div className="hidden sm:flex items-center gap-2 flex-wrap">
           {/* Search Input */}
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-plt-muted pointer-events-none" />
@@ -220,6 +206,157 @@ export default function TransactionLedgerTable({
             </button>
           )}
         </div>
+
+        {/* Mobile Search + Filters Split Pill (below sm) */}
+        <div className="flex sm:hidden flex-col gap-2 w-full">
+          <div className="flex items-stretch h-9 rounded-xl overflow-hidden border border-plt-border bg-plt-raised">
+            <div className="relative flex-1 flex items-center">
+              <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-plt-muted">
+                <Search size={14} />
+              </div>
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-full w-full bg-transparent pl-9 pr-3 text-[12px] text-plt-text placeholder:text-plt-muted focus:outline-none"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-0 pr-3 flex items-center text-plt-muted hover:text-plt-text"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            <div className="w-px bg-plt-border shrink-0" />
+
+            <button
+              type="button"
+              onClick={() => setIsMobileFiltersOpen(true)}
+              className="relative flex items-center gap-1.5 px-3.5 text-[12px] font-medium text-plt-muted hover:text-plt-text transition-colors shrink-0"
+            >
+              <SlidersHorizontal size={14} />
+              <span>Filters</span>
+              {(selectedCategoryFilter !== 'ALL' || selectedAccountFilter !== 'ALL') && (
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-plt-profit" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Filters Bottom Drawer */}
+        {isMobileFiltersOpen && (
+          <div
+            className="fixed inset-0 z-50 flex flex-col justify-end sm:hidden animate-in fade-in duration-200"
+            style={{ backgroundColor: 'var(--plt-overlay, rgba(0,0,0,0.7))' }}
+            onClick={() => setIsMobileFiltersOpen(false)}
+          >
+            <div
+              className="flex flex-col rounded-t-2xl border-t border-plt-border-strong bg-plt-surface shadow-2xl animate-in slide-in-from-bottom duration-250 max-h-[80dvh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-plt-border-strong" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-plt-border/40 shrink-0">
+                <span className="text-sm font-bold text-plt-text">Transaction Filters</span>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="p-1.5 rounded-full text-plt-muted hover:text-plt-text hover:bg-white/[0.08] transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex flex-col gap-5 px-5 py-4">
+                {/* Category Filter */}
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-2">
+                    Category
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {categoryOptions.map((opt) => {
+                      const isSelected = selectedCategoryFilter === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setSelectedCategoryFilter(opt.id)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer border ${
+                            isSelected
+                              ? 'bg-white/[0.15] text-white border-plt-border-strong font-semibold'
+                              : 'text-plt-muted border-plt-border hover:text-plt-text hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Account Filter */}
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-2">
+                    Account
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {accountOptions.map((opt) => {
+                      const isSelected = selectedAccountFilter === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setSelectedAccountFilter(opt.id)}
+                          className={`px-3 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between cursor-pointer border ${
+                            isSelected
+                              ? 'bg-white/[0.12] text-white border-plt-border-strong font-semibold'
+                              : 'text-plt-muted border-plt-border hover:text-plt-text hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <span>{opt.label}</span>
+                          {isSelected && <Check size={14} className="text-plt-profit shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 pb-6 pt-2 flex items-center gap-2.5 shrink-0">
+                {(selectedCategoryFilter !== 'ALL' || selectedAccountFilter !== 'ALL') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategoryFilter('ALL');
+                      setSelectedAccountFilter('ALL');
+                    }}
+                    className="flex-1 h-11 rounded-xl bg-plt-card border border-plt-border text-xs font-semibold text-plt-muted hover:text-plt-text transition-colors"
+                  >
+                    Reset Filters
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="flex-1 h-11 rounded-xl bg-plt-raised border border-plt-border-strong text-xs font-semibold text-plt-text hover:bg-plt-hover transition-colors"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Table */}

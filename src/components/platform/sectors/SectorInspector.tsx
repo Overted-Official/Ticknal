@@ -458,10 +458,10 @@ export default function SectorInspector({
 
       {/* 4. Ranked Constituent Stocks Section */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden pt-1">
-        {/* In-Sector Search & Sort Bar */}
-        <div className="flex items-center justify-between gap-2 pb-2 shrink-0">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-plt-muted">
+        {/* In-Sector Search & Sort Split Pill */}
+        <div className="flex items-stretch h-8 rounded-lg overflow-hidden border border-plt-border bg-plt-raised mb-2 shrink-0">
+          <div className="relative flex-1 flex items-center">
+            <div className="absolute left-0 pl-2.5 flex items-center pointer-events-none text-plt-muted">
               <Search size={12} />
             </div>
             <input
@@ -469,30 +469,30 @@ export default function SectorInspector({
               placeholder={`Filter ${sector.stocks.length} constituents...`}
               value={inSectorSearch}
               onChange={(e) => setInSectorSearch(e.target.value)}
-              className="h-7 w-full rounded-md bg-plt-raised border border-plt-border pl-7 pr-6 text-[11px] text-plt-text placeholder:text-plt-muted placeholder:text-[11px] placeholder:font-normal focus:border-plt-border-strong focus:outline-none transition-colors leading-none"
+              className="h-full w-full bg-transparent pl-7 pr-6 text-[11px] text-plt-text placeholder:text-plt-muted focus:outline-none leading-none"
             />
             {inSectorSearch && (
               <button
                 type="button"
                 onClick={() => setInSectorSearch('')}
-                className="absolute inset-y-0 right-0 pr-2 flex items-center text-plt-muted hover:text-plt-text transition-colors"
+                className="absolute right-0 pr-2 flex items-center text-plt-muted hover:text-plt-text"
               >
                 <X size={12} />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setSortBy(sortBy === 'return' ? 'turnover' : sortBy === 'turnover' ? 'symbol' : 'return')}
-              className="h-7 px-2.5 rounded-md bg-plt-raised border border-plt-border text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover hover:border-plt-border-strong flex items-center gap-1.5 transition cursor-pointer"
-              title="Change sort order"
-            >
-              <ArrowUpDown size={11} />
-              <span className="capitalize">{analysisMode === 'strategy' && sortBy === 'return' ? 'Alpha (α)' : analysisMode === 'strategy' && sortBy === 'turnover' ? 'Trades' : sortBy}</span>
-            </button>
-          </div>
+          <div className="w-px bg-plt-border shrink-0" />
+
+          <button
+            type="button"
+            onClick={() => setSortBy(sortBy === 'return' ? 'turnover' : sortBy === 'turnover' ? 'symbol' : 'return')}
+            className="flex items-center gap-1.5 px-2.5 text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors shrink-0 cursor-pointer"
+            title="Change sort order"
+          >
+            <ArrowUpDown size={11} />
+            <span className="capitalize">{analysisMode === 'strategy' && sortBy === 'return' ? 'Alpha (α)' : analysisMode === 'strategy' && sortBy === 'turnover' ? 'Trades' : sortBy}</span>
+          </button>
         </div>
 
         {/* Column Headers */}

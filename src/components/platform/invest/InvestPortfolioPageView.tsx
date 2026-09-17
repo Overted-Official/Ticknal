@@ -75,6 +75,7 @@ export default function InvestPortfolioPageView({
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('alpha');
   const [showFilters, setShowFilters] = useState(false);
+  const [isMobileFiltersDrawerOpen, setIsMobileFiltersDrawerOpen] = useState(false);
   const [minBars, setMinBars] = useState('');
   const [maxBars, setMaxBars] = useState('');
   const [minAlpha, setMinAlpha] = useState('');
@@ -366,7 +367,10 @@ export default function InvestPortfolioPageView({
             )}
           />
 
-          <div className="grid grid-cols-1 gap-2.5 rounded-xl bg-plt-card/35 p-3 sm:grid-cols-2 xl:grid-cols-6 w-full min-w-0">
+          {/* ================================================================ */}
+          {/* DESKTOP FILTER BAR (md and up) — preserved layout                */}
+          {/* ================================================================ */}
+          <div className="hidden md:grid grid-cols-1 gap-2.5 rounded-xl bg-plt-card/35 p-3 sm:grid-cols-2 xl:grid-cols-6 w-full min-w-0">
             <label className="flex items-center gap-2 text-xs text-plt-muted xl:col-span-1 min-w-0">
               <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider">Strategy</span>
               <select
@@ -416,6 +420,15 @@ export default function InvestPortfolioPageView({
                 placeholder="Search ticker or company"
                 className="w-full rounded-lg bg-plt-base py-2 pl-9 pr-3 text-xs text-plt-text outline-none placeholder:text-plt-muted"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 text-plt-muted hover:text-plt-text"
+                >
+                  <X size={13} />
+                </button>
+              )}
             </label>
 
             <button
@@ -430,7 +443,7 @@ export default function InvestPortfolioPageView({
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-2 gap-3 rounded-xl bg-plt-card/35 p-3 sm:grid-cols-4 lg:grid-cols-8 w-full min-w-0">
+            <div className="hidden md:grid grid-cols-2 gap-3 rounded-xl bg-plt-card/35 p-3 sm:grid-cols-4 lg:grid-cols-8 w-full min-w-0">
               <Field label="Regime">
                 <select
                   value={regimeFilter}
@@ -510,6 +523,265 @@ export default function InvestPortfolioPageView({
                 />{' '}
                 Include held
               </label>
+            </div>
+          )}
+
+          {/* ================================================================ */}
+          {/* MOBILE FILTER BAR (below md) — clean split pill + pill-switch     */}
+          {/* ================================================================ */}
+          <div className="flex md:hidden flex-col gap-2 w-full min-w-0">
+            {/* Row 1: Search + Filters split pill */}
+            <div className="flex items-stretch h-9 rounded-xl overflow-hidden border border-plt-border bg-plt-raised">
+              <div className="relative flex-1 flex items-center">
+                <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-plt-muted">
+                  <Search size={14} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search ticker or company..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="h-full w-full bg-transparent pl-9 pr-3 text-[12px] text-plt-text placeholder:text-plt-muted focus:outline-none"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="absolute right-0 pr-3 flex items-center text-plt-muted hover:text-plt-text"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              <div className="w-px bg-plt-border shrink-0" />
+
+              <button
+                type="button"
+                onClick={() => setIsMobileFiltersDrawerOpen(true)}
+                className="relative flex items-center gap-1.5 px-3.5 text-[12px] font-medium text-plt-muted hover:text-plt-text transition-colors shrink-0"
+              >
+                <SlidersHorizontal size={14} />
+                <span>Filters</span>
+                {(strategy !== 'all' || freshness !== 5 || regimeFilter !== 'All' || sort !== 'alpha' || minBars !== '' || maxBars !== '' || minAlpha !== '' || maxDrawdown !== '' || maxMae !== '' || includeHeld !== false) && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-plt-profit" />
+                )}
+              </button>
+            </div>
+
+            {/* Row 2: Grouping quick pill switch */}
+            <div className="pill-switch w-full">
+              {[
+                { id: 'sector', label: 'Sector' },
+                { id: 'industryGroup', label: 'Group' },
+                { id: 'industry', label: 'Industry' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setGrouping(item.id as Grouping)}
+                  className={`pill-switch-btn flex-1 text-center ${grouping === item.id ? 'active' : ''}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ================================================================ */}
+          {/* MOBILE FILTERS BOTTOM DRAWER                                      */}
+          {/* ================================================================ */}
+          {isMobileFiltersDrawerOpen && (
+            <div
+              className="fixed inset-0 z-50 flex flex-col justify-end md:hidden animate-in fade-in duration-200"
+              style={{ backgroundColor: 'var(--plt-overlay, rgba(0,0,0,0.7))' }}
+              onClick={() => setIsMobileFiltersDrawerOpen(false)}
+            >
+              <div
+                className="flex flex-col rounded-t-2xl border-t border-plt-border-strong bg-plt-surface shadow-2xl animate-in slide-in-from-bottom duration-250 max-h-[85dvh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Drag handle */}
+                <div className="flex justify-center pt-3 pb-1 shrink-0">
+                  <div className="w-10 h-1 rounded-full bg-plt-border-strong" />
+                </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-3 border-b border-plt-border/40 shrink-0">
+                  <span className="text-sm font-bold text-plt-text">Portfolio Filters</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileFiltersDrawerOpen(false)}
+                    className="p-1.5 rounded-full text-plt-muted hover:text-plt-text hover:bg-white/[0.08] transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex flex-col gap-4 px-5 py-4">
+                  {/* Strategy */}
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Strategy</label>
+                    <select
+                      value={strategy}
+                      onChange={(event) => setStrategy(event.target.value as StrategyFilter)}
+                      className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                    >
+                      {STRATEGIES.map((item) => (
+                        <option key={item.id} value={item.id} className="bg-plt-base text-plt-text">
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Freshness & Regime in 2-col grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Freshness</label>
+                      <select
+                        value={freshness}
+                        onChange={(event) => setFreshness(Number(event.target.value))}
+                        className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                      >
+                        <option value={5} className="bg-plt-base text-plt-text">5 sessions</option>
+                        <option value={10} className="bg-plt-base text-plt-text">10 sessions</option>
+                        <option value={20} className="bg-plt-base text-plt-text">20 sessions</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Regime</label>
+                      <select
+                        value={regimeFilter}
+                        onChange={(event) => setRegimeFilter(event.target.value as 'All' | Regime)}
+                        className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                      >
+                        {REGIMES.map((item) => (
+                          <option key={item} className="bg-plt-base text-plt-text">{item}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Sort Order */}
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Sort Order</label>
+                    <select
+                      value={sort}
+                      onChange={(event) => setSort(event.target.value as SortKey)}
+                      className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                    >
+                      <option value="alpha" className="bg-plt-base text-plt-text">Alpha ↓</option>
+                      <option value="return" className="bg-plt-base text-plt-text">Total return ↓</option>
+                      <option value="bars" className="bg-plt-base text-plt-text">Avg bars ↑</option>
+                      <option value="drawdown" className="bg-plt-base text-plt-text">Max DD ↑</option>
+                      <option value="mae" className="bg-plt-base text-plt-text">Max MAE ↑</option>
+                      <option value="date" className="bg-plt-base text-plt-text">Signal date ↓</option>
+                    </select>
+                  </div>
+
+                  {/* Quantitative Criteria Inputs */}
+                  <div className="pt-2 border-t border-plt-border/40">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-2">
+                      Quantitative Criteria
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <span className="text-[10px] text-plt-muted block mb-1">Min avg bars</span>
+                        <input
+                          value={minBars}
+                          onChange={(event) => setMinBars(event.target.value)}
+                          inputMode="numeric"
+                          placeholder="Any"
+                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-plt-muted block mb-1">Max avg bars</span>
+                        <input
+                          value={maxBars}
+                          onChange={(event) => setMaxBars(event.target.value)}
+                          inputMode="numeric"
+                          placeholder="Any"
+                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-plt-muted block mb-1">Min alpha %</span>
+                        <input
+                          value={minAlpha}
+                          onChange={(event) => setMinAlpha(event.target.value)}
+                          inputMode="decimal"
+                          placeholder="Any"
+                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-plt-muted block mb-1">Max DD %</span>
+                        <input
+                          value={maxDrawdown}
+                          onChange={(event) => setMaxDrawdown(event.target.value)}
+                          inputMode="decimal"
+                          placeholder="Any"
+                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-plt-muted block mb-1">Max MAE %</span>
+                        <input
+                          value={maxMae}
+                          onChange={(event) => setMaxMae(event.target.value)}
+                          inputMode="decimal"
+                          placeholder="Any"
+                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Include Held Checkbox */}
+                  <label className="flex items-center gap-2.5 py-1 text-xs text-plt-text cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={includeHeld}
+                      onChange={(event) => setIncludeHeld(event.target.checked)}
+                      className="accent-[var(--plt-accent)] w-4 h-4 rounded"
+                    />
+                    <span>Include currently held positions</span>
+                  </label>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="px-5 pb-6 pt-2 flex items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStrategy('all');
+                      setFreshness(5);
+                      setRegimeFilter('All');
+                      setSort('alpha');
+                      setMinBars('');
+                      setMaxBars('');
+                      setMinAlpha('');
+                      setMaxDrawdown('');
+                      setMaxMae('');
+                      setIncludeHeld(false);
+                    }}
+                    className="flex-1 h-11 rounded-xl bg-plt-card border border-plt-border text-xs font-semibold text-plt-muted hover:text-plt-text transition-colors"
+                  >
+                    Reset Filters
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileFiltersDrawerOpen(false)}
+                    className="flex-1 h-11 rounded-xl bg-plt-raised border border-plt-border-strong text-xs font-semibold text-plt-text hover:bg-plt-hover transition-colors"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

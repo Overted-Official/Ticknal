@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  ChevronDown,
 } from '@/components/ui/icon-library';
 import { formatUiLabel } from '@/lib/format-ui-label';
 
@@ -199,6 +200,62 @@ export default function NotificationsDrawer({
 
   const systemLogs = logsData?.logs ?? [];
   const [isClearing, setIsClearing] = useState(false);
+  const [isStrategyMenuOpen, setIsStrategyMenuOpen] = useState(false);
+  const [isRegimeMenuOpen, setIsRegimeMenuOpen] = useState(false);
+  const strategyMenuRef = useRef<HTMLDivElement>(null);
+  const regimeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (strategyMenuRef.current && !strategyMenuRef.current.contains(e.target as Node)) {
+        setIsStrategyMenuOpen(false);
+      }
+      if (regimeMenuRef.current && !regimeMenuRef.current.contains(e.target as Node)) {
+        setIsRegimeMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const strategyOptions = [
+    { id: 'all', label: 'All Strategies', count: strategyCounts.all },
+    { id: 'psi', label: 'PSI Strategy', count: strategyCounts.psi },
+    { id: 'psi_v2', label: 'PSI V2 Strategy', count: strategyCounts.psi_v2 },
+    { id: 'thoth', label: 'THOTH Strategy', count: strategyCounts.thoth },
+  ];
+
+  const regimeOptions = [
+    { id: 'all', label: 'All Regimes', count: regimeCounts.all },
+    { id: 'alpha', label: '🟢 Alpha Wave', count: regimeCounts.alpha },
+    { id: 'Leading', label: 'Leading', count: regimeCounts.Leading },
+    { id: 'Improving', label: 'Improving', count: regimeCounts.Improving },
+    { id: 'Weakening', label: 'Weakening', count: regimeCounts.Weakening },
+    { id: 'Lagging', label: 'Lagging', count: regimeCounts.Lagging },
+  ];
+
+  const activeStrategyLabel =
+    selectedStrategy === 'all'
+      ? 'All Strategies'
+      : selectedStrategy === 'psi'
+      ? 'PSI'
+      : selectedStrategy === 'psi_v2'
+      ? 'PSI V2'
+      : 'THOTH';
+
+  const activeRegimeLabel =
+    selectedRegime === 'all'
+      ? 'All Regimes'
+      : selectedRegime === 'alpha'
+      ? '🟢 Alpha Wave'
+      : selectedRegime;
+
+  const isFiltered = selectedStrategy !== 'all' || selectedRegime !== 'all';
+
+  const resetFilters = () => {
+    setSelectedStrategy('all');
+    setSelectedRegime('all');
+  };
 
   const handleClearAll = async () => {
     setIsClearing(true);
@@ -311,87 +368,135 @@ export default function NotificationsDrawer({
               </div>
             </div>
 
-            {/* Strategy & Rotation Filter Rails */}
+            {/* Unified Filter Bar (Consolidated 1 Row) */}
             {activeTab === 'signals' && notifications.length > 0 && (
-              <div className="border-b border-plt-border-soft bg-plt-card/30 flex flex-col divide-y divide-plt-border-soft/60 shrink-0">
-                {/* 1. Strategy Rail */}
-                <div className="px-4 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  {[
-                    { id: 'all', label: 'All Strategies', count: strategyCounts.all },
-                    { id: 'psi', label: 'PSI', count: strategyCounts.psi },
-                    { id: 'psi_v2', label: 'PSI V2', count: strategyCounts.psi_v2 },
-                    { id: 'thoth', label: 'THOTH', count: strategyCounts.thoth },
-                  ].map((tab) => {
-                    const isActive = selectedStrategy === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setSelectedStrategy(tab.id as any)}
-                        className={`px-2 py-0.5 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                          isActive
-                            ? 'bg-plt-card border border-plt-border-soft text-plt-text font-bold shadow-xs'
-                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
-                        }`}
-                      >
-                        <span>{tab.label}</span>
-                        <span
-                          className={`px-1 py-0.1 rounded text-[10px] font-mono ${
-                            isActive
-                              ? 'bg-plt-base text-plt-text font-bold border border-plt-border-soft'
-                              : 'text-plt-muted bg-plt-base/40'
-                          }`}
-                        >
-                          {tab.count}
+              <div className="px-4 py-2 border-b border-plt-border-soft bg-plt-card/30 flex items-center gap-2 shrink-0">
+                {/* 1. Strategy Dropdown Pill */}
+                <div className="relative flex-1 min-w-0" ref={strategyMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsStrategyMenuOpen(!isStrategyMenuOpen);
+                      setIsRegimeMenuOpen(false);
+                    }}
+                    className={`h-7.5 w-full px-2.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
+                      selectedStrategy !== 'all'
+                        ? 'bg-plt-profit/15 border-plt-profit/40 text-plt-profit font-bold shadow-xs'
+                        : 'bg-plt-card border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border'
+                    }`}
+                  >
+                    <span className="truncate">
+                      {selectedStrategy !== 'all' ? activeStrategyLabel : 'Strategy: All'}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {selectedStrategy !== 'all' && (
+                        <span className="px-1 py-0.2 rounded text-[10px] bg-plt-profit/20 font-bold">
+                          {strategyCounts[selectedStrategy]}
                         </span>
-                      </button>
-                    );
-                  })}
+                      )}
+                      <ChevronDown size={11} className={`transition-transform duration-150 ${isStrategyMenuOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+
+                  {isStrategyMenuOpen && (
+                    <div className="absolute left-0 top-full mt-1.5 w-48 rounded-xl bg-plt-card/95 border border-plt-border-strong p-1 shadow-2xl backdrop-blur-md z-50 flex flex-col gap-0.5">
+                      {strategyOptions.map((strat) => {
+                        const isSelected = selectedStrategy === strat.id;
+                        return (
+                          <button
+                            key={strat.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedStrategy(strat.id as any);
+                              setIsStrategyMenuOpen(false);
+                            }}
+                            className={`px-2.5 py-1.5 rounded-lg text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
+                              isSelected
+                                ? 'bg-plt-profit/15 text-plt-profit font-bold'
+                                : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+                            }`}
+                          >
+                            <span className="truncate">{strat.label}</span>
+                            <span className={`px-1 py-0.2 rounded text-[10px] ${isSelected ? 'bg-plt-profit/20' : 'bg-plt-base text-plt-muted'}`}>
+                              {strat.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
-                {/* 2. Industry Rotation Regime Filter */}
-                <div className="px-4 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  <span className="text-[10px] text-plt-muted/70 font-mono uppercase tracking-wider shrink-0 mr-1">
-                    Regime:
-                  </span>
-                  {[
-                    { id: 'all', label: 'All Regimes', count: regimeCounts.all },
-                    { id: 'alpha', label: '🟢 Alpha Wave', count: regimeCounts.alpha, special: true },
-                    { id: 'Leading', label: 'Leading', count: regimeCounts.Leading },
-                    { id: 'Improving', label: 'Improving', count: regimeCounts.Improving },
-                    { id: 'Weakening', label: 'Weakening', count: regimeCounts.Weakening },
-                    { id: 'Lagging', label: 'Lagging', count: regimeCounts.Lagging },
-                  ].map((rTab) => {
-                    const isActive = selectedRegime === rTab.id;
-                    return (
-                      <button
-                        key={rTab.id}
-                        type="button"
-                        onClick={() => setSelectedRegime(rTab.id as any)}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-mono transition-all flex items-center gap-1 shrink-0 cursor-pointer ${
-                          isActive
-                            ? rTab.id === 'alpha'
-                              ? 'bg-plt-profit/20 text-plt-profit border border-plt-profit/40 font-bold shadow-xs'
-                              : 'bg-plt-card border border-plt-border-soft text-plt-text font-bold shadow-xs'
-                            : rTab.id === 'alpha'
-                            ? 'text-plt-profit hover:bg-plt-profit/10 border border-plt-profit/20'
-                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
-                        }`}
-                      >
-                        <span>{rTab.label}</span>
-                        <span
-                          className={`px-1 py-0.1 rounded text-[9px] font-mono ${
-                            isActive
-                              ? 'bg-plt-base text-plt-text font-bold border border-plt-border-soft'
-                              : 'text-plt-muted bg-plt-base/40'
-                          }`}
-                        >
-                          {rTab.count}
+                {/* 2. Regime Dropdown Pill */}
+                <div className="relative flex-1 min-w-0" ref={regimeMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRegimeMenuOpen(!isRegimeMenuOpen);
+                      setIsStrategyMenuOpen(false);
+                    }}
+                    className={`h-7.5 w-full px-2.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
+                      selectedRegime !== 'all'
+                        ? selectedRegime === 'alpha'
+                          ? 'bg-plt-profit/20 border-plt-profit/50 text-plt-profit font-bold shadow-xs'
+                          : 'bg-white/[0.12] border-white/25 text-white font-bold shadow-xs'
+                        : 'bg-plt-card border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border'
+                    }`}
+                  >
+                    <span className="truncate">
+                      {selectedRegime !== 'all' ? activeRegimeLabel : 'Regime: All'}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {selectedRegime !== 'all' && (
+                        <span className="px-1 py-0.2 rounded text-[10px] bg-white/10 font-bold">
+                          {regimeCounts[selectedRegime]}
                         </span>
-                      </button>
-                    );
-                  })}
+                      )}
+                      <ChevronDown size={11} className={`transition-transform duration-150 ${isRegimeMenuOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+
+                  {isRegimeMenuOpen && (
+                    <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-plt-card/95 border border-plt-border-strong p-1 shadow-2xl backdrop-blur-md z-50 flex flex-col gap-0.5">
+                      {regimeOptions.map((reg) => {
+                        const isSelected = selectedRegime === reg.id;
+                        return (
+                          <button
+                            key={reg.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedRegime(reg.id as any);
+                              setIsRegimeMenuOpen(false);
+                            }}
+                            className={`px-2.5 py-1.5 rounded-lg text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
+                              isSelected
+                                ? 'bg-white/[0.12] text-white font-bold'
+                                : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+                            }`}
+                          >
+                            <span className="truncate">{reg.label}</span>
+                            <span className={`px-1 py-0.2 rounded text-[10px] ${isSelected ? 'bg-white/20' : 'bg-plt-base text-plt-muted'}`}>
+                              {reg.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
+
+                {/* 3. Reset Button (Only appears if a filter is active) */}
+                {isFiltered && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="h-7.5 px-2 rounded-lg border border-plt-border-soft hover:border-plt-risk/40 hover:bg-plt-risk/10 text-plt-muted hover:text-plt-risk text-xs font-mono flex items-center gap-1 transition-all cursor-pointer shrink-0"
+                    title="Reset filters"
+                  >
+                    <X size={12} />
+                    <span className="text-[11px]">Reset</span>
+                  </button>
+                )}
               </div>
             )}
 

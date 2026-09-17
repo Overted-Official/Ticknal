@@ -389,8 +389,8 @@ export default function AlertTriggersWidget({
           </button>
         </div>
 
-        {/* Filters & Search Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        {/* Filters & Search Row — Desktop (sm and up) */}
+        <div className="hidden sm:flex flex-wrap items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-md border border-white/[0.08]">
             <button
               type="button"
@@ -434,8 +434,74 @@ export default function AlertTriggersWidget({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search symbol, company..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-md bg-white/[0.03] border border-white/[0.08] text-xs text-white placeholder-white/25 focus:outline-none focus:border-white/20 transition-colors font-mono"
+              className="w-full pl-8 pr-7 py-1.5 rounded-md bg-white/[0.03] border border-white/[0.08] text-xs text-white placeholder-white/25 focus:outline-none focus:border-white/20 transition-colors font-mono"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-white/30 hover:text-white rounded"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filters & Search Row — Mobile (below sm) */}
+        <div className="flex sm:hidden flex-col gap-2 mb-4">
+          {/* Row 1: Search bar */}
+          <div className="relative flex items-center h-9 rounded-xl overflow-hidden border border-plt-border bg-plt-raised">
+            <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-plt-muted">
+              <Search size={14} />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search symbol or company..."
+              className="h-full w-full bg-transparent pl-9 pr-8 text-[12px] text-plt-text placeholder:text-plt-muted focus:outline-none font-mono"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-0 pr-3 flex items-center text-plt-muted hover:text-plt-text"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Row 2: Full-width segmented status switch */}
+          <div className="pill-switch w-full">
+            <button
+              type="button"
+              onClick={() => setTickerFilter('ALL')}
+              className={`pill-switch-btn flex-1 text-center text-[11px] ${
+                tickerFilter === 'ALL' ? 'pill-switch-btn-active font-semibold' : ''
+              }`}
+            >
+              All ({monitoredTickers.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTickerFilter('POSITIONS')}
+              className={`pill-switch-btn flex-1 text-center text-[11px] ${
+                tickerFilter === 'POSITIONS' ? 'pill-switch-btn-active font-semibold' : ''
+              }`}
+            >
+              Holdings ({monitoredTickers.filter((t) => t.isPosition).length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTickerFilter('ALERTS')}
+              className={`pill-switch-btn flex-1 text-center text-[11px] ${
+                tickerFilter === 'ALERTS' ? 'pill-switch-btn-active font-semibold' : ''
+              }`}
+            >
+              Watch ({monitoredTickers.filter((t) => t.isExplicitAlert).length})
+            </button>
           </div>
         </div>
 
