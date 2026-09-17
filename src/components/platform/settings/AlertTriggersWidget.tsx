@@ -382,7 +382,7 @@ export default function AlertTriggersWidget({
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-black bg-white hover:bg-white/90 transition-all shrink-0 cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography-semibold text-black bg-white hover:bg-white/90 transition-all shrink-0 cursor-pointer"
           >
             <Plus size={14} />
             <span>Add Ticker Alert</span>
@@ -395,7 +395,7 @@ export default function AlertTriggersWidget({
             <button
               type="button"
               onClick={() => setTickerFilter('ALL')}
-              className={`px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded btn-typography transition-all cursor-pointer ${
                 tickerFilter === 'ALL'
                   ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
                   : 'text-white/40 hover:text-white/80'
@@ -406,7 +406,7 @@ export default function AlertTriggersWidget({
             <button
               type="button"
               onClick={() => setTickerFilter('POSITIONS')}
-              className={`px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded btn-typography transition-all cursor-pointer ${
                 tickerFilter === 'POSITIONS'
                   ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
                   : 'text-white/40 hover:text-white/80'
@@ -417,7 +417,7 @@ export default function AlertTriggersWidget({
             <button
               type="button"
               onClick={() => setTickerFilter('ALERTS')}
-              className={`px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded btn-typography transition-all cursor-pointer ${
                 tickerFilter === 'ALERTS'
                   ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
                   : 'text-white/40 hover:text-white/80'
@@ -772,7 +772,7 @@ export default function AlertTriggersWidget({
                           type="button"
                           onClick={() => handleAddAlert(t)}
                           disabled={togglingSymbol === t.symbol}
-                          className="px-3 py-1 rounded bg-white hover:bg-white/90 text-black text-xs font-medium shrink-0 transition-colors cursor-pointer"
+                          className="px-3 py-1 rounded bg-white hover:bg-white/90 text-black btn-typography-semibold shrink-0 transition-colors cursor-pointer"
                         >
                           + Add Alert
                         </button>

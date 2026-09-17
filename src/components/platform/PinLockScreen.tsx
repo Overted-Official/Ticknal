@@ -316,7 +316,7 @@ export default function PinLockScreen({
             setRecoveryError(null);
             setShowRecoveryModal(true);
           }}
-          className="text-white/40 hover:text-white transition-colors flex items-center gap-1"
+          className="text-white/40 hover:text-white transition-colors flex items-center gap-1 btn-typography cursor-pointer"
         >
           <span>Forgot PIN?</span>
         </button>
@@ -326,7 +326,7 @@ export default function PinLockScreen({
         <button
           type="button"
           onClick={handleSignOut}
-          className="text-white/40 hover:text-white/80 transition-colors flex items-center gap-1"
+          className="text-white/40 hover:text-white/80 transition-colors flex items-center gap-1 btn-typography cursor-pointer"
         >
           <LogOut size={12} />
           <span>Sign Out</span>
@@ -381,7 +381,7 @@ export default function PinLockScreen({
                           setRecoveryMethod('question');
                           setRecoveryError(null);
                         }}
-                        className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all ${
+                        className={`flex-1 py-1.5 btn-typography rounded-md transition-all ${
                           recoveryMethod === 'question'
                             ? 'bg-white/10 text-white shadow-sm'
                             : 'text-white/40 hover:text-white/70'
@@ -395,7 +395,7 @@ export default function PinLockScreen({
                           setRecoveryMethod('password');
                           setRecoveryError(null);
                         }}
-                        className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all ${
+                        className={`flex-1 py-1.5 btn-typography rounded-md transition-all ${
                           recoveryMethod === 'password'
                             ? 'bg-white/10 text-white shadow-sm'
                             : 'text-white/40 hover:text-white/70'
@@ -443,14 +443,14 @@ export default function PinLockScreen({
                         <button
                           type="button"
                           onClick={() => setShowRecoveryModal(false)}
-                          className="px-3.5 py-2 rounded-xl text-xs font-medium text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                          className="px-3.5 py-2 rounded-xl btn-typography text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={isRecovering || !recoveryAnswer.trim()}
-                          className="px-4 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-white/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl btn-typography-semibold text-black bg-white hover:bg-white/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
                         >
                           <span>{isRecovering ? 'Verifying...' : 'Verify & Unlock'}</span>
                           <ArrowRight size={14} />
@@ -505,14 +505,14 @@ export default function PinLockScreen({
                         <button
                           type="button"
                           onClick={() => setShowRecoveryModal(false)}
-                          className="px-3.5 py-2 rounded-xl text-xs font-medium text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                          className="px-3.5 py-2 rounded-xl btn-typography text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={isRecovering || !authPassword}
-                          className="px-4 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-white/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl btn-typography-semibold text-black bg-white hover:bg-white/90 disabled:opacity-40 shadow-sm transition-colors flex items-center gap-1.5"
                         >
                           <span>{isRecovering ? 'Verifying...' : 'Verify Password'}</span>
                           <ArrowRight size={14} />

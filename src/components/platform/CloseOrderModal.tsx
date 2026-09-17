@@ -184,7 +184,7 @@ export default function CloseOrderModal({
               <button
                 type="button"
                 onClick={handleCloseOrder}
-                className="btn-token btn-compact flex-1 bg-plt-profit hover:bg-plt-profit/90 text-plt-inverse font-semibold font-sans shadow-md"
+                className="btn-token btn-compact flex-1 bg-plt-profit hover:bg-plt-profit/90 text-plt-inverse btn-typography-semibold font-sans shadow-md"
               >
                 Confirm Close
               </button>

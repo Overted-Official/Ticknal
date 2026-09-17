@@ -112,7 +112,7 @@ export default function PortfolioOpportunityScannerWidget({
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <ChevronDown size={14} className={`shrink-0 text-plt-muted transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
-                      <span className="text-xs font-semibold text-plt-text">{group}</span>
+                      <span className="btn-typography-semibold text-plt-text">{group}</span>
                       <span className={`rounded-md px-1.5 py-0.5 text-[10px] ${regimeTone(rows[0]?.rotationRegime)}`}>
                         {rows[0]?.rotationRegime || 'Unclassified'}
                       </span>
@@ -169,7 +169,7 @@ export default function PortfolioOpportunityScannerWidget({
                           <button
                             type="button"
                             onClick={() => onBuy(opportunity)}
-                            className="inline-flex w-fit items-center gap-1.5 rounded-md bg-plt-accent px-2.5 py-1.5 text-[11px] font-semibold text-plt-base hover:opacity-90 cursor-pointer"
+                            className="inline-flex w-fit items-center gap-1.5 rounded-md bg-plt-accent px-2.5 py-1.5 btn-typography-semibold text-plt-base hover:opacity-90 cursor-pointer"
                           >
                             <Zap size={12} /> Buy
                           </button>
@@ -211,7 +211,7 @@ export default function PortfolioOpportunityScannerWidget({
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <ChevronDown size={14} className={`shrink-0 text-plt-muted transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
-                    <span className="truncate text-xs font-semibold text-plt-text">{group}</span>
+                    <span className="truncate btn-typography-semibold text-plt-text">{group}</span>
                     <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] ${regimeTone(rows[0]?.rotationRegime)}`}>
                       {rows[0]?.rotationRegime || 'Unclassified'}
                     </span>
@@ -283,7 +283,7 @@ export default function PortfolioOpportunityScannerWidget({
                         <button
                           type="button"
                           onClick={() => onBuy(opportunity)}
-                          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-plt-accent px-3 py-2.5 text-xs font-semibold text-plt-base cursor-pointer"
+                          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-plt-accent px-3 py-2.5 btn-typography-semibold text-plt-base cursor-pointer"
                         >
                           <Zap size={13} /> Buy {symbol}
                         </button>

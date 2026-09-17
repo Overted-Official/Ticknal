@@ -12,7 +12,7 @@ export default function OAuthButtonsWidget({ onGoogleLogin, loading }: OAuthButt
         type="button"
         onClick={onGoogleLogin}
         disabled={loading}
-        className="w-full py-3 px-4 rounded-xl bg-white text-black hover:bg-white/90 active:scale-[0.99] font-medium text-sm font-sans flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+        className="w-full py-3 px-4 rounded-xl bg-white text-black hover:bg-white/90 active:scale-[0.99] btn-typography-semibold flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm disabled:opacity-50"
       >
         {loading ? (
           <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />

@@ -127,7 +127,7 @@ export default function OpportunityTable({
             <button
               type="button"
               onClick={() => setStrategyFilter('ALL')}
-              className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+              className={`px-2 py-1 rounded-lg btn-typography transition-all ${
                 strategyFilter === 'ALL'
                   ? 'bg-plt-card border border-plt-border-soft text-plt-text font-semibold shadow-xs'
                   : 'text-plt-muted hover:text-plt-text'
@@ -139,7 +139,7 @@ export default function OpportunityTable({
               <button
                 type="button"
                 onClick={() => setStrategyFilter('psi')}
-                className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+                className={`px-2 py-1 rounded-lg btn-typography transition-all ${
                   strategyFilter === 'psi'
                     ? 'bg-plt-info/20 text-plt-info border border-plt-info/30 font-semibold shadow-xs'
                     : 'text-plt-muted hover:text-plt-info'
@@ -152,7 +152,7 @@ export default function OpportunityTable({
               <button
                 type="button"
                 onClick={() => setStrategyFilter('thoth_egx_macro')}
-                className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+                className={`px-2 py-1 rounded-lg btn-typography transition-all ${
                   strategyFilter === 'thoth_egx_macro'
                     ? 'bg-plt-violet/20 text-plt-violet border border-plt-violet/30 font-semibold shadow-xs'
                     : 'text-plt-muted hover:text-plt-violet'
@@ -165,7 +165,7 @@ export default function OpportunityTable({
               <button
                 type="button"
                 onClick={() => setStrategyFilter('psi_v2')}
-                className={`px-2 py-1 rounded-lg text-mini font-medium transition-all ${
+                className={`px-2 py-1 rounded-lg btn-typography transition-all ${
                   strategyFilter === 'psi_v2'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold shadow-xs'
                     : 'text-plt-muted hover:text-emerald-400'
@@ -180,7 +180,7 @@ export default function OpportunityTable({
           <button
             type="button"
             onClick={() => setRegimeFilter((prev) => (prev === 'ALPHA' ? 'ALL' : 'ALPHA'))}
-            className={`px-2 py-1 rounded-lg text-mini font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2 py-1 rounded-lg btn-typography font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
               regimeFilter === 'ALPHA'
                 ? 'bg-plt-profit/20 text-plt-profit border border-plt-profit/40 font-bold shadow-xs'
                 : 'text-plt-muted hover:text-plt-profit border border-plt-border-soft bg-plt-card/50'

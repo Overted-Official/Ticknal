@@ -33,7 +33,7 @@ export default function ChartFloatingControls({
         aria-label="Bar Replay"
         disabled={!hasReplayRoom}
         onClick={onEnableReplay}
-        className="h-8 rounded-full px-2.5 sm:px-3 text-xs font-medium text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08] transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+        className="h-8 rounded-full px-2.5 sm:px-3 btn-typography text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08] transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
       >
         <RotateCcw size={13} className="text-plt-muted" />
         <span className="hidden sm:inline">Replay</span>
@@ -47,9 +47,9 @@ export default function ChartFloatingControls({
         type="button"
         title="Technical Indicators"
         onClick={onToggleIndicators}
-        className={`h-8 rounded-full px-2.5 sm:px-3 text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+        className={`h-8 rounded-full px-2.5 sm:px-3 btn-typography transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
           activeIndicatorsCount > 0
-            ? 'bg-plt-active text-plt-text border border-plt-border-subtle font-semibold'
+            ? 'bg-plt-active text-plt-text border border-plt-border-subtle btn-typography-semibold'
             : 'text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08]'
         }`}
       >
@@ -67,7 +67,7 @@ export default function ChartFloatingControls({
         type="button"
         title="View Positions & Orders"
         onClick={onOpenPositionsDrawer}
-        className="h-8 rounded-full px-2.5 sm:px-3 text-xs font-medium text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08] transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+        className="h-8 rounded-full px-2.5 sm:px-3 btn-typography text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08] transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
       >
         <Briefcase size={13} className="text-plt-muted" />
         <span className="hidden sm:inline">Positions</span>
@@ -82,7 +82,7 @@ export default function ChartFloatingControls({
       <button
         type="button"
         onClick={onOpenAddOrder}
-        className="h-8 rounded-full bg-white hover:bg-white/90 text-black px-3 sm:px-3.5 text-xs font-semibold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+        className="h-8 rounded-full bg-white hover:bg-white/90 text-black px-3 sm:px-3.5 btn-typography-semibold shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
         title="Add Position"
         aria-label="Add Position"
       >

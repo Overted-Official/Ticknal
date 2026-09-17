@@ -98,7 +98,7 @@ export default function ChartOrderOverlays({
                   e.stopPropagation();
                   onSelectOrderToEdit(overlay.order);
                 }}
-                className="flex-1 py-1 px-2 rounded-lg text-[10px] font-medium text-plt-text bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.12] transition-colors text-center cursor-pointer"
+                className="flex-1 py-1 px-2 rounded-lg btn-typography text-plt-text bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.12] transition-colors text-center cursor-pointer"
                 title="View / Edit Position Details"
               >
                 Details
@@ -110,7 +110,7 @@ export default function ChartOrderOverlays({
                   e.stopPropagation();
                   onSelectOrderToClose(overlay.order);
                 }}
-                className="flex-1 py-1 px-2 rounded-lg text-[10px] font-medium text-plt-risk bg-plt-risk-soft hover:bg-plt-risk hover:text-plt-inverse border border-plt-risk-border transition-colors text-center cursor-pointer"
+                className="flex-1 py-1 px-2 rounded-lg btn-typography text-plt-risk bg-plt-risk-soft hover:bg-plt-risk hover:text-plt-inverse border border-plt-risk-border transition-colors text-center cursor-pointer"
                 title="Close Position"
               >
                 Close

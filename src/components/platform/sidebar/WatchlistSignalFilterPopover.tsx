@@ -169,7 +169,7 @@ export default function WatchlistSignalFilterPopover({
               type="button"
               onClick={handleReset}
               title="Reset to default"
-              className="text-[10px] text-plt-muted hover:text-plt-text flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-plt-hover"
+              className="btn-typography text-plt-muted hover:text-plt-text flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-plt-hover"
             >
               <RotateCcw size={10} />
               Reset
@@ -268,7 +268,7 @@ export default function WatchlistSignalFilterPopover({
           <button
             type="button"
             onClick={() => toggleSignal('BUY')}
-            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md border text-[11px] font-medium transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md border btn-typography transition-all ${
               filter.signals.includes('BUY')
                 ? 'bg-plt-profit/15 border-plt-profit/50 text-plt-profit'
                 : 'bg-transparent border-plt-border/40 text-plt-muted hover:bg-plt-hover/50'
@@ -280,7 +280,7 @@ export default function WatchlistSignalFilterPopover({
           <button
             type="button"
             onClick={() => toggleSignal('SELL')}
-            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md border text-[11px] font-medium transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md border btn-typography transition-all ${
               filter.signals.includes('SELL')
                 ? 'bg-plt-risk/15 border-plt-risk/50 text-plt-risk'
                 : 'bg-transparent border-plt-border/40 text-plt-muted hover:bg-plt-hover/50'

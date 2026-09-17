@@ -918,7 +918,7 @@ export default function StrategyReportDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-plt-text font-medium transition text-xs shrink-0 border border-white/[0.1] cursor-pointer"
+            className="px-4 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-plt-text btn-typography transition shrink-0 border border-white/[0.1] cursor-pointer"
           >
             Done
           </button>

@@ -131,7 +131,7 @@ export default function ChartReplayControls({
       <button
         type="button"
         onClick={onExitReplay}
-        className="h-8 rounded-full px-3 text-xs font-medium text-plt-subtle bg-plt-hover border border-plt-border hover:bg-plt-hover hover:text-plt-text transition-colors"
+        className="h-8 rounded-full px-3 btn-typography text-plt-subtle bg-plt-hover border border-plt-border hover:bg-plt-hover hover:text-plt-text transition-colors"
       >
         Live
       </button>

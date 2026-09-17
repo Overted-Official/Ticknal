@@ -23,7 +23,7 @@ export default function SettingsNavigationRail({
       <button
         type="button"
         onClick={() => onTabChange('profile')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
           activeTab === 'profile'
             ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
             : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
@@ -36,7 +36,7 @@ export default function SettingsNavigationRail({
       <button
         type="button"
         onClick={() => onTabChange('security')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
           activeTab === 'security'
             ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
             : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
@@ -49,7 +49,7 @@ export default function SettingsNavigationRail({
       <button
         type="button"
         onClick={() => onTabChange('devices')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
           activeTab === 'devices'
             ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
             : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
@@ -65,7 +65,7 @@ export default function SettingsNavigationRail({
       <button
         type="button"
         onClick={() => onTabChange('alerts')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
           activeTab === 'alerts'
             ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
             : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'

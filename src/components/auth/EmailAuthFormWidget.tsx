@@ -53,7 +53,7 @@ export default function EmailAuthFormWidget({
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-2 py-3 px-4 rounded-xl bg-plt-muted-surface hover:bg-plt-hover active:scale-[0.99] border border-white/15 text-plt-text font-medium text-sm font-sans transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full mt-2 py-3 px-4 rounded-xl bg-plt-muted-surface hover:bg-plt-hover active:scale-[0.99] border border-white/15 text-plt-text btn-typography-semibold transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -71,7 +71,7 @@ export default function EmailAuthFormWidget({
             <button
               type="button"
               onClick={onToggleMode}
-              className="text-white hover:underline font-medium cursor-pointer"
+              className="text-white hover:underline btn-typography cursor-pointer"
             >
               Sign In
             </button>
@@ -82,7 +82,7 @@ export default function EmailAuthFormWidget({
             <button
               type="button"
               onClick={onToggleMode}
-              className="text-white hover:underline font-medium cursor-pointer"
+              className="text-white hover:underline btn-typography cursor-pointer"
             >
               Create one
             </button>

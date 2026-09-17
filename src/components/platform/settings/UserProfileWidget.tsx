@@ -203,7 +203,7 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
             type="button"
             onClick={handleSignOut}
             disabled={isLoggingOut}
-            className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium text-plt-risk bg-plt-risk-soft hover:bg-plt-risk-soft border border-plt-risk-border transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-md btn-typography text-plt-risk bg-plt-risk-soft hover:bg-plt-risk-soft border border-plt-risk-border transition-all cursor-pointer"
           >
             <LogOut size={14} />
             <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>

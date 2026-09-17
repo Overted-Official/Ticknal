@@ -25,7 +25,7 @@ export default function DashboardCharts({
     <div className="w-full select-none">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden w-full flex items-center justify-between rounded-xl bg-plt-card border border-plt-border-soft px-4 py-2.5 text-xs font-semibold text-plt-text transition-colors mb-3 cursor-pointer"
+        className="md:hidden w-full flex items-center justify-between rounded-xl bg-plt-card border border-plt-border-soft px-4 py-2.5 btn-typography-semibold text-plt-text transition-colors mb-3 cursor-pointer"
       >
         <div className="flex items-center gap-2">
           <BarChart2 className="text-plt-muted" size={12} />

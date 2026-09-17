@@ -73,7 +73,7 @@ export default function PinSecurityCard() {
                 <button
                   type="button"
                   onClick={lockApp}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-plt-text bg-plt-hover hover:bg-plt-hover active:bg-plt-active border border-plt-border transition-all flex items-center gap-2"
+                  className="px-4 py-2 rounded-xl btn-typography text-plt-text bg-plt-hover hover:bg-plt-hover active:bg-plt-active border border-plt-border transition-all flex items-center gap-2"
                 >
                   <Lock size={16} className="text-plt-muted" />
                   <span>Lock Now</span>
@@ -82,7 +82,7 @@ export default function PinSecurityCard() {
                 <button
                   type="button"
                   onClick={() => setIsSetupModalOpen(true)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-plt-subtle hover:text-plt-text bg-plt-hover hover:bg-plt-hover border border-plt-border transition-all flex items-center gap-2"
+                  className="px-4 py-2 rounded-xl btn-typography text-plt-subtle hover:text-plt-text bg-plt-hover hover:bg-plt-hover border border-plt-border transition-all flex items-center gap-2"
                 >
                   <KeyRound size={16} className="text-plt-muted" />
                   <span>Change PIN & Recovery</span>
@@ -155,7 +155,7 @@ export default function PinSecurityCard() {
                     removePin();
                   }
                 }}
-                className="text-caption text-plt-risk/70 hover:text-plt-risk transition-colors"
+                className="btn-typography text-plt-risk/70 hover:text-plt-risk transition-colors"
               >
                 Remove PIN Protection
               </button>

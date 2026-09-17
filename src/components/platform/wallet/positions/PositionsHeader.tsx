@@ -65,7 +65,7 @@ export default function PositionsHeader({
             </div>
 
             <button type="button" onClick={onAddPosition} className="btn-token btn-primary btn-compact" title="Add Tracked Position">
-              <span className="text-base leading-none font-bold">+</span>
+              <span className="leading-none font-bold">+</span>
               <span>Add Position</span>
             </button>
           </div>
@@ -103,7 +103,7 @@ export default function PositionsHeader({
           <button
             type="button"
             onClick={onAddPosition}
-            className="flex items-center gap-1.5 px-3.5 text-[12px] font-semibold text-plt-profit hover:bg-plt-profit/10 transition-colors shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 btn-typography-semibold text-plt-profit hover:bg-plt-profit/10 transition-colors shrink-0 cursor-pointer"
           >
             <Plus size={14} />
             <span>Add</span>

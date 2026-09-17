@@ -169,7 +169,7 @@ export function BuyDrawer({ opportunity, accounts, onClose, onError }: BuyDrawer
           <button
             type="submit"
             disabled={isSaving || !accountId}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-plt-accent px-3 py-3 text-xs font-semibold text-plt-base disabled:opacity-60 cursor-pointer"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-plt-accent px-3 py-3 btn-typography-semibold text-plt-base disabled:opacity-60 cursor-pointer"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}{' '}
             {isSaving ? 'Executing…' : 'Execute live buy'}
@@ -316,7 +316,7 @@ export function SellDrawer({
           <button
             type="submit"
             disabled={isSaving || !accountId}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-plt-risk px-3 py-3 text-xs font-semibold text-plt-base disabled:opacity-60 cursor-pointer"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-plt-risk px-3 py-3 btn-typography-semibold text-plt-base disabled:opacity-60 cursor-pointer"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}{' '}
             {isSaving ? 'Executing…' : 'Execute live sell'}

@@ -808,7 +808,7 @@ export default function ChartWidget({
         aria-label="AI Forecast"
         disabled={isPredicting || !data || data.length === 0}
         onClick={() => setPredictPopoverOpen((prev) => !prev)}
-        className={`h-8 rounded-full px-2.5 sm:px-3 text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+        className={`h-8 rounded-full px-2.5 sm:px-3 btn-typography transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
           predictionSeriesRef.current
             ? 'bg-plt-info/15 text-plt-info border border-plt-info/30 font-semibold'
             : 'text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08]'

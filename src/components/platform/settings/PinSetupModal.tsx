@@ -238,7 +238,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                 <button
                   type="button"
                   onClick={() => setStep('confirm')}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-plt-muted hover:text-plt-text flex items-center gap-2 transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl btn-typography text-plt-muted hover:text-plt-text flex items-center gap-2 transition-colors cursor-pointer"
                 >
                   <ArrowLeft size={16} />
                   <span>Back</span>

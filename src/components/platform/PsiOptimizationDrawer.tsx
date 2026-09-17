@@ -329,7 +329,7 @@ export const PsiOptimizationDrawer: React.FC<PsiOptimizationDrawerProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-plt-muted-surface hover:bg-plt-border text-plt-text font-medium transition text-xs shrink-0"
+            className="px-4 py-2 rounded-xl bg-plt-muted-surface hover:bg-plt-border text-plt-text btn-typography transition shrink-0"
           >
             Done
           </button>

@@ -198,7 +198,7 @@ export default function TransactionLedgerTable({
             <button
               type="button"
               onClick={resetFilters}
-              className="h-8 px-2.5 rounded-xl border border-plt-border-soft hover:border-plt-risk/30 hover:bg-plt-risk/10 text-plt-muted hover:text-plt-risk text-xs font-sans flex items-center gap-1.5 transition-all cursor-pointer"
+              className="h-8 px-2.5 rounded-xl border border-plt-border-soft hover:border-plt-risk/30 hover:bg-plt-risk/10 text-plt-muted hover:text-plt-risk btn-typography font-sans flex items-center gap-1.5 transition-all cursor-pointer"
               title="Reset all filters"
             >
               <X size={13} />
@@ -237,7 +237,7 @@ export default function TransactionLedgerTable({
             <button
               type="button"
               onClick={() => setIsMobileFiltersOpen(true)}
-              className="relative flex items-center gap-1.5 px-3.5 text-[12px] font-medium text-plt-muted hover:text-plt-text transition-colors shrink-0"
+              className="relative flex items-center gap-1.5 px-3.5 btn-typography text-plt-muted hover:text-plt-text transition-colors shrink-0"
             >
               <SlidersHorizontal size={14} />
               <span>Filters</span>
@@ -341,7 +341,7 @@ export default function TransactionLedgerTable({
                       setSelectedCategoryFilter('ALL');
                       setSelectedAccountFilter('ALL');
                     }}
-                    className="flex-1 h-11 rounded-xl bg-plt-card border border-plt-border text-xs font-semibold text-plt-muted hover:text-plt-text transition-colors"
+                    className="flex-1 h-11 rounded-xl bg-plt-card border border-plt-border btn-typography-semibold text-plt-muted hover:text-plt-text transition-colors"
                   >
                     Reset Filters
                   </button>
@@ -349,7 +349,7 @@ export default function TransactionLedgerTable({
                 <button
                   type="button"
                   onClick={() => setIsMobileFiltersOpen(false)}
-                  className="flex-1 h-11 rounded-xl bg-plt-raised border border-plt-border-strong text-xs font-semibold text-plt-text hover:bg-plt-hover transition-colors"
+                  className="flex-1 h-11 rounded-xl bg-plt-raised border border-plt-border-strong btn-typography-semibold text-plt-text hover:bg-plt-hover transition-colors"
                 >
                   Apply Filters
                 </button>

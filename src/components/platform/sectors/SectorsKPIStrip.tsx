@@ -133,9 +133,9 @@ export default function SectorsKPIStrip({
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Alpha Breadth</span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="font-bold text-sm text-emerald-400 tabular-nums">{alphaStats.positiveCount}</span>
+                <span className="btn-typography-semibold text-emerald-400 tabular-nums">{alphaStats.positiveCount}</span>
                 <span className="text-[10px] text-plt-muted">vs</span>
-                <span className="font-bold text-sm text-plt-risk tabular-nums">{alphaStats.negativeCount}</span>
+                <span className="btn-typography-semibold text-plt-risk tabular-nums">{alphaStats.negativeCount}</span>
               </div>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function SectorsKPIStrip({
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Active Longs</span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="font-bold text-sm text-plt-info tabular-nums">{signalsData.summary.totalActiveLongs}</span>
+                <span className="btn-typography-semibold text-plt-info tabular-nums">{signalsData.summary.totalActiveLongs}</span>
                 <span className="text-[10px] text-plt-muted">Stocks</span>
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function SectorsKPIStrip({
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Fresh Buys</span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="font-bold text-sm text-plt-profit tabular-nums">{signalsData.summary.totalFreshBuys}</span>
+                <span className="btn-typography-semibold text-plt-profit tabular-nums">{signalsData.summary.totalFreshBuys}</span>
                 <span className="text-[10px] text-plt-muted">New</span>
               </div>
             </div>
@@ -277,7 +277,7 @@ export default function SectorsKPIStrip({
                 <button
                   type="button"
                   onClick={() => handleToggle(activeStrategyFilter === 'ALPHA_POSITIVE' ? 'ALL' : 'ALPHA_POSITIVE')}
-                  className="font-bold text-sm text-emerald-400 hover:text-white tabular-nums cursor-pointer text-left"
+                  className="btn-typography-semibold text-emerald-400 hover:text-white tabular-nums cursor-pointer text-left"
                   title="Click to toggle Positive Alpha filter"
                 >
                   {alphaStats.positiveCount} <span className="text-[10px] font-normal text-plt-muted">Outperforming</span>
@@ -378,7 +378,7 @@ export default function SectorsKPIStrip({
                 <button
                   type="button"
                   onClick={() => handleToggle('LONG_ACTIVE')}
-                  className="font-bold text-sm text-plt-info hover:text-white tabular-nums cursor-pointer text-left"
+                  className="btn-typography-semibold text-plt-info hover:text-white tabular-nums cursor-pointer text-left"
                   title="Filter to all Active Longs"
                 >
                   {signalsData.summary.totalActiveLongs} <span className="text-[10px] font-normal text-plt-muted">Stocks</span>
@@ -408,7 +408,7 @@ export default function SectorsKPIStrip({
           <button
             type="button"
             onClick={() => handleToggle('BUY_FRESH')}
-            className={`flex items-center gap-2.5 min-w-[130px] p-1.5 px-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+            className={`flex items-center gap-2.5 min-w-[130px] p-1.5 px-2.5 rounded-xl border btn-typography transition-all cursor-pointer text-left ${
               activeStrategyFilter === 'BUY_FRESH'
                 ? 'bg-plt-profit/20 border-plt-profit ring-2 ring-plt-profit/60 shadow-[0_0_15px_rgba(16,185,129,0.25)] scale-[1.02]'
                 : 'bg-transparent border-transparent hover:bg-white/[0.04]'
@@ -420,7 +420,7 @@ export default function SectorsKPIStrip({
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Fresh Buys</span>
-              <span className="font-bold text-sm text-plt-profit tabular-nums mt-0.5">
+              <span className="btn-typography-semibold text-plt-profit tabular-nums mt-0.5">
                 {signalsData.summary.totalFreshBuys} <span className="text-[10px] font-normal text-plt-muted">New</span>
               </span>
             </div>
@@ -432,7 +432,7 @@ export default function SectorsKPIStrip({
           <button
             type="button"
             onClick={() => handleToggle('EXIT_RECENT')}
-            className={`flex items-center gap-2.5 min-w-[140px] p-1.5 px-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+            className={`flex items-center gap-2.5 min-w-[140px] p-1.5 px-2.5 rounded-xl border btn-typography transition-all cursor-pointer text-left ${
               activeStrategyFilter === 'EXIT_RECENT'
                 ? 'bg-plt-risk/20 border-plt-risk ring-2 ring-plt-risk/60 shadow-[0_0_15px_rgba(239,68,68,0.25)] scale-[1.02]'
                 : 'bg-transparent border-transparent hover:bg-white/[0.04]'
@@ -444,7 +444,7 @@ export default function SectorsKPIStrip({
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Recent Exits</span>
-              <span className="font-bold text-sm text-plt-risk tabular-nums">
+              <span className="btn-typography-semibold text-plt-risk tabular-nums">
                 {signalsData.summary.totalRecentExits} <span className="text-[10px] font-normal text-plt-muted">Closed</span>
               </span>
             </div>
@@ -456,7 +456,7 @@ export default function SectorsKPIStrip({
           <button
             type="button"
             onClick={() => onSetStrategyFilter?.('ALL')}
-            className={`flex items-center gap-2.5 min-w-[140px] p-1.5 px-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+            className={`flex items-center gap-2.5 min-w-[140px] p-1.5 px-2.5 rounded-xl border btn-typography transition-all cursor-pointer text-left ${
               activeStrategyFilter === 'ALL'
                 ? 'bg-white/[0.08] border-white/40 ring-2 ring-white/30 scale-[1.02]'
                 : 'bg-transparent border-transparent hover:bg-white/[0.04]'
@@ -468,7 +468,7 @@ export default function SectorsKPIStrip({
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Universe Scanned</span>
-              <span className="font-bold text-sm text-white tabular-nums">
+              <span className="btn-typography-semibold text-white tabular-nums">
                 {signalsData.summary.totalScanned} <span className="text-[10px] font-normal text-plt-muted">Tickers</span>
               </span>
             </div>
@@ -495,7 +495,7 @@ export default function SectorsKPIStrip({
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Turnover</span>
-            <span className="font-bold text-sm text-white tabular-nums truncate">
+            <span className="btn-typography-semibold text-white tabular-nums truncate">
               {marketSummary.totalTurnover >= 1_000_000_000_000
                 ? `${(marketSummary.totalTurnover / 1_000_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Tn`
                 : `${(marketSummary.totalTurnover / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bn`}
@@ -576,7 +576,7 @@ export default function SectorsKPIStrip({
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">Total Turnover</span>
-            <span className="font-bold text-sm text-white tabular-nums">
+            <span className="btn-typography-semibold text-white tabular-nums">
               {marketSummary.totalTurnover >= 1_000_000_000_000
                 ? `${(marketSummary.totalTurnover / 1_000_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Tn EGP`
                 : `${(marketSummary.totalTurnover / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bn EGP`}

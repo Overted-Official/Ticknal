@@ -426,7 +426,7 @@ export default function EditAccountHistoryDrawer({
                     <button
                       type="button"
                       onClick={handleAddMonth}
-                      className="h-8 px-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] text-white border border-white/20 text-xs font-semibold flex items-center gap-1.5 shrink-0 transition cursor-pointer"
+                      className="h-8 px-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] text-white border border-white/20 btn-typography-semibold flex items-center gap-1.5 shrink-0 transition cursor-pointer"
                     >
                       <Plus size={14} />
                       <span>Add</span>

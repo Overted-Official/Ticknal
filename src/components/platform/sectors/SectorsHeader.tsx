@@ -138,8 +138,8 @@ export default function SectorsHeader({
                       setTimeframePreset('3M');
                       setIsTimeframeMenuOpen(false);
                     }}
-                    className={`px-2.5 py-1.5 rounded-lg text-left text-xs transition ${
-                      timeframePreset === '3M' ? 'bg-white/[0.12] text-white font-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
+                    className={`px-2.5 py-1.5 rounded-lg text-left btn-typography transition ${
+                      timeframePreset === '3M' ? 'bg-white/[0.12] text-white btn-typography-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
                     }`}
                   >
                     3 Months (3M)
@@ -150,8 +150,8 @@ export default function SectorsHeader({
                       setTimeframePreset('6M');
                       setIsTimeframeMenuOpen(false);
                     }}
-                    className={`px-2.5 py-1.5 rounded-lg text-left text-xs transition ${
-                      timeframePreset === '6M' ? 'bg-white/[0.12] text-white font-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
+                    className={`px-2.5 py-1.5 rounded-lg text-left btn-typography transition ${
+                      timeframePreset === '6M' ? 'bg-white/[0.12] text-white btn-typography-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
                     }`}
                   >
                     6 Months (6M)
@@ -162,8 +162,8 @@ export default function SectorsHeader({
                       setTimeframePreset('custom');
                       setIsTimeframeMenuOpen(false);
                     }}
-                    className={`px-2.5 py-1.5 rounded-lg text-left text-xs transition ${
-                      timeframePreset === 'custom' ? 'bg-white/[0.12] text-white font-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
+                    className={`px-2.5 py-1.5 rounded-lg text-left btn-typography transition ${
+                      timeframePreset === 'custom' ? 'bg-white/[0.12] text-white btn-typography-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
                     }`}
                   >
                     Custom Range...
@@ -247,7 +247,7 @@ export default function SectorsHeader({
               <button
                 type="button"
                 onClick={() => setIsStrategyMenuOpen(!isStrategyMenuOpen)}
-                className={`h-7 px-2.5 rounded-md border flex items-center gap-1.5 text-[11px] font-semibold transition cursor-pointer shadow-xs ${
+                className={`h-7 px-2.5 rounded-md border flex items-center gap-1.5 btn-typography-semibold transition cursor-pointer shadow-xs ${
                   isStrategyMenuOpen
                     ? 'bg-plt-profit/20 border-plt-profit text-white'
                     : 'bg-plt-raised border-plt-profit/40 text-plt-profit hover:border-plt-profit hover:bg-plt-profit/10'
@@ -274,7 +274,7 @@ export default function SectorsHeader({
                           setSelectedStrategy(strat.id);
                           setIsStrategyMenuOpen(false);
                         }}
-                        className={`px-2.5 py-1.5 rounded-lg text-left text-xs transition flex flex-col cursor-pointer ${
+                        className={`px-2.5 py-1.5 rounded-lg text-left btn-typography transition flex flex-col cursor-pointer ${
                           isSelected
                             ? 'bg-plt-profit/15 text-white font-bold border border-plt-profit/30'
                             : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
@@ -325,7 +325,7 @@ export default function SectorsHeader({
             <button
               type="button"
               onClick={() => setIsDisplayMenuOpen(!isDisplayMenuOpen)}
-              className={`h-7 px-2.5 rounded-md border flex items-center gap-1.5 text-[11px] font-medium transition cursor-pointer ${
+              className={`h-7 px-2.5 rounded-md border flex items-center gap-1.5 btn-typography transition cursor-pointer ${
                 isDisplayMenuOpen
                   ? 'bg-plt-hover border-plt-border-strong text-white'
                   : 'bg-plt-raised border-plt-border text-plt-muted hover:text-plt-text hover:bg-plt-hover hover:border-plt-border-strong'
@@ -358,7 +358,7 @@ export default function SectorsHeader({
                           setGranularity(item.id as any);
                           onResetSelection();
                         }}
-                        className={`px-2 py-1.5 rounded-lg text-xs font-medium transition text-left ${
+                        className={`px-2 py-1.5 rounded-lg btn-typography transition text-left ${
                           granularity === item.id
                             ? 'bg-white/[0.15] text-white'
                             : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
@@ -388,7 +388,7 @@ export default function SectorsHeader({
                         key={item.id}
                         type="button"
                         onClick={() => setSizingMetric(item.id as any)}
-                        className={`px-2 py-1.5 rounded-lg text-xs font-medium transition text-center ${
+                        className={`px-2 py-1.5 rounded-lg btn-typography transition text-center ${
                           sizingMetric === item.id
                             ? 'bg-white/[0.15] text-white font-semibold'
                             : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.04]'
@@ -410,7 +410,7 @@ export default function SectorsHeader({
                     <button
                       type="button"
                       onClick={() => setFilterActiveSignalsOnly(!filterActiveSignalsOnly)}
-                      className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-between ${
+                      className={`w-full px-2.5 py-1.5 rounded-lg btn-typography transition flex items-center justify-between ${
                         filterActiveSignalsOnly
                           ? 'bg-plt-profit/15 text-plt-profit border border-plt-profit/30'
                           : 'bg-white/[0.04] text-plt-muted hover:text-plt-text'
@@ -477,7 +477,7 @@ export default function SectorsHeader({
           <button
             type="button"
             onClick={() => setIsMobileFiltersOpen(true)}
-            className="relative flex items-center gap-1.5 px-3.5 text-[12px] font-medium text-plt-muted hover:text-plt-text transition-colors shrink-0"
+            className="relative flex items-center gap-1.5 px-3.5 btn-typography text-plt-muted hover:text-plt-text transition-colors shrink-0"
           >
             <SlidersHorizontal size={14} />
             <span>Filters</span>
@@ -632,7 +632,7 @@ export default function SectorsHeader({
                         setGranularity(item.id as any);
                         onResetSelection();
                       }}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-medium transition text-left border ${
+                      className={`px-3 py-2.5 rounded-xl btn-typography transition text-left border ${
                         granularity === item.id
                           ? 'bg-white/[0.12] text-white border-plt-border-strong'
                           : 'text-plt-muted border-plt-border hover:text-plt-text hover:bg-white/[0.04]'
@@ -659,9 +659,9 @@ export default function SectorsHeader({
                       key={item.id}
                       type="button"
                       onClick={() => setSizingMetric(item.id as any)}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-medium transition text-center border ${
+                      className={`px-3 py-2.5 rounded-xl btn-typography transition text-center border ${
                         sizingMetric === item.id
-                          ? 'bg-white/[0.12] text-white border-plt-border-strong font-semibold'
+                          ? 'bg-white/[0.12] text-white border-plt-border-strong btn-typography-semibold'
                           : 'text-plt-muted border-plt-border hover:text-plt-text hover:bg-white/[0.04]'
                       }`}
                     >
@@ -681,7 +681,7 @@ export default function SectorsHeader({
                   <button
                     type="button"
                     onClick={() => setFilterActiveSignalsOnly(!filterActiveSignalsOnly)}
-                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between border ${
+                    className={`w-full px-3 py-2.5 rounded-xl btn-typography transition flex items-center justify-between border ${
                       filterActiveSignalsOnly
                         ? 'bg-plt-profit/15 text-plt-profit border-plt-profit/30'
                         : 'bg-white/[0.04] text-plt-muted border-plt-border hover:text-plt-text'
@@ -713,7 +713,7 @@ export default function SectorsHeader({
               <button
                 type="button"
                 onClick={() => setIsMobileFiltersOpen(false)}
-                className="w-full h-11 rounded-xl bg-plt-raised border border-plt-border-strong text-sm font-semibold text-plt-text hover:bg-plt-hover transition-colors"
+                className="w-full h-11 rounded-xl bg-plt-raised border border-plt-border-strong btn-typography-semibold text-plt-text hover:bg-plt-hover transition-colors"
               >
                 Apply Filters
               </button>

@@ -252,7 +252,7 @@ export default function SignalPanel({
         <button
           type="button"
           onClick={() => setActiveTab('signal')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-lg btn-typography transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'signal'
               ? 'bg-white/[0.12] text-plt-text shadow-sm'
               : 'text-plt-muted hover:text-plt-text'
@@ -264,7 +264,7 @@ export default function SignalPanel({
         <button
           type="button"
           onClick={() => setActiveTab('alpha')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-lg btn-typography transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'alpha'
               ? 'bg-white/[0.12] text-plt-text shadow-sm'
               : 'text-plt-muted hover:text-plt-text'
@@ -276,7 +276,7 @@ export default function SignalPanel({
         <button
           type="button"
           onClick={() => setActiveTab('optimizer')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-lg btn-typography transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'optimizer'
               ? 'bg-white/[0.12] text-plt-text shadow-sm'
               : 'text-plt-muted hover:text-plt-text'
@@ -582,7 +582,7 @@ export default function SignalPanel({
             <div className="flex bg-white/[0.04] border border-white/[0.08] p-1 rounded-xl">
               <button
                 type="button"
-                className={`flex-1 py-1 text-[11px] font-medium rounded-lg transition-all ${
+                className={`flex-1 py-1 btn-typography rounded-lg transition-all ${
                   trainingModel === 'psi8'
                     ? 'bg-white/[0.12] text-plt-text shadow-sm'
                     : 'text-plt-muted hover:text-plt-text'
@@ -593,7 +593,7 @@ export default function SignalPanel({
               </button>
               <button
                 type="button"
-                className={`flex-1 py-1 text-[11px] font-medium rounded-lg transition-all ${
+                className={`flex-1 py-1 btn-typography rounded-lg transition-all ${
                   trainingModel === 'psi40'
                     ? 'bg-white/[0.12] text-plt-text shadow-sm'
                     : 'text-plt-muted hover:text-plt-text'
@@ -642,7 +642,7 @@ export default function SignalPanel({
             {/* Run Optimizer CTA */}
             <button
               type="button"
-              className="w-full bg-white text-black hover:bg-white/90 transition-all rounded-xl py-2 text-[11px] font-semibold disabled:opacity-50 relative overflow-hidden flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+              className="w-full bg-white text-black hover:bg-white/90 transition-all rounded-xl py-2 btn-typography-semibold disabled:opacity-50 relative overflow-hidden flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
               onClick={startTraining}
               disabled={optimizing}
             >
@@ -721,14 +721,14 @@ export default function SignalPanel({
                           setSelectedStrategy(strat.id);
                           setIsStrategyDropdownOpen(false);
                         }}
-                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left text-xs transition-all cursor-pointer ${
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left btn-typography transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-white/[0.12] text-white font-medium shadow-sm'
                             : 'text-plt-muted hover:text-plt-text hover:bg-white/[0.06]'
                         }`}
                       >
                         <div className="flex flex-col min-w-0 pr-2">
-                          <span className={`text-xs ${isSelected ? 'font-semibold text-white' : 'text-plt-text'}`}>
+                          <span className={`${isSelected ? 'font-semibold text-white' : 'text-plt-text'}`}>
                             {strat.label}
                           </span>
                           {strat.description && (

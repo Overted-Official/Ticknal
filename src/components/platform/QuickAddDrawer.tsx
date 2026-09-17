@@ -314,7 +314,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                       <button
                         type="button"
                         onClick={() => setTxMode('EXPENSE')}
-                        className={`h-8 rounded-xl font-medium flex items-center justify-center gap-1.5 transition text-xs font-sans ${
+                        className={`h-8 rounded-xl flex items-center justify-center gap-1.5 transition btn-typography ${
                           txMode === 'EXPENSE'
                             ? 'bg-plt-risk/15 border border-plt-risk/30 text-plt-risk font-semibold'
                             : 'bg-plt-card border border-plt-border-soft text-plt-muted hover:text-plt-text hover:bg-plt-hover'
@@ -327,7 +327,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                       <button
                         type="button"
                         onClick={() => setTxMode('INCOME')}
-                        className={`h-8 rounded-xl font-medium flex items-center justify-center gap-1.5 transition text-xs font-sans ${
+                        className={`h-8 rounded-xl flex items-center justify-center gap-1.5 transition btn-typography ${
                           txMode === 'INCOME'
                             ? 'bg-plt-profit/15 border border-plt-profit/30 text-plt-profit font-semibold'
                             : 'bg-plt-card border border-plt-border-soft text-plt-muted hover:text-plt-text hover:bg-plt-hover'
@@ -340,7 +340,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                       <button
                         type="button"
                         onClick={() => setTxMode('TRANSFER')}
-                        className={`h-8 rounded-xl font-medium flex items-center justify-center gap-1.5 transition text-xs font-sans ${
+                        className={`h-8 rounded-xl flex items-center justify-center gap-1.5 transition btn-typography ${
                           txMode === 'TRANSFER'
                             ? 'bg-plt-info/15 border border-plt-info/30 text-plt-info font-semibold'
                             : 'bg-plt-card border border-plt-border-soft text-plt-muted hover:text-plt-text hover:bg-plt-hover'

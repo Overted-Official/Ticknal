@@ -129,7 +129,7 @@ export default function BankAccountsGrid({
         <button
           type="button"
           onClick={onOpenAddModal}
-          className="px-4 py-2 rounded-xl bg-white hover:bg-white/90 text-black font-medium text-xs transition font-semibold"
+          className="px-4 py-2 rounded-xl bg-white hover:bg-white/90 text-black btn-typography-semibold transition"
         >
           + Add Your First Account
         </button>
@@ -152,7 +152,7 @@ export default function BankAccountsGrid({
             <button
               type="button"
               onClick={toggleAll}
-              className="btn-token btn-secondary btn-compact font-sans text-xs"
+              className="btn-token btn-secondary btn-compact font-sans"
             >
               {expandedKeys.size === groupedBanks.length ? 'Collapse All' : 'Expand All'}
             </button>
@@ -380,7 +380,7 @@ export default function BankAccountsGrid({
                                     <button
                                       type="button"
                                       onClick={() => onSetDefaultAccount(acc.id)}
-                                      className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-plt-warning/15 hover:text-plt-warning text-plt-muted text-xs font-medium transition flex items-center gap-1.5 border border-white/[0.08] hover:border-plt-warning/30 cursor-pointer"
+                                      className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-plt-warning/15 hover:text-plt-warning text-plt-muted btn-typography transition flex items-center gap-1.5 border border-white/[0.08] hover:border-plt-warning/30 cursor-pointer"
                                       title="Set as Main Account for Logging Expenses"
                                     >
                                       <Star size={13} />
@@ -390,7 +390,7 @@ export default function BankAccountsGrid({
                                   <button
                                     type="button"
                                     onClick={() => onEditAccount(acc)}
-                                    className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] hover:text-white text-plt-muted text-xs font-medium transition flex items-center gap-1.5 border border-white/[0.08] cursor-pointer"
+                                    className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] hover:text-white text-plt-muted btn-typography transition flex items-center gap-1.5 border border-white/[0.08] cursor-pointer"
                                     title="Edit & Monthly Balance History"
                                   >
                                     <History size={14} />
@@ -508,7 +508,7 @@ export default function BankAccountsGrid({
                           e.stopPropagation();
                           onSetDefaultAccount(acc.id);
                         }}
-                        className="px-2 py-2 rounded-xl bg-plt-hover hover:bg-plt-warning/20 text-plt-muted hover:text-plt-warning text-caption font-medium transition flex items-center gap-1.5 border border-plt-border"
+                        className="px-2 py-2 rounded-xl bg-plt-hover hover:bg-plt-warning/20 text-plt-muted hover:text-plt-warning btn-typography transition flex items-center gap-1.5 border border-plt-border"
                         title="Set as Main Account for Logging Expenses"
                       >
                         <Star size={14} />
@@ -521,7 +521,7 @@ export default function BankAccountsGrid({
                         e.stopPropagation();
                         onEditAccount(acc);
                       }}
-                      className="px-2 py-2 rounded-xl bg-plt-hover hover:bg-plt-profit/20 text-plt-subtle hover:text-plt-profit text-caption font-medium transition flex items-center gap-2 border border-plt-border"
+                      className="px-2 py-2 rounded-xl bg-plt-hover hover:bg-plt-profit/20 text-plt-subtle hover:text-plt-profit btn-typography transition flex items-center gap-2 border border-plt-border"
                       title="Edit & Monthly History"
                     >
                       <History size={16} />

@@ -136,7 +136,7 @@ export default function SectorRotationMatrix({
                 e.stopPropagation();
                 toggleRegime('Improving');
               }}
-              className={`pointer-events-auto px-2.5 py-1 rounded-xl border text-xs font-medium tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
+              className={`pointer-events-auto px-2.5 py-1 rounded-xl border btn-typography tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
                 activeRegimeFilter === 'Improving'
                   ? 'bg-plt-info/25 border-plt-info ring-2 ring-white/90 text-white font-bold scale-105 shadow-lg'
                   : activeRegimeFilter
@@ -158,7 +158,7 @@ export default function SectorRotationMatrix({
                 e.stopPropagation();
                 toggleRegime('Leading');
               }}
-              className={`pointer-events-auto px-2.5 py-1 rounded-xl border text-xs font-medium tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
+              className={`pointer-events-auto px-2.5 py-1 rounded-xl border btn-typography tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
                 activeRegimeFilter === 'Leading'
                   ? 'bg-plt-profit/25 border-plt-profit ring-2 ring-white/90 text-white font-bold scale-105 shadow-lg'
                   : activeRegimeFilter
@@ -180,7 +180,7 @@ export default function SectorRotationMatrix({
                 e.stopPropagation();
                 toggleRegime('Lagging');
               }}
-              className={`pointer-events-auto px-2.5 py-1 rounded-xl border text-xs font-medium tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
+              className={`pointer-events-auto px-2.5 py-1 rounded-xl border btn-typography tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
                 activeRegimeFilter === 'Lagging'
                   ? 'bg-plt-risk/25 border-plt-risk ring-2 ring-white/90 text-white font-bold scale-105 shadow-lg'
                   : activeRegimeFilter
@@ -202,7 +202,7 @@ export default function SectorRotationMatrix({
                 e.stopPropagation();
                 toggleRegime('Weakening');
               }}
-              className={`pointer-events-auto px-2.5 py-1 rounded-xl border text-xs font-medium tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
+              className={`pointer-events-auto px-2.5 py-1 rounded-xl border btn-typography tracking-wider flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
                 activeRegimeFilter === 'Weakening'
                   ? 'bg-plt-warning/25 border-plt-warning ring-2 ring-white/90 text-white font-bold scale-105 shadow-lg'
                   : activeRegimeFilter
@@ -361,7 +361,7 @@ export default function SectorRotationMatrix({
           <button
             type="button"
             onClick={() => setActiveRegimeFilter(null)}
-            className="text-plt-text hover:text-white transition flex items-center gap-1 font-medium cursor-pointer"
+            className="text-plt-text hover:text-white transition flex items-center gap-1 btn-typography-semibold cursor-pointer"
           >
             <span>Showing {activeRegimeFilter} only (Reset ✕)</span>
           </button>

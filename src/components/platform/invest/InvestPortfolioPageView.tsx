@@ -434,7 +434,7 @@ export default function InvestPortfolioPageView({
             <button
               type="button"
               onClick={() => setShowFilters((value) => !value)}
-              className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer ${
+              className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 btn-typography-semibold cursor-pointer ${
                 showFilters ? 'bg-plt-accent-soft text-plt-accent' : 'bg-plt-base text-plt-muted hover:text-plt-text'
               }`}
             >
@@ -559,7 +559,7 @@ export default function InvestPortfolioPageView({
               <button
                 type="button"
                 onClick={() => setIsMobileFiltersDrawerOpen(true)}
-                className="relative flex items-center gap-1.5 px-3.5 text-[12px] font-medium text-plt-muted hover:text-plt-text transition-colors shrink-0"
+                className="relative flex items-center gap-1.5 px-3.5 btn-typography text-plt-muted hover:text-plt-text transition-colors shrink-0"
               >
                 <SlidersHorizontal size={14} />
                 <span>Filters</span>
@@ -769,14 +769,14 @@ export default function InvestPortfolioPageView({
                       setMaxMae('');
                       setIncludeHeld(false);
                     }}
-                    className="flex-1 h-11 rounded-xl bg-plt-card border border-plt-border text-xs font-semibold text-plt-muted hover:text-plt-text transition-colors"
+                    className="flex-1 h-11 rounded-xl bg-plt-card border border-plt-border btn-typography-semibold text-plt-muted hover:text-plt-text transition-colors"
                   >
                     Reset Filters
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsMobileFiltersDrawerOpen(false)}
-                    className="flex-1 h-11 rounded-xl bg-plt-raised border border-plt-border-strong text-xs font-semibold text-plt-text hover:bg-plt-hover transition-colors"
+                    className="flex-1 h-11 rounded-xl bg-plt-raised border border-plt-border-strong btn-typography-semibold text-plt-text hover:bg-plt-hover transition-colors"
                   >
                     Apply Filters
                   </button>
@@ -816,7 +816,7 @@ export default function InvestPortfolioPageView({
                     type="button"
                     onClick={assignExisting}
                     disabled={!assignmentAccountId || isAssigning}
-                    className="rounded-lg bg-plt-warning px-3 py-2 text-xs font-semibold text-plt-base disabled:opacity-50 cursor-pointer"
+                    className="rounded-lg bg-plt-warning px-3 py-2 btn-typography-semibold text-plt-base disabled:opacity-50 cursor-pointer"
                   >
                     {isAssigning ? 'Assigning…' : 'Assign existing lots'}
                   </button>

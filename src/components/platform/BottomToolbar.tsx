@@ -117,7 +117,7 @@ export default function BottomToolbar({
           <button
             type="button"
             onClick={() => setReportOpen(true)}
-            className="flex items-center gap-1.5 text-plt-subtle hover:text-plt-text transition-colors font-medium cursor-pointer"
+            className="flex items-center gap-1.5 text-plt-subtle hover:text-plt-text transition-colors btn-typography cursor-pointer"
             title="Open Strategy Performance Report"
           >
             <FileText size={13} className="text-plt-muted" />

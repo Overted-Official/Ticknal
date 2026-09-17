@@ -137,7 +137,7 @@ export default function ChartOrderDraftPopover({
         type="button"
         onClick={onSave}
         disabled={savingOrder || !orderDraft.accountId || brokerageAccounts.length === 0}
-        className="w-full h-8 mt-3 rounded-xl bg-white hover:bg-white/90 text-black font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer disabled:opacity-50 active:scale-98"
+        className="w-full h-8 mt-3 rounded-xl bg-white hover:bg-white/90 text-black btn-typography-semibold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer disabled:opacity-50 active:scale-98"
       >
         {savingOrder ? (
           <>

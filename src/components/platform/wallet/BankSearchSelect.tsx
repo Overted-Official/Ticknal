@@ -65,7 +65,7 @@ export default function BankSearchSelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`h-8 w-full flex items-center justify-between px-3 rounded-xl border text-left text-xs font-sans transition-all cursor-pointer ${
+        className={`h-8 w-full flex items-center justify-between px-3 rounded-xl border text-left btn-typography transition-all cursor-pointer ${
           isOpen
             ? 'bg-white/[0.06] border-white/40 ring-1 ring-white/10 text-plt-text'
             : 'bg-white/[0.04] border-plt-border-soft hover:border-plt-border-strong text-plt-text'
@@ -157,7 +157,7 @@ export default function BankSearchSelect({
                 onSelectBank(null);
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs font-sans transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left btn-typography transition-colors cursor-pointer ${
                 !selectedBank
                   ? 'bg-white/[0.10] text-white font-semibold border border-white/15'
                   : 'text-plt-text hover:bg-white/[0.06] hover:text-white'
@@ -167,9 +167,9 @@ export default function BankSearchSelect({
                 <div className="w-5 h-5 rounded-md bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-plt-muted">
                   <Landmark size={12} />
                 </div>
-                <span>None / Custom Institution</span>
+                <span className="font-medium text-white">None / Custom Institution</span>
               </div>
-              {!selectedBank && <Check size={14} className="text-plt-profit" />}
+              {!selectedBank && <Check size={14} className="text-white shrink-0" />}
             </button>
 
             {filteredBanks.length === 0 ? (
@@ -187,7 +187,7 @@ export default function BankSearchSelect({
                       onSelectBank(bank);
                       setIsOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs font-sans transition-colors cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left btn-typography transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-white/[0.10] text-white font-semibold border border-white/15'
                         : 'text-plt-text hover:bg-white/[0.06] hover:text-white'

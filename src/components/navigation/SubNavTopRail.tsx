@@ -155,9 +155,9 @@ export default function SubNavTopRail({
                 onClick={() => onChange?.(item.value)}
                 whileHover={controlHover}
                 whileTap={controlTap}
-                className={`tab-button shrink-0 select-none text-xs py-1 px-3 ${
+                className={`tab-button shrink-0 select-none py-1 px-3 ${
                   isActive
-                    ? 'tab-button-active font-semibold'
+                    ? 'tab-button-active btn-typography-semibold'
                     : 'text-plt-muted hover:text-plt-text'
                 }`}
               >

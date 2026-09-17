@@ -339,7 +339,7 @@ export default function RightSidebar({
           <button
             type="button"
             onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
-            className="text-[9px] font-medium text-plt-muted hover:text-plt-risk px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-plt-hover"
+            className="btn-typography text-plt-muted hover:text-plt-risk px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-plt-hover"
             title="Clear filter"
           >
             Clear
@@ -369,7 +369,7 @@ export default function RightSidebar({
               <button
                 type="button"
                 onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
-                className="mt-1 text-[10px] text-plt-accent hover:underline font-medium"
+                className="mt-1 btn-typography text-plt-accent hover:underline"
               >
                 Clear signal filter
               </button>

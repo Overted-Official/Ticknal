@@ -234,13 +234,13 @@ export default function PortfolioPositionsLedgerWidget({
                 </div>
 
                 <div className="mt-3 grid grid-cols-3 gap-2 border-t border-plt-border-soft pt-3">
-                  <button type="button" onClick={() => onOpenChart(holding.symbol)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-hover px-2 py-2 text-[11px] font-semibold text-plt-text cursor-pointer">
+                  <button type="button" onClick={() => onOpenChart(holding.symbol)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-hover px-2 py-2 btn-typography-semibold text-plt-text cursor-pointer">
                     <LineChart size={13} /> Chart
                   </button>
-                  <button type="button" onClick={() => onBuyMore(holding)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-accent-soft px-2 py-2 text-[11px] font-semibold text-plt-accent cursor-pointer">
+                  <button type="button" onClick={() => onBuyMore(holding)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-accent-soft px-2 py-2 btn-typography-semibold text-plt-accent cursor-pointer">
                     <ArrowUpRight size={13} /> Buy
                   </button>
-                  <button type="button" onClick={() => onSell(holding)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-risk-soft px-2 py-2 text-[11px] font-semibold text-plt-risk cursor-pointer">
+                  <button type="button" onClick={() => onSell(holding)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-risk-soft px-2 py-2 btn-typography-semibold text-plt-risk cursor-pointer">
                     <ArrowDownRight size={13} /> Sell
                   </button>
                 </div>

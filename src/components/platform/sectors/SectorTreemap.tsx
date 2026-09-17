@@ -284,7 +284,7 @@ export default function SectorTreemap({
           <button
             type="button"
             onClick={() => onSelectSector('')}
-            className="text-[11px] text-plt-muted hover:text-white transition flex items-center gap-1 cursor-pointer shrink-0 ml-2"
+            className="btn-typography text-plt-muted hover:text-white transition flex items-center gap-1 cursor-pointer shrink-0 ml-2"
           >
             <span>Reset View</span>
             <X size={11} />

@@ -59,7 +59,7 @@ export default function AccountSelectDropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`h-10 w-full flex items-center justify-between px-3 rounded-xl border text-left text-xs font-sans transition-all cursor-pointer ${
+        className={`h-10 w-full flex items-center justify-between px-3 rounded-xl border text-left btn-typography transition-all cursor-pointer ${
           isOpen
             ? 'bg-white/[0.06] border-white/40 ring-1 ring-white/10 text-plt-text'
             : 'bg-white/[0.04] border-plt-border-soft hover:border-plt-border-strong text-plt-text'

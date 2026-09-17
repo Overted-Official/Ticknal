@@ -316,7 +316,7 @@ export default function NotificationsDrawer({
                     type="button"
                     onClick={handleClearAll}
                     disabled={isClearing}
-                    className="text-[11px] font-medium text-plt-muted hover:text-plt-text px-2 py-1 rounded-lg hover:bg-plt-hover transition-colors cursor-pointer"
+                    className="btn-typography text-plt-muted hover:text-plt-text px-2 py-1 rounded-lg hover:bg-plt-hover transition-colors cursor-pointer"
                     title="Clear all notifications"
                   >
                     {isClearing ? <Loader2 size={12} className="animate-spin" /> : 'Clear all'}
@@ -379,7 +379,7 @@ export default function NotificationsDrawer({
                       setIsStrategyMenuOpen(!isStrategyMenuOpen);
                       setIsRegimeMenuOpen(false);
                     }}
-                    className={`h-7.5 w-full px-2.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
+                    className={`h-7.5 w-full px-2.5 rounded-lg border btn-typography font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
                       selectedStrategy !== 'all'
                         ? 'bg-plt-profit/15 border-plt-profit/40 text-plt-profit font-bold shadow-xs'
                         : 'bg-plt-card border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border'
@@ -410,7 +410,7 @@ export default function NotificationsDrawer({
                               setSelectedStrategy(strat.id as any);
                               setIsStrategyMenuOpen(false);
                             }}
-                            className={`px-2.5 py-1.5 rounded-lg text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
+                            className={`px-2.5 py-1.5 rounded-lg text-left btn-typography font-mono transition flex items-center justify-between cursor-pointer ${
                               isSelected
                                 ? 'bg-plt-profit/15 text-plt-profit font-bold'
                                 : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
@@ -435,7 +435,7 @@ export default function NotificationsDrawer({
                       setIsRegimeMenuOpen(!isRegimeMenuOpen);
                       setIsStrategyMenuOpen(false);
                     }}
-                    className={`h-7.5 w-full px-2.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
+                    className={`h-7.5 w-full px-2.5 rounded-lg border btn-typography font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
                       selectedRegime !== 'all'
                         ? selectedRegime === 'alpha'
                           ? 'bg-plt-profit/20 border-plt-profit/50 text-plt-profit font-bold shadow-xs'
@@ -468,7 +468,7 @@ export default function NotificationsDrawer({
                               setSelectedRegime(reg.id as any);
                               setIsRegimeMenuOpen(false);
                             }}
-                            className={`px-2.5 py-1.5 rounded-lg text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
+                            className={`px-2.5 py-1.5 rounded-lg text-left btn-typography font-mono transition flex items-center justify-between cursor-pointer ${
                               isSelected
                                 ? 'bg-white/[0.12] text-white font-bold'
                                 : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
@@ -490,7 +490,7 @@ export default function NotificationsDrawer({
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="h-7.5 px-2 rounded-lg border border-plt-border-soft hover:border-plt-risk/40 hover:bg-plt-risk/10 text-plt-muted hover:text-plt-risk text-xs font-mono flex items-center gap-1 transition-all cursor-pointer shrink-0"
+                    className="h-7.5 px-2 rounded-lg border border-plt-border-soft hover:border-plt-risk/40 hover:bg-plt-risk/10 text-plt-muted hover:text-plt-risk btn-typography font-mono flex items-center gap-1 transition-all cursor-pointer shrink-0"
                     title="Reset filters"
                   >
                     <X size={12} />
@@ -529,7 +529,7 @@ export default function NotificationsDrawer({
                     <button
                       type="button"
                       onClick={() => setSelectedStrategy('all')}
-                      className="mt-1 px-3 py-1 text-[11px] font-mono rounded-lg bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-text transition cursor-pointer"
+                      className="mt-1 px-3 py-1 btn-typography font-mono rounded-lg bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-text transition cursor-pointer"
                     >
                       View all ({notifications.length})
                     </button>

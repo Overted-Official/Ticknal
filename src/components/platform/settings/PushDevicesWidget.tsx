@@ -196,10 +196,10 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
               type="button"
               onClick={isCurrentDeviceSubscribed ? handleTestPush : handleEnablePush}
               disabled={isEnablingPush}
-              className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-all w-full md:w-auto cursor-pointer ${
+              className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-md btn-typography transition-all w-full md:w-auto cursor-pointer ${
                 isCurrentDeviceSubscribed
                   ? 'text-white bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.12]'
-                  : 'text-black bg-white hover:bg-white/90 shadow-sm font-semibold'
+                  : 'text-black bg-white hover:bg-white/90 shadow-sm btn-typography-semibold'
               }`}
             >
               <Bell size={14} />
