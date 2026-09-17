@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Target,
@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { STRATEGIES, getAvailableStrategies } from '@/strategies/registry';
+import { runPsiStrategy } from '@/strategies/PSI/psiStrategy';
 import type { ChartData } from '@/components/platform/ChartWidget';
 import { useToast } from '@/context/ToastContext';
 import { PsiOptimizationDrawer } from './PsiOptimizationDrawer';
@@ -186,6 +187,38 @@ export default function SignalPanel({
     : sysRoi !== null
       ? sysRoi - bnHroi
       : null;
+
+  // Max Adverse Excursion (MAE) Calculation
+  const computedMae = useMemo(() => {
+    const rawMae = effectiveMetrics?.['Max Adverse Excursion'] ?? effectiveMetrics?.['maxAdverseExcursion'] ?? effectiveMetrics?.['MAE'];
+    if (rawMae !== undefined && rawMae !== null && rawMae !== '') {
+      const num = parseFloat(String(rawMae));
+      if (!isNaN(num)) {
+        return num === 0 ? '0.00%' : num < 0 ? `${num.toFixed(2)}%` : `-${num.toFixed(2)}%`;
+      }
+    }
+    // Client-side fallback computation from chartData if available
+    if (chartData && chartData.length > 1) {
+      try {
+        const bars = chartData.map((d) => ({
+          date: String(d.time),
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+          volume: d.volume,
+        }));
+        const res = runPsiStrategy(bars, strategyParams as any);
+        if (res.metrics && typeof res.metrics.maxAdverseExcursion === 'number') {
+          const num = res.metrics.maxAdverseExcursion;
+          return num === 0 ? '0.00%' : num < 0 ? `${num.toFixed(2)}%` : `-${num.toFixed(2)}%`;
+        }
+      } catch {
+        // ignore fallback error
+      }
+    }
+    return '—';
+  }, [effectiveMetrics, chartData, strategyParams]);
 
   const getEffectiveCutoffDate = (): string => {
     if (trainCutoffPreset === '2020') return '2020-12-31';
@@ -459,7 +492,7 @@ export default function SignalPanel({
             </div>
           </div>
 
-          {/* 6-Metric Grid */}
+          {/* Win Rate & Annual CAGR */}
           <div className="grid grid-cols-2 gap-2">
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Win Rate</span>
@@ -473,10 +506,22 @@ export default function SignalPanel({
                 {effectiveMetrics?.['Annual CAGR'] ? `${effectiveMetrics['Annual CAGR']}%` : '—'}
               </span>
             </div>
+          </div>
+
+          {/* Risk & Trade Triad: Max Drawdown | Max Adverse Excursion | Avg/Trade */}
+          <div className="grid grid-cols-3 gap-2">
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
               <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium">Max Drawdown</span>
               <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-0.5">
                 {effectiveMetrics?.['Max Drawdown'] ? `${effectiveMetrics['Max Drawdown']}%` : '—'}
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium truncate" title="Max Adverse Excursion">
+                Max Adverse Excursion
+              </span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-0.5">
+                {computedMae}
               </span>
             </div>
             <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
@@ -676,12 +721,12 @@ export default function SignalPanel({
   const displaySignal = isBuy ? 'Buy' : isExit ? 'Sell' : 'Hold';
 
   return (
-    <div className="absolute top-[50px] left-3 right-3 sm:top-3 sm:right-3 sm:left-auto z-30 w-auto max-w-[calc(100vw-24px)] sm:max-w-[380px] sm:min-w-[280px] bg-white/[0.06] hover:bg-white/[0.08] backdrop-blur-2xl border border-white/[0.16] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.37)] flex flex-col transition-all select-none">
+    <div className="absolute top-[50px] left-2.5 right-[68px] sm:top-3 sm:right-[68px] sm:left-auto z-30 w-auto max-w-[calc(100vw-80px)] sm:max-w-[380px] sm:min-w-[280px] bg-white/[0.06] hover:bg-white/[0.08] backdrop-blur-2xl border border-white/[0.16] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.37)] flex flex-col transition-all select-none">
       {/* -------------------------------------------------- */}
       {/* FLOATING HUD (COLLAPSED HEADER - SINGLE ROW)      */}
       {/* -------------------------------------------------- */}
       <div
-        className="p-1.5 sm:p-2 cursor-pointer flex items-center justify-between gap-2"
+        className="p-1.5 sm:p-2 cursor-pointer flex items-center justify-between gap-1 sm:gap-2"
         onClick={() => setExpanded(!expanded)}
       >
         {/* Left: Custom Strategy Selector Dropdown */}
@@ -691,7 +736,7 @@ export default function SignalPanel({
             onClick={() => setIsStrategyDropdownOpen((prev) => !prev)}
             className="inline-flex items-center gap-1 px-1.5 py-0.5 -ml-1 rounded-md text-xs font-semibold text-plt-text hover:bg-white/[0.08] active:bg-white/[0.12] transition-colors cursor-pointer tracking-tight"
           >
-            <span className="truncate max-w-[130px] sm:max-w-[160px]">{activeStratDef?.label || 'Select Strategy'}</span>
+            <span className="truncate max-w-[105px] xs:max-w-[135px] sm:max-w-[160px]">{activeStratDef?.label || 'Select Strategy'}</span>
             <ChevronDown
               size={12}
               className={`text-plt-muted transition-transform duration-200 shrink-0 ${isStrategyDropdownOpen ? 'rotate-180 text-plt-text' : ''}`}
@@ -750,7 +795,7 @@ export default function SignalPanel({
         </div>
 
         {/* Right: Signal Badge + MI + Alpha + Eye + Chevron */}
-        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {/* Signal Status Badge (Buy / Sell / Hold) */}
           {loading ? (
             <div className="flex items-center gap-1 text-plt-muted text-[10px] font-mono">

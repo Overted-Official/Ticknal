@@ -359,7 +359,7 @@ async function InvestPageContent({
   const initialOpportunities: OpportunitySignal[] = [];
 
   return (
-    <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-14 md:pb-0">
+    <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-[calc(64px+max(env(safe-area-inset-bottom),0.5rem))] md:pb-0">
       <InvestClientView
         sectorsView={<InvestSectorsPageView />}
         tickersView={

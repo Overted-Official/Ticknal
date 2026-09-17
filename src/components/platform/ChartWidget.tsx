@@ -419,8 +419,24 @@ export default function ChartWidget({
     };
     window.addEventListener('resize', handleResize);
 
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (chartRef.current && entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            chartRef.current.applyOptions({
+              width: entry.contentRect.width,
+              height: entry.contentRect.height,
+            });
+          }
+        }
+      });
+      resizeObserver.observe(container);
+    }
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeObserver?.disconnect();
       chart.remove();
       chartRef.current = null;
       candlestickSeriesRef.current = null;
@@ -821,7 +837,7 @@ export default function ChartWidget({
   );
 
   return (
-    <div className="relative w-full h-full bg-plt-card overflow-hidden select-none">
+    <div className="relative w-full flex-1 min-h-0 bg-plt-card overflow-hidden select-none">
       {/* 1. Top-Left In-Place Ticker & Live OHLCV Legend (No background, directly on chart) */}
       <ChartTickerHeader
         symbol={symbol}

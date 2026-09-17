@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Download } from '@/components/ui/icon-library';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Download, Calendar } from '@/components/ui/icon-library';
 import {
   type EquityPoint,
   type FullBacktestReport,
@@ -22,7 +23,7 @@ function TickerLogo({
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.12] shrink-0 flex items-center justify-center overflow-hidden">
+    <div className="w-9 h-9 rounded-full bg-plt-card border border-plt-border-soft shrink-0 flex items-center justify-center overflow-hidden">
       {logoUrl && !imgError ? (
         <img
           src={logoUrl}
@@ -31,7 +32,7 @@ function TickerLogo({
           onError={() => setImgError(true)}
         />
       ) : (
-        <span className="text-xs font-bold tabular-nums text-plt-profit font-mono">
+        <span className="text-xs font-bold font-mono text-plt-text">
           {symbol.replace('.CA', '').slice(0, 2)}
         </span>
       )}
@@ -331,42 +332,50 @@ export default function StrategyReportDrawer({
     document.body.removeChild(link);
   };
 
-  if (!isOpen || !mounted) return null;
+  if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 overflow-hidden flex flex-col items-end pointer-events-auto select-none">
-      {/* Dim Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden flex flex-col items-end pointer-events-auto select-none">
+          {/* Dim Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+            onClick={onClose}
+          />
 
-      {/* Main Drawer Shell */}
-      <div className="relative w-full max-w-5xl h-full bg-plt-base text-plt-text border-l border-plt-border-soft shadow-2xl flex flex-col z-10 overflow-hidden animate-in slide-in-from-right duration-200">
-        
-        {/* ================================================================= */}
-        {/* REFINED HEADER                                                    */}
-        {/* ================================================================= */}
-        <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card shrink-0">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            
-            {/* Left: Fully Circular Logo + Ticker + Company Name */}
-            <div className="flex items-center gap-3 min-w-0">
-              <TickerLogo symbol={symbol} logoUrl={resolvedLogoUrl} />
+          {/* Main Drawer Shell */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 26, stiffness: 240 }}
+            className="relative z-10 w-full max-w-5xl h-dvh max-h-dvh bg-plt-base text-plt-text border-l border-plt-border-soft shadow-2xl flex flex-col min-h-0 overflow-hidden"
+          >
+            {/* ================================================================= */}
+            {/* 1. HEADER: BRANDING, TITLE, TABS & GLOBAL ACTIONS               */}
+            {/* ================================================================= */}
+            <div className="px-5 sm:px-6 py-3.5 border-b border-plt-border-soft bg-plt-raised/70 backdrop-blur-xl flex items-center justify-between gap-4 shrink-0">
+              {/* Left: Fully Circular Logo + Ticker + Company Name */}
+              <div className="flex items-center gap-3 min-w-0">
+                <TickerLogo symbol={symbol} logoUrl={resolvedLogoUrl} />
 
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-plt-text tracking-tight font-mono">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-bold text-plt-text tracking-tight font-mono shrink-0">
                     {symbol.replace('.CA', '')}
                   </span>
-                  <span className="text-[11px] text-plt-muted font-normal truncate max-w-64 font-sans">
+                  <span className="text-xs text-plt-muted font-normal truncate max-w-[130px] sm:max-w-xs font-sans">
                     {resolvedCompanyName}
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-plt-base text-plt-muted border border-plt-border-soft">
-                     {model === 'canonical'
-                       ? 'PSI (canonical)'
-                       : model === 'psi_v2'
-                       ? 'PSI V2'
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-plt-subtle border border-white/[0.08] whitespace-nowrap hidden sm:inline-block">
+                    {model === 'canonical'
+                      ? 'PSI Canonical'
+                      : model === 'psi_v2'
+                      ? 'PSI V2'
                       : model === 'thoth_egx_macro'
                       ? 'THOTH 3.7P'
                       : model === 'psi40'
@@ -375,557 +384,586 @@ export default function StrategyReportDrawer({
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Right: Consolidated Tool Controls */}
-            <div className="flex flex-wrap items-center gap-2.5 justify-end">
-              {/* Strategy Model Switcher */}
-              <div className="pill-switch">
-                <button
-                  type="button"
-                  onClick={() => setModel('canonical')}
-                  className={`pill-switch-btn ${
-                    model === 'canonical' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
-                >
-                  PSI
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModel('psi8')}
-                  className={`pill-switch-btn ${
-                    model === 'psi8' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
-                >
-                  PSI-8
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModel('psi40')}
-                  className={`pill-switch-btn ${
-                    model === 'psi40' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
-                >
-                  PSI-40
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModel('thoth_egx_macro')}
-                  className={`pill-switch-btn ${
-                    model === 'thoth_egx_macro' ? 'pill-switch-btn-active font-semibold text-plt-purple' : ''
-                  }`}
-                >
-                  THOTH 3.7P
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModel('psi_v2')}
-                  className={`pill-switch-btn ${
-                    model === 'psi_v2' ? 'pill-switch-btn-active font-semibold text-emerald-400' : ''
-                  }`}
-                >
-                  PSI V2
-                </button>
-              </div>
-
-              {/* Date Presets */}
-              <div className="pill-switch">
-                {(['2025', '1y', 'all'] as const).map((preset) => (
+              {/* Right: Tab Switcher, Export CSV & Close */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Tab Navigation Switcher */}
+                <div className="pill-switch">
                   <button
-                    key={preset}
                     type="button"
-                    onClick={() => handlePresetDate(preset)}
+                    onClick={() => setActiveTab('stats')}
                     className={`pill-switch-btn ${
-                      activePreset === preset ? 'pill-switch-btn-active font-semibold' : ''
+                      activeTab === 'stats' ? 'pill-switch-btn-active font-semibold' : ''
                     }`}
                   >
-                    {preset === '2025' ? '2025+' : preset === '1y' ? '1Y' : 'All'}
+                    Key Stats
                   </button>
-                ))}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('trades')}
+                    className={`pill-switch-btn flex items-center gap-1.5 ${
+                      activeTab === 'trades' ? 'pill-switch-btn-active font-semibold' : ''
+                    }`}
+                  >
+                    <span>Trades</span>
+                    <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-white/[0.06] text-plt-text font-bold">
+                      {trades.length}
+                    </span>
+                  </button>
+                </div>
 
-              {/* Date Range Inputs */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-plt-base border border-plt-border-soft text-[11px] font-mono">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    setActivePreset('custom');
-                  }}
-                  className="bg-transparent text-plt-text outline-none w-24"
-                />
-                <span className="text-plt-muted">→</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                    setActivePreset('custom');
-                  }}
-                  className="bg-transparent text-plt-text outline-none w-24"
-                />
-              </div>
-
-              {/* Capital Input */}
-              <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-plt-base border border-plt-border-soft text-[11px] font-mono">
-                 <span className="text-plt-muted">{currencySymbol}</span>
-                <input
-                  type="number"
-                  min="100"
-                  step="500"
-                  value={initialCapital}
-                  onChange={(e) => setInitialCapital(Math.max(100, Number(e.target.value) || 1000))}
-                  className="bg-transparent text-plt-text outline-none w-16 text-right font-semibold"
-                />
-              </div>
-
-              {/* Tab Navigation Switcher */}
-              <div className="pill-switch">
+                {/* Export CSV */}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('stats')}
-                  className={`pill-switch-btn ${
-                    activeTab === 'stats' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
+                  onClick={handleExportCSV}
+                  title="Export Trades to CSV"
+                  disabled={trades.length === 0}
+                  className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-plt-muted hover:text-plt-text transition-colors flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Key Stats
+                  <Download size={14} />
                 </button>
+
+                {/* Close Button */}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('trades')}
-                  className={`pill-switch-btn flex items-center gap-1.5 ${
-                    activeTab === 'trades' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-plt-muted hover:text-plt-text transition-colors flex items-center justify-center cursor-pointer"
+                  title="Close report (Esc)"
                 >
-                  <span>Trades</span>
-                  <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-plt-card border border-plt-border-soft">
-                    {trades.length}
-                  </span>
+                  <X size={15} />
                 </button>
               </div>
+            </div>
 
-              {/* Export CSV */}
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                title="Export Trades to CSV"
-                className="p-1.5 rounded-xl bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-muted hover:text-plt-text transition cursor-pointer"
-              >
-                <Download size={14} />
-              </button>
+            {/* ================================================================= */}
+            {/* 2. PARAMETERS & HORIZON TOOLBAR                                  */}
+            {/* ================================================================= */}
+            <div className="px-5 sm:px-6 py-2.5 border-b border-plt-border-soft bg-plt-surface/40 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              {/* Left: Strategy Models & Period Presets */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Strategy Model Switcher */}
+                <div className="pill-switch">
+                  <button
+                    type="button"
+                    onClick={() => setModel('canonical')}
+                    className={`pill-switch-btn ${
+                      model === 'canonical' ? 'pill-switch-btn-active font-semibold' : ''
+                    }`}
+                  >
+                    PSI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModel('psi8')}
+                    className={`pill-switch-btn ${
+                      model === 'psi8' ? 'pill-switch-btn-active font-semibold' : ''
+                    }`}
+                  >
+                    PSI-8
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModel('psi40')}
+                    className={`pill-switch-btn ${
+                      model === 'psi40' ? 'pill-switch-btn-active font-semibold' : ''
+                    }`}
+                  >
+                    PSI-40
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModel('thoth_egx_macro')}
+                    className={`pill-switch-btn ${
+                      model === 'thoth_egx_macro' ? 'pill-switch-btn-active font-semibold text-plt-violet' : ''
+                    }`}
+                  >
+                    THOTH 3.7P
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModel('psi_v2')}
+                    className={`pill-switch-btn ${
+                      model === 'psi_v2' ? 'pill-switch-btn-active font-semibold text-plt-profit' : ''
+                    }`}
+                  >
+                    PSI V2
+                  </button>
+                </div>
 
-              {/* Close Button */}
+                <div className="h-4 w-px bg-plt-border-soft shrink-0 hidden sm:block" />
+
+                {/* Date Presets */}
+                <div className="pill-switch">
+                  {(['2025', '1y', 'all'] as const).map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => handlePresetDate(preset)}
+                      className={`pill-switch-btn ${
+                        activePreset === preset ? 'pill-switch-btn-active font-semibold' : ''
+                      }`}
+                    >
+                      {preset === '2025' ? '2025+' : preset === '1y' ? '1Y' : 'All'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Date Range Inputs & Capital Input */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Date Range Inputs */}
+                <div className="flex items-center gap-1.5 px-2.5 h-7 rounded-xl bg-plt-card border border-plt-border-soft text-xs font-mono">
+                  <Calendar size={11} className="text-plt-muted shrink-0" />
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setActivePreset('custom');
+                    }}
+                    className="bg-transparent text-plt-text outline-none w-[88px] text-[11px] font-mono cursor-pointer"
+                  />
+                  <span className="text-plt-muted text-[11px]">→</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setActivePreset('custom');
+                    }}
+                    className="bg-transparent text-plt-text outline-none w-[88px] text-[11px] font-mono cursor-pointer"
+                  />
+                </div>
+
+                {/* Capital Input */}
+                <div className="flex items-center gap-1 px-2.5 h-7 rounded-xl bg-plt-card border border-plt-border-soft text-xs font-mono">
+                  <span className="text-plt-muted text-[11px] font-sans">{currencySymbol}</span>
+                  <input
+                    type="number"
+                    min="100"
+                    step="500"
+                    value={initialCapital}
+                    onChange={(e) => setInitialCapital(Math.max(100, Number(e.target.value) || 1000))}
+                    className="bg-transparent text-plt-text outline-none w-14 text-right font-semibold font-mono text-[11px]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ================================================================= */}
+            {/* 3. BODY CONTENT                                                  */}
+            {/* ================================================================= */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar">
+
+              {/* =============================================================== */}
+              {/* TAB 1: KEY STATS & PERFORMANCE                                  */}
+              {/* =============================================================== */}
+              {activeTab === 'stats' && (
+                <div className="space-y-4 animate-in fade-in duration-150">
+
+                  {/* 4 Top KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    {/* 1. Total Net PnL */}
+                    <div className="card-widget-compact p-4 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
+                      <div className="flex items-center justify-between">
+                        <span className="kpi-title">Total Net PnL</span>
+                        <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-full border ${
+                          stats.alphaMargin >= 0
+                            ? 'bg-plt-profit-soft text-plt-profit border-plt-profit-border'
+                            : 'bg-plt-risk-soft text-plt-risk border-plt-risk-border'
+                        }`}>
+                          {stats.alphaMargin >= 0 ? `+${stats.alphaMargin.toFixed(1)}% α` : `${stats.alphaMargin.toFixed(1)}% α`}
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <div className={`text-xl sm:text-2xl font-bold font-mono tracking-tight ${
+                          stats.netProfit >= 0 ? 'text-plt-profit' : 'text-plt-risk'
+                        }`}>
+                          {stats.netProfit >= 0 ? '+' : ''}
+                          {stats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                          <span className="text-xs font-normal text-plt-muted font-sans">{currencySymbol}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs font-mono">
+                          <span className={`font-semibold ${stats.netProfitPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
+                            {stats.netProfitPct >= 0 ? '+' : ''}{stats.netProfitPct.toFixed(2)}%
+                          </span>
+                          <span className="text-plt-muted">•</span>
+                          <span className="text-plt-muted">
+                            B&H: {stats.buyHoldReturnPct >= 0 ? '+' : ''}{stats.buyHoldReturnPct.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Max Drawdown */}
+                    <div className="card-widget-compact p-4 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
+                      <div className="flex items-center justify-between">
+                        <span className="kpi-title">Max Drawdown</span>
+                        <span className="text-[10px] font-mono text-plt-risk font-semibold px-1.5 py-0.5 rounded bg-plt-risk-soft border border-plt-risk-border">
+                          -{stats.maxDrawdown.toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-plt-risk">
+                          {stats.maxDrawdownAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                          <span className="text-xs font-normal text-plt-muted font-sans">{currencySymbol}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs font-mono text-plt-muted">
+                          <span>Peak Drawdown: <strong className="text-plt-text">{stats.maxDrawdown.toFixed(2)}%</strong></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Profitable Trades */}
+                    <div className="card-widget-compact p-4 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
+                      <div className="flex items-center justify-between">
+                        <span className="kpi-title">Win Rate</span>
+                        <span className="text-[10px] font-mono text-plt-profit font-semibold px-1.5 py-0.5 rounded bg-plt-profit-soft border border-plt-profit-border">
+                          {stats.winRate.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-plt-text">
+                          {stats.winRate.toFixed(2)}%
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs font-mono text-plt-muted">
+                          <span className="text-plt-profit font-semibold">{stats.winningTrades} wins</span>
+                          <span>/</span>
+                          <span className="text-plt-risk font-semibold">{stats.losingTrades} losses</span>
+                          <span>({stats.totalTrades} closed)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4. Profit Factor */}
+                    <div className="card-widget-compact p-4 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
+                      <div className="flex items-center justify-between">
+                        <span className="kpi-title">Profit Factor</span>
+                        <span className="text-[10px] font-mono text-plt-text font-semibold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">
+                          Payoff: {stats.winLossRatio.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-plt-text">
+                          {stats.profitFactor >= 99 ? '∞' : stats.profitFactor.toFixed(2)}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs font-mono text-plt-muted">
+                          <span>Gross:</span>
+                          <span className="text-plt-profit font-medium">+{stats.grossProfit.toFixed(0)}</span>
+                          <span>/</span>
+                          <span className="text-plt-risk font-medium">-{stats.grossLoss.toFixed(0)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance Section: Equity Curve Chart */}
+                  <div className="card-widget p-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-plt-border-soft">
+                      <div className="flex items-center gap-2">
+                        <h3 className="section-title text-xs tracking-wider uppercase font-semibold">
+                          Performance Equity Curve
+                        </h3>
+                        <span className="section-subtitle text-[11px] text-plt-muted font-normal">• Mark-to-Market vs Benchmark</span>
+                      </div>
+
+                      {/* Legend */}
+                      <div className="flex items-center gap-4 text-xs font-mono">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-plt-profit" />
+                          <span className="text-plt-text">
+                            Strategy ({stats.finalEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-plt-info" />
+                          <span className="text-plt-muted">
+                            Buy & Hold ({(initialCapital + stats.buyHoldReturn).toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SVG Equity Chart */}
+                    <EquityCurveChart
+                      equityCurve={equityCurve}
+                      initialCapital={initialCapital}
+                      currencySymbol={currencySymbol}
+                      onHoverPoint={setHoveredPoint}
+                      hoveredPoint={hoveredPoint}
+                    />
+                  </div>
+
+                  {/* Detailed Breakdown (3 Columns) */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                    {/* Panel 1: Trade Analytics */}
+                    <div className="card-widget p-4 space-y-3">
+                      <div className="widget-title pb-2.5 border-b border-plt-border-soft">
+                        Trade Analytics
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Total Trades:</span>
+                          <span className="font-mono font-semibold text-plt-text">{stats.totalTrades}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Win Rate:</span>
+                          <span className="font-mono font-semibold text-plt-profit">{stats.winRate.toFixed(2)}%</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Winning / Losing:</span>
+                          <span className="font-mono text-plt-subtle">{stats.winningTrades} / {stats.losingTrades}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Win / Loss Payoff:</span>
+                          <span className="font-mono text-plt-subtle">{stats.winLossRatio.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Avg Duration:</span>
+                          <span className="font-mono text-plt-subtle">{stats.avgBarsHeld.toFixed(1)} days</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Panel 2: PnL Distribution */}
+                    <div className="card-widget p-4 space-y-3">
+                      <div className="widget-title pb-2.5 border-b border-plt-border-soft">
+                        PnL Distribution
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Gross Profit:</span>
+                          <span className="font-mono font-semibold text-plt-profit">+{stats.grossProfit.toFixed(2)} {currencySymbol}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Gross Loss:</span>
+                          <span className="font-mono font-semibold text-plt-risk">-{stats.grossLoss.toFixed(2)} {currencySymbol}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Avg Trade PnL:</span>
+                          <span className={`font-mono font-semibold ${stats.avgTradePnl >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
+                            {stats.avgTradePnl >= 0 ? '+' : ''}{stats.avgTradePnl.toFixed(2)} {currencySymbol} ({stats.avgTradeReturnPct.toFixed(2)}%)
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Avg Win:</span>
+                          <span className="font-mono text-plt-profit">+{stats.avgWin.toFixed(2)} {currencySymbol}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Avg Loss:</span>
+                          <span className="font-mono text-plt-risk">-{stats.avgLoss.toFixed(2)} {currencySymbol}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Panel 3: Risk & Efficiency */}
+                    <div className="card-widget p-4 space-y-3">
+                      <div className="widget-title pb-2.5 border-b border-plt-border-soft">
+                        Risk & Streaks
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Max Drawdown:</span>
+                          <span className="font-mono font-semibold text-plt-risk">{stats.maxDrawdown.toFixed(2)}%</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Annualized CAGR:</span>
+                          <span className="font-mono font-semibold text-plt-profit">{stats.annualCagr.toFixed(2)}% / yr</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Sharpe Ratio:</span>
+                          <span className="font-mono text-plt-subtle">{stats.sharpeRatio.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Max Consec. Wins:</span>
+                          <span className="font-mono font-semibold text-plt-profit">{stats.maxConsecutiveWins}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-plt-muted font-sans">Max Consec. Losses:</span>
+                          <span className="font-mono font-semibold text-plt-risk">{stats.maxConsecutiveLosses}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* =============================================================== */}
+              {/* TAB 2: LIST OF TRADES                                           */}
+              {/* =============================================================== */}
+              {activeTab === 'trades' && (
+                <div className="space-y-3.5 animate-in fade-in duration-150">
+
+                  {/* Table Filter Controls */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-plt-muted text-xs font-sans">Filter Trades:</span>
+                      <div className="pill-switch">
+                        <button
+                          type="button"
+                          onClick={() => setTradeFilter('all')}
+                          className={`pill-switch-btn ${
+                            tradeFilter === 'all' ? 'pill-switch-btn-active font-semibold' : ''
+                          }`}
+                        >
+                          All ({trades.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTradeFilter('wins')}
+                          className={`pill-switch-btn ${
+                            tradeFilter === 'wins' ? 'pill-switch-btn-active font-semibold text-plt-profit' : ''
+                          }`}
+                        >
+                          Wins ({stats.winningTrades})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTradeFilter('losses')}
+                          className={`pill-switch-btn ${
+                            tradeFilter === 'losses' ? 'pill-switch-btn-active font-semibold text-plt-risk' : ''
+                          }`}
+                        >
+                          Losses ({stats.losingTrades})
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="text-plt-muted text-xs font-mono">
+                      Showing {filteredTrades.length} of {trades.length} closed trades
+                    </div>
+                  </div>
+
+                  {/* Trades Table */}
+                  <div className="card-widget overflow-hidden p-0">
+                    <div className="overflow-x-auto custom-scrollbar">
+                      <table className="w-full text-left text-xs border-collapse font-mono">
+                        <thead>
+                          <tr className="border-b border-plt-border-soft bg-plt-surface text-plt-muted text-[10px] uppercase tracking-wider">
+                            <th className="py-2.5 px-4 font-medium">Trade #</th>
+                            <th className="py-2.5 px-3 font-medium">Type</th>
+                            <th className="py-2.5 px-4 font-medium">Date</th>
+                            <th className="py-2.5 px-4 font-medium">Price</th>
+                            <th className="py-2.5 px-4 font-medium">Size</th>
+                            <th className="py-2.5 px-4 font-medium text-right">Net PnL</th>
+                            <th className="py-2.5 px-4 font-medium text-right">Return %</th>
+                            <th className="py-2.5 px-4 font-medium">Exit Reason</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-plt-border-soft">
+                          {filteredTrades.length === 0 ? (
+                            <tr>
+                              <td colSpan={8} className="py-12 text-center text-plt-muted font-sans text-xs">
+                                No trades recorded matching the selected filter.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredTrades
+                              .slice()
+                              .reverse()
+                              .map((trade) => {
+                                const isWin = trade.netPnl > 0;
+                                return (
+                                  <React.Fragment key={trade.id}>
+                                    {/* Exit Row */}
+                                    <tr className="hover:bg-white/[0.02] transition-colors">
+                                      <td rowSpan={2} className="py-3 px-4 font-semibold align-top border-r border-plt-border-soft">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-plt-text">{trade.tradeNumber}</span>
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded font-mono uppercase bg-plt-info-soft text-plt-info border border-plt-info-border">
+                                            long
+                                          </span>
+                                        </div>
+                                        <div className="text-[10px] text-plt-muted font-normal mt-1 font-sans">
+                                          {trade.barsHeld} days
+                                        </div>
+                                      </td>
+
+                                      <td className="py-2 px-3 text-plt-risk font-semibold text-[11px]">
+                                        Exit
+                                      </td>
+                                      <td className="py-2 px-4 text-plt-subtle">
+                                        {trade.exitDate}
+                                      </td>
+                                      <td className="py-2 px-4 font-semibold text-plt-text">
+                                        {trade.exitPrice.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
+                                      </td>
+                                      <td rowSpan={2} className="py-3 px-4 align-top text-plt-subtle">
+                                        <div>{trade.shares.toLocaleString()} units</div>
+                                        <div className="text-[10px] text-plt-muted font-sans mt-0.5">
+                                          {(trade.positionValue / 1000).toFixed(2)} K {currencySymbol}
+                                        </div>
+                                      </td>
+                                      <td rowSpan={2} className={`py-3 px-4 font-semibold text-right align-top ${
+                                        isWin ? 'text-plt-profit' : 'text-plt-risk'
+                                      }`}>
+                                        {isWin ? '+' : ''}
+                                        {trade.netPnl.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
+                                      </td>
+                                      <td rowSpan={2} className={`py-3 px-4 font-semibold text-right align-top ${
+                                        isWin ? 'text-plt-profit' : 'text-plt-risk'
+                                      }`}>
+                                        <span className={`px-2 py-1 rounded-md text-[11px] inline-block font-mono font-semibold ${
+                                          isWin ? 'bg-plt-profit-soft text-plt-profit border border-plt-profit-border' : 'bg-plt-risk-soft text-plt-risk border border-plt-risk-border'
+                                        }`}>
+                                          {isWin ? '+' : ''}
+                                          {trade.returnPct.toFixed(2)}%
+                                        </span>
+                                      </td>
+                                      <td rowSpan={2} className="py-3 px-4 align-top">
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-medium bg-white/[0.04] text-plt-subtle border border-white/[0.08] whitespace-nowrap">
+                                          {trade.exitReason}
+                                        </span>
+                                      </td>
+                                    </tr>
+
+                                    {/* Entry Row */}
+                                    <tr className="hover:bg-white/[0.02] transition-colors border-b border-plt-border-soft">
+                                      <td className="py-2 px-3 text-plt-profit font-semibold text-[11px]">
+                                        Entry
+                                      </td>
+                                      <td className="py-2 px-4 text-plt-subtle">
+                                        {trade.entryDate}
+                                      </td>
+                                      <td className="py-2 px-4 text-plt-subtle">
+                                        {trade.entryPrice.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
+                                      </td>
+                                    </tr>
+                                  </React.Fragment>
+                                );
+                              })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+
+            {/* ================================================================= */}
+            {/* 4. FOOTER NOTE & ACTIONS                                         */}
+            {/* ================================================================= */}
+            <div className="px-5 sm:px-6 py-3 border-t border-plt-border-soft bg-plt-raised/70 backdrop-blur-md text-xs text-plt-muted flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-plt-muted font-sans">
+                Simulated using exact point-in-time quantitative execution without lookahead bias.
+              </span>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
-                title="Close report (Esc)"
+                className="btn-token btn-secondary btn-compact cursor-pointer"
               >
-                <X size={15} />
+                Done
               </button>
             </div>
 
-          </div>
+          </motion.div>
         </div>
-
-        {/* ================================================================= */}
-        {/* BODY CONTENT                                                      */}
-        {/* ================================================================= */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-
-          {/* =============================================================== */}
-          {/* TAB 1: KEY STATS & PERFORMANCE                                  */}
-          {/* =============================================================== */}
-          {activeTab === 'stats' && (
-            <div className="space-y-4 animate-in fade-in duration-150">
-
-              {/* 4 Top KPI Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                {/* 1. Total Net PnL */}
-                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
-                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
-                    Total Net PnL
-                  </span>
-                  <div className="mt-3">
-                    <div className={`text-2xl font-bold font-mono tracking-tight ${
-                      stats.netProfit >= 0 ? 'text-plt-profit' : 'text-plt-risk'
-                    }`}>
-                      {stats.netProfit >= 0 ? '+' : ''}
-                      {stats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-                      <span className="text-xs font-normal text-plt-muted">{currencySymbol}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1 text-xs font-mono">
-                      <span className={`font-semibold ${stats.netProfitPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
-                        {stats.netProfitPct >= 0 ? '+' : ''}{stats.netProfitPct.toFixed(2)}%
-                      </span>
-                      <span className="text-plt-muted">•</span>
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                        stats.alphaMargin >= 0
-                          ? 'bg-plt-profit-soft text-plt-profit border border-plt-profit-border'
-                          : 'bg-plt-risk-soft text-plt-risk border border-plt-risk-border'
-                      }`}>
-                        {stats.alphaMargin >= 0 ? `+${stats.alphaMargin.toFixed(1)}% α` : `${stats.alphaMargin.toFixed(1)}% α`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Max Drawdown */}
-                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
-                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
-                    Max Drawdown
-                  </span>
-                  <div className="mt-3">
-                    <div className="text-2xl font-bold font-mono tracking-tight text-plt-risk">
-                      {stats.maxDrawdownAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-                      <span className="text-xs font-normal text-plt-muted">{currencySymbol}</span>
-                    </div>
-                    <div className="mt-1 text-xs font-mono text-plt-risk/90 font-medium">
-                      {stats.maxDrawdown.toFixed(2)}% of peak
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Profitable Trades */}
-                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
-                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
-                    Profitable Trades
-                  </span>
-                  <div className="mt-3">
-                    <div className="text-2xl font-bold font-mono tracking-tight text-plt-text">
-                      {stats.winRate.toFixed(2)}%
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1 text-xs font-mono text-plt-muted">
-                      <span className="text-plt-profit font-semibold">{stats.winningTrades} wins</span>
-                      <span>/</span>
-                      <span className="text-plt-risk font-semibold">{stats.losingTrades} losses</span>
-                      <span>({stats.totalTrades} total)</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Profit Factor */}
-                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 flex flex-col justify-between shadow-panel">
-                  <span className="text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
-                    Profit Factor
-                  </span>
-                  <div className="mt-3">
-                    <div className="text-2xl font-bold font-mono tracking-tight text-plt-text">
-                      {stats.profitFactor >= 99 ? '∞' : stats.profitFactor.toFixed(2)}
-                    </div>
-                    <div className="mt-1 text-xs font-mono text-plt-muted">
-                      Gross: +{stats.grossProfit.toFixed(0)} / -{stats.grossLoss.toFixed(0)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Performance Section: Equity Curve Chart */}
-              <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-5 shadow-panel space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-plt-border-soft">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-plt-text font-sans">
-                      Performance Equity Curve
-                    </span>
-                    <span className="text-[11px] text-plt-muted font-normal">• Mark-to-Market vs Benchmark</span>
-                  </div>
-
-                  {/* Legend */}
-                  <div className="flex items-center gap-4 text-xs font-mono">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-plt-profit" />
-                      <span className="text-plt-text">
-                        Strategy ({stats.finalEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-plt-info" />
-                      <span className="text-plt-muted">
-                        Buy & Hold ({(initialCapital + stats.buyHoldReturn).toLocaleString(undefined, { maximumFractionDigits: 0 })} {currencySymbol})
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* SVG Equity Chart */}
-                <EquityCurveChart
-                  equityCurve={equityCurve}
-                  initialCapital={initialCapital}
-                  currencySymbol={currencySymbol}
-                  onHoverPoint={setHoveredPoint}
-                  hoveredPoint={hoveredPoint}
-                />
-              </div>
-
-              {/* Detailed Breakdown (3 Columns) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                {/* Panel 1: Trade Analytics */}
-                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 space-y-3 shadow-panel">
-                  <div className="text-xs font-bold text-plt-text uppercase tracking-wider pb-2 border-b border-plt-border-soft">
-                    Trade Analytics
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Total Trades:</span>
-                      <span className="font-mono font-semibold text-plt-text">{stats.totalTrades}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Win Rate:</span>
-                      <span className="font-mono font-semibold text-plt-profit">{stats.winRate.toFixed(2)}%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Winning / Losing:</span>
-                      <span className="font-mono text-plt-subtle">{stats.winningTrades} / {stats.losingTrades}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Win / Loss Payoff:</span>
-                      <span className="font-mono text-plt-subtle">{stats.winLossRatio.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Avg Duration:</span>
-                      <span className="font-mono text-plt-subtle">{stats.avgBarsHeld.toFixed(1)} days</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Panel 2: PnL Distribution */}
-                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 space-y-3 shadow-panel">
-                  <div className="text-xs font-bold text-plt-text uppercase tracking-wider pb-2 border-b border-plt-border-soft">
-                    PnL Distribution
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Gross Profit:</span>
-                      <span className="font-mono font-semibold text-plt-profit">+{stats.grossProfit.toFixed(2)} {currencySymbol}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Gross Loss:</span>
-                      <span className="font-mono font-semibold text-plt-risk">-{stats.grossLoss.toFixed(2)} {currencySymbol}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Avg Trade PnL:</span>
-                      <span className={`font-mono font-semibold ${stats.avgTradePnl >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
-                        {stats.avgTradePnl >= 0 ? '+' : ''}{stats.avgTradePnl.toFixed(2)} {currencySymbol} ({stats.avgTradeReturnPct.toFixed(2)}%)
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Avg Win:</span>
-                      <span className="font-mono text-plt-profit">+{stats.avgWin.toFixed(2)} {currencySymbol}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Avg Loss:</span>
-                      <span className="font-mono text-plt-risk">-{stats.avgLoss.toFixed(2)} {currencySymbol}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Panel 3: Risk & Efficiency */}
-                <div className="bg-plt-card border border-plt-border-soft rounded-2xl p-4 space-y-3 shadow-panel">
-                  <div className="text-xs font-bold text-plt-text uppercase tracking-wider pb-2 border-b border-plt-border-soft">
-                    Risk & Streaks
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Max Drawdown:</span>
-                      <span className="font-mono font-semibold text-plt-risk">{stats.maxDrawdown.toFixed(2)}%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Annualized CAGR:</span>
-                      <span className="font-mono font-semibold text-plt-profit">{stats.annualCagr.toFixed(2)}% / yr</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Sharpe Ratio:</span>
-                      <span className="font-mono text-plt-subtle">{stats.sharpeRatio.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Max Consec. Wins:</span>
-                      <span className="font-mono font-semibold text-plt-profit">{stats.maxConsecutiveWins}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-plt-muted">Max Consec. Losses:</span>
-                      <span className="font-mono font-semibold text-plt-risk">{stats.maxConsecutiveLosses}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* =============================================================== */}
-          {/* TAB 2: LIST OF TRADES                                           */}
-          {/* =============================================================== */}
-          {activeTab === 'trades' && (
-            <div className="space-y-3.5 animate-in fade-in duration-150">
-
-              {/* Table Filter Controls */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-plt-muted text-xs font-sans">Filter Trades:</span>
-                  <div className="pill-switch">
-                    <button
-                      type="button"
-                      onClick={() => setTradeFilter('all')}
-                      className={`pill-switch-btn ${
-                        tradeFilter === 'all' ? 'pill-switch-btn-active font-semibold' : ''
-                      }`}
-                    >
-                      All ({trades.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTradeFilter('wins')}
-                      className={`pill-switch-btn ${
-                        tradeFilter === 'wins' ? 'pill-switch-btn-active font-semibold text-plt-profit' : ''
-                      }`}
-                    >
-                      Wins ({stats.winningTrades})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTradeFilter('losses')}
-                      className={`pill-switch-btn ${
-                        tradeFilter === 'losses' ? 'pill-switch-btn-active font-semibold text-plt-risk' : ''
-                      }`}
-                    >
-                      Losses ({stats.losingTrades})
-                    </button>
-                  </div>
-                </div>
-
-                <div className="text-plt-muted text-xs font-mono">
-                  Showing {filteredTrades.length} of {trades.length} closed trades
-                </div>
-              </div>
-
-              {/* Trades Table */}
-              <div className="bg-plt-card border border-plt-border-soft rounded-2xl overflow-hidden shadow-panel">
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left text-xs border-collapse font-mono">
-                    <thead>
-                      <tr className="border-b border-plt-border-soft bg-plt-base text-plt-muted text-[10px] uppercase tracking-wider">
-                        <th className="py-2.5 px-4">Trade #</th>
-                        <th className="py-2.5 px-3">Type</th>
-                        <th className="py-2.5 px-4">Date</th>
-                        <th className="py-2.5 px-4">Price</th>
-                        <th className="py-2.5 px-4">Size</th>
-                        <th className="py-2.5 px-4 text-right">Net PnL</th>
-                        <th className="py-2.5 px-4 text-right">Return %</th>
-                        <th className="py-2.5 px-4">Exit Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-plt-border-soft">
-                      {filteredTrades.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="py-10 text-center text-plt-muted font-sans">
-                            No trades recorded matching the selected filter.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredTrades
-                          .slice()
-                          .reverse()
-                          .map((trade) => {
-                            const isWin = trade.netPnl > 0;
-                            return (
-                              <React.Fragment key={trade.id}>
-                                {/* Exit Row */}
-                                <tr className="hover:bg-white/[0.02] transition-colors">
-                                  <td rowSpan={2} className="py-3 px-4 font-semibold align-top border-r border-plt-border-soft">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-plt-text">{trade.tradeNumber}</span>
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded font-mono uppercase bg-plt-info-soft text-plt-info border border-plt-info-border">
-                                        long
-                                      </span>
-                                    </div>
-                                    <div className="text-[10px] text-plt-muted font-normal mt-1 font-sans">
-                                      {trade.barsHeld} days
-                                    </div>
-                                  </td>
-
-                                  <td className="py-2 px-3 text-plt-risk font-semibold text-[11px]">
-                                    Exit
-                                  </td>
-                                  <td className="py-2 px-4 text-plt-subtle">
-                                    {trade.exitDate}
-                                  </td>
-                                  <td className="py-2 px-4 font-semibold text-plt-text">
-                                    {trade.exitPrice.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
-                                  </td>
-                                  <td rowSpan={2} className="py-3 px-4 align-top text-plt-subtle">
-                                    <div>{trade.shares.toLocaleString()} units</div>
-                                    <div className="text-[10px] text-plt-muted font-sans mt-0.5">
-                                      {(trade.positionValue / 1000).toFixed(2)} K {currencySymbol}
-                                    </div>
-                                  </td>
-                                  <td rowSpan={2} className={`py-3 px-4 font-semibold text-right align-top ${
-                                    isWin ? 'text-plt-profit' : 'text-plt-risk'
-                                  }`}>
-                                    {isWin ? '+' : ''}
-                                    {trade.netPnl.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
-                                  </td>
-                                  <td rowSpan={2} className={`py-3 px-4 font-semibold text-right align-top ${
-                                    isWin ? 'text-plt-profit' : 'text-plt-risk'
-                                  }`}>
-                                    <span className={`px-2 py-1 rounded-md text-[11px] inline-block font-mono font-semibold ${
-                                      isWin ? 'bg-plt-profit-soft text-plt-profit border border-plt-profit-border' : 'bg-plt-risk-soft text-plt-risk border border-plt-risk-border'
-                                    }`}>
-                                      {isWin ? '+' : ''}
-                                      {trade.returnPct.toFixed(2)}%
-                                    </span>
-                                  </td>
-                                  <td rowSpan={2} className="py-3 px-4 align-top">
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-medium bg-white/[0.04] text-plt-subtle border border-white/[0.08] whitespace-nowrap">
-                                      {trade.exitReason}
-                                    </span>
-                                  </td>
-                                </tr>
-
-                                {/* Entry Row */}
-                                <tr className="hover:bg-white/[0.02] transition-colors border-b border-plt-border-soft">
-                                  <td className="py-2 px-3 text-plt-profit font-semibold text-[11px]">
-                                    Entry
-                                  </td>
-                                  <td className="py-2 px-4 text-plt-subtle">
-                                    {trade.entryDate}
-                                  </td>
-                                  <td className="py-2 px-4 text-plt-subtle">
-                                    {trade.entryPrice.toFixed(2)} <span className="text-[10px] text-plt-muted font-normal">{currencySymbol}</span>
-                                  </td>
-                                </tr>
-                              </React.Fragment>
-                            );
-                          })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-        </div>
-
-        {/* ================================================================= */}
-        {/* FOOTER NOTE                                                       */}
-        {/* ================================================================= */}
-        <div className="px-5 py-3 border-t border-plt-border-soft bg-plt-card text-xs text-plt-muted flex items-center justify-between shrink-0">
-          <span className="text-[11px]">
-            Simulated using exact point-in-time quantitative execution without lookahead bias.
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-plt-text btn-typography transition shrink-0 border border-white/[0.1] cursor-pointer"
-          >
-            Done
-          </button>
-        </div>
-
-      </div>
-    </div>,
+      )}
+    </AnimatePresence>,
     document.body
   );
 }

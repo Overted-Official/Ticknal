@@ -83,7 +83,7 @@ export default function BottomToolbar({
 
   return (
     <>
-      <div className="h-[28px] w-full bg-plt-card border-t border-plt-border-soft flex items-center justify-between px-3 select-none text-[11px] font-medium text-plt-text">
+      <div className="h-[28px] shrink-0 w-full bg-plt-card border-t border-plt-border-soft flex items-center justify-between px-3 select-none text-[11px] font-medium text-plt-text">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-plt-profit animate-pulse" />
