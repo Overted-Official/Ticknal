@@ -6,11 +6,11 @@ import useSWR from 'swr';
 import { ShieldCheck, TrendingUp, Landmark } from '@/components/ui/icon-library';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
-import BanksHeader from './dashboard/banks/BanksHeader';
+import BanksHeader from './banks/BanksHeader';
 import BankSummaryKPIs from '@/components/platform/wallet/BankSummaryKPIs';
-import CashFlowBarChart from './dashboard/banks/CashFlowBarChart';
-import SpendingDonutChart from './dashboard/banks/SpendingDonutChart';
-import BankAllocationMatrix from './dashboard/banks/BankAllocationMatrix';
+import CashFlowBarChart from './banks/CashFlowBarChart';
+import SpendingDonutChart from './banks/SpendingDonutChart';
+import BankAllocationMatrix from './banks/BankAllocationMatrix';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { buildCashTrend, getDashboardCashFlowKind, isDashboardSpending, toEgp } from '@/lib/portfolio-finance';
 
@@ -18,17 +18,17 @@ const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-interface DashboardBankAccountsViewProps {
+interface DashboardBankAccountsPageViewProps {
   initialAccounts?: BankAccount[];
   initialTransactions?: BankTransaction[];
   usdRate?: number;
 }
 
-export default function DashboardBankAccountsView({
+export default function DashboardBankAccountsPageView({
   initialAccounts = [],
   initialTransactions = [],
   usdRate = 50.20,
-}: DashboardBankAccountsViewProps) {
+}: DashboardBankAccountsPageViewProps) {
   const router = useRouter();
 
   const { data: accountsData } = useSWR<{ accounts: BankAccount[] }>(

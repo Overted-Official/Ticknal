@@ -4,7 +4,7 @@ import React from 'react';
 import { Wallet, TrendingUp, DollarSign, CheckCircle } from '@/components/ui/icon-library';
 import RichSparklineCard from '@/components/platform/ui/RichSparklineCard';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import { type OrderStats } from '../../DashboardInvestmentsView';
+import { type OrderStats } from './investmentsTypes';
 
 interface InvestmentsKPIsProps {
   orderStats: OrderStats;

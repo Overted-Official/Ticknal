@@ -7,17 +7,18 @@ import { ShieldCheck, TrendingUp, Landmark } from '@/components/ui/icon-library'
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
-const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
-import NetWorthHeader from './dashboard/networth/NetWorthHeader';
-import NetWorthKPIs from './dashboard/networth/NetWorthKPIs';
-import WealthGrowthChartCard from './dashboard/networth/WealthGrowthChartCard';
-import PortfolioSplitCard from './dashboard/networth/PortfolioSplitCard';
-import PortfolioBreakdownTable, { type PortfolioCategory } from './dashboard/networth/PortfolioBreakdownTable';
-import InflationRadarChart from './dashboard/networth/InflationRadarChart';
-import { type AssetSlice } from './dashboard/networth/AssetAllocationSection';
+import NetWorthHeader from './networth/NetWorthHeader';
+import NetWorthKPIs from './networth/NetWorthKPIs';
+import WealthGrowthChartCard from './networth/WealthGrowthChartCard';
+import PortfolioSplitCard from './networth/PortfolioSplitCard';
+import PortfolioBreakdownTable, { type PortfolioCategory } from './networth/PortfolioBreakdownTable';
+import InflationRadarChart from './networth/InflationRadarChart';
+import { type AssetSlice } from './networth/AssetAllocationSection';
 import { type BankAccount, type PositionItem } from '@/types/bank';
 import { isBrokerageAccount, recentMonthKeys, toEgp } from '@/lib/portfolio-finance';
 import type { NetWorthHistoryPoint, NetWorthTrendPoint } from '@/lib/portfolio-finance';
+
+const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -29,7 +30,7 @@ const ASSET_COLORS = {
   egpCash: 'var(--plt-warning)',
 };
 
-interface DashboardNetWorthViewProps {
+interface DashboardNetworthPageViewProps {
   initialAccounts?: BankAccount[];
   openPositions?: PositionItem[];
   netWorthHistory?: NetWorthHistoryPoint[];
@@ -39,7 +40,7 @@ interface DashboardNetWorthViewProps {
   initialInflationSeries?: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }>;
 }
 
-export default function DashboardNetWorthView({
+export default function DashboardNetworthPageView({
   initialAccounts = [],
   openPositions = [],
   netWorthHistory = [],
@@ -47,7 +48,7 @@ export default function DashboardNetWorthView({
   cbeAnnualInflation = 14.9,
   usCpiAnnualInflation = 2.8,
   initialInflationSeries = [],
-}: DashboardNetWorthViewProps) {
+}: DashboardNetworthPageViewProps) {
   const router = useRouter();
 
   const { data: accountsData } = useSWR<{ accounts: BankAccount[] }>(
@@ -299,7 +300,7 @@ export default function DashboardNetWorthView({
           <section className="section-container section-viewport-fit">
             <div className="flex flex-col gap-0.5">
               <h2 className="section-title">Wealth Growth Trajectory</h2>
-            <p className="section-subtitle">Recorded account balances and month-end market values, compared against inflation-deflated purchasing power</p>
+              <p className="section-subtitle">Recorded account balances and month-end market values, compared against inflation-deflated purchasing power</p>
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col">

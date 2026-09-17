@@ -51,6 +51,7 @@
     "_technical_support",
     "_dynamic-psi-test",
     "src/app/(main)/test",
-    "src/components/platform/TestChartWidget.tsx"
+    "src/components/platform/TestChartWidget.tsx",
+    "bottom-navigation"
   ]
 }

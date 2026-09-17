@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronDown } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import { type DashboardOrder } from '../../DashboardInvestmentsView';
+import { type DashboardOrder } from './investmentsTypes';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
 
 interface DashboardPositionsCardProps {

@@ -7,7 +7,7 @@ import RightSidebar, { WatchlistItem } from '@/components/platform/RightSidebar'
 import { TickerOrder } from '@/components/platform/TickerPositions';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 
-interface InvestTickersViewProps {
+export interface InvestTickersPageViewProps {
   symbol: string;
   timeframe: string;
   initialReplayMode: boolean;
@@ -22,7 +22,7 @@ interface InvestTickersViewProps {
   brokerageAccounts?: BrokerageAccountOption[];
 }
 
-export default function InvestTickersView({
+export default function InvestTickersPageView({
   symbol,
   timeframe,
   initialReplayMode,
@@ -35,9 +35,9 @@ export default function InvestTickersView({
   logoUrl,
   rangeData,
   brokerageAccounts = [],
-}: InvestTickersViewProps) {
+}: InvestTickersPageViewProps) {
   return (
-    <div className="flex-1 h-full w-full flex flex-row overflow-hidden select-none">
+    <div className="flex-1 h-full w-full min-w-0 flex flex-row overflow-hidden select-none relative">
       {/* Chart Canvas + Bottom Toolbar */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
         <ChartReplayWorkspace

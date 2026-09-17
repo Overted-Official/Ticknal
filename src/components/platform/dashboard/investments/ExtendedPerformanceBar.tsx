@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { type OrderStats } from '../../DashboardInvestmentsView';
+import { type OrderStats } from './investmentsTypes';
 
 interface ExtendedPerformanceBarProps {
   orderStats: OrderStats;

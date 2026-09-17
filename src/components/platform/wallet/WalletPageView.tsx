@@ -1,23 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Wallet, Landmark } from '@/components/ui/icon-library';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
-import WalletPositionsView from '@/components/platform/wallet/WalletPositionsView';
-import WalletBankAccountsView from '@/components/platform/wallet/WalletBankAccountsView';
+import WalletPositionsPageView from './WalletPositionsPageView';
+import WalletBankAccountsPageView from './WalletBankAccountsPageView';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
-interface WalletClientViewProps {
+interface WalletPageViewProps {
   initialTab?: string;
   usdRate?: number;
 }
 
-export default function WalletClientView({
+export default function WalletPageView({
   initialTab = 'positions',
   usdRate = 50.20,
-}: WalletClientViewProps) {
+}: WalletPageViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -65,11 +64,11 @@ export default function WalletClientView({
       {/* Main Tab Views with Instant Zero-Latency Switch & Touch Swiping */}
       <div {...swipeHandlers} className="flex-1 h-full min-h-0 relative overflow-hidden touch-pan-y">
         <div className={`absolute inset-0 flex flex-col ${currentTab === 'positions' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
-          <WalletPositionsView />
+          <WalletPositionsPageView />
         </div>
 
         <div className={`absolute inset-0 flex flex-col ${currentTab === 'banks' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
-          <WalletBankAccountsView usdRate={usdRate} />
+          <WalletBankAccountsPageView usdRate={usdRate} />
         </div>
       </div>
     </div>

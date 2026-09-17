@@ -10,10 +10,9 @@ import { getCachedOpportunitiesSync, getExitSignalsForHoldings } from '@/lib/opp
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import OpportunityTable, { type Opportunity } from '@/components/platform/OpportunityTable';
 import TestNotificationButton from '@/components/platform/TestNotificationButton';
-import DashboardCharts from '@/components/platform/DashboardCharts';
-import DashboardInvestmentsView from '@/components/platform/DashboardInvestmentsView';
-import DashboardBankAccountsView from '@/components/platform/DashboardBankAccountsView';
-import DashboardNetWorthView from '@/components/platform/DashboardNetWorthView';
+import DashboardInvestmentsPageView from '@/components/platform/dashboard/DashboardInvestmentsPageView';
+import DashboardBankAccountsPageView from '@/components/platform/dashboard/DashboardBankAccountsPageView';
+import DashboardNetworthPageView from '@/components/platform/dashboard/DashboardNetworthPageView';
 import { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 import { type BankAccount, type BankTransaction, type PositionItem } from '@/types/bank';
@@ -100,7 +99,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
     }
 
     return (
-      <DashboardBankAccountsView
+      <DashboardBankAccountsPageView
         initialAccounts={accounts}
         initialTransactions={transactions}
         usdRate={usdRate}
@@ -147,7 +146,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
     netWorthHistory = await getNetWorthHistory(user.id, accounts, transactions, usdRate);
 
     return (
-      <DashboardNetWorthView
+      <DashboardNetworthPageView
         initialAccounts={accounts}
         openPositions={openPositions}
         netWorthHistory={netWorthHistory}
@@ -200,7 +199,7 @@ export default async function DashboardContent({ tab = 'net-worth' }: { tab?: st
     : [];
 
   return (
-    <DashboardInvestmentsView
+    <DashboardInvestmentsPageView
       orderStats={orderStats}
       buyOpportunities={initialBuyOpportunities}
       exitSignals={exitSignals}

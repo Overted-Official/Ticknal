@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import WalletClientView from './WalletClientView';
+import WalletPageView from '@/components/platform/wallet/WalletPageView';
 import { getCachedRecentPrices } from '@/lib/data-cache';
 
 export const dynamic = 'force-dynamic';
@@ -32,5 +32,5 @@ export default async function WalletPage({
     console.error('Error fetching USDEGP rate:', err);
   }
 
-  return <WalletClientView initialTab={tab} usdRate={usdRate} />;
+  return <WalletPageView initialTab={tab} usdRate={usdRate} />;
 }

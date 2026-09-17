@@ -10,9 +10,9 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import InvestClientView from '@/components/platform/invest/InvestClientView';
-import InvestSectorsView from '@/components/platform/invest/InvestSectorsView';
-import InvestTickersView from '@/components/platform/invest/InvestTickersView';
-import PortfolioCommandCenter from '@/components/platform/invest/portfolio/PortfolioCommandCenter';
+import InvestSectorsPageView from '@/components/platform/invest/InvestSectorsPageView';
+import InvestTickersPageView from '@/components/platform/invest/InvestTickersPageView';
+import InvestPortfolioPageView from '@/components/platform/invest/InvestPortfolioPageView';
 import { type WatchlistItem } from '@/components/platform/RightSidebar';
 import type { OpportunitySignal } from '@/lib/opportunities';
 import InvestSkeleton from './InvestSkeleton';
@@ -361,9 +361,9 @@ async function InvestPageContent({
   return (
     <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-14 md:pb-0">
       <InvestClientView
-        sectorsView={<InvestSectorsView />}
+        sectorsView={<InvestSectorsPageView />}
         tickersView={
-          <InvestTickersView
+          <InvestTickersPageView
             symbol={selectedSymbol}
             timeframe={timeframe}
             initialReplayMode={initialReplayMode}
@@ -388,7 +388,7 @@ async function InvestPageContent({
           />
         }
         portfolioView={
-          <PortfolioCommandCenter
+          <InvestPortfolioPageView
             initialPositions={openPositionsRows.map((p: any) => ({
               id: p.id,
               tickerSymbol: p.tickerSymbol,

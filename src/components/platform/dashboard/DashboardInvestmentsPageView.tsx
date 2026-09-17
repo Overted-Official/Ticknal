@@ -5,68 +5,34 @@ import { useRouter } from 'next/navigation';
 import { ShieldCheck, TrendingUp, Landmark } from '@/components/ui/icon-library';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
-import InvestmentsHeader from './dashboard/investments/InvestmentsHeader';
-import InvestmentsKPIs from './dashboard/investments/InvestmentsKPIs';
-import ExtendedPerformanceBar from './dashboard/investments/ExtendedPerformanceBar';
+import InvestmentsHeader from './investments/InvestmentsHeader';
+import InvestmentsKPIs from './investments/InvestmentsKPIs';
+import ExtendedPerformanceBar from './investments/ExtendedPerformanceBar';
 import SectorDonutChart, { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import MonthlyInvestmentChart, { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
-import PortfolioConsultantCard, { type IndustryGroupStake } from './dashboard/investments/PortfolioConsultantCard';
-import DashboardPositionsCard from './dashboard/investments/DashboardPositionsCard';
-import DashboardSignalsCard from './dashboard/investments/DashboardSignalsCard';
+import PortfolioConsultantCard, { type IndustryGroupStake } from './investments/PortfolioConsultantCard';
+import DashboardPositionsCard from './investments/DashboardPositionsCard';
+import DashboardSignalsCard from './investments/DashboardSignalsCard';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
+import { type DashboardOrder, type OrderStats } from './investments/investmentsTypes';
+
+export type { DashboardOrder, OrderStats };
 
 const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 
-export type DashboardOrder = {
-  id: number;
-  tickerSymbol: string;
-  companyName: string;
-  sector: string;
-  industryGroup?: string;
-  logoUrl?: string | null;
-  entryDate: string;
-  entryPrice: number;
-  quantity: number;
-  currentPrice: number;
-  profitLoss: number;
-  profitLossPct: number;
-};
-
-export type OrderStats = {
-  openOrders: DashboardOrder[];
-  openMarketValue: number;
-  openCostBasis: number;
-  unrealized: number;
-  realized: number;
-  totalRoi: number;
-  sectorData: SectorDataItem[];
-  industryGroupData: IndustryGroupStake[];
-  rotationMap?: Record<string, string>;
-  monthlyData: MonthlyDataItem[];
-  winRate: number | null;
-  avgBarsPerTrade: number | null;
-  maxDrawdownPct: number | null;
-  avgAdverseExcursion: number | null;
-  openWinning: number;
-  openLosing: number;
-  closedWinning: number;
-  closedLosing: number;
-  closedCount: number;
-};
-
-interface DashboardInvestmentsViewProps {
+interface DashboardInvestmentsPageViewProps {
   orderStats: OrderStats;
   buyOpportunities: Opportunity[];
   exitSignals: Opportunity[];
   activeAlertCount: number;
 }
 
-export default function DashboardInvestmentsView({
+export default function DashboardInvestmentsPageView({
   orderStats,
   buyOpportunities,
   exitSignals,
   activeAlertCount,
-}: DashboardInvestmentsViewProps) {
+}: DashboardInvestmentsPageViewProps) {
   const router = useRouter();
 
   const [liveBuyOpps, setLiveBuyOpps] = React.useState<Opportunity[]>(buyOpportunities ?? []);

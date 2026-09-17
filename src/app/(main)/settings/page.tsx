@@ -5,12 +5,12 @@ import { db } from '@/db';
 import { positions, pushSubscriptions, devicePushTokens, tickerAlerts } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
-import SettingsView, {
+import SettingsPageView, {
   type SettingsUserProfile,
   type DeviceInfo,
   type MonitoredTicker,
   type TickerOption
-} from '@/components/platform/SettingsView';
+} from '@/components/platform/settings/SettingsPageView';
 
 export const dynamic = 'force-dynamic';
 
@@ -191,7 +191,7 @@ export default async function SettingsPage() {
   });
 
   return (
-    <SettingsView
+    <SettingsPageView
       userProfile={userProfile}
       initialDevices={devices}
       initialMonitoredTickers={monitoredTickers}

@@ -40,17 +40,17 @@ const CATEGORIES = [
   'Other',
 ];
 
-interface WalletBankAccountsViewProps {
+interface WalletBankAccountsPageViewProps {
   initialAccounts?: BankAccount[];
   initialTransactions?: BankTransaction[];
   usdRate?: number;
 }
 
-export default function WalletBankAccountsView({
+export default function WalletBankAccountsPageView({
   initialAccounts = [],
   initialTransactions = [],
   usdRate = 50.20,
-}: WalletBankAccountsViewProps) {
+}: WalletBankAccountsPageViewProps) {
   const { toast } = useToast();
 
   // SWR Hooks for live data synchronization
