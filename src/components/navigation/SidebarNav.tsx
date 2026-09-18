@@ -214,7 +214,7 @@ export default function SidebarNav() {
                 }`}
               >
                 <LineChart size={16} />
-                <span>Tickers</span>
+                <span>Charts</span>
               </Link>
               <Link
                 href="/invest?view=portfolio"

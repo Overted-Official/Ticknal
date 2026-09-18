@@ -59,7 +59,7 @@ export default function InvestClientView({
 
   const navItems: SubNavTabItem[] = [
     { label: 'Sectors', value: 'sectors', icon: LayoutGrid },
-    { label: 'Tickers', value: 'chart', icon: LineChart },
+    { label: 'Charts', value: 'chart', icon: LineChart },
     { label: 'Portfolio', value: 'portfolio', icon: PieChartIcon },
   ];
 
