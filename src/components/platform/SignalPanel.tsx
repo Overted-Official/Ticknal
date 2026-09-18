@@ -280,42 +280,42 @@ export default function SignalPanel({
 
   const renderInspectorBody = () => (
     <div className="flex flex-col gap-3 pt-2">
-      {/* 3-Tab Segmented Controller */}
-      <div className="flex bg-white/[0.04] p-1 rounded-xl border border-white/[0.08]">
+      {/* 3-Tab Segmented Controller — tv-design §6 pill track */}
+      <div className="inline-flex w-full items-center p-0.5 rounded-lg bg-[#14171f] border border-[#2a2e39]">
         <button
           type="button"
           onClick={() => setActiveTab('signal')}
-          className={`flex-1 py-1.5 px-2 rounded-lg btn-typography transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-md btn-typography transition-colors flex items-center justify-center gap-1.5 ${
             activeTab === 'signal'
-              ? 'bg-white/[0.12] text-plt-text shadow-sm'
-              : 'text-plt-muted hover:text-plt-text'
+              ? 'bg-[#2a2e39] text-white font-semibold shadow-xs'
+              : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
           }`}
         >
-          <Target size={13} className="text-plt-muted" />
+          <Target size={13} />
           <span>Signal</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('alpha')}
-          className={`flex-1 py-1.5 px-2 rounded-lg btn-typography transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-md btn-typography transition-colors flex items-center justify-center gap-1.5 ${
             activeTab === 'alpha'
-              ? 'bg-white/[0.12] text-plt-text shadow-sm'
-              : 'text-plt-muted hover:text-plt-text'
+              ? 'bg-[#2a2e39] text-white font-semibold shadow-xs'
+              : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
           }`}
         >
-          <BarChart3 size={13} className="text-plt-profit" />
+          <BarChart3 size={13} className={activeTab === 'alpha' ? 'text-[#089981]' : 'text-[#787b86]'} />
           <span>Alpha</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('optimizer')}
-          className={`flex-1 py-1.5 px-2 rounded-lg btn-typography transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-1.5 px-2 rounded-md btn-typography transition-colors flex items-center justify-center gap-1.5 ${
             activeTab === 'optimizer'
-              ? 'bg-white/[0.12] text-plt-text shadow-sm'
-              : 'text-plt-muted hover:text-plt-text'
+              ? 'bg-[#2a2e39] text-white font-semibold shadow-xs'
+              : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
           }`}
         >
-          <Sparkles size={13} className="text-plt-muted" />
+          <Sparkles size={13} />
           <span>Optimizer</span>
         </button>
       </div>
@@ -356,15 +356,15 @@ export default function SignalPanel({
 
           {/* Execution Coordinates 3-Card Grid */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Trigger</span>
-              <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-1">
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#787b86] font-medium">Trigger</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-white mt-1">
                 {triggerPrice ? triggerPrice.toFixed(2) : '—'}
               </span>
             </div>
             {selectedStrategy === 'psi_v2' ? (
               <>
-                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
                   <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-medium">PSI UP</span>
                   <span className="text-xs font-mono tabular-nums font-semibold text-emerald-400 mt-1">
                     {visibleSignalData?.psiUp !== undefined && visibleSignalData?.psiUp !== null
@@ -372,7 +372,7 @@ export default function SignalPanel({
                       : '0.0'}
                   </span>
                 </div>
-                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
                   <span className="text-[9px] uppercase tracking-wider text-rose-400 font-medium">PSI DOWN</span>
                   <span className="text-xs font-mono tabular-nums font-semibold text-rose-400 mt-1">
                     {visibleSignalData?.psiDown !== undefined && visibleSignalData?.psiDown !== null
@@ -383,7 +383,7 @@ export default function SignalPanel({
               </>
             ) : selectedStrategy === 'thoth_egx_macro' ? (
               <>
-                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
+                <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
                   <span className="text-[9px] uppercase tracking-wider text-purple-300/80 font-medium">Pred Exhaustion</span>
                   <span className="text-xs font-mono tabular-nums font-semibold text-purple-300 mt-1">
                     {visibleSignalData?.predictedExhaustion !== undefined && visibleSignalData?.predictedExhaustion !== null
@@ -393,9 +393,9 @@ export default function SignalPanel({
                         : '—'}
                   </span>
                 </div>
-                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-                  <span className="text-[9px] uppercase tracking-wider text-plt-profit/80 font-medium">Conviction</span>
-                  <span className="text-xs font-mono tabular-nums font-semibold text-plt-profit mt-1">
+                <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-[#089981]/80 font-medium">Conviction</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-[#089981] mt-1">
                     {visibleSignalData?.convictionScore !== undefined && visibleSignalData?.convictionScore !== null
                       ? `${Number(visibleSignalData.convictionScore).toFixed(1)}`
                       : '—'}
@@ -404,15 +404,15 @@ export default function SignalPanel({
               </>
             ) : (
               <>
-                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-                  <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium">Stop Loss</span>
-                  <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-1">
+                <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-[#f23645]/80 font-medium">Stop Loss</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-[#f23645] mt-1">
                     {stopLossPrice ? stopLossPrice.toFixed(2) : '—'}
                   </span>
                 </div>
-                <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-                  <span className="text-[9px] uppercase tracking-wider text-plt-profit/80 font-medium">AYM Target</span>
-                  <span className="text-xs font-mono tabular-nums font-semibold text-plt-profit mt-1">
+                <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-[#089981]/80 font-medium">AYM Target</span>
+                  <span className="text-xs font-mono tabular-nums font-semibold text-[#089981] mt-1">
                     {targetPrice ? targetPrice.toFixed(2) : '—'}
                   </span>
                 </div>
@@ -421,13 +421,13 @@ export default function SignalPanel({
           </div>
 
           {/* Master Index (0-100 Gauge) */}
-          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col gap-1.5">
+          <div className="p-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-[10px]">
-              <span className="text-plt-muted font-medium uppercase tracking-wider">
+              <span className="text-[#787b86] font-medium uppercase tracking-wider">
                 {selectedStrategy === 'psi_v2' ? 'PSI Zone (0–100)' : 'Master Index (0–100)'}
               </span>
               <div className="flex items-center gap-2 font-mono">
-                <span className="text-plt-text font-semibold">{masterIndex !== null ? masterIndex.toFixed(1) : '—'}</span>
+                <span className="text-white font-semibold">{masterIndex !== null ? masterIndex.toFixed(1) : '—'}</span>
                 {selectedStrategy === 'psi_v2' && visibleSignalData?.regimeDirection && (
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                     visibleSignalData.regimeDirection === 'up' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
@@ -436,14 +436,14 @@ export default function SignalPanel({
                   </span>
                 )}
                 {mdm !== null && selectedStrategy !== 'psi_v2' && (
-                  <span className="text-plt-muted text-[9px]">MDM: {mdm.toFixed(2)}%</span>
+                  <span className="text-[#787b86] text-[9px]">MDM: {mdm.toFixed(2)}%</span>
                 )}
               </div>
             </div>
 
-            {/* Gauge Track */}
-            <div className="relative w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
-              <div className="w-full h-full bg-gradient-to-r from-plt-profit/40 via-white/10 to-plt-risk/40" />
+            {/* Gauge Track — tv-design §1 border colour for track */}
+            <div className="relative w-full h-1.5 rounded-full bg-[#1e222d] overflow-hidden">
+              <div className="w-full h-full bg-gradient-to-r from-[#089981]/40 via-white/10 to-[#f23645]/40" />
               {masterIndex !== null && (
                 <div
                   className="absolute top-0 bottom-0 w-1.5 bg-white rounded-full shadow-sm -ml-0.5 transition-all duration-300"
@@ -452,7 +452,7 @@ export default function SignalPanel({
               )}
             </div>
 
-            <div className="flex justify-between text-[9px] font-mono text-plt-muted pt-0.5">
+            <div className="flex justify-between text-[9px] font-mono text-[#787b86] pt-0.5">
               <span>0 Oversold</span>
               <span>50</span>
               <span>100 Overbought</span>
@@ -466,26 +466,26 @@ export default function SignalPanel({
         <div className="flex flex-col gap-2.5">
           {/* 3-Card Alpha Grid */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">System ROI</span>
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#787b86] font-medium">System ROI</span>
               <span className={`text-xs font-mono tabular-nums font-semibold mt-1 ${
-                effectiveMetrics?.['Sys ROI'] && parseFloat(effectiveMetrics['Sys ROI']) >= 0 ? 'text-plt-profit' : 'text-plt-risk'
+                effectiveMetrics?.['Sys ROI'] && parseFloat(effectiveMetrics['Sys ROI']) >= 0 ? 'text-[#089981]' : 'text-[#f23645]'
               }`}>
                 {effectiveMetrics?.['Sys ROI'] ? `${parseFloat(effectiveMetrics['Sys ROI']) > 0 ? '+' : ''}${effectiveMetrics['Sys ROI']}%` : '—'}
               </span>
             </div>
 
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Buy & Hold</span>
-              <span className="text-xs font-mono tabular-nums font-semibold text-plt-muted mt-1">
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#787b86] font-medium">Buy &amp; Hold</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-[#787b86] mt-1">
                 {effectiveMetrics?.['B&H ROI'] ? `${parseFloat(effectiveMetrics['B&H ROI']) > 0 ? '+' : ''}${effectiveMetrics['B&H ROI']}%` : '—'}
               </span>
             </div>
 
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Alpha (α)</span>
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#787b86] font-medium">Alpha (α)</span>
               <span className={`text-xs font-mono tabular-nums font-semibold mt-1 ${
-                roiMarginVal !== null && roiMarginVal >= 0 ? 'text-plt-profit' : 'text-plt-risk'
+                roiMarginVal !== null && roiMarginVal >= 0 ? 'text-[#089981]' : 'text-[#f23645]'
               }`}>
                 {roiMarginVal !== null ? (roiMarginVal > 0 ? `+${roiMarginVal.toFixed(1)}%` : `${roiMarginVal.toFixed(1)}%`) : '—'}
               </span>
@@ -494,53 +494,53 @@ export default function SignalPanel({
 
           {/* Win Rate & Annual CAGR */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Win Rate</span>
-              <span className="text-xs font-mono tabular-nums font-semibold text-plt-profit mt-0.5">
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#787b86] font-medium">Win Rate</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-[#089981] mt-0.5">
                 {effectiveMetrics?.['Win Rate'] ? `${effectiveMetrics['Win Rate']}%` : '—'}
               </span>
             </div>
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Annual CAGR</span>
-              <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-0.5">
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#787b86] font-medium">Annual CAGR</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-white mt-0.5">
                 {effectiveMetrics?.['Annual CAGR'] ? `${effectiveMetrics['Annual CAGR']}%` : '—'}
               </span>
             </div>
           </div>
 
-          {/* Risk & Trade Triad: Max Drawdown | Max Adverse Excursion | Avg/Trade */}
+          {/* Risk & Trade Triad */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium">Max Drawdown</span>
-              <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-0.5">
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#f23645]/80 font-medium">Max Drawdown</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-[#f23645] mt-0.5">
                 {effectiveMetrics?.['Max Drawdown'] ? `${effectiveMetrics['Max Drawdown']}%` : '—'}
               </span>
             </div>
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-risk/80 font-medium truncate" title="Max Adverse Excursion">
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#f23645]/80 font-medium truncate" title="Max Adverse Excursion">
                 Max Adverse Excursion
               </span>
-              <span className="text-xs font-mono tabular-nums font-semibold text-plt-risk mt-0.5">
+              <span className="text-xs font-mono tabular-nums font-semibold text-[#f23645] mt-0.5">
                 {computedMae}
               </span>
             </div>
-            <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-plt-muted font-medium">Avg/Trade</span>
-              <span className="text-xs font-mono tabular-nums font-semibold text-plt-text mt-0.5">
+            <div className="p-2 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-[#787b86] font-medium">Avg/Trade</span>
+              <span className="text-xs font-mono tabular-nums font-semibold text-white mt-0.5">
                 {effectiveMetrics?.['Avg. Return/Trade'] ? `${effectiveMetrics['Avg. Return/Trade']}%` : '—'}
               </span>
             </div>
           </div>
 
           {/* Chart Backtest Horizon Controls */}
-          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col gap-1.5">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-plt-muted flex items-center gap-1.5">
-              <Calendar size={12} className="text-plt-muted" />
+          <div className="p-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col gap-1.5">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-[#787b86] flex items-center gap-1.5">
+              <Calendar size={12} className="text-[#787b86]" />
               Backtest Horizon
             </span>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div className="flex flex-col gap-1">
-                <label className="text-plt-muted text-[10px]">Start Date</label>
+                <label className="text-[#787b86] text-[10px]">Start Date</label>
                 <input
                   type="date"
                   className="date-token font-mono"
@@ -549,7 +549,7 @@ export default function SignalPanel({
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-plt-muted text-[10px]">End Date</label>
+                <label className="text-[#787b86] text-[10px]">End Date</label>
                 <input
                   type="date"
                   className="date-token font-mono"
@@ -566,71 +566,71 @@ export default function SignalPanel({
       {/* TAB 3: WALK-FORWARD OPTIMIZER / PRODUCTION ARCHITECTURE */}
       {activeTab === 'optimizer' && (
         selectedStrategy === 'psi_v2' ? (
-          <div className="flex flex-col gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-[11px]">
+          <div className="flex flex-col gap-2 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-[11px]">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-emerald-400">GPT 3-PSI Architecture</span>
               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">PRODUCTION V2</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono pt-1">
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Zone Model</span>
-                <span className="text-plt-text font-semibold">8 Features (63d)</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Zone Model</span>
+                <span className="text-white font-semibold">8 Features (63d)</span>
               </div>
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Bull / Bear Gauges</span>
-                <span className="text-plt-text font-semibold">PSI_UP / DOWN</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Bull / Bear Gauges</span>
+                <span className="text-white font-semibold">PSI_UP / DOWN</span>
               </div>
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Entry Rules</span>
-                <span className="text-plt-text font-semibold">Zone &gt; 20 | UP &gt; 10</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Entry Rules</span>
+                <span className="text-white font-semibold">Zone &gt; 20 | UP &gt; 10</span>
               </div>
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Exit Rules</span>
-                <span className="text-plt-text font-semibold">Zone &lt; 80 | DOWN &gt; 10</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Exit Rules</span>
+                <span className="text-white font-semibold">Zone &lt; 80 | DOWN &gt; 10</span>
               </div>
             </div>
-            <p className="text-[9.5px] text-plt-muted leading-relaxed pt-0.5">
+            <p className="text-[9.5px] text-[#787b86] leading-relaxed pt-0.5">
               Strictly causal, non-lookahead 3-PSI model calibrated on Egyptian market dynamics for optimal tops/bottoms and swing progression tracking.
             </p>
           </div>
         ) : selectedStrategy === 'thoth_egx_macro' ? (
-          <div className="flex flex-col gap-2 p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/20 text-[11px]">
+          <div className="flex flex-col gap-2 p-2.5 rounded-lg bg-purple-500/5 border border-purple-500/20 text-[11px]">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-purple-400">Primary Growth Champion</span>
               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">FROZEN V3.7P</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono pt-1">
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Signal Entry</span>
-                <span className="text-plt-text font-semibold">Conviction ≥ 70</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Signal Entry</span>
+                <span className="text-white font-semibold">Conviction ≥ 70</span>
               </div>
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Exit Rule</span>
-                <span className="text-plt-text font-semibold">Dynamic Velocity</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Exit Rule</span>
+                <span className="text-white font-semibold">Dynamic Velocity</span>
               </div>
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Constraints</span>
-                <span className="text-plt-text font-semibold">Hold ≥3, Cool 10</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Constraints</span>
+                <span className="text-white font-semibold">Hold ≥3, Cool 10</span>
               </div>
-              <div className="bg-white/[0.04] p-2 rounded-lg border border-white/[0.06]">
-                <span className="text-plt-muted block text-[9px] uppercase">Universe</span>
-                <span className="text-plt-text font-semibold">Full EGX (216)</span>
+              <div className="bg-[#14171f] p-2 rounded-md border border-[#1e222d]">
+                <span className="text-[#787b86] block text-[9px] uppercase">Universe</span>
+                <span className="text-white font-semibold">Full EGX (216)</span>
               </div>
             </div>
-            <p className="text-[9.5px] text-plt-muted leading-relaxed pt-0.5">
+            <p className="text-[9.5px] text-[#787b86] leading-relaxed pt-0.5">
               Production candidate frozen model using lookback synthesis (UP: 21 bars, DOWN: 126 bars) and calibrated momentum delta hazard scoring.
             </p>
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {/* Model Toggle */}
-            <div className="flex bg-white/[0.04] border border-white/[0.08] p-1 rounded-xl">
+            {/* Model Toggle — tv-design §6 pill track */}
+            <div className="inline-flex w-full items-center p-0.5 rounded-lg bg-[#14171f] border border-[#2a2e39]">
               <button
                 type="button"
-                className={`flex-1 py-1 btn-typography rounded-lg transition-all ${
+                className={`flex-1 py-1 btn-typography rounded-md transition-colors ${
                   trainingModel === 'psi8'
-                    ? 'bg-white/[0.12] text-plt-text shadow-sm'
-                    : 'text-plt-muted hover:text-plt-text'
+                    ? 'bg-[#2a2e39] text-white font-semibold shadow-xs'
+                    : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
                 }`}
                 onClick={() => setTrainingModel('psi8')}
               >
@@ -638,10 +638,10 @@ export default function SignalPanel({
               </button>
               <button
                 type="button"
-                className={`flex-1 py-1 btn-typography rounded-lg transition-all ${
+                className={`flex-1 py-1 btn-typography rounded-md transition-colors ${
                   trainingModel === 'psi40'
-                    ? 'bg-white/[0.12] text-plt-text shadow-sm'
-                    : 'text-plt-muted hover:text-plt-text'
+                    ? 'bg-[#2a2e39] text-white font-semibold shadow-xs'
+                    : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
                 }`}
                 onClick={() => setTrainingModel('psi40')}
               >
@@ -650,8 +650,8 @@ export default function SignalPanel({
             </div>
 
             {/* Cutoff Selector */}
-            <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col gap-2">
-              <div className="flex items-center justify-between text-[10px] text-plt-muted">
+            <div className="p-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col gap-2">
+              <div className="flex items-center justify-between text-[10px] text-[#787b86]">
                 <span className="font-medium uppercase tracking-wider">In-Sample Cutoff</span>
                 <div className="flex gap-1 font-mono">
                   {(['2020', '2022', '2024', 'custom'] as const).map((preset) => (
@@ -659,10 +659,10 @@ export default function SignalPanel({
                       key={preset}
                       type="button"
                       onClick={() => setTrainCutoffPreset(preset)}
-                      className={`px-1.5 py-0.5 rounded-md text-[10px] transition ${
+                      className={`px-1.5 py-0.5 rounded-md text-[10px] transition-colors ${
                         trainCutoffPreset === preset
-                          ? 'bg-white/[0.15] text-plt-text font-medium'
-                          : 'bg-white/[0.06] text-plt-muted hover:text-plt-text'
+                          ? 'bg-[#2a2e39] text-white font-medium'
+                          : 'bg-[#1e222d] text-[#787b86] hover:text-white'
                       }`}
                     >
                       {preset === 'custom' ? 'Custom' : `≤${preset}`}
@@ -673,7 +673,7 @@ export default function SignalPanel({
 
               {trainCutoffPreset === 'custom' && (
                 <div className="flex items-center justify-between text-[11px]">
-                  <label className="text-plt-muted text-[10px]">Custom Date</label>
+                  <label className="text-[#787b86] text-[10px]">Custom Date</label>
                   <input
                     type="date"
                     className="date-token w-32 font-mono"
@@ -711,7 +711,7 @@ export default function SignalPanel({
       )}
 
       {/* Footer Info */}
-      <div className="flex items-center justify-between pt-2 border-t border-white/[0.08] text-[9px] text-plt-muted font-mono">
+      <div className="flex items-center justify-between pt-2 border-t border-[#1e222d] text-[9px] text-[#787b86] font-mono">
         <span>{visibleSignalData?.modelVersion || 'PSI v1.0'}</span>
         <span>Updated {visibleSignalData?.date ? new Date(visibleSignalData.date).toLocaleDateString() : 'Live'}</span>
       </div>
@@ -798,22 +798,22 @@ export default function SignalPanel({
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {/* Signal Status Badge (Buy / Sell / Hold) */}
           {loading ? (
-            <div className="flex items-center gap-1 text-plt-muted text-[10px] font-mono">
-              <Activity size={11} className="animate-spin text-plt-muted" />
+            <div className="flex items-center gap-1 text-[#787b86] text-[10px] font-mono">
+              <Activity size={11} className="animate-spin text-[#787b86]" />
             </div>
           ) : (
             <div
               className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold flex items-center gap-1 border ${
                 isBuy
-                  ? 'bg-plt-profit/15 text-plt-profit border-plt-profit/30'
+                  ? 'bg-[#089981]/15 text-[#089981] border-[#089981]/30'
                   : isExit
-                    ? 'bg-plt-risk/15 text-plt-risk border-plt-risk/30'
-                    : 'bg-white/[0.06] text-plt-muted border-white/[0.1]'
+                    ? 'bg-[#f23645]/15 text-[#f23645] border-[#f23645]/30'
+                    : 'bg-white/[0.06] text-[#787b86] border-white/[0.1]'
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isBuy ? 'bg-plt-profit animate-pulse' : isExit ? 'bg-plt-risk' : 'bg-plt-muted'
+                  isBuy ? 'bg-[#089981] animate-pulse' : isExit ? 'bg-[#f23645]' : 'bg-[#787b86]'
                 }`}
               />
               <span>{displaySignal}</span>
@@ -822,8 +822,8 @@ export default function SignalPanel({
 
           {/* Master Index (MI) */}
           {masterIndex !== null && (
-            <span className="text-[10px] font-mono text-plt-muted whitespace-nowrap">
-              MI: <strong className="text-plt-text font-semibold">{masterIndex.toFixed(0)}</strong>
+            <span className="text-[10px] font-mono text-[#787b86] whitespace-nowrap">
+              MI: <strong className="text-white font-semibold">{masterIndex.toFixed(0)}</strong>
             </span>
           )}
 
@@ -832,8 +832,8 @@ export default function SignalPanel({
             <span
               className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${
                 roiMarginVal >= 0
-                  ? 'bg-plt-profit/15 text-plt-profit border-plt-profit/30'
-                  : 'bg-plt-risk/15 text-plt-risk border-plt-risk/30'
+                  ? 'bg-[#089981]/15 text-[#089981] border-[#089981]/30'
+                  : 'bg-[#f23645]/15 text-[#f23645] border-[#f23645]/30'
               }`}
               title={`Alpha Margin: ${roiMarginVal > 0 ? '+' : ''}${roiMarginVal.toFixed(2)}%`}
             >
@@ -848,8 +848,8 @@ export default function SignalPanel({
               onClick={() => setShowSignals(!showSignals)}
               className={`p-1 rounded-lg transition-colors cursor-pointer ${
                 !showSignals
-                  ? 'text-plt-text bg-white/[0.10]'
-                  : 'text-plt-muted hover:text-plt-text hover:bg-white/10'
+                  ? 'text-white bg-white/[0.10]'
+                  : 'text-[#787b86] hover:text-white hover:bg-white/10'
               }`}
               title={showSignals ? 'Hide Signals' : 'Show Signals'}
             >
@@ -861,11 +861,11 @@ export default function SignalPanel({
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="p-0.5 text-plt-muted hover:text-plt-text transition-colors cursor-pointer"
+            className="p-0.5 text-[#787b86] hover:text-white transition-colors cursor-pointer"
           >
             <ChevronDown
               size={14}
-              className={`transition-transform duration-200 ${expanded ? 'rotate-180 text-plt-text' : ''}`}
+              className={`transition-transform duration-200 ${expanded ? 'rotate-180 text-white' : ''}`}
             />
           </button>
         </div>
@@ -881,7 +881,7 @@ export default function SignalPanel({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="overflow-hidden border-t border-white/[0.08] px-2.5 pb-2.5"
+            className="overflow-hidden border-t border-[#1e222d] px-2.5 pb-2.5"
           >
             {renderInspectorBody()}
           </motion.div>

@@ -83,15 +83,19 @@ export default function BottomToolbar({
 
   return (
     <>
-      <div className="h-[28px] shrink-0 w-full bg-plt-card border-t border-plt-border-soft flex items-center justify-between px-3 select-none text-[11px] font-medium text-plt-text">
+      {/* tv-design §1: bg-[#0d0d0d] border-t border-[#1e222d] */}
+      <div className="h-[28px] shrink-0 w-full bg-[#0d0d0d] border-t border-[#1e222d] flex items-center justify-between px-3 select-none text-[11px] font-medium">
         <div className="flex items-center gap-3">
+          {/* EGX Live dot — keep green pulse */}
           <div className="flex items-center gap-1.5 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-plt-profit animate-pulse" />
-            <span className="text-plt-muted">EGX Live</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#089981] animate-pulse" />
+            <span className="text-[#787b86]">EGX Live</span>
           </div>
 
-          <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
-          <div className="flex items-center space-x-2.5">
+          <div className="h-3.5 w-px bg-[#1e222d] shrink-0" />
+
+          {/* tv-design §6: pill switcher track */}
+          <div className="inline-flex items-center gap-0.5">
             {RANGES.map((range) => {
               const isActive = selectedRange === range.label;
               return (
@@ -99,10 +103,10 @@ export default function BottomToolbar({
                   key={range.label}
                   href={`?ticker=${symbol}&timeframe=${range.tf}&view=chart${replayQuery}`}
                   onClick={() => handleRangeClick(range)}
-                  className={`transition-colors leading-none ${
+                  className={`px-2.5 py-0.5 rounded-md text-[11px] transition-colors leading-none ${
                     isActive
-                      ? 'text-plt-text font-semibold'
-                      : 'text-plt-muted hover:text-plt-text'
+                      ? 'bg-[#2a2e39] text-white font-bold'
+                      : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
                   }`}
                 >
                   {range.label}
@@ -111,23 +115,23 @@ export default function BottomToolbar({
             })}
           </div>
 
-          <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
+          <div className="h-3.5 w-px bg-[#1e222d] shrink-0" />
 
           {/* Strategy Report Button */}
           <button
             type="button"
             onClick={() => setReportOpen(true)}
-            className="flex items-center gap-1.5 text-plt-subtle hover:text-plt-text transition-colors btn-typography cursor-pointer"
+            className="flex items-center gap-1.5 text-[#787b86] hover:text-white transition-colors btn-typography cursor-pointer"
             title="Open Strategy Performance Report"
           >
-            <FileText size={13} className="text-plt-muted" />
+            <FileText size={13} className="text-[#787b86]" />
             <span>Strategy Report</span>
           </button>
         </div>
 
-        {/* Right Section: Time UTC+3 (No ADJ button) */}
+        {/* Right Section: Time UTC+3 */}
         <div className="flex items-center">
-          <div className="tabular-nums text-plt-muted font-mono text-[11px] leading-none">
+          <div className="tabular-nums text-[#787b86] font-mono text-[11px] leading-none">
             {cairoTime} UTC+3
           </div>
         </div>

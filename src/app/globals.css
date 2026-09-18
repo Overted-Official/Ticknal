@@ -329,15 +329,15 @@
   --border-command-widget: transparent;
   --shadow-command-widget: none;
 
-  /* Switch & Segmented Control Tokens */
-  --switch-bg: transparent;
-  --switch-border: transparent;
+  /* Switch & Segmented Control Tokens — tv-design §6 */
+  --switch-bg: #14171f;
+  --switch-border: #2a2e39;
   --switch-radius: var(--radius-surface);
   --switch-btn-bg: transparent;
-  --switch-btn-bg-hover: color-mix(in srgb, var(--palette-interactive) 50%, transparent);
-  --switch-btn-bg-active: #232323;
-  --switch-btn-text: var(--plt-text-muted);
-  --switch-btn-text-active: var(--plt-text-primary);
+  --switch-btn-bg-hover: #1e222d;
+  --switch-btn-bg-active: #2a2e39;
+  --switch-btn-text: #787b86;
+  --switch-btn-text-active: #ffffff;
 
   /* Semantic Typography Hierarchy Tokens */
   --title-page-size: 1.125rem;

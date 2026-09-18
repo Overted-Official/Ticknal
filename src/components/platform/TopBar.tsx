@@ -50,16 +50,16 @@ export default function TopBar({
 
   return (
     <>
-      <div className="h-12 w-full bg-plt-base/90 backdrop-blur-xl border-b border-plt-border flex items-center px-4 justify-between select-none relative z-40 shrink-0 text-plt-text">
+      <div className="h-12 w-full bg-plt-base/90 backdrop-blur-xl border-b border-[#1e222d] flex items-center px-4 justify-between select-none relative z-40 shrink-0 text-plt-text">
         {/* Left section (Logo + Symbol Command trigger) */}
         <div className="flex items-center space-x-2 md:space-x-4">
           <button
             type="button"
-            className="flex items-center space-x-2 cursor-pointer hover:bg-plt-hover border border-transparent hover:border-plt-border px-2 py-2 rounded-xl transition-all text-left"
+            className="flex items-center space-x-2 cursor-pointer hover:bg-[#1e222d]/60 border border-transparent hover:border-[#2a2e39] px-2 py-2 rounded-xl transition-all text-left"
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Circular Logo */}
-            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-plt-hover border border-plt-border overflow-hidden">
+            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-[#14171f] border border-[#2a2e39] overflow-hidden">
               {currentTicker.logoUrl ? (
                 <img src={currentTicker.logoUrl} alt={displaySymbol} className="ticker-logo-image ticker-logo-fill" />
               ) : currentTicker.website ? (
@@ -71,28 +71,28 @@ export default function TopBar({
 
             <div className="flex flex-col justify-center min-w-0">
               <span className="text-plt-text text-xs font-medium truncate hidden md:block leading-tight">{currentTicker.companyName}</span>
-              <div className="flex items-center space-x-2 text-plt-muted text-caption leading-tight font-medium">
+              <div className="flex items-center space-x-2 text-[#787b86] text-caption leading-tight font-medium">
                 <span className="text-plt-text font-medium">{displaySymbol}</span>
                 <span className="opacity-40">•</span>
                 <span>{['GC1!', 'SI1!'].includes(symbol.toUpperCase()) ? 'COMEX' : symbol.toUpperCase() === 'USDEGP' ? 'FOREX' : 'EGX'}</span>
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 ml-2 px-2 py-2 rounded-xl bg-plt-hover border border-plt-border text-mini text-plt-muted tabular-nums">
+            <div className="hidden sm:flex items-center gap-2 ml-2 px-2 py-2 rounded-xl bg-[#14171f] border border-[#2a2e39] text-mini text-[#787b86] tabular-nums">
               <Search size={16} />
               <span>⌘K</span>
             </div>
           </button>
         </div>
 
-        {/* Center section: Desktop View Switcher Pills */}
+        {/* Center section: Desktop View Switcher Pills — tv-design §6 via pill-switch CSS class */}
         <div className="pill-switch hidden md:flex">
           <button
             type="button"
             onClick={() => switchView('chart')}
             className={`pill-switch-btn flex items-center gap-1.5 ${activeView === 'chart' ? 'active' : ''}`}
           >
-            <LineChart size={14} className={activeView === 'chart' ? 'text-plt-text' : 'text-plt-muted'} />
+            <LineChart size={14} className={activeView === 'chart' ? 'text-white' : 'text-[#787b86]'} />
             <span>Chart</span>
           </button>
 
@@ -101,7 +101,7 @@ export default function TopBar({
             onClick={() => switchView('positions')}
             className={`pill-switch-btn flex items-center gap-1.5 ${activeView === 'positions' ? 'active' : ''}`}
           >
-            <Briefcase size={14} className={activeView === 'positions' ? 'text-plt-text' : 'text-plt-muted'} />
+            <Briefcase size={14} className={activeView === 'positions' ? 'text-white' : 'text-[#787b86]'} />
             <span>Positions</span>
           </button>
 
@@ -110,14 +110,14 @@ export default function TopBar({
             onClick={() => switchView('sectors')}
             className={`pill-switch-btn flex items-center gap-1.5 ${activeView === 'sectors' ? 'active' : ''}`}
           >
-            <LayoutGrid size={14} className={activeView === 'sectors' ? 'text-plt-text' : 'text-plt-muted'} />
-            <span>Sectors & Heatmap</span>
+            <LayoutGrid size={14} className={activeView === 'sectors' ? 'text-white' : 'text-[#787b86]'} />
+            <span>Sectors &amp; Heatmap</span>
           </button>
         </div>
 
-        {/* Right side empty placeholder or alerts */}
+        {/* Right side: status message */}
         {statusMessage && (
-          <div className="absolute right-4 top-2 z-50 rounded-xl border border-plt-border bg-plt-base/95 backdrop-blur-xl px-4 py-2 text-xs text-plt-text shadow-2xl hidden md:block">
+          <div className="absolute right-4 top-2 z-50 rounded-xl border border-[#2a2e39] bg-plt-base/95 backdrop-blur-xl px-4 py-2 text-xs text-plt-text shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}
