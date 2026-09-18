@@ -248,6 +248,13 @@ export default function SectorRotationMatrix({
             const nodeSize = Math.max(Math.min(sector.turnoverShare * 1.2 + 28, 54), 28);
             const acronym = getSectorAcronym(sector.sector);
 
+            const bubbleFontSize =
+              nodeSize < 34
+                ? 'text-[8.5px]'
+                : nodeSize < 44
+                ? 'text-[9.5px]'
+                : 'text-[10.5px]';
+
             const regimeBg = {
               Leading: 'bg-plt-profit-soft border-plt-profit-border text-plt-profit shadow-panel',
               Improving: 'bg-plt-info-soft border-plt-info-border text-plt-info shadow-panel',
@@ -281,7 +288,7 @@ export default function SectorRotationMatrix({
                 onMouseEnter={() => setHoveredSector(sector)}
                 onMouseLeave={() => setHoveredSector(null)}
               >
-                <span className="text-mini font-medium tabular-nums tracking-tight text-center leading-none">
+                <span className={`${bubbleFontSize} font-mono font-bold tabular-nums tracking-tighter text-center leading-none px-0.5 max-w-full truncate select-none pointer-events-none`}>
                   {acronym}
                 </span>
               </div>

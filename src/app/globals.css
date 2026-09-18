@@ -759,6 +759,11 @@ textarea:focus-visible {
   letter-spacing: var(--btn-letter-spacing);
 }
 
+.text-mini {
+  font-size: var(--text-10);
+  line-height: 1.2;
+}
+
 .select-token {
   appearance: none;
   -webkit-appearance: none;
