@@ -115,7 +115,7 @@
   --chart-grid: var(--palette-chart-grid);
 
   /* Typography Scale */
-  --font-sans-token: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans-token: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
   --text-8: 0.5rem;
   --text-9: 0.5625rem;
   --text-10: 0.625rem;
@@ -142,12 +142,39 @@
   --font-weight-medium-token: 500;
   --font-weight-display-token: 500;
 
-  /* Button Typography Tokens */
+  /* Button Design Tokens (TradingView-Grade Pill Architecture) */
   --btn-font-size: var(--text-12);
+  --btn-font-size-lg: var(--text-16);
+  --btn-font-size-sm: var(--text-11);
   --btn-font-weight: var(--font-weight-medium-token);
   --btn-font-weight-semibold: 600;
   --btn-line-height: 1.25;
+  --btn-line-height-lg: 1.5;
   --btn-letter-spacing: var(--tracking-normal);
+
+  /* Button Heights (Proportional Scales) */
+  --btn-height-lg: 3rem;       /* 48px - Hero, Auth & Major CTAs */
+  --btn-height-default: 2.5rem;/* 40px - Standard Modals, Forms & Actions */
+  --btn-height-compact: 2rem;  /* 32px - Segmented Controls, Filters & Tabs */
+  --btn-height-micro: 1.625rem;/* 26px - Dense Toolbars, Chips & Table Rows */
+
+  /* Button Horizontal Paddings (~1:2 ratio with height) */
+  --btn-padding-x-lg: 1.4375rem; /* 23px */
+  --btn-padding-x-default: 1.125rem; /* 18px */
+  --btn-padding-x-compact: 0.875rem; /* 14px */
+  --btn-padding-x-micro: 0.625rem;   /* 10px */
+
+  /* Button Color Tokens */
+  --btn-primary-bg: #f2f2f2;
+  --btn-primary-text: #0f0f0f;
+  --btn-primary-border: #f2f2f2;
+  --btn-primary-hover-bg: #e0e0e0;
+  --btn-secondary-bg: var(--plt-bg-hover);
+  --btn-secondary-text: #dbdbdb;
+  --btn-secondary-border: var(--plt-border);
+  --btn-secondary-hover-bg: var(--plt-bg-muted);
+  --btn-secondary-hover-text: #ffffff;
+  --btn-secondary-hover-border: var(--plt-border-strong);
 
   /* 8px Spacing Grid */
   --space-0: 0;
@@ -433,6 +460,8 @@ button {
   font-weight: var(--btn-font-weight);
   line-height: var(--btn-line-height);
   letter-spacing: var(--btn-letter-spacing);
+  font-feature-settings: "tnum" on, "lnum" on;
+  -webkit-tap-highlight-color: transparent;
 }
 button:not(:disabled) {
   cursor: pointer;
@@ -695,55 +724,142 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  min-height: var(--size-control-default);
+  min-height: var(--btn-height-default);
   border: var(--border-width-default) solid transparent;
   border-radius: var(--radius-button);
-  padding: 0 var(--space-2);
+  padding: 0 var(--btn-padding-x-default);
   font-family: var(--font-sans-token);
   font-size: var(--btn-font-size);
   font-weight: var(--btn-font-weight);
   line-height: var(--btn-line-height);
   letter-spacing: var(--btn-letter-spacing);
+  font-feature-settings: "tnum" on, "lnum" on;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  cursor: pointer;
   white-space: nowrap;
-  transition: background-color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+  transition: background-color var(--duration-base) var(--ease-standard),
+              border-color var(--duration-base) var(--ease-standard),
+              color var(--duration-base) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard);
 }
 .btn-token:active { transform: scale(0.98); }
-.btn-compact { min-height: var(--size-control-compact); padding: 0 var(--space-2); }
-.btn-primary { border-color: #ffffff; background: #ffffff; color: #000000; box-shadow: var(--shadow-accent); font-weight: var(--btn-font-weight-semibold); }
-.btn-primary:hover { background: #e5e5e5; border-color: #e5e5e5; }
-.btn-secondary { border-color: var(--plt-border); background: var(--plt-bg-hover); color: var(--plt-text-secondary); }
-.btn-secondary:hover { border-color: var(--plt-border-strong); background: var(--plt-bg-muted); color: var(--plt-text-primary); }
-.btn-danger { border-color: var(--plt-risk-border); background: var(--plt-risk-soft); color: var(--plt-risk); font-weight: var(--btn-font-weight-semibold); }
+
+/* Proportional Size Variants */
+.btn-lg {
+  min-height: var(--btn-height-lg);
+  padding: 0 var(--btn-padding-x-lg);
+  font-size: var(--btn-font-size-lg);
+  line-height: var(--btn-line-height-lg);
+}
+.btn-compact {
+  min-height: var(--btn-height-compact);
+  padding: 0 var(--btn-padding-x-compact);
+}
+.btn-micro {
+  min-height: var(--btn-height-micro);
+  padding: 0 var(--btn-padding-x-micro);
+  font-size: var(--btn-font-size-sm);
+}
+
+/* Square / Circular Icon Buttons */
+.btn-icon {
+  width: var(--btn-height-default);
+  height: var(--btn-height-default);
+  min-height: var(--btn-height-default);
+  padding: 0;
+  border-radius: var(--radius-full);
+}
+.btn-icon-compact {
+  width: var(--btn-height-compact);
+  height: var(--btn-height-compact);
+  min-height: var(--btn-height-compact);
+  padding: 0;
+  border-radius: var(--radius-full);
+}
+
+/* TradingView Soft High-Contrast Color Variants */
+.btn-primary {
+  border-color: var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  box-shadow: var(--shadow-accent);
+  font-weight: var(--btn-font-weight-semibold);
+}
+.btn-primary:hover {
+  background: var(--btn-primary-hover-bg);
+  border-color: var(--btn-primary-hover-bg);
+  color: var(--btn-primary-text);
+}
+.btn-secondary {
+  border-color: var(--btn-secondary-border);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+}
+.btn-secondary:hover {
+  border-color: var(--btn-secondary-hover-border);
+  background: var(--btn-secondary-hover-bg);
+  color: var(--btn-secondary-hover-text);
+}
+.btn-danger {
+  border-color: var(--plt-risk-border);
+  background: var(--plt-risk-soft);
+  color: var(--plt-risk);
+  font-weight: var(--btn-font-weight-semibold);
+}
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--plt-risk);
+}
 
 .pill-switch {
   display: inline-flex;
   align-items: center;
   background: var(--switch-bg);
   border: var(--border-width-default) solid var(--switch-border);
-  border-radius: var(--switch-radius);
+  border-radius: var(--radius-button);
   padding: 0.2rem;
   gap: 0.25rem;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .pill-switch-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.3rem 0.75rem;
-  border-radius: calc(var(--switch-radius) * 0.75);
+  min-height: calc(var(--btn-height-compact) - 0.35rem);
+  padding: 0 var(--btn-padding-x-compact);
+  border-radius: var(--radius-button);
   font-size: var(--btn-font-size);
   font-family: var(--font-sans-token);
   font-weight: var(--btn-font-weight);
   line-height: var(--btn-line-height);
   letter-spacing: var(--btn-letter-spacing);
+  font-feature-settings: "tnum" on, "lnum" on;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
   color: var(--switch-btn-text);
   background: var(--switch-btn-bg);
+  border: 1px solid transparent;
   box-shadow: none;
-  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard);
   cursor: pointer;
+  white-space: nowrap;
 }
-.pill-switch-btn:hover { background: var(--switch-btn-bg-hover); color: var(--plt-text-primary); }
-.pill-switch-btn-active, .pill-switch-btn.active { background: var(--switch-btn-bg-active); color: var(--switch-btn-text-active); font-weight: var(--btn-font-weight-semibold); box-shadow: none; }
+.pill-switch-btn:hover {
+  background: var(--switch-btn-bg-hover);
+  color: var(--plt-text-primary);
+}
+.pill-switch-btn-active,
+.pill-switch-btn.active {
+  background: var(--switch-btn-bg-active);
+  color: var(--switch-btn-text-active);
+  border-color: var(--plt-border-soft);
+  font-weight: var(--btn-font-weight-semibold);
+  box-shadow: none;
+}
 
 .btn-typography {
   font-size: var(--btn-font-size);
@@ -1154,10 +1270,10 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  min-height: var(--size-control-compact);
+  min-height: var(--btn-height-compact);
   border: var(--border-width-default) solid transparent;
   border-radius: var(--radius-button);
-  padding: 0 var(--space-2);
+  padding: 0 var(--btn-padding-x-compact);
   color: var(--plt-text-muted);
   background: transparent;
   font-family: var(--font-sans-token);
@@ -1165,6 +1281,10 @@ textarea:focus-visible {
   font-weight: var(--btn-font-weight);
   line-height: var(--btn-line-height);
   letter-spacing: var(--btn-letter-spacing);
+  font-feature-settings: "tnum" on, "lnum" on;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  cursor: pointer;
   white-space: nowrap;
   transition: color var(--duration-base) var(--ease-standard), background-color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
