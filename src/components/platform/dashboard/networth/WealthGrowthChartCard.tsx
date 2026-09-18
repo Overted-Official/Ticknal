@@ -246,14 +246,14 @@ export default function WealthGrowthChartCard({
 
         {/* Right Controls: Area vs Line Switcher */}
         <div className="flex items-center gap-2">
-          <div className="inline-flex p-0.5 rounded-lg bg-[#131722] border border-[#2a2e39]/50">
+          <div className="inline-flex p-0.5 rounded-lg bg-[#18181b] border border-[#27272a]">
             {/* Area Icon */}
             <button
               type="button"
               onClick={() => setChartStyle('area')}
               className={`p-1.5 rounded-md transition-all ${
                 chartStyle === 'area'
-                  ? 'bg-[#2a2e39] text-white shadow-xs'
+                  ? 'bg-[#27272a] text-white shadow-xs'
                   : 'text-[#787b86] hover:text-white'
               }`}
               title="Area style"

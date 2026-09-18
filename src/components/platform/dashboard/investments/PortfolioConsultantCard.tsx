@@ -226,13 +226,13 @@ export default function PortfolioConsultantCard({
         </div>
 
         {/* View Mode Switcher */}
-        <div className="inline-flex p-0.5 rounded-lg bg-[#131722] border border-[#2a2e39]/50 shrink-0 self-start sm:self-auto">
+        <div className="inline-flex p-0.5 rounded-lg bg-[#18181b] border border-[#27272a] shrink-0 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setViewMode('3-columns')}
             className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
               viewMode === '3-columns'
-                ? 'bg-[#2a2e39] text-white shadow-xs'
+                ? 'bg-[#27272a] text-white shadow-xs'
                 : 'text-[#787b86] hover:text-white'
             }`}
           >
@@ -487,7 +487,7 @@ export default function PortfolioConsultantCard({
                   return (
                     <div
                       key={sug.industryGroup}
-                      className="p-3.5 rounded-xl border border-[#1e222d] bg-[#131722] hover:border-[#2a2e39] transition-all space-y-3"
+                      className="p-3.5 rounded-xl border border-[#27272a] bg-[#121214] hover:border-[#3f3f46] transition-all space-y-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div>

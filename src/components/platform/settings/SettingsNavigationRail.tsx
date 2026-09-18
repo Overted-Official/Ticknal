@@ -19,45 +19,49 @@ export default function SettingsNavigationRail({
   monitoredTickersCount,
 }: SettingsNavigationRailProps) {
   return (
-    <div className="w-full min-w-0 relative hidden md:flex items-center gap-2 border-b border-white/[0.09] pb-3">
+    <div className="w-full min-w-0 relative hidden md:flex items-center gap-6 border-b border-[#222225] overflow-x-auto no-scrollbar">
       <button
         type="button"
         onClick={() => onTabChange('profile')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
+        className={`flex items-center gap-2 pb-3 -mb-[1px] text-xs sm:text-[13px] tracking-tight transition-colors cursor-pointer border-b-2 ${
           activeTab === 'profile'
-            ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-            : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+            ? 'text-white font-semibold border-white'
+            : 'text-[#787b86] hover:text-[#d1d4dc] font-medium border-transparent'
         }`}
       >
-        <User size={14} className={activeTab === 'profile' ? 'text-white' : 'text-white/40'} />
+        <User size={15} className={activeTab === 'profile' ? 'text-white' : 'text-[#787b86]'} />
         <span>Account Profile</span>
       </button>
 
       <button
         type="button"
         onClick={() => onTabChange('security')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
+        className={`flex items-center gap-2 pb-3 -mb-[1px] text-xs sm:text-[13px] tracking-tight transition-colors cursor-pointer border-b-2 ${
           activeTab === 'security'
-            ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-            : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+            ? 'text-white font-semibold border-white'
+            : 'text-[#787b86] hover:text-[#d1d4dc] font-medium border-transparent'
         }`}
       >
-        <ShieldCheck size={14} className={activeTab === 'security' ? 'text-white' : 'text-white/40'} />
+        <ShieldCheck size={15} className={activeTab === 'security' ? 'text-white' : 'text-[#787b86]'} />
         <span>Security & PIN</span>
       </button>
 
       <button
         type="button"
         onClick={() => onTabChange('devices')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
+        className={`flex items-center gap-2 pb-3 -mb-[1px] text-xs sm:text-[13px] tracking-tight transition-colors cursor-pointer border-b-2 ${
           activeTab === 'devices'
-            ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-            : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+            ? 'text-white font-semibold border-white'
+            : 'text-[#787b86] hover:text-[#d1d4dc] font-medium border-transparent'
         }`}
       >
-        <Smartphone size={14} className={activeTab === 'devices' ? 'text-white' : 'text-white/40'} />
+        <Smartphone size={15} className={activeTab === 'devices' ? 'text-white' : 'text-[#787b86]'} />
         <span>Connected Devices</span>
-        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
+        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums border ${
+          activeTab === 'devices'
+            ? 'bg-[#27272a] text-white border-[#3f3f46]'
+            : 'bg-[#18181b] text-[#787b86] border-[#27272a]'
+        }`}>
           {Math.max(1, devicesCount)}
         </span>
       </button>
@@ -65,15 +69,19 @@ export default function SettingsNavigationRail({
       <button
         type="button"
         onClick={() => onTabChange('alerts')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography transition-all cursor-pointer ${
+        className={`flex items-center gap-2 pb-3 -mb-[1px] text-xs sm:text-[13px] tracking-tight transition-colors cursor-pointer border-b-2 ${
           activeTab === 'alerts'
-            ? 'bg-white/[0.10] text-white border border-white/[0.15] shadow-sm'
-            : 'text-white/40 hover:text-white/80 hover:bg-white/[0.03]'
+            ? 'text-white font-semibold border-white'
+            : 'text-[#787b86] hover:text-[#d1d4dc] font-medium border-transparent'
         }`}
       >
-        <Bell size={14} className={activeTab === 'alerts' ? 'text-white' : 'text-white/40'} />
+        <Bell size={15} className={activeTab === 'alerts' ? 'text-white' : 'text-[#787b86]'} />
         <span>Monitored Tickers & Alerts</span>
-        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/60">
+        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums border ${
+          activeTab === 'alerts'
+            ? 'bg-[#27272a] text-white border-[#3f3f46]'
+            : 'bg-[#18181b] text-[#787b86] border-[#27272a]'
+        }`}>
           {monitoredTickersCount}
         </span>
       </button>

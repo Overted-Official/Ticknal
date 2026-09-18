@@ -165,13 +165,13 @@ export default function PortfolioBreakdownTable({
         </div>
 
         {/* View Mode Toggle: 3 Columns vs All Holdings */}
-        <div className="inline-flex p-0.5 rounded-lg bg-[#131722] border border-[#2a2e39]/50 shrink-0 self-start sm:self-auto">
+        <div className="inline-flex p-0.5 rounded-lg bg-[#18181b] border border-[#27272a] shrink-0 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setViewMode('3-columns')}
             className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
               viewMode === '3-columns'
-                ? 'bg-[#2a2e39] text-white shadow-xs'
+                ? 'bg-[#27272a] text-white shadow-xs'
                 : 'text-[#787b86] hover:text-white'
             }`}
           >

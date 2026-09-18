@@ -47,7 +47,7 @@ function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | nu
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.09] p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
+    <div className="w-7 h-7 rounded-md bg-[#18181b] border border-[#27272a] p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
       {logoUrl && !imgError ? (
         <img
           src={logoUrl}
@@ -56,7 +56,7 @@ function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | nu
           onError={() => setImgError(true)}
         />
       ) : (
-        <span className="text-[10px] font-bold text-white/50 uppercase font-mono">{symbol.slice(0, 2)}</span>
+        <span className="text-[10px] font-bold text-[#787b86] uppercase font-sans">{symbol.slice(0, 2)}</span>
       )}
     </div>
   );
@@ -214,18 +214,18 @@ export default function AlertTriggersWidget({
   return (
     <div className="w-full min-w-0 relative space-y-4">
       {/* Strategy Scope Selector Card */}
-      <div className="border border-white/[0.09] rounded-md bg-black p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-white/[0.08]">
+      <div className="bg-[#121214] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between gap-4 border-b border-[#222225] pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.06] border border-white/[0.12] flex items-center justify-center text-white/60">
+            <div className="w-8 h-8 rounded-lg bg-[#18181b] border border-[#27272a] flex items-center justify-center text-[#d1d4dc]">
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-[13px] font-medium text-white tracking-[-0.02em] flex items-center gap-2">
-                <span>Signal & Alert Strategy Scope</span>
-                {isSavingScope && <span className="text-[10px] text-plt-muted animate-pulse font-mono">Syncing...</span>}
+              <h2 className="text-xs sm:text-[13px] font-bold text-white tracking-tight flex items-center gap-2">
+                <span>Signal &amp; Alert Strategy Scope</span>
+                {isSavingScope && <span className="text-[10px] text-[#787b86] animate-pulse">Syncing...</span>}
               </h2>
-              <p className="mt-0.5 text-xs text-white/40">
+              <p className="mt-0.5 text-xs text-[#787b86]">
                 Choose which models send push notifications and populate opportunity tables.
               </p>
             </div>
@@ -239,30 +239,30 @@ export default function AlertTriggersWidget({
             onClick={() => handleStrategyScopeChange('all')}
             className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
               alertStrategyScope === 'all'
-                ? 'bg-white/[0.06] border-white/60 shadow-inset'
-                : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                ? 'bg-[#222226] border-[#2962ff] shadow-sm'
+                : 'bg-[#18181b] border-[#27272a] hover:border-[#3f3f46] hover:bg-[#222226]'
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Zap className={`w-4 h-4 ${alertStrategyScope === 'all' ? 'text-white' : 'text-white/40'}`} />
-                  <span className="text-xs font-bold text-white">All Strategies</span>
+                  <Zap className={`w-4 h-4 ${alertStrategyScope === 'all' ? 'text-[#2962ff]' : 'text-[#787b86]'}`} />
+                  <span className="text-xs font-semibold text-white">All Strategies</span>
                 </div>
-                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#089981]/10 text-[#089981] border border-[#089981]/25">
                   Recommended
                 </span>
               </div>
-              <p className="text-[11px] text-white/40 leading-relaxed">
+              <p className="text-[11px] text-[#787b86] leading-relaxed">
                 Receive alerts from PSI, PSI V2, and Thoth EGX Macro models.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
-              <span className="text-[9px] font-mono text-white/30">Scope: Multi-Model</span>
+            <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
+              <span className="text-[9px] text-[#787b86]">Scope: Multi-Model</span>
               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                alertStrategyScope === 'all' ? 'border-white bg-white' : 'border-white/30'
+                alertStrategyScope === 'all' ? 'border-[#2962ff] bg-[#2962ff]' : 'border-[#27272a]'
               }`}>
-                {alertStrategyScope === 'all' && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
+                {alertStrategyScope === 'all' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </div>
           </div>
@@ -272,30 +272,30 @@ export default function AlertTriggersWidget({
             onClick={() => handleStrategyScopeChange('psi')}
             className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
               alertStrategyScope === 'psi'
-                ? 'bg-cyan-500/10 border-cyan-500/60 shadow-accent'
-                : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                ? 'bg-[#222226] border-[#2962ff] shadow-sm'
+                : 'bg-[#18181b] border-[#27272a] hover:border-[#3f3f46] hover:bg-[#222226]'
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Target className={`w-4 h-4 ${alertStrategyScope === 'psi' ? 'text-cyan-400' : 'text-white/40'}`} />
-                  <span className="text-xs font-bold text-white">PSI Strategy</span>
+                  <Target className={`w-4 h-4 ${alertStrategyScope === 'psi' ? 'text-[#2962ff]' : 'text-[#787b86]'}`} />
+                  <span className="text-xs font-semibold text-white">PSI Strategy</span>
                 </div>
-                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
+                <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#2962ff]/10 text-[#2962ff] border border-[#2962ff]/25">
                   PSI
                 </span>
               </div>
-              <p className="text-[11px] text-white/40 leading-relaxed">
+              <p className="text-[11px] text-[#787b86] leading-relaxed">
                 Multi-indicator PSI inflection and consensus engine triggers.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
-              <span className="text-[9px] font-mono text-white/30">Scope: PSI Rules</span>
+            <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
+              <span className="text-[9px] text-[#787b86]">Scope: PSI Rules</span>
               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                alertStrategyScope === 'psi' ? 'border-cyan-400 bg-cyan-400' : 'border-white/30'
+                alertStrategyScope === 'psi' ? 'border-[#2962ff] bg-[#2962ff]' : 'border-[#27272a]'
               }`}>
-                {alertStrategyScope === 'psi' && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
+                {alertStrategyScope === 'psi' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </div>
           </div>
@@ -305,30 +305,30 @@ export default function AlertTriggersWidget({
             onClick={() => handleStrategyScopeChange('psi_v2')}
             className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
               alertStrategyScope === 'psi_v2'
-                ? 'bg-emerald-500/10 border-emerald-500/60 shadow-accent'
-                : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                ? 'bg-[#222226] border-[#089981] shadow-sm'
+                : 'bg-[#18181b] border-[#27272a] hover:border-[#3f3f46] hover:bg-[#222226]'
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Compass className={`w-4 h-4 ${alertStrategyScope === 'psi_v2' ? 'text-emerald-400' : 'text-white/40'}`} />
-                  <span className="text-xs font-bold text-white">PSI V2 Strategy</span>
+                  <Compass className={`w-4 h-4 ${alertStrategyScope === 'psi_v2' ? 'text-[#089981]' : 'text-[#787b86]'}`} />
+                  <span className="text-xs font-semibold text-white">PSI V2 Strategy</span>
                 </div>
-                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#089981]/10 text-[#089981] border border-[#089981]/25">
                   PSI V2
                 </span>
               </div>
-              <p className="text-[11px] text-white/40 leading-relaxed">
-                3-PSI Vector Architecture (PSI Zone & Up/Down Momentum).
+              <p className="text-[11px] text-[#787b86] leading-relaxed">
+                3-PSI Vector Architecture (PSI Zone &amp; Up/Down Momentum).
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
-              <span className="text-[9px] font-mono text-white/30">Scope: 3-PSI Vector</span>
+            <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
+              <span className="text-[9px] text-[#787b86]">Scope: 3-PSI Vector</span>
               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                alertStrategyScope === 'psi_v2' ? 'border-emerald-400 bg-emerald-400' : 'border-white/30'
+                alertStrategyScope === 'psi_v2' ? 'border-[#089981] bg-[#089981]' : 'border-[#27272a]'
               }`}>
-                {alertStrategyScope === 'psi_v2' && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
+                {alertStrategyScope === 'psi_v2' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </div>
           </div>
@@ -338,28 +338,28 @@ export default function AlertTriggersWidget({
             onClick={() => handleStrategyScopeChange('thoth_egx_macro')}
             className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
               alertStrategyScope === 'thoth_egx_macro'
-                ? 'bg-purple-500/10 border-purple-500/60 shadow-accent'
-                : 'bg-white/[0.02] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.04]'
+                ? 'bg-[#222226] border-[#9c27b0] shadow-sm'
+                : 'bg-[#18181b] border-[#27272a] hover:border-[#3f3f46] hover:bg-[#222226]'
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Cpu className={`w-4 h-4 ${alertStrategyScope === 'thoth_egx_macro' ? 'text-purple-400' : 'text-white/40'}`} />
-                  <span className="text-xs font-bold text-white">Thoth Macro</span>
+                  <Cpu className={`w-4 h-4 ${alertStrategyScope === 'thoth_egx_macro' ? 'text-[#9c27b0]' : 'text-[#787b86]'}`} />
+                  <span className="text-xs font-semibold text-white">Thoth Macro</span>
                 </div>
-                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/25">
+                <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#9c27b0]/10 text-[#9c27b0] border border-[#9c27b0]/25">
                   Deep Learning
                 </span>
               </div>
-              <p className="text-[11px] text-white/40 leading-relaxed">
+              <p className="text-[11px] text-[#787b86] leading-relaxed">
                 Transformer Exhaustion Prediction model alerts.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
-              <span className="text-[9px] font-mono text-white/30">Scope: AI Model</span>
+            <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
+              <span className="text-[9px] text-[#787b86]">Scope: AI Model</span>
               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                alertStrategyScope === 'thoth_egx_macro' ? 'border-purple-400 bg-purple-400' : 'border-white/30'
+                alertStrategyScope === 'thoth_egx_macro' ? 'border-[#9c27b0] bg-[#9c27b0]' : 'border-[#27272a]'
               }`}>
                 {alertStrategyScope === 'thoth_egx_macro' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
@@ -369,12 +369,12 @@ export default function AlertTriggersWidget({
       </div>
 
       {/* Monitored Tickers Card */}
-      <div className="border border-white/[0.09] rounded-md bg-black p-5 sm:p-6">
+      <div className="bg-[#121214] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-5">
         {/* Header & Actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/[0.08]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#222225]">
           <div>
-            <h2 className="text-[13px] font-medium text-white tracking-[-0.02em]">Monitored Tickers & Trigger Subscriptions</h2>
-            <p className="mt-1 text-xs text-white/40">
+            <h2 className="text-xs sm:text-[13px] font-bold text-white tracking-tight">Monitored Tickers &amp; Trigger Subscriptions</h2>
+            <p className="mt-1 text-xs text-[#787b86]">
               Open holdings are automatically monitored. You can also add custom watch alerts for other stocks.
             </p>
           </div>
@@ -382,7 +382,7 @@ export default function AlertTriggersWidget({
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md btn-typography-semibold text-black bg-white hover:bg-white/90 transition-all shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#2962ff] hover:bg-[#1e53e5] transition-colors shrink-0 cursor-pointer shadow-xs"
           >
             <Plus size={14} />
             <span>Add Ticker Alert</span>
@@ -390,15 +390,15 @@ export default function AlertTriggersWidget({
         </div>
 
         {/* Filters & Search Row — Desktop (sm and up) */}
-        <div className="hidden sm:flex flex-wrap items-center justify-between gap-3 mb-5">
-          <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-md border border-white/[0.08]">
+        <div className="hidden sm:flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#18181b] border border-[#27272a]">
             <button
               type="button"
               onClick={() => setTickerFilter('ALL')}
-              className={`px-3 py-1 rounded btn-typography transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs transition-colors cursor-pointer ${
                 tickerFilter === 'ALL'
-                  ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
-                  : 'text-white/40 hover:text-white/80'
+                  ? 'bg-[#27272a] text-white font-semibold shadow-xs'
+                  : 'text-[#787b86] hover:text-white font-medium'
               }`}
             >
               All ({monitoredTickers.length})
@@ -406,10 +406,10 @@ export default function AlertTriggersWidget({
             <button
               type="button"
               onClick={() => setTickerFilter('POSITIONS')}
-              className={`px-3 py-1 rounded btn-typography transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs transition-colors cursor-pointer ${
                 tickerFilter === 'POSITIONS'
-                  ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
-                  : 'text-white/40 hover:text-white/80'
+                  ? 'bg-[#27272a] text-white font-semibold shadow-xs'
+                  : 'text-[#787b86] hover:text-white font-medium'
               }`}
             >
               Active Holdings ({monitoredTickers.filter((t) => t.isPosition).length})
@@ -417,10 +417,10 @@ export default function AlertTriggersWidget({
             <button
               type="button"
               onClick={() => setTickerFilter('ALERTS')}
-              className={`px-3 py-1 rounded btn-typography transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs transition-colors cursor-pointer ${
                 tickerFilter === 'ALERTS'
-                  ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
-                  : 'text-white/40 hover:text-white/80'
+                  ? 'bg-[#27272a] text-white font-semibold shadow-xs'
+                  : 'text-[#787b86] hover:text-white font-medium'
               }`}
             >
               Custom Watch ({monitoredTickers.filter((t) => t.isExplicitAlert).length})
@@ -428,19 +428,19 @@ export default function AlertTriggersWidget({
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#787b86]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search symbol, company..."
-              className="w-full pl-8 pr-7 py-1.5 rounded-md bg-white/[0.03] border border-white/[0.08] text-xs text-white placeholder-white/25 focus:outline-none focus:border-white/20 transition-colors font-mono"
+              className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-[#18181b] border border-[#27272a] focus:border-[#3f3f46] text-xs text-white placeholder-[#787b86] outline-none transition-colors font-sans"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-white/30 hover:text-white rounded"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#787b86] hover:text-white rounded"
               >
                 <X size={13} />
               </button>
@@ -449,10 +449,10 @@ export default function AlertTriggersWidget({
         </div>
 
         {/* Filters & Search Row — Mobile (below sm) */}
-        <div className="flex sm:hidden flex-col gap-2 mb-4">
+        <div className="flex sm:hidden flex-col gap-2">
           {/* Row 1: Search bar */}
-          <div className="relative flex items-center h-9 rounded-xl overflow-hidden border border-plt-border bg-plt-raised">
-            <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-plt-muted">
+          <div className="relative flex items-center h-9 rounded-lg overflow-hidden border border-[#27272a] bg-[#18181b]">
+            <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-[#787b86]">
               <Search size={14} />
             </div>
             <input
@@ -460,13 +460,13 @@ export default function AlertTriggersWidget({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search symbol or company..."
-              className="h-full w-full bg-transparent pl-9 pr-8 text-[12px] text-plt-text placeholder:text-plt-muted focus:outline-none font-mono"
+              className="h-full w-full bg-transparent pl-9 pr-8 text-[12px] text-white placeholder-[#787b86] focus:outline-none font-sans"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-0 pr-3 flex items-center text-plt-muted hover:text-plt-text"
+                className="absolute right-0 pr-3 flex items-center text-[#787b86] hover:text-white"
               >
                 <X size={13} />
               </button>
@@ -474,12 +474,12 @@ export default function AlertTriggersWidget({
           </div>
 
           {/* Row 2: Full-width segmented status switch */}
-          <div className="pill-switch w-full">
+          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#18181b] border border-[#27272a] w-full">
             <button
               type="button"
               onClick={() => setTickerFilter('ALL')}
-              className={`pill-switch-btn flex-1 text-center text-[11px] ${
-                tickerFilter === 'ALL' ? 'pill-switch-btn-active font-semibold' : ''
+              className={`flex-1 text-center text-[11px] py-1 rounded-md transition-colors ${
+                tickerFilter === 'ALL' ? 'bg-[#27272a] text-white font-semibold shadow-xs' : 'text-[#787b86] hover:text-white font-medium'
               }`}
             >
               All ({monitoredTickers.length})
@@ -487,8 +487,8 @@ export default function AlertTriggersWidget({
             <button
               type="button"
               onClick={() => setTickerFilter('POSITIONS')}
-              className={`pill-switch-btn flex-1 text-center text-[11px] ${
-                tickerFilter === 'POSITIONS' ? 'pill-switch-btn-active font-semibold' : ''
+              className={`flex-1 text-center text-[11px] py-1 rounded-md transition-colors ${
+                tickerFilter === 'POSITIONS' ? 'bg-[#27272a] text-white font-semibold shadow-xs' : 'text-[#787b86] hover:text-white font-medium'
               }`}
             >
               Holdings ({monitoredTickers.filter((t) => t.isPosition).length})
@@ -496,8 +496,8 @@ export default function AlertTriggersWidget({
             <button
               type="button"
               onClick={() => setTickerFilter('ALERTS')}
-              className={`pill-switch-btn flex-1 text-center text-[11px] ${
-                tickerFilter === 'ALERTS' ? 'pill-switch-btn-active font-semibold' : ''
+              className={`flex-1 text-center text-[11px] py-1 rounded-md transition-colors ${
+                tickerFilter === 'ALERTS' ? 'bg-[#27272a] text-white font-semibold shadow-xs' : 'text-[#787b86] hover:text-white font-medium'
               }`}
             >
               Watch ({monitoredTickers.filter((t) => t.isExplicitAlert).length})
@@ -506,9 +506,9 @@ export default function AlertTriggersWidget({
         </div>
 
         {/* Mobile View: Clean Card List */}
-        <div className="md:hidden divide-y divide-white/[0.04]">
+        <div className="md:hidden divide-y divide-[#222225]">
           {filteredMonitoredTickers.length === 0 ? (
-            <div className="py-8 text-center text-white/30 text-xs">
+            <div className="py-8 text-center text-[#787b86] text-xs">
               No monitored tickers found matching the current filter.
             </div>
           ) : (
@@ -519,24 +519,24 @@ export default function AlertTriggersWidget({
                     <TickerLogo symbol={ticker.symbol} logoUrl={ticker.logoUrl} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-bold text-xs text-white">{ticker.symbol}</span>
-                        <span className="text-[10px] font-mono text-white/35 px-1.5 py-0.2 rounded bg-white/[0.03] border border-white/[0.05] truncate">
+                        <span className="font-sans font-bold text-xs text-white">{ticker.symbol}</span>
+                        <span className="text-[10px] font-sans text-[#787b86] px-1.5 py-0.5 rounded bg-[#14171f] border border-[#2a2e39] truncate">
                           {ticker.sector}
                         </span>
                       </div>
-                      <span className="text-[11px] text-white/40 truncate block mt-0.5">
+                      <span className="text-[11px] text-[#787b86] truncate block mt-0.5">
                         {ticker.companyName}
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <div className="font-mono text-xs font-semibold text-white/90">
+                    <div className="font-sans text-xs font-semibold text-white/90 tabular-nums">
                       {ticker.currentPrice ? `${ticker.currentPrice.toFixed(2)} EGP` : '—'}
                     </div>
                     {ticker.isPosition ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-plt-profit font-sans font-medium mt-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-plt-profit" />
+                      <span className="inline-flex items-center gap-1 text-[10px] text-[#089981] font-sans font-medium mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#089981]" />
                         Always ON
                       </span>
                     ) : (
@@ -544,10 +544,10 @@ export default function AlertTriggersWidget({
                         type="button"
                         onClick={() => handleToggleAlert(ticker.symbol, ticker.alertEnabled)}
                         disabled={togglingSymbol === ticker.symbol}
-                        className={`mt-0.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium transition-all cursor-pointer ${
+                        className={`mt-0.5 px-2 py-0.5 rounded text-[10px] font-sans font-semibold transition-colors cursor-pointer ${
                           ticker.alertEnabled
-                            ? 'bg-plt-profit-soft border border-plt-profit-border text-plt-profit'
-                            : 'bg-white/[0.03] border border-white/[0.08] text-white/40'
+                            ? 'bg-[#089981]/10 border border-[#089981]/25 text-[#089981]'
+                            : 'bg-[#18181b] border border-[#27272a] text-[#787b86] hover:text-white'
                         }`}
                       >
                         {ticker.alertEnabled ? 'Active' : 'Muted'}
@@ -556,16 +556,16 @@ export default function AlertTriggersWidget({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.03]">
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#222225]">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {ticker.isPosition && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-profit/10 border border-plt-profit/20 text-plt-profit">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold whitespace-nowrap bg-[#089981]/10 border border-[#089981]/25 text-[#089981]">
                         <Lock size={10} />
                         Active Holding
                       </span>
                     )}
                     {ticker.isExplicitAlert && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-white/[0.06] border border-white/[0.12] text-white/80">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-medium whitespace-nowrap bg-[#18181b] border border-[#27272a] text-[#d1d4dc]">
                         <Bell size={10} />
                         Custom Alert
                       </span>
@@ -575,7 +575,7 @@ export default function AlertTriggersWidget({
                   <div className="flex items-center gap-1 shrink-0">
                     <Link
                       href={`/invest?ticker=${ticker.symbol}&view=chart`}
-                      className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+                      className="p-1.5 rounded text-[#787b86] hover:text-[#2962ff] hover:bg-[#222226] transition-colors"
                       title="Open in Invest"
                     >
                       <TrendingUp size={14} />
@@ -586,7 +586,7 @@ export default function AlertTriggersWidget({
                         type="button"
                         onClick={() => handleDeleteCustomAlert(ticker.symbol)}
                         disabled={togglingSymbol === ticker.symbol}
-                        className="p-1.5 rounded text-white/30 hover:text-plt-risk hover:bg-plt-risk-soft transition-colors cursor-pointer"
+                        className="p-1.5 rounded text-[#787b86] hover:text-[#f23645] hover:bg-[#f23645]/10 transition-colors cursor-pointer"
                         title="Remove Alert"
                       >
                         <Trash2 size={14} />
@@ -601,51 +601,51 @@ export default function AlertTriggersWidget({
 
         {/* Desktop View: Monitored Tickers Table */}
         <div className="hidden md:block overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs font-sans border-collapse">
             <thead>
-              <tr className="border-b border-white/[0.06] text-[11px] font-medium text-white/35">
-                <th className="py-2.5 px-3">Ticker</th>
-                <th className="py-2.5 px-3">Sector</th>
-                <th className="py-2.5 px-3">Monitoring Type</th>
-                <th className="py-2.5 px-3 text-right">Current Price</th>
-                <th className="py-2.5 px-3 text-center">Alert Trigger</th>
-                <th className="py-2.5 px-3 text-right">Actions</th>
+              <tr className="border-b border-[#222225] text-[11px] font-medium text-[#787b86]">
+                <th className="pb-2.5 px-3">Ticker</th>
+                <th className="pb-2.5 px-3">Sector</th>
+                <th className="pb-2.5 px-3">Monitoring Type</th>
+                <th className="pb-2.5 px-3 text-right">Current Price</th>
+                <th className="pb-2.5 px-3 text-center">Alert Trigger</th>
+                <th className="pb-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-[#222225]">
               {filteredMonitoredTickers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-white/30 text-xs">
+                  <td colSpan={6} className="py-8 text-center text-[#787b86] text-xs">
                     No monitored tickers found matching the current filter.
                   </td>
                 </tr>
               ) : (
                 filteredMonitoredTickers.map((ticker) => (
-                  <tr key={ticker.symbol} className="hover:bg-white/[0.02] transition-colors group">
+                  <tr key={ticker.symbol} className="hover:bg-[#222226]/50 transition-colors group">
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2.5">
                         <TickerLogo symbol={ticker.symbol} logoUrl={ticker.logoUrl} />
                         <div>
-                          <span className="font-mono font-semibold text-white block">{ticker.symbol}</span>
-                          <span className="text-[11px] text-white/40 truncate block max-w-[200px]">
+                          <span className="font-sans font-semibold text-white block">{ticker.symbol}</span>
+                          <span className="text-[11px] text-[#787b86] truncate block max-w-[200px]">
                             {ticker.companyName}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3 px-3 text-white/50 truncate max-w-[150px]">{ticker.sector}</td>
+                    <td className="py-3 px-3 text-[#787b86] truncate max-w-[150px]">{ticker.sector}</td>
 
                     <td className="py-3 px-3">
                       <div className="flex flex-wrap items-center gap-1.5">
                         {ticker.isPosition && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-plt-profit/10 border border-plt-profit/20 text-plt-profit">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold whitespace-nowrap bg-[#089981]/10 border border-[#089981]/25 text-[#089981]">
                             <Lock size={10} />
                             Active Holding
                           </span>
                         )}
                         {ticker.isExplicitAlert && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium whitespace-nowrap bg-white/[0.06] border border-white/[0.12] text-white/80">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-medium whitespace-nowrap bg-[#18181b] border border-[#27272a] text-[#d1d4dc]">
                             <Bell size={10} />
                             Custom Alert
                           </span>
@@ -653,14 +653,14 @@ export default function AlertTriggersWidget({
                       </div>
                     </td>
 
-                    <td className="py-3 px-3 text-right font-mono font-medium text-white/90">
+                    <td className="py-3 px-3 text-right font-sans font-semibold text-white tabular-nums">
                       {ticker.currentPrice ? `${ticker.currentPrice.toFixed(2)} EGP` : '—'}
                     </td>
 
                     <td className="py-3 px-3 text-center">
                       {ticker.isPosition ? (
-                        <span className="inline-flex items-center gap-1.5 text-[11px] text-plt-profit font-sans font-medium whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full bg-plt-profit" />
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-[#089981] font-sans font-medium whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#089981]" />
                           Always ON
                         </span>
                       ) : (
@@ -668,10 +668,10 @@ export default function AlertTriggersWidget({
                           type="button"
                           onClick={() => handleToggleAlert(ticker.symbol, ticker.alertEnabled)}
                           disabled={togglingSymbol === ticker.symbol}
-                          className={`px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-all whitespace-nowrap cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-sans font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                             ticker.alertEnabled
-                              ? 'bg-plt-profit-soft border border-plt-profit-border text-plt-profit hover:bg-plt-profit-soft'
-                              : 'bg-white/[0.03] border border-white/[0.08] text-white/40 hover:text-white/70'
+                              ? 'bg-[#089981]/10 border border-[#089981]/25 text-[#089981] hover:bg-[#089981]/20'
+                              : 'bg-[#18181b] border border-[#27272a] text-[#787b86] hover:text-white'
                           }`}
                         >
                           {ticker.alertEnabled ? 'Active' : 'Muted'}
@@ -680,10 +680,10 @@ export default function AlertTriggersWidget({
                     </td>
 
                     <td className="py-3 px-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/invest?ticker=${ticker.symbol}&view=chart`}
-                          className="p-1 rounded text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+                          className="p-1.5 rounded text-[#787b86] hover:text-[#2962ff] hover:bg-[#222226] transition-colors"
                           title="Open in Invest"
                         >
                           <TrendingUp size={14} />
@@ -694,7 +694,7 @@ export default function AlertTriggersWidget({
                             type="button"
                             onClick={() => handleDeleteCustomAlert(ticker.symbol)}
                             disabled={togglingSymbol === ticker.symbol}
-                            className="p-1 rounded text-white/30 hover:text-plt-risk hover:bg-plt-risk-soft transition-colors cursor-pointer"
+                            className="p-1.5 rounded text-[#787b86] hover:text-[#f23645] hover:bg-[#f23645]/10 transition-colors cursor-pointer"
                             title="Remove Alert"
                           >
                             <Trash2 size={14} />
@@ -713,58 +713,58 @@ export default function AlertTriggersWidget({
       {/* Add Alert Modal */}
       <AnimatePresence>
         {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md rounded-md bg-plt-base border border-white/[0.12] shadow-popover p-5 flex flex-col max-h-[80vh]"
+              className="w-full max-w-md rounded-xl bg-[#121214] border border-[#27272a] shadow-2xl p-5 flex flex-col max-h-[80vh]"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div className="flex items-center justify-between pb-3 border-b border-[#222225]">
                 <div className="flex items-center gap-2">
-                  <Bell size={16} className="text-white/80" />
-                  <h3 className="text-sm font-medium text-white">Add Stock Trigger Alert</h3>
+                  <Bell size={16} className="text-[#d1d4dc]" />
+                  <h3 className="text-sm font-bold text-white tracking-tight">Add Stock Trigger Alert</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="text-white/40 hover:text-white p-1 cursor-pointer"
+                  className="text-[#787b86] hover:text-white p-1 rounded transition-colors cursor-pointer"
                 >
                   <X size={16} />
                 </button>
               </div>
 
               <div className="my-4 relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#787b86]" />
                 <input
                   type="text"
                   value={addSearchQuery}
                   onChange={(e) => setAddSearchQuery(e.target.value)}
                   placeholder="Search by EGX symbol or company..."
-                  className="w-full pl-8 pr-3 py-2 rounded-md bg-white/[0.04] border border-white/[0.09] text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/20 font-mono"
+                  className="w-full pl-8 pr-3 py-2 rounded-lg bg-[#18181b] border border-[#27272a] focus:border-[#3f3f46] text-xs text-white placeholder-[#787b86] outline-none font-sans"
                   autoFocus
                 />
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-1 pr-1 divide-y divide-white/[0.04] custom-scrollbar">
+              <div className="flex-1 overflow-y-auto space-y-1 pr-1 divide-y divide-[#222225] custom-scrollbar">
                 {addModalSearchResults.map((t) => {
                   const isAlreadyMonitored = monitoredTickers.some((m) => m.symbol === t.symbol && m.alertEnabled);
 
                   return (
                     <div
                       key={t.symbol}
-                      className="pt-2 pb-2 flex items-center justify-between gap-3 hover:bg-white/[0.02] px-2 rounded-md transition-colors"
+                      className="pt-2 pb-2 flex items-center justify-between gap-3 hover:bg-[#222226] px-2 rounded-lg transition-colors"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <TickerLogo symbol={t.symbol} logoUrl={t.logoUrl} />
                         <div className="min-w-0">
-                          <span className="font-mono font-semibold text-xs text-white block">{t.symbol}</span>
-                          <span className="text-[11px] text-white/40 truncate block">{t.companyName}</span>
+                          <span className="font-sans font-semibold text-xs text-white block">{t.symbol}</span>
+                          <span className="text-[11px] text-[#787b86] truncate block">{t.companyName}</span>
                         </div>
                       </div>
 
                       {isAlreadyMonitored ? (
-                        <span className="text-[11px] font-sans text-plt-profit px-2 py-1 bg-plt-profit-soft rounded border border-plt-profit-border shrink-0">
+                        <span className="text-[10px] font-semibold text-[#089981] px-2 py-0.5 bg-[#089981]/10 rounded-full border border-[#089981]/25 shrink-0">
                           Subscribed
                         </span>
                       ) : (
@@ -772,7 +772,7 @@ export default function AlertTriggersWidget({
                           type="button"
                           onClick={() => handleAddAlert(t)}
                           disabled={togglingSymbol === t.symbol}
-                          className="px-3 py-1 rounded bg-white hover:bg-white/90 text-black btn-typography-semibold shrink-0 transition-colors cursor-pointer"
+                          className="px-3 py-1 rounded-lg bg-[#2962ff] hover:bg-[#1e53e5] text-white text-xs font-semibold shrink-0 transition-colors cursor-pointer shadow-xs"
                         >
                           + Add Alert
                         </button>

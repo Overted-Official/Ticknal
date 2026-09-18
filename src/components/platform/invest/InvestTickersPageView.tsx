@@ -49,6 +49,8 @@ export default function InvestTickersPageView({
           tickerPositions={tickerPositions}
           currentPrice={currentPrice}
           brokerageAccounts={brokerageAccounts}
+          companyName={companyName}
+          logoUrl={logoUrl}
         />
         <BottomToolbar
           symbol={symbol}

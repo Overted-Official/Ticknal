@@ -13,7 +13,6 @@ import {
   CheckCircle2,
 } from '@/components/ui/icon-library';
 import { createClient } from '@/lib/supabase/client';
-import PinSecurityCard from './PinSecurityCard';
 
 export type SettingsUserProfile = {
   id: string;
@@ -122,8 +121,8 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
   return (
     <div className="w-full min-w-0 relative space-y-4">
       {/* Main Profile Card */}
-      <div className="border border-white/[0.09] rounded-md bg-black p-5 sm:p-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-white/[0.08]">
+      <div className="bg-[#121214] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-[#222225]">
           <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
             {/* Avatar with upload trigger */}
             <div
@@ -142,16 +141,16 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
                 <img
                   src={avatarUrl}
                   alt={userProfile.name}
-                  className="w-16 h-16 shrink-0 aspect-square rounded-full border-2 border-white/[0.12] object-cover bg-white/[0.04] group-hover:opacity-75 transition-opacity"
+                  className="w-16 h-16 shrink-0 aspect-square rounded-full border-2 border-[#27272a] object-cover bg-[#18181b] group-hover:opacity-75 transition-opacity"
                 />
               ) : (
-                <div className="w-16 h-16 shrink-0 aspect-square rounded-full border border-white/[0.12] bg-gradient-to-tr from-white/[0.06] to-white/[0.12] flex items-center justify-center text-lg font-bold text-white font-mono shadow-inner group-hover:opacity-75 transition-opacity">
+                <div className="w-16 h-16 shrink-0 aspect-square rounded-full border border-[#27272a] bg-[#18181b] flex items-center justify-center text-lg font-bold text-white font-sans shadow-inner group-hover:opacity-75 transition-opacity">
                   {initials}
                 </div>
               )}
 
               {/* Camera hover overlay */}
-              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                 {isUploadingAvatar ? (
                   <Loader2 size={18} className="animate-spin text-white" />
                 ) : (
@@ -159,19 +158,19 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
                 )}
               </div>
 
-              <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-plt-profit border-2 border-plt-base" />
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-[#089981] border-2 border-[#121214]" />
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-base font-semibold text-white tracking-tight truncate">{userProfile.name}</h2>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-plt-profit-soft border border-plt-profit-border text-plt-profit shrink-0">
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">{userProfile.name}</h2>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#089981]/10 border border-[#089981]/25 text-[#089981] shrink-0">
                   <ShieldCheck size={11} />
                   Verified
                 </span>
               </div>
-              <p className="text-xs text-white/40 mt-0.5 truncate">{userProfile.email}</p>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-white/30">
+              <p className="text-xs text-[#787b86] mt-0.5 truncate">{userProfile.email}</p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-[#787b86]">
                 <span className="flex items-center gap-1">
                   <Calendar size={12} />
                   Member since {memberSince}
@@ -183,7 +182,7 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingAvatar}
-                  className="text-white/60 hover:text-white hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  className="text-[#2962ff] hover:text-[#448aff] inline-flex items-center gap-1 cursor-pointer font-medium transition-colors"
                 >
                   <Camera size={11} />
                   <span>{isUploadingAvatar ? 'Uploading...' : 'Change Photo'}</span>
@@ -191,7 +190,7 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
               </div>
 
               {avatarUploadStatus && (
-                <div className="mt-2 text-[11px] text-plt-profit font-mono flex items-center gap-1">
+                <div className="mt-2 text-[11px] text-[#089981] font-sans flex items-center gap-1">
                   <CheckCircle2 size={12} />
                   <span>{avatarUploadStatus}</span>
                 </div>
@@ -203,7 +202,7 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
             type="button"
             onClick={handleSignOut}
             disabled={isLoggingOut}
-            className="flex items-center gap-2 px-4 py-2 rounded-md btn-typography text-plt-risk bg-plt-risk-soft hover:bg-plt-risk-soft border border-plt-risk-border transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-[#f23645] bg-[#f23645]/10 hover:bg-[#f23645]/20 border border-[#f23645]/30 transition-colors cursor-pointer shrink-0"
           >
             <LogOut size={14} />
             <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
@@ -211,36 +210,33 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
         </div>
 
         {/* Account Details Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-6">
-          <div className="p-4 rounded-md bg-white/[0.02] border border-white/[0.06] min-w-0">
-            <span className="text-[11px] font-medium text-white/35 block mb-1">Email Address</span>
-            <div className="text-xs font-mono font-medium text-white/90 break-all">{userProfile.email}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="p-3.5 sm:p-4 rounded-lg bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] transition-colors min-w-0">
+            <span className="text-[11px] font-medium text-[#787b86] block mb-1">Email Address</span>
+            <div className="text-xs font-sans font-semibold text-[#d1d4dc] break-all">{userProfile.email}</div>
           </div>
 
-          <div className="p-4 rounded-md bg-white/[0.02] border border-white/[0.06] min-w-0">
-            <span className="text-[11px] font-medium text-white/35 block mb-1">User Account UID</span>
+          <div className="p-3.5 sm:p-4 rounded-lg bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] transition-colors min-w-0">
+            <span className="text-[11px] font-medium text-[#787b86] block mb-1">User Account UID</span>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-mono text-white/60 truncate">{userProfile.id}</span>
+              <span className="text-xs font-mono text-[#d1d4dc] truncate">{userProfile.id}</span>
               <button
                 type="button"
                 onClick={handleCopyUid}
-                className="p-1 rounded text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors shrink-0 cursor-pointer"
+                className="p-1 rounded text-[#787b86] hover:text-white hover:bg-[#222226] transition-colors shrink-0 cursor-pointer"
                 title="Copy User ID"
               >
-                {copiedUid ? <Check size={13} className="text-plt-profit" /> : <Copy size={13} />}
+                {copiedUid ? <Check size={13} className="text-[#089981]" /> : <Copy size={13} />}
               </button>
             </div>
           </div>
 
-          <div className="p-4 rounded-md bg-white/[0.02] border border-white/[0.06] min-w-0">
-            <span className="text-[11px] font-medium text-white/35 block mb-1">Portfolio Mode</span>
-            <div className="text-xs font-mono font-medium text-plt-text">Automated PSI Triggers</div>
+          <div className="p-3.5 sm:p-4 rounded-lg bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] transition-colors min-w-0">
+            <span className="text-[11px] font-medium text-[#787b86] block mb-1">Portfolio Mode</span>
+            <div className="text-xs font-sans font-semibold text-[#d1d4dc]">Automated PSI Triggers</div>
           </div>
         </div>
       </div>
-
-      {/* Embedded PIN security widget */}
-      <PinSecurityCard />
     </div>
   );
 }

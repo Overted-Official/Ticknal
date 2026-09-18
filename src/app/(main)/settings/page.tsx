@@ -21,10 +21,13 @@ export default async function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-auto bg-plt-base p-8 text-center text-plt-text">
-        <h2 className="text-2xl font-medium mb-4">Ticknal Settings</h2>
-        <p className="mb-6 text-plt-muted">Please sign in to manage your account profile, devices, and alert triggers.</p>
-        <Link href="/" className="btn-token btn-primary">
+      <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-auto bg-transparent p-8 text-center text-white select-none">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">Ticknal Settings</h2>
+        <p className="mb-6 text-xs text-[#787b86] max-w-sm">Please sign in to manage your account profile, devices, and alert triggers.</p>
+        <Link
+          href="/"
+          className="px-5 py-2 rounded-lg text-xs font-semibold bg-[#2962ff] hover:bg-[#1e53e5] text-white transition-colors shadow-xs"
+        >
           Sign In
         </Link>
       </div>

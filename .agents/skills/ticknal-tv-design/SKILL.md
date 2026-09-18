@@ -428,10 +428,10 @@ All mode / resolution / timeframe controls use the same pill track:
 </div>
 ```
 
-- **Track bg:** `bg-[#14171f] border border-[#2a2e39]`
-- **Active item:** `bg-[#2a2e39] text-white`
+- **Track bg:** `bg-[#18181b] border border-[#27272a]`
+- **Active item:** `bg-[#27272a] text-white`
 - **Inactive item:** `text-[#787b86] hover:text-white`
-- **Icon-only switcher** (chart style toggle): use `p-1.5` buttons inside `rounded-lg bg-[#131722] border border-[#2a2e39]/50` track
+- **Icon-only switcher** (chart style toggle): use `p-1.5` buttons inside `rounded-lg bg-[#18181b] border border-[#27272a]` track
 
 ---
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState, useEffect } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import ChartWidget, { type ChartData, type ReplayState } from '@/components/platform/ChartWidget';
 import SignalPanel from '@/components/platform/SignalPanel';
 import { STRATEGIES } from '@/strategies/registry';
@@ -18,6 +18,8 @@ interface ChartReplayWorkspaceProps {
   tickerPositions?: TickerOrder[];
   currentPrice?: number;
   brokerageAccounts?: BrokerageAccountOption[];
+  companyName?: string;
+  logoUrl?: string | null;
 }
 
 const EMPTY_REPLAY_STATE: ReplayState = {
@@ -34,13 +36,14 @@ export default function ChartReplayWorkspace({
   tickerPositions = [],
   currentPrice = 0,
   brokerageAccounts = [],
+  companyName,
+  logoUrl,
 }: ChartReplayWorkspaceProps) {
   const [replayState, setReplayState] = useState<ReplayState>(
     initialReplayMode ? { ...EMPTY_REPLAY_STATE, active: true } : EMPTY_REPLAY_STATE,
   );
-  
+
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const [activeIndicators, setActiveIndicators] = useState<string[]>(() => {
     return searchParams?.get('indicators')?.split(',').filter(Boolean) || [];
@@ -59,10 +62,10 @@ export default function ChartReplayWorkspace({
       return next;
     });
   }, [pathname]);
-  
+
   const initialStrategy = searchParams?.get('strategy') || 'psi';
   const [selectedStrategy, setSelectedStrategy] = useState(initialStrategy);
-  
+
   const [strategyParams, setStrategyParams] = useState<Record<string, any>>(() => {
     const initialParams: Record<string, any> = {};
     const stratDef = STRATEGIES[initialStrategy];
@@ -75,8 +78,12 @@ export default function ChartReplayWorkspace({
     return initialParams;
   });
 
-  const [strategyStartDate, setStrategyStartDate] = useState<string>(searchParams?.get('strategyStart') || '2025-01-01');
-  const [strategyEndDate, setStrategyEndDate] = useState<string | undefined>(searchParams?.get('strategyEnd') || undefined);
+  const [strategyStartDate, setStrategyStartDate] = useState<string>(
+    searchParams?.get('strategyStart') || '2025-01-01'
+  );
+  const [strategyEndDate, setStrategyEndDate] = useState<string | undefined>(
+    searchParams?.get('strategyEnd') || undefined
+  );
 
   // Sync strategy if URL query param changes
   useEffect(() => {
@@ -101,16 +108,16 @@ export default function ChartReplayWorkspace({
     const newParams: Record<string, any> = {};
     if (stratDef) {
       stratDef.settings.forEach(s => {
-         newParams[s.key] = s.default;
+        newParams[s.key] = s.default;
       });
     }
     setStrategyParams(newParams);
-    
+
     // Sync to URL shallowly
     const params = new URLSearchParams(searchParams?.toString() || '');
     params.set('strategy', newStrategy);
     Array.from(params.keys()).forEach(k => {
-       if (k.startsWith('s_')) params.delete(k);
+      if (k.startsWith('s_')) params.delete(k);
     });
     window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
   }, [searchParams, pathname]);
@@ -134,7 +141,7 @@ export default function ChartReplayWorkspace({
   const updateGlobalParam = useCallback((key: string, value: string) => {
     if (key === 'strategyStart') setStrategyStartDate(value);
     if (key === 'strategyEnd') setStrategyEndDate(value);
-    
+
     const params = new URLSearchParams(searchParams?.toString() || '');
     if (value) {
       params.set(key, value);
@@ -151,7 +158,7 @@ export default function ChartReplayWorkspace({
     data[data.length - 1]?.time ?? 'none',
     initialReplayMode ? 'replay' : 'live',
   ].join(':');
-  
+
   const handleReplayStateChange = useCallback((state: ReplayState) => {
     setReplayState(state);
   }, []);
@@ -161,7 +168,8 @@ export default function ChartReplayWorkspace({
   const timeframe = searchParams?.get('timeframe') || 'D';
 
   return (
-    <>
+    // Flex-col: ChartWidget fills remaining height, SignalPanel is a fixed bottom strip
+    <div className="flex flex-col flex-1 min-w-0 overflow-hidden h-full">
       <ChartWidget
         key={chartKey}
         data={data}
@@ -204,7 +212,9 @@ export default function ChartReplayWorkspace({
         metrics={metrics}
         showSignals={showSignals}
         setShowSignals={setShowSignals}
+        companyName={companyName}
+        logoUrl={logoUrl}
       />
-    </>
+    </div>
   );
 }

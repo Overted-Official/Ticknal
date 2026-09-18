@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { FileText } from '@/components/ui/icon-library';
-import StrategyReportDrawer from './StrategyReportDrawer';
 
 interface BottomToolbarProps {
   symbol?: string;
@@ -44,7 +43,6 @@ export default function BottomToolbar({
   const [selectedRange, setSelectedRange] = useState<string>(
     timeframe === '1H' || timeframe === '60' ? '1H' : timeframe === 'W' ? '1W' : timeframe === 'M' ? '1M' : timeframe === '1Y' ? '1Y' : '1D'
   );
-  const [reportOpen, setReportOpen] = useState(false);
   const searchParams = useSearchParams();
   const activeStrategy = strategy || searchParams?.get('strategy') || 'psi';
   const replayQuery = replay ? '&replay=1' : '';
@@ -120,9 +118,11 @@ export default function BottomToolbar({
           {/* Strategy Report Button */}
           <button
             type="button"
-            onClick={() => setReportOpen(true)}
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('ticknal:open-strategy-report', { detail: { tab: 'equity' } }));
+            }}
             className="flex items-center gap-1.5 text-[#787b86] hover:text-white transition-colors btn-typography cursor-pointer"
-            title="Open Strategy Performance Report"
+            title="Open Strategy Performance Report in Bottom Dock"
           >
             <FileText size={13} className="text-[#787b86]" />
             <span>Strategy Report</span>
@@ -136,18 +136,6 @@ export default function BottomToolbar({
           </div>
         </div>
       </div>
-
-      {/* Strategy Report Slide-Over Drawer */}
-      <StrategyReportDrawer
-        isOpen={reportOpen}
-        onClose={() => setReportOpen(false)}
-        symbol={symbol}
-        timeframe={timeframe}
-        chartData={chartData}
-        activeStrategy={activeStrategy}
-        companyName={companyName}
-        logoUrl={logoUrl}
-      />
     </>
   );
 }

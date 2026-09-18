@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
   X,
-  ArrowUpRight,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -62,22 +61,33 @@ function formatTimeAgo(dateStr: string): string {
   }
 }
 
-function TickerLogo({ symbol, logoUrl }: { symbol: string; logoUrl?: string | null }) {
+function TickerLogo({
+  symbol,
+  companyName,
+  logoUrl,
+}: {
+  symbol: string;
+  companyName?: string | null;
+  logoUrl?: string | null;
+}) {
   const [imgError, setImgError] = useState(false);
+  const cleanSymbol = symbol.replace('.CA', '');
+  const initial = companyName
+    ? companyName.trim().charAt(0).toUpperCase()
+    : cleanSymbol.charAt(0).toUpperCase();
 
   return (
-    <div className="w-9 h-9 rounded-full bg-plt-card border border-plt-border-soft shrink-0 flex items-center justify-center overflow-hidden">
+    <div className="w-8 h-8 rounded-full bg-[#18181b] border border-white/5 flex items-center justify-center font-bold text-xs text-white/90 shrink-0 overflow-hidden shadow-xs">
       {logoUrl && !imgError ? (
         <img
           src={logoUrl}
-          alt={symbol}
-          className="ticker-logo-image ticker-logo-fill"
+          alt={cleanSymbol}
+          className="w-full h-full object-cover"
           onError={() => setImgError(true)}
+          loading="lazy"
         />
       ) : (
-        <span className="text-xs font-bold font-mono text-plt-text">
-          {symbol.replace('.CA', '').slice(0, 2)}
-        </span>
+        <span>{initial}</span>
       )}
     </div>
   );
@@ -95,28 +105,24 @@ function getRegimeBadge(regime?: string | null) {
   if (regime === 'Leading') {
     return {
       label: 'Leading',
-      icon: '🟢',
-      className: 'bg-plt-profit/15 text-plt-profit border-plt-profit/30',
+      textColor: 'text-[#089981]',
     };
   }
   if (regime === 'Improving') {
     return {
       label: 'Improving',
-      icon: '🔵',
-      className: 'bg-plt-info/15 text-plt-info border-plt-info/30',
+      textColor: 'text-[#2962ff]',
     };
   }
   if (regime === 'Weakening') {
     return {
       label: 'Weakening',
-      icon: '🟡',
-      className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      textColor: 'text-[#f59e0b]',
     };
   }
   return {
     label: 'Lagging',
-    icon: '🔴',
-    className: 'bg-plt-risk/15 text-plt-risk border-plt-risk/30',
+    textColor: 'text-[#f23645]',
   };
 }
 
@@ -127,6 +133,7 @@ export default function NotificationsDrawer({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'signals' | 'system'>('signals');
   const [selectedStrategy, setSelectedStrategy] = useState<'all' | 'psi' | 'psi_v2' | 'thoth'>('all');
   const [selectedRegime, setSelectedRegime] = useState<'all' | 'alpha' | 'Leading' | 'Improving' | 'Weakening' | 'Lagging'>('all');
@@ -205,6 +212,7 @@ export default function NotificationsDrawer({
   const strategyMenuRef = useRef<HTMLDivElement>(null);
   const regimeMenuRef = useRef<HTMLDivElement>(null);
 
+  // Outside click listener
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (strategyMenuRef.current && !strategyMenuRef.current.contains(e.target as Node)) {
@@ -218,6 +226,23 @@ export default function NotificationsDrawer({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Keyboard Escape listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isStrategyMenuOpen || isRegimeMenuOpen) {
+          setIsStrategyMenuOpen(false);
+          setIsRegimeMenuOpen(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isStrategyMenuOpen, isRegimeMenuOpen, onClose]);
+
   const strategyOptions = [
     { id: 'all', label: 'All Strategies', count: strategyCounts.all },
     { id: 'psi', label: 'PSI Strategy', count: strategyCounts.psi },
@@ -227,7 +252,7 @@ export default function NotificationsDrawer({
 
   const regimeOptions = [
     { id: 'all', label: 'All Regimes', count: regimeCounts.all },
-    { id: 'alpha', label: '🟢 Alpha Wave', count: regimeCounts.alpha },
+    { id: 'alpha', label: 'Alpha Wave', count: regimeCounts.alpha },
     { id: 'Leading', label: 'Leading', count: regimeCounts.Leading },
     { id: 'Improving', label: 'Improving', count: regimeCounts.Improving },
     { id: 'Weakening', label: 'Weakening', count: regimeCounts.Weakening },
@@ -247,7 +272,7 @@ export default function NotificationsDrawer({
     selectedRegime === 'all'
       ? 'All Regimes'
       : selectedRegime === 'alpha'
-      ? '🟢 Alpha Wave'
+      ? 'Alpha Wave'
       : selectedRegime;
 
   const isFiltered = selectedStrategy !== 'all' || selectedRegime !== 'all';
@@ -281,31 +306,31 @@ export default function NotificationsDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs"
           />
 
-          {/* Drawer Panel */}
+          {/* Drawer Panel - Extended on desktop to 50% */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="relative z-10 h-dvh max-h-dvh w-full max-w-md bg-plt-base text-plt-text border-l border-plt-border-soft shadow-2xl flex flex-col min-h-0 overflow-hidden"
+            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+            className="relative z-modal-content h-dvh max-h-dvh w-full sm:max-w-xl md:w-[50vw] md:max-w-[50vw] bg-[#121214] text-white border-l border-[#27272a] shadow-2xl flex flex-col min-h-0 overflow-hidden"
           >
-            {/* Header */}
-            <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
-              <div>
+            {/* 1. Header */}
+            <div className="px-5 py-3.5 border-b border-[#27272a] bg-[#121214] flex items-center justify-between shrink-0">
+              <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xs font-bold text-plt-text tracking-tight font-sans">
+                  <h2 className="text-base font-bold text-white tracking-tight font-sans">
                     Trade Notifications
                   </h2>
                   {notifications.length > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-plt-profit/15 text-plt-profit border border-plt-profit/30 font-bold">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#089981]/15 text-[#089981] border border-[#089981]/30">
                       {notifications.length}
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-plt-muted font-sans">
+                <p className="text-xs text-[#787b86] font-sans">
                   Real-time alerts for watchlists & positions
                 </p>
               </div>
@@ -316,7 +341,7 @@ export default function NotificationsDrawer({
                     type="button"
                     onClick={handleClearAll}
                     disabled={isClearing}
-                    className="btn-typography text-plt-muted hover:text-plt-text px-2 py-1 rounded-lg hover:bg-plt-hover transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#787b86] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] transition-colors cursor-pointer flex items-center gap-1.5"
                     title="Clear all notifications"
                   >
                     {isClearing ? <Loader2 size={12} className="animate-spin" /> : 'Clear all'}
@@ -325,42 +350,55 @@ export default function NotificationsDrawer({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
-                  title="Close notifications"
+                  className="p-1.5 text-[#787b86] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg transition-colors cursor-pointer"
+                  title="Close notifications (Esc)"
                   aria-label="Close notifications"
                 >
-                  <X size={15} />
+                  <X size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Segmented Tabs */}
-            <div className="px-4 py-2.5 border-b border-plt-border-soft bg-plt-card/50 shrink-0">
-              <div className="pill-switch w-full">
+            {/* 2. Segmented Switcher Tabs */}
+            <div className="px-4 py-2 border-b border-[#222225] bg-[#121214] shrink-0">
+              <div className="inline-flex w-full p-1 rounded-xl bg-[#18181b] border border-[#27272a]">
                 <button
                   type="button"
                   onClick={() => setActiveTab('signals')}
-                  className={`pill-switch-btn flex-1 flex items-center justify-center gap-1.5 ${
-                    activeTab === 'signals' ? 'pill-switch-btn-active font-semibold' : ''
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === 'signals'
+                      ? 'bg-[#27272a] text-white shadow-xs'
+                      : 'text-[#787b86] hover:text-white hover:bg-[#222225]/60'
                   }`}
                 >
                   <span>Position Alerts</span>
                   {notifications.length > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-plt-base border border-plt-border-soft">
+                    <span className={`px-2 py-0.2 rounded-md text-[10px] font-mono border ${
+                      activeTab === 'signals'
+                        ? 'bg-[#121214] text-white border-[#3f3f46]'
+                        : 'bg-[#121214] text-[#787b86] border-[#27272a]'
+                    }`}>
                       {notifications.length}
                     </span>
                   )}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setActiveTab('system')}
-                  className={`pill-switch-btn flex-1 flex items-center justify-center gap-1.5 ${
-                    activeTab === 'system' ? 'pill-switch-btn-active font-semibold' : ''
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === 'system'
+                      ? 'bg-[#27272a] text-white shadow-xs'
+                      : 'text-[#787b86] hover:text-white hover:bg-[#222225]/60'
                   }`}
                 >
                   <span>System Logs</span>
                   {systemLogs.length > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-plt-base border border-plt-border-soft">
+                    <span className={`px-2 py-0.2 rounded-md text-[10px] font-mono border ${
+                      activeTab === 'system'
+                        ? 'bg-[#121214] text-white border-[#3f3f46]'
+                        : 'bg-[#121214] text-[#787b86] border-[#27272a]'
+                    }`}>
                       {systemLogs.length}
                     </span>
                   )}
@@ -368,21 +406,21 @@ export default function NotificationsDrawer({
               </div>
             </div>
 
-            {/* Unified Filter Bar (Consolidated 1 Row) */}
+            {/* 3. Filter Bar */}
             {activeTab === 'signals' && notifications.length > 0 && (
-              <div className="px-4 py-2 border-b border-plt-border-soft bg-plt-card/30 flex items-center gap-2 shrink-0">
-                {/* 1. Strategy Dropdown Pill */}
-                <div className="relative flex-1 min-w-0" ref={strategyMenuRef}>
+              <div className="px-4 py-2 border-b border-[#222225] bg-[#121214] flex items-center gap-2 shrink-0 flex-wrap">
+                {/* Strategy Filter */}
+                <div className="relative flex-1 min-w-[130px]" ref={strategyMenuRef}>
                   <button
                     type="button"
                     onClick={() => {
                       setIsStrategyMenuOpen(!isStrategyMenuOpen);
                       setIsRegimeMenuOpen(false);
                     }}
-                    className={`h-7.5 w-full px-2.5 rounded-lg border btn-typography font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
+                    className={`h-8 w-full px-2.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
                       selectedStrategy !== 'all'
-                        ? 'bg-plt-profit/15 border-plt-profit/40 text-plt-profit font-bold shadow-xs'
-                        : 'bg-plt-card border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border'
+                        ? 'bg-[#089981]/15 border-[#089981]/40 text-[#089981] font-semibold shadow-xs'
+                        : 'bg-[#18181b] border-[#27272a] text-[#a1a1aa] hover:text-white hover:border-[#3f3f46]'
                     }`}
                   >
                     <span className="truncate">
@@ -390,16 +428,21 @@ export default function NotificationsDrawer({
                     </span>
                     <div className="flex items-center gap-1 shrink-0">
                       {selectedStrategy !== 'all' && (
-                        <span className="px-1 py-0.2 rounded text-[10px] bg-plt-profit/20 font-bold">
+                        <span className="px-1 py-0.2 rounded text-[10px] bg-[#089981]/20 font-bold">
                           {strategyCounts[selectedStrategy]}
                         </span>
                       )}
-                      <ChevronDown size={11} className={`transition-transform duration-150 ${isStrategyMenuOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        size={12}
+                        className={`text-[#787b86] transition-transform duration-150 ${
+                          isStrategyMenuOpen ? 'rotate-180 text-white' : ''
+                        }`}
+                      />
                     </div>
                   </button>
 
                   {isStrategyMenuOpen && (
-                    <div className="absolute left-0 top-full mt-1.5 w-48 rounded-xl bg-plt-card/95 border border-plt-border-strong p-1 shadow-2xl backdrop-blur-md z-50 flex flex-col gap-0.5">
+                    <div className="absolute left-0 top-full mt-1.5 w-52 rounded-xl bg-[#121214] border border-[#27272a] p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
                       {strategyOptions.map((strat) => {
                         const isSelected = selectedStrategy === strat.id;
                         return (
@@ -410,14 +453,16 @@ export default function NotificationsDrawer({
                               setSelectedStrategy(strat.id as any);
                               setIsStrategyMenuOpen(false);
                             }}
-                            className={`px-2.5 py-1.5 rounded-lg text-left btn-typography font-mono transition flex items-center justify-between cursor-pointer ${
+                            className={`px-3 py-2 rounded-lg text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
                               isSelected
-                                ? 'bg-plt-profit/15 text-plt-profit font-bold'
-                                : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+                                ? 'bg-[#18181b] text-white font-semibold border border-[#27272a]'
+                                : 'text-[#a1a1aa] hover:text-white hover:bg-[#18181b]/70 border border-transparent'
                             }`}
                           >
                             <span className="truncate">{strat.label}</span>
-                            <span className={`px-1 py-0.2 rounded text-[10px] ${isSelected ? 'bg-plt-profit/20' : 'bg-plt-base text-plt-muted'}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                              isSelected ? 'bg-[#27272a] text-white font-bold' : 'bg-[#18181b] text-[#787b86]'
+                            }`}>
                               {strat.count}
                             </span>
                           </button>
@@ -427,20 +472,20 @@ export default function NotificationsDrawer({
                   )}
                 </div>
 
-                {/* 2. Regime Dropdown Pill */}
-                <div className="relative flex-1 min-w-0" ref={regimeMenuRef}>
+                {/* Regime Filter */}
+                <div className="relative flex-1 min-w-[130px]" ref={regimeMenuRef}>
                   <button
                     type="button"
                     onClick={() => {
                       setIsRegimeMenuOpen(!isRegimeMenuOpen);
                       setIsStrategyMenuOpen(false);
                     }}
-                    className={`h-7.5 w-full px-2.5 rounded-lg border btn-typography font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
+                    className={`h-8 w-full px-2.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
                       selectedRegime !== 'all'
                         ? selectedRegime === 'alpha'
-                          ? 'bg-plt-profit/20 border-plt-profit/50 text-plt-profit font-bold shadow-xs'
-                          : 'bg-white/[0.12] border-white/25 text-white font-bold shadow-xs'
-                        : 'bg-plt-card border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border'
+                          ? 'bg-[#089981]/15 border-[#089981]/40 text-[#089981] font-semibold shadow-xs'
+                          : 'bg-[#2962ff]/15 border-[#2962ff]/40 text-[#2962ff] font-semibold shadow-xs'
+                        : 'bg-[#18181b] border-[#27272a] text-[#a1a1aa] hover:text-white hover:border-[#3f3f46]'
                     }`}
                   >
                     <span className="truncate">
@@ -452,12 +497,17 @@ export default function NotificationsDrawer({
                           {regimeCounts[selectedRegime]}
                         </span>
                       )}
-                      <ChevronDown size={11} className={`transition-transform duration-150 ${isRegimeMenuOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        size={12}
+                        className={`text-[#787b86] transition-transform duration-150 ${
+                          isRegimeMenuOpen ? 'rotate-180 text-white' : ''
+                        }`}
+                      />
                     </div>
                   </button>
 
                   {isRegimeMenuOpen && (
-                    <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-plt-card/95 border border-plt-border-strong p-1 shadow-2xl backdrop-blur-md z-50 flex flex-col gap-0.5">
+                    <div className="absolute right-0 top-full mt-1.5 w-52 rounded-xl bg-[#121214] border border-[#27272a] p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
                       {regimeOptions.map((reg) => {
                         const isSelected = selectedRegime === reg.id;
                         return (
@@ -468,14 +518,16 @@ export default function NotificationsDrawer({
                               setSelectedRegime(reg.id as any);
                               setIsRegimeMenuOpen(false);
                             }}
-                            className={`px-2.5 py-1.5 rounded-lg text-left btn-typography font-mono transition flex items-center justify-between cursor-pointer ${
+                            className={`px-3 py-2 rounded-lg text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
                               isSelected
-                                ? 'bg-white/[0.12] text-white font-bold'
-                                : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+                                ? 'bg-[#18181b] text-white font-semibold border border-[#27272a]'
+                                : 'text-[#a1a1aa] hover:text-white hover:bg-[#18181b]/70 border border-transparent'
                             }`}
                           >
                             <span className="truncate">{reg.label}</span>
-                            <span className={`px-1 py-0.2 rounded text-[10px] ${isSelected ? 'bg-white/20' : 'bg-plt-base text-plt-muted'}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                              isSelected ? 'bg-[#27272a] text-white font-bold' : 'bg-[#18181b] text-[#787b86]'
+                            }`}>
                               {reg.count}
                             </span>
                           </button>
@@ -485,144 +537,150 @@ export default function NotificationsDrawer({
                   )}
                 </div>
 
-                {/* 3. Reset Button (Only appears if a filter is active) */}
+                {/* Reset Filters */}
                 {isFiltered && (
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="h-7.5 px-2 rounded-lg border border-plt-border-soft hover:border-plt-risk/40 hover:bg-plt-risk/10 text-plt-muted hover:text-plt-risk btn-typography font-mono flex items-center gap-1 transition-all cursor-pointer shrink-0"
-                    title="Reset filters"
+                    className="h-8 px-2.5 rounded-lg border border-[#27272a] bg-[#18181b] hover:border-[#f23645]/40 hover:bg-[#f23645]/10 text-[#787b86] hover:text-[#f23645] text-xs font-mono flex items-center gap-1 transition-all cursor-pointer shrink-0"
+                    title="Reset all filters"
                   >
                     <X size={12} />
-                    <span className="text-[11px]">Reset</span>
+                    <span>Reset</span>
                   </button>
                 )}
               </div>
             )}
 
-            {/* Notification Items List */}
-            <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y py-2 custom-scrollbar">
+            {/* List Header Bar */}
+            {activeTab === 'signals' && filteredNotifications.length > 0 && (
+              <div className="flex items-center justify-between px-4 py-2 border-b border-[#222225] bg-[#121214]/80 shrink-0">
+                <span className="text-xs font-bold text-white tracking-tight">
+                  Signal Alerts
+                </span>
+                <span className="text-[11px] text-[#787b86] font-medium">
+                  {filteredNotifications.length} alerts
+                </span>
+              </div>
+            )}
+
+            {/* 4. Main Scrollable List */}
+            <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y custom-scrollbar">
               {activeTab === 'signals' ? (
                 isLoadingSignals && notifications.length === 0 ? (
-                  <div className="py-20 text-center text-plt-muted text-xs flex flex-col items-center justify-center gap-2">
-                    <Loader2 size={20} className="animate-spin text-plt-muted" />
-                    <span className="font-mono text-[11px]">Loading signals...</span>
+                  <div className="py-24 text-center text-[#787b86] text-xs flex flex-col items-center justify-center gap-2">
+                    <Loader2 size={24} className="animate-spin text-[#787b86]" />
+                    <span className="font-mono text-xs text-[#a1a1aa]">Loading signals...</span>
                   </div>
                 ) : notifications.length === 0 ? (
-                  <div className="py-24 text-center text-plt-muted text-xs flex flex-col items-center justify-center gap-2 px-6">
-                    <div className="w-10 h-10 rounded-full bg-plt-card border border-plt-border-soft flex items-center justify-center text-plt-muted mb-1">
-                      <Bell size={18} />
+                  <div className="py-28 text-center text-[#787b86] text-xs flex flex-col items-center justify-center gap-3 px-6">
+                    <div className="w-12 h-12 rounded-full bg-[#18181b] border border-white/5 flex items-center justify-center text-[#787b86] mb-1">
+                      <Bell size={20} />
                     </div>
-                    <span className="font-semibold text-plt-text block font-sans">No notifications yet</span>
-                    <span className="text-[11px] text-plt-muted block leading-relaxed max-w-xs font-sans">
-                      New buy, sell, or stop triggers on your stocks will appear here in real-time.
+                    <span className="font-semibold text-white text-sm block font-sans">No notifications yet</span>
+                    <span className="text-xs text-[#787b86] block leading-relaxed max-w-sm font-sans">
+                      New buy, sell, or stop triggers on your watched stocks and holdings will appear here in real-time.
                     </span>
                   </div>
                 ) : filteredNotifications.length === 0 ? (
-                  <div className="py-20 text-center text-plt-muted text-xs flex flex-col items-center justify-center gap-2 px-6">
-                    <div className="w-9 h-9 rounded-full bg-plt-card border border-plt-border-soft flex items-center justify-center text-plt-muted mb-1">
-                      <Bell size={16} />
+                  <div className="py-24 text-center text-[#787b86] text-xs flex flex-col items-center justify-center gap-3 px-6">
+                    <div className="w-11 h-11 rounded-full bg-[#18181b] border border-white/5 flex items-center justify-center text-[#787b86] mb-1">
+                      <Bell size={18} />
                     </div>
-                    <span className="font-semibold text-plt-text block font-sans">
-                      No {selectedStrategy === 'psi' ? 'PSI' : selectedStrategy === 'psi_v2' ? 'PSI V2' : 'THOTH'} signals
+                    <span className="font-semibold text-white text-sm block font-sans">
+                      No matching signals found
                     </span>
                     <button
                       type="button"
-                      onClick={() => setSelectedStrategy('all')}
-                      className="mt-1 px-3 py-1 btn-typography font-mono rounded-lg bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-text transition cursor-pointer"
+                      onClick={resetFilters}
+                      className="mt-2 px-3.5 py-1.5 text-xs font-mono rounded-lg bg-[#18181b] hover:bg-[#222225] border border-[#27272a] hover:border-[#3f3f46] text-white transition cursor-pointer"
                     >
-                      View all ({notifications.length})
+                      Reset filters & view all ({notifications.length})
                     </button>
                   </div>
                 ) : (
                   <div>
-                    {filteredNotifications.map((item, index) => {
+                    {filteredNotifications.map((item) => {
                       const isBuy = item.signal.toUpperCase().includes('BUY');
                       const cleanSymbol = item.tickerSymbol.replace('.CA', '');
                       const regime = getRegimeBadge(item.rotationRegime);
+                      const strategyId = normalizeStrategyId(item.strategy);
+                      const strategyLabel =
+                        strategyId === 'thoth'
+                          ? 'THOTH'
+                          : strategyId === 'psi_v2'
+                          ? 'PSI V2'
+                          : 'PSI';
 
                       return (
-                        <div key={item.id}>
-                          {/* Notification Row */}
-                          <div className="px-4 py-3 hover:bg-plt-hover/60 transition-colors flex items-center justify-between gap-3">
-                            {/* Left: Avatar + Ticker & Company Name Inline */}
-                            <div className="flex items-center gap-3 min-w-0">
-                              <TickerLogo symbol={item.tickerSymbol} logoUrl={item.logoUrl} />
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            onClose();
+                            router.push(`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}`);
+                          }}
+                          className="py-2.5 px-4 flex items-center justify-between hover:bg-[#18181b]/50 transition-colors group cursor-pointer border-b border-[#222225]"
+                        >
+                          {/* Left: Circular Avatar + Stacked Name & Ticker (HoldingRowItem style) */}
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            {/* Circular Avatar */}
+                            <TickerLogo
+                              symbol={item.tickerSymbol}
+                              companyName={item.companyName}
+                              logoUrl={item.logoUrl}
+                            />
 
-                              <div className="flex flex-col min-w-0">
-                                <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-                                  <span className="text-xs font-bold font-mono text-plt-text tracking-tight shrink-0">
-                                    {cleanSymbol}
-                                  </span>
-                                  <span className="text-[11px] text-plt-muted truncate font-normal font-sans max-w-[120px]">
-                                    {item.companyName ?? cleanSymbol}
-                                  </span>
-                                  <span className="text-[9px] font-mono text-plt-muted px-1.5 py-0.2 rounded bg-plt-card border border-plt-border-soft shrink-0">
-                                    {item.strategy === 'thoth_egx_macro' || item.strategy === 'thoth'
-                                      ? 'THOTH'
-                                      : item.strategy === 'psi_v2'
-                                      ? 'PSI V2'
-                                      : 'PSI'}
-                                  </span>
-                                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border shrink-0 font-medium ${regime.className}`}>
-                                    {regime.icon} {regime.label}
-                                  </span>
-                                </div>
-
-                                <div className="text-[10px] font-mono text-plt-muted mt-1 flex items-center gap-1.5 flex-wrap">
-                                  <span>{item.signalDate}</span>
-                                  <span className="text-plt-muted/40">•</span>
-                                  <span>{formatTimeAgo(item.sentAt)}</span>
-                                  {item.industryGroup && (
-                                    <>
-                                      <span className="text-plt-muted/40">•</span>
-                                      <span className="text-plt-muted/70 truncate max-w-[130px]" title={item.industryGroup}>
-                                        {item.industryGroup}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
+                            {/* Text Stack */}
+                            <div className="min-w-0">
+                              {/* Top: Full Company Name */}
+                              <div className="text-[13px] font-medium text-white truncate max-w-[140px] sm:max-w-[220px] md:max-w-[320px] group-hover:text-[#2962ff] transition-colors">
+                                {item.companyName ?? cleanSymbol}
                               </div>
-                            </div>
 
-                            {/* Right: Chart Icon Button + Buy/Sell Button */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              <Link
-                                href={`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}`}
-                                onClick={onClose}
-                                className="p-1.5 rounded-lg bg-plt-card hover:bg-plt-hover border border-plt-border-soft text-plt-muted hover:text-plt-text transition"
-                                title="Open chart"
-                                aria-label={`Open ${cleanSymbol} chart`}
-                              >
-                                <ArrowUpRight size={14} />
-                              </Link>
-
-                              {isBuy ? (
-                                <Link
-                                  href={`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}&positions=1`}
-                                  onClick={onClose}
-                                  className="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-plt-profit/15 hover:bg-plt-profit text-plt-profit hover:text-white border border-plt-profit/30 transition-all text-center shrink-0"
-                                  title="Open positions to buy"
-                                >
-                                  Buy
-                                </Link>
-                              ) : (
-                                <Link
-                                  href={`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}&positions=1`}
-                                  onClick={onClose}
-                                  className="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-plt-risk/15 hover:bg-plt-risk text-plt-risk hover:text-white border border-plt-risk/30 transition-all text-center shrink-0"
-                                  title="Open positions to sell"
-                                >
-                                  Sell
-                                </Link>
-                              )}
+                              {/* Bottom: Ticker in dark pill + meta */}
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#18181b] text-[#868993] border border-[#27272a] uppercase tracking-wider font-mono">
+                                  {cleanSymbol}
+                                </span>
+                                <span className="text-[11px] text-[#787b86] font-normal truncate">
+                                  · {item.signalDate} · {strategyLabel}
+                                  {item.industryGroup ? ` · ${item.industryGroup}` : ''}
+                                </span>
+                              </div>
                             </div>
                           </div>
 
-                          {/* Thin separator line */}
-                          {index < filteredNotifications.length - 1 && (
-                            <div className="h-px bg-plt-border-soft mx-4" />
-                          )}
+                          {/* Right: Time/Regime Stack + Solid TradingView Pill Badge */}
+                          <div className="flex items-center gap-3 shrink-0 pl-2">
+                            {/* Time & Regime */}
+                            <div className="text-right">
+                              <div className="text-[13px] font-semibold text-white tabular-nums">
+                                {formatTimeAgo(item.sentAt)}
+                              </div>
+                              <div className={`text-[10px] font-medium tabular-nums text-right mt-0.5 ${regime.textColor}`}>
+                                {regime.label}
+                              </div>
+                            </div>
+
+                            {/* Solid TradingView Pill Badge (HoldingRowItem style) */}
+                            <div className="w-[74px] shrink-0 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onClose();
+                                  router.push(`/invest?ticker=${cleanSymbol}&view=chart&strategy=${item.strategy || 'psi'}&positions=1`);
+                                }}
+                                className={`w-[72px] py-1 text-center rounded-[6px] text-xs font-bold tabular-nums text-white shadow-xs transition-all cursor-pointer ${
+                                  isBuy
+                                    ? 'bg-[#089981] hover:bg-[#067a67]'
+                                    : 'bg-[#f23645] hover:bg-[#d42a38]'
+                                }`}
+                              >
+                                {isBuy ? 'Buy' : 'Sell'}
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
@@ -630,60 +688,80 @@ export default function NotificationsDrawer({
                 )
               ) : (
                 isLoadingLogs && systemLogs.length === 0 ? (
-                  <div className="py-20 text-center text-plt-muted text-xs flex flex-col items-center justify-center gap-2">
-                    <Loader2 size={20} className="animate-spin text-plt-muted" />
-                    <span className="font-mono text-[11px]">Loading system logs...</span>
+                  <div className="py-24 text-center text-[#787b86] text-xs flex flex-col items-center justify-center gap-2">
+                    <Loader2 size={24} className="animate-spin text-[#787b86]" />
+                    <span className="font-mono text-xs text-[#a1a1aa]">Loading system logs...</span>
                   </div>
                 ) : systemLogs.length === 0 ? (
-                  <div className="py-24 text-center text-plt-muted text-xs flex flex-col items-center justify-center gap-2 px-6">
-                    <div className="w-10 h-10 rounded-full bg-plt-card border border-plt-border-soft flex items-center justify-center text-plt-muted mb-1">
-                      <Clock size={18} />
+                  <div className="py-28 text-center text-[#787b86] text-xs flex flex-col items-center justify-center gap-3 px-6">
+                    <div className="w-12 h-12 rounded-full bg-[#18181b] border border-white/5 flex items-center justify-center text-[#787b86] mb-1">
+                      <Clock size={20} />
                     </div>
-                    <span className="font-semibold text-plt-text block font-sans">No system logs</span>
-                    <span className="text-[11px] text-plt-muted block leading-relaxed font-sans">
-                      Cron job updates and system status logs will appear here.
+                    <span className="font-semibold text-white text-sm block font-sans">No system logs</span>
+                    <span className="text-xs text-[#787b86] block leading-relaxed max-w-sm font-sans">
+                      Cron job executions, cache updates, and system status logs will appear here.
                     </span>
                   </div>
                 ) : (
                   <div>
-                    {systemLogs.map((log, idx) => {
+                    {systemLogs.map((log) => {
                       const isError = log.level === 'ERROR';
                       const isWarning = log.level === 'WARNING';
 
                       return (
-                        <div key={log.id}>
-                          <div className="px-4 py-3 hover:bg-plt-hover/60 transition-colors flex items-start gap-3">
-                            {/* Status Icon Circle */}
-                            <div className="w-8 h-8 rounded-full bg-plt-card border border-plt-border-soft flex items-center justify-center shrink-0 mt-0.5">
+                        <div
+                          key={log.id}
+                          className="py-2.5 px-4 flex items-center justify-between hover:bg-[#18181b]/50 transition-colors group cursor-pointer border-b border-[#222225]"
+                        >
+                          {/* Left: Icon Avatar + Stacked Source & Message */}
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <div className="w-8 h-8 rounded-full bg-[#18181b] border border-white/5 flex items-center justify-center shrink-0 shadow-xs">
                               {isError ? (
-                                <AlertCircle size={15} className="text-plt-risk" />
+                                <AlertCircle size={15} className="text-[#f23645]" />
                               ) : isWarning ? (
-                                <AlertCircle size={15} className="text-plt-warning" />
+                                <AlertCircle size={15} className="text-[#f59e0b]" />
                               ) : (
-                                <CheckCircle2 size={15} className="text-plt-profit" />
+                                <CheckCircle2 size={15} className="text-[#089981]" />
                               )}
                             </div>
 
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-baseline justify-between gap-2">
-                                <span className="text-xs font-bold font-mono text-plt-text tracking-tight">
+                            <div className="min-w-0">
+                              <div className="text-[13px] font-medium text-white truncate max-w-[160px] sm:max-w-[260px] md:max-w-[360px]">
+                                {log.message}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#18181b] text-[#868993] border border-[#27272a] uppercase tracking-wider font-mono">
                                   {formatUiLabel(log.source)}
                                 </span>
-                                <span className="text-[10px] font-mono text-plt-muted shrink-0">
-                                  {formatTimeAgo(log.createdAt)}
-                                </span>
                               </div>
-
-                              <p className="text-xs text-plt-subtle mt-0.5 break-words font-sans">
-                                {log.message}
-                              </p>
                             </div>
                           </div>
 
-                          {idx < systemLogs.length - 1 && (
-                            <div className="h-px bg-plt-border-soft mx-4" />
-                          )}
+                          {/* Right: Timestamp + Level Pill */}
+                          <div className="flex items-center gap-3 shrink-0 pl-2">
+                            <div className="text-right">
+                              <div className="text-[13px] font-semibold text-white tabular-nums">
+                                {formatTimeAgo(log.createdAt)}
+                              </div>
+                              <div className="text-[10px] text-[#787b86] font-medium tabular-nums text-right mt-0.5">
+                                {log.level}
+                              </div>
+                            </div>
+
+                            <div className="w-[74px] shrink-0 flex justify-end">
+                              <div
+                                className={`w-[72px] py-1 text-center rounded-[6px] text-xs font-bold tabular-nums text-white shadow-xs ${
+                                  isError
+                                    ? 'bg-[#f23645]'
+                                    : isWarning
+                                    ? 'bg-[#f59e0b]'
+                                    : 'bg-[#18181b] text-[#868993] border border-[#27272a]'
+                                }`}
+                              >
+                                {isError ? 'Error' : isWarning ? 'Warning' : 'OK'}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       );
                     })}

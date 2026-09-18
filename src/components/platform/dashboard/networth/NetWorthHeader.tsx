@@ -115,13 +115,13 @@ export default function NetWorthHeader({
       </div>
 
       {/* Right: TradingView Cohesive Currency Segmented Control */}
-      <div className="inline-flex items-center p-0.5 rounded-lg bg-[#131722] border border-[#2a2e39]">
+      <div className="inline-flex items-center p-0.5 rounded-lg bg-[#18181b] border border-[#27272a]">
         <button
           type="button"
           onClick={() => onCurrencyModeChange('EGP')}
           className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
             currencyMode === 'EGP'
-              ? 'bg-[#2a2e39] text-white shadow-xs'
+              ? 'bg-[#27272a] text-white shadow-xs'
               : 'text-[#787b86] hover:text-white font-medium'
           }`}
         >

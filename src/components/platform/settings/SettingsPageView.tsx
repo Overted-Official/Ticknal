@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { User, ShieldCheck, Smartphone, Bell } from '@/components/ui/icon-library';
 import SubNavTopRail from '@/components/navigation/SubNavTopRail';
-import PageHeader from '@/components/platform/ui/PageHeader';
+import SettingsHeader from './SettingsHeader';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 
@@ -64,30 +63,14 @@ export default function SettingsPageView({
       <div {...swipeHandlers} className="app-page page-sections-stack flex h-full min-h-0 w-full flex-1 overflow-y-auto pb-28 touch-pan-y md:pb-24 custom-scrollbar">
         {/* Top Header Banner */}
         <motion.div variants={itemFadeInUp} className="shrink-0 w-full min-w-0">
-          <PageHeader
-            title="Settings"
-            description="Manage your profile, security, devices, and alert subscriptions."
-            actions={(
-              <div className="hidden md:flex items-center gap-2">
-                <Link href="/dashboard" className="btn-token btn-secondary btn-compact">
-                  <span>Dashboard</span>
-                  <span className="text-white/40">→</span>
-                </Link>
-                <Link href="/wallet?tab=positions" className="btn-token btn-secondary btn-compact">
-                  <span>Manage Positions</span>
-                  <span className="text-white/40">→</span>
-                </Link>
-                <Link href="/invest" className="btn-token btn-primary btn-compact">
-                  <span>Open Invest</span>
-                  <span className="text-plt-text-inverse">→</span>
-                </Link>
-              </div>
-            )}
+          <SettingsHeader
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
           />
         </motion.div>
 
         {/* Main Settings Canvas */}
-        <div className="section-container w-full min-w-0 space-y-4">
+        <div className="section-container w-full min-w-0 space-y-6 pt-1">
           {/* Navigation Tabs (Desktop Only) */}
           <motion.div variants={itemFadeInUp} className="w-full min-w-0">
             <SettingsNavigationRail
