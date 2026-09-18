@@ -373,14 +373,14 @@ export default function StrategyReportDrawer({
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-plt-subtle border border-white/[0.08] whitespace-nowrap hidden sm:inline-block">
                     {model === 'canonical'
-                      ? 'PSI Canonical'
+                      ? 'Typhon Canonical'
                       : model === 'psi_v2'
-                      ? 'PSI V2'
+                      ? 'Cerberus'
                       : model === 'thoth_egx_macro'
-                      ? 'THOTH 3.7P'
+                      ? 'Archived'
                       : model === 'psi40'
-                      ? 'PSI-40 Trend'
-                      : 'PSI-8 Inflection'}
+                      ? 'Typhon-40 Trend'
+                      : 'Typhon-8 Inflection'}
                   </span>
                 </div>
               </div>
@@ -450,7 +450,7 @@ export default function StrategyReportDrawer({
                       model === 'canonical' ? 'pill-switch-btn-active font-semibold' : ''
                     }`}
                   >
-                    PSI
+                    Typhon
                   </button>
                   <button
                     type="button"
@@ -459,7 +459,7 @@ export default function StrategyReportDrawer({
                       model === 'psi8' ? 'pill-switch-btn-active font-semibold' : ''
                     }`}
                   >
-                    PSI-8
+                    Typhon-8
                   </button>
                   <button
                     type="button"
@@ -468,16 +468,7 @@ export default function StrategyReportDrawer({
                       model === 'psi40' ? 'pill-switch-btn-active font-semibold' : ''
                     }`}
                   >
-                    PSI-40
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setModel('thoth_egx_macro')}
-                    className={`pill-switch-btn ${
-                      model === 'thoth_egx_macro' ? 'pill-switch-btn-active font-semibold text-plt-violet' : ''
-                    }`}
-                  >
-                    THOTH 3.7P
+                    Typhon-40
                   </button>
                   <button
                     type="button"
@@ -486,7 +477,7 @@ export default function StrategyReportDrawer({
                       model === 'psi_v2' ? 'pill-switch-btn-active font-semibold text-plt-profit' : ''
                     }`}
                   >
-                    PSI V2
+                    Cerberus
                   </button>
                 </div>
 

@@ -168,7 +168,7 @@ export async function handleTestNotification(req?: Request) {
   }
 
   const payloadData = {
-    title: '🟢 [PSI V2] COMI Buy Opportunity',
+    title: '🟢 [Cerberus] COMI Buy Opportunity',
     body: 'Commercial International Bank triggered a BUY signal at 139.50 EGP (Target: 152.00, Stop: 134.00)',
     url: '/invest?ticker=COMI.CA&view=chart',
     tag: `test-notification-${Date.now()}`,

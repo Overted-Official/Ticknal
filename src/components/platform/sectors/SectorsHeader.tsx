@@ -255,7 +255,7 @@ export default function SectorsHeader({
                 title="Select Quantitative Strategy Model"
               >
                 <Zap size={12} className="text-plt-profit" />
-                <span>{availableStrategies.find((s) => s.id === selectedStrategy)?.label || 'PSI Strategy'}</span>
+                <span>{availableStrategies.find((s) => s.id === selectedStrategy)?.label || 'Typhon Strategy'}</span>
                 <ChevronDown size={11} className={`transition-transform duration-150 ${isStrategyMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 

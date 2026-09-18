@@ -245,9 +245,8 @@ export default function NotificationsDrawer({
 
   const strategyOptions = [
     { id: 'all', label: 'All Strategies', count: strategyCounts.all },
-    { id: 'psi', label: 'PSI Strategy', count: strategyCounts.psi },
-    { id: 'psi_v2', label: 'PSI V2 Strategy', count: strategyCounts.psi_v2 },
-    { id: 'thoth', label: 'THOTH Strategy', count: strategyCounts.thoth },
+    { id: 'psi', label: 'Typhon Strategy', count: strategyCounts.psi },
+    { id: 'psi_v2', label: 'Cerberus Strategy', count: strategyCounts.psi_v2 },
   ];
 
   const regimeOptions = [
@@ -263,10 +262,10 @@ export default function NotificationsDrawer({
     selectedStrategy === 'all'
       ? 'All Strategies'
       : selectedStrategy === 'psi'
-      ? 'PSI'
+      ? 'Typhon'
       : selectedStrategy === 'psi_v2'
-      ? 'PSI V2'
-      : 'THOTH';
+      ? 'Cerberus'
+      : 'All Strategies';
 
   const activeRegimeLabel =
     selectedRegime === 'all'
@@ -606,11 +605,11 @@ export default function NotificationsDrawer({
                       const regime = getRegimeBadge(item.rotationRegime);
                       const strategyId = normalizeStrategyId(item.strategy);
                       const strategyLabel =
-                        strategyId === 'thoth'
-                          ? 'THOTH'
-                          : strategyId === 'psi_v2'
-                          ? 'PSI V2'
-                          : 'PSI';
+                        strategyId === 'psi_v2'
+                          ? 'Cerberus'
+                          : strategyId === 'thoth'
+                          ? 'Archived'
+                          : 'Typhon';
 
                       return (
                         <div

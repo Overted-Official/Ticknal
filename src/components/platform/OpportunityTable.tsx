@@ -145,20 +145,7 @@ export default function OpportunityTable({
                     : 'text-plt-muted hover:text-plt-info'
                 }`}
               >
-                PSI ({opportunities.filter((o) => (o.strategyId || 'psi') === 'psi').length})
-              </button>
-            )}
-            {availableStrategies.includes('thoth_egx_macro') && (
-              <button
-                type="button"
-                onClick={() => setStrategyFilter('thoth_egx_macro')}
-                className={`px-2 py-1 rounded-lg btn-typography transition-all ${
-                  strategyFilter === 'thoth_egx_macro'
-                    ? 'bg-plt-violet/20 text-plt-violet border border-plt-violet/30 font-semibold shadow-xs'
-                    : 'text-plt-muted hover:text-plt-violet'
-                }`}
-              >
-                THOTH ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
+                Typhon ({opportunities.filter((o) => (o.strategyId || 'psi') === 'psi').length})
               </button>
             )}
             {availableStrategies.includes('psi_v2') && (
@@ -171,7 +158,20 @@ export default function OpportunityTable({
                     : 'text-plt-muted hover:text-emerald-400'
                 }`}
               >
-                PSI V2 ({opportunities.filter((o) => o.strategyId === 'psi_v2').length})
+                Cerberus ({opportunities.filter((o) => o.strategyId === 'psi_v2').length})
+              </button>
+            )}
+            {availableStrategies.includes('thoth_egx_macro') && (
+              <button
+                type="button"
+                onClick={() => setStrategyFilter('thoth_egx_macro')}
+                className={`px-2 py-1 rounded-lg btn-typography transition-all ${
+                  strategyFilter === 'thoth_egx_macro'
+                    ? 'bg-plt-violet/20 text-plt-violet border border-plt-violet/30 font-semibold shadow-xs'
+                    : 'text-plt-muted hover:text-plt-violet'
+                }`}
+              >
+                Archived ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
               </button>
             )}
           </div>
@@ -310,7 +310,7 @@ export default function OpportunityTable({
                     <span className={`text-[10px] tabular-nums font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ${
                       item.strategyBadgeClassName || 'bg-plt-info/10 text-plt-info'
                     }`}>
-                      {item.strategyShortName || 'PSI'}
+                      {item.strategyShortName || (item.strategyId === 'psi_v2' ? 'Cerberus' : item.strategyId === 'thoth_egx_macro' ? 'Archived' : 'Typhon')}
                     </span>
                   </td>
                   {!compact && (

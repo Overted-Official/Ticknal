@@ -98,50 +98,44 @@ export interface StrategyDefinition {
 export const STRATEGIES: Record<string, StrategyDefinition> = {
   psi: {
     id: 'psi',
-    label: 'PSI Strategy',
-    shortName: 'PSI',
-    description: 'Proprietary System Indicator',
-    badgeClassName: 'bg-plt-info-soft text-plt-info border-plt-info-border',
-    settings: [], // PSI has no configurable settings on the frontend right now
-    metrics: [
-      { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },
-      { key: 'medianDailyMove', label: 'MDM', format: 'percentage', decimals: 2 },
-    ]
-  },
-  thoth_egx_macro: {
-    id: 'thoth_egx_macro',
-    label: 'THOTH EGX V3.7P',
-    shortName: 'THOTH 3.7P',
-    description: 'Frozen V3.7P Primary Growth Champion for EGX daily swing exhaustion',
-    badgeClassName: 'bg-plt-violet-soft text-plt-violet border-plt-violet-border',
+    label: 'Typhon Strategy',
+    shortName: 'TYPHON',
+    description: 'Primordial Cyclical & Mean-Reversion Engine (Master Index & MDM)',
+    badgeClassName: 'bg-[#2962ff]/15 text-[#2962ff] border-[#2962ff]/30',
     settings: [],
     metrics: [
       { key: 'masterIndex', label: 'Master Index', format: 'number', decimals: 2 },
-      { key: 'masterIndexAdjusted', label: 'Pred Exhaustion', format: 'percentage', decimals: 1 },
-    ]
+      { key: 'medianDailyMove', label: 'MDM', format: 'percentage', decimals: 2 },
+    ],
   },
   psi_v2: {
     id: 'psi_v2',
-    label: 'PSI V2 Strategy',
-    shortName: 'PSI V2',
-    description: 'GPT 3-PSI Architecture (PSI_ZONE, PSI_UP, PSI_DOWN)',
-    badgeClassName: 'bg-plt-profit-soft text-plt-profit border-plt-profit-border',
+    label: 'Cerberus Strategy',
+    shortName: 'CERBERUS',
+    description: '3-Headed Stateful Swing & Regime Engine (ZONE, UP, DOWN)',
+    badgeClassName: 'bg-[#089981]/15 text-[#089981] border-[#089981]/30',
     settings: [],
     metrics: [
       { key: 'psiZone', label: 'PSI Zone', format: 'number', decimals: 2 },
       { key: 'psiUp', label: 'PSI UP', format: 'number', decimals: 2 },
       { key: 'psiDown', label: 'PSI DOWN', format: 'number', decimals: 2 },
       { key: 'regimeDirection', label: 'Regime', format: 'text' },
-    ]
-  }
+    ],
+  },
 };
 
 export const getAvailableStrategies = () => Object.values(STRATEGIES);
 
 export function getStrategyBadge(strategyId: string = 'psi'): { label: string; className: string } {
   const strat = STRATEGIES[strategyId] || STRATEGIES['psi'];
+  if (!strat) {
+    return {
+      label: 'Archived',
+      className: 'bg-[#18181b] text-[#787b86] border-[#27272a]',
+    };
+  }
   return {
     label: strat.shortName || strat.label,
-    className: strat.badgeClassName || 'bg-plt-hover text-plt-text border-plt-border-strong',
+    className: strat.badgeClassName || 'bg-[#18181b] text-white border-[#27272a]',
   };
 }

@@ -9,7 +9,6 @@ import {
   formatPsiV2MetricsForApi,
   runPsiV2Strategy,
 } from '@/strategies/PSI_V2';
-import { runThothV37PStrategy } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
 import type { EquityPoint, StrategyTrade } from '@/strategies/registry';
 import { getLatestActionableSignal } from '@/lib/strategy-signal-state';
 
@@ -209,11 +208,11 @@ export async function analyzeStrategy(
     parameterVersion = `psi-v2-levels-${cleanSymbol}`;
     formattedMetrics = formatPsiV2MetricsForApi(rawResult.metrics);
   } else {
-    rawResult = await runThothV37PStrategy(bars, { ticker: cleanSymbol, ...commonParams });
-    signals = rawResult.signals;
-    metrics = rawResult.metrics;
-    parameterVersion = 'thoth-egx-v3.7p-production-frozen';
-    formattedMetrics = formatMetricsForApi(rawResult.metrics);
+    signals = [];
+    metrics = {};
+    parameterVersion = 'archived';
+    formattedMetrics = {};
+    rawResult = { signals: [], metrics: {} };
   }
 
   const signalEvents = makeSignalEvents(cleanSymbol, strategyId, signals, bars);
@@ -238,7 +237,7 @@ export async function analyzeStrategy(
 }
 
 export function strategyLabel(strategyId: StrategyId): string {
-  if (strategyId === 'psi_v2') return 'PSI V2';
-  if (strategyId === 'thoth_egx_macro') return 'THOTH';
-  return 'PSI';
+  if (strategyId === 'psi_v2') return 'Cerberus';
+  if (strategyId === 'thoth_egx_macro') return 'Archived';
+  return 'Typhon';
 }

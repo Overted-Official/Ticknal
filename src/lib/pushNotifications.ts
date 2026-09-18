@@ -107,14 +107,7 @@ export async function dispatchSignalNotifications(options: {
   }
 
   const { resolvePsiParamsFromStore } = await import('@/strategies/PSI/psiParameterStore');
-  const { runThothV37PStrategy } = await import('@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy');
   const { runPsiV2Strategy } = await import('@/strategies/PSI_V2/psiV2Strategy');
-
-  const THOTH_FOCUS_TICKERS = new Set([
-    'COMI', 'FWRY', 'EAST', 'TMGH', 'HRHO', 'SWDY', 'ETEL', 'ABUK',
-    'EKHO', 'ORAS', 'ISPH', 'CIEB', 'AMOC', 'ESRS', 'ADIB', 'HELI',
-    'AUTO', 'JUFO', 'SKPC', 'MNHD', 'EFID', 'ALCN', 'CERA', 'MFPC',
-  ]);
 
   const newNotificationsToInsert: Array<{
     userId: string;
@@ -198,7 +191,7 @@ export async function dispatchSignalNotifications(options: {
         parameterVersion: string;
       }> = [];
 
-      // 1. Evaluate PSI Strategy
+      // 1. Evaluate Typhon Strategy (PSI)
       if (userScope === 'all' || userScope === 'psi') {
         try {
           const psiParams = resolvePsiParamsFromStore(ticker, { startDate: '2025-01-01' });
@@ -209,8 +202,8 @@ export async function dispatchSignalNotifications(options: {
             if (signal.signal === 'BUY' || isTracked) {
               signalsToDispatch.push({
                 strategyId: 'psi',
-                strategyShort: 'PSI',
-                strategyLabel: 'PSI Strategy',
+                strategyShort: 'TYPHON',
+                strategyLabel: 'Typhon Strategy',
                 signal,
                 metrics: psiResult.metrics,
                 parameterVersion: 'psi-parameter-store',
@@ -220,27 +213,7 @@ export async function dispatchSignalNotifications(options: {
         } catch (e) {}
       }
 
-      // 2. Evaluate THOTH Strategy (targeted to focus tickers and tracked positions)
-      if ((userScope === 'all' || userScope === 'thoth_egx_macro') && (isTracked || THOTH_FOCUS_TICKERS.has(ticker))) {
-        try {
-          const thothResult = await runThothV37PStrategy(bars, { ticker, startDate: '2025-01-01' });
-          const signal = [...thothResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
-          if (signal) {
-            if (signal.signal === 'BUY' || isTracked) {
-              signalsToDispatch.push({
-                strategyId: 'thoth_egx_macro',
-                strategyShort: 'THOTH',
-                strategyLabel: 'THOTH EGX V3.7P',
-                signal,
-                metrics: thothResult.metrics,
-                parameterVersion: 'thoth-egx-v3.7p-production-frozen',
-              });
-            }
-          }
-        } catch (e) {}
-      }
-
-      // 3. Evaluate PSI V2 Strategy
+      // 2. Evaluate Cerberus Strategy (PSI V2)
       if (userScope === 'all' || userScope === 'psi_v2') {
         try {
           const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: '2025-01-01' });
@@ -249,8 +222,8 @@ export async function dispatchSignalNotifications(options: {
             if (signal.signal === 'BUY' || isTracked) {
               signalsToDispatch.push({
                 strategyId: 'psi_v2',
-                strategyShort: 'PSI V2',
-                strategyLabel: 'PSI V2 Strategy',
+                strategyShort: 'CERBERUS',
+                strategyLabel: 'Cerberus Strategy',
                 signal,
                 metrics: psiV2Result.metrics,
                 parameterVersion: `psi-v2-levels-${ticker}`,
@@ -518,7 +491,7 @@ function buildNotificationTitle(
   ticker: string,
   signal: PsiSignal,
   openOrderExists: boolean,
-  strategyShort: string = 'PSI'
+  strategyShort: string = 'TYPHON'
 ): string {
   const prefix = `[${strategyShort}]`;
   if (signal.signal === 'BUY') return `${prefix} ${ticker} has a buy opportunity`;
@@ -528,7 +501,7 @@ function buildNotificationTitle(
 
 function buildNotificationBody(
   signal: PsiSignal,
-  strategyLabel: string = 'PSI Strategy'
+  strategyLabel: string = 'Typhon Strategy'
 ): string {
   const price = `${Number(signal.price).toFixed(2)} EGP`;
   if (signal.signal === 'BUY') return `${strategyLabel} buy signal at ${price}.`;

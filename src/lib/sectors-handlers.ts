@@ -6,7 +6,6 @@ import { getCachedTickers } from '@/lib/data-cache';
 import { normalizeTickerSymbol, runPsiStrategy, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { runPsiV2Strategy } from '@/strategies/PSI_V2/psiV2Strategy';
-import { runThothV37PStrategy } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
 
 import {
   type StockPerformanceItem,
@@ -293,20 +292,7 @@ export async function handleSignalsGet(request?: Request) {
         let maxAdverseExcursion = 0;
         let avgAdverseExcursion = 0;
 
-        if (strategy === 'thoth_egx_macro') {
-          try {
-            const thothRes = await runThothV37PStrategy(bars, { ticker: symbol, startDate });
-            signals = thothRes.signals;
-            sysRoi = thothRes.metrics?.sysRoi || 0;
-            winRate = thothRes.metrics?.winRate || 0;
-            tradesCount = thothRes.metrics?.trades || 0;
-            avgBars = (thothRes as any)?.metrics?.avgBarsHeld || (thothRes as any)?.metrics?.avgBarsPerTrade || 0;
-            maxAdverseExcursion = thothRes.metrics?.maxAdverseExcursion || 0;
-            avgAdverseExcursion = thothRes.metrics?.avgAdverseExcursion || 0;
-          } catch (e) {
-            signals = [];
-          }
-        } else if (strategy === 'psi_v2' || strategy === 'psiv2') {
+        if (strategy === 'psi_v2' || strategy === 'psiv2') {
           try {
             const psiV2Result = runPsiV2Strategy(bars, { ticker: symbol, startDate });
             signals = psiV2Result.signals.filter((s) => s.signal === 'BUY' || s.signal === 'SELL');

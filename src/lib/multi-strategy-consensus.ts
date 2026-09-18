@@ -68,23 +68,23 @@ export async function evaluateHoldingConsensus(
 
   let psiOpinion: StrategyOpinion = {
     strategyId: 'psi',
-    strategyName: 'PSI',
+    strategyName: 'Typhon',
     verdict: 'HOLD',
     reason: 'In consolidation or standard trend following',
   };
 
   let psiV2Opinion: StrategyOpinion = {
     strategyId: 'psi_v2',
-    strategyName: 'PSI V2',
+    strategyName: 'Cerberus',
     verdict: 'HOLD',
     reason: 'Multi-timeframe indices inside healthy range',
   };
 
   let thothOpinion: StrategyOpinion = {
     strategyId: 'thoth_egx_macro',
-    strategyName: 'THOTH',
+    strategyName: 'Archived',
     verdict: 'HOLD',
-    reason: THOTH_FOCUS_TICKERS.has(cleanSym) ? 'Macro regime neutral' : 'Non-focus macro stock (Neutral)',
+    reason: 'Archived model',
   };
   let psiMetrics = unavailableMetrics();
   let psiV2Metrics = unavailableMetrics();
@@ -94,7 +94,6 @@ export async function evaluateHoldingConsensus(
     const analyses = await Promise.allSettled([
       analyzeStrategy(cleanSym, bars, 'psi', { lookbackBars }),
       analyzeStrategy(cleanSym, bars, 'psi_v2', { lookbackBars }),
-      analyzeStrategy(cleanSym, bars, 'thoth_egx_macro', { lookbackBars }),
     ]);
 
     const toOpinion = (analysis: Awaited<ReturnType<typeof analyzeStrategy>>, strategyName: string): StrategyOpinion => {
@@ -119,49 +118,48 @@ export async function evaluateHoldingConsensus(
     };
 
     if (analyses[0].status === 'fulfilled') {
-      psiOpinion = toOpinion(analyses[0].value, 'PSI');
+      psiOpinion = toOpinion(analyses[0].value, 'Typhon');
       psiMetrics = analyses[0].value.metrics;
     }
-    else psiOpinion.reason = 'PSI signal unavailable for this ticker';
+    else psiOpinion.reason = 'Typhon signal unavailable for this ticker';
+
     if (analyses[1].status === 'fulfilled') {
-      psiV2Opinion = toOpinion(analyses[1].value, 'PSI V2');
+      psiV2Opinion = toOpinion(analyses[1].value, 'Cerberus');
       psiV2Metrics = analyses[1].value.metrics;
     }
-    else psiV2Opinion.reason = 'PSI V2 signal unavailable for this ticker';
-    if (analyses[2].status === 'fulfilled') {
-      thothOpinion = toOpinion(analyses[2].value, 'THOTH');
-      thothMetrics = analyses[2].value.metrics;
-    }
-    else thothOpinion.reason = THOTH_FOCUS_TICKERS.has(cleanSym)
-      ? 'THOTH signal unavailable for this ticker'
-      : 'THOTH coverage not available for this ticker';
+    else psiV2Opinion.reason = 'Cerberus signal unavailable for this ticker';
   }
 
-  // Calculate consensus aggregation
-  const opinions = [psiOpinion, psiV2Opinion, thothOpinion];
+  // Calculate dual consensus aggregation (Typhon & Cerberus)
+  const opinions = [psiOpinion, psiV2Opinion];
   const buyCount = opinions.filter((o) => o.verdict === 'BUY').length;
   const sellCount = opinions.filter((o) => o.verdict === 'SELL').length;
   const holdCount = opinions.filter((o) => o.verdict === 'HOLD').length;
 
   let overallVerdict: HoldingConsensus['overallVerdict'] = 'HOLD';
   let verdictLabel = 'Hold / Ride Position';
-  let verdictBadgeClass = 'bg-plt-info-soft text-plt-info border-plt-info-border';
+  let verdictBadgeClass = 'bg-[#18181b] text-[#787b86] border-[#27272a]';
   let verdictIcon = '🛡️';
 
   if (sellCount >= 2) {
     overallVerdict = 'CRITICAL_EXIT';
-    verdictLabel = `Exit Alert (${sellCount} of 3 strategies)`;
-    verdictBadgeClass = 'bg-plt-risk-soft text-plt-risk border-plt-risk-border';
+    verdictLabel = 'Exit Alert (Both Engines)';
+    verdictBadgeClass = 'bg-[#f23645]/15 text-[#f23645] border-[#f23645]/30';
     verdictIcon = '🚨';
   } else if (sellCount === 1) {
     overallVerdict = 'DIVERGENCE';
-    verdictLabel = 'Divergence (1 Sell Alert)';
-    verdictBadgeClass = 'bg-plt-warning-soft text-plt-warning border-plt-warning-border';
+    verdictLabel = 'Divergence (1 Exit Alert)';
+    verdictBadgeClass = 'bg-amber-500/15 text-amber-400 border-amber-500/30';
     verdictIcon = '⚠️';
-  } else if (buyCount >= 2) {
+  } else if (buyCount === 2) {
     overallVerdict = 'STRONG_BUY';
-    verdictLabel = `Strong Accumulate (${buyCount} of 3 strategies)`;
-    verdictBadgeClass = 'bg-plt-profit-soft text-plt-profit border-plt-profit-border';
+    verdictLabel = 'Strong Accumulate (Both Engines)';
+    verdictBadgeClass = 'bg-[#089981]/15 text-[#089981] border-[#089981]/30';
+    verdictIcon = '🟢';
+  } else if (buyCount === 1) {
+    overallVerdict = 'STRONG_BUY';
+    verdictLabel = 'Moderate Accumulate (1 Buy Alert)';
+    verdictBadgeClass = 'bg-[#089981]/15 text-[#089981] border-[#089981]/30';
     verdictIcon = '🟢';
   }
 

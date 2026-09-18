@@ -232,8 +232,8 @@ export default function AlertTriggersWidget({
           </div>
         </div>
 
-        {/* 4 Strategy Scope Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        {/* Strategy Scope Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* 1. All Strategies */}
           <div
             onClick={() => handleStrategyScopeChange('all')}
@@ -254,7 +254,7 @@ export default function AlertTriggersWidget({
                 </span>
               </div>
               <p className="text-[11px] text-[#787b86] leading-relaxed">
-                Receive alerts from PSI, PSI V2, and Thoth EGX Macro models.
+                Receive alerts from Typhon and Cerberus models.
               </p>
             </div>
             <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
@@ -267,7 +267,7 @@ export default function AlertTriggersWidget({
             </div>
           </div>
 
-          {/* 2. PSI Strategy */}
+          {/* 2. Typhon Strategy */}
           <div
             onClick={() => handleStrategyScopeChange('psi')}
             className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
@@ -280,18 +280,18 @@ export default function AlertTriggersWidget({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Target className={`w-4 h-4 ${alertStrategyScope === 'psi' ? 'text-[#2962ff]' : 'text-[#787b86]'}`} />
-                  <span className="text-xs font-semibold text-white">PSI Strategy</span>
+                  <span className="text-xs font-semibold text-white">Typhon Strategy</span>
                 </div>
                 <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#2962ff]/10 text-[#2962ff] border border-[#2962ff]/25">
-                  PSI
+                  TYPHON
                 </span>
               </div>
               <p className="text-[11px] text-[#787b86] leading-relaxed">
-                Multi-indicator PSI inflection and consensus engine triggers.
+                Multi-indicator inflection and consensus engine triggers.
               </p>
             </div>
             <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
-              <span className="text-[9px] text-[#787b86]">Scope: PSI Rules</span>
+              <span className="text-[9px] text-[#787b86]">Scope: Typhon Engine</span>
               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
                 alertStrategyScope === 'psi' ? 'border-[#2962ff] bg-[#2962ff]' : 'border-[#27272a]'
               }`}>
@@ -300,7 +300,7 @@ export default function AlertTriggersWidget({
             </div>
           </div>
 
-          {/* 3. PSI V2 Strategy */}
+          {/* 3. Cerberus Strategy */}
           <div
             onClick={() => handleStrategyScopeChange('psi_v2')}
             className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
@@ -313,55 +313,22 @@ export default function AlertTriggersWidget({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Compass className={`w-4 h-4 ${alertStrategyScope === 'psi_v2' ? 'text-[#089981]' : 'text-[#787b86]'}`} />
-                  <span className="text-xs font-semibold text-white">PSI V2 Strategy</span>
+                  <span className="text-xs font-semibold text-white">Cerberus Strategy</span>
                 </div>
                 <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#089981]/10 text-[#089981] border border-[#089981]/25">
-                  PSI V2
+                  CERBERUS
                 </span>
               </div>
               <p className="text-[11px] text-[#787b86] leading-relaxed">
-                3-PSI Vector Architecture (PSI Zone &amp; Up/Down Momentum).
+                3-Headed Vector Architecture (Zone &amp; Up/Down Momentum).
               </p>
             </div>
             <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
-              <span className="text-[9px] text-[#787b86]">Scope: 3-PSI Vector</span>
+              <span className="text-[9px] text-[#787b86]">Scope: Cerberus Engine</span>
               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
                 alertStrategyScope === 'psi_v2' ? 'border-[#089981] bg-[#089981]' : 'border-[#27272a]'
               }`}>
                 {alertStrategyScope === 'psi_v2' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Thoth EGX Macro */}
-          <div
-            onClick={() => handleStrategyScopeChange('thoth_egx_macro')}
-            className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
-              alertStrategyScope === 'thoth_egx_macro'
-                ? 'bg-[#222226] border-[#9c27b0] shadow-sm'
-                : 'bg-[#18181b] border-[#27272a] hover:border-[#3f3f46] hover:bg-[#222226]'
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Cpu className={`w-4 h-4 ${alertStrategyScope === 'thoth_egx_macro' ? 'text-[#9c27b0]' : 'text-[#787b86]'}`} />
-                  <span className="text-xs font-semibold text-white">Thoth Macro</span>
-                </div>
-                <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#9c27b0]/10 text-[#9c27b0] border border-[#9c27b0]/25">
-                  Deep Learning
-                </span>
-              </div>
-              <p className="text-[11px] text-[#787b86] leading-relaxed">
-                Transformer Exhaustion Prediction model alerts.
-              </p>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
-              <span className="text-[9px] text-[#787b86]">Scope: AI Model</span>
-              <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                alertStrategyScope === 'thoth_egx_macro' ? 'border-[#9c27b0] bg-[#9c27b0]' : 'border-[#27272a]'
-              }`}>
-                {alertStrategyScope === 'thoth_egx_macro' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </div>
           </div>

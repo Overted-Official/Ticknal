@@ -64,9 +64,8 @@ export type HoldingRow = {
 
 export const STRATEGIES: Array<{ id: StrategyFilter; label: string }> = [
   { id: 'all', label: 'All strategies' },
-  { id: 'psi', label: 'PSI' },
-  { id: 'psi_v2', label: 'PSI V2' },
-  { id: 'thoth_egx_macro', label: 'THOTH' },
+  { id: 'psi', label: 'Typhon' },
+  { id: 'psi_v2', label: 'Cerberus' },
 ];
 
 export const REGIMES: Array<'All' | Regime> = ['All', 'Leading', 'Improving', 'Weakening', 'Lagging'];
@@ -155,9 +154,8 @@ export function buyOpportunityForHolding(
     opinion: StrategyOpinion;
     metrics: StrategyMetrics;
   }> = [
-    { strategyId: 'psi', strategyLabel: 'PSI', opinion: consensus.opinions.psi, metrics: consensus.strategyMetrics.psi },
-    { strategyId: 'psi_v2', strategyLabel: 'PSI V2', opinion: consensus.opinions.psiV2, metrics: consensus.strategyMetrics.psiV2 },
-    { strategyId: 'thoth_egx_macro', strategyLabel: 'THOTH', opinion: consensus.opinions.thoth, metrics: consensus.strategyMetrics.thoth },
+    { strategyId: 'psi', strategyLabel: 'Typhon', opinion: consensus.opinions.psi, metrics: consensus.strategyMetrics.psi },
+    { strategyId: 'psi_v2', strategyLabel: 'Cerberus', opinion: consensus.opinions.psiV2, metrics: consensus.strategyMetrics.psiV2 },
   ];
 
   const eligible = candidates

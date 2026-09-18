@@ -60,8 +60,7 @@ const MEM_CACHE_TTL = 30 * 60 * 1000;
 function strategyScopeToIds(strategyScope: string): StrategyId[] {
   if (strategyScope === 'psi') return ['psi'];
   if (strategyScope === 'psi_v2') return ['psi_v2'];
-  if (strategyScope === 'thoth' || strategyScope === 'thoth_egx_macro') return ['thoth_egx_macro'];
-  return ['psi', 'psi_v2', 'thoth_egx_macro'];
+  return ['psi', 'psi_v2'];
 }
 
 type IndexedBuySignal = {

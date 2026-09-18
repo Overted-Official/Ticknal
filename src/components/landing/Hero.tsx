@@ -43,7 +43,7 @@ export default function Hero() {
             href="#strategies"
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.06] border border-white/15 hover:border-white/30 hover:bg-white/[0.1] transition-all text-[13px] text-white/90 backdrop-blur-md font-sans tracking-tight"
           >
-            <span>Proprietary PSI V2 &amp; Thoth Models Live</span>
+            <span>Proprietary Typhon &amp; Cerberus Models Live</span>
             <span className="text-white/60">→</span>
           </Link>
         </motion.div>

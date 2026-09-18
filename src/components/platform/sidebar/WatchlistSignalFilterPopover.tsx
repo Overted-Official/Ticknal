@@ -19,7 +19,7 @@ export interface SignalFilterConfig {
 
 export const DEFAULT_SIGNAL_FILTER: SignalFilterConfig = {
   isActive: false,
-  strategies: ['psi', 'thoth_egx_macro', 'psi_v2'],
+  strategies: ['psi', 'psi_v2'],
   signals: ['BUY'],
   lookbackDays: 5,
 };
@@ -36,23 +36,16 @@ interface WatchlistSignalFilterPopoverProps {
 const STRATEGY_OPTIONS = [
   {
     id: 'psi',
-    label: 'PSI Strategy',
+    label: 'Typhon Strategy',
     sub: 'Consensus & Inflection',
-    badge: 'PSI',
+    badge: 'TYPHON',
     color: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
   },
   {
-    id: 'thoth_egx_macro',
-    label: 'THOTH EGX V3.7P',
-    sub: 'Macro Exhaustion Transformer',
-    badge: 'THOTH',
-    color: 'text-purple-400 border-purple-500/30 bg-purple-500/10',
-  },
-  {
     id: 'psi_v2',
-    label: 'PSI V2 Strategy',
+    label: 'Cerberus Strategy',
     sub: '3-Vector Momentum Architecture',
-    badge: 'PSI V2',
+    badge: 'CERBERUS',
     color: 'text-sky-400 border-sky-500/30 bg-sky-500/10',
   },
 ];

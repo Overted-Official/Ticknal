@@ -70,9 +70,8 @@ export default function PortfolioPositionsLedgerWidget({
             <span>Position</span>
             <span>Weight</span>
             <span>Group / regime</span>
-            <span>PSI</span>
-            <span>PSI V2</span>
-            <span>THOTH</span>
+            <span>Typhon</span>
+            <span>Cerberus</span>
             <span>Actions</span>
           </div>
 
@@ -127,9 +126,8 @@ export default function PortfolioPositionsLedgerWidget({
                     </span>
                   </div>
 
-                  <StrategyDecisionCell label="PSI" opinion={opinionFor(consensus, 'psi', freshness)} loading={isLoadingConsensus} active={strategy === 'psi'} />
-                  <StrategyDecisionCell label="PSI V2" opinion={opinionFor(consensus, 'psi_v2', freshness)} loading={isLoadingConsensus} active={strategy === 'psi_v2'} />
-                  <StrategyDecisionCell label="THOTH" opinion={opinionFor(consensus, 'thoth_egx_macro', freshness)} loading={isLoadingConsensus} active={strategy === 'thoth_egx_macro'} />
+                  <StrategyDecisionCell label="Typhon" opinion={opinionFor(consensus, 'psi', freshness)} loading={isLoadingConsensus} active={strategy === 'psi'} />
+                  <StrategyDecisionCell label="Cerberus" opinion={opinionFor(consensus, 'psi_v2', freshness)} loading={isLoadingConsensus} active={strategy === 'psi_v2'} />
 
                   <div className="flex items-center justify-end gap-1">
                     <button type="button" onClick={() => onOpenChart(holding.symbol)} className="rounded-md p-1.5 text-plt-muted hover:bg-plt-hover hover:text-plt-text cursor-pointer" title="Open chart">
@@ -223,12 +221,11 @@ export default function PortfolioPositionsLedgerWidget({
                   <div className="flex flex-wrap gap-1.5">
                     {strategy === 'all' ? (
                       <>
-                        <DecisionChip strategy="PSI" opinion={opinionFor(consensus, 'psi', freshness) || undefined} loading={isLoadingConsensus} />
-                        <DecisionChip strategy="V2" opinion={opinionFor(consensus, 'psi_v2', freshness) || undefined} loading={isLoadingConsensus} />
-                        <DecisionChip strategy="THOTH" opinion={opinionFor(consensus, 'thoth_egx_macro', freshness) || undefined} loading={isLoadingConsensus} />
+                        <DecisionChip strategy="Typhon" opinion={opinionFor(consensus, 'psi', freshness) || undefined} loading={isLoadingConsensus} />
+                        <DecisionChip strategy="Cerberus" opinion={opinionFor(consensus, 'psi_v2', freshness) || undefined} loading={isLoadingConsensus} />
                       </>
                     ) : (
-                      <DecisionChip strategy={strategy === 'psi' ? 'PSI' : strategy === 'psi_v2' ? 'PSI V2' : 'THOTH'} opinion={selectedOpinion || undefined} loading={isLoadingConsensus} />
+                      <DecisionChip strategy={strategy === 'psi' ? 'Typhon' : 'Cerberus'} opinion={selectedOpinion || undefined} loading={isLoadingConsensus} />
                     )}
                   </div>
                 </div>

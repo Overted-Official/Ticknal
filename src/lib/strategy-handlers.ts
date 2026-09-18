@@ -6,7 +6,6 @@ import {
   type PriceBar,
 } from '@/strategies/PSI/psiStrategy';
 import { runFullStrategyBacktest } from '@/strategies/PSI/psiBacktestEngine';
-import { runFullThothV37PBacktest } from '@/strategies/THOTH_EGX_V3_7P/thothV37PStrategy';
 import { runFullPsiV2Backtest } from '@/strategies/PSI_V2';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
@@ -19,8 +18,8 @@ export async function handleSignalsGet(request: Request) {
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategyParam = searchParams.get('strategy') || 'psi';
-    const strategy: StrategyId = strategyParam === 'psi_v2' || strategyParam === 'thoth_egx_macro'
-      ? strategyParam
+    const strategy: StrategyId = strategyParam === 'psi_v2'
+      ? 'psi_v2'
       : 'psi';
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
@@ -141,8 +140,8 @@ export async function handleMetricsGet(request: Request) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
 
-    const strategyId: StrategyId = strategy === 'psi_v2' || strategy === 'thoth_egx_macro'
-      ? strategy
+    const strategyId: StrategyId = strategy === 'psi_v2'
+      ? 'psi_v2'
       : 'psi';
     const effectiveStartDate = startDate ?? (is1H ? (bars[0]?.date || '2020-01-01') : '2025-01-01');
     const strategyParams: Record<string, unknown> = {};
@@ -266,7 +265,7 @@ export async function handleReportGet(request: Request) {
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
     const requestedModel = searchParams.get('model');
-    const model = requestedModel || (strategy === 'thoth_egx_macro' ? 'thoth_egx_macro' : strategy === 'psi_v2' ? 'psi_v2' : 'canonical');
+    const model = requestedModel || (strategy === 'psi_v2' ? 'psi_v2' : 'canonical');
     const startDate = searchParams.get('start') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? undefined;
     const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 3000;
@@ -312,16 +311,6 @@ export async function handleReportGet(request: Request) {
       };
 
       report = runFullPsiV2Backtest(bars, psiV2Overrides);
-    } else if (strategy === 'thoth_egx_macro' || model === 'thoth_egx_macro') {
-      strategyId = 'thoth_egx_macro';
-      const thothOverrides: Record<string, any> = {
-        ticker,
-        startDate,
-        endDate,
-        initialCapital,
-      };
-
-      report = await runFullThothV37PBacktest(bars, thothOverrides);
     } else {
       const psiModel = model === 'psi8' || model === 'psi40' ? model : undefined;
       const parameterResolution = await resolvePsiParamsAsync(ticker, {
