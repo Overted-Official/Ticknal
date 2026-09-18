@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
-import { flyoutReveal } from '@/lib/motion';
+import { flyoutRevealRight } from '@/lib/motion';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -72,7 +72,7 @@ export default function SidebarNav() {
   const isWalletActive = pathname === '/wallet' || pathname === '/positions';
 
   return (
-    <div className="nav-shell w-[45px] h-full flex flex-col items-center py-2.5 border-r select-none">
+    <div className="nav-shell w-[45px] h-full flex flex-col items-center py-2.5 border-l select-none">
       {/* Brand Logo */}
       <Link
         href="/dashboard"
@@ -109,10 +109,10 @@ export default function SidebarNav() {
           {/* Desktop Floating Menu for Dashboard */}
           {isDashboardMenuOpen && (
             <motion.div
-              variants={flyoutReveal}
+              variants={flyoutRevealRight}
               initial="hidden"
               animate="visible"
-              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-44 overflow-hidden"
+              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-44 overflow-hidden"
             >
               <div className="nav-flyout-title">Dashboard</div>
               <Link
@@ -184,10 +184,10 @@ export default function SidebarNav() {
           {/* Desktop Floating Menu for Invest */}
           {isChartsMenuOpen && (
             <motion.div
-              variants={flyoutReveal}
+              variants={flyoutRevealRight}
               initial="hidden"
               animate="visible"
-              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-44 overflow-hidden"
+              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-44 overflow-hidden"
             >
               <div className="nav-flyout-title">Invest</div>
               <Link
@@ -259,10 +259,10 @@ export default function SidebarNav() {
           {/* Desktop Floating Menu for Wallet */}
           {isWalletMenuOpen && (
             <motion.div
-              variants={flyoutReveal}
+              variants={flyoutRevealRight}
               initial="hidden"
               animate="visible"
-              className="nav-flyout absolute left-full top-0 ml-2 z-50 w-40 overflow-hidden"
+              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-40 overflow-hidden"
             >
               <div className="nav-flyout-title">Wallet</div>
               <Link

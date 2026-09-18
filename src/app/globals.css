@@ -26,49 +26,112 @@
 :root {
   color-scheme: dark;
 
+  /* ========================================================================
+     TradingView Cold Gray Palette & Core Scales
+     ======================================================================== */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-cold-gray-50: #f9f9f9;
+  --color-cold-gray-100: #f2f2f2;
+  --color-cold-gray-150: #ebebeb;
+  --color-cold-gray-200: #dbdbdb;
+  --color-cold-gray-250: #c9c9c9;
+  --color-cold-gray-300: #b8b8b8;
+  --color-cold-gray-350: #a8a8a8;
+  --color-cold-gray-400: #9c9c9c;
+  --color-cold-gray-450: #8c8c8c;
+  --color-cold-gray-500: #7d7d7d;
+  --color-cold-gray-550: #707070;
+  --color-cold-gray-600: #636363;
+  --color-cold-gray-650: #575757;
+  --color-cold-gray-700: #4a4a4a;
+  --color-cold-gray-750: #3d3d3d;
+  --color-cold-gray-800: #2e2e2e;
+  --color-cold-gray-850: #1f1f1f;
+  --color-cold-gray-900: #0f0f0f;
+
+  /* TradingView Brand Blue Scale */
+  --color-tv-blue-50: #f0f7ff;
+  --color-tv-blue-100: #e0effe;
+  --color-tv-blue-200: #bae0fd;
+  --color-tv-blue-300: #7cc8fc;
+  --color-tv-blue-400: #36acf8;
+  --color-tv-blue-500: #2962ff;
+  --color-tv-blue-600: #1e53e5;
+  --color-tv-blue-700: #1844b8;
+
+  /* TradingView Functional & Asset Colors */
+  --color-minty-green-400: #22ab94;
+  --color-minty-green-500: #089981;
+  --color-minty-green-600: #06806b;
+  --color-minty-green-700: #056656;
+
+  --color-ripe-red-400: #f7525f;
+  --color-ripe-red-500: #f23645;
+  --color-ripe-red-600: #cc2f3c;
+  --color-ripe-red-700: #b22833;
+
+  --color-tan-orange-400: #ffa726;
+  --color-tan-orange-500: #ff9800;
+  --color-tan-orange-600: #fb8c00;
+  --color-tan-orange-700: #f57c00;
+
+  --color-sky-blue-400: #26c6da;
+  --color-sky-blue-500: #00bcd4;
+  --color-sky-blue-600: #00acc1;
+
+  --color-grapes-purple-400: #ab47bc;
+  --color-grapes-purple-500: #9c27b0;
+  --color-grapes-purple-600: #8e24aa;
+
+  --color-symbol-change-positive: var(--color-minty-green-400);
+  --color-symbol-change-negative: var(--color-ripe-red-400);
+  --color-symbol-change-neutral: var(--color-cold-gray-200);
+
   /* Product Base Palette */
-  --palette-background: #000000;
-  --palette-sidebar: #0e0e0e;
+  --palette-background: var(--color-black);
+  --palette-sidebar: var(--color-cold-gray-900);
   --palette-chart: #121212;
-  --palette-chart-axis: #161616;
+  --palette-chart-axis: var(--color-cold-gray-850);
   --palette-chart-grid: #202020;
-  --palette-interactive: #242424;
+  --palette-interactive: var(--color-cold-gray-800);
   --palette-link: var(--core-white);
   --palette-negative: #ef4444;
   --palette-positive: #10b981;
-  --core-white: #ffffff;
+  --core-white: var(--color-white);
   --core-black: var(--palette-background);
   --core-red: var(--palette-negative);
-  --core-orange: #ffffff;
+  --core-orange: var(--color-white);
   --support-red: var(--palette-negative);
   --support-green: var(--palette-positive);
-  --support-blue: #3b82f6;
+  --support-blue: var(--color-tv-blue-500);
   --support-amber: #f59e0b;
 
   /* Semantic Platform Colors */
-  --plt-bg-base: #000000;
-  --plt-bg-raised: #0e0e0e;
-  --plt-bg-surface: #0e0e0e;
-  --plt-bg-surface-elevated: #161616;
-  --plt-bg-muted: #242424;
-  --plt-bg-brand: #161616;
-  --plt-bg-hover: #1e1e1e;
-  --plt-bg-active: #242424;
+  --plt-bg-base: var(--color-black);
+  --plt-bg-raised: var(--color-cold-gray-900);
+  --plt-bg-surface: var(--color-cold-gray-900);
+  --plt-bg-surface-elevated: var(--color-cold-gray-850);
+  --plt-bg-muted: var(--color-cold-gray-800);
+  --plt-bg-brand: var(--color-cold-gray-850);
+  --plt-bg-hover: var(--color-cold-gray-850);
+  --plt-bg-active: var(--color-cold-gray-800);
   --plt-bg-chart: #121212;
-  --plt-bg-console: #141414;
+  --plt-bg-console: var(--color-cold-gray-900);
   --plt-bg-overlay: rgba(0, 0, 0, 0.8);
   --plt-text-primary: var(--core-white);
-  --plt-text-secondary: color-mix(in srgb, var(--core-white) 72%, transparent);
-  --plt-text-muted: color-mix(in srgb, var(--core-white) 56%, transparent);
-  --plt-text-faint: color-mix(in srgb, var(--core-white) 40%, transparent);
-  --plt-text-inverse: var(--core-black);
+  --plt-text-secondary: var(--color-cold-gray-250);
+  --plt-text-muted: var(--color-cold-gray-450);
+  --plt-text-faint: var(--color-cold-gray-600);
+  --plt-text-inverse: var(--color-black);
   --plt-border-subtle: transparent;
-  --plt-border: #242424;
-  --plt-border-soft: #1e1e1e;
-  --plt-border-strong: #2c2c2c;
+  --plt-border: var(--color-cold-gray-800);
+  --plt-border-soft: var(--color-cold-gray-850);
+  --plt-border-strong: var(--color-cold-gray-750);
   --plt-border-active: rgba(255, 255, 255, 0.3);
-  --plt-surface-edge: #242424;
-  --plt-surface-edge-hover: #2c2c2c;
+  --plt-surface-edge: var(--color-cold-gray-800);
+  --plt-surface-edge-hover: var(--color-cold-gray-750);
   --plt-surface-highlight: color-mix(in srgb, var(--core-white) 6%, transparent);
   --plt-surface-lowlight: rgba(0, 0, 0, 0.8);
 
@@ -165,16 +228,16 @@
   --btn-padding-x-micro: 0.625rem;   /* 10px */
 
   /* Button Color Tokens */
-  --btn-primary-bg: #f2f2f2;
-  --btn-primary-text: #0f0f0f;
-  --btn-primary-border: #f2f2f2;
+  --btn-primary-bg: var(--color-cold-gray-100);
+  --btn-primary-text: var(--color-cold-gray-900);
+  --btn-primary-border: var(--color-cold-gray-100);
   --btn-primary-hover-bg: #e0e0e0;
-  --btn-secondary-bg: var(--plt-bg-hover);
-  --btn-secondary-text: #dbdbdb;
-  --btn-secondary-border: var(--plt-border);
-  --btn-secondary-hover-bg: var(--plt-bg-muted);
-  --btn-secondary-hover-text: #ffffff;
-  --btn-secondary-hover-border: var(--plt-border-strong);
+  --btn-secondary-bg: var(--color-cold-gray-850);
+  --btn-secondary-text: var(--color-cold-gray-200);
+  --btn-secondary-border: var(--color-cold-gray-800);
+  --btn-secondary-hover-bg: var(--color-cold-gray-800);
+  --btn-secondary-hover-text: var(--color-white);
+  --btn-secondary-hover-border: var(--color-cold-gray-750);
 
   /* 8px Spacing Grid */
   --space-0: 0;
@@ -284,11 +347,14 @@
   --subtitle-page-size: 0.75rem;
   --subtitle-page-color: var(--plt-text-muted);
 
-  --title-section-size: 0.875rem;
-  --title-section-weight: 700;
+  --title-section-size: 1.75rem;
+  --title-section-line-height: 2.25rem;
+  --title-section-weight: 600;
   --title-section-transform: none;
+  --title-section-tracking: -0.015em;
   --title-section-color: var(--plt-text-primary);
-  --subtitle-section-size: 0.75rem;
+  --subtitle-section-size: 0.8125rem;
+  --subtitle-section-line-height: 1.4;
   --subtitle-section-color: var(--plt-text-muted);
 
   --title-widget-size: 0.75rem;
@@ -323,6 +389,10 @@
     --gap-kpi-grid: 0.625rem;
     --gap-widget-grid: 1rem;
     --section-min-height: auto;
+    --title-section-size: 1.375rem;
+    --title-section-line-height: 1.75rem;
+    --subtitle-section-size: 0.75rem;
+    --subtitle-section-line-height: 1.35;
   }
 }
 
@@ -333,6 +403,36 @@
   --font-sans: var(--font-sans-token);
   --text-btn: var(--btn-font-size);
   --font-weight-btn: var(--btn-font-weight);
+
+  /* TradingView Cold Gray Scale Utilities */
+  --color-cold-gray-50: var(--color-cold-gray-50);
+  --color-cold-gray-100: var(--color-cold-gray-100);
+  --color-cold-gray-150: var(--color-cold-gray-150);
+  --color-cold-gray-200: var(--color-cold-gray-200);
+  --color-cold-gray-250: var(--color-cold-gray-250);
+  --color-cold-gray-300: var(--color-cold-gray-300);
+  --color-cold-gray-350: var(--color-cold-gray-350);
+  --color-cold-gray-400: var(--color-cold-gray-400);
+  --color-cold-gray-450: var(--color-cold-gray-450);
+  --color-cold-gray-500: var(--color-cold-gray-500);
+  --color-cold-gray-550: var(--color-cold-gray-550);
+  --color-cold-gray-600: var(--color-cold-gray-600);
+  --color-cold-gray-650: var(--color-cold-gray-650);
+  --color-cold-gray-700: var(--color-cold-gray-700);
+  --color-cold-gray-750: var(--color-cold-gray-750);
+  --color-cold-gray-800: var(--color-cold-gray-800);
+  --color-cold-gray-850: var(--color-cold-gray-850);
+  --color-cold-gray-900: var(--color-cold-gray-900);
+
+  /* TradingView Blue Scale Utilities */
+  --color-tv-blue-50: var(--color-tv-blue-50);
+  --color-tv-blue-100: var(--color-tv-blue-100);
+  --color-tv-blue-200: var(--color-tv-blue-200);
+  --color-tv-blue-300: var(--color-tv-blue-300);
+  --color-tv-blue-400: var(--color-tv-blue-400);
+  --color-tv-blue-500: var(--color-tv-blue-500);
+  --color-tv-blue-600: var(--color-tv-blue-600);
+  --color-tv-blue-700: var(--color-tv-blue-700);
 
   /* Platform Backgrounds */
   --color-plt-base: var(--plt-bg-base);
@@ -612,18 +712,26 @@ textarea:focus-visible {
 
 .section-title {
   font-size: var(--title-section-size);
+  line-height: var(--title-section-line-height, 1.2857);
   font-weight: var(--title-section-weight);
+  letter-spacing: var(--title-section-tracking, -0.015em);
   text-transform: var(--title-section-transform);
   color: var(--title-section-color);
   font-family: var(--font-sans-token);
-  line-height: 1.3;
+  font-feature-settings: "tnum" on, "lnum" on;
+  word-break: break-word;
+  text-wrap: balance;
+  margin: 0;
+  padding: 0;
 }
 
 .section-subtitle {
   font-size: var(--subtitle-section-size);
+  line-height: var(--subtitle-section-line-height, 1.4);
   color: var(--subtitle-section-color);
   font-family: var(--font-sans-token);
-  line-height: 1.4;
+  margin: 0;
+  padding: 0;
 }
 
 .widget-title {
@@ -716,6 +824,127 @@ textarea:focus-visible {
 }
 @media (min-width: 1024px) {
   .insights-grid { grid-template-columns: var(--grid-insights-columns); }
+}
+
+/* --- 4.3.1 TradingView KPI Card & Filmstrip --- */
+.tv-kpi-card {
+  height: 82px;
+  min-width: 272px;
+  border-radius: 16px;
+  padding: 16px;
+  background: transparent;
+  border: 1px solid var(--color-cold-gray-800);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+  font-family: var(--font-sans-token);
+  font-feature-settings: "tnum" on, "lnum" on;
+}
+
+.tv-kpi-card:hover {
+  background: rgba(30, 34, 45, 0.4);
+  border-color: var(--color-cold-gray-700);
+  transform: translateY(-1px);
+}
+
+.tv-kpi-card:active {
+  transform: translateY(0);
+}
+
+.tv-filmstrip-track {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tv-filmstrip-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- 4.3.2 TradingView Widget Card & Holdings Table --- */
+.tv-widget-card {
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  user-select: none;
+  font-family: var(--font-sans-token);
+  font-feature-settings: "tnum" on, "lnum" on;
+}
+
+.tv-filter-pill-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px;
+  border-radius: 9999px;
+  background: #131722;
+  border: 1px solid #2a2e39;
+}
+
+.tv-filter-pill-btn {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  color: #787b86;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.tv-filter-pill-btn:hover {
+  color: #ffffff;
+  background: rgba(30, 34, 45, 0.6);
+}
+
+.tv-filter-pill-btn-active {
+  color: #ffffff;
+  background: #1e222d;
+  border: 1px solid #2a2e39;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.tv-holdings-table {
+  width: 100%;
+  text-align: left;
+  font-size: 0.75rem; /* 12px */
+  font-family: var(--font-sans-token);
+  border-collapse: collapse;
+}
+
+.tv-holdings-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-cold-gray-900);
+}
+
+.tv-holdings-table th {
+  padding: 0.625rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-cold-gray-450);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-cold-gray-800);
+}
+
+.tv-holdings-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--color-cold-gray-850);
+  transition: background-color 0.12s ease;
+}
+
+.tv-holdings-table tr:hover td {
+  background: var(--color-cold-gray-850);
 }
 
 /* --- 4.4 Buttons, Switches & Form Controls --- */

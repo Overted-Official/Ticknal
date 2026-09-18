@@ -235,7 +235,7 @@ export default function SectorInspector({
       <div className="flex items-start justify-between gap-2 shrink-0 relative z-30">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="section-title truncate">{sector.sector}</h2>
+            <h2 className="page-title truncate">{sector.sector}</h2>
             <span className="badge badge-muted shrink-0">
               {sector.stockCount} {sector.stockCount === 1 ? 'stock' : 'stocks'}
             </span>

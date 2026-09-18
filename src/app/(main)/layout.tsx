@@ -14,13 +14,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <PinLockProvider>
           <MobileNavScrollProvider>
             <div className="app-shell flex h-dvh w-screen flex-col overflow-hidden md:flex-row">
-              <div className="hidden md:flex h-full shrink-0 z-50">
-                <Suspense fallback={<div className="h-full w-[45px] border-r nav-shell" />}>
-                  <SidebarNav />
-                </Suspense>
-              </div>
               <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col">
                 <PageTransition>{children}</PageTransition>
+              </div>
+              <div className="hidden md:flex h-full shrink-0 z-50">
+                <Suspense fallback={<div className="h-full w-[45px] border-l nav-shell" />}>
+                  <SidebarNav />
+                </Suspense>
               </div>
               <div className="md:hidden fixed bottom-0 left-0 right-0 w-full z-50 pointer-events-none">
                 <BottomNav />

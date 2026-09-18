@@ -145,9 +145,9 @@ export default function TransactionLedgerTable({
     <div className="card-widget space-y-3 select-none">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-plt-border-soft">
         <div className="flex items-center gap-2">
-          <h2 className="section-title">
+          <h3 className="text-sm font-semibold text-plt-text">
             Transaction History & Cash Flow Ledger
-          </h2>
+          </h3>
           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-plt-card border border-plt-border-soft text-plt-muted font-mono">
             {filteredTransactions.length} {filteredTransactions.length === 1 ? 'entry' : 'entries'}
           </span>

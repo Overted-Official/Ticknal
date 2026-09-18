@@ -158,7 +158,7 @@ export default function TickerPositions({
       {/* ================================================================= */}
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-1">
-          <h3 className="section-title">
+          <h3 className="text-sm font-semibold text-plt-text">
             Position Overview
           </h3>
           <span className="text-xs text-plt-muted font-normal">
@@ -314,7 +314,7 @@ export default function TickerPositions({
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
           <div className="flex items-center gap-3">
-            <h3 className="section-title">
+            <h3 className="text-sm font-semibold text-plt-text">
               Orders & Positions
             </h3>
             {/* Tokenized Segmented Switch (Transparent Background, No Border) */}

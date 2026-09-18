@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 
-export default function Loading() {
+export default function RootLoading() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[linear-gradient(180deg,#000000_0%,#090307_30%,#1c0a17_65%,#301728_100%)] select-none">
       <div className="relative flex flex-col items-center justify-center">

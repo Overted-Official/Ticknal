@@ -1,9 +1,8 @@
 'use client';
 
-import React from 'react';
-import { ShieldCheck, TrendingUp, Landmark, Flame } from '@/components/ui/icon-library';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import RichSparklineCard from '@/components/platform/ui/RichSparklineCard';
 import type { NetWorthTrendPoint } from '@/lib/portfolio-finance';
 
 interface NetWorthKPIsProps {
@@ -39,14 +38,17 @@ export default function NetWorthKPIs({
   connectedAccountsCount,
   currentYearDrag,
   effectiveAnnualInflation,
-  trendData,
 }: NetWorthKPIsProps) {
   const { isPrivacy } = usePrivacyMode();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
   const displaySymbol = currencyMode === 'USD' ? '$' : '';
   const displaySuffix = currencyMode === 'EGP' ? ' £' : '';
 
   const formatCurrency = (val: number) => {
-    return `${displaySymbol}${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${displaySuffix}`;
+    return `${displaySymbol}${val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}${displaySuffix}`;
   };
 
   const investedTotal = (totalEquitiesMarketValue + totalFundsMarketValue) * fxMultiplier;
@@ -59,114 +61,169 @@ export default function NetWorthKPIs({
   const brokeragePct = totalNetWorthEgp > 0 ? ((brokerageCashInEgp / totalNetWorthEgp) * 100).toFixed(1) : '0.0';
 
   const realPurchasingPower = displayTotalNetWorth - dragDisplay;
-  const trendLabels = trendData.length >= 2
-    ? [trendData[0].month, trendData[Math.floor(trendData.length / 2)].month, trendData[trendData.length - 1].month]
-    : [];
+
+  // Filmstrip scroll state management
+  const updateScrollState = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = trackRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [updateScrollState]);
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    const el = trackRef.current;
+    if (!el) return;
+    const step = 288; // 272px card + 16px gap
+    el.scrollBy({
+      left: direction === 'left' ? -step : step,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleCardClick = (targetId: string) => {
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const cards = [
+    {
+      id: 'net-worth',
+      targetId: 'section-wealth-trajectory',
+      title: 'Total Net Worth',
+      value: isPrivacy ? '••••••••' : formatCurrency(displayTotalNetWorth),
+      badgeText: 'Live mark',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+      metaText: 'Mark-to-market live',
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'real-purchasing-power',
+      targetId: 'section-wealth-trajectory',
+      title: 'Real Purchasing Power',
+      value: isPrivacy ? '••••••••' : formatCurrency(realPurchasingPower),
+      badgeText: `-${effectiveAnnualInflation.toFixed(1)}% Defl.`,
+      badgeClass: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+      metaText: isPrivacy ? 'Drag: -••••••' : `Drag: -${formatCurrency(dragDisplay)}`,
+      metaClass: 'text-amber-400/90',
+    },
+    {
+      id: 'investments',
+      targetId: 'section-holdings-allocations',
+      title: 'Investments (Equities & Funds)',
+      value: isPrivacy ? '••••••••' : formatCurrency(investedTotal),
+      badgeText: `${investedPct}% Alloc.`,
+      badgeClass: 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: `${openPositionsCount} active holdings`,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'liquid-cash',
+      targetId: 'section-holdings-allocations',
+      title: 'Cash Reserves (Bank + USD)',
+      value: isPrivacy ? '••••••••' : formatCurrency(liquidCashTotal),
+      badgeText: `${cashPct}% Liquidity`,
+      badgeClass: 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: `${connectedAccountsCount} bank account${connectedAccountsCount !== 1 ? 's' : ''}`,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'brokerage-cash',
+      targetId: 'section-holdings-allocations',
+      title: 'Brokerage Cash',
+      value: brokerageAccountsCount > 0
+        ? (isPrivacy ? '••••••••' : formatCurrency(brokerageCashTotal))
+        : 'Not linked',
+      badgeText: brokerageAccountsCount > 0 ? `${brokeragePct}% Share` : 'No account',
+      badgeClass: 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: brokerageAccountsCount > 0 ? 'Available trading cash' : 'Add brokerage',
+      metaClass: 'text-cold-gray-450',
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Row 1: 2 Main Cards (Total Net Worth & Real Purchasing Power) */}
-      <div className="kpi-grid-2">
-        {/* Card 1: Total Net Worth */}
-        <RichSparklineCard
-          title="Total Net Worth"
-          value={formatCurrency(displayTotalNetWorth)}
-          changeBadge={{
-            text: 'Current mark',
-            isNeutral: true,
-          }}
-          meta="Mark-to-market live valuation"
-          sparklineTitle="Recorded monthly net worth"
-          sparklineData={trendData.map((point) => point.nominal)}
-          sparklineLabels={trendLabels}
-          colorVariant="profit"
-          isPrivacy={isPrivacy}
-        />
-
-        {/* Card 2: Real Purchasing Power */}
-        <RichSparklineCard
-          title={`Real Purchasing Power (${effectiveAnnualInflation}% Defl.)`}
-          value={formatCurrency(realPurchasingPower)}
-          changeBadge={{
-            text: `-${effectiveAnnualInflation}% Defl.`,
-            isPositive: false,
-          }}
-          meta={`Inflation drag: -${formatCurrency(dragDisplay)}`}
-          sparklineTitle="Inflation-adjusted monthly value"
-          sparklineData={trendData.map((point) => point.real)}
-          sparklineLabels={trendLabels}
-          colorVariant="orange"
-          isPrivacy={isPrivacy}
-        />
+    <div className="w-full space-y-2">
+      {/* Navigation bar */}
+      <div className="flex items-center justify-between px-0.5">
+        <span className="text-[11px] font-medium text-cold-gray-450 tracking-wide">
+          Key Metrics · Click card to jump to section
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => handleScroll('left')}
+            disabled={!canScrollLeft}
+            className="p-1 rounded-lg border border-cold-gray-800 bg-transparent text-cold-gray-400 hover:text-white hover:bg-cold-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScroll('right')}
+            disabled={!canScrollRight}
+            className="p-1 rounded-lg border border-cold-gray-800 bg-transparent text-cold-gray-400 hover:text-white hover:bg-cold-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
-      {/* Row 2: 4 Breakdown Cards (Investments, Bank Liquidity, Brokerage Cash, Inflation Drag) */}
-      <div className="kpi-grid-4">
-        {/* Card 3: Equities & Mutual Funds */}
-        <RichSparklineCard
-          title="Investments (Equities & Funds)"
-          value={formatCurrency(investedTotal)}
-          changeBadge={{
-            text: `${investedPct}% Alloc.`,
-            isPositive: true,
-          }}
-          meta={`${openPositionsCount} active holdings & funds`}
-          sparklineTitle="Month-end invested value"
-          sparklineData={trendData.map((point) => point.invested)}
-          sparklineLabels={trendLabels}
-          colorVariant="orange"
-          isPrivacy={isPrivacy}
-        />
+      {/* Filmstrip track */}
+      <div
+        ref={trackRef}
+        className="tv-filmstrip-track pb-1 pt-0.5 scroll-smooth"
+      >
+        {cards.map((card) => (
+          <div
+            key={card.id}
+            onClick={() => handleCardClick(card.targetId)}
+            className="tv-kpi-card shrink-0 flex-1 min-w-[272px] max-w-[360px]"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick(card.targetId);
+              }
+            }}
+          >
+            {/* Top row: Title + Badge */}
+            <div className="flex items-center justify-between gap-2 leading-none">
+              <span className="text-[12px] font-medium text-cold-gray-400 truncate tracking-tight">
+                {card.title}
+              </span>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold leading-none ${card.badgeClass}`}>
+                {card.badgeText}
+              </span>
+            </div>
 
-        {/* Card 4: Liquid Bank Reserves */}
-        <RichSparklineCard
-          title="Cash Reserves (Bank + USD)"
-          value={formatCurrency(liquidCashTotal)}
-          changeBadge={{
-            text: `${cashPct}% Liquidity`,
-            isNeutral: true,
-          }}
-          meta={`${connectedAccountsCount} connected cash account${connectedAccountsCount !== 1 ? 's' : ''} · brokerage cash excluded`}
-          sparklineTitle="Recorded monthly cash balance"
-          sparklineData={trendData.map((point) => point.cash - point.brokerageCash)}
-          sparklineLabels={trendLabels}
-          colorVariant="info"
-          isPrivacy={isPrivacy}
-        />
-
-        {/* Card 5: Brokerage Cash */}
-        <RichSparklineCard
-          title="Brokerage Cash"
-          value={brokerageAccountsCount > 0 ? formatCurrency(brokerageCashTotal) : 'Not linked'}
-          changeBadge={{
-            text: brokerageAccountsCount > 0 ? `${brokeragePct}% of Net Worth` : 'No account',
-            isNeutral: brokerageAccountsCount === 0,
-          }}
-          meta={brokerageAccountsCount > 0
-            ? `${brokerageAccountsCount} brokerage account${brokerageAccountsCount !== 1 ? 's' : ''} · Available trading cash`
-            : 'Add a brokerage account to track trading cash'}
-          sparklineTitle="Brokerage Cash Run-Rate"
-          sparklineData={trendData.map((point) => point.brokerageCash)}
-          sparklineLabels={trendLabels}
-          colorVariant="profit"
-          isPrivacy={isPrivacy && brokerageAccountsCount > 0}
-        />
-
-        {/* Card 6: Inflation Drag */}
-        <RichSparklineCard
-          title={`Inflation Drag (1Y @ ${effectiveAnnualInflation}% Eff.)`}
-          value={`-${formatCurrency(dragDisplay)}`}
-          changeBadge={{
-            text: `-${effectiveAnnualInflation}% Drag`,
-            isPositive: false,
-          }}
-          meta="Purchasing power deflator"
-          sparklineTitle="Cumulative Purchasing Drag"
-          sparklineData={trendData.map((point) => point.drag)}
-          sparklineLabels={trendLabels}
-          colorVariant="risk"
-          isPrivacy={isPrivacy}
-        />
+            {/* Bottom row: Value + Meta */}
+            <div className="flex items-baseline justify-between gap-2 leading-none">
+              <span className="text-[20px] font-bold text-cold-gray-100 tabular-nums tracking-tight">
+                {card.value}
+              </span>
+              <span className={`text-[11px] truncate max-w-[130px] text-right font-medium leading-none ${card.metaClass}`}>
+                {card.metaText}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

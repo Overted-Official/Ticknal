@@ -142,9 +142,9 @@ export default function BankAccountsGrid({
       {/* Header Controls */}
       <div className="flex items-center justify-between pb-1 select-none">
         <div className="flex items-center gap-2">
-          <h2 className="section-title">
+          <h3 className="text-sm font-semibold text-plt-text">
             Connected Institutions ({groupedBanks.length} Banks · {accounts.length} Accounts)
-          </h2>
+          </h3>
         </div>
 
         <div className="flex items-center gap-2">

@@ -53,6 +53,19 @@ export const flyoutReveal: Variants = {
   },
 };
 
+export const flyoutRevealRight: Variants = {
+  hidden: { opacity: 0, x: 8, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      duration: 0.16,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
 export const tapPress: TargetAndTransition = {
   scale: 0.98,
   transition: { duration: 0.1 },

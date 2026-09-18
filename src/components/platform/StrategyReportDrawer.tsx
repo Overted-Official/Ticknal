@@ -661,10 +661,10 @@ export default function StrategyReportDrawer({
                   <div className="card-widget p-5 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-plt-border-soft">
                       <div className="flex items-center gap-2">
-                        <h3 className="section-title text-xs tracking-wider uppercase font-semibold">
+                        <h3 className="widget-title">
                           Performance Equity Curve
                         </h3>
-                        <span className="section-subtitle text-[11px] text-plt-muted font-normal">• Mark-to-Market vs Benchmark</span>
+                        <span className="widget-subtitle text-[11px] font-normal">• Mark-to-Market vs Benchmark</span>
                       </div>
 
                       {/* Legend */}

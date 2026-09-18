@@ -9,7 +9,6 @@ import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
 import NetWorthHeader from './networth/NetWorthHeader';
 import NetWorthKPIs from './networth/NetWorthKPIs';
-import WealthGrowthChartCard from './networth/WealthGrowthChartCard';
 import PortfolioSplitCard from './networth/PortfolioSplitCard';
 import PortfolioBreakdownTable, { type PortfolioCategory } from './networth/PortfolioBreakdownTable';
 import InflationRadarChart from './networth/InflationRadarChart';
@@ -23,11 +22,11 @@ const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const ASSET_COLORS = {
-  stocks: 'var(--plt-info)',
-  funds: 'var(--plt-violet)',
-  brokerageCash: 'var(--plt-accent)',
-  usdCash: 'var(--plt-profit)',
-  egpCash: 'var(--plt-warning)',
+  stocks: '#2962ff',        // TradingView Blue 500
+  funds: '#9c27b0',         // Grapes Purple 500
+  brokerageCash: '#00bcd4', // Sky Blue 500
+  usdCash: '#089981',       // Minty Green 500
+  egpCash: '#ff9800',       // Tan Orange 500
 };
 
 interface DashboardNetworthPageViewProps {
@@ -264,18 +263,19 @@ export default function DashboardNetworthPageView({
       {/* 2. Main Page Scroll Canvas */}
       <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y">
         <div className="app-page page-sections-stack pb-28 md:pb-20">
-          {/* Header */}
-          <NetWorthHeader
-            currencyMode={currencyMode}
-            onCurrencyModeChange={setCurrencyMode}
-          />
+          {/* Header & Section 1: Overview */}
+          <div className="flex flex-col gap-3 md:gap-4">
+            <NetWorthHeader
+              currencyMode={currencyMode}
+              onCurrencyModeChange={setCurrencyMode}
+            />
 
-          {/* SECTION 1: Net Worth Overview (5 Cards: 2 in Row 1, 3 in Row 2) */}
-          <section className="section-container section-viewport-fit">
-            <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Net Worth Overview</h2>
-              <p className="section-subtitle">Aggregated wealth balance, asset allocation split, and purchasing power capacity</p>
-            </div>
+            {/* SECTION 1: Overview */}
+            <section id="section-networth-overview" className="section-container section-viewport-fit">
+              <div className="flex flex-col gap-0.5">
+                <h2 className="section-title">Overview</h2>
+                <p className="section-subtitle">Aggregated wealth balance, asset allocation split, and purchasing power capacity</p>
+              </div>
 
             <NetWorthKPIs
               currencyMode={currencyMode}
@@ -295,71 +295,72 @@ export default function DashboardNetworthPageView({
               trendData={netWorthTrend}
             />
           </section>
+        </div>
 
-          {/* SECTION 2: Wealth Growth Trajectory */}
-          <section className="section-container section-viewport-fit">
+          {/* SECTION 2: Wealth Growth & Inflation Effect */}
+          <section id="section-wealth-trajectory" className="section-container section-viewport-fit">
+            <div id="section-inflation-impact" className="sr-only" />
             <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Wealth Growth Trajectory</h2>
-              <p className="section-subtitle">Recorded account balances and month-end market values, compared against inflation-deflated purchasing power</p>
+              <h2 className="section-title">Wealth Growth & Inflation Effect</h2>
+              <p className="section-subtitle">Recorded net worth trajectory and capital appreciation, benchmarked against currency-weighted inflation and real purchasing power</p>
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col">
-              <WealthGrowthChartCard
-                trendData={netWorthTrend}
+              <InflationRadarChart
+                points={inflationPoints}
+                cbeAnnualInflation={inflationAnalysis.headlineRate}
+                usCpiAnnualInflation={inflationAnalysis.usCpiRate}
+                effectiveAnnualInflation={inflationAnalysis.effectiveRate}
+                wEgpPct={inflationAnalysis.wEgp}
+                wUsdPct={inflationAnalysis.wUsd}
                 currencyMode={currencyMode}
                 usdRate={usdRate}
               />
             </div>
           </section>
 
-          {/* SECTION 3: Portfolio Components & Allocation */}
-          <section className="section-container section-viewport-fit">
+          {/* SECTION 3: Portfolio Distribution */}
+          <section id="section-portfolio-distribution" className="section-container section-viewport-fit">
             <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Portfolio Components & Allocation</h2>
-              <p className="section-subtitle">Interactive asset class distribution and constituent holdings breakdown</p>
+              <h2 className="section-title">Portfolio Distribution</h2>
+              <p className="section-subtitle">Asset class distribution, sector concentration, and currency exposure breakdown</p>
             </div>
 
-            <div className="widget-grid grid-cols-1 lg:grid-cols-12 items-stretch flex-1 min-h-0 w-full">
-              <div className="lg:col-span-4 flex flex-col w-full">
-                <PortfolioSplitCard
-                  slices={assetSlices}
-                  currencyMode={currencyMode}
-                  selectedSliceName={categoryToSliceMap[selectedCategory]}
-                  onSelectSlice={(name) => {
-                    setSelectedCategory(name === 'ALL' ? 'ALL' : (sliceToCategoryMap[name] || 'ALL'));
-                  }}
-                />
-              </div>
-              <div className="lg:col-span-8 flex flex-col">
-                <PortfolioBreakdownTable
-                  openPositions={openPositions}
-                  accounts={accounts}
-                  usdRate={usdRate}
-                  currencyMode={currencyMode}
-                  totalNetWorthEgp={totalNetWorthEgp}
-                  activeFilter={selectedCategory}
-                  onFilterChange={setSelectedCategory}
-                />
-              </div>
+            <div className="flex-1 min-h-0 w-full">
+              <PortfolioSplitCard
+                slices={assetSlices}
+                currencyMode={currencyMode}
+                selectedSliceName={categoryToSliceMap[selectedCategory]}
+                onSelectSlice={(name) => {
+                  setSelectedCategory(name === 'ALL' ? 'ALL' : (sliceToCategoryMap[name] || 'ALL'));
+                }}
+                openPositions={openPositions}
+                accounts={accounts}
+                usdRate={usdRate}
+                totalNetWorthEgp={totalNetWorthEgp}
+              />
             </div>
           </section>
 
-          {/* SECTION 4: Inflation & Purchasing Power Impact */}
-          <section className="section-container section-viewport-fit">
+          {/* SECTION 4: Holdings & Allocations */}
+          <section id="section-holdings-allocations" className="section-container section-viewport-fit">
+            <div id="section-portfolio-components" className="sr-only" />
             <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Inflation & Purchasing Power Impact</h2>
-              <p className="section-subtitle">Recorded net worth history with the same currency-weighted inflation deflator used in the wealth trajectory</p>
+              <h2 className="section-title">Holdings & Allocations</h2>
+              <p className="section-subtitle">Constituent asset performance across gainers, liquid reserves, and losers</p>
             </div>
 
-            <InflationRadarChart
-              points={inflationPoints}
-              cbeAnnualInflation={inflationAnalysis.headlineRate}
-              usCpiAnnualInflation={inflationAnalysis.usCpiRate}
-              effectiveAnnualInflation={inflationAnalysis.effectiveRate}
-              wEgpPct={inflationAnalysis.wEgp}
-              wUsdPct={inflationAnalysis.wUsd}
-              currencyMode={currencyMode}
-            />
+            <div className="flex-1 min-h-0 w-full">
+              <PortfolioBreakdownTable
+                openPositions={openPositions}
+                accounts={accounts}
+                usdRate={usdRate}
+                currencyMode={currencyMode}
+                totalNetWorthEgp={totalNetWorthEgp}
+                activeFilter={selectedCategory}
+                onFilterChange={setSelectedCategory}
+              />
+            </div>
           </section>
         </div>
       </div>
