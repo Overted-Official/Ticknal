@@ -68,7 +68,7 @@ export default function ChartOrderDraftPopover({
         </label>
       ) : (
         <div className="mb-3 rounded-lg bg-plt-risk-soft px-2.5 py-2 text-[10px] text-plt-risk">
-          An EGP brokerage account is required. <a href="/wallet?tab=banks" className="font-semibold underline">Open Accounts</a> to create one.
+          An EGP brokerage account is required. <a href="/wallet?tab=transactions" className="font-semibold underline">Open Cash &amp; Transactions</a> to create one.
         </div>
       )}
 

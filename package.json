@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:init-local": "tsx src/scripts/init_local_db.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
@@ -17,7 +18,9 @@
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/status-bar": "^8.0.3",
+    "@electric-sql/pglite": "^0.5.8",
     "@mathieuc/tradingview": "^3.5.2",
+    "@next/swc-win32-x64-msvc": "^16.3.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",
     "@types/d3-geo": "^3.1.1",
@@ -31,6 +34,7 @@
     "lenis": "^1.3.26",
     "lightweight-charts": "^5.2.0",
     "lucide-react": "^1.31.0",
+    "motion-dom": "^13.0.0",
     "next": "16.3.0",
     "onnxruntime-node": "^1.27.0",
     "onnxruntime-web": "^1.21.0",

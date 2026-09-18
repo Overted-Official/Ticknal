@@ -75,8 +75,8 @@ export function BuyDrawer({ opportunity, accounts, onClose, onError }: BuyDrawer
       {accounts.length === 0 ? (
         <div className="rounded-lg bg-plt-risk-soft p-3 text-xs text-plt-risk">
           An EGP brokerage account is required.{' '}
-          <a href="/wallet?tab=banks" className="font-semibold underline">
-            Open Accounts
+          <a href="/wallet?tab=transactions" className="font-semibold underline">
+            Open Cash &amp; Transactions
           </a>{' '}
           to create one.
         </div>

@@ -822,7 +822,7 @@ export default function InvestPortfolioPageView({
                   </button>
                 </div>
               ) : (
-                <a href="/wallet?tab=banks" className="inline-flex items-center gap-1.5 text-xs font-semibold text-plt-warning hover:text-plt-text">
+                <a href="/wallet?tab=transactions" className="inline-flex items-center gap-1.5 text-xs font-semibold text-plt-warning hover:text-plt-text">
                   Create brokerage account <ExternalLink size={13} />
                 </a>
               )}
@@ -911,8 +911,8 @@ export default function InvestPortfolioPageView({
               Metric definitions: alpha is strategy return minus benchmark over {opportunities[0]?.analysisStart || '2025-01-01'} → {latestData}; “Unavailable” means the engine did not return a value.
             </span>
           </div>
-          <a href="/wallet?tab=banks" className="inline-flex items-center gap-1.5 font-semibold text-plt-accent hover:text-plt-text">
-            Manage Accounts <ExternalLink size={13} />
+          <a href="/wallet?tab=transactions" className="inline-flex items-center gap-1.5 font-semibold text-plt-accent hover:text-plt-text">
+            Manage Cash &amp; Transactions <ExternalLink size={13} />
           </a>
         </section>
       </div>

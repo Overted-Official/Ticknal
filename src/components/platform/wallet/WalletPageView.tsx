@@ -20,14 +20,18 @@ export default function WalletPageView({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [currentTab, setCurrentTab] = useState<'positions' | 'banks'>(() => {
-    const urlTab = searchParams?.get('tab');
-    if (urlTab === 'banks' || urlTab === 'positions') return urlTab;
-    return initialTab === 'banks' ? 'banks' : 'positions';
+  const normalizeTab = (val?: string | null): 'positions' | 'transactions' => {
+    if (!val) return initialTab === 'banks' || initialTab === 'transactions' ? 'transactions' : 'positions';
+    if (['banks', 'accounts', 'ledger', 'transactions'].includes(val)) return 'transactions';
+    return 'positions';
+  };
+
+  const [currentTab, setCurrentTab] = useState<'positions' | 'transactions'>(() => {
+    return normalizeTab(searchParams?.get('tab'));
   });
 
   const { swipeHandlers } = useSwipeableTabs({
-    tabs: ['positions', 'banks'] as const,
+    tabs: ['positions', 'transactions'] as const,
     activeTab: currentTab,
     onTabChange: (newTab) => handleTabChange(newTab),
   });
@@ -35,12 +39,12 @@ export default function WalletPageView({
   // Sync internal state if URL search param changes from external navigation
   useEffect(() => {
     const urlTab = searchParams?.get('tab');
-    if (urlTab === 'banks' || urlTab === 'positions') {
-      setCurrentTab(urlTab);
+    if (urlTab) {
+      setCurrentTab(normalizeTab(urlTab));
     }
   }, [searchParams]);
 
-  const handleTabChange = (newTab: 'positions' | 'banks') => {
+  const handleTabChange = (newTab: 'positions' | 'transactions') => {
     if (newTab === currentTab) return;
     setCurrentTab(newTab);
     // Instant client-side URL sync without full server round-trip
@@ -49,7 +53,7 @@ export default function WalletPageView({
 
   const navItems = [
     { label: 'Stock Positions', value: 'positions', icon: Wallet },
-    { label: 'Accounts', value: 'banks', icon: Landmark },
+    { label: 'Cash & Transactions', value: 'transactions', icon: Landmark },
   ];
 
   return (
@@ -58,7 +62,7 @@ export default function WalletPageView({
       <SubNavTopRail
         items={navItems}
         activeTab={currentTab}
-        onChange={(val) => handleTabChange(val as 'positions' | 'banks')}
+        onChange={(val) => handleTabChange(val as 'positions' | 'transactions')}
       />
 
       {/* Main Tab Views with Instant Zero-Latency Switch & Touch Swiping */}
@@ -67,7 +71,7 @@ export default function WalletPageView({
           <WalletPositionsPageView />
         </div>
 
-        <div className={`absolute inset-0 flex flex-col ${currentTab === 'banks' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
+        <div className={`absolute inset-0 flex flex-col ${currentTab === 'transactions' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 -z-10 pointer-events-none'}`}>
           <WalletBankAccountsPageView usdRate={usdRate} />
         </div>
       </div>

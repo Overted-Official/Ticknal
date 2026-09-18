@@ -829,7 +829,7 @@ textarea:focus-visible {
 /* --- 4.3.1 TradingView KPI Card & Filmstrip --- */
 .tv-kpi-card {
   height: 82px;
-  min-width: 272px;
+  min-width: 0;
   border-radius: 16px;
   padding: 16px;
   background: transparent;
@@ -842,6 +842,18 @@ textarea:focus-visible {
   user-select: none;
   font-family: var(--font-sans-token);
   font-feature-settings: "tnum" on, "lnum" on;
+}
+
+@media (max-width: 639px) {
+  .tv-kpi-card {
+    height: 74px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+}
+
+.tv-filmstrip-track .tv-kpi-card {
+  min-width: 272px;
 }
 
 .tv-kpi-card:hover {

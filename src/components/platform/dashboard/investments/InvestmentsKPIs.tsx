@@ -1,121 +1,356 @@
 'use client';
 
 import React from 'react';
-import { Wallet, TrendingUp, DollarSign, CheckCircle } from '@/components/ui/icon-library';
-import RichSparklineCard from '@/components/platform/ui/RichSparklineCard';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type OrderStats } from './investmentsTypes';
 
 interface InvestmentsKPIsProps {
   orderStats: OrderStats;
-  activeAlertCount: number;
+  activeAlertCount?: number;
 }
 
 export default function InvestmentsKPIs({
   orderStats,
-  activeAlertCount,
 }: InvestmentsKPIsProps) {
   const { isPrivacy } = usePrivacyMode();
 
   const formatMoney = (value: number, showSign: boolean = false): string => {
     if (isPrivacy) {
-      if (value === 0) return '****** £';
+      if (value === 0) return '•••••• £';
       const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
-      return `${sign}****** £`;
+      return `${sign}•••••• £`;
     }
-    if (value === 0) return '0.00 £';
-    const formatted = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (value === 0) return '0.0 £';
+    const formatted = Math.abs(value).toLocaleString('en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
     const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
     return `${sign}${formatted} £`;
   };
 
-  const unrealizedPct = orderStats.openCostBasis > 0
-    ? ((orderStats.unrealized / orderStats.openCostBasis) * 100).toFixed(1)
-    : '0.0';
-  const history = orderStats.monthlyData ?? [];
-  const historyLabels = history.length >= 2
-    ? [history[0].month, history[Math.floor(history.length / 2)].month, history[history.length - 1].month]
-    : [];
-  const marketValueTrend = history.map((point) => point.marketValue ?? 0);
-  const unrealizedTrend = history.map((point) => point.unrealizedPl ?? 0);
-  const realizedTrend = history.map((point) => point.cumulativeRealizedPl ?? 0);
-  const winRateTrend = history.map((point) => point.winRate);
-  const closedTradeWinRate = orderStats.closedCount > 0 ? orderStats.winRate : null;
-  const hasClosedTrades = closedTradeWinRate !== null;
+  const handleCardClick = (targetId: string) => {
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // --- Row 1: Primary Financials (4 Cards) ---
+  const unrealizedPct =
+    orderStats.openCostBasis > 0
+      ? (orderStats.unrealized / orderStats.openCostBasis) * 100
+      : 0;
+
+  const totalGain = orderStats.unrealized + orderStats.realized;
+  const totalRoi = orderStats.totalRoi;
+
+  const row1Cards = [
+    {
+      id: 'portfolio-value',
+      targetId: 'section-capital-allocation',
+      title: 'Portfolio Value',
+      value: isPrivacy ? '••••••••' : formatMoney(orderStats.openMarketValue),
+      badgeText: `${orderStats.openOrders.length} Holdings`,
+      badgeClass: 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: isPrivacy ? 'Cost: ••••••••' : `Cost: ${formatMoney(orderStats.openCostBasis)}`,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'unrealized-gain',
+      targetId: 'section-active-positions',
+      title: 'Unrealized Gain',
+      value: isPrivacy
+        ? (orderStats.unrealized >= 0 ? '+••••••••' : '-••••••••')
+        : formatMoney(orderStats.unrealized, true),
+      badgeText: `${unrealizedPct >= 0 ? '+' : ''}${unrealizedPct.toFixed(1)}%`,
+      badgeClass:
+        orderStats.unrealized > 0
+          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          : orderStats.unrealized < 0
+          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          : 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: `${orderStats.openWinning}W · ${orderStats.openLosing}L active`,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'realized-gain',
+      targetId: 'section-monthly-progression',
+      title: 'Realized Gain',
+      value: isPrivacy
+        ? (orderStats.realized >= 0 ? '+••••••••' : '-••••••••')
+        : formatMoney(orderStats.realized, true),
+      badgeText: `${orderStats.closedCount} Closed`,
+      badgeClass:
+        orderStats.realized > 0
+          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          : orderStats.realized < 0
+          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          : 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: `${orderStats.closedWinning}W · ${orderStats.closedLosing}L closed`,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'total-gain',
+      targetId: 'section-monthly-progression',
+      title: 'Total Gain',
+      value: isPrivacy
+        ? (totalGain >= 0 ? '+••••••••' : '-••••••••')
+        : formatMoney(totalGain, true),
+      badgeText: `${totalRoi >= 0 ? '+' : ''}${totalRoi.toFixed(1)}% ROI`,
+      badgeClass:
+        totalGain > 0
+          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          : totalGain < 0
+          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          : 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: 'Unrealized + Realized',
+      metaClass: 'text-cold-gray-450',
+    },
+  ];
+
+  // --- Row 2: Trading & Risk Metrics (5 Cards) ---
+  const hasClosedTrades = orderStats.closedCount > 0;
+  const winRate = orderStats.winRate;
+  const displayWinRate = hasClosedTrades && winRate !== null ? `${winRate.toFixed(1)}%` : '—';
+  const winRateBadge =
+    !hasClosedTrades || winRate === null
+      ? 'No data'
+      : winRate >= 60
+      ? 'Optimal'
+      : winRate >= 50
+      ? 'Positive'
+      : 'Active';
+  const winRateBadgeClass =
+    !hasClosedTrades || winRate === null
+      ? 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700'
+      : winRate >= 50
+      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+
+  const avgBars = orderStats.avgBarsPerTrade !== null ? Math.round(orderStats.avgBarsPerTrade) : null;
+  const displayAvgBars = avgBars !== null ? `${avgBars} bars` : '—';
+  const avgBarsBadge =
+    avgBars !== null
+      ? avgBars > 20
+        ? 'Position'
+        : avgBars > 5
+        ? 'Swing'
+        : 'Intraday'
+      : 'No data';
+
+  let avgGain: number | null = null;
+  let avgGainMeta = 'Completed trades';
+  if (orderStats.closedCount > 0) {
+    avgGain = orderStats.realized / orderStats.closedCount;
+    avgGainMeta = `${orderStats.closedCount} closed trades`;
+  } else if (orderStats.openOrders.length > 0) {
+    avgGain = orderStats.unrealized / orderStats.openOrders.length;
+    avgGainMeta = `${orderStats.openOrders.length} active holdings`;
+  }
+  const displayAvgGain = avgGain !== null ? formatMoney(avgGain, true) : '—';
+  const avgGainBadge =
+    avgGain !== null
+      ? avgGain > 0
+        ? 'Profit'
+        : avgGain < 0
+        ? 'Loss'
+        : 'Even'
+      : 'No trades';
+  const avgGainBadgeClass =
+    avgGain !== null
+      ? avgGain > 0
+        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+        : avgGain < 0
+        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+        : 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700'
+      : 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700';
+
+  const mae = orderStats.avgAdverseExcursion;
+  const displayMae = mae !== null ? `-${Math.abs(mae).toFixed(1)}%` : '—';
+  const maeBadge =
+    mae === null
+      ? 'No data'
+      : Math.abs(mae) < 2.5
+      ? 'Low Risk'
+      : 'Moderate';
+  const maeBadgeClass =
+    mae === null
+      ? 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700'
+      : Math.abs(mae) < 2.5
+      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+
+  const mdd = orderStats.maxDrawdownPct;
+  const displayMdd = mdd !== null ? `-${Math.abs(mdd).toFixed(1)}%` : '—';
+  const mddBadge =
+    mdd === null
+      ? 'No data'
+      : Math.abs(mdd) <= 5
+      ? 'Controlled'
+      : 'Elevated';
+  const mddBadgeClass =
+    mdd === null
+      ? 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700'
+      : Math.abs(mdd) <= 5
+      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+
+  const row2Cards = [
+    {
+      id: 'win-rate',
+      targetId: 'section-active-positions',
+      title: 'Win Rate',
+      value: displayWinRate,
+      badgeText: winRateBadge,
+      badgeClass: winRateBadgeClass,
+      metaText: hasClosedTrades
+        ? `${orderStats.closedWinning}W · ${orderStats.closedLosing}L closed`
+        : 'Closed trades required',
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'avg-bars',
+      targetId: 'section-active-positions',
+      title: 'Avg. Bars / Trade',
+      shortTitle: 'Avg. Bars',
+      value: displayAvgBars,
+      badgeText: avgBarsBadge,
+      badgeClass: 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: avgBars !== null ? 'Trading bars' : 'Market bars required',
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'avg-gain',
+      targetId: 'section-active-positions',
+      title: 'Avg. Gain / Trade',
+      shortTitle: 'Avg. Gain',
+      value: isPrivacy && avgGain !== null
+        ? (avgGain >= 0 ? '+••••••••' : '-••••••••')
+        : displayAvgGain,
+      badgeText: avgGainBadge,
+      badgeClass: avgGainBadgeClass,
+      metaText: avgGainMeta,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'max-adverse-excursion',
+      targetId: 'section-active-positions',
+      title: 'Portfolio Max Adverse Excursion',
+      shortTitle: 'Max Adverse Excursion',
+      value: displayMae,
+      badgeText: maeBadge,
+      badgeClass: maeBadgeClass,
+      metaText: 'Average worst move',
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'max-drawdown',
+      targetId: 'section-monthly-progression',
+      title: 'Portfolio Max Drawdown',
+      shortTitle: 'Max Drawdown',
+      value: displayMdd,
+      badgeText: mddBadge,
+      badgeClass: mddBadgeClass,
+      metaText: 'Equity peak → trough',
+      metaClass: 'text-cold-gray-450',
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 select-none">
-      {/* Card 1: Portfolio Value */}
-      <RichSparklineCard
-        title="Portfolio Value"
-        value={formatMoney(orderStats.openMarketValue)}
-        icon={Wallet}
-        changeBadge={{
-          text: `${orderStats.openOrders.length} Holdings`,
-          isPositive: true,
-        }}
-        meta="Total active stock & fund holdings"
-        sparklineTitle="Monthly mark-to-market value"
-        sparklineData={marketValueTrend}
-        sparklineLabels={historyLabels}
-        colorVariant="orange"
-        isPrivacy={isPrivacy}
-      />
+    <div className="w-full space-y-2.5 sm:space-y-3 select-none">
+      {/* Row 1: Primary Financials (2x2 on phone, 4 on lg) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        {row1Cards.map((card) => (
+          <div
+            key={card.id}
+            onClick={() => handleCardClick(card.targetId)}
+            className="tv-kpi-card w-full"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick(card.targetId);
+              }
+            }}
+          >
+            {/* Top row: Title + Badge */}
+            <div className="flex items-center justify-between gap-1 leading-none">
+              <span className="text-[11px] sm:text-[12px] font-medium text-cold-gray-400 truncate tracking-tight" title={card.title}>
+                {card.title}
+              </span>
+              <span
+                className={`shrink-0 inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold leading-none ${card.badgeClass}`}
+              >
+                {card.badgeText}
+              </span>
+            </div>
 
-      {/* Card 2: Unrealized P/L */}
-      <RichSparklineCard
-        title="Unrealized P/L"
-        value={formatMoney(orderStats.unrealized, true)}
-        icon={TrendingUp}
-        changeBadge={{
-          text: `${orderStats.unrealized >= 0 ? '+' : ''}${unrealizedPct}%`,
-          isPositive: orderStats.unrealized >= 0,
-        }}
-        meta={`${orderStats.openWinning}W · ${orderStats.openLosing}L open trades`}
-        sparklineTitle="Month-end unrealized P/L"
-        sparklineData={unrealizedTrend}
-        sparklineLabels={historyLabels}
-        colorVariant={orderStats.unrealized >= 0 ? 'profit' : 'risk'}
-        isPrivacy={isPrivacy}
-      />
+            {/* Bottom row: Value + Meta */}
+            <div className="flex items-baseline justify-between gap-1 leading-none">
+              <span className="text-[15px] sm:text-[20px] font-bold text-cold-gray-100 tabular-nums tracking-tight shrink-0">
+                {card.value}
+              </span>
+              <span
+                className={`text-[10px] sm:text-[11px] truncate max-w-[68px] sm:max-w-[130px] text-right font-medium leading-none ${card.metaClass}`}
+              >
+                {card.metaText}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Card 3: Realized P/L */}
-      <RichSparklineCard
-        title="Realized P/L"
-        value={formatMoney(orderStats.realized, true)}
-        icon={DollarSign}
-        changeBadge={{
-          text: `${orderStats.closedCount} Closed`,
-          isPositive: orderStats.realized >= 0,
-          isNeutral: orderStats.realized === 0,
-        }}
-        meta={`${orderStats.closedWinning}W · ${orderStats.closedLosing}L closed trades`}
-        sparklineTitle="Cumulative realized P/L"
-        sparklineData={realizedTrend}
-        sparklineLabels={historyLabels}
-        colorVariant={orderStats.realized >= 0 ? 'profit' : 'risk'}
-        isPrivacy={isPrivacy}
-      />
+      {/* Row 2: Trading & Risk Metrics (2-column grid on phone, 3 on md, 5 on lg) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+        {row2Cards.map((card) => (
+          <div
+            key={card.id}
+            onClick={() => handleCardClick(card.targetId)}
+            className={`tv-kpi-card w-full ${card.id === 'max-drawdown' ? 'col-span-2 md:col-span-1' : ''}`}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick(card.targetId);
+              }
+            }}
+          >
+            {/* Top row: Title + Badge */}
+            <div className="flex items-center justify-between gap-1 leading-none">
+              <span className="text-[11px] sm:text-[12px] font-medium text-cold-gray-400 truncate tracking-tight" title={card.title}>
+                {card.shortTitle ? (
+                  <>
+                    <span className="sm:hidden">{card.shortTitle}</span>
+                    <span className="hidden sm:inline">{card.title}</span>
+                  </>
+                ) : (
+                  card.title
+                )}
+              </span>
+              <span
+                className={`shrink-0 inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold leading-none ${card.badgeClass}`}
+              >
+                {card.badgeText}
+              </span>
+            </div>
 
-      {/* Card 4: Strategy Execution */}
-      <RichSparklineCard
-        title="System Win Rate"
-        value={hasClosedTrades ? `${closedTradeWinRate.toFixed(1)}%` : '—'}
-        icon={CheckCircle}
-        changeBadge={{
-          text: hasClosedTrades ? `${activeAlertCount} Signals` : 'No closed trades',
-          isPositive: hasClosedTrades,
-          isNeutral: !hasClosedTrades,
-        }}
-        meta={hasClosedTrades
-          ? `Avg. ${orderStats.avgBarsPerTrade !== null ? Math.round(orderStats.avgBarsPerTrade) : '—'} bars/trade`
-          : 'Closed-trade performance required'}
-        sparklineTitle="Cumulative closed-trade win rate"
-        sparklineData={winRateTrend}
-        sparklineLabels={historyLabels}
-        colorVariant="info"
-        isPrivacy={isPrivacy}
-      />
+            {/* Bottom row: Value + Meta */}
+            <div className="flex items-baseline justify-between gap-1 leading-none">
+              <span className="text-[15px] sm:text-[20px] font-bold text-cold-gray-100 tabular-nums tracking-tight shrink-0">
+                {card.value}
+              </span>
+              <span
+                className={`text-[10px] sm:text-[11px] truncate max-w-[68px] sm:max-w-[120px] text-right font-medium leading-none ${card.metaClass}`}
+              >
+                {card.metaText}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

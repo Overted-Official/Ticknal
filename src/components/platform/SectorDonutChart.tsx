@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Treemap } from 'recharts';
-import { PieChart as PieChartIcon, Grid } from '@/components/ui/icon-library';
+import React, { useState, useMemo } from 'react';
+import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { type IndustryGroupStake } from './dashboard/investments/PortfolioConsultantCard';
+import { type DashboardOrder } from './dashboard/investments/investmentsTypes';
 
 export type SectorDataItem = {
   sector: string;
@@ -11,249 +12,380 @@ export type SectorDataItem = {
   percentage: number;
 };
 
-// Refined, cohesive institutional color palette for dark mode
-const SECTOR_COLORS = [
-  '#3b82f6', // Sapphire Blue
-  '#10b981', // Emerald
-  '#8b5cf6', // Violet
-  '#f59e0b', // Warm Amber
-  '#06b6d4', // Cyan
-  '#ec4899', // Rose
-  '#6366f1', // Indigo
-  '#14b8a6', // Teal
-  '#f97316', // Coral
-  '#84cc16', // Lime
+export type CapitalAllocationTab = 'industry' | 'sectors' | 'holdings';
+
+export interface DistributionItem {
+  id: string;
+  name: string;
+  secondaryName?: string;
+  value: number;
+  percentage: number;
+  unrealizedGain?: number;
+  color: string;
+  tickers?: string[];
+  positionsCount?: number;
+}
+
+export interface SectorDonutChartProps {
+  data?: SectorDataItem[];
+  sectorData?: SectorDataItem[];
+  industryGroupData?: IndustryGroupStake[];
+  openOrders?: DashboardOrder[];
+  totalValue?: number;
+}
+
+const PALETTE = [
+  '#448aff', // TradingView electric blue
+  '#9c27b0', // Grapes purple
+  '#089981', // Minty green
+  '#ff9800', // Tan orange
+  '#00bcd4', // Sky blue
+  '#e91e63', // Rose
+  '#ff5722', // Deep orange
+  '#3f51b5', // Indigo
+  '#009688', // Teal
+  '#ffeb3b', // Amber
 ];
 
-function formatEGP(value: number, isPrivacy = false): string {
-  if (isPrivacy) return '****** £';
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M £`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K £`;
-  return `${value.toFixed(0)} £`;
-}
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    payload: SectorDataItem;
-    value: number;
-  }>;
-  isPrivacy?: boolean;
-}
-
-function CustomTooltip({ active, payload, isPrivacy }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null;
-  const item = payload[0].payload;
-  return (
-    <div className="rounded-xl border border-plt-border bg-plt-card/95 backdrop-blur-md px-3.5 py-2.5 text-xs shadow-xl z-50 min-w-36">
-      <div className="font-semibold text-plt-text font-sans">{item.sector}</div>
-      <div className="mt-1.5 flex items-center justify-between gap-4 font-mono text-[11px]">
-        <span className="text-plt-muted">Allocation:</span>
-        <span className="text-plt-text font-bold">{item.percentage.toFixed(1)}%</span>
-      </div>
-      <div className="flex items-center justify-between gap-4 font-mono text-[11px] mt-0.5">
-        <span className="text-plt-muted">Market Value:</span>
-        <span className="text-plt-profit font-semibold">{formatEGP(item.value, isPrivacy)}</span>
-      </div>
-    </div>
-  );
-}
-
-// Custom Treemap Tile with rounded edges, clear typography, and clean contrast
-function CustomizedTreemapContent(props: any) {
-  const { root, depth, x, y, width, height, index, name } = props;
-
-  if (depth !== 1) return null;
-
-  const item: SectorDataItem | undefined = root?.children?.[index];
-  const color = SECTOR_COLORS[index % SECTOR_COLORS.length];
-  const isWideEnough = width > 55;
-  const isTallEnough = height > 40;
-
-  return (
-    <g>
-      <rect
-        x={x + 1}
-        y={y + 1}
-        width={Math.max(0, width - 2)}
-        height={Math.max(0, height - 2)}
-        rx={6}
-        ry={6}
-        style={{
-          fill: color,
-          fillOpacity: 0.85,
-          stroke: 'var(--plt-bg-base)',
-          strokeWidth: 2,
-          transition: 'fill-opacity 0.2s ease',
-        }}
-      />
-      {isWideEnough && isTallEnough && (
-        <g className="pointer-events-none select-none font-sans">
-          {/* Sector Title */}
-          <text
-            x={x + 8}
-            y={y + 18}
-            fill="#ffffff"
-            fontSize={width > 90 ? '11px' : '10px'}
-            fontWeight="600"
-            className="tracking-tight"
-          >
-            {name && name.length > Math.floor(width / 7.5)
-              ? name.substring(0, Math.floor(width / 7.5)) + '…'
-              : name}
-          </text>
-          {/* Percentage & Value Badge */}
-          {height > 52 && (
-            <text
-              x={x + 8}
-              y={y + 34}
-              fill="rgba(255, 255, 255, 0.85)"
-              fontSize="10px"
-              fontWeight="500"
-              className="font-mono"
-            >
-              {item?.percentage ? `${item.percentage.toFixed(1)}%` : ''}
-              {width > 110 && item?.value ? ` · ${formatEGP(item.value).replace(' £', '£')}` : ''}
-            </text>
-          )}
-        </g>
-      )}
-    </g>
-  );
-}
-
-export default function SectorDonutChart({ data }: { data: SectorDataItem[] }) {
-  const [view, setView] = useState<'donut' | 'treemap'>('donut');
+export default function SectorDonutChart({
+  data = [],
+  sectorData = [],
+  industryGroupData = [],
+  openOrders = [],
+  totalValue: propTotalValue,
+}: SectorDonutChartProps) {
+  const [activeTab, setActiveTab] = useState<CapitalAllocationTab>('industry');
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { isPrivacy } = usePrivacyMode();
 
+  // Resolve total portfolio market value
   const totalValue = useMemo(() => {
-    return data.reduce((sum, item) => sum + item.value, 0);
-  }, [data]);
+    if (propTotalValue !== undefined && propTotalValue > 0) return propTotalValue;
+    if (openOrders.length > 0) {
+      return openOrders.reduce((sum, o) => sum + (o.currentPrice * o.quantity), 0);
+    }
+    if (industryGroupData.length > 0) {
+      return industryGroupData.reduce((sum, item) => sum + item.value, 0);
+    }
+    const sourceData = sectorData.length > 0 ? sectorData : data;
+    return sourceData.reduce((sum, item) => sum + item.value, 0);
+  }, [propTotalValue, openOrders, industryGroupData, sectorData, data]);
 
-  const sortedData = useMemo(() => {
-    return [...data].sort((a, b) => b.value - a.value);
-  }, [data]);
+  // Compute active items based on selected tab
+  const activeItems: DistributionItem[] = useMemo(() => {
+    const total = totalValue > 0 ? totalValue : 1;
+
+    // TAB 1: 25 GICS Industry Groups
+    if (activeTab === 'industry') {
+      if (industryGroupData.length > 0) {
+        return industryGroupData.map((ig, idx) => {
+          let unrealizedGain: number | undefined = undefined;
+          if (openOrders.length > 0) {
+            const matches = openOrders.filter(
+              (o) => (o.industryGroup || o.sector || 'Unclassified') === ig.industryGroup
+            );
+            if (matches.length > 0) {
+              unrealizedGain = matches.reduce((sum, o) => sum + (o.profitLoss || 0), 0);
+            }
+          }
+          return {
+            id: `ig-${ig.industryGroup}`,
+            name: ig.industryGroup,
+            value: ig.value,
+            percentage: (ig.value / total) * 100,
+            unrealizedGain,
+            color: PALETTE[idx % PALETTE.length],
+            tickers: ig.tickers,
+            positionsCount: ig.positionsCount,
+          };
+        }).sort((a, b) => b.value - a.value);
+      }
+
+      // Fallback to sectorData or data
+      const source = sectorData.length > 0 ? sectorData : data;
+      return source.map((item, idx) => ({
+        id: `sec-${item.sector}`,
+        name: item.sector,
+        value: item.value,
+        percentage: (item.value / total) * 100,
+        color: PALETTE[idx % PALETTE.length],
+      })).sort((a, b) => b.value - a.value);
+    }
+
+    // TAB 2: Broad Sectors
+    if (activeTab === 'sectors') {
+      if (openOrders.length > 0) {
+        const sectorMap = new Map<string, { value: number; gain: number; tickers: Set<string> }>();
+        for (const order of openOrders) {
+          const sec = order.sector || 'Unclassified';
+          const val = order.currentPrice * order.quantity;
+          const gain = order.profitLoss || 0;
+          if (!sectorMap.has(sec)) {
+            sectorMap.set(sec, { value: 0, gain: 0, tickers: new Set() });
+          }
+          const item = sectorMap.get(sec)!;
+          item.value += val;
+          item.gain += gain;
+          item.tickers.add(order.tickerSymbol.replace('.CA', ''));
+        }
+
+        const items: DistributionItem[] = [];
+        let idx = 0;
+        for (const [sec, d] of sectorMap.entries()) {
+          items.push({
+            id: `sec-${sec}`,
+            name: sec,
+            value: d.value,
+            percentage: (d.value / total) * 100,
+            unrealizedGain: d.gain,
+            color: PALETTE[idx % PALETTE.length],
+            tickers: Array.from(d.tickers),
+            positionsCount: d.tickers.size,
+          });
+          idx++;
+        }
+        return items.sort((a, b) => b.value - a.value);
+      }
+
+      const source = sectorData.length > 0 ? sectorData : data;
+      return source.map((item, idx) => ({
+        id: `sec-${item.sector}`,
+        name: item.sector,
+        value: item.value,
+        percentage: (item.value / total) * 100,
+        color: PALETTE[idx % PALETTE.length],
+      })).sort((a, b) => b.value - a.value);
+    }
+
+    // TAB 3: Individual Open Holdings
+    if (activeTab === 'holdings') {
+      if (openOrders.length > 0) {
+        return openOrders.map((order, idx) => {
+          const val = order.currentPrice * order.quantity;
+          return {
+            id: `ord-${order.id || order.tickerSymbol}`,
+            name: order.tickerSymbol.replace('.CA', ''),
+            secondaryName: order.companyName,
+            value: val,
+            percentage: (val / total) * 100,
+            unrealizedGain: order.profitLoss,
+            color: PALETTE[idx % PALETTE.length],
+          };
+        }).sort((a, b) => b.value - a.value);
+      }
+
+      const source = sectorData.length > 0 ? sectorData : data;
+      return source.map((item, idx) => ({
+        id: `holding-${item.sector}`,
+        name: item.sector,
+        value: item.value,
+        percentage: (item.value / total) * 100,
+        color: PALETTE[idx % PALETTE.length],
+      })).sort((a, b) => b.value - a.value);
+    }
+
+    return [];
+  }, [activeTab, industryGroupData, openOrders, sectorData, data, totalValue]);
+
+  // Tab configurations
+  const tabs: Array<{ key: CapitalAllocationTab; label: string }> = [
+    { key: 'industry', label: '25 Industry Groups' },
+    { key: 'sectors', label: 'Broad Sectors' },
+    { key: 'holdings', label: 'Open Holdings' },
+  ];
+
+  const activeTabTitle = {
+    industry: 'Total industry groups',
+    sectors: 'Total sectors',
+    holdings: 'Total holdings',
+  }[activeTab];
+
+  const currentSlice = hoveredIndex !== null && activeItems[hoveredIndex]
+    ? activeItems[hoveredIndex]
+    : activeItems[0];
 
   return (
-    <div className="flex h-full flex-col select-none overflow-hidden">
-      {/* Header */}
-      <div className="mb-2 flex items-center justify-between gap-2 pb-2 border-b border-plt-border-soft shrink-0">
-        <div>
-          <h2 className="widget-title">Capital Allocation</h2>
-          <p className="widget-subtitle mt-0.5">Asset weight distribution across 25 GICS Industry Groups</p>
-        </div>
-        <div className="pill-switch">
-          <button
-            type="button"
-            onClick={() => setView('donut')}
-            className={`pill-switch-btn p-1.5 cursor-pointer ${view === 'donut' ? 'pill-switch-btn-active' : ''}`}
-            title="Donut View"
-          >
-            <PieChartIcon size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('treemap')}
-            className={`pill-switch-btn p-1.5 cursor-pointer ${view === 'treemap' ? 'pill-switch-btn-active' : ''}`}
-            title="Treemap View"
-          >
-            <Grid size={14} />
-          </button>
-        </div>
+    <div className="w-full h-full flex flex-col justify-start select-none space-y-4 bg-transparent">
+      {/* 1. Square Tabs Bar (Replicates TradingView top tabs from PortfolioSplitCard) */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 border-b border-[#1e222d] pb-2">
+        {tabs.map((tab) => {
+          const isSelected = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              onClick={() => {
+                setActiveTab(tab.key);
+                setHoveredIndex(null);
+              }}
+              className={`text-xs px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+                isSelected
+                  ? 'bg-[#1e222d] text-white font-semibold shadow-xs border border-[#2a2e39]'
+                  : 'text-[#787b86] hover:text-white font-medium'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Main Chart Area */}
-      <div className="relative flex-1 min-h-0 w-full flex items-center">
-        {!data.length ? (
-          <div className="flex h-full w-full items-center justify-center text-xs text-plt-muted font-sans">
-            No open positions to allocate
-          </div>
-        ) : view === 'donut' ? (
-          <div className="w-full h-full flex items-center">
-            {/* Donut Chart with Center Label */}
-            <div className="relative w-[55%] h-full flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={sortedData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="65%"
-                    outerRadius="86%"
-                    paddingAngle={2.5}
-                    dataKey="value"
-                    nameKey="sector"
-                    strokeWidth={0}
-                  >
-                    {sortedData.map((_, index) => (
+      {/* 2. Side-by-Side: Donut on Left (col-span-5), Table on Right (col-span-7) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-1">
+        {/* Left Column: Donut Chart Canvas */}
+        <div className="lg:col-span-5 flex flex-col items-center justify-center">
+          <div className="relative w-full h-56 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={activeItems}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={58}
+                  outerRadius={84}
+                  paddingAngle={activeItems.length > 1 ? 2 : 0}
+                  isAnimationActive={false}
+                  onMouseEnter={(_, idx) => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  {activeItems.map((entry, index) => {
+                    const isHighlighted = hoveredIndex === index || (hoveredIndex === null && index === 0);
+                    return (
                       <Cell
-                        key={`cell-${index}`}
-                        fill={SECTOR_COLORS[index % SECTOR_COLORS.length]}
-                        className="hover:opacity-80 transition-opacity cursor-pointer outline-none"
+                        key={entry.id || entry.name}
+                        fill={entry.color}
+                        stroke={isHighlighted ? '#ffffff' : 'transparent'}
+                        strokeWidth={isHighlighted ? 2 : 0}
+                        className="cursor-pointer transition-all duration-150"
+                        onClick={() => setHoveredIndex(index)}
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip isPrivacy={isPrivacy} />} />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Donut Center Metrics */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xs font-bold font-mono text-plt-text tracking-tight">
-                  {formatEGP(totalValue, isPrivacy)}
-                </span>
-                <span className="text-[10px] text-plt-muted font-sans font-medium mt-0.5">
-                  {data.length} {data.length === 1 ? 'Industry' : 'Industries'}
-                </span>
-              </div>
-            </div>
+                    );
+                  })}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
 
-            {/* Clean Modern Custom Legend on Right */}
-            <div className="w-[45%] h-full flex flex-col justify-center gap-2 pl-2 pr-1 overflow-y-auto custom-scrollbar">
-              {sortedData.map((entry, idx) => {
-                const color = SECTOR_COLORS[idx % SECTOR_COLORS.length];
-                return (
-                  <div key={entry.sector} className="flex flex-col gap-0.5 group">
-                    <div className="flex items-center justify-between text-[11px] font-sans">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                        <span className="text-plt-text font-medium truncate max-w-[95px]" title={entry.sector}>
-                          {entry.sector}
-                        </span>
-                      </div>
-                      <span className="font-mono font-semibold text-plt-text text-[11px]">
-                        {entry.percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    {/* Mini Progress Bar */}
-                    <div className="w-full h-1 rounded-full bg-plt-border-soft overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(100, entry.percentage)}%`,
-                          backgroundColor: color,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Center Text inside Donut Hole */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+              <span className="text-3xl font-bold text-white tracking-tight leading-none">
+                {activeItems.length}
+              </span>
+              <span className="text-xs text-[#787b86] font-medium mt-1">
+                {activeTabTitle}
+              </span>
             </div>
           </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <Treemap
-              data={sortedData.map(item => ({ ...item, name: item.sector, size: item.value }))}
-              dataKey="size"
-              aspectRatio={4 / 3}
-              stroke="var(--plt-bg-base)"
-              fill="var(--chart-series-1)"
-              isAnimationActive={false}
-              content={<CustomizedTreemapContent />}
-            >
-              <Tooltip content={<CustomTooltip isPrivacy={isPrivacy} />} />
-            </Treemap>
-          </ResponsiveContainer>
-        )}
+
+          {/* Bottom Arc Label */}
+          <div className="text-center py-1 min-h-[26px]">
+            {currentSlice && (
+              <span className="text-sm font-semibold text-white tracking-wide">
+                {currentSlice.name} {currentSlice.secondaryName ? `· ${currentSlice.secondaryName}` : ''}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Distribution Table (Replicates TradingView table-QQFNVkgh) */}
+        <div className="lg:col-span-7 overflow-x-auto overflow-y-auto max-h-[280px] custom-scrollbar">
+          <table className="w-full text-left text-xs font-sans border-collapse">
+            <thead>
+              <tr className="border-b border-[#1e222d] text-[#787b86] text-[11px] font-medium">
+                <th className="pb-2 text-left font-medium">
+                  {activeTab === 'industry'
+                    ? 'Industry group'
+                    : activeTab === 'sectors'
+                    ? 'Sector'
+                    : 'Holding'}
+                </th>
+                <th className="pb-2 text-right font-medium">Holding value</th>
+                <th className="pb-2 text-right font-medium">Allocation</th>
+                <th className="pb-2 text-right font-medium">Unrealized gain</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1e222d]/60">
+              {activeItems.map((item, idx) => (
+                <tr
+                  key={item.id || item.name}
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={() => setHoveredIndex(idx)}
+                  className={`hover:bg-[#1e222d]/30 transition-colors cursor-pointer group ${
+                    hoveredIndex === idx ? 'bg-[#1e222d]/40' : ''
+                  }`}
+                >
+                  {/* 1. Name with Color Swatch & Tickers Pill */}
+                  <td className="py-2.5 pr-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-xs shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-white font-medium truncate max-w-[150px] group-hover:text-[#2962ff] transition-colors">
+                          {item.name}
+                        </span>
+                        {item.tickers && item.tickers.length > 0 && (
+                          <span className="hidden sm:inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-[#868993] bg-[#1e222d] border border-white/5 truncate max-w-[90px]">
+                            {item.tickers.join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* 2. Holding Value */}
+                  <td className="py-2.5 px-3 text-right tabular-nums text-white font-semibold">
+                    {isPrivacy ? (
+                      '••••••'
+                    ) : (
+                      <>
+                        {item.value.toLocaleString('en-US', {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })}
+                        <span className="text-[10px] text-[#787b86] ml-1 uppercase font-normal">
+                          EGP
+                        </span>
+                      </>
+                    )}
+                  </td>
+
+                  {/* 3. Allocation Percentage */}
+                  <td className="py-2.5 px-3 text-right tabular-nums text-[#d1d4dc] font-medium">
+                    {item.percentage.toFixed(1)}%
+                  </td>
+
+                  {/* 4. Unrealized Gain */}
+                  <td className="py-2.5 pl-3 text-right tabular-nums font-semibold">
+                    {item.unrealizedGain !== undefined ? (
+                      <span
+                        className={
+                          item.unrealizedGain >= 0 ? 'text-[#089981]' : 'text-[#f23645]'
+                        }
+                      >
+                        {item.unrealizedGain >= 0 ? '+' : ''}
+                        {item.unrealizedGain.toLocaleString('en-US', {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })}
+                        <span className="text-[10px] text-[#787b86] ml-0.5 uppercase font-normal">
+                          EGP
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-[#787b86] font-normal">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

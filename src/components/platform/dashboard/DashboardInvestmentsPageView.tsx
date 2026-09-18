@@ -7,10 +7,10 @@ import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import InvestmentsHeader from './investments/InvestmentsHeader';
 import InvestmentsKPIs from './investments/InvestmentsKPIs';
-import ExtendedPerformanceBar from './investments/ExtendedPerformanceBar';
 import SectorDonutChart, { type SectorDataItem } from '@/components/platform/SectorDonutChart';
 import MonthlyInvestmentChart, { type MonthlyDataItem } from '@/components/platform/MonthlyInvestmentChart';
 import PortfolioConsultantCard, { type IndustryGroupStake } from './investments/PortfolioConsultantCard';
+import ActivePositionsBreakdownTable from './investments/ActivePositionsBreakdownTable';
 import DashboardPositionsCard from './investments/DashboardPositionsCard';
 import DashboardSignalsCard from './investments/DashboardSignalsCard';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
@@ -81,82 +81,82 @@ export default function DashboardInvestmentsPageView({
         items={[
           { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
           { label: 'Investments', value: 'investments', icon: TrendingUp },
-          { label: 'Accounts', value: 'banks', icon: Landmark },
+          { label: 'Banks', value: 'banks', icon: Landmark },
         ]}
       />
 
       {/* 2. Main Page Scroll Canvas */}
       <div {...swipeHandlers} className="flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y custom-scrollbar">
         <div className="app-page page-sections-stack pb-28 md:pb-20">
-          {/* Header */}
-          <InvestmentsHeader />
+          {/* Header & Section 1: Performance Overview */}
+          <div className="flex flex-col gap-3 md:gap-4">
+            <InvestmentsHeader />
 
-          {/* SECTION 1: Performance Overview */}
-          <section className="section-container section-viewport-fit">
-            <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Performance Overview</h2>
-              <p className="section-subtitle">Mark-to-market portfolio returns, win rates, and monthly capital progression</p>
-            </div>
+            {/* SECTION 1: Performance Overview */}
+            <section className="section-container section-viewport-fit">
+              <div className="flex flex-col gap-0.5">
+                <h2 className="section-title">Performance Overview</h2>
+                <p className="section-subtitle">Mark-to-market portfolio returns, win rates, and monthly capital progression</p>
+              </div>
 
-            <InvestmentsKPIs
-              orderStats={orderStats}
-              activeAlertCount={activeAlertCount}
-            />
+              <InvestmentsKPIs
+                orderStats={orderStats}
+                activeAlertCount={activeAlertCount}
+              />
 
-            <ExtendedPerformanceBar orderStats={orderStats} />
-
-            {/* Monthly Performance Progression Chart */}
-            <div className="card-widget w-full mt-1">
-              <MonthlyInvestmentChart data={orderStats.monthlyData} />
-            </div>
-          </section>
+              {/* Monthly Performance Progression Chart */}
+              <div id="section-monthly-progression" className="w-full mt-3 flex-1 min-h-0 flex flex-col">
+                <MonthlyInvestmentChart data={orderStats.monthlyData} />
+              </div>
+            </section>
+          </div>
 
           {/* SECTION 2: Capital Allocation & Portfolio Health */}
-          <section className="section-container section-viewport-fit">
+          <section id="section-capital-allocation" className="section-container section-viewport-fit space-y-6">
             <div className="flex flex-col gap-0.5">
               <h2 className="section-title">Capital Allocation & Portfolio Health</h2>
               <p className="section-subtitle">25 GICS Industry Group exposure, concentration risk diagnostics, and rotation-driven rebalancing</p>
             </div>
 
-            <div className="widget-grid grid-cols-1 xl:grid-cols-2 items-stretch w-full">
-              {/* 25 GICS Industry Group Capital Allocation */}
-              <div className="card-widget dashboard-widget-height flex flex-col overflow-hidden">
-                <SectorDonutChart data={orderStats.sectorData} />
+            <div className="flex flex-col gap-8 w-full">
+              {/* Row 1: Capital Allocation (Aligned with Portfolio Distribution benchmark) */}
+              <div className="w-full">
+                <SectorDonutChart
+                  sectorData={orderStats.sectorData}
+                  industryGroupData={orderStats.industryGroupData}
+                  openOrders={orderStats.openOrders}
+                  totalValue={orderStats.openMarketValue}
+                />
               </div>
 
-              {/* Dedicated Portfolio Allocation Consultant & Health Advisor */}
-              <div className="dashboard-widget-height">
+              {/* Row 2: Dedicated Portfolio Allocation Consultant & Health Advisor (Aligned with Holdings & Allocations benchmark) */}
+              <div className="w-full pt-2">
                 <PortfolioConsultantCard
                   stakes={orderStats.industryGroupData}
                   totalPortfolioValue={orderStats.openMarketValue}
                   buyOpportunities={liveBuyOpps}
                   rotationMap={orderStats.rotationMap}
+                  openOrders={orderStats.openOrders}
                 />
               </div>
             </div>
           </section>
 
-          {/* SECTION 3: Active Positions & Market Signals */}
-          <section className="section-container section-viewport-fit">
+          {/* SECTION 3: Active Positions & Market Signals (Aligned with Holdings & Allocations benchmark) */}
+          <section id="section-active-positions" className="section-container section-viewport-fit space-y-4">
             <div className="flex flex-col gap-0.5">
               <h2 className="section-title">Active Positions & Market Signals</h2>
               <p className="section-subtitle">Live open market holdings alongside real-time algorithmic entry and risk management alerts</p>
             </div>
 
-            <div className="widget-grid grid-cols-1 xl:grid-cols-2 items-stretch w-full">
-              <div className="dashboard-widget-height">
-                <DashboardPositionsCard
-                  orders={orderStats.openOrders}
-                  exitSignals={exitSignals}
-                />
-              </div>
-              <div className="dashboard-widget-height">
-                <DashboardSignalsCard
-                  buyOpportunities={liveBuyOpps}
-                  exitSignals={exitSignals}
-                  isLoadingBuyOpportunities={isLoadingOpps}
-                />
-              </div>
+            <div className="flex-1 min-h-0 w-full">
+              <ActivePositionsBreakdownTable
+                orders={orderStats.openOrders}
+                totalMarketValue={orderStats.openMarketValue}
+                buyOpportunities={liveBuyOpps}
+                exitSignals={exitSignals}
+                isLoadingBuyOpportunities={isLoadingOpps}
+              />
             </div>
           </section>
         </div>

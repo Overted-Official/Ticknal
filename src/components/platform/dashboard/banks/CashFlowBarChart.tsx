@@ -398,7 +398,7 @@ export default function CashFlowBarChart({
           <Landmark size={32} className="text-plt-faint" />
           <p>No transactions logged for this period.</p>
           <Link
-            href="/wallet?tab=banks"
+            href="/wallet?tab=transactions"
             className="text-white/60 hover:text-white hover:underline font-semibold"
           >
             Log transactions in Wallet &rarr;

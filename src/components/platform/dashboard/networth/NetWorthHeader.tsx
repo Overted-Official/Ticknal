@@ -12,7 +12,7 @@ interface NetWorthHeaderProps {
 const DASHBOARD_PAGES = [
   { label: 'Networth', tab: 'net-worth', href: '/dashboard?tab=net-worth', icon: ShieldCheck },
   { label: 'Investments', tab: 'investments', href: '/dashboard?tab=investments', icon: TrendingUp },
-  { label: 'Accounts', tab: 'banks', href: '/dashboard?tab=banks', icon: Landmark },
+  { label: 'Banks', tab: 'banks', href: '/dashboard?tab=banks', icon: Landmark },
 ];
 
 export default function NetWorthHeader({

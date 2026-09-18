@@ -18,7 +18,7 @@ const WALLET_NAV_PAGES = [
   { label: 'Networth', tab: 'net-worth', href: '/dashboard?tab=net-worth', icon: ShieldCheck },
 ];
 
-export default function PositionsHeader() {
+export default function WalletTransactionsHeader() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -53,7 +53,7 @@ export default function PositionsHeader() {
       <div className="flex items-center gap-2">
         <span
           className="text-xs md:text-sm text-[#787b86] font-normal hover:text-white transition-colors cursor-pointer"
-          onClick={() => router.push('/wallet?tab=positions')}
+          onClick={() => router.push('/wallet?tab=transactions')}
         >
           Wallet
         </span>
@@ -66,7 +66,7 @@ export default function PositionsHeader() {
             aria-expanded={isOpen}
             className="group inline-flex items-center gap-1.5 text-2xl md:text-3xl font-bold text-white tracking-tight hover:opacity-90 transition-opacity focus:outline-hidden cursor-pointer"
           >
-            <span>Stock Positions</span>
+            <span>Cash &amp; Transactions</span>
             <ChevronDown
               className={`w-5 h-5 text-[#787b86] group-hover:text-white transition-transform duration-200 ${
                 isOpen ? 'transform rotate-180 text-white' : ''
@@ -78,10 +78,10 @@ export default function PositionsHeader() {
           {isOpen && (
             <div className="absolute left-0 top-full mt-2 w-56 rounded-xl bg-[#1e222d] border border-[#2a2e39] shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-1.5 text-[11px] font-semibold text-[#787b86] uppercase tracking-wider">
-                Wallet & Portfolio
+                Wallet &amp; Portfolio
               </div>
               {WALLET_NAV_PAGES.map((page, idx) => {
-                const isActive = page.tab === 'positions';
+                const isActive = page.tab === 'transactions';
                 const Icon = page.icon;
                 return (
                   <React.Fragment key={page.tab}>

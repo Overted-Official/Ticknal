@@ -140,31 +140,31 @@ export default function BankAccountsGrid({
   return (
     <div className="widget-stack">
       {/* Header Controls */}
-      <div className="flex items-center justify-between pb-1 select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 select-none">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-plt-text">
+          <h3 className="text-sm font-semibold text-white">
             Connected Institutions ({groupedBanks.length} Banks · {accounts.length} Accounts)
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           {viewMode === 'table' && groupedBanks.length > 1 && (
             <button
               type="button"
               onClick={toggleAll}
-              className="btn-token btn-secondary btn-compact font-sans"
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#1f1f1f] border border-[#3d3d3d] text-[#8c8c8c] hover:text-white transition-colors cursor-pointer"
             >
               {expandedKeys.size === groupedBanks.length ? 'Collapse All' : 'Expand All'}
             </button>
           )}
 
           {/* View Mode Switcher */}
-          <div className="pill-switch">
+          <div className="inline-flex p-0.5 rounded-lg bg-[#1f1f1f] border border-[#3d3d3d]">
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`pill-switch-btn p-1.5 ${
-                viewMode === 'table' ? 'pill-switch-btn-active' : ''
+              className={`p-1.5 rounded transition-all cursor-pointer ${
+                viewMode === 'table' ? 'bg-[#2e2e2e] text-white shadow-xs' : 'text-[#8c8c8c] hover:text-white'
               }`}
               title="Grouped Table View"
             >
@@ -173,14 +173,25 @@ export default function BankAccountsGrid({
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`pill-switch-btn p-1.5 ${
-                viewMode === 'grid' ? 'pill-switch-btn-active' : ''
+              className={`p-1.5 rounded transition-all cursor-pointer ${
+                viewMode === 'grid' ? 'bg-[#2e2e2e] text-white shadow-xs' : 'text-[#8c8c8c] hover:text-white'
               }`}
               title="Cards Grid View"
             >
               <LayoutGrid size={14} />
             </button>
           </div>
+
+          {/* + New Account CTA Button */}
+          <button
+            type="button"
+            onClick={onOpenAddModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#2962ff] text-white hover:bg-[#1e53e5] transition-all shadow-xs cursor-pointer shrink-0"
+            title="Add Bank or Brokerage Account"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Account</span>
+          </button>
         </div>
       </div>
 

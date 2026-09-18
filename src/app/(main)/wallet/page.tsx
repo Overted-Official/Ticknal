@@ -11,7 +11,10 @@ export default async function WalletPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const params = await searchParams;
-  const tab = params.tab || 'positions';
+  const rawTab = params?.tab || 'positions';
+  const tab = ['banks', 'accounts', 'ledger', 'transactions'].includes(rawTab)
+    ? 'transactions'
+    : 'positions';
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

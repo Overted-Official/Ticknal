@@ -67,6 +67,14 @@ export default function InflationRadarChart({
   const latestPoint = filteredPoints.length > 0 ? filteredPoints[filteredPoints.length - 1] : null;
   const latestNominal = latestPoint ? latestPoint.nominal : 0;
 
+  const priceRange = useMemo(() => {
+    if (!filteredPoints || filteredPoints.length === 0) return 1;
+    const values = filteredPoints.flatMap((p) => [p.nominal, p.realValue]);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    return Math.max(1, max - min);
+  }, [filteredPoints]);
+
   const formatPriceValue = (val: number) => {
     if (isPrivacy) return '••••';
     if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
@@ -142,7 +150,7 @@ export default function InflationRadarChart({
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={filteredPoints} margin={{ top: 12, right: 68, left: 10, bottom: 0 }}>
+            <AreaChart data={filteredPoints} margin={{ top: 12, right: 4, left: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="tvNominalGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#089981" stopOpacity={0.32} />
@@ -169,23 +177,31 @@ export default function InflationRadarChart({
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
+                padding={{ left: 0, right: 0 }}
                 dy={6}
               />
 
               {/* Y-Axis on RIGHT (TradingView Price Scale) */}
               <YAxis
                 orientation="right"
+                width={50}
                 stroke="#787b86"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => (isPrivacy ? '•••' : formatPriceValue(v))}
+                tickFormatter={(v) => {
+                  if (isPrivacy) return '•••';
+                  if (latestNominal && Math.abs(v - latestNominal) <= priceRange * 0.09) {
+                    return '';
+                  }
+                  return formatPriceValue(v);
+                }}
                 dx={8}
                 domain={['auto', 'auto']}
               />
 
               {/* Right-Axis Current Price Tag (TradingView Solid Green Badge) */}
-              {latestPoint && (
+              {latestPoint && latestNominal !== 0 && (
                 <ReferenceLine
                   y={latestNominal}
                   stroke="#089981"
@@ -194,13 +210,13 @@ export default function InflationRadarChart({
                   label={({ viewBox }: any) => {
                     if (!viewBox) return null;
                     const { x, y, width } = viewBox;
-                    const posX = x + width + 4;
+                    const posX = x + width + 2;
                     return (
-                      <g transform={`translate(${posX}, ${y - 11})`}>
-                        <rect width="60" height="22" rx="4" fill="#089981" />
+                      <g transform={`translate(${posX}, ${y - 10})`}>
+                        <rect width="46" height="20" rx="4" fill="#089981" />
                         <text
-                          x="30"
-                          y="15"
+                          x="23"
+                          y="14"
                           fill="#ffffff"
                           textAnchor="middle"
                           fontSize="11"

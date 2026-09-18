@@ -306,7 +306,7 @@ export default function AddOrderModal({
                     </select>
                   ) : (
                     <div className="rounded-lg bg-plt-risk-soft px-3 py-2.5 text-[11px] text-plt-risk">
-                      An EGP brokerage account is required. <a href="/wallet?tab=banks" className="font-semibold underline">Open Accounts</a> to create one.
+                      An EGP brokerage account is required. <a href="/wallet?tab=transactions" className="font-semibold underline">Open Cash &amp; Transactions</a> to create one.
                     </div>
                   )}
                 </div>

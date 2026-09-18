@@ -8,11 +8,10 @@ import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import BanksHeader from './banks/BanksHeader';
 import BankSummaryKPIs from '@/components/platform/wallet/BankSummaryKPIs';
-import CashFlowBarChart from './banks/CashFlowBarChart';
-import SpendingDonutChart from './banks/SpendingDonutChart';
-import BankAllocationMatrix from './banks/BankAllocationMatrix';
+import BankAccountsScreenerWidget from './banks/BankAccountsScreenerWidget';
+import CashFlowSpendingAnalyticsWidget from './banks/CashFlowSpendingAnalyticsWidget';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
-import { buildCashTrend, getDashboardCashFlowKind, isDashboardSpending, toEgp } from '@/lib/portfolio-finance';
+import { buildCashTrend, toEgp } from '@/lib/portfolio-finance';
 
 const DASHBOARD_TABS = ['net-worth', 'investments', 'banks'] as const;
 
@@ -58,84 +57,7 @@ export default function DashboardBankAccountsPageView({
     );
   }, [accounts, usdRate]);
 
-  // Monthly Cash Flow Aggregation (Inflows vs Outflows)
-  const monthlyFlowData = useMemo(() => {
-    type MonthFlow = { month: string; rawDate: string; inflows: number; outflows: number; net: number };
-    const map = new Map<string, MonthFlow>();
 
-    for (const tx of transactions) {
-      const ym = tx.transactionDate.slice(0, 7); // YYYY-MM
-      const [year, month] = ym.split('-');
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const label = `${monthNames[Number(month) - 1]} '${year.slice(2)}`;
-
-      if (!map.has(ym)) {
-        map.set(ym, { month: label, rawDate: ym, inflows: 0, outflows: 0, net: 0 });
-      }
-
-      const entry = map.get(ym)!;
-      const amt = Number(tx.amount);
-      const isUsd = tx.currency === 'USD';
-      const egpVal = isUsd ? amt * usdRate : amt;
-
-      const flowKind = getDashboardCashFlowKind(tx.type);
-      if (flowKind === 'INFLOW') {
-        entry.inflows += egpVal;
-      } else if (flowKind === 'OUTFLOW') {
-        entry.outflows += egpVal;
-      }
-    }
-
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, v]) => ({
-        ...v,
-        net: v.inflows - v.outflows,
-      }));
-  }, [transactions, usdRate]);
-
-  // Spending Splits by Category
-  const categorySplits = useMemo(() => {
-    const map = new Map<string, number>();
-    let totalExpense = 0;
-
-    for (const tx of transactions) {
-      if (isDashboardSpending(tx.type)) {
-        const amt = Number(tx.amount);
-        const egpVal = tx.currency === 'USD' ? amt * usdRate : amt;
-        const cat = tx.category || 'Other';
-        map.set(cat, (map.get(cat) ?? 0) + egpVal);
-        totalExpense += egpVal;
-      }
-    }
-
-    return Array.from(map.entries())
-      .map(([name, value]) => ({
-        name,
-        value,
-        percentage: totalExpense > 0 ? (value / totalExpense) * 100 : 0,
-      }))
-      .sort((a, b) => b.value - a.value);
-  }, [transactions, usdRate]);
-
-  // Bank-by-Bank Liquidity Distribution
-  const bankDistribution = useMemo(() => {
-    return accounts.map((acc) => {
-      const bal = Number(acc.balance);
-      const egpVal = toEgp(bal, acc.currency, usdRate);
-      return {
-        id: acc.id,
-        name: acc.accountName,
-        bankName: acc.bankName || acc.customBankName || 'Bank',
-        accountType: acc.accountType,
-        currency: acc.currency,
-        rawBalance: bal,
-        egpVal,
-        percentage: totalCombinedEgp > 0 ? (egpVal / totalCombinedEgp) * 100 : 0,
-        logoUrl: acc.bankLogoUrl,
-      };
-    }).sort((a, b) => b.egpVal - a.egpVal);
-  }, [accounts, usdRate, totalCombinedEgp]);
 
   const { swipeHandlers } = useSwipeableTabs({
     tabs: DASHBOARD_TABS,
@@ -152,7 +74,7 @@ export default function DashboardBankAccountsPageView({
         items={[
           { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
           { label: 'Investments', value: 'investments', icon: TrendingUp },
-          { label: 'Accounts', value: 'banks', icon: Landmark },
+          { label: 'Banks', value: 'banks', icon: Landmark },
         ]}
       />
 
@@ -171,32 +93,24 @@ export default function DashboardBankAccountsPageView({
 
             <BankSummaryKPIs accounts={accounts} usdRate={usdRate} cashTrend={cashTrend} />
 
-            <BankAllocationMatrix distribution={bankDistribution} />
+            <BankAccountsScreenerWidget
+              accounts={accounts}
+              transactions={transactions}
+              usdRate={usdRate}
+            />
           </section>
 
           {/* SECTION 2: Cash Flow & Spending Distribution */}
           <section className="section-container section-viewport-fit">
             <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Cash Flow & Spending Distribution</h2>
-              <p className="section-subtitle">Monthly inflows versus outflows trajectory and category expense allocation</p>
+              <h2 className="section-title">Cash Flow &amp; Spending Distribution</h2>
+              <p className="section-subtitle">Interactive cash movement dynamics, net accumulation, and categorized outflow breakdown</p>
             </div>
 
-            <div className="widget-grid grid-cols-1 lg:grid-cols-3 items-stretch flex-1 min-h-0 w-full">
-              <div className="lg:col-span-2 w-full">
-                <CashFlowBarChart
-                  data={monthlyFlowData}
-                  transactions={transactions}
-                  usdRate={usdRate}
-                />
-              </div>
-              <div className="lg:col-span-1 w-full">
-                <SpendingDonutChart
-                  splits={categorySplits}
-                  transactions={transactions}
-                  usdRate={usdRate}
-                />
-              </div>
-            </div>
+            <CashFlowSpendingAnalyticsWidget
+              transactions={transactions}
+              usdRate={usdRate}
+            />
           </section>
         </div>
       </div>

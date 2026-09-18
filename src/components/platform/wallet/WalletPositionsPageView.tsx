@@ -57,6 +57,7 @@ export default function WalletPositionsPageView() {
     const closedOrders = orders.filter((o) => o.status === 'CLOSED');
 
     const portfolioValue = openOrders.reduce((acc, o) => acc + o.currentPrice * o.quantity, 0);
+    const costBasis = openOrders.reduce((acc, o) => acc + o.entryPrice * o.quantity, 0);
     const unrealized = openOrders.reduce((acc, o) => acc + o.profitLoss, 0);
     const realized = closedOrders.reduce((acc, o) => acc + o.profitLoss, 0);
 
@@ -65,6 +66,7 @@ export default function WalletPositionsPageView() {
 
     return {
       portfolioValue,
+      costBasis,
       unrealized,
       realized,
       winRate,
@@ -192,6 +194,14 @@ export default function WalletPositionsPageView() {
     });
   };
 
+  const handleExpandAll = () => {
+    setExpandedKeys(new Set(sortedGroupedOrders.map((g) => g.key)));
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedKeys(new Set());
+  };
+
   function closeOrder(order: OrderRow) {
     setOrderToClose(order);
   }
@@ -207,61 +217,110 @@ export default function WalletPositionsPageView() {
     }
   }
 
+  const scrollToTable = () => {
+    const el = document.getElementById('section-positions-table');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
-    <div className="command-surface-page flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y select-none">
+    <div className="command-surface-page flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y select-none custom-scrollbar">
       <div className="app-page page-sections-stack pb-28 md:pb-20">
         {/* Header */}
-        <PositionsHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filter={filter}
-          onFilterChange={setFilter}
-          onAddPosition={() => setIsAddingOrder(true)}
-        />
+        <PositionsHeader />
 
         {/* SECTION 1: Portfolio Performance Overview */}
-        <section className="section-container section-viewport-fit">
+        <section className="section-container section-viewport-fit space-y-2.5">
           <div className="flex flex-col gap-0.5">
             <h2 className="section-title">Portfolio Performance Overview</h2>
-            <p className="section-subtitle">Live mark-to-market valuation, open floating return, and historical win rate</p>
+            <p className="section-subtitle">
+              Live mark-to-market valuation, open floating return, and historical strategy win rate
+            </p>
           </div>
 
-          <PositionsKPIs totals={totals} />
+          <PositionsKPIs totals={totals} onScrollToTable={scrollToTable} />
         </section>
 
         {/* SECTION 2: Tracked Positions & Execution Lots */}
-        <section className="section-container section-viewport-fit">
-          <div className="flex flex-col gap-0.5">
-            <h2 className="section-title">Tracked Positions & Execution Lots</h2>
-            <p className="section-subtitle">Comprehensive order management, active market exposure, and trade lifecycle</p>
+        <section id="section-positions-table" className="section-container section-viewport-fit space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-[#1e222d]">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="section-title">Tracked Positions & Execution Lots</h2>
+              <p className="section-subtitle">
+                Comprehensive order management, active market exposure, and trade lifecycle
+              </p>
+            </div>
+
+            {/* Quick Summary & Lot Controls */}
+            <div className="flex items-center gap-2 self-start sm:self-auto text-xs text-[#787b86]">
+              <span className="font-semibold text-white">{sortedGroupedOrders.length}</span>
+              <span>Tickers</span>
+              <span className="text-[#50535e]">·</span>
+              <span className="font-semibold text-white">{filteredOrders.length}</span>
+              <span>Lots</span>
+
+              {sortedGroupedOrders.some((g) => g.orders.length > 1) && (
+                <>
+                  <span className="text-[#50535e]">·</span>
+                  {expandedKeys.size > 0 ? (
+                    <button
+                      type="button"
+                      onClick={handleCollapseAll}
+                      className="text-xs font-semibold text-[#2962ff] hover:text-[#5b9cf6] transition-colors cursor-pointer"
+                    >
+                      Collapse Lots
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleExpandAll}
+                      className="text-xs font-semibold text-[#2962ff] hover:text-[#5b9cf6] transition-colors cursor-pointer"
+                    >
+                      Expand Lots
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Positions Grouped Table Card */}
-          <div className="card-widget flex-1 min-h-0 flex flex-col overflow-hidden w-full">
-            {/* Mobile View (Cards) */}
-            <PositionsMobileCardWidget
-              loading={loading}
-              sortedGroupedOrders={sortedGroupedOrders}
-              filter={filter}
-            />
+          {/* Mobile View (Cards) */}
+          <PositionsMobileCardWidget
+            loading={loading}
+            sortedGroupedOrders={sortedGroupedOrders}
+            filter={filter}
+            onFilterChange={setFilter}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAddPosition={() => setIsAddingOrder(true)}
+            onCloseOrder={closeOrder}
+            onEditOrder={editOrder}
+            onDeleteOrder={deleteOrder}
+            deletingId={deletingId}
+            onConfirmDelete={(id) => setDeletingId(id)}
+          />
 
-            {/* Desktop View (Borderless Table) */}
-            <PositionsDataTableWidget
-              loading={loading}
-              sortedGroupedOrders={sortedGroupedOrders}
-              filter={filter}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-              expandedKeys={expandedKeys}
-              onToggleExpand={toggleExpand}
-              deletingId={deletingId}
-              onConfirmDelete={(id) => setDeletingId(id)}
-              onCloseOrder={closeOrder}
-              onEditOrder={editOrder}
-              onDeleteOrder={deleteOrder}
-            />
-          </div>
+          {/* Desktop View (TradingView Screener Table) */}
+          <PositionsDataTableWidget
+            loading={loading}
+            sortedGroupedOrders={sortedGroupedOrders}
+            filter={filter}
+            onFilterChange={setFilter}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            expandedKeys={expandedKeys}
+            onToggleExpand={toggleExpand}
+            deletingId={deletingId}
+            onConfirmDelete={(id) => setDeletingId(id)}
+            onCloseOrder={closeOrder}
+            onEditOrder={editOrder}
+            onDeleteOrder={deleteOrder}
+            onAddPosition={() => setIsAddingOrder(true)}
+          />
         </section>
       </div>
 

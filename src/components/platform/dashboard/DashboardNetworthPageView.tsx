@@ -256,7 +256,7 @@ export default function DashboardNetworthPageView({
         items={[
           { label: 'Net Worth & Inflation', value: 'net-worth', icon: ShieldCheck },
           { label: 'Investments', value: 'investments', icon: TrendingUp },
-          { label: 'Accounts', value: 'banks', icon: Landmark },
+          { label: 'Banks', value: 'banks', icon: Landmark },
         ]}
       />
 

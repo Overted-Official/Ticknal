@@ -68,3 +68,6 @@ _*/
 android/
 Thoth/
 bottom-navigation/
+
+# Local PGlite Database
+.local_pgdata/

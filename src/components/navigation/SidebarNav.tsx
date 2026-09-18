@@ -112,7 +112,7 @@ export default function SidebarNav() {
               variants={flyoutRevealRight}
               initial="hidden"
               animate="visible"
-              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-44 overflow-hidden"
+              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-48 overflow-hidden"
             >
               <div className="nav-flyout-title">Dashboard</div>
               <Link
@@ -152,7 +152,7 @@ export default function SidebarNav() {
                 }`}
               >
                 <Landmark size={16} />
-                <span>Accounts</span>
+                <span>Banks</span>
               </Link>
             </motion.div>
           )}
@@ -262,7 +262,7 @@ export default function SidebarNav() {
               variants={flyoutRevealRight}
               initial="hidden"
               animate="visible"
-              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-40 overflow-hidden"
+              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-48 overflow-hidden"
             >
               <div className="nav-flyout-title">Wallet</div>
               <Link
@@ -279,17 +279,17 @@ export default function SidebarNav() {
                 <span>Positions</span>
               </Link>
               <Link
-                href="/wallet?tab=banks"
+                href="/wallet?tab=transactions"
                 prefetch={true}
                 onClick={() => setIsWalletMenuOpen(false)}
                 className={`nav-flyout-link ${
-                  isWalletActive && currentTab === 'banks'
+                  isWalletActive && (currentTab === 'transactions' || currentTab === 'banks')
                     ? 'nav-flyout-link-active'
                     : ''
                 }`}
               >
                 <Landmark size={16} />
-                <span>Accounts</span>
+                <span>Cash &amp; Transactions</span>
               </Link>
             </motion.div>
           )}

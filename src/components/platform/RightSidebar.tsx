@@ -48,8 +48,8 @@ export default function RightSidebar({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: quoteData } = useSWR(`/api/quote?symbol=${selectedSymbol}`, fetcher, {
-    refreshInterval: 15000,
-    revalidateOnFocus: true,
+    refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 30000,
+    revalidateOnFocus: process.env.NODE_ENV === 'development' ? false : true,
   });
 
   const liveData = useMemo(() => {

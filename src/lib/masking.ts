@@ -10,7 +10,7 @@
 export function maskAccountNumber(accountNumber?: string | null): string {
   if (!accountNumber) return '—';
   const clean = accountNumber.trim();
-  if (clean.length === 0) return '—';
+  if (clean.length === 0 || clean === 'null' || clean === 'undefined') return '—';
   if (clean.length <= 4) return `•••• ${clean}`;
 
   const last4 = clean.slice(-4);

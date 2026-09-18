@@ -8,7 +8,8 @@ import TransactionLedgerTable from './TransactionLedgerTable';
 import AddAccountDrawer from './AddAccountDrawer';
 import LogTransactionDrawer from './LogTransactionDrawer';
 import EditAccountHistoryDrawer from './EditAccountHistoryDrawer';
-import WalletBanksHeader from './banks/WalletBanksHeader';
+import WalletTransactionsHeader from './transactions/WalletTransactionsHeader';
+import BrokerageHoldingsWidget from './BrokerageHoldingsWidget';
 import BankAccountsSkeleton from './BankAccountsSkeleton';
 import { type BankAccount, type BankTransaction, type BankItem } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
@@ -147,34 +148,35 @@ export default function WalletBankAccountsPageView({
     }
   }
 
+  const scrollToTransactions = () => {
+    const el = document.getElementById('section-transactions-table');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
-    <div className="command-surface-page flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y select-none">
+    <div className="command-surface-page flex-1 h-full w-full min-h-0 overflow-y-auto touch-pan-y select-none custom-scrollbar">
       <div className="app-page page-sections-stack pb-28 md:pb-20">
         {isInitialLoading ? (
           <BankAccountsSkeleton />
         ) : (
           <>
             {/* Header */}
-            <WalletBanksHeader
-              onLogTransaction={() => {
-                if (accounts.length === 0) {
-                  toast.warning('No Accounts Found', 'Please add a bank account first before logging transactions.');
-                  return;
-                }
-                setSelectedTxForEdit(null);
-                setIsTxDrawerOpen(true);
-              }}
-              onAddAccount={() => setIsAccountDrawerOpen(true)}
-            />
+            <WalletTransactionsHeader />
 
             {/* SECTION 1: Liquidity & Connected Accounts */}
-            <section className="section-container section-viewport-fit">
+            <section className="section-container section-viewport-fit space-y-2.5">
               <div className="flex flex-col gap-0.5">
-                <h2 className="section-title">Liquidity & Connected Accounts</h2>
+                <h2 className="section-title">Liquidity &amp; Connected Accounts</h2>
                 <p className="section-subtitle">Aggregated cash balances, currency allocation, and institutional accounts</p>
               </div>
 
-              <BankSummaryKPIs accounts={accounts} usdRate={usdRate} />
+              <BankSummaryKPIs
+                accounts={accounts}
+                usdRate={usdRate}
+                onScrollToSection={scrollToTransactions}
+              />
 
               <BankAccountsGrid
                 accounts={accounts}
@@ -185,38 +187,16 @@ export default function WalletBankAccountsPageView({
                 onSetDefaultAccount={handleSetDefaultAccount}
               />
 
-              {brokerageSummaries.length > 0 && (
-                <div className="mt-5 rounded-xl bg-plt-card/35 px-4 py-3">
-                  <div className="mb-3 flex items-end justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-plt-text">Invested holdings by brokerage</h3>
-                      <p className="mt-0.5 text-[11px] text-plt-muted">Open positions linked to each brokerage account. Historical unlinked lots stay outside these totals.</p>
-                    </div>
-                    <span className="text-[10px] uppercase tracking-[0.14em] text-plt-muted">Live positions</span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <div className="account-summary-table-min">
-                      <div className="table-layout-account-summary border-b border-plt-border-soft px-2 py-2 text-[9px] font-semibold uppercase tracking-wider text-plt-muted">
-                        <span>Brokerage</span><span>Positions</span><span>Tickers</span><span className="text-right">Market value</span>
-                      </div>
-                      {brokerageSummaries.map(({ account, positions, symbols, investedValue }) => (
-                        <div key={account.id} className="table-layout-account-summary items-center border-b border-plt-border-soft px-2 py-2.5 text-xs last:border-b-0">
-                          <span className="truncate font-semibold text-plt-text">{account.accountName || account.customBankName || account.bankName || 'Brokerage account'}</span>
-                          <span className="text-plt-muted">{positions.length}</span>
-                          <span className="text-plt-muted">{symbols.length}</span>
-                          <span className="text-right font-semibold text-plt-text">{investedValue.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} {account.currency}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <BrokerageHoldingsWidget
+                summaries={brokerageSummaries}
+                usdRate={usdRate}
+              />
             </section>
 
             {/* SECTION 2: Transaction Ledger & Activity */}
-            <section className="section-container section-viewport-fit">
-              <div className="flex flex-col gap-0.5">
-                <h2 className="section-title">Transaction Ledger & Activity</h2>
+            <section id="section-transactions-table" className="section-container section-viewport-fit space-y-3 pt-2">
+              <div className="flex flex-col gap-0.5 pb-1 border-b border-[#1e222d]">
+                <h2 className="section-title">Transaction Ledger &amp; Activity</h2>
                 <p className="section-subtitle">Audited record of multi-currency inflows, expenses, injections, and withdrawals</p>
               </div>
 
@@ -228,6 +208,14 @@ export default function WalletBankAccountsPageView({
                   onDeleteTransaction={handleDeleteTransaction}
                   onEditTransaction={(tx) => {
                     setSelectedTxForEdit(tx);
+                    setIsTxDrawerOpen(true);
+                  }}
+                  onLogTransaction={() => {
+                    if (accounts.length === 0) {
+                      toast.warning('No Accounts Found', 'Please add a bank account first before logging transactions.');
+                      return;
+                    }
+                    setSelectedTxForEdit(null);
                     setIsTxDrawerOpen(true);
                   }}
                 />

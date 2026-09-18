@@ -1,13 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Wallet, TrendingUp, DollarSign, CheckCircle } from '@/components/ui/icon-library';
-import RichSparklineCard from '@/components/platform/ui/RichSparklineCard';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 interface PositionsKPIsProps {
   totals: {
     portfolioValue: number;
+    costBasis?: number;
     unrealized: number;
     realized: number;
     winRate: number;
@@ -16,95 +15,132 @@ interface PositionsKPIsProps {
     winningCount: number;
     losingCount: number;
   };
+  onScrollToTable?: () => void;
 }
 
-export default function PositionsKPIs({ totals }: PositionsKPIsProps) {
+export default function PositionsKPIs({ totals, onScrollToTable }: PositionsKPIsProps) {
   const { isPrivacy } = usePrivacyMode();
 
-  const formatPrice = (p: number) =>
-    `${p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} £`;
-
-  const formatMoney = (val: number) => {
-    const sign = val > 0 ? '+' : val < 0 ? '-' : '';
-    const abs = Math.abs(val);
-    return `${sign}${abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} £`;
+  const formatMoney = (value: number, showSign: boolean = false): string => {
+    if (isPrivacy) {
+      if (value === 0) return '•••••• £';
+      const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
+      return `${sign}•••••• £`;
+    }
+    if (value === 0) return '0.0 £';
+    const formatted = Math.abs(value).toLocaleString('en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+    const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
+    return `${sign}${formatted} £`;
   };
 
-  const unrealizedPct = totals.portfolioValue > 0
-    ? ((totals.unrealized / (totals.portfolioValue - totals.unrealized || 1)) * 100).toFixed(1)
-    : '0.0';
+  const cost = totals.costBasis ?? (totals.portfolioValue - totals.unrealized > 0 ? totals.portfolioValue - totals.unrealized : 0);
+  const unrealizedPct = cost > 0 ? (totals.unrealized / cost) * 100 : 0;
+
+  const cards = [
+    {
+      id: 'portfolio-value',
+      title: 'Portfolio Value',
+      value: isPrivacy ? '••••••••' : formatMoney(totals.portfolioValue),
+      badgeText: `${totals.openCount} Open`,
+      badgeClass: 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: isPrivacy ? 'Cost: ••••••••' : cost > 0 ? `Cost: ${formatMoney(cost)}` : 'Live valuation',
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'unrealized-pl',
+      title: 'Unrealized P/L',
+      value: isPrivacy
+        ? (totals.unrealized >= 0 ? '+••••••••' : '-••••••••')
+        : formatMoney(totals.unrealized, true),
+      badgeText: `${unrealizedPct >= 0 ? '+' : ''}${unrealizedPct.toFixed(1)}%`,
+      badgeClass:
+        totals.unrealized > 0
+          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          : totals.unrealized < 0
+          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          : 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: `${totals.openCount} active position${totals.openCount !== 1 ? 's' : ''}`,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'realized-pl',
+      title: 'Realized P/L',
+      value: isPrivacy
+        ? (totals.realized >= 0 ? '+••••••••' : '-••••••••')
+        : formatMoney(totals.realized, true),
+      badgeText: `${totals.closedCount} Closed`,
+      badgeClass:
+        totals.realized > 0
+          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          : totals.realized < 0
+          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          : 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700',
+      metaText: `${totals.winningCount}W · ${totals.losingCount}L closed`,
+      metaClass: 'text-cold-gray-450',
+    },
+    {
+      id: 'win-rate',
+      title: 'Strategy Win Rate',
+      value: totals.closedCount > 0 ? `${totals.winRate.toFixed(1)}%` : '—',
+      badgeText: totals.closedCount > 0 ? `${totals.winningCount}/${totals.closedCount} Won` : 'No trades',
+      badgeClass:
+        totals.closedCount === 0
+          ? 'bg-cold-gray-800 text-cold-gray-250 border border-cold-gray-700'
+          : totals.winRate >= 50
+          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          : 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+      metaText: totals.closedCount > 0 ? 'Closed trades' : 'No closed trades',
+      metaClass: 'text-cold-gray-450',
+    },
+  ];
 
   return (
-    <div className="kpi-grid-4 select-none">
-      {/* 1. Portfolio Value */}
-      <RichSparklineCard
-        title="Portfolio Value"
-        value={formatPrice(totals.portfolioValue)}
-        icon={Wallet}
-        changeBadge={{
-          text: `${totals.openCount} Open`,
-          isPositive: true,
-        }}
-        meta="Invested capital + floating P/L"
-        sparklineTitle="Holding Value Trajectory"
-        sparklineData={[10, 11, 12, 14, 15, 15, 16, 16, 17, 18]}
-        sparklineLabels={['30D Ago', '15D Ago', 'Present']}
-        colorVariant="orange"
-        isPrivacy={isPrivacy}
-      />
+    <div className="w-full select-none">
+      {/* Strict 2x2 Grid on Mobile, 4-cards row on lg */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.id}
+            onClick={onScrollToTable}
+            className="tv-kpi-card w-full cursor-pointer"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onScrollToTable?.();
+              }
+            }}
+          >
+            {/* Top row: Title + Badge */}
+            <div className="flex items-center justify-between gap-1 leading-none">
+              <span className="text-[11px] sm:text-[12px] font-medium text-cold-gray-400 truncate tracking-tight" title={card.title}>
+                {card.title}
+              </span>
+              <span
+                className={`shrink-0 inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold leading-none ${card.badgeClass}`}
+              >
+                {card.badgeText}
+              </span>
+            </div>
 
-      {/* 2. Unrealized P/L */}
-      <RichSparklineCard
-        title="Unrealized P/L"
-        value={formatMoney(totals.unrealized)}
-        icon={TrendingUp}
-        changeBadge={{
-          text: `${totals.unrealized >= 0 ? '+' : ''}${unrealizedPct}%`,
-          isPositive: totals.unrealized >= 0,
-        }}
-        meta={`${totals.openCount} open position${totals.openCount !== 1 ? 's' : ''}`}
-        sparklineTitle="Open Floating Return"
-        sparklineData={[0, 4, 2, 8, 12, 11, 15, 18, 20, 22]}
-        sparklineLabels={['Entry', 'Holding', 'Present']}
-        colorVariant={totals.unrealized >= 0 ? 'profit' : 'risk'}
-        isPrivacy={isPrivacy}
-      />
-
-      {/* 3. Realized P/L */}
-      <RichSparklineCard
-        title="Realized P/L"
-        value={formatMoney(totals.realized)}
-        icon={DollarSign}
-        changeBadge={{
-          text: `${totals.closedCount} Closed`,
-          isPositive: totals.realized >= 0,
-          isNeutral: totals.realized === 0,
-        }}
-        meta={`${totals.winningCount}W · ${totals.losingCount}L closed trades`}
-        sparklineTitle="Cumulative Realized Return"
-        sparklineData={[0, 5, 10, 15, 20, 25, 30, 35, 40, 45]}
-        sparklineLabels={['Start', 'Mid', 'Present']}
-        colorVariant={totals.realized >= 0 ? 'profit' : 'risk'}
-        isPrivacy={isPrivacy}
-      />
-
-      {/* 4. Win Rate */}
-      <RichSparklineCard
-        title="Strategy Win Rate"
-        value={`${totals.winRate.toFixed(1)}%`}
-        icon={CheckCircle}
-        changeBadge={{
-          text: `${totals.winningCount}/${totals.closedCount} Won`,
-          isPositive: totals.winRate >= 50,
-          isNeutral: totals.closedCount === 0,
-        }}
-        meta={totals.closedCount > 0 ? 'Based on closed trades' : 'No closed trades yet'}
-        sparklineTitle="Historical Hit Rate"
-        sparklineData={[50, 55, 60, 65, 70, 75, 80, 85, 90, 95]}
-        sparklineLabels={['Start', 'Mid', 'Present']}
-        colorVariant="info"
-        isPrivacy={isPrivacy}
-      />
+            {/* Bottom row: Value + Meta */}
+            <div className="flex items-baseline justify-between gap-1 leading-none">
+              <span className="text-[15px] sm:text-[20px] font-bold text-cold-gray-100 tabular-nums tracking-tight shrink-0">
+                {card.value}
+              </span>
+              <span
+                className={`text-[10px] sm:text-[11px] truncate max-w-[68px] sm:max-w-[130px] text-right font-medium leading-none ${card.metaClass}`}
+              >
+                {card.metaText}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
