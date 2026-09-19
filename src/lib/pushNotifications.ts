@@ -81,11 +81,11 @@ export async function dispatchSignalNotifications(options: {
   const userSettingsRows = await db.select().from(userStrategySettings);
   const userSettingsMap = groupBy(userSettingsRows, (setting) => `${setting.userId}-${setting.tickerSymbol}`);
 
-  // Fetch all stock price bars in a single high-performance bulk query
+  // Fetch all stock price bars in a single high-performance bulk query with dynamic rolling warmup window (120 days)
   const priceRows = await db.execute(sql`
     SELECT ticker_symbol, date, open, high, low, close, volume
     FROM ${dailyPrices}
-    WHERE date >= DATE '2025-01-01' AND (close > 0 OR volume > 0)
+    WHERE date >= CURRENT_DATE - INTERVAL '120 days' AND (close > 0 OR volume > 0)
     ORDER BY ticker_symbol, date ASC
   `) as any[];
 

@@ -184,7 +184,9 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
 export async function handleTickersGet() {
   try {
     const allTickers = await db.select().from(tickers);
-    return NextResponse.json(allTickers);
+    return NextResponse.json(allTickers, {
+      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
+    });
   } catch (error) {
     console.error('Error fetching tickers:', error);
     return NextResponse.json({ error: 'Failed to fetch tickers' }, { status: 500 });
@@ -209,6 +211,8 @@ export async function handleInflationGet(request: Request) {
       latestCbeRate,
       latestUsCpiRate,
       series,
+    }, {
+      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
     });
   } catch (err) {
     console.error('API /api/market/inflation error:', err);
@@ -226,7 +230,10 @@ export async function handleOpportunitiesGet(request: Request): Promise<Response
     const { getRecentOpportunities } = await import('@/lib/opportunities');
     const opportunities = await getRecentOpportunities(limitBars, strategyScope);
 
-    return NextResponse.json({ opportunities }, { status: 200 });
+    return NextResponse.json({ opportunities }, {
+      status: 200,
+      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+    });
   } catch (err: any) {
     console.error('API /api/opportunities error:', err);
     return NextResponse.json({ error: 'Failed to fetch opportunities', details: err?.message }, { status: 500 });

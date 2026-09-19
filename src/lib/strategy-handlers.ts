@@ -11,6 +11,10 @@ import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeStrategy, type StrategyId } from '@/lib/strategy-analysis';
 
+const STRATEGY_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
+};
+
 let predictorInstance: any = null;
 
 export async function handleSignalsGet(request: Request) {
@@ -96,6 +100,8 @@ export async function handleSignalsGet(request: Request) {
       canonicalMetrics: analysis.metrics,
       trades: analysis.trades,
       equityCurve: analysis.equityCurve,
+    }, {
+      headers: STRATEGY_CACHE_HEADERS,
     });
   } catch (error) {
     console.error('Error calculating signals:', error);
@@ -158,16 +164,20 @@ export async function handleMetricsGet(request: Request) {
       endDate,
       timeframe,
       strategyParams,
+      lookbackBars: Number(searchParams.get('lookbackBars') || 5),
     });
 
     return NextResponse.json({
-      ticker,
+      symbol: ticker,
+      strategyId: analysis.strategyId,
       startDate: analysis.analysisStart,
       endDate: analysis.analysisEnd,
       dataAsOf: analysis.dataAsOf,
       parameterSource: analysis.parameterVersion,
       metrics: analysis.formattedMetrics,
       canonicalMetrics: analysis.metrics,
+    }, {
+      headers: STRATEGY_CACHE_HEADERS,
     });
   } catch (error) {
     console.error('Error calculating metrics:', error);
@@ -330,7 +340,9 @@ export async function handleReportGet(request: Request) {
       timeframe,
       strategyParams,
     });
-    return NextResponse.json(addCanonicalReportContext(report, analysis));
+    return NextResponse.json(addCanonicalReportContext(report, analysis), {
+      headers: STRATEGY_CACHE_HEADERS,
+    });
   } catch (error) {
     console.error('Error generating strategy report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

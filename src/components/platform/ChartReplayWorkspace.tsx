@@ -5,6 +5,7 @@ import { useSearchParams, usePathname } from 'next/navigation';
 import ChartWidget, { type ChartData, type ReplayState } from '@/components/platform/ChartWidget';
 import SignalPanel from '@/components/platform/SignalPanel';
 import { STRATEGIES } from '@/strategies/registry';
+import { tickerDataStore } from '@/lib/storage/tickerDataStore';
 
 import { WatchlistItem } from '@/components/platform/RightSidebar';
 import { TickerOrder } from '@/components/platform/TickerPositions';
@@ -85,6 +86,41 @@ export default function ChartReplayWorkspace({
     searchParams?.get('strategyEnd') || undefined
   );
 
+  const timeframe = searchParams?.get('timeframe') || 'D';
+
+  // Client-side IndexedDB caching & delta sync
+  const [activeChartData, setActiveChartData] = useState<ChartData[]>(data);
+
+  useEffect(() => {
+    setActiveChartData(data);
+  }, [data]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    // 1. Instantly check IndexedDB for cached historical bars
+    tickerDataStore.getStoredBars(symbol, timeframe).then((localBars) => {
+      if (!isCancelled && localBars.length > 0 && (!data || localBars.length > data.length)) {
+        setActiveChartData(localBars as ChartData[]);
+      }
+    }).catch(() => {});
+
+    // 2. Perform delta-sync in background to fetch only missing days
+    tickerDataStore.syncTickerData(symbol, timeframe, {
+      initialBars: data as any,
+    }).then((result) => {
+      if (!isCancelled && result.bars && result.bars.length > 0) {
+        setActiveChartData(result.bars as ChartData[]);
+      }
+    }).catch((err) => {
+      console.warn('Ticker data delta sync warning:', err);
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [symbol, timeframe]);
+
   // Sync strategy if URL query param changes
   useEffect(() => {
     const urlStrat = searchParams?.get('strategy');
@@ -153,9 +189,10 @@ export default function ChartReplayWorkspace({
 
   const chartKey = [
     symbol,
-    data.length,
-    data[0]?.time ?? 'none',
-    data[data.length - 1]?.time ?? 'none',
+    timeframe,
+    activeChartData.length,
+    activeChartData[0]?.time ?? 'none',
+    activeChartData[activeChartData.length - 1]?.time ?? 'none',
     initialReplayMode ? 'replay' : 'live',
   ].join(':');
 
@@ -165,14 +202,13 @@ export default function ChartReplayWorkspace({
 
   const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
   const [showSignals, setShowSignals] = useState(true);
-  const timeframe = searchParams?.get('timeframe') || 'D';
 
   return (
     // Flex-col: ChartWidget fills remaining height, SignalPanel is a fixed bottom strip
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden h-full">
       <ChartWidget
         key={chartKey}
-        data={data}
+        data={activeChartData}
         symbol={symbol}
         timeframe={timeframe}
         watchlist={watchlist}
@@ -204,7 +240,7 @@ export default function ChartReplayWorkspace({
         strategyParams={strategyParams}
         updateStrategyParam={updateStrategyParam}
         bulkUpdateStrategyParams={bulkUpdateStrategyParams}
-        chartData={data}
+        chartData={activeChartData}
         strategyStartDate={strategyStartDate}
         strategyEndDate={strategyEndDate}
         setStrategyStartDate={(val) => updateGlobalParam('strategyStart', val)}

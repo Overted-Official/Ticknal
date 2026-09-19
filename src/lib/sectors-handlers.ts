@@ -32,6 +32,10 @@ const memSignalsCacheMap = new Map<string, { data: any; timestamp: number }>();
 const inFlightSignalsMap = new Map<string, Promise<any>>();
 const SIGNALS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
+const EDGE_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
+};
+
 export async function handlePerformanceGet(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -54,6 +58,8 @@ export async function handlePerformanceGet(request: Request) {
         sectors,
         marketSummary,
         granularity,
+      }, {
+        headers: EDGE_CACHE_HEADERS,
       });
     }
 
@@ -174,7 +180,7 @@ export async function handlePerformanceGet(request: Request) {
     };
 
     memPerformanceCache.set(cacheKey, { data: payload, timestamp: Date.now() });
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, { headers: EDGE_CACHE_HEADERS });
   } catch (error) {
     console.error('Error computing sector performance:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -192,13 +198,13 @@ export async function handleSignalsGet(request?: Request) {
 
     const cached = memSignalsCacheMap.get(cacheKey);
     if (cached && now - cached.timestamp < SIGNALS_CACHE_TTL) {
-      return NextResponse.json(cached.data);
+      return NextResponse.json(cached.data, { headers: EDGE_CACHE_HEADERS });
     }
 
     const existingPromise = inFlightSignalsMap.get(cacheKey);
     if (existingPromise) {
       const data = await existingPromise;
-      return NextResponse.json(data);
+      return NextResponse.json(data, { headers: EDGE_CACHE_HEADERS });
     }
 
     const promise = (async () => {
@@ -426,7 +432,7 @@ export async function handleSignalsGet(request?: Request) {
 
     inFlightSignalsMap.set(cacheKey, promise);
     const result = await promise;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: EDGE_CACHE_HEADERS });
   } catch (error) {
     console.error('Error computing sector strategy signals:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

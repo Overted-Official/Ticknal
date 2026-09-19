@@ -627,11 +627,35 @@ async function getPortfolioPerformanceMetrics(
   }
 }
 
+const memMonthlyCloseMap = new Map<string, number>();
+
 async function getMonthlyCloseMap(symbols: string[], startDate: string): Promise<Map<string, number>> {
   if (symbols.length === 0) return new Map();
 
+  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const result = new Map<string, number>();
+  const missingSymbols: string[] = [];
+
+  for (const sym of symbols) {
+    const cleanSym = sym.trim().toUpperCase();
+    let foundInCache = false;
+    for (const [key, val] of memMonthlyCloseMap.entries()) {
+      if (key.startsWith(`${cleanSym}|`)) {
+        result.set(key, val);
+        foundInCache = true;
+      }
+    }
+    if (!foundInCache) {
+      missingSymbols.push(cleanSym);
+    }
+  }
+
+  if (missingSymbols.length === 0) {
+    return result;
+  }
+
   try {
-    const symbolList = sql.join(symbols.map((symbol) => sql`${symbol}`), sql`, `);
+    const symbolList = sql.join(missingSymbols.map((symbol) => sql`${symbol}`), sql`, `);
     const rows = await db.execute(sql`
       SELECT ticker_symbol, year_month, close
       FROM (
@@ -647,19 +671,22 @@ async function getMonthlyCloseMap(symbols: string[], startDate: string): Promise
       ) AS monthly_closes
     `);
 
-    const result = new Map<string, number>();
     for (const row of rows as Array<Record<string, unknown>>) {
       const symbol = String(row.ticker_symbol || '').trim().toUpperCase();
       const yearMonth = String(row.year_month || '');
       const close = Number(row.close);
       if (symbol && yearMonth && Number.isFinite(close) && close > 0) {
-        result.set(`${symbol}|${yearMonth}`, close);
+        const key = `${symbol}|${yearMonth}`;
+        result.set(key, close);
+        if (yearMonth < currentYearMonth) {
+          memMonthlyCloseMap.set(key, close);
+        }
       }
     }
     return result;
   } catch (error) {
     console.error('Error fetching monthly investment prices:', error);
-    return new Map();
+    return result;
   }
 }
 

@@ -37,6 +37,7 @@ import {
   handleInflationGet,
   handleOpportunitiesGet,
 } from '@/lib/market-handlers';
+import { handleHistoryGet } from '@/lib/market/history-handlers';
 import {
   handleNotificationsGet,
   handleNotificationsDelete,
@@ -214,7 +215,10 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     return handlePortfolioAnalysisGet(req);
   }
 
-  // 8. Market / Quotes / Tickers / Macro / Opportunities
+  // 8. Market / Quotes / Tickers / Macro / Opportunities / History
+  if (root === 'history' || (root === 'market' && sub === 'history')) {
+    return handleHistoryGet(req);
+  }
   if (root === 'opportunities' || (root === 'market' && sub === 'opportunities')) {
     return handleOpportunitiesGet(req);
   }

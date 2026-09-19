@@ -87,7 +87,9 @@ async function InvestPageContent({
           .from(positions)
           .where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, userId)))
       : Promise.resolve([]),
-    is1H ? getCachedHourlyPrices(selectedSymbol) : getCachedDailyPrices(selectedSymbol),
+    view === 'chart'
+      ? (is1H ? getCachedHourlyPrices(selectedSymbol) : getCachedDailyPrices(selectedSymbol))
+      : Promise.resolve([]),
     getCachedIndustryRotationMap().catch(() => null),
     userId
       ? db.select().from(userBankAccounts).where(and(eq(userBankAccounts.userId, userId), eq(userBankAccounts.isArchived, false)))
