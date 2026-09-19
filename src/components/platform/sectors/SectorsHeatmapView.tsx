@@ -148,98 +148,100 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
   };
 
   return (
-    <div className="app-page page-sections-stack flex min-h-0 flex-1 flex-col overflow-y-auto bg-plt-base text-plt-text touch-pan-y custom-scrollbar md:overflow-hidden md:pb-5">
-      {/* ---------------------------------------------------- */}
-      {/* 1. TOP CONTROLS & KPI STRIP (SHRINK-0)               */}
-      {/* ---------------------------------------------------- */}
-      <div className="shrink-0 flex flex-col gap-2.5">
-        <InvestHeader
-          currentView="sectors"
-          subtitle="Compare sector momentum, rotation, and strategy signals"
-        />
-        <SectorsHeader
-          timeframePreset={timeframePreset}
-          setTimeframePreset={setTimeframePreset}
-          customStartDate={customStartDate}
-          setCustomStartDate={setCustomStartDate}
-          customEndDate={customEndDate}
-          setCustomEndDate={setCustomEndDate}
-          analysisMode={analysisMode}
-          setAnalysisMode={setAnalysisMode}
-          granularity={granularity}
-          setGranularity={setGranularity}
-          sizingMetric={sizingMetric}
-          setSizingMetric={setSizingMetric}
-          viewLayout={viewLayout}
-          setViewLayout={setViewLayout}
-          filterActiveSignalsOnly={filterActiveSignalsOnly}
-          setFilterActiveSignalsOnly={setFilterActiveSignalsOnly}
-          selectedStrategy={selectedStrategy}
-          setSelectedStrategy={setSelectedStrategy}
-          availableStrategies={availableStrategies}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          onResetSelection={handleResetSelection}
-        />
+    <div className="h-full w-full overflow-y-auto custom-scrollbar bg-plt-base text-plt-text select-none">
+      <div className="app-page page-sections-stack page-content-wide mx-auto pb-24 flex flex-col gap-3.5">
+        {/* ---------------------------------------------------- */}
+        {/* 1. TOP CONTROLS & KPI STRIP (SHRINK-0)               */}
+        {/* ---------------------------------------------------- */}
+        <div className="shrink-0 flex flex-col gap-2.5 w-full min-w-0">
+          <InvestHeader
+            currentView="sectors"
+            subtitle="Compare sector momentum, rotation, and strategy signals"
+          />
+          <SectorsHeader
+            timeframePreset={timeframePreset}
+            setTimeframePreset={setTimeframePreset}
+            customStartDate={customStartDate}
+            setCustomStartDate={setCustomStartDate}
+            customEndDate={customEndDate}
+            setCustomEndDate={setCustomEndDate}
+            analysisMode={analysisMode}
+            setAnalysisMode={setAnalysisMode}
+            granularity={granularity}
+            setGranularity={setGranularity}
+            sizingMetric={sizingMetric}
+            setSizingMetric={setSizingMetric}
+            viewLayout={viewLayout}
+            setViewLayout={setViewLayout}
+            filterActiveSignalsOnly={filterActiveSignalsOnly}
+            setFilterActiveSignalsOnly={setFilterActiveSignalsOnly}
+            selectedStrategy={selectedStrategy}
+            setSelectedStrategy={setSelectedStrategy}
+            availableStrategies={availableStrategies}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onResetSelection={handleResetSelection}
+          />
 
-        <SectorsKPIStrip
-          analysisMode={analysisMode}
-          granularity={granularity}
-          sectors={sectors}
-          marketSummary={marketSummary}
-          signalsData={signalsData}
-          activeStrategyFilter={activeStrategyFilter}
-          onSetStrategyFilter={setActiveStrategyFilter}
-          onSelectSector={handleSelectSector}
-        />
-      </div>
+          <SectorsKPIStrip
+            analysisMode={analysisMode}
+            granularity={granularity}
+            sectors={sectors}
+            marketSummary={marketSummary}
+            signalsData={signalsData}
+            activeStrategyFilter={activeStrategyFilter}
+            onSetStrategyFilter={setActiveStrategyFilter}
+            onSelectSector={handleSelectSector}
+          />
+        </div>
 
-      {/* ---------------------------------------------------- */}
-      {/* 2. DEDICATED MAIN WORKSPACE CANVAS (FLEX-1 VIEWPORT) */}
-      {/* ---------------------------------------------------- */}
-      <div className="heatmap-workspace flex-1 md:min-h-0 md:h-full flex flex-col md:flex-row widget-row-gap overflow-hidden shrink-0 md:shrink">
-        {/* Left Pane: Treemap or Rotation Matrix */}
-        <div className="heatmap-pane flex-1 h-full md:min-h-0 overflow-hidden relative border border-[#1e222d] bg-transparent rounded-xl">
-          {isLoading ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
-              <RefreshCw className="w-6 h-6 animate-spin text-plt-muted" />
-              <span className="text-xs tabular-nums text-plt-muted">Aggregating EGX Market Performance...</span>
-            </div>
-          ) : viewLayout === 'treemap' ? (
-            <SectorTreemap
-              sectors={sectors}
-              sizingMetric={sizingMetric}
+        {/* ---------------------------------------------------- */}
+        {/* 2. DEDICATED MAIN WORKSPACE CANVAS                   */}
+        {/* ---------------------------------------------------- */}
+        <div className="heatmap-workspace w-full flex flex-col md:flex-row widget-row-gap shrink-0 min-h-[520px] md:min-h-[620px] lg:min-h-[680px] xl:min-h-[740px] h-[580px] md:h-[650px] lg:h-[720px] xl:h-[760px]">
+          {/* Left Pane: Treemap or Rotation Matrix */}
+          <div className="heatmap-pane flex-1 h-full min-h-[460px] md:min-h-[580px] overflow-hidden relative border border-[#1e222d] bg-transparent rounded-xl">
+            {isLoading ? (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
+                <RefreshCw className="w-6 h-6 animate-spin text-plt-muted" />
+                <span className="text-xs tabular-nums text-plt-muted">Aggregating EGX Market Performance...</span>
+              </div>
+            ) : viewLayout === 'treemap' ? (
+              <SectorTreemap
+                sectors={sectors}
+                sizingMetric={sizingMetric}
+                analysisMode={analysisMode}
+                signalsMap={signalsData?.signalsByTicker}
+                sectorSummary={signalsData?.sectorSummary}
+                filterActiveSignalsOnly={filterActiveSignalsOnly}
+                activeStrategyFilter={activeStrategyFilter}
+                searchQuery={searchQuery}
+                selectedSector={selectedSector}
+                onSelectSector={handleSelectSector}
+                onSelectTicker={handleSelectTicker}
+              />
+            ) : (
+              <SectorRotationMatrix
+                sectors={sectors}
+                selectedSector={selectedSector}
+                onSelectSector={handleSelectSector}
+              />
+            )}
+          </div>
+
+          {/* Right Pane: Sector Inspector & Attribution Panel */}
+          <div className="hidden md:flex w-full md:w-80 lg:w-96 heatmap-inspector-width shrink-0 h-full flex-col overflow-hidden border border-[#1e222d] bg-[#14171f]/40 rounded-xl p-3">
+            <SectorInspector
+              sector={activeSectorData}
+              selectedTicker={selectedTicker}
+              granularity={granularity}
               analysisMode={analysisMode}
               signalsMap={signalsData?.signalsByTicker}
               sectorSummary={signalsData?.sectorSummary}
-              filterActiveSignalsOnly={filterActiveSignalsOnly}
-              activeStrategyFilter={activeStrategyFilter}
-              searchQuery={searchQuery}
-              selectedSector={selectedSector}
-              onSelectSector={handleSelectSector}
               onSelectTicker={handleSelectTicker}
+              onOpenTickerChart={handleOpenChart}
             />
-          ) : (
-            <SectorRotationMatrix
-              sectors={sectors}
-              selectedSector={selectedSector}
-              onSelectSector={handleSelectSector}
-            />
-          )}
-        </div>
-
-        {/* Right Pane: Sector Inspector & Attribution Panel */}
-        <div className="hidden md:flex w-full md:w-80 lg:w-96 heatmap-inspector-width shrink-0 h-full min-h-0 flex-col overflow-hidden">
-          <SectorInspector
-            sector={activeSectorData}
-            selectedTicker={selectedTicker}
-            granularity={granularity}
-            analysisMode={analysisMode}
-            signalsMap={signalsData?.signalsByTicker}
-            sectorSummary={signalsData?.sectorSummary}
-            onSelectTicker={handleSelectTicker}
-            onOpenTickerChart={handleOpenChart}
-          />
+          </div>
         </div>
       </div>
 

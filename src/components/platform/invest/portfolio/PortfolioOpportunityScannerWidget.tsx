@@ -128,6 +128,12 @@ export default function PortfolioOpportunityScannerWidget({
                   {!isCollapsed &&
                     rows.map((opportunity) => {
                       const symbol = cleanSymbol(opportunity.symbol);
+                      const avgBars = metricForOpportunity(opportunity, 'avgBarsPerTrade');
+                      const maxDd = metricForOpportunity(opportunity, 'maxDrawdown');
+                      const maxMae = metricForOpportunity(opportunity, 'maxAdverseExcursion');
+                      const totalReturn = metricForOpportunity(opportunity, 'totalReturn');
+                      const alpha = metricForOpportunity(opportunity, 'alpha');
+
                       return (
                         <div
                           key={symbol}
@@ -150,14 +156,14 @@ export default function PortfolioOpportunityScannerWidget({
                           <span className="tabular-nums font-mono font-medium text-white">{number(opportunity.signal.price, 2)}</span>
                           <span className="tabular-nums font-mono text-[#787b86] text-[11px]">{opportunity.signal.date}</span>
                           <span className="tabular-nums text-[#d1d4dc]">{opportunity.signal.barsAgo ?? 0} sessions</span>
-                          <span className="tabular-nums text-[#787b86]">{metricForOpportunity(opportunity, 'avgBarsPerTrade')}</span>
-                          <span className="tabular-nums text-[#787b86]">{metricForOpportunity(opportunity, 'maxDrawdown')}</span>
-                          <span className="tabular-nums text-[#787b86]">{metricForOpportunity(opportunity, 'maxAdverseExcursion')}</span>
-                          <span className={`tabular-nums font-bold ${opportunity.metrics.totalReturn && opportunity.metrics.totalReturn >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
-                            {metricForOpportunity(opportunity, 'totalReturn')}
+                          <span className="tabular-nums text-[#787b86]">{avgBars !== null ? number(avgBars, 1) : '—'}</span>
+                          <span className="tabular-nums text-[#787b86]">{maxDd !== null ? `${number(maxDd, 1)}%` : '—'}</span>
+                          <span className="tabular-nums text-[#787b86]">{maxMae !== null ? `${number(maxMae, 1)}%` : '—'}</span>
+                          <span className={`tabular-nums font-bold ${totalReturn !== null && totalReturn >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                            {totalReturn !== null ? pct(totalReturn, 1) : '—'}
                           </span>
-                          <span className={`tabular-nums font-bold ${opportunity.metrics.alpha && opportunity.metrics.alpha >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
-                            {metricForOpportunity(opportunity, 'alpha')}
+                          <span className={`tabular-nums font-bold ${alpha !== null && alpha >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                            {alpha !== null ? pct(alpha, 1) : '—'}
                           </span>
 
                           <div className="flex justify-end">
@@ -194,60 +200,86 @@ export default function PortfolioOpportunityScannerWidget({
             const isCollapsed = collapsedGroups[group] === true;
             return (
               <div key={group} className="rounded-xl border border-[#1e222d] bg-[#14171f] overflow-hidden">
+                {/* Group Accordion Header */}
                 <button
                   type="button"
                   onClick={() => onToggleGroup(group)}
-                  className="flex w-full items-center justify-between p-3 text-left hover:bg-[#1e222d]/40 transition-colors"
+                  className="flex w-full items-center justify-between p-3 text-left hover:bg-[#1e222d]/40 transition-colors cursor-pointer"
                 >
-                  <span className="flex items-center gap-2">
-                    <ChevronDown size={14} className={`text-[#787b86] transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
-                    <span className="text-xs font-bold text-white">{group}</span>
-                    <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${regimeTone(rows[0]?.rotationRegime)}`}>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <ChevronDown size={14} className={`text-[#787b86] shrink-0 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                    <span className="text-xs font-bold text-white truncate">{group}</span>
+                    <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold shrink-0 ${regimeTone(rows[0]?.rotationRegime)}`}>
                       {rows[0]?.rotationRegime || 'Unclassified'}
                     </span>
                   </span>
-                  <span className="text-[11px] text-[#787b86]">{rows.length} candidates</span>
+                  <span className="text-[11px] text-[#787b86] shrink-0 font-medium">{rows.length} candidates</span>
                 </button>
 
+                {/* Simplified Candidate Cards */}
                 {!isCollapsed && (
                   <div className="divide-y divide-[#1e222d] border-t border-[#1e222d]">
                     {rows.map((opportunity) => {
                       const symbol = cleanSymbol(opportunity.symbol);
+                      const maxDd = metricForOpportunity(opportunity, 'maxDrawdown');
+                      const totalReturn = metricForOpportunity(opportunity, 'totalReturn');
+                      const alpha = metricForOpportunity(opportunity, 'alpha');
+
                       return (
-                        <div key={symbol} className="p-3.5 space-y-2.5">
-                          <div className="flex items-start justify-between gap-3">
+                        <div key={symbol} className="p-3 space-y-2.5 hover:bg-[#1e222d]/20 transition-colors">
+                          {/* Top: Identity + Strategy Badge */}
+                          <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <TickerLogo symbol={symbol} logoUrl={opportunity.logoUrl} />
                               <div className="min-w-0">
-                                <p className="text-xs font-bold text-white">{symbol}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-white">{symbol}</span>
+                                  <span className="text-[10px] text-[#787b86] font-mono">· {number(opportunity.signal.price, 2)} EGP</span>
+                                </div>
                                 <p className="truncate text-[11px] text-[#787b86]">{opportunity.companyName}</p>
                               </div>
                             </div>
-                            <span className="rounded-md bg-[#2962ff]/15 border border-[#2962ff]/30 px-2 py-0.5 text-[10px] font-semibold text-[#2962ff]">
+                            <span className="shrink-0 rounded-md bg-[#2962ff]/15 border border-[#2962ff]/30 px-2 py-0.5 text-[10px] font-semibold text-[#2962ff]">
                               {opportunity.strategyLabel}
                             </span>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 text-xs tabular-nums border-t border-[#1e222d]/40 pt-2">
+                          {/* Middle: Clean 3-Metric Strip */}
+                          <div className="grid grid-cols-3 gap-1.5 rounded-lg bg-[#0d0f14] border border-[#1e222d]/70 p-2 text-center tabular-nums">
                             <div>
-                              <span className="text-[10px] uppercase text-[#787b86] block">Trigger Price</span>
-                              <span className="font-semibold text-white">{number(opportunity.signal.price, 2)} EGP</span>
+                              <span className="text-[9px] uppercase tracking-wider text-[#787b86] block">Alpha (α)</span>
+                              <span className={`text-xs font-bold ${alpha !== null && alpha >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                                {alpha !== null ? pct(alpha, 1) : '—'}
+                              </span>
                             </div>
                             <div>
-                              <span className="text-[10px] uppercase text-[#787b86] block">Alpha (α)</span>
-                              <span className={`font-bold ${opportunity.metrics.alpha && opportunity.metrics.alpha >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
-                                {metricForOpportunity(opportunity, 'alpha')}
+                              <span className="text-[9px] uppercase tracking-wider text-[#787b86] block">Return</span>
+                              <span className={`text-xs font-bold ${totalReturn !== null && totalReturn >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                                {totalReturn !== null ? pct(totalReturn, 1) : '—'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] uppercase tracking-wider text-[#787b86] block">Max DD</span>
+                              <span className="text-xs font-semibold text-[#d1d4dc]">
+                                {maxDd !== null ? `${number(maxDd, 1)}%` : '—'}
                               </span>
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => onBuy(opportunity)}
-                            className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-[#089981] py-2 text-xs font-semibold text-white hover:bg-[#07836f] transition-all shadow-xs cursor-pointer"
-                          >
-                            <Zap size={12} /> Open Trade Ticket
-                          </button>
+                          {/* Bottom: Context + Compact Buy Button */}
+                          <div className="flex items-center justify-between pt-0.5">
+                            <span className="text-[10px] text-[#787b86] tabular-nums font-medium">
+                              {opportunity.signal.barsAgo ?? 0}s ago · {opportunity.signal.date}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => onBuy(opportunity)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-[#089981] px-3 py-1 text-xs font-semibold text-white hover:bg-[#07836f] transition-all shadow-xs cursor-pointer"
+                            >
+                              <Zap size={11} /> Buy
+                            </button>
+                          </div>
                         </div>
                       );
                     })}

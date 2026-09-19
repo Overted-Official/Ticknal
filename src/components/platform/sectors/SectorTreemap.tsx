@@ -293,7 +293,7 @@ export default function SectorTreemap({
       </div>
 
       {/* 2. Interactive Canvas Box */}
-      <div className="flex-1 relative w-full h-full min-h-0 overflow-hidden">
+      <div className="flex-1 relative w-full min-h-0 overflow-hidden">
         {layout.map((sectorRect) => {
           const sectorData = sectorRect.data as SectorPerformanceItem;
           const isSelected = selectedSector === sectorData.sector;

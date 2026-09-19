@@ -9,7 +9,7 @@ export interface InvestSectorsPageViewProps {
 
 export default function InvestSectorsPageView({ onOpenTickerChart }: InvestSectorsPageViewProps) {
   return (
-    <div className="w-full h-full min-w-0 relative flex-1 flex flex-col overflow-hidden">
+    <div className="w-full h-full min-w-0 relative flex-1 flex flex-col">
       <SectorsHeatmapView onOpenTickerChart={onOpenTickerChart} />
     </div>
   );
