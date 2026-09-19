@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
-import { db } from '../src/db';
-import { signals } from '../src/db/schema';
+import { db } from '../../src/db';
+import { signals } from '../../src/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -10,7 +10,7 @@ async function main() {
   const ticker = 'COMI';
   
   // 1. Read JSON file
-  const jsonPath = path.join(__dirname, '../quant_engine/comi_meta_signals.json');
+  const jsonPath = path.join(__dirname, '../../quant_engine/comi_meta_signals.json');
   if (!fs.existsSync(jsonPath)) {
     console.error(`File not found: ${jsonPath}`);
     process.exit(1);

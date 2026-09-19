@@ -18,6 +18,10 @@ const eslintConfig = defineConfig([
     "scripts/**",
     "src/scripts/**",
     "scratch_*",
+    "builds/**",
+    "_technical_support/**",
+    "_archived/**",
+    "_playground/**",
   ]),
 ]);
 

@@ -59,12 +59,14 @@ __pycache__/
 .pytest_cache/
 *.py[cod]
 drop_tables.ts
+scripts/db/drop_tables.ts
 _archived/
 _*/
 
 # Local builds & assets
 *.apk
 *.aab
+builds/
 android/
 Thoth/
 bottom-navigation/

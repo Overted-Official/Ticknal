@@ -1,8 +1,8 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
-import { db } from '../src/db';
-import { tickers, dailyPrices } from '../src/db/schema';
+import { db } from '../../src/db';
+import { tickers, dailyPrices } from '../../src/db/schema';
 import fs from 'fs';
 import path from 'path';
 

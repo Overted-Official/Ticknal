@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
-import { db } from '../src/db';
-import { dailyPrices } from '../src/db/schema';
+import { db } from '../../src/db';
+import { dailyPrices } from '../../src/db/schema';
 import { desc, eq, inArray } from 'drizzle-orm';
 
 async function test() {
