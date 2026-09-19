@@ -14,7 +14,7 @@ import {
 import type { HoldingConsensus } from '@/lib/multi-strategy-consensus';
 import type { OpportunitySignal } from '@/lib/opportunities';
 import type { StrategyId } from '@/lib/strategy-analysis';
-import PageHeader from '@/components/platform/ui/PageHeader';
+import InvestHeader from './InvestHeader';
 
 import {
   cleanSymbol,
@@ -344,21 +344,21 @@ export default function InvestPortfolioPageView({
       <div className="app-page page-sections-stack page-content-wide mx-auto pb-24">
         {/* Top Control Bar & Filters */}
         <section className="section-container w-full min-w-0">
-          <PageHeader
-            title="Investment Command Center"
-            description={`Make fast, chart-synced buy and sell decisions across your strategies. Fresh means the last ${freshness} trading sessions.`}
+          <InvestHeader
+            currentView="portfolio"
+            subtitle={`Make fast, chart-synced buy and sell decisions across your strategies. Fresh means the last ${freshness} trading sessions.`}
             actions={(
               <>
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-plt-profit-soft px-2.5 py-1.5 text-[11px] text-plt-profit">
-                  <span className="h-1.5 w-1.5 rounded-full bg-plt-profit" /> Chart-synced
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#089981]/15 border border-[#089981]/30 px-2.5 py-1.5 text-[11px] font-medium text-[#089981]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#089981]" /> Chart-synced
                 </span>
-                <span className="rounded-lg bg-plt-card px-2.5 py-1.5 text-[11px] text-plt-muted">
+                <span className="rounded-lg bg-[#1e222d] border border-[#2a2e39] px-2.5 py-1.5 text-[11px] text-[#787b86] tabular-nums">
                   Data as of {latestData}
                 </span>
                 <button
                   type="button"
                   onClick={refreshPage}
-                  className="rounded-lg p-2 text-plt-muted hover:bg-plt-hover hover:text-plt-text cursor-pointer"
+                  className="rounded-lg p-2 text-[#787b86] bg-[#1e222d] border border-[#2a2e39] hover:border-[#448aff] hover:text-white cursor-pointer transition-colors"
                   title="Refresh analysis"
                 >
                   <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
@@ -370,61 +370,61 @@ export default function InvestPortfolioPageView({
           {/* ================================================================ */}
           {/* DESKTOP FILTER BAR (md and up) — preserved layout                */}
           {/* ================================================================ */}
-          <div className="hidden md:grid grid-cols-1 gap-2.5 rounded-xl bg-plt-card/35 p-3 sm:grid-cols-2 xl:grid-cols-6 w-full min-w-0">
-            <label className="flex items-center gap-2 text-xs text-plt-muted xl:col-span-1 min-w-0">
-              <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider">Strategy</span>
+          <div className="hidden md:grid grid-cols-1 gap-2.5 rounded-xl bg-[#1e222d]/60 border border-[#2a2e39] p-3 sm:grid-cols-2 xl:grid-cols-6 w-full min-w-0">
+            <label className="flex items-center gap-2 text-xs text-[#787b86] xl:col-span-1 min-w-0">
+              <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-[#787b86]">Strategy</span>
               <select
                 value={strategy}
                 onChange={(event) => setStrategy(event.target.value as StrategyFilter)}
-                className="min-w-0 flex-1 rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none"
+                className="min-w-0 flex-1 rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
               >
                 {STRATEGIES.map((item) => (
-                  <option key={item.id} value={item.id}>
+                  <option key={item.id} value={item.id} className="bg-[#14171f] text-[#d1d4dc]">
                     {item.label}
                   </option>
                 ))}
               </select>
             </label>
 
-            <label className="flex items-center gap-2 text-xs text-plt-muted min-w-0">
-              <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider">Freshness</span>
+            <label className="flex items-center gap-2 text-xs text-[#787b86] min-w-0">
+              <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-[#787b86]">Freshness</span>
               <select
                 value={freshness}
                 onChange={(event) => setFreshness(Number(event.target.value))}
-                className="min-w-0 flex-1 rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none"
+                className="min-w-0 flex-1 rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
               >
-                <option value={5}>5 trading sessions</option>
-                <option value={10}>10 trading sessions</option>
-                <option value={20}>20 trading sessions</option>
+                <option value={5} className="bg-[#14171f] text-[#d1d4dc]">5 trading sessions</option>
+                <option value={10} className="bg-[#14171f] text-[#d1d4dc]">10 trading sessions</option>
+                <option value={20} className="bg-[#14171f] text-[#d1d4dc]">20 trading sessions</option>
               </select>
             </label>
 
-            <label className="flex items-center gap-2 text-xs text-plt-muted min-w-0">
-              <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider">Group by</span>
+            <label className="flex items-center gap-2 text-xs text-[#787b86] min-w-0">
+              <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-[#787b86]">Group by</span>
               <select
                 value={grouping}
                 onChange={(event) => setGrouping(event.target.value as Grouping)}
-                className="min-w-0 flex-1 rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none"
+                className="min-w-0 flex-1 rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
               >
-                <option value="sector">Sector</option>
-                <option value="industryGroup">Industry group</option>
-                <option value="industry">Industry</option>
+                <option value="sector" className="bg-[#14171f] text-[#d1d4dc]">Sector</option>
+                <option value="industryGroup" className="bg-[#14171f] text-[#d1d4dc]">Industry group</option>
+                <option value="industry" className="bg-[#14171f] text-[#d1d4dc]">Industry</option>
               </select>
             </label>
 
             <label className="relative flex items-center sm:col-span-2 xl:col-span-2 min-w-0">
-              <Search size={14} className="absolute left-3 text-plt-muted" />
+              <Search size={14} className="absolute left-3 text-[#787b86]" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search ticker or company"
-                className="w-full rounded-lg bg-plt-base py-2 pl-9 pr-3 text-xs text-plt-text outline-none placeholder:text-plt-muted"
+                className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] py-2 pl-9 pr-3 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  className="absolute right-2.5 text-plt-muted hover:text-plt-text"
+                  className="absolute right-2.5 text-[#787b86] hover:text-white"
                 >
                   <X size={13} />
                 </button>
@@ -434,8 +434,10 @@ export default function InvestPortfolioPageView({
             <button
               type="button"
               onClick={() => setShowFilters((value) => !value)}
-              className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 btn-typography-semibold cursor-pointer ${
-                showFilters ? 'bg-plt-accent-soft text-plt-accent' : 'bg-plt-base text-plt-muted hover:text-plt-text'
+              className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 btn-typography-semibold cursor-pointer transition-colors ${
+                showFilters
+                  ? 'bg-[#2962ff]/15 text-[#2962ff] border border-[#2962ff]/40'
+                  : 'bg-[#14171f] border border-[#2a2e39] text-[#787b86] hover:text-white hover:border-[#787b86]'
               }`}
             >
               <SlidersHorizontal size={14} /> Filters
@@ -443,15 +445,15 @@ export default function InvestPortfolioPageView({
           </div>
 
           {showFilters && (
-            <div className="hidden md:grid grid-cols-2 gap-3 rounded-xl bg-plt-card/35 p-3 sm:grid-cols-4 lg:grid-cols-8 w-full min-w-0">
+            <div className="hidden md:grid grid-cols-2 gap-3 rounded-xl bg-[#1e222d]/60 border border-[#2a2e39] p-3 sm:grid-cols-4 lg:grid-cols-8 w-full min-w-0">
               <Field label="Regime">
                 <select
                   value={regimeFilter}
                   onChange={(event) => setRegimeFilter(event.target.value as 'All' | Regime)}
-                  className="w-full rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none"
+                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
                 >
                   {REGIMES.map((item) => (
-                    <option key={item}>{item}</option>
+                    <option key={item} className="bg-[#14171f] text-[#d1d4dc]">{item}</option>
                   ))}
                 </select>
               </Field>
@@ -459,14 +461,14 @@ export default function InvestPortfolioPageView({
                 <select
                   value={sort}
                   onChange={(event) => setSort(event.target.value as SortKey)}
-                  className="w-full rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none"
+                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
                 >
-                  <option value="alpha">Alpha ↓</option>
-                  <option value="return">Total return ↓</option>
-                  <option value="bars">Avg bars ↑</option>
-                  <option value="drawdown">Max DD ↑</option>
-                  <option value="mae">Max MAE ↑</option>
-                  <option value="date">Signal date ↓</option>
+                  <option value="alpha" className="bg-[#14171f] text-[#d1d4dc]">Alpha ↓</option>
+                  <option value="return" className="bg-[#14171f] text-[#d1d4dc]">Total return ↓</option>
+                  <option value="bars" className="bg-[#14171f] text-[#d1d4dc]">Avg bars ↑</option>
+                  <option value="drawdown" className="bg-[#14171f] text-[#d1d4dc]">Max DD ↑</option>
+                  <option value="mae" className="bg-[#14171f] text-[#d1d4dc]">Max MAE ↑</option>
+                  <option value="date" className="bg-[#14171f] text-[#d1d4dc]">Signal date ↓</option>
                 </select>
               </Field>
               <Field label="Min avg bars">
@@ -475,7 +477,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMinBars(event.target.value)}
                   inputMode="numeric"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none placeholder:text-plt-muted"
+                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Max avg bars">
@@ -484,7 +486,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMaxBars(event.target.value)}
                   inputMode="numeric"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none placeholder:text-plt-muted"
+                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Min alpha %">
@@ -493,7 +495,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMinAlpha(event.target.value)}
                   inputMode="decimal"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none placeholder:text-plt-muted"
+                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Max DD %">
@@ -502,7 +504,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMaxDrawdown(event.target.value)}
                   inputMode="decimal"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none placeholder:text-plt-muted"
+                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Max MAE %">
@@ -511,15 +513,15 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMaxMae(event.target.value)}
                   inputMode="decimal"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-plt-base px-2.5 py-2 text-xs text-plt-text outline-none placeholder:text-plt-muted"
+                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
-              <label className="flex items-end gap-2 pb-2 text-xs text-plt-muted cursor-pointer">
+              <label className="flex items-end gap-2 pb-2 text-xs text-[#787b86] hover:text-[#d1d4dc] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeHeld}
                   onChange={(event) => setIncludeHeld(event.target.checked)}
-                  className="accent-[var(--plt-accent)]"
+                  className="accent-[#2962ff]"
                 />{' '}
                 Include held
               </label>
@@ -531,9 +533,9 @@ export default function InvestPortfolioPageView({
           {/* ================================================================ */}
           <div className="flex md:hidden flex-col gap-2 w-full min-w-0">
             {/* Row 1: Search + Filters split pill */}
-            <div className="flex items-stretch h-9 rounded-xl overflow-hidden border border-plt-border bg-plt-raised">
+            <div className="flex items-stretch h-9 rounded-xl overflow-hidden border border-[#2a2e39] bg-[#14171f]">
               <div className="relative flex-1 flex items-center">
-                <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-plt-muted">
+                <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-[#787b86]">
                   <Search size={14} />
                 </div>
                 <input
@@ -541,36 +543,36 @@ export default function InvestPortfolioPageView({
                   placeholder="Search ticker or company..."
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="h-full w-full bg-transparent pl-9 pr-3 text-[12px] text-plt-text placeholder:text-plt-muted focus:outline-none"
+                  className="h-full w-full bg-transparent pl-9 pr-3 text-[12px] text-[#d1d4dc] placeholder:text-[#787b86] focus:outline-none"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="absolute right-0 pr-3 flex items-center text-plt-muted hover:text-plt-text"
+                    className="absolute right-0 pr-3 flex items-center text-[#787b86] hover:text-white"
                   >
                     <X size={13} />
                   </button>
                 )}
               </div>
 
-              <div className="w-px bg-plt-border shrink-0" />
+              <div className="w-px bg-[#2a2e39] shrink-0" />
 
               <button
                 type="button"
                 onClick={() => setIsMobileFiltersDrawerOpen(true)}
-                className="relative flex items-center gap-1.5 px-3.5 btn-typography text-plt-muted hover:text-plt-text transition-colors shrink-0"
+                className="relative flex items-center gap-1.5 px-3.5 btn-typography text-[#787b86] hover:text-white transition-colors shrink-0 cursor-pointer"
               >
                 <SlidersHorizontal size={14} />
                 <span>Filters</span>
                 {(strategy !== 'all' || freshness !== 5 || regimeFilter !== 'All' || sort !== 'alpha' || minBars !== '' || maxBars !== '' || minAlpha !== '' || maxDrawdown !== '' || maxMae !== '' || includeHeld !== false) && (
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-plt-profit" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#089981]" />
                 )}
               </button>
             </div>
 
             {/* Row 2: Grouping quick pill switch */}
-            <div className="pill-switch w-full">
+            <div className="flex rounded-lg p-0.5 bg-[#14171f] border border-[#2a2e39] w-full">
               {[
                 { id: 'sector', label: 'Sector' },
                 { id: 'industryGroup', label: 'Group' },
@@ -580,7 +582,11 @@ export default function InvestPortfolioPageView({
                   key={item.id}
                   type="button"
                   onClick={() => setGrouping(item.id as Grouping)}
-                  className={`pill-switch-btn flex-1 text-center ${grouping === item.id ? 'active' : ''}`}
+                  className={`flex-1 py-1 text-center text-xs rounded-md transition-colors cursor-pointer ${
+                    grouping === item.id
+                      ? 'bg-[#2a2e39] text-white font-medium shadow-xs'
+                      : 'text-[#787b86] hover:text-white'
+                  }`}
                 >
                   {item.label}
                 </button>
@@ -594,25 +600,25 @@ export default function InvestPortfolioPageView({
           {isMobileFiltersDrawerOpen && (
             <div
               className="fixed inset-0 z-50 flex flex-col justify-end md:hidden animate-in fade-in duration-200"
-              style={{ backgroundColor: 'var(--plt-overlay, rgba(0,0,0,0.7))' }}
+              style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
               onClick={() => setIsMobileFiltersDrawerOpen(false)}
             >
               <div
-                className="flex flex-col rounded-t-2xl border-t border-plt-border-strong bg-plt-surface shadow-2xl animate-in slide-in-from-bottom duration-250 max-h-[85dvh] overflow-y-auto"
+                className="flex flex-col rounded-t-2xl border-t border-[#2a2e39] bg-[#1e222d] shadow-2xl animate-in slide-in-from-bottom duration-250 max-h-[85dvh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Drag handle */}
                 <div className="flex justify-center pt-3 pb-1 shrink-0">
-                  <div className="w-10 h-1 rounded-full bg-plt-border-strong" />
+                  <div className="w-10 h-1 rounded-full bg-[#2a2e39]" />
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-3 border-b border-plt-border/40 shrink-0">
-                  <span className="text-sm font-bold text-plt-text">Portfolio Filters</span>
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[#2a2e39] shrink-0">
+                  <span className="text-sm font-bold text-white">Portfolio Filters</span>
                   <button
                     type="button"
                     onClick={() => setIsMobileFiltersDrawerOpen(false)}
-                    className="p-1.5 rounded-full text-plt-muted hover:text-plt-text hover:bg-white/[0.08] transition-colors"
+                    className="p-1.5 rounded-full text-[#787b86] hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
                   >
                     <X size={16} />
                   </button>
@@ -622,14 +628,14 @@ export default function InvestPortfolioPageView({
                 <div className="flex flex-col gap-4 px-5 py-4">
                   {/* Strategy */}
                   <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Strategy</label>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[#787b86] mb-1.5 block">Strategy</label>
                     <select
                       value={strategy}
                       onChange={(event) => setStrategy(event.target.value as StrategyFilter)}
-                      className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                      className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                     >
                       {STRATEGIES.map((item) => (
-                        <option key={item.id} value={item.id} className="bg-plt-base text-plt-text">
+                        <option key={item.id} value={item.id} className="bg-[#14171f] text-[#d1d4dc]">
                           {item.label}
                         </option>
                       ))}
@@ -639,27 +645,27 @@ export default function InvestPortfolioPageView({
                   {/* Freshness & Regime in 2-col grid */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Freshness</label>
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[#787b86] mb-1.5 block">Freshness</label>
                       <select
                         value={freshness}
                         onChange={(event) => setFreshness(Number(event.target.value))}
-                        className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                       >
-                        <option value={5} className="bg-plt-base text-plt-text">5 sessions</option>
-                        <option value={10} className="bg-plt-base text-plt-text">10 sessions</option>
-                        <option value={20} className="bg-plt-base text-plt-text">20 sessions</option>
+                        <option value={5} className="bg-[#14171f] text-[#d1d4dc]">5 sessions</option>
+                        <option value={10} className="bg-[#14171f] text-[#d1d4dc]">10 sessions</option>
+                        <option value={20} className="bg-[#14171f] text-[#d1d4dc]">20 sessions</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Regime</label>
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[#787b86] mb-1.5 block">Regime</label>
                       <select
                         value={regimeFilter}
                         onChange={(event) => setRegimeFilter(event.target.value as 'All' | Regime)}
-                        className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                       >
                         {REGIMES.map((item) => (
-                          <option key={item} className="bg-plt-base text-plt-text">{item}</option>
+                          <option key={item} className="bg-[#14171f] text-[#d1d4dc]">{item}</option>
                         ))}
                       </select>
                     </div>
@@ -667,87 +673,87 @@ export default function InvestPortfolioPageView({
 
                   {/* Sort Order */}
                   <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5 block">Sort Order</label>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[#787b86] mb-1.5 block">Sort Order</label>
                     <select
                       value={sort}
                       onChange={(event) => setSort(event.target.value as SortKey)}
-                      className="w-full h-10 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none"
+                      className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                     >
-                      <option value="alpha" className="bg-plt-base text-plt-text">Alpha ↓</option>
-                      <option value="return" className="bg-plt-base text-plt-text">Total return ↓</option>
-                      <option value="bars" className="bg-plt-base text-plt-text">Avg bars ↑</option>
-                      <option value="drawdown" className="bg-plt-base text-plt-text">Max DD ↑</option>
-                      <option value="mae" className="bg-plt-base text-plt-text">Max MAE ↑</option>
-                      <option value="date" className="bg-plt-base text-plt-text">Signal date ↓</option>
+                      <option value="alpha" className="bg-[#14171f] text-[#d1d4dc]">Alpha ↓</option>
+                      <option value="return" className="bg-[#14171f] text-[#d1d4dc]">Total return ↓</option>
+                      <option value="bars" className="bg-[#14171f] text-[#d1d4dc]">Avg bars ↑</option>
+                      <option value="drawdown" className="bg-[#14171f] text-[#d1d4dc]">Max DD ↑</option>
+                      <option value="mae" className="bg-[#14171f] text-[#d1d4dc]">Max MAE ↑</option>
+                      <option value="date" className="bg-[#14171f] text-[#d1d4dc]">Signal date ↓</option>
                     </select>
                   </div>
 
                   {/* Quantitative Criteria Inputs */}
-                  <div className="pt-2 border-t border-plt-border/40">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-2">
+                  <div className="pt-2 border-t border-[#2a2e39]">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[#787b86] mb-2">
                       Quantitative Criteria
                     </div>
                     <div className="grid grid-cols-2 gap-2.5">
                       <div>
-                        <span className="text-[10px] text-plt-muted block mb-1">Min avg bars</span>
+                        <span className="text-[10px] text-[#787b86] block mb-1">Min avg bars</span>
                         <input
                           value={minBars}
                           onChange={(event) => setMinBars(event.target.value)}
                           inputMode="numeric"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] text-plt-muted block mb-1">Max avg bars</span>
+                        <span className="text-[10px] text-[#787b86] block mb-1">Max avg bars</span>
                         <input
                           value={maxBars}
                           onChange={(event) => setMaxBars(event.target.value)}
                           inputMode="numeric"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] text-plt-muted block mb-1">Min alpha %</span>
+                        <span className="text-[10px] text-[#787b86] block mb-1">Min alpha %</span>
                         <input
                           value={minAlpha}
                           onChange={(event) => setMinAlpha(event.target.value)}
                           inputMode="decimal"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] text-plt-muted block mb-1">Max DD %</span>
+                        <span className="text-[10px] text-[#787b86] block mb-1">Max DD %</span>
                         <input
                           value={maxDrawdown}
                           onChange={(event) => setMaxDrawdown(event.target.value)}
                           inputMode="decimal"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div className="col-span-2">
-                        <span className="text-[10px] text-plt-muted block mb-1">Max MAE %</span>
+                        <span className="text-[10px] text-[#787b86] block mb-1">Max MAE %</span>
                         <input
                           value={maxMae}
                           onChange={(event) => setMaxMae(event.target.value)}
                           inputMode="decimal"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-plt-card border border-plt-border-soft text-xs text-plt-text focus:outline-none placeholder:text-plt-muted"
+                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Include Held Checkbox */}
-                  <label className="flex items-center gap-2.5 py-1 text-xs text-plt-text cursor-pointer">
+                  <label className="flex items-center gap-2.5 py-1 text-xs text-[#d1d4dc] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={includeHeld}
                       onChange={(event) => setIncludeHeld(event.target.checked)}
-                      className="accent-[var(--plt-accent)] w-4 h-4 rounded"
+                      className="accent-[#2962ff] w-4 h-4 rounded"
                     />
                     <span>Include currently held positions</span>
                   </label>
@@ -769,14 +775,14 @@ export default function InvestPortfolioPageView({
                       setMaxMae('');
                       setIncludeHeld(false);
                     }}
-                    className="flex-1 h-11 rounded-xl bg-plt-card border border-plt-border btn-typography-semibold text-plt-muted hover:text-plt-text transition-colors"
+                    className="flex-1 h-11 rounded-xl bg-[#14171f] border border-[#2a2e39] btn-typography-semibold text-[#787b86] hover:text-white transition-colors cursor-pointer"
                   >
                     Reset Filters
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsMobileFiltersDrawerOpen(false)}
-                    className="flex-1 h-11 rounded-xl bg-plt-raised border border-plt-border-strong btn-typography-semibold text-plt-text hover:bg-plt-hover transition-colors"
+                    className="flex-1 h-11 rounded-xl bg-[#2962ff] hover:bg-[#2962ff]/90 btn-typography-semibold text-white transition-colors cursor-pointer"
                   >
                     Apply Filters
                   </button>
@@ -856,6 +862,7 @@ export default function InvestPortfolioPageView({
           />
 
           <PortfolioAllocationsCardWidget
+            holdings={holdings}
             grouping={grouping}
             allocation={allocation}
             investedValue={investedValue}
@@ -904,14 +911,14 @@ export default function InvestPortfolioPageView({
         </section>
 
         {/* Metric Disclaimer & Footer */}
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-plt-card/35 px-4 py-3 text-[11px] text-plt-muted w-full min-w-0">
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#1e222d]/60 border border-[#2a2e39] px-4 py-3 text-[11px] text-[#787b86] w-full min-w-0">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={15} className="text-plt-profit shrink-0" />
+            <ShieldCheck size={15} className="text-[#089981] shrink-0" />
             <span>
               Metric definitions: alpha is strategy return minus benchmark over {opportunities[0]?.analysisStart || '2025-01-01'} → {latestData}; “Unavailable” means the engine did not return a value.
             </span>
           </div>
-          <a href="/wallet?tab=transactions" className="inline-flex items-center gap-1.5 font-semibold text-plt-accent hover:text-plt-text">
+          <a href="/wallet?tab=transactions" className="inline-flex items-center gap-1.5 font-semibold text-[#2962ff] hover:text-white transition-colors">
             Manage Cash &amp; Transactions <ExternalLink size={13} />
           </a>
         </section>

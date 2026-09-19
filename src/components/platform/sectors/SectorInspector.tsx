@@ -283,71 +283,71 @@ export default function SectorInspector({
       {analysisMode === 'strategy' ? (
         <div className="grid grid-cols-3 gap-2 shrink-0">
           {/* Active Longs */}
-          <div className="py-2 px-2.5 rounded-lg bg-plt-info/10 border border-plt-info/30 flex flex-col justify-between">
-            <span className="text-[10px] uppercase tracking-wider text-plt-info font-semibold flex items-center gap-1">
+          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+            <span className="text-[10px] uppercase tracking-wider text-[#2962ff] font-semibold flex items-center gap-1">
               Active Longs
             </span>
-            <span className="text-base font-bold tabular-nums text-plt-info mt-0.5">
-              {sectorStrategyStats.longs} <span className="text-[10px] font-normal opacity-80">Held</span>
+            <span className="text-base font-bold tabular-nums text-white mt-0.5">
+              {sectorStrategyStats.longs} <span className="text-[10px] font-normal text-[#787b86]">Held</span>
             </span>
           </div>
 
           {/* Fresh Buys */}
-          <div className="py-2 px-2.5 rounded-lg bg-plt-profit/10 border border-plt-profit/30 flex flex-col justify-between">
-            <span className="text-[10px] uppercase tracking-wider text-plt-profit font-semibold flex items-center gap-1">
+          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+            <span className="text-[10px] uppercase tracking-wider text-[#089981] font-semibold flex items-center gap-1">
               Fresh Buys
             </span>
-            <span className="text-base font-bold tabular-nums text-plt-profit mt-0.5">
-              {sectorStrategyStats.buys} <span className="text-[10px] font-normal opacity-80">New</span>
+            <span className="text-base font-bold tabular-nums text-[#089981] mt-0.5">
+              {sectorStrategyStats.buys} <span className="text-[10px] font-normal text-[#787b86]">New</span>
             </span>
           </div>
 
           {/* Recent Exits */}
-          <div className="py-2 px-2.5 rounded-lg bg-plt-risk/10 border border-plt-risk/30 flex flex-col justify-between">
-            <span className="text-[10px] uppercase tracking-wider text-plt-risk font-semibold flex items-center gap-1">
+          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+            <span className="text-[10px] uppercase tracking-wider text-[#f23645] font-semibold flex items-center gap-1">
               Recent Exits
             </span>
-            <span className="text-base font-bold tabular-nums text-plt-risk mt-0.5">
-              {sectorStrategyStats.exits} <span className="text-[10px] font-normal opacity-80">Closed</span>
+            <span className="text-base font-bold tabular-nums text-[#f23645] mt-0.5">
+              {sectorStrategyStats.exits} <span className="text-[10px] font-normal text-[#787b86]">Closed</span>
             </span>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-2 shrink-0">
           {/* Weighted ROI */}
-          <div className="py-2 px-2.5 rounded-lg bg-white/[0.02] flex flex-col justify-between relative group/kpi">
+          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between relative group/kpi">
             <div className="flex items-center justify-between">
-              <span className="kpi-title flex items-center gap-1">
+              <span className="kpi-title flex items-center gap-1 text-[#787b86] text-[10px]">
                 Weighted ROI
-                <Info size={11} className="text-plt-muted hover:text-plt-text cursor-help" />
+                <Info size={11} className="text-[#787b86] hover:text-white cursor-help" />
               </span>
             </div>
-            <span className={`text-base font-bold tabular-nums mt-0.5 ${sector.turnoverWeightedReturn >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
+            <span className={`text-base font-bold tabular-nums mt-0.5 ${sector.turnoverWeightedReturn >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
               {sector.turnoverWeightedReturn > 0 ? '+' : ''}{sector.turnoverWeightedReturn.toFixed(2)}%
             </span>
-            <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-plt-raised/98 border border-plt-border-strong text-[10px] text-plt-text leading-tight shadow-xl z-50 pointer-events-none">
+            <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-[10px] text-[#d1d4dc] leading-tight shadow-2xl z-50 pointer-events-none">
               Total net return weighted by each constituent stock&apos;s traded capital volume (turnover).
             </div>
           </div>
 
           {/* Alpha vs EGX30 */}
-          <div className="py-2 px-2.5 rounded-lg bg-white/[0.02] flex flex-col justify-between relative group/kpi">
+          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between relative group/kpi">
             <div className="flex items-center justify-between">
-              <span className="kpi-title flex items-center gap-1">
+              <span className="kpi-title flex items-center gap-1 text-[#787b86] text-[10px]">
                 Alpha (α)
-                <Info size={11} className="text-plt-muted hover:text-plt-text cursor-help" />
+                <Info size={11} className="text-[#787b86] hover:text-white cursor-help" />
               </span>
             </div>
-            <span className={`text-base font-bold tabular-nums mt-0.5 ${sector.relativeStrengthVsBenchmark >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
+            <span className={`text-base font-bold tabular-nums mt-0.5 ${sector.relativeStrengthVsBenchmark >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
               {sector.relativeStrengthVsBenchmark > 0 ? '+' : ''}{sector.relativeStrengthVsBenchmark.toFixed(2)}%
             </span>
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-plt-raised/98 border border-plt-border-strong text-[10px] text-plt-text leading-tight shadow-xl z-50 pointer-events-none">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-[10px] text-[#d1d4dc] leading-tight shadow-2xl z-50 pointer-events-none">
               Excess outperformance of this group relative to the benchmark EGX 30 index.
             </div>
           </div>
 
           {/* Breadth */}
-          <div className="py-2 px-2.5 rounded-lg bg-white/[0.02] flex flex-col justify-between relative group/kpi">
+          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between relative group/kpi">
             <div className="flex items-center justify-between">
               <span className="kpi-title flex items-center gap-1">
                 Breadth
@@ -459,9 +459,9 @@ export default function SectorInspector({
       {/* 4. Ranked Constituent Stocks Section */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden pt-1">
         {/* In-Sector Search & Sort Split Pill */}
-        <div className="flex items-stretch h-8 rounded-lg overflow-hidden border border-plt-border bg-plt-raised mb-2 shrink-0">
+        <div className="flex items-stretch h-7.5 rounded-lg overflow-hidden border border-[#2a2e39] bg-[#14171f] mb-2 shrink-0">
           <div className="relative flex-1 flex items-center">
-            <div className="absolute left-0 pl-2.5 flex items-center pointer-events-none text-plt-muted">
+            <div className="absolute left-0 pl-2.5 flex items-center pointer-events-none text-[#787b86]">
               <Search size={12} />
             </div>
             <input
@@ -469,25 +469,25 @@ export default function SectorInspector({
               placeholder={`Filter ${sector.stocks.length} constituents...`}
               value={inSectorSearch}
               onChange={(e) => setInSectorSearch(e.target.value)}
-              className="h-full w-full bg-transparent pl-7 pr-6 text-[11px] text-plt-text placeholder:text-plt-muted focus:outline-none leading-none"
+              className="h-full w-full bg-transparent pl-7 pr-6 text-[11px] text-white placeholder:text-[#787b86] focus:outline-none leading-none"
             />
             {inSectorSearch && (
               <button
                 type="button"
                 onClick={() => setInSectorSearch('')}
-                className="absolute right-0 pr-2 flex items-center text-plt-muted hover:text-plt-text"
+                className="absolute right-0 pr-2 flex items-center text-[#787b86] hover:text-white cursor-pointer"
               >
                 <X size={12} />
               </button>
             )}
           </div>
 
-          <div className="w-px bg-plt-border shrink-0" />
+          <div className="w-px bg-[#2a2e39] shrink-0" />
 
           <button
             type="button"
             onClick={() => setSortBy(sortBy === 'return' ? 'turnover' : sortBy === 'turnover' ? 'symbol' : 'return')}
-            className="flex items-center gap-1.5 px-2.5 text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 text-[11px] font-medium text-[#787b86] hover:text-white hover:bg-[#1e222d] transition-colors shrink-0 cursor-pointer"
             title="Change sort order"
           >
             <ArrowUpDown size={11} />
@@ -496,7 +496,7 @@ export default function SectorInspector({
         </div>
 
         {/* Column Headers */}
-        <div className="py-1 px-2 flex items-center justify-between border-b border-plt-border/40 text-[10px] font-semibold uppercase tracking-wider text-plt-muted shrink-0">
+        <div className="py-1 px-2 flex items-center justify-between border-b border-[#1e222d] text-[10px] font-medium uppercase tracking-wider text-[#787b86] shrink-0">
           <span>Constituent Stock</span>
           <div className="flex items-center gap-4 pr-7">
             <span className="w-14 text-right">{analysisMode === 'strategy' ? 'B&H ROI' : 'Turnover'}</span>
@@ -505,9 +505,9 @@ export default function SectorInspector({
         </div>
 
         {/* Scrollable Stocks List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-plt-border/15 custom-scrollbar pt-1">
+        <div className="flex-1 overflow-y-auto divide-y divide-[#1e222d]/60 custom-scrollbar pt-1">
           {filteredStocks.length === 0 ? (
-            <div className="p-4 text-center text-xs text-plt-muted">
+            <div className="p-4 text-center text-xs text-[#787b86]">
               No matching stocks in this sector
             </div>
           ) : (
@@ -522,18 +522,18 @@ export default function SectorInspector({
                   key={stock.symbol}
                   onClick={() => onSelectTicker(stock.symbol)}
                   className={`py-2 px-2 rounded-lg flex items-center justify-between transition-colors cursor-pointer text-xs group ${
-                    isSelected ? 'bg-white/[0.08] ring-1 ring-white/20' : 'hover:bg-white/[0.04]'
+                    isSelected ? 'bg-[#2a2e39] ring-1 ring-[#089981]/50' : 'hover:bg-[#1e222d]/40'
                   }`}
                 >
                   {/* Left: Logo + Company Name as Title + Ticker Symbol Smaller Below */}
                   <div className="flex items-center gap-2.5 min-w-0">
                     <StockLogo logoUrl={stock.logoUrl} symbol={stock.symbol} />
                     <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-xs text-plt-text group-hover:text-white transition-colors truncate max-w-40" title={stock.companyName}>
+                      <span className="font-semibold text-xs text-white group-hover:text-[#2962ff] transition-colors truncate max-w-40" title={stock.companyName}>
                         {stock.companyName}
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-mono font-bold text-plt-muted">{stock.symbol}</span>
+                        <span className="text-[10px] font-mono font-bold text-[#787b86]">{stock.symbol}</span>
                         {analysisMode === 'strategy' && sig && (
                           sig.status === 'BUY_FRESH' ? (
                             <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400 text-black animate-pulse shadow-xs">

@@ -6,10 +6,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from '@/components/ui/icon-library';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import type { HoldingConsensus } from '@/lib/multi-strategy-consensus';
 import type { StrategyId } from '@/lib/strategy-analysis';
 import {
-  cleanSymbol,
   money,
   number,
   pct,
@@ -48,95 +48,126 @@ export default function PortfolioPositionsLedgerWidget({
   onBuyMore,
   onSell,
 }: PortfolioPositionsLedgerWidgetProps) {
+  const { isPrivacy } = usePrivacyMode();
+
   return (
-    <div className="w-full min-w-0 relative space-y-3">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="w-full min-w-0 relative space-y-3 select-none font-sans">
+      {/* Section Header */}
+      <div className="flex flex-wrap items-end justify-between gap-3 pb-2 border-b border-[#1e222d]">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-plt-accent">02 · Current portfolio</p>
-          <h2 className="mt-1 text-base font-semibold text-plt-text">Open positions, one row per ticker</h2>
-          <p className="mt-1 text-xs text-plt-muted">Multiple lots and accounts are aggregated here; use the account detail before selling.</p>
+          <h3 className="text-base font-bold text-white tracking-tight">Open Holdings Ledger</h3>
+          <p className="text-xs text-[#787b86] mt-0.5">Aggregated positions, allocation weights, and algorithmic consensus</p>
         </div>
-        <span className="text-[11px] text-plt-muted">
+        <span className="text-xs text-[#787b86] font-medium">
           {holdings.length} active ticker{holdings.length === 1 ? '' : 's'} · {totalLotsCount} lot{totalLotsCount === 1 ? '' : 's'}
         </span>
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden overflow-x-auto rounded-xl bg-plt-card/25 md:block custom-scrollbar">
+      <div className="hidden overflow-x-auto md:block custom-scrollbar">
         <div className="portfolio-table-min">
-          <div className="table-layout-portfolio border-b border-plt-border-soft px-3 py-2 text-[9px] font-semibold uppercase tracking-wider text-plt-muted">
+          <div className="table-layout-portfolio border-b border-[#1e222d] px-3 py-2 text-[11px] font-medium text-[#787b86]">
             <span>Ticker</span>
             <span>Accounts</span>
             <span>Position</span>
             <span>Weight</span>
-            <span>Group / regime</span>
+            <span>Group / Regime</span>
             <span>Typhon</span>
             <span>Cerberus</span>
-            <span>Actions</span>
+            <span className="text-right">Actions</span>
           </div>
 
           {holdings.length === 0 ? (
-            <div className="px-3 py-10 text-center text-xs text-plt-muted">No open positions yet.</div>
+            <div className="px-3 py-12 text-center text-xs text-[#787b86]">No open positions in your portfolio yet.</div>
           ) : (
             holdings.map((holding) => {
               const group = grouping === 'sector' ? holding.sector : grouping === 'industryGroup' ? holding.industryGroup : holding.industry;
               const consensus = consensusMap[holding.symbol];
 
               return (
-                <div key={holding.symbol} className="table-layout-portfolio items-center border-b border-plt-border-soft px-3 py-3 last:border-b-0 hover:bg-plt-hover/40">
+                <div
+                  key={holding.symbol}
+                  className="table-layout-portfolio items-center border-b border-[#1e222d]/60 px-3 py-3 hover:bg-[#1e222d]/30 transition-colors group cursor-pointer"
+                >
+                  {/* Ticker & Logo */}
                   <div className="flex min-w-0 items-center gap-2.5">
                     <TickerLogo symbol={holding.symbol} logoUrl={holding.logoUrl} />
                     <div className="min-w-0">
-                      <p className="portfolio-ticker-name">{holding.symbol}</p>
-                      <p className="truncate text-[11px] text-plt-muted">{holding.companyName}</p>
+                      <p className="text-xs font-semibold text-white group-hover:text-[#2962ff] transition-colors">
+                        {holding.symbol}
+                      </p>
+                      <p className="truncate text-[11px] text-[#787b86]">{holding.companyName}</p>
                     </div>
                   </div>
 
-                  <div className="min-w-0 text-[11px] text-plt-muted" title={holding.accountNames.join(', ')}>
+                  {/* Accounts */}
+                  <div className="min-w-0 text-[11px] text-[#787b86]" title={holding.accountNames.join(', ')}>
                     {holding.accountNames.length ? (
-                      <>{holding.accountNames.length} account{holding.accountNames.length === 1 ? '' : 's'}</>
+                      <span className="text-[#d1d4dc]">{holding.accountNames.length} account{holding.accountNames.length === 1 ? '' : 's'}</span>
                     ) : (
-                      <span className="text-plt-warning">Not linked</span>
+                      <span className="text-amber-400">Not linked</span>
                     )}
                   </div>
 
-                  <div className="holding-position-cell">
+                  {/* Position Qty / Value / P&L */}
+                  <div className="holding-position-cell tabular-nums">
                     <div className="holding-position-line">
-                      <span className="holding-position-label">Qty</span>
-                      <span className="holding-position-value">{number(holding.quantity, 2)}</span>
+                      <span className="holding-position-label text-[#787b86]">Qty</span>
+                      <span className="holding-position-value font-medium text-white">{isPrivacy ? '••••' : number(holding.quantity, 2)}</span>
                     </div>
                     <div className="holding-position-line">
-                      <span className="holding-position-label">Value</span>
-                      <span className="holding-position-value">{money(holding.marketValue)}</span>
+                      <span className="holding-position-label text-[#787b86]">Value</span>
+                      <span className="holding-position-value font-semibold text-white">{isPrivacy ? '••••••••' : money(holding.marketValue)}</span>
                     </div>
                     <div className="holding-position-line">
-                      <span className="holding-position-label">P/L</span>
-                      <span className={`holding-position-value ${holding.unrealizedPnl >= 0 ? 'holding-position-value-profit' : 'holding-position-value-risk'}`}>
-                        {pct(holding.unrealizedPnlPct)} · {money(holding.unrealizedPnl)}
+                      <span className="holding-position-label text-[#787b86]">P/L</span>
+                      <span className={`holding-position-value font-semibold ${holding.unrealizedPnl >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                        {isPrivacy ? (holding.unrealizedPnl >= 0 ? '+••••' : '-••••') : (
+                          <>{pct(holding.unrealizedPnlPct)} · {holding.unrealizedPnl > 0 ? '+' : ''}{money(holding.unrealizedPnl)}</>
+                        )}
                       </span>
                     </div>
                   </div>
 
-                  <span className="text-xs text-plt-muted">{number(holding.weightPct)}%</span>
+                  {/* Weight */}
+                  <span className="text-xs font-semibold text-[#d1d4dc] tabular-nums">{number(holding.weightPct)}%</span>
 
-                  <div className="text-[11px]">
-                    <span className="block truncate text-plt-text">{group}</span>
-                    <span className={`mt-1 inline-flex rounded-md px-1.5 py-0.5 text-[10px] ${regimeTone(holding.regime)}`}>
+                  {/* Group / Regime */}
+                  <div className="text-[11px] min-w-0">
+                    <span className="block truncate text-white font-medium">{group}</span>
+                    <span className={`mt-1 inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${regimeTone(holding.regime)}`}>
                       {holding.regime}
                     </span>
                   </div>
 
+                  {/* Strategy Decision Cells */}
                   <StrategyDecisionCell label="Typhon" opinion={opinionFor(consensus, 'psi', freshness)} loading={isLoadingConsensus} active={strategy === 'psi'} />
                   <StrategyDecisionCell label="Cerberus" opinion={opinionFor(consensus, 'psi_v2', freshness)} loading={isLoadingConsensus} active={strategy === 'psi_v2'} />
 
+                  {/* Actions */}
                   <div className="flex items-center justify-end gap-1">
-                    <button type="button" onClick={() => onOpenChart(holding.symbol)} className="rounded-md p-1.5 text-plt-muted hover:bg-plt-hover hover:text-plt-text cursor-pointer" title="Open chart">
+                    <button
+                      type="button"
+                      onClick={() => onOpenChart(holding.symbol)}
+                      className="rounded-lg p-1.5 text-[#787b86] hover:bg-[#2a2e39] hover:text-white transition-colors cursor-pointer"
+                      title="Open Candlestick Chart"
+                    >
                       <LineChart size={14} />
                     </button>
-                    <button type="button" onClick={() => onBuyMore(holding)} className="rounded-md p-1.5 text-plt-accent hover:bg-plt-accent-soft cursor-pointer" title="Buy more">
+                    <button
+                      type="button"
+                      onClick={() => onBuyMore(holding)}
+                      className="rounded-lg p-1.5 text-[#089981] hover:bg-[#089981]/15 transition-colors cursor-pointer"
+                      title="Buy More"
+                    >
                       <ArrowUpRight size={14} />
                     </button>
-                    <button type="button" onClick={() => onSell(holding)} className="rounded-md p-1.5 text-plt-risk hover:bg-plt-risk-soft cursor-pointer" title="Sell">
+                    <button
+                      type="button"
+                      onClick={() => onSell(holding)}
+                      className="rounded-lg p-1.5 text-[#f23645] hover:bg-[#f23645]/15 transition-colors cursor-pointer"
+                      title="Sell Position"
+                    >
                       <ArrowDownRight size={14} />
                     </button>
                   </div>
@@ -148,9 +179,11 @@ export default function PortfolioPositionsLedgerWidget({
       </div>
 
       {/* Mobile Card View */}
-      <div className="space-y-2 md:hidden">
+      <div className="space-y-2.5 md:hidden">
         {holdings.length === 0 ? (
-          <div className="rounded-xl bg-plt-card/25 px-3 py-10 text-center text-xs text-plt-muted">No open positions yet.</div>
+          <div className="rounded-xl border border-[#1e222d] bg-[#14171f] px-3 py-10 text-center text-xs text-[#787b86]">
+            No open positions yet.
+          </div>
         ) : (
           holdings.map((holding) => {
             const consensus = consensusMap[holding.symbol];
@@ -160,63 +193,55 @@ export default function PortfolioPositionsLedgerWidget({
             const group = grouping === 'sector' ? holding.sector : grouping === 'industryGroup' ? holding.industryGroup : holding.industry;
 
             return (
-              <article key={holding.symbol} className="rounded-xl bg-plt-card/25 px-3 py-3 min-w-0">
+              <article key={holding.symbol} className="rounded-xl border border-[#1e222d] bg-[#14171f] p-3.5 min-w-0 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2.5">
                     <TickerLogo symbol={holding.symbol} logoUrl={holding.logoUrl} />
                     <div className="min-w-0">
-                      <p className="portfolio-ticker-name">{holding.symbol}</p>
-                      <p className="truncate text-[11px] text-plt-muted">{holding.companyName}</p>
+                      <p className="text-xs font-bold text-white">{holding.symbol}</p>
+                      <p className="truncate text-[11px] text-[#787b86]">{holding.companyName}</p>
                     </div>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-xs font-semibold text-plt-text">{money(holding.marketValue)}</p>
-                    <p className={holding.unrealizedPnl >= 0 ? 'text-[11px] text-plt-profit' : 'text-[11px] text-plt-risk'}>
-                      {pct(holding.unrealizedPnlPct)}
+                  <div className="shrink-0 text-right tabular-nums">
+                    <p className="text-xs font-bold text-white">{isPrivacy ? '••••••••' : money(holding.marketValue)}</p>
+                    <p className={`text-[11px] font-semibold ${holding.unrealizedPnl >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                      {isPrivacy ? (holding.unrealizedPnl >= 0 ? '+••••' : '-••••') : pct(holding.unrealizedPnlPct)}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-2 border-b border-plt-border-soft pb-2.5">
-                  <span className="truncate text-[11px] text-plt-muted">{group}</span>
-                  <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] ${regimeTone(holding.regime)}`}>{holding.regime}</span>
+                <div className="flex items-center justify-between gap-2 border-b border-[#1e222d] pb-2 text-[11px]">
+                  <span className="truncate text-[#787b86]">{group}</span>
+                  <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${regimeTone(holding.regime)}`}>
+                    {holding.regime}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-b border-plt-border-soft py-3">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-b border-[#1e222d] pb-3 text-xs tabular-nums">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-plt-muted">Quantity</p>
-                    <p className="mt-1 text-xs text-plt-text">{number(holding.quantity, 2)}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-[#787b86]">Quantity</p>
+                    <p className="mt-0.5 font-semibold text-white">{isPrivacy ? '••••' : number(holding.quantity, 2)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-plt-muted">Last price</p>
-                    <p className="mt-1 text-xs text-plt-text">{number(holding.currentPrice, 2)} EGP</p>
+                    <p className="text-[10px] uppercase tracking-wider text-[#787b86]">Last Price</p>
+                    <p className="mt-0.5 font-semibold text-white">{number(holding.currentPrice, 2)} EGP</p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-plt-muted">Weight</p>
-                    <p className="mt-1 text-xs text-plt-text">{number(holding.weightPct)}%</p>
+                    <p className="text-[10px] uppercase tracking-wider text-[#787b86]">Weight</p>
+                    <p className="mt-0.5 font-semibold text-[#d1d4dc]">{number(holding.weightPct)}%</p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-plt-muted">Account</p>
-                    <p className="mt-1 truncate text-xs text-plt-text">
+                    <p className="text-[10px] uppercase tracking-wider text-[#787b86]">Account</p>
+                    <p className="mt-0.5 truncate font-medium text-white">
                       {holding.accountNames.length ? `${holding.accountNames.length} account${holding.accountNames.length === 1 ? '' : 's'}` : 'Not linked'}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-plt-muted">Signal date</p>
-                    <p className="mt-1 text-xs text-plt-text">{isLoadingConsensus ? 'Analyzing…' : latestDecision?.signalDate || 'No fresh signal'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-plt-muted">Strategy alpha</p>
-                    <p className="mt-1 text-xs text-plt-text">{isLoadingConsensus ? 'Analyzing…' : pct(selectedMetrics?.alpha)}</p>
-                  </div>
                 </div>
 
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted">Decision</span>
-                    <span className="text-[10px] text-plt-muted">
-                      {isLoadingConsensus ? 'Loading canonical analysis' : latestDecision ? `${latestDecision.barsAgo ?? 0} sessions old` : 'Selected window'}
-                    </span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2 text-[10px] text-[#787b86]">
+                    <span className="font-semibold uppercase tracking-wider">Strategy Decision</span>
+                    <span>{isLoadingConsensus ? 'Analyzing…' : latestDecision ? `${latestDecision.barsAgo ?? 0} sessions old` : 'Current window'}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {strategy === 'all' ? (
@@ -230,14 +255,26 @@ export default function PortfolioPositionsLedgerWidget({
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-plt-border-soft pt-3">
-                  <button type="button" onClick={() => onOpenChart(holding.symbol)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-hover px-2 py-2 btn-typography-semibold text-plt-text cursor-pointer">
+                <div className="grid grid-cols-3 gap-2 border-t border-[#1e222d] pt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => onOpenChart(holding.symbol)}
+                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#2a2e39] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#323644] transition-colors cursor-pointer"
+                  >
                     <LineChart size={13} /> Chart
                   </button>
-                  <button type="button" onClick={() => onBuyMore(holding)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-accent-soft px-2 py-2 btn-typography-semibold text-plt-accent cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => onBuyMore(holding)}
+                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#089981]/15 border border-[#089981]/30 px-2 py-1.5 text-xs font-semibold text-[#089981] hover:bg-[#089981]/25 transition-colors cursor-pointer"
+                  >
                     <ArrowUpRight size={13} /> Buy
                   </button>
-                  <button type="button" onClick={() => onSell(holding)} className="inline-flex items-center justify-center gap-1 rounded-md bg-plt-risk-soft px-2 py-2 btn-typography-semibold text-plt-risk cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => onSell(holding)}
+                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#f23645]/15 border border-[#f23645]/30 px-2 py-1.5 text-xs font-semibold text-[#f23645] hover:bg-[#f23645]/25 transition-colors cursor-pointer"
+                  >
                     <ArrowDownRight size={13} /> Sell
                   </button>
                 </div>

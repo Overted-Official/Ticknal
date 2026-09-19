@@ -9,7 +9,7 @@ import SectorsKPIStrip from './SectorsKPIStrip';
 import SectorTreemap from './SectorTreemap';
 import SectorInspector from './SectorInspector';
 import SectorRotationMatrix from './SectorRotationMatrix';
-import PageHeader from '@/components/platform/ui/PageHeader';
+import InvestHeader from '@/components/platform/invest/InvestHeader';
 import {
   type SectorsPerformanceResponse,
   type SectorPerformanceItem,
@@ -153,9 +153,9 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       {/* 1. TOP CONTROLS & KPI STRIP (SHRINK-0)               */}
       {/* ---------------------------------------------------- */}
       <div className="shrink-0 flex flex-col gap-2.5">
-        <PageHeader
-          title="Market Sectors"
-          description="Compare sector momentum, rotation, and strategy signals."
+        <InvestHeader
+          currentView="sectors"
+          subtitle="Compare sector momentum, rotation, and strategy signals"
         />
         <SectorsHeader
           timeframePreset={timeframePreset}
@@ -199,7 +199,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
       {/* ---------------------------------------------------- */}
       <div className="heatmap-workspace flex-1 md:min-h-0 md:h-full flex flex-col md:flex-row widget-row-gap overflow-hidden shrink-0 md:shrink">
         {/* Left Pane: Treemap or Rotation Matrix */}
-        <div className="heatmap-pane flex-1 h-full md:min-h-0 overflow-hidden relative border border-plt-border-soft bg-plt-base rounded-xl">
+        <div className="heatmap-pane flex-1 h-full md:min-h-0 overflow-hidden relative border border-[#1e222d] bg-transparent rounded-xl">
           {isLoading ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
               <RefreshCw className="w-6 h-6 animate-spin text-plt-muted" />

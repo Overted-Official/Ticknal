@@ -299,7 +299,7 @@ export default function SectorsHeader({
 
           {/* Quick Ticker / Sector Search */}
           <div className="relative flex items-center w-40 md:w-52">
-            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-plt-muted">
+            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[#787b86]">
               <Search size={13} />
             </div>
             <input
@@ -307,13 +307,13 @@ export default function SectorsHeader({
               placeholder="Search tickers or sectors..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-7 w-full rounded-md bg-plt-raised border border-plt-border pl-7.5 pr-6 text-[11px] text-plt-text placeholder:text-plt-muted placeholder:text-[11px] placeholder:font-normal focus:border-plt-border-strong focus:outline-none transition-colors leading-none"
+              className="h-7 w-full rounded-lg bg-[#14171f] border border-[#2a2e39] pl-8 pr-6 text-xs text-white placeholder:text-[#787b86] focus:border-[#2962ff] focus:outline-none transition-colors leading-none"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-2 flex items-center text-plt-muted hover:text-plt-text transition-colors"
+                className="absolute inset-y-0 right-0 pr-2 flex items-center text-[#787b86] hover:text-white transition-colors cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -325,10 +325,10 @@ export default function SectorsHeader({
             <button
               type="button"
               onClick={() => setIsDisplayMenuOpen(!isDisplayMenuOpen)}
-              className={`h-7 px-2.5 rounded-md border flex items-center gap-1.5 btn-typography transition cursor-pointer ${
+              className={`h-7 px-2.5 rounded-lg border flex items-center gap-1.5 btn-typography transition cursor-pointer ${
                 isDisplayMenuOpen
-                  ? 'bg-plt-hover border-plt-border-strong text-white'
-                  : 'bg-plt-raised border-plt-border text-plt-muted hover:text-plt-text hover:bg-plt-hover hover:border-plt-border-strong'
+                  ? 'bg-[#2a2e39] border-[#2a2e39] text-white'
+                  : 'bg-[#14171f] border-[#2a2e39] text-[#787b86] hover:text-white hover:bg-[#1e222d]'
               }`}
               title="Display HUD & Grouping Settings"
             >
@@ -338,7 +338,7 @@ export default function SectorsHeader({
             </button>
 
             {isDisplayMenuOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl bg-plt-raised/98 border border-plt-border-strong p-3 shadow-2xl backdrop-blur-2xl z-50 flex flex-col gap-3">
+              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl bg-[#1e222d] border border-[#2a2e39] p-3 shadow-2xl z-50 flex flex-col gap-3">
                 {/* Grouping Tier */}
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5">
