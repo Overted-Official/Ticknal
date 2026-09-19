@@ -36,7 +36,7 @@ export default function ChartReplayControls({
   predictButtonUI,
 }: ChartReplayControlsProps) {
   return (
-    <div className="absolute bottom-8 sm:bottom-10 left-2 sm:left-4 z-40 flex max-w-full sm:max-w-full flex-wrap items-center gap-2 rounded-full border border-plt-border-strong bg-plt-base/80 backdrop-blur-xl p-1.5 sm:p-2 text-xs text-plt-text shadow-2xl">
+    <div className="absolute top-14 left-2.5 max-w-[calc(100vw-24px)] overflow-x-auto no-scrollbar sm:top-3 sm:right-16 sm:left-auto sm:max-w-none z-40 flex flex-wrap items-center gap-2 rounded-full border border-plt-border-strong bg-plt-base/90 backdrop-blur-xl p-1.5 sm:p-2 text-xs text-plt-text shadow-2xl">
       <button
         type="button"
         title="Reset replay point"

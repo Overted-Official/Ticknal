@@ -29,7 +29,7 @@ export default function ChartIndicatorsPopover({
   const availableIndicators = getAvailableIndicators();
 
   return (
-    <div className="surface-popover absolute bottom-20 left-2 sm:left-4 z-50 w-72 p-3 text-xs text-plt-text shadow-2xl backdrop-blur-xl border border-plt-border bg-plt-base/95 rounded-xl animate-in fade-in zoom-in-95 duration-100">
+    <div className="surface-popover absolute top-[94px] left-2.5 sm:top-14 sm:right-16 sm:left-auto z-50 w-72 p-3 text-xs text-plt-text shadow-2xl backdrop-blur-xl border border-plt-border bg-plt-base/95 rounded-xl animate-in fade-in zoom-in-95 duration-100">
       <div className="mb-2.5 flex items-center justify-between border-b border-plt-border pb-2">
         <span className="font-semibold text-xs text-plt-text">Technical Indicators</span>
         <button

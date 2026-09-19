@@ -25,7 +25,7 @@ export default function ChartFloatingControls({
   onOpenAddOrder,
 }: ChartFloatingControlsProps) {
   return (
-    <div className="absolute bottom-8 sm:bottom-10 left-2 sm:left-4 z-40 flex items-center gap-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.08] backdrop-blur-2xl border border-white/[0.16] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.37)] transition-all select-none">
+    <div className="absolute top-14 left-2.5 sm:top-3 sm:right-16 sm:left-auto z-40 flex items-center gap-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.08] backdrop-blur-2xl border border-white/[0.16] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.37)] transition-all select-none">
       {/* 1. Bar Replay */}
       <button
         type="button"
@@ -36,7 +36,7 @@ export default function ChartFloatingControls({
         className="h-8 rounded-full px-2.5 sm:px-3 btn-typography text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08] transition-all disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
       >
         <RotateCcw size={13} className="text-plt-muted" />
-        <span className="hidden sm:inline">Replay</span>
+        <span className="hidden md:inline">Replay</span>
       </button>
 
       {/* 2. Predict N Days */}
@@ -54,7 +54,7 @@ export default function ChartFloatingControls({
         }`}
       >
         <BarChart2 size={13} />
-        <span className="hidden sm:inline">Indicators</span>
+        <span className="hidden md:inline">Indicators</span>
         {activeIndicatorsCount > 0 && (
           <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-white font-bold">
             {activeIndicatorsCount}
@@ -70,7 +70,7 @@ export default function ChartFloatingControls({
         className="h-8 rounded-full px-2.5 sm:px-3 btn-typography text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08] transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
       >
         <Briefcase size={13} className="text-plt-muted" />
-        <span className="hidden sm:inline">Positions</span>
+        <span className="hidden md:inline">Positions</span>
         {openPositionsCount > 0 && (
           <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-white font-bold">
             {openPositionsCount}

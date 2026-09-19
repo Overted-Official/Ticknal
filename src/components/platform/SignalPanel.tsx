@@ -523,10 +523,10 @@ export default function SignalPanel({
       <div
         className={`w-full bg-plt-base border-t border-plt-border-soft shrink-0 flex flex-col select-none relative font-sans transition-all duration-200 ${
           isCollapsed
-            ? 'h-10 md:h-9 z-20'
+            ? 'h-10 md:h-9 z-30'
             : isMaximized
-            ? 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-10 max-md:z-50 max-md:h-[calc(100vh-2.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[620px] md:z-20'
-            : 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-14 max-md:z-50 max-md:h-[calc(100vh-3.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[400px] md:z-20'
+            ? 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-10 max-md:z-50 max-md:h-[calc(100vh-2.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[620px] md:z-30'
+            : 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-14 max-md:z-50 max-md:h-[calc(100vh-3.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[400px] md:z-30'
         }`}
       >
         {/* Mobile Header when expanded */}
@@ -618,11 +618,11 @@ export default function SignalPanel({
             <AnimatePresence>
               {isStrategyDropdownOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                  initial={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                  exit={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
                   transition={{ duration: 0.12 }}
-                  className="surface-popover absolute bottom-full left-0 mb-1.5 w-[230px] z-50 p-1"
+                  className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 w-[230px] z-[60] p-1 shadow-2xl`}
                 >
                   <div className="kpi-title px-2 py-1 border-b border-plt-border-soft mb-1">
                     Select Strategy
@@ -662,10 +662,10 @@ export default function SignalPanel({
             <AnimatePresence>
               {isDatePickerOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4 }}
+                  initial={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  className="surface-popover absolute bottom-full left-0 mb-1.5 z-50 space-y-2.5 w-[260px] p-3"
+                  exit={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
+                  className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 z-[60] space-y-2.5 w-[260px] p-3 shadow-2xl`}
                 >
                   <div className="pill-switch w-full flex">
                     {(['2025', '1y', 'all'] as const).map((preset) => (

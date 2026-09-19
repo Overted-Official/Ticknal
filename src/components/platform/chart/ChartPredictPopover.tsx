@@ -22,7 +22,7 @@ export default function ChartPredictPopover({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute bottom-20 left-2 sm:left-4 z-50 w-72 p-3.5 text-xs text-plt-text shadow-popover backdrop-blur-2xl border border-white/[0.16] bg-plt-card/95 rounded-2xl animate-in fade-in zoom-in-95 duration-100 select-none">
+    <div className="absolute top-[94px] left-2.5 sm:top-14 sm:right-16 sm:left-auto z-50 w-72 p-3.5 text-xs text-plt-text shadow-popover backdrop-blur-2xl border border-white/[0.16] bg-plt-card/95 rounded-2xl animate-in fade-in zoom-in-95 duration-100 select-none">
       <div className="mb-3 flex items-center justify-between border-b border-white/[0.08] pb-2">
         <div className="flex items-center gap-1.5 font-semibold text-xs text-plt-text">
           <Sparkles size={14} className="text-plt-text" />

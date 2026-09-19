@@ -831,7 +831,7 @@ export default function ChartWidget({
         } disabled:cursor-not-allowed disabled:opacity-40`}
       >
         <Sparkles size={13} className={isPredicting ? 'animate-spin text-plt-text' : 'text-plt-muted'} />
-        <span className="hidden sm:inline">Predict</span>
+        <span className="hidden md:inline">Predict</span>
       </button>
     </div>
   );
