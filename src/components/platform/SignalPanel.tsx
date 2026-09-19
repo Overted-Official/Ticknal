@@ -89,16 +89,10 @@ export default function SignalPanel({
 }: SignalPanelProps) {
   const { toast } = useToast();
 
-  // Layout states (default to collapsed on mobile/tablets so chart has full view; expand on desktop)
+  // Layout states (default to collapsed on all viewports so chart has full view; expanded via toolbar or dock toggle)
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState<ViewTab>('performance');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-      setIsCollapsed(false);
-    }
-  }, []);
 
   // Strategy Report / Backtest State
   const [initialCapital, setInitialCapital] = useState<number>(3000);
