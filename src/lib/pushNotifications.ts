@@ -493,10 +493,11 @@ function buildNotificationTitle(
   openOrderExists: boolean,
   strategyShort: string = 'TYPHON'
 ): string {
-  const prefix = `[${strategyShort}]`;
-  if (signal.signal === 'BUY') return `${prefix} ${ticker} has a buy opportunity`;
-  if (openOrderExists) return `${prefix} Sell the open ${ticker} position`;
-  return `${prefix} ${ticker} has an exit signal`;
+  const cleanTicker = ticker.replace('.CA', '').toUpperCase();
+  const strat = strategyShort.toUpperCase();
+  if (signal.signal === 'BUY') return `${cleanTicker} · BUY Signal (${strat})`;
+  if (openOrderExists) return `${cleanTicker} · Exit Position (${strat})`;
+  return `${cleanTicker} · Exit Signal (${strat})`;
 }
 
 function buildNotificationBody(
@@ -504,8 +505,14 @@ function buildNotificationBody(
   strategyLabel: string = 'Typhon Strategy'
 ): string {
   const price = `${Number(signal.price).toFixed(2)} EGP`;
-  if (signal.signal === 'BUY') return `${strategyLabel} buy signal at ${price}.`;
-  return `${strategyLabel} ${signal.signal.replace('SELL_', '').toLowerCase()} exit at ${price}.`;
+  const reason = (signal as any).entryReason || (signal as any).exitReason || (signal as any).reasoning;
+  if (reason) {
+    return `Triggered at ${price} · ${reason}`;
+  }
+  if (signal.signal === 'BUY') {
+    return `Triggered at ${price} · Entry criteria confirmed (${strategyLabel})`;
+  }
+  return `Triggered at ${price} · Exit rule satisfied (${strategyLabel})`;
 }
 
 function groupBy<T>(items: T[], getKey: (item: T) => string): Record<string, T[]> {

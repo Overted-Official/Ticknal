@@ -133,6 +133,16 @@ export async function requestNativePushPermission(userId?: string): Promise<{ su
   }
 }
 
+export async function checkNativePushStatus(): Promise<boolean> {
+  if (!isNativePlatform()) return false;
+  try {
+    const perm = await PushNotifications.checkPermissions();
+    return perm.receive === 'granted';
+  } catch {
+    return false;
+  }
+}
+
 async function setupNativePushNotifications(
   onNavigate?: (url: string) => void,
   userId?: string
@@ -230,14 +240,14 @@ export async function triggerNativeTestNotification(title?: string, body?: strin
     await LocalNotifications.schedule({
       notifications: [
         {
-          title: title || '🟢 Ticknal Signal Test',
-          body: body || 'Test Alert: BUY Signal triggered for COMI at 84.50 EGP.',
+          title: title || 'COMI · BUY Signal (Cerberus)',
+          body: body || 'Triggered at 139.50 EGP · Target: 152.00 · Stop: 134.00',
           id: Math.floor(Math.random() * 100000),
-          schedule: { at: new Date(Date.now() + 500) },
-          sound: undefined,
-          actionTypeId: '',
+          channelId: 'trading_signals',
+          schedule: { at: new Date(Date.now() + 300) },
+          iconColor: '#2962ff',
           extra: {
-            url: '/invest?ticker=COMI.CA&view=chart',
+            url: '/invest?ticker=COMI.CA&view=chart&strategy=psi_v2',
           },
         },
       ],

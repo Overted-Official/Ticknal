@@ -78,14 +78,14 @@ export default function AlertTriggersWidget({
   const [isSavingScope, setIsSavingScope] = useState(false);
 
   useEffect(() => {
-    fetch('/api/user/strategy-scope')
+    fetch('/api/alerts/preferences')
       .then((res) => res.json())
       .then((data) => {
-        if (data?.strategyScope) {
-          setAlertStrategyScope(data.strategyScope);
+        if (data?.scope) {
+          setAlertStrategyScope(data.scope);
         }
       })
-      .catch((err) => console.warn('Could not fetch user strategy scope:', err));
+      .catch((err) => console.warn('Could not fetch user alert preferences:', err));
   }, []);
 
   const handleStrategyScopeChange = async (scope: 'all' | 'psi' | 'psi_v2' | 'thoth_egx_macro') => {
@@ -93,10 +93,10 @@ export default function AlertTriggersWidget({
     setAlertStrategyScope(scope);
     setIsSavingScope(true);
     try {
-      await fetch('/api/user/strategy-scope', {
+      await fetch('/api/alerts/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ strategyScope: scope }),
+        body: JSON.stringify({ scope }),
       });
     } catch (err) {
       console.error('Failed to update alert strategy scope:', err);

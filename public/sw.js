@@ -7,8 +7,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', () => {
-  // A minimal fetch listener is required to pass PWA installation criteria on some browsers.
-  // We just let the network handle it.
+  // Pass-through fetch handler for PWA installation
 });
 
 self.addEventListener('push', (event) => {
@@ -21,28 +20,39 @@ self.addEventListener('push', (event) => {
     try {
       payload = {
         title: 'Ticknal Signal Alert',
-        body: event.data.text() || 'A new trading signal is available.',
+        body: event.data.text() || 'A new trade signal is available.',
       };
     } catch {
       payload = {
         title: 'Ticknal Signal Alert',
-        body: 'A new trading signal is available.',
+        body: 'A new trade signal is available.',
       };
     }
   }
 
   const title = payload.title || 'Ticknal Signal Alert';
+  const targetUrl = payload.url || (payload.symbol ? `/invest?ticker=${payload.symbol}&view=chart` : '/invest?view=chart');
+
   const options = {
-    body: payload.body || 'A trading signal is available.',
+    body: payload.body || 'A trade signal is available on Ticknal.',
     icon: '/icon-192x192.png',
     badge: '/badge.png',
-    tag: payload.tag || `ticknal-${Date.now()}`,
+    tag: payload.tag || `ticknal-signal-${Date.now()}`,
     renotify: true,
     requireInteraction: true,
-    vibrate: [200, 100, 200, 100, 200], // Vibration pattern for mobile
+    vibrate: [200, 100, 200, 100, 200],
     data: {
-      url: payload.url || '/invest?view=chart',
+      url: targetUrl,
+      symbol: payload.symbol,
+      signal: payload.signal,
+      strategy: payload.strategy,
     },
+    actions: [
+      {
+        action: 'open_chart',
+        title: '📈 View Chart',
+      },
+    ],
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -50,6 +60,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
   const targetUrl = event.notification.data?.url || '/invest?view=chart';
   const url = new URL(targetUrl, self.location.origin).href;
 

@@ -168,13 +168,14 @@ export async function handleTestNotification(req?: Request) {
   }
 
   const payloadData = {
-    title: '🟢 [Cerberus] COMI Buy Opportunity',
-    body: 'Commercial International Bank triggered a BUY signal at 139.50 EGP (Target: 152.00, Stop: 134.00)',
-    url: '/invest?ticker=COMI.CA&view=chart',
-    tag: `test-notification-${Date.now()}`,
+    title: 'COMI · BUY Signal (Cerberus)',
+    body: 'Triggered at 139.50 EGP · Target: 152.00 · Stop: 134.00',
+    url: '/invest?ticker=COMI.CA&view=chart&strategy=psi_v2',
+    tag: `signal-test-${Date.now()}`,
     symbol: 'COMI.CA',
     signal: 'BUY',
     price: '139.50',
+    strategy: 'Cerberus',
   };
 
   const payload = JSON.stringify(payloadData);

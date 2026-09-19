@@ -12,7 +12,7 @@ import {
   Trash2,
 } from '@/components/ui/icon-library';
 import { useAlerts } from '@/components/platform/AlertProvider';
-import { triggerNativeTestNotification } from '@/lib/native/capacitor-bridge';
+import { triggerNativeTestNotification, isNativePlatform, checkNativePushStatus } from '@/lib/native/capacitor-bridge';
 
 export type DeviceInfo = {
   id: number;
@@ -62,11 +62,38 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
   const [pushStatus, setPushStatus] = useState<string | null>(null);
   const [deletingDeviceId, setDeletingDeviceId] = useState<number | null>(null);
   const [clientUa, setClientUa] = useState<string>('');
+  const [isProbedSubscribed, setIsProbedSubscribed] = useState<boolean>(false);
 
   useEffect(() => {
+    let isMounted = true;
     if (typeof window !== 'undefined') {
       setClientUa(navigator.userAgent);
     }
+
+    async function probeDeviceSubscription() {
+      if (isNativePlatform()) {
+        const granted = await checkNativePushStatus();
+        if (isMounted && granted) {
+          setIsProbedSubscribed(true);
+        }
+        return;
+      }
+
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (sub && Notification.permission === 'granted') {
+            if (isMounted) setIsProbedSubscribed(true);
+          }
+        } catch {}
+      }
+    }
+
+    probeDeviceSubscription();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const currentClient = parseUserAgent(clientUa || (typeof navigator !== 'undefined' ? navigator.userAgent : ''));
@@ -77,9 +104,12 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
     Monitor;
 
   const isCurrentDeviceSubscribed =
+    isProbedSubscribed ||
+    permission === 'granted' ||
+    (isNativePlatform() && devices.some((d) => d.userAgent?.includes('Native App'))) ||
     devices.some(
       (d) => clientUa && d.userAgent && (clientUa.includes(d.userAgent.slice(0, 30)) || d.userAgent.includes(clientUa.slice(0, 30)))
-    ) || permission === 'granted';
+    );
 
   const handleEnablePush = async () => {
     setIsEnablingPush(true);
@@ -87,6 +117,7 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
     try {
       const res = await ensurePushSubscription({ forceResubscribe: true });
       if (res.success) {
+        setIsProbedSubscribed(true);
         setPushStatus('Notifications enabled successfully on this device!');
         const devRes = await fetch('/api/push/subscribe');
         if (devRes.ok) {
@@ -110,8 +141,8 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
       await ensurePushSubscription({ forceResubscribe: false }).catch(() => {});
 
       await triggerNativeTestNotification(
-        '🟢 Ticknal Signal Test',
-        'BUY Signal triggered for COMI at 84.50 EGP (Target: 92.00, Stop: 81.00)'
+        'COMI · BUY Signal (Cerberus)',
+        'Triggered at 139.50 EGP · Target: 152.00 · Stop: 134.00'
       );
 
       const res = await fetch('/api/notifications/test', { method: 'POST' });

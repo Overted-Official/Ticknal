@@ -131,6 +131,7 @@ export async function sendFCMMessage(
                     sound: 'default',
                     default_vibrate_timings: true,
                     notification_priority: 'PRIORITY_HIGH',
+                    color: '#2962ff',
                   },
                 },
               },
