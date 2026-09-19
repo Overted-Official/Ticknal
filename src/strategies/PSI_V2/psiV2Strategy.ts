@@ -560,17 +560,15 @@ export function runPsiV2Strategy(
         priceGateMet = (closePrice >= aymThreshold) || (closePrice >= atrThreshold);
       }
 
-      const isLastBar = i === bars.length - 1 || (Boolean(endDate) && bars[i + 1]?.date > (endDate as string));
       const profitProtect = overrides?.profitProtect !== false;
       const isProfit = closePrice > entryPrice;
+      const isTechnicalExit = baseTechnicalExit && priceGateMet && (!profitProtect || isProfit);
 
-      if (((baseTechnicalExit && priceGateMet && (!profitProtect || isProfit)) || isLastBar)) {
+      if (isTechnicalExit) {
         signalType = 'SELL';
         triggeredExitReason = zoneCrossUnder
           ? `PSI_ZONE Cross Under ${sellZoneLevel} (Overbought Deceleration)`
-          : downCross
-          ? `PSI_DOWN Cross > ${sellDownLevel} (Bearish Swing Inception)`
-          : 'End of Backtest Horizon';
+          : `PSI_DOWN Cross > ${sellDownLevel} (Bearish Swing Inception)`;
         if (aymMult > 0 || atrMult > 0) {
           triggeredExitReason += ` [Excursion Target Met]`;
         }

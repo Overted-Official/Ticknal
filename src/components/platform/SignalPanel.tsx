@@ -89,10 +89,16 @@ export default function SignalPanel({
 }: SignalPanelProps) {
   const { toast } = useToast();
 
-  // Layout states
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Layout states (default to collapsed on mobile/tablets so chart has full view; expand on desktop)
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState<ViewTab>('performance');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setIsCollapsed(false);
+    }
+  }, []);
 
   // Strategy Report / Backtest State
   const [initialCapital, setInitialCapital] = useState<number>(3000);
@@ -511,17 +517,99 @@ export default function SignalPanel({
   };
 
   return (
-    <div
-      className={`w-full bg-plt-base border-t border-plt-border-soft shrink-0 flex flex-col select-none relative z-20 transition-all duration-200 font-sans ${
-        isCollapsed ? 'h-9' : isMaximized ? 'h-[620px]' : 'h-[400px]'
-      }`}
-    >
-      {/* ══════════════════════════════════════════════════════
-          1. TRADINGVIEW-STYLE TOP TOOLBAR (h-9)
-      ══════════════════════════════════════════════════════ */}
-      <div className="flex items-center justify-between px-3 h-9 shrink-0 bg-plt-base border-b border-plt-border-soft">
-        {/* Left: Strategy dropdown & date range */}
-        <div className="flex items-center gap-2">
+    <>
+      {/* Mobile Backdrop when open */}
+      {!isCollapsed && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/70 z-40 backdrop-blur-xs transition-opacity"
+          onClick={() => setIsCollapsed(true)}
+        />
+      )}
+
+      <div
+        className={`w-full bg-plt-base border-t border-plt-border-soft shrink-0 flex flex-col select-none relative font-sans transition-all duration-200 ${
+          isCollapsed
+            ? 'h-10 md:h-9 z-20'
+            : isMaximized
+            ? 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-10 max-md:z-50 max-md:h-[calc(100vh-2.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[620px] md:z-20'
+            : 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-14 max-md:z-50 max-md:h-[calc(100vh-3.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[400px] md:z-20'
+        }`}
+      >
+        {/* Mobile Header when expanded */}
+        {!isCollapsed && (
+          <div className="md:hidden flex items-center justify-between px-4 pt-2.5 pb-2 border-b border-plt-border-soft bg-plt-base rounded-t-2xl shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-xs text-plt-text flex items-center gap-1.5">
+                <Sparkles size={13} className="text-plt-accent" />
+                Strategy Report
+              </span>
+              <span className="text-[10px] font-semibold text-plt-muted bg-plt-active px-2 py-0.5 rounded">
+                {activeStratDef?.shortName || activeStratDef?.label}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCollapsed(true)}
+              className="p-1 rounded text-plt-muted hover:text-white transition-colors cursor-pointer"
+              title="Close Strategy Report"
+            >
+              <ChevronDown size={18} />
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Top Bar when collapsed */}
+        {isCollapsed && (
+          <div
+            onClick={() => setIsCollapsed(false)}
+            className="md:hidden flex items-center justify-between px-3 h-10 w-full cursor-pointer hover:bg-plt-hover transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-xs text-plt-text flex items-center gap-1.5">
+                <Sparkles size={13} className="text-plt-accent" />
+                {activeStratDef?.shortName || activeStratDef?.label}
+              </span>
+              <div
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                  signalAction === 'BUY'
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : signalAction === 'SELL'
+                    ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                    : 'bg-white/10 text-plt-subtle border border-white/10'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    signalAction === 'BUY'
+                      ? 'bg-emerald-400 animate-pulse'
+                      : signalAction === 'SELL'
+                      ? 'bg-rose-400'
+                      : 'bg-plt-muted'
+                  }`}
+                />
+                <span>{signalAction}</span>
+                {triggerPrice !== null && (
+                  <span className="tabular-nums font-mono font-bold text-white text-[10px]">
+                    {triggerPrice.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-plt-accent bg-plt-accent/15 border border-plt-accent/30 px-2.5 py-1 rounded-full flex items-center gap-1">
+                Report <ChevronUp size={13} />
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════
+            1. TRADINGVIEW-STYLE TOP TOOLBAR (Always on desktop; on mobile only when expanded)
+        ══════════════════════════════════════════════════════ */}
+        <div className={`items-center justify-between px-3 h-9 shrink-0 bg-plt-base border-b border-plt-border-soft ${isCollapsed ? 'hidden md:flex' : 'flex'}`}>
+          {/* Left: Strategy dropdown & date range */}
+          <div className="flex items-center gap-2">
           {/* Strategy Dropdown */}
           <div className="relative" ref={strategyDropdownRef}>
             <button
@@ -1393,6 +1481,7 @@ export default function SignalPanel({
         }}
       />
     </div>
+    </>
   );
 }
 
