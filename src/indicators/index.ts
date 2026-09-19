@@ -2,6 +2,10 @@ import { SeriesMarker, Time } from 'lightweight-charts';
 import { ChartData } from '@/components/platform/ChartWidget';
 import { swingMapperIndicator } from './swing-mapper';
 import { supportResistanceIndicator } from './support-resistance';
+import { framaIndicator } from './frama';
+import { evenBetterSinewaveIndicator } from './even-better-sinewave';
+import { kalmanFilterIndicator } from './kalman-filter';
+import { permutationEntropyIndicator } from './permutation-entropy';
 
 export interface IndicatorLine {
   id: string;
@@ -34,8 +38,12 @@ export interface IndicatorDefinition {
 
 // Registry of all available indicators
 export const INDICATORS: Record<string, IndicatorDefinition> = {
-  [swingMapperIndicator.id]: swingMapperIndicator,
+  [framaIndicator.id]: framaIndicator,
+  [evenBetterSinewaveIndicator.id]: evenBetterSinewaveIndicator,
+  [kalmanFilterIndicator.id]: kalmanFilterIndicator,
+  [permutationEntropyIndicator.id]: permutationEntropyIndicator,
   [supportResistanceIndicator.id]: supportResistanceIndicator,
+  [swingMapperIndicator.id]: swingMapperIndicator,
 };
 
 export const getAvailableIndicators = () => Object.values(INDICATORS);
