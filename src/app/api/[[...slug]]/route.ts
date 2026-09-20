@@ -70,6 +70,8 @@ import {
   handlePositionsAssignAccountPost,
   handleAvatarPost,
   handleSystemLogsGet,
+  handleProfileGet,
+  handleProfilePatch,
 } from '@/lib/user-handlers';
 import { handlePortfolioAnalysisGet, handlePortfolioTradesPost } from '@/lib/portfolio-trade-handlers';
 import {
@@ -236,7 +238,10 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     return handleInflationGet(req);
   }
 
-  // 9. User / Positions / System Logs
+  // 9. User / Positions / System Logs / Profile
+  if (root === 'profile') {
+    return handleProfileGet();
+  }
   if (root === 'positions' || (root === 'user' && sub === 'positions')) {
     return handlePositionsGet(req);
   }
@@ -360,6 +365,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ slug?: st
   if (root === 'banks') {
     if (sub === 'accounts') return handleAccountsPut(req);
     if (sub === 'transactions') return handleTransactionsPut(req);
+  }
+
+  if (root === 'profile') {
+    return handleProfilePatch(req);
   }
 
   if (root === 'positions' || (root === 'user' && sub === 'positions')) {

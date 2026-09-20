@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { desc, eq, and, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, systemLogs, userBankAccounts } from '@/db/schema';
+import { positions, profiles, systemLogs, userBankAccounts } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { createClient } from '@/lib/supabase/server';
@@ -429,3 +429,107 @@ export async function handleSystemLogsGet() {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+// ----------------------------------------------------
+// PROFILE HANDLERS (reads/writes public.profiles)
+// ----------------------------------------------------
+
+/**
+ * GET /api/profile
+ * Returns the current user's profile row from public.profiles.
+ * Falls back to auth metadata if the row doesn't exist yet.
+ */
+export async function handleProfileGet() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const [row] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
+
+    if (row) {
+      return NextResponse.json({
+        id: row.id,
+        email: row.email ?? user.email,
+        fullName: row.fullName,
+        avatarUrl: row.avatarUrl,
+        role: row.role,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        provider: user.app_metadata?.provider ?? 'email',
+        emailConfirmed: Boolean(user.email_confirmed_at),
+        lastSignInAt: user.last_sign_in_at,
+      });
+    }
+
+    // Row missing — upsert from auth metadata then return
+    const metadata = user.user_metadata ?? {};
+    const fullName =
+      (typeof metadata.full_name === 'string' && metadata.full_name) ||
+      (typeof metadata.name === 'string' && metadata.name) ||
+      user.email?.split('@')[0] ||
+      'Trader';
+    const avatarUrl =
+      (typeof metadata.avatar_url === 'string' && metadata.avatar_url) ||
+      (typeof metadata.picture === 'string' && metadata.picture) ||
+      null;
+
+    await db.insert(profiles).values({ id: user.id, email: user.email, fullName, avatarUrl })
+      .onConflictDoUpdate({
+        target: profiles.id,
+        set: { email: user.email, fullName, avatarUrl, updatedAt: new Date() },
+      });
+
+    return NextResponse.json({
+      id: user.id,
+      email: user.email,
+      fullName,
+      avatarUrl,
+      role: 'user',
+      provider: user.app_metadata?.provider ?? 'email',
+      emailConfirmed: Boolean(user.email_confirmed_at),
+      createdAt: user.created_at,
+      lastSignInAt: user.last_sign_in_at,
+    });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH /api/profile
+ * Allows users to update their full_name in public.profiles.
+ * Avatar updates continue to go through /api/user/avatar (storage upload).
+ */
+export async function handleProfilePatch(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    const fullName = typeof body.fullName === 'string' ? body.fullName.trim().slice(0, 100) : undefined;
+
+    if (!fullName) {
+      return NextResponse.json({ error: 'fullName is required' }, { status: 400 });
+    }
+
+    await db
+      .update(profiles)
+      .set({ fullName, updatedAt: new Date() })
+      .where(eq(profiles.id, user.id));
+
+    return NextResponse.json({ success: true, fullName });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+

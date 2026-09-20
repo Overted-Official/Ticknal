@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { connection } from 'next/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, pushSubscriptions, devicePushTokens, tickerAlerts } from '@/db/schema';
+import { positions, profiles, pushSubscriptions, devicePushTokens, tickerAlerts } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import SettingsPageView, {
@@ -86,30 +86,40 @@ export default async function SettingsPage() {
     });
   }
 
-  // Extract Google / OAuth profile details
+  // Fetch profile from public.profiles (canonical source of truth)
+  // Falls back to auth metadata if the profile row was somehow missing (shouldn't happen in practice).
+  let profileRow: typeof profiles.$inferSelect | undefined;
+  try {
+    const [row] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
+    profileRow = row;
+  } catch {
+    profileRow = undefined;
+  }
+
   const metadata = user.user_metadata ?? {};
   const identityData = user.identities?.[0]?.identity_data ?? {};
-  const avatarUrl =
-    (typeof metadata.avatar_url === 'string' && metadata.avatar_url) ||
-    (typeof metadata.picture === 'string' && metadata.picture) ||
-    (typeof identityData.avatar_url === 'string' && identityData.avatar_url) ||
-    (typeof identityData.picture === 'string' && identityData.picture) ||
-    null;
 
   const name =
-    (typeof metadata.full_name === 'string' && metadata.full_name) ||
-    (typeof metadata.name === 'string' && metadata.name) ||
-    (typeof identityData.full_name === 'string' && identityData.full_name) ||
-    (typeof identityData.name === 'string' && identityData.name) ||
-    user.email?.split('@')[0] ||
-    'Trader';
+    profileRow?.fullName ??
+    ((typeof metadata.full_name === 'string' && metadata.full_name) ||
+      (typeof metadata.name === 'string' && metadata.name) ||
+      (typeof identityData.full_name === 'string' && identityData.full_name) ||
+      user.email?.split('@')[0] ||
+      'Trader');
+
+  const avatarUrl =
+    profileRow?.avatarUrl ??
+    ((typeof metadata.avatar_url === 'string' && metadata.avatar_url) ||
+      (typeof metadata.picture === 'string' && metadata.picture) ||
+      (typeof identityData.avatar_url === 'string' && identityData.avatar_url) ||
+      null);
 
   const userProfile: SettingsUserProfile = {
     id: user.id,
-    email: user.email ?? 'No email provided',
+    email: profileRow?.email ?? user.email ?? 'No email provided',
     emailConfirmed: Boolean(user.email_confirmed_at),
-    name,
-    avatarUrl,
+    name: name || 'Trader',
+    avatarUrl: avatarUrl || null,
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at,
     provider: user.app_metadata?.provider ?? user.identities?.[0]?.provider ?? 'email',

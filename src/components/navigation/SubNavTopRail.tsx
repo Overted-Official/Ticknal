@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ChevronRight } from '@/components/ui/icon-library';
-import { createClient } from '@/lib/supabase/client';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import { controlHover, controlTap } from '@/lib/motion';
 
@@ -45,39 +44,26 @@ export default function SubNavTopRail({
 
   useEffect(() => {
     let isMounted = true;
-    const supabase = createClient();
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!isMounted || !user) return;
-      const resolvedName =
-        (typeof user.user_metadata?.full_name === 'string' && user.user_metadata.full_name) ||
-        (typeof user.user_metadata?.name === 'string' && user.user_metadata.name) ||
-        user.email?.split('@')[0] ||
-        'Trader';
-
-      setLoadedUserName(resolvedName);
-      if (user.user_metadata?.avatar_url) {
-        setLoadedAvatarUrl(user.user_metadata.avatar_url);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted || !session?.user) return;
-      const resolvedName =
-        (typeof session.user.user_metadata?.full_name === 'string' && session.user.user_metadata.full_name) ||
-        (typeof session.user.user_metadata?.name === 'string' && session.user.user_metadata.name) ||
-        session.user.email?.split('@')[0] ||
-        'Trader';
-
-      setLoadedUserName(resolvedName);
-      if (session.user.user_metadata?.avatar_url) {
-        setLoadedAvatarUrl(session.user.user_metadata.avatar_url);
-      }
-    });
+    fetch('/api/profile')
+      .then((res) => res.ok ? res.json() : null)
+      .then((profile) => {
+        if (!isMounted || !profile) return;
+        const resolvedName =
+          (typeof profile.fullName === 'string' && profile.fullName) ||
+          (typeof profile.email === 'string' && profile.email.split('@')[0]) ||
+          'Trader';
+        setLoadedUserName(resolvedName);
+        if (typeof profile.avatarUrl === 'string' && profile.avatarUrl) {
+          setLoadedAvatarUrl(profile.avatarUrl);
+        }
+      })
+      .catch(() => {
+        // silent fallback – name stays as 'Trader' and no avatar
+      });
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
     };
   }, []);
 
