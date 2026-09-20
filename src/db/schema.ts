@@ -1,5 +1,19 @@
 import { boolean, date, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
 
+export const profiles = pgTable('profiles', {
+  id: uuid('id').primaryKey(),
+  email: varchar('email', { length: 255 }),
+  fullName: text('full_name'),
+  avatarUrl: text('avatar_url'),
+  role: varchar('role', { length: 50 }).default('user').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    emailIdx: index('profiles_email_idx').on(table.email),
+  };
+});
+
 export const tickers = pgTable('tickers', {
   symbol: varchar('symbol', { length: 20 }).primaryKey(),
   companyName: varchar('company_name', { length: 255 }),
