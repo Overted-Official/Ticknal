@@ -6,6 +6,7 @@ import ChartWidget, { type ChartData, type ReplayState } from '@/components/plat
 import SignalPanel from '@/components/platform/SignalPanel';
 import { STRATEGIES } from '@/strategies/registry';
 import { tickerDataStore } from '@/lib/storage/tickerDataStore';
+import { prefetchWatchlist } from '@/lib/client-price-cache';
 
 import { WatchlistItem } from '@/components/platform/RightSidebar';
 import { TickerOrder } from '@/components/platform/TickerPositions';
@@ -116,10 +117,15 @@ export default function ChartReplayWorkspace({
       console.warn('Ticker data delta sync warning:', err);
     });
 
+    // 3. Pre-warm user's watchlist symbols in background during idle time
+    if (watchlist && watchlist.length > 0) {
+      prefetchWatchlist(watchlist.map((w) => w.symbol), timeframe);
+    }
+
     return () => {
       isCancelled = true;
     };
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, watchlist]);
 
   // Sync strategy if URL query param changes
   useEffect(() => {

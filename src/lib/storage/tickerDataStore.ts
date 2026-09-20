@@ -186,9 +186,13 @@ export const tickerDataStore = {
       }
     }
 
-    // If cache is fresh within 60 seconds, avoid network ping entirely
+    // If cache is fresh, avoid network ping entirely (12 hours for daily bars, 5 mins for intraday)
     const now = Date.now();
-    if (storedBars.length > 0 && meta && now - meta.syncedAt < 60 * 1000) {
+    const freshDuration = options.forceRefresh
+      ? 0
+      : (timeframe.toUpperCase() === 'D' ? 12 * 60 * 60 * 1000 : 5 * 60 * 1000);
+
+    if (storedBars.length > 0 && meta && now - meta.syncedAt < freshDuration) {
       return { bars: storedBars, fromCache: true, deltaCount: 0 };
     }
 
@@ -337,5 +341,79 @@ export const tickerDataStore = {
       tx.objectStore(STORES.SYNC_META).clear();
       tx.objectStore(STORES.MONTHLY_CLOSES).clear();
     } catch {}
+  },
+
+  /**
+   * Background prefetching for symbols (e.g. user watchlist)
+   * Fetches missing or stale tickers one at a time during browser idle time.
+   */
+  async prefetchSymbols(symbols: string[], timeframe: string = 'D'): Promise<void> {
+    if (!isIndexedDbSupported() || symbols.length === 0) return;
+    const cleanSymbols = Array.from(new Set(symbols.map((s) => s.trim().toUpperCase().replace('.CA', ''))));
+
+    for (const sym of cleanSymbols) {
+      try {
+        const meta = await this.getSyncMeta(sym, timeframe);
+        const freshDuration = timeframe.toUpperCase() === 'D' ? 12 * 60 * 60 * 1000 : 5 * 60 * 1000;
+        if (meta && Date.now() - meta.syncedAt < freshDuration) {
+          continue; // Already fresh in IndexedDB
+        }
+        await this.syncTickerData(sym, timeframe);
+        // Throttle slightly between requests to avoid saturating network
+        await new Promise((r) => setTimeout(r, 200));
+      } catch {
+        // Silently continue
+      }
+    }
+  },
+
+  /**
+   * Retrieves high-level stats of locally stored data in IndexedDB.
+   */
+  async getStorageStats(): Promise<{
+    cachedTickersCount: number;
+    totalBarsCount: number;
+    tickers: Array<{ symbol: string; timeframe: string; count: number; lastDate: string; syncedAt: number }>;
+  }> {
+    if (!isIndexedDbSupported()) {
+      return { cachedTickersCount: 0, totalBarsCount: 0, tickers: [] };
+    }
+    try {
+      const db = await openDb();
+      return new Promise((resolve) => {
+        const tx = db.transaction([STORES.SYNC_META], 'readonly');
+        const metaStore = tx.objectStore(STORES.SYNC_META);
+        const req = metaStore.openCursor();
+        const list: Array<{ symbol: string; timeframe: string; count: number; lastDate: string; syncedAt: number }> = [];
+        let totalBars = 0;
+
+        req.onsuccess = (e) => {
+          const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+          if (cursor) {
+            const key = String(cursor.key);
+            const [sym, tf] = key.split(':');
+            const val = cursor.value as SyncMeta;
+            list.push({
+              symbol: sym,
+              timeframe: tf || 'D',
+              count: val.count,
+              lastDate: val.lastDate,
+              syncedAt: val.syncedAt,
+            });
+            totalBars += val.count || 0;
+            cursor.continue();
+          } else {
+            resolve({
+              cachedTickersCount: list.length,
+              totalBarsCount: totalBars,
+              tickers: list,
+            });
+          }
+        };
+        req.onerror = () => resolve({ cachedTickersCount: 0, totalBarsCount: 0, tickers: [] });
+      });
+    } catch {
+      return { cachedTickersCount: 0, totalBarsCount: 0, tickers: [] };
+    }
   },
 };

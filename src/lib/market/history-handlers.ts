@@ -93,11 +93,15 @@ export async function handleHistoryGet(req: Request) {
       volume: Number(r.volume || 0),
     }));
 
+    const cacheHeader = since
+      ? 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'
+      : 'public, max-age=300, s-maxage=86400, stale-while-revalidate=86400';
+
     return NextResponse.json(
       { symbol, timeframe: 'D', count: bars.length, since: since || null, bars },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
+          'Cache-Control': cacheHeader,
         },
       }
     );

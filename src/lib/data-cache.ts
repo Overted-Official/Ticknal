@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { db } from '@/db';
 import { dailyPrices, intradayCandles, tickers } from '@/db/schema';
-import { eq, asc, desc, sql } from 'drizzle-orm';
+import { eq, and, asc, desc, sql } from 'drizzle-orm';
 
 // Fast in-memory cache to guarantee sub-millisecond responses on warm routes
 let tickersMemCache: { data: any[]; timestamp: number } | null = null;
@@ -14,11 +14,11 @@ let recentPricesInFlight: Promise<any[]> | null = null;
 
 /**
  * Fetches all tickers from the database.
- * Caches in memory for 60 seconds.
+ * Caches in memory for 1 hour (3600 seconds).
  */
 export async function getCachedTickers(): Promise<any[]> {
   const now = Date.now();
-  if (tickersMemCache && now - tickersMemCache.timestamp < 60 * 1000) {
+  if (tickersMemCache && now - tickersMemCache.timestamp < 3600 * 1000) {
     return tickersMemCache.data;
   }
   if (tickersInFlight) return tickersInFlight;
@@ -37,16 +37,22 @@ export async function getCachedTickers(): Promise<any[]> {
 }
 
 /**
- * Fetches the complete price history for a specific ticker.
- * Caches the result for 30 seconds.
+ * Fetches the complete or delta price history for a specific ticker.
+ * Caches the result for 24 hours (86,400s) on the server.
  */
-export const getCachedDailyPrices = async (ticker: string, limitBars?: number) => {
+export const getCachedDailyPrices = async (ticker: string, limitBars?: number, sinceDate?: string) => {
+  const cleanTicker = ticker.trim().toUpperCase().replace('.CA', '');
   const fetchPrices = async () => {
+    const conditions = [eq(dailyPrices.tickerSymbol, cleanTicker)];
+    if (sinceDate) {
+      conditions.push(sql`${dailyPrices.date} >= ${sinceDate}`);
+    }
+
     if (limitBars) {
       const rows = await db
         .select()
         .from(dailyPrices)
-        .where(eq(dailyPrices.tickerSymbol, ticker))
+        .where(and(...conditions))
         .orderBy(desc(dailyPrices.date))
         .limit(limitBars);
       return rows.reverse();
@@ -54,16 +60,17 @@ export const getCachedDailyPrices = async (ticker: string, limitBars?: number) =
       return await db
         .select()
         .from(dailyPrices)
-        .where(eq(dailyPrices.tickerSymbol, ticker))
+        .where(and(...conditions))
         .orderBy(asc(dailyPrices.date));
     }
   };
 
   try {
+    const cacheKey = `daily-prices-${cleanTicker}-${limitBars ?? 'all'}-${sinceDate ?? 'all'}`;
     const cachedFn = unstable_cache(
       fetchPrices,
-      [`daily-prices-${ticker}-${limitBars ?? 'all'}`],
-      { tags: [`prices-${ticker}`, 'prices'], revalidate: 30 }
+      [cacheKey],
+      { tags: [`prices-${cleanTicker}`, 'prices'], revalidate: 86400 }
     );
     return await cachedFn();
   } catch (error) {
@@ -149,7 +156,7 @@ export const getCachedHourlyPrices = async (ticker: string, limitBars?: number) 
     const cachedFn = unstable_cache(
       fetchHourly,
       [`hourly-prices-${ticker}-${limitBars ?? 'all'}`],
-      { tags: [`prices-${ticker}-1h`, 'prices'], revalidate: 30 }
+      { tags: [`prices-${ticker}-1h`, 'prices'], revalidate: 300 }
     );
     return await cachedFn();
   } catch {
@@ -159,11 +166,11 @@ export const getCachedHourlyPrices = async (ticker: string, limitBars?: number) 
 
 /**
  * Fetches the latest 2 prices for all tickers using a Window Function.
- * Caches in memory for 60 seconds.
+ * Caches in memory for 5 minutes (300 seconds).
  */
 export async function getCachedRecentPrices(): Promise<any[]> {
   const now = Date.now();
-  if (recentPricesMemCache && now - recentPricesMemCache.timestamp < 60 * 1000) {
+  if (recentPricesMemCache && now - recentPricesMemCache.timestamp < 300 * 1000) {
     return recentPricesMemCache.data;
   }
   if (recentPricesInFlight) return recentPricesInFlight;
