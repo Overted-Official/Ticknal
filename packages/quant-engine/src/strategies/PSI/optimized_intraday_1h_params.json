@@ -1,0 +1,4769 @@
+{
+  "AALR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 80,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 4007.09,
+      "buyHoldRoi": 932.11,
+      "alpha": 3074.98,
+      "trades": 32,
+      "winRate": 100
+    }
+  },
+  "ABUK": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 567.46,
+      "buyHoldRoi": 246.66,
+      "alpha": 320.8,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "ACAMD": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 898.84,
+      "buyHoldRoi": 389.41,
+      "alpha": 509.43,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "ACAP": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 3213.66,
+      "buyHoldRoi": 2200.26,
+      "alpha": 1013.4,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "ACGC": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 992.49,
+      "buyHoldRoi": 860.69,
+      "alpha": 131.8,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "ACTF": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": false,
+    "aymMultiplier": 0,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 16.05,
+      "buyHoldRoi": -24.51,
+      "alpha": 40.55,
+      "trades": 18,
+      "winRate": 100
+    }
+  },
+  "ADCI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1523.69,
+      "buyHoldRoi": 1260.84,
+      "alpha": 262.86,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "ADIB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1686.66,
+      "buyHoldRoi": 1415.08,
+      "alpha": 271.58,
+      "trades": 30,
+      "winRate": 100
+    }
+  },
+  "ADPC": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 143.14,
+      "buyHoldRoi": 9.92,
+      "alpha": 133.22,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "ADRI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 2606.62,
+      "buyHoldRoi": 2129.24,
+      "alpha": 477.39,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "AFDI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 626.34,
+      "buyHoldRoi": 356.81,
+      "alpha": 269.53,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "AFMC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 3558.01,
+      "buyHoldRoi": 2335.79,
+      "alpha": 1222.22,
+      "trades": 22,
+      "winRate": 100
+    }
+  },
+  "AIDC": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 235.01,
+      "buyHoldRoi": 174.53,
+      "alpha": 60.47,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "AIFI": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2051.01,
+      "buyHoldRoi": 1608.32,
+      "alpha": 442.7,
+      "trades": 10,
+      "winRate": 100
+    }
+  },
+  "AIH": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 612.59,
+      "buyHoldRoi": 225.7,
+      "alpha": 386.9,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "AJWA": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 80,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1393.03,
+      "buyHoldRoi": 1324.96,
+      "alpha": 68.07,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "ALCN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1013.38,
+      "buyHoldRoi": 647.07,
+      "alpha": 366.3,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "ALEX": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 878.5,
+      "buyHoldRoi": 428.25,
+      "alpha": 450.25,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "ALUM": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1376.94,
+      "buyHoldRoi": 799.39,
+      "alpha": 577.55,
+      "trades": 27,
+      "winRate": 100
+    }
+  },
+  "AMER": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1873.09,
+      "buyHoldRoi": 836.85,
+      "alpha": 1036.24,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "AMES": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 36408.08,
+      "buyHoldRoi": 23334.64,
+      "alpha": 13073.44,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "AMIA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1629.68,
+      "buyHoldRoi": 2016.77,
+      "alpha": -387.09,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "AMII": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 80,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2038.97,
+      "buyHoldRoi": 1579.04,
+      "alpha": 459.93,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "AMOC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 602.55,
+      "buyHoldRoi": 181.65,
+      "alpha": 420.9,
+      "trades": 43,
+      "winRate": 100
+    }
+  },
+  "AMPI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 852.88,
+      "buyHoldRoi": 328.08,
+      "alpha": 524.8,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "APPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 204.76,
+      "buyHoldRoi": -8.67,
+      "alpha": 213.43,
+      "trades": 3,
+      "winRate": 100
+    }
+  },
+  "APSW": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 538.14,
+      "buyHoldRoi": 218.82,
+      "alpha": 319.32,
+      "trades": 37,
+      "winRate": 100
+    }
+  },
+  "ARAB": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 1542.72,
+      "buyHoldRoi": 684.07,
+      "alpha": 858.65,
+      "trades": 52,
+      "winRate": 100
+    }
+  },
+  "ARCC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 10,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 3903.53,
+      "buyHoldRoi": 2212.31,
+      "alpha": 1691.22,
+      "trades": 18,
+      "winRate": 100
+    }
+  },
+  "AREH": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 450.27,
+      "buyHoldRoi": 97.03,
+      "alpha": 353.24,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "ASCM": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 1424.76,
+      "buyHoldRoi": 988.08,
+      "alpha": 436.68,
+      "trades": 30,
+      "winRate": 100
+    }
+  },
+  "ASPI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 244.73,
+      "buyHoldRoi": 170.28,
+      "alpha": 74.45,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "ATLC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 382.41,
+      "buyHoldRoi": 147.85,
+      "alpha": 234.55,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "ATQA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1529.99,
+      "buyHoldRoi": 1276.81,
+      "alpha": 253.17,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "AXPH": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1391.8,
+      "buyHoldRoi": 1029.26,
+      "alpha": 362.53,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "BIDI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 495.94,
+      "buyHoldRoi": 291.38,
+      "alpha": 204.56,
+      "trades": 7,
+      "winRate": 100
+    }
+  },
+  "BIGP": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 433.19,
+      "buyHoldRoi": 122.73,
+      "alpha": 310.46,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "BINV": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 782.03,
+      "buyHoldRoi": 391.92,
+      "alpha": 390.12,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "BIOC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 2678.93,
+      "buyHoldRoi": 1749.73,
+      "alpha": 929.2,
+      "trades": 31,
+      "winRate": 100
+    }
+  },
+  "BONY": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 64.49,
+      "buyHoldRoi": 12.99,
+      "alpha": 51.5,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "BTFH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 1226.4,
+      "buyHoldRoi": 420.04,
+      "alpha": 806.36,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "CAED": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 10775.95,
+      "buyHoldRoi": 4497.61,
+      "alpha": 6278.34,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "CANA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2859.27,
+      "buyHoldRoi": 1640.84,
+      "alpha": 1218.43,
+      "trades": 14,
+      "winRate": 100
+    }
+  },
+  "CCAP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 992.88,
+      "buyHoldRoi": 468.78,
+      "alpha": 524.1,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "CCRS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 2138.96,
+      "buyHoldRoi": 225.95,
+      "alpha": 1913.01,
+      "trades": 41,
+      "winRate": 87.8
+    }
+  },
+  "CEFM": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 994.95,
+      "buyHoldRoi": 442.34,
+      "alpha": 552.61,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "CERA": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 508,
+      "buyHoldRoi": 330.49,
+      "alpha": 177.51,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "CFGH": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 4.68,
+      "buyHoldRoi": -17.67,
+      "alpha": 22.34,
+      "trades": 7,
+      "winRate": 33.3
+    }
+  },
+  "CICH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 313.26,
+      "buyHoldRoi": 208.61,
+      "alpha": 104.66,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "CIEB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 596.64,
+      "buyHoldRoi": 367.1,
+      "alpha": 229.53,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "CIRA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 336.96,
+      "buyHoldRoi": 198.24,
+      "alpha": 138.73,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "CLHO": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 571.22,
+      "buyHoldRoi": 323.73,
+      "alpha": 247.49,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "CNFN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 363.37,
+      "buyHoldRoi": 49.73,
+      "alpha": 313.64,
+      "trades": 48,
+      "winRate": 100
+    }
+  },
+  "COMI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 670.16,
+      "buyHoldRoi": 530.45,
+      "alpha": 139.71,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "COPR": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1694.54,
+      "buyHoldRoi": 77.64,
+      "alpha": 1616.9,
+      "trades": 18,
+      "winRate": 94.1
+    }
+  },
+  "COSG": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 412.17,
+      "buyHoldRoi": -48.41,
+      "alpha": 460.58,
+      "trades": 34,
+      "winRate": 91.2
+    }
+  },
+  "CPCI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1782.98,
+      "buyHoldRoi": 1250.8,
+      "alpha": 532.18,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "CPME": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 26.92,
+      "buyHoldRoi": 133.87,
+      "alpha": -106.95,
+      "trades": 2,
+      "winRate": 100
+    }
+  },
+  "CRST": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2295.74,
+      "buyHoldRoi": 1768.64,
+      "alpha": 527.1,
+      "trades": 10,
+      "winRate": 100
+    }
+  },
+  "CSAG": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 927.72,
+      "buyHoldRoi": 465.03,
+      "alpha": 462.69,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "DAPH": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1782.1,
+      "buyHoldRoi": 725.84,
+      "alpha": 1056.26,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "DEIN": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2627.62,
+      "buyHoldRoi": 1705.56,
+      "alpha": 922.06,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "DGTZ": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 3201.4,
+      "buyHoldRoi": 482.11,
+      "alpha": 2719.28,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "DOMT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 11,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 965.79,
+      "buyHoldRoi": 506.09,
+      "alpha": 459.7,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "DSCW": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1685.58,
+      "buyHoldRoi": 872.13,
+      "alpha": 813.46,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "DTPP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1197.33,
+      "buyHoldRoi": 1192.09,
+      "alpha": 5.25,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "EALR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 8070.47,
+      "buyHoldRoi": 2417.5,
+      "alpha": 5652.97,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "EASB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 2240.78,
+      "buyHoldRoi": 565.04,
+      "alpha": 1675.74,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "EAST": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 658.02,
+      "buyHoldRoi": 377.19,
+      "alpha": 280.83,
+      "trades": 30,
+      "winRate": 100
+    }
+  },
+  "EBSC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 943.02,
+      "buyHoldRoi": 353.39,
+      "alpha": 589.63,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "ECAP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 711.64,
+      "buyHoldRoi": 295.57,
+      "alpha": 416.07,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "EDFM": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 728.3,
+      "buyHoldRoi": 275.88,
+      "alpha": 452.42,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "EEII": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 489.05,
+      "buyHoldRoi": 292.13,
+      "alpha": 196.92,
+      "trades": 27,
+      "winRate": 100
+    }
+  },
+  "EFIC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 3128.55,
+      "buyHoldRoi": 1378.25,
+      "alpha": 1750.29,
+      "trades": 59,
+      "winRate": 100
+    }
+  },
+  "EFID": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 913.92,
+      "buyHoldRoi": 786.71,
+      "alpha": 127.2,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "EFIH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 435.18,
+      "buyHoldRoi": 282.77,
+      "alpha": 152.41,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "EGAL": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 3220.46,
+      "buyHoldRoi": 2275.42,
+      "alpha": 945.04,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "EGAS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 447.86,
+      "buyHoldRoi": 215.14,
+      "alpha": 232.72,
+      "trades": 18,
+      "winRate": 100
+    }
+  },
+  "EGBE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 116.6,
+      "buyHoldRoi": 35.85,
+      "alpha": 80.76,
+      "trades": 7,
+      "winRate": 100
+    }
+  },
+  "EGCH": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 702.25,
+      "buyHoldRoi": 370.21,
+      "alpha": 332.04,
+      "trades": 39,
+      "winRate": 100
+    }
+  },
+  "EGREF": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 516.88,
+      "buyHoldRoi": 265.44,
+      "alpha": 251.43,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "EGS30AJ1C016-EGP": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 537.87,
+      "buyHoldRoi": 475.11,
+      "alpha": 62.77,
+      "trades": 2,
+      "winRate": 100
+    }
+  },
+  "EGS370O1C013": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 78.19,
+      "buyHoldRoi": 30.89,
+      "alpha": 47.3,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "EGS385S1C012": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 19.35,
+      "buyHoldRoi": -8.97,
+      "alpha": 28.32,
+      "trades": 14,
+      "winRate": 100
+    }
+  },
+  "EGS48271C018-EGP": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 710.89,
+      "buyHoldRoi": 7.69,
+      "alpha": 703.19,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "EGSA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": -33.1,
+      "buyHoldRoi": -30,
+      "alpha": -3.1,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "EGTS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 80,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1512.28,
+      "buyHoldRoi": 1119.57,
+      "alpha": 392.72,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "EHDR": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 130.85,
+      "buyHoldRoi": 70.6,
+      "alpha": 60.25,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "EITP": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 17.85,
+      "buyHoldRoi": -37.79,
+      "alpha": 55.63,
+      "trades": 2,
+      "winRate": 100
+    }
+  },
+  "ELEC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 615.48,
+      "buyHoldRoi": 564.52,
+      "alpha": 50.97,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "ELKA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 582.19,
+      "buyHoldRoi": 175.64,
+      "alpha": 406.55,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "ELNA": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 223.47,
+      "buyHoldRoi": 59.61,
+      "alpha": 163.86,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "ELSH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 245.43,
+      "buyHoldRoi": 174.49,
+      "alpha": 70.94,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "ELWA": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 561.03,
+      "buyHoldRoi": 250.57,
+      "alpha": 310.46,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "EMFD": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 925.34,
+      "buyHoldRoi": 411.81,
+      "alpha": 513.52,
+      "trades": 32,
+      "winRate": 100
+    }
+  },
+  "ENGC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1285.61,
+      "buyHoldRoi": 1002.08,
+      "alpha": 283.52,
+      "trades": 22,
+      "winRate": 100
+    }
+  },
+  "EOSB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 478.83,
+      "buyHoldRoi": 117.33,
+      "alpha": 361.5,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "EPCO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 995.32,
+      "buyHoldRoi": 323.46,
+      "alpha": 671.86,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "EPPK": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1,
+    "metrics": {
+      "sysRoi": 214.58,
+      "buyHoldRoi": 63.34,
+      "alpha": 151.24,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "ETEL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 1140.98,
+      "buyHoldRoi": 750.55,
+      "alpha": 390.43,
+      "trades": 72,
+      "winRate": 100
+    }
+  },
+  "ETRS": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 571.89,
+      "buyHoldRoi": 572.24,
+      "alpha": -0.35,
+      "trades": 37,
+      "winRate": 100
+    }
+  },
+  "EXPA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 762.78,
+      "buyHoldRoi": 456.72,
+      "alpha": 306.06,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "FAIT": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 395.39,
+      "buyHoldRoi": 268.32,
+      "alpha": 127.07,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "FAITA": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 33.13,
+      "buyHoldRoi": 22.29,
+      "alpha": 10.84,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "FCMD": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 2653.17,
+      "buyHoldRoi": 552.64,
+      "alpha": 2100.53,
+      "trades": 33,
+      "winRate": 100
+    }
+  },
+  "FIRE": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 1709.15,
+      "buyHoldRoi": 555.22,
+      "alpha": 1153.93,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "FNAR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2971.3,
+      "buyHoldRoi": 1765.67,
+      "alpha": 1205.63,
+      "trades": 12,
+      "winRate": 90.9
+    }
+  },
+  "FTNS": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1,
+    "metrics": {
+      "sysRoi": 25.01,
+      "buyHoldRoi": -32.54,
+      "alpha": 57.55,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "FWRY": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1249.43,
+      "buyHoldRoi": 479.75,
+      "alpha": 769.68,
+      "trades": 48,
+      "winRate": 100
+    }
+  },
+  "GBCO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1281.9,
+      "buyHoldRoi": 869.28,
+      "alpha": 412.62,
+      "trades": 44,
+      "winRate": 100
+    }
+  },
+  "GDWA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 729.61,
+      "buyHoldRoi": 564.66,
+      "alpha": 164.96,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "GGCC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 852.2,
+      "buyHoldRoi": 423.53,
+      "alpha": 428.67,
+      "trades": 31,
+      "winRate": 100
+    }
+  },
+  "GGRN": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": false,
+    "aymMultiplier": 0,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 179.49,
+      "buyHoldRoi": 18.64,
+      "alpha": 160.84,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "GIHD": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1753.79,
+      "buyHoldRoi": 509.04,
+      "alpha": 1244.75,
+      "trades": 14,
+      "winRate": 100
+    }
+  },
+  "GMCI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 583.89,
+      "buyHoldRoi": 255.14,
+      "alpha": 328.75,
+      "trades": 44,
+      "winRate": 100
+    }
+  },
+  "GOUR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 59.46,
+      "buyHoldRoi": 72.02,
+      "alpha": -12.56,
+      "trades": 10,
+      "winRate": 100
+    }
+  },
+  "GPIM": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 13515.81,
+      "buyHoldRoi": 7959.43,
+      "alpha": 5556.38,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "GPPL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 33.31,
+      "buyHoldRoi": -18.57,
+      "alpha": 51.87,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "GRCA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 669.82,
+      "buyHoldRoi": 487.89,
+      "alpha": 181.93,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "GSSC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 2379.65,
+      "buyHoldRoi": 573.88,
+      "alpha": 1805.77,
+      "trades": 30,
+      "winRate": 100
+    }
+  },
+  "GTEX": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 19.59,
+      "buyHoldRoi": 7.32,
+      "alpha": 12.27,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "GTHE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 611.34,
+      "buyHoldRoi": 25.36,
+      "alpha": 585.98,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "GTWL": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 6638.38,
+      "buyHoldRoi": 3537.93,
+      "alpha": 3100.44,
+      "trades": 48,
+      "winRate": 100
+    }
+  },
+  "HBCO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 699.94,
+      "buyHoldRoi": 628.6,
+      "alpha": 71.34,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "HDBK": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2140.07,
+      "buyHoldRoi": 1859.41,
+      "alpha": 280.67,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "HELI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 717.93,
+      "buyHoldRoi": 306.08,
+      "alpha": 411.85,
+      "trades": 47,
+      "winRate": 100
+    }
+  },
+  "HRHO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 441.22,
+      "buyHoldRoi": 180.73,
+      "alpha": 260.49,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "IBCT": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 2440.95,
+      "buyHoldRoi": 786.65,
+      "alpha": 1654.3,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "ICFC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 5450.67,
+      "buyHoldRoi": 2968.25,
+      "alpha": 2482.41,
+      "trades": 10,
+      "winRate": 100
+    }
+  },
+  "ICID": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 2554.6,
+      "buyHoldRoi": 1736.19,
+      "alpha": 818.4,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "ICLE": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2.04,
+      "buyHoldRoi": -54.03,
+      "alpha": 56.06,
+      "trades": 2,
+      "winRate": 100
+    }
+  },
+  "IDRE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 11,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 1366.09,
+      "buyHoldRoi": 130.29,
+      "alpha": 1235.8,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "IEEC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 949.65,
+      "buyHoldRoi": 648.98,
+      "alpha": 300.67,
+      "trades": 56,
+      "winRate": 100
+    }
+  },
+  "IFAP": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 7518.09,
+      "buyHoldRoi": 4078.21,
+      "alpha": 3439.88,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "INEG": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 911.9,
+      "buyHoldRoi": 458.07,
+      "alpha": 453.83,
+      "trades": 34,
+      "winRate": 100
+    }
+  },
+  "INFI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 11,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2038.19,
+      "buyHoldRoi": 1240.9,
+      "alpha": 797.29,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "IRON": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 11146.4,
+      "buyHoldRoi": 1355.87,
+      "alpha": 9790.52,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "ISMA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 822.79,
+      "buyHoldRoi": 707.66,
+      "alpha": 115.13,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "ISMQ": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1731.3,
+      "buyHoldRoi": 774.76,
+      "alpha": 956.54,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "ISPH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 988.82,
+      "buyHoldRoi": 791.84,
+      "alpha": 196.98,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "JUFO": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1113.35,
+      "buyHoldRoi": 467.78,
+      "alpha": 645.57,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "KABO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1696.26,
+      "buyHoldRoi": 1771.08,
+      "alpha": -74.82,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "KORA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 4.21,
+      "buyHoldRoi": -2.03,
+      "alpha": 6.24,
+      "trades": 3,
+      "winRate": 100
+    }
+  },
+  "KRDI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 276.9,
+      "buyHoldRoi": 145.45,
+      "alpha": 131.45,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "KWIN": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 4799.83,
+      "buyHoldRoi": 1715.24,
+      "alpha": 3084.6,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "KZPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1491.44,
+      "buyHoldRoi": 980.01,
+      "alpha": 511.43,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "LCSW": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 771.62,
+      "buyHoldRoi": 649.44,
+      "alpha": 122.18,
+      "trades": 39,
+      "winRate": 100
+    }
+  },
+  "LKGP": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 208.04,
+      "buyHoldRoi": 230,
+      "alpha": -21.96,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "LUTS": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 10,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1273.82,
+      "buyHoldRoi": 816.07,
+      "alpha": 457.74,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "MAAL": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1284.31,
+      "buyHoldRoi": 1092.5,
+      "alpha": 191.81,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "MASR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 457.17,
+      "buyHoldRoi": 228.65,
+      "alpha": 228.52,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "MBEG": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 2039.97,
+      "buyHoldRoi": 653.03,
+      "alpha": 1386.94,
+      "trades": 48,
+      "winRate": 100
+    }
+  },
+  "MBSC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 10,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 2014.38,
+      "buyHoldRoi": 1260.16,
+      "alpha": 754.22,
+      "trades": 22,
+      "winRate": 100
+    }
+  },
+  "MCQE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 3197.78,
+      "buyHoldRoi": 2605.99,
+      "alpha": 591.79,
+      "trades": 27,
+      "winRate": 100
+    }
+  },
+  "MCRO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 303.32,
+      "buyHoldRoi": 141.23,
+      "alpha": 162.1,
+      "trades": 43,
+      "winRate": 100
+    }
+  },
+  "MENA": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 1016.73,
+      "buyHoldRoi": 748.78,
+      "alpha": 267.95,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "MEPA": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1853.53,
+      "buyHoldRoi": 690.97,
+      "alpha": 1162.57,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "MFPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 994.69,
+      "buyHoldRoi": 421.88,
+      "alpha": 572.81,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "MFSC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1019.6,
+      "buyHoldRoi": 552.03,
+      "alpha": 467.57,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "MHOT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 2473,
+      "buyHoldRoi": 1832.97,
+      "alpha": 640.03,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "MICH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 951.21,
+      "buyHoldRoi": 639.52,
+      "alpha": 311.69,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "MILS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1011.15,
+      "buyHoldRoi": 881.44,
+      "alpha": 129.71,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "MIPH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 80,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 968.9,
+      "buyHoldRoi": 698.94,
+      "alpha": 269.96,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "MISR": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 91.66,
+      "buyHoldRoi": 48.59,
+      "alpha": 43.07,
+      "trades": 20,
+      "winRate": 90
+    }
+  },
+  "MKIT": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 175.57,
+      "buyHoldRoi": -8.73,
+      "alpha": 184.3,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "MMAT": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 1477.56,
+      "buyHoldRoi": 325.29,
+      "alpha": 1152.28,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "MOED": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 756.74,
+      "buyHoldRoi": 466.42,
+      "alpha": 290.32,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "MOIL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1945.25,
+      "buyHoldRoi": 574,
+      "alpha": 1371.25,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "MOIN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 9225.74,
+      "buyHoldRoi": 4998.12,
+      "alpha": 4227.62,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "MOSC": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 80,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 6449.85,
+      "buyHoldRoi": 2440.29,
+      "alpha": 4009.56,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "MPCI": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 10515.88,
+      "buyHoldRoi": 8738.5,
+      "alpha": 1777.38,
+      "trades": 10,
+      "winRate": 100
+    }
+  },
+  "MPCO": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 372.87,
+      "buyHoldRoi": 380.18,
+      "alpha": -7.31,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "MPRC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1333.38,
+      "buyHoldRoi": 848.08,
+      "alpha": 485.3,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "MTIE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1923.5,
+      "buyHoldRoi": 803.87,
+      "alpha": 1119.63,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "NAHO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 28.9,
+      "buyHoldRoi": 2.9,
+      "alpha": 26.01,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "NARE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2038.9,
+      "buyHoldRoi": 1225.46,
+      "alpha": 813.44,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "NBKE": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 154.85,
+      "buyHoldRoi": 113.18,
+      "alpha": 41.67,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "NCCW": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 674.62,
+      "buyHoldRoi": 472.1,
+      "alpha": 202.52,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "NCGC": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": false,
+    "aymMultiplier": 0,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": -37,
+      "buyHoldRoi": 0,
+      "alpha": -37,
+      "trades": 1,
+      "winRate": 0
+    }
+  },
+  "NEDA": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": false,
+    "aymMultiplier": 0,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 179.6,
+      "buyHoldRoi": 165.75,
+      "alpha": 13.85,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "NHPS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1210.72,
+      "buyHoldRoi": 342.17,
+      "alpha": 868.55,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "NINH": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1110,
+      "buyHoldRoi": 618.29,
+      "alpha": 491.71,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "NIPH": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 6472.6,
+      "buyHoldRoi": 3837.14,
+      "alpha": 2635.46,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "OBRI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 946.28,
+      "buyHoldRoi": 409.61,
+      "alpha": 536.67,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "OCDI": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 1526.18,
+      "buyHoldRoi": 988.24,
+      "alpha": 537.94,
+      "trades": 27,
+      "winRate": 100
+    }
+  },
+  "OCPH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 3101.15,
+      "buyHoldRoi": 1184.2,
+      "alpha": 1916.95,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "ODIN": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 10,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 518.77,
+      "buyHoldRoi": 445.45,
+      "alpha": 73.31,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "OFH": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 1142.55,
+      "buyHoldRoi": 442.7,
+      "alpha": 699.85,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "OIH": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 1592.58,
+      "buyHoldRoi": 931.75,
+      "alpha": 660.83,
+      "trades": 23,
+      "winRate": 100
+    }
+  },
+  "OLFI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 569.8,
+      "buyHoldRoi": 344.62,
+      "alpha": 225.19,
+      "trades": 22,
+      "winRate": 100
+    }
+  },
+  "ORAS": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1622.64,
+      "buyHoldRoi": 1318.46,
+      "alpha": 304.18,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "ORHD": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 10,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 1324.65,
+      "buyHoldRoi": 1130.32,
+      "alpha": 194.33,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "ORWE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 660.86,
+      "buyHoldRoi": 291.72,
+      "alpha": 369.14,
+      "trades": 23,
+      "winRate": 100
+    }
+  },
+  "PHAR": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 708.27,
+      "buyHoldRoi": 510.59,
+      "alpha": 197.68,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "PHDC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 2089.75,
+      "buyHoldRoi": 1078.57,
+      "alpha": 1011.18,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "PHGC": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1,
+    "metrics": {
+      "sysRoi": 656.09,
+      "buyHoldRoi": 182.55,
+      "alpha": 473.53,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "PHTV": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 3848.66,
+      "buyHoldRoi": 2380.49,
+      "alpha": 1468.17,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "POUL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 5,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 2861.27,
+      "buyHoldRoi": 1566.67,
+      "alpha": 1294.61,
+      "trades": 39,
+      "winRate": 100
+    }
+  },
+  "PRCL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 2151.77,
+      "buyHoldRoi": 1288.84,
+      "alpha": 862.92,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "PRDC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 909.33,
+      "buyHoldRoi": 454.54,
+      "alpha": 454.79,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "PRMH": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 828.03,
+      "buyHoldRoi": 361.68,
+      "alpha": 466.35,
+      "trades": 18,
+      "winRate": 100
+    }
+  },
+  "QNBE": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 401.97,
+      "buyHoldRoi": 252.73,
+      "alpha": 149.24,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "RACC": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 776.17,
+      "buyHoldRoi": 297.14,
+      "alpha": 479.03,
+      "trades": 37,
+      "winRate": 100
+    }
+  },
+  "RAKT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 610.35,
+      "buyHoldRoi": 227.38,
+      "alpha": 382.97,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "RAYA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 887.83,
+      "buyHoldRoi": 672.1,
+      "alpha": 215.73,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "RKAZ": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1044.55,
+      "buyHoldRoi": 429.5,
+      "alpha": 615.04,
+      "trades": 10,
+      "winRate": 100
+    }
+  },
+  "RMDA": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 445.81,
+      "buyHoldRoi": 422.95,
+      "alpha": 22.86,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "ROTO": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1091.48,
+      "buyHoldRoi": 173.7,
+      "alpha": 917.79,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "RREI": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1521.43,
+      "buyHoldRoi": 688.99,
+      "alpha": 832.44,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "RTVC": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 287.19,
+      "buyHoldRoi": 134.76,
+      "alpha": 152.43,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "RUBX": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1300.28,
+      "buyHoldRoi": 269.4,
+      "alpha": 1030.88,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "SAIB": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 127.79,
+      "buyHoldRoi": -55.42,
+      "alpha": 183.21,
+      "trades": 4,
+      "winRate": 33.3
+    }
+  },
+  "SAUD": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 645.26,
+      "buyHoldRoi": 481.48,
+      "alpha": 163.78,
+      "trades": 39,
+      "winRate": 100
+    }
+  },
+  "SCEM": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 4266.3,
+      "buyHoldRoi": 1682.36,
+      "alpha": 2583.94,
+      "trades": 33,
+      "winRate": 100
+    }
+  },
+  "SCFM": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 2171.87,
+      "buyHoldRoi": 576.01,
+      "alpha": 1595.86,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "SCTS": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": false,
+    "aymMultiplier": 0,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 3017.5,
+      "buyHoldRoi": 4696.15,
+      "alpha": -1678.65,
+      "trades": 1,
+      "winRate": 0
+    }
+  },
+  "SDTI": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 906.16,
+      "buyHoldRoi": 799.46,
+      "alpha": 106.69,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "SEIG": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1692.05,
+      "buyHoldRoi": 1038.02,
+      "alpha": 654.03,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "SIPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 1178.7,
+      "buyHoldRoi": 335.61,
+      "alpha": 843.09,
+      "trades": 55,
+      "winRate": 100
+    }
+  },
+  "SKPC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 760.67,
+      "buyHoldRoi": 336.5,
+      "alpha": 424.17,
+      "trades": 14,
+      "winRate": 100
+    }
+  },
+  "SMFR": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 9,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 5915.57,
+      "buyHoldRoi": 3640.43,
+      "alpha": 2275.14,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "SNFC": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 14,
+    "aymLimit": 61.8,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1276.92,
+      "buyHoldRoi": 1452.33,
+      "alpha": -175.4,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "SNFI": {
+    "model": "psi8",
+    "entryLevels": [
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 126.57,
+      "buyHoldRoi": 158.56,
+      "alpha": -32,
+      "trades": 2,
+      "winRate": 100
+    }
+  },
+  "SPIN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 50,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1788.37,
+      "buyHoldRoi": 1407.01,
+      "alpha": 381.35,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "SPMD": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 222.3,
+      "buyHoldRoi": 7.4,
+      "alpha": 214.9,
+      "trades": 39,
+      "winRate": 100
+    }
+  },
+  "SUCE": {
+    "model": "psi8",
+    "entryLevels": [
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 134.86,
+      "buyHoldRoi": 18.75,
+      "alpha": 116.11,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "SUGR": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 8,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 822.6,
+      "buyHoldRoi": 393.6,
+      "alpha": 429,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "SVCE": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 18,
+    "aymLimit": 80,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 2183.97,
+      "buyHoldRoi": 1087.42,
+      "alpha": 1096.55,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "SWDY": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 80,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 2282.24,
+      "buyHoldRoi": 1862.79,
+      "alpha": 419.45,
+      "trades": 28,
+      "winRate": 100
+    }
+  },
+  "TALM": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 16,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 910.94,
+      "buyHoldRoi": 379.17,
+      "alpha": 531.77,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "TANM": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 904.83,
+      "buyHoldRoi": 164.09,
+      "alpha": 740.73,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "TAQA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 240.4,
+      "buyHoldRoi": 71.11,
+      "alpha": 169.29,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "TMGH": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      61.8
+    ],
+    "useAym": false,
+    "aymMultiplier": 0,
+    "aymLimit": 78.6,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1493.57,
+      "buyHoldRoi": 1287.32,
+      "alpha": 206.25,
+      "trades": 18,
+      "winRate": 100
+    }
+  },
+  "TORA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 2,
+    "metrics": {
+      "sysRoi": 791.5,
+      "buyHoldRoi": 550.1,
+      "alpha": 241.4,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "TRTO": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 0.5,
+    "metrics": {
+      "sysRoi": 86.03,
+      "buyHoldRoi": -65,
+      "alpha": 151.03,
+      "trades": 47,
+      "winRate": 34.8
+    }
+  },
+  "TWSA": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 381.9,
+      "buyHoldRoi": 236.09,
+      "alpha": 145.81,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "TYCN": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 4,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 10401.32,
+      "buyHoldRoi": 3611.44,
+      "alpha": 6789.88,
+      "trades": 30,
+      "winRate": 96.6
+    }
+  },
+  "UBEE": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 7,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 1.5,
+    "metrics": {
+      "sysRoi": 66.14,
+      "buyHoldRoi": 1.74,
+      "alpha": 64.4,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "UEFM": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 904.37,
+      "buyHoldRoi": 274.52,
+      "alpha": 629.84,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "UEGC": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 655.6,
+      "buyHoldRoi": 314.58,
+      "alpha": 341.02,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "UNIP": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 3.5,
+    "metrics": {
+      "sysRoi": 317.53,
+      "buyHoldRoi": 190.53,
+      "alpha": 127,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "UNIT": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 20,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 858.13,
+      "buyHoldRoi": 600.37,
+      "alpha": 257.76,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "UPMS": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1025.91,
+      "buyHoldRoi": 175.97,
+      "alpha": 849.94,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "UTOP": {
+    "model": "psi8",
+    "entryLevels": [
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 2.5,
+    "metrics": {
+      "sysRoi": 7412.77,
+      "buyHoldRoi": 1438.46,
+      "alpha": 5974.31,
+      "trades": 56,
+      "winRate": 100
+    }
+  },
+  "VALU": {
+    "model": "psi8",
+    "entryLevels": [
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 3,
+    "aymLimit": 78.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 90.87,
+      "buyHoldRoi": 36.71,
+      "alpha": 54.16,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "VERT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 24,
+    "aymLimit": 50,
+    "useAtr": true,
+    "atrDistance": 5,
+    "metrics": {
+      "sysRoi": 2539.88,
+      "buyHoldRoi": 751.12,
+      "alpha": 1788.76,
+      "trades": 15,
+      "winRate": 92.9
+    }
+  },
+  "VLMR": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 2,
+    "aymLimit": 70,
+    "useAtr": true,
+    "atrDistance": 1,
+    "metrics": {
+      "sysRoi": -23.34,
+      "buyHoldRoi": -41.12,
+      "alpha": 17.78,
+      "trades": 7,
+      "winRate": 100
+    }
+  },
+  "VLMRA": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2
+    ],
+    "useAym": true,
+    "aymMultiplier": 1,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 1,
+    "metrics": {
+      "sysRoi": 149.48,
+      "buyHoldRoi": 64.64,
+      "alpha": 84.83,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "WCDF": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      50,
+      61.8
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 1212.87,
+      "buyHoldRoi": 589.78,
+      "alpha": 623.09,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "WKOL": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 88.6,
+    "useAtr": false,
+    "atrDistance": null,
+    "metrics": {
+      "sysRoi": 4582.18,
+      "buyHoldRoi": 1198.95,
+      "alpha": 3383.23,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "ZEOT": {
+    "model": "psi8",
+    "entryLevels": [
+      14.6,
+      23.6
+    ],
+    "useAym": true,
+    "aymMultiplier": 12,
+    "aymLimit": 61.8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1289.42,
+      "buyHoldRoi": 819.18,
+      "alpha": 470.24,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "ZMID": {
+    "model": "psi8",
+    "entryLevels": [
+      23.6,
+      38.2,
+      50
+    ],
+    "useAym": true,
+    "aymMultiplier": 6,
+    "aymLimit": 88.6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 413.95,
+      "buyHoldRoi": 234.72,
+      "alpha": 179.22,
+      "trades": 22,
+      "winRate": 100
+    }
+  }
+}

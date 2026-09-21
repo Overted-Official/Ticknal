@@ -17,6 +17,7 @@ import {
   HelpCircle,
   SlidersHorizontal,
   X,
+  Check,
 } from '@/components/ui/icon-library';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -168,16 +169,29 @@ export default function SignalPanel({
 
   // Click outside handlers
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (strategyDropdownRef.current && !strategyDropdownRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Element;
+      if (
+        strategyDropdownRef.current &&
+        !strategyDropdownRef.current.contains(target as Node) &&
+        !target?.closest?.('[data-strategy-sheet]')
+      ) {
         setIsStrategyDropdownOpen(false);
       }
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(target as Node) &&
+        !target?.closest?.('[data-datepicker-sheet]')
+      ) {
         setIsDatePickerOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const strategies = getAvailableStrategies();
@@ -570,9 +584,15 @@ export default function SignalPanel({
                   <Sparkles size={13} className="text-plt-accent" />
                   Strategy Report
                 </span>
-                <span className="text-[10px] font-semibold text-plt-muted bg-plt-active px-2 py-0.5 rounded">
-                  {activeStratDef?.shortName || activeStratDef?.label}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsStrategyDropdownOpen(true)}
+                  className="text-[10px] font-semibold text-plt-text bg-plt-active hover:bg-plt-hover px-2 py-0.5 rounded flex items-center gap-1 cursor-pointer transition-colors border border-plt-border-soft"
+                  title="Change Strategy"
+                >
+                  <span>{activeStratDef?.shortName || activeStratDef?.label}</span>
+                  <ChevronDown size={10} className="text-plt-muted" />
+                </button>
               </div>
               <button
                 type="button"
@@ -636,7 +656,7 @@ export default function SignalPanel({
         {/* ══════════════════════════════════════════════════════
             1. TRADINGVIEW-STYLE TOP TOOLBAR (Always on desktop; on mobile only when expanded)
         ══════════════════════════════════════════════════════ */}
-        <div className={`items-center justify-between px-2.5 sm:px-3 h-9 shrink-0 bg-plt-base border-b border-plt-border-soft overflow-x-auto no-scrollbar gap-1.5 ${isCollapsed ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`items-center justify-between px-2.5 sm:px-3 h-9 shrink-0 bg-plt-base border-b border-plt-border-soft overflow-x-auto md:overflow-visible no-scrollbar gap-1.5 ${isCollapsed ? 'hidden md:flex' : 'flex'}`}>
           {/* Left: Strategy dropdown & date range */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Strategy Dropdown */}
@@ -650,34 +670,37 @@ export default function SignalPanel({
               <ChevronDown size={12} className={`text-plt-muted shrink-0 transition-transform duration-200 ${isStrategyDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            <AnimatePresence>
-              {isStrategyDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
-                  transition={{ duration: 0.12 }}
-                  className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 w-[230px] z-[60] p-1 shadow-2xl`}
-                >
-                  <div className="kpi-title px-2 py-1 border-b border-plt-border-soft mb-1">
-                    Select Strategy
-                  </div>
-                  {strategies.map((strat) => (
-                    <button
-                      key={strat.id}
-                      type="button"
-                      onClick={() => { setSelectedStrategy(strat.id); setIsStrategyDropdownOpen(false); }}
-                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
-                        strat.id === selectedStrategy ? 'bg-plt-active text-plt-text font-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
-                      }`}
-                    >
-                      <span className="truncate">{strat.label}</span>
-                      {strat.id === selectedStrategy && <div className="w-1.5 h-1.5 rounded-full bg-plt-profit" />}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Desktop Dropdown Popover */}
+            <div className="hidden md:block">
+              <AnimatePresence>
+                {isStrategyDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
+                    transition={{ duration: 0.12 }}
+                    className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 w-[230px] z-[60] p-1 shadow-2xl`}
+                  >
+                    <div className="kpi-title px-2 py-1 border-b border-plt-border-soft mb-1">
+                      Select Strategy
+                    </div>
+                    {strategies.map((strat) => (
+                      <button
+                        key={strat.id}
+                        type="button"
+                        onClick={() => { setSelectedStrategy(strat.id); setIsStrategyDropdownOpen(false); }}
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors cursor-pointer ${
+                          strat.id === selectedStrategy ? 'bg-plt-active text-plt-text font-semibold' : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
+                        }`}
+                      >
+                        <span className="truncate">{strat.label}</span>
+                        {strat.id === selectedStrategy && <div className="w-1.5 h-1.5 rounded-full bg-plt-profit" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
@@ -708,51 +731,54 @@ export default function SignalPanel({
               <ChevronDown size={11} className="text-plt-muted shrink-0" />
             </button>
 
-            <AnimatePresence>
-              {isDatePickerOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
-                  className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 max-sm:-left-6 sm:left-0 z-[60] space-y-2.5 w-[260px] max-w-[calc(100vw-32px)] p-3 shadow-2xl`}
-                >
-                  <div className="pill-switch w-full flex">
-                    {(['2025', '1y', 'all'] as const).map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => { handlePresetDate(preset); setIsDatePickerOpen(false); }}
-                        className={`flex-1 pill-switch-btn text-[11px] py-1 ${
-                          activePreset === preset ? 'pill-switch-btn-active font-semibold' : ''
-                        }`}
-                      >
-                        {preset === '2025' ? '2025+' : preset === '1y' ? '1 Year' : 'All Data'}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[10px] tabular-nums">
-                    <div>
-                      <span className="kpi-title block mb-0.5">Start</span>
-                      <input
-                        type="date"
-                        value={strategyStartDate || '2025-01-01'}
-                        onChange={(e) => { setStrategyStartDate?.(e.target.value); setActivePreset('custom'); }}
-                        className="date-token w-full text-[11px] px-1 py-1"
-                      />
+            {/* Desktop Date Picker Popover */}
+            <div className="hidden md:block">
+              <AnimatePresence>
+                {isDatePickerOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
+                    className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 max-sm:-left-6 sm:left-0 z-[60] space-y-2.5 w-[260px] max-w-[calc(100vw-32px)] p-3 shadow-2xl`}
+                  >
+                    <div className="pill-switch w-full flex">
+                      {(['2025', '1y', 'all'] as const).map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => { handlePresetDate(preset); setIsDatePickerOpen(false); }}
+                          className={`flex-1 pill-switch-btn text-[11px] py-1 ${
+                            activePreset === preset ? 'pill-switch-btn-active font-semibold' : ''
+                          }`}
+                        >
+                          {preset === '2025' ? '2025+' : preset === '1y' ? '1 Year' : 'All Data'}
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <span className="kpi-title block mb-0.5">End</span>
-                      <input
-                        type="date"
-                        value={strategyEndDate || ''}
-                        onChange={(e) => { setStrategyEndDate?.(e.target.value); setActivePreset('custom'); }}
-                        className="date-token w-full text-[11px] px-1 py-1"
-                      />
+                    <div className="grid grid-cols-2 gap-2 text-[10px] tabular-nums">
+                      <div>
+                        <span className="kpi-title block mb-0.5">Start</span>
+                        <input
+                          type="date"
+                          value={strategyStartDate || '2025-01-01'}
+                          onChange={(e) => { setStrategyStartDate?.(e.target.value); setActivePreset('custom'); }}
+                          className="date-token w-full text-[11px] px-1 py-1"
+                        />
+                      </div>
+                      <div>
+                        <span className="kpi-title block mb-0.5">End</span>
+                        <input
+                          type="date"
+                          value={strategyEndDate || ''}
+                          onChange={(e) => { setStrategyEndDate?.(e.target.value); setActivePreset('custom'); }}
+                          className="date-token w-full text-[11px] px-1 py-1"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
@@ -1531,6 +1557,209 @@ export default function SignalPanel({
         }}
       />
     </div>
+
+      {/* ══════════════════════════════════════════════════════
+          MOBILE STRATEGY SELECTOR ACTION SHEET (Phones only)
+      ══════════════════════════════════════════════════════ */}
+      <div className="md:hidden" data-strategy-sheet>
+        <AnimatePresence>
+          {isStrategyDropdownOpen && (
+            <>
+              {/* Darkened Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/80 z-[100] backdrop-blur-xs"
+                onClick={() => setIsStrategyDropdownOpen(false)}
+              />
+              {/* Bottom Sheet Modal */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+                className="fixed inset-x-0 bottom-0 z-[101] bg-[#14171f] border-t border-[#2a2e39] rounded-t-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+              >
+                {/* Drag handle */}
+                <div className="w-full flex justify-center pb-1">
+                  <div className="w-10 h-1 bg-white/20 rounded-full" />
+                </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-[#2a2e39]">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-[#2962ff]" />
+                    <span className="font-bold text-sm text-white">Select Trading Strategy</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsStrategyDropdownOpen(false)}
+                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 flex items-center justify-center text-white/80 hover:text-white transition-colors cursor-pointer"
+                    aria-label="Close"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+
+                {/* Strategy List */}
+                <div className="space-y-2 pt-1">
+                  {strategies.map((strat) => {
+                    const isSelected = strat.id === selectedStrategy;
+                    return (
+                      <button
+                        key={strat.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedStrategy(strat.id);
+                          setIsStrategyDropdownOpen(false);
+                        }}
+                        className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#2962ff]/15 border-[#2962ff]/60 text-white shadow-lg shadow-[#2962ff]/10'
+                            : 'bg-[#1e222d]/60 border-[#2a2e39] text-[#d1d4dc] hover:bg-[#1e222d] active:scale-[0.99]'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm">{strat.label}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider ${
+                              strat.id === 'hydra'
+                                ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
+                                : strat.id === 'psi_v2'
+                                ? 'bg-[#089981]/15 text-[#089981] border border-[#089981]/30'
+                                : 'bg-[#2962ff]/15 text-[#2962ff] border border-[#2962ff]/30'
+                            }`}>
+                              {strat.shortName || strat.id}
+                            </span>
+                          </div>
+                          {strat.description && (
+                            <p className="text-xs text-[#787b86] mt-1 line-clamp-2 leading-relaxed">
+                              {strat.description}
+                            </p>
+                          )}
+                        </div>
+                        {isSelected ? (
+                          <div className="w-6 h-6 rounded-full bg-[#2962ff] flex items-center justify-center text-white shrink-0">
+                            <Check size={14} className="stroke-[2.5]" />
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full border border-[#2a2e39] shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════
+          MOBILE DATE RANGE PICKER ACTION SHEET (Phones only)
+      ══════════════════════════════════════════════════════ */}
+      <div className="md:hidden" data-datepicker-sheet>
+        <AnimatePresence>
+          {isDatePickerOpen && (
+            <>
+              {/* Darkened Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/80 z-[100] backdrop-blur-xs"
+                onClick={() => setIsDatePickerOpen(false)}
+              />
+              {/* Bottom Sheet Modal */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+                className="fixed inset-x-0 bottom-0 z-[101] bg-[#14171f] border-t border-[#2a2e39] rounded-t-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+              >
+                {/* Drag handle */}
+                <div className="w-full flex justify-center pb-1">
+                  <div className="w-10 h-1 bg-white/20 rounded-full" />
+                </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-[#2a2e39]">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-[#2962ff]" />
+                    <span className="font-bold text-sm text-white">Select Backtest Range</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsDatePickerOpen(false)}
+                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 flex items-center justify-center text-white/80 hover:text-white transition-colors cursor-pointer"
+                    aria-label="Close"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+
+                {/* Presets */}
+                <div className="pill-switch w-full flex">
+                  {(['2025', '1y', 'all'] as const).map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => {
+                        handlePresetDate(preset);
+                        setIsDatePickerOpen(false);
+                      }}
+                      className={`flex-1 pill-switch-btn text-xs py-2 ${
+                        activePreset === preset ? 'pill-switch-btn-active font-semibold' : ''
+                      }`}
+                    >
+                      {preset === '2025' ? '2025+' : preset === '1y' ? '1 Year' : 'All Data'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Date Inputs */}
+                <div className="grid grid-cols-2 gap-3 text-xs tabular-nums">
+                  <div>
+                    <span className="kpi-title block mb-1 text-[11px]">Start Date</span>
+                    <input
+                      type="date"
+                      value={strategyStartDate || '2025-01-01'}
+                      onChange={(e) => {
+                        setStrategyStartDate?.(e.target.value);
+                        setActivePreset('custom');
+                      }}
+                      className="date-token w-full text-xs px-2.5 py-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-white"
+                    />
+                  </div>
+                  <div>
+                    <span className="kpi-title block mb-1 text-[11px]">End Date</span>
+                    <input
+                      type="date"
+                      value={strategyEndDate || ''}
+                      onChange={(e) => {
+                        setStrategyEndDate?.(e.target.value);
+                        setActivePreset('custom');
+                      }}
+                      className="date-token w-full text-xs px-2.5 py-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Done Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsDatePickerOpen(false)}
+                  className="w-full py-2.5 rounded-xl bg-[#2962ff] text-white font-semibold text-xs hover:bg-[#2962ff]/90 active:scale-[0.99] transition-colors cursor-pointer"
+                >
+                  Apply Date Range
+                </button>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
     </>
   );
 }

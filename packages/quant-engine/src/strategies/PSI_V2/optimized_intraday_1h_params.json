@@ -1,0 +1,4337 @@
+{
+  "AALR": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1038.52,
+      "buyHoldRoi": 932.11,
+      "alpha": 106.4,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "ABUK": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 151.43,
+      "buyHoldRoi": 246.66,
+      "alpha": -95.23,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "ACAMD": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 466.18,
+      "buyHoldRoi": 389.41,
+      "alpha": 76.77,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "ACAP": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 3471.34,
+      "buyHoldRoi": 2200.26,
+      "alpha": 1271.07,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "ACGC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1125.53,
+      "buyHoldRoi": 860.69,
+      "alpha": 264.84,
+      "trades": 59,
+      "winRate": 100
+    }
+  },
+  "ACTF": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": -18.39,
+      "buyHoldRoi": -24.51,
+      "alpha": 6.11,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "ADCI": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1168.99,
+      "buyHoldRoi": 1260.84,
+      "alpha": -91.85,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "ADIB": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1319.07,
+      "buyHoldRoi": 1415.08,
+      "alpha": -96.01,
+      "trades": 69,
+      "winRate": 100
+    }
+  },
+  "ADPC": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 6.12,
+      "buyHoldRoi": 9.92,
+      "alpha": -3.8,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "ADRI": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2380.59,
+      "buyHoldRoi": 2129.24,
+      "alpha": 251.36,
+      "trades": 44,
+      "winRate": 100
+    }
+  },
+  "AFDI": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 551.24,
+      "buyHoldRoi": 356.81,
+      "alpha": 194.43,
+      "trades": 57,
+      "winRate": 100
+    }
+  },
+  "AFMC": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 3454.29,
+      "buyHoldRoi": 2335.79,
+      "alpha": 1118.5,
+      "trades": 65,
+      "winRate": 100
+    }
+  },
+  "AIDC": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 172.11,
+      "buyHoldRoi": 174.53,
+      "alpha": -2.42,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "AIFI": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 969.26,
+      "buyHoldRoi": 1608.32,
+      "alpha": -639.05,
+      "trades": 55,
+      "winRate": 100
+    }
+  },
+  "AIH": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 239.17,
+      "buyHoldRoi": 225.7,
+      "alpha": 13.47,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "AJWA": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1385.39,
+      "buyHoldRoi": 1324.96,
+      "alpha": 60.43,
+      "trades": 82,
+      "winRate": 100
+    }
+  },
+  "ALCN": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 339.7,
+      "buyHoldRoi": 647.07,
+      "alpha": -307.37,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "ALEX": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 30523.47,
+      "buyHoldRoi": 428.25,
+      "alpha": 30095.22,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "ALUM": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 932.81,
+      "buyHoldRoi": 799.39,
+      "alpha": 133.42,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "AMER": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 876.85,
+      "buyHoldRoi": 836.85,
+      "alpha": 40,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "AMES": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 20713.61,
+      "buyHoldRoi": 23334.64,
+      "alpha": -2621.03,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "AMIA": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 969.35,
+      "buyHoldRoi": 2016.77,
+      "alpha": -1047.42,
+      "trades": 52,
+      "winRate": 100
+    }
+  },
+  "AMII": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1991.58,
+      "buyHoldRoi": 1579.04,
+      "alpha": 412.54,
+      "trades": 55,
+      "winRate": 100
+    }
+  },
+  "AMOC": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 208.79,
+      "buyHoldRoi": 181.65,
+      "alpha": 27.14,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "AMPI": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 180.82,
+      "buyHoldRoi": 328.08,
+      "alpha": -147.26,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "APPC": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 149.88,
+      "buyHoldRoi": -8.67,
+      "alpha": 158.55,
+      "trades": 6,
+      "winRate": 100
+    }
+  },
+  "APSW": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 364.25,
+      "buyHoldRoi": 218.82,
+      "alpha": 145.43,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "ARAB": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 537.61,
+      "buyHoldRoi": 684.07,
+      "alpha": -146.46,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "ARCC": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2040.94,
+      "buyHoldRoi": 2212.31,
+      "alpha": -171.37,
+      "trades": 60,
+      "winRate": 100
+    }
+  },
+  "AREH": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 87.56,
+      "buyHoldRoi": 97.03,
+      "alpha": -9.47,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "ASCM": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 939.1,
+      "buyHoldRoi": 988.08,
+      "alpha": -48.99,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "ASPI": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 209.91,
+      "buyHoldRoi": 170.28,
+      "alpha": 39.63,
+      "trades": 27,
+      "winRate": 100
+    }
+  },
+  "ATLC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 250.22,
+      "buyHoldRoi": 147.85,
+      "alpha": 102.36,
+      "trades": 53,
+      "winRate": 100
+    }
+  },
+  "ATQA": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1294.49,
+      "buyHoldRoi": 1276.81,
+      "alpha": 17.68,
+      "trades": 69,
+      "winRate": 100
+    }
+  },
+  "AXPH": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 907.36,
+      "buyHoldRoi": 1029.26,
+      "alpha": -121.9,
+      "trades": 65,
+      "winRate": 100
+    }
+  },
+  "BIDI": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 558.16,
+      "buyHoldRoi": 291.38,
+      "alpha": 266.78,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "BIGP": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 94.94,
+      "buyHoldRoi": 122.73,
+      "alpha": -27.78,
+      "trades": 23,
+      "winRate": 100
+    }
+  },
+  "BINV": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 705.56,
+      "buyHoldRoi": 391.92,
+      "alpha": 313.64,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "BIOC": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1628.44,
+      "buyHoldRoi": 1749.73,
+      "alpha": -121.3,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "BONY": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 12.25,
+      "buyHoldRoi": 12.99,
+      "alpha": -0.73,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "BTFH": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 315.45,
+      "buyHoldRoi": 420.04,
+      "alpha": -104.6,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "CAED": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 22372.71,
+      "buyHoldRoi": 4497.61,
+      "alpha": 17875.1,
+      "trades": 84,
+      "winRate": 100
+    }
+  },
+  "CANA": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1204.13,
+      "buyHoldRoi": 1640.84,
+      "alpha": -436.71,
+      "trades": 70,
+      "winRate": 100
+    }
+  },
+  "CCAP": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 430.31,
+      "buyHoldRoi": 468.78,
+      "alpha": -38.47,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "CCRS": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 431.89,
+      "buyHoldRoi": 225.95,
+      "alpha": 205.94,
+      "trades": 47,
+      "winRate": 100
+    }
+  },
+  "CEFM": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 916.77,
+      "buyHoldRoi": 442.34,
+      "alpha": 474.43,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "CERA": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 526.13,
+      "buyHoldRoi": 330.49,
+      "alpha": 195.64,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "CFGH": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": -9.38,
+      "buyHoldRoi": -17.67,
+      "alpha": 8.28,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "CICH": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 325.02,
+      "buyHoldRoi": 208.61,
+      "alpha": 116.41,
+      "trades": 66,
+      "winRate": 100
+    }
+  },
+  "CIEB": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 278.13,
+      "buyHoldRoi": 367.1,
+      "alpha": -88.97,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "CIRA": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 342.11,
+      "buyHoldRoi": 198.24,
+      "alpha": 143.88,
+      "trades": 59,
+      "winRate": 100
+    }
+  },
+  "CLHO": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 355.27,
+      "buyHoldRoi": 323.73,
+      "alpha": 31.55,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "CNFN": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 197.36,
+      "buyHoldRoi": 49.73,
+      "alpha": 147.63,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "COMI": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 472.65,
+      "buyHoldRoi": 530.45,
+      "alpha": -57.81,
+      "trades": 40,
+      "winRate": 100
+    }
+  },
+  "COPR": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 144.57,
+      "buyHoldRoi": 77.64,
+      "alpha": 66.93,
+      "trades": 18,
+      "winRate": 100
+    }
+  },
+  "CPCI": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1201.46,
+      "buyHoldRoi": 1250.8,
+      "alpha": -49.34,
+      "trades": 65,
+      "winRate": 100
+    }
+  },
+  "CPME": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 359.87,
+      "buyHoldRoi": 133.87,
+      "alpha": 226,
+      "trades": 14,
+      "winRate": 100
+    }
+  },
+  "CRST": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1089.2,
+      "buyHoldRoi": 1768.64,
+      "alpha": -679.44,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "CSAG": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 393.46,
+      "buyHoldRoi": 465.03,
+      "alpha": -71.56,
+      "trades": 53,
+      "winRate": 100
+    }
+  },
+  "DAPH": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1013.24,
+      "buyHoldRoi": 725.84,
+      "alpha": 287.4,
+      "trades": 40,
+      "winRate": 100
+    }
+  },
+  "DCRC": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 341.33,
+      "buyHoldRoi": 161.44,
+      "alpha": 179.9,
+      "trades": 7,
+      "winRate": 100
+    }
+  },
+  "DEIN": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 4872.66,
+      "buyHoldRoi": 1705.56,
+      "alpha": 3167.1,
+      "trades": 66,
+      "winRate": 100
+    }
+  },
+  "DGTZ": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 635.68,
+      "buyHoldRoi": 482.11,
+      "alpha": 153.57,
+      "trades": 36,
+      "winRate": 100
+    }
+  },
+  "DOMT": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 457.39,
+      "buyHoldRoi": 506.09,
+      "alpha": -48.69,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "DSCW": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 688.89,
+      "buyHoldRoi": 872.13,
+      "alpha": -183.23,
+      "trades": 48,
+      "winRate": 100
+    }
+  },
+  "DTPP": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1927.62,
+      "buyHoldRoi": 1192.09,
+      "alpha": 735.53,
+      "trades": 40,
+      "winRate": 100
+    }
+  },
+  "EALR": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2469.51,
+      "buyHoldRoi": 2417.5,
+      "alpha": 52.01,
+      "trades": 39,
+      "winRate": 100
+    }
+  },
+  "EASB": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 5789.68,
+      "buyHoldRoi": 565.04,
+      "alpha": 5224.64,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "EAST": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 286.74,
+      "buyHoldRoi": 377.19,
+      "alpha": -90.44,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "EBSC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1052.16,
+      "buyHoldRoi": 353.39,
+      "alpha": 698.77,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "ECAP": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 331.82,
+      "buyHoldRoi": 295.57,
+      "alpha": 36.26,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "EDFM": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 558.52,
+      "buyHoldRoi": 275.88,
+      "alpha": 282.64,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "EEII": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 400.53,
+      "buyHoldRoi": 292.13,
+      "alpha": 108.4,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "EFIC": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1137.92,
+      "buyHoldRoi": 1378.25,
+      "alpha": -240.33,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "EFID": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 781.58,
+      "buyHoldRoi": 786.71,
+      "alpha": -5.14,
+      "trades": 53,
+      "winRate": 100
+    }
+  },
+  "EFIH": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 216.98,
+      "buyHoldRoi": 282.77,
+      "alpha": -65.79,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "EGAL": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1287.77,
+      "buyHoldRoi": 2275.42,
+      "alpha": -987.65,
+      "trades": 90,
+      "winRate": 100
+    }
+  },
+  "EGAS": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 278.87,
+      "buyHoldRoi": 215.14,
+      "alpha": 63.73,
+      "trades": 51,
+      "winRate": 100
+    }
+  },
+  "EGBE": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 61.55,
+      "buyHoldRoi": 35.85,
+      "alpha": 25.7,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "EGCH": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 389.34,
+      "buyHoldRoi": 370.21,
+      "alpha": 19.13,
+      "trades": 55,
+      "winRate": 100
+    }
+  },
+  "EGREF": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1337.4,
+      "buyHoldRoi": 265.44,
+      "alpha": 1071.95,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "EGS30AJ1C016-EGP": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 41430.01,
+      "buyHoldRoi": 475.11,
+      "alpha": 40954.9,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "EGS370O1C013": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 73.71,
+      "buyHoldRoi": 30.89,
+      "alpha": 42.81,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "EGS385S1C012": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 16.99,
+      "buyHoldRoi": -8.97,
+      "alpha": 25.96,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "EGS48271C018-EGP": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 256.06,
+      "buyHoldRoi": 7.69,
+      "alpha": 248.36,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "EGSA": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": -33.21,
+      "buyHoldRoi": -30,
+      "alpha": -3.21,
+      "trades": 2,
+      "winRate": 100
+    }
+  },
+  "EGTS": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 915.12,
+      "buyHoldRoi": 1119.57,
+      "alpha": -204.45,
+      "trades": 60,
+      "winRate": 100
+    }
+  },
+  "EHDR": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 139.61,
+      "buyHoldRoi": 70.6,
+      "alpha": 69.01,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "EITP": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 569.68,
+      "buyHoldRoi": -37.79,
+      "alpha": 607.47,
+      "trades": 7,
+      "winRate": 100
+    }
+  },
+  "ELEC": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 404.75,
+      "buyHoldRoi": 564.52,
+      "alpha": -159.76,
+      "trades": 40,
+      "winRate": 100
+    }
+  },
+  "ELKA": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 238.35,
+      "buyHoldRoi": 175.64,
+      "alpha": 62.71,
+      "trades": 30,
+      "winRate": 100
+    }
+  },
+  "ELNA": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 54.43,
+      "buyHoldRoi": 59.61,
+      "alpha": -5.18,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "ELSH": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 198.7,
+      "buyHoldRoi": 174.49,
+      "alpha": 24.21,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "ELWA": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 290.12,
+      "buyHoldRoi": 250.57,
+      "alpha": 39.55,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "EMFD": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 289.06,
+      "buyHoldRoi": 411.81,
+      "alpha": -122.75,
+      "trades": 65,
+      "winRate": 100
+    }
+  },
+  "ENGC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1569.25,
+      "buyHoldRoi": 1002.08,
+      "alpha": 567.17,
+      "trades": 83,
+      "winRate": 100
+    }
+  },
+  "EOSB": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 124.16,
+      "buyHoldRoi": 117.33,
+      "alpha": 6.82,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "EPCO": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 319.04,
+      "buyHoldRoi": 323.46,
+      "alpha": -4.42,
+      "trades": 33,
+      "winRate": 100
+    }
+  },
+  "EPPK": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 489.8,
+      "buyHoldRoi": 63.34,
+      "alpha": 426.46,
+      "trades": 34,
+      "winRate": 100
+    }
+  },
+  "ETEL": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 761.92,
+      "buyHoldRoi": 750.55,
+      "alpha": 11.37,
+      "trades": 53,
+      "winRate": 100
+    }
+  },
+  "ETRS": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 430.32,
+      "buyHoldRoi": 572.24,
+      "alpha": -141.93,
+      "trades": 65,
+      "winRate": 100
+    }
+  },
+  "EXPA": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 539.72,
+      "buyHoldRoi": 456.72,
+      "alpha": 83,
+      "trades": 87,
+      "winRate": 100
+    }
+  },
+  "FAIT": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 177,
+      "buyHoldRoi": 268.32,
+      "alpha": -91.32,
+      "trades": 23,
+      "winRate": 100
+    }
+  },
+  "FAITA": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 11.72,
+      "buyHoldRoi": 22.29,
+      "alpha": -10.57,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "FCMD": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 949.82,
+      "buyHoldRoi": 552.64,
+      "alpha": 397.18,
+      "trades": 57,
+      "winRate": 100
+    }
+  },
+  "FIRE": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 721.27,
+      "buyHoldRoi": 555.22,
+      "alpha": 166.05,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "FNAR": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 2421.85,
+      "buyHoldRoi": 1765.67,
+      "alpha": 656.18,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "FTNS": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 90,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": -10.55,
+      "buyHoldRoi": -32.54,
+      "alpha": 21.99,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "FWRY": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 546.19,
+      "buyHoldRoi": 479.75,
+      "alpha": 66.44,
+      "trades": 77,
+      "winRate": 100
+    }
+  },
+  "GBCO": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1841.36,
+      "buyHoldRoi": 869.28,
+      "alpha": 972.08,
+      "trades": 94,
+      "winRate": 100
+    }
+  },
+  "GDWA": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 662.14,
+      "buyHoldRoi": 564.66,
+      "alpha": 97.48,
+      "trades": 70,
+      "winRate": 100
+    }
+  },
+  "GGCC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 277.16,
+      "buyHoldRoi": 423.53,
+      "alpha": -146.37,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "GGRN": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 20.46,
+      "buyHoldRoi": 18.64,
+      "alpha": 1.81,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "GIHD": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 709.79,
+      "buyHoldRoi": 509.04,
+      "alpha": 200.76,
+      "trades": 31,
+      "winRate": 100
+    }
+  },
+  "GMCI": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 277.28,
+      "buyHoldRoi": 255.14,
+      "alpha": 22.14,
+      "trades": 31,
+      "winRate": 100
+    }
+  },
+  "GOUR": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 78.28,
+      "buyHoldRoi": 72.02,
+      "alpha": 6.26,
+      "trades": 13,
+      "winRate": 100
+    }
+  },
+  "GPIM": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 6000.36,
+      "buyHoldRoi": 7959.43,
+      "alpha": -1959.07,
+      "trades": 44,
+      "winRate": 100
+    }
+  },
+  "GPPL": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 90,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 86.78,
+      "buyHoldRoi": -18.57,
+      "alpha": 105.35,
+      "trades": 14,
+      "winRate": 100
+    }
+  },
+  "GRCA": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 433.22,
+      "buyHoldRoi": 487.89,
+      "alpha": -54.67,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "GSSC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1023.51,
+      "buyHoldRoi": 573.88,
+      "alpha": 449.63,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "GTEX": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 16,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 14.42,
+      "buyHoldRoi": 7.32,
+      "alpha": 7.1,
+      "trades": 4,
+      "winRate": 100
+    }
+  },
+  "GTHE": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 344.64,
+      "buyHoldRoi": 25.36,
+      "alpha": 319.29,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "GTWL": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 6642.64,
+      "buyHoldRoi": 3537.93,
+      "alpha": 3104.7,
+      "trades": 67,
+      "winRate": 100
+    }
+  },
+  "HBCO": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 601.1,
+      "buyHoldRoi": 628.6,
+      "alpha": -27.49,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "HDBK": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1138.23,
+      "buyHoldRoi": 1859.41,
+      "alpha": -721.18,
+      "trades": 58,
+      "winRate": 100
+    }
+  },
+  "HELI": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 268.31,
+      "buyHoldRoi": 306.08,
+      "alpha": -37.77,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "HRHO": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 250.67,
+      "buyHoldRoi": 180.73,
+      "alpha": 69.94,
+      "trades": 67,
+      "winRate": 100
+    }
+  },
+  "IBCT": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1794.48,
+      "buyHoldRoi": 786.65,
+      "alpha": 1007.83,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "ICFC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2187,
+      "buyHoldRoi": 2968.25,
+      "alpha": -781.26,
+      "trades": 89,
+      "winRate": 100
+    }
+  },
+  "ICID": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1979.06,
+      "buyHoldRoi": 1736.19,
+      "alpha": 242.86,
+      "trades": 51,
+      "winRate": 100
+    }
+  },
+  "IDRE": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 175.6,
+      "buyHoldRoi": 130.29,
+      "alpha": 45.32,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "IEEC": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 755.7,
+      "buyHoldRoi": 648.98,
+      "alpha": 106.73,
+      "trades": 33,
+      "winRate": 100
+    }
+  },
+  "IFAP": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1633.74,
+      "buyHoldRoi": 4078.21,
+      "alpha": -2444.47,
+      "trades": 52,
+      "winRate": 100
+    }
+  },
+  "INEG": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 481.36,
+      "buyHoldRoi": 458.07,
+      "alpha": 23.29,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "INFI": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1438.44,
+      "buyHoldRoi": 1240.9,
+      "alpha": 197.54,
+      "trades": 51,
+      "winRate": 100
+    }
+  },
+  "IRAX": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 678.49,
+      "buyHoldRoi": -0.2,
+      "alpha": 678.69,
+      "trades": 3,
+      "winRate": 100
+    }
+  },
+  "IRON": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 3986.16,
+      "buyHoldRoi": 1355.87,
+      "alpha": 2630.29,
+      "trades": 32,
+      "winRate": 100
+    }
+  },
+  "ISMA": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 615.25,
+      "buyHoldRoi": 707.66,
+      "alpha": -92.41,
+      "trades": 36,
+      "winRate": 100
+    }
+  },
+  "ISMQ": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 927.48,
+      "buyHoldRoi": 774.76,
+      "alpha": 152.72,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "ISPH": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 577.56,
+      "buyHoldRoi": 791.84,
+      "alpha": -214.27,
+      "trades": 62,
+      "winRate": 100
+    }
+  },
+  "JUFO": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 862.8,
+      "buyHoldRoi": 467.78,
+      "alpha": 395.02,
+      "trades": 57,
+      "winRate": 100
+    }
+  },
+  "KABO": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 862.54,
+      "buyHoldRoi": 1771.08,
+      "alpha": -908.54,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "KORA": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 4.27,
+      "buyHoldRoi": -2.03,
+      "alpha": 6.3,
+      "trades": 2,
+      "winRate": 100
+    }
+  },
+  "KRDI": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 89.81,
+      "buyHoldRoi": 145.45,
+      "alpha": -55.63,
+      "trades": 30,
+      "winRate": 100
+    }
+  },
+  "KWIN": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 3032.75,
+      "buyHoldRoi": 1715.24,
+      "alpha": 1317.52,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "KZPC": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 747.08,
+      "buyHoldRoi": 980.01,
+      "alpha": -232.93,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "LCSW": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 893.8,
+      "buyHoldRoi": 649.44,
+      "alpha": 244.36,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "LKGP": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 416.78,
+      "buyHoldRoi": 230,
+      "alpha": 186.78,
+      "trades": 12,
+      "winRate": 100
+    }
+  },
+  "LUTS": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1042.7,
+      "buyHoldRoi": 816.07,
+      "alpha": 226.63,
+      "trades": 32,
+      "winRate": 100
+    }
+  },
+  "MAAL": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1007.69,
+      "buyHoldRoi": 1092.5,
+      "alpha": -84.81,
+      "trades": 52,
+      "winRate": 100
+    }
+  },
+  "MASR": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 356.21,
+      "buyHoldRoi": 228.65,
+      "alpha": 127.56,
+      "trades": 63,
+      "winRate": 100
+    }
+  },
+  "MBEG": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 920.13,
+      "buyHoldRoi": 653.03,
+      "alpha": 267.1,
+      "trades": 39,
+      "winRate": 100
+    }
+  },
+  "MBSC": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2417.99,
+      "buyHoldRoi": 1260.16,
+      "alpha": 1157.83,
+      "trades": 58,
+      "winRate": 100
+    }
+  },
+  "MCQE": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1215.89,
+      "buyHoldRoi": 2605.99,
+      "alpha": -1390.1,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "MCRO": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 131.83,
+      "buyHoldRoi": 141.23,
+      "alpha": -9.4,
+      "trades": 15,
+      "winRate": 100
+    }
+  },
+  "MENA": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 755.16,
+      "buyHoldRoi": 748.78,
+      "alpha": 6.38,
+      "trades": 40,
+      "winRate": 100
+    }
+  },
+  "MEPA": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 873.16,
+      "buyHoldRoi": 690.97,
+      "alpha": 182.19,
+      "trades": 40,
+      "winRate": 100
+    }
+  },
+  "MFPC": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 334,
+      "buyHoldRoi": 421.88,
+      "alpha": -87.88,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "MFSC": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 965.29,
+      "buyHoldRoi": 552.03,
+      "alpha": 413.26,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "MHOT": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1937.91,
+      "buyHoldRoi": 1832.97,
+      "alpha": 104.94,
+      "trades": 52,
+      "winRate": 100
+    }
+  },
+  "MICH": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 567.36,
+      "buyHoldRoi": 639.52,
+      "alpha": -72.16,
+      "trades": 52,
+      "winRate": 100
+    }
+  },
+  "MILS": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1651.41,
+      "buyHoldRoi": 881.44,
+      "alpha": 769.97,
+      "trades": 79,
+      "winRate": 100
+    }
+  },
+  "MIPH": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1208.63,
+      "buyHoldRoi": 698.94,
+      "alpha": 509.69,
+      "trades": 67,
+      "winRate": 100
+    }
+  },
+  "MISR": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 79,
+      "buyHoldRoi": 48.59,
+      "alpha": 30.41,
+      "trades": 8,
+      "winRate": 100
+    }
+  },
+  "MKIT": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 8.37,
+      "buyHoldRoi": -8.73,
+      "alpha": 17.1,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "MMAT": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 90,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 526.26,
+      "buyHoldRoi": 325.29,
+      "alpha": 200.97,
+      "trades": 37,
+      "winRate": 100
+    }
+  },
+  "MOED": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 484,
+      "buyHoldRoi": 466.42,
+      "alpha": 17.58,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "MOIL": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 399.88,
+      "buyHoldRoi": 574,
+      "alpha": -174.12,
+      "trades": 33,
+      "winRate": 100
+    }
+  },
+  "MOIN": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 12848.22,
+      "buyHoldRoi": 4998.12,
+      "alpha": 7850.1,
+      "trades": 81,
+      "winRate": 100
+    }
+  },
+  "MOSC": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2370.57,
+      "buyHoldRoi": 2440.29,
+      "alpha": -69.72,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "MPCI": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 9673.53,
+      "buyHoldRoi": 8738.5,
+      "alpha": 935.03,
+      "trades": 76,
+      "winRate": 100
+    }
+  },
+  "MPCO": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 90,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 414.8,
+      "buyHoldRoi": 380.18,
+      "alpha": 34.62,
+      "trades": 31,
+      "winRate": 100
+    }
+  },
+  "MPRC": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 622,
+      "buyHoldRoi": 848.08,
+      "alpha": -226.08,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "MTIE": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1084.15,
+      "buyHoldRoi": 803.87,
+      "alpha": 280.28,
+      "trades": 50,
+      "winRate": 100
+    }
+  },
+  "NAHO": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 38.73,
+      "buyHoldRoi": 2.9,
+      "alpha": 35.83,
+      "trades": 25,
+      "winRate": 100
+    }
+  },
+  "NARE": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1450.35,
+      "buyHoldRoi": 1225.46,
+      "alpha": 224.89,
+      "trades": 36,
+      "winRate": 100
+    }
+  },
+  "NBKE": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 884.21,
+      "buyHoldRoi": 113.18,
+      "alpha": 771.03,
+      "trades": 10,
+      "winRate": 100
+    }
+  },
+  "NCCW": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 613.76,
+      "buyHoldRoi": 472.1,
+      "alpha": 141.66,
+      "trades": 52,
+      "winRate": 100
+    }
+  },
+  "NCGC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1249.54,
+      "buyHoldRoi": 0,
+      "alpha": 1249.54,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "NEDA": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 128.22,
+      "buyHoldRoi": 165.75,
+      "alpha": -37.53,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "NHPS": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1186.45,
+      "buyHoldRoi": 342.17,
+      "alpha": 844.28,
+      "trades": 37,
+      "winRate": 100
+    }
+  },
+  "NINH": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 681.87,
+      "buyHoldRoi": 618.29,
+      "alpha": 63.59,
+      "trades": 43,
+      "winRate": 100
+    }
+  },
+  "NIPH": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 4123.81,
+      "buyHoldRoi": 3837.14,
+      "alpha": 286.67,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "OBRI": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 592.95,
+      "buyHoldRoi": 409.61,
+      "alpha": 183.33,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "OCDI": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 754.16,
+      "buyHoldRoi": 988.24,
+      "alpha": -234.08,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "OCPH": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 3413.81,
+      "buyHoldRoi": 1184.2,
+      "alpha": 2229.6,
+      "trades": 42,
+      "winRate": 100
+    }
+  },
+  "ODIN": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 330.5,
+      "buyHoldRoi": 445.45,
+      "alpha": -114.95,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "OFH": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 514.96,
+      "buyHoldRoi": 442.7,
+      "alpha": 72.26,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "OIH": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 90,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 939.58,
+      "buyHoldRoi": 931.75,
+      "alpha": 7.84,
+      "trades": 80,
+      "winRate": 100
+    }
+  },
+  "OLFI": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 662.53,
+      "buyHoldRoi": 344.62,
+      "alpha": 317.91,
+      "trades": 49,
+      "winRate": 100
+    }
+  },
+  "ORAS": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 663.08,
+      "buyHoldRoi": 1318.46,
+      "alpha": -655.39,
+      "trades": 87,
+      "winRate": 100
+    }
+  },
+  "ORHD": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 917.76,
+      "buyHoldRoi": 1130.32,
+      "alpha": -212.56,
+      "trades": 72,
+      "winRate": 100
+    }
+  },
+  "ORWE": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 338.95,
+      "buyHoldRoi": 291.72,
+      "alpha": 47.23,
+      "trades": 71,
+      "winRate": 100
+    }
+  },
+  "PACH": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 801.36,
+      "buyHoldRoi": 103.59,
+      "alpha": 697.77,
+      "trades": 11,
+      "winRate": 100
+    }
+  },
+  "PHAR": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 414.85,
+      "buyHoldRoi": 510.59,
+      "alpha": -95.74,
+      "trades": 68,
+      "winRate": 100
+    }
+  },
+  "PHDC": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 710.05,
+      "buyHoldRoi": 1078.57,
+      "alpha": -368.52,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "PHGC": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 412.17,
+      "buyHoldRoi": 182.55,
+      "alpha": 229.61,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "PHTV": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2720.1,
+      "buyHoldRoi": 2380.49,
+      "alpha": 339.61,
+      "trades": 57,
+      "winRate": 100
+    }
+  },
+  "POUL": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 3229.83,
+      "buyHoldRoi": 1566.67,
+      "alpha": 1663.16,
+      "trades": 102,
+      "winRate": 100
+    }
+  },
+  "PRCL": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1020.65,
+      "buyHoldRoi": 1288.84,
+      "alpha": -268.19,
+      "trades": 53,
+      "winRate": 100
+    }
+  },
+  "PRDC": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 341.61,
+      "buyHoldRoi": 454.54,
+      "alpha": -112.93,
+      "trades": 46,
+      "winRate": 100
+    }
+  },
+  "PRMH": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 363.68,
+      "buyHoldRoi": 361.68,
+      "alpha": 1.99,
+      "trades": 40,
+      "winRate": 100
+    }
+  },
+  "QNBE": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 216.23,
+      "buyHoldRoi": 252.73,
+      "alpha": -36.49,
+      "trades": 32,
+      "winRate": 100
+    }
+  },
+  "RACC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 629.47,
+      "buyHoldRoi": 297.14,
+      "alpha": 332.32,
+      "trades": 73,
+      "winRate": 100
+    }
+  },
+  "RAKT": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 365.38,
+      "buyHoldRoi": 227.38,
+      "alpha": 138,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "RAYA": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 693.36,
+      "buyHoldRoi": 672.1,
+      "alpha": 21.26,
+      "trades": 54,
+      "winRate": 100
+    }
+  },
+  "RKAZ": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 511.5,
+      "buyHoldRoi": 429.5,
+      "alpha": 82,
+      "trades": 24,
+      "winRate": 100
+    }
+  },
+  "RMDA": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 475.1,
+      "buyHoldRoi": 422.95,
+      "alpha": 52.15,
+      "trades": 36,
+      "winRate": 100
+    }
+  },
+  "ROTO": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 264.62,
+      "buyHoldRoi": 173.7,
+      "alpha": 90.92,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "RREI": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 1061.77,
+      "buyHoldRoi": 688.99,
+      "alpha": 372.78,
+      "trades": 56,
+      "winRate": 100
+    }
+  },
+  "RTVC": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 106.38,
+      "buyHoldRoi": 134.76,
+      "alpha": -28.38,
+      "trades": 19,
+      "winRate": 100
+    }
+  },
+  "RUBX": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 480.54,
+      "buyHoldRoi": 269.4,
+      "alpha": 211.14,
+      "trades": 31,
+      "winRate": 100
+    }
+  },
+  "SAIB": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 0.94,
+      "buyHoldRoi": -55.42,
+      "alpha": 56.36,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "SAUD": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 287.67,
+      "buyHoldRoi": 481.48,
+      "alpha": -193.81,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "SCEM": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2032.05,
+      "buyHoldRoi": 1682.36,
+      "alpha": 349.69,
+      "trades": 29,
+      "winRate": 100
+    }
+  },
+  "SCFM": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 906.37,
+      "buyHoldRoi": 576.01,
+      "alpha": 330.36,
+      "trades": 34,
+      "winRate": 100
+    }
+  },
+  "SCTS": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 9016.38,
+      "buyHoldRoi": 4696.15,
+      "alpha": 4320.22,
+      "trades": 67,
+      "winRate": 100
+    }
+  },
+  "SDTI": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 507.53,
+      "buyHoldRoi": 799.46,
+      "alpha": -291.94,
+      "trades": 62,
+      "winRate": 100
+    }
+  },
+  "SEIG": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 902.5,
+      "buyHoldRoi": 1038.02,
+      "alpha": -135.52,
+      "trades": 35,
+      "winRate": 100
+    }
+  },
+  "SIPC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 686.66,
+      "buyHoldRoi": 335.61,
+      "alpha": 351.05,
+      "trades": 32,
+      "winRate": 100
+    }
+  },
+  "SKPC": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 310.25,
+      "buyHoldRoi": 336.5,
+      "alpha": -26.25,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "SMFR": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 4212.58,
+      "buyHoldRoi": 3640.43,
+      "alpha": 572.15,
+      "trades": 68,
+      "winRate": 100
+    }
+  },
+  "SMPP": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 460.31,
+      "buyHoldRoi": 29.5,
+      "alpha": 430.81,
+      "trades": 5,
+      "winRate": 100
+    }
+  },
+  "SNFC": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1126.01,
+      "buyHoldRoi": 1452.33,
+      "alpha": -326.31,
+      "trades": 57,
+      "winRate": 100
+    }
+  },
+  "SNFI": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 175.29,
+      "buyHoldRoi": 158.56,
+      "alpha": 16.73,
+      "trades": 7,
+      "winRate": 100
+    }
+  },
+  "SPIN": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1923.23,
+      "buyHoldRoi": 1407.01,
+      "alpha": 516.21,
+      "trades": 62,
+      "winRate": 100
+    }
+  },
+  "SPMD": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 70,
+      "buyHoldRoi": 7.4,
+      "alpha": 62.6,
+      "trades": 27,
+      "winRate": 100
+    }
+  },
+  "SUCE": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 548.41,
+      "buyHoldRoi": 18.75,
+      "alpha": 529.66,
+      "trades": 9,
+      "winRate": 100
+    }
+  },
+  "SUGR": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 233.81,
+      "buyHoldRoi": 393.6,
+      "alpha": -159.79,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "SVCE": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 4,
+    "metrics": {
+      "sysRoi": 756.25,
+      "buyHoldRoi": 1087.42,
+      "alpha": -331.17,
+      "trades": 67,
+      "winRate": 100
+    }
+  },
+  "SWDY": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 6,
+    "metrics": {
+      "sysRoi": 1014.72,
+      "buyHoldRoi": 1862.79,
+      "alpha": -848.07,
+      "trades": 58,
+      "winRate": 100
+    }
+  },
+  "TALM": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 477.15,
+      "buyHoldRoi": 379.17,
+      "alpha": 97.98,
+      "trades": 44,
+      "winRate": 100
+    }
+  },
+  "TANM": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 80,
+    "sellPsiDownThreshold": 18,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 446.25,
+      "buyHoldRoi": 164.09,
+      "alpha": 282.15,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "TAQA": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 75,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 157.97,
+      "buyHoldRoi": 71.11,
+      "alpha": 86.86,
+      "trades": 18,
+      "winRate": 100
+    }
+  },
+  "TMGH": {
+    "buyZoneCrossUp": 12,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 786.06,
+      "buyHoldRoi": 1287.32,
+      "alpha": -501.27,
+      "trades": 45,
+      "winRate": 100
+    }
+  },
+  "TORA": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 95,
+    "sellPsiDownThreshold": 18,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1227.53,
+      "buyHoldRoi": 550.1,
+      "alpha": 677.43,
+      "trades": 14,
+      "winRate": 100
+    }
+  },
+  "TRTO": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": -60.02,
+      "buyHoldRoi": -65,
+      "alpha": 4.98,
+      "trades": 1,
+      "winRate": 100
+    }
+  },
+  "TWSA": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 185.43,
+      "buyHoldRoi": 236.09,
+      "alpha": -50.66,
+      "trades": 16,
+      "winRate": 100
+    }
+  },
+  "TYCN": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 3817.79,
+      "buyHoldRoi": 3611.44,
+      "alpha": 206.34,
+      "trades": 60,
+      "winRate": 100
+    }
+  },
+  "UBEE": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 2.74,
+      "buyHoldRoi": 1.74,
+      "alpha": 1,
+      "trades": 1,
+      "winRate": 100
+    }
+  },
+  "UEFM": {
+    "buyZoneCrossUp": 16,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 913.94,
+      "buyHoldRoi": 274.52,
+      "alpha": 639.42,
+      "trades": 38,
+      "winRate": 100
+    }
+  },
+  "UEGC": {
+    "buyZoneCrossUp": 2,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 9,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 241.43,
+      "buyHoldRoi": 314.58,
+      "alpha": -73.15,
+      "trades": 41,
+      "winRate": 100
+    }
+  },
+  "UNIP": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 20,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 224.64,
+      "buyHoldRoi": 190.53,
+      "alpha": 34.12,
+      "trades": 20,
+      "winRate": 100
+    }
+  },
+  "UNIT": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 85,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 12,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 683.78,
+      "buyHoldRoi": 600.37,
+      "alpha": 83.41,
+      "trades": 58,
+      "winRate": 100
+    }
+  },
+  "UPMS": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 148.91,
+      "buyHoldRoi": 175.97,
+      "alpha": -27.06,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "UTOP": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 6470.88,
+      "buyHoldRoi": 1438.46,
+      "alpha": 5032.42,
+      "trades": 74,
+      "winRate": 100
+    }
+  },
+  "VALU": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 16,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 49.71,
+      "buyHoldRoi": 36.71,
+      "alpha": 13,
+      "trades": 17,
+      "winRate": 100
+    }
+  },
+  "VERT": {
+    "buyZoneCrossUp": 0,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 516.37,
+      "buyHoldRoi": 751.12,
+      "alpha": -234.75,
+      "trades": 26,
+      "winRate": 100
+    }
+  },
+  "VLMR": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": -39,
+      "buyHoldRoi": -41.12,
+      "alpha": 2.12,
+      "trades": 3,
+      "winRate": 100
+    }
+  },
+  "VLMRA": {
+    "buyZoneCrossUp": 8,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 8,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 114.37,
+      "buyHoldRoi": 64.64,
+      "alpha": 49.73,
+      "trades": 21,
+      "winRate": 100
+    }
+  },
+  "WATP": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 20,
+    "sellZoneCrossUnder": 90,
+    "sellPsiDownThreshold": 8,
+    "useAym": true,
+    "aymMultiplier": 16,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 450.31,
+      "buyHoldRoi": 284.62,
+      "alpha": 165.7,
+      "trades": 3,
+      "winRate": 100
+    }
+  },
+  "WCDF": {
+    "buyZoneCrossUp": 5,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 14,
+    "useAym": true,
+    "aymMultiplier": 6,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1562.96,
+      "buyHoldRoi": 589.78,
+      "alpha": 973.17,
+      "trades": 61,
+      "winRate": 100
+    }
+  },
+  "WKOL": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 25,
+    "sellZoneCrossUnder": 70,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 1135.76,
+      "buyHoldRoi": 1198.95,
+      "alpha": -63.19,
+      "trades": 37,
+      "winRate": 100
+    }
+  },
+  "ZEOT": {
+    "buyZoneCrossUp": 10,
+    "buyPsiUpThreshold": 0,
+    "sellZoneCrossUnder": 90,
+    "sellPsiDownThreshold": 20,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": true,
+    "atrDistance": 3,
+    "metrics": {
+      "sysRoi": 1006.62,
+      "buyHoldRoi": 819.18,
+      "alpha": 187.44,
+      "trades": 63,
+      "winRate": 100
+    }
+  },
+  "ZMID": {
+    "buyZoneCrossUp": 20,
+    "buyPsiUpThreshold": 15,
+    "sellZoneCrossUnder": 100,
+    "sellPsiDownThreshold": 8,
+    "useAym": false,
+    "aymMultiplier": 0,
+    "useAtr": false,
+    "atrDistance": 0,
+    "metrics": {
+      "sysRoi": 231.07,
+      "buyHoldRoi": 234.72,
+      "alpha": -3.66,
+      "trades": 27,
+      "winRate": 100
+    }
+  }
+}

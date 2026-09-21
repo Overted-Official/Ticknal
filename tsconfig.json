@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@ticknal/types": [
+        "./packages/types/src"
+      ],
+      "@ticknal/quant-engine": [
+        "./packages/quant-engine/src"
       ]
     }
   },

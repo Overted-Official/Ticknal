@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ["@ticknal/quant-engine", "@ticknal/types"],
   serverExternalPackages: ["onnxruntime-node", "onnxruntime-web"],
   images: {
     remotePatterns: [
