@@ -16,6 +16,7 @@ import {
   Camera,
   HelpCircle,
   SlidersHorizontal,
+  X,
 } from '@/components/ui/icon-library';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -132,6 +133,20 @@ export default function SignalPanel({
   const [drawerTrainPeriod, setDrawerTrainPeriod] = useState('2020-01-01 to 2024-12-31');
   const [drawerTestPeriod, setDrawerTestPeriod] = useState('2025-01-01 to Present');
   const [drawerTotalEvaluated, setDrawerTotalEvaluated] = useState(50220);
+
+  // Mobile swipe down to close gesture
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartY;
+    if (deltaY > 40) {
+      setIsCollapsed(true);
+    }
+    setTouchStartY(null);
+  };
 
   // Global listener from BottomToolbar
   useEffect(() => {
@@ -357,6 +372,10 @@ export default function SignalPanel({
     ? stats.maxDrawdown
     : (effectiveMetrics?.['Max Drawdown'] ? Math.abs(parseFloat(effectiveMetrics['Max Drawdown'])) : 0);
 
+  const effectiveWinRate = stats.totalTrades > 0
+    ? stats.winRate
+    : (effectiveMetrics?.['Win Rate'] ? parseFloat(effectiveMetrics['Win Rate']) : 0);
+
   const { computedMaxMae, computedAvgMae } = useMemo(() => {
     const rawMax =
       effectiveMetrics?.['Max Adverse Excursion'] ??
@@ -417,7 +436,7 @@ export default function SignalPanel({
   const computedMae = computedMaxMae;
 
   // Risk / Reward
-  const hasRR = selectedStrategy !== 'psi_v2' && selectedStrategy !== 'thoth_egx_macro'
+  const hasRR = selectedStrategy !== 'psi_v2' && selectedStrategy !== 'thoth_egx_macro' && selectedStrategy !== 'hydra'
     && triggerPrice !== null && stopLossPrice !== null && targetPrice !== null;
   const riskAmt   = hasRR ? Math.abs(triggerPrice! - stopLossPrice!) : 0;
   const rewardAmt = hasRR ? Math.abs(targetPrice!  - triggerPrice!)  : 0;
@@ -525,30 +544,46 @@ export default function SignalPanel({
           isCollapsed
             ? 'h-10 md:h-9 z-30'
             : isMaximized
-            ? 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-10 max-md:z-50 max-md:h-[calc(100vh-2.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[620px] md:z-30'
-            : 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-14 max-md:z-50 max-md:h-[calc(100vh-3.5rem)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[400px] md:z-30'
+            ? 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-[88px] max-md:z-50 max-md:h-[calc(100dvh-88px)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[620px] md:z-30'
+            : 'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-[88px] max-md:z-50 max-md:h-[calc(100dvh-88px)] max-md:rounded-t-2xl max-md:shadow-2xl md:h-[400px] md:z-30'
         }`}
       >
-        {/* Mobile Header when expanded */}
+        {/* Mobile Header when expanded (stops below top rail, swipe down or tap to close) */}
         {!isCollapsed && (
-          <div className="md:hidden flex items-center justify-between px-4 pt-2.5 pb-2 border-b border-plt-border-soft bg-plt-base rounded-t-2xl shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-xs text-plt-text flex items-center gap-1.5">
-                <Sparkles size={13} className="text-plt-accent" />
-                Strategy Report
-              </span>
-              <span className="text-[10px] font-semibold text-plt-muted bg-plt-active px-2 py-0.5 rounded">
-                {activeStratDef?.shortName || activeStratDef?.label}
-              </span>
-            </div>
-            <button
-              type="button"
+          <div
+            className="md:hidden flex flex-col border-b border-plt-border-soft bg-plt-base rounded-t-2xl shrink-0 touch-none select-none"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Grab Handle Pill */}
+            <div
+              className="w-full flex justify-center pt-2.5 pb-1 cursor-pointer"
               onClick={() => setIsCollapsed(true)}
-              className="p-1 rounded text-plt-muted hover:text-white transition-colors cursor-pointer"
-              title="Close Strategy Report"
+              title="Swipe or Tap to Close"
             >
-              <ChevronDown size={18} />
-            </button>
+              <div className="w-10 h-1 bg-white/25 hover:bg-white/40 rounded-full transition-colors" />
+            </div>
+
+            <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xs text-plt-text flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-plt-accent" />
+                  Strategy Report
+                </span>
+                <span className="text-[10px] font-semibold text-plt-muted bg-plt-active px-2 py-0.5 rounded">
+                  {activeStratDef?.shortName || activeStratDef?.label}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCollapsed(true)}
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 flex items-center justify-center text-white/80 hover:text-white transition-colors cursor-pointer"
+                title="Close Strategy Report"
+                aria-label="Close Strategy Report"
+              >
+                <X size={15} />
+              </button>
+            </div>
           </div>
         )}
 
@@ -601,18 +636,18 @@ export default function SignalPanel({
         {/* ══════════════════════════════════════════════════════
             1. TRADINGVIEW-STYLE TOP TOOLBAR (Always on desktop; on mobile only when expanded)
         ══════════════════════════════════════════════════════ */}
-        <div className={`items-center justify-between px-3 h-9 shrink-0 bg-plt-base border-b border-plt-border-soft ${isCollapsed ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`items-center justify-between px-2.5 sm:px-3 h-9 shrink-0 bg-plt-base border-b border-plt-border-soft overflow-x-auto no-scrollbar gap-1.5 ${isCollapsed ? 'hidden md:flex' : 'flex'}`}>
           {/* Left: Strategy dropdown & date range */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Strategy Dropdown */}
           <div className="relative" ref={strategyDropdownRef}>
             <button
               type="button"
               onClick={() => setIsStrategyDropdownOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold text-plt-text hover:bg-plt-hover transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 rounded text-xs font-semibold text-plt-text hover:bg-plt-hover transition-colors cursor-pointer shrink-0"
             >
-              <span className="truncate max-w-[140px] sm:max-w-[200px]">{activeStratDef?.label || 'Select Strategy'}</span>
-              <ChevronDown size={12} className={`text-plt-muted transition-transform duration-200 ${isStrategyDropdownOpen ? 'rotate-180' : ''}`} />
+              <span className="truncate max-w-[115px] sm:max-w-[200px]">{activeStratDef?.label || 'Select Strategy'}</span>
+              <ChevronDown size={12} className={`text-plt-muted shrink-0 transition-transform duration-200 ${isStrategyDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
@@ -645,18 +680,32 @@ export default function SignalPanel({
             </AnimatePresence>
           </div>
 
-          <div className="h-3.5 w-px bg-plt-border-soft" />
+          <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
 
           {/* Date Range Picker Pill */}
           <div className="relative" ref={datePickerRef}>
             <button
               type="button"
               onClick={() => setIsDatePickerOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs text-plt-subtle hover:bg-plt-hover transition-colors cursor-pointer tabular-nums"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 rounded text-xs text-plt-subtle hover:bg-plt-hover transition-colors cursor-pointer tabular-nums whitespace-nowrap shrink-0"
+              title="Select Backtest Date Range"
             >
-              <Calendar size={12} className="text-plt-muted" />
-              <span className="text-[11px]">{strategyStartDate || '2025-01-01'} — {strategyEndDate || 'Present'}</span>
-              <ChevronDown size={11} className="text-plt-muted" />
+              <Calendar size={12} className="text-plt-muted shrink-0" />
+              {/* Compact on phones */}
+              <span className="text-[11px] whitespace-nowrap sm:hidden">
+                {activePreset === '2025'
+                  ? '2025+'
+                  : activePreset === '1y'
+                  ? '1 Year'
+                  : activePreset === 'all'
+                  ? 'All Data'
+                  : `${strategyStartDate?.slice(2) || '25'}–Pres`}
+              </span>
+              {/* Full range on desktop */}
+              <span className="text-[11px] whitespace-nowrap hidden sm:inline">
+                {strategyStartDate || '2025-01-01'} — {strategyEndDate || 'Present'}
+              </span>
+              <ChevronDown size={11} className="text-plt-muted shrink-0" />
             </button>
 
             <AnimatePresence>
@@ -665,7 +714,7 @@ export default function SignalPanel({
                   initial={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
-                  className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 z-[60] space-y-2.5 w-[260px] p-3 shadow-2xl`}
+                  className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 max-sm:-left-6 sm:left-0 z-[60] space-y-2.5 w-[260px] max-w-[calc(100vw-32px)] p-3 shadow-2xl`}
                 >
                   <div className="pill-switch w-full flex">
                     {(['2025', '1y', 'all'] as const).map((preset) => (
@@ -673,7 +722,7 @@ export default function SignalPanel({
                         key={preset}
                         type="button"
                         onClick={() => { handlePresetDate(preset); setIsDatePickerOpen(false); }}
-                        className={`flex-1 pill-switch-btn ${
+                        className={`flex-1 pill-switch-btn text-[11px] py-1 ${
                           activePreset === preset ? 'pill-switch-btn-active font-semibold' : ''
                         }`}
                       >
@@ -688,7 +737,7 @@ export default function SignalPanel({
                         type="date"
                         value={strategyStartDate || '2025-01-01'}
                         onChange={(e) => { setStrategyStartDate?.(e.target.value); setActivePreset('custom'); }}
-                        className="date-token w-full text-[11px]"
+                        className="date-token w-full text-[11px] px-1 py-1"
                       />
                     </div>
                     <div>
@@ -697,7 +746,7 @@ export default function SignalPanel({
                         type="date"
                         value={strategyEndDate || ''}
                         onChange={(e) => { setStrategyEndDate?.(e.target.value); setActivePreset('custom'); }}
-                        className="date-token w-full text-[11px]"
+                        className="date-token w-full text-[11px] px-1 py-1"
                       />
                     </div>
                   </div>
@@ -706,7 +755,7 @@ export default function SignalPanel({
             </AnimatePresence>
           </div>
 
-          <div className="h-3.5 w-px bg-plt-border-soft" />
+          <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
 
           {/* Actionable Signal Pill */}
           {signalsLoading ? (
@@ -845,10 +894,10 @@ export default function SignalPanel({
               TAB: STRATEGY PERFORMANCE (Flagship View)
           ────────────────────────────────────────────────── */}
           {activeTab === 'performance' && (
-            <div className="space-y-12 sm:space-y-14 max-w-[1440px] mx-auto pb-12">
+            <div className="space-y-10 sm:space-y-14 max-w-[1440px] mx-auto pb-32 sm:pb-14">
 
-              {/* 1. KEY STATS SECTION (2 Clean Full-Width Rows, 1px White Border Cards, Core Stat Focused) */}
-              <div className="space-y-4">
+              {/* 1. KEY STATS SECTION (Unified 2x2 Grid on Mobile, No Card Full Width, 4 Columns on Desktop) */}
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between pb-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-cold-gray-400">Key Stats</h4>
                   <span className="text-[11px] text-cold-gray-400 font-normal">
@@ -856,12 +905,12 @@ export default function SignalPanel({
                   </span>
                 </div>
 
-                {/* Row 1: 3 ROI Metrics extending full width */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5 w-full">
+                {/* 2x2 Grid on Mobile, 4 Columns on Desktop */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 w-full">
                   {/* 1. Strategy ROI */}
-                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[82px] sm:min-h-[86px]">
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
                     <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">Strategy ROI</span>
-                    <div className={`text-xl sm:text-2xl font-bold tabular-nums font-sans tracking-tight mt-1.5 ${
+                    <div className={`text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight mt-1 sm:mt-1.5 ${
                       effectiveStrategyRoiPct >= 0 ? 'text-[#089981]' : 'text-[#f23645]'
                     }`}>
                       {effectiveStrategyRoiPct >= 0 ? '+' : ''}{effectiveStrategyRoiPct.toFixed(2)}%
@@ -869,56 +918,63 @@ export default function SignalPanel({
                   </div>
 
                   {/* 2. B&H ROI */}
-                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[82px] sm:min-h-[86px]">
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
                     <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">B&amp;H ROI</span>
-                    <div className="text-xl sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-white mt-1.5">
+                    <div className="text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-white mt-1 sm:mt-1.5">
                       {effectiveBnhRoiPct >= 0 ? '+' : ''}{effectiveBnhRoiPct.toFixed(2)}%
                     </div>
                   </div>
 
                   {/* 3. ROI Alpha */}
-                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[82px] sm:min-h-[86px]">
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
                     <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">ROI Alpha</span>
-                    <div className={`text-xl sm:text-2xl font-bold tabular-nums font-sans tracking-tight mt-1.5 ${
+                    <div className={`text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight mt-1 sm:mt-1.5 ${
                       effectiveAlphaPct >= 0 ? 'text-[#089981]' : 'text-[#f23645]'
                     }`}>
                       {effectiveAlphaPct >= 0 ? '+' : ''}{effectiveAlphaPct.toFixed(2)}%
                     </div>
                   </div>
-                </div>
 
-                {/* Row 2: 4 Other Metrics extending full width (2x2 on phone) */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5 w-full">
-                  {/* 4. Avg move per trade (%) */}
-                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[82px] sm:min-h-[86px]">
+                  {/* 4. Win Rate */}
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
+                    <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">Win Rate</span>
+                    <div className={`text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight mt-1 sm:mt-1.5 ${
+                      effectiveWinRate >= 50 ? 'text-[#089981]' : effectiveWinRate > 0 ? 'text-white' : 'text-cold-gray-400'
+                    }`}>
+                      {effectiveWinRate > 0 ? `${effectiveWinRate.toFixed(1)}%` : '—'}
+                    </div>
+                  </div>
+
+                  {/* 5. Avg move / trade */}
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
                     <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">Avg move / trade</span>
-                    <div className={`text-xl sm:text-2xl font-bold tabular-nums font-sans tracking-tight mt-1.5 ${
+                    <div className={`text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight mt-1 sm:mt-1.5 ${
                       effectiveAvgTradeReturnPct >= 0 ? 'text-[#089981]' : 'text-[#f23645]'
                     }`}>
                       {effectiveAvgTradeReturnPct >= 0 ? '+' : ''}{effectiveAvgTradeReturnPct.toFixed(2)}%
                     </div>
                   </div>
 
-                  {/* 5. Avg bars per trade */}
-                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[82px] sm:min-h-[86px]">
+                  {/* 6. Avg bars / trade */}
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
                     <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">Avg bars / trade</span>
-                    <div className="text-xl sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-white mt-1.5">
+                    <div className="text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-white mt-1 sm:mt-1.5">
                       {effectiveAvgBars}
                     </div>
                   </div>
 
-                  {/* 6. Max adverse excursion */}
-                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[82px] sm:min-h-[86px]">
+                  {/* 7. Max adverse excursion */}
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
                     <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">Max adverse excursion</span>
-                    <div className="text-xl sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-[#f23645] mt-1.5">
+                    <div className="text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-[#f23645] mt-1 sm:mt-1.5">
                       {computedMaxMae}
                     </div>
                   </div>
 
-                  {/* 7. Max drawdown */}
-                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[82px] sm:min-h-[86px]">
+                  {/* 8. Max drawdown */}
+                  <div className="bg-[#121214] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-3 sm:p-4 flex flex-col justify-between min-h-[76px] sm:min-h-[86px]">
                     <span className="text-xs sm:text-[13px] text-[#d1d4dc] font-normal truncate tracking-tight">Max drawdown</span>
-                    <div className="text-xl sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-[#f23645] mt-1.5">
+                    <div className="text-lg sm:text-2xl font-bold tabular-nums font-sans tracking-tight text-[#f23645] mt-1 sm:mt-1.5">
                       {effectiveMaxDd > 0 ? `-${Math.abs(effectiveMaxDd).toFixed(2)}%` : '0.00%'}
                     </div>
                   </div>

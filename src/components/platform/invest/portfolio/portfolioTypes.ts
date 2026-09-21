@@ -66,6 +66,7 @@ export const STRATEGIES: Array<{ id: StrategyFilter; label: string }> = [
   { id: 'all', label: 'All strategies' },
   { id: 'psi', label: 'Typhon' },
   { id: 'psi_v2', label: 'Cerberus' },
+  { id: 'hydra', label: 'Hydra' },
 ];
 
 export const REGIMES: Array<'All' | Regime> = ['All', 'Leading', 'Improving', 'Weakening', 'Lagging'];
@@ -114,15 +115,21 @@ export function opinionFor(
   maxAgeBars = Number.POSITIVE_INFINITY
 ): StrategyOpinion | null {
   if (!consensus || strategy === 'all') return null;
-  const opinion = strategy === 'psi' ? consensus.opinions.psi : strategy === 'psi_v2' ? consensus.opinions.psiV2 : consensus.opinions.thoth;
-  if (!opinion.signalDate || (opinion.barsAgo !== undefined && opinion.barsAgo >= maxAgeBars)) return null;
+  const opinion = strategy === 'psi'
+    ? consensus.opinions.psi
+    : strategy === 'psi_v2'
+      ? consensus.opinions.psiV2
+      : strategy === 'hydra'
+        ? consensus.opinions.hydra
+        : consensus.opinions.thoth;
+  if (!opinion?.signalDate || (opinion.barsAgo !== undefined && opinion.barsAgo >= maxAgeBars)) return null;
   return opinion;
 }
 
 export function latestFreshOpinion(consensus: HoldingConsensus | undefined, maxAgeBars: number): StrategyOpinion | null {
   if (!consensus) return null;
   return (
-    [consensus.opinions.psi, consensus.opinions.psiV2, consensus.opinions.thoth]
+    [consensus.opinions.psi, consensus.opinions.psiV2, consensus.opinions.hydra, consensus.opinions.thoth]
       .filter((opinion) => opinion.signalDate && (opinion.barsAgo ?? Number.POSITIVE_INFINITY) < maxAgeBars)
       .sort((a, b) => String(b.signalDate).localeCompare(String(a.signalDate)))[0] || null
   );
@@ -132,6 +139,7 @@ export function strategyMetricsFor(consensus: HoldingConsensus | undefined, stra
   if (!consensus || strategy === 'all') return null;
   if (strategy === 'psi') return consensus.strategyMetrics.psi;
   if (strategy === 'psi_v2') return consensus.strategyMetrics.psiV2;
+  if (strategy === 'hydra') return consensus.strategyMetrics.hydra;
   return consensus.strategyMetrics.thoth;
 }
 
@@ -156,6 +164,7 @@ export function buyOpportunityForHolding(
   }> = [
     { strategyId: 'psi', strategyLabel: 'Typhon', opinion: consensus.opinions.psi, metrics: consensus.strategyMetrics.psi },
     { strategyId: 'psi_v2', strategyLabel: 'Cerberus', opinion: consensus.opinions.psiV2, metrics: consensus.strategyMetrics.psiV2 },
+    { strategyId: 'hydra', strategyLabel: 'Hydra', opinion: consensus.opinions.hydra, metrics: consensus.strategyMetrics.hydra },
   ];
 
   const eligible = candidates

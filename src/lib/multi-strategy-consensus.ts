@@ -18,6 +18,7 @@ export type HoldingConsensus = {
   opinions: {
     psi: StrategyOpinion;
     psiV2: StrategyOpinion;
+    hydra: StrategyOpinion;
     thoth: StrategyOpinion;
   };
   overallVerdict: 'STRONG_BUY' | 'HOLD' | 'DIVERGENCE' | 'CRITICAL_EXIT';
@@ -31,6 +32,7 @@ export type HoldingConsensus = {
   strategyMetrics: {
     psi: StrategyMetrics;
     psiV2: StrategyMetrics;
+    hydra: StrategyMetrics;
     thoth: StrategyMetrics;
   };
 };
@@ -80,6 +82,13 @@ export async function evaluateHoldingConsensus(
     reason: 'Multi-timeframe indices inside healthy range',
   };
 
+  let hydraOpinion: StrategyOpinion = {
+    strategyId: 'hydra',
+    strategyName: 'Hydra',
+    verdict: 'HOLD',
+    reason: 'Adaptive volatility index in equilibrium',
+  };
+
   let thothOpinion: StrategyOpinion = {
     strategyId: 'thoth_egx_macro',
     strategyName: 'Archived',
@@ -88,12 +97,14 @@ export async function evaluateHoldingConsensus(
   };
   let psiMetrics = unavailableMetrics();
   let psiV2Metrics = unavailableMetrics();
+  let hydraMetrics = unavailableMetrics();
   let thothMetrics = unavailableMetrics();
 
   if (bars && bars.length >= 80) {
     const analyses = await Promise.allSettled([
       analyzeStrategy(cleanSym, bars, 'psi', { lookbackBars }),
       analyzeStrategy(cleanSym, bars, 'psi_v2', { lookbackBars }),
+      analyzeStrategy(cleanSym, bars, 'hydra', { lookbackBars }),
     ]);
 
     const toOpinion = (analysis: Awaited<ReturnType<typeof analyzeStrategy>>, strategyName: string): StrategyOpinion => {
@@ -128,10 +139,16 @@ export async function evaluateHoldingConsensus(
       psiV2Metrics = analyses[1].value.metrics;
     }
     else psiV2Opinion.reason = 'Cerberus signal unavailable for this ticker';
+
+    if (analyses[2].status === 'fulfilled') {
+      hydraOpinion = toOpinion(analyses[2].value, 'Hydra');
+      hydraMetrics = analyses[2].value.metrics;
+    }
+    else hydraOpinion.reason = 'Hydra signal unavailable for this ticker';
   }
 
-  // Calculate dual consensus aggregation (Typhon & Cerberus)
-  const opinions = [psiOpinion, psiV2Opinion];
+  // Calculate multi-strategy consensus aggregation (Typhon, Cerberus, Hydra)
+  const opinions = [psiOpinion, psiV2Opinion, hydraOpinion];
   const buyCount = opinions.filter((o) => o.verdict === 'BUY').length;
   const sellCount = opinions.filter((o) => o.verdict === 'SELL').length;
   const holdCount = opinions.filter((o) => o.verdict === 'HOLD').length;
@@ -143,7 +160,7 @@ export async function evaluateHoldingConsensus(
 
   if (sellCount >= 2) {
     overallVerdict = 'CRITICAL_EXIT';
-    verdictLabel = 'Exit Alert (Both Engines)';
+    verdictLabel = `Exit Alert (${sellCount}/3 Engines)`;
     verdictBadgeClass = 'bg-[#f23645]/15 text-[#f23645] border-[#f23645]/30';
     verdictIcon = '🚨';
   } else if (sellCount === 1) {
@@ -151,9 +168,9 @@ export async function evaluateHoldingConsensus(
     verdictLabel = 'Divergence (1 Exit Alert)';
     verdictBadgeClass = 'bg-amber-500/15 text-amber-400 border-amber-500/30';
     verdictIcon = '⚠️';
-  } else if (buyCount === 2) {
+  } else if (buyCount >= 2) {
     overallVerdict = 'STRONG_BUY';
-    verdictLabel = 'Strong Accumulate (Both Engines)';
+    verdictLabel = `Strong Accumulate (${buyCount}/3 Engines)`;
     verdictBadgeClass = 'bg-[#089981]/15 text-[#089981] border-[#089981]/30';
     verdictIcon = '🟢';
   } else if (buyCount === 1) {
@@ -168,6 +185,7 @@ export async function evaluateHoldingConsensus(
     opinions: {
       psi: psiOpinion,
       psiV2: psiV2Opinion,
+      hydra: hydraOpinion,
       thoth: thothOpinion,
     },
     overallVerdict,
@@ -181,6 +199,7 @@ export async function evaluateHoldingConsensus(
     strategyMetrics: {
       psi: psiMetrics,
       psiV2: psiV2Metrics,
+      hydra: hydraMetrics,
       thoth: thothMetrics,
     },
   };

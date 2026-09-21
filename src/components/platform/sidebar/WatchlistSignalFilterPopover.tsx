@@ -19,7 +19,7 @@ export interface SignalFilterConfig {
 
 export const DEFAULT_SIGNAL_FILTER: SignalFilterConfig = {
   isActive: false,
-  strategies: ['psi', 'psi_v2'],
+  strategies: ['psi', 'psi_v2', 'hydra'],
   signals: ['BUY'],
   lookbackDays: 5,
 };
@@ -47,6 +47,13 @@ const STRATEGY_OPTIONS = [
     sub: '3-Vector Momentum Architecture',
     badge: 'CERBERUS',
     color: 'text-sky-400 border-sky-500/30 bg-sky-500/10',
+  },
+  {
+    id: 'hydra',
+    label: 'Hydra Strategy',
+    sub: 'Adaptive Volatility Synchronizer',
+    badge: 'HYDRA',
+    color: 'text-[#00E676] border-[#00E676]/30 bg-[#00E676]/10',
   },
 ];
 

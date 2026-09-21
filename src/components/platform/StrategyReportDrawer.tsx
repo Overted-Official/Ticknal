@@ -75,7 +75,8 @@ export default function StrategyReportDrawer({
 }: StrategyReportDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'stats' | 'trades'>('stats');
-  const [model, setModel] = useState<'canonical' | 'psi8' | 'psi40' | 'thoth_egx_macro' | 'psi_v2'>(() => {
+  const [model, setModel] = useState<'canonical' | 'psi8' | 'psi40' | 'thoth_egx_macro' | 'psi_v2' | 'hydra'>(() => {
+    if (activeStrategy === 'hydra') return 'hydra';
     if (activeStrategy === 'psi_v2') return 'psi_v2';
     if (activeStrategy === 'thoth_egx_macro') return 'thoth_egx_macro';
     return 'canonical';
@@ -136,7 +137,9 @@ export default function StrategyReportDrawer({
   }, []);
 
   useEffect(() => {
-    if (activeStrategy === 'psi_v2') {
+    if (activeStrategy === 'hydra') {
+      setModel('hydra');
+    } else if (activeStrategy === 'psi_v2') {
       setModel('psi_v2');
     } else if (activeStrategy === 'thoth_egx_macro') {
       setModel('thoth_egx_macro');
@@ -376,6 +379,8 @@ export default function StrategyReportDrawer({
                       ? 'Typhon Canonical'
                       : model === 'psi_v2'
                       ? 'Cerberus'
+                      : model === 'hydra'
+                      ? 'Hydra'
                       : model === 'thoth_egx_macro'
                       ? 'Archived'
                       : model === 'psi40'
@@ -479,6 +484,15 @@ export default function StrategyReportDrawer({
                   >
                     Cerberus
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setModel('hydra')}
+                    className={`pill-switch-btn ${
+                      model === 'hydra' ? 'pill-switch-btn-active font-semibold text-[#00E676]' : ''
+                    }`}
+                  >
+                    Hydra
+                  </button>
                 </div>
 
                 <div className="h-4 w-px bg-plt-border-soft shrink-0 hidden sm:block" />
@@ -552,8 +566,8 @@ export default function StrategyReportDrawer({
               {activeTab === 'stats' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
 
-                  {/* 4 Top KPI Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {/* 4 Top KPI Cards (2x2 on mobile, 4 columns on desktop) */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
                     {/* 1. Total Net PnL */}
                     <div className="card-widget-compact p-4 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
                       <div className="flex items-center justify-between">

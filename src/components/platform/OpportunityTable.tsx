@@ -161,6 +161,19 @@ export default function OpportunityTable({
                 Cerberus ({opportunities.filter((o) => o.strategyId === 'psi_v2').length})
               </button>
             )}
+            {availableStrategies.includes('hydra') && (
+              <button
+                type="button"
+                onClick={() => setStrategyFilter('hydra')}
+                className={`px-2 py-1 rounded-lg btn-typography transition-all ${
+                  strategyFilter === 'hydra'
+                    ? 'bg-[#00E676]/20 text-[#00E676] border border-[#00E676]/30 font-semibold shadow-xs'
+                    : 'text-plt-muted hover:text-[#00E676]'
+                }`}
+              >
+                Hydra ({opportunities.filter((o) => o.strategyId === 'hydra').length})
+              </button>
+            )}
             {availableStrategies.includes('thoth_egx_macro') && (
               <button
                 type="button"
@@ -310,7 +323,7 @@ export default function OpportunityTable({
                     <span className={`text-[10px] tabular-nums font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ${
                       item.strategyBadgeClassName || 'bg-plt-info/10 text-plt-info'
                     }`}>
-                      {item.strategyShortName || (item.strategyId === 'psi_v2' ? 'Cerberus' : item.strategyId === 'thoth_egx_macro' ? 'Archived' : 'Typhon')}
+                      {item.strategyShortName || (item.strategyId === 'hydra' ? 'HYDRA' : item.strategyId === 'psi_v2' ? 'Cerberus' : item.strategyId === 'thoth_egx_macro' ? 'Archived' : 'Typhon')}
                     </span>
                   </td>
                   {!compact && (

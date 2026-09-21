@@ -6,6 +6,7 @@ import { framaIndicator } from './frama';
 import { evenBetterSinewaveIndicator } from './even-better-sinewave';
 import { kalmanFilterIndicator } from './kalman-filter';
 import { permutationEntropyIndicator } from './permutation-entropy';
+import { hydraIndicator } from './hydra-index';
 
 export interface IndicatorLine {
   id: string;
@@ -38,6 +39,7 @@ export interface IndicatorDefinition {
 
 // Registry of all available indicators
 export const INDICATORS: Record<string, IndicatorDefinition> = {
+  [hydraIndicator.id]: hydraIndicator,
   [framaIndicator.id]: framaIndicator,
   [evenBetterSinewaveIndicator.id]: evenBetterSinewaveIndicator,
   [kalmanFilterIndicator.id]: kalmanFilterIndicator,

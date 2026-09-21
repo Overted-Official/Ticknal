@@ -59,6 +59,7 @@ import ChartPredictPopover from './chart/ChartPredictPopover';
 import ChartOrderOverlays from './chart/ChartOrderOverlays';
 import ChartOrderDraftPopover from './chart/ChartOrderDraftPopover';
 import ChartLoadingSkeleton from './chart/ChartLoadingSkeleton';
+import HydraIndexPanel from './chart/HydraIndexPanel';
 
 // Re-export shared types for backward compatibility across the app
 export type { ChartData, ReplayState };
@@ -89,6 +90,12 @@ export default function ChartWidget({
   const { toast } = useToast();
   const [positionsDrawerOpen, setPositionsDrawerOpen] = useState(false);
   const openPositionsCount = tickerPositions.filter((o) => o.status === 'OPEN').length;
+  const isHydraPanelOpen = activeIndicators.includes('hydraIndex');
+  const hydraOptionsState = useMemo(() => {
+    return {
+      showMarkers: Boolean(strategyParams['hydraIndex_showMarkers'] ?? true),
+    };
+  }, [strategyParams]);
 
   const isFund = useMemo(() => {
     return ['CI_QUANT', 'OSOUL', 'COF'].includes(symbol.toUpperCase());
@@ -307,6 +314,7 @@ export default function ChartWidget({
       },
       rightPriceScale: {
         borderColor: cssTokenColor('--palette-chart-grid', '#1D2431'),
+        minimumWidth: 70,
       },
       timeScale: {
         borderColor: cssTokenColor('--palette-chart-grid', '#1D2431'),
@@ -837,101 +845,114 @@ export default function ChartWidget({
   );
 
   return (
-    <div className="relative w-full flex-1 min-h-0 bg-plt-card overflow-hidden select-none">
-      {/* 1. Top-Left In-Place Ticker & Live OHLCV Legend (No background, directly on chart) */}
-      <ChartTickerHeader
-        symbol={symbol}
-        watchlist={watchlist}
-        activeCandle={activeCandle}
-        timeframe="1D"
-      />
+    <div className="relative w-full flex-1 min-h-0 bg-plt-card overflow-hidden select-none flex flex-col">
+      {/* 1. Main Candlestick Price Stage */}
+      <div className="relative w-full flex-1 min-h-0 overflow-hidden">
+        {/* Top-Left In-Place Ticker & Live OHLCV Legend (No background, directly on chart) */}
+        <ChartTickerHeader
+          symbol={symbol}
+          watchlist={watchlist}
+          activeCandle={activeCandle}
+          timeframe="1D"
+        />
 
-      {/* 2. Main Lightweight-Charts Container Canvas */}
-      <div ref={chartContainerRef} className="w-full h-full" />
+        {/* Main Lightweight-Charts Container Canvas */}
+        <div ref={chartContainerRef} className="w-full h-full" />
 
-      {/* 3. Position Visual Overlays on Canvas */}
-      <ChartOrderOverlays
-        overlays={orderOverlays}
-        onSelectOrderToEdit={setSelectedOrderToEdit}
-        onSelectOrderToClose={setSelectedOrderToClose}
-      />
+        {/* Position Visual Overlays on Canvas */}
+        <ChartOrderOverlays
+          overlays={orderOverlays}
+          onSelectOrderToEdit={setSelectedOrderToEdit}
+          onSelectOrderToClose={setSelectedOrderToClose}
+        />
 
-      {/* 4. Order Drafting Popover */}
-      <ChartOrderDraftPopover
-        orderDraft={orderDraft}
-        symbol={symbol}
-        brokerageAccounts={liveBrokerageAccounts}
-        savingOrder={savingOrder}
-        orderError={orderError}
-        onUpdateDraft={setOrderDraft}
-        onClose={() => setOrderDraft(null)}
-        onSave={handleSaveOrderDraft}
-      />
+        {/* Order Drafting Popover */}
+        <ChartOrderDraftPopover
+          orderDraft={orderDraft}
+          symbol={symbol}
+          brokerageAccounts={liveBrokerageAccounts}
+          savingOrder={savingOrder}
+          orderError={orderError}
+          onUpdateDraft={setOrderDraft}
+          onClose={() => setOrderDraft(null)}
+          onSave={handleSaveOrderDraft}
+        />
 
-      {/* 5. Bottom Floating Controls (When NOT in replay mode) */}
-      {!replayMode && (
-        <ChartFloatingControls
-          hasReplayRoom={data.length > 1}
-          onEnableReplay={() => {
-            setReplayMode(true);
-            setReplayIndex(getDefaultReplayIndex(data));
-          }}
-          predictButtonUI={predictButtonUI}
-          activeIndicatorsCount={activeIndicators.length}
-          onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
-          openPositionsCount={openPositionsCount}
-          onOpenPositionsDrawer={() => setPositionsDrawerOpen(true)}
-          onOpenAddOrder={() => setIsAddOrderOpen(true)}
+        {/* Bottom Floating Controls (When NOT in replay mode) */}
+        {!replayMode && (
+          <ChartFloatingControls
+            hasReplayRoom={data.length > 1}
+            onEnableReplay={() => {
+              setReplayMode(true);
+              setReplayIndex(getDefaultReplayIndex(data));
+            }}
+            predictButtonUI={predictButtonUI}
+            activeIndicatorsCount={activeIndicators.length}
+            onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
+            openPositionsCount={openPositionsCount}
+            onOpenPositionsDrawer={() => setPositionsDrawerOpen(true)}
+            onOpenAddOrder={() => setIsAddOrderOpen(true)}
+          />
+        )}
+
+        {/* Bottom Replay Controls Toolbar (When in replay mode) */}
+        {replayMode && (
+          <ChartReplayControls
+            data={data}
+            replayIndex={replayIndex}
+            replayDate={replayDate ? String(replayDate) : null}
+            isPlaying={isPlaying}
+            playbackSpeed={playbackSpeed}
+            onJumpToStart={() => setReplayIndex(0)}
+            onStepReplay={(step) => setReplayIndex((curr) => clampNumber(curr + step, 0, data.length - 1))}
+            onTogglePlay={() => setIsPlaying((p) => !p)}
+            onJumpToLatest={() => setReplayIndex(Math.max(0, data.length - 1))}
+            onDateChange={(d) => setReplayIndex(findIndexAtOrBefore(data, d))}
+            onSpeedChange={setPlaybackSpeed}
+            onExitReplay={() => {
+              setReplayMode(false);
+              setIsPlaying(false);
+              setReplayIndex(Math.max(0, data.length - 1));
+            }}
+            predictButtonUI={predictButtonUI}
+          />
+        )}
+
+        {/* Technical Indicators Selection Popover */}
+        <ChartIndicatorsPopover
+          isOpen={indicatorsPopoverOpen}
+          onClose={() => setIndicatorsPopoverOpen(false)}
+          activeIndicators={activeIndicators}
+          onToggleIndicator={handleToggleIndicator}
+          expandedIndicators={expandedIndicators}
+          onToggleExpanded={toggleIndicatorExpanded}
+          strategyParams={strategyParams}
+          onUpdateStrategyParam={handleUpdateStrategyParam}
+        />
+
+        {/* AI Predict Popover */}
+        <ChartPredictPopover
+          isOpen={predictPopoverOpen}
+          onClose={() => setPredictPopoverOpen(false)}
+          predictDaysInput={predictDaysInput}
+          onChangePredictDays={setPredictDaysInput}
+          onRunPrediction={handleRunPrediction}
+          isPredicting={isPredicting}
+        />
+
+        {/* Loading Shimmer Overlay */}
+        <ChartLoadingSkeleton isLoading={isChartLoading} displaySymbol={displaySymbol} />
+      </div>
+
+      {/* 2. Separate HYDRA Index Dedicated Sub-Panel (Opens below chart when toggled) */}
+      {isHydraPanelOpen && (
+        <HydraIndexPanel
+          data={visibleData}
+          mainChart={chartRef.current}
+          onClose={() => handleToggleIndicator('hydraIndex')}
+          optionsState={hydraOptionsState}
         />
       )}
-
-      {/* 6. Bottom Replay Controls Toolbar (When in replay mode) */}
-      {replayMode && (
-        <ChartReplayControls
-          data={data}
-          replayIndex={replayIndex}
-          replayDate={replayDate ? String(replayDate) : null}
-          isPlaying={isPlaying}
-          playbackSpeed={playbackSpeed}
-          onJumpToStart={() => setReplayIndex(0)}
-          onStepReplay={(step) => setReplayIndex((curr) => clampNumber(curr + step, 0, data.length - 1))}
-          onTogglePlay={() => setIsPlaying((p) => !p)}
-          onJumpToLatest={() => setReplayIndex(Math.max(0, data.length - 1))}
-          onDateChange={(d) => setReplayIndex(findIndexAtOrBefore(data, d))}
-          onSpeedChange={setPlaybackSpeed}
-          onExitReplay={() => {
-            setReplayMode(false);
-            setIsPlaying(false);
-            setReplayIndex(Math.max(0, data.length - 1));
-          }}
-          predictButtonUI={predictButtonUI}
-        />
-      )}
-
-      {/* 7. Technical Indicators Selection Popover */}
-      <ChartIndicatorsPopover
-        isOpen={indicatorsPopoverOpen}
-        onClose={() => setIndicatorsPopoverOpen(false)}
-        activeIndicators={activeIndicators}
-        onToggleIndicator={handleToggleIndicator}
-        expandedIndicators={expandedIndicators}
-        onToggleExpanded={toggleIndicatorExpanded}
-        strategyParams={strategyParams}
-        onUpdateStrategyParam={handleUpdateStrategyParam}
-      />
-
-      {/* 8. AI Predict Popover */}
-      <ChartPredictPopover
-        isOpen={predictPopoverOpen}
-        onClose={() => setPredictPopoverOpen(false)}
-        predictDaysInput={predictDaysInput}
-        onChangePredictDays={setPredictDaysInput}
-        onRunPrediction={handleRunPrediction}
-        isPredicting={isPredicting}
-      />
-
-      {/* 9. Loading Shimmer Overlay */}
-      <ChartLoadingSkeleton isLoading={isChartLoading} displaySymbol={displaySymbol} />
 
       {/* 10. Positions & Orders Slide-over Drawer (Responsive Sheet on Mobile, 50% Screen on Desktop) */}
       {positionsDrawerOpen && (

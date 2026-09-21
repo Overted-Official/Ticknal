@@ -9,10 +9,14 @@ import {
   formatPsiV2MetricsForApi,
   runPsiV2Strategy,
 } from '@/strategies/PSI_V2';
+import {
+  formatHydraMetricsForApi,
+  runHydraStrategy,
+} from '@/strategies/Hydra';
 import type { EquityPoint, StrategyTrade } from '@/strategies/registry';
 import { getLatestActionableSignal } from '@/lib/strategy-signal-state';
 
-export type StrategyId = 'psi' | 'psi_v2' | 'thoth_egx_macro';
+export type StrategyId = 'psi' | 'psi_v2' | 'hydra' | 'thoth_egx_macro';
 
 export type SignalEvent = {
   symbol: string;
@@ -207,6 +211,14 @@ export async function analyzeStrategy(
     equityCurve = rawResult.equityCurve || [];
     parameterVersion = `psi-v2-levels-${cleanSymbol}`;
     formattedMetrics = formatPsiV2MetricsForApi(rawResult.metrics);
+  } else if (strategyId === 'hydra') {
+    rawResult = runHydraStrategy(bars, { ticker: cleanSymbol, ...commonParams });
+    signals = rawResult.signals;
+    metrics = rawResult.metrics;
+    trades = rawResult.trades || [];
+    equityCurve = rawResult.equityCurve || [];
+    parameterVersion = 'hydra-adaptive-v1';
+    formattedMetrics = formatHydraMetricsForApi(rawResult.metrics);
   } else {
     signals = [];
     metrics = {};
@@ -237,6 +249,7 @@ export async function analyzeStrategy(
 }
 
 export function strategyLabel(strategyId: StrategyId): string {
+  if (strategyId === 'hydra') return 'Hydra';
   if (strategyId === 'psi_v2') return 'Cerberus';
   if (strategyId === 'thoth_egx_macro') return 'Archived';
   return 'Typhon';

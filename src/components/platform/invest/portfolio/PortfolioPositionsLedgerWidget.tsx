@@ -74,6 +74,7 @@ export default function PortfolioPositionsLedgerWidget({
             <span>Group / Regime</span>
             <span>Typhon</span>
             <span>Cerberus</span>
+            <span>Hydra</span>
             <span className="text-right">Actions</span>
           </div>
 
@@ -143,6 +144,7 @@ export default function PortfolioPositionsLedgerWidget({
                   {/* Strategy Decision Cells */}
                   <StrategyDecisionCell label="Typhon" opinion={opinionFor(consensus, 'psi', freshness)} loading={isLoadingConsensus} active={strategy === 'psi'} />
                   <StrategyDecisionCell label="Cerberus" opinion={opinionFor(consensus, 'psi_v2', freshness)} loading={isLoadingConsensus} active={strategy === 'psi_v2'} />
+                  <StrategyDecisionCell label="Hydra" opinion={opinionFor(consensus, 'hydra', freshness)} loading={isLoadingConsensus} active={strategy === 'hydra'} />
 
                   {/* Actions */}
                   <div className="flex items-center justify-end gap-1">
@@ -248,9 +250,10 @@ export default function PortfolioPositionsLedgerWidget({
                       <>
                         <DecisionChip strategy="Typhon" opinion={opinionFor(consensus, 'psi', freshness) || undefined} loading={isLoadingConsensus} />
                         <DecisionChip strategy="Cerberus" opinion={opinionFor(consensus, 'psi_v2', freshness) || undefined} loading={isLoadingConsensus} />
+                        <DecisionChip strategy="Hydra" opinion={opinionFor(consensus, 'hydra', freshness) || undefined} loading={isLoadingConsensus} />
                       </>
                     ) : (
-                      <DecisionChip strategy={strategy === 'psi' ? 'Typhon' : 'Cerberus'} opinion={selectedOpinion || undefined} loading={isLoadingConsensus} />
+                      <DecisionChip strategy={strategy === 'psi' ? 'Typhon' : strategy === 'psi_v2' ? 'Cerberus' : 'Hydra'} opinion={selectedOpinion || undefined} loading={isLoadingConsensus} />
                     )}
                   </div>
                 </div>

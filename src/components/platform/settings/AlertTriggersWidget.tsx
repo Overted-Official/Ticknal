@@ -9,6 +9,7 @@ import {
   Target,
   Compass,
   Cpu,
+  Activity,
   Plus,
   Search,
   Lock,
@@ -74,7 +75,7 @@ export default function AlertTriggersWidget({
   const [togglingSymbol, setTogglingSymbol] = useState<string | null>(null);
 
   // Strategy Scope state
-  const [alertStrategyScope, setAlertStrategyScope] = useState<'all' | 'psi' | 'psi_v2' | 'thoth_egx_macro'>('all');
+  const [alertStrategyScope, setAlertStrategyScope] = useState<'all' | 'psi' | 'psi_v2' | 'hydra' | 'thoth_egx_macro'>('all');
   const [isSavingScope, setIsSavingScope] = useState(false);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function AlertTriggersWidget({
       .catch((err) => console.warn('Could not fetch user alert preferences:', err));
   }, []);
 
-  const handleStrategyScopeChange = async (scope: 'all' | 'psi' | 'psi_v2' | 'thoth_egx_macro') => {
+  const handleStrategyScopeChange = async (scope: 'all' | 'psi' | 'psi_v2' | 'hydra' | 'thoth_egx_macro') => {
     if (scope === alertStrategyScope) return;
     setAlertStrategyScope(scope);
     setIsSavingScope(true);
@@ -233,7 +234,7 @@ export default function AlertTriggersWidget({
         </div>
 
         {/* Strategy Scope Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* 1. All Strategies */}
           <div
             onClick={() => handleStrategyScopeChange('all')}
@@ -254,7 +255,7 @@ export default function AlertTriggersWidget({
                 </span>
               </div>
               <p className="text-[11px] text-[#787b86] leading-relaxed">
-                Receive alerts from Typhon and Cerberus models.
+                Receive alerts from Typhon, Cerberus, and Hydra models.
               </p>
             </div>
             <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
@@ -329,6 +330,39 @@ export default function AlertTriggersWidget({
                 alertStrategyScope === 'psi_v2' ? 'border-[#089981] bg-[#089981]' : 'border-[#27272a]'
               }`}>
                 {alertStrategyScope === 'psi_v2' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Hydra Strategy */}
+          <div
+            onClick={() => handleStrategyScopeChange('hydra')}
+            className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+              alertStrategyScope === 'hydra'
+                ? 'bg-[#222226] border-[#00E676] shadow-sm'
+                : 'bg-[#18181b] border-[#27272a] hover:border-[#3f3f46] hover:bg-[#222226]'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Activity className={`w-4 h-4 ${alertStrategyScope === 'hydra' ? 'text-[#00E676]' : 'text-[#787b86]'}`} />
+                  <span className="text-xs font-semibold text-white">Hydra Strategy</span>
+                </div>
+                <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/25">
+                  HYDRA
+                </span>
+              </div>
+              <p className="text-[11px] text-[#787b86] leading-relaxed">
+                Adaptive Volatility Synchronizer &amp; Velocity Sniper.
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-[#222225] flex items-center justify-between">
+              <span className="text-[9px] text-[#787b86]">Scope: Hydra Engine</span>
+              <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                alertStrategyScope === 'hydra' ? 'border-[#00E676] bg-[#00E676]' : 'border-[#27272a]'
+              }`}>
+                {alertStrategyScope === 'hydra' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </div>
           </div>

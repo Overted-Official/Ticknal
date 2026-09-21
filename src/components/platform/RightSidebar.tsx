@@ -331,7 +331,7 @@ export default function RightSidebar({
               ·{' '}
               <span className="text-plt-text font-medium">
                 {signalFilter.strategies
-                  .map((s) => (s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon'))
+                  .map((s) => (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon'))
                   .join(', ')}
               </span>{' '}
               ({signalFilter.lookbackDays}D)
@@ -363,7 +363,7 @@ export default function RightSidebar({
             <p className="text-[11px] font-medium text-plt-text">No matching tickers</p>
             <p className="text-[10px] text-[#787b86] max-w-[200px] leading-relaxed">
               {signalFilter.isActive
-                ? `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map(s => s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon').join(', ')} in the last ${signalFilter.lookbackDays} days.`
+                ? `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map(s => s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon').join(', ')} in the last ${signalFilter.lookbackDays} days.`
                 : 'Try a different search query.'}
             </p>
             {signalFilter.isActive && (

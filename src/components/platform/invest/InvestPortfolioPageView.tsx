@@ -279,7 +279,7 @@ export default function InvestPortfolioPageView({
   const freshOpportunityCount = strategyOpportunities.length;
   const freshSellCount = holdings.filter((holding) => {
     const consensus = consensusMap[holding.symbol];
-    if (strategy === 'all') return Boolean(consensus && [consensus.opinions.psi, consensus.opinions.psiV2, consensus.opinions.thoth].some((opinion) => opinion.verdict === 'SELL' && opinion.signalDate && (opinion.barsAgo ?? Number.POSITIVE_INFINITY) < freshness));
+    if (strategy === 'all') return Boolean(consensus && [consensus.opinions.psi, consensus.opinions.psiV2, consensus.opinions.hydra, consensus.opinions.thoth].some((opinion) => opinion.verdict === 'SELL' && opinion.signalDate && (opinion.barsAgo ?? Number.POSITIVE_INFINITY) < freshness));
     const opinion = opinionFor(consensus, strategy, freshness);
     return opinion?.verdict === 'SELL' && Boolean(opinion.signalDate);
   }).length;

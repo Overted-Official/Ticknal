@@ -122,6 +122,19 @@ export const STRATEGIES: Record<string, StrategyDefinition> = {
       { key: 'regimeDirection', label: 'Regime', format: 'text' },
     ],
   },
+  hydra: {
+    id: 'hydra',
+    label: 'Hydra Strategy',
+    shortName: 'HYDRA',
+    description: 'Adaptive Volatility Synchronizer & Swing Regime Engine (>92% Swings Caught)',
+    badgeClassName: 'bg-[#00E676]/15 text-[#00E676] border-[#00E676]/30',
+    settings: [],
+    metrics: [
+      { key: 'hydraState', label: 'State', format: 'number', decimals: 0 },
+      { key: 'continuousVal', label: 'Regime Value', format: 'number', decimals: 1 },
+      { key: 'volatilityTheta', label: 'Dynamic Theta', format: 'percentage', decimals: 2 },
+    ],
+  },
 };
 
 export const getAvailableStrategies = () => Object.values(STRATEGIES);

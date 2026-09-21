@@ -93,9 +93,10 @@ function TickerLogo({
   );
 }
 
-function normalizeStrategyId(strategy?: string | null): 'psi' | 'psi_v2' | 'thoth' {
+function normalizeStrategyId(strategy?: string | null): 'psi' | 'psi_v2' | 'hydra' | 'thoth' {
   if (!strategy) return 'psi';
   const lower = strategy.toLowerCase();
+  if (lower.includes('hydra')) return 'hydra';
   if (lower.includes('thoth')) return 'thoth';
   if (lower.includes('psi_v2') || lower.includes('psiv2')) return 'psi_v2';
   return 'psi';
@@ -135,7 +136,7 @@ export default function NotificationsDrawer({
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'signals' | 'system'>('signals');
-  const [selectedStrategy, setSelectedStrategy] = useState<'all' | 'psi' | 'psi_v2' | 'thoth'>('all');
+  const [selectedStrategy, setSelectedStrategy] = useState<'all' | 'psi' | 'psi_v2' | 'hydra' | 'thoth'>('all');
   const [selectedRegime, setSelectedRegime] = useState<'all' | 'alpha' | 'Leading' | 'Improving' | 'Weakening' | 'Lagging'>('all');
 
   const { data: signalsData, mutate: mutateSignals, isLoading: isLoadingSignals } = useSWR<{
@@ -163,7 +164,7 @@ export default function NotificationsDrawer({
   }, [signalsData?.notifications]);
 
   const strategyCounts = useMemo(() => {
-    const counts = { all: notifications.length, psi: 0, psi_v2: 0, thoth: 0 };
+    const counts = { all: notifications.length, psi: 0, psi_v2: 0, hydra: 0, thoth: 0 };
     for (const n of notifications) {
       const s = normalizeStrategyId(n.strategy);
       counts[s]++;
@@ -247,6 +248,7 @@ export default function NotificationsDrawer({
     { id: 'all', label: 'All Strategies', count: strategyCounts.all },
     { id: 'psi', label: 'Typhon Strategy', count: strategyCounts.psi },
     { id: 'psi_v2', label: 'Cerberus Strategy', count: strategyCounts.psi_v2 },
+    { id: 'hydra', label: 'Hydra Strategy', count: strategyCounts.hydra },
   ];
 
   const regimeOptions = [
@@ -265,6 +267,8 @@ export default function NotificationsDrawer({
       ? 'Typhon'
       : selectedStrategy === 'psi_v2'
       ? 'Cerberus'
+      : selectedStrategy === 'hydra'
+      ? 'Hydra'
       : 'All Strategies';
 
   const activeRegimeLabel =
@@ -605,7 +609,9 @@ export default function NotificationsDrawer({
                       const regime = getRegimeBadge(item.rotationRegime);
                       const strategyId = normalizeStrategyId(item.strategy);
                       const strategyLabel =
-                        strategyId === 'psi_v2'
+                        strategyId === 'hydra'
+                          ? 'Hydra'
+                          : strategyId === 'psi_v2'
                           ? 'Cerberus'
                           : strategyId === 'thoth'
                           ? 'Archived'
