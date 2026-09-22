@@ -120,6 +120,12 @@ export default function SignalPanel({
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const strategyDropdownRef = useRef<HTMLDivElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  // Button refs to compute fixed popover position (escapes overflow-hidden ancestors)
+  const strategyBtnRef = useRef<HTMLButtonElement>(null);
+  const datePickerBtnRef = useRef<HTMLButtonElement>(null);
+  const [strategyBtnRect, setStrategyBtnRect] = useState<DOMRect | null>(null);
+  const [datePickerBtnRect, setDatePickerBtnRect] = useState<DOMRect | null>(null);
+
 
   // Optimizer State
   const [optimizing, setOptimizing] = useState(false);
@@ -174,25 +180,36 @@ export default function SignalPanel({
       if (
         strategyDropdownRef.current &&
         !strategyDropdownRef.current.contains(target as Node) &&
-        !target?.closest?.('[data-strategy-sheet]')
+        !target?.closest?.('[data-strategy-sheet]') &&
+        !target?.closest?.('[data-strategy-popover]')
       ) {
         setIsStrategyDropdownOpen(false);
       }
       if (
         datePickerRef.current &&
         !datePickerRef.current.contains(target as Node) &&
-        !target?.closest?.('[data-datepicker-sheet]')
+        !target?.closest?.('[data-datepicker-sheet]') &&
+        !target?.closest?.('[data-datepicker-popover]')
       ) {
         setIsDatePickerOpen(false);
       }
     };
+    const handleDismiss = () => {
+      setIsStrategyDropdownOpen(false);
+      setIsDatePickerOpen(false);
+    };
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside);
+    window.addEventListener('scroll', handleDismiss, true);
+    window.addEventListener('resize', handleDismiss);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
+      window.removeEventListener('scroll', handleDismiss, true);
+      window.removeEventListener('resize', handleDismiss);
     };
   }, []);
+
 
   const strategies = getAvailableStrategies();
   const activeStratDef = STRATEGIES[selectedStrategy] || STRATEGIES['psi'];
@@ -662,24 +679,38 @@ export default function SignalPanel({
           {/* Strategy Dropdown */}
           <div className="relative" ref={strategyDropdownRef}>
             <button
+              ref={strategyBtnRef}
               type="button"
-              onClick={() => setIsStrategyDropdownOpen((prev) => !prev)}
+              onClick={() => {
+                if (strategyBtnRef.current) {
+                  setStrategyBtnRect(strategyBtnRef.current.getBoundingClientRect());
+                }
+                setIsStrategyDropdownOpen((prev) => !prev);
+              }}
               className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 rounded text-xs font-semibold text-plt-text hover:bg-plt-hover transition-colors cursor-pointer shrink-0"
             >
               <span className="truncate max-w-[115px] sm:max-w-[200px]">{activeStratDef?.label || 'Select Strategy'}</span>
               <ChevronDown size={12} className={`text-plt-muted shrink-0 transition-transform duration-200 ${isStrategyDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Desktop Dropdown Popover */}
+            {/* Desktop Dropdown Popover — rendered fixed to escape overflow-hidden ancestors */}
             <div className="hidden md:block">
               <AnimatePresence>
-                {isStrategyDropdownOpen && (
+                {isStrategyDropdownOpen && strategyBtnRect && (
                   <motion.div
-                    initial={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
+                    data-strategy-popover
+                    initial={{ opacity: 0, y: 4, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: isCollapsed ? 4 : -4, scale: 0.97 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.97 }}
                     transition={{ duration: 0.12 }}
-                    className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 w-[230px] z-[60] p-1 shadow-2xl`}
+                    style={{
+                      position: 'fixed',
+                      top: strategyBtnRect.bottom + 4,
+                      left: strategyBtnRect.left,
+                      zIndex: 9999,
+                      width: 230,
+                    }}
+                    className="surface-popover p-1 shadow-2xl"
                   >
                     <div className="kpi-title px-2 py-1 border-b border-plt-border-soft mb-1">
                       Select Strategy
@@ -703,13 +734,20 @@ export default function SignalPanel({
             </div>
           </div>
 
+
           <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
 
           {/* Date Range Picker Pill */}
           <div className="relative" ref={datePickerRef}>
             <button
+              ref={datePickerBtnRef}
               type="button"
-              onClick={() => setIsDatePickerOpen((prev) => !prev)}
+              onClick={() => {
+                if (datePickerBtnRef.current) {
+                  setDatePickerBtnRect(datePickerBtnRef.current.getBoundingClientRect());
+                }
+                setIsDatePickerOpen((prev) => !prev);
+              }}
               className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 rounded text-xs text-plt-subtle hover:bg-plt-hover transition-colors cursor-pointer tabular-nums whitespace-nowrap shrink-0"
               title="Select Backtest Date Range"
             >
@@ -731,15 +769,23 @@ export default function SignalPanel({
               <ChevronDown size={11} className="text-plt-muted shrink-0" />
             </button>
 
-            {/* Desktop Date Picker Popover */}
+            {/* Desktop Date Picker Popover — rendered fixed to escape overflow-hidden ancestors */}
             <div className="hidden md:block">
               <AnimatePresence>
-                {isDatePickerOpen && (
+                {isDatePickerOpen && datePickerBtnRect && (
                   <motion.div
-                    initial={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
+                    data-datepicker-popover
+                    initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: isCollapsed ? 4 : -4 }}
-                    className={`surface-popover absolute ${isCollapsed ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} left-0 max-sm:-left-6 sm:left-0 z-[60] space-y-2.5 w-[260px] max-w-[calc(100vw-32px)] p-3 shadow-2xl`}
+                    exit={{ opacity: 0, y: 4 }}
+                    style={{
+                      position: 'fixed',
+                      top: datePickerBtnRect.bottom + 4,
+                      left: Math.min(datePickerBtnRect.left, window.innerWidth - 268),
+                      zIndex: 9999,
+                      width: 260,
+                    }}
+                    className="surface-popover space-y-2.5 p-3 shadow-2xl"
                   >
                     <div className="pill-switch w-full flex">
                       {(['2025', '1y', 'all'] as const).map((preset) => (
@@ -780,6 +826,7 @@ export default function SignalPanel({
               </AnimatePresence>
             </div>
           </div>
+
 
           <div className="h-3.5 w-px bg-plt-border-soft shrink-0" />
 
