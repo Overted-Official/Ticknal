@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -114,8 +114,8 @@ export default function MonthlyInvestmentChart({ data }: MonthlyInvestmentChartP
     if (!active || !payload || !payload.length) return null;
     const d = payload[0].payload as MonthlyDataItem;
     return (
-      <div className="p-3 rounded-xl bg-[#1e222d] border border-[#2a2e39] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl min-w-[210px]">
-        <div className="font-semibold text-white mb-1 border-b border-[#2a2e39] pb-1 flex justify-between items-center">
+      <div className="p-3 rounded-xl bg-[#27272a] border border-[#3f3f46] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl min-w-[210px]">
+        <div className="font-semibold text-white mb-1 border-b border-[#3f3f46] pb-1 flex justify-between items-center">
           <span>{d.month}</span>
           {d.roi !== undefined && (
             <span className={d.roi >= 0 ? 'text-[#ff9800]' : 'text-[#f23645]'}>
@@ -238,7 +238,7 @@ export default function MonthlyInvestmentChart({ data }: MonthlyInvestmentChartP
 
               {/* Minimalist Horizontal Gridlines matching TradingView */}
               <CartesianGrid
-                stroke="#1e222d"
+                stroke="#27272a"
                 strokeDasharray="2 2"
                 vertical={false}
                 strokeOpacity={0.7}
@@ -419,7 +419,7 @@ export default function MonthlyInvestmentChart({ data }: MonthlyInvestmentChartP
                 name="Cumulative ROI"
                 stroke="#ff9800"
                 strokeWidth={2}
-                dot={{ r: 3, fill: '#ff9800', stroke: '#1e222d', strokeWidth: 1 }}
+                dot={{ r: 3, fill: '#ff9800', stroke: '#27272a', strokeWidth: 1 }}
                 activeDot={{ r: 5, fill: '#ff9800' }}
                 isAnimationActive={false}
               />
@@ -429,7 +429,7 @@ export default function MonthlyInvestmentChart({ data }: MonthlyInvestmentChartP
       </div>
 
       {/* 3. TradingView Controls Row (Bottom Bar) */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#1e222d] mt-1">
+      <div className="flex items-center justify-between pt-2 border-t border-[#27272a] mt-1">
         {/* Timeframe Selectors (1M, 3M, 6M, 1Y, All) */}
         <div className="flex items-center gap-1">
           {timeframes.map((tf) => {
@@ -441,7 +441,7 @@ export default function MonthlyInvestmentChart({ data }: MonthlyInvestmentChartP
                 onClick={() => setTimeframe(tf)}
                 className={`text-xs px-3 py-1 rounded-lg transition-all ${
                   isSelected
-                    ? 'bg-[#2a2e39] text-white font-bold shadow-xs border border-[#2a2e39]'
+                    ? 'bg-[#3f3f46] text-white font-bold shadow-xs border border-[#3f3f46]'
                     : 'text-[#787b86] hover:text-white font-medium'
                 }`}
               >
@@ -476,7 +476,7 @@ export default function MonthlyInvestmentChart({ data }: MonthlyInvestmentChartP
               onClick={() => setChartStyle('bars')}
               className={`p-1.5 rounded-md transition-all ${
                 chartStyle === 'bars'
-                  ? 'bg-[#2a2e39] text-white shadow-xs'
+                  ? 'bg-[#3f3f46] text-white shadow-xs'
                   : 'text-[#787b86] hover:text-white'
               }`}
               title="Bars style"
@@ -492,7 +492,7 @@ export default function MonthlyInvestmentChart({ data }: MonthlyInvestmentChartP
               onClick={() => setChartStyle('line')}
               className={`p-1.5 rounded-md transition-all ${
                 chartStyle === 'line'
-                  ? 'bg-[#2a2e39] text-white shadow-xs'
+                  ? 'bg-[#3f3f46] text-white shadow-xs'
                   : 'text-[#787b86] hover:text-white'
               }`}
               title="Line style"

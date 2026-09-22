@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -307,7 +307,7 @@ export default function SectorsHeader({
               placeholder="Search tickers or sectors..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-7 w-full rounded-lg bg-[#14171f] border border-[#2a2e39] pl-8 pr-6 text-xs text-white placeholder:text-[#787b86] focus:border-[#2962ff] focus:outline-none transition-colors leading-none"
+              className="h-7 w-full rounded-lg bg-[#18181b] border border-[#3f3f46] pl-8 pr-6 text-xs text-white placeholder:text-[#787b86] focus:border-[#2962ff] focus:outline-none transition-colors leading-none"
             />
             {searchQuery && (
               <button
@@ -327,8 +327,8 @@ export default function SectorsHeader({
               onClick={() => setIsDisplayMenuOpen(!isDisplayMenuOpen)}
               className={`h-7 px-2.5 rounded-lg border flex items-center gap-1.5 btn-typography transition cursor-pointer ${
                 isDisplayMenuOpen
-                  ? 'bg-[#2a2e39] border-[#2a2e39] text-white'
-                  : 'bg-[#14171f] border-[#2a2e39] text-[#787b86] hover:text-white hover:bg-[#1e222d]'
+                  ? 'bg-[#3f3f46] border-[#3f3f46] text-white'
+                  : 'bg-[#18181b] border-[#3f3f46] text-[#787b86] hover:text-white hover:bg-[#27272a]'
               }`}
               title="Display HUD & Grouping Settings"
             >
@@ -338,7 +338,7 @@ export default function SectorsHeader({
             </button>
 
             {isDisplayMenuOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl bg-[#1e222d] border border-[#2a2e39] p-3 shadow-2xl z-50 flex flex-col gap-3">
+              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl bg-[#27272a] border border-[#3f3f46] p-3 shadow-2xl z-50 flex flex-col gap-3">
                 {/* Grouping Tier */}
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-plt-muted mb-1.5">

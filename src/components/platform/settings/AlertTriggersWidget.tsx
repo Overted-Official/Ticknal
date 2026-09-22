@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
@@ -521,7 +521,7 @@ export default function AlertTriggersWidget({
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-sans font-bold text-xs text-white">{ticker.symbol}</span>
-                        <span className="text-[10px] font-sans text-[#787b86] px-1.5 py-0.5 rounded bg-[#14171f] border border-[#2a2e39] truncate">
+                        <span className="text-[10px] font-sans text-[#787b86] px-1.5 py-0.5 rounded bg-[#18181b] border border-[#3f3f46] truncate">
                           {ticker.sector}
                         </span>
                       </div>

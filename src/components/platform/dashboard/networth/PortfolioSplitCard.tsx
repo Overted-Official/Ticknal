@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -321,7 +321,7 @@ export default function PortfolioSplitCard({
   return (
     <div className="w-full h-full flex flex-col justify-start select-none space-y-4 bg-transparent">
       {/* 1. Square Tabs Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 border-b border-[#1e222d] pb-2">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 border-b border-[#27272a] pb-2">
         {tabs.map((tab) => {
           const isSelected = activeTab === tab.key;
           return (
@@ -336,7 +336,7 @@ export default function PortfolioSplitCard({
               }}
               className={`text-xs px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap ${
                 isSelected
-                  ? 'bg-[#1e222d] text-white font-semibold shadow-xs border border-[#2a2e39]'
+                  ? 'bg-[#27272a] text-white font-semibold shadow-xs border border-[#3f3f46]'
                   : 'text-[#787b86] hover:text-white font-medium'
               }`}
             >
@@ -408,7 +408,7 @@ export default function PortfolioSplitCard({
         <div className="lg:col-span-7 overflow-x-auto overflow-y-auto max-h-[280px] custom-scrollbar">
           <table className="w-full text-left text-xs font-sans border-collapse">
             <thead>
-              <tr className="border-b border-[#1e222d] text-[#787b86] text-[11px] font-medium">
+              <tr className="border-b border-[#27272a] text-[#787b86] text-[11px] font-medium">
                 <th className="pb-2 text-left font-medium">
                   {activeTab === 'types'
                     ? 'Asset type'
@@ -423,12 +423,12 @@ export default function PortfolioSplitCard({
                 <th className="pb-2 text-right font-medium">Unrealized gain</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e222d]/60">
+            <tbody className="divide-y divide-[#27272a]/60">
               {activeItems.map((item) => (
                 <tr
                   key={item.id || item.name}
                   onClick={() => onSelectSlice && onSelectSlice(item.name)}
-                  className="hover:bg-[#1e222d]/30 transition-colors cursor-pointer group"
+                  className="hover:bg-[#27272a]/30 transition-colors cursor-pointer group"
                 >
                   {/* 1. Name with Color Swatch */}
                   <td className="py-2.5 pr-3">

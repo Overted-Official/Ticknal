@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -86,8 +86,8 @@ export default function InflationRadarChart({
     if (!active || !payload || !payload.length) return null;
     const data = payload[0].payload as InflationPoint;
     return (
-      <div className="p-3 rounded-xl bg-[#1e222d] border border-[#2a2e39] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl">
-        <div className="font-semibold text-white mb-1 border-b border-[#2a2e39] pb-1">
+      <div className="p-3 rounded-xl bg-[#27272a] border border-[#3f3f46] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl">
+        <div className="font-semibold text-white mb-1 border-b border-[#3f3f46] pb-1">
           {data.fullDate || label}
         </div>
         <div className="flex justify-between gap-4 text-[#089981]">
@@ -164,7 +164,7 @@ export default function InflationRadarChart({
 
               {/* Minimalist Horizontal Gridlines matching TradingView */}
               <CartesianGrid
-                stroke="#1e222d"
+                stroke="#27272a"
                 strokeDasharray="2 2"
                 vertical={false}
                 strokeOpacity={0.7}
@@ -259,7 +259,7 @@ export default function InflationRadarChart({
       </div>
 
       {/* 3. TradingView Controls Row (Bottom Bar from Reference Snippet) */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#1e222d] mt-1">
+      <div className="flex items-center justify-between pt-2 border-t border-[#27272a] mt-1">
         {/* Timeframe Selectors (1D, 1M, 3M, 1Y, 5Y, All) */}
         <div className="flex items-center gap-1">
           {timeframes.map((tf) => {
@@ -271,7 +271,7 @@ export default function InflationRadarChart({
                 onClick={() => setTimeframe(tf)}
                 className={`text-xs px-3 py-1 rounded-lg transition-all ${
                   isSelected
-                    ? 'bg-[#2a2e39] text-white font-bold shadow-xs border border-[#2a2e39]'
+                    ? 'bg-[#3f3f46] text-white font-bold shadow-xs border border-[#3f3f46]'
                     : 'text-[#787b86] hover:text-white font-medium'
                 }`}
               >
@@ -306,7 +306,7 @@ export default function InflationRadarChart({
               onClick={() => setChartStyle('line')}
               className={`p-1.5 rounded-md transition-all ${
                 chartStyle === 'line'
-                  ? 'bg-[#2a2e39] text-white shadow-xs'
+                  ? 'bg-[#3f3f46] text-white shadow-xs'
                   : 'text-[#787b86] hover:text-white'
               }`}
               title="Line style"

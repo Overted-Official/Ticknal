@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -203,7 +203,7 @@ export default function PortfolioConsultantCard({
   return (
     <div className="w-full h-full flex flex-col justify-start select-none space-y-4 bg-transparent">
       {/* 1. Top Control Bar: Category Filters on Left + View Mode Switch on Right (Matches PortfolioBreakdownTable) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#1e222d]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#27272a]">
         {/* Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
           {filterTabs.map((f) => (
@@ -216,7 +216,7 @@ export default function PortfolioConsultantCard({
               }}
               className={`px-3.5 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
                 activeFilter === f.key && viewMode !== 'rebalance'
-                  ? 'bg-[#1e222d] text-white border border-[#2a2e39] font-semibold'
+                  ? 'bg-[#27272a] text-white border border-[#3f3f46] font-semibold'
                   : 'text-[#868993] hover:text-white font-medium'
               }`}
             >
@@ -243,7 +243,7 @@ export default function PortfolioConsultantCard({
             onClick={() => setViewMode('all')}
             className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
               viewMode === 'all'
-                ? 'bg-[#2a2e39] text-white shadow-xs'
+                ? 'bg-[#3f3f46] text-white shadow-xs'
                 : 'text-[#787b86] hover:text-white'
             }`}
           >
@@ -254,7 +254,7 @@ export default function PortfolioConsultantCard({
             onClick={() => setViewMode('rebalance')}
             className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
               viewMode === 'rebalance'
-                ? 'bg-[#2a2e39] text-white shadow-xs'
+                ? 'bg-[#3f3f46] text-white shadow-xs'
                 : 'text-[#787b86] hover:text-white'
             }`}
           >
@@ -312,7 +312,7 @@ export default function PortfolioConsultantCard({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* COLUMN 1: LEADING INDUSTRY STAKES */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Leading Industry Stakes</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -322,7 +322,7 @@ export default function PortfolioConsultantCard({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {leadingStakes.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No active positions in leading rotation regimes.
@@ -356,7 +356,7 @@ export default function PortfolioConsultantCard({
 
             {/* COLUMN 2: IMPROVING & STABLE STAKES */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Improving & Stable Stakes</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -366,7 +366,7 @@ export default function PortfolioConsultantCard({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {improvingStakes.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No positions in improving industry groups.
@@ -400,7 +400,7 @@ export default function PortfolioConsultantCard({
 
             {/* COLUMN 3: LAGGING & RISK STAKES */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Lagging & Overweight Risk</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -410,7 +410,7 @@ export default function PortfolioConsultantCard({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {laggingOrRiskStakes.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No lagging or overconcentrated stakes detected.
@@ -445,7 +445,7 @@ export default function PortfolioConsultantCard({
         ) : viewMode === 'all' ? (
           /* SINGLE COMPLETE RANKED LIST */
           <div className="flex flex-col">
-            <div className="divide-y divide-[#1e222d]">
+            <div className="divide-y divide-[#27272a]">
               {filteredStakes.map((stake) => (
                 <StakeRowItem
                   key={stake.industryGroup}
@@ -457,7 +457,7 @@ export default function PortfolioConsultantCard({
                 />
               ))}
             </div>
-            <div className="pt-3 mt-1 border-t border-[#1e222d]">
+            <div className="pt-3 mt-1 border-t border-[#27272a]">
               <span className="text-xs text-[#787b86]">
                 Showing {filteredStakes.length} industry groups ranked by portfolio allocation weight
               </span>
@@ -475,7 +475,7 @@ export default function PortfolioConsultantCard({
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#787b86] pb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between text-xs text-[#787b86] pb-1 border-b border-[#27272a]">
                 <span>Underweight / Unheld Sectors in Alpha Rotation with Live Buy Alerts</span>
                 <span className="font-mono text-white font-medium">{rebalancingSuggestions.length} Opportunities</span>
               </div>
@@ -518,7 +518,7 @@ export default function PortfolioConsultantCard({
                       </div>
 
                       {/* Live Strategy Buy Triggers in this sector */}
-                      <div className="pt-2 border-t border-[#1e222d] space-y-1.5">
+                      <div className="pt-2 border-t border-[#27272a] space-y-1.5">
                         <span className="text-[10px] text-[#787b86] font-sans uppercase font-medium tracking-wider block">
                           Live Strategy Buy Signals ({sug.opportunities.length}):
                         </span>
@@ -528,7 +528,7 @@ export default function PortfolioConsultantCard({
                             <Link
                               key={`${opp.symbol}-${opp.strategyId}`}
                               href={`/invest?ticker=${opp.symbol}&view=chart&timeframe=D`}
-                              className="flex items-center justify-between p-2 rounded-lg bg-[#1e222d]/60 hover:bg-[#1e222d] border border-[#2a2e39]/60 transition-colors group"
+                              className="flex items-center justify-between p-2 rounded-lg bg-[#27272a]/60 hover:bg-[#27272a] border border-[#3f3f46]/60 transition-colors group"
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="font-bold text-xs text-white group-hover:text-[#2962ff] transition-colors">
@@ -589,7 +589,7 @@ function StakeRowItem({
   const initial = stake.industryGroup.trim().charAt(0).toUpperCase();
 
   return (
-    <div className={`py-2.5 px-1 flex flex-col hover:bg-[#1e222d]/30 transition-colors group cursor-pointer border-b border-[#1e222d] ${
+    <div className={`py-2.5 px-1 flex flex-col hover:bg-[#27272a]/30 transition-colors group cursor-pointer border-b border-[#27272a] ${
       isOverweight ? 'bg-red-500/[0.03]' : ''
     }`}>
       <div className="flex items-center justify-between">
@@ -600,7 +600,7 @@ function StakeRowItem({
               ? 'bg-red-500/15 text-red-400 border-red-500/30'
               : regime === 'Leading'
               ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-              : 'bg-[#1e222d] text-white/90 border-white/5'
+              : 'bg-[#27272a] text-white/90 border-white/5'
           }`}>
             <span>{initial}</span>
           </div>
@@ -619,7 +619,7 @@ function StakeRowItem({
 
             <div className="flex items-center gap-1.5 mt-0.5">
               {stake.tickers.length > 0 && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1e222d] text-[#868993] border border-white/5 uppercase tracking-wider truncate max-w-[110px]">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#27272a] text-[#868993] border border-white/5 uppercase tracking-wider truncate max-w-[110px]">
                   {stake.tickers.join(', ')}
                 </span>
               )}
@@ -669,7 +669,7 @@ function StakeRowItem({
                   ? 'bg-[#2962ff]'
                   : regime === 'Weakening'
                   ? 'bg-[#ff9800]'
-                  : 'bg-[#1e222d] text-[#868993] border border-white/5'
+                  : 'bg-[#27272a] text-[#868993] border border-white/5'
               }`}
             >
               {isOverweight ? '⚠️ >25%' : regime}
@@ -680,7 +680,7 @@ function StakeRowItem({
 
       {/* Optional Allocation Progress Bar */}
       {showProgressBar && (
-        <div className="w-full h-1 rounded-full bg-[#1e222d] overflow-hidden mt-2">
+        <div className="w-full h-1 rounded-full bg-[#27272a] overflow-hidden mt-2">
           <div
             className={`h-full rounded-full transition-all duration-300 ${
               isOverweight ? 'bg-[#f23645]' : isModerate ? 'bg-[#ff9800]' : 'bg-[#089981]'

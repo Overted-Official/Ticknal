@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -120,7 +120,7 @@ export default function ActivePositionsBreakdownTable({
   return (
     <div className="w-full h-full flex flex-col justify-start select-none space-y-4 bg-transparent">
       {/* 1. Top Control Bar: Category Filters on Left + View Mode Switch on Right (Matches PortfolioBreakdownTable) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#1e222d]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#27272a]">
         {/* Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
           {filterTabs.map((f) => (
@@ -137,7 +137,7 @@ export default function ActivePositionsBreakdownTable({
               }}
               className={`px-3.5 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
                 activeFilter === f.key
-                  ? 'bg-[#1e222d] text-white border border-[#2a2e39] font-semibold'
+                  ? 'bg-[#27272a] text-white border border-[#3f3f46] font-semibold'
                   : 'text-[#868993] hover:text-white font-medium'
               }`}
             >
@@ -165,7 +165,7 @@ export default function ActivePositionsBreakdownTable({
               onClick={() => setViewMode('all')}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                 viewMode === 'all'
-                  ? 'bg-[#2a2e39] text-white shadow-xs'
+                  ? 'bg-[#3f3f46] text-white shadow-xs'
                   : 'text-[#787b86] hover:text-white'
               }`}
             >
@@ -176,7 +176,7 @@ export default function ActivePositionsBreakdownTable({
               onClick={() => setViewMode('signals')}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                 viewMode === 'signals'
-                  ? 'bg-[#2a2e39] text-white shadow-xs'
+                  ? 'bg-[#3f3f46] text-white shadow-xs'
                   : 'text-[#787b86] hover:text-white'
               }`}
             >
@@ -204,7 +204,7 @@ export default function ActivePositionsBreakdownTable({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* COLUMN 1: STOCK GAINERS */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Stock gainers</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -214,7 +214,7 @@ export default function ActivePositionsBreakdownTable({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {gainers.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No positive return positions currently.
@@ -252,7 +252,7 @@ export default function ActivePositionsBreakdownTable({
 
             {/* COLUMN 2: LIVE BUY SIGNALS */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Live Buy Signals</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -262,7 +262,7 @@ export default function ActivePositionsBreakdownTable({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {buyOpportunities.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     {isLoadingBuyOpportunities ? 'Scanning live market opportunities...' : 'No active buy triggers in recent bars.'}
@@ -297,7 +297,7 @@ export default function ActivePositionsBreakdownTable({
 
             {/* COLUMN 3: STOCK LOSERS & EXIT ALERTS */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Stock losers & Exit Alerts</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -307,7 +307,7 @@ export default function ActivePositionsBreakdownTable({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {losersAndExits.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No declining positions or exit risk alerts.
@@ -346,7 +346,7 @@ export default function ActivePositionsBreakdownTable({
         ) : viewMode === 'all' ? (
           /* SINGLE COMPLETE TRADINGVIEW LIST (ALL OPEN POSITIONS) */
           <div className="flex flex-col">
-            <div className="divide-y divide-[#1e222d]">
+            <div className="divide-y divide-[#27272a]">
               {filteredOrders.length === 0 ? (
                 <div className="py-8 text-center text-[#787b86] text-xs">
                   No positions found for this category filter.
@@ -365,7 +365,7 @@ export default function ActivePositionsBreakdownTable({
                 ))
               )}
             </div>
-            <div className="pt-3 mt-1 border-t border-[#1e222d] flex items-center justify-between">
+            <div className="pt-3 mt-1 border-t border-[#27272a] flex items-center justify-between">
               <span className="text-xs text-[#787b86]">
                 Showing {filteredOrders.length} active positions ranked by total portfolio allocation
               </span>
@@ -384,7 +384,7 @@ export default function ActivePositionsBreakdownTable({
                   <AlertTriangle size={14} />
                   <span>Exit & Risk Management Triggers on Active Holdings ({exitSignals.length})</span>
                 </div>
-                <div className="divide-y divide-[#1e222d] rounded-xl border border-rose-500/20 bg-rose-500/5 p-2">
+                <div className="divide-y divide-[#27272a] rounded-xl border border-rose-500/20 bg-rose-500/5 p-2">
                   {exitSignals.map((sig) => (
                     <SignalRowItem
                       key={`exit-${sig.symbol}-${sig.strategyId}`}
@@ -420,7 +420,7 @@ export default function ActivePositionsBreakdownTable({
                       className="p-3 rounded-xl border border-[#27272a] bg-[#121214] hover:border-[#3f3f46] transition-all flex items-center justify-between group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-[#1e222d] border border-white/5 flex items-center justify-center font-bold text-xs text-white shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#27272a] border border-white/5 flex items-center justify-center font-bold text-xs text-white shrink-0">
                           {opp.symbol.replace('.CA', '').slice(0, 2)}
                         </div>
                         <div className="min-w-0">
@@ -496,7 +496,7 @@ function PositionRowItem({
   return (
     <Link
       href={`/invest?ticker=${order.tickerSymbol}&view=chart&timeframe=D`}
-      className={`py-2.5 px-1 flex items-center justify-between hover:bg-[#1e222d]/30 transition-colors group cursor-pointer border-b border-[#1e222d] ${
+      className={`py-2.5 px-1 flex items-center justify-between hover:bg-[#27272a]/30 transition-colors group cursor-pointer border-b border-[#27272a] ${
         exitSignal ? 'bg-rose-500/[0.03]' : ''
       }`}
     >
@@ -507,7 +507,7 @@ function PositionRowItem({
             ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
             : isPositive
             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            : 'bg-[#1e222d] text-white/90 border-white/5'
+            : 'bg-[#27272a] text-white/90 border-white/5'
         }`}>
           {order.logoUrl && !imgError ? (
             <img
@@ -536,7 +536,7 @@ function PositionRowItem({
           </div>
 
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1e222d] text-[#868993] border border-white/5 uppercase tracking-wider">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#27272a] text-[#868993] border border-white/5 uppercase tracking-wider">
               {cleanSymbol}
             </span>
             <span className="text-[11px] text-[#787b86] font-normal truncate">
@@ -603,7 +603,7 @@ function SignalRowItem({
   return (
     <Link
       href={`/invest?ticker=${opp.symbol}&view=chart&timeframe=D`}
-      className="py-2.5 px-1 flex items-center justify-between hover:bg-[#1e222d]/30 transition-colors group cursor-pointer border-b border-[#1e222d]"
+      className="py-2.5 px-1 flex items-center justify-between hover:bg-[#27272a]/30 transition-colors group cursor-pointer border-b border-[#27272a]"
     >
       <div className="flex items-center gap-2.5 min-w-0 pr-2">
         <div className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-xs ${
@@ -620,7 +620,7 @@ function SignalRowItem({
           </div>
 
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1e222d] text-[#868993] border border-white/5 uppercase tracking-wider">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#27272a] text-[#868993] border border-white/5 uppercase tracking-wider">
               {opp.strategyShortName || 'PSI'}
             </span>
             <span className="text-[11px] text-[#787b86] font-normal truncate">

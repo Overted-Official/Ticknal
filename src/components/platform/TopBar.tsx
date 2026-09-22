@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Search, X, Bell } from '@/components/ui/icon-library';
@@ -50,16 +50,16 @@ export default function TopBar({
 
   return (
     <>
-      <div className="h-12 w-full bg-plt-base/90 backdrop-blur-xl border-b border-[#1e222d] flex items-center px-4 justify-between select-none relative z-40 shrink-0 text-plt-text">
+      <div className="h-12 w-full bg-plt-base/90 backdrop-blur-xl border-b border-[#27272a] flex items-center px-4 justify-between select-none relative z-40 shrink-0 text-plt-text">
         {/* Left section (Logo + Symbol Command trigger) */}
         <div className="flex items-center space-x-2 md:space-x-4">
           <button
             type="button"
-            className="flex items-center space-x-2 cursor-pointer hover:bg-[#1e222d]/60 border border-transparent hover:border-[#2a2e39] px-2 py-2 rounded-xl transition-all text-left"
+            className="flex items-center space-x-2 cursor-pointer hover:bg-[#27272a]/60 border border-transparent hover:border-[#3f3f46] px-2 py-2 rounded-xl transition-all text-left"
             onClick={() => setIsSearchOpen(true)}
           >
             {/* Circular Logo */}
-            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-[#14171f] border border-[#2a2e39] overflow-hidden">
+            <div className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-[#18181b] border border-[#3f3f46] overflow-hidden">
               {currentTicker.logoUrl ? (
                 <img src={currentTicker.logoUrl} alt={displaySymbol} className="ticker-logo-image ticker-logo-fill" />
               ) : currentTicker.website ? (
@@ -78,7 +78,7 @@ export default function TopBar({
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 ml-2 px-2 py-2 rounded-xl bg-[#14171f] border border-[#2a2e39] text-mini text-[#787b86] tabular-nums">
+            <div className="hidden sm:flex items-center gap-2 ml-2 px-2 py-2 rounded-xl bg-[#18181b] border border-[#3f3f46] text-mini text-[#787b86] tabular-nums">
               <Search size={16} />
               <span>⌘K</span>
             </div>
@@ -117,7 +117,7 @@ export default function TopBar({
 
         {/* Right side: status message */}
         {statusMessage && (
-          <div className="absolute right-4 top-2 z-50 rounded-xl border border-[#2a2e39] bg-plt-base/95 backdrop-blur-xl px-4 py-2 text-xs text-plt-text shadow-2xl hidden md:block">
+          <div className="absolute right-4 top-2 z-50 rounded-xl border border-[#3f3f46] bg-plt-base/95 backdrop-blur-xl px-4 py-2 text-xs text-plt-text shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}

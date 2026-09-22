@@ -330,12 +330,12 @@
   --shadow-command-widget: none;
 
   /* Switch & Segmented Control Tokens — tv-design §6 */
-  --switch-bg: #14171f;
-  --switch-border: #2a2e39;
+  --switch-bg: #18181b;
+  --switch-border: #3f3f46;
   --switch-radius: var(--radius-surface);
   --switch-btn-bg: transparent;
-  --switch-btn-bg-hover: #1e222d;
-  --switch-btn-bg-active: #2a2e39;
+  --switch-btn-bg-hover: #27272a;
+  --switch-btn-bg-active: #3f3f46;
   --switch-btn-text: #787b86;
   --switch-btn-text-active: #ffffff;
 
@@ -913,13 +913,13 @@ textarea:focus-visible {
 
 .tv-filter-pill-btn:hover {
   color: #ffffff;
-  background: rgba(30, 34, 45, 0.6);
+  background: rgba(39, 39, 42, 0.6);
 }
 
 .tv-filter-pill-btn-active {
   color: #ffffff;
-  background: #1e222d;
-  border: 1px solid #2a2e39;
+  background: #27272a;
+  border: 1px solid #3f3f46;
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }

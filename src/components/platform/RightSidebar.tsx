@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { ChevronDown, ChevronRight, Search, SlidersHorizontal, X } from '@/components/ui/icon-library';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -252,7 +252,7 @@ export default function RightSidebar({
 
   return (
     <div
-      className="bg-[#0d0d0d] border-l border-[#1e222d] flex flex-col select-none relative shrink-0 text-plt-text"
+      className="bg-[#0d0d0d] border-l border-[#27272a] flex flex-col select-none relative shrink-0 text-plt-text"
       style={{ width: `${sidebarWidth}px` }}
     >
       <div
@@ -261,7 +261,7 @@ export default function RightSidebar({
       />
 
       {/* Search bar + filter */}
-      <div className="p-2 border-b border-[#1e222d] bg-[#0d0d0d] shrink-0 flex items-center gap-1.5">
+      <div className="p-2 border-b border-[#27272a] bg-[#0d0d0d] shrink-0 flex items-center gap-1.5">
         <div className="relative flex items-center flex-1 min-w-0">
           <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[#787b86]">
             <Search size={13} />
@@ -271,7 +271,7 @@ export default function RightSidebar({
             placeholder="Search tickers or sectors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-7 w-full rounded-md bg-[#14171f] border border-[#2a2e39] pl-7 pr-6 text-[11px] text-plt-text placeholder:text-[#787b86] placeholder:text-[11px] focus:border-[#787b86] focus:outline-none transition-colors leading-none"
+            className="h-7 w-full rounded-md bg-[#18181b] border border-[#3f3f46] pl-7 pr-6 text-[11px] text-plt-text placeholder:text-[#787b86] placeholder:text-[11px] focus:border-[#787b86] focus:outline-none transition-colors leading-none"
           />
           {searchQuery && (
             <button
@@ -297,8 +297,8 @@ export default function RightSidebar({
               signalFilter.isActive
                 ? 'bg-[#2962ff]/15 border-[#2962ff] text-[#2962ff] shadow-sm'
                 : isFilterOpen
-                ? 'bg-[#1e222d] border-[#2a2e39] text-plt-text'
-                : 'border-[#2a2e39] bg-[#14171f] text-[#787b86] hover:text-plt-text hover:bg-[#1e222d]'
+                ? 'bg-[#27272a] border-[#3f3f46] text-plt-text'
+                : 'border-[#3f3f46] bg-[#18181b] text-[#787b86] hover:text-plt-text hover:bg-[#27272a]'
             }`}
           >
             <SlidersHorizontal size={13} />
@@ -320,7 +320,7 @@ export default function RightSidebar({
 
       {/* Active Filter Banner */}
       {signalFilter.isActive && (
-        <div className="px-3 py-1 bg-[#0d0d0d]/90 border-b border-[#1e222d] flex items-center justify-between text-[10px]">
+        <div className="px-3 py-1 bg-[#0d0d0d]/90 border-b border-[#27272a] flex items-center justify-between text-[10px]">
           <div className="flex items-center gap-1.5 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff] shrink-0 animate-pulse" />
             <span className="text-[#787b86] truncate">
@@ -340,7 +340,7 @@ export default function RightSidebar({
           <button
             type="button"
             onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
-            className="btn-typography text-[#787b86] hover:text-[#f23645] px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-[#1e222d]"
+            className="btn-typography text-[#787b86] hover:text-[#f23645] px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-[#27272a]"
             title="Clear filter"
           >
             Clear
@@ -385,11 +385,11 @@ export default function RightSidebar({
                 <button
                   type="button"
                   onClick={() => toggleSector(sector)}
-                  className="flex w-full items-center gap-1.5 px-3 py-1 text-left text-[11px] tracking-wider text-[#787b86] transition-colors hover:text-plt-text group border-b border-[#1e222d]/40"
+                  className="flex w-full items-center gap-1.5 px-3 py-1 text-left text-[11px] tracking-wider text-[#787b86] transition-colors hover:text-plt-text group border-b border-[#27272a]/40"
                 >
                   {collapsed ? <ChevronRight size={14} className="text-[#787b86]/60 group-hover:text-plt-text" /> : <ChevronDown size={14} className="text-[#787b86]/60 group-hover:text-plt-text" />}
                   <span className="min-w-0 flex-1 truncate font-medium">{sector}</span>
-                  <span className="text-[10px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-[#1e222d] text-[#787b86]">{items.length}</span>
+                  <span className="text-[10px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-[#27272a] text-[#787b86]">{items.length}</span>
                 </button>
 
                 {!collapsed && items.map((item) => {
@@ -464,7 +464,7 @@ export default function RightSidebar({
 
       {selectedItem && (
         <div
-          className="border-t border-[#1e222d] bg-[#0d0d0d] flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
+          className="border-t border-[#27272a] bg-[#0d0d0d] flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {!isDetailsCollapsed && (
@@ -476,13 +476,13 @@ export default function RightSidebar({
 
           <div
             onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
-            className="flex items-center justify-between px-4 py-2 shrink-0 cursor-pointer hover:bg-[#1e222d]/40 transition-colors"
+            className="flex items-center justify-between px-4 py-2 shrink-0 cursor-pointer hover:bg-[#27272a]/40 transition-colors"
           >
             <div className="flex items-center space-x-2 min-w-0">
               {selectedItem.logoUrl ? (
                 <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="ticker-logo-image w-6 h-6 shrink-0" />
               ) : (
-                <div className="w-6 h-6 rounded-xl bg-[#14171f] flex items-center justify-center font-medium text-plt-text border border-[#2a2e39] text-compact shrink-0">
+                <div className="w-6 h-6 rounded-xl bg-[#18181b] flex items-center justify-center font-medium text-plt-text border border-[#3f3f46] text-compact shrink-0">
                   {displaySelectedSymbol.substring(0, 2)}
                 </div>
               )}
@@ -555,7 +555,7 @@ export default function RightSidebar({
                     <span className="text-plt-text tabular-nums font-semibold">{dHigh.toFixed(2)}</span>
                   </div>
                   {/* Track — tv-design §1 border colour */}
-                  <div className="h-1.5 bg-[#1e222d] rounded-full relative overflow-hidden">
+                  <div className="h-1.5 bg-[#27272a] rounded-full relative overflow-hidden">
                     <div
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#089981]' : 'bg-[#f23645]'}`}
                       style={{ width: `${dayPct}%`, left: 0 }}
@@ -569,7 +569,7 @@ export default function RightSidebar({
                     <span className="text-[#787b86] text-[10px] tracking-wider font-sans font-medium uppercase">52Wk Range</span>
                     <span className="text-plt-text tabular-nums font-semibold">{yHigh.toFixed(2)}</span>
                   </div>
-                  <div className="h-1.5 bg-[#1e222d] rounded-full relative overflow-hidden">
+                  <div className="h-1.5 bg-[#27272a] rounded-full relative overflow-hidden">
                     <div
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#089981]' : 'bg-[#f23645]'}`}
                       style={{ width: `${yearPct}%`, left: 0 }}

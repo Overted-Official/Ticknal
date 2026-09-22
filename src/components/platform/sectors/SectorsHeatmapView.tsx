@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useMemo } from 'react';
 import useSWR from 'swr';
@@ -200,7 +200,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
         {/* ---------------------------------------------------- */}
         <div className="heatmap-workspace w-full flex flex-col md:flex-row widget-row-gap shrink-0 min-h-[520px] md:min-h-[620px] lg:min-h-[680px] xl:min-h-[740px] h-[580px] md:h-[650px] lg:h-[720px] xl:h-[760px]">
           {/* Left Pane: Treemap or Rotation Matrix */}
-          <div className="heatmap-pane flex-1 h-full min-h-[460px] md:min-h-[580px] overflow-hidden relative border border-[#1e222d] bg-transparent rounded-xl">
+          <div className="heatmap-pane flex-1 h-full min-h-[460px] md:min-h-[580px] overflow-hidden relative border border-[#27272a] bg-transparent rounded-xl">
             {isLoading ? (
               <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
                 <RefreshCw className="w-6 h-6 animate-spin text-plt-muted" />
@@ -230,7 +230,7 @@ export default function SectorsHeatmapView({ onOpenTickerChart }: SectorsHeatmap
           </div>
 
           {/* Right Pane: Sector Inspector & Attribution Panel */}
-          <div className="hidden md:flex w-full md:w-80 lg:w-96 heatmap-inspector-width shrink-0 h-full flex-col overflow-hidden border border-[#1e222d] bg-[#14171f]/40 rounded-xl p-3">
+          <div className="hidden md:flex w-full md:w-80 lg:w-96 heatmap-inspector-width shrink-0 h-full flex-col overflow-hidden border border-[#27272a] bg-[#18181b]/40 rounded-xl p-3">
             <SectorInspector
               sector={activeSectorData}
               selectedTicker={selectedTicker}

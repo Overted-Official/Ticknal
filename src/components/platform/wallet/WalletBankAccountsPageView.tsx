@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo, useState } from 'react';
 import useSWR from 'swr';
@@ -195,7 +195,7 @@ export default function WalletBankAccountsPageView({
 
             {/* SECTION 2: Transaction Ledger & Activity */}
             <section id="section-transactions-table" className="section-container section-viewport-fit space-y-3 pt-2">
-              <div className="flex flex-col gap-0.5 pb-1 border-b border-[#1e222d]">
+              <div className="flex flex-col gap-0.5 pb-1 border-b border-[#27272a]">
                 <h2 className="section-title">Transaction Ledger &amp; Activity</h2>
                 <p className="section-subtitle">Audited record of multi-currency inflows, expenses, injections, and withdrawals</p>
               </div>

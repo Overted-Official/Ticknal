@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
@@ -917,7 +917,7 @@ export default function SignalPanel({
         <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-plt-base p-6 sm:p-8 space-y-10">
 
           {/* Docker Tab Switcher (Flat TradingView-style tabs, zero surface boxes or borders) */}
-          <div className="flex items-center justify-between border-b border-[#1e222d] pb-3 mb-6 max-w-[1440px] mx-auto">
+          <div className="flex items-center justify-between border-b border-[#27272a] pb-3 mb-6 max-w-[1440px] mx-auto">
             <div className="flex items-center gap-6">
               <button
                 type="button"
@@ -1055,7 +1055,7 @@ export default function SignalPanel({
               </div>
 
               {/* 2. PERFORMANCE (RECHARTS AREA & BENCHMARK CHART - Borderless & Flat) */}
-              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#1e222d]">
+              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#27272a]">
                 <div className="w-full space-y-4">
                   {/* Header with Legends */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
@@ -1111,7 +1111,7 @@ export default function SignalPanel({
                           </defs>
 
                           <CartesianGrid
-                            stroke="#1e222d"
+                            stroke="#27272a"
                             strokeDasharray="2 2"
                             vertical={false}
                             strokeOpacity={0.7}
@@ -1205,7 +1205,7 @@ export default function SignalPanel({
               </div>
 
               {/* 3. SIGNAL & EXECUTION LEVELS (Borderless & Flat) */}
-              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#1e222d]">
+              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#27272a]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cold-gray-400">Signal &amp; Execution Levels</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
                   {/* Signal Card */}
@@ -1303,7 +1303,7 @@ export default function SignalPanel({
               </div>
 
               {/* 4. PERFORMANCE SUMMARY ANALYTICS (Borderless & Flat) */}
-              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#1e222d]">
+              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#27272a]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cold-gray-400">Performance Analytics</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
                   {/* Panel 1 */}
@@ -1345,7 +1345,7 @@ export default function SignalPanel({
               </div>
 
               {/* 5. TRADES ANALYSIS (Borderless & Flat) */}
-              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#1e222d]">
+              <div className="space-y-4 pt-10 sm:pt-12 border-t border-[#27272a]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cold-gray-400">Trades Analysis</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10">
                   {/* Trades Distribution Donut */}
@@ -1354,7 +1354,7 @@ export default function SignalPanel({
                     <div className="flex items-center justify-around gap-4 py-2">
                       <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
                         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                          <circle cx="50" cy="50" r="38" fill="none" stroke="#2a2e39" strokeWidth="14" />
+                          <circle cx="50" cy="50" r="38" fill="none" stroke="#3f3f46" strokeWidth="14" />
                           <circle
                             cx="50"
                             cy="50"
@@ -1525,7 +1525,7 @@ export default function SignalPanel({
                   Evaluate up to 50,000 parameter permutations across Egyptian stock market regimes without lookahead bias.
                 </p>
 
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#1e222d]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#27272a]">
                   <div className="space-y-1">
                     <span className="kpi-title block">Model</span>
                     <div className="pill-switch text-xs">
@@ -1626,7 +1626,7 @@ export default function SignalPanel({
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-                className="fixed inset-x-0 bottom-0 z-[101] bg-[#14171f] border-t border-[#2a2e39] rounded-t-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+                className="fixed inset-x-0 bottom-0 z-[101] bg-[#18181b] border-t border-[#3f3f46] rounded-t-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
               >
                 {/* Drag handle */}
                 <div className="w-full flex justify-center pb-1">
@@ -1634,7 +1634,7 @@ export default function SignalPanel({
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-[#2a2e39]">
+                <div className="flex items-center justify-between pb-2 border-b border-[#3f3f46]">
                   <div className="flex items-center gap-2">
                     <Sparkles size={16} className="text-[#2962ff]" />
                     <span className="font-bold text-sm text-white">Select Trading Strategy</span>
@@ -1664,7 +1664,7 @@ export default function SignalPanel({
                         className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
                           isSelected
                             ? 'bg-[#2962ff]/15 border-[#2962ff]/60 text-white shadow-lg shadow-[#2962ff]/10'
-                            : 'bg-[#1e222d]/60 border-[#2a2e39] text-[#d1d4dc] hover:bg-[#1e222d] active:scale-[0.99]'
+                            : 'bg-[#27272a]/60 border-[#3f3f46] text-[#d1d4dc] hover:bg-[#27272a] active:scale-[0.99]'
                         }`}
                       >
                         <div className="min-w-0 flex-1">
@@ -1691,7 +1691,7 @@ export default function SignalPanel({
                             <Check size={14} className="stroke-[2.5]" />
                           </div>
                         ) : (
-                          <div className="w-6 h-6 rounded-full border border-[#2a2e39] shrink-0" />
+                          <div className="w-6 h-6 rounded-full border border-[#3f3f46] shrink-0" />
                         )}
                       </button>
                     );
@@ -1724,7 +1724,7 @@ export default function SignalPanel({
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-                className="fixed inset-x-0 bottom-0 z-[101] bg-[#14171f] border-t border-[#2a2e39] rounded-t-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+                className="fixed inset-x-0 bottom-0 z-[101] bg-[#18181b] border-t border-[#3f3f46] rounded-t-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
               >
                 {/* Drag handle */}
                 <div className="w-full flex justify-center pb-1">
@@ -1732,7 +1732,7 @@ export default function SignalPanel({
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-[#2a2e39]">
+                <div className="flex items-center justify-between pb-2 border-b border-[#3f3f46]">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-[#2962ff]" />
                     <span className="font-bold text-sm text-white">Select Backtest Range</span>
@@ -1777,7 +1777,7 @@ export default function SignalPanel({
                         setStrategyStartDate?.(e.target.value);
                         setActivePreset('custom');
                       }}
-                      className="date-token w-full text-xs px-2.5 py-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-white"
+                      className="date-token w-full text-xs px-2.5 py-2 rounded-lg bg-[#27272a] border border-[#3f3f46] text-white"
                     />
                   </div>
                   <div>
@@ -1789,7 +1789,7 @@ export default function SignalPanel({
                         setStrategyEndDate?.(e.target.value);
                         setActivePreset('custom');
                       }}
-                      className="date-token w-full text-xs px-2.5 py-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-white"
+                      className="date-token w-full text-xs px-2.5 py-2 rounded-lg bg-[#27272a] border border-[#3f3f46] text-white"
                     />
                   </div>
                 </div>
@@ -1828,8 +1828,8 @@ function StrategyChartTooltip({
     const bnhPct = initialCapital > 0 ? (bnhPnl / initialCapital) * 100 : 0;
 
     return (
-      <div className="p-3 rounded-xl bg-[#1e222d] border border-[#2a2e39] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl">
-        <div className="font-semibold text-white mb-1 border-b border-[#2a2e39] pb-1">
+      <div className="p-3 rounded-xl bg-[#27272a] border border-[#3f3f46] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl">
+        <div className="font-semibold text-white mb-1 border-b border-[#3f3f46] pb-1">
           {d.date}
         </div>
         <div className="flex justify-between gap-6 text-[#089981]">

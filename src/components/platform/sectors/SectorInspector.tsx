@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useMemo } from 'react';
 import type { SectorPerformanceItem, TickerStrategySignalState, StockPerformanceItem } from '@/lib/sectors-math';
@@ -283,7 +283,7 @@ export default function SectorInspector({
       {analysisMode === 'strategy' ? (
         <div className="grid grid-cols-3 gap-2 shrink-0">
           {/* Active Longs */}
-          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+          <div className="py-2 px-2.5 rounded-lg bg-[#18181b] border border-[#27272a] flex flex-col justify-between">
             <span className="text-[10px] uppercase tracking-wider text-[#2962ff] font-semibold flex items-center gap-1">
               Active Longs
             </span>
@@ -293,7 +293,7 @@ export default function SectorInspector({
           </div>
 
           {/* Fresh Buys */}
-          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+          <div className="py-2 px-2.5 rounded-lg bg-[#18181b] border border-[#27272a] flex flex-col justify-between">
             <span className="text-[10px] uppercase tracking-wider text-[#089981] font-semibold flex items-center gap-1">
               Fresh Buys
             </span>
@@ -303,7 +303,7 @@ export default function SectorInspector({
           </div>
 
           {/* Recent Exits */}
-          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between">
+          <div className="py-2 px-2.5 rounded-lg bg-[#18181b] border border-[#27272a] flex flex-col justify-between">
             <span className="text-[10px] uppercase tracking-wider text-[#f23645] font-semibold flex items-center gap-1">
               Recent Exits
             </span>
@@ -315,7 +315,7 @@ export default function SectorInspector({
       ) : (
         <div className="grid grid-cols-3 gap-2 shrink-0">
           {/* Weighted ROI */}
-          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between relative group/kpi">
+          <div className="py-2 px-2.5 rounded-lg bg-[#18181b] border border-[#27272a] flex flex-col justify-between relative group/kpi">
             <div className="flex items-center justify-between">
               <span className="kpi-title flex items-center gap-1 text-[#787b86] text-[10px]">
                 Weighted ROI
@@ -325,13 +325,13 @@ export default function SectorInspector({
             <span className={`text-base font-bold tabular-nums mt-0.5 ${sector.turnoverWeightedReturn >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
               {sector.turnoverWeightedReturn > 0 ? '+' : ''}{sector.turnoverWeightedReturn.toFixed(2)}%
             </span>
-            <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-[10px] text-[#d1d4dc] leading-tight shadow-2xl z-50 pointer-events-none">
+            <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-[#27272a] border border-[#3f3f46] text-[10px] text-[#d1d4dc] leading-tight shadow-2xl z-50 pointer-events-none">
               Total net return weighted by each constituent stock&apos;s traded capital volume (turnover).
             </div>
           </div>
 
           {/* Alpha vs EGX30 */}
-          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between relative group/kpi">
+          <div className="py-2 px-2.5 rounded-lg bg-[#18181b] border border-[#27272a] flex flex-col justify-between relative group/kpi">
             <div className="flex items-center justify-between">
               <span className="kpi-title flex items-center gap-1 text-[#787b86] text-[10px]">
                 Alpha (α)
@@ -341,13 +341,13 @@ export default function SectorInspector({
             <span className={`text-base font-bold tabular-nums mt-0.5 ${sector.relativeStrengthVsBenchmark >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
               {sector.relativeStrengthVsBenchmark > 0 ? '+' : ''}{sector.relativeStrengthVsBenchmark.toFixed(2)}%
             </span>
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-[#1e222d] border border-[#2a2e39] text-[10px] text-[#d1d4dc] leading-tight shadow-2xl z-50 pointer-events-none">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover/kpi:block w-52 p-2 rounded-lg bg-[#27272a] border border-[#3f3f46] text-[10px] text-[#d1d4dc] leading-tight shadow-2xl z-50 pointer-events-none">
               Excess outperformance of this group relative to the benchmark EGX 30 index.
             </div>
           </div>
 
           {/* Breadth */}
-          <div className="py-2 px-2.5 rounded-lg bg-[#14171f] border border-[#1e222d] flex flex-col justify-between relative group/kpi">
+          <div className="py-2 px-2.5 rounded-lg bg-[#18181b] border border-[#27272a] flex flex-col justify-between relative group/kpi">
             <div className="flex items-center justify-between">
               <span className="kpi-title flex items-center gap-1">
                 Breadth
@@ -459,7 +459,7 @@ export default function SectorInspector({
       {/* 4. Ranked Constituent Stocks Section */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden pt-1">
         {/* In-Sector Search & Sort Split Pill */}
-        <div className="flex items-stretch h-7.5 rounded-lg overflow-hidden border border-[#2a2e39] bg-[#14171f] mb-2 shrink-0">
+        <div className="flex items-stretch h-7.5 rounded-lg overflow-hidden border border-[#3f3f46] bg-[#18181b] mb-2 shrink-0">
           <div className="relative flex-1 flex items-center">
             <div className="absolute left-0 pl-2.5 flex items-center pointer-events-none text-[#787b86]">
               <Search size={12} />
@@ -482,12 +482,12 @@ export default function SectorInspector({
             )}
           </div>
 
-          <div className="w-px bg-[#2a2e39] shrink-0" />
+          <div className="w-px bg-[#3f3f46] shrink-0" />
 
           <button
             type="button"
             onClick={() => setSortBy(sortBy === 'return' ? 'turnover' : sortBy === 'turnover' ? 'symbol' : 'return')}
-            className="flex items-center gap-1.5 px-2.5 text-[11px] font-medium text-[#787b86] hover:text-white hover:bg-[#1e222d] transition-colors shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 text-[11px] font-medium text-[#787b86] hover:text-white hover:bg-[#27272a] transition-colors shrink-0 cursor-pointer"
             title="Change sort order"
           >
             <ArrowUpDown size={11} />
@@ -496,7 +496,7 @@ export default function SectorInspector({
         </div>
 
         {/* Column Headers */}
-        <div className="py-1 px-2 flex items-center justify-between border-b border-[#1e222d] text-[10px] font-medium uppercase tracking-wider text-[#787b86] shrink-0">
+        <div className="py-1 px-2 flex items-center justify-between border-b border-[#27272a] text-[10px] font-medium uppercase tracking-wider text-[#787b86] shrink-0">
           <span>Constituent Stock</span>
           <div className="flex items-center gap-4 pr-7">
             <span className="w-14 text-right">{analysisMode === 'strategy' ? 'B&H ROI' : 'Turnover'}</span>
@@ -505,7 +505,7 @@ export default function SectorInspector({
         </div>
 
         {/* Scrollable Stocks List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-[#1e222d]/60 custom-scrollbar pt-1">
+        <div className="flex-1 overflow-y-auto divide-y divide-[#27272a]/60 custom-scrollbar pt-1">
           {filteredStocks.length === 0 ? (
             <div className="p-4 text-center text-xs text-[#787b86]">
               No matching stocks in this sector
@@ -522,7 +522,7 @@ export default function SectorInspector({
                   key={stock.symbol}
                   onClick={() => onSelectTicker(stock.symbol)}
                   className={`py-2 px-2 rounded-lg flex items-center justify-between transition-colors cursor-pointer text-xs group ${
-                    isSelected ? 'bg-[#2a2e39] ring-1 ring-[#089981]/50' : 'hover:bg-[#1e222d]/40'
+                    isSelected ? 'bg-[#3f3f46] ring-1 ring-[#089981]/50' : 'hover:bg-[#27272a]/40'
                   }`}
                 >
                   {/* Left: Logo + Company Name as Title + Ticker Symbol Smaller Below */}

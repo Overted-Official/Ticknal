@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo } from 'react';
 import type { SectorsPerformanceResponse, SectorStrategySignalsResponse, SectorPerformanceItem } from '@/lib/sectors-math';
@@ -107,7 +107,7 @@ export default function SectorsKPIStrip({
           <div
             onClick={() => handleToggle('ALL')}
             className={`tv-kpi-card w-full cursor-pointer transition-all ${
-              isRoiActive ? 'ring-1 ring-[#089981]/50 border-[#089981]/60 bg-[#1e222d]' : ''
+              isRoiActive ? 'ring-1 ring-[#089981]/50 border-[#089981]/60 bg-[#27272a]' : ''
             }`}
             title="Click to view all strategy constituents"
           >
@@ -141,7 +141,7 @@ export default function SectorsKPIStrip({
           <div
             onClick={() => handleToggle('LONG_ACTIVE')}
             className={`tv-kpi-card w-full cursor-pointer transition-all ${
-              isLongActive ? 'ring-1 ring-[#2962ff]/50 border-[#2962ff]/60 bg-[#1e222d]' : ''
+              isLongActive ? 'ring-1 ring-[#2962ff]/50 border-[#2962ff]/60 bg-[#27272a]' : ''
             }`}
             title="Click to filter to active long positions"
           >
@@ -170,7 +170,7 @@ export default function SectorsKPIStrip({
           <div
             onClick={() => handleToggle('BUY_FRESH')}
             className={`tv-kpi-card w-full cursor-pointer transition-all ${
-              isBuysActive ? 'ring-1 ring-[#089981]/50 border-[#089981]/60 bg-[#1e222d]' : ''
+              isBuysActive ? 'ring-1 ring-[#089981]/50 border-[#089981]/60 bg-[#27272a]' : ''
             }`}
             title="Click to filter to fresh buy signals"
           >
@@ -199,7 +199,7 @@ export default function SectorsKPIStrip({
           <div
             onClick={() => handleToggle('EXIT_RECENT')}
             className={`tv-kpi-card w-full cursor-pointer transition-all ${
-              isExitsActive ? 'ring-1 ring-[#f23645]/50 border-[#f23645]/60 bg-[#1e222d]' : ''
+              isExitsActive ? 'ring-1 ring-[#f23645]/50 border-[#f23645]/60 bg-[#27272a]' : ''
             }`}
             title="Click to filter to recent technical exits"
           >

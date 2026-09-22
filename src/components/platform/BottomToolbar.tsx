@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -81,8 +81,8 @@ export default function BottomToolbar({
 
   return (
     <>
-      {/* tv-design §1: bg-[#0d0d0d] border-t border-[#1e222d] */}
-      <div className="h-[28px] shrink-0 w-full bg-[#0d0d0d] border-t border-[#1e222d] flex items-center justify-between px-3 select-none text-[11px] font-medium overflow-x-auto no-scrollbar">
+      {/* tv-design §1: bg-[#0d0d0d] border-t border-[#27272a] */}
+      <div className="h-[28px] shrink-0 w-full bg-[#0d0d0d] border-t border-[#27272a] flex items-center justify-between px-3 select-none text-[11px] font-medium overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {/* EGX Live dot — keep green pulse */}
           <div className="flex items-center gap-1.5 font-mono shrink-0">
@@ -90,7 +90,7 @@ export default function BottomToolbar({
             <span className="text-[#787b86] hidden sm:inline">EGX Live</span>
           </div>
 
-          <div className="h-3.5 w-px bg-[#1e222d] shrink-0" />
+          <div className="h-3.5 w-px bg-[#27272a] shrink-0" />
 
           {/* tv-design §6: pill switcher track */}
           <div className="inline-flex items-center gap-0.5 shrink-0">
@@ -103,8 +103,8 @@ export default function BottomToolbar({
                   onClick={() => handleRangeClick(range)}
                   className={`px-2 sm:px-2.5 py-0.5 rounded-md text-[11px] transition-colors leading-none ${
                     isActive
-                      ? 'bg-[#2a2e39] text-white font-bold'
-                      : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
+                      ? 'bg-[#3f3f46] text-white font-bold'
+                      : 'text-[#787b86] hover:text-white hover:bg-[#27272a]'
                   }`}
                 >
                   {range.label}
@@ -113,7 +113,7 @@ export default function BottomToolbar({
             })}
           </div>
 
-          <div className="h-3.5 w-px bg-[#1e222d] shrink-0" />
+          <div className="h-3.5 w-px bg-[#27272a] shrink-0" />
 
           {/* Strategy Report Button */}
           <button

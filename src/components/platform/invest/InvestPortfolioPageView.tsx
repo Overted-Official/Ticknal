@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -352,13 +352,13 @@ export default function InvestPortfolioPageView({
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#089981]/15 border border-[#089981]/30 px-2.5 py-1.5 text-[11px] font-medium text-[#089981]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#089981]" /> Chart-synced
                 </span>
-                <span className="rounded-lg bg-[#1e222d] border border-[#2a2e39] px-2.5 py-1.5 text-[11px] text-[#787b86] tabular-nums">
+                <span className="rounded-lg bg-[#27272a] border border-[#3f3f46] px-2.5 py-1.5 text-[11px] text-[#787b86] tabular-nums">
                   Data as of {latestData}
                 </span>
                 <button
                   type="button"
                   onClick={refreshPage}
-                  className="rounded-lg p-2 text-[#787b86] bg-[#1e222d] border border-[#2a2e39] hover:border-[#448aff] hover:text-white cursor-pointer transition-colors"
+                  className="rounded-lg p-2 text-[#787b86] bg-[#27272a] border border-[#3f3f46] hover:border-[#448aff] hover:text-white cursor-pointer transition-colors"
                   title="Refresh analysis"
                 >
                   <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
@@ -370,16 +370,16 @@ export default function InvestPortfolioPageView({
           {/* ================================================================ */}
           {/* DESKTOP FILTER BAR (md and up) — preserved layout                */}
           {/* ================================================================ */}
-          <div className="hidden md:grid grid-cols-1 gap-2.5 rounded-xl bg-[#1e222d]/60 border border-[#2a2e39] p-3 sm:grid-cols-2 xl:grid-cols-6 w-full min-w-0">
+          <div className="hidden md:grid grid-cols-1 gap-2.5 rounded-xl bg-[#27272a]/60 border border-[#3f3f46] p-3 sm:grid-cols-2 xl:grid-cols-6 w-full min-w-0">
             <label className="flex items-center gap-2 text-xs text-[#787b86] xl:col-span-1 min-w-0">
               <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-[#787b86]">Strategy</span>
               <select
                 value={strategy}
                 onChange={(event) => setStrategy(event.target.value as StrategyFilter)}
-                className="min-w-0 flex-1 rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
+                className="min-w-0 flex-1 rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
               >
                 {STRATEGIES.map((item) => (
-                  <option key={item.id} value={item.id} className="bg-[#14171f] text-[#d1d4dc]">
+                  <option key={item.id} value={item.id} className="bg-[#18181b] text-[#d1d4dc]">
                     {item.label}
                   </option>
                 ))}
@@ -391,11 +391,11 @@ export default function InvestPortfolioPageView({
               <select
                 value={freshness}
                 onChange={(event) => setFreshness(Number(event.target.value))}
-                className="min-w-0 flex-1 rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
+                className="min-w-0 flex-1 rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
               >
-                <option value={5} className="bg-[#14171f] text-[#d1d4dc]">5 trading sessions</option>
-                <option value={10} className="bg-[#14171f] text-[#d1d4dc]">10 trading sessions</option>
-                <option value={20} className="bg-[#14171f] text-[#d1d4dc]">20 trading sessions</option>
+                <option value={5} className="bg-[#18181b] text-[#d1d4dc]">5 trading sessions</option>
+                <option value={10} className="bg-[#18181b] text-[#d1d4dc]">10 trading sessions</option>
+                <option value={20} className="bg-[#18181b] text-[#d1d4dc]">20 trading sessions</option>
               </select>
             </label>
 
@@ -404,11 +404,11 @@ export default function InvestPortfolioPageView({
               <select
                 value={grouping}
                 onChange={(event) => setGrouping(event.target.value as Grouping)}
-                className="min-w-0 flex-1 rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
+                className="min-w-0 flex-1 rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
               >
-                <option value="sector" className="bg-[#14171f] text-[#d1d4dc]">Sector</option>
-                <option value="industryGroup" className="bg-[#14171f] text-[#d1d4dc]">Industry group</option>
-                <option value="industry" className="bg-[#14171f] text-[#d1d4dc]">Industry</option>
+                <option value="sector" className="bg-[#18181b] text-[#d1d4dc]">Sector</option>
+                <option value="industryGroup" className="bg-[#18181b] text-[#d1d4dc]">Industry group</option>
+                <option value="industry" className="bg-[#18181b] text-[#d1d4dc]">Industry</option>
               </select>
             </label>
 
@@ -418,7 +418,7 @@ export default function InvestPortfolioPageView({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search ticker or company"
-                className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] py-2 pl-9 pr-3 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
+                className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] py-2 pl-9 pr-3 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
               />
               {search && (
                 <button
@@ -437,7 +437,7 @@ export default function InvestPortfolioPageView({
               className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 btn-typography-semibold cursor-pointer transition-colors ${
                 showFilters
                   ? 'bg-[#2962ff]/15 text-[#2962ff] border border-[#2962ff]/40'
-                  : 'bg-[#14171f] border border-[#2a2e39] text-[#787b86] hover:text-white hover:border-[#787b86]'
+                  : 'bg-[#18181b] border border-[#3f3f46] text-[#787b86] hover:text-white hover:border-[#787b86]'
               }`}
             >
               <SlidersHorizontal size={14} /> Filters
@@ -445,15 +445,15 @@ export default function InvestPortfolioPageView({
           </div>
 
           {showFilters && (
-            <div className="hidden md:grid grid-cols-2 gap-3 rounded-xl bg-[#1e222d]/60 border border-[#2a2e39] p-3 sm:grid-cols-4 lg:grid-cols-8 w-full min-w-0">
+            <div className="hidden md:grid grid-cols-2 gap-3 rounded-xl bg-[#27272a]/60 border border-[#3f3f46] p-3 sm:grid-cols-4 lg:grid-cols-8 w-full min-w-0">
               <Field label="Regime">
                 <select
                   value={regimeFilter}
                   onChange={(event) => setRegimeFilter(event.target.value as 'All' | Regime)}
-                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
+                  className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
                 >
                   {REGIMES.map((item) => (
-                    <option key={item} className="bg-[#14171f] text-[#d1d4dc]">{item}</option>
+                    <option key={item} className="bg-[#18181b] text-[#d1d4dc]">{item}</option>
                   ))}
                 </select>
               </Field>
@@ -461,14 +461,14 @@ export default function InvestPortfolioPageView({
                 <select
                   value={sort}
                   onChange={(event) => setSort(event.target.value as SortKey)}
-                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
+                  className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none"
                 >
-                  <option value="alpha" className="bg-[#14171f] text-[#d1d4dc]">Alpha ↓</option>
-                  <option value="return" className="bg-[#14171f] text-[#d1d4dc]">Total return ↓</option>
-                  <option value="bars" className="bg-[#14171f] text-[#d1d4dc]">Avg bars ↑</option>
-                  <option value="drawdown" className="bg-[#14171f] text-[#d1d4dc]">Max DD ↑</option>
-                  <option value="mae" className="bg-[#14171f] text-[#d1d4dc]">Max MAE ↑</option>
-                  <option value="date" className="bg-[#14171f] text-[#d1d4dc]">Signal date ↓</option>
+                  <option value="alpha" className="bg-[#18181b] text-[#d1d4dc]">Alpha ↓</option>
+                  <option value="return" className="bg-[#18181b] text-[#d1d4dc]">Total return ↓</option>
+                  <option value="bars" className="bg-[#18181b] text-[#d1d4dc]">Avg bars ↑</option>
+                  <option value="drawdown" className="bg-[#18181b] text-[#d1d4dc]">Max DD ↑</option>
+                  <option value="mae" className="bg-[#18181b] text-[#d1d4dc]">Max MAE ↑</option>
+                  <option value="date" className="bg-[#18181b] text-[#d1d4dc]">Signal date ↓</option>
                 </select>
               </Field>
               <Field label="Min avg bars">
@@ -477,7 +477,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMinBars(event.target.value)}
                   inputMode="numeric"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
+                  className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Max avg bars">
@@ -486,7 +486,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMaxBars(event.target.value)}
                   inputMode="numeric"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
+                  className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Min alpha %">
@@ -495,7 +495,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMinAlpha(event.target.value)}
                   inputMode="decimal"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
+                  className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Max DD %">
@@ -504,7 +504,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMaxDrawdown(event.target.value)}
                   inputMode="decimal"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
+                  className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <Field label="Max MAE %">
@@ -513,7 +513,7 @@ export default function InvestPortfolioPageView({
                   onChange={(event) => setMaxMae(event.target.value)}
                   inputMode="decimal"
                   placeholder="Any"
-                  className="w-full rounded-lg bg-[#14171f] border border-[#2a2e39] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
+                  className="w-full rounded-lg bg-[#18181b] border border-[#3f3f46] px-2.5 py-2 text-xs text-[#d1d4dc] focus:border-[#2962ff] outline-none placeholder:text-[#787b86]"
                 />
               </Field>
               <label className="flex items-end gap-2 pb-2 text-xs text-[#787b86] hover:text-[#d1d4dc] cursor-pointer">
@@ -533,7 +533,7 @@ export default function InvestPortfolioPageView({
           {/* ================================================================ */}
           <div className="flex md:hidden flex-col gap-2 w-full min-w-0">
             {/* Row 1: Search + Filters split pill */}
-            <div className="flex items-stretch h-9 rounded-xl overflow-hidden border border-[#2a2e39] bg-[#14171f]">
+            <div className="flex items-stretch h-9 rounded-xl overflow-hidden border border-[#3f3f46] bg-[#18181b]">
               <div className="relative flex-1 flex items-center">
                 <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-[#787b86]">
                   <Search size={14} />
@@ -556,7 +556,7 @@ export default function InvestPortfolioPageView({
                 )}
               </div>
 
-              <div className="w-px bg-[#2a2e39] shrink-0" />
+              <div className="w-px bg-[#3f3f46] shrink-0" />
 
               <button
                 type="button"
@@ -572,7 +572,7 @@ export default function InvestPortfolioPageView({
             </div>
 
             {/* Row 2: Grouping quick pill switch */}
-            <div className="flex rounded-lg p-0.5 bg-[#14171f] border border-[#2a2e39] w-full">
+            <div className="flex rounded-lg p-0.5 bg-[#18181b] border border-[#3f3f46] w-full">
               {[
                 { id: 'sector', label: 'Sector' },
                 { id: 'industryGroup', label: 'Group' },
@@ -584,7 +584,7 @@ export default function InvestPortfolioPageView({
                   onClick={() => setGrouping(item.id as Grouping)}
                   className={`flex-1 py-1 text-center text-xs rounded-md transition-colors cursor-pointer ${
                     grouping === item.id
-                      ? 'bg-[#2a2e39] text-white font-medium shadow-xs'
+                      ? 'bg-[#3f3f46] text-white font-medium shadow-xs'
                       : 'text-[#787b86] hover:text-white'
                   }`}
                 >
@@ -604,16 +604,16 @@ export default function InvestPortfolioPageView({
               onClick={() => setIsMobileFiltersDrawerOpen(false)}
             >
               <div
-                className="flex flex-col rounded-t-2xl border-t border-[#2a2e39] bg-[#1e222d] shadow-2xl animate-in slide-in-from-bottom duration-250 max-h-[85dvh] overflow-y-auto"
+                className="flex flex-col rounded-t-2xl border-t border-[#3f3f46] bg-[#27272a] shadow-2xl animate-in slide-in-from-bottom duration-250 max-h-[85dvh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Drag handle */}
                 <div className="flex justify-center pt-3 pb-1 shrink-0">
-                  <div className="w-10 h-1 rounded-full bg-[#2a2e39]" />
+                  <div className="w-10 h-1 rounded-full bg-[#3f3f46]" />
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-3 border-b border-[#2a2e39] shrink-0">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[#3f3f46] shrink-0">
                   <span className="text-sm font-bold text-white">Portfolio Filters</span>
                   <button
                     type="button"
@@ -632,10 +632,10 @@ export default function InvestPortfolioPageView({
                     <select
                       value={strategy}
                       onChange={(event) => setStrategy(event.target.value as StrategyFilter)}
-                      className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
+                      className="w-full h-10 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                     >
                       {STRATEGIES.map((item) => (
-                        <option key={item.id} value={item.id} className="bg-[#14171f] text-[#d1d4dc]">
+                        <option key={item.id} value={item.id} className="bg-[#18181b] text-[#d1d4dc]">
                           {item.label}
                         </option>
                       ))}
@@ -649,11 +649,11 @@ export default function InvestPortfolioPageView({
                       <select
                         value={freshness}
                         onChange={(event) => setFreshness(Number(event.target.value))}
-                        className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                       >
-                        <option value={5} className="bg-[#14171f] text-[#d1d4dc]">5 sessions</option>
-                        <option value={10} className="bg-[#14171f] text-[#d1d4dc]">10 sessions</option>
-                        <option value={20} className="bg-[#14171f] text-[#d1d4dc]">20 sessions</option>
+                        <option value={5} className="bg-[#18181b] text-[#d1d4dc]">5 sessions</option>
+                        <option value={10} className="bg-[#18181b] text-[#d1d4dc]">10 sessions</option>
+                        <option value={20} className="bg-[#18181b] text-[#d1d4dc]">20 sessions</option>
                       </select>
                     </div>
 
@@ -662,10 +662,10 @@ export default function InvestPortfolioPageView({
                       <select
                         value={regimeFilter}
                         onChange={(event) => setRegimeFilter(event.target.value as 'All' | Regime)}
-                        className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                       >
                         {REGIMES.map((item) => (
-                          <option key={item} className="bg-[#14171f] text-[#d1d4dc]">{item}</option>
+                          <option key={item} className="bg-[#18181b] text-[#d1d4dc]">{item}</option>
                         ))}
                       </select>
                     </div>
@@ -677,19 +677,19 @@ export default function InvestPortfolioPageView({
                     <select
                       value={sort}
                       onChange={(event) => setSort(event.target.value as SortKey)}
-                      className="w-full h-10 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
+                      className="w-full h-10 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none"
                     >
-                      <option value="alpha" className="bg-[#14171f] text-[#d1d4dc]">Alpha ↓</option>
-                      <option value="return" className="bg-[#14171f] text-[#d1d4dc]">Total return ↓</option>
-                      <option value="bars" className="bg-[#14171f] text-[#d1d4dc]">Avg bars ↑</option>
-                      <option value="drawdown" className="bg-[#14171f] text-[#d1d4dc]">Max DD ↑</option>
-                      <option value="mae" className="bg-[#14171f] text-[#d1d4dc]">Max MAE ↑</option>
-                      <option value="date" className="bg-[#14171f] text-[#d1d4dc]">Signal date ↓</option>
+                      <option value="alpha" className="bg-[#18181b] text-[#d1d4dc]">Alpha ↓</option>
+                      <option value="return" className="bg-[#18181b] text-[#d1d4dc]">Total return ↓</option>
+                      <option value="bars" className="bg-[#18181b] text-[#d1d4dc]">Avg bars ↑</option>
+                      <option value="drawdown" className="bg-[#18181b] text-[#d1d4dc]">Max DD ↑</option>
+                      <option value="mae" className="bg-[#18181b] text-[#d1d4dc]">Max MAE ↑</option>
+                      <option value="date" className="bg-[#18181b] text-[#d1d4dc]">Signal date ↓</option>
                     </select>
                   </div>
 
                   {/* Quantitative Criteria Inputs */}
-                  <div className="pt-2 border-t border-[#2a2e39]">
+                  <div className="pt-2 border-t border-[#3f3f46]">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-[#787b86] mb-2">
                       Quantitative Criteria
                     </div>
@@ -701,7 +701,7 @@ export default function InvestPortfolioPageView({
                           onChange={(event) => setMinBars(event.target.value)}
                           inputMode="numeric"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
+                          className="w-full h-9 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div>
@@ -711,7 +711,7 @@ export default function InvestPortfolioPageView({
                           onChange={(event) => setMaxBars(event.target.value)}
                           inputMode="numeric"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
+                          className="w-full h-9 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div>
@@ -721,7 +721,7 @@ export default function InvestPortfolioPageView({
                           onChange={(event) => setMinAlpha(event.target.value)}
                           inputMode="decimal"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
+                          className="w-full h-9 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div>
@@ -731,7 +731,7 @@ export default function InvestPortfolioPageView({
                           onChange={(event) => setMaxDrawdown(event.target.value)}
                           inputMode="decimal"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
+                          className="w-full h-9 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                       <div className="col-span-2">
@@ -741,7 +741,7 @@ export default function InvestPortfolioPageView({
                           onChange={(event) => setMaxMae(event.target.value)}
                           inputMode="decimal"
                           placeholder="Any"
-                          className="w-full h-9 px-3 rounded-xl bg-[#14171f] border border-[#2a2e39] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
+                          className="w-full h-9 px-3 rounded-xl bg-[#18181b] border border-[#3f3f46] text-xs text-[#d1d4dc] focus:border-[#2962ff] focus:outline-none placeholder:text-[#787b86]"
                         />
                       </div>
                     </div>
@@ -775,7 +775,7 @@ export default function InvestPortfolioPageView({
                       setMaxMae('');
                       setIncludeHeld(false);
                     }}
-                    className="flex-1 h-11 rounded-xl bg-[#14171f] border border-[#2a2e39] btn-typography-semibold text-[#787b86] hover:text-white transition-colors cursor-pointer"
+                    className="flex-1 h-11 rounded-xl bg-[#18181b] border border-[#3f3f46] btn-typography-semibold text-[#787b86] hover:text-white transition-colors cursor-pointer"
                   >
                     Reset Filters
                   </button>
@@ -911,7 +911,7 @@ export default function InvestPortfolioPageView({
         </section>
 
         {/* Metric Disclaimer & Footer */}
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#1e222d]/60 border border-[#2a2e39] px-4 py-3 text-[11px] text-[#787b86] w-full min-w-0">
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#27272a]/60 border border-[#3f3f46] px-4 py-3 text-[11px] text-[#787b86] w-full min-w-0">
           <div className="flex items-center gap-2">
             <ShieldCheck size={15} className="text-[#089981] shrink-0" />
             <span>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -76,7 +76,7 @@ export default function NetWorthHeader({
 
           {/* Dropdown Menu for Dashboard Views */}
           {isOpen && (
-            <div className="absolute left-0 top-full mt-2 w-56 rounded-xl bg-[#1e222d] border border-[#2a2e39] shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute left-0 top-full mt-2 w-56 rounded-xl bg-[#27272a] border border-[#3f3f46] shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-1.5 text-[11px] font-semibold text-[#787b86] uppercase tracking-wider">
                 Dashboard views
               </div>
@@ -95,8 +95,8 @@ export default function NetWorthHeader({
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-left ${
                       isActive
-                        ? 'bg-[#2a2e39] text-white font-medium'
-                        : 'text-[#d1d4dc] hover:text-white hover:bg-[#2a2e39]/60'
+                        ? 'bg-[#3f3f46] text-white font-medium'
+                        : 'text-[#d1d4dc] hover:text-white hover:bg-[#3f3f46]/60'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -132,7 +132,7 @@ export default function NetWorthHeader({
           onClick={() => onCurrencyModeChange('USD')}
           className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
             currencyMode === 'USD'
-              ? 'bg-[#2a2e39] text-white shadow-xs'
+              ? 'bg-[#3f3f46] text-white shadow-xs'
               : 'text-[#787b86] hover:text-white font-medium'
           }`}
         >

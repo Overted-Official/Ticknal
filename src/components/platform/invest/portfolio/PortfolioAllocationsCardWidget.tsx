@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -144,14 +144,14 @@ export default function PortfolioAllocationsCardWidget({
   return (
     <div className="w-full min-w-0 relative select-none font-sans space-y-4 pt-1">
       {/* 1. Header & Tab Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#1e222d]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#27272a]">
         <div>
           <h3 className="text-base font-bold text-white tracking-tight">Capital Allocation & Exposure</h3>
           <p className="text-xs text-[#787b86] mt-0.5">Diversification breakdown by industry groups, broad sectors, and macro regimes</p>
         </div>
 
         {/* Pill Tab Switcher */}
-        <div className="inline-flex items-center p-0.5 rounded-lg bg-[#14171f] border border-[#2a2e39] self-start sm:self-auto shrink-0">
+        <div className="inline-flex items-center p-0.5 rounded-lg bg-[#18181b] border border-[#3f3f46] self-start sm:self-auto shrink-0">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -162,7 +162,7 @@ export default function PortfolioAllocationsCardWidget({
               }}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                 activeTab === tab.key
-                  ? 'bg-[#2a2e39] text-white shadow-xs'
+                  ? 'bg-[#3f3f46] text-white shadow-xs'
                   : 'text-[#787b86] hover:text-white'
               }`}
             >
@@ -237,21 +237,21 @@ export default function PortfolioAllocationsCardWidget({
           <div className="lg:col-span-7 overflow-x-auto overflow-y-auto max-h-[280px] custom-scrollbar">
             <table className="w-full text-left text-xs font-sans border-collapse">
               <thead>
-                <tr className="border-b border-[#1e222d] text-[#787b86] text-[11px] font-medium">
+                <tr className="border-b border-[#27272a] text-[#787b86] text-[11px] font-medium">
                   <th className="pb-2 text-left font-medium">Name</th>
                   <th className="pb-2 text-right font-medium">Market Value</th>
                   <th className="pb-2 text-right font-medium">Allocation</th>
                   <th className="pb-2 text-right font-medium">Gain / Regime</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e222d]/60">
+              <tbody className="divide-y divide-[#27272a]/60">
                 {distributionItems.map((item, idx) => (
                   <tr
                     key={item.id}
                     onMouseEnter={() => setHoveredIndex(idx)}
                     onMouseLeave={() => setHoveredIndex(null)}
                     className={`transition-colors cursor-pointer group ${
-                      hoveredIndex === idx ? 'bg-[#1e222d]/60' : 'hover:bg-[#1e222d]/30'
+                      hoveredIndex === idx ? 'bg-[#27272a]/60' : 'hover:bg-[#27272a]/30'
                     }`}
                   >
                     {/* Name with color swatch */}
@@ -308,7 +308,7 @@ export default function PortfolioAllocationsCardWidget({
 
       {/* 3. Concentration Risk Diagnostic Footer */}
       {largestItem && (
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#1e222d] text-[11px] text-[#787b86]">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#27272a] text-[11px] text-[#787b86]">
           <div>
             Largest exposure: <strong className="text-white">{largestItem.name}</strong> ({largestItem.percentage.toFixed(1)}%).{' '}
             {isHighConcentration ? (

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -204,7 +204,7 @@ export default function TransactionLedgerTable({
             </button>
 
             {isAccountDropdownOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-48 max-h-56 overflow-y-auto rounded-lg bg-[#1e222d] border border-[#2a2e39] p-1 shadow-2xl z-50 flex flex-col gap-0.5 custom-scrollbar">
+              <div className="absolute right-0 top-full mt-1.5 w-48 max-h-56 overflow-y-auto rounded-lg bg-[#27272a] border border-[#3f3f46] p-1 shadow-2xl z-50 flex flex-col gap-0.5 custom-scrollbar">
                 {accountOptions.map((opt) => {
                   const isSelected = selectedAccountFilter === opt.id;
                   return (
@@ -218,7 +218,7 @@ export default function TransactionLedgerTable({
                       className={`px-2.5 py-1.5 rounded text-left text-xs transition flex items-center justify-between cursor-pointer ${
                         isSelected
                           ? 'bg-[#2962ff]/20 text-white font-semibold'
-                          : 'text-[#d1d4dc] hover:text-white hover:bg-[#2a2e39]'
+                          : 'text-[#d1d4dc] hover:text-white hover:bg-[#3f3f46]'
                       }`}
                     >
                       <span className="truncate">{opt.label}</span>

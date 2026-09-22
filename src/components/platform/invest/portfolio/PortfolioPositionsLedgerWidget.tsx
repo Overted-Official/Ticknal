@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import {
@@ -53,7 +53,7 @@ export default function PortfolioPositionsLedgerWidget({
   return (
     <div className="w-full min-w-0 relative space-y-3 select-none font-sans">
       {/* Section Header */}
-      <div className="flex flex-wrap items-end justify-between gap-3 pb-2 border-b border-[#1e222d]">
+      <div className="flex flex-wrap items-end justify-between gap-3 pb-2 border-b border-[#27272a]">
         <div>
           <h3 className="text-base font-bold text-white tracking-tight">Open Holdings Ledger</h3>
           <p className="text-xs text-[#787b86] mt-0.5">Aggregated positions, allocation weights, and algorithmic consensus</p>
@@ -66,7 +66,7 @@ export default function PortfolioPositionsLedgerWidget({
       {/* Desktop Table View */}
       <div className="hidden overflow-x-auto md:block custom-scrollbar">
         <div className="portfolio-table-min">
-          <div className="table-layout-portfolio border-b border-[#1e222d] px-3 py-2 text-[11px] font-medium text-[#787b86]">
+          <div className="table-layout-portfolio border-b border-[#27272a] px-3 py-2 text-[11px] font-medium text-[#787b86]">
             <span>Ticker</span>
             <span>Accounts</span>
             <span>Position</span>
@@ -88,7 +88,7 @@ export default function PortfolioPositionsLedgerWidget({
               return (
                 <div
                   key={holding.symbol}
-                  className="table-layout-portfolio items-center border-b border-[#1e222d]/60 px-3 py-3 hover:bg-[#1e222d]/30 transition-colors group cursor-pointer"
+                  className="table-layout-portfolio items-center border-b border-[#27272a]/60 px-3 py-3 hover:bg-[#27272a]/30 transition-colors group cursor-pointer"
                 >
                   {/* Ticker & Logo */}
                   <div className="flex min-w-0 items-center gap-2.5">
@@ -151,7 +151,7 @@ export default function PortfolioPositionsLedgerWidget({
                     <button
                       type="button"
                       onClick={() => onOpenChart(holding.symbol)}
-                      className="rounded-lg p-1.5 text-[#787b86] hover:bg-[#2a2e39] hover:text-white transition-colors cursor-pointer"
+                      className="rounded-lg p-1.5 text-[#787b86] hover:bg-[#3f3f46] hover:text-white transition-colors cursor-pointer"
                       title="Open Candlestick Chart"
                     >
                       <LineChart size={14} />
@@ -183,7 +183,7 @@ export default function PortfolioPositionsLedgerWidget({
       {/* Mobile Card View */}
       <div className="space-y-2.5 md:hidden">
         {holdings.length === 0 ? (
-          <div className="rounded-xl border border-[#1e222d] bg-[#14171f] px-3 py-10 text-center text-xs text-[#787b86]">
+          <div className="rounded-xl border border-[#27272a] bg-[#18181b] px-3 py-10 text-center text-xs text-[#787b86]">
             No open positions yet.
           </div>
         ) : (
@@ -195,7 +195,7 @@ export default function PortfolioPositionsLedgerWidget({
             const group = grouping === 'sector' ? holding.sector : grouping === 'industryGroup' ? holding.industryGroup : holding.industry;
 
             return (
-              <article key={holding.symbol} className="rounded-xl border border-[#1e222d] bg-[#14171f] p-3.5 min-w-0 space-y-3">
+              <article key={holding.symbol} className="rounded-xl border border-[#27272a] bg-[#18181b] p-3.5 min-w-0 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2.5">
                     <TickerLogo symbol={holding.symbol} logoUrl={holding.logoUrl} />
@@ -212,14 +212,14 @@ export default function PortfolioPositionsLedgerWidget({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 border-b border-[#1e222d] pb-2 text-[11px]">
+                <div className="flex items-center justify-between gap-2 border-b border-[#27272a] pb-2 text-[11px]">
                   <span className="truncate text-[#787b86]">{group}</span>
                   <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${regimeTone(holding.regime)}`}>
                     {holding.regime}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-b border-[#1e222d] pb-3 text-xs tabular-nums">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-b border-[#27272a] pb-3 text-xs tabular-nums">
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-[#787b86]">Quantity</p>
                     <p className="mt-0.5 font-semibold text-white">{isPrivacy ? '••••' : number(holding.quantity, 2)}</p>
@@ -258,11 +258,11 @@ export default function PortfolioPositionsLedgerWidget({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 border-t border-[#1e222d] pt-2.5">
+                <div className="grid grid-cols-3 gap-2 border-t border-[#27272a] pt-2.5">
                   <button
                     type="button"
                     onClick={() => onOpenChart(holding.symbol)}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#2a2e39] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#323644] transition-colors cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#3f3f46] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#323644] transition-colors cursor-pointer"
                   >
                     <LineChart size={13} /> Chart
                   </button>

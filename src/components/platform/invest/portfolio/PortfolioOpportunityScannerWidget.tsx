@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import {
@@ -56,7 +56,7 @@ export default function PortfolioOpportunityScannerWidget({
   return (
     <div className="w-full min-w-0 relative space-y-3 select-none font-sans">
       {/* Section Header */}
-      <div className="flex flex-wrap items-end justify-between gap-3 pb-2 border-b border-[#1e222d]">
+      <div className="flex flex-wrap items-end justify-between gap-3 pb-2 border-b border-[#27272a]">
         <div>
           <h3 className="text-base font-bold text-white tracking-tight">Market Opportunity Scanner</h3>
           <p className="text-xs text-[#787b86] mt-0.5">
@@ -71,7 +71,7 @@ export default function PortfolioOpportunityScannerWidget({
       {/* Desktop Table View */}
       <div className="hidden overflow-x-auto md:block custom-scrollbar">
         <div className="opportunity-table-min">
-          <div className="table-layout-opportunity border-b border-[#1e222d] px-3 py-2 text-[11px] font-medium text-[#787b86]">
+          <div className="table-layout-opportunity border-b border-[#27272a] px-3 py-2 text-[11px] font-medium text-[#787b86]">
             <span>Ticker</span>
             <span>Triggering Strategy</span>
             <span>Last Price</span>
@@ -109,7 +109,7 @@ export default function PortfolioOpportunityScannerWidget({
                     type="button"
                     onClick={() => onToggleGroup(group)}
                     aria-expanded={!isCollapsed}
-                    className="flex w-full items-center justify-between border-b border-[#1e222d] bg-[#14171f]/80 px-3 py-2.5 text-left hover:bg-[#1e222d]/50 transition-colors cursor-pointer"
+                    className="flex w-full items-center justify-between border-b border-[#27272a] bg-[#18181b]/80 px-3 py-2.5 text-left hover:bg-[#27272a]/50 transition-colors cursor-pointer"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <ChevronDown size={14} className={`shrink-0 text-[#787b86] transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
@@ -137,7 +137,7 @@ export default function PortfolioOpportunityScannerWidget({
                       return (
                         <div
                           key={symbol}
-                          className="table-layout-opportunity items-center border-b border-[#1e222d]/40 px-3 py-2.5 hover:bg-[#1e222d]/30 transition-colors group cursor-pointer text-xs"
+                          className="table-layout-opportunity items-center border-b border-[#27272a]/40 px-3 py-2.5 hover:bg-[#27272a]/30 transition-colors group cursor-pointer text-xs"
                         >
                           <div className="flex min-w-0 items-center gap-2.5">
                             <TickerLogo symbol={symbol} logoUrl={opportunity.logoUrl} />
@@ -188,23 +188,23 @@ export default function PortfolioOpportunityScannerWidget({
       {/* Mobile Card View */}
       <div className="space-y-3 md:hidden">
         {isLoadingOpportunities ? (
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-[#1e222d] bg-[#14171f] p-8 text-xs text-[#787b86]">
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-[#27272a] bg-[#18181b] p-8 text-xs text-[#787b86]">
             <Loader2 size={14} className="animate-spin text-[#2962ff]" /> Scanning market candidates…
           </div>
         ) : groupedOpportunities.length === 0 ? (
-          <div className="rounded-xl border border-[#1e222d] bg-[#14171f] p-8 text-center text-xs text-[#787b86]">
+          <div className="rounded-xl border border-[#27272a] bg-[#18181b] p-8 text-center text-xs text-[#787b86]">
             No matching candidates found.
           </div>
         ) : (
           groupedOpportunities.map(([group, rows]) => {
             const isCollapsed = collapsedGroups[group] === true;
             return (
-              <div key={group} className="rounded-xl border border-[#1e222d] bg-[#14171f] overflow-hidden">
+              <div key={group} className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
                 {/* Group Accordion Header */}
                 <button
                   type="button"
                   onClick={() => onToggleGroup(group)}
-                  className="flex w-full items-center justify-between p-3 text-left hover:bg-[#1e222d]/40 transition-colors cursor-pointer"
+                  className="flex w-full items-center justify-between p-3 text-left hover:bg-[#27272a]/40 transition-colors cursor-pointer"
                 >
                   <span className="flex items-center gap-2 min-w-0">
                     <ChevronDown size={14} className={`text-[#787b86] shrink-0 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
@@ -218,7 +218,7 @@ export default function PortfolioOpportunityScannerWidget({
 
                 {/* Simplified Candidate Cards */}
                 {!isCollapsed && (
-                  <div className="divide-y divide-[#1e222d] border-t border-[#1e222d]">
+                  <div className="divide-y divide-[#27272a] border-t border-[#27272a]">
                     {rows.map((opportunity) => {
                       const symbol = cleanSymbol(opportunity.symbol);
                       const maxDd = metricForOpportunity(opportunity, 'maxDrawdown');
@@ -226,7 +226,7 @@ export default function PortfolioOpportunityScannerWidget({
                       const alpha = metricForOpportunity(opportunity, 'alpha');
 
                       return (
-                        <div key={symbol} className="p-3 space-y-2.5 hover:bg-[#1e222d]/20 transition-colors">
+                        <div key={symbol} className="p-3 space-y-2.5 hover:bg-[#27272a]/20 transition-colors">
                           {/* Top: Identity + Strategy Badge */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2.5 min-w-0">
@@ -245,7 +245,7 @@ export default function PortfolioOpportunityScannerWidget({
                           </div>
 
                           {/* Middle: Clean 3-Metric Strip */}
-                          <div className="grid grid-cols-3 gap-1.5 rounded-lg bg-[#0d0f14] border border-[#1e222d]/70 p-2 text-center tabular-nums">
+                          <div className="grid grid-cols-3 gap-1.5 rounded-lg bg-[#0d0f14] border border-[#27272a]/70 p-2 text-center tabular-nums">
                             <div>
                               <span className="text-[9px] uppercase tracking-wider text-[#787b86] block">Alpha (α)</span>
                               <span className={`text-xs font-bold ${alpha !== null && alpha >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>

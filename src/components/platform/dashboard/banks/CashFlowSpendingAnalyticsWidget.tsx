@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
@@ -568,19 +568,19 @@ export default function CashFlowSpendingAnalyticsWidget({
   return (
     <div className="w-full flex flex-col bg-transparent select-none space-y-6">
       {/* ================= SECTION MASTER TIMEFRAME TOOLBAR ================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1e222d]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#27272a]">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-semibold text-white tracking-wide">
             Analysis Period:
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#1e222d] border border-[#2a2e39] text-[#787b86] font-mono">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#27272a] border border-[#3f3f46] text-[#787b86] font-mono">
             {dateRangeLabel}
           </span>
         </div>
 
         {/* Master Timeframe Filter */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#14171f] border border-[#2a2e39]">
+          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#18181b] border border-[#3f3f46]">
             {(['THIS_MONTH', '30D', '90D', 'YTD', 'ALL', 'CUSTOM'] as TimeframePreset[]).map((p) => {
               const labels: Record<TimeframePreset, string> = {
                 THIS_MONTH: 'This Month',
@@ -598,8 +598,8 @@ export default function CashFlowSpendingAnalyticsWidget({
                   onClick={() => setTimeframe(p)}
                   className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                     active
-                      ? 'bg-[#2a2e39] text-white font-semibold shadow-xs'
-                      : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
+                      ? 'bg-[#3f3f46] text-white font-semibold shadow-xs'
+                      : 'text-[#787b86] hover:text-white hover:bg-[#27272a]'
                   }`}
                 >
                   {labels[p]}
@@ -610,7 +610,7 @@ export default function CashFlowSpendingAnalyticsWidget({
 
           {/* Custom Date Pickers */}
           {timeframe === 'CUSTOM' && (
-            <div className="flex items-center gap-1.5 bg-[#14171f] border border-[#2a2e39] px-2.5 py-1 rounded-lg text-xs font-mono text-white animate-in fade-in duration-150">
+            <div className="flex items-center gap-1.5 bg-[#18181b] border border-[#3f3f46] px-2.5 py-1 rounded-lg text-xs font-mono text-white animate-in fade-in duration-150">
               <Calendar className="w-3.5 h-3.5 text-[#787b86]" />
               <input
                 type="date"
@@ -669,7 +669,7 @@ export default function CashFlowSpendingAnalyticsWidget({
       {/* ================= ROW 2: CASH MOVEMENT CHART (ALIGNED WITH NETWORTH CHARTS) ================= */}
       <div className="w-full flex flex-col justify-start select-none bg-transparent space-y-3 pt-2">
         {/* Header with Legends and Action Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#1e222d]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#27272a]">
           <div>
             <h3 className="text-base font-bold text-white tracking-tight">
               Cash Movement Dynamics &amp; Cumulative Trajectory
@@ -701,7 +701,7 @@ export default function CashFlowSpendingAnalyticsWidget({
         <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
           <div className="flex items-center gap-2">
             <span className="text-[#787b86] font-medium text-[11px]">Resolution:</span>
-            <div className="inline-flex items-center p-0.5 rounded-md bg-[#14171f] border border-[#2a2e39]">
+            <div className="inline-flex items-center p-0.5 rounded-md bg-[#18181b] border border-[#3f3f46]">
               {(['AUTO', 'DAILY', 'WEEKLY', 'MONTHLY'] as GroupingResolution[]).map((res) => {
                 const active = resolution === res;
                 return (
@@ -711,8 +711,8 @@ export default function CashFlowSpendingAnalyticsWidget({
                     onClick={() => setResolution(res)}
                     className={`px-2 py-0.5 text-[11px] font-mono rounded transition-colors ${
                       active
-                        ? 'bg-[#2a2e39] text-white font-semibold'
-                        : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
+                        ? 'bg-[#3f3f46] text-white font-semibold'
+                        : 'text-[#787b86] hover:text-white hover:bg-[#27272a]'
                     }`}
                   >
                     {res === 'AUTO' ? 'Auto' : res.slice(0, 1) + res.slice(1).toLowerCase()}
@@ -724,14 +724,14 @@ export default function CashFlowSpendingAnalyticsWidget({
 
           <div className="flex items-center gap-2">
             {/* Mode Switcher: Totals vs Categories */}
-            <div className="inline-flex items-center p-0.5 rounded-md bg-[#14171f] border border-[#2a2e39]">
+            <div className="inline-flex items-center p-0.5 rounded-md bg-[#18181b] border border-[#3f3f46]">
               <button
                 type="button"
                 onClick={() => setChartFlowMode('TOTALS')}
                 className={`px-2 py-0.5 text-[11px] font-medium rounded flex items-center gap-1 transition-colors ${
                   chartFlowMode === 'TOTALS'
-                    ? 'bg-[#2a2e39] text-white font-semibold'
-                    : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
+                    ? 'bg-[#3f3f46] text-white font-semibold'
+                    : 'text-[#787b86] hover:text-white hover:bg-[#27272a]'
                 }`}
               >
                 <BarChart3 className="w-3 h-3" />
@@ -742,8 +742,8 @@ export default function CashFlowSpendingAnalyticsWidget({
                 onClick={() => setChartFlowMode('CATEGORIES')}
                 className={`px-2 py-0.5 text-[11px] font-medium rounded flex items-center gap-1 transition-colors ${
                   chartFlowMode === 'CATEGORIES'
-                    ? 'bg-[#2a2e39] text-white font-semibold'
-                    : 'text-[#787b86] hover:text-white hover:bg-[#1e222d]'
+                    ? 'bg-[#3f3f46] text-white font-semibold'
+                    : 'text-[#787b86] hover:text-white hover:bg-[#27272a]'
                 }`}
               >
                 <Layers className="w-3 h-3" />
@@ -758,7 +758,7 @@ export default function CashFlowSpendingAnalyticsWidget({
               className={`px-2 py-0.5 text-[11px] font-mono rounded border flex items-center gap-1 transition-colors ${
                 showCumulativeLine
                   ? 'bg-[#2962ff]/10 text-[#2962ff] border-[#2962ff]/30 font-semibold'
-                  : 'bg-[#14171f] text-[#787b86] border-[#2a2e39] hover:text-white'
+                  : 'bg-[#18181b] text-[#787b86] border-[#3f3f46] hover:text-white'
               }`}
             >
               <LineChart className="w-3 h-3" />
@@ -789,7 +789,7 @@ export default function CashFlowSpendingAnalyticsWidget({
               >
                 {/* Horizontal Gridlines matching TradingView Networth */}
                 <CartesianGrid
-                  stroke="#1e222d"
+                  stroke="#27272a"
                   strokeDasharray="2 2"
                   vertical={false}
                   strokeOpacity={0.7}
@@ -828,8 +828,8 @@ export default function CashFlowSpendingAnalyticsWidget({
                     const outflowCats = item.outflowCategories || {};
 
                     return (
-                      <div className="p-3 rounded-xl bg-[#1e222d] border border-[#2a2e39] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl min-w-[200px]">
-                        <div className="font-semibold text-white mb-1 border-b border-[#2a2e39] pb-1 flex items-center justify-between">
+                      <div className="p-3 rounded-xl bg-[#27272a] border border-[#3f3f46] text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl min-w-[200px]">
+                        <div className="font-semibold text-white mb-1 border-b border-[#3f3f46] pb-1 flex items-center justify-between">
                           <span>{item.label}</span>
                           <span
                             className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
@@ -870,7 +870,7 @@ export default function CashFlowSpendingAnalyticsWidget({
                           </div>
                         )}
                         {showCumulativeLine && (
-                          <div className="flex justify-between gap-4 text-[#2962ff] pt-1 border-t border-[#2a2e39]">
+                          <div className="flex justify-between gap-4 text-[#2962ff] pt-1 border-t border-[#3f3f46]">
                             <span>Cumulative Net:</span>
                             <strong className="text-white">
                               {item.cumulativeNet >= 0 ? '+' : ''}{formatMoney(item.cumulativeNet)}
@@ -951,7 +951,7 @@ export default function CashFlowSpendingAnalyticsWidget({
       </div>
 
       {/* ================= ROW 3: OUTFLOW DISTRIBUTION (EXACT MATCH IMAGE 3 / PORTFOLIO SPLIT) ================= */}
-      <div className="w-full h-full flex flex-col justify-start select-none space-y-4 bg-transparent pt-4 border-t border-[#1e222d]">
+      <div className="w-full h-full flex flex-col justify-start select-none space-y-4 bg-transparent pt-4 border-t border-[#27272a]">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -968,7 +968,7 @@ export default function CashFlowSpendingAnalyticsWidget({
         </div>
 
         {/* 1. Square Tabs Bar matching Image 3 */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 border-b border-[#1e222d] pb-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 border-b border-[#27272a] pb-2">
           {tabs.map((tab) => {
             const isSelected = activeTab === tab.key;
             return (
@@ -983,7 +983,7 @@ export default function CashFlowSpendingAnalyticsWidget({
                 }}
                 className={`text-xs px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap ${
                   isSelected
-                    ? 'bg-[#1e222d] text-white font-semibold shadow-xs border border-[#2a2e39]'
+                    ? 'bg-[#27272a] text-white font-semibold shadow-xs border border-[#3f3f46]'
                     : 'text-[#787b86] hover:text-white font-medium'
                 }`}
               >
@@ -1064,7 +1064,7 @@ export default function CashFlowSpendingAnalyticsWidget({
           <div className="lg:col-span-7 overflow-x-auto overflow-y-auto max-h-[320px] custom-scrollbar">
             <table className="w-full text-left text-xs font-sans border-collapse">
               <thead>
-                <tr className="border-b border-[#1e222d] text-[#787b86] text-[11px] font-medium">
+                <tr className="border-b border-[#27272a] text-[#787b86] text-[11px] font-medium">
                   <th className="pb-2 text-left font-medium">
                     {activeTab === 'categories'
                       ? 'Category'
@@ -1077,7 +1077,7 @@ export default function CashFlowSpendingAnalyticsWidget({
                   <th className="pb-2 text-right font-medium">Transactions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e222d]/60">
+              <tbody className="divide-y divide-[#27272a]/60">
                 {distributionItems.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-6 text-center text-xs text-[#787b86]">
@@ -1091,7 +1091,7 @@ export default function CashFlowSpendingAnalyticsWidget({
                       onClick={() => setInspectItem({ name: item.name, type: activeTab })}
                       onMouseEnter={() => setHoveredIndex(idx)}
                       onMouseLeave={() => setHoveredIndex(null)}
-                      className="hover:bg-[#1e222d]/30 transition-colors cursor-pointer group"
+                      className="hover:bg-[#27272a]/30 transition-colors cursor-pointer group"
                     >
                       {/* 1. Name with Color Swatch */}
                       <td className="py-2.5 pr-3">
@@ -1136,11 +1136,11 @@ export default function CashFlowSpendingAnalyticsWidget({
           onClick={() => setInspectItem(null)}
         >
           <div
-            className="w-full max-w-lg bg-[#14171f] border border-[#2a2e39] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150 font-sans"
+            className="w-full max-w-lg bg-[#18181b] border border-[#3f3f46] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150 font-sans"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-[#1e222d] flex items-center justify-between bg-[#1e222d]/50">
+            <div className="p-4 sm:p-5 border-b border-[#27272a] flex items-center justify-between bg-[#27272a]/50">
               <div className="flex items-center gap-3">
                 <div
                   className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0 shadow-xs"
@@ -1153,7 +1153,7 @@ export default function CashFlowSpendingAnalyticsWidget({
                 <div>
                   <h4 className="font-semibold text-white text-sm flex items-center gap-2">
                     {inspectItem.name}
-                    <span className="text-[10px] font-normal text-[#787b86] px-2 py-0.5 rounded-full bg-[#1e222d] border border-[#2a2e39]">
+                    <span className="text-[10px] font-normal text-[#787b86] px-2 py-0.5 rounded-full bg-[#27272a] border border-[#3f3f46]">
                       {inspectTransactions.length} {inspectTransactions.length === 1 ? 'record' : 'records'}
                     </span>
                   </h4>
@@ -1170,7 +1170,7 @@ export default function CashFlowSpendingAnalyticsWidget({
               <button
                 type="button"
                 onClick={() => setInspectItem(null)}
-                className="p-1.5 rounded-lg text-[#787b86] hover:text-white hover:bg-[#1e222d] transition-colors"
+                className="p-1.5 rounded-lg text-[#787b86] hover:text-white hover:bg-[#27272a] transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -1192,7 +1192,7 @@ export default function CashFlowSpendingAnalyticsWidget({
                   return (
                     <div
                       key={tx.id}
-                      className="p-2.5 rounded-xl bg-[#1e222d]/40 border border-[#2a2e39]/60 flex items-center justify-between gap-3 hover:bg-[#1e222d]/70 transition-colors"
+                      className="p-2.5 rounded-xl bg-[#27272a]/40 border border-[#3f3f46]/60 flex items-center justify-between gap-3 hover:bg-[#27272a]/70 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         {tx.bankLogoUrl ? (
@@ -1206,7 +1206,7 @@ export default function CashFlowSpendingAnalyticsWidget({
                             />
                           </div>
                         ) : (
-                          <div className="w-7 h-7 rounded-lg bg-[#1e222d] border border-[#2a2e39] shrink-0 flex items-center justify-center text-[#787b86]">
+                          <div className="w-7 h-7 rounded-lg bg-[#27272a] border border-[#3f3f46] shrink-0 flex items-center justify-center text-[#787b86]">
                             <Landmark className="w-3.5 h-3.5" />
                           </div>
                         )}
@@ -1239,12 +1239,12 @@ export default function CashFlowSpendingAnalyticsWidget({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3 bg-[#1e222d]/30 border-t border-[#1e222d] flex items-center justify-between text-xs text-[#787b86]">
+            <div className="p-3 bg-[#27272a]/30 border-t border-[#27272a] flex items-center justify-between text-xs text-[#787b86]">
               <span>{inspectTransactions.length} Transactions</span>
               <button
                 type="button"
                 onClick={() => setInspectItem(null)}
-                className="px-3 py-1 bg-[#2a2e39] hover:bg-[#333744] text-white rounded-lg text-xs transition-colors border border-[#3e4250]"
+                className="px-3 py-1 bg-[#3f3f46] hover:bg-[#333744] text-white rounded-lg text-xs transition-colors border border-[#3e4250]"
               >
                 Close
               </button>

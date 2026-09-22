@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
@@ -87,7 +87,7 @@ export default function PortfolioSummaryHeaderWidget({
 
   return (
     <div className="w-full min-w-0 relative select-none font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-[#1e222d] mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-[#27272a] mb-3">
         <div>
           <h3 className="text-base font-bold text-white tracking-tight">Portfolio Overview</h3>
           <p className="text-xs text-[#787b86] mt-0.5">Capital, cash reserves, and fresh algorithmic signals</p>

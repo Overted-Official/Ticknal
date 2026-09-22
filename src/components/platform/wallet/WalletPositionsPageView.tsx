@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
 import useSWR from 'swr';
@@ -244,7 +244,7 @@ export default function WalletPositionsPageView() {
 
         {/* SECTION 2: Tracked Positions & Execution Lots */}
         <section id="section-positions-table" className="section-container section-viewport-fit space-y-3 pt-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-[#1e222d]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-[#27272a]">
             <div className="flex flex-col gap-0.5">
               <h2 className="section-title">Tracked Positions & Execution Lots</h2>
               <p className="section-subtitle">

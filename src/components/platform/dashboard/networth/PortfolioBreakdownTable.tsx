@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { ChevronRight } from '@/components/ui/icon-library';
@@ -145,7 +145,7 @@ export default function PortfolioBreakdownTable({
   return (
     <div className="w-full h-full flex flex-col justify-start select-none space-y-4 bg-transparent">
       {/* 1. Top Filter Bar: Category Tabs on Left + View Mode Switch on Right */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#1e222d]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#27272a]">
         {/* Category Pills (TradingView Top Tabs) */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
@@ -155,7 +155,7 @@ export default function PortfolioBreakdownTable({
               onClick={() => setFilter(c.key)}
               className={`px-3.5 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
                 currentFilter === c.key
-                  ? 'bg-[#1e222d] text-white border border-[#2a2e39] font-semibold'
+                  ? 'bg-[#27272a] text-white border border-[#3f3f46] font-semibold'
                   : 'text-[#868993] hover:text-white font-medium'
               }`}
             >
@@ -182,7 +182,7 @@ export default function PortfolioBreakdownTable({
             onClick={() => setViewMode('all')}
             className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
               viewMode === 'all'
-                ? 'bg-[#2a2e39] text-white shadow-xs'
+                ? 'bg-[#3f3f46] text-white shadow-xs'
                 : 'text-[#787b86] hover:text-white'
             }`}
           >
@@ -202,7 +202,7 @@ export default function PortfolioBreakdownTable({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* COLUMN 1: GAINERS */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Stock gainers</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -212,7 +212,7 @@ export default function PortfolioBreakdownTable({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {gainers.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No positive return holdings in this category.
@@ -247,7 +247,7 @@ export default function PortfolioBreakdownTable({
 
             {/* COLUMN 2: LIQUID RESERVES & FUNDS */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Liquid reserves & Cash</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -257,7 +257,7 @@ export default function PortfolioBreakdownTable({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {liquid.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No liquid reserves or cash balances found.
@@ -292,7 +292,7 @@ export default function PortfolioBreakdownTable({
 
             {/* COLUMN 3: LOSERS */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#1e222d]">
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-[#27272a]">
                 <div className="flex items-center gap-1 text-base font-bold text-white group cursor-pointer hover:text-[#2962ff] transition-colors">
                   <span>Stock losers</span>
                   <ChevronRight className="w-4 h-4 text-[#868993] group-hover:text-[#2962ff]" />
@@ -302,7 +302,7 @@ export default function PortfolioBreakdownTable({
                 </span>
               </div>
 
-              <div className="divide-y divide-[#1e222d]">
+              <div className="divide-y divide-[#27272a]">
                 {losers.length === 0 ? (
                   <div className="py-8 text-center text-[#787b86] text-xs">
                     No declining holdings in this portfolio.
@@ -338,7 +338,7 @@ export default function PortfolioBreakdownTable({
         ) : (
           /* Single Complete TradingView List */
           <div className="flex flex-col">
-            <div className="divide-y divide-[#1e222d]">
+            <div className="divide-y divide-[#27272a]">
               {allSortedByVal.map((item) => (
                 <HoldingRowItem
                   key={item.id}
@@ -351,7 +351,7 @@ export default function PortfolioBreakdownTable({
               ))}
             </div>
 
-            <div className="pt-3 mt-1 border-t border-[#1e222d]">
+            <div className="pt-3 mt-1 border-t border-[#27272a]">
               <span className="text-xs text-[#787b86]">
                 Showing all {allSortedByVal.length} constituent assets sorted by total market allocation
               </span>
@@ -397,11 +397,11 @@ function HoldingRowItem({
     : item.ticker.charAt(0).toUpperCase();
 
   return (
-    <div className="py-2.5 px-1 flex items-center justify-between hover:bg-[#1e222d]/30 transition-colors group cursor-pointer border-b border-[#1e222d]">
+    <div className="py-2.5 px-1 flex items-center justify-between hover:bg-[#27272a]/30 transition-colors group cursor-pointer border-b border-[#27272a]">
       {/* Left: Circular Avatar + Stacked Name & Ticker */}
       <div className="flex items-center gap-2.5 min-w-0 pr-2">
         {/* Circular Avatar */}
-        <div className="w-8 h-8 rounded-full bg-[#1e222d] border border-white/5 flex items-center justify-center font-bold text-xs text-white/90 shrink-0 overflow-hidden shadow-xs">
+        <div className="w-8 h-8 rounded-full bg-[#27272a] border border-white/5 flex items-center justify-center font-bold text-xs text-white/90 shrink-0 overflow-hidden shadow-xs">
           {item.logoUrl && !imgError ? (
             <img
               src={item.logoUrl}
@@ -424,7 +424,7 @@ function HoldingRowItem({
 
           {/* Bottom: Ticker in dark pill + shares */}
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1e222d] text-[#868993] border border-white/5 uppercase tracking-wider">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#27272a] text-[#868993] border border-white/5 uppercase tracking-wider">
               {item.ticker}
             </span>
             <span className="text-[11px] text-[#787b86] font-normal truncate">
@@ -468,7 +468,7 @@ function HoldingRowItem({
               {isPositive ? '+' : ''}{item.pnlPct.toFixed(1)}%
             </div>
           ) : (
-            <div className="w-[72px] py-1 text-center rounded-[6px] text-xs font-medium tabular-nums text-[#868993] bg-[#1e222d] border border-white/5">
+            <div className="w-[72px] py-1 text-center rounded-[6px] text-xs font-medium tabular-nums text-[#868993] bg-[#27272a] border border-white/5">
               {item.category === 'BROKERAGE_CASH' ? 'Cash' : item.category === 'FUNDS' ? 'Fund' : 'Liquid'}
             </div>
           )}

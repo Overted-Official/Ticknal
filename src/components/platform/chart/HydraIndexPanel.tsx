@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -70,14 +70,14 @@ export default function HydraIndexPanel({
         fontSize: 10,
       },
       grid: {
-        vertLines: { color: cssTokenColor('--palette-chart-grid', '#1E222D') },
-        horzLines: { color: cssTokenColor('--palette-chart-grid', '#1E222D') },
+        vertLines: { color: cssTokenColor('--palette-chart-grid', '#27272a') },
+        horzLines: { color: cssTokenColor('--palette-chart-grid', '#27272a') },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
       },
       rightPriceScale: {
-        borderColor: cssTokenColor('--palette-chart-grid', '#1E222D'),
+        borderColor: cssTokenColor('--palette-chart-grid', '#27272a'),
         autoScale: false,
         minimumWidth: 70,
         scaleMargins: {
@@ -86,7 +86,7 @@ export default function HydraIndexPanel({
         },
       },
       timeScale: {
-        borderColor: cssTokenColor('--palette-chart-grid', '#1E222D'),
+        borderColor: cssTokenColor('--palette-chart-grid', '#27272a'),
         timeVisible: true,
         secondsVisible: false,
         visible: false, // Hidden to seamlessly align with main chart's time scale
