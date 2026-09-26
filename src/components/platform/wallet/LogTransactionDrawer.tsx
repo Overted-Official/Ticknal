@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRightLeft, X, Check } from '@/components/ui/icon-library';
+import { ArrowRightLeft, X, Check, ChevronDown } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
 import AccountSelectDropdown from './AccountSelectDropdown';
@@ -16,6 +17,13 @@ interface LogTransactionDrawerProps {
   transactionToEdit?: BankTransaction | null;
 }
 
+const modeDescriptions: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION', string> = {
+  EXPENSE: 'Outflow from the selected account for living, bills, or operational costs.',
+  INCOME: 'Inflow adding liquid cash to your selected bank or treasury balance.',
+  TRANSFER: 'Move capital between two accounts without altering overall net worth.',
+  BROKER_INJECTION: 'Inject funds directly into your brokerage account to back stock purchases.',
+};
+
 export default function LogTransactionDrawer({
   isOpen,
   onClose,
@@ -25,8 +33,10 @@ export default function LogTransactionDrawer({
   transactionToEdit,
 }: LogTransactionDrawerProps) {
   const { toast } = useToast();
-  const isEditMode = Boolean(transactionToEdit);
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
+  const isEditMode = Boolean(transactionToEdit);
   const defaultAccount = accounts.find((a) => a.isDefaultExpense) || accounts[0];
 
   const [txMode, setTxMode] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION'>('EXPENSE');
@@ -39,7 +49,25 @@ export default function LogTransactionDrawer({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     if (!isOpen) return;
 
     if (transactionToEdit) {
@@ -71,6 +99,11 @@ export default function LogTransactionDrawer({
       return;
     }
 
+    if (txMode === 'TRANSFER' && (!toAccountId || toAccountId === accountId)) {
+      toast.warning('Invalid Destination', 'Please select a different destination account for transfers.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/banks/transactions', {
@@ -92,7 +125,7 @@ export default function LogTransactionDrawer({
       if (res.ok) {
         toast.success(
           isEditMode ? 'Transaction Updated' : 'Transaction Recorded',
-          `${txMode === 'TRANSFER' ? 'Transfer' : txMode} of ${Number(amount).toLocaleString()} ${currency} ${isEditMode ? 'updated' : 'completed'}.`
+          `${txMode === 'TRANSFER' ? 'Transfer' : txMode === 'BROKER_INJECTION' ? 'Broker Transfer' : txMode} of ${Number(amount).toLocaleString()} ${currency} ${isEditMode ? 'updated' : 'completed'}.`
         );
         onTransactionLogged();
         onClose();
@@ -109,200 +142,246 @@ export default function LogTransactionDrawer({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-modal overflow-hidden flex justify-end pointer-events-auto">
+        <div key="log-transaction-drawer-overlay" className="drawer-overlay">
           {/* Backdrop */}
           <motion.div
+            key="log-transaction-drawer-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 z-0 cursor-pointer"
+            className="drawer-backdrop"
+            aria-label="Close drawer overlay"
           />
 
-          {/* Sliding Sheet / Drawer */}
+          {/* Drawer Sheet */}
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            key="log-transaction-drawer-sheet"
+            initial={isMobile ? { y: '100%' } : { x: '100%' }}
+            animate={isMobile ? { y: 0 } : { x: 0 }}
+            exit={isMobile ? { y: '100%' } : { x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="relative z-modal-content w-full max-w-md bg-plt-surface text-plt-text border-t md:border-t-0 md:border-l border-plt-border-strong shadow-2xl flex flex-col max-h-[90vh] md:max-h-full h-full mt-auto md:mt-0"
+            className="drawer-sheet-form"
           >
+            {/* Top Brand Accent Hairline */}
+            <div className="drawer-brand-hairline" />
+
             {/* Header */}
-            <div className="px-5 py-3.5 border-b border-plt-border-soft bg-plt-card flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="text-xs font-bold text-plt-text tracking-tight font-sans">
-                  {isEditMode ? 'Edit Transaction' : 'Log Transaction'}
-                </h3>
-                <p className="text-[10px] text-plt-muted font-sans mt-0.5">
-                  {isEditMode ? 'Modify transaction details & recalculate balances' : 'Record transfers, expenses, income & cash flows'}
-                </p>
+            <div className="drawer-header">
+              {/* Mobile Drag Pill */}
+              <div
+                className="drawer-drag-pill-container"
+                onClick={onClose}
+                aria-label="Drag handle to close"
+              >
+                <div className="drawer-drag-pill" />
               </div>
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition cursor-pointer"
-                title="Close drawer"
-              >
-                <X size={15} />
-              </button>
+              {/* Main Header Row */}
+              <div className="drawer-header-row">
+                <div className="drawer-header-brand">
+                  <div className="drawer-header-icon-box">
+                    <ArrowRightLeft className="drawer-header-icon" />
+                  </div>
+                  <div className="drawer-header-titles">
+                    <h2 className="drawer-title">
+                      {isEditMode ? 'Edit Transaction' : 'Log Transaction'}
+                    </h2>
+                    <p className="drawer-subtitle">
+                      {isEditMode
+                        ? 'Modify transaction details & recalculate account balances'
+                        : 'Record transfers, expenses, income & cash flows'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="drawer-close-btn"
+                  aria-label="Close drawer"
+                  title="Close drawer"
+                >
+                  <X className="drawer-close-icon" />
+                </button>
+              </div>
             </div>
 
             {/* Mode Switcher */}
-            <div className="px-4 py-2.5 bg-plt-card/50 border-b border-plt-border-soft shrink-0">
-              <div className="pill-switch w-full">
+            <div className="drawer-mode-bar">
+              <div className="pill-switch pill-switch-full">
                 <button
                   type="button"
                   onClick={() => setTxMode('EXPENSE')}
-                  className={`pill-switch-btn flex-1 ${
-                    txMode === 'EXPENSE' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
+                  className={`pill-switch-btn ${txMode === 'EXPENSE' ? 'pill-switch-btn-active' : ''}`}
                 >
                   Expense
                 </button>
                 <button
                   type="button"
                   onClick={() => setTxMode('INCOME')}
-                  className={`pill-switch-btn flex-1 ${
-                    txMode === 'INCOME' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
+                  className={`pill-switch-btn ${txMode === 'INCOME' ? 'pill-switch-btn-active' : ''}`}
                 >
                   Income
                 </button>
                 <button
                   type="button"
                   onClick={() => setTxMode('TRANSFER')}
-                  className={`pill-switch-btn flex-1 ${
-                    txMode === 'TRANSFER' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
+                  className={`pill-switch-btn ${txMode === 'TRANSFER' ? 'pill-switch-btn-active' : ''}`}
                 >
                   Transfer
                 </button>
                 <button
                   type="button"
                   onClick={() => setTxMode('BROKER_INJECTION')}
-                  className={`pill-switch-btn flex-1 ${
-                    txMode === 'BROKER_INJECTION' ? 'pill-switch-btn-active font-semibold' : ''
-                  }`}
+                  className={`pill-switch-btn ${txMode === 'BROKER_INJECTION' ? 'pill-switch-btn-active' : ''}`}
                 >
                   To Stocks
                 </button>
               </div>
             </div>
 
-            {/* Body */}
-            <form onSubmit={handleSubmit} className="p-5 flex-1 overflow-y-auto space-y-4 text-xs custom-scrollbar">
-              {/* Account Selection */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-plt-muted font-sans">
-                  {txMode === 'TRANSFER' ? 'From Account (Source)' : 'Account'}
-                </label>
-                <AccountSelectDropdown
-                  accounts={accounts}
-                  selectedAccountId={accountId}
-                  onSelectAccount={(accId) => {
-                    setAccountId(accId);
-                    const sel = accounts.find((a) => String(a.id) === accId);
-                    if (sel) setCurrency(sel.currency);
-                  }}
-                  placeholder="Select source bank account..."
-                />
-              </div>
+            {/* Form wrapping body and sticky footer */}
+            <form onSubmit={handleSubmit} className="drawer-form">
+              <div className="drawer-body custom-scrollbar drawer-form-fields">
+                {/* Mode Hint Info Card */}
+                <div className="drawer-info-card">
+                  <div className="drawer-info-dot" />
+                  <p className="drawer-info-text">{modeDescriptions[txMode]}</p>
+                </div>
 
-              {/* Destination Account (Transfers only) */}
-              {txMode === 'TRANSFER' && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-plt-muted font-sans">To Account (Destination)</label>
+                {/* Source Account Selection */}
+                <div className="drawer-form-field">
+                  <label className="field-label">
+                    {txMode === 'TRANSFER' ? 'From Account (Source) *' : 'Account *'}
+                  </label>
                   <AccountSelectDropdown
                     accounts={accounts}
-                    selectedAccountId={toAccountId}
-                    onSelectAccount={setToAccountId}
-                    excludeAccountId={accountId}
-                    placeholder="Select destination bank account..."
-                  />
-                </div>
-              )}
-
-              {/* Amount & Date */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-plt-muted font-sans">Amount ({currency}) *</label>
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="input-token"
+                    selectedAccountId={accountId}
+                    onSelectAccount={(accId) => {
+                      setAccountId(accId);
+                      const sel = accounts.find((a) => String(a.id) === accId);
+                      if (sel) setCurrency(sel.currency);
+                    }}
+                    placeholder="Select source bank account..."
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-plt-muted font-sans">Date</label>
+                {/* Destination Account Selection (Transfers only) */}
+                {txMode === 'TRANSFER' && (
+                  <div className="drawer-form-field">
+                    <label className="field-label">To Account (Destination) *</label>
+                    <AccountSelectDropdown
+                      accounts={accounts}
+                      selectedAccountId={toAccountId}
+                      onSelectAccount={setToAccountId}
+                      excludeAccountId={accountId}
+                      placeholder="Select destination bank account..."
+                    />
+                  </div>
+                )}
+
+                {/* Amount & Date 2-Column Grid */}
+                <div className="drawer-form-grid-2">
+                  <div className="drawer-form-field">
+                    <label className="field-label">Amount ({currency}) *</label>
+                    <div className="field-group">
+                      <input
+                        type="number"
+                        step="any"
+                        required
+                        placeholder="0.00"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="field-input"
+                      />
+                      <span className="field-suffix">{currency}</span>
+                    </div>
+                  </div>
+
+                  <div className="drawer-form-field">
+                    <label className="field-label">Transaction Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={transactionDate}
+                      onChange={(e) => setTransactionDate(e.target.value)}
+                      className="field-date-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Category (Non-transfers) */}
+                {txMode !== 'TRANSFER' && (
+                  <div className="drawer-form-field">
+                    <label className="field-label">Category</label>
+                    <div className="field-select-wrapper">
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="field-select-input"
+                      >
+                        {categories.map((c) => (
+                          <option key={c} value={c} className="field-select-option">
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="field-select-chevron" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes / Description */}
+                <div className="drawer-form-field">
+                  <label className="field-label">Notes / Description (Optional)</label>
                   <input
-                    type="date"
-                    value={transactionDate}
-                    onChange={(e) => setTransactionDate(e.target.value)}
-                    className="date-token"
+                    type="text"
+                    placeholder="e.g. Salary wire, Monthly rent, Grocery trip"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="field-text-input"
                   />
                 </div>
               </div>
 
-              {/* Category (if not transfer) */}
-              {txMode !== 'TRANSFER' && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-plt-muted font-sans">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="select-token"
-                  >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Notes */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-plt-muted font-sans">Notes / Description (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Salary wire, Monthly rent, Grocery trip"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="input-token"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-3 border-t border-plt-border-soft flex items-center justify-end gap-2">
+              {/* Drawer Footer with standardized buttons */}
+              <div className="drawer-footer">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="btn-token btn-secondary btn-compact font-sans"
+                  className="drawer-cancel-btn"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-token btn-primary btn-compact font-sans"
+                  className="drawer-confirm-btn"
                 >
-                  <Check size={14} strokeWidth={2.5} />
-                  {isSubmitting ? (isEditMode ? 'Saving...' : 'Recording...') : (isEditMode ? 'Save Changes' : 'Record Transaction')}
+                  <Check className="drawer-btn-icon" strokeWidth={2.5} />
+                  <span>
+                    {isSubmitting
+                      ? isEditMode ? 'Saving...' : 'Recording...'
+                      : isEditMode
+                      ? 'Save Changes'
+                      : txMode === 'TRANSFER'
+                      ? 'Transfer Funds'
+                      : 'Record Transaction'}
+                  </span>
                 </button>
               </div>
             </form>
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
