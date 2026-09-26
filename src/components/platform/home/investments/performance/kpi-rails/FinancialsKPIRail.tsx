@@ -32,11 +32,14 @@ export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps
   const totalGain = orderStats.unrealized + orderStats.realized;
   const totalRoi = orderStats.totalRoi;
 
-  // Extract sparkline historical trends from monthly progression
-  const marketValPoints = orderStats.monthlyData?.map((m) => m.marketValue ?? m.invested).filter((v) => v !== undefined && v > 0);
-  const unrealizedPoints = orderStats.monthlyData?.map((m) => m.unrealizedPl ?? m.pl).filter((v) => v !== undefined);
-  const realizedPoints = orderStats.monthlyData?.map((m) => m.cumulativeRealizedPl ?? m.pl).filter((v) => v !== undefined);
-  const roiPoints = orderStats.monthlyData?.map((m) => m.roi).filter((v) => v !== undefined);
+  // KPI sparklines represent the current calendar year only. The full
+  // history remains available in the detailed progression chart below.
+  const currentYear = new Date().getUTCFullYear().toString();
+  const ytdData = orderStats.monthlyData?.filter((month) => month.yearMonth?.startsWith(currentYear)) ?? [];
+  const marketValPoints = ytdData.map((m) => m.marketValue ?? m.invested).filter((v) => v !== undefined && v > 0);
+  const unrealizedPoints = ytdData.map((m) => m.unrealizedPl ?? m.pl).filter((v) => v !== undefined);
+  const realizedPoints = ytdData.map((m) => m.cumulativeRealizedPl ?? m.pl).filter((v) => v !== undefined);
+  const roiPoints = ytdData.map((m) => m.roi).filter((v) => v !== undefined);
 
   const cards: KPICardProps[] = [
     {

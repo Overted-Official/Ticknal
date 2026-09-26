@@ -220,7 +220,7 @@ export default function LogTransactionDrawer({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: '100%' } : { x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="drawer-sheet-form"
+            className={`drawer-sheet-form ${!isMobile ? 'drawer-sheet-viewport-safe' : ''}`}
           >
             {/* Top Brand Accent Hairline */}
             <div className="drawer-brand-hairline" />

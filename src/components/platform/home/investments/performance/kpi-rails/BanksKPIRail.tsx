@@ -15,15 +15,17 @@ import { type BankAccount, type BankTransaction } from '@/types/bank';
 import {
   isBrokerageAccount,
   toEgp,
-  getAccountCashImpact,
-  buildCashTrend,
+  buildAccountYtdBalanceTrend,
+  buildYtdCashTrend,
 } from '@/lib/portfolio-finance';
+import AccountBalanceHistoryDrawer from '@/components/platform/wallet/AccountBalanceHistoryDrawer';
 import KPICard, { type KPICardProps } from './KPICard';
 
 interface BanksKPIRailProps {
   accounts?: BankAccount[];
   transactions?: BankTransaction[];
   usdRate?: number;
+  onAccountsUpdated?: () => void | Promise<void>;
 }
 
 function calculateAccountSparkline(
@@ -36,60 +38,11 @@ function calculateAccountSparkline(
   changeColorClass: string;
 } {
   const currentBalance = Number(account.balance) || 0;
-
-  // Filter transactions involving this account
-  const acctTx = transactions
-    .filter((t) => t.accountId === account.id || t.toAccountId === account.id)
-    .sort((a, b) => new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime());
-
-  if (acctTx.length === 0) {
-    return {
-      points: [currentBalance, currentBalance, currentBalance, currentBalance, currentBalance, currentBalance],
-      trend: 'neutral',
-      changeText: 'Steady',
-      changeColorClass: 'text-zinc-400',
-    };
-  }
-
-  // Calculate net impact for this account
-  const getImpact = (t: BankTransaction): number => {
-    const amt = Math.abs(Number(t.amount) || 0);
-    if (t.accountId === account.id) {
-      if (t.type === 'TRANSFER') return -amt;
-      return getAccountCashImpact(t.type, amt);
-    }
-    if (t.toAccountId === account.id) {
-      return amt;
-    }
-    return 0;
-  };
-
-  const totalDelta = acctTx.reduce((sum, t) => sum + getImpact(t), 0);
-  const startBalance = currentBalance - totalDelta;
-
-  // Build running balance progression
-  let running = startBalance;
-  const progression: number[] = [startBalance];
-  for (const t of acctTx) {
-    running += getImpact(t);
-    progression.push(running);
-  }
-  progression[progression.length - 1] = currentBalance;
-
-  // Sample progression down to 8 points if longer
-  let samplePoints = progression;
-  if (progression.length > 8) {
-    samplePoints = [];
-    const step = (progression.length - 1) / 7;
-    for (let i = 0; i < 8; i++) {
-      const idx = Math.min(Math.round(i * step), progression.length - 1);
-      samplePoints.push(progression[idx]);
-    }
-    samplePoints[7] = currentBalance;
-  }
-
-  // Determine trend and percentage change
-  const delta = currentBalance - startBalance;
+  const rawPoints = buildAccountYtdBalanceTrend(account, transactions, 8);
+  const points = rawPoints.length > 1 ? rawPoints : [currentBalance, currentBalance];
+  const startBalance = points[0] ?? currentBalance;
+  const endingBalance = points[points.length - 1] ?? currentBalance;
+  const delta = endingBalance - startBalance;
   let trend: 'up' | 'down' | 'neutral' = 'neutral';
   let changeText = 'Steady';
   let changeColorClass = 'text-zinc-400';
@@ -111,21 +64,34 @@ function calculateAccountSparkline(
   }
 
   return {
-    points: samplePoints,
+    points,
     trend,
     changeText,
     changeColorClass,
   };
 }
 
+function getSparklineTrend(points: number[]): 'up' | 'down' | 'neutral' {
+  if (points.length < 2) return 'neutral';
+  const delta = points[points.length - 1] - points[0];
+  return Math.abs(delta) < 0.01 ? 'neutral' : delta > 0 ? 'up' : 'down';
+}
+
 export default function BanksKPIRail({
   accounts = [],
   transactions = [],
   usdRate = 50.20,
+  onAccountsUpdated,
 }: BanksKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
   const [showAllAccounts, setShowAllAccounts] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const INITIAL_ACCOUNTS_LIMIT = 4;
+
+  const selectedAccount = useMemo(
+    () => accounts.find((account) => account.id === selectedAccountId) ?? null,
+    [accounts, selectedAccountId]
+  );
 
   const cashAccounts = useMemo(() => accounts.filter((a) => !isBrokerageAccount(a)), [accounts]);
   const brokerageAccounts = useMemo(() => accounts.filter(isBrokerageAccount), [accounts]);
@@ -180,9 +146,9 @@ export default function BanksKPIRail({
     return `${formatted} ${currency}`;
   };
 
-  // Build monthly cash trend for macro cards
+  // Build month-end cash balances from January through the current month.
   const cashTrend = useMemo(
-    () => buildCashTrend(accounts, transactions, usdRate, 6),
+    () => buildYtdCashTrend(accounts, transactions, usdRate),
     [accounts, transactions, usdRate]
   );
 
@@ -203,7 +169,7 @@ export default function BanksKPIRail({
       badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
       metaText: 'Bank + Brokerage combined',
       sparklinePoints: totalCashPoints.length > 1 ? totalCashPoints : undefined,
-      sparklineTrend: 'up',
+      sparklineTrend: getSparklineTrend(totalCashPoints),
       href: '/wallet?tab=banks',
     },
     {
@@ -217,7 +183,7 @@ export default function BanksKPIRail({
       badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
       metaText: `${cashAccounts.filter((a) => a.currency === 'EGP').length} commercial accounts`,
       sparklinePoints: bankCashPoints.length > 1 ? bankCashPoints : undefined,
-      sparklineTrend: 'up',
+      sparklineTrend: getSparklineTrend(bankCashPoints),
       href: '/wallet?tab=banks',
     },
     {
@@ -233,7 +199,7 @@ export default function BanksKPIRail({
       badgeClass: 'text-emerald-400 font-medium text-[9px] bg-emerald-500/10 border border-emerald-500/20',
       metaText: `≈ ${(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} £`,
       sparklinePoints: usdCashPoints.length > 1 ? usdCashPoints : undefined,
-      sparklineTrend: 'neutral',
+      sparklineTrend: getSparklineTrend(usdCashPoints),
       href: '/wallet?tab=banks',
     },
     {
@@ -251,7 +217,7 @@ export default function BanksKPIRail({
       badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
       metaText: brokerageAccounts.length > 0 ? `${brokerageAccounts.length} trading accounts` : 'No brokerage',
       sparklinePoints: brokerageCashPoints.length > 1 ? brokerageCashPoints : undefined,
-      sparklineTrend: brokerageAccounts.length > 0 ? 'up' : 'neutral',
+      sparklineTrend: brokerageAccounts.length > 0 ? getSparklineTrend(brokerageCashPoints) : 'neutral',
       href: '/wallet?tab=banks',
     },
   ];
@@ -329,7 +295,7 @@ export default function BanksKPIRail({
         sparklineTrend: sparkline.trend,
         changeText: isPrivacy ? '•••' : sparkline.changeText,
         changeColorClass: sparkline.changeColorClass,
-        href: '/wallet?tab=banks',
+        onClick: () => setSelectedAccountId(account.id),
         className: `shrink-0 w-[170px] xs:w-[180px] sm:w-[190px] lg:w-full snap-start cursor-pointer ${
           isDesktopHidden ? 'lg:hidden' : ''
         }`,
@@ -397,6 +363,12 @@ export default function BanksKPIRail({
           ))}
         </div>
       )}
+      <AccountBalanceHistoryDrawer
+        account={selectedAccount}
+        isOpen={selectedAccount !== null}
+        onClose={() => setSelectedAccountId(null)}
+        onSaved={onAccountsUpdated}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import NetWorthKPIRail from './NetWorthKPIRail';
 import BanksKPIRail from './BanksKPIRail';
 import { type OrderStats } from '../../homeInvestmentsTypes';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
+import { type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 
 export type PerformanceViewTab = 'net-worth' | 'investments' | 'banks';
 
@@ -18,6 +19,8 @@ interface PerformanceKPIRailsProps {
   transactions?: BankTransaction[];
   usdRate?: number;
   cbeInflationRate?: number;
+  initialNetWorthHistory?: NetWorthHistoryPoint[];
+  onAccountsUpdated?: () => void | Promise<void>;
 }
 
 export default function PerformanceKPIRails({
@@ -27,6 +30,8 @@ export default function PerformanceKPIRails({
   transactions = [],
   usdRate = 50.20,
   cbeInflationRate = 14.9,
+  initialNetWorthHistory = [],
+  onAccountsUpdated,
 }: PerformanceKPIRailsProps) {
   return (
     <div className="w-full select-none">
@@ -45,6 +50,7 @@ export default function PerformanceKPIRails({
               accounts={accounts}
               usdRate={usdRate}
               cbeInflationRate={cbeInflationRate}
+              netWorthHistory={initialNetWorthHistory}
             />
           </motion.div>
         )}
@@ -79,6 +85,7 @@ export default function PerformanceKPIRails({
               accounts={accounts}
               transactions={transactions}
               usdRate={usdRate}
+              onAccountsUpdated={onAccountsUpdated}
             />
           </motion.div>
         )}

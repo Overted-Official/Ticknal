@@ -155,7 +155,7 @@ export default function TickerPositionsDrawer({
                 animate={isMobile ? { y: 0 } : { x: 0 }}
                 exit={isMobile ? { y: '100%' } : { x: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-                className="drawer-sheet"
+                className={`drawer-sheet ${!isMobile ? 'drawer-sheet-viewport-safe' : ''}`}
               >
                 {/* Header: Clean Black Surface, Integrated Mobile Drag Pill, Circular Logo & Sharp Borders */}
                 <div className="drawer-header">

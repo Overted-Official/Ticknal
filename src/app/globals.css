@@ -26,6 +26,16 @@
 :root {
   color-scheme: dark;
 
+  /*
+   * Native wrappers can expose system-bar insets through Capacitor's
+   * --safe-area-inset-* variables, while Safari/WebView uses env(). Keep one
+   * token for layout code so both environments behave the same way.
+   */
+  --ticknal-safe-area-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --ticknal-safe-area-right: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
+  --ticknal-safe-area-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+  --ticknal-safe-area-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+
   /* ========================================================================
      TradingView Cold Gray Palette & Core Scales
      ======================================================================== */
@@ -1162,6 +1172,13 @@ textarea:focus-visible {
   z-index: 10;
   overflow: hidden;
 }
+
+.drawer-sheet-viewport-safe-fixed {
+  top: var(--ticknal-safe-area-top);
+  bottom: var(--ticknal-safe-area-bottom);
+  height: auto;
+  max-height: none;
+}
 @media (min-width: 768px) {
   .drawer-sheet {
     width: 50%;
@@ -1202,6 +1219,18 @@ textarea:focus-visible {
     border-top: 0;
     border-left: 1px solid var(--border-default);
   }
+}
+
+/* Full-height side sheets must stop at the system bars when the WebView is
+ * edge-to-edge. The overlay/backdrop remains full-screen; only the sheet is
+ * inset so its content never sits beneath the clock, camera cutout, or home
+ * indicator. This intentionally follows the drawer media rules above so it
+ * wins over their 100% height declarations. */
+.drawer-sheet-viewport-safe {
+  height: calc(100dvh - var(--ticknal-safe-area-top) - var(--ticknal-safe-area-bottom));
+  max-height: calc(100dvh - var(--ticknal-safe-area-top) - var(--ticknal-safe-area-bottom));
+  margin-top: var(--ticknal-safe-area-top);
+  margin-bottom: var(--ticknal-safe-area-bottom);
 }
 
 .drawer-brand-hairline {
@@ -2347,8 +2376,8 @@ textarea:focus-visible {
 .z-modal-content { z-index: var(--z-modal-content); }
 .z-lock-underlay { z-index: var(--z-lock-underlay); }
 .max-h-drawer-mobile { max-height: var(--height-drawer-mobile); }
-.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
-.safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-area-bottom { padding-bottom: var(--ticknal-safe-area-bottom); }
+.safe-area-top { padding-top: var(--ticknal-safe-area-top); }
 .will-change-nav { will-change: transform, max-height, opacity; }
 .modal-search-offset { padding-top: var(--offset-modal-search); }
 

@@ -420,7 +420,7 @@ export default function StrategyReportDrawer({
               stiffness: 340,
               mass: 0.8,
             }}
-            className="relative w-full md:w-[75vw] md:max-w-[1300px] h-full bg-black text-text-primary rounded-none border-l border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
+            className="relative drawer-sheet-viewport-safe w-full md:w-[75vw] md:max-w-[1300px] bg-black text-text-primary rounded-none border-l border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
           >
             {/* 1. Sticky Header */}
             <StrategyReportHeader

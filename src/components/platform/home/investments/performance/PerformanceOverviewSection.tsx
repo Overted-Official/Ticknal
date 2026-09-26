@@ -64,7 +64,7 @@ export default function PerformanceOverviewSection({
     };
   }, []);
 
-  const handleAccountCreated = async () => {
+  const refreshBankData = async () => {
     try {
       const [accRes, txRes] = await Promise.all([
         fetch('/api/banks/accounts'),
@@ -79,8 +79,12 @@ export default function PerformanceOverviewSection({
         if (txData?.transactions) setTransactions(txData.transactions);
       }
     } catch (err) {
-      console.warn('Failed to refresh accounts after creation:', err);
+      console.warn('Failed to refresh bank data:', err);
     }
+  };
+
+  const handleAccountCreated = async () => {
+    await refreshBankData();
     setActiveTab('banks');
     router.refresh();
   };
@@ -148,6 +152,8 @@ export default function PerformanceOverviewSection({
         transactions={transactions}
         usdRate={usdRate}
         cbeInflationRate={cbeInflationRate}
+        initialNetWorthHistory={initialNetWorthHistory}
+        onAccountsUpdated={refreshBankData}
       />
 
       {/* Monthly Performance Progression Chart & Sector Breakdown - Hidden on phone, side-by-side on desktop */}

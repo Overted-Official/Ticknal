@@ -204,7 +204,7 @@ export default function PinLockScreen({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-between pt-[max(env(safe-area-inset-top,0px),2.5rem)] pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] px-6 text-white select-none overflow-hidden"
+      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-between pt-[max(var(--ticknal-safe-area-top),2.5rem)] pb-[max(var(--ticknal-safe-area-bottom),1.5rem)] px-6 text-white select-none overflow-hidden"
     >
       {/* Top Header */}
       <div className="flex flex-col items-center text-center space-y-3">

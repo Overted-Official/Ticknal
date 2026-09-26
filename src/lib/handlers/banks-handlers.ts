@@ -316,6 +316,11 @@ export async function handleSnapshotsGet(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const accountId = searchParams.get('accountId');
+    const parsedAccountId = accountId ? Number(accountId) : null;
+
+    if (accountId && !Number.isInteger(parsedAccountId)) {
+      return NextResponse.json({ error: 'Invalid accountId' }, { status: 400 });
+    }
 
     const query = db
       .select()
@@ -324,7 +329,7 @@ export async function handleSnapshotsGet(req: Request) {
         accountId
           ? and(
               eq(bankMonthlySnapshots.userId, user.id),
-              eq(bankMonthlySnapshots.accountId, Number(accountId))
+              eq(bankMonthlySnapshots.accountId, parsedAccountId as number)
             )
           : eq(bankMonthlySnapshots.userId, user.id)
       )
@@ -354,15 +359,41 @@ export async function handleSnapshotsPost(req: Request) {
       updateCurrentBalance?: boolean;
     };
 
-    if (!accountId || !Array.isArray(snapshots)) {
+    const parsedAccountId = Number(accountId);
+    if (!Number.isInteger(parsedAccountId) || !Array.isArray(snapshots)) {
       return NextResponse.json({ error: 'Invalid payload: accountId and snapshots array required' }, { status: 400 });
     }
 
-    const keepMonths = new Set(snapshots.map((s) => s.yearMonth));
+    const [ownedAccount] = await db
+      .select({ id: userBankAccounts.id })
+      .from(userBankAccounts)
+      .where(and(eq(userBankAccounts.id, parsedAccountId), eq(userBankAccounts.userId, user.id)))
+      .limit(1);
+
+    if (!ownedAccount) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+
+    const normalizedSnapshots = snapshots.map((snapshot) => ({
+      yearMonth: String(snapshot.yearMonth),
+      closingBalance: Number(snapshot.closingBalance),
+    }));
+
+    if (
+      normalizedSnapshots.some(
+        (snapshot) =>
+          !/^\d{4}-(0[1-9]|1[0-2])$/.test(snapshot.yearMonth) ||
+          !Number.isFinite(snapshot.closingBalance)
+      )
+    ) {
+      return NextResponse.json({ error: 'Invalid snapshot month or closing balance' }, { status: 400 });
+    }
+
+    const keepMonths = new Set(normalizedSnapshots.map((s) => s.yearMonth));
     const existing = await db
       .select({ yearMonth: bankMonthlySnapshots.yearMonth })
       .from(bankMonthlySnapshots)
-      .where(and(eq(bankMonthlySnapshots.userId, user.id), eq(bankMonthlySnapshots.accountId, Number(accountId))));
+      .where(and(eq(bankMonthlySnapshots.userId, user.id), eq(bankMonthlySnapshots.accountId, parsedAccountId)));
 
     for (const ex of existing) {
       if (!keepMonths.has(ex.yearMonth)) {
@@ -371,19 +402,19 @@ export async function handleSnapshotsPost(req: Request) {
           .where(
             and(
               eq(bankMonthlySnapshots.userId, user.id),
-              eq(bankMonthlySnapshots.accountId, Number(accountId)),
+              eq(bankMonthlySnapshots.accountId, parsedAccountId),
               eq(bankMonthlySnapshots.yearMonth, ex.yearMonth)
             )
           );
       }
     }
 
-    for (const snap of snapshots) {
+    for (const snap of normalizedSnapshots) {
       await db
         .insert(bankMonthlySnapshots)
         .values({
           userId: user.id,
-          accountId: Number(accountId),
+          accountId: parsedAccountId,
           yearMonth: snap.yearMonth,
           closingBalance: String(snap.closingBalance),
         })
@@ -395,16 +426,16 @@ export async function handleSnapshotsPost(req: Request) {
         });
     }
 
-    if (updateCurrentBalance && snapshots.length > 0) {
-      const sorted = [...snapshots].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+    if (updateCurrentBalance && normalizedSnapshots.length > 0) {
+      const sorted = [...normalizedSnapshots].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
       const latest = sorted[sorted.length - 1];
       await db
         .update(userBankAccounts)
         .set({ balance: String(latest.closingBalance), updatedAt: new Date() })
-        .where(and(eq(userBankAccounts.id, Number(accountId)), eq(userBankAccounts.userId, user.id)));
+        .where(and(eq(userBankAccounts.id, parsedAccountId), eq(userBankAccounts.userId, user.id)));
     }
 
-    return NextResponse.json({ success: true, count: snapshots.length });
+    return NextResponse.json({ success: true, count: normalizedSnapshots.length });
   } catch (error) {
     console.error('Error updating bank snapshots:', error);
     return NextResponse.json({ error: 'Failed to update snapshots' }, { status: 500 });

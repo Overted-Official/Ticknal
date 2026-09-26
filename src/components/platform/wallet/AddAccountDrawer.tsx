@@ -131,7 +131,7 @@ export default function AddAccountDrawer({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: '100%' } : { x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="drawer-sheet"
+            className={`drawer-sheet ${!isMobile ? 'drawer-sheet-viewport-safe' : ''}`}
           >
             {/* Header: Clean Surface, Mobile Drag Pill, Title & Close Button */}
             <div className="drawer-header">

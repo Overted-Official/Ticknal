@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type BankAccount } from '@/types/bank';
-import { isBrokerageAccount, toEgp } from '@/lib/portfolio-finance';
+import { isBrokerageAccount, toEgp, type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 import { type OrderStats } from '../../homeInvestmentsTypes';
 import KPICard from './KPICard';
 
@@ -20,6 +20,7 @@ interface NetWorthKPIRailProps {
   accounts?: BankAccount[];
   usdRate?: number;
   cbeInflationRate?: number;
+  netWorthHistory?: NetWorthHistoryPoint[];
 }
 
 export default function NetWorthKPIRail({
@@ -27,6 +28,7 @@ export default function NetWorthKPIRail({
   accounts = [],
   usdRate = 50.20,
   cbeInflationRate = 14.9,
+  netWorthHistory = [],
 }: NetWorthKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
 
@@ -51,7 +53,9 @@ export default function NetWorthKPIRail({
     0
   );
 
-  // Total invested in stocks and mutual funds
+  // For this dashboard KPI, invested capital is the current mark-to-market
+  // value of open holdings. Cost basis remains available in orderStats for
+  // return calculations, but it should not be the displayed balance here.
   const totalInvested = orderStats.openMarketValue || 0;
 
   // Cumulative Net Worth
@@ -75,6 +79,21 @@ export default function NetWorthKPIRail({
       ? ((totalBrokerageCashInEgp / totalNetWorth) * 100).toFixed(1)
       : '0.0';
 
+  const currentYear = new Date().getUTCFullYear().toString();
+  const ytdHistory = netWorthHistory.filter((point) => point.yearMonth.startsWith(currentYear));
+  const totalNetWorthPoints = ytdHistory.map((point) => point.nominalEgp);
+  const investedCapitalPoints = ytdHistory.map((point) => point.investedEgp);
+  const liquidBankCashPoints = ytdHistory.map((point) => point.cashEgp - point.brokerageCashEgp);
+  const brokerageCashPoints = ytdHistory.map((point) => point.brokerageCashEgp);
+  const realPurchasingPowerPoints = totalNetWorthPoints.map((value) => value * (1 - effectiveInflation / 100));
+  const inflationLossPoints = totalNetWorthPoints.map((value) => value * (effectiveInflation / 100));
+
+  const trendFor = (points: number[]): 'up' | 'down' | 'neutral' => {
+    if (points.length < 2) return 'neutral';
+    const delta = points[points.length - 1] - points[0];
+    return Math.abs(delta) < 0.01 ? 'neutral' : delta > 0 ? 'up' : 'down';
+  };
+
   const formatMoney = (value: number): string => {
     if (isPrivacy) return '•••••• £';
     if (value === 0) return '0.0 £';
@@ -96,6 +115,8 @@ export default function NetWorthKPIRail({
       badgeText: 'Live Mark',
       badgeClass: 'text-emerald-400 font-medium text-[9px]',
       metaText: 'Consolidated balance',
+      sparklinePoints: totalNetWorthPoints.length > 1 ? totalNetWorthPoints : undefined,
+      sparklineTrend: trendFor(totalNetWorthPoints),
       targetId: 'section-my-positions',
     },
     {
@@ -108,6 +129,8 @@ export default function NetWorthKPIRail({
       badgeText: `${investedPct}% Alloc.`,
       badgeClass: 'text-zinc-400 font-medium text-[9px]',
       metaText: `${orderStats.openOrders.length} active holding${orderStats.openOrders.length !== 1 ? 's' : ''}`,
+      sparklinePoints: investedCapitalPoints.length > 1 ? investedCapitalPoints : undefined,
+      sparklineTrend: trendFor(investedCapitalPoints),
       targetId: 'section-my-positions',
     },
     {
@@ -120,6 +143,8 @@ export default function NetWorthKPIRail({
       badgeText: `${liquidCashPct}% Liquidity`,
       badgeClass: 'text-zinc-400 font-medium text-[9px]',
       metaText: `${cashAccounts.length} bank account${cashAccounts.length !== 1 ? 's' : ''}`,
+      sparklinePoints: liquidBankCashPoints.length > 1 ? liquidBankCashPoints : undefined,
+      sparklineTrend: trendFor(liquidBankCashPoints),
       targetId: 'section-my-positions',
     },
     {
@@ -136,6 +161,8 @@ export default function NetWorthKPIRail({
       badgeText: brokerageAccounts.length > 0 ? `${brokerageCashPct}% Share` : 'None',
       badgeClass: 'text-zinc-400 font-medium text-[9px]',
       metaText: brokerageAccounts.length > 0 ? 'Ready to deploy' : 'No brokerage',
+      sparklinePoints: brokerageCashPoints.length > 1 ? brokerageCashPoints : undefined,
+      sparklineTrend: trendFor(brokerageCashPoints),
       targetId: 'section-my-positions',
     },
     {
@@ -148,6 +175,8 @@ export default function NetWorthKPIRail({
       badgeText: 'Deflated Mark',
       badgeClass: 'text-amber-400 font-medium text-[9px]',
       metaText: 'Inflation-adjusted',
+      sparklinePoints: realPurchasingPowerPoints.length > 1 ? realPurchasingPowerPoints : undefined,
+      sparklineTrend: trendFor(realPurchasingPowerPoints),
       targetId: 'section-my-positions',
     },
     {
@@ -160,6 +189,8 @@ export default function NetWorthKPIRail({
       badgeText: `-${effectiveInflation.toFixed(1)}% CBE`,
       badgeClass: 'text-rose-400 font-medium text-[9px]',
       metaText: 'Annual purchasing loss',
+      sparklinePoints: inflationLossPoints.length > 1 ? inflationLossPoints : undefined,
+      sparklineTrend: trendFor(inflationLossPoints),
       targetId: 'section-my-positions',
     },
   ];

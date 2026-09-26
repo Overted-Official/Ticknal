@@ -128,7 +128,7 @@ export default function BottomNav() {
     <>
       {/* Mobile Floating Action Buttons (Positioned safely above the bottom tab bar) */}
       <div
-        className={`fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px)+16px)] right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
+        className={`fixed bottom-[calc(56px+var(--ticknal-safe-area-bottom)+16px)] right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
           isNavVisible
             ? 'translate-y-0 opacity-100 pointer-events-auto'
             : 'translate-y-16 opacity-0 pointer-events-none'
@@ -229,7 +229,7 @@ export default function BottomNav() {
         }`}
         aria-label="Mobile Navigation"
       >
-        <nav className="relative bg-black border-t border-white/[0.08] shadow-[0_-4px_24px_rgba(0,0,0,0.85)] pb-[env(safe-area-inset-bottom,0px)]">
+        <nav className="relative bg-black border-t border-white/[0.08] shadow-[0_-4px_24px_rgba(0,0,0,0.85)] pb-[var(--ticknal-safe-area-bottom)]">
           <div className="h-[56px] grid grid-cols-5 w-full items-center px-1">
             {NAV_ITEMS.map((item) => {
               const isActive = currentNavId === item.id;

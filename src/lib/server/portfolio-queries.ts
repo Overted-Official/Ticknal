@@ -6,6 +6,7 @@ import {
   tickerAlerts,
   userBankAccounts,
   bankTransactions,
+  dailyPrices,
 } from '@/db/schema';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
@@ -48,7 +49,7 @@ export const emptyOrderStats: OrderStats = {
 
 export async function getOrderStats(userId: string): Promise<OrderStats> {
   try {
-    const [openRows, closedRows, latestPrices, tickerMap, rotationMeta] = await Promise.all([
+    const [openRows, closedRows] = await Promise.all([
       db
         .select()
         .from(positions)
@@ -59,7 +60,16 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
         .from(positions)
         .where(and(eq(positions.status, 'CLOSED'), eq(positions.userId, userId)))
         .orderBy(desc(positions.createdAt)),
-      getLatestPriceMap().catch(() => ({} as Record<string, number>)),
+    ]);
+
+    // Only fetch prices for this user's positions. The previous all-tickers
+    // window query could time out and cause the entire home-page stats object
+    // to fall back to zero even though the position rows loaded successfully.
+    const positionSymbols = Array.from(
+      new Set([...openRows, ...closedRows].map((row) => row.tickerSymbol.trim().toUpperCase()))
+    );
+    const [latestPrices, tickerMap, rotationMeta] = await Promise.all([
+      getLatestPriceMap(positionSymbols).catch(() => ({} as Record<string, number>)),
       getTickerMap().catch(
         () => ({} as Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }>)
       ),
@@ -255,6 +265,7 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
       cumClosedCount += bucket.closedCount;
       const totalPL = cumRealizedPL + bucket.unrealizedPL;
       return {
+        yearMonth: monthKey,
         month: getLabel(monthKey),
         invested: bucket.invested,
         pl: bucket.realizedPL,
@@ -608,13 +619,30 @@ export async function getActiveAlertCount(userId: string): Promise<number> {
   }
 }
 
-async function getLatestPriceMap(): Promise<Record<string, number>> {
+async function getLatestPriceMap(symbols?: string[]): Promise<Record<string, number>> {
   try {
-    const raw = await getCachedRecentPrices();
-    const rows = Array.isArray(raw) ? raw : (raw as any)?.rows ?? [];
+    let rows: any[];
+    if (symbols && symbols.length > 0) {
+      const symbolList = sql.join(
+        symbols.map((symbol) => sql`${symbol}`),
+        sql`, `
+      );
+      const result = await db.execute(sql`
+        SELECT DISTINCT ON (ticker_symbol) ticker_symbol, close
+        FROM ${dailyPrices}
+        WHERE ticker_symbol IN (${symbolList})
+          AND close IS NOT NULL
+        ORDER BY ticker_symbol, date DESC
+      `);
+      rows = Array.isArray(result) ? result : (result as any)?.rows ?? [];
+    } else {
+      const raw = await getCachedRecentPrices();
+      rows = Array.isArray(raw) ? raw : (raw as any)?.rows ?? [];
+    }
+
     const priceMap: Record<string, number> = {};
     for (const row of rows) {
-      if (Number(row.rn) === 1) {
+      if (symbols?.length || Number(row.rn) === 1) {
         priceMap[String(row.ticker_symbol)] = Number(row.close);
       }
     }

@@ -306,7 +306,7 @@ async function ChartsPageContent({
   const currentTicker = watchlist.find((item) => item.symbol.toUpperCase() === selectedSymbol.toUpperCase());
 
   return (
-    <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-[calc(64px+max(env(safe-area-inset-bottom),0.5rem))] md:pb-0">
+    <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-[calc(64px+max(var(--ticknal-safe-area-bottom),0.5rem))] md:pb-0">
       <ChartsWorkspaceView
         symbol={selectedSymbol}
         timeframe={timeframe}

@@ -293,7 +293,7 @@ export default function NotificationsDrawer({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="relative z-modal-content h-dvh max-h-dvh w-full sm:max-w-md md:max-w-lg bg-black text-plt-text border-l border-border-default shadow-2xl flex flex-col min-h-0 overflow-hidden rounded-none"
+              className="relative z-modal-content drawer-sheet-viewport-safe w-full sm:max-w-md md:max-w-lg bg-black text-plt-text border-l border-border-default shadow-2xl flex flex-col min-h-0 overflow-hidden rounded-none"
             >
               {/* Brand Accent Hairline Top Bar */}
               <div className="h-[2px] w-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] shrink-0" />

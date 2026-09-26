@@ -479,10 +479,10 @@ export default function AddOrderModal({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: '100%' } : { x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className={`fixed z-10 flex flex-col bg-black text-text-primary rounded-none shadow-2xl overflow-hidden font-sans ${
+            className={`fixed z-10 flex flex-col bg-black text-text-primary rounded-none shadow-2xl overflow-hidden font-sans drawer-sheet-viewport-safe-fixed ${
               isMobile
-                ? 'inset-0 h-full w-full max-h-full'
-                : 'inset-y-0 right-0 h-full w-full md:w-1/2 lg:w-1/2 border-l border-white/10'
+                ? 'left-0 right-0 w-full'
+                : 'right-0 w-full md:w-1/2 lg:w-1/2 border-l border-white/10'
             }`}
           >
             {/* Mobile Drag Indicator */}

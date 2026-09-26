@@ -17,6 +17,7 @@ import {
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 export type MonthlyDataItem = {
+  yearMonth?: string;
   month: string;
   invested: number;
   pl: number;

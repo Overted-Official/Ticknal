@@ -85,6 +85,88 @@ export function recentMonthKeys(months: number): string[] {
   return keys;
 }
 
+export function ytdMonthKeys(referenceDate = new Date()): string[] {
+  const year = referenceDate.getUTCFullYear();
+  const throughMonth = referenceDate.getUTCMonth();
+  return Array.from({ length: throughMonth + 1 }, (_, index) =>
+    `${year}-${String(index + 1).padStart(2, '0')}`
+  );
+}
+
+function sampleTrendPoints(points: number[], maxPoints: number): number[] {
+  if (points.length <= maxPoints) return points;
+  if (maxPoints <= 1) return [points[points.length - 1]];
+
+  return Array.from({ length: maxPoints }, (_, index) => {
+    const sourceIndex = Math.round((index / (maxPoints - 1)) * (points.length - 1));
+    return points[sourceIndex];
+  });
+}
+
+/**
+ * Reconstructs one account's balance from the start of the current year to
+ * today. The first point is the inferred YTD opening balance, followed by
+ * each recorded balance-changing event. A flat result is intentional when no
+ * YTD activity has been recorded.
+ */
+export function buildAccountYtdBalanceTrend(
+  account: BankAccount,
+  transactions: BankTransaction[],
+  maxPoints = 8,
+  referenceDate = new Date(),
+): number[] {
+  const yearStart = `${referenceDate.getUTCFullYear()}-01-01`;
+  const today = referenceDate.toISOString().slice(0, 10);
+  const accountCreated = account.createdAt ? String(account.createdAt).slice(0, 10) : yearStart;
+  const ytdAccountTransactions = transactions
+    .filter((transaction) => {
+      const date = String(transaction.transactionDate || '').slice(0, 10);
+      return date >= yearStart && date <= today &&
+        (transaction.accountId === account.id || transaction.toAccountId === account.id);
+    })
+    .sort((a, b) => String(a.transactionDate).localeCompare(String(b.transactionDate)) || a.id - b.id);
+  const firstLedgerDate = ytdAccountTransactions[0]
+    ? String(ytdAccountTransactions[0].transactionDate).slice(0, 10)
+    : null;
+  const startDate = accountCreated > yearStart
+    ? (firstLedgerDate && firstLedgerDate < accountCreated ? firstLedgerDate : accountCreated)
+    : yearStart;
+  const relevantTransactions = ytdAccountTransactions.filter(
+    (transaction) => String(transaction.transactionDate || '').slice(0, 10) >= startDate
+  );
+
+  const currentBalance = Number(account.balance) || 0;
+  const totalImpact = relevantTransactions.reduce((sum, transaction) => {
+    const amount = Number(transaction.amount) || 0;
+    if (transaction.type === 'TRANSFER') {
+      if (transaction.accountId === account.id) return sum - amount;
+      if (transaction.toAccountId === account.id) return sum + amount;
+      return sum;
+    }
+    return transaction.accountId === account.id
+      ? sum + getAccountCashImpact(transaction.type, amount)
+      : sum;
+  }, 0);
+
+  const points = [currentBalance - totalImpact];
+  let runningBalance = points[0];
+  for (const transaction of relevantTransactions) {
+    const amount = Number(transaction.amount) || 0;
+    if (transaction.type === 'TRANSFER') {
+      if (transaction.accountId === account.id) runningBalance -= amount;
+      if (transaction.toAccountId === account.id) runningBalance += amount;
+    } else if (transaction.accountId === account.id) {
+      runningBalance += getAccountCashImpact(transaction.type, amount);
+    }
+    points.push(runningBalance);
+  }
+
+  // Keep the final point aligned with the source-of-truth account balance in
+  // case a ledger contains an entry type that is intentionally ignored here.
+  if (points.length > 0) points[points.length - 1] = currentBalance;
+  return sampleTrendPoints(points, maxPoints);
+}
+
 /**
  * Reconstructs recorded account balances at month-end from today's balance
  * and the account ledger. This avoids inventing a sparkline when no balance
@@ -97,6 +179,25 @@ export function buildCashTrend(
   months = 12,
 ): CashTrendPoint[] {
   const monthKeys = recentMonthKeys(months);
+
+  return buildCashTrendForMonthKeys(accounts, transactions, usdRate, monthKeys);
+}
+
+export function buildYtdCashTrend(
+  accounts: BankAccount[],
+  transactions: BankTransaction[],
+  usdRate: number,
+  referenceDate = new Date(),
+): CashTrendPoint[] {
+  return buildCashTrendForMonthKeys(accounts, transactions, usdRate, ytdMonthKeys(referenceDate));
+}
+
+function buildCashTrendForMonthKeys(
+  accounts: BankAccount[],
+  transactions: BankTransaction[],
+  usdRate: number,
+  monthKeys: string[],
+): CashTrendPoint[] {
 
   return monthKeys.map((yearMonth) => {
     const asOf = monthEnd(yearMonth);
