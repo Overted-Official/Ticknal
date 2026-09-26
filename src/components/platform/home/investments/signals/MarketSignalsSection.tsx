@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ChevronDown, ChevronUp, Sparkles, Loader2 } from '@/components/ui/icon-library';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
-import StrategySwitcher, { KNOWN_STRATEGIES, resolveStrategyMeta } from './StrategySwitcher';
+import { resolveStrategyMeta } from './StrategySwitcher';
 import MarketSignalRowItem, { type GroupedMarketSignal } from './MarketSignalRowItem';
 
 interface MarketSignalsSectionProps {
@@ -18,7 +18,6 @@ export default function MarketSignalsSection({
   buyOpportunities = [],
   isLoading = false,
 }: MarketSignalsSectionProps) {
-  const [selectedStrategy, setSelectedStrategy] = useState<string>('ALL');
   const [quickRange, setQuickRange] = useState<QuickRange | null>('5D');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
@@ -38,11 +37,15 @@ export default function MarketSignalsSection({
           cleanSymbol,
           companyName: opp.companyName || cleanSymbol,
           sector: opp.sector || 'Equities',
+          rotationRegime: opp.rotationRegime,
           logoUrl: opp.logoUrl,
           strategies: [stratMeta],
           signalPrice: opp.signal.price,
           signalDate: opp.signal.date,
           barsAgo,
+          winningAlpha: typeof opp.metrics?.alpha === 'number' && Number.isFinite(opp.metrics.alpha)
+            ? opp.metrics.alpha
+            : null,
           metrics: opp.metrics,
           rawOpportunities: [opp],
         });
@@ -54,6 +57,16 @@ export default function MarketSignalsSection({
         }
         // Inherit metrics if missing
         if (!existing.metrics?.buyHoldReturn && opp.metrics?.buyHoldReturn) {
+          existing.metrics = opp.metrics;
+        }
+        if (!existing.rotationRegime && opp.rotationRegime) {
+          existing.rotationRegime = opp.rotationRegime;
+        }
+        const candidateAlpha = typeof opp.metrics?.alpha === 'number' && Number.isFinite(opp.metrics.alpha)
+          ? opp.metrics.alpha
+          : null;
+        if (candidateAlpha !== null && (existing.winningAlpha == null || candidateAlpha > existing.winningAlpha)) {
+          existing.winningAlpha = candidateAlpha;
           existing.metrics = opp.metrics;
         }
         // Keep the latest price if this opp is more recent
@@ -104,39 +117,9 @@ export default function MarketSignalsSection({
     }
   }, [sortedSignalDates]);
 
-  // Extract unique strategies present in grouped signals
-  const availableStrategies = useMemo(() => {
-    const set = new Set<string>();
-    groupedSignals.forEach((sig) => {
-      sig.strategies.forEach((s) => set.add(s.id));
-    });
-    return Array.from(set);
-  }, [groupedSignals]);
-
-  // Compute counts per strategy (unique tickers triggering each strategy)
-  const strategyCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const sId of availableStrategies) {
-      counts[sId] = 0;
-    }
-    for (const sig of groupedSignals) {
-      for (const s of sig.strategies) {
-        counts[s.id] = (counts[s.id] || 0) + 1;
-      }
-    }
-    return counts;
-  }, [groupedSignals, availableStrategies]);
-
-  // Filter grouped opportunities by selected strategy and date range
+  // Filter grouped opportunities by date range
   const filteredSignals = useMemo(() => {
     return groupedSignals.filter((sig) => {
-      // 1. Strategy Model Filter
-      if (selectedStrategy !== 'ALL') {
-        const match = sig.strategies.some((s) => s.id === selectedStrategy);
-        if (!match) return false;
-      }
-
-      // 2. Date Range Filter
       if (quickRange === '1D') {
         if (sig.barsAgo != null) return sig.barsAgo <= 1;
         if (fromDate && sig.signalDate && sig.signalDate < fromDate) return false;
@@ -154,9 +137,7 @@ export default function MarketSignalsSection({
 
       return true;
     });
-  }, [groupedSignals, selectedStrategy, quickRange, fromDate, toDate]);
-
-  const activeStrategyMeta = KNOWN_STRATEGIES[selectedStrategy];
+  }, [groupedSignals, quickRange, fromDate, toDate]);
 
   const INITIAL_SIGNALS = 6;
   const [showAllSignals, setShowAllSignals] = useState(false);
@@ -164,7 +145,7 @@ export default function MarketSignalsSection({
   // Reset expansion when filtering parameters change
   useEffect(() => {
     setShowAllSignals(false);
-  }, [selectedStrategy, quickRange, fromDate, toDate]);
+  }, [quickRange, fromDate, toDate]);
 
   const visibleSignals = showAllSignals ? filteredSignals : filteredSignals.slice(0, INITIAL_SIGNALS);
 
@@ -185,20 +166,10 @@ export default function MarketSignalsSection({
         </div>
       </div>
 
-      {/* 2. Controls Toolbar: Strategy Switcher + Date Range & Quick Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <StrategySwitcher
-          selectedStrategy={selectedStrategy}
-          onSelectStrategy={setSelectedStrategy}
-          availableStrategies={availableStrategies}
-          counts={strategyCounts}
-          totalCount={groupedSignals.length}
-        />
-
-        {/* Right Corner: Quick Access (1D, 5D, 10D) + From / To Date Inputs */}
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto max-w-full min-w-0">
+      {/* 2. Date Range & Quick Buttons */}
+      <div className="flex w-full min-w-0 flex-nowrap items-center gap-2">
           {/* Quick Range Switch Buttons */}
-          <div className="seg-control shrink-0">
+          <div className="seg-control shrink-0 [&_.seg-control-btn]:px-2">
             {(['1D', '5D', '10D'] as const).map((r) => {
               const isActive = quickRange === r;
               return (
@@ -215,7 +186,7 @@ export default function MarketSignalsSection({
           </div>
 
           {/* From / To Date Inputs */}
-          <div className="h-9 flex items-center gap-2 bg-surface-raised border border-border-subtle rounded-xl px-2.5 sm:px-3 text-xs text-text-muted max-w-full overflow-x-auto no-scrollbar">
+          <div className="flex h-9 min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-xl border border-border-subtle bg-surface-raised px-2 text-xs text-text-muted sm:gap-2 sm:px-3">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">From</span>
             <input
               type="date"
@@ -224,7 +195,7 @@ export default function MarketSignalsSection({
                 setFromDate(e.target.value);
                 setQuickRange(null);
               }}
-              className="bg-transparent text-text-primary text-xs font-sans tabular-nums outline-none cursor-pointer [color-scheme:dark] w-[118px] shrink-0"
+              className="w-full min-w-0 max-w-[118px] flex-1 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
             />
             <span className="text-zinc-600 text-xs shrink-0 select-none">•</span>
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">To</span>
@@ -235,10 +206,9 @@ export default function MarketSignalsSection({
                 setToDate(e.target.value);
                 setQuickRange(null);
               }}
-              className="bg-transparent text-text-primary text-xs font-sans tabular-nums outline-none cursor-pointer [color-scheme:dark] w-[118px] shrink-0"
+              className="w-full min-w-0 max-w-[118px] flex-1 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
             />
           </div>
-        </div>
       </div>
 
       {/* 3. Main Signals List / Grid */}
@@ -251,17 +221,11 @@ export default function MarketSignalsSection({
         ) : filteredSignals.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs">
             <Sparkles className="w-6 h-6 text-text-muted/50 mb-2" />
-            <span>
-              {selectedStrategy === 'ALL'
-                ? 'No fresh buy signals from active strategies at this moment.'
-                : `No active buy triggers for ${
-                    activeStrategyMeta?.name || selectedStrategy
-                  } right now.`}
-            </span>
+            <span>No fresh buy signals from active strategies at this moment.</span>
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0">
               {visibleSignals.map((item) => (
                 <MarketSignalRowItem
                   key={item.cleanSymbol}
@@ -298,7 +262,6 @@ export default function MarketSignalsSection({
           </Link>
           <span className="text-[11px] text-text-muted">
             Showing {visibleSignals.length} of {filteredSignals.length} potential buy signals
-            {selectedStrategy !== 'ALL' && ` in ${activeStrategyMeta?.name || selectedStrategy}`}
           </span>
         </div>
       )}
