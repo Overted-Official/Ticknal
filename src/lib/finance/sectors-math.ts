@@ -49,6 +49,25 @@ export interface SectorPerformanceItem {
   stocks: StockPerformanceItem[];
 }
 
+export interface MajorIndexData {
+  symbol: 'EGX30' | 'EGX70' | 'EGX100';
+  name: string;
+  badge: string;
+  points: number;
+  change: number;
+  changePercent: number;
+  dailyChange: number;
+  dailyChangePercent: number;
+  history: Array<{
+    date: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }>;
+}
+
 export interface SectorsPerformanceResponse {
   timeframe: {
     startDate: string;
@@ -70,6 +89,9 @@ export interface SectorsPerformanceResponse {
   sectors: SectorPerformanceItem[];
   rawStockItems?: StockPerformanceItem[];
   egx30Return?: number | null;
+  egx30History?: { date: string; close: number; volume?: number }[];
+  dailyBreadth?: { date: string; gainers: number; losers: number; netAdvancers: number; adLine: number }[];
+  majorIndices?: Record<'EGX30' | 'EGX70' | 'EGX100', MajorIndexData>;
   granularity?: 'sector' | 'industryGroup' | 'industry' | 'ticker';
 }
 
@@ -82,15 +104,54 @@ export interface TickerStrategySignalState {
   currentPrice?: number;
   barsHeld?: number;
   sysRoi?: number;
+  buyHoldRoi?: number;
+  roiMargin?: number;
   winRate?: number;
   tradesCount?: number;
   maxAdverseExcursion?: number;
   avgAdverseExcursion?: number;
+  positionMae?: number;
+}
+
+export interface StrategyModelComparisonMetrics {
+  simulatedRoi: number;
+  buyHoldRoi: number;
+  alphaVsBh: number;
+  alphaVsEgx: number;
+  cagr: number;
+  profitFactor: number;
+  maxDrawdown: number;
+  sharpeRatio: number;
+  sortinoRatio: number;
+  calmarRatio: number;
+  volatility: number;
+  winRate: number;
+  winLossRatio: number;
+  avgHoldingPeriod: string;
+  breadthBeatRate: number;
+  totalTrades: number;
+}
+
+export interface WinningUniverseComparisonMetrics extends StrategyModelComparisonMetrics {
+  winningTickersCount: number;
+  totalScanned: number;
+  winningBreadthPct: number;
+}
+
+export interface TickerChampionInfo {
+  champion: 'psi' | 'psi_v2' | 'hydra';
+  championName: string;
+  alpha: number;
+  roi: number;
+  buyHoldRoi: number;
+  hasPositiveAlpha: boolean;
 }
 
 export interface SectorStrategySignalsResponse {
   summary: {
     cumulativeRoi?: number;
+    cumulativeBuyHoldRoi?: number;
+    strategyAlphaVsBuyHold?: number;
     winRate?: number;
     totalTrades?: number;
     avgBarsPerTrade?: number;
@@ -113,10 +174,15 @@ export interface SectorStrategySignalsResponse {
       activeLosingCount?: number;
       avgTradeReturn?: number;
       cumulativeStrategyRoi?: number;
+      cumulativeBuyHoldRoi?: number;
+      alphaSpread?: number;
       recentExitsCount: number;
       totalStocks: number;
     }
   >;
+  modelsComparison?: Record<string, StrategyModelComparisonMetrics>;
+  winningUniverseComparison?: Record<string, WinningUniverseComparisonMetrics>;
+  tickerChampions?: Record<string, TickerChampionInfo>;
 }
 
 export function aggregateSectorsFromStocks(
@@ -212,7 +278,23 @@ export function aggregateSectorsFromStocks(
       }
     }
 
-    const momentumSpread = turnoverWeightedReturn - equalWeightedReturn;
+    const stockCount = stocks.length;
+    let momentumSpread = 0;
+    if (stockCount > 1) {
+      // Option A: Breadth-Conditioned Momentum
+      // Net breadth ratio: (advancing - declining) / total stocks, bounded [-1.0, +1.0]
+      const netBreadth = (gainers - losers) / stockCount;
+      const capitalSpread = Math.abs(turnoverWeightedReturn - equalWeightedReturn);
+      const alphaAbs = Math.abs(turnoverWeightedReturn - (benchmarkReturn ?? 0));
+      
+      // Momentum scale combines breadth direction with market impact magnitude
+      const impactMagnitude = 10 + capitalSpread * 0.4 + alphaAbs * 0.2;
+      momentumSpread = netBreadth * impactMagnitude;
+    } else {
+      // For single ticker / 1-stock categories: momentum relative to the broader market equal return
+      momentumSpread = (turnoverWeightedReturn - marketEqualReturn) * 0.75;
+    }
+
     let rotationRegime: 'Leading' | 'Weakening' | 'Lagging' | 'Improving' = 'Lagging';
 
     if (turnoverWeightedReturn >= benchmarkReturn) {

@@ -1,10 +1,10 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import { type IndustryGroupStake } from './dashboard/investments/PortfolioConsultantCard';
-import { type DashboardOrder } from './dashboard/investments/investmentsTypes';
+import { type IndustryGroupStake } from '@/types/bank';
+import { type DashboardOrder } from '@/components/platform/home/investments/homeInvestmentsTypes';
 
 export type SectorDataItem = {
   sector: string;

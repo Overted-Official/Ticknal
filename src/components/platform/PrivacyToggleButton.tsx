@@ -12,7 +12,11 @@ interface PrivacyToggleButtonProps {
 export default function PrivacyToggleButton({ className = '', iconOnly = false }: PrivacyToggleButtonProps) {
   const { isPrivacy, togglePrivacy } = usePrivacyMode();
   const title = isPrivacy ? 'Privacy Mode Active (Values Masked) - Click to Reveal' : 'Values Visible - Click to Mask';
-  const icon = isPrivacy ? <EyeOff size={iconOnly ? 18 : 14} className="text-plt-muted" /> : <Eye size={iconOnly ? 18 : 16} className="text-plt-subtle" />;
+  const icon = isPrivacy ? (
+    <EyeOff size={iconOnly ? 18 : 14} className="text-current" />
+  ) : (
+    <Eye size={iconOnly ? 18 : 16} className="text-current" />
+  );
 
   if (iconOnly) {
     return (

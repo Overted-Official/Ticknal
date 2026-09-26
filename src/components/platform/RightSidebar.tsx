@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { ChevronDown, ChevronRight, Search, SlidersHorizontal, X } from '@/components/ui/icon-library';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -67,7 +67,7 @@ export default function RightSidebar({
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
   const [isResizing, setIsResizing] = useState(false);
   const [panelHeight, setPanelHeight] = useState(280);
   const [isResizingPanel, setIsResizingPanel] = useState(false);
@@ -95,7 +95,7 @@ export default function RightSidebar({
     if (!isResizing) return;
     const handleMouseMove = (e: MouseEvent) => {
       const newWidth = window.innerWidth - e.clientX;
-      if (newWidth >= 240 && newWidth <= 440) {
+      if (newWidth >= 200 && newWidth <= 440) {
         setSidebarWidth(newWidth);
       }
     };
@@ -252,7 +252,7 @@ export default function RightSidebar({
 
   return (
     <div
-      className="bg-[#0d0d0d] border-l border-[#27272a] flex flex-col select-none relative shrink-0 text-plt-text"
+      className="bg-cold-gray-900 border-l border-border-subtle flex flex-col select-none relative shrink-0 text-plt-text font-sans"
       style={{ width: `${sidebarWidth}px` }}
     >
       <div
@@ -261,23 +261,23 @@ export default function RightSidebar({
       />
 
       {/* Search bar + filter */}
-      <div className="p-2 border-b border-[#27272a] bg-[#0d0d0d] shrink-0 flex items-center gap-1.5">
+      <div className="p-2 border-b border-white/[0.08] bg-cold-gray-900 shrink-0 flex items-center gap-1.5">
         <div className="relative flex items-center flex-1 min-w-0">
-          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[#787b86]">
+          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-muted">
             <Search size={13} />
           </div>
           <input
             type="text"
-            placeholder="Search tickers or sectors..."
+            placeholder="Search tickers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-7 w-full rounded-md bg-[#18181b] border border-[#3f3f46] pl-7 pr-6 text-[11px] text-plt-text placeholder:text-[#787b86] placeholder:text-[11px] focus:border-[#787b86] focus:outline-none transition-colors leading-none"
+            className="h-7 w-full rounded-md bg-surface-input border border-border-subtle pl-7 pr-6 text-[11px] text-text-primary placeholder:text-text-muted placeholder:text-[11px] focus:border-border-input-hover focus:outline-none transition-colors leading-none"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-2 flex items-center text-[#787b86] hover:text-plt-text transition-colors"
+              className="absolute inset-y-0 right-0 pr-2 flex items-center text-text-muted hover:text-white transition-colors"
             >
               <X size={13} />
             </button>
@@ -295,15 +295,15 @@ export default function RightSidebar({
             aria-label="Filter tickers"
             className={`h-7 w-7 rounded-md border flex items-center justify-center shrink-0 transition-all relative ${
               signalFilter.isActive
-                ? 'bg-[#2962ff]/15 border-[#2962ff] text-[#2962ff] shadow-sm'
+                ? 'bg-brand-blue/15 border-brand-blue text-brand-blue shadow-xs'
                 : isFilterOpen
-                ? 'bg-[#27272a] border-[#3f3f46] text-plt-text'
-                : 'border-[#3f3f46] bg-[#18181b] text-[#787b86] hover:text-plt-text hover:bg-[#27272a]'
+                ? 'bg-surface-active border-border-subtle text-white'
+                : 'border-border-subtle bg-surface-raised text-text-muted hover:text-white hover:bg-surface-hover-raised'
             }`}
           >
             <SlidersHorizontal size={13} />
             {signalFilter.isActive && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#2962ff] border-2 border-[#0d0d0d] animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand-blue border-2 border-cold-gray-900 animate-pulse" />
             )}
           </button>
 
@@ -320,10 +320,10 @@ export default function RightSidebar({
 
       {/* Active Filter Banner */}
       {signalFilter.isActive && (
-        <div className="px-3 py-1 bg-[#0d0d0d]/90 border-b border-[#27272a] flex items-center justify-between text-[10px]">
+        <div className="px-3 py-1 bg-cold-gray-900/90 border-b border-white/[0.08] flex items-center justify-between text-[10px]">
           <div className="flex items-center gap-1.5 truncate">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff] shrink-0 animate-pulse" />
-            <span className="text-[#787b86] truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-blue shrink-0 animate-pulse" />
+            <span className="text-text-muted truncate">
               Signals:{' '}
               <span className="text-plt-text font-medium">
                 {signalFilter.signals.join('/')}
@@ -340,7 +340,7 @@ export default function RightSidebar({
           <button
             type="button"
             onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
-            className="btn-typography text-[#787b86] hover:text-[#f23645] px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-[#27272a]"
+            className="btn-typography text-text-muted hover:text-loss-num px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-surface-hover-subtle"
             title="Clear filter"
           >
             Clear
@@ -358,10 +358,10 @@ export default function RightSidebar({
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {groupedWatchlist.length === 0 ? (
-          <div className="p-6 text-center text-[#787b86] flex flex-col items-center justify-center space-y-2 h-52">
-            <SlidersHorizontal size={22} className="text-[#787b86] stroke-1" />
+          <div className="p-6 text-center text-text-muted flex flex-col items-center justify-center space-y-2 h-52">
+            <SlidersHorizontal size={22} className="text-text-muted stroke-1" />
             <p className="text-[11px] font-medium text-plt-text">No matching tickers</p>
-            <p className="text-[10px] text-[#787b86] max-w-[200px] leading-relaxed">
+            <p className="text-[10px] text-text-muted max-w-[200px] leading-relaxed">
               {signalFilter.isActive
                 ? `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map(s => s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon').join(', ')} in the last ${signalFilter.lookbackDays} days.`
                 : 'Try a different search query.'}
@@ -370,7 +370,7 @@ export default function RightSidebar({
               <button
                 type="button"
                 onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
-                className="mt-1 btn-typography text-[#2962ff] hover:underline"
+                className="mt-1 btn-typography text-brand-blue hover:underline"
               >
                 Clear signal filter
               </button>
@@ -381,15 +381,15 @@ export default function RightSidebar({
             const collapsed = collapsedSectors.has(sector) && searchQuery.length === 0;
             return (
               <div key={sector}>
-                {/* Sector group header — tv-design §1 border colour */}
+                {/* Sector group header */}
                 <button
                   type="button"
                   onClick={() => toggleSector(sector)}
-                  className="flex w-full items-center gap-1.5 px-3 py-1 text-left text-[11px] tracking-wider text-[#787b86] transition-colors hover:text-plt-text group border-b border-[#27272a]/40"
+                  className="flex w-full items-center gap-1.5 px-2.5 h-[25px] text-left text-[10.5px] tracking-wider text-text-muted transition-colors hover:text-plt-text group border-b border-white/[0.08] bg-cold-gray-900 sticky top-0 z-10"
                 >
-                  {collapsed ? <ChevronRight size={14} className="text-[#787b86]/60 group-hover:text-plt-text" /> : <ChevronDown size={14} className="text-[#787b86]/60 group-hover:text-plt-text" />}
+                  {collapsed ? <ChevronRight size={13} className="text-text-muted/60 group-hover:text-plt-text shrink-0" /> : <ChevronDown size={13} className="text-text-muted/60 group-hover:text-plt-text shrink-0" />}
                   <span className="min-w-0 flex-1 truncate font-medium">{sector}</span>
-                  <span className="text-[10px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-[#27272a] text-[#787b86]">{items.length}</span>
+                  <span className="text-[9.5px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-surface-raised text-text-muted shrink-0">{items.length}</span>
                 </button>
 
                 {!collapsed && items.map((item) => {
@@ -406,11 +406,11 @@ export default function RightSidebar({
                       role="button"
                       tabIndex={0}
                       onClick={() => openTicker(item.symbol, matchingSignal?.strategyId)}
-                      className={`watchlist-row cursor-pointer group ${
+                      className={`watchlist-row cursor-pointer group border-b border-white/[0.06] ${
                         isPendingThis
-                          ? 'bg-plt-hover animate-pulse'
+                          ? 'bg-white/[0.04] animate-pulse'
                           : isSelected
-                            ? 'watchlist-row-active'
+                            ? 'watchlist-row-active bg-white/[0.08]'
                             : ''
                       }`}
                     >
@@ -431,10 +431,10 @@ export default function RightSidebar({
                           {matchingSignal && (
                             <span
                               title={`${matchingSignal.strategyLabel}: ${matchingSignal.signal.signal} on ${matchingSignal.signal.date} (${matchingSignal.signal.barsAgo ?? 0} bars ago)`}
-                              className={`text-[8px] font-mono font-semibold px-1 py-0.5 rounded leading-none border shrink-0 ${
+                              className={`text-[7.5px] font-sans tabular-nums font-semibold px-1 py-[1.5px] rounded leading-none border shrink-0 ${
                                 matchingSignal.signal.signal === 'BUY'
-                                  ? 'bg-plt-profit/15 text-plt-profit border-plt-profit/30'
-                                  : 'bg-plt-risk/15 text-plt-risk border-plt-risk/30'
+                                  ? 'bg-profit-num/15 text-profit-num border-profit-num/30'
+                                  : 'bg-loss-num/15 text-loss-num border-loss-num/30'
                               }`}
                             >
                               {matchingSignal.signal.signal}
@@ -446,11 +446,11 @@ export default function RightSidebar({
                         {item.price}
                       </div>
                       <div className={`text-right font-sans font-medium text-[11px] tabular-nums whitespace-nowrap leading-none ${
-                        isPositive ? 'text-plt-profit' : 'text-plt-risk'
+                        isPositive ? 'text-profit-num' : 'text-loss-num'
                       }`}>
                         {changePctDisplay}
                       </div>
-                      <div className="text-right font-sans font-medium text-plt-muted text-[11px] tabular-nums whitespace-nowrap truncate leading-none">
+                      <div className="text-right font-sans font-medium text-plt-muted text-[10.5px] tabular-nums whitespace-nowrap truncate leading-none">
                         {item.volume || '-'}
                       </div>
                     </div>
@@ -464,7 +464,7 @@ export default function RightSidebar({
 
       {selectedItem && (
         <div
-          className="border-t border-[#27272a] bg-[#0d0d0d] flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
+          className="border-t border-white/[0.08] bg-cold-gray-900 flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {!isDetailsCollapsed && (
@@ -476,20 +476,20 @@ export default function RightSidebar({
 
           <div
             onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
-            className="flex items-center justify-between px-4 py-2 shrink-0 cursor-pointer hover:bg-[#27272a]/40 transition-colors"
+            className="flex items-center justify-between px-4 py-2 shrink-0 cursor-pointer hover:bg-surface-hover-subtle transition-colors"
           >
             <div className="flex items-center space-x-2 min-w-0">
               {selectedItem.logoUrl ? (
                 <img src={selectedItem.logoUrl} alt={selectedItem.symbol} className="ticker-logo-image w-6 h-6 shrink-0" />
               ) : (
-                <div className="w-6 h-6 rounded-xl bg-[#18181b] flex items-center justify-center font-medium text-plt-text border border-[#3f3f46] text-compact shrink-0">
+                <div className="w-6 h-6 rounded-xl bg-surface-raised flex items-center justify-center font-medium text-plt-text border border-border-subtle text-compact shrink-0">
                   {displaySelectedSymbol.substring(0, 2)}
                 </div>
               )}
               <div className="flex items-baseline gap-2 min-w-0">
                 <span className="font-medium text-plt-text text-xs tracking-tight truncate">{displaySelectedSymbol}</span>
                 {isDetailsCollapsed && (
-                  <span className={`text-[11px] tabular-nums font-semibold ${selectedItem.isUp ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                  <span className={`text-[11px] tabular-nums font-semibold ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
                     {selectedItem.price || '0.00'} {['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'USD' : 'EGP'}
                   </span>
                 )}
@@ -498,21 +498,21 @@ export default function RightSidebar({
 
             <button
               type="button"
-              className="p-2 rounded-xl text-[#787b86] hover:text-plt-text transition-colors"
+              className="p-2 rounded-xl text-text-muted hover:text-plt-text transition-colors"
               aria-label={isDetailsCollapsed ? 'Expand details' : 'Collapse details'}
             >
-              <ChevronDown size={16} className={`transition-transform duration-200 ${isDetailsCollapsed ? 'rotate-180 text-[#787b86]' : ''}`} />
+              <ChevronDown size={16} className={`transition-transform duration-200 ${isDetailsCollapsed ? 'rotate-180 text-text-muted' : ''}`} />
             </button>
           </div>
 
           {!isDetailsCollapsed && (
-            <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-4 space-y-3">
+            <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-4 space-y-3 font-sans">
               {/* Company Name & Market/Sector */}
               <div>
                 <div className="text-plt-text text-[11px] font-medium leading-snug">
                   {selectedItem.companyName}
                 </div>
-                <div className="flex items-center text-[10px] text-[#787b86] space-x-1.5 mt-0.5">
+                <div className="flex items-center text-[10px] text-text-muted space-x-1.5 mt-0.5">
                   <span>{['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'COMEX' : selectedSymbol.toUpperCase() === 'USDEGP' ? 'FOREX' : 'EGX'}</span>
                   {selectedItem.sector && (
                     <>
@@ -526,22 +526,18 @@ export default function RightSidebar({
               {/* Price & Change */}
               <div className="py-1 space-y-1">
                 <div className="flex items-baseline space-x-2">
-                  <span className={`text-3xl font-bold tabular-nums tracking-tight ${selectedItem.isUp ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                  <span className={`text-3xl font-bold tabular-nums tracking-tight ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
                     {selectedItem.price || '0.00'}
                   </span>
-                  <span className="text-[11px] text-[#787b86] font-sans font-medium">
+                  <span className="text-[11px] text-text-muted font-sans font-medium">
                     {['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'USD' : 'EGP'}
                   </span>
-                  <div className={`ml-2 text-xs font-semibold tabular-nums ${selectedItem.isUp ? 'text-[#089981]' : 'text-[#f23645]'}`}>
-                    {selectedItem.change ? selectedItem.change.split(' ')[0] : ''} {selectedItem.changePct || ''}
+                  <div className={`ml-2 text-xs font-semibold tabular-nums ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
+                    {selectedItem.changePct || (selectedItem.change ? (selectedItem.change.includes('(') ? selectedItem.change.split('(')[1]?.replace(')', '') : selectedItem.change) : '')}
                   </div>
                 </div>
 
-                <div className="flex items-center text-[#787b86] text-[10px] space-x-1.5">
-                  {/* Market status dot — tv-design muted */}
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#787b86]" />
-                  <span>Market closed</span>
-                  <span>•</span>
+                <div className="flex items-center text-text-muted text-[10px]">
                   <span>Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:28 GMT+3</span>
                 </div>
               </div>
@@ -549,29 +545,29 @@ export default function RightSidebar({
               {/* Day's Range & 52Wk Range */}
               <div className="space-y-3 pt-1">
                 <div>
-                  <div className="flex justify-between text-[11px] mb-1.5 font-mono">
+                  <div className="flex justify-between text-[11px] mb-1.5 font-sans">
                     <span className="text-plt-text tabular-nums font-semibold">{dLow.toFixed(2)}</span>
-                    <span className="text-[#787b86] text-[10px] tracking-wider font-sans font-medium uppercase">Day&apos;s Range</span>
+                    <span className="text-text-muted text-[10px] tracking-wider font-sans font-medium uppercase">Day&apos;s Range</span>
                     <span className="text-plt-text tabular-nums font-semibold">{dHigh.toFixed(2)}</span>
                   </div>
-                  {/* Track — tv-design §1 border colour */}
-                  <div className="h-1.5 bg-[#27272a] rounded-full relative overflow-hidden">
+                  {/* Track */}
+                  <div className="h-1.5 bg-surface-raised rounded-full relative overflow-hidden">
                     <div
-                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#089981]' : 'bg-[#f23645]'}`}
+                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-profit-num' : 'bg-loss-num'}`}
                       style={{ width: `${dayPct}%`, left: 0 }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-[11px] mb-1.5 font-mono">
+                  <div className="flex justify-between text-[11px] mb-1.5 font-sans">
                     <span className="text-plt-text tabular-nums font-semibold">{yLow.toFixed(2)}</span>
-                    <span className="text-[#787b86] text-[10px] tracking-wider font-sans font-medium uppercase">52Wk Range</span>
+                    <span className="text-text-muted text-[10px] tracking-wider font-sans font-medium uppercase">52Wk Range</span>
                     <span className="text-plt-text tabular-nums font-semibold">{yHigh.toFixed(2)}</span>
                   </div>
-                  <div className="h-1.5 bg-[#27272a] rounded-full relative overflow-hidden">
+                  <div className="h-1.5 bg-surface-raised rounded-full relative overflow-hidden">
                     <div
-                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-[#089981]' : 'bg-[#f23645]'}`}
+                      className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-profit-num' : 'bg-loss-num'}`}
                       style={{ width: `${yearPct}%`, left: 0 }}
                     />
                   </div>

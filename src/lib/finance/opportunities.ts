@@ -112,13 +112,14 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
   signals: IndexedBuySignal[];
   recentMarketDates: Set<string>;
 }> {
-  const recentDateRows = await db.execute(sql`
+  const rawRecentDateRows = await db.execute(sql`
     SELECT DISTINCT date::text AS date
     FROM ${dailyPrices}
     WHERE (close > 0 OR volume > 0)
     ORDER BY date DESC
     LIMIT ${limitBars}
   `);
+  const recentDateRows = Array.isArray(rawRecentDateRows) ? rawRecentDateRows : (rawRecentDateRows as any)?.rows ?? [];
   const recentMarketDates = new Set(
     (recentDateRows as unknown as Array<{ date: unknown }>)
       .map((row) => toSignalDate(row.date))

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { db } from '@/db';
 import { banks, userBankAccounts, bankMonthlySnapshots, bankTransactions } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
@@ -431,6 +432,9 @@ export async function handleTransactionsGet(req: Request) {
       conditions.push(eq(bankTransactions.accountId, Number(accountId)));
     }
 
+    const toUserBankAccounts = alias(userBankAccounts, 'to_user_bank_accounts');
+    const toBanks = alias(banks, 'to_banks');
+
     const transactions = await db
       .select({
         id: bankTransactions.id,
@@ -448,10 +452,14 @@ export async function handleTransactionsGet(req: Request) {
         accountType: userBankAccounts.accountType,
         bankLogoUrl: banks.logoUrl,
         bankName: banks.name,
+        toAccountName: toUserBankAccounts.accountName,
+        toBankName: toBanks.name,
       })
       .from(bankTransactions)
       .innerJoin(userBankAccounts, eq(bankTransactions.accountId, userBankAccounts.id))
       .leftJoin(banks, eq(userBankAccounts.bankId, banks.id))
+      .leftJoin(toUserBankAccounts, eq(bankTransactions.toAccountId, toUserBankAccounts.id))
+      .leftJoin(toBanks, eq(toUserBankAccounts.bankId, toBanks.id))
       .where(and(...conditions))
       .orderBy(desc(bankTransactions.transactionDate), desc(bankTransactions.createdAt))
       .limit(limit);

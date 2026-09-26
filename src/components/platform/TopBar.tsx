@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { Search, X, Bell } from '@/components/ui/icon-library';
@@ -10,12 +10,10 @@ import { useAlerts } from './AlertProvider';
 export default function TopBar({
   symbol,
   timeframe,
-  replay = false,
   watchlist = []
 }: {
   symbol: string,
   timeframe: string,
-  replay?: boolean,
   watchlist?: WatchlistItem[]
 }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -24,7 +22,6 @@ export default function TopBar({
   const { isAlerted, statusMessage, toggleAlert } = useAlerts();
 
   const displaySymbol = symbol.replace('.CA', '');
-  const replayQuery = replay ? '&replay=1' : '';
 
   const searchParams = useSearchParams();
   const rawView = searchParams.get('view');
@@ -158,7 +155,7 @@ export default function TopBar({
                     className="flex items-center justify-between px-4 py-2 rounded-xl hover:bg-plt-hover cursor-pointer transition-colors group"
                     onClick={() => {
                       setIsSearchOpen(false);
-                      router.push(`?ticker=${item.symbol}&timeframe=${timeframe}&view=chart${replayQuery}`);
+                      router.push(`?ticker=${item.symbol}&timeframe=${timeframe}`);
                     }}
                   >
                     <div className="flex items-center space-x-4 min-w-0">

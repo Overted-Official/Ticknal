@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@ticknal/quant-engine", "@ticknal/types"],
-  serverExternalPackages: ["onnxruntime-node", "onnxruntime-web"],
+  serverExternalPackages: ["onnxruntime-node", "onnxruntime-web", "@electric-sql/pglite"],
   images: {
     remotePatterns: [
       {
@@ -57,23 +57,55 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/charts',
-        destination: '/invest',
+        source: '/invest',
+        has: [
+          {
+            type: 'query',
+            key: 'view',
+            value: 'sectors',
+          },
+        ],
+        destination: '/markets',
         permanent: true,
       },
       {
-        source: '/dashboard/investments',
-        destination: '/dashboard?tab=investments',
+        source: '/invest',
+        destination: '/charts',
         permanent: true,
       },
       {
-        source: '/dashboard/net-worth',
-        destination: '/dashboard?tab=net-worth',
+        source: '/sectors',
+        destination: '/markets',
         permanent: true,
       },
       {
-        source: '/dashboard/banks',
-        destination: '/dashboard?tab=banks',
+        source: '/analysis',
+        destination: '/charts',
+        permanent: true,
+      },
+      {
+        source: '/positions',
+        destination: '/transactions',
+        permanent: true,
+      },
+      {
+        source: '/money',
+        destination: '/transactions',
+        permanent: true,
+      },
+      {
+        source: '/wallet',
+        destination: '/transactions',
+        permanent: true,
+      },
+      {
+        source: '/dashboard',
+        destination: '/home',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/:path*',
+        destination: '/home',
         permanent: true,
       },
     ];

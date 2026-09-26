@@ -77,19 +77,12 @@ export type OrderOverlay = {
   profitLossPct: number;
 };
 
-export type ReplayState = {
-  active: boolean;
-  startDate: string | number | null;
-  endDate: string | number | null;
-};
-
 export interface ChartWidgetProps {
   data: ChartData[];
   symbol: string;
   timeframe?: string;
-  initialReplayMode?: boolean;
-  onReplayStateChange?: (state: ReplayState) => void;
   selectedStrategy?: string;
+  setSelectedStrategy?: (strategy: string) => void;
   strategyParams?: Record<string, any>;
   strategyStartDate?: string;
   strategyEndDate?: string;
@@ -98,16 +91,14 @@ export interface ChartWidgetProps {
   activeIndicators?: string[];
   onToggleIndicator?: (id: string) => void;
   onUpdateStrategyParam?: (key: string, val: any) => void;
+  bulkUpdateStrategyParams?: (newParams: Record<string, any>) => void;
   watchlist?: WatchlistItem[];
   showSignals?: boolean;
   onMetricsChange?: (metrics: Record<string, string> | null) => void;
+  metrics?: Record<string, string> | null;
+  companyName?: string;
+  logoUrl?: string | null;
   tickerPositions?: TickerOrder[];
   currentPrice?: number;
   brokerageAccounts?: BrokerageAccountOption[];
 }
-
-export const PLAYBACK_SPEEDS = [
-  { label: '1x', delay: 900 },
-  { label: '2x', delay: 450 },
-  { label: '4x', delay: 180 },
-] as const;

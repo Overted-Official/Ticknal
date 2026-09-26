@@ -13,7 +13,7 @@ import EmailAuthFormWidget from './EmailAuthFormWidget';
 export default function LoginPageView() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/dashboard';
+  const nextPath = searchParams.get('next') || '/home';
   const initialMode = searchParams.get('mode') === 'signup';
 
   const [isSignUp, setIsSignUp] = useState(initialMode);

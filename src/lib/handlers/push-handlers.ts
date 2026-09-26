@@ -136,21 +136,35 @@ export async function handleSubscribeDelete(request: Request) {
     const id = searchParams.get('id');
     const endpoint = searchParams.get('endpoint');
 
-    if (id) {
-      await db
-        .delete(pushSubscriptions)
-        .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.id, Number(id))));
-      return NextResponse.json({ ok: true });
+    if (!id && !endpoint) {
+      return NextResponse.json({ error: 'id or endpoint is required' }, { status: 400 });
+    }
+
+    const numId = id ? Number(id) : null;
+
+    if (numId !== null && !isNaN(numId)) {
+      await Promise.all([
+        db
+          .delete(pushSubscriptions)
+          .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.id, numId))),
+        db
+          .delete(devicePushTokens)
+          .where(and(eq(devicePushTokens.userId, user.id), eq(devicePushTokens.id, numId))),
+      ]);
     }
 
     if (endpoint) {
-      await db
-        .delete(pushSubscriptions)
-        .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)));
-      return NextResponse.json({ ok: true });
+      await Promise.all([
+        db
+          .delete(pushSubscriptions)
+          .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint))),
+        db
+          .delete(devicePushTokens)
+          .where(and(eq(devicePushTokens.userId, user.id), eq(devicePushTokens.token, endpoint))),
+      ]);
     }
 
-    return NextResponse.json({ error: 'id or endpoint is required' }, { status: 400 });
+    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Error deleting push subscription:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

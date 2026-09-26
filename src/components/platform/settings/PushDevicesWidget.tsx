@@ -164,12 +164,29 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
     }
   };
 
-  const handleDeleteDevice = async (id: number) => {
-    setDeletingDeviceId(id);
+  const handleDeleteDevice = async (device: DeviceInfo) => {
+    setDeletingDeviceId(device.id);
     try {
-      const res = await fetch(`/api/push/subscribe?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(
+        `/api/push/subscribe?id=${device.id}&endpoint=${encodeURIComponent(device.endpoint)}`,
+        { method: 'DELETE' }
+      );
       if (res.ok) {
-        setDevices((prev) => prev.filter((d) => d.id !== id));
+        setDevices((prev) => prev.filter((d) => d.id !== device.id && d.endpoint !== device.endpoint));
+
+        // If the deleted device is the current browser session, unsubscribe PushManager locally
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+          try {
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            if (sub && (sub.endpoint === device.endpoint || !device.endpoint.startsWith('http'))) {
+              await sub.unsubscribe();
+              setIsProbedSubscribed(false);
+            }
+          } catch (err) {
+            console.warn('Local service worker unsubscribe error:', err);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to delete device:', err);
@@ -179,42 +196,36 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
   };
 
   return (
-    <div className="w-full min-w-0 relative space-y-4">
-      {/* 1. CURRENT ACTIVE SESSION CARD */}
-      <div className="bg-[#121214] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between gap-4 border-b border-[#222225] pb-4">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse" />
-            <h2 className="text-xs sm:text-[13px] font-bold text-white tracking-tight">Current Active Session</h2>
-          </div>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#089981]/10 border border-[#089981]/25 text-[#089981]">
-            Connected Now
-          </span>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-lg bg-[#18181b] border border-[#27272a]">
+    <div className="w-full min-w-0 py-2 space-y-8">
+      {/* 1. CURRENT ACTIVE SESSION */}
+      <div className="space-y-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl bg-white/[0.03]">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-lg bg-[#222226] border border-[#27272a] flex items-center justify-center text-[#d1d4dc] shrink-0">
+            <div className="w-11 h-11 rounded-full bg-white/[0.06] flex items-center justify-center text-white shrink-0">
               <CurrentDeviceIcon size={20} />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold text-white truncate">
                   {currentClient.browser} on {currentClient.os}
                 </span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-sans uppercase bg-[#222226] text-[#787b86] border border-[#27272a]">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-white/70">
                   {currentClient.deviceType}
                 </span>
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-profit-num/10 text-profit-num">
+                  <span className="w-1.5 h-1.5 rounded-full bg-profit-num animate-pulse" />
+                  Active Now
+                </span>
               </div>
-              <div className="text-xs text-[#787b86] mt-0.5 truncate">
+              <div className="text-xs text-text-muted mt-1 truncate">
                 {isCurrentDeviceSubscribed ? (
-                  <span className="text-[#089981] flex items-center gap-1.5">
-                    <CheckCircle2 size={12} />
-                    Subscribed to instantaneous trade signals &amp; stop-loss alerts
+                  <span className="text-profit-num flex items-center gap-1.5 font-medium">
+                    <CheckCircle2 size={13} />
+                    Subscribed to real-time trade signals &amp; alert triggers
                   </span>
                 ) : (
-                  <span className="text-[#787b86] flex items-center gap-1.5">
-                    <BellOff size={12} />
+                  <span className="text-text-muted flex items-center gap-1.5">
+                    <BellOff size={13} />
                     Push alerts inactive on this browser session
                   </span>
                 )}
@@ -227,10 +238,10 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
               type="button"
               onClick={isCurrentDeviceSubscribed ? handleTestPush : handleEnablePush}
               disabled={isEnablingPush}
-              className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors w-full md:w-auto cursor-pointer ${
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all w-full md:w-auto cursor-pointer active:scale-98 ${
                 isCurrentDeviceSubscribed
-                  ? 'text-white bg-[#222226] hover:bg-[#27272a] border border-[#27272a] hover:border-[#3f3f46]'
-                  : 'text-white bg-[#2962ff] hover:bg-[#1e53e5] shadow-xs'
+                  ? 'text-white bg-white/[0.06] hover:bg-white/[0.12]'
+                  : 'text-white bg-brand-blue hover:opacity-90 shadow-xs'
               }`}
             >
               <Bell size={14} />
@@ -246,37 +257,38 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
         </div>
 
         {pushStatus && (
-          <div className="p-3 rounded-lg bg-[#18181b] border border-[#27272a] text-xs text-[#d1d4dc] flex items-center gap-2">
-            <CheckCircle2 size={14} className="text-[#089981] shrink-0" />
+          <div className="px-4 py-2.5 rounded-xl bg-white/[0.03] text-xs text-text-secondary flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-profit-num shrink-0" />
             <span>{pushStatus}</span>
           </div>
         )}
       </div>
 
       {/* 2. REGISTERED PUSH & MOBILE DEVICES */}
-      <div className="bg-[#121214] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
-        <div className="border-b border-[#222225] pb-4">
-          <h2 className="text-xs sm:text-[13px] font-bold text-white tracking-tight">
-            Linked Notification Devices ({devices.length})
-          </h2>
-          <p className="mt-1 text-xs text-[#787b86]">
-            All browsers and mobile apps linked to your Ticknal account for real-time trade signals.
-          </p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between pb-1">
+          <h3 className="text-xs sm:text-sm font-semibold text-white tracking-tight">
+            Linked Notification Endpoints ({devices.length})
+          </h3>
         </div>
 
         {devices.length === 0 ? (
-          <div className="py-8 px-4 text-center rounded-lg bg-[#18181b] border border-dashed border-[#27272a]">
-            <Smartphone size={28} className="mx-auto mb-2 text-[#787b86]/40" />
-            <p className="text-xs text-[#d1d4dc] font-medium">No additional background devices registered</p>
-            <p className="text-[11px] text-[#787b86] mt-1 max-w-sm mx-auto">
-              Click &quot;Enable Push on This Device&quot; above to link this browser, or log in from the Ticknal Android app to receive instant trade notifications.
+          <div className="py-8 px-4 text-center rounded-xl bg-white/[0.02]">
+            <Smartphone size={28} className="mx-auto mb-2 text-white/30" />
+            <p className="text-xs text-white/80 font-medium">No additional background devices registered</p>
+            <p className="text-[11px] text-text-muted mt-1 max-w-sm mx-auto">
+              Click &quot;Enable Push on This Device&quot; to link this browser, or log in from the Ticknal mobile app to receive instant trade notifications.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {devices.map((device) => {
               const { browser, os, deviceType } = parseUserAgent(device.userAgent);
-              const isCurrent = clientUa && device.userAgent && (clientUa.includes(device.userAgent.slice(0, 30)) || device.userAgent.includes(clientUa.slice(0, 30)));
+              const isCurrent =
+                clientUa &&
+                device.userAgent &&
+                (clientUa.includes(device.userAgent.slice(0, 30)) ||
+                  device.userAgent.includes(clientUa.slice(0, 30)));
 
               const DeviceIcon =
                 deviceType === 'mobile' ? Smartphone :
@@ -287,37 +299,43 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
               return (
                 <div
                   key={device.id}
-                  className="p-3.5 rounded-lg bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] transition-colors flex items-center justify-between gap-3 min-w-0"
+                  className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center justify-between gap-3 min-w-0"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-[#222226] border border-[#27272a] flex items-center justify-center text-[#787b86] shrink-0">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center text-white/80 shrink-0">
                       <DeviceIcon size={18} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-white truncate">
-                          {device.userAgent?.startsWith('Native App') ? device.userAgent : `${browser} on ${os}`}
+                        <span className="text-xs sm:text-sm font-semibold text-white truncate">
+                          {device.userAgent?.startsWith('Native App')
+                            ? device.userAgent
+                            : `${browser} on ${os}`}
                         </span>
                         {isCurrent && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-sans font-semibold bg-[#089981]/10 border border-[#089981]/25 text-[#089981] shrink-0">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-sans font-semibold bg-profit-num/10 text-profit-num shrink-0">
                             Current
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-[#787b86] mt-0.5 tabular-nums">
-                        Registered {new Date(device.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <div className="text-[11px] text-text-muted mt-0.5 tabular-nums">
+                        Registered {new Date(device.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
                       </div>
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => handleDeleteDevice(device.id)}
+                    onClick={() => handleDeleteDevice(device)}
                     disabled={deletingDeviceId === device.id}
-                    className="p-1.5 rounded text-[#787b86] hover:text-[#f23645] hover:bg-[#f23645]/10 transition-colors shrink-0 cursor-pointer"
+                    className="p-2 rounded-lg text-white/40 hover:text-loss-num hover:bg-loss-num/10 transition-colors shrink-0 cursor-pointer"
                     title="Disconnect Device"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               );

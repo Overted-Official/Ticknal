@@ -126,7 +126,6 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
       }, 1200);
     } catch {
       setErrorMessage('Failed to save security settings. Please try again.');
-
       setIsSubmitting(false);
     }
   };
@@ -134,17 +133,17 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-lock-underlay flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-lock-underlay flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="w-full max-w-[340px] sm:max-w-[360px] p-6 sm:p-7 flex flex-col items-center text-white relative rounded-2xl bg-[#121214] border border-[#27272a] shadow-2xl"
+        className="w-full max-w-[360px] sm:max-w-[380px] p-6 sm:p-8 flex flex-col items-center text-white relative rounded-2xl bg-black border border-white/10 shadow-[0_24px_50px_rgba(0,0,0,0.85)]"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-[#787b86] hover:text-white hover:bg-[#222226] transition-colors cursor-pointer"
+          className="absolute top-4 right-4 p-2 rounded-full text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
         >
           <X size={16} />
         </button>
@@ -155,11 +154,11 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
             animate={{ scale: 1, opacity: 1 }}
             className="flex flex-col items-center text-center py-8 space-y-4"
           >
-            <div className="w-14 h-14 rounded-full bg-[#089981]/10 border border-[#089981]/30 flex items-center justify-center text-[#089981]">
+            <div className="w-14 h-14 rounded-full bg-profit-num/10 border border-profit-num/30 flex items-center justify-center text-profit-num">
               <CheckCircle2 size={30} />
             </div>
             <h3 className="text-lg font-bold text-white tracking-tight">Security Activated!</h3>
-            <p className="text-xs text-[#787b86]">Your app is protected with a 4-digit PIN and recovery question.</p>
+            <p className="text-xs text-text-muted">Your app is protected with a 4-digit PIN and recovery question.</p>
           </motion.div>
         ) : step === 'recovery' ? (
           /* Step 3: Security Question & Secret Answer */
@@ -169,11 +168,11 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
             className="w-full space-y-4"
           >
             <div className="flex flex-col items-center text-center space-y-1.5">
-              <div className="w-11 h-11 rounded-xl bg-[#18181b] border border-[#27272a] flex items-center justify-center text-[#d1d4dc] mb-1">
+              <div className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-white mb-1">
                 <ShieldCheck size={22} />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Set Recovery Question</h3>
-              <p className="text-xs text-[#787b86] leading-relaxed">
+              <p className="text-xs text-text-muted leading-relaxed">
                 Required if you ever forget your PIN to safely recover access on this device.
               </p>
             </div>
@@ -181,11 +180,11 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
             <form onSubmit={handleFinishSetup} className="space-y-3.5 pt-2">
               {/* Question Dropdown */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-[#787b86]">Security Question</label>
+                <label className="text-xs font-medium text-text-muted">Security Question</label>
                 <select
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
-                  className="w-full bg-[#18181b] border border-[#27272a] focus:border-[#2962ff] text-xs text-white rounded-lg p-2.5 outline-none font-sans cursor-pointer transition-colors"
+                  className="w-full bg-black border border-white/10 focus:border-brand-blue text-xs text-white rounded-xl p-3 outline-none font-sans cursor-pointer transition-colors"
                 >
                   {STANDARD_SECURITY_QUESTIONS.map((q) => (
                     <option key={q} value={q}>
@@ -200,13 +199,13 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
 
               {question === 'CUSTOM' && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[#787b86]">Custom Question</label>
+                  <label className="text-xs font-medium text-text-muted">Custom Question</label>
                   <input
                     type="text"
                     value={customQuestion}
                     onChange={(e) => setCustomQuestion(e.target.value)}
                     placeholder="Enter your custom question"
-                    className="w-full bg-[#18181b] border border-[#27272a] focus:border-[#2962ff] text-xs text-white placeholder-[#787b86] rounded-lg p-2.5 outline-none font-sans transition-colors"
+                    className="w-full bg-black border border-white/10 focus:border-brand-blue text-xs text-white placeholder-text-muted rounded-xl p-3 outline-none font-sans transition-colors"
                     required
                   />
                 </div>
@@ -214,7 +213,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
 
               {/* Secret Answer */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-[#787b86]">Secret Answer</label>
+                <label className="text-xs font-medium text-text-muted">Secret Answer</label>
                 <input
                   type="text"
                   value={answer}
@@ -223,22 +222,22 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                     setErrorMessage(null);
                   }}
                   placeholder="Your secret answer (case-insensitive)"
-                  className="w-full bg-[#18181b] border border-[#27272a] focus:border-[#2962ff] text-xs text-white placeholder-[#787b86] rounded-lg p-2.5 outline-none font-sans transition-colors"
+                  className="w-full bg-black border border-white/10 focus:border-brand-blue text-xs text-white placeholder-text-muted rounded-xl p-3 outline-none font-sans transition-colors"
                   required
                   autoFocus
                 />
-                <p className="text-[10px] text-[#787b86]">Answers are stored hashed and never shared.</p>
+                <p className="text-[10px] text-text-muted">Answers are stored hashed and never shared.</p>
               </div>
 
               {errorMessage && (
-                <p className="text-xs text-[#f23645] font-medium">{errorMessage}</p>
+                <p className="text-xs text-loss-num font-medium">{errorMessage}</p>
               )}
 
               <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setStep('confirm')}
-                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-[#787b86] hover:text-white hover:bg-[#222226] transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl text-xs font-medium text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft size={15} />
                   <span>Back</span>
@@ -247,7 +246,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                 <button
                   type="submit"
                   disabled={isSubmitting || !answer.trim()}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#2962ff] hover:bg-[#1e53e5] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-blue hover:opacity-90 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <span>{isSubmitting ? 'Saving...' : 'Activate Passcode'}</span>
                   <ArrowRight size={15} />
@@ -258,14 +257,14 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
         ) : (
           /* Step 1 & 2: PIN Keypad */
           <>
-            <div className="flex flex-col items-center text-center space-y-1 mb-4">
-              <div className="w-11 h-11 rounded-xl bg-[#18181b] border border-[#27272a] flex items-center justify-center text-[#d1d4dc] mb-1">
+            <div className="flex flex-col items-center text-center space-y-1 mb-3">
+              <div className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-white mb-1">
                 <Lock size={18} />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 {step === 'create' ? 'Step 1 of 3: Set 4-Digit PIN' : 'Step 2 of 3: Confirm PIN'}
               </h3>
-              <p className="text-xs text-[#787b86]">
+              <p className="text-xs text-text-muted">
                 {step === 'create'
                   ? 'Choose a 4-digit code to protect your portfolio'
                   : 'Re-enter the code to confirm'}
@@ -285,9 +284,9 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                     className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-all duration-200 ${
                       isFilled
                         ? isError
-                          ? 'bg-[#f23645] shadow-[0_0_12px_rgba(242,54,69,0.6)] scale-110'
-                          : 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] scale-110'
-                        : 'bg-[#18181b] border border-[#27272a]'
+                          ? 'bg-loss-num shadow-[0_0_14px_rgba(242,54,69,0.7)] scale-110'
+                          : 'bg-white shadow-[0_0_14px_rgba(255,255,255,0.7)] scale-110'
+                        : 'bg-white/10 border border-white/20'
                     }`}
                   />
                 );
@@ -302,7 +301,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="text-xs text-[#f23645] font-medium tracking-tight"
+                    className="text-xs text-loss-num font-medium tracking-tight"
                   >
                     {errorMessage}
                   </motion.p>
@@ -310,20 +309,20 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
               </AnimatePresence>
             </div>
 
-            {/* Keypad (3x4) */}
-            <div className="w-full max-w-[260px] sm:max-w-[280px] mx-auto space-y-3">
+            {/* Keypad (3x4) with circular buttons and bigger numbers */}
+            <div className="w-full max-w-[270px] sm:max-w-[290px] mx-auto space-y-3 sm:space-y-3.5">
               {[
                 ['1', '2', '3'],
                 ['4', '5', '6'],
                 ['7', '8', '9'],
               ].map((row, rIdx) => (
-                <div key={rIdx} className="grid grid-cols-3 gap-3 justify-items-center">
+                <div key={rIdx} className="grid grid-cols-3 gap-3.5 sm:gap-4 justify-items-center">
                   {row.map((digit) => (
                     <button
                       key={digit}
                       type="button"
                       onClick={() => handleDigit(digit)}
-                      className="w-[62px] h-[62px] sm:w-[68px] sm:h-[68px] rounded-xl bg-[#18181b] hover:bg-[#222226] active:bg-[#27272a] border border-[#27272a] hover:border-[#3f3f46] flex items-center justify-center text-2xl sm:text-3xl font-bold font-sans text-white transition-all shadow-xs focus:outline-none cursor-pointer select-none active:scale-95"
+                      className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[30px] sm:text-[34px] font-sans font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
                     >
                       {digit}
                     </button>
@@ -331,12 +330,12 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                 </div>
               ))}
 
-              <div className="grid grid-cols-3 gap-3 justify-items-center items-center">
-                <div className="w-[62px] h-[62px] sm:w-[68px] sm:h-[68px]" />
+              <div className="grid grid-cols-3 gap-3.5 sm:gap-4 justify-items-center items-center">
+                <div className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px]" />
                 <button
                   type="button"
                   onClick={() => handleDigit('0')}
-                  className="w-[62px] h-[62px] sm:w-[68px] sm:h-[68px] rounded-xl bg-[#18181b] hover:bg-[#222226] active:bg-[#27272a] border border-[#27272a] hover:border-[#3f3f46] flex items-center justify-center text-2xl sm:text-3xl font-bold font-sans text-white transition-all shadow-xs focus:outline-none cursor-pointer select-none active:scale-95"
+                  className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[30px] sm:text-[34px] font-sans font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
                 >
                   0
                 </button>
@@ -344,10 +343,10 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                   type="button"
                   onClick={handleBackspace}
                   disabled={currentDigits.length === 0}
-                  className="w-[62px] h-[62px] sm:w-[68px] sm:h-[68px] rounded-xl bg-transparent hover:bg-[#222226] active:bg-[#27272a] border border-transparent hover:border-[#27272a] flex items-center justify-center text-[#787b86] hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer active:scale-95"
+                  className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-transparent hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 flex items-center justify-center text-white/50 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
                   title="Delete"
                 >
-                  <Delete size={22} />
+                  <Delete size={24} className="sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>

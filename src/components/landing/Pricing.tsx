@@ -99,7 +99,7 @@ export default function Pricing() {
                   'Sub-Second Real-Time Push Notifications',
                   'Intraday Timeframe Signals (15m, 1h, 4h, 1D)',
                   'Full Customizable Strategy Parameters',
-                  'TradingView Lightweight Live Replays',
+                  'TradingView Lightweight Advanced Charting',
                   'Automated Portfolio Snapshots & Mark-to-Market',
                   'Priority 24/7 VIP Support',
                 ].map((feat, i) => (

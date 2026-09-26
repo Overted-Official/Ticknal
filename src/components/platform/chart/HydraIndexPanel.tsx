@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -65,19 +65,20 @@ export default function HydraIndexPanel({
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: ColorType.Solid, color: cssTokenColor('--palette-chart', '#131722') },
-        textColor: cssTokenColor('--plt-muted', '#787B86'),
+        background: { type: ColorType.Solid, color: cssTokenColor('--plt-bg-base', 'rgb(0, 0, 0)') },
+        textColor: cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
         fontSize: 10,
+        attributionLogo: false,
       },
       grid: {
-        vertLines: { color: cssTokenColor('--palette-chart-grid', '#27272a') },
-        horzLines: { color: cssTokenColor('--palette-chart-grid', '#27272a') },
+        vertLines: { color: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)') },
+        horzLines: { color: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)') },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
       },
       rightPriceScale: {
-        borderColor: cssTokenColor('--palette-chart-grid', '#27272a'),
+        borderColor: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
         autoScale: false,
         minimumWidth: 70,
         scaleMargins: {
@@ -86,7 +87,7 @@ export default function HydraIndexPanel({
         },
       },
       timeScale: {
-        borderColor: cssTokenColor('--palette-chart-grid', '#27272a'),
+        borderColor: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
         timeVisible: true,
         secondsVisible: false,
         visible: false, // Hidden to seamlessly align with main chart's time scale
@@ -95,9 +96,9 @@ export default function HydraIndexPanel({
 
     chartRef.current = chart;
 
-    // Line Series for Hydra (Cyan #00E5FF)
+    // Line Series for Hydra
     const hydraSeries = chart.addSeries(LineSeries, {
-      color: '#00E5FF',
+      color: cssTokenColor('--color-sky-blue-500', 'rgb(0, 188, 212)'),
       lineWidth: 2,
       priceFormat: {
         type: 'custom',
@@ -166,7 +167,7 @@ export default function HydraIndexPanel({
 
     if (viewMode === 'binary') {
       series.applyOptions({
-        color: '#00E676', // Glowing Neon Green
+        color: cssTokenColor('--plt-profit', 'rgb(8, 153, 129)'),
         lineWidth: 2,
         priceFormat: {
           type: 'custom',
@@ -179,7 +180,7 @@ export default function HydraIndexPanel({
       });
       const pl1 = series.createPriceLine({
         price: 1.0,
-        color: '#00E676',
+        color: cssTokenColor('--plt-profit', 'rgb(8, 153, 129)'),
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
@@ -187,7 +188,7 @@ export default function HydraIndexPanel({
       });
       const pl0 = series.createPriceLine({
         price: 0.0,
-        color: '#787B86',
+        color: cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
@@ -196,7 +197,7 @@ export default function HydraIndexPanel({
       priceLinesRef.current = [pl1, pl0];
     } else {
       series.applyOptions({
-        color: '#00E5FF', // Cyan
+        color: cssTokenColor('--color-sky-blue-500', 'rgb(0, 188, 212)'),
         lineWidth: 2,
         priceFormat: {
           type: 'custom',
@@ -209,7 +210,7 @@ export default function HydraIndexPanel({
       });
       const pl90 = series.createPriceLine({
         price: 90,
-        color: '#FF5252',
+        color: cssTokenColor('--plt-risk', 'rgb(242, 54, 69)'),
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
@@ -217,7 +218,7 @@ export default function HydraIndexPanel({
       });
       const pl50 = series.createPriceLine({
         price: 50,
-        color: '#787B86',
+        color: cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
         lineWidth: 1,
         lineStyle: 1,
         axisLabelVisible: false,
@@ -225,7 +226,7 @@ export default function HydraIndexPanel({
       });
       const pl13 = series.createPriceLine({
         price: 1.3,
-        color: '#00E676',
+        color: cssTokenColor('--plt-profit', 'rgb(8, 153, 129)'),
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
@@ -347,11 +348,11 @@ export default function HydraIndexPanel({
   return (
     <div className="h-40 sm:h-44 w-full border-t border-plt-border bg-plt-base/98 flex flex-col relative shrink-0 select-none animate-in slide-in-from-bottom-2 duration-150">
       {/* Panel Top Header Strip */}
-      <div className="h-7 px-3 flex items-center justify-between border-b border-plt-border/40 bg-plt-raised/70 shrink-0 text-xs">
+      <div className="h-7 px-3 flex items-center justify-between border-b border-plt-border/40 bg-plt-raised/70 shrink-0 text-xs font-sans">
         {/* Left: Indicator title and live values */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 font-bold tracking-wider text-[11px] text-[#00E676]">
-            <Activity className="h-3.5 w-3.5 text-[#00E676]" />
+          <div className="flex items-center gap-1.5 font-bold tracking-wider text-[11px] text-profit-num">
+            <Activity className="h-3.5 w-3.5 text-profit-num" />
             <span>HYDRA BINARY INDEX</span>
           </div>
 
@@ -360,8 +361,8 @@ export default function HydraIndexPanel({
           {/* Current Live State / Value */}
           <div className="flex items-baseline gap-1">
             <span
-              className={`font-mono font-bold text-[12px] ${
-                isInvested ? 'text-[#00E676]' : 'text-plt-muted'
+              className={`font-sans tabular-nums font-bold text-[12px] ${
+                isInvested ? 'text-profit-num' : 'text-plt-muted'
               }`}
             >
               {viewMode === 'binary'
@@ -376,13 +377,13 @@ export default function HydraIndexPanel({
           <div
             className={`px-1.5 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1 ${
               isInvested
-                ? 'bg-[#00E676]/20 text-[#00E676] border border-[#00E676]/40'
+                ? 'bg-profit-num/20 text-profit-num border border-profit-num/40'
                 : 'bg-white/[0.06] text-plt-muted border border-white/[0.1]'
             }`}
           >
             <span
               className={`h-1.5 w-1.5 rounded-full ${
-                isInvested ? 'bg-[#00E676] animate-pulse' : 'bg-plt-muted'
+                isInvested ? 'bg-profit-num animate-pulse' : 'bg-plt-muted'
               }`}
             />
             <span>
@@ -393,7 +394,7 @@ export default function HydraIndexPanel({
           </div>
 
           {/* Performance Pill */}
-          <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30">
+          <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-profit-num/15 text-profit-num border border-profit-num/30">
             {viewMode === 'continuous'
               ? 'Continuous 0-100 Bayesian Regime Curve'
               : 'Adaptive Volatility Synchronizer: >92% Swings Caught | 2.8-Bar Lag | 0% Leakage'}
@@ -409,7 +410,7 @@ export default function HydraIndexPanel({
               onClick={() => setViewMode('binary')}
               className={`px-2 py-0.5 rounded font-semibold transition-colors cursor-pointer ${
                 viewMode === 'binary'
-                  ? 'bg-[#00E676]/20 text-[#00E676] shadow-sm'
+                  ? 'bg-profit-num/20 text-profit-num shadow-xs'
                   : 'text-plt-muted hover:text-plt-text'
               }`}
               title="Binary Regime Index (0 = Cash / 1 = Invested)"
@@ -421,7 +422,7 @@ export default function HydraIndexPanel({
               onClick={() => setViewMode('continuous')}
               className={`px-2 py-0.5 rounded font-semibold transition-colors cursor-pointer ${
                 viewMode === 'continuous'
-                  ? 'bg-[#00E5FF]/20 text-[#00E5FF] shadow-sm'
+                  ? 'bg-brand-blue/20 text-brand-blue shadow-xs'
                   : 'text-plt-muted hover:text-plt-text'
               }`}
               title="Continuous 0-100 Bayesian Regime Curve"

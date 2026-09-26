@@ -35,7 +35,7 @@ export default function ChartOrderDraftPopover({
       <div className="mb-3 flex items-center justify-between border-b border-white/[0.08] pb-2">
         <div>
           <div className="font-bold text-xs text-plt-text">Open Long Position</div>
-          <div className="text-[10px] text-plt-muted font-mono">{symbol.replace('.CA', '')} • {orderDraft.date}</div>
+          <div className="text-[10px] text-plt-muted font-sans tabular-nums">{symbol.replace('.CA', '')} • {orderDraft.date}</div>
         </div>
         <button
           type="button"
@@ -82,7 +82,7 @@ export default function ChartOrderDraftPopover({
             onChange={(event) =>
               onUpdateDraft((current) => (current ? { ...current, entryPrice: event.target.value } : current))
             }
-            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-mono font-semibold text-plt-text outline-none focus:border-plt-border-active"
+            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-sans tabular-nums font-semibold text-plt-text outline-none focus:border-plt-border-active"
           />
         </label>
         <label className="text-[10px] uppercase font-semibold text-plt-muted font-sans block">
@@ -95,7 +95,7 @@ export default function ChartOrderDraftPopover({
             onChange={(event) =>
               onUpdateDraft((current) => (current ? { ...current, quantity: event.target.value } : current))
             }
-            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-mono font-semibold text-plt-text outline-none focus:border-plt-border-active"
+            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-sans tabular-nums font-semibold text-plt-text outline-none focus:border-plt-border-active"
           />
         </label>
         <label className="text-[10px] uppercase font-semibold text-plt-profit/80 font-sans block">
@@ -108,7 +108,7 @@ export default function ChartOrderDraftPopover({
             onChange={(event) =>
               onUpdateDraft((current) => (current ? { ...current, targetPrice: event.target.value } : current))
             }
-            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-mono font-semibold text-plt-profit outline-none focus:border-plt-border-active"
+            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-sans tabular-nums font-semibold text-plt-profit outline-none focus:border-plt-border-active"
           />
         </label>
         <label className="text-[10px] uppercase font-semibold text-plt-risk/80 font-sans block">
@@ -121,13 +121,13 @@ export default function ChartOrderDraftPopover({
             onChange={(event) =>
               onUpdateDraft((current) => (current ? { ...current, stopPrice: event.target.value } : current))
             }
-            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-mono font-semibold text-plt-risk outline-none focus:border-plt-border-active"
+            className="h-8 w-full mt-1 rounded-xl border border-white/[0.12] bg-white/[0.04] px-2.5 text-xs font-sans tabular-nums font-semibold text-plt-risk outline-none focus:border-plt-border-active"
           />
         </label>
       </div>
 
       {(orderDraft.targetLabel || orderDraft.stopLabel || orderError) && (
-        <div className="mt-2 text-[10px] font-mono text-plt-muted">
+        <div className="mt-2 text-[10px] font-sans tabular-nums text-plt-muted">
           {[orderDraft.targetLabel, orderDraft.stopLabel].filter(Boolean).join(' • ')}
           {orderError && <div className="mt-1 text-plt-risk">{orderError}</div>}
         </div>

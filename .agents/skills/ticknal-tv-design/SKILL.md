@@ -26,11 +26,13 @@ outside the token set without explicit user approval.
 | **Loss / Negative** | `#f23645` | Losses, outflows, negative delta |
 | **Info / Accent Blue** | `#2962ff` | Secondary lines, toggle active states, hover highlight on table row names |
 | **Muted Text** | `#787b86` | Labels, subtitles, axis ticks, empty-state copy |
-| **Card Border / Row Divider** | `#1e222d` | Section borders, horizontal row separators, tooltip border |
-| **Elevated Surface** | `#2a2e39` | Active tab/button fill, pill active state, tooltip background |
-| **Recessed Panel** | `#14171f` | Pill container background, switcher track |
-| **Page Background** | `#000000` / `#0d0d0d` | App shell — never used *inside* widgets |
-| **Widget Surface** | `bg-transparent` | All widget root elements — no background fill |
+| **Card Border / Row Divider** | `#222225` / `border-white/10` / `border-white/[0.06]` | Section borders, horizontal row separators, tooltip border |
+| **Drawer & Modal Surface** | `#000000` (`bg-black`) | Slide-up sheets and modals — strictly pure black, `rounded-none` |
+| **Hovercard / Tooltip Surface** | `#3D3D3D` | Popover hovercards only — unbordered, shadow-2xl |
+| **Page & Canvas Background** | `#000000` (`bg-black`) | App shell & chart canvases — pure pitch neutral black |
+| **Widget Surface** | `bg-transparent` | All widget root elements — strictly transparent, no dark gray fill |
+
+> **IMPORTANT**: NEVER use dark gray background fills (`#18181b`, `#121214`, `#121212`, `#0e0e10`, `zinc-900`) or bluish navy hex codes (`#14171f`, `#1e222d`, `#2a2e39`) for widgets, cards, or drawer surfaces. Drawers must have square corners (`rounded-none`). Ticknal exclusively uses pure neutral black (`#000000`), `bg-transparent`, and modern sans-serif typography (`font-sans` with `tabular-nums`, NEVER `font-mono`).
 
 **Semantic badge colour classes:**
 ```

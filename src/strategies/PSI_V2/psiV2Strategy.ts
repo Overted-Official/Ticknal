@@ -398,7 +398,8 @@ function emptyStats(initialCapital: number, startDate: string, endDate: string):
 
 export function runPsiV2Strategy(
   bars: PriceBar[],
-  overrides?: PsiV2StrategyOverrides
+  overrides?: PsiV2StrategyOverrides,
+  precomputedIndices?: PsiV2BarMetrics[]
 ): PsiV2StrategyResult {
   const initialCapital = overrides?.initialCapital || DEFAULT_INITIAL_CAPITAL;
   const startDate = overrides?.startDate || (bars.length > 0 ? bars[0].date : '2025-01-01');
@@ -448,8 +449,8 @@ export function runPsiV2Strategy(
     };
   }
 
-  // 1. Compute Continuous 3-PSI Indices across complete history
-  const indices = computePsiV2Indices(bars);
+  // 1. Compute Continuous 3-PSI Indices across complete history (or use precomputed)
+  const indices = precomputedIndices ?? computePsiV2Indices(bars);
 
   // 2. Identify Simulation Window Start Index
   let startIdx = 0;

@@ -87,7 +87,7 @@ export const DEFAULT_PARAMS: PsiStrategyParams = {
   aymLimit: 78.6,
   useAtr: true,
   atrDistance: 4,
-  initialCapital: 3000,
+  initialCapital: 1000,
   startDate: "2025-01-01",
 };
 
@@ -111,8 +111,12 @@ export function resolvePsiParams(symbol: string, overrides: Partial<PsiStrategyP
   };
 }
 
-export function runPsiStrategy(bars: PriceBar[], params: PsiStrategyParams): PsiBacktestResult {
-  const computed = computePsiSeries(bars);
+export function runPsiStrategy(
+  bars: PriceBar[],
+  params: PsiStrategyParams,
+  precomputedSeries?: ComputedPsiBar[]
+): PsiBacktestResult {
+  const computed = precomputedSeries ?? computePsiSeries(bars);
   const startTime = Date.parse(params.startDate);
   const endTime = params.endDate ? Date.parse(params.endDate) : Number.POSITIVE_INFINITY;
   const signals: PsiSignal[] = [];

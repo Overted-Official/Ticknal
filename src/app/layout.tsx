@@ -24,15 +24,15 @@ export const metadata: Metadata = {
   description: "Algorithmic signals, proprietary PSI & Thoth models, live EGX ingestion, and institutional risk analytics for high-conviction traders.",
   icons: {
     icon: [
-      { url: "/Ticknal_icon.svg?v=2", type: "image/svg+xml" },
-      { url: "/favicon.ico?v=2", sizes: "any" },
-      { url: "/icon-192x192.png?v=2", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512x512.png?v=2", sizes: "512x512", type: "image/png" },
+      { url: "/Ticknal_icon.svg?v=3", type: "image/svg+xml" },
+      { url: "/favicon.ico?v=3", sizes: "any" },
+      { url: "/icon-192x192.png?v=3", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png?v=3", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: ["/favicon.ico?v=2"],
+    shortcut: ["/favicon.ico?v=3"],
     apple: [
-      { url: "/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" },
-      { url: "/icon-192x192.png?v=2", sizes: "192x192", type: "image/png" },
+      { url: "/apple-touch-icon.png?v=3", sizes: "180x180", type: "image/png" },
+      { url: "/icon-192x192.png?v=3", sizes: "192x192", type: "image/png" },
     ],
   },
   other: {
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
     "msapplication-navbutton-color": APP_THEME_COLOR,
     "theme-color": APP_THEME_COLOR,
-    "msapplication-TileImage": "/icon-144x144.png?v=2",
+    "msapplication-TileImage": "/icon-144x144.png?v=3",
     "msapplication-TileColor": "#000000",
   },
 };

@@ -8,7 +8,7 @@ export default function AuthButton({
   className,
   children,
   variant = 'primary',
-  nextPath = '/dashboard'
+  nextPath = '/home'
 }: {
   className?: string,
   children: React.ReactNode,

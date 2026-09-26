@@ -13,6 +13,7 @@ import { syncAllMacroInflation } from '@/lib/cbe-inflation';
 // 1. UPDATE STOCKS
 // ----------------------------------------------------
 function getTradingViewSymbol(symbol: string, exchange: string | null = 'EGX'): string {
+  if (symbol === 'EGX30') return 'EGX:EGX30CAPPED';
   if (symbol === 'EGX70') return 'EGX:EGX70EWI';
   if (symbol === 'EGX100') return 'EGX:EGX100EWI';
   const ex = exchange || 'EGX';
@@ -95,6 +96,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
     ]);
 
     const prioritySet = new Set<string>([
+      'EGX30', 'EGX70', 'EGX100',
       'COMI', 'COMI.CA', 'ETEL', 'ETEL.CA', 'EAST', 'EAST.CA', 'EGAL', 'EGAL.CA', 'PHDC', 'PHDC.CA',
       'HRHO', 'HRHO.CA', 'TMGH', 'TMGH.CA', 'SWDY', 'SWDY.CA', 'FWRY', 'FWRY.CA', 'MFPC', 'MFPC.CA',
       'EKHO', 'EKHO.CA', 'ORAS', 'ORAS.CA', 'ABUK', 'ABUK.CA', 'ESRS', 'ESRS.CA', 'AMOC', 'AMOC.CA',
@@ -132,7 +134,14 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
         return new Promise((resolve) => {
           try {
             const symbol = ticker.symbol.replace('.CA', '');
-            const tvSymbol = symbol === 'EGX70' ? 'EGX:EGX70EWI' : symbol === 'EGX100' ? 'EGX:EGX100EWI' : `EGX:${symbol}`;
+            const tvSymbol =
+              symbol === 'EGX30'
+                ? 'EGX:EGX30CAPPED'
+                : symbol === 'EGX70'
+                ? 'EGX:EGX70EWI'
+                : symbol === 'EGX100'
+                ? 'EGX:EGX100EWI'
+                : `EGX:${symbol}`;
             const chart = new client.Session.Chart();
             chart.setMarket(tvSymbol, { timeframe: 'D', range: 15 });
 
@@ -222,9 +231,10 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
     try {
       (revalidateTag as any)('prices');
       (revalidateTag as any)('opportunities');
-      revalidatePath('/dashboard');
-      revalidatePath('/invest');
-      revalidatePath('/sectors');
+      revalidatePath('/home');
+      revalidatePath('/charts');
+      revalidatePath('/markets');
+      revalidatePath('/strategies');
     } catch {}
 
     const elapsed = Date.now() - startTime;
@@ -368,8 +378,9 @@ export async function handleUpdateFunds(req: Request) {
 
     try {
       (revalidateTag as any)('prices');
-      revalidatePath('/dashboard');
-      revalidatePath('/invest');
+      revalidatePath('/home');
+      revalidatePath('/charts');
+      revalidatePath('/markets');
     } catch {}
 
     await db.insert(systemLogs).values({
@@ -529,8 +540,9 @@ export async function handleUpdateCommodities(req: Request) {
 
     try {
       (revalidateTag as any)('prices');
-      revalidatePath('/invest');
-      revalidatePath('/dashboard');
+      revalidatePath('/home');
+      revalidatePath('/charts');
+      revalidatePath('/markets');
     } catch {}
 
     await db.insert(systemLogs).values({

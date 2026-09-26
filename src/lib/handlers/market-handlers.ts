@@ -86,7 +86,13 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
 
   try {
     let tvSymbol = `EGX:${cleanSym}`;
-    if (cleanSym === 'GC1!' || cleanSym === 'GC1' || cleanSym === 'GC' || cleanSym === 'GOLD' || cleanSym === 'XAUUSD') {
+    if (cleanSym === 'EGX30') {
+      tvSymbol = 'EGX:EGX30CAPPED';
+    } else if (cleanSym === 'EGX70') {
+      tvSymbol = 'EGX:EGX70EWI';
+    } else if (cleanSym === 'EGX100') {
+      tvSymbol = 'EGX:EGX100EWI';
+    } else if (cleanSym === 'GC1!' || cleanSym === 'GC1' || cleanSym === 'GC' || cleanSym === 'GOLD' || cleanSym === 'XAUUSD') {
       tvSymbol = 'COMEX:GC1!';
     } else if (cleanSym === 'SI1!' || cleanSym === 'SI1' || cleanSym === 'SI' || cleanSym === 'SILVER' || cleanSym === 'XAGUSD') {
       tvSymbol = 'COMEX:SI1!';

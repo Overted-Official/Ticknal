@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/server';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 
+const notificationsMemCache = new Map<string, { data: any[]; timestamp: number }>();
+const NOTIFS_CACHE_TTL = 30 * 1000; // 30s cache per user
+
 export async function handleNotificationsGet() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -15,8 +18,14 @@ export async function handleNotificationsGet() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Check in-memory debounce cache to eliminate redundant database egress
+  const cached = notificationsMemCache.get(user.id);
+  if (cached && Date.now() - cached.timestamp < NOTIFS_CACHE_TTL) {
+    return NextResponse.json({ notifications: cached.data });
+  }
+
   try {
-    let rows = await db
+    const rows = await db
       .select({
         id: signalNotifications.id,
         tickerSymbol: signalNotifications.tickerSymbol,
@@ -34,33 +43,9 @@ export async function handleNotificationsGet() {
       .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
       .limit(50);
 
-    const newestSentAt = rows[0]?.sentAt ? new Date(rows[0].sentAt).getTime() : 0;
-    const needsRefresh = rows.length === 0 || (Date.now() - newestSentAt > 15 * 60 * 1000);
-
-    if (needsRefresh) {
-      try {
-        await dispatchSignalNotifications({ lookbackBars: 5 });
-
-        rows = await db
-          .select({
-            id: signalNotifications.id,
-            tickerSymbol: signalNotifications.tickerSymbol,
-            strategy: signalNotifications.strategy,
-            signalDate: signalNotifications.signalDate,
-            signal: signalNotifications.signal,
-            sentAt: signalNotifications.sentAt,
-            companyName: tickers.companyName,
-            logoUrl: tickers.logoUrl,
-            sector: tickers.sector,
-          })
-          .from(signalNotifications)
-          .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
-          .where(eq(signalNotifications.userId, user.id))
-          .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
-          .limit(50);
-      } catch (syncErr) {
-        console.error('Error during notifications lazy sync:', syncErr);
-      }
+    if (rows.length === 0) {
+      notificationsMemCache.set(user.id, { data: [], timestamp: Date.now() });
+      return NextResponse.json({ notifications: [] });
     }
 
     const { getCachedIndustryRotationMap } = await import('@/lib/industry-rotation');
@@ -76,6 +61,7 @@ export async function handleNotificationsGet() {
       };
     });
 
+    notificationsMemCache.set(user.id, { data: enhancedRows, timestamp: Date.now() });
     return NextResponse.json({ notifications: enhancedRows });
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -170,7 +156,7 @@ export async function handleTestNotification(req?: Request) {
   const payloadData = {
     title: 'COMI · BUY Signal (Cerberus)',
     body: 'Triggered at 139.50 EGP · Target: 152.00 · Stop: 134.00',
-    url: '/invest?ticker=COMI.CA&view=chart&strategy=psi_v2',
+    url: '/charts?ticker=COMI.CA&strategy=psi_v2',
     tag: `signal-test-${Date.now()}`,
     symbol: 'COMI.CA',
     signal: 'BUY',

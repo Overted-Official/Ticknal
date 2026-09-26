@@ -1,118 +1,103 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { User, ShieldCheck, Smartphone, Bell } from '@/components/ui/icon-library';
-import SubNavTopRail from '@/components/navigation/SubNavTopRail';
 import SettingsHeader from './SettingsHeader';
-import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
-import { containerStagger, itemFadeInUp } from '@/lib/motion';
-
-import SettingsNavigationRail, { type SettingsTabType } from './SettingsNavigationRail';
+import SettingsFloatingNav from './SettingsFloatingNav';
 import UserProfileWidget, { type SettingsUserProfile } from './UserProfileWidget';
 import PinSecurityCard from './PinSecurityCard';
+import PushNotificationCard from './PushNotificationCard';
 import PushDevicesWidget, { type DeviceInfo } from './PushDevicesWidget';
-import AlertTriggersWidget, { type MonitoredTicker, type TickerOption } from './AlertTriggersWidget';
+import { containerStagger, itemFadeInUp } from '@/lib/motion';
 
-export type { SettingsUserProfile, DeviceInfo, MonitoredTicker, TickerOption };
+export type { SettingsUserProfile, DeviceInfo };
 
 interface SettingsPageViewProps {
   userProfile: SettingsUserProfile;
   initialDevices: DeviceInfo[];
-  initialMonitoredTickers: MonitoredTicker[];
-  allTickers: TickerOption[];
 }
-
-const SETTINGS_TABS: SettingsTabType[] = ['profile', 'security', 'devices', 'alerts'];
 
 export default function SettingsPageView({
   userProfile,
-  initialDevices,
-  initialMonitoredTickers,
-  allTickers,
+  initialDevices = [],
 }: SettingsPageViewProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTabType>('profile');
-
-  const { swipeHandlers } = useSwipeableTabs({
-    tabs: SETTINGS_TABS,
-    activeTab,
-    onTabChange: (newTab) => setActiveTab(newTab),
-  });
-
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerStagger}
-      className="relative z-10 flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-plt-base text-plt-text select-none"
-    >
-      {/* 1. Mobile Top Rail */}
-      <SubNavTopRail
-        activeTab={activeTab}
-        onChange={(val) => setActiveTab(val as SettingsTabType)}
-        userName={userProfile.name}
-        userAvatarUrl={userProfile.avatarUrl || undefined}
-        items={[
-          { label: 'Profile', value: 'profile', icon: User },
-          { label: 'Security & PIN', value: 'security', icon: ShieldCheck },
-          { label: 'Devices', value: 'devices', icon: Smartphone, badge: initialDevices.length },
-          { label: 'Alerts', value: 'alerts', icon: Bell, badge: initialMonitoredTickers.length },
-        ]}
-      />
-
-      <div {...swipeHandlers} className="app-page page-sections-stack flex h-full min-h-0 w-full flex-1 overflow-y-auto pb-28 touch-pan-y md:pb-24 custom-scrollbar">
-        {/* Top Header Banner */}
-        <motion.div variants={itemFadeInUp} className="shrink-0 w-full min-w-0">
-          <SettingsHeader
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-        </motion.div>
-
-        {/* Main Settings Canvas */}
-        <div className="section-container w-full min-w-0 space-y-6 pt-1">
-          {/* Navigation Tabs (Desktop Only) */}
-          <motion.div variants={itemFadeInUp} className="w-full min-w-0">
-            <SettingsNavigationRail
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              devicesCount={initialDevices.length}
-              monitoredTickersCount={initialMonitoredTickers.length}
-            />
-          </motion.div>
-
-          {/* TAB 1: ACCOUNT PROFILE */}
-          {activeTab === 'profile' && (
-            <motion.div variants={itemFadeInUp} className="w-full min-w-0">
-              <UserProfileWidget userProfile={userProfile} />
-            </motion.div>
-          )}
-
-          {/* TAB 2: SECURITY & PIN */}
-          {activeTab === 'security' && (
-            <motion.div variants={itemFadeInUp} className="w-full min-w-0">
-              <PinSecurityCard />
-            </motion.div>
-          )}
-
-          {/* TAB 3: CONNECTED DEVICES & SESSIONS */}
-          {activeTab === 'devices' && (
-            <motion.div variants={itemFadeInUp} className="w-full min-w-0">
-              <PushDevicesWidget initialDevices={initialDevices} />
-            </motion.div>
-          )}
-
-          {/* TAB 4: MONITORED TICKERS & ALERTS */}
-          {activeTab === 'alerts' && (
-            <motion.div variants={itemFadeInUp} className="w-full min-w-0">
-              <AlertTriggersWidget
-                initialMonitoredTickers={initialMonitoredTickers}
-                allTickers={allTickers}
-              />
-            </motion.div>
-          )}
-        </div>
+    <div className="command-surface-page flex-1 h-full w-full flex flex-col min-h-0 overflow-y-auto custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
+      {/* 1. Header (Breadcrumbs & Actions) */}
+      <div className="px-4 sm:px-6 pt-3 pb-1 shrink-0 bg-plt-base">
+        <SettingsHeader />
       </div>
-    </motion.div>
+
+      {/* 2. Sticky Floating Navigation Bar */}
+      <SettingsFloatingNav devicesCount={initialDevices.length} />
+
+      {/* 3. Main Sections Stack (Single Continuous Long Page) */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={containerStagger}
+        className="app-page page-sections-stack pb-28 md:pb-24 pt-2 space-y-10"
+      >
+        {/* SECTION 1: ACCOUNT PROFILE */}
+        <motion.section
+          id="section-profile"
+          variants={itemFadeInUp}
+          className="section-container scroll-mt-20 space-y-4"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="section-title">Account Profile</h2>
+              <p className="section-subtitle">
+                Personal identity, email authentication status, and session controls
+              </p>
+            </div>
+          </div>
+          <UserProfileWidget userProfile={userProfile} />
+
+          <div className="border-t border-border-subtle pt-4">
+            <PushNotificationCard />
+          </div>
+        </motion.section>
+
+        {/* SECTION 2: SECURITY & PASSCODE PIN */}
+        <motion.section
+          id="section-security"
+          variants={itemFadeInUp}
+          className="section-container scroll-mt-20 space-y-4"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="section-title">Security & PIN</h2>
+              <p className="section-subtitle">
+                4-digit local passcode, auto-lock timeouts, and device security safeguards
+              </p>
+            </div>
+          </div>
+          <PinSecurityCard />
+        </motion.section>
+
+        {/* SECTION 3: CONNECTED DEVICES & NOTIFICATIONS */}
+        <motion.section
+          id="section-devices"
+          variants={itemFadeInUp}
+          className="section-container scroll-mt-20 space-y-4"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <h2 className="section-title">Connected Devices</h2>
+                {initialDevices.length > 0 && (
+                  <span className="badge-count">{initialDevices.length}</span>
+                )}
+              </div>
+              <p className="section-subtitle">
+                Active web sessions, registered push notification endpoints, and remote revocation
+              </p>
+            </div>
+          </div>
+          <PushDevicesWidget initialDevices={initialDevices} />
+        </motion.section>
+      </motion.div>
+    </div>
   );
 }

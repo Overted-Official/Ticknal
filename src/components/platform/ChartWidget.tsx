@@ -19,8 +19,10 @@ import {
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts';
-import { Sparkles, Briefcase, X } from '@/components/ui/icon-library';
-import AddOrderModal from '@/components/platform/AddOrderModal';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Briefcase, X, Plus } from '@/components/ui/icon-library';
+import AddOrderModal, { type InitialOrderData } from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
@@ -30,15 +32,10 @@ import { useToast } from '@/context/ToastContext';
 // Modular Chart Imports
 import type {
   ChartData,
-  ReplayState,
   ChartOrder,
-  OrderDraft,
   OrderOverlay,
   StrategySignal,
   ChartWidgetProps,
-} from './chart/types';
-import {
-  PLAYBACK_SPEEDS,
 } from './chart/types';
 import {
   cssTokenColor,
@@ -47,31 +44,27 @@ import {
   buildMarkers,
   parseChartTime,
   sanitizeChartSeriesData,
-  getDefaultReplayIndex,
-  findIndexAtOrBefore,
   parseOptionalNumber,
 } from './chart/utils';
 import ChartTickerHeader from './chart/ChartTickerHeader';
-import ChartFloatingControls from './chart/ChartFloatingControls';
-import ChartReplayControls from './chart/ChartReplayControls';
+import ChartTopBar from './chart/ChartTopBar';
 import ChartIndicatorsPopover from './chart/ChartIndicatorsPopover';
 import ChartPredictPopover from './chart/ChartPredictPopover';
 import ChartOrderOverlays from './chart/ChartOrderOverlays';
-import ChartOrderDraftPopover from './chart/ChartOrderDraftPopover';
 import ChartLoadingSkeleton from './chart/ChartLoadingSkeleton';
 import HydraIndexPanel from './chart/HydraIndexPanel';
+import StrategyReportDrawer, { type StrategyReportTab } from './chart/StrategyReportDrawer';
 
 // Re-export shared types for backward compatibility across the app
-export type { ChartData, ReplayState };
+export type { ChartData };
 
 export default function ChartWidget({
   data,
   symbol,
   timeframe = 'D',
   watchlist = [],
-  initialReplayMode = false,
-  onReplayStateChange,
   selectedStrategy = 'psi',
+  setSelectedStrategy,
   strategyParams = {},
   strategyStartDate,
   strategyEndDate,
@@ -80,8 +73,12 @@ export default function ChartWidget({
   activeIndicators = [],
   onToggleIndicator,
   onUpdateStrategyParam,
+  bulkUpdateStrategyParams,
   showSignals = true,
   onMetricsChange,
+  metrics,
+  companyName,
+  logoUrl,
   tickerPositions = [],
   currentPrice,
   brokerageAccounts = [],
@@ -89,7 +86,19 @@ export default function ChartWidget({
   const router = useRouter();
   const { toast } = useToast();
   const [positionsDrawerOpen, setPositionsDrawerOpen] = useState(false);
-  const openPositionsCount = tickerPositions.filter((o) => o.status === 'OPEN').length;
+  const [positionsImgError, setPositionsImgError] = useState(false);
+  const [isStrategyReportOpen, setIsStrategyReportOpen] = useState(false);
+  const [strategyReportTab, setStrategyReportTab] = useState<StrategyReportTab>('performance');
+
+  const [orders, setOrders] = useState<any[]>(tickerPositions);
+
+  useEffect(() => {
+    if (tickerPositions && tickerPositions.length > 0) {
+      setOrders(tickerPositions);
+    }
+  }, [tickerPositions]);
+
+  const openPositionsCount = (orders.length > 0 ? orders : tickerPositions).filter((o) => o.status === 'OPEN').length;
   const isHydraPanelOpen = activeIndicators.includes('hydraIndex');
   const hydraOptionsState = useMemo(() => {
     return {
@@ -110,22 +119,18 @@ export default function ChartWidget({
 
   const [seriesReadyKey, setSeriesReadyKey] = useState(0);
   const [indicatorMarkers, setIndicatorMarkers] = useState<SeriesMarker<Time>[]>([]);
-
-  const [orders, setOrders] = useState<ChartOrder[]>([]);
-  const [orderDraft, setOrderDraft] = useState<OrderDraft | null>(null);
-  const [savingOrder, setSavingOrder] = useState(false);
-  const [orderError, setOrderError] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    price: number;
+    date: string;
+  } | null>(null);
+  const [addOrderInitialData, setAddOrderInitialData] = useState<InitialOrderData | undefined>(undefined);
   const [orderOverlays, setOrderOverlays] = useState<OrderOverlay[]>([]);
   const [selectedOrderToEdit, setSelectedOrderToEdit] = useState<ChartOrder | null>(null);
   const [selectedOrderToClose, setSelectedOrderToClose] = useState<ChartOrder | null>(null);
   const [positionsRefreshKey, setPositionsRefreshKey] = useState(0);
   const [chartSignals, setChartSignals] = useState<StrategySignal[]>([]);
-  const [replayMode, setReplayMode] = useState(initialReplayMode);
-  const [replayIndex, setReplayIndex] = useState(() =>
-    initialReplayMode ? getDefaultReplayIndex(data) : Math.max(0, data.length - 1),
-  );
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(PLAYBACK_SPEEDS[0].delay);
 
   const [isPredicting, setIsPredicting] = useState(false);
   const predictionSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -156,6 +161,22 @@ export default function ChartWidget({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [positionsDrawerOpen]);
+
+  // Global listener for ticknal:open-strategy-report
+  useEffect(() => {
+    const handleOpen = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tab?: string }>;
+      const requested = customEvent.detail?.tab;
+      if (requested === 'trades') {
+        setStrategyReportTab('trades');
+      } else {
+        setStrategyReportTab('performance');
+      }
+      setIsStrategyReportOpen(true);
+    };
+    window.addEventListener('ticknal:open-strategy-report', handleOpen);
+    return () => window.removeEventListener('ticknal:open-strategy-report', handleOpen);
+  }, []);
 
   const displaySymbol = symbol.replace('.CA', '');
 
@@ -206,24 +227,8 @@ export default function ChartWidget({
     window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
   };
 
-  // Replay slice
-  const visibleData = useMemo(() => {
-    if (!replayMode) return data;
-    const clampedIndex = clampNumber(replayIndex, 0, Math.max(0, data.length - 1));
-    return data.slice(0, clampedIndex + 1);
-  }, [data, replayIndex, replayMode]);
-
-  const replayDate = replayMode ? visibleData[visibleData.length - 1]?.time ?? null : null;
-  const activeCandle = hoveredCandle ?? visibleData[visibleData.length - 1] ?? null;
-
-  // Sync replay state upward
-  useEffect(() => {
-    onReplayStateChange?.({
-      active: replayMode,
-      startDate: replayMode && visibleData[0] ? String(visibleData[0].time) : null,
-      endDate: replayDate !== null ? String(replayDate) : null,
-    });
-  }, [onReplayStateChange, replayDate, replayMode, visibleData]);
+  const visibleData = data;
+  const activeCandle = hoveredCandle ?? (data.length > 0 ? data[data.length - 1] : null);
 
   // Fetch signals
   useEffect(() => {
@@ -301,23 +306,24 @@ export default function ChartWidget({
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: ColorType.Solid, color: cssTokenColor('--palette-chart', '#141B28') },
-        textColor: cssTokenColor('--plt-muted', '#737373'),
+        background: { type: ColorType.Solid, color: cssTokenColor('--plt-bg-chart', '#121212') },
+        textColor: cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
         fontSize: 11,
+        attributionLogo: false,
       },
       grid: {
-        vertLines: { color: cssTokenColor('--palette-chart-grid', '#1D2431') },
-        horzLines: { color: cssTokenColor('--palette-chart-grid', '#1D2431') },
+        vertLines: { color: cssTokenColor('--palette-chart-grid', '#202020') },
+        horzLines: { color: cssTokenColor('--palette-chart-grid', '#202020') },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
       },
       rightPriceScale: {
-        borderColor: cssTokenColor('--palette-chart-grid', '#1D2431'),
-        minimumWidth: 70,
+        borderColor: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
+        minimumWidth: 55,
       },
       timeScale: {
-        borderColor: cssTokenColor('--palette-chart-grid', '#1D2431'),
+        borderColor: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
         timeVisible: true,
         secondsVisible: false,
       },
@@ -330,23 +336,23 @@ export default function ChartWidget({
       mainSeries = chart.addSeries(AreaSeries, {
         topColor: 'rgba(255, 255, 255, 0.14)',
         bottomColor: 'rgba(255, 255, 255, 0.02)',
-        lineColor: cssTokenColor('--plt-text-primary', '#ffffff'),
+        lineColor: cssTokenColor('--plt-text-primary', 'rgb(255, 255, 255)'),
         lineWidth: 2,
       });
     } else {
       mainSeries = chart.addSeries(CandlestickSeries, {
-        upColor: cssTokenColor('--plt-profit', '#089981'),
-        downColor: cssTokenColor('--plt-risk', '#f23645'),
-        borderUpColor: cssTokenColor('--plt-profit', '#089981'),
-        borderDownColor: cssTokenColor('--plt-risk', '#f23645'),
-        wickUpColor: cssTokenColor('--plt-profit', '#089981'),
-        wickDownColor: cssTokenColor('--plt-risk', '#f23645'),
+        upColor: cssTokenColor('--plt-profit', 'rgb(8, 153, 129)'),
+        downColor: cssTokenColor('--plt-risk', 'rgb(242, 54, 69)'),
+        borderUpColor: cssTokenColor('--plt-profit', 'rgb(8, 153, 129)'),
+        borderDownColor: cssTokenColor('--plt-risk', 'rgb(242, 54, 69)'),
+        wickUpColor: cssTokenColor('--plt-profit', 'rgb(8, 153, 129)'),
+        wickDownColor: cssTokenColor('--plt-risk', 'rgb(242, 54, 69)'),
       });
     }
     candlestickSeriesRef.current = mainSeries;
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
-      color: cssTokenColor('--palette-chart-grid', '#1D2431'),
+      color: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.08)'),
       priceFormat: { type: 'volume' },
       priceScaleId: '',
     });
@@ -376,44 +382,9 @@ export default function ChartWidget({
       }
     });
 
-    // Chart Click Handler: click on any candle to draft an open position
-    chart.subscribeClick((param: MouseEventParams<Time>) => {
-      if (!param.point || !param.time || !candlestickSeriesRef.current) {
-        return;
-      }
-      const timeStr = typeof param.time === 'string'
-        ? param.time
-        : (param.time as any).year
-        ? `${(param.time as any).year}-${String((param.time as any).month).padStart(2, '0')}-${String((param.time as any).day).padStart(2, '0')}`
-        : String(param.time);
-
-      const allData = data && data.length > 0 ? data : [];
-      const bar = allData.find((d) => d.time === timeStr);
-      const clickPrice = bar ? bar.close : (candlestickSeriesRef.current.coordinateToPrice(param.point.y) ?? 0);
-      if (!clickPrice || clickPrice <= 0) return;
-
-      const chartWidth = container.clientWidth;
-      const chartHeight = container.clientHeight;
-
-      const popoverX = Math.min(Math.max(16, param.point.x - 140), chartWidth - 300);
-      const popoverY = Math.min(Math.max(16, param.point.y - 120), chartHeight - 340);
-
-      const estimatedStop = (clickPrice * 0.95).toFixed(2);
-      const estimatedTarget = (clickPrice * 1.08).toFixed(2);
-
-      setOrderDraft({
-        x: popoverX,
-        y: popoverY,
-        date: timeStr,
-        entryPrice: clickPrice.toFixed(2),
-        quantity: '10',
-        accountId: liveBrokerageAccounts[0] ? String(liveBrokerageAccounts[0].id) : '',
-        targetPrice: estimatedTarget,
-        stopPrice: estimatedStop,
-        targetLabel: '+8% Target',
-        stopLabel: '-5% Stop',
-        loadingLevels: false,
-      });
+    // Chart Click Handler: click on chart dismisses context menu
+    chart.subscribeClick(() => {
+      setContextMenu(null);
     });
 
     // Resize Observer
@@ -599,15 +570,31 @@ export default function ChartWidget({
 
     const overlays: OrderOverlay[] = [];
 
+    const lastBar = visibleData && visibleData.length > 0 ? visibleData[visibleData.length - 1] : null;
+    let lastBarX: number | null = null;
+    if (lastBar) {
+      lastBarX = timeScale.timeToCoordinate(parseChartTime(lastBar.time));
+    }
+
     orders
       .filter((o) => o.status === 'OPEN')
       .forEach((order) => {
         const entryCoordinate = series.priceToCoordinate(order.entryPrice);
         if (entryCoordinate === null) return;
 
-        const targetCoordinate = order.targetPrice !== null ? series.priceToCoordinate(order.targetPrice) : null;
-        const stopCoordinate = order.stopPrice !== null ? series.priceToCoordinate(order.stopPrice) : null;
-        const currentCoordinate = series.priceToCoordinate(order.currentPrice);
+        const livePrice = Number(order.currentPrice ?? (lastBar ? lastBar.close : currentPrice) ?? order.entryPrice ?? 0);
+        const currentCoordinate = series.priceToCoordinate(livePrice);
+        const targetCoordinate = order.targetPrice !== null && order.targetPrice !== undefined ? series.priceToCoordinate(order.targetPrice) : null;
+        const stopCoordinate = order.stopPrice !== null && order.stopPrice !== undefined ? series.priceToCoordinate(order.stopPrice) : null;
+        const entryPrice = Number(order.entryPrice ?? 0);
+        const quantity = Number(order.quantity ?? 0);
+        const profitLoss = typeof order.profitLoss === 'number' && !isNaN(order.profitLoss)
+          ? order.profitLoss
+          : (livePrice - entryPrice) * quantity;
+        const profitLossPct = typeof order.profitLossPct === 'number' && !isNaN(order.profitLossPct)
+          ? order.profitLossPct
+          : (entryPrice > 0 ? ((livePrice - entryPrice) / entryPrice) * 100 : 0);
+        const isProfit = profitLoss >= 0;
 
         const entryDateClean = (order.entryDate || '').split('T')[0].split(' ')[0];
         let xCoordinate = timeScale.timeToCoordinate(parseChartTime(entryDateClean));
@@ -629,7 +616,9 @@ export default function ChartWidget({
         }
 
         const left = xCoordinate !== null ? xCoordinate : 10;
-        const boxWidth = Math.max(100, width - left - 55);
+        // End the corridor exactly at the last candle x-coordinate instead of extending to infinity
+        const rightEdge = lastBarX !== null ? lastBarX : Math.min(width - 55, left + 100);
+        const boxWidth = Math.max(16, rightEdge - left);
 
         let profitBoxTop: number | null = null;
         let profitBoxHeight = 0;
@@ -658,18 +647,18 @@ export default function ChartWidget({
           profitBoxHeight,
           stopBoxTop,
           stopBoxHeight,
-          isProfit: order.profitLoss >= 0,
-          entryPrice: order.entryPrice,
-          currentPrice: order.currentPrice,
-          quantity: order.quantity,
-          marketValue: order.quantity * order.currentPrice,
-          profitLoss: order.profitLoss,
-          profitLossPct: order.profitLossPct,
+          isProfit,
+          entryPrice,
+          currentPrice: livePrice,
+          quantity,
+          marketValue: quantity * livePrice,
+          profitLoss,
+          profitLossPct,
         });
       });
 
     setOrderOverlays(overlays);
-  }, [orders, data, seriesReadyKey]);
+  }, [orders, data, visibleData, seriesReadyKey]);
 
   // Subscribe to time scale changes (pan, zoom) so overlays stay locked to candles
   useEffect(() => {
@@ -691,23 +680,6 @@ export default function ChartWidget({
       } catch {}
     };
   }, [updateOrderOverlays, visibleData, seriesReadyKey]);
-
-  // Replay playback timer
-  useEffect(() => {
-    if (!replayMode || !isPlaying) return;
-
-    const timer = setInterval(() => {
-      setReplayIndex((current) => {
-        if (current >= data.length - 1) {
-          setIsPlaying(false);
-          return current;
-        }
-        return current + 1;
-      });
-    }, playbackSpeed);
-
-    return () => clearInterval(timer);
-  }, [data.length, isPlaying, playbackSpeed, replayMode]);
 
   // AI Prediction Handler
   const handleRunPrediction = async (days: number) => {
@@ -764,100 +736,97 @@ export default function ChartWidget({
     }
   };
 
-  // Save Order Draft Handler
-  const handleSaveOrderDraft = async () => {
-    if (!orderDraft) return;
-    const entryPrice = parseOptionalNumber(orderDraft.entryPrice);
-    const quantity = parseOptionalNumber(orderDraft.quantity);
-    const targetPrice = parseOptionalNumber(orderDraft.targetPrice);
-    const stopPrice = parseOptionalNumber(orderDraft.stopPrice);
+  // Handle Right-Click on Chart Container for Context Menu
+  const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!chartContainerRef.current || !candlestickSeriesRef.current || !chartRef.current) return;
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    if (entryPrice === null || entryPrice <= 0) {
-      setOrderError('Enter a valid entry price');
-      return;
-    }
-    if (quantity === null || quantity <= 0) {
-      setOrderError('Enter a valid quantity');
-      return;
-    }
-    if (!orderDraft.accountId) {
-      setOrderError('Select an EGP brokerage account before opening a live position');
-      return;
-    }
+    const price = candlestickSeriesRef.current.coordinateToPrice(y);
+    if (!price || price <= 0) return;
 
-    setSavingOrder(true);
-    setOrderError(null);
-
-    try {
-      const res = await fetch('/api/portfolio/trades', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'BUY',
-          accountId: Number(orderDraft.accountId),
-          tickerSymbol: symbol,
-          symbol,
-          date: orderDraft.date,
-          entryDate: orderDraft.date,
-          price: entryPrice,
-          quantity,
-          targetPrice,
-          stopPrice,
-          entrySource: 'CHART',
-          strategyId: selectedStrategy,
-        }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json();
-        throw new Error(errJson.error || 'Failed to save position');
+    const time = chartRef.current.timeScale().coordinateToTime(x);
+    let dateStr = new Date().toISOString().split('T')[0];
+    if (time) {
+      if (typeof time === 'string') {
+        dateStr = time;
+      } else if (typeof time === 'object' && 'year' in (time as any)) {
+        dateStr = `${(time as any).year}-${String((time as any).month).padStart(2, '0')}-${String((time as any).day).padStart(2, '0')}`;
       }
-
-      setOrderDraft(null);
-      setPositionsRefreshKey((k) => k + 1);
-      toast.success('Live position opened', 'Brokerage cash was debited and the trade was recorded.');
-    } catch (err: any) {
-      setOrderError(err.message || 'Failed to save position');
-    } finally {
-      setSavingOrder(false);
     }
-  };
 
-  // Predict button UI element
-  const predictButtonUI = (
-    <div className="relative">
-      <button
-        type="button"
-        title="AI Forecast"
-        aria-label="AI Forecast"
-        disabled={isPredicting || !data || data.length === 0}
-        onClick={() => setPredictPopoverOpen((prev) => !prev)}
-        className={`h-8 rounded-full px-2.5 sm:px-3 btn-typography transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
-          predictionSeriesRef.current
-            ? 'bg-plt-info/15 text-plt-info border border-plt-info/30 font-semibold'
-            : 'text-plt-muted hover:text-plt-text bg-white/[0.04] hover:bg-white/[0.10] border border-white/[0.08]'
-        } disabled:cursor-not-allowed disabled:opacity-40`}
-      >
-        <Sparkles size={13} className={isPredicting ? 'animate-spin text-plt-text' : 'text-plt-muted'} />
-        <span className="hidden md:inline">Predict</span>
-      </button>
-    </div>
-  );
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      price: Number(price.toFixed(2)),
+      date: dateStr,
+    });
+  }, []);
+
+  // Dismiss context menu on click or ESC
+  useEffect(() => {
+    const handleCloseMenu = () => setContextMenu(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    window.addEventListener('click', handleCloseMenu);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('click', handleCloseMenu);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
-    <div className="relative w-full flex-1 min-h-0 bg-plt-card overflow-hidden select-none flex flex-col">
+    <div className="relative w-full flex-1 min-h-0 bg-plt-chart overflow-hidden select-none flex flex-col">
+      {/* Framed Chart Top Bar (h-[45px] matching right SidebarNav width) */}
+      <ChartTopBar
+        symbol={symbol}
+        watchlist={watchlist}
+        timeframe={timeframe}
+        companyName={companyName}
+        logoUrl={logoUrl}
+        isPredicting={isPredicting}
+        isPredictPopoverOpen={predictPopoverOpen}
+        onTogglePredict={() => setPredictPopoverOpen((prev) => !prev)}
+        activeIndicatorsCount={activeIndicators.length}
+        isIndicatorsPopoverOpen={indicatorsPopoverOpen}
+        onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
+        onOpenStrategyReport={() => {
+          setStrategyReportTab('performance');
+          setIsStrategyReportOpen(true);
+        }}
+        openPositionsCount={openPositionsCount}
+        onOpenPositionsDrawer={() => setPositionsDrawerOpen(true)}
+        onOpenAddOrder={() => {
+          setAddOrderInitialData({
+            symbol,
+            price: currentPrice ?? data[data.length - 1]?.close,
+          });
+          setIsAddOrderOpen(true);
+        }}
+      />
+
       {/* 1. Main Candlestick Price Stage */}
-      <div className="relative w-full flex-1 min-h-0 overflow-hidden">
-        {/* Top-Left In-Place Ticker & Live OHLCV Legend (No background, directly on chart) */}
+      <div className="relative w-full flex-1 min-h-0 bg-plt-chart overflow-hidden">
+        {/* Top-Left Live Ticker Name & OHLCV Legend directly on chart canvas */}
         <ChartTickerHeader
           symbol={symbol}
+          companyName={companyName}
+          logoUrl={logoUrl}
+          timeframe={timeframe}
           watchlist={watchlist}
           activeCandle={activeCandle}
-          timeframe="1D"
         />
 
         {/* Main Lightweight-Charts Container Canvas */}
-        <div ref={chartContainerRef} className="w-full h-full" />
+        <div
+          ref={chartContainerRef}
+          className="w-full h-full bg-plt-chart"
+          onContextMenu={handleContextMenu}
+        />
 
         {/* Position Visual Overlays on Canvas */}
         <ChartOrderOverlays
@@ -866,56 +835,39 @@ export default function ChartWidget({
           onSelectOrderToClose={setSelectedOrderToClose}
         />
 
-        {/* Order Drafting Popover */}
-        <ChartOrderDraftPopover
-          orderDraft={orderDraft}
-          symbol={symbol}
-          brokerageAccounts={liveBrokerageAccounts}
-          savingOrder={savingOrder}
-          orderError={orderError}
-          onUpdateDraft={setOrderDraft}
-          onClose={() => setOrderDraft(null)}
-          onSave={handleSaveOrderDraft}
-        />
-
-        {/* Bottom Floating Controls (When NOT in replay mode) */}
-        {!replayMode && (
-          <ChartFloatingControls
-            hasReplayRoom={data.length > 1}
-            onEnableReplay={() => {
-              setReplayMode(true);
-              setReplayIndex(getDefaultReplayIndex(data));
-            }}
-            predictButtonUI={predictButtonUI}
-            activeIndicatorsCount={activeIndicators.length}
-            onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
-            openPositionsCount={openPositionsCount}
-            onOpenPositionsDrawer={() => setPositionsDrawerOpen(true)}
-            onOpenAddOrder={() => setIsAddOrderOpen(true)}
-          />
-        )}
-
-        {/* Bottom Replay Controls Toolbar (When in replay mode) */}
-        {replayMode && (
-          <ChartReplayControls
-            data={data}
-            replayIndex={replayIndex}
-            replayDate={replayDate ? String(replayDate) : null}
-            isPlaying={isPlaying}
-            playbackSpeed={playbackSpeed}
-            onJumpToStart={() => setReplayIndex(0)}
-            onStepReplay={(step) => setReplayIndex((curr) => clampNumber(curr + step, 0, data.length - 1))}
-            onTogglePlay={() => setIsPlaying((p) => !p)}
-            onJumpToLatest={() => setReplayIndex(Math.max(0, data.length - 1))}
-            onDateChange={(d) => setReplayIndex(findIndexAtOrBefore(data, d))}
-            onSpeedChange={setPlaybackSpeed}
-            onExitReplay={() => {
-              setReplayMode(false);
-              setIsPlaying(false);
-              setReplayIndex(Math.max(0, data.length - 1));
-            }}
-            predictButtonUI={predictButtonUI}
-          />
+        {/* Chart Right-Click Context Menu */}
+        {contextMenu && typeof document !== 'undefined' && createPortal(
+          <div
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            className="fixed z-[120] py-1.5 px-1 rounded-xl bg-black border border-border-subtle shadow-2xl text-xs text-text-secondary select-none animate-in fade-in zoom-in-95 duration-100 min-w-56"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-2.5 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider border-b border-border-subtle mb-1">
+              Chart Actions • {symbol.replace('.CA', '')}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setAddOrderInitialData({
+                  symbol,
+                  price: contextMenu.price,
+                  date: contextMenu.date,
+                });
+                setIsAddOrderOpen(true);
+                setContextMenu(null);
+              }}
+              className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-white hover:bg-surface-raised transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Plus size={14} className="text-brand-blue" />
+                <span>Add Position</span>
+              </div>
+              <span className="font-semibold text-brand-blue tabular-nums">
+                {contextMenu.price.toFixed(2)} EGP
+              </span>
+            </button>
+          </div>,
+          document.body
         )}
 
         {/* Technical Indicators Selection Popover */}
@@ -954,69 +906,119 @@ export default function ChartWidget({
         />
       )}
 
-      {/* 10. Positions & Orders Slide-over Drawer (Responsive Sheet on Mobile, 50% Screen on Desktop) */}
-      {positionsDrawerOpen && (
-        <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-end overflow-hidden">
-          {/* Backdrop (Tapping closes drawer) */}
-          <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity duration-150 animate-in fade-in cursor-pointer"
-            onClick={() => setPositionsDrawerOpen(false)}
-            aria-label="Close drawer overlay"
-          />
-
-          {/* Drawer Sheet */}
-          <div className="relative w-full lg:w-1/2 max-w-none h-[88vh] md:h-full bg-plt-base text-plt-text rounded-t-2xl md:rounded-none border-t md:border-t-0 md:border-l border-plt-border flex flex-col shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-right duration-200 z-10 overflow-hidden">
-            {/* Mobile Sheet Drag / Swipe Indicator */}
-            <div
-              className="md:hidden w-full flex items-center justify-center pt-2.5 pb-1 shrink-0 bg-plt-raised cursor-pointer"
-              onClick={() => setPositionsDrawerOpen(false)}
-            >
-              <div className="w-10 h-1 rounded-full bg-white/20 hover:bg-white/40 transition-colors" />
-            </div>
-
-            {/* Header */}
-            <div className="h-14 px-4 sm:px-6 flex items-center justify-between border-b border-plt-border shrink-0 bg-plt-raised">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.12] flex items-center justify-center text-xs font-bold text-plt-text">
-                  {displaySymbol.slice(0, 2)}
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="font-bold text-sm text-plt-text">{displaySymbol}</span>
-                  <span className="text-xs text-plt-muted font-normal">Positions & Orders</span>
-                </div>
-              </div>
-              <button
-                type="button"
+      {/* 10. Positions & Orders Slide-over Drawer (Portaled to document.body to overlay entire screen and right sidebar) */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {positionsDrawerOpen && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-end overflow-hidden">
+              {/* Backdrop (Tapping closes drawer) */}
+              <motion.div
+                key="positions-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer z-0"
                 onClick={() => setPositionsDrawerOpen(false)}
-                className="w-10 h-10 -mr-2 rounded-xl text-plt-muted hover:text-plt-text hover:bg-white/[0.08] active:bg-white/[0.15] transition cursor-pointer flex items-center justify-center"
-                title="Close (Esc)"
-                aria-label="Close Positions Drawer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6 safe-area-bottom">
-              <TickerPositions
-                symbol={symbol}
-                orders={tickerPositions}
-                currentPrice={currentPrice ?? data[data.length - 1]?.close ?? 0}
-                chartData={data}
-                onEditOrder={(order) => setSelectedOrderToEdit(order as any)}
-                onCloseOrder={(order) => setSelectedOrderToClose(order as any)}
-                onAddNew={() => setIsAddOrderOpen(true)}
+                aria-label="Close drawer overlay"
               />
+
+              {/* Drawer Sheet: slides smoothly from right on BOTH desktop and mobile */}
+              <motion.div
+                key="positions-sheet"
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{
+                  type: 'spring',
+                  damping: 32,
+                  stiffness: 340,
+                  mass: 0.8,
+                }}
+                className="relative w-full md:w-1/2 lg:w-1/2 max-w-full h-full bg-black text-text-primary rounded-none border-l border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
+              >
+                {/* Replicated Strategy Report Header */}
+                <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 sm:py-0 flex items-center justify-between border-b border-white/10 shrink-0 bg-black">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center shrink-0">
+                      {logoUrl && !positionsImgError ? (
+                        <img
+                          src={logoUrl}
+                          alt={symbol}
+                          className="w-full h-full object-cover"
+                          onError={() => setPositionsImgError(true)}
+                        />
+                      ) : (
+                        <span className="text-xs font-bold text-white uppercase font-sans">
+                          {displaySymbol.slice(0, 2)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1 overflow-hidden leading-tight">
+                      <span
+                        className="text-sm font-semibold text-white truncate max-w-[200px] sm:max-w-[340px]"
+                        title={companyName || displaySymbol}
+                      >
+                        {companyName || displaySymbol}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                        <span className="font-semibold text-white/90 tabular-nums">
+                          {displaySymbol}
+                        </span>
+                        <span>•</span>
+                        <span className="text-[11px] text-white/50">Positions &amp; Orders</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Close Button matching Strategy Report Drawer */}
+                  <button
+                    type="button"
+                    onClick={() => setPositionsDrawerOpen(false)}
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0 ml-3"
+                    title="Close (Esc)"
+                    aria-label="Close Positions Drawer"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6 safe-area-bottom custom-scrollbar bg-black">
+                  <TickerPositions
+                    symbol={symbol}
+                    companyName={companyName}
+                    logoUrl={logoUrl}
+                    orders={orders.length > 0 ? orders : tickerPositions}
+                    currentPrice={currentPrice ?? data[data.length - 1]?.close ?? 0}
+                    chartData={data}
+                    onOrdersChange={() => setPositionsRefreshKey((k) => k + 1)}
+                    onEditOrder={(order) => setSelectedOrderToEdit(order as any)}
+                    onCloseOrder={(order) => setSelectedOrderToClose(order as any)}
+                    onAddNew={() => {
+                      setAddOrderInitialData({
+                        symbol,
+                        price: currentPrice ?? data[data.length - 1]?.close,
+                      });
+                      setIsAddOrderOpen(true);
+                    }}
+                  />
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
       {/* Modals */}
       <AddOrderModal
         isOpen={isAddOrderOpen}
-        onClose={() => setIsAddOrderOpen(false)}
+        onClose={() => {
+          setIsAddOrderOpen(false);
+          setAddOrderInitialData(undefined);
+        }}
         onSuccess={() => setPositionsRefreshKey((k) => k + 1)}
-        initialData={{
+        initialData={addOrderInitialData || {
           symbol,
           price: data[data.length - 1]?.close,
         }}
@@ -1048,6 +1050,28 @@ export default function ChartWidget({
           }}
         />
       )}
+
+      {/* Strategy Report Slide-Over Drawer (75% desktop width, full screen mobile, pure black) */}
+      <StrategyReportDrawer
+        isOpen={isStrategyReportOpen}
+        onClose={() => setIsStrategyReportOpen(false)}
+        symbol={symbol}
+        timeframe={timeframe}
+        selectedStrategy={selectedStrategy}
+        setSelectedStrategy={setSelectedStrategy}
+        strategyParams={strategyParams}
+        updateStrategyParam={onUpdateStrategyParam}
+        bulkUpdateStrategyParams={bulkUpdateStrategyParams}
+        chartData={data}
+        strategyStartDate={strategyStartDate}
+        strategyEndDate={strategyEndDate}
+        setStrategyStartDate={setStrategyStartDate}
+        setStrategyEndDate={setStrategyEndDate}
+        metrics={metrics}
+        companyName={companyName || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.companyName}
+        logoUrl={logoUrl || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.logoUrl}
+        initialTab={strategyReportTab}
+      />
     </div>
   );
 }

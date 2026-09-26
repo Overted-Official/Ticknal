@@ -119,7 +119,7 @@ export async function sendFCMMessage(
                   body: payload.body,
                 },
                 data: {
-                  url: payload.url || '/invest?view=chart',
+                  url: payload.url || '/charts',
                   ticker: payload.ticker || '',
                   strategy: payload.strategy || '',
                   signal: payload.signal || '',
@@ -168,7 +168,7 @@ export async function sendFCMMessage(
             android_channel_id: 'trading_signals',
           },
           data: {
-            url: payload.url || '/invest?view=chart',
+            url: payload.url || '/charts',
             ticker: payload.ticker || '',
             strategy: payload.strategy || '',
             signal: payload.signal || '',

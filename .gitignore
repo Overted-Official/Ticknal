@@ -65,6 +65,7 @@ drop_tables.ts
 scripts/db/drop_tables.ts
 _archived/
 _*/
+.agents/
 
 # Local builds & assets
 *.apk

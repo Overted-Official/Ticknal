@@ -106,48 +106,7 @@ export const getCachedHourlyPrices = async (ticker: string, limitBars?: number) 
       }
     } catch {}
 
-    // 2. Fallback to local 1H CSV file
-    try {
-      const csvPath = path.resolve(process.cwd(), `_playground/QE-V1-Upgrade/_dataset/Intraday/1h/${ticker}.csv`);
-      if (fs.existsSync(csvPath)) {
-        const raw = fs.readFileSync(csvPath, 'utf8');
-        const lines = raw.trim().split('\n');
-        if (lines.length > 1) {
-          const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
-          const dateIdx = headers.findIndex((h) => h === 'datetime' || h === 'date' || h === 'time');
-          const openIdx = headers.indexOf('open');
-          const highIdx = headers.indexOf('high');
-          const lowIdx = headers.indexOf('low');
-          const closeIdx = headers.indexOf('close');
-          const volIdx = headers.indexOf('volume');
-
-          const bars: any[] = [];
-          for (let i = 1; i < lines.length; i++) {
-            const parts = lines[i].split(',').map((p) => p.trim());
-            if (parts.length < 5) continue;
-            const d = parts[dateIdx];
-            const o = parseFloat(parts[openIdx]);
-            const h = parseFloat(parts[highIdx]);
-            const l = parseFloat(parts[lowIdx]);
-            const c = parseFloat(parts[closeIdx]);
-            const v = volIdx >= 0 ? parseFloat(parts[volIdx]) || 0 : 0;
-            if (!isNaN(o) && !isNaN(h) && !isNaN(l) && !isNaN(c) && c > 0) {
-              bars.push({
-                date: d,
-                open: String(o),
-                high: String(h),
-                low: String(l),
-                close: String(c),
-                volume: String(v),
-              });
-            }
-          }
-          return limitBars ? bars.slice(-limitBars) : bars;
-        }
-      }
-    } catch {}
-
-    // 3. Fallback to daily prices if 1H completely unavailable
+    // 2. Fallback to daily prices if 1H completely unavailable
     const dailyRows = await getCachedDailyPrices(ticker, limitBars);
     return dailyRows;
   };
@@ -189,8 +148,9 @@ export async function getCachedRecentPrices(): Promise<any[]> {
         WHERE rn <= 2;
       `;
       const data = await db.execute(recentPricesQuery);
-      recentPricesMemCache = { data: data as any[], timestamp: Date.now() };
-      return data as any[];
+      const rows = Array.isArray(data) ? data : (data as any)?.rows ?? [];
+      recentPricesMemCache = { data: rows as any[], timestamp: Date.now() };
+      return rows as any[];
     } finally {
       recentPricesInFlight = null;
     }

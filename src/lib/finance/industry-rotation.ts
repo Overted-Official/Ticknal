@@ -66,7 +66,8 @@ export async function getCachedIndustryRotationMap(): Promise<{
            AND (array_agg(close::numeric ORDER BY date DESC))[1] > 0;
       `;
 
-      const rawRows = (await db.execute(aggregationQuery)) as any[];
+      const rawResult = await db.execute(aggregationQuery);
+      const rawRows = (Array.isArray(rawResult) ? rawResult : (rawResult as any)?.rows ?? []) as any[];
 
       const stockItems: StockPerformanceItem[] = [];
       let egx30Return: number | null = null;

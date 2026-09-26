@@ -90,8 +90,8 @@ export async function initNativeBridge(options?: {
           console.error('Error handling OAuth callback in app:', err);
         }
 
-        // Navigate to dashboard inside the WebView
-        window.location.href = '/dashboard';
+        // Navigate to home inside the WebView
+        window.location.href = '/home';
         return;
       }
 
@@ -178,7 +178,7 @@ async function setupNativePushNotifications(
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
       const data = notification.notification.data;
-      const targetUrl = data?.url || (data?.ticker ? `/invest?ticker=${data.ticker}&view=chart` : null);
+      const targetUrl = data?.url || (data?.ticker ? `/charts?ticker=${data.ticker}` : null);
 
       if (targetUrl) {
         if (onNavigate) {
@@ -247,7 +247,7 @@ export async function triggerNativeTestNotification(title?: string, body?: strin
           schedule: { at: new Date(Date.now() + 300) },
           iconColor: '#2962ff',
           extra: {
-            url: '/invest?ticker=COMI.CA&view=chart&strategy=psi_v2',
+            url: '/charts?ticker=COMI.CA&strategy=psi_v2',
           },
         },
       ],

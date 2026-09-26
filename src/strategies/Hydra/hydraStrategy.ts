@@ -126,7 +126,8 @@ function emptyStats(initialCapital: number, startDate: string, endDate: string):
 
 export function runHydraStrategy(
   bars: PriceBar[],
-  overrides?: HydraStrategyOverrides
+  overrides?: HydraStrategyOverrides,
+  precomputedPoints?: HydraPoint[]
 ): HydraStrategyResult {
   const initialCapital = overrides?.initialCapital || DEFAULT_INITIAL_CAPITAL;
   const commissionRate = overrides?.commissionRate ?? DEFAULT_COMMISSION_RATE;
@@ -173,19 +174,22 @@ export function runHydraStrategy(
     };
   }
 
-  // 1. Convert PriceBar[] to ChartData[] for the causal HYDRA calculator
-  const chartBars: ChartData[] = bars.map((b) => ({
-    time: b.date,
-    open: b.open,
-    high: b.high,
-    low: b.low,
-    close: b.close,
-    volume: b.volume ?? 0,
-  }));
-
-  // 2. Compute Causal HYDRA Index (0 = Cash, 1 = Invested)
-  const hydraResult = computeHydraIndex(chartBars, { binaryMode: true, showMarkers: false });
-  const points: HydraPoint[] = hydraResult.points;
+  // 1. Resolve points: either passed precomputed points or compute from chartBars
+  let points: HydraPoint[];
+  if (precomputedPoints && precomputedPoints.length > 0) {
+    points = precomputedPoints;
+  } else {
+    const chartBars: ChartData[] = bars.map((b) => ({
+      time: b.date,
+      open: b.open,
+      high: b.high,
+      low: b.low,
+      close: b.close,
+      volume: b.volume ?? 0,
+    }));
+    const hydraResult = computeHydraIndex(chartBars, { binaryMode: true, showMarkers: false });
+    points = hydraResult.points;
+  }
 
   // 3. Locate Simulation Window Start
   let startIdx = 0;

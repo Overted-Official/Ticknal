@@ -33,7 +33,7 @@ export default function SubNavTopRail({
   userName: propUserName,
   userAvatarUrl: propAvatarUrl,
   accountName: propAccountName,
-  accountPillHref = '/wallet',
+  accountPillHref = '/transactions',
   onAccountClick,
   className = '',
 }: SubNavTopRailProps) {

@@ -53,7 +53,7 @@ const STRATEGY_OPTIONS = [
     label: 'Hydra Strategy',
     sub: 'Adaptive Volatility Synchronizer',
     badge: 'HYDRA',
-    color: 'text-[#00E676] border-[#00E676]/30 bg-[#00E676]/10',
+    color: 'text-purple-400 border-purple-500/30 bg-purple-500/10',
   },
 ];
 
@@ -249,7 +249,7 @@ export default function WatchlistSignalFilterPopover({
                     </span>
                   </div>
                 </div>
-                <span className={`text-[9px] font-mono px-1 py-0.5 rounded border ${strat.color}`}>
+                <span className={`text-[9px] font-sans font-semibold px-1 py-0.5 rounded border ${strat.color}`}>
                   {strat.badge}
                 </span>
               </button>
@@ -296,7 +296,7 @@ export default function WatchlistSignalFilterPopover({
       <div className="mb-3">
         <div className="text-[10px] uppercase font-semibold tracking-wider text-plt-muted mb-1.5 flex items-center justify-between">
           <span>Lookback Window</span>
-          <span className="text-[9px] font-mono text-plt-text">
+          <span className="text-[9px] font-sans tabular-nums text-plt-text">
             Last {filter.lookbackDays} trading days
           </span>
         </div>
@@ -308,7 +308,7 @@ export default function WatchlistSignalFilterPopover({
                 key={opt.value}
                 type="button"
                 onClick={() => setLookback(opt.value)}
-                className={`flex flex-col items-center justify-center py-1 rounded border text-[10px] font-mono transition-all ${
+                className={`flex flex-col items-center justify-center py-1 rounded border text-[10px] font-sans tabular-nums transition-all ${
                   isSelected
                     ? 'bg-plt-accent/15 border-plt-accent text-plt-accent font-semibold'
                     : 'bg-transparent border-plt-border/40 text-plt-muted hover:bg-plt-hover/60 hover:text-plt-text'

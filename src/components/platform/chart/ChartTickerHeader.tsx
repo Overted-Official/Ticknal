@@ -1,78 +1,42 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Globe, Search, ChevronDown, X } from '@/components/ui/icon-library';
+import React, { useMemo } from 'react';
+import { Globe } from '@/components/ui/icon-library';
 import type { ChartData } from './types';
 import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import { formatVolume } from './utils';
 
 interface ChartTickerHeaderProps {
-  symbol: string;
-  watchlist: WatchlistItem[];
-  activeCandle: ChartData | null;
+  symbol?: string;
+  companyName?: string;
+  logoUrl?: string | null;
   timeframe?: string;
+  watchlist?: WatchlistItem[];
+  activeCandle: ChartData | null;
 }
 
 export default function ChartTickerHeader({
-  symbol,
-  watchlist,
-  activeCandle,
+  symbol = 'COMI.CA',
+  companyName,
+  logoUrl,
   timeframe = '1D',
+  watchlist = [],
+  activeCandle,
 }: ChartTickerHeaderProps) {
-  const router = useRouter();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const displaySymbol = symbol.replace('.CA', '');
-  const currentTickerItem = watchlist.find((item) => item.symbol === symbol) ?? {
-    symbol,
-    companyName: symbol,
-    price: '',
-    changePct: '',
-    isUp: false,
-    logoUrl: null,
-  };
-
-  useEffect(() => {
-    if (isSearchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isSearchOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsSearchOpen(false);
+  const currentTickerItem = useMemo(() => {
+    return (
+      watchlist.find((item) => item.symbol.toUpperCase() === symbol.toUpperCase()) ?? {
+        symbol,
+        companyName: companyName || displaySymbol,
+        price: '',
+        changePct: '',
+        isUp: false,
+        logoUrl: logoUrl ?? null,
       }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsSearchOpen(false);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsSearchOpen((prev) => !prev);
-      }
-    };
+    );
+  }, [watchlist, symbol, companyName, displaySymbol, logoUrl]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  const searchResults = watchlist.filter(
-    (item) =>
-      item.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.companyName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Compute OHLCV values & change
   const open = activeCandle?.open ?? 0;
   const high = activeCandle?.high ?? 0;
   const low = activeCandle?.low ?? 0;
@@ -84,255 +48,61 @@ export default function ChartTickerHeader({
   const isUp = diff >= 0;
 
   return (
-    <div className="absolute top-3 left-3 z-30 pointer-events-auto select-none" ref={dropdownRef}>
-      {/* Top Row: Globe/Logo + Company Name / Ticker Title (No background, directly on chart) */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setIsSearchOpen((prev) => !prev)}
-          className="group flex items-center gap-1.5 text-left bg-transparent border-0 p-0 focus:outline-none cursor-pointer"
-          title="Search / Change Ticker"
-        >
-          {/* Globe or Ticker Logo */}
-          <div className="w-4 h-4 rounded-full flex items-center justify-center overflow-hidden shrink-0 text-plt-info">
-            {currentTickerItem.logoUrl ? (
-              <img
-                src={currentTickerItem.logoUrl}
-                alt={displaySymbol}
-                className="ticker-logo-image ticker-logo-fill"
-              />
-            ) : (
-              <Globe size={15} className="text-plt-info" />
-            )}
-          </div>
+    <div className="absolute top-2.5 left-3 z-20 pointer-events-none select-none flex flex-col gap-0.5">
+      {/* Top Row: Logo + Company Name / Symbol · Timeframe · EGX */}
+      <div className="flex items-center gap-1.5 text-left">
+        <div className="w-4 h-4 rounded-full flex items-center justify-center overflow-hidden shrink-0 text-white">
+          {currentTickerItem.logoUrl ? (
+            <img
+              src={currentTickerItem.logoUrl}
+              alt={displaySymbol}
+              className="ticker-logo-image ticker-logo-fill"
+            />
+          ) : (
+            <Globe size={14} className="text-text-muted" />
+          )}
+        </div>
 
-          {/* Title */}
-          <span className="text-[13px] font-semibold text-plt-text tracking-tight group-hover:text-white transition-colors flex items-center gap-1">
-            <span className="truncate max-w-[150px] sm:max-w-none">{currentTickerItem.companyName || displaySymbol}</span>
-            <span className="text-plt-muted font-normal text-xs shrink-0">· {timeframe} · EGX</span>
-            <ChevronDown size={14} className={`text-plt-muted shrink-0 transition-transform duration-150 ${isSearchOpen ? 'rotate-180 text-plt-text' : ''}`} />
+        <span className="text-[13px] font-semibold text-text-primary tracking-tight flex items-center gap-1">
+          <span className="truncate max-w-[240px] sm:max-w-none">
+            {currentTickerItem.companyName || displaySymbol}
           </span>
-        </button>
+          <span className="text-text-muted font-normal text-xs shrink-0">
+            · {timeframe} · EGX
+          </span>
+        </span>
       </div>
 
       {/* Bottom Row: OHLCV + Change Metrics */}
       {activeCandle && (
-        <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] sm:text-[11px] leading-tight tabular-nums overflow-x-auto no-scrollbar max-w-[calc(100vw-24px)]">
+        <div className="flex items-center gap-2 font-sans text-[10px] sm:text-[11px] leading-tight tabular-nums overflow-x-auto no-scrollbar max-w-[calc(100vw-24px)]">
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">O</span>
-            <span className="text-plt-info font-medium">{open.toFixed(2)}</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">O</span>
+            <span className="text-text-primary font-medium">{open.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">H</span>
-            <span className="text-plt-info font-medium">{high.toFixed(2)}</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">H</span>
+            <span className="text-text-primary font-medium">{high.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">L</span>
-            <span className="text-plt-info font-medium">{low.toFixed(2)}</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">L</span>
+            <span className="text-text-primary font-medium">{low.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">C</span>
-            <span className="text-plt-info font-medium">{close.toFixed(2)}</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">C</span>
+            <span className="text-text-primary font-medium">{close.toFixed(2)}</span>
           </div>
 
           <div className="hidden sm:flex items-center gap-1">
-            <span className="text-plt-muted font-sans text-[11px]">Vol</span>
-            <span className="text-plt-info font-medium">{formatVolume(volume)}</span>
+            <span className="text-text-muted font-sans text-[11px]">Vol</span>
+            <span className="text-text-primary font-medium">{formatVolume(volume)}</span>
           </div>
 
-          <div className={`font-medium shrink-0 ${isUp ? 'text-plt-profit' : 'text-plt-risk'}`}>
+          <div className={`font-semibold shrink-0 ${isUp ? 'text-profit-num' : 'text-loss-num'}`}>
             {isUp ? '+' : ''}{diff.toFixed(2)} ({isUp ? '+' : ''}{diffPct.toFixed(2)}%)
-          </div>
-        </div>
-      )}
-
-      {/* Dropdown Menu (Desktop: sm and up) */}
-      {isSearchOpen && (
-        <div className="hidden sm:block absolute top-full left-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-plt-elevated border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-          {/* Search Input */}
-          <div className="flex items-center px-3.5 py-2.5 border-b border-white/[0.08] bg-white/[0.03]">
-            <Search size={14} className="text-plt-muted mr-2 shrink-0" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search EGX tickers or names..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-plt-text text-xs placeholder:text-plt-muted"
-            />
-            <div className="text-[10px] tabular-nums text-plt-muted px-1.5 py-0.5 rounded bg-plt-border-soft border border-plt-border-soft">
-              ESC
-            </div>
-          </div>
-
-          {/* List of Tickers */}
-          <div className="max-h-64 overflow-y-auto no-scrollbar py-1">
-            {searchResults.length === 0 ? (
-              <div className="p-4 text-center text-plt-muted text-xs">No tickers found</div>
-            ) : (
-              searchResults.map((item, index) => {
-                const isSelected = item.symbol === symbol;
-                const itemDisplay = item.symbol.replace('.CA', '');
-                return (
-                  <div key={item.symbol}>
-                    {index > 0 && (
-                      <div className="mx-3.5 h-px bg-plt-border-soft" />
-                    )}
-                    <div
-                      onClick={() => {
-                        setIsSearchOpen(false);
-                        router.push(`?ticker=${item.symbol}`);
-                      }}
-                      className={`flex items-center justify-between px-3.5 py-2 cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'bg-white/[0.06] text-plt-text font-medium'
-                          : 'hover:bg-white/[0.04] text-plt-text'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-5 h-5 rounded-full bg-transparent flex items-center justify-center overflow-hidden shrink-0">
-                          {item.logoUrl ? (
-                            <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image ticker-logo-fill" />
-                          ) : (
-                            <div className="w-full h-full rounded-full bg-plt-hover flex items-center justify-center text-[9px] font-semibold text-plt-text">
-                              {itemDisplay.substring(0, 2)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-medium text-plt-text flex items-center gap-1.5">
-                            <span className={isSelected ? 'text-white font-semibold' : 'text-plt-text'}>{itemDisplay}</span>
-                            <span className="text-[11px] text-plt-muted font-normal truncate max-w-36">{item.companyName}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0 pl-2 font-mono">
-                        <div className="text-xs tabular-nums font-semibold text-plt-text">{item.price}</div>
-                        {item.changePct && (
-                          <div className={`text-[10px] tabular-nums font-medium ${item.isUp ? 'text-plt-profit' : 'text-plt-risk'}`}>
-                            {item.changePct}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Slide-Up Bottom Drawer (Mobile: below sm) */}
-      {isSearchOpen && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col justify-end sm:hidden animate-in fade-in duration-200"
-          style={{ backgroundColor: 'var(--plt-overlay, rgba(0,0,0,0.7))' }}
-          onClick={() => setIsSearchOpen(false)}
-        >
-          <div
-            className="flex flex-col rounded-t-2xl border-t border-plt-border-strong bg-plt-surface shadow-2xl animate-in slide-in-from-bottom duration-250 max-h-[75dvh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-plt-border-strong" />
-            </div>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-2.5 border-b border-plt-border/40 shrink-0">
-              <span className="text-sm font-bold text-plt-text">Select Market Ticker</span>
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen(false)}
-                className="p-1 rounded-full text-plt-muted hover:text-plt-text hover:bg-white/[0.08]"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Search Input */}
-            <div className="px-4 py-2.5 border-b border-plt-border/30 bg-plt-raised/40 shrink-0">
-              <div className="relative flex items-center h-9 rounded-xl overflow-hidden border border-plt-border bg-plt-raised">
-                <div className="absolute left-0 pl-3 flex items-center pointer-events-none text-plt-muted">
-                  <Search size={14} />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search EGX tickers or names..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-full w-full bg-transparent pl-9 pr-8 text-xs text-plt-text placeholder:text-plt-muted focus:outline-none"
-                  autoFocus
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-0 pr-3 flex items-center text-plt-muted hover:text-plt-text"
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* List of Tickers */}
-            <div className="flex-1 overflow-y-auto divide-y divide-plt-border/15 custom-scrollbar px-2 py-1">
-              {searchResults.length === 0 ? (
-                <div className="p-6 text-center text-plt-muted text-xs">No tickers found</div>
-              ) : (
-                searchResults.map((item) => {
-                  const isSelected = item.symbol === symbol;
-                  const itemDisplay = item.symbol.replace('.CA', '');
-                  return (
-                    <div
-                      key={item.symbol}
-                      onClick={() => {
-                        setIsSearchOpen(false);
-                        router.push(`?ticker=${item.symbol}`);
-                      }}
-                      className={`flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors rounded-xl ${
-                        isSelected
-                          ? 'bg-white/[0.08] text-plt-text font-medium'
-                          : 'hover:bg-white/[0.04] text-plt-text'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-7 h-7 rounded-full bg-transparent flex items-center justify-center overflow-hidden shrink-0">
-                          {item.logoUrl ? (
-                            <img src={item.logoUrl} alt={item.symbol} className="ticker-logo-image ticker-logo-fill" />
-                          ) : (
-                            <div className="w-full h-full rounded-full bg-plt-hover flex items-center justify-center text-[10px] font-semibold text-plt-text">
-                              {itemDisplay.substring(0, 2)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-plt-text flex items-center gap-1.5">
-                            <span className={isSelected ? 'text-white font-bold' : 'text-plt-text'}>{itemDisplay}</span>
-                          </div>
-                          <div className="text-[11px] text-plt-muted font-normal truncate max-w-48">{item.companyName}</div>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0 pl-2 font-mono">
-                        <div className="text-xs tabular-nums font-semibold text-plt-text">{item.price}</div>
-                        {item.changePct && (
-                          <div className={`text-[10px] tabular-nums font-medium ${item.isUp ? 'text-plt-profit' : 'text-plt-risk'}`}>
-                            {item.changePct}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
           </div>
         </div>
       )}

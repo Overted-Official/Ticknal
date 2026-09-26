@@ -17,7 +17,8 @@ function toNullableNumber(value: unknown): number | null {
 
 async function getLatestPriceMap(): Promise<Record<string, number>> {
   const { getCachedRecentPrices } = await import('@/lib/data-cache');
-  const rows = await getCachedRecentPrices();
+  const raw = await getCachedRecentPrices();
+  const rows = Array.isArray(raw) ? raw : (raw as any)?.rows ?? [];
 
   const priceMap: Record<string, number> = {};
   for (const row of rows) {
@@ -447,6 +448,17 @@ export async function handleProfileGet() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const metadata = user.user_metadata ?? {};
+  const defaultFullName =
+    (typeof metadata.full_name === 'string' && metadata.full_name) ||
+    (typeof metadata.name === 'string' && metadata.name) ||
+    user.email?.split('@')[0] ||
+    'Trader';
+  const defaultAvatarUrl =
+    (typeof metadata.avatar_url === 'string' && metadata.avatar_url) ||
+    (typeof metadata.picture === 'string' && metadata.picture) ||
+    null;
+
   try {
     const [row] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
 
@@ -454,10 +466,10 @@ export async function handleProfileGet() {
       return NextResponse.json({
         id: row.id,
         email: row.email ?? user.email,
-        fullName: row.fullName,
-        avatarUrl: row.avatarUrl,
-        role: row.role,
-        createdAt: row.createdAt,
+        fullName: row.fullName || defaultFullName,
+        avatarUrl: row.avatarUrl || defaultAvatarUrl,
+        role: row.role || 'user',
+        createdAt: row.createdAt || user.created_at,
         updatedAt: row.updatedAt,
         provider: user.app_metadata?.provider ?? 'email',
         emailConfirmed: Boolean(user.email_confirmed_at),
@@ -465,29 +477,22 @@ export async function handleProfileGet() {
       });
     }
 
-    // Row missing — upsert from auth metadata then return
-    const metadata = user.user_metadata ?? {};
-    const fullName =
-      (typeof metadata.full_name === 'string' && metadata.full_name) ||
-      (typeof metadata.name === 'string' && metadata.name) ||
-      user.email?.split('@')[0] ||
-      'Trader';
-    const avatarUrl =
-      (typeof metadata.avatar_url === 'string' && metadata.avatar_url) ||
-      (typeof metadata.picture === 'string' && metadata.picture) ||
-      null;
-
-    await db.insert(profiles).values({ id: user.id, email: user.email, fullName, avatarUrl })
-      .onConflictDoUpdate({
-        target: profiles.id,
-        set: { email: user.email, fullName, avatarUrl, updatedAt: new Date() },
-      });
+    // Row missing — try to upsert from auth metadata then return
+    try {
+      await db.insert(profiles).values({ id: user.id, email: user.email, fullName: defaultFullName, avatarUrl: defaultAvatarUrl })
+        .onConflictDoUpdate({
+          target: profiles.id,
+          set: { email: user.email, fullName: defaultFullName, avatarUrl: defaultAvatarUrl, updatedAt: new Date() },
+        });
+    } catch (insertErr) {
+      console.warn('Could not insert profile into db:', insertErr);
+    }
 
     return NextResponse.json({
       id: user.id,
       email: user.email,
-      fullName,
-      avatarUrl,
+      fullName: defaultFullName,
+      avatarUrl: defaultAvatarUrl,
       role: 'user',
       provider: user.app_metadata?.provider ?? 'email',
       emailConfirmed: Boolean(user.email_confirmed_at),
@@ -495,8 +500,18 @@ export async function handleProfileGet() {
       lastSignInAt: user.last_sign_in_at,
     });
   } catch (error) {
-    console.error('Error fetching profile:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.warn('Error fetching profile from db, falling back to auth user metadata:', error);
+    return NextResponse.json({
+      id: user.id,
+      email: user.email,
+      fullName: defaultFullName,
+      avatarUrl: defaultAvatarUrl,
+      role: 'user',
+      provider: user.app_metadata?.provider ?? 'email',
+      emailConfirmed: Boolean(user.email_confirmed_at),
+      createdAt: user.created_at,
+      lastSignInAt: user.last_sign_in_at,
+    });
   }
 }
 

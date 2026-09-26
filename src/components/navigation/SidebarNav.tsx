@@ -1,298 +1,152 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { motion } from 'framer-motion';
 import {
-  LayoutDashboard,
+  Home,
   LineChart,
-  Wallet,
+  LayoutGrid,
+  Zap,
+  ArrowRightLeft,
   Settings,
   Bell,
-  TrendingUp,
-  Landmark,
-  ShieldCheck,
-  Layers,
-  LayoutGrid,
-  PieChart,
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
-import { flyoutRevealRight } from '@/lib/motion';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function SidebarNav() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const currentTab = searchParams.get('tab');
-
-  const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
-  const [isChartsMenuOpen, setIsChartsMenuOpen] = useState(false);
-  const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  const dashboardMenuRef = useRef<HTMLDivElement>(null);
-  const chartsMenuRef = useRef<HTMLDivElement>(null);
-  const walletMenuRef = useRef<HTMLDivElement>(null);
-
   const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
-    refreshInterval: 30000,
-    revalidateOnFocus: true,
+    refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
   });
 
-  const { data: logsData } = useSWR<{ logs: Array<{ id: number; level: string; createdAt: string }> }>('/api/system-logs', fetcher, {
-    refreshInterval: 30000,
-    revalidateOnFocus: true,
-  });
+  const notificationCount = notifData?.notifications?.length ?? 0;
 
-  const notificationCount = (notifData?.notifications?.length ?? 0) + (logsData?.logs?.some((l) => l.level === 'ERROR') ? 1 : 0);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dashboardMenuRef.current && !dashboardMenuRef.current.contains(event.target as Node)) {
-        setIsDashboardMenuOpen(false);
-      }
-      if (chartsMenuRef.current && !chartsMenuRef.current.contains(event.target as Node)) {
-        setIsChartsMenuOpen(false);
-      }
-      if (walletMenuRef.current && !walletMenuRef.current.contains(event.target as Node)) {
-        setIsWalletMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const isDashboardActive = pathname === '/dashboard';
-  const isInvestActive = pathname === '/invest' || pathname === '/charts';
-  const isWalletActive = pathname === '/wallet' || pathname === '/positions';
+  const isHomeActive = pathname === '/home' || pathname === '/dashboard';
+  const isChartsActive = pathname === '/charts' || pathname.startsWith('/charts/') || pathname === '/invest';
+  const isMarketsActive = pathname === '/markets' || pathname.startsWith('/markets/') || pathname === '/sectors';
+  const isStrategiesActive = pathname === '/strategies' || pathname.startsWith('/strategies/');
+  const isTransactionsActive = pathname === '/transactions' || pathname.startsWith('/transactions/');
 
   return (
     <div className="nav-shell w-[45px] h-full flex flex-col items-center py-2.5 border-l select-none">
       {/* Brand Logo */}
       <Link
-        href="/dashboard"
+        href="/home"
         className="mb-3 w-8 h-8 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center"
-        title="Ticknal Dashboard"
+        title="Ticknal Home"
       >
         <Image src="/logo-mark.svg" alt="Ticknal" width={22} height={22} className="object-contain" priority />
       </Link>
 
       <div className="flex-1 flex flex-col space-y-2.5 w-full items-center">
-        {/* 1. Dashboard with Sub-Menu */}
-        <div className="w-full relative flex items-center justify-center group" ref={dashboardMenuRef}>
-          <button
-            type="button"
-            onClick={() => {
-              setIsDashboardMenuOpen(!isDashboardMenuOpen);
-              setIsChartsMenuOpen(false);
-              setIsWalletMenuOpen(false);
-            }}
+        {/* 1. Home Direct Link */}
+        <div className="w-full relative flex items-center justify-center group">
+          <Link
+            href="/home"
+            prefetch={true}
             className="flex items-center justify-center relative"
-            title="Dashboard"
+            title="Home"
           >
             <div
               className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isDashboardActive || isDashboardMenuOpen
+                isHomeActive
                   ? 'nav-icon-active'
-                  : 'text-plt-muted hover:text-plt-text'
+                  : 'text-[#dbdbdb] hover:text-white'
               }`}
             >
-              <LayoutDashboard size={20} strokeWidth={1.5} />
+              <Home size={20} strokeWidth={1.5} />
             </div>
-          </button>
-
-          {/* Desktop Floating Menu for Dashboard */}
-          {isDashboardMenuOpen && (
-            <motion.div
-              variants={flyoutRevealRight}
-              initial="hidden"
-              animate="visible"
-              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-48 overflow-hidden"
-            >
-              <div className="nav-flyout-title">Dashboard</div>
-              <Link
-                href="/dashboard?tab=net-worth"
-                prefetch={true}
-                onClick={() => setIsDashboardMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isDashboardActive && (!currentTab || currentTab === 'net-worth')
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <ShieldCheck size={16} />
-                <span>Net Worth</span>
-              </Link>
-              <Link
-                href="/dashboard?tab=investments"
-                prefetch={true}
-                onClick={() => setIsDashboardMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isDashboardActive && currentTab === 'investments'
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <TrendingUp size={16} />
-                <span>Investments</span>
-              </Link>
-              <Link
-                href="/dashboard?tab=banks"
-                prefetch={true}
-                onClick={() => setIsDashboardMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isDashboardActive && currentTab === 'banks'
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <Landmark size={16} />
-                <span>Banks</span>
-              </Link>
-            </motion.div>
-          )}
+          </Link>
         </div>
 
-        {/* 2. Invest with Sub-Menu */}
-        <div className="w-full relative flex items-center justify-center group" ref={chartsMenuRef}>
-          <button
-            type="button"
-            onClick={() => {
-              setIsChartsMenuOpen(!isChartsMenuOpen);
-              setIsDashboardMenuOpen(false);
-              setIsWalletMenuOpen(false);
-            }}
+        {/* 2. Charts Direct Link */}
+        <div className="w-full relative flex items-center justify-center group">
+          <Link
+            href="/charts"
+            prefetch={true}
             className="flex items-center justify-center relative"
-            title="Invest"
+            title="Charts"
           >
             <div
               className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isInvestActive || isChartsMenuOpen
+                isChartsActive
                   ? 'nav-icon-active'
-                  : 'text-plt-muted hover:text-plt-text'
+                  : 'text-[#dbdbdb] hover:text-white'
               }`}
             >
               <LineChart size={20} strokeWidth={1.5} />
             </div>
-          </button>
-
-          {/* Desktop Floating Menu for Invest */}
-          {isChartsMenuOpen && (
-            <motion.div
-              variants={flyoutRevealRight}
-              initial="hidden"
-              animate="visible"
-              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-44 overflow-hidden"
-            >
-              <div className="nav-flyout-title">Invest</div>
-              <Link
-                href="/invest?view=sectors"
-                prefetch={true}
-                onClick={() => setIsChartsMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isInvestActive && (!searchParams.get('view') || searchParams.get('view') === 'sectors')
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <Layers size={16} />
-                <span>Sectors</span>
-              </Link>
-              <Link
-                href="/invest?view=chart"
-                prefetch={true}
-                onClick={() => setIsChartsMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isInvestActive && searchParams.get('view') === 'chart'
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <LineChart size={16} />
-                <span>Charts</span>
-              </Link>
-              <Link
-                href="/invest?view=portfolio"
-                prefetch={true}
-                onClick={() => setIsChartsMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isInvestActive && searchParams.get('view') === 'portfolio'
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <PieChart size={16} />
-                <span>Portfolio</span>
-              </Link>
-            </motion.div>
-          )}
+          </Link>
         </div>
 
-        {/* 3. Wallet with Sub-Menu */}
-        <div className="w-full relative flex items-center justify-center group" ref={walletMenuRef}>
-          <button
-            type="button"
-            onClick={() => {
-              setIsWalletMenuOpen(!isWalletMenuOpen);
-              setIsDashboardMenuOpen(false);
-              setIsChartsMenuOpen(false);
-            }}
+        {/* 3. Markets Direct Link */}
+        <div className="w-full relative flex items-center justify-center group">
+          <Link
+            href="/markets"
+            prefetch={true}
             className="flex items-center justify-center relative"
-            title="Wallet"
+            title="Markets"
           >
             <div
               className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isWalletActive || isWalletMenuOpen
+                isMarketsActive
                   ? 'nav-icon-active'
-                  : 'text-plt-muted hover:text-plt-text'
+                  : 'text-[#dbdbdb] hover:text-white'
               }`}
             >
-              <Wallet size={20} strokeWidth={1.5} />
+              <LayoutGrid size={20} strokeWidth={1.5} />
             </div>
-          </button>
+          </Link>
+        </div>
 
-          {/* Desktop Floating Menu for Wallet */}
-          {isWalletMenuOpen && (
-            <motion.div
-              variants={flyoutRevealRight}
-              initial="hidden"
-              animate="visible"
-              className="nav-flyout absolute right-full top-0 mr-2 z-50 w-48 overflow-hidden"
+        {/* 4. Strategies Direct Link */}
+        <div className="w-full relative flex items-center justify-center group">
+          <Link
+            href="/strategies"
+            prefetch={true}
+            className="flex items-center justify-center relative"
+            title="Strategies"
+          >
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
+                isStrategiesActive
+                  ? 'nav-icon-active'
+                  : 'text-[#dbdbdb] hover:text-white'
+              }`}
             >
-              <div className="nav-flyout-title">Wallet</div>
-              <Link
-                href="/wallet?tab=positions"
-                prefetch={true}
-                onClick={() => setIsWalletMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isWalletActive && (!currentTab || currentTab === 'positions')
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <Layers size={16} />
-                <span>Positions</span>
-              </Link>
-              <Link
-                href="/wallet?tab=transactions"
-                prefetch={true}
-                onClick={() => setIsWalletMenuOpen(false)}
-                className={`nav-flyout-link ${
-                  isWalletActive && (currentTab === 'transactions' || currentTab === 'banks')
-                    ? 'nav-flyout-link-active'
-                    : ''
-                }`}
-              >
-                <Landmark size={16} />
-                <span>Cash &amp; Transactions</span>
-              </Link>
-            </motion.div>
-          )}
+              <Zap size={20} strokeWidth={1.5} />
+            </div>
+          </Link>
+        </div>
+
+        {/* 5. Transactions Direct Link */}
+        <div className="w-full relative flex items-center justify-center group">
+          <Link
+            href="/transactions"
+            prefetch={true}
+            className="flex items-center justify-center relative"
+            title="Transactions"
+          >
+            <div
+              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
+                isTransactionsActive
+                  ? 'nav-icon-active'
+                  : 'text-[#dbdbdb] hover:text-white'
+              }`}
+            >
+              <ArrowRightLeft size={20} strokeWidth={1.5} />
+            </div>
+          </Link>
         </div>
       </div>
 
@@ -321,7 +175,7 @@ export default function SidebarNav() {
               className={`nav-icon flex items-center justify-center transition-all duration-150 relative ${
                 isNotificationsOpen
                   ? 'nav-icon-active'
-                  : 'text-plt-muted hover:text-plt-text'
+                  : 'text-[#dbdbdb] hover:text-white'
               }`}
             >
               <Bell size={20} strokeWidth={1.5} />
@@ -344,7 +198,7 @@ export default function SidebarNav() {
               className={`nav-icon flex items-center justify-center transition-all duration-150 ${
                 pathname === '/settings'
                   ? 'nav-icon-active'
-                  : 'text-plt-muted hover:text-plt-text'
+                  : 'text-[#dbdbdb] hover:text-white'
               }`}
             >
               <Settings size={20} strokeWidth={1.5} />

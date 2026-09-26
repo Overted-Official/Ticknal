@@ -1,11 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { Bell, Plus } from '@/components/ui/icon-library';
+import {
+  Home,
+  LineChart,
+  LayoutGrid,
+  Zap,
+  ArrowRightLeft,
+  Bell,
+  Plus,
+  MoreHorizontal,
+  Settings,
+} from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
@@ -14,39 +24,51 @@ import { controlHover, controlTap } from '@/lib/motion';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-type NavItemId = 'dashboard' | 'invest' | 'wallet' | 'settings';
+type NavItemId = 'home' | 'charts' | 'markets' | 'strategies' | 'transactions';
 
 interface NavItemConfig {
   id: NavItemId;
   label: string;
   href: string;
+  icon: typeof Home;
   isActive: (pathname: string) => boolean;
 }
 
 const NAV_ITEMS: NavItemConfig[] = [
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    href: '/dashboard',
-    isActive: (p) => p === '/dashboard',
+    id: 'home',
+    label: 'Home',
+    href: '/home',
+    icon: Home,
+    isActive: (p) => p === '/home' || p === '/dashboard',
   },
   {
-    id: 'invest',
-    label: 'Invest',
-    href: '/invest',
-    isActive: (p) => p === '/invest' || p.startsWith('/invest/') || p === '/charts',
+    id: 'charts',
+    label: 'Charts',
+    href: '/charts',
+    icon: LineChart,
+    isActive: (p) => p === '/charts' || p.startsWith('/charts/') || p === '/invest',
   },
   {
-    id: 'wallet',
-    label: 'Wallet',
-    href: '/wallet',
-    isActive: (p) => p === '/wallet' || p.startsWith('/wallet/') || p === '/positions',
+    id: 'markets',
+    label: 'Markets',
+    href: '/markets',
+    icon: LayoutGrid,
+    isActive: (p) => p === '/markets' || p.startsWith('/markets/') || p === '/sectors' || p.startsWith('/sectors/'),
   },
   {
-    id: 'settings',
-    label: 'Settings',
-    href: '/settings',
-    isActive: (p) => p === '/settings' || p.startsWith('/settings/'),
+    id: 'strategies',
+    label: 'Strategies',
+    href: '/strategies',
+    icon: Zap,
+    isActive: (p) => p === '/strategies' || p.startsWith('/strategies/'),
+  },
+  {
+    id: 'transactions',
+    label: 'Transactions',
+    href: '/transactions',
+    icon: ArrowRightLeft,
+    isActive: (p) => p === '/transactions' || p.startsWith('/transactions/'),
   },
 ];
 
@@ -58,10 +80,13 @@ export default function BottomNav() {
   const [optimisticNavId, setOptimisticNavId] = useState<NavItemId | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
-    refreshInterval: 30000,
-    revalidateOnFocus: true,
+    refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
   });
 
   const notificationCount = notifData?.notifications?.length ?? 0;
@@ -69,7 +94,7 @@ export default function BottomNav() {
   // Resolve active navigation tab based on the current URL
   const routeNavId = useMemo<NavItemId>(() => {
     const matched = NAV_ITEMS.find((item) => item.isActive(pathname));
-    return matched ? matched.id : 'dashboard';
+    return matched ? matched.id : 'home';
   }, [pathname]);
 
   // Reset optimistic tab override once the router matches the destination
@@ -86,243 +111,116 @@ export default function BottomNav() {
     });
   }, [router]);
 
-  const renderInactiveIcon = (id: NavItemId) => {
-    switch (id) {
-      case 'dashboard':
-        return (
-          <svg
-            width="21"
-            height="21"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.85"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect width="7" height="9" x="3" y="3" rx="1.5" />
-            <rect width="7" height="5" x="14" y="3" rx="1.5" />
-            <rect width="7" height="9" x="14" y="12" rx="1.5" />
-            <rect width="7" height="5" x="3" y="16" rx="1.5" />
-          </svg>
-        );
-      case 'invest':
-        return (
-          <svg
-            width="21"
-            height="21"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.85"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="8" y1="3" x2="8" y2="21" />
-            <rect x="6" y="8" width="4" height="7" rx="1" />
-            <line x1="16" y1="3" x2="16" y2="21" />
-            <rect x="14" y="5" width="4" height="10" rx="1" />
-          </svg>
-        );
-      case 'wallet':
-        return (
-          <svg
-            width="21"
-            height="21"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.85"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
-            <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-            <circle cx="17" cy="14" r="1" fill="currentColor" stroke="none" />
-          </svg>
-        );
-      case 'settings':
-        return (
-          <svg
-            width="21"
-            height="21"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.85"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        );
+  // Handle outside clicks to close the More actions popover
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    };
+    if (isMoreOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
     }
-  };
-
-  const renderActiveIcon = (id: NavItemId) => {
-    switch (id) {
-      case 'dashboard':
-        return (
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.25 }}
-            className="relative flex items-center justify-center text-black"
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.95"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect width="7" height="9" x="3" y="3" rx="1.5" fill="currentColor" fillOpacity="0.25" />
-              <rect width="7" height="5" x="14" y="3" rx="1.5" fill="currentColor" fillOpacity="0.25" />
-              <rect width="7" height="9" x="14" y="12" rx="1.5" fill="currentColor" fillOpacity="0.25" />
-              <rect width="7" height="5" x="3" y="16" rx="1.5" fill="currentColor" fillOpacity="0.25" />
-            </svg>
-          </motion.div>
-        );
-      case 'invest':
-        return (
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.25 }}
-            className="relative flex items-center justify-center text-black"
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="8" y1="3" x2="8" y2="21" />
-              <rect x="6" y="8" width="4" height="7" rx="1" fill="currentColor" fillOpacity="0.25" />
-              <line x1="16" y1="3" x2="16" y2="21" />
-              <rect x="14" y="5" width="4" height="10" rx="1" fill="currentColor" />
-              <path
-                d="M20 3.5 C20 4.5 20 4.5 21 4.5 C20 4.5 20 4.5 20 5.5 C20 4.5 20 4.5 19 4.5 C20 4.5 20 4.5 20 3.5 Z"
-                fill="currentColor"
-                stroke="none"
-              />
-            </svg>
-          </motion.div>
-        );
-      case 'wallet':
-        return (
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.25 }}
-            className="relative flex items-center justify-center text-black"
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path
-                d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"
-                fill="currentColor"
-                fillOpacity="0.25"
-              />
-              <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-              <circle cx="17" cy="14" r="1.5" fill="currentColor" stroke="none" />
-            </svg>
-          </motion.div>
-        );
-      case 'settings':
-        return (
-          <motion.div
-            initial={{ rotate: -25, scale: 0.85 }}
-            animate={{ rotate: 0, scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-            className="relative flex items-center justify-center text-black"
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path
-                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
-                fill="currentColor"
-                fillOpacity="0.2"
-              />
-              <circle cx="12" cy="12" r="3" fill="currentColor" />
-            </svg>
-          </motion.div>
-        );
-    }
-  };
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isMoreOpen]);
 
   return (
     <>
       {/* Mobile Floating Action Buttons (Aligned Above Bottom Bar) */}
       <div
-        className={`fixed bottom-22 right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
+        className={`fixed bottom-18 right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
           isNavVisible
             ? 'translate-y-0 opacity-100 pointer-events-auto'
             : 'translate-y-16 opacity-0 pointer-events-none'
         }`}
         aria-label="Mobile Quick Actions"
       >
-        {/* 1. Alerts & Notifications Button */}
+        {/* 1. Alerts & Notifications Button (Slightly bigger: 46x46) */}
         <motion.button
           type="button"
-          onClick={() => setIsNotificationsOpen(true)}
+          onClick={() => {
+            setIsMoreOpen(false);
+            setIsNotificationsOpen(true);
+          }}
           whileHover={controlHover}
           whileTap={controlTap}
-          className="w-10 h-10 rounded-full bg-[#121212]/95 hover:bg-[#181818] active:bg-[#0c0c0c] backdrop-blur-2xl border border-white/10 text-white shadow-xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
+          className="w-[46px] h-[46px] rounded-full bg-black/90 backdrop-blur-xl border border-white/15 text-white shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
           title="Trade Notifications & Alerts"
         >
-          <Bell size={17} className="text-white" />
+          <Bell size={20} strokeWidth={1.8} className="text-white" />
           {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-plt-profit text-black text-[9px] font-mono font-bold flex items-center justify-center ring-2 ring-black">
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-black">
               {notificationCount > 9 ? '9+' : notificationCount}
             </span>
           )}
         </motion.button>
 
-        {/* 2. Quick Add Position / Transaction Button */}
+        {/* 2. Quick Add Position / Transaction Button (Slightly bigger: 46x46) */}
         <motion.button
           type="button"
-          onClick={() => setIsQuickAddOpen(true)}
+          onClick={() => {
+            setIsMoreOpen(false);
+            setIsQuickAddOpen(true);
+          }}
           whileHover={controlHover}
           whileTap={controlTap}
-          className="w-10 h-10 rounded-full bg-[#181818]/95 hover:bg-[#202020] active:bg-[#101010] backdrop-blur-2xl border border-white/15 text-white shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition-all"
+          className="w-[46px] h-[46px] rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all group"
           title="Quick Add Position or Transaction"
         >
-          <Plus size={18} strokeWidth={2.2} />
+          <Plus size={22} strokeWidth={2.2} className="text-white group-hover:scale-110 transition-transform" />
         </motion.button>
 
-        {/* 3. Balance Masking / Privacy Toggle Button */}
-        <PrivacyToggleButton
-          iconOnly
-          className="w-10 h-10 rounded-full bg-[#121212]/95 hover:bg-[#181818] backdrop-blur-2xl border border-white/10 text-white shadow-xl cursor-pointer active:scale-95 transition-all"
-        />
+        {/* 3. More Action Button (•••) with expandable popover for Settings & Privacy Eye */}
+        <div className="relative" ref={moreRef}>
+          <motion.button
+            type="button"
+            onClick={() => setIsMoreOpen((prev) => !prev)}
+            whileHover={controlHover}
+            whileTap={controlTap}
+            className={`w-[40px] h-[40px] rounded-full backdrop-blur-xl border shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition-all ${
+              isMoreOpen
+                ? 'bg-white/[0.18] border-white/30 text-white'
+                : 'bg-black/90 border-white/12 text-white/80 hover:text-white'
+            }`}
+            title="More actions"
+            aria-expanded={isMoreOpen}
+          >
+            <MoreHorizontal size={18} strokeWidth={2.2} />
+          </motion.button>
+
+          {/* Popover tray expanding horizontally to the left */}
+          <AnimatePresence>
+            {isMoreOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85, x: 8 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.85, x: 8 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
+                className="absolute right-12 bottom-0 flex items-center gap-1.5 p-1 rounded-full bg-black/95 backdrop-blur-2xl border border-white/15 shadow-2xl z-50"
+              >
+                {/* Balance Masking / Privacy Toggle (Eye) */}
+                <PrivacyToggleButton
+                  iconOnly
+                  className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-white flex items-center justify-center transition-colors cursor-pointer"
+                />
+
+                {/* Settings Link (Gear) */}
+                <Link
+                  href="/settings"
+                  prefetch={true}
+                  onClick={() => setIsMoreOpen(false)}
+                  className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-white flex items-center justify-center transition-colors cursor-pointer"
+                  title="Settings"
+                >
+                  <Settings size={18} strokeWidth={1.8} />
+                </Link>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Main Modern Mobile Bottom Bar */}
+      {/* Main Modern Mobile Bottom Bar — Matches Desktop Side Nav Styling */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 md:hidden transition-transform duration-300 ease-out select-none ${
           isNavVisible
@@ -331,10 +229,11 @@ export default function BottomNav() {
         }`}
         aria-label="Mobile Navigation"
       >
-        <nav className="relative bg-black/95 backdrop-blur-2xl border-t border-white/[0.08] shadow-[0_-8px_32px_rgba(0,0,0,0.6)] pb-[max(env(safe-area-inset-bottom),0.5rem)] overflow-visible">
-          <div className="h-[62px] flex items-stretch relative px-1">
+        <nav className="relative bg-black/95 backdrop-blur-xl border-t border-border-default shadow-[0_-4px_24px_rgba(0,0,0,0.8)] pb-[max(env(safe-area-inset-bottom),0.35rem)]">
+          <div className="h-[54px] flex items-center justify-around px-1.5">
             {NAV_ITEMS.map((item) => {
               const isActive = currentNavId === item.id;
+              const Icon = item.icon;
 
               return (
                 <Link
@@ -343,39 +242,25 @@ export default function BottomNav() {
                   prefetch={true}
                   onClick={() => setOptimisticNavId(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className="flex-1 relative flex flex-col items-center justify-end pb-2 pt-1 h-full cursor-pointer group focus:outline-none min-w-0"
+                  className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group focus:outline-none min-w-0"
                 >
-                  {isActive ? (
-                    <>
-                      {/* Elevated circular active bubble popping above the top edge */}
-                      <motion.div
-                        layoutId="mobileActiveNavBubble"
-                        className="absolute -top-3.5 w-[50px] h-[50px] rounded-full bg-white ring-[3.5px] ring-black shadow-[0_4px_22px_rgba(0,0,0,0.8),0_0_16px_rgba(255,255,255,0.18)] flex items-center justify-center overflow-hidden z-10"
-                        transition={{
-                          type: 'spring',
-                          stiffness: 420,
-                          damping: 30,
-                          mass: 0.8,
-                        }}
-                      >
-                        {renderActiveIcon(item.id)}
-                      </motion.div>
-                      {/* Geometry placeholder space in default icon position */}
-                      <div className="h-[24px] w-[24px] mb-1 opacity-0 pointer-events-none" aria-hidden="true" />
-                    </>
-                  ) : (
-                    <div className="relative h-[24px] w-[24px] mb-1 flex items-center justify-center transition-transform group-active:scale-90 text-white/45 group-hover:text-white/80">
-                      {renderInactiveIcon(item.id)}
-                      {item.id === 'settings' && notificationCount > 0 && (
-                        <span className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-plt-profit ring-2 ring-black" />
-                      )}
-                    </div>
-                  )}
+                  {/* Icon container matching desktop nav-icon style */}
+                  <div
+                    className={`w-9 h-7 rounded-lg flex items-center justify-center transition-all duration-150 ${
+                      isActive
+                        ? 'bg-white/[0.1] border border-white/10 text-white shadow-xs'
+                        : 'text-[#9ca3af] group-hover:text-white'
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={isActive ? 2 : 1.6} />
+                  </div>
 
-                  {/* Typography Label */}
+                  {/* Clean micro-label */}
                   <span
-                    className={`text-[10px] sm:text-[11px] tracking-tight leading-none transition-colors truncate max-w-[66px] ${
-                      isActive ? 'font-bold text-white' : 'font-medium text-white/45 group-hover:text-white/80'
+                    className={`text-[9.5px] font-sans tracking-tight leading-tight mt-0.5 truncate max-w-[58px] text-center transition-colors ${
+                      isActive
+                        ? 'font-semibold text-white'
+                        : 'font-normal text-text-muted group-hover:text-white/80'
                     }`}
                   >
                     {item.label}

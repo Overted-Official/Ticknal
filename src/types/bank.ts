@@ -45,6 +45,8 @@ export type BankTransaction = {
   accountType?: string;
   bankLogoUrl?: string | null;
   bankName?: string | null;
+  toAccountName?: string | null;
+  toBankName?: string | null;
 };
 
 export type PositionItem = {
@@ -65,4 +67,13 @@ export type BankMonthlySnapshot = {
   yearMonth: string; // e.g. '2026-07'
   closingBalance: number | string;
   createdAt?: string;
+};
+
+export type IndustryGroupStake = {
+  industryGroup: string;
+  value: number;
+  percentage: number;
+  positionsCount: number;
+  tickers: string[];
+  rotationRegime?: 'Leading' | 'Improving' | 'Weakening' | 'Lagging' | string;
 };

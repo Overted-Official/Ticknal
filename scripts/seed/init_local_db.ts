@@ -11,6 +11,19 @@ const PRIMARY_USER_ID = '4425418c-eef9-474e-bd27-acf59d2ec7f8'; // Abdelrahman M
 
 async function initLocalDatabase() {
   const dataDir = path.resolve(process.cwd(), '.local_pgdata');
+  const isFresh = process.argv.includes('--fresh') || process.argv.includes('-f');
+  if (isFresh && fs.existsSync(dataDir)) {
+    console.log('[initLocalDatabase] --fresh flag detected. Removing existing .local_pgdata...');
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  } else if (fs.existsSync(dataDir)) {
+    const pidFile = path.join(dataDir, 'postmaster.pid');
+    if (fs.existsSync(pidFile)) {
+      try {
+        fs.unlinkSync(pidFile);
+      } catch {}
+    }
+  }
+
   console.log(`[initLocalDatabase] Initializing PGlite at: ${dataDir}`);
 
   const client = new PGlite(dataDir);
@@ -28,7 +41,7 @@ async function initLocalDatabase() {
 
   try {
     // 1. Emulate auth schema in local PGlite
-    console.log('[1/10] Initializing auth schema and user context...');
+    console.log('[1/10] Initializing auth schema, user context, and profiles...');
     await client.exec(`
       CREATE SCHEMA IF NOT EXISTS auth;
       CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid AS $$
@@ -44,6 +57,18 @@ async function initLocalDatabase() {
         created_at timestamptz
       );
       DELETE FROM auth.users;
+
+      DROP TABLE IF EXISTS "profiles" CASCADE;
+      CREATE TABLE "profiles" (
+        "id" uuid PRIMARY KEY NOT NULL,
+        "email" varchar(255),
+        "full_name" text,
+        "avatar_url" text,
+        "role" varchar(50) DEFAULT 'user' NOT NULL,
+        "created_at" timestamptz DEFAULT now() NOT NULL,
+        "updated_at" timestamptz DEFAULT now() NOT NULL
+      );
+      CREATE INDEX "profiles_email_idx" ON "profiles"("email");
     `);
 
     const liveUsers = await liveSql`SELECT id, email, created_at FROM auth.users;`;
@@ -55,6 +80,31 @@ async function initLocalDatabase() {
       ]);
     }
     console.log(` -> Synced ${liveUsers.length} auth users.`);
+
+    try {
+      const liveProfiles = await liveSql`SELECT id, email, full_name, avatar_url, role, created_at, updated_at FROM profiles;`;
+      for (const p of liveProfiles) {
+        await client.query(
+          `INSERT INTO profiles (id, email, full_name, avatar_url, role, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (id) DO UPDATE SET
+             email = EXCLUDED.email,
+             full_name = EXCLUDED.full_name,
+             avatar_url = EXCLUDED.avatar_url,
+             updated_at = EXCLUDED.updated_at;`,
+          [p.id, p.email, p.full_name, p.avatar_url, p.role || 'user', p.created_at, p.updated_at]
+        );
+      }
+      console.log(` -> Synced ${liveProfiles.length} user profiles.`);
+    } catch (profErr) {
+      console.warn('Could not fetch profiles from live Supabase, creating fallback profile:', profErr);
+      await client.query(
+        `INSERT INTO profiles (id, email, full_name, role)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (id) DO NOTHING;`,
+        [PRIMARY_USER_ID, 'abdelrahman@ticknal.com', 'Abdelrahman Mamdouh', 'user']
+      );
+    }
 
     // 2. Tickers (All 300 from live Supabase)
     console.log('[2/10] Syncing tickers table...');
@@ -360,6 +410,137 @@ async function initLocalDatabase() {
     }
     console.log(` -> Synced ${liveSignals.length} signal notifications.`);
 
+    // 8b. Ticker Alerts, Push Subscriptions, and Device Tokens
+    console.log(' -> Syncing ticker alerts, push subscriptions, and device tokens...');
+    await client.exec(`
+      DROP TABLE IF EXISTS "ticker_alerts" CASCADE;
+      CREATE TABLE "ticker_alerts" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "user_id" uuid NOT NULL,
+        "ticker_symbol" varchar(20) NOT NULL REFERENCES "tickers"("symbol") ON DELETE cascade,
+        "enabled" boolean DEFAULT true NOT NULL,
+        "created_at" timestamptz DEFAULT now() NOT NULL,
+        "updated_at" timestamptz DEFAULT now() NOT NULL,
+        CONSTRAINT "ticker_alerts_user_ticker_unique" UNIQUE("user_id", "ticker_symbol")
+      );
+      CREATE INDEX "ticker_alerts_ticker_idx" ON "ticker_alerts"("ticker_symbol");
+      CREATE INDEX "ticker_alerts_user_id_idx" ON "ticker_alerts"("user_id");
+
+      DROP TABLE IF EXISTS "push_subscriptions" CASCADE;
+      CREATE TABLE "push_subscriptions" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "user_id" uuid NOT NULL,
+        "endpoint" text NOT NULL UNIQUE,
+        "p256dh" text NOT NULL,
+        "auth" text NOT NULL,
+        "user_agent" text,
+        "created_at" timestamptz DEFAULT now() NOT NULL,
+        "updated_at" timestamptz DEFAULT now() NOT NULL
+      );
+
+      DROP TABLE IF EXISTS "device_push_tokens" CASCADE;
+      CREATE TABLE "device_push_tokens" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "user_id" uuid,
+        "token" text NOT NULL UNIQUE,
+        "platform" varchar(20) DEFAULT 'android' NOT NULL,
+        "device_model" text,
+        "is_active" boolean DEFAULT true NOT NULL,
+        "created_at" timestamptz DEFAULT now() NOT NULL,
+        "updated_at" timestamptz DEFAULT now() NOT NULL
+      );
+
+      DROP TABLE IF EXISTS "system_logs" CASCADE;
+      CREATE TABLE "system_logs" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "level" varchar(20) DEFAULT 'INFO' NOT NULL,
+        "source" varchar(50) NOT NULL,
+        "message" text NOT NULL,
+        "metadata" jsonb,
+        "created_at" timestamptz DEFAULT now() NOT NULL
+      );
+
+      DROP TABLE IF EXISTS "intraday_positions" CASCADE;
+      CREATE TABLE "intraday_positions" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "ticker_symbol" varchar(20) NOT NULL REFERENCES "tickers"("symbol") ON DELETE cascade,
+        "strategy_id" varchar(50) DEFAULT 'PSI_PURE' NOT NULL,
+        "timeframe" varchar(10) DEFAULT '15m' NOT NULL,
+        "status" varchar(20) DEFAULT 'OPEN' NOT NULL,
+        "entry_price" numeric(12, 4) NOT NULL,
+        "entry_time" timestamptz DEFAULT now() NOT NULL,
+        "quantity" numeric(16, 4) DEFAULT '1' NOT NULL,
+        "highest_price" numeric(12, 4),
+        "target_price" numeric(12, 4),
+        "trailing_stop_price" numeric(12, 4),
+        "current_price" numeric(12, 4),
+        "unrealized_pnl_pct" numeric(8, 2) DEFAULT '0.00',
+        "exit_price" numeric(12, 4),
+        "exit_time" timestamptz,
+        "exit_reason" varchar(50),
+        "realized_pnl_pct" numeric(8, 2),
+        "notes" text,
+        "created_at" timestamptz DEFAULT now() NOT NULL,
+        "updated_at" timestamptz DEFAULT now() NOT NULL
+      );
+
+      DROP TABLE IF EXISTS "intraday_signals_log" CASCADE;
+      CREATE TABLE "intraday_signals_log" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "ticker_symbol" varchar(20) NOT NULL REFERENCES "tickers"("symbol") ON DELETE cascade,
+        "strategy_id" varchar(50) DEFAULT 'PSI_PURE' NOT NULL,
+        "timeframe" varchar(10) DEFAULT '15m' NOT NULL,
+        "signal_type" varchar(20) NOT NULL,
+        "signal_price" numeric(12, 4) NOT NULL,
+        "master_index" numeric(8, 2),
+        "master_index_adjusted" numeric(8, 2),
+        "signal_time" timestamptz DEFAULT now() NOT NULL,
+        "executed" boolean DEFAULT false NOT NULL,
+        "execution_status" varchar(20) DEFAULT 'FILLED' NOT NULL,
+        "error_message" text,
+        "metadata" jsonb
+      );
+
+      DROP TABLE IF EXISTS "intraday_system_logs" CASCADE;
+      CREATE TABLE "intraday_system_logs" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "level" varchar(10) DEFAULT 'INFO' NOT NULL,
+        "source" varchar(50) NOT NULL,
+        "message" text NOT NULL,
+        "metadata" jsonb,
+        "created_at" timestamptz DEFAULT now() NOT NULL
+      );
+
+      DROP TABLE IF EXISTS "intraday_candles" CASCADE;
+      CREATE TABLE "intraday_candles" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "ticker_symbol" varchar(20) NOT NULL REFERENCES "tickers"("symbol") ON DELETE cascade,
+        "timeframe" varchar(10) DEFAULT '15m' NOT NULL,
+        "timestamp" timestamptz NOT NULL,
+        "open" numeric(12, 4) NOT NULL,
+        "high" numeric(12, 4) NOT NULL,
+        "low" numeric(12, 4) NOT NULL,
+        "close" numeric(12, 4) NOT NULL,
+        "volume" numeric(15, 2) DEFAULT '0' NOT NULL,
+        CONSTRAINT "intraday_candles_sym_tf_ts_unique" UNIQUE("ticker_symbol", "timeframe", "timestamp")
+      );
+    `);
+
+    try {
+      const liveAlerts = await liveSql`SELECT * FROM ticker_alerts;`;
+      for (const a of liveAlerts) {
+        await client.query(
+          `INSERT INTO ticker_alerts (id, user_id, ticker_symbol, enabled, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT DO NOTHING;`,
+          [a.id, a.user_id, a.ticker_symbol, a.enabled, a.created_at, a.updated_at]
+        );
+      }
+      console.log(` -> Synced ${liveAlerts.length} ticker alerts.`);
+    } catch (e) {
+      console.warn('Could not sync ticker_alerts from live Supabase:', e);
+    }
+
     // 9. Sync Latest Daily Prices from live Supabase (>= 2026-08-14)
     console.log('[9/10] Syncing latest daily prices from live Supabase (>= 2026-08-14)...');
     await client.exec(`
@@ -465,6 +646,9 @@ async function initLocalDatabase() {
     console.log('======================================================\n');
 
   } finally {
+    try {
+      await client.close();
+    } catch {}
     await liveSql.end();
   }
 }

@@ -17,6 +17,19 @@ export type Opportunity = {
   strategyLabel?: string;
   strategyShortName?: string;
   strategyBadgeClassName?: string;
+  metrics?: {
+    totalReturn?: number | null;
+    alpha?: number | null;
+    avgBarsPerTrade?: number | null;
+    maxDrawdown?: number | null;
+    maxAdverseExcursion?: number | null;
+    avgAdverseExcursion?: number | null;
+    winRate?: number | null;
+    trades?: number | null;
+    buyHoldReturn?: number | null;
+    annualCagr?: number | null;
+    [key: string]: any;
+  } | null;
   signal: {
     signal: string;
     level?: string;
@@ -180,11 +193,11 @@ export default function OpportunityTable({
                 onClick={() => setStrategyFilter('thoth_egx_macro')}
                 className={`px-2 py-1 rounded-lg btn-typography transition-all ${
                   strategyFilter === 'thoth_egx_macro'
-                    ? 'bg-plt-violet/20 text-plt-violet border border-plt-violet/30 font-semibold shadow-xs'
-                    : 'text-plt-muted hover:text-plt-violet'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold shadow-xs'
+                    : 'text-plt-muted hover:text-amber-400'
                 }`}
               >
-                Archived ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
+                Thoth ({opportunities.filter((o) => o.strategyId === 'thoth_egx_macro').length})
               </button>
             )}
           </div>
@@ -193,7 +206,7 @@ export default function OpportunityTable({
           <button
             type="button"
             onClick={() => setRegimeFilter((prev) => (prev === 'ALPHA' ? 'ALL' : 'ALPHA'))}
-            className={`px-2 py-1 rounded-lg btn-typography font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2 py-1 rounded-lg btn-typography transition-all flex items-center gap-1.5 cursor-pointer ${
               regimeFilter === 'ALPHA'
                 ? 'bg-plt-profit/20 text-plt-profit border border-plt-profit/40 font-bold shadow-xs'
                 : 'text-plt-muted hover:text-plt-profit border border-plt-border-soft bg-plt-card/50'
@@ -226,7 +239,7 @@ export default function OpportunityTable({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-medium text-plt-text hover:text-white text-xs">
+                      <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-medium text-plt-text hover:text-white text-xs">
                         {item.symbol.replace('.CA', '')}
                       </Link>
                       {item.strategyShortName && (
@@ -242,7 +255,7 @@ export default function OpportunityTable({
                         </span>
                         {item.rotationRegime && (
                           <span
-                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-medium ${
+                            className={`text-[9px] px-1.5 py-0.2 rounded border font-medium ${
                               getRegimeBadge(item.rotationRegime).className
                             }`}
                           >
@@ -312,7 +325,7 @@ export default function OpportunityTable({
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <Link href={`/invest?ticker=${item.symbol}&view=chart&timeframe=D`} className="font-semibold text-xs text-plt-text group-hover:text-white transition-colors">
+                        <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-semibold text-xs text-plt-text group-hover:text-white transition-colors">
                           {item.symbol.replace('.CA', '')}
                         </Link>
                         {!compact && <span className="text-[10px] text-plt-muted truncate max-w-32">{item.companyName}</span>}
@@ -323,7 +336,7 @@ export default function OpportunityTable({
                     <span className={`text-[10px] tabular-nums font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ${
                       item.strategyBadgeClassName || 'bg-plt-info/10 text-plt-info'
                     }`}>
-                      {item.strategyShortName || (item.strategyId === 'hydra' ? 'HYDRA' : item.strategyId === 'psi_v2' ? 'Cerberus' : item.strategyId === 'thoth_egx_macro' ? 'Archived' : 'Typhon')}
+                      {item.strategyShortName || (item.strategyId === 'hydra' ? 'HYDRA' : item.strategyId === 'psi_v2' ? 'Cerberus' : item.strategyId === 'thoth_egx_macro' ? 'Thoth' : 'Typhon')}
                     </span>
                   </td>
                   {!compact && (
@@ -334,7 +347,7 @@ export default function OpportunityTable({
                         </span>
                         {item.rotationRegime && (
                           <span
-                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-medium ${
+                            className={`text-[9px] px-1.5 py-0.2 rounded border font-medium ${
                               getRegimeBadge(item.rotationRegime).className
                             }`}
                           >

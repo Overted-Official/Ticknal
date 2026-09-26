@@ -7,6 +7,10 @@ import { getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 import { mapStrategyMetrics } from '@/lib/strategy-analysis';
+import { getOrInitPrecomputedCache } from '@/lib/handlers/sectors-handlers';
+import { evaluateModelsAndChampions, isChampionSignal } from '@/lib/finance/champion-routing';
+import type { TickerChampionInfo } from '@/lib/finance/sectors-math';
+import { runHydraStrategy } from '@/strategies/Hydra/hydraStrategy';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 
@@ -77,34 +81,16 @@ export async function dispatchSignalNotifications(options: {
   const lookbackBars = Math.max(1, options.lookbackBars ?? 5);
 
   // Fetch custom user strategy settings
-  const { userStrategySettings, tickers: tickersTable, dailyPrices } = await import('@/db/schema');
+  const { userStrategySettings } = await import('@/db/schema');
   const userSettingsRows = await db.select().from(userStrategySettings);
   const userSettingsMap = groupBy(userSettingsRows, (setting) => `${setting.userId}-${setting.tickerSymbol}`);
 
-  // Fetch all stock price bars in a single high-performance bulk query with dynamic rolling warmup window (120 days)
-  const priceRows = await db.execute(sql`
-    SELECT ticker_symbol, date, open, high, low, close, volume
-    FROM ${dailyPrices}
-    WHERE date >= CURRENT_DATE - INTERVAL '120 days' AND (close > 0 OR volume > 0)
-    ORDER BY ticker_symbol, date ASC
-  `) as any[];
-
-  const barsByTicker = new Map<string, PriceBar[]>();
-  for (const row of priceRows) {
-    const sym = normalizeTickerSymbol(String(row.ticker_symbol));
-    if (symbolFilter.size > 0 && !symbolFilter.has(sym)) continue;
-
-    const bars = barsByTicker.get(sym) ?? [];
-    bars.push({
-      date: typeof row.date === 'string' ? row.date.split('T')[0] : new Date(row.date as Date).toISOString().split('T')[0],
-      open: Number(row.open),
-      high: Number(row.high),
-      low: Number(row.low),
-      close: Number(row.close),
-      volume: Number(row.volume),
-    });
-    barsByTicker.set(sym, bars);
-  }
+  // Load precomputed bars and indicators cache
+  const cache = await getOrInitPrecomputedCache();
+  const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  const { tickerChampions } = evaluateModelsAndChampions(cache, oneYearAgo, today, 0, 252);
+  const barsByTicker = cache.barsByTicker;
 
   const { resolvePsiParamsFromStore } = await import('@/strategies/PSI/psiParameterStore');
   const { runPsiV2Strategy } = await import('@/strategies/PSI_V2/psiV2Strategy');
@@ -152,11 +138,11 @@ export async function dispatchSignalNotifications(options: {
     const sentSet = new Set(existingNotifs.map(n => `${n.tickerSymbol}-${n.strategy}-${n.signalDate}-${n.signal}`));
 
     const userGlobalScopeRow = userSettingsMap[`${userId}-GLOBAL`]?.find(s => s.strategyName === 'alert_scope');
-    let userDefaultScope = 'all';
+    let userDefaultScope = 'champion';
     if (userGlobalScopeRow) {
       try {
         const parsed = JSON.parse(userGlobalScopeRow.params);
-        userDefaultScope = parsed.scope || 'all';
+        userDefaultScope = parsed.scope || 'champion';
       } catch (e) {}
     }
 
@@ -164,7 +150,8 @@ export async function dispatchSignalNotifications(options: {
     const nativeTokens = deviceTokensByUser[userId] ?? [];
 
     for (const [ticker, bars] of barsByTicker.entries()) {
-      if (bars.length < 80) continue;
+      if (symbolFilter.size > 0 && !symbolFilter.has(ticker)) continue;
+      if (!bars || bars.length < 80) continue;
       result.checkedSymbols += 1;
 
       const isPositionOpen = userOpenSymbols.has(ticker);
@@ -192,10 +179,11 @@ export async function dispatchSignalNotifications(options: {
       }> = [];
 
       // 1. Evaluate Typhon Strategy (PSI)
-      if (userScope === 'all' || userScope === 'psi') {
+      if (userScope === 'all' || userScope === 'psi' || userScope === 'champion') {
         try {
           const psiParams = resolvePsiParamsFromStore(ticker, { startDate: '2025-01-01' });
-          const psiResult = runPsiStrategy(bars, psiParams);
+          const psiSeries = cache.psiCache.get(ticker);
+          const psiResult = runPsiStrategy(bars, psiParams, psiSeries);
           const signal = [...psiResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
           if (signal) {
             // If tracked (held or alerted), dispatch both BUY and SELL. If untracked, dispatch BUY opportunities.
@@ -214,9 +202,10 @@ export async function dispatchSignalNotifications(options: {
       }
 
       // 2. Evaluate Cerberus Strategy (PSI V2)
-      if (userScope === 'all' || userScope === 'psi_v2') {
+      if (userScope === 'all' || userScope === 'psi_v2' || userScope === 'champion') {
         try {
-          const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: '2025-01-01' });
+          const psiV2Series = cache.psiV2Cache.get(ticker);
+          const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: '2025-01-01' }, psiV2Series);
           const signal = [...psiV2Result.signals].reverse().find((s) => dateWindow.has(s.date) && (s.signal === 'BUY' || s.signal === 'SELL')) ?? null;
           if (signal) {
             if (signal.signal === 'BUY' || isTracked) {
@@ -233,13 +222,45 @@ export async function dispatchSignalNotifications(options: {
         } catch (e) {}
       }
 
-      if (signalsToDispatch.length === 0) {
+      // 3. Evaluate Hydra Strategy
+      if (userScope === 'all' || userScope === 'hydra' || userScope === 'champion') {
+        try {
+          const hydraPoints = cache.hydraCache.get(ticker);
+          const hydraResult = runHydraStrategy(bars, { ticker, startDate: '2025-01-01' }, hydraPoints);
+          const signal = [...hydraResult.signals].reverse().find((s) => dateWindow.has(s.date) && (s.signal === 'BUY' || s.signal === 'SELL')) ?? null;
+          if (signal) {
+            if (signal.signal === 'BUY' || isTracked) {
+              signalsToDispatch.push({
+                strategyId: 'hydra',
+                strategyShort: 'HYDRA',
+                strategyLabel: 'Hydra Strategy',
+                signal,
+                metrics: hydraResult.metrics,
+                parameterVersion: `hydra-v1-${ticker}`,
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Smart Champion Model Routing (Option A):
+      // Only permit alerts if the model is the designated champion for this ticker and alpha > 0.
+      const isRawOptOut = userScope === 'all_raw' || userScope === 'raw';
+      const eligibleSignals = isRawOptOut
+        ? signalsToDispatch
+        : signalsToDispatch.filter((item) => {
+            const check = isChampionSignal(ticker, item.strategyId, tickerChampions, true);
+            return check.allowed;
+          });
+
+      if (eligibleSignals.length === 0) {
         result.skipped += 1;
         continue;
       }
 
-      for (const item of signalsToDispatch) {
+      for (const item of eligibleSignals) {
         const { strategyId, strategyShort, strategyLabel, signal, metrics, parameterVersion } = item;
+        const champInfo = tickerChampions[ticker] || tickerChampions[normalizeTickerSymbol(ticker)];
 
         const signalIndex = bars.findIndex((bar) => bar.date === signal.date);
         const signalBarsAgo = signalIndex >= 0 ? Math.max(0, bars.length - 1 - signalIndex) : 0;
@@ -284,9 +305,9 @@ export async function dispatchSignalNotifications(options: {
         // Queue push deliveries
         if (subscriptions.length > 0) {
           const payload = JSON.stringify({
-            title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort),
-            body: buildNotificationBody(signal, strategyLabel),
-            url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
+            title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort, champInfo),
+            body: buildNotificationBody(signal, strategyLabel, champInfo),
+            url: `/charts?ticker=${ticker}&strategy=${strategyId}`,
             tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
             symbol: ticker,
             strategy: strategyId,
@@ -311,9 +332,9 @@ export async function dispatchSignalNotifications(options: {
           for (const device of nativeTokens) {
             pushTasks.push(async () => {
               const fcmSent = await sendFCMMessage(device.token, {
-                title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort),
-                body: buildNotificationBody(signal, strategyLabel),
-                url: `/invest?ticker=${ticker}&view=chart&strategy=${strategyId}`,
+                title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort, champInfo),
+                body: buildNotificationBody(signal, strategyLabel, champInfo),
+                url: `/charts?ticker=${ticker}&strategy=${strategyId}`,
                 ticker,
                 strategy: strategyId,
                 signal: signal.signal,
@@ -406,7 +427,7 @@ export async function dispatchTestNotification(): Promise<DispatchNotificationsR
   const payload = JSON.stringify({
     title: 'Test Notification',
     body: 'This is a mock push notification to test the alert feature.',
-    url: '/dashboard',
+    url: '/home',
     tag: `test-notification-${Date.now()}`,
     symbol: 'TEST',
     signal: 'TEST',
@@ -491,28 +512,36 @@ function buildNotificationTitle(
   ticker: string,
   signal: PsiSignal,
   openOrderExists: boolean,
-  strategyShort: string = 'TYPHON'
+  strategyShort: string = 'TYPHON',
+  championInfo?: TickerChampionInfo
 ): string {
   const cleanTicker = ticker.replace('.CA', '').toUpperCase();
-  const strat = strategyShort.toUpperCase();
-  if (signal.signal === 'BUY') return `${cleanTicker} · BUY Signal (${strat})`;
-  if (openOrderExists) return `${cleanTicker} · Exit Position (${strat})`;
-  return `${cleanTicker} · Exit Signal (${strat})`;
+  const champTag = championInfo?.hasPositiveAlpha
+    ? ` · 🏆 ${championInfo.championName}`
+    : ` (${strategyShort.toUpperCase()})`;
+  if (signal.signal === 'BUY') return `${cleanTicker} · BUY Signal${champTag}`;
+  if (openOrderExists) return `${cleanTicker} · Exit Position${champTag}`;
+  return `${cleanTicker} · Exit Signal${champTag}`;
 }
 
 function buildNotificationBody(
   signal: PsiSignal,
-  strategyLabel: string = 'Typhon Strategy'
+  strategyLabel: string = 'Typhon Strategy',
+  championInfo?: TickerChampionInfo
 ): string {
   const price = `${Number(signal.price).toFixed(2)} EGP`;
   const reason = (signal as any).entryReason || (signal as any).exitReason || (signal as any).reasoning;
+  const alphaSnippet = championInfo?.hasPositiveAlpha
+    ? ` · 🏆 Best-Fit (+${championInfo.alpha > 0 ? '+' : ''}${championInfo.alpha.toFixed(1)}% α)`
+    : '';
+
   if (reason) {
-    return `Triggered at ${price} · ${reason}`;
+    return `Triggered at ${price}${alphaSnippet} · ${reason}`;
   }
   if (signal.signal === 'BUY') {
-    return `Triggered at ${price} · Entry criteria confirmed (${strategyLabel})`;
+    return `Triggered at ${price}${alphaSnippet} · Entry criteria confirmed (${strategyLabel})`;
   }
-  return `Triggered at ${price} · Exit rule satisfied (${strategyLabel})`;
+  return `Triggered at ${price}${alphaSnippet} · Exit rule satisfied (${strategyLabel})`;
 }
 
 function groupBy<T>(items: T[], getKey: (item: T) => string): Record<string, T[]> {

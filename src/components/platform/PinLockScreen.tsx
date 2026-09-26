@@ -208,9 +208,9 @@ export default function PinLockScreen({
     >
       {/* Top Header */}
       <div className="flex flex-col items-center text-center space-y-3 mt-4">
-        <div className="w-14 h-14 rounded-2xl bg-white/[0.05] border border-white/[0.12] flex items-center justify-center shadow-[0_0_24px_rgba(255,255,255,0.08)] relative">
+        <div className="w-14 h-14 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shadow-[0_0_24px_rgba(255,255,255,0.06)] relative">
           <Lock size={22} className="text-white" />
-          <div className="absolute inset-0 rounded-2xl border border-white/20 animate-pulse" />
+          <div className="absolute inset-0 rounded-full border border-white/20 animate-pulse" />
         </div>
 
         <div>
@@ -260,22 +260,22 @@ export default function PinLockScreen({
         </div>
       </div>
 
-      {/* Numeric Keypad (3x4) */}
-      <div className="w-full max-w-[280px] sm:max-w-[300px] mx-auto space-y-3.5 sm:space-y-4 mb-4">
+      {/* Numeric Keypad (3x4) with circular buttons and bigger numbers */}
+      <div className="w-full max-w-[290px] sm:max-w-[320px] mx-auto space-y-4 sm:space-y-4.5 mb-4">
         {/* Rows 1-3 */}
         {[
           ['1', '2', '3'],
           ['4', '5', '6'],
           ['7', '8', '9'],
         ].map((row, rIdx) => (
-          <div key={rIdx} className="grid grid-cols-3 gap-3.5 sm:gap-4 justify-items-center">
+          <div key={rIdx} className="grid grid-cols-3 gap-4 sm:gap-4.5 justify-items-center">
             {row.map((digit) => (
               <button
                 key={digit}
                 type="button"
                 onClick={() => handleDigit(digit)}
                 disabled={isVerifying}
-                className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.24] flex items-center justify-center text-[32px] sm:text-[38px] font-sans font-medium leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
+                className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[34px] sm:text-[40px] font-sans font-light sm:font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
               >
                 {digit}
               </button>
@@ -284,14 +284,14 @@ export default function PinLockScreen({
         ))}
 
         {/* Row 4: Blank, '0', Backspace */}
-        <div className="grid grid-cols-3 gap-3.5 sm:gap-4 justify-items-center items-center">
-          <div className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px]" />
+        <div className="grid grid-cols-3 gap-4 sm:gap-4.5 justify-items-center items-center">
+          <div className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px]" />
 
           <button
             type="button"
             onClick={() => handleDigit('0')}
             disabled={isVerifying}
-            className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.06] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.10] hover:border-white/[0.24] flex items-center justify-center text-[32px] sm:text-[38px] font-sans font-medium leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
+            className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[34px] sm:text-[40px] font-sans font-light sm:font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
           >
             0
           </button>
@@ -300,7 +300,7 @@ export default function PinLockScreen({
             type="button"
             onClick={handleBackspace}
             disabled={pin.length === 0 || isVerifying}
-            className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.02] hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 border border-white/[0.06] hover:border-white/[0.15] flex items-center justify-center text-white/60 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
+            className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square bg-transparent hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 flex items-center justify-center text-white/50 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
             title="Delete"
           >
             <Delete size={26} className="sm:w-7 sm:h-7" />
@@ -346,7 +346,7 @@ export default function PinLockScreen({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-plt-surface border border-white/[0.12] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left"
+              className="bg-black border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left"
             >
               {recoverySuccess ? (
                 <motion.div

@@ -107,7 +107,7 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   if (root === 'auth' && sub === 'callback') {
     const requestUrl = new URL(req.url);
     const code = requestUrl.searchParams.get('code');
-    const next = requestUrl.searchParams.get('next') || '/dashboard';
+    const next = requestUrl.searchParams.get('next') || '/home';
     const forwardedHost = req.headers.get('x-forwarded-host');
     const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
     const isLocalEnv = process.env.NODE_ENV === 'development';
@@ -193,11 +193,11 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     return NextResponse.json({ error: `Unknown push action: ${sub}` }, { status: 404 });
   }
 
-  // 6. Sectors
-  if (root === 'sectors') {
+  // 6. Markets / Sectors
+  if (root === 'markets' || root === 'sectors') {
     if (sub === 'performance') return handlePerformanceGet(req);
     if (sub === 'signals') return handleSectorSignalsGet(req);
-    return NextResponse.json({ error: `Unknown sectors action: ${sub}` }, { status: 404 });
+    return NextResponse.json({ error: `Unknown markets/sectors action: ${sub}` }, { status: 404 });
   }
 
   // 7. Strategy & Signals

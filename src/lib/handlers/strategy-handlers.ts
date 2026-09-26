@@ -283,7 +283,7 @@ export async function handleReportGet(request: Request) {
     const model = requestedModel || (strategy === 'hydra' ? 'hydra' : strategy === 'psi_v2' ? 'psi_v2' : 'canonical');
     const startDate = searchParams.get('start') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? undefined;
-    const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 3000;
+    const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 1000;
 
     if (!symbol) {
       return NextResponse.json({ error: 'Missing symbol parameter' }, { status: 400 });

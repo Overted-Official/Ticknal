@@ -38,7 +38,7 @@ export const resolveCssColor = (value: string, fallback: string): string => {
   return toChartCompatibleColor(resolved || fallback);
 };
 
-export const cssTokenColor = (name: string, fallback: string): string => {
+export const cssTokenColor = (name: string, fallback: string = ''): string => {
   return resolveCssColor(`var(${name})`, fallback);
 };
 
@@ -163,32 +163,6 @@ export function buildMarkers(signals: StrategySignal[]): SeriesMarker<Time>[] {
   }
 
   return sanitizeChartSeriesData(rawMarkers);
-}
-
-export function getDefaultReplayIndex(data: ChartData[]): number {
-  if (data.length === 0) return 0;
-  return Math.max(0, Math.floor(data.length * 0.7));
-}
-
-export function findIndexAtOrBefore(data: ChartData[], date: string | number | Time): number {
-  if (data.length === 0) return 0;
-  const targetTime = parseChartTime(date);
-  let low = 0;
-  let high = data.length - 1;
-  let result = -1;
-
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    const currTime = data[mid].time;
-    if (currTime <= targetTime) {
-      result = mid;
-      low = mid + 1;
-    } else {
-      high = mid - 1;
-    }
-  }
-
-  return result >= 0 ? result : 0;
 }
 
 export function parseOptionalNumber(value: string): number | null {

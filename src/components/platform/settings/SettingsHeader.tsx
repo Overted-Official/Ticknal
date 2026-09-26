@@ -1,40 +1,31 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   ChevronDown,
-  Check,
   User,
   ShieldCheck,
   Smartphone,
-  Bell,
   TrendingUp,
   Landmark,
-  ExternalLink,
 } from '@/components/ui/icon-library';
-import type { SettingsTabType } from './SettingsNavigationRail';
-
-interface SettingsHeaderProps {
-  activeTab: SettingsTabType;
-  onTabChange: (tab: SettingsTabType) => void;
-}
 
 const SETTINGS_SECTIONS = [
-  { label: 'Profile', tab: 'profile' as SettingsTabType, icon: User },
-  { label: 'Security & PIN', tab: 'security' as SettingsTabType, icon: ShieldCheck },
-  { label: 'Connected Devices', tab: 'devices' as SettingsTabType, icon: Smartphone },
-  { label: 'Alert Triggers', tab: 'alerts' as SettingsTabType, icon: Bell },
+  { label: 'Profile', id: 'section-profile', icon: User },
+  { label: 'Security & PIN', id: 'section-security', icon: ShieldCheck },
+  { label: 'Connected Devices', id: 'section-devices', icon: Smartphone },
 ];
 
 const PLATFORM_VIEWS = [
-  { label: 'Networth', href: '/dashboard?tab=net-worth', icon: Landmark },
-  { label: 'Investments', href: '/dashboard?tab=investments', icon: TrendingUp },
-  { label: 'Banks', href: '/dashboard?tab=banks', icon: Landmark },
+  { label: 'Home', href: '/home', icon: TrendingUp },
+  { label: 'Charts', href: '/charts', icon: TrendingUp },
+  { label: 'Markets', href: '/markets', icon: Landmark },
+  { label: 'Ledger', href: '/transactions', icon: Landmark },
 ];
 
-export default function SettingsHeader({ activeTab, onTabChange }: SettingsHeaderProps) {
+export default function SettingsHeader() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -63,17 +54,39 @@ export default function SettingsHeader({ activeTab, onTabChange }: SettingsHeade
     };
   }, [isOpen]);
 
+  const scrollToSection = (id: string) => {
+    setIsOpen(false);
+    const element = document.getElementById(id);
+    if (!element) return;
+    const container = document.querySelector('.command-surface-page') as HTMLElement | null;
+    if (container) {
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const targetScrollTop = container.scrollTop + (elementRect.top - containerRect.top) - 56;
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: 'smooth',
+      });
+    } else {
+      const top = element.getBoundingClientRect().top + window.scrollY - 56;
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'smooth',
+      });
+    }
+  };
+
   return (
-    <header className="flex items-center justify-between gap-4 select-none pb-1">
-      {/* Left: Single-line Breadcrumb & Title with Dropdown */}
+    <header className="flex items-center justify-between gap-4 select-none pb-1 font-sans">
+      {/* Left: Breadcrumb & Title */}
       <div className="flex items-center gap-2">
-        <span
-          className="text-xs md:text-sm text-[#787b86] font-normal hover:text-white transition-colors cursor-pointer"
-          onClick={() => router.push('/dashboard')}
+        <Link
+          href="/home"
+          className="text-xs md:text-sm text-text-muted font-normal hover:text-white transition-colors"
         >
-          Dashboard
-        </span>
-        <span className="text-xs md:text-sm text-[#50535e]">/</span>
+          Home
+        </Link>
+        <span className="text-xs md:text-sm text-text-muted">/</span>
 
         <div className="relative" ref={menuRef}>
           <button
@@ -84,7 +97,7 @@ export default function SettingsHeader({ activeTab, onTabChange }: SettingsHeade
           >
             <span>Settings</span>
             <ChevronDown
-              className={`w-5 h-5 text-[#787b86] group-hover:text-white transition-transform duration-200 ${
+              className={`w-5 h-5 text-text-muted group-hover:text-white transition-transform duration-200 ${
                 isOpen ? 'transform rotate-180 text-white' : ''
               }`}
             />
@@ -92,39 +105,30 @@ export default function SettingsHeader({ activeTab, onTabChange }: SettingsHeade
 
           {/* Dropdown Menu for Settings & Platform Views */}
           {isOpen && (
-            <div className="absolute left-0 top-full mt-2 w-64 rounded-xl bg-[#121214] border border-[#27272a] shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-[#787b86] uppercase tracking-wider">
-                Settings views
+            <div className="absolute left-0 top-full mt-2 w-64 rounded-xl bg-black border border-border-subtle shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="px-3 py-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+                Jump to Section
               </div>
               {SETTINGS_SECTIONS.map((section) => {
-                const isActive = activeTab === section.tab;
                 const Icon = section.icon;
                 return (
                   <button
-                    key={section.tab}
+                    key={section.id}
                     type="button"
-                    onClick={() => {
-                      onTabChange(section.tab);
-                      setIsOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-left cursor-pointer ${
-                      isActive
-                        ? 'bg-[#18181b] text-white font-medium border border-[#27272a]'
-                        : 'text-[#d1d4dc] hover:text-white hover:bg-[#18181b]/70 border border-transparent'
-                    }`}
+                    onClick={() => scrollToSection(section.id)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-white hover:bg-white/[0.04] border border-transparent transition-colors text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-[#2962ff]' : 'text-[#787b86]'}`} />
+                      <Icon className="w-4 h-4 text-text-muted" />
                       <span>{section.label}</span>
                     </div>
-                    {isActive && <Check className="w-4 h-4 text-[#089981]" />}
                   </button>
                 );
               })}
 
-              <div className="my-1.5 border-t border-[#222225]" />
+              <div className="my-1.5 border-t border-border-subtle" />
 
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-[#787b86] uppercase tracking-wider">
+              <div className="px-3 py-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
                 Platform views
               </div>
               {PLATFORM_VIEWS.map((page) => {
@@ -137,44 +141,19 @@ export default function SettingsHeader({ activeTab, onTabChange }: SettingsHeade
                       setIsOpen(false);
                       router.push(page.href);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-left text-[#d1d4dc] hover:text-white hover:bg-[#18181b]/70 border border-transparent cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-left text-text-secondary hover:text-white hover:bg-white/[0.04] border border-transparent cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 text-[#787b86]" />
+                      <Icon className="w-4 h-4 text-text-muted" />
                       <span>{page.label}</span>
                     </div>
-                    <span className="text-[#50535e] text-xs">↗</span>
+                    <span className="text-text-muted text-xs">↗</span>
                   </button>
                 );
               })}
             </div>
           )}
         </div>
-      </div>
-
-      {/* Right: Actions */}
-      <div className="hidden sm:flex items-center gap-2.5 shrink-0 flex-wrap">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#18181b] border border-[#27272a] text-[#d1d4dc] hover:text-white hover:bg-[#222225] hover:border-[#3f3f46] transition-all shadow-xs"
-        >
-          <span>Dashboard</span>
-          <span className="text-[#787b86]">→</span>
-        </Link>
-        <Link
-          href="/wallet?tab=positions"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#18181b] border border-[#27272a] text-[#d1d4dc] hover:text-white hover:bg-[#222225] hover:border-[#3f3f46] transition-all shadow-xs"
-        >
-          <span>Manage Positions</span>
-          <span className="text-[#787b86]">→</span>
-        </Link>
-        <Link
-          href="/invest"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#2962ff] text-white hover:bg-[#1e53e5] transition-all shadow-xs"
-        >
-          <span>Open Invest</span>
-          <ExternalLink className="w-3.5 h-3.5" />
-        </Link>
       </div>
     </header>
   );
