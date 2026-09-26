@@ -139,13 +139,22 @@ export default function SectorTreemap({
   // ResizeObserver for fluid responsiveness
   useEffect(() => {
     if (!containerRef.current) return;
+    const updateDims = (w: number, h: number) => {
+      if (w > 0 && h > 0) {
+        setDimensions({
+          width: Math.max(w, 280),
+          height: Math.max(h, 480),
+        });
+      }
+    };
+    const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      updateDims(rect.width, rect.height);
+    }
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        setDimensions({
-          width: Math.max(entry.contentRect.width, 300),
-          height: Math.max(entry.contentRect.height, 350),
-        });
+        updateDims(entry.contentRect.width, entry.contentRect.height);
       }
     });
     observer.observe(containerRef.current);
@@ -215,7 +224,7 @@ export default function SectorTreemap({
 
   // Compute layout coordinates (full container height)
   const layout = useMemo(() => {
-    const usableHeight = Math.max(dimensions.height, 100);
+    const usableHeight = Math.max(dimensions.height, 480);
     if (dimensions.width <= 0 || usableHeight <= 0) return [];
     return computeTreemap(treemapTree, dimensions.width, usableHeight);
   }, [treemapTree, dimensions]);
@@ -226,7 +235,7 @@ export default function SectorTreemap({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="w-full h-full relative select-none overflow-hidden bg-black flex flex-col font-sans touch-pan-y border-0 rounded-none"
+      className="w-full h-full min-h-[500px] sm:min-h-[580px] relative select-none overflow-hidden bg-black flex flex-col font-sans touch-pan-y border-0 rounded-none"
     >
       {selectedSector && (
         <button
@@ -240,7 +249,12 @@ export default function SectorTreemap({
       )}
 
       {/* 2. Interactive Canvas Box */}
-      <div className="flex-1 relative w-full min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 relative w-full h-full overflow-hidden">
+        {layout.length === 0 && (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-neutral-500 text-xs">
+            <span>No market heatmap data available</span>
+          </div>
+        )}
         {layout.map((sectorRect) => {
           const sectorData = sectorRect.data as SectorPerformanceItem;
           const isSelected = selectedSector === sectorData.sector;
@@ -259,13 +273,13 @@ export default function SectorTreemap({
                 isSelected
                   ? 'border-white ring-2 ring-white/90 shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-20 scale-[1.012]'
                   : selectedSector
-                  ? 'border-plt-border-soft/50 bg-plt-card opacity-70 hover:opacity-100'
-                  : 'border-plt-border-soft bg-plt-card'
+                  ? 'border-white/10 bg-black opacity-70 hover:opacity-100'
+                  : 'border-white/10 bg-black'
               }`}
               onClick={() => onSelectSector(sectorData.sector)}
             >
-              {/* Sector Header Ribbon (Only if multi-stock group) */}
-              {sectorData.stocks.length > 1 && (() => {
+              {/* Sector Header Ribbon (Only if multi-stock group and ribbon height > 0) */}
+              {sectorData.stocks.length > 1 && (sectorRect.headerHeight ?? 22) > 0 && (() => {
                 let sectorStratRoi = 0;
                 let activeW = 0;
                 let activeL = 0;
@@ -281,11 +295,15 @@ export default function SectorTreemap({
                   }
                 }
                 sectorStratRoi = sectorData.stocks.length > 0 ? sumRoi / sectorData.stocks.length : 0;
+                const ribbonH = sectorRect.headerHeight ?? 20;
 
                 return (
-                  <div className={`h-[20px] px-2 flex items-center justify-between backdrop-blur-sm border-b border-plt-border-soft text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors ${
-                    isSelected ? 'bg-white/15 text-white font-bold' : 'bg-plt-surface/95 text-plt-muted'
-                  }`}>
+                  <div
+                    style={{ height: ribbonH }}
+                    className={`px-2 flex items-center justify-between backdrop-blur-sm border-b border-white/10 text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors ${
+                      isSelected ? 'bg-white/15 text-white font-bold' : 'bg-black/90 text-neutral-400'
+                    }`}
+                  >
                     <span className="truncate max-w-[65%]">
                       {sectorData.sector}
                     </span>

@@ -168,7 +168,7 @@ export default function MarketHeatmapSection({
       {/* 3. Main Workspace: Squarified Treemap (Left) + Constituent Tickers List (Right) */}
       <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch">
         {/* Left Canvas: Treemap without outer border */}
-        <div className="flex-1 min-w-0 bg-black overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
+        <div className="w-full lg:flex-1 min-w-0 bg-black overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] min-h-[500px] sm:min-h-[580px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
           {isLoading ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
               <span className="w-6 h-6 rounded-full border-2 border-profit-num border-t-transparent animate-spin" />

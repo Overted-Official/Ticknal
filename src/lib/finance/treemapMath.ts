@@ -21,6 +21,7 @@ export interface TreemapRect<T = any> {
   width: number;
   height: number;
   children?: TreemapRect<any>[];
+  headerHeight?: number;
 }
 
 interface ContainerBox {
@@ -199,16 +200,29 @@ function squarify(
   for (const rect of result) {
     const originalNode = sorted.find((s) => s.id === rect.id);
     if (originalNode && originalNode.children && originalNode.children.length > 0) {
-      const isSingleStock = originalNode.children.length === 1 && originalNode.children[0].id === originalNode.id;
-      const headerHeight = isSingleStock ? 0 : 22; // Height for sector title ribbon
+      const isSingleStock = originalNode.children.length === 1;
+      let headerHeight = 0;
+      if (!isSingleStock) {
+        if (rect.height >= 48) {
+          headerHeight = 22;
+        } else if (rect.height >= 34) {
+          headerHeight = 16;
+        } else {
+          headerHeight = 0; // Not enough vertical space for ribbon; prioritize displaying stock tiles
+        }
+      }
+
+      const innerW = Math.max(rect.width - (isSingleStock ? 0 : 2), 0);
+      const innerH = Math.max(rect.height - headerHeight - (isSingleStock ? 0 : 1), 0);
       const innerContainer: ContainerBox = {
         x: rect.x + (isSingleStock ? 0 : 1),
         y: rect.y + headerHeight,
-        width: Math.max(rect.width - (isSingleStock ? 0 : 2), 0),
-        height: Math.max(rect.height - headerHeight - (isSingleStock ? 0 : 1), 0),
+        width: innerW > 0 ? innerW : rect.width,
+        height: innerH > 0 ? innerH : rect.height,
       };
       const childTotal = originalNode.children.reduce((acc, c) => acc + c.value, 0);
       rect.children = squarify(originalNode.children, innerContainer, childTotal);
+      rect.headerHeight = headerHeight;
     }
   }
 
