@@ -5,6 +5,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 export interface SettingsNavSection {
   id: string;
   label: string;
+  shortLabel: string;
   badge?: number;
 }
 
@@ -16,9 +17,9 @@ export default function SettingsFloatingNav({
   devicesCount = 0,
 }: SettingsFloatingNavProps) {
   const sections: SettingsNavSection[] = [
-    { id: 'section-profile', label: 'Profile' },
-    { id: 'section-security', label: 'Security & PIN' },
-    { id: 'section-devices', label: 'Devices', badge: devicesCount },
+    { id: 'section-profile', label: 'Profile', shortLabel: 'Profile' },
+    { id: 'section-security', label: 'Security & PIN', shortLabel: 'Security' },
+    { id: 'section-devices', label: 'Devices', shortLabel: 'Devices', badge: devicesCount },
   ];
 
   const [activeSection, setActiveSection] = useState<string>('section-profile');
@@ -81,19 +82,19 @@ export default function SettingsFloatingNav({
   return (
     <nav
       aria-label="Settings Page Sections"
-      className="sticky top-0 z-30 w-full py-2 px-4 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
+      className="sticky top-0 z-30 w-full max-w-full overflow-x-hidden py-1.5 sm:py-2 px-2 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
     >
-      <div className="w-full flex items-center justify-center">
+      <div className="w-full max-w-full min-w-0 flex items-center justify-center">
         {/* TradingView Floating Pill Container */}
         <div
           data-name="round-tabs-anchors"
-          className="relative pointer-events-auto rounded-[36px] border border-[#3d3d3d] bg-black/60 backdrop-blur-[6px] p-1 w-fit max-w-full overflow-hidden shadow-sm"
+          className="relative pointer-events-auto rounded-[36px] border border-white/10 bg-black/80 backdrop-blur-md p-0.5 sm:p-1 w-fit max-w-[calc(100vw-16px)] sm:max-w-full overflow-hidden shadow-sm"
         >
           <div
             id="sticky-navigation-tabs"
             role="tablist"
             aria-orientation="horizontal"
-            className="flex items-center gap-1 overflow-x-auto no-scrollbar"
+            className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar max-w-full"
           >
             {sections.map((sec) => {
               const isSelected = activeSection === sec.id;
@@ -107,16 +108,17 @@ export default function SettingsFloatingNav({
                   aria-selected={isSelected}
                   type="button"
                   onClick={() => scrollToSection(sec.id)}
-                  className={`relative inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap outline-none ${
+                  className={`relative inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs sm:text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap outline-none ${
                     isSelected
-                      ? 'bg-[#2e2e2e] text-white shadow-xs'
-                      : 'bg-transparent text-[#8c8c8c] hover:text-neutral-200 hover:bg-[#2e2e2e]/50 active:bg-[#2e2e2e]'
+                      ? 'bg-white/10 text-white shadow-xs'
+                      : 'bg-transparent text-[#8c8c8c] hover:text-neutral-200 hover:bg-white/[0.05] active:bg-white/10'
                   }`}
                 >
-                  <span className="leading-tight">{sec.label}</span>
+                  <span className="leading-tight sm:hidden">{sec.shortLabel}</span>
+                  <span className="leading-tight hidden sm:inline">{sec.label}</span>
                   {typeof sec.badge === 'number' && sec.badge > 0 && (
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${
+                      className={`text-[9.5px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full tabular-nums ${
                         isSelected
                           ? 'bg-white/20 text-white font-bold'
                           : 'bg-white/[0.08] text-[#8c8c8c]'

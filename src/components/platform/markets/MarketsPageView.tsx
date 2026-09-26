@@ -112,7 +112,7 @@ export default function MarketsPageView() {
   };
 
   return (
-    <div className="command-surface-page flex-1 h-full w-full flex flex-col min-h-0 overflow-y-auto custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
+    <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
       {/* 1. Markets Page Header (Breadcrumbs + Live Indicator) */}
       <header className="px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-4 shrink-0 bg-plt-base">
         <div className="flex items-center gap-1.5 text-xs sm:text-sm">

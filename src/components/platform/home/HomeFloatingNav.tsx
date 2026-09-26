@@ -5,12 +5,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 export interface HomeNavSection {
   id: string;
   label: string;
+  shortLabel: string;
 }
 
 export const HOME_SECTIONS: HomeNavSection[] = [
-  { id: 'section-performance-overview', label: 'Performance Overview' },
-  { id: 'section-my-positions', label: 'My Positions' },
-  { id: 'section-market-signals', label: 'Market Signals' },
+  { id: 'section-performance-overview', label: 'Performance Overview', shortLabel: 'Overview' },
+  { id: 'section-my-positions', label: 'My Positions', shortLabel: 'Positions' },
+  { id: 'section-market-signals', label: 'Market Signals', shortLabel: 'Signals' },
 ];
 
 export default function HomeFloatingNav() {
@@ -73,19 +74,19 @@ export default function HomeFloatingNav() {
   return (
     <nav
       aria-label="Home Page Sections"
-      className="sticky top-0 z-30 w-full py-2 px-4 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
+      className="sticky top-0 z-30 w-full max-w-full overflow-x-hidden py-1.5 sm:py-2 px-2 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
     >
-      <div className="w-full flex items-center justify-center">
+      <div className="w-full max-w-full min-w-0 flex items-center justify-center">
         {/* TradingView Floating Pill Container */}
         <div
           data-name="round-tabs-anchors"
-          className="relative pointer-events-auto rounded-[36px] border border-[#3d3d3d] bg-black/60 backdrop-blur-[6px] p-1 w-fit max-w-full overflow-hidden shadow-sm"
+          className="relative pointer-events-auto rounded-[36px] border border-white/10 bg-black/80 backdrop-blur-md p-0.5 sm:p-1 w-fit max-w-[calc(100vw-16px)] sm:max-w-full overflow-hidden shadow-sm"
         >
           <div
             id="sticky-navigation-tabs"
             role="tablist"
             aria-orientation="horizontal"
-            className="flex items-center gap-1 overflow-x-auto no-scrollbar"
+            className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar max-w-full"
           >
             {HOME_SECTIONS.map((sec) => {
               const isSelected = activeSection === sec.id;
@@ -99,13 +100,14 @@ export default function HomeFloatingNav() {
                   aria-selected={isSelected}
                   type="button"
                   onClick={() => scrollToSection(sec.id)}
-                  className={`relative inline-flex items-center justify-center px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap outline-none ${
+                  className={`relative inline-flex items-center justify-center px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs sm:text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap outline-none ${
                     isSelected
-                      ? 'bg-[#2e2e2e] text-white shadow-xs'
-                      : 'bg-transparent text-[#8c8c8c] hover:text-neutral-200 hover:bg-[#2e2e2e]/50 active:bg-[#2e2e2e]'
+                      ? 'bg-white/10 text-white shadow-xs'
+                      : 'bg-transparent text-[#8c8c8c] hover:text-neutral-200 hover:bg-white/[0.05] active:bg-white/10'
                   }`}
                 >
-                  <span className="leading-tight">{sec.label}</span>
+                  <span className="leading-tight sm:hidden">{sec.shortLabel}</span>
+                  <span className="leading-tight hidden sm:inline">{sec.label}</span>
                 </button>
               );
             })}

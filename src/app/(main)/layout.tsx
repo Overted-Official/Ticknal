@@ -13,7 +13,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <AlertProvider>
         <PinLockProvider>
           <MobileNavScrollProvider>
-            <div className="app-shell flex h-dvh w-screen flex-col overflow-hidden md:flex-row">
+            <div className="app-shell flex h-dvh w-full max-w-full overflow-hidden md:flex-row">
               <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col">
                 <PageTransition>{children}</PageTransition>
               </div>

@@ -138,7 +138,7 @@ export default function StrategiesPageView() {
   };
 
   return (
-    <div className="flex-1 w-full bg-black text-white flex flex-col font-sans select-none overflow-y-auto command-surface-page">
+    <div className="flex-1 w-full max-w-full bg-black text-white flex flex-col font-sans select-none overflow-y-auto overflow-x-hidden command-surface-page">
       {/* 1. Page Header */}
       <header className="px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-4 shrink-0 bg-black flex-wrap">
         {/* Left: Breadcrumbs aligned with Home */}

@@ -723,6 +723,11 @@ textarea:focus-visible {
   border-color: var(--border-card-strong);
 }
 
+.command-surface-page {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 .command-surface-page .card-shell,
 .command-surface-page .card-widget,
 .command-surface-page .card-widget-compact {

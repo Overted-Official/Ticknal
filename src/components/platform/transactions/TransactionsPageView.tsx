@@ -93,7 +93,7 @@ export default function TransactionsPageView({
   }, [closedTrades, timeframe]);
 
   return (
-    <div className="command-surface-page flex-1 h-full w-full flex flex-col min-h-0 overflow-y-auto custom-scrollbar bg-plt-base text-plt-text select-none">
+    <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none">
       {/* 1. Header & Breadcrumb */}
       <div className="px-4 sm:px-6 pt-3 pb-1 shrink-0 bg-plt-base">
         <TransactionsHeader />

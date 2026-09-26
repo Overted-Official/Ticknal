@@ -196,9 +196,9 @@ export default function MarketSignalsSection({
         />
 
         {/* Right Corner: Quick Access (1D, 5D, 10D) + From / To Date Inputs */}
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto max-w-full min-w-0">
           {/* Quick Range Switch Buttons */}
-          <div className="seg-control">
+          <div className="seg-control shrink-0">
             {(['1D', '5D', '10D'] as const).map((r) => {
               const isActive = quickRange === r;
               return (
@@ -215,7 +215,7 @@ export default function MarketSignalsSection({
           </div>
 
           {/* From / To Date Inputs */}
-          <div className="h-9 flex items-center gap-2 bg-surface-raised border border-border-subtle rounded-xl px-3 text-xs text-text-muted">
+          <div className="h-9 flex items-center gap-2 bg-surface-raised border border-border-subtle rounded-xl px-2.5 sm:px-3 text-xs text-text-muted max-w-full overflow-x-auto no-scrollbar">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">From</span>
             <input
               type="date"

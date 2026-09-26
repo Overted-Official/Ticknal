@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
 
       <body
-        className="min-h-full flex flex-col font-sans bg-plt-base text-plt-text"
+        className="min-h-full flex flex-col font-sans bg-plt-base text-plt-text overflow-x-hidden max-w-full"
         suppressHydrationWarning
       >
         {children}
