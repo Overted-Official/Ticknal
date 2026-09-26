@@ -126,16 +126,16 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Mobile Floating Action Buttons (Aligned Above Bottom Bar) */}
+      {/* Mobile Floating Action Buttons (Positioned safely above the bottom tab bar) */}
       <div
-        className={`fixed bottom-18 right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
+        className={`fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px)+16px)] right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
           isNavVisible
             ? 'translate-y-0 opacity-100 pointer-events-auto'
             : 'translate-y-16 opacity-0 pointer-events-none'
         }`}
         aria-label="Mobile Quick Actions"
       >
-        {/* 1. Alerts & Notifications Button (Slightly bigger: 46x46) */}
+        {/* 1. Alerts & Notifications Button (44x44) */}
         <motion.button
           type="button"
           onClick={() => {
@@ -144,7 +144,7 @@ export default function BottomNav() {
           }}
           whileHover={controlHover}
           whileTap={controlTap}
-          className="w-[46px] h-[46px] rounded-full bg-black/90 backdrop-blur-xl border border-white/15 text-white shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
+          className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
           title="Trade Notifications & Alerts"
         >
           <Bell size={20} strokeWidth={1.8} className="text-white" />
@@ -155,7 +155,7 @@ export default function BottomNav() {
           )}
         </motion.button>
 
-        {/* 2. Quick Add Position / Transaction Button (Slightly bigger: 46x46) */}
+        {/* 2. Quick Add Position / Transaction Button (44x44) */}
         <motion.button
           type="button"
           onClick={() => {
@@ -164,7 +164,7 @@ export default function BottomNav() {
           }}
           whileHover={controlHover}
           whileTap={controlTap}
-          className="w-[46px] h-[46px] rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all group"
+          className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all group"
           title="Quick Add Position or Transaction"
         >
           <Plus size={22} strokeWidth={2.2} className="text-white group-hover:scale-110 transition-transform" />
@@ -177,10 +177,10 @@ export default function BottomNav() {
             onClick={() => setIsMoreOpen((prev) => !prev)}
             whileHover={controlHover}
             whileTap={controlTap}
-            className={`w-[40px] h-[40px] rounded-full backdrop-blur-xl border shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition-all ${
+            className={`w-10 h-10 rounded-full backdrop-blur-xl border shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition-all ${
               isMoreOpen
                 ? 'bg-white/[0.18] border-white/30 text-white'
-                : 'bg-black/90 border-white/12 text-white/80 hover:text-white'
+                : 'bg-black/90 border-white/15 text-white/80 hover:text-white'
             }`}
             title="More actions"
             aria-expanded={isMoreOpen}
@@ -220,7 +220,7 @@ export default function BottomNav() {
         </div>
       </div>
 
-      {/* Main Modern Mobile Bottom Bar — Matches Desktop Side Nav Styling */}
+      {/* Main Native Mobile Bottom Bar — Pure Black, Flawlessly Centered, Crisp Active States */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 md:hidden transition-transform duration-300 ease-out select-none ${
           isNavVisible
@@ -229,8 +229,8 @@ export default function BottomNav() {
         }`}
         aria-label="Mobile Navigation"
       >
-        <nav className="relative bg-black/95 backdrop-blur-xl border-t border-border-default shadow-[0_-4px_24px_rgba(0,0,0,0.8)] pb-[max(env(safe-area-inset-bottom),0.35rem)]">
-          <div className="h-[54px] flex items-center justify-around px-1.5">
+        <nav className="relative bg-black border-t border-white/[0.08] shadow-[0_-4px_24px_rgba(0,0,0,0.85)] pb-[env(safe-area-inset-bottom,0px)]">
+          <div className="h-[56px] grid grid-cols-5 w-full items-center px-1">
             {NAV_ITEMS.map((item) => {
               const isActive = currentNavId === item.id;
               const Icon = item.icon;
@@ -242,25 +242,36 @@ export default function BottomNav() {
                   prefetch={true}
                   onClick={() => setOptimisticNavId(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group focus:outline-none min-w-0"
+                  className="flex flex-col items-center justify-center h-full py-1 cursor-pointer group focus:outline-none min-w-0 active:scale-95 transition-transform duration-100"
                 >
-                  {/* Icon container matching desktop nav-icon style */}
+                  {/* Subtle active indicator pill */}
                   <div
-                    className={`w-9 h-7 rounded-lg flex items-center justify-center transition-all duration-150 ${
+                    className={`h-[2px] w-5 rounded-full transition-all duration-200 mb-1 ${
                       isActive
-                        ? 'bg-white/[0.1] border border-white/10 text-white shadow-xs'
-                        : 'text-[#9ca3af] group-hover:text-white'
+                        ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]'
+                        : 'bg-transparent'
                     }`}
-                  >
-                    <Icon size={18} strokeWidth={isActive ? 2 : 1.6} />
+                  />
+
+                  {/* Icon */}
+                  <div className="flex items-center justify-center">
+                    <Icon
+                      size={20}
+                      strokeWidth={isActive ? 2.2 : 1.7}
+                      className={`transition-colors duration-150 ${
+                        isActive
+                          ? 'text-white'
+                          : 'text-zinc-500 group-hover:text-zinc-300'
+                      }`}
+                    />
                   </div>
 
-                  {/* Clean micro-label */}
+                  {/* Micro label */}
                   <span
-                    className={`text-[9.5px] font-sans tracking-tight leading-tight mt-0.5 truncate max-w-[58px] text-center transition-colors ${
+                    className={`text-[10px] font-sans tracking-tight leading-tight mt-0.5 truncate max-w-[62px] text-center transition-colors duration-150 ${
                       isActive
                         ? 'font-semibold text-white'
-                        : 'font-normal text-text-muted group-hover:text-white/80'
+                        : 'font-medium text-zinc-500 group-hover:text-zinc-300'
                     }`}
                   >
                     {item.label}

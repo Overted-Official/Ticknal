@@ -16,7 +16,7 @@ const spectral = Spectral({
   subsets: ["latin"],
 });
 
-const APP_THEME_COLOR = "black";
+const APP_THEME_COLOR = "#000000";
 
 
 export const metadata: Metadata = {
