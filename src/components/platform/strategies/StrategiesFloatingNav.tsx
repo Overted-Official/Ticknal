@@ -84,7 +84,7 @@ export default function StrategiesFloatingNav() {
             id="sticky-navigation-tabs"
             role="tablist"
             aria-orientation="horizontal"
-            className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full px-1 sm:px-1.5"
+            className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full"
           >
             {STRATEGY_SECTIONS.map((sec) => {
               const isSelected = activeSection === sec.id;

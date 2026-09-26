@@ -45,7 +45,7 @@ export default function SidebarNav() {
         className="mb-3 w-8 h-8 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center"
         title="Ticknal Home"
       >
-        <Image src="/logo-mark.svg" alt="Ticknal" width={22} height={22} className="object-contain" priority />
+        <Image src="/logo-white.svg" alt="Ticknal" width={22} height={22} className="object-contain" priority />
       </Link>
 
       <div className="flex-1 flex flex-col space-y-2.5 w-full items-center">

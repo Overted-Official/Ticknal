@@ -86,7 +86,7 @@ export default function HomeFloatingNav() {
             id="sticky-navigation-tabs"
             role="tablist"
             aria-orientation="horizontal"
-            className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full px-1 sm:px-1.5"
+            className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full"
           >
             {HOME_SECTIONS.map((sec) => {
               const isSelected = activeSection === sec.id;
