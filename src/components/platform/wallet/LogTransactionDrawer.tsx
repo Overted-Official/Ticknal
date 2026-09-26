@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRightLeft, X, Check, ChevronDown } from '@/components/ui/icon-library';
+import { ArrowRightLeft, X, Check, ChevronDown, Trash2 } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
 import useSWR from 'swr';
@@ -18,6 +18,7 @@ interface LogTransactionDrawerProps {
   categories?: string[];
   onTransactionLogged: () => void;
   transactionToEdit?: BankTransaction | null;
+  onDeleteTransaction?: (id: number) => Promise<void> | void;
 }
 
 const modeDescriptions: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION', string> = {
@@ -34,10 +35,12 @@ export default function LogTransactionDrawer({
   categories = ['Living & Bills'],
   onTransactionLogged,
   transactionToEdit,
+  onDeleteTransaction,
 }: LogTransactionDrawerProps) {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fallback to fetch accounts dynamically if not provided by parent
   const { data: fetchedAccountsData } = useSWR<{ accounts: BankAccount[] }>(
@@ -162,6 +165,33 @@ export default function LogTransactionDrawer({
       toast.error('Network Error', 'Could not reach server.');
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!transactionToEdit) return;
+    if (!confirm('Are you sure you want to permanently delete this transaction?')) return;
+    setIsDeleting(true);
+    try {
+      if (onDeleteTransaction) {
+        await onDeleteTransaction(transactionToEdit.id);
+      } else {
+        const res = await fetch(`/api/banks/transactions?id=${transactionToEdit.id}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) {
+          toast.error('Delete Failed', 'Failed to delete transaction.');
+          return;
+        }
+      }
+      toast.success('Transaction Deleted', 'The transaction has been removed.');
+      onTransactionLogged();
+      onClose();
+    } catch (err) {
+      console.error('Failed to delete transaction:', err);
+      toast.error('Delete Error', 'An error occurred while deleting the transaction.');
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -376,6 +406,18 @@ export default function LogTransactionDrawer({
 
               {/* Drawer Footer with standardized buttons */}
               <div className="drawer-footer">
+                {isEditMode && transactionToEdit && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isDeleting || isSubmitting}
+                    className="h-10 px-3.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold font-sans flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+                    title="Delete transaction"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={onClose}
@@ -385,7 +427,7 @@ export default function LogTransactionDrawer({
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isDeleting}
                   className="drawer-confirm-btn"
                 >
                   <Check className="drawer-btn-icon" strokeWidth={2.5} />

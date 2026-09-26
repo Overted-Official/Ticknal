@@ -18,7 +18,6 @@ import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { formatCleanAccountTitle } from '@/lib/format-bank-name';
 import { type UnifiedLedgerItem, type ClosedTradeItem, type LedgerFilterType } from './types';
 import TransactionRowItem from './TransactionRowItem';
-import TransactionDetailDrawer from './TransactionDetailDrawer';
 import LogTransactionDrawer from '@/components/platform/wallet/LogTransactionDrawer';
 
 interface TransactionsLedgerSectionProps {
@@ -67,7 +66,6 @@ export default function TransactionsLedgerSection({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState('ALL');
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
-  const [selectedItemForDrawer, setSelectedItemForDrawer] = useState<UnifiedLedgerItem | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<BankTransaction | null>(null);
   const [isLogDrawerOpen, setIsLogDrawerOpen] = useState(false);
 
@@ -382,6 +380,13 @@ export default function TransactionsLedgerSection({
     setIsLogDrawerOpen(true);
   };
 
+  const handleRowClick = (item: UnifiedLedgerItem) => {
+    if (item.rawTransaction) {
+      setEditingTransaction(item.rawTransaction);
+      setIsLogDrawerOpen(true);
+    }
+  };
+
   return (
     <section id="section-activity-ledger" className="section-container section-viewport-fit space-y-3 sm:space-y-4">
       {/* 1. Header with Title & Live Stats */}
@@ -645,7 +650,7 @@ export default function TransactionsLedgerSection({
                       key={item.id}
                       item={item}
                       formatMoney={formatMoney}
-                      onClick={setSelectedItemForDrawer}
+                      onClick={handleRowClick}
                     />
                   ))
                 )}
@@ -675,7 +680,7 @@ export default function TransactionsLedgerSection({
                       key={item.id}
                       item={item}
                       formatMoney={formatMoney}
-                      onClick={setSelectedItemForDrawer}
+                      onClick={handleRowClick}
                     />
                   ))
                 )}
@@ -700,23 +705,13 @@ export default function TransactionsLedgerSection({
                   key={item.id}
                   item={item}
                   formatMoney={formatMoney}
-                  onClick={setSelectedItemForDrawer}
+                  onClick={handleRowClick}
                 />
               ))}
             </div>
           </div>
         )}
       </div>
-
-      {/* Detail Drawer (Matches TickerPositionsDrawer) */}
-      <TransactionDetailDrawer
-        isOpen={Boolean(selectedItemForDrawer)}
-        onClose={() => setSelectedItemForDrawer(null)}
-        item={selectedItemForDrawer}
-        onEdit={handleEditTransaction}
-        onDelete={handleDeleteTransaction}
-        formatMoney={formatMoney}
-      />
 
       {/* Log / Edit Transaction Drawer */}
       <LogTransactionDrawer
@@ -728,6 +723,7 @@ export default function TransactionsLedgerSection({
         accounts={accounts}
         categories={categories}
         transactionToEdit={editingTransaction}
+        onDeleteTransaction={handleDeleteTransaction}
         onTransactionLogged={() => {
           if (onTransactionsChanged) onTransactionsChanged();
         }}
