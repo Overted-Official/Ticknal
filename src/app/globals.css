@@ -2348,6 +2348,7 @@ textarea:focus-visible {
 .z-lock-underlay { z-index: var(--z-lock-underlay); }
 .max-h-drawer-mobile { max-height: var(--height-drawer-mobile); }
 .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
 .will-change-nav { will-change: transform, max-height, opacity; }
 .modal-search-offset { padding-top: var(--offset-modal-search); }
 

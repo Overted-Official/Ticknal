@@ -204,18 +204,26 @@ export default function PinLockScreen({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-between py-10 px-6 text-white select-none overflow-hidden"
+      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-between pt-[max(env(safe-area-inset-top,0px),2.5rem)] pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] px-6 text-white select-none overflow-hidden"
     >
       {/* Top Header */}
-      <div className="flex flex-col items-center text-center space-y-3 mt-4">
-        <div className="w-14 h-14 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shadow-[0_0_24px_rgba(255,255,255,0.06)] relative">
-          <Lock size={22} className="text-white" />
-          <div className="absolute inset-0 rounded-full border border-white/20 animate-pulse" />
+      <div className="flex flex-col items-center text-center space-y-3">
+        <div className="relative">
+          {/* Ambient brand gradient glow */}
+          <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-[#00BCE6]/30 via-[#2962FF]/30 to-[#D500F9]/30 blur-xl opacity-75 animate-pulse" />
+          <div className="relative w-16 h-16 rounded-full bg-black/90 border border-white/15 flex items-center justify-center shadow-[0_0_30px_rgba(41,98,255,0.25)]">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#00BCE6]/15 via-[#2962FF]/15 to-[#D500F9]/15 flex items-center justify-center border border-white/10">
+              <Lock size={22} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+            </div>
+          </div>
         </div>
 
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-white">Ticknal Security</h2>
-          <p className="text-xs text-white/50 mt-1">Enter your 4-digit passcode to unlock</p>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Ticknal Security</h2>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-1.5 rounded-full bg-white/[0.04] border border-white/[0.08]">
+            <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] animate-pulse" />
+            <p className="text-[11px] sm:text-xs text-white/60 font-medium">Enter 4-digit passcode to unlock</p>
+          </div>
         </div>
       </div>
 
@@ -234,8 +242,8 @@ export default function PinLockScreen({
                 className={`w-4 h-4 rounded-full transition-all duration-200 ${
                   isFilled
                     ? isError
-                      ? 'bg-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.6)] scale-115'
-                      : 'bg-white shadow-[0_0_14px_rgba(255,255,255,0.5)] scale-110'
+                      ? 'bg-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.7)] scale-115 border border-rose-400'
+                      : 'bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] shadow-[0_0_16px_rgba(41,98,255,0.75)] scale-115 border border-white/40'
                     : 'bg-white/10 border border-white/20'
                 }`}
               />
@@ -260,8 +268,8 @@ export default function PinLockScreen({
         </div>
       </div>
 
-      {/* Numeric Keypad (3x4) with circular buttons and bigger numbers */}
-      <div className="w-full max-w-[290px] sm:max-w-[320px] mx-auto space-y-4 sm:space-y-4.5 mb-4">
+      {/* Numeric Keypad (3x4) with circular buttons, large numbers and brand gradient highlights */}
+      <div className="w-full max-w-[300px] sm:max-w-[330px] mx-auto space-y-4 sm:space-y-4.5 mb-2 sm:mb-4">
         {/* Rows 1-3 */}
         {[
           ['1', '2', '3'],
@@ -275,9 +283,13 @@ export default function PinLockScreen({
                 type="button"
                 onClick={() => handleDigit(digit)}
                 disabled={isVerifying}
-                className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[34px] sm:text-[40px] font-sans font-light sm:font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
+                className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
               >
-                {digit}
+                <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
+                  <span className="text-3xl sm:text-4xl font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+                    {digit}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
@@ -291,19 +303,23 @@ export default function PinLockScreen({
             type="button"
             onClick={() => handleDigit('0')}
             disabled={isVerifying}
-            className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[34px] sm:text-[40px] font-sans font-light sm:font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none disabled:opacity-50"
+            className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
           >
-            0
+            <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
+              <span className="text-3xl sm:text-4xl font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+                0
+              </span>
+            </div>
           </button>
 
           <button
             type="button"
             onClick={handleBackspace}
             disabled={pin.length === 0 || isVerifying}
-            className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square bg-transparent hover:bg-white/[0.08] active:bg-white/[0.16] active:scale-95 flex items-center justify-center text-white/50 hover:text-white transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
+            className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square flex items-center justify-center text-white/50 hover:text-white active:scale-95 active:text-rose-400 hover:bg-white/[0.06] transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
             title="Delete"
           >
-            <Delete size={26} className="sm:w-7 sm:h-7" />
+            <Delete size={28} className="sm:w-8 sm:h-8" />
           </button>
         </div>
       </div>

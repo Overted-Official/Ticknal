@@ -14,7 +14,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <PinLockProvider>
           <MobileNavScrollProvider>
             <div className="app-shell flex h-dvh w-full max-w-full overflow-hidden md:flex-row">
-              <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col">
+              <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col pt-[env(safe-area-inset-top,0px)] md:pt-0">
                 <PageTransition>{children}</PageTransition>
               </div>
               <div className="hidden md:flex h-full shrink-0 z-50">
