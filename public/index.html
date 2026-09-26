@@ -25,32 +25,74 @@
       align-items: center;
       gap: 16px;
     }
-    .logo {
-      width: 80px;
-      height: 80px;
-      animation: pulse 2s infinite ease-in-out;
+    .loading-stage {
+      position: relative;
+      width: 112px;
+      height: 112px;
+      display: grid;
+      place-items: center;
     }
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #10b981;
+    .ambient-glow {
+      position: absolute;
+      inset: -64px;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      background: radial-gradient(circle, #2962FF 0%, #00BCE6 40%, #D500F9 80%, transparent 100%);
+      filter: blur(36px);
+      opacity: 0.25;
+      pointer-events: none;
     }
-    @keyframes spin {
+    .comet-orbit {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: center;
+      animation: comet-orbit 1.8s linear infinite;
+    }
+    .logo {
+      position: relative;
+      z-index: 1;
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+    }
+    @keyframes comet-orbit {
       to { transform: rotate(360deg); }
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.8; transform: scale(0.96); }
+    @media (prefers-reduced-motion: reduce) {
+      .comet-orbit { animation: none; }
     }
   </style>
 </head>
 <body>
   <div class="logo-container">
-    <img src="/Ticknal_icon.svg" alt="Ticknal Logo" class="logo" onerror="this.style.display='none'">
-    <div class="spinner"></div>
+    <div class="loading-stage" aria-label="Loading Ticknal">
+      <div class="ambient-glow"></div>
+      <svg class="comet-orbit" viewBox="0 0 112 112" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="fallbackCometTrail" x1="102" y1="56" x2="19" y2="84" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#00BCE6" stop-opacity="0.5" />
+            <stop offset="0.42" stop-color="#2962FF" stop-opacity="0.85" />
+            <stop offset="0.78" stop-color="#7C3AED" />
+            <stop offset="1" stop-color="#D500F9" />
+          </linearGradient>
+          <filter id="fallbackCometGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <g filter="url(#fallbackCometGlow)">
+          <circle cx="56" cy="56" r="46" stroke="#00BCE6" stroke-opacity="0.16" stroke-width="1.35" />
+          <circle cx="56" cy="56" r="46" stroke="url(#fallbackCometTrail)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="115 174" />
+          <circle cx="19" cy="84" r="6.5" fill="#D500F9" opacity="0.18" />
+          <circle cx="19" cy="84" r="3.25" fill="#D500F9" />
+        </g>
+      </svg>
+      <img class="logo" src="/logo-white.svg" alt="Ticknal" />
+    </div>
   </div>
   <script>
     // In live server mode, navigate to dashboard immediately

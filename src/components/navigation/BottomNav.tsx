@@ -177,7 +177,7 @@ export default function BottomNav() {
             onClick={() => setIsMoreOpen((prev) => !prev)}
             whileHover={controlHover}
             whileTap={controlTap}
-            className={`w-10 h-10 rounded-full backdrop-blur-xl border shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition-all ${
+            className={`w-11 h-11 rounded-full backdrop-blur-xl border shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition-all ${
               isMoreOpen
                 ? 'bg-white/[0.18] border-white/30 text-white'
                 : 'bg-black/90 border-white/15 text-white/80 hover:text-white'

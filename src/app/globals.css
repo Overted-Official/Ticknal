@@ -2421,6 +2421,7 @@ textarea:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
+
 }
 
 /* Hide TradingView attribution logo mark across all chart canvases */
