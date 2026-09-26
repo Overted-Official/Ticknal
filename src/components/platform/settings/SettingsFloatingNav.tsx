@@ -82,19 +82,19 @@ export default function SettingsFloatingNav({
   return (
     <nav
       aria-label="Settings Page Sections"
-      className="sticky top-0 z-30 w-full max-w-full overflow-x-hidden py-1.5 sm:py-2 px-2 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
+      className="sticky top-0 z-30 w-full py-2.5 sm:py-3 px-3 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
     >
       <div className="w-full max-w-full min-w-0 flex items-center justify-center">
         {/* TradingView Floating Pill Container */}
         <div
           data-name="round-tabs-anchors"
-          className="relative pointer-events-auto rounded-[36px] border border-white/10 bg-black/80 backdrop-blur-md p-0.5 sm:p-1 w-fit max-w-[calc(100vw-16px)] sm:max-w-full overflow-hidden shadow-sm"
+          className="relative pointer-events-auto rounded-full border border-white/15 bg-black/90 backdrop-blur-xl p-1 sm:p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.8)] flex items-center justify-center max-w-[calc(100vw-24px)] sm:max-w-full"
         >
           <div
             id="sticky-navigation-tabs"
             role="tablist"
             aria-orientation="horizontal"
-            className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar max-w-full"
+            className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full px-1 sm:px-1.5"
           >
             {sections.map((sec) => {
               const isSelected = activeSection === sec.id;
@@ -108,20 +108,20 @@ export default function SettingsFloatingNav({
                   aria-selected={isSelected}
                   type="button"
                   onClick={() => scrollToSection(sec.id)}
-                  className={`relative inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs sm:text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap outline-none ${
+                  className={`relative inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-[13px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap outline-none ${
                     isSelected
-                      ? 'bg-white/10 text-white shadow-xs'
-                      : 'bg-transparent text-[#8c8c8c] hover:text-neutral-200 hover:bg-white/[0.05] active:bg-white/10'
+                      ? 'bg-white/15 text-white font-semibold shadow-xs'
+                      : 'bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.06] active:bg-white/10'
                   }`}
                 >
-                  <span className="leading-tight sm:hidden">{sec.shortLabel}</span>
-                  <span className="leading-tight hidden sm:inline">{sec.label}</span>
+                  <span className="leading-none sm:hidden">{sec.shortLabel}</span>
+                  <span className="leading-none hidden sm:inline">{sec.label}</span>
                   {typeof sec.badge === 'number' && sec.badge > 0 && (
                     <span
-                      className={`text-[9.5px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full tabular-nums ${
+                      className={`text-[9.5px] sm:text-[10px] px-1.5 py-0.5 rounded-full tabular-nums ${
                         isSelected
                           ? 'bg-white/20 text-white font-bold'
-                          : 'bg-white/[0.08] text-[#8c8c8c]'
+                          : 'bg-white/[0.08] text-zinc-400'
                       }`}
                     >
                       {sec.badge}
