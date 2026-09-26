@@ -6,13 +6,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRightLeft, X, Check, ChevronDown } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
+import useSWR from 'swr';
 import AccountSelectDropdown from './AccountSelectDropdown';
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface LogTransactionDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  accounts: BankAccount[];
-  categories: string[];
+  accounts?: BankAccount[];
+  categories?: string[];
   onTransactionLogged: () => void;
   transactionToEdit?: BankTransaction | null;
 }
@@ -27,8 +30,8 @@ const modeDescriptions: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJEC
 export default function LogTransactionDrawer({
   isOpen,
   onClose,
-  accounts,
-  categories,
+  accounts = [],
+  categories = ['Living & Bills'],
   onTransactionLogged,
   transactionToEdit,
 }: LogTransactionDrawerProps) {
@@ -36,8 +39,15 @@ export default function LogTransactionDrawer({
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Fallback to fetch accounts dynamically if not provided by parent
+  const { data: fetchedAccountsData } = useSWR<{ accounts: BankAccount[] }>(
+    isOpen && (!accounts || accounts.length === 0) ? '/api/banks/accounts' : null,
+    fetcher
+  );
+  const resolvedAccounts = accounts && accounts.length > 0 ? accounts : (fetchedAccountsData?.accounts ?? []);
+
   const isEditMode = Boolean(transactionToEdit);
-  const defaultAccount = accounts.find((a) => a.isDefaultExpense) || accounts[0];
+  const defaultAccount = resolvedAccounts.find((a) => a.isDefaultExpense) || resolvedAccounts[0];
 
   const [txMode, setTxMode] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION'>('EXPENSE');
   const [accountId, setAccountId] = useState<string>(defaultAccount ? String(defaultAccount.id) : '');
@@ -80,17 +90,30 @@ export default function LogTransactionDrawer({
       setTransactionDate(transactionToEdit.transactionDate || new Date().toISOString().split('T')[0]);
       setNotes(transactionToEdit.notes || '');
     } else {
-      const defAcc = accounts.find((a) => a.isDefaultExpense) || accounts[0];
+      const defAcc = resolvedAccounts.find((a) => a.isDefaultExpense) || resolvedAccounts[0];
       setTxMode('EXPENSE');
-      setAccountId(defAcc ? String(defAcc.id) : '');
+      if (defAcc) {
+        setAccountId(String(defAcc.id));
+        setCurrency(defAcc.currency || 'EGP');
+      }
       setToAccountId('');
       setAmount('');
-      setCurrency(defAcc?.currency || 'EGP');
       setCategory(categories[0] || 'Living & Bills');
       setTransactionDate(new Date().toISOString().split('T')[0]);
       setNotes('');
     }
-  }, [isOpen, transactionToEdit, accounts, categories]);
+  }, [isOpen, transactionToEdit, resolvedAccounts, categories]);
+
+  // Handle case where resolvedAccounts arrives after drawer opens
+  useEffect(() => {
+    if (isOpen && !transactionToEdit && resolvedAccounts.length > 0 && !accountId) {
+      const defAcc = resolvedAccounts.find((a) => a.isDefaultExpense) || resolvedAccounts[0];
+      if (defAcc) {
+        setAccountId(String(defAcc.id));
+        setCurrency(defAcc.currency || 'EGP');
+      }
+    }
+  }, [isOpen, transactionToEdit, resolvedAccounts, accountId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -262,11 +285,11 @@ export default function LogTransactionDrawer({
                     {txMode === 'TRANSFER' ? 'From Account (Source) *' : 'Account *'}
                   </label>
                   <AccountSelectDropdown
-                    accounts={accounts}
+                    accounts={resolvedAccounts}
                     selectedAccountId={accountId}
                     onSelectAccount={(accId) => {
                       setAccountId(accId);
-                      const sel = accounts.find((a) => String(a.id) === accId);
+                      const sel = resolvedAccounts.find((a) => String(a.id) === accId);
                       if (sel) setCurrency(sel.currency);
                     }}
                     placeholder="Select source bank account..."
@@ -278,7 +301,7 @@ export default function LogTransactionDrawer({
                   <div className="drawer-form-field">
                     <label className="field-label">To Account (Destination) *</label>
                     <AccountSelectDropdown
-                      accounts={accounts}
+                      accounts={resolvedAccounts}
                       selectedAccountId={toAccountId}
                       onSelectAccount={setToAccountId}
                       excludeAccountId={accountId}
