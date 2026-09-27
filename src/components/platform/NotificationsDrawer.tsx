@@ -24,6 +24,8 @@ export type SignalNotificationItem = {
   signalDate: string;
   signal: string;
   strategy?: string | null;
+  signalBarsAgo?: number | null;
+  dataAsOf?: string | null;
   sentAt: string;
   companyName?: string | null;
   logoUrl?: string | null;
@@ -46,7 +48,11 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 /** Returns a concise label for a date grouping header */
 function formatGroupLabel(dateStr: string): string {
   try {
-    const d = new Date(dateStr);
+    const datePart = dateStr.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    const d = year && month && day
+      ? new Date(year, month - 1, day)
+      : new Date(dateStr);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -59,6 +65,16 @@ function formatGroupLabel(dateStr: string): string {
   } catch {
     return dateStr;
   }
+}
+
+function formatSignalAge(item: SignalNotificationItem): string {
+  if (typeof item.signalBarsAgo === 'number') {
+    if (item.signalBarsAgo === 0) return 'Latest session';
+    if (item.signalBarsAgo === 1) return '1 session ago';
+    return `${item.signalBarsAgo} sessions ago`;
+  }
+
+  return formatGroupLabel(item.signalDate);
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -178,19 +194,18 @@ export default function NotificationsDrawer({
     return notifications.filter((n) => (n.rotationRegime || 'Leading') === selectedRegime);
   }, [notifications, selectedRegime]);
 
-  /** Group filtered notifications by calendar date of sentAt */
+  /** Group notifications by the session that produced the signal. */
   const groupedNotifications = useMemo(() => {
     const groups: { label: string; dateKey: string; items: SignalNotificationItem[] }[] = [];
     const seen = new Map<string, number>();
 
     for (const item of filteredNotifications) {
-      const d = new Date(item.sentAt);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const key = item.signalDate.split('T')[0];
       if (seen.has(key)) {
         groups[seen.get(key)!].items.push(item);
       } else {
         seen.set(key, groups.length);
-        groups.push({ label: formatGroupLabel(item.sentAt), dateKey: key, items: [item] });
+        groups.push({ label: formatGroupLabel(item.signalDate), dateKey: key, items: [item] });
       }
     }
     return groups;
@@ -515,12 +530,15 @@ export default function NotificationsDrawer({
                                 {/* Right: Time stack + compact action buttons */}
                                 <div className="flex items-center gap-2 shrink-0 pl-1.5">
                                   {/* Compact Time + Date */}
-                                  <div className="text-right leading-tight hidden xs:block sm:block">
-                                    <div className="text-[11px] font-medium text-white tabular-nums">
-                                      {formatTimeAgo(item.sentAt)}
+                                  <div
+                                    className="text-right leading-tight shrink-0 max-w-[78px]"
+                                    title={`Delivered ${formatTimeAgo(item.sentAt)}`}
+                                  >
+                                    <div className="text-[10px] font-medium text-white tabular-nums whitespace-nowrap">
+                                      {formatSignalAge(item)}
                                     </div>
                                     <div className="text-[9.5px] text-text-muted tabular-nums mt-0.5">
-                                      {item.signalDate}
+                                      {item.signalDate.split('T')[0]}
                                     </div>
                                   </div>
 

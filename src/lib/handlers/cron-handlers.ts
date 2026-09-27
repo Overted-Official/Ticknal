@@ -243,7 +243,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
     let notificationResult: any = null;
     if (totalUpdated > 0 && Date.now() - startTime < 42000) {
       try {
-        notificationResult = await dispatchSignalNotifications({ lookbackBars: 5 });
+        notificationResult = await dispatchSignalNotifications({ lookbackBars: 1 });
         await db.insert(systemLogs).values({
           source: 'cron-stocks-signals',
           level: 'INFO',
@@ -602,7 +602,7 @@ export async function handleProcessSignals(req: Request) {
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    const notificationResult = await dispatchSignalNotifications({ lookbackBars: 5 });
+    const notificationResult = await dispatchSignalNotifications({ lookbackBars: 1 });
     
     await db.insert(systemLogs).values({
       source: 'cron-signals',

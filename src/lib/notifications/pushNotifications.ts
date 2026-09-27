@@ -13,6 +13,7 @@ import {
 } from '@/lib/strategy-analysis';
 import { getOrInitPrecomputedCache } from '@/lib/handlers/sectors-handlers';
 import type { TickerChampionInfo } from '@/lib/finance/sectors-math';
+import { getLatestBarDate, isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 type DispatchStrategyId = Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>;
@@ -84,14 +85,22 @@ export async function dispatchSignalNotifications(options: {
 
   const lookbackBars = Math.max(1, options.lookbackBars ?? 5);
 
-  // Fetch custom user strategy settings
-  const { userStrategySettings } = await import('@/db/schema');
-  const userSettingsRows = await db.select().from(userStrategySettings);
-  const userSettingsMap = groupBy(userSettingsRows, (setting) => `${setting.userId}-${setting.tickerSymbol}`);
-
   // Load precomputed bars and indicators cache
   const cache = await getOrInitPrecomputedCache();
   const barsByTicker = cache.barsByTicker;
+  const latestEquitySession = Array.from(barsByTicker.entries()).reduce<string | null>(
+    (latest, [ticker, bars]) => {
+      if (!isSignalEligibleEquity(ticker, cache.tickerMap.get(ticker))) return latest;
+      const latestBarDate = getLatestBarDate(bars);
+      return latestBarDate && (!latest || latestBarDate > latest) ? latestBarDate : latest;
+    },
+    null,
+  );
+
+  if (!latestEquitySession) {
+    result.messages.push('No eligible equity market session found for notification dispatch.');
+    return result;
+  }
 
   const newNotificationsToInsert: Array<{
     userId: string;
@@ -135,36 +144,22 @@ export async function dispatchSignalNotifications(options: {
     const userAlertedSymbols = new Set(userAlertRows.map(a => normalizeTickerSymbol(a.tickerSymbol)));
     const sentSet = new Set(existingNotifs.map(n => `${n.tickerSymbol}-${n.strategy}-${n.signalDate}-${n.signal}`));
 
-    const userGlobalScopeRow = userSettingsMap[`${userId}-GLOBAL`]?.find(s => s.strategyName === 'alert_scope');
-    let userDefaultScope = 'champion';
-    if (userGlobalScopeRow) {
-      try {
-        const parsed = JSON.parse(userGlobalScopeRow.params);
-        userDefaultScope = parsed.scope || 'champion';
-      } catch (e) {}
-    }
-
     const subscriptions = subscriptionsByUser[userId] ?? [];
     const nativeTokens = deviceTokensByUser[userId] ?? [];
 
     for (const [ticker, bars] of barsByTicker.entries()) {
       if (symbolFilter.size > 0 && !symbolFilter.has(ticker)) continue;
+      if (!isSignalEligibleEquity(ticker, cache.tickerMap.get(ticker))) continue;
       if (!bars || bars.length < 80) continue;
+      if (getLatestBarDate(bars) !== latestEquitySession) {
+        result.skipped += 1;
+        continue;
+      }
       result.checkedSymbols += 1;
 
       const isPositionOpen = userOpenSymbols.has(ticker);
       const isAlerted = userAlertedSymbols.has(ticker);
       const isTracked = isPositionOpen || isAlerted;
-
-      // Determine strategy scope for this ticker
-      let userScope = userDefaultScope;
-      const userTickerScopeRow = userSettingsMap[`${userId}-${ticker}`]?.find(s => s.strategyName === 'alert_scope');
-      if (userTickerScopeRow) {
-        try {
-          const parsed = JSON.parse(userTickerScopeRow.params);
-          if (parsed.scope) userScope = parsed.scope;
-        } catch (e) {}
-      }
 
       const signalsToDispatch: Array<{
         strategyId: DispatchStrategyId;
@@ -216,12 +211,7 @@ export async function dispatchSignalNotifications(options: {
       };
 
       for (const strategy of strategies) {
-        const isInScope = userScope === 'all'
-          || userScope === 'all_raw'
-          || userScope === 'raw'
-          || userScope === strategy.id
-          || userScope === 'champion';
-        if (!isInScope) continue;
+        if (strategy.id !== champion.strategyId) continue;
 
         try {
           // The champion resolver already ran the canonical chart analysis for
@@ -230,7 +220,7 @@ export async function dispatchSignalNotifications(options: {
           const analysis = analysesByStrategy.get(strategy.id);
           if (!analysis) continue;
           const signal = analysis.latestActionableSignal;
-          if (signal) {
+          if (signal?.barsAgo === 0 && signal.date === latestEquitySession) {
             // If tracked (held or alerted), dispatch both BUY and SELL. If untracked, dispatch BUY opportunities.
             if (signal.signal === 'BUY' || isTracked) {
               signalsToDispatch.push({
@@ -249,14 +239,11 @@ export async function dispatchSignalNotifications(options: {
         } catch (e) {}
       }
 
-      // Only permit alerts from the designated highest-alpha model. Raw scopes
-      // remain available for explicit diagnostic use.
-      const isRawOptOut = userScope === 'all_raw' || userScope === 'raw';
-      const eligibleSignals = isRawOptOut
-        ? signalsToDispatch
-        : champion.hasPositiveAlpha
-          ? signalsToDispatch.filter((item) => item.strategyId === champion.strategyId)
-          : [];
+      // Notifications always use the same positive highest-alpha model that
+      // the chart opens by default.
+      const eligibleSignals = champion.hasPositiveAlpha
+        ? signalsToDispatch.filter((item) => item.strategyId === champion.strategyId)
+        : [];
 
       if (eligibleSignals.length === 0) {
         result.skipped += 1;

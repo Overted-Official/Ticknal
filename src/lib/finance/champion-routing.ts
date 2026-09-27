@@ -8,6 +8,7 @@ import type {
   WinningUniverseComparisonMetrics,
   TickerChampionInfo,
 } from '@/lib/finance/sectors-math';
+import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 
 export interface PrecomputedModelCache {
   barsByTicker: Map<string, PriceBar[]>;
@@ -204,12 +205,7 @@ export function evaluateModelsAndChampions(
 
   for (const [symbol, bars] of cache.barsByTicker.entries()) {
     const meta = cache.tickerMap.get(symbol);
-    const isIndexOrMacro =
-      meta?.sector === 'Indices' ||
-      meta?.sector === 'Macro' ||
-      ['EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!'].includes(symbol);
-    const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(symbol) || meta?.sector === 'Funds';
-    if (isIndexOrMacro || isFund) continue;
+    if (!isSignalEligibleEquity(symbol, meta)) continue;
     if (!bars || bars.length < 130) continue;
     totalScanned++;
 

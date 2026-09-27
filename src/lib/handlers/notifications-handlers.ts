@@ -6,6 +6,7 @@ import { signalNotifications, tickers, pushSubscriptions, devicePushTokens } fro
 import { createClient } from '@/lib/supabase/server';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 import { sendFCMMessage } from '@/lib/fcm-v1';
+import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 
 const notificationsMemCache = new Map<string, { data: any[]; timestamp: number }>();
 const NOTIFS_CACHE_TTL = 30 * 1000; // 30s cache per user
@@ -32,6 +33,8 @@ export async function handleNotificationsGet() {
         strategy: signalNotifications.strategy,
         signalDate: signalNotifications.signalDate,
         signal: signalNotifications.signal,
+        signalBarsAgo: signalNotifications.signalBarsAgo,
+        dataAsOf: signalNotifications.dataAsOf,
         sentAt: signalNotifications.sentAt,
         companyName: tickers.companyName,
         logoUrl: tickers.logoUrl,
@@ -51,7 +54,7 @@ export async function handleNotificationsGet() {
     const { getCachedIndustryRotationMap } = await import('@/lib/industry-rotation');
     const { tickerMap } = await getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map() }));
 
-    const enhancedRows = rows.map((r) => {
+    const enhancedRows = rows.filter((r) => isSignalEligibleEquity(r.tickerSymbol, r)).map((r) => {
       const cleanSym = r.tickerSymbol.replace('.CA', '').toUpperCase();
       const meta = tickerMap.get(cleanSym) || tickerMap.get(r.tickerSymbol);
       return {
