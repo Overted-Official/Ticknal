@@ -1,4 +1,5 @@
 import React from 'react';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 interface EmailAuthFormWidgetProps {
   isSignUp: boolean;
@@ -56,7 +57,7 @@ export default function EmailAuthFormWidget({
           className="w-full mt-2 py-3 px-4 rounded-xl bg-plt-muted-surface hover:bg-plt-hover active:scale-[0.99] border border-white/15 text-plt-text btn-typography-semibold transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {loading ? (
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <InlineSpinner className="h-4 w-4" label={isSignUp ? 'Creating account' : 'Signing in'} />
           ) : (
             <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
           )}

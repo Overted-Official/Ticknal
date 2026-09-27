@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ChevronDown, ChevronUp, Sparkles, Loader2 } from '@/components/ui/icon-library';
+import { ChevronRight, ChevronDown, ChevronUp, Sparkles } from '@/components/ui/icon-library';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
 import { resolveStrategyMeta } from './StrategySwitcher';
 import MarketSignalRowItem, { type GroupedMarketSignal } from './MarketSignalRowItem';
@@ -13,6 +13,24 @@ interface MarketSignalsSectionProps {
 }
 
 type QuickRange = '1D' | '5D' | '10D';
+
+function MarketSignalsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2" role="status" aria-live="polite" aria-label="Scanning strategy models for fresh market entry signals">
+      <span className="sr-only">Scanning strategy models for fresh market entry signals…</span>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="flex items-center gap-3 border-b border-white/[0.08] py-3.5 animate-pulse">
+          <div className="h-9 w-9 shrink-0 rounded-full bg-white/[0.08]" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-3 w-3/5 bg-white/[0.10]" />
+            <div className="h-2.5 w-2/5 bg-white/[0.06]" />
+          </div>
+          <div className="h-3 w-12 shrink-0 bg-white/[0.10]" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function MarketSignalsSection({
   buyOpportunities = [],
@@ -214,10 +232,7 @@ export default function MarketSignalsSection({
       {/* 3. Main Signals List / Grid */}
       <div className="flex-1 min-h-0 w-full overflow-y-auto custom-scrollbar">
         {isLoading ? (
-          <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-brand-blue" />
-            <span>Scanning strategy models for fresh market entry signals...</span>
-          </div>
+          <MarketSignalsSkeleton />
         ) : filteredSignals.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs">
             <Sparkles className="w-6 h-6 text-text-muted/50 mb-2" />

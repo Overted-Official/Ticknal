@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, BellOff, CheckCircle2, Loader2, Send } from '@/components/ui/icon-library';
+import { Bell, BellOff, CheckCircle2, Send } from '@/components/ui/icon-library';
 import { useAlerts } from '@/components/platform/AlertProvider';
 import { isNativePlatform, triggerNativeTestNotification } from '@/lib/native/capacitor-bridge';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 type PushState = 'idle' | 'requesting' | 'sending_test';
 
@@ -185,7 +186,7 @@ export default function PushNotificationCard() {
               >
                 {isLoading ? (
                   <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-sm transition-transform duration-200 ease-out">
-                    <Loader2 size={12} className="animate-spin text-black/60" />
+                    <InlineSpinner className="h-3 w-3" label="Updating notification preferences" />
                   </div>
                 ) : (
                   <div
@@ -212,7 +213,7 @@ export default function PushNotificationCard() {
               className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] active:scale-98 text-white transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
             >
               {pushState === 'sending_test' ? (
-                <Loader2 size={13} className="animate-spin" />
+                <InlineSpinner className="h-3.5 w-3.5" label="Sending test notification" />
               ) : (
                 <Send size={13} className="text-text-muted" />
               )}

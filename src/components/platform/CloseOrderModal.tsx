@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2 } from '@/components/ui/icon-library';
+import { X } from '@/components/ui/icon-library';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/context/ToastContext';
 
@@ -311,7 +312,7 @@ export default function CloseOrderModal({
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <InlineSpinner className="h-4 w-4" label="Closing position" />
                     <span>Processing...</span>
                   </>
                 ) : (

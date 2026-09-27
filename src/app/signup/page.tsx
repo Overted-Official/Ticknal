@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -10,9 +11,5 @@ export default function SignupPage() {
     router.replace('/login?mode=signup');
   }, [router]);
 
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center text-white text-sm">
-      Redirecting to Ticknal Registration...
-    </div>
-  );
+  return <LoadingScreen label="Opening registration" />;
 }

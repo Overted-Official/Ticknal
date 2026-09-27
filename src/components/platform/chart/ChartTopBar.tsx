@@ -13,6 +13,7 @@ import {
   X,
 } from '@/components/ui/icon-library';
 import type { WatchlistItem } from '@/components/platform/RightSidebar';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 export interface ChartTopBarProps {
   symbol: string;
@@ -228,7 +229,11 @@ export default function ChartTopBar({
                 : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <Sparkles size={13} className={isPredicting ? 'animate-spin text-white' : 'text-text-muted'} />
+            {isPredicting ? (
+              <InlineSpinner className="h-[13px] w-[13px]" label="Generating price forecast" />
+            ) : (
+              <Sparkles size={13} className="text-text-muted" />
+            )}
             <span className="hidden sm:inline">Predict Price</span>
             <span className="sm:hidden">Predict</span>
           </button>

@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RefreshCw, Sparkles, ExternalLink } from '@/components/ui/icon-library';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 import MarketsFloatingNav from './MarketsFloatingNav';
 import MarketOverviewSection, { type MarketTimeframe } from './sections/MarketOverviewSection';
 import SectorRotationSection from './sections/SectorRotationSection';
@@ -135,7 +136,11 @@ export default function MarketsPageView() {
             className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer"
             title="Refresh market data"
           >
-            <RefreshCw size={14} className={isMacroLoading ? 'animate-spin text-profit-num' : ''} />
+            {isMacroLoading ? (
+              <InlineSpinner className="h-3.5 w-3.5" label="Refreshing market data" />
+            ) : (
+              <RefreshCw size={14} />
+            )}
           </button>
         </div>
       </header>

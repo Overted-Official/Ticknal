@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { Sparkles, X, Loader2 } from '@/components/ui/icon-library';
+import { Sparkles, X } from '@/components/ui/icon-library';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 interface ChartPredictPopoverProps {
   isOpen: boolean;
@@ -127,7 +128,7 @@ export default function ChartPredictPopover({
         >
           {isPredicting ? (
             <>
-              <Loader2 size={13} className="animate-spin" />
+              <InlineSpinner className="h-3.5 w-3.5" label="Generating forecast" />
               <span>Forecasting...</span>
             </>
           ) : (

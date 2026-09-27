@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import type { MajorIndexData, SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import { ChevronRight } from '@/components/ui/icon-library';
+import SectionLoadingState from '@/components/ui/SectionLoadingState';
 
 export type SelectedIndexSymbol = 'EGX30' | 'EGX70' | 'EGX100';
 
@@ -207,9 +208,7 @@ export default function MajorIndicesSection({
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
         <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black overflow-hidden pt-2">
           {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
-              Loading market index data...
-            </div>
+            <SectionLoadingState className="h-full" label="Loading market index data…" />
           ) : chartData.length < 2 ? (
             <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
               No historical data available for this timeframe.

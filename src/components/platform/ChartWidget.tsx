@@ -180,7 +180,7 @@ export default function ChartWidget({
 
   const displaySymbol = symbol.replace('.CA', '');
 
-  // Clear previous predictions and trigger loading skeleton on symbol/data change
+  // Clear previous predictions and show a chart-shaped loading state until the new series is written.
   useEffect(() => {
     if (predictionSeriesRef.current && chartRef.current) {
       try {
@@ -190,10 +190,6 @@ export default function ChartWidget({
     }
 
     setIsChartLoading(true);
-    const timer = setTimeout(() => {
-      setIsChartLoading(false);
-    }, 280);
-    return () => clearTimeout(timer);
   }, [symbol, data]);
 
   const toggleIndicatorExpanded = useCallback((id: string) => {
@@ -456,6 +452,9 @@ export default function ChartWidget({
       }))
     );
     volumeSeriesRef.current.setData(volumeData);
+
+    const frame = window.requestAnimationFrame(() => setIsChartLoading(false));
+    return () => window.cancelAnimationFrame(frame);
   }, [isFund, visibleData]);
 
   // Combined Signal & Indicator Markers

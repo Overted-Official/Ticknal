@@ -10,7 +10,6 @@ import {
   Building2,
   Wallet,
   AlertCircle,
-  Loader2,
   TrendingUp,
   ShieldAlert,
   Clock,
@@ -18,6 +17,7 @@ import {
   Scale,
 } from '@/components/ui/icon-library';
 import { useToast } from '@/context/ToastContext';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 export type InitialOrderData = {
   symbol: string;
@@ -535,7 +535,7 @@ export default function AddOrderModal({
                   </div>
                   {winningMetrics.isLoading && (
                     <span className="text-[10px] text-white/40 flex items-center gap-1">
-                      <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
+                      <InlineSpinner className="h-3 w-3" label="Calculating metrics" /> Calculating...
                     </span>
                   )}
                 </div>
@@ -795,7 +795,7 @@ export default function AddOrderModal({
                     <div className="space-y-1">
                       {isAccountsLoading && eligibleAccounts.length === 0 ? (
                         <div className="h-9 rounded-lg bg-black border border-white/10 px-3 flex items-center text-xs text-white/50 font-sans">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> Loading accounts...
+                          <InlineSpinner className="mr-2 h-3.5 w-3.5" label="Loading accounts" /> Loading accounts...
                         </div>
                       ) : eligibleAccounts.length > 0 ? (
                         <div className="flex items-center gap-2.5">
@@ -914,7 +914,7 @@ export default function AddOrderModal({
                   disabled={isSubmitting || !newOrderForm.symbol || !newOrderForm.entryPrice}
                   className="btn-token btn-primary btn-compact"
                 >
-                  {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isSubmitting && <InlineSpinner className="h-3.5 w-3.5" label="Processing order" />}
                   <span>
                     {isSubmitting
                       ? 'Processing...'

@@ -18,6 +18,7 @@ import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { useToast } from '@/context/ToastContext';
 import { isBrokerageAccount } from '@/lib/portfolio-finance';
 import { type BankAccount, type BankMonthlySnapshot } from '@/types/bank';
+import SectionLoadingState from '@/components/ui/SectionLoadingState';
 
 interface AccountBalanceHistoryDrawerProps {
   account: BankAccount | null;
@@ -332,7 +333,7 @@ export default function AccountBalanceHistoryDrawer({
 
                 <div className="h-[190px] w-full border-y border-border-default py-3">
                   {isLoading ? (
-                    <div className="flex h-full items-center justify-center text-xs text-text-muted">Loading history…</div>
+                    <SectionLoadingState className="h-full py-0" label="Loading balance history…" />
                   ) : chartData.length < 2 ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-xs text-text-muted">
                       Record at least two month-end balances to see the trend line.

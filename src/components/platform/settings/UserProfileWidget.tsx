@@ -6,10 +6,10 @@ import {
   Calendar,
   LogOut,
   Camera,
-  Loader2,
   CheckCircle2,
 } from '@/components/ui/icon-library';
 import { createClient } from '@/lib/supabase/client';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 export type SettingsUserProfile = {
   id: string;
@@ -144,7 +144,7 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
             {/* Camera hover overlay */}
             <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
               {isUploadingAvatar ? (
-                <Loader2 size={18} className="animate-spin text-white" />
+                <InlineSpinner className="h-[18px] w-[18px]" label="Uploading profile photo" />
               ) : (
                 <Camera size={18} className="text-white/90" />
               )}

@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { RefreshCw } from '@/components/ui/icon-library';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 import StrategiesFloatingNav from './StrategiesFloatingNav';
 import StrategySimulationSection, { type StrategyTimeframe } from './sections/StrategySimulationSection';
 import StrategyModelComparisonSection from './sections/StrategyModelComparisonSection';
@@ -162,7 +163,11 @@ export default function StrategiesPageView() {
           className="p-1.5 rounded-lg border border-white/10 hover:bg-white/[0.06] text-neutral-400 hover:text-white transition cursor-pointer"
           title="Refresh Strategy Data"
         >
-          <RefreshCw size={14} className={isSignalsLoading ? 'animate-spin' : ''} />
+          {isSignalsLoading ? (
+            <InlineSpinner className="h-3.5 w-3.5" label="Refreshing strategy data" />
+          ) : (
+            <RefreshCw size={14} />
+          )}
         </button>
       </header>
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { X, Loader2 } from '@/components/ui/icon-library';
+import { X } from '@/components/ui/icon-library';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 import type { OrderDraft } from './types';
 
@@ -141,7 +142,7 @@ export default function ChartOrderDraftPopover({
       >
         {savingOrder ? (
           <>
-            <Loader2 size={14} className="animate-spin" />
+            <InlineSpinner className="h-3.5 w-3.5" label="Saving position" />
             <span>Saving Position...</span>
           </>
         ) : (

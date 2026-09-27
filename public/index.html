@@ -7,7 +7,8 @@
   <style>
     body {
       margin: 0;
-      padding: 0;
+      box-sizing: border-box;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       background-color: #000000;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -15,7 +16,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      height: 100dvh;
       width: 100vw;
       overflow: hidden;
     }
@@ -66,7 +67,7 @@
 </head>
 <body>
   <div class="logo-container">
-    <div class="loading-stage" aria-label="Loading Ticknal">
+    <div class="loading-stage" role="status" aria-live="polite" aria-label="Loading Ticknal">
       <div class="ambient-glow"></div>
       <svg class="comet-orbit" viewBox="0 0 112 112" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
@@ -95,8 +96,8 @@
     </div>
   </div>
   <script>
-    // In live server mode, navigate to dashboard immediately
-    window.location.replace('/dashboard');
+    // The static Capacitor fallback hands off to the active application route.
+    window.location.replace('/home');
   </script>
 </body>
 </html>

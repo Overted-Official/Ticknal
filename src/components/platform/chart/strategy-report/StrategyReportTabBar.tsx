@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { TrendingUp, BarChart2, Activity } from '@/components/ui/icon-library';
+import { TrendingUp, BarChart2 } from '@/components/ui/icon-library';
 import type { StrategyReportTab } from './types';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 interface StrategyReportTabBarProps {
   activeTab: StrategyReportTab;
@@ -53,7 +54,7 @@ export default function StrategyReportTabBar({
       {/* Loading indicator */}
       {reportLoading && (
         <div className="flex items-center gap-1.5 text-[11px] text-white/50">
-          <Activity size={12} className="animate-spin text-white" />
+          <InlineSpinner className="h-3 w-3" label="Updating backtest" />
           <span>Updating backtest…</span>
         </div>
       )}

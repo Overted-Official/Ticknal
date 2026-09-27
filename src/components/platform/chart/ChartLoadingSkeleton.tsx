@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { CometSpinner } from '@/components/ui/CometSpinner';
 
 interface ChartLoadingSkeletonProps {
   isLoading: boolean;
@@ -12,50 +12,37 @@ const CANDLE_HEIGHTS = [
 ];
 
 export default function ChartLoadingSkeleton({ isLoading, displaySymbol }: ChartLoadingSkeletonProps) {
+  if (!isLoading) return null;
+
+  const label = `Loading ${displaySymbol}`;
+
   return (
-    <AnimatePresence>
-      {isLoading && (
-        <motion.div
-          key="chart-loading-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="absolute inset-0 z-30 bg-plt-card/90 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden"
-        >
-          {/* Grid Line Shimmer */}
-          <div className="absolute inset-0 flex flex-col justify-between py-12 px-6 opacity-40">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="w-full h-px bg-plt-border-soft" />
-            ))}
-          </div>
+    <div
+      className="absolute inset-0 z-30 flex select-none items-center justify-center overflow-hidden bg-black/90"
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+    >
+      <div aria-hidden="true" className="absolute inset-x-6 top-12 bottom-12 flex flex-col justify-between opacity-50">
+        {[...Array(6)].map((_, index) => (
+          <div key={index} className="h-px w-full bg-white/[0.08]" />
+        ))}
+      </div>
 
-          {/* Shimmering Candlestick Bars */}
-          <div className="absolute bottom-12 left-10 right-10 h-3/5 flex items-end gap-2 px-4 opacity-20">
-            {CANDLE_HEIGHTS.map((h, i) => (
-              <motion.div
-                key={i}
-                animate={{ opacity: [0.15, 0.65, 0.15] }}
-                transition={{ duration: 1.2, repeat: Infinity, delay: (i % 6) * 0.1 }}
-                className="flex-1 bg-plt-text rounded-full"
-                style={{ height: `${h}%` }}
-              />
-            ))}
-          </div>
+      <div aria-hidden="true" className="absolute bottom-12 left-10 right-10 flex h-3/5 items-end gap-1.5 px-4 opacity-30">
+        {CANDLE_HEIGHTS.map((height, index) => (
+          <div
+            key={index}
+            className="flex-1 bg-white/[0.18]"
+            style={{ height: `${height}%` }}
+          />
+        ))}
+      </div>
 
-          {/* Centered Loading Badge */}
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="relative z-10 flex items-center gap-3 px-4 py-2 rounded-xl bg-plt-base/80 border border-plt-border-strong backdrop-blur-md shadow-2xl"
-          >
-            <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-            <span className="text-xs tabular-nums font-medium text-plt-text tracking-wide">
-              Loading {displaySymbol}...
-            </span>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <div className="relative z-10 flex flex-col items-center gap-3 text-center">
+        <CometSpinner decorative className="h-9 w-9" />
+        <span className="text-[11px] font-medium text-text-secondary">{label}</span>
+      </div>
+    </div>
   );
 }

@@ -75,7 +75,16 @@ const NAV_ITEMS: NavItemConfig[] = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isNavVisible } = useMobileNavScroll();
+  const { isNavVisible, setIsNavVisible } = useMobileNavScroll();
+  const isChartRoute = pathname === '/charts' || pathname.startsWith('/charts/');
+  // The chart workspace has no reliable vertical page scroll to restore hidden navigation.
+  const isBottomNavVisible = isChartRoute || isNavVisible;
+
+  useEffect(() => {
+    if (isChartRoute) {
+      setIsNavVisible(true);
+    }
+  }, [isChartRoute, setIsNavVisible]);
 
   const [optimisticNavId, setOptimisticNavId] = useState<NavItemId | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -223,7 +232,7 @@ export default function BottomNav() {
       {/* Main Native Mobile Bottom Bar — Pure Black, Flawlessly Centered, Crisp Active States */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 md:hidden transition-transform duration-300 ease-out select-none ${
-          isNavVisible
+          isBottomNavVisible
             ? 'translate-y-0 pointer-events-auto'
             : 'translate-y-[calc(100%+1.5rem)] pointer-events-none'
         }`}

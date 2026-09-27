@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2 } from '@/components/ui/icon-library';
+import { X } from '@/components/ui/icon-library';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import { type HomeInvestmentOrder } from '../homeInvestmentsTypes';
+import SectionLoadingState from '@/components/ui/SectionLoadingState';
 
 export interface TickerPositionsDrawerProps {
   isOpen: boolean;
@@ -254,10 +255,7 @@ export default function TickerPositionsDrawer({
                 {/* Content Body */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6 safe-area-bottom">
                   {isLoading && orders.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-plt-muted gap-3">
-                      <Loader2 className="w-6 h-6 animate-spin text-plt-primary" />
-                      <span className="text-xs">Loading positions & orders...</span>
-                    </div>
+                    <SectionLoadingState className="py-20" label="Loading positions and orders…" />
                   ) : (
                     <TickerPositions
                       symbol={symbol}

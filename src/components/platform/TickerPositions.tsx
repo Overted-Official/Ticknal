@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Wallet, CheckCircle2, TrendingUp, TrendingDown, Loader2 } from '@/components/ui/icon-library';
+import { Plus, Wallet, CheckCircle2, TrendingUp, TrendingDown } from '@/components/ui/icon-library';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
@@ -866,7 +867,7 @@ export default function TickerPositions({
                     }
                     className="btn-token btn-danger"
                   >
-                    {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {isSubmitting && <InlineSpinner className="h-3.5 w-3.5" label="Selling position" />}
                     <span>{isSubmitting ? 'Selling...' : 'Sell'}</span>
                   </button>
                 </div>

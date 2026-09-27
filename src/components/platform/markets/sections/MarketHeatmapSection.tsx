@@ -8,6 +8,7 @@ import SectorTreemap from '../SectorTreemap';
 import SectorConstituentRowItem from './SectorConstituentRowItem';
 import { X } from '@/components/ui/icon-library';
 import { TIMEFRAMES } from './MarketOverviewSection';
+import SectionLoadingState from '@/components/ui/SectionLoadingState';
 
 interface MarketHeatmapSectionProps {
   sectors?: SectorPerformanceItem[];
@@ -170,10 +171,11 @@ export default function MarketHeatmapSection({
         {/* Left Canvas: Treemap without outer border */}
         <div className="w-full lg:flex-1 min-w-0 bg-black overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] min-h-[500px] sm:min-h-[580px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
           {isLoading ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-plt-base/40">
-              <span className="w-6 h-6 rounded-full border-2 border-profit-num border-t-transparent animate-spin" />
-              <span className="text-xs tabular-nums text-text-muted">Aggregating EGX Market Performance...</span>
-            </div>
+            <SectionLoadingState
+              className="h-full w-full"
+              spinnerClassName="h-8 w-8"
+              label="Aggregating EGX market performance…"
+            />
           ) : (
             <SectorTreemap
               sectors={sectors}

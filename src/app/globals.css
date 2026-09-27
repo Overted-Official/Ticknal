@@ -2413,6 +2413,18 @@ textarea:focus-visible {
   animation: enter-fade var(--duration-base) var(--ease-standard) both;
 }
 
+@keyframes loading-ui-comet-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-ui-comet-orbit {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loading-ui-comet-rotation var(--duration, 1.7s) linear infinite;
+}
+
 /* Accessibility: Respect Reduced Motion Preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
