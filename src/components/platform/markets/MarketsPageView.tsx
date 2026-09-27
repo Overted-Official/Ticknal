@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { RefreshCw, Sparkles, ExternalLink } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import MarketsFloatingNav from './MarketsFloatingNav';
+import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import MarketOverviewSection, { type MarketTimeframe } from './sections/MarketOverviewSection';
 import SectorRotationSection from './sections/SectorRotationSection';
 import MarketHeatmapSection from './sections/MarketHeatmapSection';
@@ -20,6 +21,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function MarketsPageView() {
   const router = useRouter();
+  const { isNavVisible } = useMobileNavScroll();
 
   // Timeframe & Sizing State (default to 1M for responsive overview)
   const [timeframePreset, setTimeframePreset] = useState<MarketTimeframe | 'custom'>('1M');
@@ -149,7 +151,13 @@ export default function MarketsPageView() {
       <MarketsFloatingNav />
 
       {/* 3. Main 4-Section Executive Scroll */}
-      <main className="app-page page-sections-stack pb-28 md:pb-24 pt-3 space-y-8 sm:space-y-10">
+      <main
+        className={`app-page page-sections-stack pt-3 space-y-8 sm:space-y-10 ${
+          isNavVisible
+            ? 'pb-[calc(56px+var(--ticknal-safe-area-bottom)+1rem)] md:pb-24'
+            : 'pb-[max(var(--ticknal-safe-area-bottom),1.25rem)] md:pb-24'
+        }`}
+      >
         {/* Section 1: Executive Market Overview (includes KPIs & Major Indices Area Chart) */}
         <MarketOverviewSection
           macroData={macroData}

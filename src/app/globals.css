@@ -1050,6 +1050,21 @@ textarea:focus-visible {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Dense, paired mobile filters where two related controls must share one row. */
+@media (max-width: 639px) {
+  .seg-control-compact {
+    gap: 0.125rem;
+    height: 2.125rem;
+    padding: 0.1875rem;
+  }
+
+  .seg-control-compact .seg-control-btn {
+    padding-left: 0.4375rem;
+    padding-right: 0.4375rem;
+    font-size: 0.6875rem;
+  }
+}
+
 /* Filter Control Trigger & Reset (Pill Architecture matching .seg-control) */
 .filter-control-btn {
   display: inline-flex;

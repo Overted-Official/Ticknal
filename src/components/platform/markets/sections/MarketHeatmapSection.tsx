@@ -108,14 +108,14 @@ export default function MarketHeatmapSection({
       </div>
 
       {/* 2. Dedicated Controls Toolbar (Placed below header, open center prevents any collision with floating nav) */}
-      <div className="flex items-center justify-between gap-3 flex-wrap text-xs select-none">
+      <div className="flex flex-col gap-2 text-xs select-none sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         {/* Left: GICS Granularity + Sizing Metric */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar sm:gap-2">
           {/* Granularity Switcher */}
-          <div className="seg-control">
+          <div className="seg-control seg-control-compact shrink-0">
             {[
               { id: 'sector', label: 'Sector' },
-              { id: 'industryGroup', label: 'Industry Group' },
+              { id: 'industryGroup', label: 'Group' },
               { id: 'industry', label: 'Industry' },
             ].map((lvl) => (
               <button
@@ -133,7 +133,7 @@ export default function MarketHeatmapSection({
           </div>
 
           {/* Sizing Metric Switcher */}
-          <div className="seg-control">
+          <div className="seg-control seg-control-compact shrink-0">
             {[
               { id: 'turnover', label: 'Turnover' },
               { id: 'volume', label: 'Volume' },
@@ -152,7 +152,7 @@ export default function MarketHeatmapSection({
         </div>
 
         {/* Right: Timeframe Switcher */}
-        <div className="seg-control">
+        <div className="seg-control self-start shrink-0">
           {TIMEFRAMES.map((tf) => (
             <button
               key={tf}

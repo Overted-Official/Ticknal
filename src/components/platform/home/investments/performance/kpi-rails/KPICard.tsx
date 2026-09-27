@@ -26,6 +26,7 @@ export interface KPICardProps {
   targetId?: string;
   href?: string;
   onClick?: () => void;
+  hideBadgeOnMobile?: boolean;
   className?: string;
 }
 
@@ -51,6 +52,7 @@ export default function KPICard({
   targetId,
   href,
   onClick,
+  hideBadgeOnMobile = false,
   className = '',
 }: KPICardProps) {
   const router = useRouter();
@@ -158,7 +160,7 @@ export default function KPICard({
 
         {badgeText && (
           <span
-            className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold leading-none ${badgeClass}`}
+            className={`shrink-0 items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold leading-none ${hideBadgeOnMobile ? 'hidden sm:inline-flex' : 'inline-flex'} ${badgeClass}`}
           >
             {badgeText}
           </span>

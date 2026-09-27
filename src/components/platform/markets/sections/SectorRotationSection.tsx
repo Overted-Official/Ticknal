@@ -116,7 +116,7 @@ export default function SectorRotationSection({
         <div className="seg-control">
           {[
             { id: 'sector', label: 'Sector' },
-            { id: 'industryGroup', label: 'Industry Group' },
+            { id: 'industryGroup', label: 'Group' },
             { id: 'industry', label: 'Industry' },
           ].map((lvl) => (
             <button

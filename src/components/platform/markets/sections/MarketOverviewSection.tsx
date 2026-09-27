@@ -144,6 +144,7 @@ export default function MarketOverviewSection({
       sparklinePoints: egx30SparklinePoints,
       sparklineTrend: egx30Return >= 0 ? 'up' : 'down',
       showSparkline: true,
+      hideBadgeOnMobile: true,
       targetId: 'major-indices',
     },
     {
@@ -162,6 +163,7 @@ export default function MarketOverviewSection({
       sparklinePoints: breadthSparklinePoints,
       sparklineTrend: netAdvancers >= 0 ? 'up' : 'down',
       showSparkline: true,
+      hideBadgeOnMobile: true,
       targetId: 'major-indices',
     },
     {
@@ -180,6 +182,7 @@ export default function MarketOverviewSection({
       sparklinePoints: turnoverSparklinePoints,
       sparklineTrend: 'neutral',
       showSparkline: true,
+      hideBadgeOnMobile: true,
       targetId: 'major-indices',
     },
     {
@@ -198,6 +201,7 @@ export default function MarketOverviewSection({
       sparklinePoints: dispersionSparklinePoints,
       sparklineTrend: dispersionSpread >= 0 ? 'up' : 'down',
       showSparkline: true,
+      hideBadgeOnMobile: true,
       targetId: 'major-indices',
       onClick: () => onSelectSector?.(topSector),
     },
