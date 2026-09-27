@@ -301,9 +301,6 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
             className={`drawer-sheet-form ${!isMobile ? 'drawer-sheet-viewport-safe' : ''}`}
           >
-            {/* Top Brand Accent Hairline */}
-            <div className="drawer-brand-hairline" />
-
             {/* Header */}
             <div className="drawer-header">
               {/* Mobile Drag Pill */}

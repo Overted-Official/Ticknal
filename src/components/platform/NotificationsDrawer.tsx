@@ -296,9 +296,6 @@ export default function NotificationsDrawer({
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
               className="relative z-modal-content drawer-sheet-viewport-safe w-full sm:max-w-md md:max-w-lg bg-black text-plt-text border-l border-border-default shadow-2xl flex flex-col min-h-0 overflow-hidden rounded-none"
             >
-              {/* Brand Accent Hairline Top Bar */}
-              <div className="h-[2px] w-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] shrink-0" />
-
               {/* 1. Header — compact sleek row */}
               <div className="px-4 py-2.5 border-b border-border-default bg-black flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2 min-w-0">

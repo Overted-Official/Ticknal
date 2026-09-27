@@ -274,7 +274,6 @@ export default function AccountBalanceHistoryDrawer({
             className={`drawer-sheet ${!isMobile ? 'drawer-sheet-viewport-safe' : ''}`}
             aria-label={`${account.accountName} balance history`}
           >
-            <div className="drawer-brand-hairline" />
             <div className="drawer-header">
               <div className="drawer-drag-pill-container" onClick={onClose}>
                 <div className="drawer-drag-pill" />

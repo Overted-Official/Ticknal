@@ -1188,6 +1188,24 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
+/* Every application drawer carries the same Ticknal gradient accent. Most
+ * sheets use one of the shared drawer classes below; standalone sheets opt in
+ * with .drawer-gradient-top. Keeping the line as a pseudo-element prevents
+ * each drawer from having to reserve header space for a duplicate node. */
+.drawer-sheet::before,
+.drawer-sheet-form::before,
+.drawer-sheet-viewport-safe::before,
+.drawer-sheet-viewport-safe-fixed::before,
+.drawer-gradient-top::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, #00BCE6 0%, #2962FF 50%, #D500F9 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* Bottom sheets remain visually anchored to the viewport, but their action
  * controls must clear an edge-to-edge native gesture/navigation area. Keep
  * this at the shared primitive so every account and transaction drawer gets
@@ -1257,13 +1275,6 @@ textarea:focus-visible {
   max-height: calc(100dvh - var(--ticknal-safe-area-top) - var(--ticknal-safe-area-bottom));
   margin-top: var(--ticknal-safe-area-top);
   margin-bottom: var(--ticknal-safe-area-bottom);
-}
-
-.drawer-brand-hairline {
-  height: 2px;
-  width: 100%;
-  background: linear-gradient(90deg, #00BCE6 0%, #2962FF 50%, #D500F9 100%);
-  flex-shrink: 0;
 }
 
 .drawer-header {

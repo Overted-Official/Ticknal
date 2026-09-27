@@ -934,7 +934,7 @@ export default function ChartWidget({
                   stiffness: 340,
                   mass: 0.8,
                 }}
-                className="relative w-full md:w-1/2 lg:w-1/2 max-w-full h-full bg-black text-text-primary rounded-none border-l border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
+                className="drawer-gradient-top relative w-full md:w-1/2 lg:w-1/2 max-w-full h-full bg-black text-text-primary rounded-none border-l border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
               >
                 {/* Replicated Strategy Report Header */}
                 <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 sm:py-0 flex items-center justify-between border-b border-white/10 shrink-0 bg-black">

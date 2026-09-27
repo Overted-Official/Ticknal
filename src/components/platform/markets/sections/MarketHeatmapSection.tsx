@@ -291,7 +291,7 @@ export default function MarketHeatmapSection({
                       setIsDrawerOpen(false);
                     }
                   }}
-                  className="relative w-full max-h-[82vh] bg-black text-white rounded-none border-t border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden touch-pan-y"
+                  className="drawer-gradient-top relative w-full max-h-[82vh] bg-black text-white rounded-none border-t border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden touch-pan-y"
                 >
                   {/* Drag Handle */}
                   <div
