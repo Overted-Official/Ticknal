@@ -57,6 +57,7 @@ import {
 } from '@/lib/sectors-handlers';
 import {
   handleSignalsGet,
+  handleStrategyChampionGet,
   handleMetricsGet,
   handleLevelsGet,
   handleReportGet,
@@ -203,6 +204,9 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   // 7. Strategy & Signals
   if (root === 'signals' || (root === 'strategy' && sub === 'signals')) {
     return handleSignalsGet(req);
+  }
+  if (root === 'strategy-champion' || (root === 'strategy' && sub === 'champion')) {
+    return handleStrategyChampionGet(req);
   }
   if (root === 'metrics' || (root === 'strategy' && sub === 'metrics')) {
     return handleMetricsGet(req);

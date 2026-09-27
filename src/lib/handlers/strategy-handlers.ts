@@ -10,7 +10,7 @@ import { runFullPsiV2Backtest } from '@/strategies/PSI_V2';
 import { runFullHydraBacktest } from '@/strategies/Hydra';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
-import { analyzeStrategy, type StrategyId } from '@/lib/strategy-analysis';
+import { analyzeStrategy, analyzeTickerChampion, type StrategyId } from '@/lib/strategy-analysis';
 
 const STRATEGY_CACHE_HEADERS = {
   'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
@@ -108,6 +108,62 @@ export async function handleSignalsGet(request: Request) {
     });
   } catch (error) {
     console.error('Error calculating signals:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * Resolves the best-fit strategy for one ticker. This is intentionally backed
+ * by the same canonical analyser as chart markers and notification routing.
+ */
+export async function handleStrategyChampionGet(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const symbol = searchParams.get('symbol');
+    const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
+    const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
+
+    if (!symbol) {
+      return NextResponse.json({ error: 'Missing symbol parameter' }, { status: 400 });
+    }
+
+    const ticker = normalizeTickerSymbol(symbol);
+    const rows = is1H
+      ? await getCachedHourlyPrices(ticker)
+      : await getCachedDailyPrices(ticker);
+    const bars: PriceBar[] = rows
+      .map((record) => ({
+        date: typeof record.date === 'string'
+          ? (is1H ? record.date : record.date.split('T')[0])
+          : (is1H ? (record.date as Date).toISOString() : (record.date as Date).toISOString().split('T')[0]),
+        open: Number(record.open),
+        high: Number(record.high),
+        low: Number(record.low),
+        close: Number(record.close),
+        volume: Number(record.volume ?? 0),
+      }))
+      .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
+
+    if (bars.length === 0) {
+      return NextResponse.json({ error: 'No price history found' }, { status: 404 });
+    }
+
+    const champion = await analyzeTickerChampion(ticker, bars, {
+      startDate: searchParams.get('start') || (is1H ? bars[0]?.date : '2025-01-01'),
+      endDate: searchParams.get('end') || undefined,
+      timeframe,
+    });
+
+    return NextResponse.json({
+      symbol: ticker,
+      strategy: champion.strategyId,
+      strategyId: champion.strategyId,
+      strategyName: champion.strategyName,
+      alpha: champion.alpha,
+      hasPositiveAlpha: champion.hasPositiveAlpha,
+    }, { headers: STRATEGY_CACHE_HEADERS });
+  } catch (error) {
+    console.error('Error resolving ticker strategy champion:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

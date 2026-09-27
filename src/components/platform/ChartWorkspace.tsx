@@ -53,7 +53,10 @@ export default function ChartWorkspace({
     });
   }, [pathname]);
 
-  const initialStrategy = searchParams?.get('strategy') || 'psi';
+  const requestedStrategy = searchParams?.get('strategy');
+  const initialStrategy = requestedStrategy && STRATEGIES[requestedStrategy]
+    ? requestedStrategy
+    : 'psi';
   const [selectedStrategy, setSelectedStrategy] = useState(initialStrategy);
 
   const [strategyParams, setStrategyParams] = useState<Record<string, any>>(() => {
@@ -77,6 +80,53 @@ export default function ChartWorkspace({
 
   const rawTf = searchParams?.get('timeframe') || 'D';
   const timeframe = (rawTf === '1H' || rawTf === '60' || rawTf === '1h') ? 'D' : rawTf;
+
+  // A strategy supplied by a notification (or a user-selected URL) always
+  // wins. With no explicit strategy, resolve the ticker's best-fit model by
+  // alpha so the chart opens on the same algorithm that can generate its
+  // notification.
+  useEffect(() => {
+    if (requestedStrategy && STRATEGIES[requestedStrategy]) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const resolveChampion = async () => {
+      try {
+        const params = new URLSearchParams({
+          symbol,
+          timeframe,
+          start: '2025-01-01',
+        });
+        const response = await fetch(`/api/strategy-champion?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const champion = await response.json() as { strategy?: string };
+        const strategy = champion.strategy;
+        if (cancelled || !strategy || !STRATEGIES[strategy]) return;
+
+        setSelectedStrategy(strategy);
+        const definition = STRATEGIES[strategy];
+        const defaults: Record<string, any> = {};
+        definition.settings.forEach((setting) => {
+          defaults[setting.key] = setting.default;
+        });
+        setStrategyParams(defaults);
+      } catch (error: any) {
+        if (error?.name !== 'AbortError') {
+          console.warn('Could not resolve the ticker strategy champion:', error);
+        }
+      }
+    };
+
+    resolveChampion();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [requestedStrategy, symbol, timeframe]);
 
   // Client-side IndexedDB caching & delta sync
   const [activeChartData, setActiveChartData] = useState<ChartData[]>(data);

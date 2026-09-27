@@ -2,17 +2,21 @@ import webPush from 'web-push';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens } from '@/db/schema';
-import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
-import { getDailyPriceBars } from '@/lib/strategyOrders';
-import { normalizeTickerSymbol, runPsiStrategy, type PsiSignal, type PriceBar } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
-import { mapStrategyMetrics } from '@/lib/strategy-analysis';
+import {
+  analyzeTickerChampion,
+  type SignalEvent,
+  type StrategyId,
+  type StrategyMetrics,
+  type TickerChampionAnalysis,
+} from '@/lib/strategy-analysis';
 import { getOrInitPrecomputedCache } from '@/lib/handlers/sectors-handlers';
-import { evaluateModelsAndChampions, isChampionSignal } from '@/lib/finance/champion-routing';
 import type { TickerChampionInfo } from '@/lib/finance/sectors-math';
-import { runHydraStrategy } from '@/strategies/Hydra/hydraStrategy';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
+type DispatchStrategyId = Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>;
+type NotificationSignal = Pick<SignalEvent, 'barsAgo' | 'date' | 'price' | 'reason' | 'signal'>;
 
 export type DispatchNotificationsResult = {
   configured: boolean;
@@ -87,13 +91,7 @@ export async function dispatchSignalNotifications(options: {
 
   // Load precomputed bars and indicators cache
   const cache = await getOrInitPrecomputedCache();
-  const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const today = new Date().toISOString().split('T')[0];
-  const { tickerChampions } = evaluateModelsAndChampions(cache, oneYearAgo, today, 0, 252);
   const barsByTicker = cache.barsByTicker;
-
-  const { resolvePsiParamsFromStore } = await import('@/strategies/PSI/psiParameterStore');
-  const { runPsiV2Strategy } = await import('@/strategies/PSI_V2/psiV2Strategy');
 
   const newNotificationsToInsert: Array<{
     userId: string;
@@ -115,7 +113,7 @@ export async function dispatchSignalNotifications(options: {
     analysisStart: string;
     analysisEnd: string;
     dataAsOf: string;
-    metrics: ReturnType<typeof mapStrategyMetrics>;
+    metrics: StrategyMetrics;
     parameterVersion: string;
   }> = [];
 
@@ -168,90 +166,97 @@ export async function dispatchSignalNotifications(options: {
         } catch (e) {}
       }
 
-      const dateWindow = new Set(bars.slice(-lookbackBars).map((bar) => bar.date));
       const signalsToDispatch: Array<{
-        strategyId: string;
+        strategyId: DispatchStrategyId;
         strategyShort: string;
         strategyLabel: string;
-        signal: any;
-        metrics: Record<string, unknown>;
+        signal: NotificationSignal;
+        metrics: StrategyMetrics;
         parameterVersion: string;
+        analysisStart: string;
+        analysisEnd: string;
+        dataAsOf: string;
       }> = [];
 
-      // 1. Evaluate Typhon Strategy (PSI)
-      if (userScope === 'all' || userScope === 'psi' || userScope === 'champion') {
+      const strategies: Array<{
+        id: DispatchStrategyId;
+        short: string;
+        label: string;
+      }> = [
+        { id: 'psi', short: 'TYPHON', label: 'Typhon Strategy' },
+        { id: 'psi_v2', short: 'CERBERUS', label: 'Cerberus Strategy' },
+        { id: 'hydra', short: 'HYDRA', label: 'Hydra Strategy' },
+      ];
+
+      // The same highest-alpha calculation is used for notification routing
+      // and the chart's default strategy. Never determine the winner from a
+      // strategy-specific signal snapshot.
+      let champion: TickerChampionAnalysis;
+      try {
+        champion = await analyzeTickerChampion(ticker, bars, {
+          startDate: '2025-01-01',
+          timeframe: 'D',
+          lookbackBars,
+        });
+      } catch {
+        result.skipped += 1;
+        continue;
+      }
+      const analysesByStrategy = new Map(
+        champion.analyses.map((analysis) => [analysis.strategyId, analysis]),
+      );
+      const championAnalysis = analysesByStrategy.get(champion.strategyId);
+      const champInfo: TickerChampionInfo = {
+        champion: champion.strategyId,
+        championName: champion.strategyName,
+        alpha: champion.alpha,
+        roi: championAnalysis?.metrics.totalReturn ?? 0,
+        buyHoldRoi: championAnalysis?.metrics.buyHoldReturn ?? 0,
+        hasPositiveAlpha: champion.hasPositiveAlpha,
+      };
+
+      for (const strategy of strategies) {
+        const isInScope = userScope === 'all'
+          || userScope === 'all_raw'
+          || userScope === 'raw'
+          || userScope === strategy.id
+          || userScope === 'champion';
+        if (!isInScope) continue;
+
         try {
-          const psiParams = resolvePsiParamsFromStore(ticker, { startDate: '2025-01-01' });
-          const psiSeries = cache.psiCache.get(ticker);
-          const psiResult = runPsiStrategy(bars, psiParams, psiSeries);
-          const signal = [...psiResult.signals].reverse().find((s) => dateWindow.has(s.date)) ?? null;
+          // The champion resolver already ran the canonical chart analysis for
+          // every active model. Reusing it keeps the signal date and alpha
+          // ranking identical across both surfaces.
+          const analysis = analysesByStrategy.get(strategy.id);
+          if (!analysis) continue;
+          const signal = analysis.latestActionableSignal;
           if (signal) {
             // If tracked (held or alerted), dispatch both BUY and SELL. If untracked, dispatch BUY opportunities.
             if (signal.signal === 'BUY' || isTracked) {
               signalsToDispatch.push({
-                strategyId: 'psi',
-                strategyShort: 'TYPHON',
-                strategyLabel: 'Typhon Strategy',
+                strategyId: strategy.id,
+                strategyShort: strategy.short,
+                strategyLabel: strategy.label,
                 signal,
-                metrics: psiResult.metrics,
-                parameterVersion: 'psi-parameter-store',
+                metrics: analysis.metrics,
+                parameterVersion: analysis.parameterVersion,
+                analysisStart: analysis.analysisStart,
+                analysisEnd: analysis.analysisEnd,
+                dataAsOf: analysis.dataAsOf,
               });
             }
           }
         } catch (e) {}
       }
 
-      // 2. Evaluate Cerberus Strategy (PSI V2)
-      if (userScope === 'all' || userScope === 'psi_v2' || userScope === 'champion') {
-        try {
-          const psiV2Series = cache.psiV2Cache.get(ticker);
-          const psiV2Result = runPsiV2Strategy(bars, { ticker, startDate: '2025-01-01' }, psiV2Series);
-          const signal = [...psiV2Result.signals].reverse().find((s) => dateWindow.has(s.date) && (s.signal === 'BUY' || s.signal === 'SELL')) ?? null;
-          if (signal) {
-            if (signal.signal === 'BUY' || isTracked) {
-              signalsToDispatch.push({
-                strategyId: 'psi_v2',
-                strategyShort: 'CERBERUS',
-                strategyLabel: 'Cerberus Strategy',
-                signal,
-                metrics: psiV2Result.metrics,
-                parameterVersion: `psi-v2-levels-${ticker}`,
-              });
-            }
-          }
-        } catch (e) {}
-      }
-
-      // 3. Evaluate Hydra Strategy
-      if (userScope === 'all' || userScope === 'hydra' || userScope === 'champion') {
-        try {
-          const hydraPoints = cache.hydraCache.get(ticker);
-          const hydraResult = runHydraStrategy(bars, { ticker, startDate: '2025-01-01' }, hydraPoints);
-          const signal = [...hydraResult.signals].reverse().find((s) => dateWindow.has(s.date) && (s.signal === 'BUY' || s.signal === 'SELL')) ?? null;
-          if (signal) {
-            if (signal.signal === 'BUY' || isTracked) {
-              signalsToDispatch.push({
-                strategyId: 'hydra',
-                strategyShort: 'HYDRA',
-                strategyLabel: 'Hydra Strategy',
-                signal,
-                metrics: hydraResult.metrics,
-                parameterVersion: `hydra-v1-${ticker}`,
-              });
-            }
-          }
-        } catch (e) {}
-      }
-
-      // Smart Champion Model Routing (Option A):
-      // Only permit alerts if the model is the designated champion for this ticker and alpha > 0.
+      // Only permit alerts from the designated highest-alpha model. Raw scopes
+      // remain available for explicit diagnostic use.
       const isRawOptOut = userScope === 'all_raw' || userScope === 'raw';
       const eligibleSignals = isRawOptOut
         ? signalsToDispatch
-        : signalsToDispatch.filter((item) => {
-            const check = isChampionSignal(ticker, item.strategyId, tickerChampions, true);
-            return check.allowed;
-          });
+        : champion.hasPositiveAlpha
+          ? signalsToDispatch.filter((item) => item.strategyId === champion.strategyId)
+          : [];
 
       if (eligibleSignals.length === 0) {
         result.skipped += 1;
@@ -259,14 +264,17 @@ export async function dispatchSignalNotifications(options: {
       }
 
       for (const item of eligibleSignals) {
-        const { strategyId, strategyShort, strategyLabel, signal, metrics, parameterVersion } = item;
-        const champInfo = tickerChampions[ticker] || tickerChampions[normalizeTickerSymbol(ticker)];
-
-        const signalIndex = bars.findIndex((bar) => bar.date === signal.date);
-        const signalBarsAgo = signalIndex >= 0 ? Math.max(0, bars.length - 1 - signalIndex) : 0;
-        const analysisStart = '2025-01-01';
-        const dataAsOf = bars[bars.length - 1]?.date ?? signal.date;
-
+        const {
+          strategyId,
+          strategyShort,
+          strategyLabel,
+          signal,
+          metrics,
+          parameterVersion,
+          analysisStart,
+          analysisEnd,
+          dataAsOf,
+        } = item;
         // Refresh the canonical snapshot even when this notification was
         // already delivered. The opportunities endpoint can then read the
         // latest metrics without re-running the strategy during a request.
@@ -277,12 +285,12 @@ export async function dispatchSignalNotifications(options: {
           signalDate: signal.date,
           signal: signal.signal,
           signalPrice: String(signal.price),
-          signalBarsAgo,
-          signalReason: signal.entryReason || signal.exitReason || signal.reasoning || null,
+          signalBarsAgo: signal.barsAgo,
+          signalReason: signal.reason || null,
           analysisStart,
-          analysisEnd: dataAsOf,
+          analysisEnd,
           dataAsOf,
-          metrics: mapStrategyMetrics(metrics),
+          metrics,
           parameterVersion,
         });
 
@@ -467,7 +475,7 @@ function configureWebPush() {
 
 
 
-async function hasNotificationBeenSent(userId: string, ticker: string, strategy: string, signal: PsiSignal): Promise<boolean> {
+async function hasNotificationBeenSent(userId: string, ticker: string, strategy: string, signal: NotificationSignal): Promise<boolean> {
   const rows = await db
     .select({ id: signalNotifications.id })
     .from(signalNotifications)
@@ -510,7 +518,7 @@ async function sendToSubscription(
 
 function buildNotificationTitle(
   ticker: string,
-  signal: PsiSignal,
+  signal: NotificationSignal,
   openOrderExists: boolean,
   strategyShort: string = 'TYPHON',
   championInfo?: TickerChampionInfo
@@ -525,12 +533,12 @@ function buildNotificationTitle(
 }
 
 function buildNotificationBody(
-  signal: PsiSignal,
+  signal: NotificationSignal,
   strategyLabel: string = 'Typhon Strategy',
   championInfo?: TickerChampionInfo
 ): string {
   const price = `${Number(signal.price).toFixed(2)} EGP`;
-  const reason = (signal as any).entryReason || (signal as any).exitReason || (signal as any).reasoning;
+  const reason = signal.reason;
   const alphaSnippet = championInfo?.hasPositiveAlpha
     ? ` · 🏆 Best-Fit (+${championInfo.alpha > 0 ? '+' : ''}${championInfo.alpha.toFixed(1)}% α)`
     : '';

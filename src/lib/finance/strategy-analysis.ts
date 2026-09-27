@@ -58,6 +58,17 @@ export type StrategyAnalysis = {
   rawResult: unknown;
 };
 
+export type TickerStrategyChampion = {
+  strategyId: Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>;
+  strategyName: 'Typhon' | 'Cerberus' | 'Hydra';
+  alpha: number;
+  hasPositiveAlpha: boolean;
+};
+
+export type TickerChampionAnalysis = TickerStrategyChampion & {
+  analyses: StrategyAnalysis[];
+};
+
 export type StrategyAnalysisOptions = {
   startDate?: string;
   endDate?: string;
@@ -245,6 +256,55 @@ export async function analyzeStrategy(
     parameterVersion,
     formattedMetrics,
     rawResult,
+  };
+}
+
+const CHAMPION_STRATEGIES: Array<Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>> = [
+  'psi',
+  'psi_v2',
+  'hydra',
+];
+
+function strategyNameForChampion(strategyId: TickerStrategyChampion['strategyId']): TickerStrategyChampion['strategyName'] {
+  if (strategyId === 'psi_v2') return 'Cerberus';
+  if (strategyId === 'hydra') return 'Hydra';
+  return 'Typhon';
+}
+
+/**
+ * Evaluates every active strategy with the same canonical analyser used by
+ * charts, then selects the ticker's highest-alpha strategy. Notifications and
+ * chart defaults both use this result so a signal always opens its own model.
+ */
+export async function analyzeTickerChampion(
+  symbol: string,
+  bars: PriceBar[],
+  options: StrategyAnalysisOptions = {},
+): Promise<TickerChampionAnalysis> {
+  const analyses = await Promise.all(
+    CHAMPION_STRATEGIES.map((strategyId) => analyzeStrategy(symbol, bars, strategyId, options)),
+  );
+
+  const ranking = analyses
+    .filter((analysis): analysis is StrategyAnalysis & { strategyId: TickerStrategyChampion['strategyId'] } =>
+      CHAMPION_STRATEGIES.includes(analysis.strategyId as TickerStrategyChampion['strategyId']),
+    )
+    .map((analysis) => ({
+      analysis,
+      alpha: analysis.metrics.alpha ?? Number.NEGATIVE_INFINITY,
+    }))
+    .sort((left, right) => right.alpha - left.alpha);
+
+  const winner = ranking[0];
+  const strategyId = winner?.analysis.strategyId ?? 'psi';
+  const alpha = Number.isFinite(winner?.alpha) ? winner.alpha : 0;
+
+  return {
+    strategyId,
+    strategyName: strategyNameForChampion(strategyId),
+    alpha,
+    hasPositiveAlpha: alpha > 0,
+    analyses,
   };
 }
 
