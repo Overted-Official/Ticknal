@@ -144,7 +144,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         } catch {}
         const fallback = await fallbackToDbQuote(cleanSym);
         resolve(fallback);
-      }, 1800);
+      }, 3000);
 
       chart.onUpdate(async () => {
         if (resolved) return;

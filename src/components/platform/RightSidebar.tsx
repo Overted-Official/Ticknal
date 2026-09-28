@@ -49,7 +49,7 @@ export default function RightSidebar({
   const searchParams = useSearchParams();
   const { data: quoteData } = useSWR(`/api/quote?symbol=${selectedSymbol}`, fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 30000,
-    revalidateOnFocus: false,
+    revalidateOnFocus: true,
     dedupingInterval: 15000,
     isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });

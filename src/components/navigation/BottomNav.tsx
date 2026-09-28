@@ -94,7 +94,7 @@ export default function BottomNav() {
 
   const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
-    revalidateOnFocus: false,
+    revalidateOnFocus: true,
     dedupingInterval: 30000,
     isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
