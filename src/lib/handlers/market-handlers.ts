@@ -11,6 +11,7 @@ import {
 
 import { desc, eq } from 'drizzle-orm';
 import { dailyPrices } from '@/db/schema';
+import { getCachedTickers } from '@/lib/data-cache';
 
 type TradingViewPeriod = {
   time: number;
@@ -24,7 +25,15 @@ type TradingViewPeriod = {
 async function getDbQuoteAndRanges(cleanSym: string) {
   try {
     const rows = await db
-      .select()
+      .select({
+        tickerSymbol: dailyPrices.tickerSymbol,
+        date: dailyPrices.date,
+        open: dailyPrices.open,
+        high: dailyPrices.high,
+        low: dailyPrices.low,
+        close: dailyPrices.close,
+        volume: dailyPrices.volume,
+      })
       .from(dailyPrices)
       .where(eq(dailyPrices.tickerSymbol, cleanSym))
       .orderBy(desc(dailyPrices.date))
@@ -66,10 +75,18 @@ async function getDbQuoteAndRanges(cleanSym: string) {
   return null;
 }
 
+const QUOTE_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+};
+
+const quoteMemoryCache = new Map<string, { data: any; timestamp: number }>();
+const QUOTE_CACHE_TTL = 30 * 1000; // 30s in-memory cache per lambda
+
 async function fallbackToDbQuote(cleanSym: string): Promise<Response> {
   const data = await getDbQuoteAndRanges(cleanSym);
   if (data) {
-    return NextResponse.json(data);
+    quoteMemoryCache.set(cleanSym, { data, timestamp: Date.now() });
+    return NextResponse.json(data, { headers: QUOTE_CACHE_HEADERS });
   }
   return NextResponse.json({ error: 'No quote data available' }, { status: 404 });
 }
@@ -83,6 +100,13 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
   }
 
   const cleanSym = symbol.trim().toUpperCase().replace('.CA', '');
+
+  // 1. Fast in-memory cache check (sub-millisecond, zero CPU & zero network)
+  const now = Date.now();
+  const cached = quoteMemoryCache.get(cleanSym);
+  if (cached && now - cached.timestamp < QUOTE_CACHE_TTL) {
+    return NextResponse.json(cached.data, { headers: QUOTE_CACHE_HEADERS });
+  }
 
   try {
     let tvSymbol = `EGX:${cleanSym}`;
@@ -110,6 +134,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         range: 2
       });
 
+      // Cap timeout at 1800ms to avoid burning expensive lambda execution duration
       const timeout = setTimeout(async () => {
         if (resolved) return;
         resolved = true;
@@ -119,7 +144,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         } catch {}
         const fallback = await fallbackToDbQuote(cleanSym);
         resolve(fallback);
-      }, 3500);
+      }, 1800);
 
       chart.onUpdate(async () => {
         if (resolved) return;
@@ -151,7 +176,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
           client.end();
         } catch {}
 
-        resolve(NextResponse.json({
+        const payload = {
           symbol: cleanSym,
           price: currentPrice,
           change: Number(change.toFixed(2)),
@@ -165,7 +190,10 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
           yearLow: dbRanges?.yearLow || current.min || currentPrice,
           volume: current.volume,
           updatedAt: new Date(current.time * 1000).toISOString()
-        }));
+        };
+
+        quoteMemoryCache.set(cleanSym, { data: payload, timestamp: Date.now() });
+        resolve(NextResponse.json(payload, { headers: QUOTE_CACHE_HEADERS }));
       });
 
       chart.onError(async (err: Error) => {
@@ -189,7 +217,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
 
 export async function handleTickersGet() {
   try {
-    const allTickers = await db.select().from(tickers);
+    const allTickers = await getCachedTickers();
     return NextResponse.json(allTickers, {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
     });
@@ -238,7 +266,7 @@ export async function handleOpportunitiesGet(request: Request): Promise<Response
 
     return NextResponse.json({ opportunities }, {
       status: 200,
-      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400' },
     });
   } catch (err: any) {
     console.error('API /api/opportunities error:', err);

@@ -376,7 +376,7 @@ export async function getOrInitPrecomputedCache(): Promise<PrecomputedModelCache
           SELECT ticker_symbol, date, open, high, low, close, volume,
                  ROW_NUMBER() OVER(PARTITION BY ticker_symbol ORDER BY date DESC) AS rn
           FROM ${dailyPrices}
-          WHERE close > 0
+          WHERE close > 0 AND date >= '2023-01-01'
         )
         SELECT ticker_symbol, date, open, high, low, close, volume
         FROM ranked_prices

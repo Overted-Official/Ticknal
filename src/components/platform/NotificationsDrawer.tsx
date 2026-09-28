@@ -160,6 +160,8 @@ export default function NotificationsDrawer({
   }>(isOpen ? '/api/notifications' : null, fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
     revalidateOnFocus: false,
+    dedupingInterval: 30000,
+    isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
 
   const { data: logsData, isLoading: isLoadingLogs } = useSWR<{ logs: SystemLogItem[] }>(
@@ -168,6 +170,8 @@ export default function NotificationsDrawer({
     {
       refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
       revalidateOnFocus: false,
+      dedupingInterval: 30000,
+      isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
     }
   );
 

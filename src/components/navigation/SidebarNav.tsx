@@ -27,6 +27,7 @@ export default function SidebarNav() {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
     revalidateOnFocus: false,
     dedupingInterval: 30000,
+    isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
 
   const notificationCount = notifData?.notifications?.length ?? 0;

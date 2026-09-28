@@ -94,6 +94,7 @@ export async function handleNotificationsDelete(request: Request) {
         .where(eq(signalNotifications.userId, user.id));
     }
 
+    notificationsMemCache.delete(user.id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Error deleting notifications:', error);

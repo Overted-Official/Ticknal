@@ -409,7 +409,14 @@ export async function handleAvatarPost(request: Request) {
 // ----------------------------------------------------
 // SYSTEM LOGS HANDLER
 // ----------------------------------------------------
+let systemLogsMemCache: { data: any[]; timestamp: number } | null = null;
+const SYSTEM_LOGS_TTL = 30 * 1000;
+
 export async function handleSystemLogsGet() {
+  const now = Date.now();
+  if (systemLogsMemCache && now - systemLogsMemCache.timestamp < SYSTEM_LOGS_TTL) {
+    return NextResponse.json({ logs: systemLogsMemCache.data });
+  }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -424,6 +431,7 @@ export async function handleSystemLogsGet() {
       .orderBy(desc(systemLogs.createdAt))
       .limit(100);
 
+    systemLogsMemCache = { data: logs, timestamp: Date.now() };
     return NextResponse.json({ logs });
   } catch (error) {
     console.error('Error fetching system logs:', error);

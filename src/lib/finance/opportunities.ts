@@ -266,10 +266,19 @@ export async function _getRecentOpportunities(
       const championOnly = strategyScope === 'champion';
       const needsRequestAnalysis = championOnly || indexedSignals.some((signal) => !signal.snapshot?.metrics);
       const priceRows = needsRequestAnalysis
-        ? await db.select()
+        ? await db
+          .select({
+            tickerSymbol: dailyPrices.tickerSymbol,
+            date: dailyPrices.date,
+            open: dailyPrices.open,
+            high: dailyPrices.high,
+            low: dailyPrices.low,
+            close: dailyPrices.close,
+            volume: dailyPrices.volume,
+          })
           .from(dailyPrices)
           .where(championOnly
-            ? inArray(dailyPrices.tickerSymbol, candidateSymbols)
+            ? and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, '2024-01-01'))
             : and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, DEFAULT_START_DATE)))
           .orderBy(dailyPrices.tickerSymbol, dailyPrices.date)
         : [];
@@ -467,7 +476,15 @@ export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5
   if (cleanSymbols.length === 0) return [];
   const [tickerRows, priceRows] = await Promise.all([
     db.select().from(tickers).where(inArray(tickers.symbol, cleanSymbols)),
-    db.select().from(dailyPrices).where(inArray(dailyPrices.tickerSymbol, cleanSymbols)).orderBy(dailyPrices.tickerSymbol, dailyPrices.date),
+    db.select({
+      tickerSymbol: dailyPrices.tickerSymbol,
+      date: dailyPrices.date,
+      open: dailyPrices.open,
+      high: dailyPrices.high,
+      low: dailyPrices.low,
+      close: dailyPrices.close,
+      volume: dailyPrices.volume,
+    }).from(dailyPrices).where(and(inArray(dailyPrices.tickerSymbol, cleanSymbols), gte(dailyPrices.date, DEFAULT_START_DATE))).orderBy(dailyPrices.tickerSymbol, dailyPrices.date),
   ]);
   const metadata = new Map(tickerRows.map((ticker) => [normalizeTickerSymbol(ticker.symbol), ticker]));
   const barsByTicker = new Map<string, PriceBar[]>();
