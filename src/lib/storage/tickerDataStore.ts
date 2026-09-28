@@ -15,10 +15,15 @@ export type SyncMeta = {
   lastDate: string;
   count: number;
   syncedAt: number;
+  adjustmentRevision?: string | null;
 };
 
-const DB_NAME = 'ticknal_market_data_v2';
+const DB_NAME = 'ticknal_market_data_v1';
 const DB_VERSION = 1;
+
+const REQUIRED_ADJUSTMENT_REVISIONS: Record<string, string> = {
+  POUL: '2026-09-27:',
+};
 
 const STORES = {
   CANDLES: 'candles',
@@ -104,7 +109,12 @@ export const tickerDataStore = {
   /**
    * Saves price bars and updates sync metadata in IndexedDB.
    */
-  async saveBars(symbol: string, bars: PriceBar[], timeframe: string = 'D'): Promise<void> {
+  async saveBars(
+    symbol: string,
+    bars: PriceBar[],
+    timeframe: string = 'D',
+    adjustmentRevision: string | null = null,
+  ): Promise<void> {
     if (!isIndexedDbSupported() || bars.length === 0) return;
     try {
       const db = await openDb();
@@ -122,6 +132,7 @@ export const tickerDataStore = {
           lastDate,
           count: bars.length,
           syncedAt: Date.now(),
+          adjustmentRevision,
         } satisfies SyncMeta,
         key
       );
@@ -166,11 +177,23 @@ export const tickerDataStore = {
       ]);
     }
 
+    const requiredRevisionPrefix = REQUIRED_ADJUSTMENT_REVISIONS[cleanSym];
+    const requiresKnownRepairRefresh = Boolean(
+      timeframe.toUpperCase() === 'D' &&
+      requiredRevisionPrefix &&
+      !meta?.adjustmentRevision?.startsWith(requiredRevisionPrefix),
+    );
+    const forceRefresh = Boolean(options.forceRefresh || requiresKnownRepairRefresh);
+    if (forceRefresh) {
+      storedBars = [];
+      meta = null;
+    }
+
     // Seed local store if empty and initialBars provided
     if (options.initialBars && options.initialBars.length > 0) {
       if (storedBars.length === 0) {
         storedBars = options.initialBars;
-        this.saveBars(cleanSym, storedBars, timeframe).catch(() => {});
+        this.saveBars(cleanSym, storedBars, timeframe, meta?.adjustmentRevision ?? null).catch(() => {});
       } else {
         const lastStored = storedBars[storedBars.length - 1];
         const lastInitial = options.initialBars[options.initialBars.length - 1];
@@ -183,14 +206,14 @@ export const tickerDataStore = {
             const timeB = typeof b.time === 'number' ? b.time : Date.parse(String(b.time));
             return timeA - timeB;
           });
-          this.saveBars(cleanSym, storedBars, timeframe).catch(() => {});
+          this.saveBars(cleanSym, storedBars, timeframe, meta?.adjustmentRevision ?? null).catch(() => {});
         }
       }
     }
 
     // If cache is fresh, avoid network ping entirely (12 hours for daily bars, 5 mins for intraday)
     const now = Date.now();
-    const freshDuration = options.forceRefresh
+    const freshDuration = forceRefresh
       ? 0
       : (timeframe.toUpperCase() === 'D' ? 12 * 60 * 60 * 1000 : 5 * 60 * 1000);
 
@@ -204,7 +227,7 @@ export const tickerDataStore = {
       const url = new URL('/api/history', window.location.origin);
       url.searchParams.set('ticker', cleanSym);
       url.searchParams.set('timeframe', timeframe);
-      if (lastDate && !options.forceRefresh) {
+      if (lastDate && !forceRefresh) {
         url.searchParams.set('since', lastDate);
       }
 
@@ -219,14 +242,37 @@ export const tickerDataStore = {
 
       const data = await response.json();
       const incomingBars: PriceBar[] = data?.bars || [];
+      const incomingAdjustmentRevision: string | null = data?.adjustmentRevision || null;
+
+      const fetchFullHistory = async (): Promise<PriceBar[] | null> => {
+        const refreshUrl = new URL('/api/history', window.location.origin);
+        refreshUrl.searchParams.set('ticker', cleanSym);
+        refreshUrl.searchParams.set('timeframe', timeframe);
+        refreshUrl.searchParams.set('fresh', '1');
+        const refreshResponse = await fetch(refreshUrl.toString(), { cache: 'no-store' });
+        if (!refreshResponse.ok) return null;
+        const refreshData = await refreshResponse.json();
+        const refreshedBars: PriceBar[] = refreshData?.bars || [];
+        if (refreshedBars.length === 0) return null;
+        const refreshedRevision: string | null = refreshData?.adjustmentRevision || null;
+        this.saveBars(cleanSym, refreshedBars, timeframe, refreshedRevision).catch(() => {});
+        return refreshedBars;
+      };
 
       // Case A: Full initial fetch (local was empty or forceRefresh)
-      if (storedBars.length === 0 || options.forceRefresh) {
+      if (storedBars.length === 0 || forceRefresh) {
         if (incomingBars.length > 0) {
           // Asynchronously persist without blocking caller
-          this.saveBars(cleanSym, incomingBars, timeframe).catch(() => {});
+          this.saveBars(cleanSym, incomingBars, timeframe, incomingAdjustmentRevision).catch(() => {});
         }
         return { bars: incomingBars, fromCache: false, deltaCount: incomingBars.length };
+      }
+
+      if (incomingAdjustmentRevision !== (meta?.adjustmentRevision ?? null)) {
+        const refreshedBars = await fetchFullHistory();
+        if (refreshedBars) {
+          return { bars: refreshedBars, fromCache: false, deltaCount: refreshedBars.length };
+        }
       }
 
       // Case B: Delta fetch (0 new bars returned)
@@ -250,22 +296,13 @@ export const tickerDataStore = {
         if (lastStored && firstIncoming) {
           const discontinuity = detectExtremeGap(Number(lastStored.close), Number(firstIncoming.open));
           if (discontinuity) {
-            const refreshUrl = new URL('/api/history', window.location.origin);
-            refreshUrl.searchParams.set('ticker', cleanSym);
-            refreshUrl.searchParams.set('timeframe', timeframe);
-            refreshUrl.searchParams.set('fresh', '1');
-            const refreshResponse = await fetch(refreshUrl.toString(), { cache: 'no-store' });
-            if (refreshResponse.ok) {
-              const refreshData = await refreshResponse.json();
-              const refreshedBars: PriceBar[] = refreshData?.bars || [];
-              if (refreshedBars.length > 0) {
-                this.saveBars(cleanSym, refreshedBars, timeframe).catch(() => {});
-                return {
-                  bars: refreshedBars,
-                  fromCache: false,
-                  deltaCount: refreshedBars.length,
-                };
-              }
+            const refreshedBars = await fetchFullHistory();
+            if (refreshedBars) {
+              return {
+                bars: refreshedBars,
+                fromCache: false,
+                deltaCount: refreshedBars.length,
+              };
             }
           }
         }
@@ -287,7 +324,7 @@ export const tickerDataStore = {
       });
 
       // Save asynchronously
-      this.saveBars(cleanSym, mergedBars, timeframe).catch(() => {});
+      this.saveBars(cleanSym, mergedBars, timeframe, incomingAdjustmentRevision).catch(() => {});
 
       return {
         bars: mergedBars,

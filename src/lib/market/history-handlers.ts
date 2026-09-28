@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { dailyPrices, intradayCandles } from '@/db/schema';
-import { eq, and, gt, asc } from 'drizzle-orm';
+import { dailyPrices, intradayCandles, priceAdjustments } from '@/db/schema';
+import { eq, and, gt, asc, desc } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 
 export async function handleHistoryGet(req: Request) {
@@ -94,6 +94,28 @@ export async function handleHistoryGet(req: Request) {
       volume: Number(r.volume || 0),
     }));
 
+    let adjustmentRevision: string | null = null;
+    try {
+      const latestAdjustment = await db
+        .select({
+          effectiveDate: priceAdjustments.effectiveDate,
+          factor: priceAdjustments.factor,
+        })
+        .from(priceAdjustments)
+        .where(and(
+          eq(priceAdjustments.tickerSymbol, symbol),
+          eq(priceAdjustments.status, 'APPLIED'),
+        ))
+        .orderBy(desc(priceAdjustments.effectiveDate))
+        .limit(1);
+      if (latestAdjustment[0]) {
+        adjustmentRevision = `${String(latestAdjustment[0].effectiveDate).slice(0, 10)}:${latestAdjustment[0].factor}`;
+      }
+    } catch {
+      // Compatibility while migration 0009 is rolling out. A missing revision
+      // never blocks canonical history reads.
+    }
+
     const cacheHeader = fresh
       ? 'no-store'
       : since
@@ -101,7 +123,7 @@ export async function handleHistoryGet(req: Request) {
       : 'public, max-age=300, s-maxage=86400, stale-while-revalidate=86400';
 
     return NextResponse.json(
-      { symbol, timeframe: 'D', count: bars.length, since: since || null, bars },
+      { symbol, timeframe: 'D', count: bars.length, since: since || null, adjustmentRevision, bars },
       {
         headers: {
           'Cache-Control': cacheHeader,

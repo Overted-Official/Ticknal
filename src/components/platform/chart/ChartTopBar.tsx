@@ -177,152 +177,256 @@ export default function ChartTopBar({
   }, [isSearchOpen]);
 
   return (
-    <div className="h-[45px] shrink-0 w-full bg-cold-gray-900 border-b border-white/[0.08] flex items-center justify-between px-2 sm:px-3 select-none text-xs font-sans relative z-30">
-      {/* ─── Left Section: Search Bar & Analysis Tools ─── */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0">
-        {/* Mobile Search Icon Button */}
-        <button
-          type="button"
-          onClick={() => setIsSearchOpen(true)}
-          className={`sm:hidden h-7 w-7 rounded-md flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-            isSearchOpen
-              ? 'bg-white/15 text-white font-semibold'
-              : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
-          }`}
-          title="Search tickers"
-          aria-label="Search tickers"
-        >
-          <Search size={13} />
-        </button>
-
-        {/* Desktop Search Trigger Input */}
-        <div
-          onClick={() => setIsSearchOpen(true)}
-          className="hidden sm:flex relative items-center cursor-pointer group"
-        >
-          <Search
-            size={13}
-            className="absolute left-2.5 text-text-muted group-hover:text-white transition-colors pointer-events-none"
-          />
-          <div className="h-7 w-36 sm:w-44 md:w-52 rounded-md bg-white/[0.04] group-hover:bg-white/[0.07] border border-white/[0.08] group-hover:border-white/20 pl-7 pr-6 text-[11px] text-text-muted group-hover:text-white flex items-center transition-all leading-none font-sans select-none">
-            {searchQuery || 'Search tickers...'}
+    <div className="w-full shrink-0 bg-cold-gray-900 border-b border-white/[0.08] select-none text-xs font-sans relative z-30">
+      {/* ─── Mobile 2-Bar Layout (sm:hidden) ─── */}
+      <div className="sm:hidden flex flex-col w-full divide-y divide-white/[0.06]">
+        {/* Bar 1: Search Bar (with search input look) + Positions + Add */}
+        <div className="h-10 px-2 flex items-center justify-between gap-1.5 w-full">
+          {/* Mobile Search Bar Trigger */}
+          <div
+            onClick={() => setIsSearchOpen(true)}
+            className="flex-1 min-w-0 h-8 px-2.5 rounded-md bg-white/[0.04] active:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+            role="button"
+            tabIndex={0}
+            aria-label="Search tickers"
+          >
+            <Search size={13} className="text-text-muted shrink-0" />
+            <span className="text-[11px] text-text-muted truncate select-none">
+              {searchQuery || 'Search tickers...'}
+            </span>
           </div>
-          <kbd className="hidden md:flex absolute right-1.5 px-1 py-0.5 rounded border border-white/10 text-[9px] text-text-muted font-sans pointer-events-none leading-none">
-            ⌘K
-          </kbd>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* My Positions */}
+            {onOpenPositionsDrawer && (
+              <button
+                type="button"
+                title="My Positions & Orders"
+                aria-label="My Positions"
+                onClick={onOpenPositionsDrawer}
+                className="h-8 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white active:bg-white/[0.08] bg-white/[0.03] border border-white/[0.08] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Briefcase size={12} className="shrink-0" />
+                <span>Positions</span>
+                {openPositionsCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none shrink-0">
+                    {openPositionsCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Add Position Primary CTA */}
+            {onOpenAddOrder && (
+              <button
+                type="button"
+                title="Add Position"
+                aria-label="Add Position"
+                onClick={onOpenAddOrder}
+                className="h-8 px-2.5 rounded-md bg-white hover:bg-white/90 active:bg-white/80 text-black text-[11px] font-semibold transition-all flex items-center justify-center gap-1 shrink-0 cursor-pointer shadow-xs active:scale-95"
+              >
+                <Plus size={13} strokeWidth={2.5} />
+                <span>Add</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Splitting Line between Search bar and Predict Price */}
-        <div className="h-3.5 w-px bg-white/10 shrink-0 mx-0.5 sm:mx-1" />
-
-        {/* Predict Price */}
-        {onTogglePredict && (
-          <button
-            type="button"
-            title="AI Price Forecast"
-            aria-label="Predict Price"
-            disabled={isPredicting}
-            onClick={onTogglePredict}
-            className={`h-7 px-1.5 sm:px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${
-              isPredictPopoverOpen || isPredicting
-                ? 'bg-white/15 text-white font-semibold'
-                : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
-            }`}
-          >
-            {isPredicting ? (
-              <InlineSpinner className="h-[13px] w-[13px]" label="Generating price forecast" />
-            ) : (
-              <Sparkles size={13} className="text-text-muted" />
+        {/* Bar 2: Predict + Indicators + Report taking full width correctly */}
+        <div className="h-9 px-2 flex items-center w-full">
+          <div className="grid grid-cols-3 gap-1.5 w-full">
+            {/* Predict Price */}
+            {onTogglePredict && (
+              <button
+                type="button"
+                title="AI Price Forecast"
+                aria-label="Predict Price"
+                disabled={isPredicting}
+                onClick={onTogglePredict}
+                className={`h-7 px-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed w-full border ${
+                  isPredictPopoverOpen || isPredicting
+                    ? 'bg-white/15 text-white border-white/20 font-semibold'
+                    : 'text-text-muted hover:text-white bg-white/[0.03] border-white/[0.08] active:bg-white/[0.08]'
+                }`}
+              >
+                {isPredicting ? (
+                  <InlineSpinner className="h-[13px] w-[13px]" label="Generating forecast" />
+                ) : (
+                  <Sparkles size={12} className="text-text-muted shrink-0" />
+                )}
+                <span className="truncate">Predict</span>
+              </button>
             )}
-            <span className="hidden sm:inline">Predict Price</span>
-            <span className="sm:hidden">Predict</span>
-          </button>
-        )}
 
-        {/* Splitting Line between Predict Price and Indicators */}
-        <div className="h-3.5 w-px bg-white/10 shrink-0 mx-0.5 sm:mx-1" />
-
-        {/* Indicators */}
-        {onToggleIndicators && (
-          <button
-            type="button"
-            title="Technical Indicators"
-            aria-label="Indicators"
-            onClick={onToggleIndicators}
-            className={`h-7 px-1.5 sm:px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0 ${
-              isIndicatorsPopoverOpen || activeIndicatorsCount > 0
-                ? 'bg-white/15 text-white font-semibold'
-                : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
-            }`}
-          >
-            <BarChart2 size={13} />
-            <span>Indicators</span>
-            {activeIndicatorsCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
-                {activeIndicatorsCount}
-              </span>
+            {/* Indicators */}
+            {onToggleIndicators && (
+              <button
+                type="button"
+                title="Technical Indicators"
+                aria-label="Indicators"
+                onClick={onToggleIndicators}
+                className={`h-7 px-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full border ${
+                  isIndicatorsPopoverOpen || activeIndicatorsCount > 0
+                    ? 'bg-white/15 text-white border-white/20 font-semibold'
+                    : 'text-text-muted hover:text-white bg-white/[0.03] border-white/[0.08] active:bg-white/[0.08]'
+                }`}
+              >
+                <BarChart2 size={12} className="shrink-0" />
+                <span className="truncate">Indicators</span>
+                {activeIndicatorsCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none shrink-0">
+                    {activeIndicatorsCount}
+                  </span>
+                )}
+              </button>
             )}
-          </button>
-        )}
 
-        {/* Splitting Line between Indicators and Strategy Report */}
-        <div className="h-3.5 w-px bg-white/10 shrink-0 mx-0.5 sm:mx-1" />
-
-        {/* Strategy Report */}
-        {onOpenStrategyReport && (
-          <button
-            type="button"
-            title="Strategy Report & Performance Backtest"
-            aria-label="Strategy Report"
-            onClick={onOpenStrategyReport}
-            className="h-7 px-1.5 sm:px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0"
-          >
-            <FileText size={13} />
-            <span className="hidden sm:inline">Strategy Report</span>
-            <span className="sm:hidden">Report</span>
-          </button>
-        )}
+            {/* Strategy Report */}
+            {onOpenStrategyReport && (
+              <button
+                type="button"
+                title="Strategy Report & Performance Backtest"
+                aria-label="Strategy Report"
+                onClick={onOpenStrategyReport}
+                className="h-7 px-1 rounded-md text-[11px] font-medium text-text-muted hover:text-white bg-white/[0.03] border border-white/[0.08] active:bg-white/[0.08] transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full"
+              >
+                <FileText size={12} className="shrink-0" />
+                <span className="truncate">Report</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* ─── Right Section: Portfolio & Execution Actions (Far Right) ─── */}
-      <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto pl-1 sm:pl-2">
-        {/* My Positions */}
-        {onOpenPositionsDrawer && (
-          <button
-            type="button"
-            title="My Positions & Orders"
-            aria-label="My Positions"
-            onClick={onOpenPositionsDrawer}
-            className="h-7 px-1.5 sm:px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0"
+      {/* ─── Desktop Single-Bar Layout (hidden sm:flex) ─── */}
+      <div className="hidden sm:flex h-[45px] w-full items-center justify-between px-3">
+        {/* Left Section: Search Bar & Analysis Tools */}
+        <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+          {/* Desktop Search Trigger Input */}
+          <div
+            onClick={() => setIsSearchOpen(true)}
+            className="flex relative items-center cursor-pointer group"
           >
-            <Briefcase size={13} />
-            <span className="hidden sm:inline">My Positions</span>
-            <span className="hidden min-[410px]:inline sm:hidden">Positions</span>
-            {openPositionsCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
-                {openPositionsCount}
-              </span>
-            )}
-          </button>
-        )}
+            <Search
+              size={13}
+              className="absolute left-2.5 text-text-muted group-hover:text-white transition-colors pointer-events-none"
+            />
+            <div className="h-7 w-36 sm:w-44 md:w-52 rounded-md bg-white/[0.04] group-hover:bg-white/[0.07] border border-white/[0.08] group-hover:border-white/20 pl-7 pr-6 text-[11px] text-text-muted group-hover:text-white flex items-center transition-all leading-none font-sans select-none">
+              {searchQuery || 'Search tickers...'}
+            </div>
+            <kbd className="hidden md:flex absolute right-1.5 px-1 py-0.5 rounded border border-white/10 text-[9px] text-text-muted font-sans pointer-events-none leading-none">
+              ⌘K
+            </kbd>
+          </div>
 
-        {/* Splitting Line */}
-        <div className="h-3.5 w-px bg-white/10 shrink-0 mx-0.5" />
+          {/* Splitting Line between Search bar and Predict Price */}
+          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-1" />
 
-        {/* Add Position Primary CTA */}
-        {onOpenAddOrder && (
-          <button
-            type="button"
-            title="Add Position"
-            aria-label="Add Position"
-            onClick={onOpenAddOrder}
-            className="h-7 px-2 sm:px-3 rounded-md bg-white hover:bg-white/90 text-black text-[11px] font-semibold transition-all flex items-center justify-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-xs"
-          >
-            <Plus size={13} strokeWidth={2.5} />
-            <span className="hidden sm:inline">Add Position</span>
-            <span className="sm:hidden">Add</span>
-          </button>
-        )}
+          {/* Predict Price */}
+          {onTogglePredict && (
+            <button
+              type="button"
+              title="AI Price Forecast"
+              aria-label="Predict Price"
+              disabled={isPredicting}
+              onClick={onTogglePredict}
+              className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${
+                isPredictPopoverOpen || isPredicting
+                  ? 'bg-white/15 text-white font-semibold'
+                  : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
+              }`}
+            >
+              {isPredicting ? (
+                <InlineSpinner className="h-[13px] w-[13px]" label="Generating price forecast" />
+              ) : (
+                <Sparkles size={13} className="text-text-muted" />
+              )}
+              <span>Predict Price</span>
+            </button>
+          )}
+
+          {/* Splitting Line between Predict Price and Indicators */}
+          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-1" />
+
+          {/* Indicators */}
+          {onToggleIndicators && (
+            <button
+              type="button"
+              title="Technical Indicators"
+              aria-label="Indicators"
+              onClick={onToggleIndicators}
+              className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                isIndicatorsPopoverOpen || activeIndicatorsCount > 0
+                  ? 'bg-white/15 text-white font-semibold'
+                  : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
+              }`}
+            >
+              <BarChart2 size={13} />
+              <span>Indicators</span>
+              {activeIndicatorsCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
+                  {activeIndicatorsCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Splitting Line between Indicators and Strategy Report */}
+          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-1" />
+
+          {/* Strategy Report */}
+          {onOpenStrategyReport && (
+            <button
+              type="button"
+              title="Strategy Report & Performance Backtest"
+              aria-label="Strategy Report"
+              onClick={onOpenStrategyReport}
+              className="h-7 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <FileText size={13} />
+              <span>Strategy Report</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right Section: Portfolio & Execution Actions */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto pl-2">
+          {/* My Positions */}
+          {onOpenPositionsDrawer && (
+            <button
+              type="button"
+              title="My Positions & Orders"
+              aria-label="My Positions"
+              onClick={onOpenPositionsDrawer}
+              className="h-7 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Briefcase size={13} />
+              <span>My Positions</span>
+              {openPositionsCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
+                  {openPositionsCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Splitting Line */}
+          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-0.5" />
+
+          {/* Add Position Primary CTA */}
+          {onOpenAddOrder && (
+            <button
+              type="button"
+              title="Add Position"
+              aria-label="Add Position"
+              onClick={onOpenAddOrder}
+              className="h-7 px-3 rounded-md bg-white hover:bg-white/90 text-black text-[11px] font-semibold transition-all flex items-center justify-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-xs"
+            >
+              <Plus size={13} strokeWidth={2.5} />
+              <span>Add Position</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ─── Portal Search Command Palette & Dropdown (Immune to parent overflow clipping) ─── */}

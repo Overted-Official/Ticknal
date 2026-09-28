@@ -139,7 +139,9 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   if (root === 'cron') {
     switch (sub) {
       case 'update-stocks':
-        return handleUpdateStocks(req);
+        return handleUpdateStocks(req, {
+          skipNotifications: new URL(req.url).searchParams.get('skipNotifications') === '1',
+        });
       case 'update-funds':
         return handleUpdateFunds(req);
       case 'update-commodities':

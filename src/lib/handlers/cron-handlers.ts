@@ -161,7 +161,7 @@ async function applyPriceAdjustment(
   });
 }
 
-export async function handleUpdateStocks(req: Request, options?: { specificSymbols?: string[] }) {
+export async function handleUpdateStocks(req: Request, options?: { specificSymbols?: string[]; skipNotifications?: boolean }) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
@@ -487,7 +487,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
 
     // Direct Signal Pipeline: If new price data was inserted and budget permits (< 42s), immediately process signals and push notifications
     let notificationResult: any = null;
-    if (totalUpdated > 0 && Date.now() - startTime < 42000) {
+    if (!options?.skipNotifications && totalUpdated > 0 && Date.now() - startTime < 42000) {
       try {
         notificationResult = await dispatchSignalNotifications({ lookbackBars: 1 });
         await db.insert(systemLogs).values({
