@@ -158,14 +158,20 @@ export async function handleTestNotification(req?: Request) {
   }
 
   const payloadData = {
-    title: 'COMI · BUY Signal (Cerberus)',
-    body: 'Triggered at 139.50 EGP · Target: 152.00 · Stop: 134.00',
+    title: '(BUY) Commercial International Bank',
+    body: 'COMI · α +16.4% · MAE 4.2% · Return/MAE 150%',
     url: '/charts?ticker=COMI.CA&strategy=psi_v2',
     tag: `signal-test-${Date.now()}`,
     symbol: 'COMI.CA',
     signal: 'BUY',
     price: '139.50',
-    strategy: 'Cerberus',
+    strategy: 'psi_v2',
+    companyName: 'Commercial International Bank',
+    logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/ticker-logos/COMI.png',
+    alpha: '+16.4%',
+    adverseExcursion: '4.2%',
+    returnToMae: '150%',
+    color: '#00C896',
   };
 
   const payload = JSON.stringify(payloadData);
@@ -216,15 +222,27 @@ export async function handleTestNotification(req?: Request) {
       .where(eq(devicePushTokens.userId, user.id));
 
     for (const dev of deviceRows) {
-      const fcmOk = await sendFCMMessage(dev.token, {
+      const fcmResult = await sendFCMMessage(dev.token, {
         title: payloadData.title,
         body: payloadData.body,
         url: payloadData.url,
         ticker: payloadData.symbol,
+        strategy: payloadData.strategy,
         signal: payloadData.signal,
+        companyName: payloadData.companyName,
+        logoUrl: payloadData.logoUrl,
+        alpha: payloadData.alpha,
+        adverseExcursion: payloadData.adverseExcursion,
+        returnToMae: payloadData.returnToMae,
+        color: payloadData.color,
       });
-      if (fcmOk) {
+      if (fcmResult.sent) {
         sent++;
+      } else if (fcmResult.invalidToken) {
+        await db
+          .update(devicePushTokens)
+          .set({ isActive: false, updatedAt: new Date() })
+          .where(eq(devicePushTokens.id, dev.id));
       } else {
         // If not sent because neither Firebase SA nor FCM Key configured
         console.info(`FCM message skipped for device ${dev.id}: No Firebase credentials or token expired.`);

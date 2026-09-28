@@ -51,6 +51,7 @@ function unavailableMetrics(): StrategyMetrics {
     maxDrawdown: null,
     maxAdverseExcursion: null,
     avgAdverseExcursion: null,
+    avgReturnPerTrade: null,
     winRate: null,
     trades: null,
     buyHoldReturn: null,

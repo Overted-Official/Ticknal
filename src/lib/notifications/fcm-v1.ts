@@ -7,6 +7,16 @@ interface ServiceAccount {
 }
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
+let tokenRequestInFlight: Promise<string | null> | null = null;
+
+export type FcmDispatchResult = {
+  sent: boolean;
+  invalidToken: boolean;
+};
+
+function invalidTokenResponse(status: number, response: string): boolean {
+  return status === 404 || /UNREGISTERED|NotRegistered/i.test(response);
+}
 
 function getServiceAccount(): ServiceAccount | null {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -37,6 +47,19 @@ async function getGoogleOAuth2Token(sa: ServiceAccount): Promise<string | null> 
     return cachedToken.token;
   }
 
+  if (!tokenRequestInFlight) {
+    tokenRequestInFlight = requestGoogleOAuth2Token(sa, now).finally(() => {
+      tokenRequestInFlight = null;
+    });
+  }
+
+  return tokenRequestInFlight;
+}
+
+async function requestGoogleOAuth2Token(
+  sa: ServiceAccount,
+  now: number,
+): Promise<string | null> {
   const header = { alg: 'RS256', typ: 'JWT' };
   const claim = {
     iss: sa.client_email,
@@ -94,8 +117,14 @@ export async function sendFCMMessage(
     ticker?: string;
     strategy?: string;
     signal?: string;
+    companyName?: string;
+    logoUrl?: string;
+    alpha?: string;
+    adverseExcursion?: string;
+    returnToMae?: string;
+    color?: string;
   }
-): Promise<boolean> {
+): Promise<FcmDispatchResult> {
   const sa = getServiceAccount();
 
   // 1. Try FCM HTTP v1 (Official Google Firebase Standard)
@@ -117,21 +146,29 @@ export async function sendFCMMessage(
                 notification: {
                   title: payload.title,
                   body: payload.body,
+                  ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
                 },
                 data: {
                   url: payload.url || '/charts',
                   ticker: payload.ticker || '',
                   strategy: payload.strategy || '',
                   signal: payload.signal || '',
+                  companyName: payload.companyName || '',
+                  logoUrl: payload.logoUrl || '',
+                  alpha: payload.alpha || '',
+                  adverseExcursion: payload.adverseExcursion || '',
+                  returnToMae: payload.returnToMae || '',
                 },
                 android: {
                   priority: 'high',
                   notification: {
                     channel_id: 'trading_signals',
+                    icon: 'ic_stat_ticknal',
+                    ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
                     sound: 'default',
                     default_vibrate_timings: true,
                     notification_priority: 'PRIORITY_HIGH',
-                    color: '#2962ff',
+                    color: payload.color || '#2962ff',
                   },
                 },
               },
@@ -139,8 +176,11 @@ export async function sendFCMMessage(
           }
         );
 
-        if (res.ok) return true;
+        if (res.ok) return { sent: true, invalidToken: false };
         const errText = await res.text();
+        if (invalidTokenResponse(res.status, errText)) {
+          return { sent: false, invalidToken: true };
+        }
         console.error('FCM HTTP v1 dispatch error:', errText);
       } catch (err) {
         console.error('FCM HTTP v1 network error:', err);
@@ -166,20 +206,31 @@ export async function sendFCMMessage(
             body: payload.body,
             sound: 'default',
             android_channel_id: 'trading_signals',
+            ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
           },
           data: {
             url: payload.url || '/charts',
             ticker: payload.ticker || '',
             strategy: payload.strategy || '',
             signal: payload.signal || '',
+            companyName: payload.companyName || '',
+            logoUrl: payload.logoUrl || '',
+            alpha: payload.alpha || '',
+            adverseExcursion: payload.adverseExcursion || '',
+            returnToMae: payload.returnToMae || '',
           },
         }),
       });
-      return res.ok;
+      if (res.ok) return { sent: true, invalidToken: false };
+      const errText = await res.text();
+      if (invalidTokenResponse(res.status, errText)) {
+        return { sent: false, invalidToken: true };
+      }
+      console.error('Legacy FCM dispatch error:', errText);
     } catch (err) {
       console.error('Legacy FCM dispatch error:', err);
     }
   }
 
-  return false;
+  return { sent: false, invalidToken: false };
 }

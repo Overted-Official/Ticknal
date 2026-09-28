@@ -12,12 +12,22 @@ import {
   type TickerChampionAnalysis,
 } from '@/lib/strategy-analysis';
 import { getOrInitPrecomputedCache } from '@/lib/handlers/sectors-handlers';
-import type { TickerChampionInfo } from '@/lib/finance/sectors-math';
 import { getLatestBarDate, isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 type DispatchStrategyId = Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>;
 type NotificationSignal = Pick<SignalEvent, 'barsAgo' | 'date' | 'price' | 'reason' | 'signal'>;
+
+type SignalNotificationPresentation = {
+  title: string;
+  body: string;
+  color: string;
+  companyName: string;
+  logoUrl?: string;
+  alpha: string;
+  adverseExcursion: string;
+  returnToMae: string;
+};
 
 export type DispatchNotificationsResult = {
   configured: boolean;
@@ -163,8 +173,6 @@ export async function dispatchSignalNotifications(options: {
 
       const signalsToDispatch: Array<{
         strategyId: DispatchStrategyId;
-        strategyShort: string;
-        strategyLabel: string;
         signal: NotificationSignal;
         metrics: StrategyMetrics;
         parameterVersion: string;
@@ -173,14 +181,10 @@ export async function dispatchSignalNotifications(options: {
         dataAsOf: string;
       }> = [];
 
-      const strategies: Array<{
-        id: DispatchStrategyId;
-        short: string;
-        label: string;
-      }> = [
-        { id: 'psi', short: 'TYPHON', label: 'Typhon Strategy' },
-        { id: 'psi_v2', short: 'CERBERUS', label: 'Cerberus Strategy' },
-        { id: 'hydra', short: 'HYDRA', label: 'Hydra Strategy' },
+      const strategies: Array<{ id: DispatchStrategyId }> = [
+        { id: 'psi' },
+        { id: 'psi_v2' },
+        { id: 'hydra' },
       ];
 
       // The same highest-alpha calculation is used for notification routing
@@ -200,16 +204,6 @@ export async function dispatchSignalNotifications(options: {
       const analysesByStrategy = new Map(
         champion.analyses.map((analysis) => [analysis.strategyId, analysis]),
       );
-      const championAnalysis = analysesByStrategy.get(champion.strategyId);
-      const champInfo: TickerChampionInfo = {
-        champion: champion.strategyId,
-        championName: champion.strategyName,
-        alpha: champion.alpha,
-        roi: championAnalysis?.metrics.totalReturn ?? 0,
-        buyHoldRoi: championAnalysis?.metrics.buyHoldReturn ?? 0,
-        hasPositiveAlpha: champion.hasPositiveAlpha,
-      };
-
       for (const strategy of strategies) {
         if (strategy.id !== champion.strategyId) continue;
 
@@ -225,8 +219,6 @@ export async function dispatchSignalNotifications(options: {
             if (signal.signal === 'BUY' || isTracked) {
               signalsToDispatch.push({
                 strategyId: strategy.id,
-                strategyShort: strategy.short,
-                strategyLabel: strategy.label,
                 signal,
                 metrics: analysis.metrics,
                 parameterVersion: analysis.parameterVersion,
@@ -253,8 +245,6 @@ export async function dispatchSignalNotifications(options: {
       for (const item of eligibleSignals) {
         const {
           strategyId,
-          strategyShort,
-          strategyLabel,
           signal,
           metrics,
           parameterVersion,
@@ -297,11 +287,19 @@ export async function dispatchSignalNotifications(options: {
           signal: signal.signal,
         });
 
+        const presentation = buildSignalNotificationPresentation({
+          ticker,
+          signal,
+          companyName: cache.tickerMap.get(ticker)?.companyName,
+          logoUrl: cache.tickerMap.get(ticker)?.logoUrl,
+          alpha: champion.alpha,
+          metrics,
+        });
+
         // Queue push deliveries
         if (subscriptions.length > 0) {
           const payload = JSON.stringify({
-            title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort, champInfo),
-            body: buildNotificationBody(signal, strategyLabel, champInfo),
+            ...presentation,
             url: `/charts?ticker=${ticker}&strategy=${strategyId}`,
             tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
             symbol: ticker,
@@ -326,16 +324,20 @@ export async function dispatchSignalNotifications(options: {
         if (nativeTokens.length > 0) {
           for (const device of nativeTokens) {
             pushTasks.push(async () => {
-              const fcmSent = await sendFCMMessage(device.token, {
-                title: buildNotificationTitle(ticker, signal, isPositionOpen, strategyShort, champInfo),
-                body: buildNotificationBody(signal, strategyLabel, champInfo),
+              const fcmResult = await sendFCMMessage(device.token, {
+                ...presentation,
                 url: `/charts?ticker=${ticker}&strategy=${strategyId}`,
                 ticker,
                 strategy: strategyId,
                 signal: signal.signal,
               });
-              if (fcmSent) {
+              if (fcmResult.sent) {
                 result.sent += 1;
+              } else if (fcmResult.invalidToken) {
+                await db
+                  .update(devicePushTokens)
+                  .set({ isActive: false, updatedAt: new Date() })
+                  .where(eq(devicePushTokens.id, device.id));
               }
             });
           }
@@ -503,40 +505,53 @@ async function sendToSubscription(
   }
 }
 
-function buildNotificationTitle(
-  ticker: string,
-  signal: NotificationSignal,
-  openOrderExists: boolean,
-  strategyShort: string = 'TYPHON',
-  championInfo?: TickerChampionInfo
-): string {
-  const cleanTicker = ticker.replace('.CA', '').toUpperCase();
-  const champTag = championInfo?.hasPositiveAlpha
-    ? ` · 🏆 ${championInfo.championName}`
-    : ` (${strategyShort.toUpperCase()})`;
-  if (signal.signal === 'BUY') return `${cleanTicker} · BUY Signal${champTag}`;
-  if (openOrderExists) return `${cleanTicker} · Exit Position${champTag}`;
-  return `${cleanTicker} · Exit Signal${champTag}`;
+function buildSignalNotificationPresentation({
+  ticker,
+  signal,
+  companyName,
+  logoUrl,
+  alpha,
+  metrics,
+}: {
+  ticker: string;
+  signal: NotificationSignal;
+  companyName?: string | null;
+  logoUrl?: string | null;
+  alpha: number;
+  metrics: StrategyMetrics;
+}): SignalNotificationPresentation {
+  const symbol = ticker.replace('.CA', '').toUpperCase();
+  const action = signal.signal === 'BUY' ? 'BUY' : 'SELL';
+  const safeLogoUrl = logoUrl?.startsWith('https://') ? logoUrl : undefined;
+  const adverseExcursion = Math.abs(
+    metrics.avgAdverseExcursion ?? metrics.maxAdverseExcursion ?? 0,
+  );
+  const averageReturn = metrics.avgReturnPerTrade;
+  const formattedAlpha = formatSignedPercentage(alpha);
+  const formattedMae = `${adverseExcursion.toFixed(1)}%`;
+  const hasReturnToMae =
+    typeof averageReturn === 'number' &&
+    Number.isFinite(averageReturn) &&
+    adverseExcursion > 0;
+  const formattedReturnToMae = hasReturnToMae
+    ? `${((averageReturn / adverseExcursion) * 100).toFixed(0)}%`
+    : '—';
+
+  return {
+    title: `(${action}) ${companyName || symbol}`,
+    body: `${symbol} · α ${formattedAlpha} · MAE ${formattedMae} · Return/MAE ${formattedReturnToMae}`,
+    color: signal.signal === 'BUY' ? '#00C896' : '#FF4055',
+    companyName: companyName || symbol,
+    logoUrl: safeLogoUrl,
+    alpha: formattedAlpha,
+    adverseExcursion: formattedMae,
+    returnToMae: formattedReturnToMae,
+  };
 }
 
-function buildNotificationBody(
-  signal: NotificationSignal,
-  strategyLabel: string = 'Typhon Strategy',
-  championInfo?: TickerChampionInfo
-): string {
-  const price = `${Number(signal.price).toFixed(2)} EGP`;
-  const reason = signal.reason;
-  const alphaSnippet = championInfo?.hasPositiveAlpha
-    ? ` · 🏆 Best-Fit (+${championInfo.alpha > 0 ? '+' : ''}${championInfo.alpha.toFixed(1)}% α)`
-    : '';
-
-  if (reason) {
-    return `Triggered at ${price}${alphaSnippet} · ${reason}`;
-  }
-  if (signal.signal === 'BUY') {
-    return `Triggered at ${price}${alphaSnippet} · Entry criteria confirmed (${strategyLabel})`;
-  }
-  return `Triggered at ${price}${alphaSnippet} · Exit rule satisfied (${strategyLabel})`;
+function formatSignedPercentage(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return `${safeValue >= 0 ? '+' : ''}${safeValue.toFixed(1)}%`;
 }
 
 function groupBy<T>(items: T[], getKey: (item: T) => string): Record<string, T[]> {

@@ -36,6 +36,7 @@ export type StrategyMetrics = {
   maxDrawdown: number | null;
   maxAdverseExcursion: number | null;
   avgAdverseExcursion: number | null;
+  avgReturnPerTrade: number | null;
   winRate: number | null;
   trades: number | null;
   buyHoldReturn: number | null;
@@ -120,6 +121,7 @@ export function mapStrategyMetrics(metrics: Record<string, unknown>): StrategyMe
     maxDrawdown: numberOrNull(metrics.maxDrawdown),
     maxAdverseExcursion: numberOrNull(metrics.maxAdverseExcursion),
     avgAdverseExcursion: numberOrNull(metrics.avgAdverseExcursion),
+    avgReturnPerTrade: numberOrNull(metrics.avgReturnPerTrade),
     winRate: numberOrNull(metrics.winRate),
     trades: numberOrNull(metrics.trades),
     buyHoldReturn: numberOrNull(metrics.buyHoldRoi),
@@ -187,6 +189,7 @@ export async function analyzeStrategy(
         maxDrawdown: null,
         maxAdverseExcursion: null,
         avgAdverseExcursion: null,
+        avgReturnPerTrade: null,
         winRate: null,
         trades: null,
         buyHoldReturn: null,

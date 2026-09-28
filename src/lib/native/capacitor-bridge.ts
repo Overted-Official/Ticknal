@@ -240,12 +240,12 @@ export async function triggerNativeTestNotification(title?: string, body?: strin
     await LocalNotifications.schedule({
       notifications: [
         {
-          title: title || 'COMI · BUY Signal (Cerberus)',
-          body: body || 'Triggered at 139.50 EGP · Target: 152.00 · Stop: 134.00',
+          title: title || '(BUY) Commercial International Bank',
+          body: body || 'COMI · α +16.4% · MAE 4.2% · Return/MAE 150%',
           id: Math.floor(Math.random() * 100000),
           channelId: 'trading_signals',
           schedule: { at: new Date(Date.now() + 300) },
-          iconColor: '#2962ff',
+          iconColor: '#00C896',
           extra: {
             url: '/charts?ticker=COMI.CA&strategy=psi_v2',
           },
@@ -257,4 +257,3 @@ export async function triggerNativeTestNotification(title?: string, body?: strin
     console.error('Failed to schedule local test notification:', err);
   }
 }
-

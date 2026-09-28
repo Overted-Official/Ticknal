@@ -102,6 +102,7 @@ function normalizeStoredMetrics(value: unknown): StrategyMetrics | null {
     maxDrawdown: storedMetric(raw.maxDrawdown),
     maxAdverseExcursion: storedMetric(raw.maxAdverseExcursion),
     avgAdverseExcursion: storedMetric(raw.avgAdverseExcursion),
+    avgReturnPerTrade: storedMetric(raw.avgReturnPerTrade),
     winRate: storedMetric(raw.winRate),
     trades: storedMetric(raw.trades),
     buyHoldReturn: storedMetric(raw.buyHoldReturn),

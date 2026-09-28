@@ -35,8 +35,9 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: payload.body || 'A trade signal is available on Ticknal.',
-    icon: '/icon-192x192.png',
-    badge: '/badge.png',
+    icon: payload.logoUrl || '/ticknal-notification-icon.png',
+    badge: '/ticknal-notification-icon.png',
+    ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
     tag: payload.tag || `ticknal-signal-${Date.now()}`,
     renotify: true,
     requireInteraction: true,
@@ -46,6 +47,10 @@ self.addEventListener('push', (event) => {
       symbol: payload.symbol,
       signal: payload.signal,
       strategy: payload.strategy,
+      companyName: payload.companyName,
+      alpha: payload.alpha,
+      adverseExcursion: payload.adverseExcursion,
+      returnToMae: payload.returnToMae,
     },
     actions: [
       {
