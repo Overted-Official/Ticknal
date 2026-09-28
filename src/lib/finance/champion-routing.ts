@@ -182,6 +182,46 @@ function aggregateMetricsFromTickerResults(
 }
 
 /**
+ * Computes the Alpha Velocity Score: Total Alpha / (safeMae * safeBars).
+ * Penalizes large adverse excursions and prolonged holding periods while preserving alpha edge.
+ */
+export function computeAlphaVelocityScore(
+  alpha: number,
+  trades: number,
+  avgMae: number,
+  avgBars: number
+): number {
+  if (trades <= 0) return -9999;
+  const safeMae = Math.max(Math.abs(avgMae), 0.1);
+  const safeBars = Math.max(avgBars, 1);
+  return alpha / (safeMae * safeBars);
+}
+
+/**
+ * Institutional comparator for ranking champion candidate models for a ticker:
+ * 1. Models with positive alpha always beat models with negative/zero alpha.
+ * 2. Among positive alpha models, ranks by Alpha Velocity Score (Alpha / (MAE * Duration)).
+ * 3. Fallback to raw Alpha.
+ */
+export function compareChampionCandidates(
+  a: { alpha: number; trades: number; avgMae: number; avgBars: number },
+  b: { alpha: number; trades: number; avgMae: number; avgBars: number }
+): number {
+  if (a.alpha > 0 && b.alpha <= 0) return -1;
+  if (b.alpha > 0 && a.alpha <= 0) return 1;
+
+  if (a.alpha > 0 && b.alpha > 0) {
+    const scoreA = computeAlphaVelocityScore(a.alpha, a.trades, a.avgMae, a.avgBars);
+    const scoreB = computeAlphaVelocityScore(b.alpha, b.trades, b.avgMae, b.avgBars);
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA;
+    }
+  }
+
+  return b.alpha - a.alpha;
+}
+
+/**
  * Unified multi-model evaluation that computes:
  * 1. Champion Model assignment for every ticker
  * 2. Full-universe metrics for Typhon, Cerberus, and Hydra
@@ -271,14 +311,40 @@ export function evaluateModelsAndChampions(
       adverse: hydraRes.metrics?.avgAdverseExcursion || hydraRes.metrics?.maxAdverseExcursion || 0,
     };
     modelTickerResults.hydra.push(hydraResult);
-
-    // Determine Champion Model for this ticker
+    // Determine Champion Model for this ticker using Alpha Velocity
     const candidates = [
-      { id: 'psi' as const, name: 'Typhon', alpha: psiAlpha, roi: psiRoi, bhRoi: psiBhRoi },
-      { id: 'psi_v2' as const, name: 'Cerberus', alpha: psiV2Alpha, roi: psiV2Roi, bhRoi: psiV2BhRoi },
-      { id: 'hydra' as const, name: 'Hydra', alpha: hydraAlpha, roi: hydraRoi, bhRoi: hydraBhRoi },
+      {
+        id: 'psi' as const,
+        name: 'Typhon',
+        alpha: psiAlpha,
+        roi: psiRoi,
+        bhRoi: psiBhRoi,
+        trades: psiResult.tradesCount,
+        avgMae: Math.abs(psiResult.adverse),
+        avgBars: psiResult.avgBars,
+      },
+      {
+        id: 'psi_v2' as const,
+        name: 'Cerberus',
+        alpha: psiV2Alpha,
+        roi: psiV2Roi,
+        bhRoi: psiV2BhRoi,
+        trades: psiV2Result.tradesCount,
+        avgMae: Math.abs(psiV2Result.adverse),
+        avgBars: psiV2Result.avgBars,
+      },
+      {
+        id: 'hydra' as const,
+        name: 'Hydra',
+        alpha: hydraAlpha,
+        roi: hydraRoi,
+        bhRoi: hydraBhRoi,
+        trades: hydraResult.tradesCount,
+        avgMae: Math.abs(hydraResult.adverse),
+        avgBars: hydraResult.avgBars,
+      },
     ];
-    candidates.sort((a, b) => b.alpha - a.alpha);
+    candidates.sort(compareChampionCandidates);
     const top = candidates[0];
 
     tickerChampions[symbol] = {

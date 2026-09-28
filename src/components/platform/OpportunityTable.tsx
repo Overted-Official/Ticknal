@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import AddOrderModal, { InitialOrderData } from '@/components/platform/AddOrderModal';
-import { Layers, Sparkles } from '@/components/ui/icon-library';
 
 export type Opportunity = {
   symbol: string;
@@ -28,13 +27,15 @@ export type Opportunity = {
     trades?: number | null;
     buyHoldReturn?: number | null;
     annualCagr?: number | null;
-    [key: string]: any;
+    [key: string]: unknown;
   } | null;
+  signalAgeBars?: number | null;
   signal: {
     signal: string;
     level?: string;
     date: string;
     price: number;
+    barsAgo?: number;
     reasoning?: string;
     exitReason?: string;
     entryReason?: string;

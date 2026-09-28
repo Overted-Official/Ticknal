@@ -114,7 +114,7 @@ export default async function HomePage() {
     console.error('Error fetching exit signals for holdings in HomePage:', err);
   }
 
-  const cachedOpps = getCachedOpportunitiesSync(10, 'all') || getCachedOpportunitiesSync(5, 'all');
+  const cachedOpps = getCachedOpportunitiesSync(10, 'champion') || getCachedOpportunitiesSync(5, 'champion');
   const initialBuyOpportunities = cachedOpps
     ? (cachedOpps.filter((item) => item.signal.signal === 'BUY').slice(0, 50) as Opportunity[])
     : [];

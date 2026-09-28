@@ -15,6 +15,7 @@ import {
 } from '@/strategies/Hydra';
 import type { EquityPoint, StrategyTrade } from '@/strategies/registry';
 import { getLatestActionableSignal } from '@/lib/strategy-signal-state';
+import { compareChampionCandidates } from '@/lib/finance/champion-routing';
 
 export type StrategyId = 'psi' | 'psi_v2' | 'hydra' | 'thoth_egx_macro';
 
@@ -289,11 +290,20 @@ export async function analyzeTickerChampion(
     .filter((analysis): analysis is StrategyAnalysis & { strategyId: TickerStrategyChampion['strategyId'] } =>
       CHAMPION_STRATEGIES.includes(analysis.strategyId as TickerStrategyChampion['strategyId']),
     )
-    .map((analysis) => ({
-      analysis,
-      alpha: analysis.metrics.alpha ?? Number.NEGATIVE_INFINITY,
-    }))
-    .sort((left, right) => right.alpha - left.alpha);
+    .map((analysis) => {
+      const alpha = analysis.metrics.alpha ?? Number.NEGATIVE_INFINITY;
+      const trades = analysis.metrics.trades ?? 0;
+      const avgMae = Math.abs(analysis.metrics.avgAdverseExcursion ?? analysis.metrics.maxAdverseExcursion ?? 0);
+      const avgBars = analysis.metrics.avgBarsPerTrade ?? 0;
+      return {
+        analysis,
+        alpha,
+        trades,
+        avgMae,
+        avgBars,
+      };
+    })
+    .sort(compareChampionCandidates);
 
   const winner = ranking[0];
   const strategyId = winner?.analysis.strategyId ?? 'psi';

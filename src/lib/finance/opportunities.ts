@@ -3,12 +3,20 @@ import { dailyPrices, signalNotifications, tickers } from '@/db/schema';
 import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
-import { analyzeStrategy, strategyLabel, type StrategyId, type StrategyMetrics } from '@/lib/strategy-analysis';
+import {
+  analyzeStrategy,
+  analyzeTickerChampion,
+  strategyLabel,
+  type StrategyId,
+  type StrategyMetrics,
+} from '@/lib/strategy-analysis';
+import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 import { unstable_cache } from 'next/cache';
 
-const SIGNAL_PIPELINE_VERSION = 'canonical-analysis-indexed-2026-09-09';
+const SIGNAL_PIPELINE_VERSION = 'canonical-champion-concurrent-2026-09-28';
 const DEFAULT_START_DATE = '2025-01-01';
 const MAX_INDEXED_CANDIDATES = 120;
+const CHAMPION_ANALYSIS_CONCURRENCY = 8;
 
 type OpportunityPriceRow = {
   tickerSymbol: unknown;
@@ -101,6 +109,29 @@ function normalizeStoredMetrics(value: unknown): StrategyMetrics | null {
   };
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from(
+    { length: Math.min(Math.max(1, concurrency), items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await mapper(items[currentIndex]);
+      }
+    },
+  );
+
+  await Promise.all(workers);
+  return results;
+}
+
 /**
  * The scheduled signal processor already evaluates the market and persists
  * recent BUY events in signal_notifications. Use that durable index to narrow
@@ -119,7 +150,9 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
     ORDER BY date DESC
     LIMIT ${limitBars}
   `);
-  const recentDateRows = Array.isArray(rawRecentDateRows) ? rawRecentDateRows : (rawRecentDateRows as any)?.rows ?? [];
+  const recentDateRows = Array.isArray(rawRecentDateRows)
+    ? rawRecentDateRows
+    : (rawRecentDateRows as { rows?: unknown[] }).rows ?? [];
   const recentMarketDates = new Set(
     (recentDateRows as unknown as Array<{ date: unknown }>)
       .map((row) => toSignalDate(row.date))
@@ -230,11 +263,14 @@ export async function _getRecentOpportunities(
 
       const candidateSymbols = Array.from(new Set(indexedSignals.map((signal) => signal.symbol)));
       const tickerRows = await db.select().from(tickers).where(inArray(tickers.symbol, candidateSymbols));
-      const needsRequestAnalysis = indexedSignals.some((signal) => !signal.snapshot?.metrics);
+      const championOnly = strategyScope === 'champion';
+      const needsRequestAnalysis = championOnly || indexedSignals.some((signal) => !signal.snapshot?.metrics);
       const priceRows = needsRequestAnalysis
         ? await db.select()
           .from(dailyPrices)
-          .where(and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, DEFAULT_START_DATE)))
+          .where(championOnly
+            ? inArray(dailyPrices.tickerSymbol, candidateSymbols)
+            : and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, DEFAULT_START_DATE)))
           .orderBy(dailyPrices.tickerSymbol, dailyPrices.date)
         : [];
 
@@ -270,64 +306,123 @@ export async function _getRecentOpportunities(
       }
 
       const opportunities: OpportunitySignal[] = [];
-      for (const indexedSignal of indexedSignals) {
-        const symbol = indexedSignal.symbol;
-        const meta = metadata.get(symbol);
-        let analysis = null;
-        let latest = null;
-        const snapshot = indexedSignal.snapshot;
-        if (!snapshot?.metrics) {
-          const bars = barsByTicker.get(symbol) ?? [];
-          if (bars.length < 80) continue;
-          analysis = await analyzeStrategy(symbol, bars, indexedSignal.strategyId, {
-            startDate: DEFAULT_START_DATE,
-            lookbackBars: limitBars,
-          }).catch(() => null);
-          latest = analysis?.latestActionableSignal ?? null;
-          if (!analysis || !latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date)) continue;
-        } else {
-          if (!recentMarketDates.has(indexedSignal.signalDate)) continue;
-          latest = {
-            signal: 'BUY' as const,
-            date: indexedSignal.signalDate,
-            price: snapshot.signalPrice ?? 0,
-            barsAgo: snapshot.signalBarsAgo ?? 0,
-            reason: snapshot.signalReason ?? undefined,
-          };
-          analysis = {
-            analysisStart: snapshot.analysisStart ?? DEFAULT_START_DATE,
-            analysisEnd: snapshot.analysisEnd ?? snapshot.dataAsOf ?? indexedSignal.signalDate,
-            dataAsOf: snapshot.dataAsOf ?? snapshot.analysisEnd ?? indexedSignal.signalDate,
-            signalAgeBars: snapshot.signalBarsAgo,
-            metrics: snapshot.metrics,
-          };
-        }
-        const badge = getStrategyBadge(indexedSignal.strategyId);
-        opportunities.push({
-          symbol,
-          companyName: meta?.companyName ?? symbol,
-          sector: meta?.sector ?? 'Unclassified',
-          industryGroup: meta?.industryGroup,
-          industry: meta?.industry,
-          rotationRegime: meta?.rotationRegime,
-          logoUrl: meta?.logoUrl ?? null,
-          strategyId: indexedSignal.strategyId,
-          strategyLabel: STRATEGIES[indexedSignal.strategyId]?.label ?? strategyLabel(indexedSignal.strategyId),
-          strategyShortName: badge.label,
-          strategyBadgeClassName: badge.className,
-          analysisStart: analysis.analysisStart,
-          analysisEnd: analysis.analysisEnd,
-          dataAsOf: analysis.dataAsOf,
-          signalAgeBars: analysis.signalAgeBars,
-          metrics: analysis.metrics,
-          signal: {
-            signal: 'BUY',
-            date: latest.date,
-            price: latest.price,
-            barsAgo: latest.barsAgo,
-            reasoning: latest.reason,
+      if (championOnly) {
+        const indexedSignalKeys = new Set(
+          indexedSignals.map((signal) => `${signal.symbol}:${signal.strategyId}:${signal.signalDate}`),
+        );
+
+        const championOpportunities = await mapWithConcurrency(
+          candidateSymbols,
+          CHAMPION_ANALYSIS_CONCURRENCY,
+          async (symbol): Promise<OpportunitySignal | null> => {
+            const meta = metadata.get(symbol);
+            if (!isSignalEligibleEquity(symbol, meta)) return null;
+
+            const bars = barsByTicker.get(symbol) ?? [];
+            if (bars.length < 80) return null;
+
+            const champion = await analyzeTickerChampion(symbol, bars, {
+              startDate: DEFAULT_START_DATE,
+              timeframe: 'D',
+              lookbackBars: limitBars,
+            }).catch(() => null);
+            if (!champion?.hasPositiveAlpha) return null;
+
+            const analysis = champion.analyses.find((item) => item.strategyId === champion.strategyId);
+            const latest = analysis?.latestActionableSignal;
+            if (!analysis || !latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date)) return null;
+            if (!indexedSignalKeys.has(`${symbol}:${champion.strategyId}:${latest.date}`)) return null;
+
+            const badge = getStrategyBadge(champion.strategyId);
+            return {
+              symbol,
+              companyName: meta?.companyName ?? symbol,
+              sector: meta?.sector ?? 'Unclassified',
+              industryGroup: meta?.industryGroup,
+              industry: meta?.industry,
+              rotationRegime: meta?.rotationRegime,
+              logoUrl: meta?.logoUrl ?? null,
+              strategyId: champion.strategyId,
+              strategyLabel: STRATEGIES[champion.strategyId]?.label ?? strategyLabel(champion.strategyId),
+              strategyShortName: badge.label,
+              strategyBadgeClassName: badge.className,
+              analysisStart: analysis.analysisStart,
+              analysisEnd: analysis.analysisEnd,
+              dataAsOf: analysis.dataAsOf,
+              signalAgeBars: analysis.signalAgeBars,
+              metrics: analysis.metrics,
+              signal: {
+                signal: 'BUY',
+                date: latest.date,
+                price: latest.price,
+                barsAgo: latest.barsAgo,
+                reasoning: latest.reason,
+              },
+            };
           },
-        });
+        );
+        opportunities.push(...championOpportunities.filter((item): item is OpportunitySignal => item !== null));
+      } else {
+        for (const indexedSignal of indexedSignals) {
+          const symbol = indexedSignal.symbol;
+          const meta = metadata.get(symbol);
+          if (!isSignalEligibleEquity(symbol, meta)) continue;
+          let analysis = null;
+          let latest = null;
+          const snapshot = indexedSignal.snapshot;
+          if (!snapshot?.metrics) {
+            const bars = barsByTicker.get(symbol) ?? [];
+            if (bars.length < 80) continue;
+            analysis = await analyzeStrategy(symbol, bars, indexedSignal.strategyId, {
+              startDate: DEFAULT_START_DATE,
+              lookbackBars: limitBars,
+            }).catch(() => null);
+            latest = analysis?.latestActionableSignal ?? null;
+            if (!analysis || !latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date)) continue;
+          } else {
+            if (!recentMarketDates.has(indexedSignal.signalDate)) continue;
+            latest = {
+              signal: 'BUY' as const,
+              date: indexedSignal.signalDate,
+              price: snapshot.signalPrice ?? 0,
+              barsAgo: snapshot.signalBarsAgo ?? 0,
+              reason: snapshot.signalReason ?? undefined,
+            };
+            analysis = {
+              analysisStart: snapshot.analysisStart ?? DEFAULT_START_DATE,
+              analysisEnd: snapshot.analysisEnd ?? snapshot.dataAsOf ?? indexedSignal.signalDate,
+              dataAsOf: snapshot.dataAsOf ?? snapshot.analysisEnd ?? indexedSignal.signalDate,
+              signalAgeBars: snapshot.signalBarsAgo,
+              metrics: snapshot.metrics,
+            };
+          }
+          const badge = getStrategyBadge(indexedSignal.strategyId);
+          opportunities.push({
+            symbol,
+            companyName: meta?.companyName ?? symbol,
+            sector: meta?.sector ?? 'Unclassified',
+            industryGroup: meta?.industryGroup,
+            industry: meta?.industry,
+            rotationRegime: meta?.rotationRegime,
+            logoUrl: meta?.logoUrl ?? null,
+            strategyId: indexedSignal.strategyId,
+            strategyLabel: STRATEGIES[indexedSignal.strategyId]?.label ?? strategyLabel(indexedSignal.strategyId),
+            strategyShortName: badge.label,
+            strategyBadgeClassName: badge.className,
+            analysisStart: analysis.analysisStart,
+            analysisEnd: analysis.analysisEnd,
+            dataAsOf: analysis.dataAsOf,
+            signalAgeBars: analysis.signalAgeBars,
+            metrics: analysis.metrics,
+            signal: {
+              signal: 'BUY',
+              date: latest.date,
+              price: latest.price,
+              barsAgo: latest.barsAgo,
+              reasoning: latest.reason,
+            },
+          });
+        }
       }
 
       opportunities.sort((a, b) => {

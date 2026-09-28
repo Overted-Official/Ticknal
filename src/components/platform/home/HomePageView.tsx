@@ -28,7 +28,6 @@ export default function HomePageView({
   orderStats,
   buyOpportunities = [],
   exitSignals = [],
-  activeAlertCount = 0,
   initialAccounts = [],
   initialTransactions = [],
   usdRate = 50.20,
@@ -36,22 +35,20 @@ export default function HomePageView({
   initialNetWorthHistory = [],
   initialInflationSeries = [],
 }: HomePageViewProps) {
-  const [liveBuyOpps, setLiveBuyOpps] = useState<Opportunity[]>(buyOpportunities);
+  const [liveBuyOpps, setLiveBuyOpps] = useState<Opportunity[]>([]);
   const [isLoadingOpps, setIsLoadingOpps] = useState(!buyOpportunities || buyOpportunities.length === 0);
 
   useEffect(() => {
     if (buyOpportunities && buyOpportunities.length > 0) {
-      setLiveBuyOpps(buyOpportunities);
-      setIsLoadingOpps(false);
       return;
     }
 
     let isMounted = true;
-    fetch('/api/opportunities?bars=10&strategy=all')
+    fetch('/api/opportunities?bars=10&strategy=champion')
       .then((res) => res.json())
       .then((data) => {
         if (isMounted && data?.opportunities && Array.isArray(data.opportunities)) {
-          const buys = data.opportunities.filter((o: any) => o.signal?.signal === 'BUY');
+          const buys = (data.opportunities as Opportunity[]).filter((opportunity) => opportunity.signal?.signal === 'BUY');
           setLiveBuyOpps(buys);
         }
       })
@@ -96,8 +93,8 @@ export default function HomePageView({
 
         {/* SECTION 3: Market Signals (Algorithmic Buy Opportunities with Strategy Switcher) */}
         <MarketSignalsSection
-          buyOpportunities={liveBuyOpps}
-          isLoading={isLoadingOpps}
+          buyOpportunities={buyOpportunities.length > 0 ? buyOpportunities : liveBuyOpps}
+          isLoading={buyOpportunities.length === 0 && isLoadingOpps}
         />
       </div>
     </div>

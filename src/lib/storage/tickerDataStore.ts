@@ -1,5 +1,7 @@
 'use client';
 
+import { detectExtremeGap } from '@/lib/market/price-adjustments';
+
 export type PriceBar = {
   time: string | number;
   open: number;
@@ -15,7 +17,7 @@ export type SyncMeta = {
   syncedAt: number;
 };
 
-const DB_NAME = 'ticknal_market_data_v1';
+const DB_NAME = 'ticknal_market_data_v2';
 const DB_VERSION = 1;
 
 const STORES = {
@@ -235,6 +237,38 @@ export const tickerDataStore = {
           this.touchSyncMeta(cleanSym, meta, timeframe).catch(() => {});
         }
         return { bars: storedBars, fromCache: true, deltaCount: 0 };
+      }
+
+      // A corporate action may rewrite the units of the entire historical
+      // series. A delta-only merge would combine old-unit cached bars with a
+      // new-unit incoming bar, recreating the fake crash in the browser even
+      // after the server fixed its canonical history. Detect that boundary and
+      // replace the local series from a fresh, uncached full response.
+      if (timeframe.toUpperCase() === 'D') {
+        const lastStored = storedBars[storedBars.length - 1];
+        const firstIncoming = incomingBars[0];
+        if (lastStored && firstIncoming) {
+          const discontinuity = detectExtremeGap(Number(lastStored.close), Number(firstIncoming.open));
+          if (discontinuity) {
+            const refreshUrl = new URL('/api/history', window.location.origin);
+            refreshUrl.searchParams.set('ticker', cleanSym);
+            refreshUrl.searchParams.set('timeframe', timeframe);
+            refreshUrl.searchParams.set('fresh', '1');
+            const refreshResponse = await fetch(refreshUrl.toString(), { cache: 'no-store' });
+            if (refreshResponse.ok) {
+              const refreshData = await refreshResponse.json();
+              const refreshedBars: PriceBar[] = refreshData?.bars || [];
+              if (refreshedBars.length > 0) {
+                this.saveBars(cleanSym, refreshedBars, timeframe).catch(() => {});
+                return {
+                  bars: refreshedBars,
+                  fromCache: false,
+                  deltaCount: refreshedBars.length,
+                };
+              }
+            }
+          }
+        }
       }
 
       // Case C: Delta fetch with new bars -> Deduplicate and Merge

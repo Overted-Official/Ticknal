@@ -558,6 +558,22 @@ async function initLocalDatabase() {
       );
       CREATE INDEX "daily_prices_ticker_idx" ON "daily_prices"("ticker_symbol");
       CREATE INDEX "daily_prices_date_idx" ON "daily_prices"("date");
+      DROP TABLE IF EXISTS "price_adjustments" CASCADE;
+      CREATE TABLE "price_adjustments" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "ticker_symbol" varchar(20) NOT NULL REFERENCES "tickers"("symbol") ON DELETE cascade,
+        "effective_date" date NOT NULL,
+        "factor" numeric(18, 10) NOT NULL,
+        "reference_price_before" numeric(12, 4),
+        "reference_price_after" numeric(12, 4),
+        "source" varchar(50) NOT NULL,
+        "status" varchar(30) DEFAULT 'PENDING_REVIEW' NOT NULL,
+        "evidence" jsonb,
+        "detected_at" timestamp with time zone DEFAULT now() NOT NULL,
+        "applied_at" timestamp with time zone,
+        CONSTRAINT "price_adjustments_ticker_effective_unique" UNIQUE("ticker_symbol", "effective_date")
+      );
+      CREATE INDEX "price_adjustments_status_idx" ON "price_adjustments"("status");
     `);
 
     const recentPrices = await liveSql`

@@ -15,6 +15,7 @@ export async function handleHistoryGet(req: Request) {
     const symbol = normalizeTickerSymbol(rawSymbol);
     const timeframe = (searchParams.get('timeframe') || 'D').toUpperCase();
     const since = searchParams.get('since');
+    const fresh = searchParams.get('fresh') === '1';
     const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined;
 
     const isIntraday = timeframe === '1H' || timeframe === '60' || timeframe === '15M';
@@ -93,7 +94,9 @@ export async function handleHistoryGet(req: Request) {
       volume: Number(r.volume || 0),
     }));
 
-    const cacheHeader = since
+    const cacheHeader = fresh
+      ? 'no-store'
+      : since
       ? 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'
       : 'public, max-age=300, s-maxage=86400, stale-while-revalidate=86400';
 

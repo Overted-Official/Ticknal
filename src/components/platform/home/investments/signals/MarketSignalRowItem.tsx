@@ -21,7 +21,7 @@ export interface GroupedMarketSignal {
     alpha?: number | null;
     totalReturn?: number | null;
     winRate?: number | null;
-    [key: string]: any;
+    [key: string]: unknown;
   } | null;
   rawOpportunities?: Opportunity[];
 }
@@ -59,8 +59,9 @@ export default function MarketSignalRowItem({
 
   const barsAgo = isGrouped
     ? signalData.barsAgo
-    : (signalData.signal as any)?.barsAgo ?? (signalData as any)?.signalAgeBars ?? null;
+    : signalData.signal.barsAgo ?? signalData.signalAgeBars ?? null;
   const rawSignalDate = isGrouped ? signalData.signalDate : signalData.signal?.date;
+  const strategyId = isGrouped ? signalData.strategies[0]?.id : signalData.strategyId;
 
   let signalAgeText = '';
   if (typeof barsAgo === 'number') {
@@ -71,7 +72,7 @@ export default function MarketSignalRowItem({
 
   return (
     <Link
-      href={`/charts?ticker=${signalData.symbol}&timeframe=D`}
+      href={`/charts?ticker=${encodeURIComponent(signalData.symbol)}&timeframe=D${strategyId ? `&strategy=${encodeURIComponent(strategyId)}` : ''}`}
       className="group flex min-w-0 items-center gap-3 border-b border-border-subtle px-2 py-3 transition-colors hover:bg-surface-active/30"
     >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-surface-active text-xs font-bold text-text-primary">

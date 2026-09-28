@@ -1,60 +1,163 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { tickers, dailyPrices, systemLogs, macroInflationRates } from '@/db/schema';
-import { sql, inArray, desc, eq } from 'drizzle-orm';
+import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications } from '@/db/schema';
+import { sql, inArray, eq, and, lt, gt, gte } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { verifyCronAuth } from '@/lib/cron-auth';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 import { syncAllMacroInflation } from '@/lib/cbe-inflation';
+import { invalidatePrecomputedMarketCache } from '@/lib/handlers/sectors-handlers';
+import {
+  detectExtremeGap,
+  detectProviderAdjustment,
+  toComparableBar,
+  type ComparablePriceBar,
+} from '@/lib/market/price-adjustments';
 
 // ----------------------------------------------------
 // 1. UPDATE STOCKS
 // ----------------------------------------------------
-function getTradingViewSymbol(symbol: string, exchange: string | null = 'EGX'): string {
-  if (symbol === 'EGX30') return 'EGX:EGX30CAPPED';
-  if (symbol === 'EGX70') return 'EGX:EGX70EWI';
-  if (symbol === 'EGX100') return 'EGX:EGX100EWI';
-  const ex = exchange || 'EGX';
-  return `${ex}:${symbol.replace('.CA', '')}`;
+type ConfirmedAdjustment = {
+  tickerSymbol: string;
+  effectiveDate: string;
+  factor: number;
+  referencePriceBefore: number | null;
+  referencePriceAfter: number | null;
+  source: string;
+  evidence: unknown;
+  removeZeroVolumeAfterDate?: string | null;
+};
+
+function toDailyPriceInsert(tickerSymbol: string, bar: ComparablePriceBar) {
+  return {
+    tickerSymbol,
+    date: bar.date,
+    open: String(bar.open),
+    high: String(bar.high),
+    low: String(bar.low),
+    close: String(bar.close),
+    volume: String(bar.volume),
+  };
 }
 
-function fetchStockSymbolPeriods(client: TradingViewClient, symbol: string, exchange: string | null = 'EGX', rangeBars: number = 30): Promise<TradingViewPeriod[]> {
-  return new Promise((resolve) => {
-    try {
-      const tvSymbol = getTradingViewSymbol(symbol, exchange);
-      const chart = new client.Session.Chart();
-      
-      chart.setMarket(tvSymbol, { timeframe: 'D', range: rangeBars });
-
-      const timeout = setTimeout(() => {
-        chart.delete();
-        resolve([]);
-      }, 7000);
-
-      chart.onUpdate(() => {
-        clearTimeout(timeout);
-        const data = chart.periods;
-        if (data && data.length > 0) {
-          data.sort((a, b) => a.time - b.time);
-          chart.delete();
-          resolve(data);
-        } else {
-          chart.delete();
-          resolve([]);
-        }
+async function upsertDailyPriceRows(
+  tx: Pick<typeof db, 'insert'>,
+  rows: ReturnType<typeof toDailyPriceInsert>[],
+) {
+  for (let index = 0; index < rows.length; index += 50) {
+    await tx.insert(dailyPrices)
+      .values(rows.slice(index, index + 50))
+      .onConflictDoUpdate({
+        target: [dailyPrices.tickerSymbol, dailyPrices.date],
+        set: {
+          open: sql`EXCLUDED.open`,
+          high: sql`EXCLUDED.high`,
+          low: sql`EXCLUDED.low`,
+          close: sql`EXCLUDED.close`,
+          volume: sql`EXCLUDED.volume`,
+        },
       });
+  }
+}
 
-      chart.onError((err: Error) => {
-        clearTimeout(timeout);
-        chart.delete();
-        console.error(`Error for ${symbol}:`, err.message || err);
-        resolve([]);
-      });
-    } catch {
-      resolve([]);
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function applyPriceAdjustment(
+  adjustment: ConfirmedAdjustment,
+  fetchedBars: ComparablePriceBar[],
+): Promise<boolean> {
+  if (!Number.isFinite(adjustment.factor) || adjustment.factor <= 0) {
+    throw new Error(`Invalid price adjustment factor for ${adjustment.tickerSymbol}`);
+  }
+
+  return db.transaction(async (tx) => {
+    const existing = await tx
+      .select({ status: priceAdjustments.status, appliedAt: priceAdjustments.appliedAt })
+      .from(priceAdjustments)
+      .where(and(
+        eq(priceAdjustments.tickerSymbol, adjustment.tickerSymbol),
+        eq(priceAdjustments.effectiveDate, adjustment.effectiveDate),
+      ))
+      .limit(1);
+
+    if (existing[0]?.status === 'APPLIED' || existing[0]?.appliedAt) {
+      return false;
     }
+
+    const factor = adjustment.factor;
+    if (adjustment.removeZeroVolumeAfterDate) {
+      await tx
+        .delete(dailyPrices)
+        .where(and(
+          eq(dailyPrices.tickerSymbol, adjustment.tickerSymbol),
+          gt(dailyPrices.date, adjustment.removeZeroVolumeAfterDate),
+          lt(dailyPrices.date, adjustment.effectiveDate),
+          eq(dailyPrices.volume, '0'),
+        ));
+    }
+
+    await tx
+      .update(dailyPrices)
+      .set({
+        open: sql`ROUND((${dailyPrices.open})::numeric * ${factor}::numeric, 4)`,
+        high: sql`ROUND((${dailyPrices.high})::numeric * ${factor}::numeric, 4)`,
+        low: sql`ROUND((${dailyPrices.low})::numeric * ${factor}::numeric, 4)`,
+        close: sql`ROUND((${dailyPrices.close})::numeric * ${factor}::numeric, 4)`,
+        volume: sql`ROUND((${dailyPrices.volume})::numeric / NULLIF(${factor}::numeric, 0), 2)`,
+      })
+      .where(and(
+        eq(dailyPrices.tickerSymbol, adjustment.tickerSymbol),
+        lt(dailyPrices.date, adjustment.effectiveDate),
+      ));
+
+    if (fetchedBars.length > 0) {
+      await upsertDailyPriceRows(
+        tx,
+        fetchedBars.map((bar) => toDailyPriceInsert(adjustment.tickerSymbol, bar)),
+      );
+    }
+
+    // Signals on or after the discontinuity were calculated from invalid
+    // units. Remove them so the canonical processor can recreate only signals
+    // that still exist on the normalized series.
+    await tx
+      .delete(signalNotifications)
+      .where(and(
+        eq(signalNotifications.tickerSymbol, adjustment.tickerSymbol),
+        gte(signalNotifications.signalDate, adjustment.effectiveDate),
+      ));
+
+    await tx
+      .insert(priceAdjustments)
+      .values({
+        tickerSymbol: adjustment.tickerSymbol,
+        effectiveDate: adjustment.effectiveDate,
+        factor: String(factor),
+        referencePriceBefore: adjustment.referencePriceBefore == null ? null : String(adjustment.referencePriceBefore),
+        referencePriceAfter: adjustment.referencePriceAfter == null ? null : String(adjustment.referencePriceAfter),
+        source: adjustment.source,
+        status: 'APPLIED',
+        evidence: adjustment.evidence,
+        appliedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [priceAdjustments.tickerSymbol, priceAdjustments.effectiveDate],
+        set: {
+          factor: String(factor),
+          referencePriceBefore: adjustment.referencePriceBefore == null ? null : String(adjustment.referencePriceBefore),
+          referencePriceAfter: adjustment.referencePriceAfter == null ? null : String(adjustment.referencePriceAfter),
+          source: adjustment.source,
+          status: 'APPLIED',
+          evidence: adjustment.evidence,
+          appliedAt: new Date(),
+        },
+      });
+
+    return true;
   });
 }
 
@@ -117,6 +220,8 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
 
     let totalUpdated = 0;
     let updatedTickersCount = 0;
+    let adjustmentsApplied = 0;
+    let quarantinedTickersCount = 0;
     const errors: string[] = [];
 
     // Recycled client per batch (30 charts max per WebSocket session to avoid TradingView connection rate limits)
@@ -130,7 +235,82 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
       const batch = stockTickers.slice(i, i + BATCH_SIZE);
       const client = new TradingView.Client();
 
-      const fetchSymbol = (ticker: typeof stockTickers[0]): Promise<any[]> => {
+      const batchSymbols = batch.map((ticker) => ticker.symbol);
+      type StoredWindowRow = {
+        ticker_symbol: string;
+        date: string | Date;
+        open: string | number;
+        high: string | number;
+        low: string | number;
+        close: string | number;
+        volume: string | number | null;
+      };
+      const storedWindowRows = await db.execute(sql`
+        WITH ranked_prices AS (
+          SELECT ticker_symbol, date, open, high, low, close, volume,
+                 ROW_NUMBER() OVER (PARTITION BY ticker_symbol ORDER BY date DESC) AS row_number
+          FROM ${dailyPrices}
+          WHERE ${inArray(dailyPrices.tickerSymbol, batchSymbols)}
+        )
+        SELECT ticker_symbol, date, open, high, low, close, volume
+        FROM ranked_prices
+        WHERE row_number <= 30
+        ORDER BY ticker_symbol, date
+      `) as unknown as StoredWindowRow[];
+      const storedWindows = new Map<string, ComparablePriceBar[]>();
+      for (const row of storedWindowRows) {
+        const tickerSymbol = String(row.ticker_symbol);
+        const bars = storedWindows.get(tickerSymbol) ?? [];
+        bars.push({
+          date: typeof row.date === 'string' ? row.date.slice(0, 10) : new Date(row.date).toISOString().slice(0, 10),
+          open: Number(row.open),
+          high: Number(row.high),
+          low: Number(row.low),
+          close: Number(row.close),
+          volume: Number(row.volume || 0),
+        });
+        storedWindows.set(tickerSymbol, bars);
+      }
+
+      let confirmedAdjustments: ConfirmedAdjustment[] = [];
+      const latestAppliedDateByTicker = new Map<string, string>();
+      try {
+        const adjustmentRows = await db
+          .select()
+          .from(priceAdjustments)
+          .where(and(
+            inArray(priceAdjustments.tickerSymbol, batchSymbols),
+            inArray(priceAdjustments.status, ['CONFIRMED', 'APPLIED']),
+          ));
+        confirmedAdjustments = adjustmentRows
+          .filter((row) => row.status === 'CONFIRMED')
+          .map((row) => ({
+            tickerSymbol: row.tickerSymbol,
+            effectiveDate: String(row.effectiveDate).slice(0, 10),
+            factor: Number(row.factor),
+            referencePriceBefore: row.referencePriceBefore == null ? null : Number(row.referencePriceBefore),
+            referencePriceAfter: row.referencePriceAfter == null ? null : Number(row.referencePriceAfter),
+            source: row.source,
+            evidence: row.evidence,
+            removeZeroVolumeAfterDate:
+              row.evidence && typeof row.evidence === 'object' && 'lastTradingDate' in row.evidence
+                ? String((row.evidence as Record<string, unknown>).lastTradingDate)
+                : null,
+          }));
+        for (const row of adjustmentRows) {
+          if (row.status !== 'APPLIED') continue;
+          const effectiveDate = String(row.effectiveDate).slice(0, 10);
+          const current = latestAppliedDateByTicker.get(row.tickerSymbol);
+          if (!current || effectiveDate > current) {
+            latestAppliedDateByTicker.set(row.tickerSymbol, effectiveDate);
+          }
+        }
+      } catch (error) {
+        errors.push(`price_adjustments: ${getErrorMessage(error)}`);
+      }
+      const confirmedByTicker = new Map(confirmedAdjustments.map((item) => [item.tickerSymbol, item]));
+
+      const fetchSymbol = (ticker: typeof stockTickers[0]): Promise<{ tickerSymbol: string; bars: ComparablePriceBar[] }> => {
         return new Promise((resolve) => {
           try {
             const symbol = ticker.symbol.replace('.CA', '');
@@ -143,7 +323,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
                 ? 'EGX:EGX100EWI'
                 : `EGX:${symbol}`;
             const chart = new client.Session.Chart();
-            chart.setMarket(tvSymbol, { timeframe: 'D', range: 15 });
+            chart.setMarket(tvSymbol, { timeframe: 'D', range: 15, adjustment: 'splits' });
 
             let done = false;
             const cleanup = () => {
@@ -155,42 +335,30 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
 
             const timeout = setTimeout(() => {
               cleanup();
-              resolve([]);
+              resolve({ tickerSymbol: ticker.symbol, bars: [] });
             }, 2500);
 
             chart.onUpdate(() => {
               const periods = chart.periods;
               cleanup();
-              if (!periods || periods.length === 0) return resolve([]);
+              if (!periods || periods.length === 0) {
+                return resolve({ tickerSymbol: ticker.symbol, bars: [] });
+              }
 
-              const lastDate = lastDateMap.get(ticker.symbol);
-              const sorted = [...periods].sort((a, b) => a.time - b.time);
-              const newPeriods = sorted.filter((p) => {
-                const dateStr = new Date(p.time * 1000).toISOString().split('T')[0];
-                return !lastDate || dateStr > lastDate;
-              });
-
-              const rows = newPeriods.map((p) => ({
-                tickerSymbol: ticker.symbol,
-                date: new Date(p.time * 1000).toISOString().split('T')[0],
-                open: sql`${p.open}`,
-                high: sql`${p.max}`,
-                low: sql`${p.min}`,
-                close: sql`${p.close}`,
-                volume: sql`${p.volume || 0}`,
-              }));
-
-              resolve(rows);
+              const bars = [...periods]
+                .sort((a, b) => a.time - b.time)
+                .map(toComparableBar);
+              resolve({ tickerSymbol: ticker.symbol, bars });
             });
 
-            chart.onError((err: any) => {
+            chart.onError((err: Error) => {
               cleanup();
-              errors.push(`${ticker.symbol}: ${err?.message || err}`);
-              resolve([]);
+              errors.push(`${ticker.symbol}: ${getErrorMessage(err)}`);
+              resolve({ tickerSymbol: ticker.symbol, bars: [] });
             });
-          } catch (err: any) {
-            errors.push(`${ticker.symbol}: ${err?.message || err}`);
-            resolve([]);
+          } catch (err: unknown) {
+            errors.push(`${ticker.symbol}: ${getErrorMessage(err)}`);
+            resolve({ tickerSymbol: ticker.symbol, bars: [] });
           }
         });
       };
@@ -198,39 +366,117 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
       const batchResults = await Promise.all(batch.map(fetchSymbol));
       client.end();
 
-      const rowsToInsert: any[] = [];
-      batchResults.forEach((rows) => {
-        if (rows.length > 0) {
-          updatedTickersCount++;
-          totalUpdated += rows.length;
-          rowsToInsert.push(...rows);
+      const rowsToInsert: ReturnType<typeof toDailyPriceInsert>[] = [];
+      for (const result of batchResults) {
+        const { tickerSymbol, bars } = result;
+        if (bars.length === 0) continue;
+
+        const storedBars = storedWindows.get(tickerSymbol) ?? [];
+        const lastStored = storedBars[storedBars.length - 1];
+        const lastDate = lastDateMap.get(tickerSymbol);
+        const newBars = bars.filter((bar) => !lastDate || bar.date > lastDate);
+        const confirmedAdjustment = confirmedByTicker.get(tickerSymbol);
+
+        if (confirmedAdjustment) {
+          const postActionBars = bars.filter((bar) => bar.date >= confirmedAdjustment.effectiveDate);
+          const applied = await applyPriceAdjustment(confirmedAdjustment, postActionBars);
+          if (applied) {
+            adjustmentsApplied += 1;
+            updatedTickersCount += 1;
+            totalUpdated += Math.max(1, newBars.length);
+          }
+          continue;
         }
-      });
+
+        const latestAppliedDate = latestAppliedDateByTicker.get(tickerSymbol);
+        const comparableStoredBars = latestAppliedDate
+          ? storedBars.filter((bar) => bar.date >= latestAppliedDate)
+          : storedBars;
+        const comparableIncomingBars = latestAppliedDate
+          ? bars.filter((bar) => bar.date >= latestAppliedDate)
+          : bars;
+        const providerAdjustment = detectProviderAdjustment(comparableStoredBars, comparableIncomingBars);
+        if (providerAdjustment && newBars.length > 0 && lastStored) {
+          const firstNewBar = newBars[0];
+          const replacementBars = latestAppliedDate
+            ? bars.filter((bar) => bar.date >= latestAppliedDate)
+            : bars;
+          const applied = await applyPriceAdjustment({
+            tickerSymbol,
+            effectiveDate: firstNewBar.date,
+            factor: providerAdjustment.factor,
+            referencePriceBefore: lastStored.close,
+            referencePriceAfter: lastStored.close * providerAdjustment.factor,
+            source: 'TRADINGVIEW_OVERLAP_REBASE',
+            evidence: providerAdjustment,
+          }, replacementBars);
+          if (applied) {
+            adjustmentsApplied += 1;
+            updatedTickersCount += 1;
+            totalUpdated += Math.max(1, newBars.length);
+          }
+          continue;
+        }
+
+        if (newBars.length > 0 && lastStored) {
+          const firstNewBar = newBars[0];
+          const extremeGap = detectExtremeGap(lastStored.close, firstNewBar.open);
+          if (extremeGap) {
+            quarantinedTickersCount += 1;
+            await db
+              .insert(priceAdjustments)
+              .values({
+                tickerSymbol,
+                effectiveDate: firstNewBar.date,
+                factor: String(extremeGap.factor),
+                referencePriceBefore: String(lastStored.close),
+                referencePriceAfter: String(firstNewBar.open),
+                source: 'EXTREME_GAP_GUARD',
+                status: 'PENDING_REVIEW',
+                evidence: {
+                  ...extremeGap,
+                  previousDate: lastStored.date,
+                  incomingClose: firstNewBar.close,
+                  message: 'Bar withheld from canonical history until the discontinuity is confirmed.',
+                },
+              })
+              .onConflictDoUpdate({
+                target: [priceAdjustments.tickerSymbol, priceAdjustments.effectiveDate],
+                set: {
+                  factor: String(extremeGap.factor),
+                  referencePriceBefore: String(lastStored.close),
+                  referencePriceAfter: String(firstNewBar.open),
+                  evidence: {
+                    ...extremeGap,
+                    previousDate: lastStored.date,
+                    incomingClose: firstNewBar.close,
+                    message: 'Bar withheld from canonical history until the discontinuity is confirmed.',
+                  },
+                },
+              });
+            errors.push(`${tickerSymbol}: quarantined ${extremeGap.gapPct.toFixed(1)}% opening discontinuity on ${firstNewBar.date}`);
+            continue;
+          }
+        }
+
+        if (newBars.length > 0) {
+          updatedTickersCount += 1;
+          totalUpdated += newBars.length;
+          rowsToInsert.push(...newBars.map((bar) => toDailyPriceInsert(tickerSymbol, bar)));
+        }
+      }
 
       if (rowsToInsert.length > 0) {
-        for (let r = 0; r < rowsToInsert.length; r += 50) {
-          const slice = rowsToInsert.slice(r, r + 50);
-          await db.insert(dailyPrices)
-            .values(slice)
-            .onConflictDoUpdate({
-              target: [dailyPrices.tickerSymbol, dailyPrices.date],
-              set: {
-                open: sql`EXCLUDED.open`,
-                high: sql`EXCLUDED.high`,
-                low: sql`EXCLUDED.low`,
-                close: sql`EXCLUDED.close`,
-                volume: sql`EXCLUDED.volume`,
-              }
-            });
-        }
+        await upsertDailyPriceRows(db, rowsToInsert);
       }
 
       await new Promise((r) => setTimeout(r, 20));
     }
 
+    invalidatePrecomputedMarketCache();
     try {
-      (revalidateTag as any)('prices');
-      (revalidateTag as any)('opportunities');
+      revalidateTag('prices', { expire: 0 });
+      revalidateTag('opportunities', { expire: 0 });
       revalidatePath('/home');
       revalidatePath('/charts');
       revalidatePath('/markets');
@@ -258,11 +504,11 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
     await db.insert(systemLogs).values({
       source: 'cron-stocks',
       level: 'INFO',
-      message: `Stock sync complete: Updated ${updatedTickersCount} tickers with ${totalUpdated} new price bars in ${Math.round(elapsed / 1000)}s.`,
-      metadata: { totalUpdated, updatedTickersCount, elapsedMs: elapsed, notificationResult, errors: errors.length > 0 ? errors.slice(0, 10) : undefined },
+      message: `Stock sync complete: Updated ${updatedTickersCount} tickers with ${totalUpdated} new price bars, applied ${adjustmentsApplied} price adjustments, and quarantined ${quarantinedTickersCount} suspicious discontinuities in ${Math.round(elapsed / 1000)}s.`,
+      metadata: { totalUpdated, updatedTickersCount, adjustmentsApplied, quarantinedTickersCount, elapsedMs: elapsed, notificationResult, errors: errors.length > 0 ? errors.slice(0, 10) : undefined },
     });
 
-    return NextResponse.json({ message: 'Stock update completed', totalUpdated, updatedTickersCount, elapsedMs: elapsed, notificationResult, errors }, { status: 200 });
+    return NextResponse.json({ message: 'Stock update completed', totalUpdated, updatedTickersCount, adjustmentsApplied, quarantinedTickersCount, elapsedMs: elapsed, notificationResult, errors }, { status: 200 });
   } catch (error) {
     console.error('Error in handleUpdateStocks:', error);
     await db.insert(systemLogs).values({
@@ -377,7 +623,7 @@ export async function handleUpdateFunds(req: Request) {
     const results = await Promise.all(SNDUK_FUNDS.map(updateSndukFund));
 
     try {
-      (revalidateTag as any)('prices');
+      revalidateTag('prices', { expire: 0 });
       revalidatePath('/home');
       revalidatePath('/charts');
       revalidatePath('/markets');
@@ -539,7 +785,7 @@ export async function handleUpdateCommodities(req: Request) {
     client.end();
 
     try {
-      (revalidateTag as any)('prices');
+      revalidateTag('prices', { expire: 0 });
       revalidatePath('/home');
       revalidatePath('/charts');
       revalidatePath('/markets');

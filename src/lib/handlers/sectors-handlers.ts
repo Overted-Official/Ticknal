@@ -351,6 +351,14 @@ let precomputedCache: PrecomputedModelCache | null = null;
 const PRECOMPUTED_TTL = 10 * 60 * 1000; // 10 minutes
 let precomputePromise: Promise<PrecomputedModelCache> | null = null;
 
+export function invalidatePrecomputedMarketCache(): void {
+  precomputedCache = null;
+  precomputePromise = null;
+  memPerformanceCache.clear();
+  memSignalsCacheMap.clear();
+  inFlightSignalsMap.clear();
+}
+
 export async function getOrInitPrecomputedCache(): Promise<PrecomputedModelCache> {
   const now = Date.now();
   if (precomputedCache && now - precomputedCache.timestamp < PRECOMPUTED_TTL) {

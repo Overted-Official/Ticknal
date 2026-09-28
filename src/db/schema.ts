@@ -41,6 +41,27 @@ export const dailyPrices = pgTable('daily_prices', {
   };
 });
 
+export const priceAdjustments = pgTable('price_adjustments', {
+  id: serial('id').primaryKey(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  effectiveDate: date('effective_date').notNull(),
+  factor: numeric('factor', { precision: 18, scale: 10 }).notNull(),
+  referencePriceBefore: numeric('reference_price_before', { precision: 12, scale: 4 }),
+  referencePriceAfter: numeric('reference_price_after', { precision: 12, scale: 4 }),
+  source: varchar('source', { length: 50 }).notNull(),
+  status: varchar('status', { length: 30 }).default('PENDING_REVIEW').notNull(),
+  evidence: jsonb('evidence'),
+  detectedAt: timestamp('detected_at', { withTimezone: true }).defaultNow().notNull(),
+  appliedAt: timestamp('applied_at', { withTimezone: true }),
+}, (table) => {
+  return {
+    tickerEffectiveUnique: unique('price_adjustments_ticker_effective_unique').on(table.tickerSymbol, table.effectiveDate),
+    statusIdx: index('price_adjustments_status_idx').on(table.status),
+  };
+});
+
 // Removed old ML signals table as signals are now dynamically calculated per user configuration
 // Removed strategy_signals table as signals are now dynamically calculated per user configuration
 

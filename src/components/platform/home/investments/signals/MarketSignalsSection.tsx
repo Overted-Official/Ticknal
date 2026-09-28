@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ChevronDown, ChevronUp, Sparkles } from '@/components/ui/icon-library';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
@@ -40,61 +40,39 @@ export default function MarketSignalsSection({
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
 
-  // Deduplicate and group buy opportunities by ticker symbol
+  // Keep one complete winning-model record per ticker. Never mix the signal
+  // date from one strategy with alpha or metrics from another.
   const groupedSignals = useMemo(() => {
     const map = new Map<string, GroupedMarketSignal>();
 
     for (const opp of buyOpportunities) {
       const cleanSymbol = opp.symbol.replace('.CA', '').trim().toUpperCase();
       const stratMeta = resolveStrategyMeta(opp.strategyId, opp.strategyShortName);
-      const barsAgo = (opp.signal as any)?.barsAgo ?? (opp as any)?.signalAgeBars ?? null;
+      const barsAgo = opp.signal.barsAgo ?? opp.signalAgeBars ?? null;
+      const candidateAlpha = typeof opp.metrics?.alpha === 'number' && Number.isFinite(opp.metrics.alpha)
+        ? opp.metrics.alpha
+        : null;
+      const existing = map.get(cleanSymbol);
 
-      if (!map.has(cleanSymbol)) {
-        map.set(cleanSymbol, {
-          symbol: opp.symbol,
-          cleanSymbol,
-          companyName: opp.companyName || cleanSymbol,
-          sector: opp.sector || 'Equities',
-          rotationRegime: opp.rotationRegime,
-          logoUrl: opp.logoUrl,
-          strategies: [stratMeta],
-          signalPrice: opp.signal.price,
-          signalDate: opp.signal.date,
-          barsAgo,
-          winningAlpha: typeof opp.metrics?.alpha === 'number' && Number.isFinite(opp.metrics.alpha)
-            ? opp.metrics.alpha
-            : null,
-          metrics: opp.metrics,
-          rawOpportunities: [opp],
-        });
-      } else {
-        const existing = map.get(cleanSymbol)!;
-        // Avoid duplicate strategy badges for the same model
-        if (!existing.strategies.some((s) => s.id === stratMeta.id)) {
-          existing.strategies.push(stratMeta);
-        }
-        // Inherit metrics if missing
-        if (!existing.metrics?.buyHoldReturn && opp.metrics?.buyHoldReturn) {
-          existing.metrics = opp.metrics;
-        }
-        if (!existing.rotationRegime && opp.rotationRegime) {
-          existing.rotationRegime = opp.rotationRegime;
-        }
-        const candidateAlpha = typeof opp.metrics?.alpha === 'number' && Number.isFinite(opp.metrics.alpha)
-          ? opp.metrics.alpha
-          : null;
-        if (candidateAlpha !== null && (existing.winningAlpha == null || candidateAlpha > existing.winningAlpha)) {
-          existing.winningAlpha = candidateAlpha;
-          existing.metrics = opp.metrics;
-        }
-        // Keep the latest price if this opp is more recent
-        if (opp.signal.date && (!existing.signalDate || opp.signal.date > existing.signalDate)) {
-          existing.signalPrice = opp.signal.price;
-          existing.signalDate = opp.signal.date;
-          if (barsAgo != null) existing.barsAgo = barsAgo;
-        }
-        existing.rawOpportunities?.push(opp);
+      if (existing && (existing.winningAlpha ?? Number.NEGATIVE_INFINITY) >= (candidateAlpha ?? Number.NEGATIVE_INFINITY)) {
+        continue;
       }
+
+      map.set(cleanSymbol, {
+        symbol: opp.symbol,
+        cleanSymbol,
+        companyName: opp.companyName || cleanSymbol,
+        sector: opp.sector || 'Equities',
+        rotationRegime: opp.rotationRegime,
+        logoUrl: opp.logoUrl,
+        strategies: [stratMeta],
+        signalPrice: opp.signal.price,
+        signalDate: opp.signal.date,
+        barsAgo,
+        winningAlpha: candidateAlpha,
+        metrics: opp.metrics,
+        rawOpportunities: [opp],
+      });
     }
 
     return Array.from(map.values());
@@ -111,6 +89,7 @@ export default function MarketSignalsSection({
   // Handle Quick Range selection (1D, 5D, 10D)
   const handleQuickRangeClick = (r: QuickRange) => {
     setQuickRange(r);
+    setShowAllSignals(false);
     const latest = sortedSignalDates[0] || new Date().toISOString().split('T')[0];
     setToDate(latest);
 
@@ -128,42 +107,34 @@ export default function MarketSignalsSection({
     }
   };
 
-  // Initialize dates on first load when signals arrive
-  useEffect(() => {
-    if (sortedSignalDates.length > 0 && !fromDate && !toDate) {
-      handleQuickRangeClick('5D');
-    }
-  }, [sortedSignalDates]);
+  const effectiveToDate = toDate || sortedSignalDates[0] || '';
+  const defaultFromIndex = Math.min(4, sortedSignalDates.length - 1);
+  const effectiveFromDate = fromDate || sortedSignalDates[defaultFromIndex] || effectiveToDate;
 
   // Filter grouped opportunities by date range
   const filteredSignals = useMemo(() => {
     return groupedSignals.filter((sig) => {
       if (quickRange === '1D') {
-        if (sig.barsAgo != null) return sig.barsAgo <= 1;
-        if (fromDate && sig.signalDate && sig.signalDate < fromDate) return false;
+        if (sig.barsAgo != null) return sig.barsAgo < 1;
+        if (effectiveFromDate && sig.signalDate && sig.signalDate < effectiveFromDate) return false;
       } else if (quickRange === '5D') {
-        if (sig.barsAgo != null) return sig.barsAgo <= 5;
-        if (fromDate && sig.signalDate && sig.signalDate < fromDate) return false;
+        if (sig.barsAgo != null) return sig.barsAgo < 5;
+        if (effectiveFromDate && sig.signalDate && sig.signalDate < effectiveFromDate) return false;
       } else if (quickRange === '10D') {
-        if (sig.barsAgo != null) return sig.barsAgo <= 10;
-        if (fromDate && sig.signalDate && sig.signalDate < fromDate) return false;
+        if (sig.barsAgo != null) return sig.barsAgo < 10;
+        if (effectiveFromDate && sig.signalDate && sig.signalDate < effectiveFromDate) return false;
       } else {
         // Custom date range selected by user
-        if (fromDate && sig.signalDate && sig.signalDate < fromDate) return false;
-        if (toDate && sig.signalDate && sig.signalDate > toDate) return false;
+        if (effectiveFromDate && sig.signalDate && sig.signalDate < effectiveFromDate) return false;
+        if (effectiveToDate && sig.signalDate && sig.signalDate > effectiveToDate) return false;
       }
 
       return true;
     });
-  }, [groupedSignals, quickRange, fromDate, toDate]);
+  }, [groupedSignals, quickRange, effectiveFromDate, effectiveToDate]);
 
   const INITIAL_SIGNALS = 6;
   const [showAllSignals, setShowAllSignals] = useState(false);
-
-  // Reset expansion when filtering parameters change
-  useEffect(() => {
-    setShowAllSignals(false);
-  }, [quickRange, fromDate, toDate]);
 
   const visibleSignals = showAllSignals ? filteredSignals : filteredSignals.slice(0, INITIAL_SIGNALS);
 
@@ -208,10 +179,11 @@ export default function MarketSignalsSection({
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">From</span>
             <input
               type="date"
-              value={fromDate}
+              value={effectiveFromDate}
               onChange={(e) => {
                 setFromDate(e.target.value);
                 setQuickRange(null);
+                setShowAllSignals(false);
               }}
               className="w-full min-w-0 max-w-[118px] flex-1 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
             />
@@ -219,10 +191,11 @@ export default function MarketSignalsSection({
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">To</span>
             <input
               type="date"
-              value={toDate}
+              value={effectiveToDate}
               onChange={(e) => {
                 setToDate(e.target.value);
                 setQuickRange(null);
+                setShowAllSignals(false);
               }}
               className="w-full min-w-0 max-w-[118px] flex-1 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
             />
