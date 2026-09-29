@@ -51,7 +51,7 @@ interface TickerPositionsProps {
 function getCurrency(symbol: string, instrumentCurrency?: string): string {
   if (instrumentCurrency) return instrumentCurrency.toUpperCase();
   const upper = symbol.toUpperCase();
-  if (['GC1!', 'SI1!'].includes(upper)) return 'USD';
+  if (['SI1!'].includes(upper)) return 'USD';
   return 'EGP';
 }
 

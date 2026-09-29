@@ -225,7 +225,7 @@ export default function TickerPositionsDrawer({
                               maximumFractionDigits: 2,
                             })}{' '}
                             <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-sans">
-                              {['GC1!', 'SI1!'].includes(cleanSymbol) ? 'USD' : 'EGP'}
+                              {['SI1!'].includes(cleanSymbol) ? 'USD' : 'EGP'}
                             </span>
                           </div>
                           <span className="text-[10px] font-medium text-emerald-400 flex items-center gap-1 leading-none mt-0.5 font-sans">

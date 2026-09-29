@@ -164,8 +164,26 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         const current = data[data.length - 1];
         const previous = data.length > 1 ? data[data.length - 2] : null;
 
-        const currentPrice = current.close;
-        const prevPrice = previous ? previous.close : current.open;
+        let currentPrice = current.close;
+        let prevPrice = previous ? previous.close : current.open;
+        let openPrice = current.open;
+        let highPrice = current.max;
+        let lowPrice = current.min;
+
+        if (cleanSym === 'GC1!' || cleanSym === 'GOLD') {
+          const latestUsd = await db.query.dailyPrices.findFirst({
+            where: eq(dailyPrices.tickerSymbol, 'USDEGP'),
+            orderBy: [desc(dailyPrices.date)],
+          });
+          const rate = latestUsd ? Number(latestUsd.close) : 52.0;
+          const OZ_TO_GRAMS = 31.1034768;
+          currentPrice = Number(((currentPrice * rate) / OZ_TO_GRAMS).toFixed(2));
+          prevPrice = Number(((prevPrice * rate) / OZ_TO_GRAMS).toFixed(2));
+          openPrice = Number(((openPrice * rate) / OZ_TO_GRAMS).toFixed(2));
+          highPrice = Number(((highPrice * rate) / OZ_TO_GRAMS).toFixed(2));
+          lowPrice = Number(((lowPrice * rate) / OZ_TO_GRAMS).toFixed(2));
+        }
+
         const change = currentPrice - prevPrice;
         const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : 0;
 
@@ -181,13 +199,13 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
           price: currentPrice,
           change: Number(change.toFixed(2)),
           changePercent: Number(changePercent.toFixed(2)),
-          open: current.open,
-          high: current.max,
-          low: current.min,
-          dayHigh: current.max || dbRanges?.dayHigh || currentPrice,
-          dayLow: current.min || dbRanges?.dayLow || currentPrice,
-          yearHigh: dbRanges?.yearHigh || current.max || currentPrice,
-          yearLow: dbRanges?.yearLow || current.min || currentPrice,
+          open: openPrice,
+          high: highPrice,
+          low: lowPrice,
+          dayHigh: highPrice || dbRanges?.dayHigh || currentPrice,
+          dayLow: lowPrice || dbRanges?.dayLow || currentPrice,
+          yearHigh: dbRanges?.yearHigh || highPrice || currentPrice,
+          yearLow: dbRanges?.yearLow || lowPrice || currentPrice,
           volume: current.volume,
           updatedAt: new Date(current.time * 1000).toISOString()
         };

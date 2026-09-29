@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications } from '@/db/schema';
-import { sql, inArray, eq, and, lt, gt, gte } from 'drizzle-orm';
+import { sql, inArray, eq, and, lt, gt, gte, desc } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { verifyCronAuth } from '@/lib/cron-auth';
@@ -655,7 +655,7 @@ export async function handleUpdateFunds(req: Request) {
 // 3. UPDATE COMMODITIES
 // ----------------------------------------------------
 const GLOBAL_ASSETS = [
-  { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'USD' },
+  { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold (EGP/g)', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'EGP' },
   { symbol: 'SI1!', tvSymbol: 'COMEX:SI1!', name: 'Silver Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'USD' },
   { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP' },
   { symbol: 'EUREGP', tvSymbol: 'FX_IDC:EUREGP', name: 'EUR to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP' }
@@ -756,26 +756,53 @@ export async function handleUpdateCommodities(req: Request) {
 
         if (newPeriods.length === 0) continue;
 
+        // If updating Gold (GC1!), fetch latest USDEGP rate to convert USD/oz to EGP/g (24K)
+        let usdEgpRate = 52.0;
+        if (asset.symbol === 'GC1!') {
+          const latestUsdRow = await db.query.dailyPrices.findFirst({
+            where: eq(dailyPrices.tickerSymbol, 'USDEGP'),
+            orderBy: [desc(dailyPrices.date)],
+          });
+          if (latestUsdRow && Number(latestUsdRow.close) > 0) {
+            usdEgpRate = Number(latestUsdRow.close);
+          }
+        }
+
+        const OZ_TO_GRAMS = 31.1034768;
+
         for (const p of newPeriods) {
           const dateStr = new Date(p.time * 1000).toISOString().split('T')[0];
+
+          let openVal = p.open;
+          let highVal = p.max;
+          let lowVal = p.min;
+          let closeVal = p.close;
+
+          if (asset.symbol === 'GC1!') {
+            openVal = Number(((p.open * usdEgpRate) / OZ_TO_GRAMS).toFixed(4));
+            highVal = Number(((p.max * usdEgpRate) / OZ_TO_GRAMS).toFixed(4));
+            lowVal = Number(((p.min * usdEgpRate) / OZ_TO_GRAMS).toFixed(4));
+            closeVal = Number(((p.close * usdEgpRate) / OZ_TO_GRAMS).toFixed(4));
+          }
+
           await db
             .insert(dailyPrices)
             .values({
               tickerSymbol: asset.symbol,
               date: dateStr,
-              open: sql`${p.open}`,
-              high: sql`${p.max}`,
-              low: sql`${p.min}`,
-              close: sql`${p.close}`,
+              open: sql`${openVal}`,
+              high: sql`${highVal}`,
+              low: sql`${lowVal}`,
+              close: sql`${closeVal}`,
               volume: sql`${p.volume || 0}`,
             })
             .onConflictDoUpdate({
               target: [dailyPrices.tickerSymbol, dailyPrices.date],
               set: {
-                open: sql`${p.open}`,
-                high: sql`${p.max}`,
-                low: sql`${p.min}`,
-                close: sql`${p.close}`,
+                open: sql`${openVal}`,
+                high: sql`${highVal}`,
+                low: sql`${lowVal}`,
+                close: sql`${closeVal}`,
                 volume: sql`${p.volume || 0}`,
               },
             });
