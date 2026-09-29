@@ -78,7 +78,7 @@ export default function AddOrderModal({
   onClose,
   onSuccess,
   initialData,
-  mode = 'import',
+  mode = 'live',
   brokerageAccounts = EMPTY_BROKERAGE_ACCOUNTS,
   entrySource = 'CHART',
 }: {
@@ -179,18 +179,9 @@ export default function AddOrderModal({
     const brokerAccounts = allAccounts.filter(
       (a) => !a.isArchived && ['BROKERAGE', 'BROKER_CASH'].includes(a.accountType)
     );
-    const matchingBrokerageAccounts = brokerAccounts.filter(
+    return brokerAccounts.filter(
       (account) => (account.currency || 'EGP').toUpperCase() === newOrderForm.currency.toUpperCase(),
     );
-    if (matchingBrokerageAccounts.length > 0) return matchingBrokerageAccounts;
-    if (brokerAccounts.length > 0) return [];
-
-    const egpAccounts = allAccounts.filter(
-      (a) => !a.isArchived && (a.currency === 'EGP' || !a.currency)
-    );
-    if (egpAccounts.length > 0) return egpAccounts;
-
-    return allAccounts.filter((a) => !a.isArchived);
   }, [allAccounts, newOrderForm.currency]);
 
   // Sync initialData when drawer opens, and fetch all tickers

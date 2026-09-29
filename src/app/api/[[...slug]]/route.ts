@@ -67,6 +67,7 @@ import {
   handlePositionsGet,
   handlePositionsPost,
   handlePositionsPatch,
+  handlePositionsClosePost,
   handlePositionsDelete,
   handlePositionsAssignAccountPost,
   handleAvatarPost,
@@ -324,6 +325,7 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
   }
   if (root === 'positions' || (root === 'user' && sub === 'positions')) {
     if (sub === 'assign-account') return handlePositionsAssignAccountPost(req);
+    if (sub === 'close') return handlePositionsClosePost(req);
     return handlePositionsPost(req);
   }
   if (root === 'user' && sub === 'avatar') {

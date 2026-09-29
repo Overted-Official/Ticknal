@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
@@ -81,6 +81,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
   const [positionDate, setPositionDate] = useState(new Date().toISOString().split('T')[0]);
   const [positionPrice, setPositionPrice] = useState('');
   const [positionQty, setPositionQty] = useState('100');
+  const [positionAccountId, setPositionAccountId] = useState<string>('');
   const [isSubmittingPos, setIsSubmittingPos] = useState(false);
   const [isTickerDropdownOpen, setIsTickerDropdownOpen] = useState(false);
   const tickerSearchRef = useRef<HTMLDivElement>(null);
@@ -90,7 +91,14 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
     isOpen ? '/api/banks/accounts' : null,
     fetcher
   );
-  const accounts = accountsData?.accounts ?? [];
+  const accounts: BankAccount[] = accountsData?.accounts ?? [];
+
+  // Filter for brokerage accounts
+  const brokerageAccounts = useMemo(() => {
+    return accounts.filter(
+      (a: BankAccount) => !a.isArchived && ['BROKERAGE', 'BROKER_CASH'].includes(a.accountType)
+    );
+  }, [accounts]);
 
   // SWR: Tickers
   const { data: tickersData } = useSWR<Ticker[]>(isOpen ? '/api/tickers' : null, fetcher);
@@ -119,13 +127,23 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
   // Set default account when accounts load
   useEffect(() => {
     if (accounts.length > 0 && !accountId) {
-      const def = accounts.find((a) => a.isDefaultExpense) || accounts[0];
+      const def = accounts.find((a: BankAccount) => a.isDefaultExpense) || accounts[0];
       if (def) {
         setAccountId(String(def.id));
         setCurrency(def.currency || 'EGP');
       }
     }
   }, [accounts, accountId]);
+
+  // Set default brokerage account for stock positions
+  useEffect(() => {
+    if (brokerageAccounts.length > 0 && !positionAccountId) {
+      const def = brokerageAccounts.find((a: BankAccount) => a.isDefaultExpense) || brokerageAccounts[0];
+      if (def) {
+        setPositionAccountId(String(def.id));
+      }
+    }
+  }, [brokerageAccounts, positionAccountId]);
 
   // Sync currency when account changes
   const handleAccountChange = (accIdStr: string) => {
@@ -235,25 +253,43 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
       toast.warning('Invalid Quantity', 'Please enter a valid share quantity.');
       return;
     }
+    if (!positionAccountId) {
+      toast.warning('Brokerage Account Required', 'Please select a funded brokerage account.');
+      return;
+    }
+
+    const selectedAccount = brokerageAccounts.find((a: BankAccount) => String(a.id) === positionAccountId);
+    const requiredAmount = Number(positionPrice) * Number(positionQty);
+    if (selectedAccount && Number(selectedAccount.balance) < requiredAmount) {
+      toast.error(
+        'Insufficient Cash',
+        `Account has ${Number(selectedAccount.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })} ${selectedAccount.currency || 'EGP'} available, but ${requiredAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} is required.`
+      );
+      return;
+    }
 
     setIsSubmittingPos(true);
     try {
-      const res = await fetch('/api/positions', {
+      const res = await fetch('/api/portfolio/trades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'BUY',
+          accountId: Number(positionAccountId),
           symbol: positionSymbol.trim().toUpperCase(),
-          entryDate: positionDate,
-          entryPrice: Number(positionPrice),
+          date: positionDate,
+          price: Number(positionPrice),
           quantity: Number(positionQty),
+          entrySource: 'CHART',
         }),
       });
 
       if (res.ok) {
         toast.success(
-          'Position Created',
-          `Added ${positionQty} shares of ${positionSymbol.toUpperCase()} at ${Number(positionPrice).toFixed(2)} EGP.`
+          'Live Position Opened',
+          `Bought ${positionQty} shares of ${positionSymbol.toUpperCase()} at ${Number(positionPrice).toFixed(2)} EGP. Brokerage balance debited.`
         );
+        mutateAccounts();
         if (onSuccess) onSuccess();
         router.refresh();
         onClose();
@@ -262,7 +298,8 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
         setPositionPrice('');
         setPositionQty('100');
       } else {
-        toast.error('Position Failed', 'Failed to add position.');
+        const data = await res.json().catch(() => null);
+        toast.error('Position Failed', data?.error || 'Failed to add position.');
       }
     } catch (err) {
       console.error(err);
@@ -595,6 +632,39 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                             )}
                           </button>
                         ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Brokerage Account Selection */}
+                  <div className="drawer-form-field">
+                    <label className="field-label">Brokerage Account *</label>
+                    {brokerageAccounts.length === 0 ? (
+                      <div className="drawer-info-card">
+                        <div className="drawer-info-dot" />
+                        <p className="drawer-info-text">
+                          No brokerage account found. Please add an EGP brokerage account in{' '}
+                          <a href="/wallet?tab=transactions" className="underline font-semibold">
+                            Cash &amp; Transactions
+                          </a>{' '}
+                          first.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="field-select-wrapper">
+                        <select
+                          required
+                          value={positionAccountId}
+                          onChange={(e) => setPositionAccountId(e.target.value)}
+                          className="field-select-input"
+                        >
+                          {brokerageAccounts.map((b: BankAccount) => (
+                            <option key={b.id} value={b.id} className="field-select-option">
+                              {b.accountName || b.customBankName || b.bankName || `Account ${b.id}`} · {Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {b.currency || 'EGP'} available
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="field-select-chevron w-4 h-4" />
                       </div>
                     )}
                   </div>

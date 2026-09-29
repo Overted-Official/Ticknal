@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { desc, eq, and, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, profiles, systemLogs, userBankAccounts } from '@/db/schema';
+import { positions, profiles, systemLogs, userBankAccounts, bankTransactions, tickers } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { createClient } from '@/lib/supabase/server';
@@ -153,27 +153,242 @@ export async function handlePositionsPost(request: Request) {
       existingLevels ??
       derivePositionLevels(ticker, await getDailyPriceBars(ticker), entryDate, entryPrice);
 
-    const [createdPosition] = await db
-      .insert(positions)
-      .values({
-        userId: user.id,
-        tickerSymbol: ticker,
-        status: 'OPEN',
-        side: 'LONG',
-        entryDate,
-        entryPrice: entryPrice.toString(),
-        quantity: Number.isFinite(quantity) && quantity > 0 ? quantity.toString() : '1',
-        targetPrice: levels.targetPrice === null ? null : levels.targetPrice.toString(),
-        stopPrice: levels.stopPrice === null ? null : levels.stopPrice.toString(),
-        notes: typeof body.notes === 'string' && body.notes.trim() ? body.notes.trim() : null,
-        updatedAt: new Date(),
-      })
-      .returning();
+    // Resolve brokerage account: explicit accountId or fallback to user's matching active brokerage account
+    let targetAccountId = Number(body.accountId);
+    if (!Number.isInteger(targetAccountId) || targetAccountId <= 0) {
+      const [instrument] = await db.select({ currency: tickers.currency })
+        .from(tickers)
+        .where(eq(tickers.symbol, ticker));
+      const targetCurrency = (instrument?.currency || 'EGP').toUpperCase();
+
+      const userBrokerAccounts = await db.select()
+        .from(userBankAccounts)
+        .where(and(
+          eq(userBankAccounts.userId, user.id),
+          eq(userBankAccounts.isArchived, false),
+        ));
+
+      const matchingBroker = userBrokerAccounts.find(
+        (a) => ['BROKERAGE', 'BROKER_CASH'].includes(a.accountType) && (a.currency || 'EGP').toUpperCase() === targetCurrency
+      );
+
+      if (matchingBroker) {
+        targetAccountId = matchingBroker.id;
+      }
+    }
+
+    const tradeAmount = entryPrice * quantity;
+    const entrySource = body.entrySource === 'CHART' ? 'CHART' : (body.entrySource || 'CHART');
+
+    const createdPosition = await db.transaction(async (tx) => {
+      let resolvedAccountId: number | null = null;
+
+      if (Number.isInteger(targetAccountId) && targetAccountId > 0) {
+        const [account] = await tx.select()
+          .from(userBankAccounts)
+          .where(and(
+            eq(userBankAccounts.id, targetAccountId),
+            eq(userBankAccounts.userId, user.id),
+            eq(userBankAccounts.isArchived, false),
+          ));
+
+        if (!account || !['BROKERAGE', 'BROKER_CASH'].includes(account.accountType)) {
+          throw new Error('Selected account is not a valid brokerage account');
+        }
+
+        const [debited] = await tx.update(userBankAccounts)
+          .set({
+            balance: sql`${userBankAccounts.balance} - ${tradeAmount}`,
+            updatedAt: new Date(),
+          })
+          .where(and(
+            eq(userBankAccounts.id, targetAccountId),
+            eq(userBankAccounts.userId, user.id),
+            sql`CAST(${userBankAccounts.balance} AS NUMERIC) >= ${tradeAmount}`,
+          ))
+          .returning();
+
+        if (!debited) {
+          throw new Error('Insufficient brokerage cash');
+        }
+
+        resolvedAccountId = targetAccountId;
+      }
+
+      const [pos] = await tx
+        .insert(positions)
+        .values({
+          userId: user.id,
+          tickerSymbol: ticker,
+          status: 'OPEN',
+          side: 'LONG',
+          accountId: resolvedAccountId,
+          entryDate,
+          entryPrice: entryPrice.toString(),
+          quantity: Number.isFinite(quantity) && quantity > 0 ? quantity.toString() : '1',
+          targetPrice: levels.targetPrice === null ? null : levels.targetPrice.toString(),
+          stopPrice: levels.stopPrice === null ? null : levels.stopPrice.toString(),
+          entrySource,
+          notes: typeof body.notes === 'string' && body.notes.trim() ? body.notes.trim() : null,
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      if (resolvedAccountId) {
+        const [acc] = await tx.select({ currency: userBankAccounts.currency })
+          .from(userBankAccounts)
+          .where(eq(userBankAccounts.id, resolvedAccountId));
+
+        await tx.insert(bankTransactions).values({
+          userId: user.id,
+          accountId: resolvedAccountId,
+          type: 'BROKERAGE_BUY',
+          amount: tradeAmount.toFixed(4),
+          currency: acc?.currency || 'EGP',
+          category: 'Investments',
+          transactionDate: entryDate,
+          positionId: pos.id,
+          notes: body.notes || `Buy ${ticker} · ${quantity} shares @ ${entryPrice.toFixed(2)}`,
+        });
+      }
+
+      return pos;
+    });
 
     const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
     return NextResponse.json({ order: formatPosition(createdPosition, priceMap, tickerMap) }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating position:', error);
+    if (error?.message === 'Insufficient brokerage cash' || error?.message === 'Selected account is not a valid brokerage account') {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+/** Close a position or lot, credit brokerage balance, and record BROKERAGE_SELL transaction. */
+export async function handlePositionsClosePost(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const positionId = Number(body.positionId ?? body.id);
+    const exitDate = typeof body.exitDate === 'string' && body.exitDate ? body.exitDate.split('T')[0] : new Date().toISOString().split('T')[0];
+    const exitPrice = toNullableNumber(body.exitPrice);
+    const quantityToClose = toNullableNumber(body.quantityToClose);
+
+    if (!Number.isInteger(positionId) || positionId <= 0) {
+      return NextResponse.json({ error: 'A valid position id is required' }, { status: 400 });
+    }
+    if (exitPrice === null || exitPrice <= 0) {
+      return NextResponse.json({ error: 'A valid exit price is required' }, { status: 400 });
+    }
+    if (quantityToClose === null || quantityToClose <= 0) {
+      return NextResponse.json({ error: 'A valid quantity to close is required' }, { status: 400 });
+    }
+
+    const [existingPosition] = await db.select()
+      .from(positions)
+      .where(and(eq(positions.id, positionId), eq(positions.userId, user.id)));
+
+    if (!existingPosition) {
+      return NextResponse.json({ error: 'Position not found' }, { status: 404 });
+    }
+
+    const currentQty = Number(existingPosition.quantity);
+    if (quantityToClose > currentQty) {
+      return NextResponse.json({ error: `Cannot close ${quantityToClose} shares; only ${currentQty} open shares available.` }, { status: 400 });
+    }
+
+    const tradeProceeds = exitPrice * quantityToClose;
+
+    // Execute in transaction
+    await db.transaction(async (tx) => {
+      let closedPositionId = positionId;
+
+      if (quantityToClose < currentQty) {
+        // Partial close: update remaining open lot and insert new closed lot
+        const remainingQty = currentQty - quantityToClose;
+        await tx.update(positions)
+          .set({ quantity: remainingQty.toString(), updatedAt: new Date() })
+          .where(and(eq(positions.id, positionId), eq(positions.userId, user.id)));
+
+        const [closedLot] = await tx.insert(positions).values({
+          userId: user.id,
+          tickerSymbol: existingPosition.tickerSymbol,
+          status: 'CLOSED',
+          side: existingPosition.side,
+          accountId: existingPosition.accountId,
+          entryDate: existingPosition.entryDate,
+          entryPrice: existingPosition.entryPrice,
+          quantity: quantityToClose.toString(),
+          targetPrice: existingPosition.targetPrice,
+          stopPrice: existingPosition.stopPrice,
+          exitDate,
+          exitPrice: exitPrice.toString(),
+          entryStrategyId: existingPosition.entryStrategyId,
+          entrySignalDate: existingPosition.entrySignalDate,
+          entrySignalPrice: existingPosition.entrySignalPrice,
+          entrySource: existingPosition.entrySource,
+          notes: typeof body.notes === 'string' ? body.notes : existingPosition.notes,
+          createdAt: existingPosition.createdAt,
+          updatedAt: new Date(),
+        }).returning();
+
+        closedPositionId = closedLot.id;
+      } else {
+        // Full close
+        await tx.update(positions)
+          .set({
+            status: 'CLOSED',
+            exitDate,
+            exitPrice: exitPrice.toString(),
+            notes: typeof body.notes === 'string' ? body.notes : existingPosition.notes,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(positions.id, positionId), eq(positions.userId, user.id)));
+      }
+
+      // If associated with a brokerage account, credit cash and record BROKERAGE_SELL transaction
+      if (existingPosition.accountId) {
+        await tx.update(userBankAccounts)
+          .set({
+            balance: sql`${userBankAccounts.balance} + ${tradeProceeds}`,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(userBankAccounts.id, existingPosition.accountId), eq(userBankAccounts.userId, user.id)));
+
+        const [account] = await tx.select({ currency: userBankAccounts.currency })
+          .from(userBankAccounts)
+          .where(eq(userBankAccounts.id, existingPosition.accountId));
+
+        await tx.insert(bankTransactions).values({
+          userId: user.id,
+          accountId: existingPosition.accountId,
+          type: 'BROKERAGE_SELL',
+          amount: tradeProceeds.toFixed(4),
+          currency: account?.currency || 'EGP',
+          category: 'Investments',
+          transactionDate: exitDate,
+          positionId: closedPositionId,
+          notes: body.notes || `Sell ${existingPosition.tickerSymbol} · ${quantityToClose} shares @ ${exitPrice.toFixed(2)}`,
+        });
+      }
+    });
+
+    const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
+    const [freshPosition] = await db.select().from(positions).where(eq(positions.id, positionId));
+    return NextResponse.json({
+      success: true,
+      order: freshPosition ? formatPosition(freshPosition, priceMap, tickerMap) : null
+    });
+  } catch (error) {
+    console.error('Error closing position:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

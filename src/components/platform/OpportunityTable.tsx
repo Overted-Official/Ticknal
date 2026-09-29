@@ -390,6 +390,8 @@ export default function OpportunityTable({
             window.location.reload();
           }}
           initialData={initialOrderData}
+          mode="live"
+          entrySource="CHART"
         />
       )}
     </div>
