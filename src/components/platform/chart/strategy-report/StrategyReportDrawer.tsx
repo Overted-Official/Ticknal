@@ -38,6 +38,7 @@ export default function StrategyReportDrawer({
   metrics,
   companyName,
   logoUrl,
+  currency = 'EGP',
   initialTab = 'performance',
 }: StrategyReportDrawerProps) {
   const [activeTab, setActiveTab] = useState<StrategyReportTab>(initialTab);
@@ -121,14 +122,7 @@ export default function StrategyReportDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const currencySymbol = useMemo(() => {
-    if (!symbol) return 'EGP';
-    const clean = symbol.toUpperCase();
-    if (clean.includes('GC') || clean.includes('SI') || clean.includes('GOLD') || clean.includes('SILVER')) {
-      return 'USD';
-    }
-    return 'EGP';
-  }, [symbol]);
+  const currencySymbol = useMemo(() => currency.toUpperCase(), [currency]);
 
   // Fetch Signals
   useEffect(() => {

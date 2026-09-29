@@ -24,6 +24,7 @@ export type InitialOrderData = {
   companyName?: string;
   logoUrl?: string | null;
   sector?: string;
+  currency?: string;
   signal?: string;
   price?: number;
   date?: string;
@@ -40,6 +41,7 @@ type Ticker = {
   companyName: string;
   logoUrl?: string | null;
   sector?: string;
+  currency?: string;
   price?: number;
 };
 
@@ -103,6 +105,7 @@ export default function AddOrderModal({
     companyName: '',
     logoUrl: null as string | null,
     sector: '',
+    currency: 'EGP',
     entryDate: new Date().toISOString().split('T')[0],
     entryPrice: '',
     quantity: '100',
@@ -176,7 +179,11 @@ export default function AddOrderModal({
     const brokerAccounts = allAccounts.filter(
       (a) => !a.isArchived && ['BROKERAGE', 'BROKER_CASH'].includes(a.accountType)
     );
-    if (brokerAccounts.length > 0) return brokerAccounts;
+    const matchingBrokerageAccounts = brokerAccounts.filter(
+      (account) => (account.currency || 'EGP').toUpperCase() === newOrderForm.currency.toUpperCase(),
+    );
+    if (matchingBrokerageAccounts.length > 0) return matchingBrokerageAccounts;
+    if (brokerAccounts.length > 0) return [];
 
     const egpAccounts = allAccounts.filter(
       (a) => !a.isArchived && (a.currency === 'EGP' || !a.currency)
@@ -184,7 +191,7 @@ export default function AddOrderModal({
     if (egpAccounts.length > 0) return egpAccounts;
 
     return allAccounts.filter((a) => !a.isArchived);
-  }, [allAccounts]);
+  }, [allAccounts, newOrderForm.currency]);
 
   // Sync initialData when drawer opens, and fetch all tickers
   useEffect(() => {
@@ -200,6 +207,7 @@ export default function AddOrderModal({
         companyName: initialData?.companyName || '',
         logoUrl: initialData?.logoUrl || null,
         sector: initialData?.sector || '',
+        currency: initialData?.currency || 'EGP',
         entryDate: initialData?.date || new Date().toISOString().split('T')[0],
         entryPrice: priceVal,
         quantity: initialData?.quantity ? String(initialData.quantity) : '100',
@@ -225,6 +233,7 @@ export default function AddOrderModal({
                   companyName: prev.companyName || found.companyName || '',
                   logoUrl: prev.logoUrl || found.logoUrl || null,
                   sector: prev.sector || found.sector || '',
+                  currency: prev.currency || found.currency || 'EGP',
                 }));
               }
             }
@@ -363,6 +372,7 @@ export default function AddOrderModal({
       companyName: ticker.companyName || clean,
       logoUrl: ticker.logoUrl || null,
       sector: ticker.sector || '',
+      currency: ticker.currency || 'EGP',
       entryPrice: prev.entryPrice || (priceNum > 0 ? String(priceNum) : ''),
     }));
     setIsSearchOpen(false);
@@ -375,7 +385,7 @@ export default function AddOrderModal({
       return;
     }
     if (mode === 'live' && !newOrderForm.accountId) {
-      toast.error('Brokerage account required', 'Select an EGP brokerage account before executing the buy.');
+      toast.error('Brokerage account required', `Select a ${newOrderForm.currency} brokerage account before executing the buy.`);
       return;
     }
 
@@ -555,7 +565,7 @@ export default function AddOrderModal({
                       </div>
                       <div className="text-[11px] font-semibold text-white/80 tabular-nums font-sans mt-0.5">
                         {totalValue > 0
-                          ? `${estProfitCash >= 0 ? '+' : ''}${estProfitCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`
+                          ? `${estProfitCash >= 0 ? '+' : ''}${estProfitCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${newOrderForm.currency}`
                           : '—'}
                       </div>
                     </div>
@@ -580,7 +590,7 @@ export default function AddOrderModal({
                       </div>
                       <div className="text-[11px] font-semibold text-white/80 tabular-nums font-sans mt-0.5">
                         {totalValue > 0 && winningMetrics.maxAdverseExcursion !== 0
-                          ? `-${maxRiskCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`
+                          ? `-${maxRiskCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${newOrderForm.currency}`
                           : '—'}
                       </div>
                     </div>
@@ -824,7 +834,7 @@ export default function AddOrderModal({
                         <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 px-3 py-2 text-xs text-rose-400 flex items-center gap-2 font-sans">
                           <AlertCircle size={14} className="shrink-0 text-rose-400" />
                           <span>
-                            An EGP brokerage account is required. <a href="/wallet?tab=transactions" className="font-semibold underline">Link one in Wallet</a>.
+                            A {newOrderForm.currency} brokerage account is required. <a href="/wallet?tab=transactions" className="font-semibold underline">Link one in Wallet</a>.
                           </span>
                         </div>
                       )}
@@ -880,7 +890,7 @@ export default function AddOrderModal({
                           onChange={(e) => setNewOrderForm((prev) => ({ ...prev, entryPrice: e.target.value }))}
                           className="input-token h-9 pr-10 bg-black text-white border-white/10 focus:border-white/40 font-bold tabular-nums text-xs"
                         />
-                        <span className="absolute right-2.5 text-[10px] text-white/40 font-medium pointer-events-none">EGP</span>
+                        <span className="absolute right-2.5 text-[10px] text-white/40 font-medium pointer-events-none">{newOrderForm.currency}</span>
                       </div>
                     </div>
                   </div>
@@ -896,7 +906,7 @@ export default function AddOrderModal({
                 </span>
                 <span className="text-base sm:text-lg font-bold text-white tabular-nums font-sans leading-tight">
                   {totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-                  <span className="text-xs font-normal text-white/60">EGP</span>
+                  <span className="text-xs font-normal text-white/60">{newOrderForm.currency}</span>
                 </span>
               </div>
 

@@ -24,6 +24,8 @@ export const tickers = pgTable('tickers', {
   industry: varchar('industry', { length: 100 }),
   subIndustry: varchar('sub_industry', { length: 100 }),
   logoUrl: varchar('logo_url', { length: 255 }),
+  // Prices are stored in this instrument's native quote currency.
+  currency: varchar('currency', { length: 10 }).default('EGP').notNull(),
 });
 
 export const dailyPrices = pgTable('daily_prices', {

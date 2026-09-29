@@ -17,6 +17,7 @@ export interface ChartsWorkspaceViewProps {
   currentPrice: number;
   companyName?: string;
   logoUrl?: string | null;
+  currency?: string;
   rangeData: { dayHigh: number; dayLow: number; yearHigh: number; yearLow: number };
   brokerageAccounts?: BrokerageAccountOption[];
 }
@@ -31,6 +32,7 @@ export default function ChartsWorkspaceView({
   currentPrice,
   companyName,
   logoUrl,
+  currency,
   rangeData,
   brokerageAccounts = [],
 }: ChartsWorkspaceViewProps) {
@@ -48,6 +50,7 @@ export default function ChartsWorkspaceView({
           brokerageAccounts={brokerageAccounts}
           companyName={companyName}
           logoUrl={logoUrl}
+          currency={currency}
         />
         <BottomToolbar
           symbol={symbol}

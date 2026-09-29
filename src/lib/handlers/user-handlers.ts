@@ -29,16 +29,17 @@ async function getLatestPriceMap(): Promise<Record<string, number>> {
   return priceMap;
 }
 
-async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; logoUrl: string | null }>> {
+async function getTickerMap(): Promise<Record<string, { companyName: string; sector: string; logoUrl: string | null; currency: string }>> {
   const { getCachedTickers } = await import('@/lib/data-cache');
   const rows = await getCachedTickers();
   
-  const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }> = {};
+  const tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null; currency: string }> = {};
   for (const ticker of rows) {
     tickerMap[ticker.symbol] = {
       companyName: ticker.companyName ?? ticker.symbol,
       sector: ticker.sector ?? 'Unclassified',
       logoUrl: ticker.logoUrl ?? null,
+      currency: ticker.currency ?? 'EGP',
     };
   }
   return tickerMap;
@@ -47,7 +48,7 @@ async function getTickerMap(): Promise<Record<string, { companyName: string; sec
 function formatPosition(
   position: PositionRow,
   priceMap: Record<string, number>,
-  tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null }>,
+  tickerMap: Record<string, { companyName: string; sector: string; logoUrl: string | null; currency: string }>,
 ) {
   const entryPrice = Number(position.entryPrice);
   const quantity = Number(position.quantity);
@@ -66,6 +67,7 @@ function formatPosition(
     companyName: tickerMap[position.tickerSymbol]?.companyName ?? position.tickerSymbol,
     sector: tickerMap[position.tickerSymbol]?.sector ?? 'Unclassified',
     logoUrl: tickerMap[position.tickerSymbol]?.logoUrl ?? null,
+    currency: tickerMap[position.tickerSymbol]?.currency ?? 'EGP',
     status: position.status,
     side: position.side,
     entryDate: position.entryDate,
@@ -555,4 +557,3 @@ export async function handleProfilePatch(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-

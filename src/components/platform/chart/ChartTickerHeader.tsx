@@ -13,6 +13,7 @@ interface ChartTickerHeaderProps {
   timeframe?: string;
   watchlist?: WatchlistItem[];
   activeCandle: ChartData | null;
+  currency?: string;
 }
 
 export default function ChartTickerHeader({
@@ -22,6 +23,7 @@ export default function ChartTickerHeader({
   timeframe = '1D',
   watchlist = [],
   activeCandle,
+  currency = 'EGP',
 }: ChartTickerHeaderProps) {
   const displaySymbol = symbol.replace('.CA', '');
   const currentTickerItem = useMemo(() => {
@@ -68,7 +70,7 @@ export default function ChartTickerHeader({
             {currentTickerItem.companyName || displaySymbol}
           </span>
           <span className="text-text-muted font-normal text-xs shrink-0">
-            · {timeframe} · EGX
+            · {timeframe} · {currency.toUpperCase()}
           </span>
         </span>
       </div>

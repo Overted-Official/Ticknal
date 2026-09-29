@@ -13,8 +13,12 @@ export type HomeInvestmentOrder = {
   entryPrice: number;
   quantity: number;
   currentPrice: number;
+  currency: string;
   profitLoss: number;
   profitLossPct: number;
+  marketValueEgp: number;
+  costBasisEgp: number;
+  profitLossEgp: number;
 };
 
 // Backwards-compatibility alias

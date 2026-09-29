@@ -6,12 +6,14 @@ import { X } from '@/components/ui/icon-library';
 
 interface ChartOrderOverlaysProps {
   overlays: OrderOverlay[];
+  currency?: string;
   onSelectOrderToEdit: (order: ChartOrder) => void;
   onSelectOrderToClose: (order: ChartOrder) => void;
 }
 
 export default function ChartOrderOverlays({
   overlays,
+  currency = 'EGP',
   onSelectOrderToEdit,
   onSelectOrderToClose,
 }: ChartOrderOverlaysProps) {
@@ -134,21 +136,21 @@ export default function ChartOrderOverlays({
                     <div className="p-2 rounded-lg bg-surface-raised/60 border border-border-subtle">
                       <span className="text-text-muted block text-[10px]">Entry Price</span>
                       <span className="text-white font-semibold tabular-nums mt-0.5 block">
-                        {(overlay.entryPrice ?? 0).toFixed(2)} EGP
+                        {(overlay.entryPrice ?? 0).toFixed(2)} {currency}
                       </span>
                     </div>
 
                     <div className="p-2 rounded-lg bg-surface-raised/60 border border-border-subtle">
                       <span className="text-text-muted block text-[10px]">Current Price</span>
                       <span className="text-white font-semibold tabular-nums mt-0.5 block">
-                        {(overlay.currentPrice ?? 0).toFixed(2)} EGP
+                        {(overlay.currentPrice ?? 0).toFixed(2)} {currency}
                       </span>
                     </div>
 
                     <div className="p-2 rounded-lg bg-surface-raised/60 border border-border-subtle">
                       <span className="text-text-muted block text-[10px]">Unrealized P&L</span>
                       <span className={`font-semibold tabular-nums mt-0.5 block ${overlay.isProfit ? 'text-profit-num' : 'text-loss-num'}`}>
-                        {(overlay.profitLoss ?? 0) >= 0 ? '+' : ''}{(overlay.profitLoss ?? 0).toFixed(2)} EGP ({(overlay.profitLossPct ?? 0) >= 0 ? '+' : ''}{(overlay.profitLossPct ?? 0).toFixed(2)}%)
+                        {(overlay.profitLoss ?? 0) >= 0 ? '+' : ''}{(overlay.profitLoss ?? 0).toFixed(2)} {currency} ({(overlay.profitLossPct ?? 0) >= 0 ? '+' : ''}{(overlay.profitLossPct ?? 0).toFixed(2)}%)
                       </span>
                     </div>
                   </div>

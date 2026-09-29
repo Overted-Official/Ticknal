@@ -258,6 +258,7 @@ export default function AddAccountDrawer({
                       >
                         <option value="EGP" className="bg-surface-input text-text-primary">EGP (Egyptian Pound)</option>
                         <option value="USD" className="bg-surface-input text-text-primary">USD (US Dollar)</option>
+                        <option value="EUR" className="bg-surface-input text-text-primary">EUR (Euro)</option>
                       </select>
                       <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                     </div>

@@ -16,6 +16,7 @@ export type CloseOrderRow = {
   companyName?: string;
   logoUrl?: string | null;
   sector?: string;
+  currency?: string;
 };
 
 interface CloseOrderModalProps {
@@ -71,6 +72,7 @@ export default function CloseOrderModal({
   const exitPriceNum = parseFloat(form.exitPrice) || 0;
   const quantityNum = parseFloat(form.quantityToClose) || 0;
   const totalProceeds = exitPriceNum * quantityNum;
+  const currency = order?.currency || 'EGP';
 
   const realizedPl = order?.entryPrice ? (exitPriceNum - order.entryPrice) * quantityNum : null;
   const realizedPlPct = order?.entryPrice && order.entryPrice > 0 ? ((exitPriceNum - order.entryPrice) / order.entryPrice) * 100 : null;
@@ -99,7 +101,7 @@ export default function CloseOrderModal({
       if (res.ok) {
         toast.success(
           'Position Closed',
-          `Closed ${quantityNum} share(s) of ${cleanSymbol} at ${exitPriceNum.toFixed(2)} EGP.`
+          `Closed ${quantityNum} share(s) of ${cleanSymbol} at ${exitPriceNum.toFixed(2)} ${currency}.`
         );
         onSuccess();
         onClose();
@@ -253,7 +255,7 @@ export default function CloseOrderModal({
 
               {/* Exit Price */}
               <div className="space-y-1.5">
-                <label className="field-label">Exit Price (EGP)</label>
+                <label className="field-label">Exit Price ({currency})</label>
                 <div className="field-group">
                   <input
                     type="number"
@@ -264,7 +266,7 @@ export default function CloseOrderModal({
                     onChange={(e) => setForm((prev) => ({ ...prev, exitPrice: e.target.value }))}
                     className="field-input"
                   />
-                  <span className="field-suffix shrink-0">EGP</span>
+                  <span className="field-suffix shrink-0">{currency}</span>
                 </div>
               </div>
 
@@ -273,7 +275,7 @@ export default function CloseOrderModal({
                 <div className="flex items-center justify-between">
                   <span className="field-label">Total Realized Proceeds</span>
                   <span className="text-base font-bold text-text-primary font-sans tabular-nums">
-                    {totalProceeds.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+                    {totalProceeds.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                   </span>
                 </div>
 
@@ -282,7 +284,7 @@ export default function CloseOrderModal({
                     <span className="font-sans">Estimated Realized P/L:</span>
                     <div className="flex items-center gap-1.5 font-sans tabular-nums">
                       <span className={`font-semibold ${realizedPl >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                        {realizedPl >= 0 ? '+' : ''}{realizedPl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+                        {realizedPl >= 0 ? '+' : ''}{realizedPl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                       </span>
                       {realizedPlPct !== null && (
                         <span className={`text-[11px] font-medium ${realizedPl >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>

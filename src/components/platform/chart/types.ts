@@ -37,6 +37,7 @@ export type ChartOrder = {
   targetPrice: number | null;
   stopPrice: number | null;
   currentPrice: number;
+  currency?: string;
   profitLoss: number;
   profitLossPct: number;
 };
@@ -98,6 +99,7 @@ export interface ChartWidgetProps {
   metrics?: Record<string, string> | null;
   companyName?: string;
   logoUrl?: string | null;
+  currency?: string;
   tickerPositions?: TickerOrder[];
   currentPrice?: number;
   brokerageAccounts?: BrokerageAccountOption[];

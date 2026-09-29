@@ -17,6 +17,7 @@ export interface WatchlistItem {
   companyName: string;
   website?: string | null;
   sector: string;
+  currency?: string;
   price: string;
   change?: string;
   changePct?: string;
@@ -492,7 +493,7 @@ export default function RightSidebar({
                 <span className="font-medium text-plt-text text-xs tracking-tight truncate">{displaySelectedSymbol}</span>
                 {isDetailsCollapsed && (
                   <span className={`text-[11px] tabular-nums font-semibold ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
-                    {selectedItem.price || '0.00'} {['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'USD' : 'EGP'}
+                    {selectedItem.price || '0.00'} {selectedItem.currency || 'EGP'}
                   </span>
                 )}
               </div>
@@ -515,7 +516,7 @@ export default function RightSidebar({
                   {selectedItem.companyName}
                 </div>
                 <div className="flex items-center text-[10px] text-text-muted space-x-1.5 mt-0.5">
-                  <span>{['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'COMEX' : selectedSymbol.toUpperCase() === 'USDEGP' ? 'FOREX' : 'EGX'}</span>
+                  <span>{selectedItem.sector === 'Funds' ? 'FUND' : ['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'COMEX' : ['USDEGP', 'EUREGP'].includes(selectedSymbol.toUpperCase()) ? 'FOREX' : 'EGX'}</span>
                   {selectedItem.sector && (
                     <>
                       <span>•</span>
@@ -532,7 +533,7 @@ export default function RightSidebar({
                     {selectedItem.price || '0.00'}
                   </span>
                   <span className="text-[11px] text-text-muted font-sans font-medium">
-                    {['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'USD' : 'EGP'}
+                    {selectedItem.currency || 'EGP'}
                   </span>
                   <div className={`ml-2 text-xs font-semibold tabular-nums ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
                     {selectedItem.changePct || (selectedItem.change ? (selectedItem.change.includes('(') ? selectedItem.change.split('(')[1]?.replace(')', '') : selectedItem.change) : '')}

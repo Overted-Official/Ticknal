@@ -20,6 +20,7 @@ interface ChartWorkspaceProps {
   brokerageAccounts?: BrokerageAccountOption[];
   companyName?: string;
   logoUrl?: string | null;
+  currency?: string;
 }
 
 export default function ChartWorkspace({
@@ -31,6 +32,7 @@ export default function ChartWorkspace({
   brokerageAccounts = [],
   companyName,
   logoUrl,
+  currency,
 }: ChartWorkspaceProps) {
 
   const searchParams = useSearchParams();
@@ -265,6 +267,7 @@ export default function ChartWorkspace({
         metrics={metrics}
         companyName={companyName}
         logoUrl={logoUrl}
+        currency={currency}
         tickerPositions={tickerPositions}
         currentPrice={currentPrice}
         brokerageAccounts={brokerageAccounts}

@@ -37,7 +37,9 @@ export default function TopBar({
     symbol,
     companyName: displaySymbol,
     logoUrl: null,
-    website: null
+    website: null,
+    sector: '',
+    currency: 'EGP',
   };
 
   const filteredWatchlist = watchlist.filter(item =>
@@ -71,7 +73,7 @@ export default function TopBar({
               <div className="flex items-center space-x-2 text-[#787b86] text-caption leading-tight font-medium">
                 <span className="text-plt-text font-medium">{displaySymbol}</span>
                 <span className="opacity-40">•</span>
-                <span>{['GC1!', 'SI1!'].includes(symbol.toUpperCase()) ? 'COMEX' : symbol.toUpperCase() === 'USDEGP' ? 'FOREX' : 'EGX'}</span>
+                <span>{currentTicker.sector === 'Funds' ? 'FUND' : ['GC1!', 'SI1!'].includes(symbol.toUpperCase()) ? 'COMEX' : ['USDEGP', 'EUREGP'].includes(symbol.toUpperCase()) ? 'FOREX' : 'EGX'}</span>
               </div>
             </div>
 
@@ -178,7 +180,7 @@ export default function TopBar({
                       <div className="text-right">
                         <div className="text-mini text-plt-muted ">{item.sector}</div>
                         <div className="text-xs tabular-nums font-medium text-plt-text">
-                          {item.price ? Number(item.price).toFixed(2) : ''} EGP
+                          {item.price ? Number(item.price).toFixed(2) : ''} {item.currency || 'EGP'}
                         </div>
                       </div>
                       <button

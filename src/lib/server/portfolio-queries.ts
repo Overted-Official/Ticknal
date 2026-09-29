@@ -10,7 +10,14 @@ import {
 } from '@/db/schema';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
-import { buildCashTrend, monthEnd, recentMonthKeys, type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
+import {
+  buildCashTrend,
+  monthEnd,
+  recentMonthKeys,
+  toEgp,
+  type FxRates,
+  type NetWorthHistoryPoint,
+} from '@/lib/portfolio-finance';
 import {
   type BankAccount,
   type BankTransaction,
@@ -68,15 +75,16 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
     const positionSymbols = Array.from(
       new Set([...openRows, ...closedRows].map((row) => row.tickerSymbol.trim().toUpperCase()))
     );
-    const [latestPrices, tickerMap, rotationMeta] = await Promise.all([
+    const [latestPrices, tickerMap, rotationMeta, fxRates] = await Promise.all([
       getLatestPriceMap(positionSymbols).catch(() => ({} as Record<string, number>)),
       getTickerMap().catch(
-        () => ({} as Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }>)
+        () => ({} as Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null; currency: string }>)
       ),
       getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map(), industryMap: new Map() })),
+      getFxRates(),
     ]);
 
-    const positionPerformance = await getPortfolioPerformanceMetrics(openRows, closedRows);
+    const positionPerformance = await getPortfolioPerformanceMetrics(openRows, closedRows, tickerMap, fxRates);
 
     const openOrdersMap = new Map<string, DashboardOrder>();
     for (const order of openRows) {
@@ -87,6 +95,10 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
       const currentPrice = latestPrices[symbol] ?? entryPrice;
       const direction = String(order.side).toUpperCase() === 'SHORT' ? -1 : 1;
       const profitLoss = (currentPrice - entryPrice) * quantity * direction;
+      const currency = tickerMap[symbol]?.currency ?? 'EGP';
+      const marketValueEgp = toEgp(currentPrice * quantity, currency, fxRates);
+      const costBasisEgp = toEgp(entryPrice * quantity, currency, fxRates);
+      const profitLossEgp = toEgp(profitLoss, currency, fxRates);
       const industryGroup =
         tickerMap[symbol]?.industryGroup ||
         rotationMeta.tickerMap.get(cleanSym)?.industryGroup ||
@@ -102,6 +114,9 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
         existing.quantity = newQuantity;
         existing.entryPrice = avgEntryPrice;
         existing.profitLoss += profitLoss;
+        existing.marketValueEgp += marketValueEgp;
+        existing.costBasisEgp += costBasisEgp;
+        existing.profitLossEgp += profitLossEgp;
         existing.profitLossPct = totalCost > 0 ? (existing.profitLoss / totalCost) * 100 : 0;
       } else {
         openOrdersMap.set(symbol, {
@@ -115,20 +130,24 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
           entryPrice,
           quantity,
           currentPrice,
+          currency,
           profitLoss,
           profitLossPct: entryPrice > 0 ? (profitLoss / (entryPrice * quantity)) * 100 : 0,
+          marketValueEgp,
+          costBasisEgp,
+          profitLossEgp,
         });
       }
     }
     const openOrders = Array.from(openOrdersMap.values());
-    const totalMarketValue = openOrders.reduce((sum, o) => sum + o.currentPrice * o.quantity, 0);
-    const openCostBasis = openRows.reduce((sum, order) => sum + Number(order.entryPrice) * Number(order.quantity), 0);
+    const totalMarketValue = openOrders.reduce((sum, o) => sum + o.marketValueEgp, 0);
+    const openCostBasis = openOrders.reduce((sum, o) => sum + o.costBasisEgp, 0);
 
     // --- 25 GICS Industry Group Capital Allocation & Stakes ---
     const industryGroupMap = new Map<string, { value: number; count: number; tickers: Set<string> }>();
     for (const order of openOrders) {
       const ig = order.industryGroup || order.sector || 'Unclassified';
-      const val = order.currentPrice * order.quantity;
+      const val = order.marketValueEgp;
       if (!industryGroupMap.has(ig)) {
         industryGroupMap.set(ig, { value: 0, count: 0, tickers: new Set() });
       }
@@ -219,7 +238,13 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
     for (const order of allOrders) {
       const entryMonth = getMonthKey(getIsoDate(order.entryDate));
       const bucket = monthlyBucketMap.get(entryMonth);
-      if (bucket) bucket.invested += Number(order.entryPrice) * Number(order.quantity);
+      if (bucket) {
+        bucket.invested += toEgp(
+          Number(order.entryPrice) * Number(order.quantity),
+          tickerMap[order.tickerSymbol.trim().toUpperCase()]?.currency ?? 'EGP',
+          fxRates,
+        );
+      }
     }
 
     for (const order of closedRows) {
@@ -248,9 +273,10 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
           monthKey === currentMonthKey
             ? (latestPrices[symbol] ?? entryPrice)
             : (monthlyCloseMap.get(`${symbol}|${monthKey}`) ?? entryPrice);
-        bucket.marketValue += price * quantity;
+        const currency = tickerMap[symbol]?.currency ?? 'EGP';
+        bucket.marketValue += toEgp(price * quantity, currency, fxRates);
         const direction = String(order.side).toUpperCase() === 'SHORT' ? -1 : 1;
-        bucket.unrealizedPL += (price - entryPrice) * quantity * direction;
+        bucket.unrealizedPL += toEgp((price - entryPrice) * quantity * direction, currency, fxRates);
       }
     }
 
@@ -287,17 +313,25 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
       } else if (tradePnl < 0) {
         closedLosing++;
       }
-      return sum + tradePnl;
+      return sum + toEgp(
+        tradePnl,
+        tickerMap[order.tickerSymbol.trim().toUpperCase()]?.currency ?? 'EGP',
+        fxRates,
+      );
     }, 0);
 
     const closedCount = closedRows.length;
     const winRate = closedCount > 0 ? (winningTrades / closedCount) * 100 : null;
 
     const totalCostBasis = allOrders.reduce(
-      (sum, order) => sum + Number(order.entryPrice) * Number(order.quantity),
-      0
+      (sum, order) => sum + toEgp(
+        Number(order.entryPrice) * Number(order.quantity),
+        tickerMap[order.tickerSymbol.trim().toUpperCase()]?.currency ?? 'EGP',
+        fxRates,
+      ),
+      0,
     );
-    const unrealized = openOrders.reduce((sum, order) => sum + order.profitLoss, 0);
+    const unrealized = openOrders.reduce((sum, order) => sum + order.profitLossEgp, 0);
     const totalRoi = totalCostBasis > 0 ? ((unrealized + realized) / totalCostBasis) * 100 : 0;
 
     return {
@@ -364,7 +398,9 @@ function positionPnl(position: PerformancePosition): number {
 
 async function getPortfolioPerformanceMetrics(
   openRows: PerformancePosition[],
-  closedRows: PerformancePosition[]
+  closedRows: PerformancePosition[],
+  tickerMap: Record<string, { currency: string }>,
+  fxRates: FxRates,
 ): Promise<PortfolioPerformanceMetrics> {
   const allRows = [...openRows, ...closedRows];
   if (allRows.length === 0) {
@@ -444,16 +480,17 @@ async function getPortfolioPerformanceMetrics(
         const entryPrice = Number(position.entryPrice);
         const quantity = Number(position.quantity);
         const direction = String(position.side).toUpperCase() === 'SHORT' ? -1 : 1;
-        deployedCapital += entryPrice * quantity;
+        const currency = tickerMap[position.tickerSymbol.trim().toUpperCase()]?.currency ?? 'EGP';
+        deployedCapital += toEgp(entryPrice * quantity, currency, fxRates);
 
         if (position.exitDate && isoDate(position.exitDate) <= date) {
-          realizedPnl += positionPnl(position);
+          realizedPnl += toEgp(positionPnl(position), currency, fxRates);
           continue;
         }
 
         const currentClose = lastCloseBySymbol.get(position.tickerSymbol.trim().toUpperCase());
         if (currentClose !== undefined && Number.isFinite(currentClose)) {
-          activeMarkToMarketPnl += (currentClose - entryPrice) * quantity * direction;
+          activeMarkToMarketPnl += toEgp((currentClose - entryPrice) * quantity * direction, currency, fxRates);
         }
       }
 
@@ -544,10 +581,10 @@ export async function getNetWorthHistory(
   userId: string,
   accounts: BankAccount[],
   transactions: BankTransaction[],
-  usdRate: number
+  fxRates: FxRates,
 ): Promise<NetWorthHistoryPoint[]> {
   const monthKeys = recentMonthKeys(12);
-  const cashTrend = buildCashTrend(accounts, transactions, usdRate, 12);
+  const cashTrend = buildCashTrend(accounts, transactions, fxRates, 12);
 
   try {
     const positionRows = await db
@@ -563,8 +600,11 @@ export async function getNetWorthHistory(
       .where(eq(positions.userId, userId));
 
     const symbols = Array.from(new Set(positionRows.map((row) => row.tickerSymbol.trim().toUpperCase())));
-    const monthlyCloseMap = await getMonthlyCloseMap(symbols, `${monthKeys[0]}-01`);
-    const latestPrices = await getLatestPriceMap();
+    const [monthlyCloseMap, latestPrices, tickerMap] = await Promise.all([
+      getMonthlyCloseMap(symbols, `${monthKeys[0]}-01`),
+      getLatestPriceMap(),
+      getTickerMap(),
+    ]);
     const currentMonth = monthKeys[monthKeys.length - 1];
     const lastKnownCloseBySymbol = new Map<string, number>();
 
@@ -587,7 +627,7 @@ export async function getNetWorthHistory(
           yearMonth === currentMonth
             ? (latestPrices[symbol] ?? lastKnownCloseBySymbol.get(symbol) ?? entryPrice)
             : (monthlyClose ?? lastKnownCloseBySymbol.get(symbol) ?? entryPrice);
-        investedEgp += price * quantity;
+        investedEgp += toEgp(price * quantity, tickerMap[symbol]?.currency ?? 'EGP', fxRates);
       }
 
       const cashEgp = cashTrend[index]?.totalEgp ?? 0;
@@ -654,13 +694,13 @@ async function getLatestPriceMap(symbols?: string[]): Promise<Record<string, num
 }
 
 async function getTickerMap(): Promise<
-  Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }>
+  Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null; currency: string }>
 > {
   try {
     const rows = await getCachedTickers();
     const tickerMap: Record<
       string,
-      { companyName: string; sector: string; industryGroup: string; logoUrl: string | null }
+      { companyName: string; sector: string; industryGroup: string; logoUrl: string | null; currency: string }
     > = {};
     for (const ticker of rows) {
       tickerMap[ticker.symbol] = {
@@ -668,6 +708,7 @@ async function getTickerMap(): Promise<
         sector: ticker.sector ?? 'Unclassified',
         industryGroup: ticker.industryGroup ?? ticker.sector ?? 'Unclassified',
         logoUrl: ticker.logoUrl,
+        currency: ticker.currency ?? 'EGP',
       };
     }
     return tickerMap;
@@ -741,18 +782,25 @@ export async function getUserBankTransactions(userId: string): Promise<BankTrans
   }
 }
 
-export async function getUsdRate(): Promise<number> {
+export async function getFxRates(): Promise<FxRates> {
+  const rates: FxRates = { EGP: 1 };
   try {
-    const rawRecent = await getCachedRecentPrices();
-    const recentPrices = Array.isArray(rawRecent) ? rawRecent : (rawRecent as any)?.rows ?? [];
-    const usdRow = recentPrices.find((r: any) => r.ticker_symbol === 'USDEGP' && Number(r.rn) === 1);
-    if (usdRow && Number(usdRow.close) > 0) {
-      return Number(usdRow.close);
+    const latest = await getLatestPriceMap(['USDEGP', 'EUREGP']);
+    for (const [currency, symbol] of Object.entries({ USD: 'USDEGP', EUR: 'EUREGP' })) {
+      const rate = Number(latest[symbol]);
+      if (Number.isFinite(rate) && rate > 0) {
+        rates[currency] = rate;
+      }
     }
   } catch (err) {
-    console.error('Error fetching USD rate:', err);
+    console.error('Error fetching FX rates:', err);
   }
-  return 50.2;
+  return rates;
+}
+
+export async function getUsdRate(): Promise<number> {
+  const rates = await getFxRates();
+  return rates.USD ?? 50.2;
 }
 
 export async function getOpenPositionsForNetWorth(userId: string): Promise<PositionItem[]> {
@@ -761,7 +809,7 @@ export async function getOpenPositionsForNetWorth(userId: string): Promise<Posit
       db.select().from(positions).where(and(eq(positions.status, 'OPEN'), eq(positions.userId, userId))),
       getLatestPriceMap().catch(() => ({} as Record<string, number>)),
       getTickerMap().catch(
-        () => ({} as Record<string, { companyName: string; sector: string; logoUrl: string | null }>)
+        () => ({} as Record<string, { companyName: string; sector: string; logoUrl: string | null; currency: string }>)
       ),
     ]);
 
@@ -778,6 +826,7 @@ export async function getOpenPositionsForNetWorth(userId: string): Promise<Posit
         quantity: Number(p.quantity),
         entryPrice,
         currentPrice,
+        currency: meta?.currency ?? 'EGP',
         sector: meta?.sector ?? 'Unclassified',
         logoUrl: meta?.logoUrl ?? null,
       };

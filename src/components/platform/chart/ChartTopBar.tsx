@@ -656,7 +656,7 @@ export default function ChartTopBar({
                       <div className="flex items-center gap-2.5 shrink-0 font-sans tabular-nums text-right">
                         <div className="flex flex-col items-end">
                           <span className="text-xs sm:text-[13px] font-semibold text-white">
-                            {item.price} <span className="text-[10px] text-white/40 font-normal">EGP</span>
+                            {item.price} <span className="text-[10px] text-white/40 font-normal">{item.currency || 'EGP'}</span>
                           </span>
                           {item.changePct && (
                             <span

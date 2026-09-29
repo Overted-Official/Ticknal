@@ -9,6 +9,8 @@ export interface StockPerformanceItem {
   startPrice: number;
   endPrice: number;
   returnPct: number;
+  /** Tactical return used only when a caller supplies a short-term rotation horizon. */
+  shortTermReturnPct?: number;
   volume: number;
   turnover: number;
   turnoverShare: number;
@@ -188,7 +190,8 @@ export interface SectorStrategySignalsResponse {
 export function aggregateSectorsFromStocks(
   stockItems: StockPerformanceItem[],
   granularity: 'sector' | 'industryGroup' | 'industry' | 'ticker' = 'sector',
-  egx30Return: number | null = null
+  egx30Return: number | null = null,
+  options: { shortTermBenchmarkReturn?: number | null } = {},
 ): {
   sectors: SectorPerformanceItem[];
   marketSummary: SectorsPerformanceResponse['marketSummary'];
@@ -223,6 +226,19 @@ export function aggregateSectorsFromStocks(
       : 0;
 
   const benchmarkReturn = egx30Return !== null ? egx30Return : marketWeightedReturn;
+  const hasShortTermRotation =
+    stockItems.some((stock) => Number.isFinite(stock.shortTermReturnPct));
+  const marketShortTermWeightedReturn =
+    totalMarketTurnover > 0
+      ? stockItems.reduce(
+          (sum, stock) => sum + (stock.shortTermReturnPct ?? 0) * (stock.turnover / totalMarketTurnover),
+          0,
+        )
+      : 0;
+  const shortTermBenchmarkReturn =
+    typeof options.shortTermBenchmarkReturn === 'number'
+      ? options.shortTermBenchmarkReturn
+      : marketShortTermWeightedReturn;
   const sectors: SectorPerformanceItem[] = [];
 
   for (const [sectorName, stocks] of sectorGroups.entries()) {
@@ -279,28 +295,40 @@ export function aggregateSectorsFromStocks(
     }
 
     const stockCount = stocks.length;
-    let momentumSpread = 0;
-    if (stockCount > 1) {
-      // Option A: Breadth-Conditioned Momentum
-      // Net breadth ratio: (advancing - declining) / total stocks, bounded [-1.0, +1.0]
+    let hasPositiveMomentum: boolean;
+
+    if (hasShortTermRotation) {
+      const shortTermGainers = stocks.filter((stock) => (stock.shortTermReturnPct ?? 0) > 0).length;
+      const shortTermLosers = stocks.filter((stock) => (stock.shortTermReturnPct ?? 0) < 0).length;
+      const shortTermTurnoverWeightedReturn =
+        sectorTurnover > 0
+          ? stocks.reduce(
+              (sum, stock) => sum + (stock.shortTermReturnPct ?? 0) * (stock.turnover / sectorTurnover),
+              0,
+            )
+          : 0;
+
+      // Tactical confirmation requires both relative strength and breadth to be positive over 5 sessions.
+      hasPositiveMomentum =
+        shortTermTurnoverWeightedReturn >= shortTermBenchmarkReturn &&
+        shortTermGainers >= shortTermLosers;
+    } else if (stockCount > 1) {
+      // Default behavior for callers that use a single timeframe: breadth-conditioned momentum.
       const netBreadth = (gainers - losers) / stockCount;
       const capitalSpread = Math.abs(turnoverWeightedReturn - equalWeightedReturn);
       const alphaAbs = Math.abs(turnoverWeightedReturn - (benchmarkReturn ?? 0));
-      
-      // Momentum scale combines breadth direction with market impact magnitude
       const impactMagnitude = 10 + capitalSpread * 0.4 + alphaAbs * 0.2;
-      momentumSpread = netBreadth * impactMagnitude;
+      hasPositiveMomentum = netBreadth * impactMagnitude >= 0;
     } else {
-      // For single ticker / 1-stock categories: momentum relative to the broader market equal return
-      momentumSpread = (turnoverWeightedReturn - marketEqualReturn) * 0.75;
+      hasPositiveMomentum = turnoverWeightedReturn >= marketEqualReturn;
     }
 
     let rotationRegime: 'Leading' | 'Weakening' | 'Lagging' | 'Improving' = 'Lagging';
 
     if (turnoverWeightedReturn >= benchmarkReturn) {
-      rotationRegime = momentumSpread >= 0 ? 'Leading' : 'Weakening';
+      rotationRegime = hasPositiveMomentum ? 'Leading' : 'Weakening';
     } else {
-      rotationRegime = momentumSpread >= 0 ? 'Improving' : 'Lagging';
+      rotationRegime = hasPositiveMomentum ? 'Improving' : 'Lagging';
     }
 
     stocks.sort((a, b) => b.turnover - a.turnover);

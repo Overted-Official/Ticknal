@@ -36,6 +36,13 @@ export async function getCachedTickers(): Promise<any[]> {
   return tickersInFlight;
 }
 
+export function invalidateTickersMemCache(): void {
+  tickersMemCache = null;
+  tickersInFlight = null;
+  recentPricesMemCache = null;
+  recentPricesInFlight = null;
+}
+
 /**
  * Fetches the complete or delta price history for a specific ticker.
  * Caches the result for 24 hours (86,400s) on the server.

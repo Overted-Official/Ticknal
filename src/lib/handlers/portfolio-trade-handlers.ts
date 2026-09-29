@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { bankTransactions, positions, userBankAccounts } from '@/db/schema';
+import { bankTransactions, positions, tickers, userBankAccounts } from '@/db/schema';
 import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { createClient } from '@/lib/supabase/server';
 import { getCachedDailyPrices } from '@/lib/data-cache';
@@ -107,7 +107,14 @@ export async function handlePortfolioTradesPost(request: Request) {
       if (!account) throw new TradeValidationError('Brokerage account not found', 404);
       const canonicalType = account.accountType === 'BROKER_CASH' ? 'BROKERAGE' : account.accountType;
       if (canonicalType !== 'BROKERAGE') throw new TradeValidationError('Selected account is not a brokerage account');
-      if (account.currency !== 'EGP') throw new TradeValidationError('Live EGX trades require an EGP brokerage account');
+      const [instrument] = await tx.select({ currency: tickers.currency })
+        .from(tickers)
+        .where(eq(tickers.symbol, ticker));
+      if (!instrument) throw new TradeValidationError('Instrument not found', 404);
+      const instrumentCurrency = (instrument.currency || 'EGP').toUpperCase();
+      if ((account.currency || 'EGP').toUpperCase() !== instrumentCurrency) {
+        throw new TradeValidationError(`A ${instrumentCurrency} brokerage account is required for ${ticker}`);
+      }
 
       if (action === 'BUY') {
         const [debitedAccount] = await tx.update(userBankAccounts)

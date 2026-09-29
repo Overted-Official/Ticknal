@@ -79,6 +79,7 @@ export default function ChartWidget({
   metrics,
   companyName,
   logoUrl,
+  currency = 'EGP',
   tickerPositions = [],
   currentPrice,
   brokerageAccounts = [],
@@ -107,8 +108,12 @@ export default function ChartWidget({
   }, [strategyParams]);
 
   const isFund = useMemo(() => {
-    return ['CI_QUANT', 'OSOUL', 'COF'].includes(symbol.toUpperCase());
-  }, [symbol]);
+    const item = watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase());
+    return (
+      ['CI_QUANT', 'OSOUL', 'COF'].includes(symbol.toUpperCase()) ||
+      item?.sector?.toLowerCase() === 'funds'
+    );
+  }, [symbol, watchlist]);
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -142,11 +147,6 @@ export default function ChartWidget({
   const [expandedIndicators, setExpandedIndicators] = useState<Record<string, boolean>>({ supportResistance: true });
   const indicatorLineSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
-  const liveBrokerageAccounts = useMemo(
-    () => brokerageAccounts.filter((account) => !account.isArchived && account.currency === 'EGP' && ['BROKERAGE', 'BROKER_CASH'].includes(account.accountType)),
-    [brokerageAccounts],
-  );
-
   // Active hovered candle for live OHLCV legend
   const [hoveredCandle, setHoveredCandle] = useState<ChartData | null>(null);
 
@@ -179,6 +179,7 @@ export default function ChartWidget({
   }, []);
 
   const displaySymbol = symbol.replace('.CA', '');
+  const instrumentCurrency = currency.toUpperCase();
 
   // Clear previous predictions and show a chart-shaped loading state until the new series is written.
   useEffect(() => {
@@ -803,6 +804,7 @@ export default function ChartWidget({
           setAddOrderInitialData({
             symbol,
             price: currentPrice ?? data[data.length - 1]?.close,
+            currency: instrumentCurrency,
           });
           setIsAddOrderOpen(true);
         }}
@@ -818,6 +820,7 @@ export default function ChartWidget({
           timeframe={timeframe}
           watchlist={watchlist}
           activeCandle={activeCandle}
+          currency={instrumentCurrency}
         />
 
         {/* Main Lightweight-Charts Container Canvas */}
@@ -830,6 +833,7 @@ export default function ChartWidget({
         {/* Position Visual Overlays on Canvas */}
         <ChartOrderOverlays
           overlays={orderOverlays}
+          currency={instrumentCurrency}
           onSelectOrderToEdit={setSelectedOrderToEdit}
           onSelectOrderToClose={setSelectedOrderToClose}
         />
@@ -851,6 +855,7 @@ export default function ChartWidget({
                   symbol,
                   price: contextMenu.price,
                   date: contextMenu.date,
+                  currency: instrumentCurrency,
                 });
                 setIsAddOrderOpen(true);
                 setContextMenu(null);
@@ -862,7 +867,7 @@ export default function ChartWidget({
                 <span>Add Position</span>
               </div>
               <span className="font-semibold text-brand-blue tabular-nums">
-                {contextMenu.price.toFixed(2)} EGP
+                {contextMenu.price.toFixed(2)} {instrumentCurrency}
               </span>
             </button>
           </div>,
@@ -990,6 +995,7 @@ export default function ChartWidget({
                     orders={orders.length > 0 ? orders : tickerPositions}
                     currentPrice={currentPrice ?? data[data.length - 1]?.close ?? 0}
                     chartData={data}
+                    currency={instrumentCurrency}
                     onOrdersChange={() => setPositionsRefreshKey((k) => k + 1)}
                     onEditOrder={(order) => setSelectedOrderToEdit(order as any)}
                     onCloseOrder={(order) => setSelectedOrderToClose(order as any)}
@@ -997,6 +1003,7 @@ export default function ChartWidget({
                       setAddOrderInitialData({
                         symbol,
                         price: currentPrice ?? data[data.length - 1]?.close,
+                        currency: instrumentCurrency,
                       });
                       setIsAddOrderOpen(true);
                     }}
@@ -1020,6 +1027,7 @@ export default function ChartWidget({
         initialData={addOrderInitialData || {
           symbol,
           price: data[data.length - 1]?.close,
+          currency: instrumentCurrency,
         }}
         mode="live"
         brokerageAccounts={brokerageAccounts}
@@ -1069,6 +1077,7 @@ export default function ChartWidget({
         metrics={metrics}
         companyName={companyName || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.companyName}
         logoUrl={logoUrl || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.logoUrl}
+        currency={instrumentCurrency}
         initialTab={strategyReportTab}
       />
     </div>

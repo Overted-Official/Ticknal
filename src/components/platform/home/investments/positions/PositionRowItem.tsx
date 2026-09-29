@@ -8,7 +8,7 @@ import { type Opportunity } from '@/components/platform/OpportunityTable';
 interface PositionRowItemProps {
   order: HomeInvestmentOrder;
   totalMarketValue: number;
-  formatMoney: (val: number, showSign?: boolean) => string;
+  formatMoney: (val: number, showSign?: boolean, currency?: string) => string;
   isPrivacy: boolean;
   exitSignal?: Opportunity;
   showDetails?: boolean;
@@ -28,7 +28,7 @@ export default function PositionRowItem({
 }: PositionRowItemProps) {
   const [imgError, setImgError] = useState(false);
   const positionVal = order.currentPrice * order.quantity;
-  const weightPct = totalMarketValue > 0 ? (positionVal / totalMarketValue) * 100 : 0;
+  const weightPct = totalMarketValue > 0 ? (order.marketValueEgp / totalMarketValue) * 100 : 0;
   const isPositive = order.profitLoss >= 0;
   const cleanSymbol = order.tickerSymbol.replace('.CA', '').trim().toUpperCase();
   const initial = cleanSymbol.slice(0, 2);
@@ -91,7 +91,7 @@ export default function PositionRowItem({
             </span>
             <span className="text-[11px] text-text-muted font-normal truncate">
               · {order.quantity.toLocaleString()} shares
-              {showDetails ? ` @ ${order.entryPrice.toFixed(2)} £` : ''}
+              {showDetails ? ` @ ${order.entryPrice.toFixed(2)} ${order.currency}` : ''}
             </span>
           </div>
         </div>
@@ -101,7 +101,7 @@ export default function PositionRowItem({
       <div className="flex items-center gap-3 shrink-0 pl-2">
         <div className="text-right flex flex-col items-end">
           <div className="text-[13px] font-semibold text-text-primary tabular-nums">
-            {formatMoney(positionVal)}
+            {formatMoney(positionVal, false, order.currency)}
           </div>
           <div className="text-[11px] font-medium tabular-nums text-right mt-0.5 flex items-center justify-end gap-1.5 whitespace-nowrap">
             <span className="text-text-muted">{weightPct.toFixed(1)}%</span>
@@ -111,7 +111,7 @@ export default function PositionRowItem({
                 isPositive ? 'text-profit-chart' : 'text-loss-chart'
               }`}
             >
-              {formatMoney(order.profitLoss, true)} ({isPositive ? '+' : ''}
+              {formatMoney(order.profitLoss, true, order.currency)} ({isPositive ? '+' : ''}
               {order.profitLossPct.toFixed(1)}%)
             </span>
           </div>

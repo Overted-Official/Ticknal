@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
-import { getCachedTickers } from '@/lib/data-cache';
+import { getCachedTickers, invalidateTickersMemCache } from '@/lib/data-cache';
 import { normalizeTickerSymbol, runPsiStrategy, computePsiSeries, type PriceBar } from '@/strategies/PSI/psiStrategy';
 import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
 import { runPsiV2Strategy } from '@/strategies/PSI_V2/psiV2Strategy';
@@ -26,6 +26,7 @@ import {
   evaluateModelsAndChampions,
   type PrecomputedModelCache,
 } from '@/lib/finance/champion-routing';
+import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 
 export type {
   StockPerformanceItem,
@@ -357,6 +358,7 @@ export function invalidatePrecomputedMarketCache(): void {
   memPerformanceCache.clear();
   memSignalsCacheMap.clear();
   inFlightSignalsMap.clear();
+  invalidateTickersMemCache();
 }
 
 export async function getOrInitPrecomputedCache(): Promise<PrecomputedModelCache> {
@@ -414,6 +416,8 @@ export async function getOrInitPrecomputedCache(): Promise<PrecomputedModelCache
     const hydraCache = new Map<string, any>();
 
     for (const [symbol, bars] of barsByTicker.entries()) {
+      const meta = tickerMap.get(symbol);
+      if (meta && !isSignalEligibleEquity(symbol, meta)) continue;
       if (bars.length < 130) continue;
       try {
         psiCache.set(symbol, computePsiSeries(bars));

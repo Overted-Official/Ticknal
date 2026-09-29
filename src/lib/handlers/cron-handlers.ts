@@ -15,6 +15,7 @@ import {
   toComparableBar,
   type ComparablePriceBar,
 } from '@/lib/market/price-adjustments';
+import { ALL_SNDUK_FUNDS, type SndukFund } from '@/lib/funds/snduk-funds-list';
 
 // ----------------------------------------------------
 // 1. UPDATE STOCKS
@@ -524,26 +525,9 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
 // ----------------------------------------------------
 // 2. UPDATE FUNDS
 // ----------------------------------------------------
-export const SNDUK_FUNDS = [
-  {
-    symbol: 'CI_QUANT',
-    fundId: 123,
-    companyName: 'CI The Quant Fund',
-    sector: 'Funds',
-    industry: 'Equity Funds',
-    logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/funds/1780357545756-9yoqpms6r0o.jpeg',
-  },
-  {
-    symbol: 'OSOUL',
-    fundId: 16,
-    companyName: 'CIB Osoul Money Market Fund',
-    sector: 'Funds',
-    industry: 'Money Market Funds',
-    logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/funds/1777586064877-t780xncyncb.png',
-  },
-];
+export const SNDUK_FUNDS: SndukFund[] = ALL_SNDUK_FUNDS;
 
-async function updateSndukFund(fund: typeof SNDUK_FUNDS[0]) {
+async function updateSndukFund(fund: SndukFund) {
   try {
     await db.insert(tickers)
       .values({
@@ -551,20 +535,26 @@ async function updateSndukFund(fund: typeof SNDUK_FUNDS[0]) {
         companyName: fund.companyName,
         exchange: 'EGX',
         sector: fund.sector,
+        industryGroup: fund.industryGroup ?? 'Investment Funds',
         industry: fund.industry,
-        logoUrl: fund.logoUrl,
+        subIndustry: fund.subIndustry ?? null,
+        logoUrl: fund.logoUrl ?? null,
+        currency: fund.currency,
       })
       .onConflictDoUpdate({
         target: tickers.symbol,
         set: {
           companyName: fund.companyName,
           sector: fund.sector,
+          industryGroup: fund.industryGroup ?? 'Investment Funds',
           industry: fund.industry,
-          logoUrl: fund.logoUrl,
+          subIndustry: fund.subIndustry ?? null,
+          logoUrl: fund.logoUrl ?? null,
+          currency: fund.currency,
         },
       });
 
-    const inputPayload = { '0': { json: { fundId: fund.fundId, period: 'ALL' } } };
+    const inputPayload = { '0': { json: { fundId: fund.fundId, period: '1M' } } };
     const url = `https://snduk.com/api/trpc/funds.getPriceHistory?batch=1&input=${encodeURIComponent(JSON.stringify(inputPayload))}`;
 
     const res = await fetch(url, {
@@ -588,26 +578,28 @@ async function updateSndukFund(fund: typeof SNDUK_FUNDS[0]) {
     const dateStr = typeof latest.date === 'string' ? latest.date.split('T')[0] : new Date(latest.date).toISOString().split('T')[0];
     const priceVal = Number(latest.price);
 
-    await db.insert(dailyPrices)
-      .values({
-        tickerSymbol: fund.symbol,
-        date: dateStr,
-        open: sql`${priceVal}`,
-        high: sql`${priceVal}`,
-        low: sql`${priceVal}`,
-        close: sql`${priceVal}`,
-        volume: sql`0`,
-      })
-      .onConflictDoUpdate({
-        target: [dailyPrices.tickerSymbol, dailyPrices.date],
-        set: {
+    if (dateStr && !isNaN(priceVal) && priceVal > 0) {
+      await db.insert(dailyPrices)
+        .values({
+          tickerSymbol: fund.symbol,
+          date: dateStr,
           open: sql`${priceVal}`,
           high: sql`${priceVal}`,
           low: sql`${priceVal}`,
           close: sql`${priceVal}`,
           volume: sql`0`,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [dailyPrices.tickerSymbol, dailyPrices.date],
+          set: {
+            open: sql`${priceVal}`,
+            high: sql`${priceVal}`,
+            low: sql`${priceVal}`,
+            close: sql`${priceVal}`,
+            volume: sql`0`,
+          },
+        });
+    }
 
     return { symbol: fund.symbol, status: 'success', date: dateStr, price: priceVal };
   } catch (err: any) {
@@ -620,8 +612,15 @@ export async function handleUpdateFunds(req: Request) {
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    const results = await Promise.all(SNDUK_FUNDS.map(updateSndukFund));
+    const results: any[] = [];
+    const CONCURRENCY = 5;
+    for (let i = 0; i < SNDUK_FUNDS.length; i += CONCURRENCY) {
+      const chunk = SNDUK_FUNDS.slice(i, i + CONCURRENCY);
+      const chunkRes = await Promise.all(chunk.map(updateSndukFund));
+      results.push(...chunkRes);
+    }
 
+    invalidatePrecomputedMarketCache();
     try {
       revalidateTag('prices', { expire: 0 });
       revalidatePath('/home');
@@ -632,8 +631,11 @@ export async function handleUpdateFunds(req: Request) {
     await db.insert(systemLogs).values({
       source: 'cron-funds',
       level: 'INFO',
-      message: 'Updated mutual funds prices from Snduk.',
-      metadata: { results },
+      message: `Updated mutual funds prices from Snduk. Total: ${results.length}.`,
+      metadata: {
+        total: results.length,
+        successCount: results.filter((r) => r.status === 'success').length,
+      },
     });
 
     return NextResponse.json({ message: 'Funds update completed', results }, { status: 200 });
@@ -653,9 +655,10 @@ export async function handleUpdateFunds(req: Request) {
 // 3. UPDATE COMMODITIES
 // ----------------------------------------------------
 const GLOBAL_ASSETS = [
-  { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals' },
-  { symbol: 'SI1!', tvSymbol: 'COMEX:SI1!', name: 'Silver Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals' },
-  { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex' }
+  { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'USD' },
+  { symbol: 'SI1!', tvSymbol: 'COMEX:SI1!', name: 'Silver Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'USD' },
+  { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP' },
+  { symbol: 'EUREGP', tvSymbol: 'FX_IDC:EUREGP', name: 'EUR to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP' }
 ];
 
 function fetchCommodityPeriods(client: TradingViewClient, tvSymbol: string, rangeBars: number = 30): Promise<TradingViewPeriod[]> {
@@ -729,6 +732,7 @@ export async function handleUpdateCommodities(req: Request) {
             exchange: asset.exchange,
             sector: asset.sector,
             industry: asset.industry,
+            currency: asset.currency,
           })
           .onConflictDoUpdate({
             target: tickers.symbol,
@@ -737,6 +741,7 @@ export async function handleUpdateCommodities(req: Request) {
               exchange: asset.exchange,
               sector: asset.sector,
               industry: asset.industry,
+              currency: asset.currency,
             }
           });
 
@@ -878,7 +883,7 @@ export async function handleSignals(req: Request) {
 // 6. WATCHDOG
 // ----------------------------------------------------
 const GLOBAL_COMMODITIES = new Set(['GC1!', 'SI1!', 'USDEGP']);
-const FUNDS = new Set(['CI_QUANT', 'OSOUL']);
+const FUNDS = new Set(ALL_SNDUK_FUNDS.map((f) => f.symbol));
 
 async function triggerEndpoint(endpoint: string, host: string, secret: string) {
   const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';

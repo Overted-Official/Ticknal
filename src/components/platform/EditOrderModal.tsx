@@ -16,6 +16,7 @@ export type EditOrderRow = {
   companyName?: string;
   logoUrl?: string | null;
   sector?: string;
+  currency?: string;
 };
 
 interface EditOrderModalProps {
@@ -71,6 +72,7 @@ export default function EditOrderModal({
   const entryPriceNum = parseFloat(form.entryPrice) || 0;
   const quantityNum = parseFloat(form.quantity) || 0;
   const totalCost = entryPriceNum * quantityNum;
+  const currency = order?.currency || 'EGP';
 
   const handleEditOrder = async () => {
     if (!order || !form.entryPrice || !form.quantity || isSubmitting) return;
@@ -233,7 +235,7 @@ export default function EditOrderModal({
 
               {/* Entry Price */}
               <div className="space-y-1.5">
-                <label className="field-label">Entry Price (EGP)</label>
+                <label className="field-label">Entry Price ({currency})</label>
                 <div className="field-group">
                   <input
                     type="number"
@@ -244,7 +246,7 @@ export default function EditOrderModal({
                     onChange={(e) => setForm((prev) => ({ ...prev, entryPrice: e.target.value }))}
                     className="field-input"
                   />
-                  <span className="field-suffix shrink-0">EGP</span>
+                  <span className="field-suffix shrink-0">{currency}</span>
                 </div>
               </div>
 
@@ -253,7 +255,7 @@ export default function EditOrderModal({
                 <div className="flex items-center justify-between">
                   <span className="field-label">Total Position Cost</span>
                   <span className="text-base font-bold text-text-primary font-sans tabular-nums">
-                    {totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+                    {totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                   </span>
                 </div>
               </div>

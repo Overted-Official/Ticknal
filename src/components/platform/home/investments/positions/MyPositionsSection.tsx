@@ -31,6 +31,7 @@ export default function MyPositionsSection({
     tickerSymbol: string;
     quantity: number;
     currentPrice: number;
+    currency: string;
   } | null>(null);
 
   const handleTickerClick = (order: HomeInvestmentOrder) => {
@@ -42,12 +43,14 @@ export default function MyPositionsSection({
     tickerSymbol: string;
     quantity: number;
     currentPrice: number;
+    currency: string;
   }) => {
     setOrderToClose({
       id: order.id,
       tickerSymbol: order.tickerSymbol,
       quantity: order.quantity,
       currentPrice: order.currentPrice,
+      currency: order.currency,
     });
   };
 
@@ -57,19 +60,19 @@ export default function MyPositionsSection({
   };
 
   // Format currency with privacy masking support
-  const formatMoney = (value: number, showSign: boolean = false): string => {
+  const formatMoney = (value: number, showSign: boolean = false, currency: string = '£'): string => {
     if (isPrivacy) {
-      if (value === 0) return '•••••• £';
+      if (value === 0) return `•••••• ${currency}`;
       const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
-      return `${sign}•••••• £`;
+      return `${sign}•••••• ${currency}`;
     }
-    if (value === 0) return '0.0 £';
+    if (value === 0) return `0.0 ${currency}`;
     const formatted = Math.abs(value).toLocaleString('en-US', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     });
     const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
-    return `${sign}${formatted} £`;
+    return `${sign}${formatted} ${currency}`;
   };
 
   // Map exit signals by symbol for fast lookup

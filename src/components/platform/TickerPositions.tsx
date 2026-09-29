@@ -22,6 +22,7 @@ export interface TickerOrder {
   currentPrice?: number;
   profitLoss?: number;
   profitLossPct?: number;
+  currency?: string;
 }
 
 export interface ChartBar {
@@ -44,9 +45,11 @@ interface TickerPositionsProps {
   onEditOrder?: (order: TickerOrder) => void;
   onCloseOrder?: (order: TickerOrder) => void;
   onAddNew?: () => void;
+  currency?: string;
 }
 
-function getCurrency(symbol: string): string {
+function getCurrency(symbol: string, instrumentCurrency?: string): string {
+  if (instrumentCurrency) return instrumentCurrency.toUpperCase();
   const upper = symbol.toUpperCase();
   if (['GC1!', 'SI1!'].includes(upper)) return 'USD';
   return 'EGP';
@@ -89,6 +92,7 @@ export default function TickerPositions({
   onEditOrder,
   onCloseOrder,
   onAddNew,
+  currency: instrumentCurrency,
 }: TickerPositionsProps) {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -134,7 +138,7 @@ export default function TickerPositions({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCloseModalOpen]);
 
-  const currency = getCurrency(symbol);
+  const currency = getCurrency(symbol, instrumentCurrency);
   const cleanSymbol = symbol.replace('.CA', '').toUpperCase();
   const displayCompanyName = companyName || tickerMeta.companyName || cleanSymbol;
   const displayLogoUrl = logoUrl || tickerMeta.logoUrl || null;

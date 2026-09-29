@@ -1,13 +1,32 @@
 import type { BankAccount, BankTransaction } from '@/types/bank';
 
+export type FxRates = Record<string, number>;
+
+export function normalizeCurrency(currency: string | null | undefined): string {
+  return String(currency || 'EGP').trim().toUpperCase() || 'EGP';
+}
+
+export function getEgpFxRate(currency: string | null | undefined, fxRates: FxRates | number): number | null {
+  const normalizedCurrency = normalizeCurrency(currency);
+  if (normalizedCurrency === 'EGP') return 1;
+
+  if (typeof fxRates === 'number') {
+    return normalizedCurrency === 'USD' && Number.isFinite(fxRates) && fxRates > 0 ? fxRates : null;
+  }
+
+  const rate = Number(fxRates[normalizedCurrency]);
+  return Number.isFinite(rate) && rate > 0 ? rate : null;
+}
+
 /** Legacy values remain readable, but all dashboard calculations use BROKERAGE semantics. */
 export function isBrokerageAccount(account: Pick<BankAccount, 'accountType'> | { accountType?: string | null } | string): boolean {
   const accountType = typeof account === 'string' ? account : account.accountType;
   return accountType === 'BROKERAGE' || accountType === 'BROKER_CASH';
 }
 
-export function toEgp(amount: number, currency: string, usdRate: number): number {
-  return currency === 'USD' ? amount * usdRate : amount;
+export function toEgp(amount: number, currency: string, fxRates: FxRates | number): number {
+  const rate = getEgpFxRate(currency, fxRates);
+  return rate === null ? 0 : amount * rate;
 }
 
 export type DashboardCashFlowKind = 'INFLOW' | 'OUTFLOW' | 'INTERNAL' | 'IGNORED';
@@ -175,27 +194,27 @@ export function buildAccountYtdBalanceTrend(
 export function buildCashTrend(
   accounts: BankAccount[],
   transactions: BankTransaction[],
-  usdRate: number,
+  fxRates: FxRates | number,
   months = 12,
 ): CashTrendPoint[] {
   const monthKeys = recentMonthKeys(months);
 
-  return buildCashTrendForMonthKeys(accounts, transactions, usdRate, monthKeys);
+  return buildCashTrendForMonthKeys(accounts, transactions, fxRates, monthKeys);
 }
 
 export function buildYtdCashTrend(
   accounts: BankAccount[],
   transactions: BankTransaction[],
-  usdRate: number,
+  fxRates: FxRates | number,
   referenceDate = new Date(),
 ): CashTrendPoint[] {
-  return buildCashTrendForMonthKeys(accounts, transactions, usdRate, ytdMonthKeys(referenceDate));
+  return buildCashTrendForMonthKeys(accounts, transactions, fxRates, ytdMonthKeys(referenceDate));
 }
 
 function buildCashTrendForMonthKeys(
   accounts: BankAccount[],
   transactions: BankTransaction[],
-  usdRate: number,
+  fxRates: FxRates | number,
   monthKeys: string[],
 ): CashTrendPoint[] {
 
@@ -228,7 +247,7 @@ function buildCashTrendForMonthKeys(
         }
       }
 
-      const egpValue = toEgp(balance, account.currency, usdRate);
+      const egpValue = toEgp(balance, account.currency, fxRates);
       totalEgp += egpValue;
       if (isBrokerageAccount(account)) brokerageCashEgp += egpValue;
       else bankCashEgp += egpValue;

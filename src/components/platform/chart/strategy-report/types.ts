@@ -22,6 +22,7 @@ export interface StrategyReportDrawerProps {
   metrics?: Record<string, string> | null;
   companyName?: string;
   logoUrl?: string | null;
+  currency?: string;
   initialTab?: StrategyReportTab;
 }
 

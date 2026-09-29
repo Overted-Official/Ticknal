@@ -9,12 +9,12 @@ import {
   emptyOrderStats,
   getUserBankAccounts,
   getUserBankTransactions,
-  getUsdRate,
+  getFxRates,
   getNetWorthHistory,
 } from '@/lib/server/portfolio-queries';
 import { getLatestInflationRate, getHistoricalInflationSeries } from '@/lib/cbe-inflation';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
-import { type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
+import { type FxRates, type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 import HomePageView from '@/components/platform/home/HomePageView';
 
 export const dynamic = 'force-dynamic';
@@ -42,17 +42,18 @@ export default async function HomePage() {
   let initialAccounts: BankAccount[] = [];
   let initialTransactions: BankTransaction[] = [];
   let usdRate = 50.20;
+  let fxRates: FxRates = { EGP: 1, USD: usdRate };
   let cbeInflationRate = 14.9;
   let netWorthHistory: NetWorthHistoryPoint[] = [];
   let inflationSeries: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }> = [];
 
   try {
-    const [statsResult, alertResult, accountsResult, txResult, usdResult, inflationResult, seriesResult] = await Promise.allSettled([
+    const [statsResult, alertResult, accountsResult, txResult, fxRatesResult, inflationResult, seriesResult] = await Promise.allSettled([
       getOrderStats(user.id),
       getActiveAlertCount(user.id),
       getUserBankAccounts(user.id),
       getUserBankTransactions(user.id),
-      getUsdRate(),
+      getFxRates(),
       getLatestInflationRate(),
       getHistoricalInflationSeries(),
     ]);
@@ -81,8 +82,11 @@ export default async function HomePage() {
       console.error('Error fetching transactions for HomePage:', txResult.reason);
     }
 
-    if (usdResult.status === 'fulfilled' && usdResult.value > 0) {
-      usdRate = usdResult.value;
+    if (fxRatesResult.status === 'fulfilled') {
+      fxRates = fxRatesResult.value;
+      if (fxRates.USD && fxRates.USD > 0) {
+        usdRate = fxRates.USD;
+      }
     }
 
     if (inflationResult.status === 'fulfilled' && inflationResult.value > 0) {
@@ -101,7 +105,7 @@ export default async function HomePage() {
   }
 
   try {
-    netWorthHistory = await getNetWorthHistory(user.id, initialAccounts, initialTransactions, usdRate);
+    netWorthHistory = await getNetWorthHistory(user.id, initialAccounts, initialTransactions, fxRates);
   } catch (err) {
     console.error('Error fetching netWorthHistory for HomePage:', err);
   }

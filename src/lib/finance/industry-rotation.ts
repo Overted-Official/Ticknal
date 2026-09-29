@@ -29,6 +29,12 @@ let inFlightRotationPromise: Promise<{
 }> | null = null;
 
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const ONE_MONTH_TRADING_DAYS = 21;
+const SHORT_TERM_TRADING_DAYS = 5;
+
+function dateKey(value: unknown): string {
+  return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
+}
 
 export async function getCachedIndustryRotationMap(): Promise<{
   tickerMap: Map<string, TickerRotationMeta>;
@@ -46,8 +52,23 @@ export async function getCachedIndustryRotationMap(): Promise<{
 
   inFlightRotationPromise = (async () => {
     try {
-      const startDate = `${new Date().getFullYear()}-01-01`;
-      const endDate = new Date().toISOString().split('T')[0];
+      const sessionsResult = await db.execute(sql`
+        SELECT date
+        FROM ${dailyPrices}
+        WHERE ticker_symbol = 'EGX30'
+        ORDER BY date DESC
+        LIMIT ${ONE_MONTH_TRADING_DAYS + 1};
+      `);
+      const sessions = (Array.isArray(sessionsResult) ? sessionsResult : (sessionsResult as any)?.rows ?? [])
+        .map((row: { date: unknown }) => dateKey(row.date));
+
+      if (sessions.length < ONE_MONTH_TRADING_DAYS + 1) {
+        throw new Error('Insufficient daily-price history to calculate 1M sector rotation.');
+      }
+
+      const endDate = sessions[0];
+      const oneMonthStartDate = sessions[ONE_MONTH_TRADING_DAYS];
+      const shortTermStartDate = sessions[SHORT_TERM_TRADING_DAYS];
 
       const allTickers = await getCachedTickers();
       const metaMap = new Map(allTickers.map((t) => [normalizeTickerSymbol(t.symbol), t]));
@@ -55,12 +76,13 @@ export async function getCachedIndustryRotationMap(): Promise<{
       const aggregationQuery = sql`
         SELECT 
           ticker_symbol,
-          (array_agg(close::numeric ORDER BY date ASC))[1] as start_price,
+          (array_agg(close::numeric ORDER BY date ASC))[1] as one_month_start_price,
           (array_agg(close::numeric ORDER BY date DESC))[1] as end_price,
+          (array_agg(close::numeric ORDER BY date ASC) FILTER (WHERE date >= ${shortTermStartDate}))[1] as short_term_start_price,
           SUM(volume::numeric) as total_volume,
           SUM((close::numeric) * (volume::numeric)) as total_turnover
         FROM ${dailyPrices}
-        WHERE date >= ${startDate} AND date <= ${endDate}
+        WHERE date >= ${oneMonthStartDate} AND date <= ${endDate}
         GROUP BY ticker_symbol
         HAVING (array_agg(close::numeric ORDER BY date ASC))[1] > 0
            AND (array_agg(close::numeric ORDER BY date DESC))[1] > 0;
@@ -71,17 +93,22 @@ export async function getCachedIndustryRotationMap(): Promise<{
 
       const stockItems: StockPerformanceItem[] = [];
       let egx30Return: number | null = null;
+      let egx30ShortTermReturn: number | null = null;
 
       for (const row of rawRows) {
         const symbol = normalizeTickerSymbol(String(row.ticker_symbol));
-        const startPrice = Number(row.start_price);
+        const startPrice = Number(row.one_month_start_price);
         const endPrice = Number(row.end_price);
+        const shortTermStartPrice = Number(row.short_term_start_price);
         const returnPct = startPrice > 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
+        const shortTermReturnPct =
+          shortTermStartPrice > 0 ? ((endPrice - shortTermStartPrice) / shortTermStartPrice) * 100 : 0;
         const turnover = Number(row.total_turnover || 0);
         const volume = Number(row.total_volume || 0);
 
         if (symbol === 'EGX30') {
           egx30Return = returnPct;
+          egx30ShortTermReturn = shortTermReturnPct;
         }
 
         const meta = metaMap.get(symbol);
@@ -98,6 +125,7 @@ export async function getCachedIndustryRotationMap(): Promise<{
           startPrice,
           endPrice,
           returnPct,
+          shortTermReturnPct,
           volume,
           turnover,
           turnoverShare: 0,
@@ -105,7 +133,9 @@ export async function getCachedIndustryRotationMap(): Promise<{
         });
       }
 
-      const { sectors } = aggregateSectorsFromStocks(stockItems, 'industryGroup', egx30Return ?? 0);
+      const { sectors } = aggregateSectorsFromStocks(stockItems, 'industryGroup', egx30Return, {
+        shortTermBenchmarkReturn: egx30ShortTermReturn,
+      });
 
       const industryMap = new Map<string, RotationRegime>();
       for (const s of sectors) {

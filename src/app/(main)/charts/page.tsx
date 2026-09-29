@@ -112,7 +112,9 @@ async function ChartsPageContent({
     const change = lastPrice - prevPrice;
     const changePct = prevPrice ? (change / prevPrice) * 100 : 0;
 
-    const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(t.symbol.toUpperCase());
+    const isFund =
+      ['CI_QUANT', 'OSOUL', 'COF'].includes(t.symbol.toUpperCase()) ||
+      t.sector?.toLowerCase() === 'funds';
     let group = t.industryGroup || t.sector || 'Unclassified';
     if (isFund || group.toLowerCase().includes('fund')) {
       group = 'Funds';
@@ -123,6 +125,7 @@ async function ChartsPageContent({
       companyName: t.companyName || t.symbol,
       website: t.website || undefined,
       sector: group,
+      currency: t.currency || 'EGP',
       price: lastPrice.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
       changePct: `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}%`,
@@ -158,6 +161,7 @@ async function ChartsPageContent({
       currentPrice: effectivePrice,
       profitLoss,
       profitLossPct,
+      currency: allTickers.find((ticker) => ticker.symbol.toUpperCase() === selectedSymbol.toUpperCase())?.currency || 'EGP',
     };
   });
 
@@ -185,7 +189,10 @@ async function ChartsPageContent({
   }
   const rangeData = { dayHigh, dayLow, yearHigh, yearLow };
 
-  const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(selectedSymbol.toUpperCase());
+  const currentTicker = watchlist.find((item) => item.symbol.toUpperCase() === selectedSymbol.toUpperCase());
+  const isFund =
+    ['CI_QUANT', 'OSOUL', 'COF'].includes(selectedSymbol.toUpperCase()) ||
+    currentTicker?.sector?.toLowerCase() === 'funds';
 
   const rawChartData = dbData
     .filter((record) => (isFund ? Number(record.close) > 0 : Number(record.volume) > 0 || Number(record.close) > 0))
@@ -303,8 +310,6 @@ async function ChartsPageContent({
     chartData = monthlyData;
   }
 
-  const currentTicker = watchlist.find((item) => item.symbol.toUpperCase() === selectedSymbol.toUpperCase());
-
   return (
     <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-[calc(64px+max(var(--ticknal-safe-area-bottom),0.5rem))] md:pb-0">
       <ChartsWorkspaceView
@@ -317,6 +322,7 @@ async function ChartsPageContent({
         currentPrice={currentPriceForSymbol}
         companyName={currentTicker?.companyName}
         logoUrl={currentTicker?.logoUrl}
+        currency={currentTicker?.currency || 'EGP'}
         rangeData={rangeData}
         brokerageAccounts={brokerageAccounts.map((account: any) => ({
           id: account.id,

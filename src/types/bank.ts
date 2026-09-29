@@ -56,6 +56,7 @@ export type PositionItem = {
   quantity: number;
   entryPrice: number;
   currentPrice: number;
+  currency: string;
   sector: string;
   logoUrl?: string | null;
 };
