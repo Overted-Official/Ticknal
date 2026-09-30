@@ -655,10 +655,10 @@ export async function handleUpdateFunds(req: Request) {
 // 3. UPDATE COMMODITIES
 // ----------------------------------------------------
 const GLOBAL_ASSETS = [
-  { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold (EGP/g)', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'EGP' },
-  { symbol: 'SI1!', tvSymbol: 'COMEX:SI1!', name: 'Silver Futures', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'USD' },
-  { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP' },
-  { symbol: 'EUREGP', tvSymbol: 'FX_IDC:EUREGP', name: 'EUR to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP' }
+  { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold (EGP/g)', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg' },
+  { symbol: 'SI1!', tvSymbol: 'COMEX:SI1!', name: 'Silver (EGP/g)', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg' },
+  { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/country/US.svg' },
+  { symbol: 'EUREGP', tvSymbol: 'FX_IDC:EUREGP', name: 'EUR to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EU.svg' }
 ];
 
 function fetchCommodityPeriods(client: TradingViewClient, tvSymbol: string, rangeBars: number = 30): Promise<TradingViewPeriod[]> {
@@ -733,6 +733,7 @@ export async function handleUpdateCommodities(req: Request) {
             sector: asset.sector,
             industry: asset.industry,
             currency: asset.currency,
+            logoUrl: asset.logoUrl,
           })
           .onConflictDoUpdate({
             target: tickers.symbol,
@@ -742,6 +743,7 @@ export async function handleUpdateCommodities(req: Request) {
               sector: asset.sector,
               industry: asset.industry,
               currency: asset.currency,
+              logoUrl: asset.logoUrl,
             }
           });
 
@@ -756,9 +758,9 @@ export async function handleUpdateCommodities(req: Request) {
 
         if (newPeriods.length === 0) continue;
 
-        // If updating Gold (GC1!), fetch latest USDEGP rate to convert USD/oz to EGP/g (24K)
+        // If updating Gold (GC1!) or Silver (SI1!), fetch latest USDEGP rate to convert USD/oz to EGP/g
         let usdEgpRate = 52.0;
-        if (asset.symbol === 'GC1!') {
+        if (asset.symbol === 'GC1!' || asset.symbol === 'SI1!') {
           const latestUsdRow = await db.query.dailyPrices.findFirst({
             where: eq(dailyPrices.tickerSymbol, 'USDEGP'),
             orderBy: [desc(dailyPrices.date)],
@@ -778,7 +780,7 @@ export async function handleUpdateCommodities(req: Request) {
           let lowVal = p.min;
           let closeVal = p.close;
 
-          if (asset.symbol === 'GC1!') {
+          if (asset.symbol === 'GC1!' || asset.symbol === 'SI1!') {
             openVal = Number(((p.open * usdEgpRate) / OZ_TO_GRAMS).toFixed(4));
             highVal = Number(((p.max * usdEgpRate) / OZ_TO_GRAMS).toFixed(4));
             lowVal = Number(((p.min * usdEgpRate) / OZ_TO_GRAMS).toFixed(4));

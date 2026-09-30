@@ -170,7 +170,7 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
         let highPrice = current.max;
         let lowPrice = current.min;
 
-        if (cleanSym === 'GC1!' || cleanSym === 'GOLD') {
+        if (cleanSym === 'GC1!' || cleanSym === 'GOLD' || cleanSym === 'SI1!' || cleanSym === 'SILVER') {
           const latestUsd = await db.query.dailyPrices.findFirst({
             where: eq(dailyPrices.tickerSymbol, 'USDEGP'),
             orderBy: [desc(dailyPrices.date)],

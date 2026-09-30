@@ -2,7 +2,7 @@
 
 import { ChevronDown, ChevronRight, Search, SlidersHorizontal, X } from '@/components/ui/icon-library';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import type { OpportunitySignal } from '@/lib/opportunities';
 import WatchlistSignalFilterPopover, {
@@ -27,6 +27,8 @@ export interface WatchlistItem {
   logoUrl?: string | null;
   recentBuyOpportunity?: boolean;
 }
+
+export type TickerCategory = 'EGX' | 'Metals' | 'Funds';
 
 interface RightSidebarProps {
   watchlist: WatchlistItem[];
@@ -69,6 +71,36 @@ export default function RightSidebar({
   }, [quoteData]);
 
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [selectedCategory, setSelectedCategory] = useState<TickerCategory>(() => {
+    const sym = selectedSymbol.toUpperCase();
+    if (['GC1!', 'SI1!'].includes(sym)) return 'Metals';
+    if (['CI_QUANT', 'OSOUL', 'COF'].includes(sym)) return 'Funds';
+    const found = watchlist.find((w) => w.symbol.toUpperCase() === sym);
+    if (found?.sector?.toLowerCase() === 'funds' || found?.companyName?.toLowerCase().includes('fund')) {
+      return 'Funds';
+    }
+    if (found?.sector?.toLowerCase() === 'metals' || found?.sector?.toLowerCase() === 'precious metals') {
+      return 'Metals';
+    }
+    return 'EGX';
+  });
+
+  useEffect(() => {
+    const sym = selectedSymbol.toUpperCase();
+    if (['GC1!', 'SI1!'].includes(sym)) {
+      setSelectedCategory('Metals');
+    } else if (['CI_QUANT', 'OSOUL', 'COF'].includes(sym)) {
+      setSelectedCategory('Funds');
+    } else {
+      const found = watchlist.find((w) => w.symbol.toUpperCase() === sym);
+      if (found?.sector?.toLowerCase() === 'funds' || found?.companyName?.toLowerCase().includes('fund')) {
+        setSelectedCategory('Funds');
+      } else if (found?.sector?.toLowerCase() === 'metals' || found?.sector?.toLowerCase() === 'precious metals') {
+        setSelectedCategory('Metals');
+      }
+    }
+  }, [selectedSymbol, watchlist]);
 
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [isResizing, setIsResizing] = useState(false);
@@ -167,13 +199,41 @@ export default function RightSidebar({
     return result;
   }, [signalFilter, signalsBySymbol]);
 
-  // Matching tickers count in the watchlist
+  const isItemMetal = useCallback((item: WatchlistItem) => {
+    const sym = item.symbol.toUpperCase().replace('.CA', '');
+    return (
+      sym === 'GC1!' ||
+      sym === 'SI1!' ||
+      sym === 'GOLD' ||
+      sym === 'SILVER' ||
+      item.sector?.toLowerCase() === 'metals' ||
+      item.sector?.toLowerCase() === 'precious metals'
+    );
+  }, []);
+
+  const isItemFund = useCallback((item: WatchlistItem) => {
+    const sym = item.symbol.toUpperCase().replace('.CA', '');
+    return (
+      !isItemMetal(item) &&
+      (item.sector?.toLowerCase() === 'funds' ||
+        item.sector?.toLowerCase() === 'fund' ||
+        item.companyName?.toLowerCase().includes('fund') ||
+        ['CI_QUANT', 'OSOUL', 'COF'].includes(sym))
+    );
+  }, [isItemMetal]);
+
+  // Matching tickers count in the watchlist for current category
   const matchingCount = useMemo(() => {
     return watchlist.filter((item) => {
       const sym = item.symbol.toUpperCase().replace('.CA', '');
+      if (selectedCategory === 'Metals' && !isItemMetal(item)) return false;
+      if (selectedCategory === 'Funds' && !isItemFund(item)) return false;
+      if (selectedCategory === 'EGX' && (isItemMetal(item) || isItemFund(item) || ['USDEGP', 'EUREGP'].includes(sym))) {
+        return false;
+      }
       return matchingSignalsBySymbol.has(sym);
     }).length;
-  }, [watchlist, matchingSignalsBySymbol]);
+  }, [watchlist, matchingSignalsBySymbol, selectedCategory, isItemMetal, isItemFund]);
 
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
@@ -183,15 +243,26 @@ export default function RightSidebar({
     : baseSelectedItem;
 
   const filteredWatchlist = useMemo(() => {
-    return watchlist.filter(item => {
+    return watchlist.filter((item) => {
       const sym = item.symbol.toUpperCase().replace('.CA', '');
 
-      // 1. Signal Filter
+      // 1. Category Switcher Filter (EGX | Metals | Funds)
+      if (selectedCategory === 'Metals') {
+        if (!isItemMetal(item)) return false;
+      } else if (selectedCategory === 'Funds') {
+        if (!isItemFund(item)) return false;
+      } else if (selectedCategory === 'EGX') {
+        if (isItemMetal(item) || isItemFund(item) || ['USDEGP', 'EUREGP'].includes(sym)) {
+          return false;
+        }
+      }
+
+      // 2. Signal Filter
       if (signalFilter.isActive && !matchingSignalsBySymbol.has(sym)) {
         return false;
       }
 
-      // 2. Search Query
+      // 3. Search Query
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return (
@@ -203,7 +274,7 @@ export default function RightSidebar({
 
       return true;
     });
-  }, [watchlist, signalFilter.isActive, matchingSignalsBySymbol, searchQuery]);
+  }, [watchlist, selectedCategory, signalFilter.isActive, matchingSignalsBySymbol, searchQuery, isItemMetal, isItemFund]);
 
   const groupedWatchlist = useMemo(() => {
     const groups = new Map<string, WatchlistItem[]>();
@@ -263,61 +334,77 @@ export default function RightSidebar({
         onMouseDown={() => setIsResizing(true)}
       />
 
-      {/* Search bar + filter */}
-      <div className="p-2 border-b border-white/[0.08] bg-cold-gray-900 shrink-0 flex items-center gap-1.5">
-        <div className="relative flex items-center flex-1 min-w-0">
-          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-muted">
-            <Search size={13} />
+      {/* Search bar + filter + category switcher */}
+      <div className="p-2 border-b border-white/[0.08] bg-black/60 shrink-0 flex flex-col gap-2">
+        <div className="flex items-center gap-1.5">
+          <div className="relative flex items-center flex-1 min-w-0">
+            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-muted">
+              <Search size={13} />
+            </div>
+            <input
+              type="text"
+              placeholder={`Search ${selectedCategory.toLowerCase()}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-7 w-full rounded-md bg-surface-input border border-border-subtle pl-7 pr-6 text-[11px] text-text-primary placeholder:text-text-muted placeholder:text-[11px] focus:border-border-input-hover focus:outline-none transition-colors leading-none"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-2 flex items-center text-text-muted hover:text-white transition-colors"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Search tickers..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-7 w-full rounded-md bg-surface-input border border-border-subtle pl-7 pr-6 text-[11px] text-text-primary placeholder:text-text-muted placeholder:text-[11px] focus:border-border-input-hover focus:outline-none transition-colors leading-none"
-          />
-          {searchQuery && (
+          <div className="relative">
             <button
               type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-2 flex items-center text-text-muted hover:text-white transition-colors"
+              onClick={() => setIsFilterOpen((prev) => !prev)}
+              title={
+                signalFilter.isActive
+                  ? `Signal Filter Active (${matchingCount} tickers matched)`
+                  : 'Filter tickers by strategy signals'
+              }
+              aria-label="Filter tickers"
+              className={`h-7 w-7 rounded-md border flex items-center justify-center shrink-0 transition-all relative ${
+                signalFilter.isActive
+                  ? 'bg-brand-blue/15 border-brand-blue text-brand-blue shadow-xs'
+                  : isFilterOpen
+                  ? 'bg-surface-active border-border-subtle text-white'
+                  : 'border-border-subtle bg-surface-raised text-text-muted hover:text-white hover:bg-surface-hover-raised'
+              }`}
             >
-              <X size={13} />
+              <SlidersHorizontal size={13} />
+              {signalFilter.isActive && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand-blue border-2 border-cold-gray-900 animate-pulse" />
+              )}
             </button>
-          )}
-        </div>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsFilterOpen((prev) => !prev)}
-            title={
-              signalFilter.isActive
-                ? `Signal Filter Active (${matchingCount} tickers matched)`
-                : 'Filter tickers by strategy signals'
-            }
-            aria-label="Filter tickers"
-            className={`h-7 w-7 rounded-md border flex items-center justify-center shrink-0 transition-all relative ${
-              signalFilter.isActive
-                ? 'bg-brand-blue/15 border-brand-blue text-brand-blue shadow-xs'
-                : isFilterOpen
-                ? 'bg-surface-active border-border-subtle text-white'
-                : 'border-border-subtle bg-surface-raised text-text-muted hover:text-white hover:bg-surface-hover-raised'
-            }`}
-          >
-            <SlidersHorizontal size={13} />
-            {signalFilter.isActive && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand-blue border-2 border-cold-gray-900 animate-pulse" />
-            )}
-          </button>
 
-          <WatchlistSignalFilterPopover
-            isOpen={isFilterOpen}
-            onClose={() => setIsFilterOpen(false)}
-            filter={signalFilter}
-            onChange={setSignalFilter}
-            matchingCount={matchingCount}
-            totalCount={watchlist.length}
-          />
+            <WatchlistSignalFilterPopover
+              isOpen={isFilterOpen}
+              onClose={() => setIsFilterOpen(false)}
+              filter={signalFilter}
+              onChange={setSignalFilter}
+              matchingCount={matchingCount}
+              totalCount={watchlist.length}
+            />
+          </div>
+        </div>
+
+        {/* Category Switcher: EGX | Metals | Funds */}
+        <div className="pill-switch pill-switch-full">
+          {(['EGX', 'Metals', 'Funds'] as const).map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              className={`pill-switch-btn ${selectedCategory === cat ? 'pill-switch-btn-active font-semibold' : ''}`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -363,7 +450,7 @@ export default function RightSidebar({
         {groupedWatchlist.length === 0 ? (
           <div className="p-6 text-center text-text-muted flex flex-col items-center justify-center space-y-2 h-52">
             <SlidersHorizontal size={22} className="text-text-muted stroke-1" />
-            <p className="text-[11px] font-medium text-plt-text">No matching tickers</p>
+            <p className="text-[11px] font-medium text-plt-text">No matching {selectedCategory} tickers</p>
             <p className="text-[10px] text-text-muted max-w-[200px] leading-relaxed">
               {signalFilter.isActive
                 ? `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map(s => s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon').join(', ')} in the last ${signalFilter.lookbackDays} days.`

@@ -52,7 +52,7 @@ export default function ChartTopBar({
 }: ChartTopBarProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'stocks' | 'funds'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'stocks' | 'funds' | 'metals'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -62,13 +62,31 @@ export default function ChartTopBar({
     setMounted(true);
   }, []);
 
+  const isMetalItem = (item: WatchlistItem) => {
+    const sym = item.symbol.toUpperCase().replace('.CA', '');
+    return (
+      sym === 'GC1!' ||
+      sym === 'SI1!' ||
+      sym === 'GOLD' ||
+      sym === 'SILVER' ||
+      item.sector?.toLowerCase() === 'metals' ||
+      item.sector?.toLowerCase() === 'precious metals'
+    );
+  };
+
   const isFundItem = (item: WatchlistItem) => {
     const sym = item.symbol.toUpperCase().replace('.CA', '');
     return (
-      item.sector?.toLowerCase() === 'funds' ||
-      item.sector?.toLowerCase() === 'fund' ||
-      ['CI_QUANT', 'OSOUL', 'COF'].includes(sym)
+      !isMetalItem(item) &&
+      (item.sector?.toLowerCase() === 'funds' ||
+        item.sector?.toLowerCase() === 'fund' ||
+        item.companyName?.toLowerCase().includes('fund') ||
+        ['CI_QUANT', 'OSOUL', 'COF'].includes(sym))
     );
+  };
+
+  const isStockItem = (item: WatchlistItem) => {
+    return !isMetalItem(item) && !isFundItem(item);
   };
 
   const queryFilteredList = useMemo(() => {
@@ -85,8 +103,11 @@ export default function ChartTopBar({
   const tabCounts = useMemo(() => {
     let stocksCount = 0;
     let fundsCount = 0;
+    let metalsCount = 0;
     for (const item of queryFilteredList) {
-      if (isFundItem(item)) {
+      if (isMetalItem(item)) {
+        metalsCount++;
+      } else if (isFundItem(item)) {
         fundsCount++;
       } else {
         stocksCount++;
@@ -96,19 +117,22 @@ export default function ChartTopBar({
       all: queryFilteredList.length,
       stocks: stocksCount,
       funds: fundsCount,
+      metals: metalsCount,
     };
   }, [queryFilteredList]);
 
   const searchResults = useMemo(() => {
     let list = queryFilteredList;
     if (activeTab === 'stocks') {
-      list = list.filter((item) => !isFundItem(item));
+      list = list.filter((item) => isStockItem(item));
     } else if (activeTab === 'funds') {
       list = list.filter((item) => isFundItem(item));
+    } else if (activeTab === 'metals') {
+      list = list.filter((item) => isMetalItem(item));
     }
 
     if (!searchQuery.trim()) {
-      return activeTab === 'funds' ? list : list.slice(0, 30);
+      return activeTab === 'all' ? list.slice(0, 40) : list;
     }
     return list;
   }, [queryFilteredList, activeTab, searchQuery]);
@@ -133,7 +157,14 @@ export default function ChartTopBar({
         } else if (e.key === 'Tab') {
           e.preventDefault();
           setActiveTab((prev) => {
-            const nextTab = prev === 'all' ? 'stocks' : prev === 'stocks' ? 'funds' : 'all';
+            const nextTab =
+              prev === 'all'
+                ? 'stocks'
+                : prev === 'stocks'
+                ? 'funds'
+                : prev === 'funds'
+                ? 'metals'
+                : 'all';
             return nextTab;
           });
           setFocusedIndex(0);
@@ -431,37 +462,39 @@ export default function ChartTopBar({
 
       {/* ─── Portal Search Command Palette & Dropdown (Immune to parent overflow clipping) ─── */}
       {mounted && isSearchOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[150] flex flex-col items-center justify-start p-3 sm:p-0 select-none">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-6 select-none">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity animate-in fade-in duration-100"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-150"
             onClick={() => setIsSearchOpen(false)}
           />
 
-          {/* Search Card Container */}
+          {/* Search Card Container - Centralized, Sleek Pure Black Surface */}
           <div
-            className="relative z-10 w-full max-w-lg sm:max-w-xl md:max-w-2xl mt-4 sm:mt-12 bg-black border border-white/[0.12] rounded-xl shadow-2xl shadow-black overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-100 font-sans"
+            className="relative z-10 w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-black border border-white/[0.12] rounded-2xl shadow-[0_32px_96px_-12px_rgba(0,0,0,0.95),0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-[0.98] duration-150 font-sans"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search Input Bar */}
-            <div className="h-12 px-4 flex items-center gap-3 border-b border-white/[0.08] bg-black">
-              <Search size={16} className="text-white/40 shrink-0" />
+            <div className="h-13 sm:h-14 px-4 sm:px-5 flex items-center gap-3 border-b border-white/[0.08] bg-black">
+              <Search size={17} className="text-white/40 shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
                 placeholder={
                   activeTab === 'funds'
                     ? 'Search mutual funds by name or ticker...'
+                    : activeTab === 'metals'
+                    ? 'Search precious metals (Gold, Silver)...'
                     : activeTab === 'stocks'
                     ? 'Search stocks by symbol, company, or sector...'
-                    : 'Search stocks, mutual funds, or sectors...'
+                    : 'Search stocks, mutual funds, metals, or sectors...'
                 }
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setFocusedIndex(0);
                 }}
-                className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder:text-white/35 focus:outline-none font-sans"
+                className="flex-1 bg-transparent text-sm sm:text-[15px] text-white placeholder:text-white/30 focus:outline-none font-sans tracking-tight"
               />
               {searchQuery && (
                 <button
@@ -471,104 +504,71 @@ export default function ChartTopBar({
                     setFocusedIndex(0);
                     searchInputRef.current?.focus();
                   }}
-                  className="p-1 text-white/40 hover:text-white transition-colors cursor-pointer"
+                  className="p-1.5 text-white/40 hover:text-white transition-colors cursor-pointer rounded-md hover:bg-white/[0.06]"
                   title="Clear search"
                 >
-                  <X size={14} />
+                  <X size={15} />
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(false)}
-                className="px-2.5 py-1 rounded-md text-[11px] font-medium text-white/50 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer font-sans flex items-center gap-1.5"
+                className="px-2.5 py-1 rounded-md text-[11px] font-medium text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer font-sans flex items-center gap-1.5"
               >
                 <span>Close</span>
-                <kbd className="hidden sm:inline px-1 py-0.2 rounded border border-white/10 text-[9px] text-white/40">ESC</kbd>
+                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded border border-white/10 text-[9px] text-white/40 bg-white/[0.04]">ESC</kbd>
               </button>
             </div>
 
             {/* Filter Tabs & Header Bar */}
-            <div className="px-4 py-2 border-b border-white/[0.06] bg-white/[0.02] flex items-center justify-between gap-3">
+            <div className="px-4 sm:px-5 py-2.5 border-b border-white/[0.06] bg-black flex items-center justify-between gap-3">
               {/* Tabs */}
-              <div className="flex items-center gap-1 bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.06]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('all');
-                    setFocusedIndex(0);
-                  }}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeTab === 'all'
-                      ? 'bg-white text-black font-semibold shadow-xs'
-                      : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <span>All</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${
-                      activeTab === 'all'
-                        ? 'bg-black/15 text-black font-bold'
-                        : 'bg-white/[0.08] text-white/60'
-                    }`}
-                  >
-                    {tabCounts.all}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('stocks');
-                    setFocusedIndex(0);
-                  }}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeTab === 'stocks'
-                      ? 'bg-white text-black font-semibold shadow-xs'
-                      : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <span>Stocks</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${
-                      activeTab === 'stocks'
-                        ? 'bg-black/15 text-black font-bold'
-                        : 'bg-white/[0.08] text-white/60'
-                    }`}
-                  >
-                    {tabCounts.stocks}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('funds');
-                    setFocusedIndex(0);
-                  }}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeTab === 'funds'
-                      ? 'bg-white text-black font-semibold shadow-xs'
-                      : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <span>Funds</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${
-                      activeTab === 'funds'
-                        ? 'bg-black/15 text-black font-bold'
-                        : 'bg-white/[0.08] text-white/60'
-                    }`}
-                  >
-                    {tabCounts.funds}
-                  </span>
-                </button>
+              <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
+                {(
+                  [
+                    { id: 'all', label: 'All', count: tabCounts.all },
+                    { id: 'stocks', label: 'Stocks', count: tabCounts.stocks },
+                    { id: 'funds', label: 'Funds', count: tabCounts.funds },
+                    { id: 'metals', label: 'Metals', count: tabCounts.metals },
+                  ] as const
+                ).map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        setFocusedIndex(0);
+                      }}
+                      className={`px-3 py-1 rounded-md text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-white text-black font-semibold shadow-xs'
+                          : 'text-white/50 hover:text-white hover:bg-white/[0.04] font-medium'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full tabular-nums leading-none ${
+                          isActive
+                            ? 'bg-black/15 text-black font-bold'
+                            : 'bg-white/[0.06] text-white/40'
+                        }`}
+                      >
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Status info */}
-              <div className="text-[11px] text-white/40 font-medium hidden sm:block">
+              <div className="text-[11px] text-white/40 font-medium tabular-nums hidden sm:block">
                 <span>
                   {activeTab === 'funds'
                     ? `${searchResults.length} funds found`
+                    : activeTab === 'metals'
+                    ? `${searchResults.length} metals found`
                     : activeTab === 'stocks'
                     ? `${searchResults.length} stocks found`
                     : `${searchResults.length} instruments found`}
@@ -577,17 +577,25 @@ export default function ChartTopBar({
             </div>
 
             {/* Results List */}
-            <div className="max-h-[380px] sm:max-h-[420px] overflow-y-auto no-scrollbar py-1 divide-y divide-white/[0.03]">
+            <div className="max-h-[380px] sm:max-h-[440px] overflow-y-auto no-scrollbar py-1 divide-y divide-white/[0.03]">
               {searchResults.length === 0 ? (
-                <div className="py-12 px-4 text-center">
-                  <p className="text-white/60 text-xs font-medium">No matching {activeTab === 'funds' ? 'funds' : activeTab === 'stocks' ? 'stocks' : 'instruments'} found</p>
-                  <p className="text-white/30 text-[11px] mt-1">Try a different ticker name, company keyword, or switch tabs.</p>
+                <div className="py-12 px-4 text-center flex flex-col items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3 text-white/40">
+                    <Search size={18} />
+                  </div>
+                  <p className="text-white/70 text-xs font-semibold">
+                    No matching {activeTab === 'funds' ? 'funds' : activeTab === 'metals' ? 'metals' : activeTab === 'stocks' ? 'stocks' : 'instruments'} found
+                  </p>
+                  <p className="text-white/35 text-[11px] mt-1 max-w-xs">
+                    Try a different ticker name, company keyword, or switch tabs.
+                  </p>
                 </div>
               ) : (
                 searchResults.map((item, index) => {
                   const isSelected = item.symbol === symbol;
                   const isFocused = index === focusedIndex;
                   const itemDisplay = item.symbol.replace('.CA', '');
+                  const isMetal = isMetalItem(item);
                   const isFund = isFundItem(item);
 
                   return (
@@ -595,17 +603,17 @@ export default function ChartTopBar({
                       key={item.symbol}
                       onClick={() => handleSelectTicker(item.symbol)}
                       onMouseEnter={() => setFocusedIndex(index)}
-                      className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between px-4 sm:px-5 py-2.5 sm:py-3 cursor-pointer transition-colors ${
                         isSelected
                           ? 'bg-white/[0.08] text-white font-medium'
                           : isFocused
                           ? 'bg-white/[0.04] text-white'
-                          : 'hover:bg-white/[0.04] text-text-primary'
+                          : 'hover:bg-white/[0.03] text-text-primary'
                       }`}
                     >
-                      {/* Left: Avatar/Logo + Symbol + Type Badge + Company Name */}
+                      {/* Left: Avatar/Logo + Symbol + Type Badge + Sector + Company Name */}
                       <div className="flex items-center gap-3 min-w-0 pr-3">
-                        <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
                           {item.logoUrl ? (
                             <img
                               src={item.logoUrl}
@@ -613,40 +621,44 @@ export default function ChartTopBar({
                               className="ticker-logo-image ticker-logo-fill"
                             />
                           ) : (
-                            <span className="text-[10px] font-bold text-white/80">
+                            <span className="text-[10px] font-bold text-white/75">
                               {itemDisplay.substring(0, 2)}
                             </span>
                           )}
                         </div>
 
-                        <div className="min-w-0 flex flex-col">
+                        <div className="min-w-0 flex flex-col gap-0.5">
                           <div className="flex items-center gap-2">
                             <span
                               className={`text-xs sm:text-[13px] font-bold font-sans tracking-tight ${
-                                isSelected ? 'text-white' : 'text-text-primary'
+                                isSelected ? 'text-white' : 'text-white/90'
                               }`}
                             >
                               {itemDisplay}
                             </span>
 
-                            {isFund ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shrink-0">
+                            {isMetal ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-amber-400/10 text-amber-300 border border-amber-400/25 shrink-0">
+                                Metal
+                              </span>
+                            ) : isFund ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-cyan-400/10 text-cyan-300 border border-cyan-400/25 shrink-0">
                                 Fund
                               </span>
                             ) : (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wider uppercase bg-white/[0.06] text-white/50 border border-white/10 shrink-0">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wider uppercase bg-white/[0.05] text-white/50 border border-white/[0.08] shrink-0">
                                 Stock
                               </span>
                             )}
 
                             {item.sector && (
-                              <span className="hidden sm:inline text-[10px] text-white/40 truncate">
+                              <span className="hidden sm:inline text-[11px] text-white/40 truncate">
                                 · {item.sector}
                               </span>
                             )}
                           </div>
 
-                          <div className="text-[11px] text-text-muted truncate max-w-[220px] sm:max-w-[340px]">
+                          <div className="text-[11px] text-white/50 truncate max-w-[220px] sm:max-w-[340px]">
                             {item.companyName}
                           </div>
                         </div>
@@ -656,11 +668,14 @@ export default function ChartTopBar({
                       <div className="flex items-center gap-2.5 shrink-0 font-sans tabular-nums text-right">
                         <div className="flex flex-col items-end">
                           <span className="text-xs sm:text-[13px] font-semibold text-white">
-                            {item.price} <span className="text-[10px] text-white/40 font-normal">{item.currency || 'EGP'}</span>
+                            {item.price}{' '}
+                            <span className="text-[10px] text-white/40 font-normal">
+                              {item.currency || 'EGP'}
+                            </span>
                           </span>
                           {item.changePct && (
                             <span
-                              className={`text-[10px] font-semibold ${
+                              className={`text-[10px] font-medium ${
                                 item.isUp ? 'text-profit-num' : 'text-loss-num'
                               }`}
                             >
@@ -676,15 +691,30 @@ export default function ChartTopBar({
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-2 border-t border-white/[0.06] bg-black/60 flex items-center justify-between text-[10px] text-white/40 font-sans">
-              <span className="hidden sm:inline text-[10px] text-white/40">
-                ↑↓ to navigate • Enter to select • Tab to switch tabs • Esc to close
-              </span>
+            <div className="px-4 sm:px-5 py-2.5 border-t border-white/[0.06] bg-black flex items-center justify-between text-[11px] text-white/40 font-sans">
+              <div className="hidden sm:flex items-center gap-3">
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↑↓</kbd>
+                  <span>navigate</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↵</kbd>
+                  <span>select</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Tab</kbd>
+                  <span>filter</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Esc</kbd>
+                  <span>close</span>
+                </span>
+              </div>
               <span className="sm:hidden text-[10px] text-white/40">
                 Tap ticker to view chart
               </span>
-              <span className="text-[10px] text-white/30 hidden sm:inline">
-                {activeTab === 'funds' ? 'Mutual Funds' : activeTab === 'stocks' ? 'EGX Listed Equities' : 'EGX Market'}
+              <span className="text-[11px] text-white/30 hidden sm:inline">
+                {activeTab === 'funds' ? 'Mutual Funds' : activeTab === 'metals' ? 'Precious Metals' : activeTab === 'stocks' ? 'EGX Listed Equities' : 'All Markets'}
               </span>
             </div>
           </div>

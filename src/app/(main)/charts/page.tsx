@@ -115,9 +115,12 @@ async function ChartsPageContent({
     const isFund =
       ['CI_QUANT', 'OSOUL', 'COF'].includes(t.symbol.toUpperCase()) ||
       t.sector?.toLowerCase() === 'funds';
+    const isMetal = ['GC1!', 'SI1!'].includes(t.symbol.toUpperCase());
     let group = t.industryGroup || t.sector || 'Unclassified';
     if (isFund || group.toLowerCase().includes('fund')) {
       group = 'Funds';
+    } else if (isMetal) {
+      group = 'Metals';
     }
 
     return {
