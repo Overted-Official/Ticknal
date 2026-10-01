@@ -70,6 +70,21 @@ export interface MajorIndexData {
   }>;
 }
 
+export interface MoneySupplyData {
+  symbol: 'M2' | 'M1' | 'M0';
+  name: string;
+  badge: string;
+  value: number;
+  change: number;
+  changePercent: number;
+  history: Array<{
+    date: string;
+    value: number;
+    change: number;
+    changePercent: number;
+  }>;
+}
+
 export interface SectorsPerformanceResponse {
   timeframe: {
     startDate: string;
@@ -94,6 +109,7 @@ export interface SectorsPerformanceResponse {
   egx30History?: { date: string; close: number; volume?: number }[];
   dailyBreadth?: { date: string; gainers: number; losers: number; netAdvancers: number; adLine: number }[];
   majorIndices?: Record<'EGX30' | 'EGX70' | 'EGX100', MajorIndexData>;
+  moneySupply?: Record<'M2' | 'M1' | 'M0', MoneySupplyData>;
   granularity?: 'sector' | 'industryGroup' | 'industry' | 'ticker';
 }
 

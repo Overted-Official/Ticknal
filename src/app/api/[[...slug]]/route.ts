@@ -30,13 +30,17 @@ import {
   handleProcessSignals,
   handleSignals as handleCronSignals,
   handleWatchdog,
+  handleUpdateInvestorFlows,
 } from '@/lib/cron-handlers';
 import {
   handleQuoteGet,
   handleTickersGet,
   handleInflationGet,
+  handleMoneySupplyGet,
   handleOpportunitiesGet,
 } from '@/lib/market-handlers';
+import { handleFxFairValueGet } from '@/lib/handlers/fx-fair-value-handler';
+import { handleInvestorFlowsGet } from '@/lib/handlers/investor-flow-handler';
 import { handleHistoryGet } from '@/lib/market/history-handlers';
 import {
   handleNotificationsGet,
@@ -155,6 +159,8 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
         return handleCronSignals(req);
       case 'watchdog':
         return handleWatchdog(req);
+      case 'update-investor-flows':
+        return handleUpdateInvestorFlows(req);
       default:
         return NextResponse.json({ error: `Unknown cron job: ${sub}` }, { status: 404 });
     }
@@ -244,6 +250,27 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
   ) {
     return handleInflationGet(req);
   }
+  if (
+    (root === 'macro' && (sub === 'money-supply' || sub === 'moneysupply')) ||
+    (root === 'market' && (sub === 'money-supply' || sub === 'moneysupply')) ||
+    root === 'money-supply'
+  ) {
+    return handleMoneySupplyGet(req);
+  }
+  if (
+    (root === 'macro' && (sub === 'fx-fair-value' || sub === 'fair-value' || sub === 'devaluation')) ||
+    (root === 'market' && (sub === 'fx-fair-value' || sub === 'fair-value' || sub === 'devaluation')) ||
+    root === 'fx-fair-value'
+  ) {
+    return handleFxFairValueGet();
+  }
+  if (
+    (root === 'macro' && (sub === 'investor-flows' || sub === 'flows')) ||
+    (root === 'market' && (sub === 'investor-flows' || sub === 'flows')) ||
+    root === 'investor-flows'
+  ) {
+    return handleInvestorFlowsGet(req);
+  }
 
   // 9. User / Positions / System Logs / Profile
   if (root === 'profile') {
@@ -277,6 +304,16 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
   const segments = getPathSegments(slug);
   const root = segments[0] || '';
   const sub = segments[1] || '';
+
+  // 0. Cron
+  if (root === 'cron') {
+    switch (sub) {
+      case 'update-investor-flows':
+        return handleUpdateInvestorFlows(req);
+      default:
+        return NextResponse.json({ error: `Unknown cron action: ${sub}` }, { status: 404 });
+    }
+  }
 
   // 1. Banks
   if (root === 'banks') {

@@ -280,6 +280,44 @@ export const macroInflationRates = pgTable('macro_inflation_rates', {
   };
 });
 
+export const macroMoneySupply = pgTable('macro_money_supply', {
+  id: serial('id').primaryKey(),
+  date: date('date').notNull(), // stored as YYYY-MM-DD
+  indicator: varchar('indicator', { length: 20 }).notNull(), // 'M2' | 'M1' | 'M0'
+  value: numeric('value', { precision: 20, scale: 2 }).notNull(), // Raw EGP amount (e.g. 15499852000000.00)
+  change: numeric('change', { precision: 20, scale: 2 }), // Change from previous period
+  changePercent: numeric('change_percent', { precision: 8, scale: 4 }), // % change e.g. 1.56
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    dateIndicatorUnique: unique('macro_money_supply_date_indicator_unique').on(table.date, table.indicator),
+    dateIdx: index('macro_money_supply_date_idx').on(table.date),
+    indicatorIdx: index('macro_money_supply_indicator_idx').on(table.indicator),
+  };
+});
+
+export const egxInvestorFlows = pgTable('egx_investor_flows', {
+  id: serial('id').primaryKey(),
+  date: date('date').notNull().unique(), // stored as YYYY-MM-DD
+  egyptianBuy: numeric('egyptian_buy', { precision: 16, scale: 2 }).default('0').notNull(),
+  egyptianSell: numeric('egyptian_sell', { precision: 16, scale: 2 }).default('0').notNull(),
+  egyptianNet: numeric('egyptian_net', { precision: 16, scale: 2 }).default('0').notNull(),
+  arabBuy: numeric('arab_buy', { precision: 16, scale: 2 }).default('0').notNull(),
+  arabSell: numeric('arab_sell', { precision: 16, scale: 2 }).default('0').notNull(),
+  arabNet: numeric('arab_net', { precision: 16, scale: 2 }).default('0').notNull(),
+  foreignBuy: numeric('foreign_buy', { precision: 16, scale: 2 }).default('0').notNull(),
+  foreignSell: numeric('foreign_sell', { precision: 16, scale: 2 }).default('0').notNull(),
+  foreignNet: numeric('foreign_net', { precision: 16, scale: 2 }).default('0').notNull(),
+  totalTurnover: numeric('total_turnover', { precision: 16, scale: 2 }).default('0').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    dateIdx: index('egx_investor_flows_date_idx').on(table.date),
+  };
+});
+
 export const systemLogs = pgTable('system_logs', {
   id: serial('id').primaryKey(),
   level: varchar('level', { length: 20 }).default('INFO').notNull(),

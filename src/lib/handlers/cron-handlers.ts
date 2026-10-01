@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications } from '@/db/schema';
+import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply } from '@/db/schema';
 import { sql, inArray, eq, and, lt, gt, gte, desc } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
@@ -16,6 +16,7 @@ import {
   type ComparablePriceBar,
 } from '@/lib/market/price-adjustments';
 import { ALL_SNDUK_FUNDS, type SndukFund } from '@/lib/funds/snduk-funds-list';
+import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 
 // ----------------------------------------------------
 // 1. UPDATE STOCKS
@@ -502,6 +503,16 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
       }
     }
 
+    // Automatically sync daily investor flows for the completed trading session
+    let investorFlowResult: any = null;
+    if (totalUpdated > 0 && Date.now() - startTime < 55000) {
+      try {
+        investorFlowResult = await syncDailyInvestorFlows();
+      } catch (flowErr: any) {
+        console.error('Post-update investor flow sync error:', flowErr);
+      }
+    }
+
     await db.insert(systemLogs).values({
       source: 'cron-stocks',
       level: 'INFO',
@@ -846,28 +857,124 @@ export async function handleUpdateCommodities(req: Request) {
 }
 
 // ----------------------------------------------------
-// 4. UPDATE MACRO
+// 4. UPDATE MACRO & MONEY SUPPLY
 // ----------------------------------------------------
+export async function syncTradingViewMoneySupply(): Promise<{ updated: number; errors: string[] }> {
+  const targets = [
+    { indicator: 'M2', tvSymbol: 'ECONOMICS:EGM2' },
+    { indicator: 'M1', tvSymbol: 'ECONOMICS:EGM1' },
+    { indicator: 'M0', tvSymbol: 'ECONOMICS:EGM0' },
+  ];
+
+  const client = new TradingView.Client();
+  let updated = 0;
+  const errors: string[] = [];
+
+  for (const target of targets) {
+    try {
+      const periods: TradingViewPeriod[] = await new Promise((resolve) => {
+        const chart = new client.Session.Chart();
+        chart.setMarket(target.tvSymbol, { timeframe: '1M', range: 36 });
+        const timeout = setTimeout(() => {
+          chart.delete();
+          resolve([]);
+        }, 12000);
+
+        chart.onUpdate(() => {
+          clearTimeout(timeout);
+          const p = chart.periods;
+          chart.delete();
+          resolve(p || []);
+        });
+
+        chart.onError((err: any) => {
+          clearTimeout(timeout);
+          chart.delete();
+          console.error(`Error for ${target.tvSymbol}:`, err.message || err);
+          resolve([]);
+        });
+      });
+
+      if (!periods || periods.length === 0) continue;
+      periods.sort((a, b) => a.time - b.time);
+
+      for (let i = 0; i < periods.length; i++) {
+        const curr = periods[i];
+        const prev = i > 0 ? periods[i - 1] : null;
+        const dateStr = new Date(curr.time * 1000).toISOString().split('T')[0];
+        const val = Number(curr.close);
+        const chg = prev ? val - Number(prev.close) : 0;
+        const chgPct = prev && Number(prev.close) > 0 ? (chg / Number(prev.close)) * 100 : 0;
+
+        await db
+          .insert(macroMoneySupply)
+          .values({
+            date: dateStr,
+            indicator: target.indicator,
+            value: sql`${val}`,
+            change: sql`${chg}`,
+            changePercent: sql`${chgPct}`,
+          })
+          .onConflictDoUpdate({
+            target: [macroMoneySupply.date, macroMoneySupply.indicator],
+            set: {
+              value: sql`${val}`,
+              change: sql`${chg}`,
+              changePercent: sql`${chgPct}`,
+              updatedAt: new Date(),
+            },
+          });
+        updated++;
+      }
+    } catch (err: any) {
+      errors.push(`${target.indicator}: ${err.message || err}`);
+    }
+  }
+
+  client.end();
+  return { updated, errors };
+}
+
 export async function handleUpdateMacro(req: Request) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    await syncAllMacroInflation();
-    
+    const [inflationResult, moneySupplyResult] = await Promise.allSettled([
+      syncAllMacroInflation(),
+      syncTradingViewMoneySupply(),
+    ]);
+
+    const moneySupplyData = moneySupplyResult.status === 'fulfilled' ? moneySupplyResult.value : { updated: 0, errors: [] };
+
+    invalidatePrecomputedMarketCache();
+    try {
+      revalidateTag('prices', { expire: 0 });
+      revalidatePath('/markets');
+    } catch {}
+
     await db.insert(systemLogs).values({
       source: 'cron-macro',
       level: 'INFO',
-      message: 'Successfully synced Macro Inflation Rates from CBE and FRED.',
+      message: `Synced Macro Inflation Rates and Money Supply (M2/M1/M0). Money supply rows updated: ${moneySupplyData.updated}.`,
+      metadata: {
+        inflationStatus: inflationResult.status,
+        moneySupplyUpdated: moneySupplyData.updated,
+        moneySupplyErrors: moneySupplyData.errors,
+      },
     });
 
-    return NextResponse.json({ message: 'Macro inflation sync completed' }, { status: 200 });
+    return NextResponse.json({
+      message: 'Macro sync completed',
+      inflation: inflationResult.status,
+      moneySupply: moneySupplyData,
+    }, { status: 200 });
   } catch (error) {
-    console.error('Error syncing macro inflation rates:', error);
+    console.error('Error syncing macro data:', error);
     await db.insert(systemLogs).values({
       source: 'cron-macro',
       level: 'ERROR',
-      message: 'Failed to sync Macro Inflation Rates',
+      message: 'Failed to sync Macro Data',
       metadata: { error: (error as Error).message }
     });
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
@@ -1034,6 +1141,41 @@ export async function handleWatchdog(req: Request) {
       level: 'ERROR',
       message: 'Failed watchdog health check',
       metadata: { error: (error as Error).message }
+    });
+    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------
+// 7. UPDATE INVESTOR FLOWS
+// ----------------------------------------------------
+export async function handleUpdateInvestorFlows(req: Request) {
+  const authErr = verifyCronAuth(req);
+  if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
+
+  try {
+    const url = new URL(req.url);
+    const targetDate = url.searchParams.get('date') || undefined;
+
+    let manualData;
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        if (body?.date && body?.foreignBuy !== undefined) {
+          manualData = body;
+        }
+      } catch {}
+    }
+
+    const result = await syncDailyInvestorFlows({ targetDate, manualData });
+    return NextResponse.json(result, { status: result.success ? 200 : 400 });
+  } catch (error) {
+    console.error('Error in handleUpdateInvestorFlows:', error);
+    await db.insert(systemLogs).values({
+      source: 'cron-investor-flows',
+      level: 'ERROR',
+      message: `Failed to update EGX investor flows: ${(error as Error).message}`,
+      metadata: { error: (error as Error).message },
     });
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
   }

@@ -9,8 +9,8 @@ import {
   syncAllMacroInflation 
 } from '@/lib/cbe-inflation';
 
-import { desc, eq } from 'drizzle-orm';
-import { dailyPrices } from '@/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
+import { dailyPrices, macroMoneySupply } from '@/db/schema';
 import { getCachedTickers } from '@/lib/data-cache';
 
 type TradingViewPeriod = {
@@ -289,5 +289,70 @@ export async function handleOpportunitiesGet(request: Request): Promise<Response
   } catch (err: any) {
     console.error('API /api/opportunities error:', err);
     return NextResponse.json({ error: 'Failed to fetch opportunities', details: err?.message }, { status: 500 });
+  }
+}
+
+export async function handleMoneySupplyGet(request: Request): Promise<Response> {
+  try {
+    const { searchParams } = new URL(request.url);
+    const indicator = searchParams.get('indicator');
+
+    let query = sql`
+      SELECT 
+        date,
+        indicator,
+        value::numeric as value,
+        change::numeric as change,
+        change_percent::numeric as change_percent
+      FROM macro_money_supply
+    `;
+    if (indicator) {
+      query = sql`${query} WHERE indicator = ${indicator.toUpperCase()}`;
+    }
+    query = sql`${query} ORDER BY date ASC;`;
+
+    const result: any = await db.execute(query);
+    const rows = Array.isArray(result) ? result : result?.rows ?? [];
+
+    const data: Record<string, {
+      indicator: string;
+      latest: {
+        date: string;
+        value: number;
+        change: number;
+        changePercent: number;
+      } | null;
+      history: Array<{
+        date: string;
+        value: number;
+        change: number;
+        changePercent: number;
+      }>;
+    }> = {};
+
+    for (const r of rows) {
+      const ind = String(r.indicator);
+      if (!data[ind]) {
+        data[ind] = { indicator: ind, latest: null, history: [] };
+      }
+      const entry = {
+        date: typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().split('T')[0],
+        value: Number(r.value),
+        change: Number(r.change || 0),
+        changePercent: Number(r.change_percent || 0),
+      };
+      data[ind].history.push(entry);
+      data[ind].latest = entry;
+    }
+
+    return NextResponse.json({
+      success: true,
+      data,
+    }, {
+      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
+    });
+  } catch (err: any) {
+    console.error('API /api/macro/money-supply error:', err);
+    return NextResponse.json({ success: false, error: 'Failed to fetch money supply data' }, { status: 500 });
   }
 }

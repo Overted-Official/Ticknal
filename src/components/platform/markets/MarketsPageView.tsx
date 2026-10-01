@@ -9,6 +9,7 @@ import InlineSpinner from '@/components/ui/InlineSpinner';
 import MarketsFloatingNav from './MarketsFloatingNav';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import MarketOverviewSection, { type MarketTimeframe } from './sections/MarketOverviewSection';
+import FxDevaluationSection from './sections/FxDevaluationSection';
 import SectorRotationSection from './sections/SectorRotationSection';
 import MarketHeatmapSection from './sections/MarketHeatmapSection';
 import {
@@ -168,7 +169,13 @@ export default function MarketsPageView() {
           isLoading={isMacroLoading}
         />
 
-        {/* Section 2: Sector Rotation & Cycle Map */}
+        {/* Section 2: FX & Devaluation Risk (Fair Value, Barometer, CIB GDR, and Money Supply M2 Chart) */}
+        <FxDevaluationSection
+          macroData={macroData}
+          isLoading={isMacroLoading}
+        />
+
+        {/* Section 3: Sector Rotation & Cycle Map */}
         <SectorRotationSection
           macroData={macroData}
           sectors={sectors}

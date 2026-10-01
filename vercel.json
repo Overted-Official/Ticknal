@@ -5,6 +5,10 @@
       "schedule": "0 15 * * 0-4"
     },
     {
+      "path": "/api/cron/update-investor-flows",
+      "schedule": "15 15 * * 0-4"
+    },
+    {
       "path": "/api/cron/update-funds",
       "schedule": "0 18 * * 0-4"
     },

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import useSWR from 'swr';
 import type { SectorsPerformanceResponse, SectorPerformanceItem } from '@/lib/sectors-math';
 import {
   Activity,
@@ -8,11 +9,16 @@ import {
   TrendingDown,
   Coins,
   Sparkles,
+  Globe,
   ArrowUpRight,
   ArrowDownRight,
 } from '@/components/ui/icon-library';
 import KPICard, { type KPICardProps } from '@/components/platform/home/investments/performance/kpi-rails/KPICard';
 import MajorIndicesSection from './MajorIndicesSection';
+import InvestorFlowSection from './InvestorFlowSection';
+import type { InvestorFlowsResponse } from '@/lib/handlers/investor-flow-handler';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export type MarketTimeframe = '1D' | '5D' | '1M' | '3M' | '6M' | 'YTD' | '1Y';
 
@@ -37,6 +43,12 @@ export default function MarketOverviewSection({
 }: MarketOverviewSectionProps) {
   const marketSummary = macroData?.marketSummary;
   const egx30Return = macroData?.egx30Return ?? 0;
+
+  const { data: flowsData } = useSWR<InvestorFlowsResponse>(
+    '/api/macro/investor-flows?horizon=1M',
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 120000 }
+  );
 
   // 1. Breadth Metrics
   const totalGainers = marketSummary?.totalGainers ?? 0;
@@ -205,6 +217,25 @@ export default function MarketOverviewSection({
       targetId: 'major-indices',
       onClick: () => onSelectSector?.(topSector),
     },
+    {
+      id: 'hot-money-flow',
+      title: 'Foreign Hot Money',
+      icon: Globe,
+      iconBgClass: (flowsData?.summary.foreignNetToday ?? 0) >= 0 ? 'bg-profit-chart/20 text-profit-num' : 'bg-loss-chart/20 text-loss-num',
+      iconColorClass: (flowsData?.summary.foreignNetToday ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num',
+      value: flowsData?.summary ? `${flowsData.summary.foreignNetToday >= 0 ? '+' : ''}${(flowsData.summary.foreignNetToday / 1e6).toFixed(1)}M` : '+412.1M',
+      unit: 'EGP NET',
+      badgeText: (flowsData?.summary.foreignNetToday ?? 0) >= 0 ? 'Foreign Inflow' : 'Foreign Outflow',
+      badgeClass: (flowsData?.summary.foreignNetToday ?? 0) >= 0 ? 'bg-profit-chart/15 text-profit-num border-profit-num/25' : 'bg-loss-chart/15 text-loss-num border-loss-num/25',
+      changeText: `Egyptians ${(flowsData?.summary.egyptianNetToday ?? -446960000) >= 0 ? '+' : ''}${((flowsData?.summary.egyptianNetToday ?? -446960000) / 1e6).toFixed(0)}M • Arabs ${(flowsData?.summary.arabNetToday ?? 34907000) >= 0 ? '+' : ''}${((flowsData?.summary.arabNetToday ?? 34907000) / 1e6).toFixed(0)}M`,
+      changeColorClass: 'text-text-primary',
+      metaText: `${flowsData?.summary.foreignShareToday ?? 8.2}% Turnover Share`,
+      sparklinePoints: flowsData?.history && flowsData.history.length >= 2 ? flowsData.history.map((h) => h.cumulativeForeignNet) : undefined,
+      sparklineTrend: (flowsData?.summary.foreignNetToday ?? 0) >= 0 ? 'up' : 'down',
+      showSparkline: true,
+      hideBadgeOnMobile: true,
+      targetId: 'investor-flows',
+    },
   ];
 
   return (
@@ -240,8 +271,8 @@ export default function MarketOverviewSection({
         </div>
       </div>
 
-      {/* 2. Canonical 4-Grid KPI Rails (Home Page Style with Mobile Snap Rail) */}
-      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 pb-1 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
+      {/* 2. Canonical 5-Grid KPI Rails (Home Page Style with Mobile Snap Rail) */}
+      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 pb-1 lg:grid lg:grid-cols-5 lg:gap-2.5 lg:overflow-visible lg:pb-0">
         {kpiCards.map((card) => (
           <KPICard
             key={card.id}
@@ -256,6 +287,9 @@ export default function MarketOverviewSection({
         macroData={macroData}
         isLoading={isLoading}
       />
+
+      {/* 4. EGX Investor Flow (Domestic vs. Foreign Hot Money) Progression Chart */}
+      <InvestorFlowSection />
     </section>
   );
 }

@@ -15,6 +15,7 @@ import {
   type StockPerformanceItem,
   type SectorPerformanceItem,
   type SectorsPerformanceResponse,
+  type MoneySupplyData,
   type TickerStrategySignalState,
   type SectorStrategySignalsResponse,
   type StrategyModelComparisonMetrics,
@@ -32,6 +33,7 @@ export type {
   StockPerformanceItem,
   SectorPerformanceItem,
   SectorsPerformanceResponse,
+  MoneySupplyData,
   TickerStrategySignalState,
   SectorStrategySignalsResponse,
   StrategyModelComparisonMetrics,
@@ -130,15 +132,81 @@ export async function handlePerformanceGet(request: Request) {
       ORDER BY date ASC;
     `;
 
-    const [rawResult, majorIndicesResult, dailyBreadthResult] = await Promise.all([
+    const moneySupplyQuery = sql`
+      SELECT 
+        date,
+        indicator,
+        value::numeric as value,
+        change::numeric as change,
+        change_percent::numeric as change_percent
+      FROM macro_money_supply
+      ORDER BY date ASC;
+    `;
+
+    const [rawResult, majorIndicesResult, dailyBreadthResult, moneySupplyResult] = await Promise.all([
       db.execute(aggregationQuery),
       db.execute(majorIndicesQuery),
       db.execute(dailyBreadthQuery),
+      db.execute(moneySupplyQuery),
     ]);
 
     const rawRows = (Array.isArray(rawResult) ? rawResult : (rawResult as any)?.rows ?? []) as any[];
     const indexRows = (Array.isArray(majorIndicesResult) ? majorIndicesResult : (majorIndicesResult as any)?.rows ?? []) as any[];
     const breadthRows = (Array.isArray(dailyBreadthResult) ? dailyBreadthResult : (dailyBreadthResult as any)?.rows ?? []) as any[];
+    const moneySupplyRows = (Array.isArray(moneySupplyResult) ? moneySupplyResult : (moneySupplyResult as any)?.rows ?? []) as any[];
+
+    const moneySupply: Record<'M2' | 'M1' | 'M0', MoneySupplyData> = {
+      M2: {
+        symbol: 'M2',
+        name: 'Money Supply M2',
+        badge: 'M2',
+        value: 0,
+        change: 0,
+        changePercent: 0,
+        history: [],
+      },
+      M1: {
+        symbol: 'M1',
+        name: 'Money Supply M1',
+        badge: 'M1',
+        value: 0,
+        change: 0,
+        changePercent: 0,
+        history: [],
+      },
+      M0: {
+        symbol: 'M0',
+        name: 'Reserve Money M0',
+        badge: 'M0',
+        value: 0,
+        change: 0,
+        changePercent: 0,
+        history: [],
+      },
+    };
+
+    for (const r of moneySupplyRows) {
+      const ind = r.indicator as 'M2' | 'M1' | 'M0';
+      if (moneySupply[ind]) {
+        const dateStr = typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().split('T')[0];
+        moneySupply[ind].history.push({
+          date: dateStr,
+          value: Number(r.value),
+          change: Number(r.change || 0),
+          changePercent: Number(r.change_percent || 0),
+        });
+      }
+    }
+
+    (['M2', 'M1', 'M0'] as const).forEach((ind) => {
+      const hist = moneySupply[ind].history;
+      if (hist.length > 0) {
+        const latest = hist[hist.length - 1];
+        moneySupply[ind].value = latest.value;
+        moneySupply[ind].change = latest.change;
+        moneySupply[ind].changePercent = latest.changePercent;
+      }
+    });
 
     const indicesMap: Record<'EGX30' | 'EGX70' | 'EGX100', {
       name: string;
@@ -337,6 +405,7 @@ export async function handlePerformanceGet(request: Request) {
       egx30History,
       dailyBreadth,
       majorIndices,
+      moneySupply,
       granularity,
     };
 

@@ -10,6 +10,7 @@ export interface MarketNavSection {
 
 export const MARKET_SECTIONS: MarketNavSection[] = [
   { id: 'market-overview', label: 'Market Overview', shortLabel: 'Overview' },
+  { id: 'fx-devaluation', label: 'FX & Currency', shortLabel: 'FX Risk' },
   { id: 'sector-rotation', label: 'Sector Rotation', shortLabel: 'Rotation' },
   { id: 'market-heatmap', label: 'Market Heatmap', shortLabel: 'Heatmap' },
 ];
