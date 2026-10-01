@@ -1,8 +1,10 @@
 'use client';
 
+import React, { useEffect, useMemo } from 'react';
 import { X } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import type { OrderDraft } from './types';
 
 interface ChartOrderDraftPopoverProps {
@@ -26,6 +28,23 @@ export default function ChartOrderDraftPopover({
   onClose,
   onSave,
 }: ChartOrderDraftPopoverProps) {
+  // Auto-select first eligible or default account if none is selected
+  useEffect(() => {
+    if (orderDraft && !orderDraft.accountId && brokerageAccounts.length > 0) {
+      const defaultAcc = brokerageAccounts.find((a) => a.isDefaultExpense) || brokerageAccounts[0];
+      if (defaultAcc) {
+        onUpdateDraft((current) => (current ? { ...current, accountId: String(defaultAcc.id) } : current));
+      }
+    }
+  }, [orderDraft, brokerageAccounts, onUpdateDraft]);
+
+  const selectedAccount = useMemo(() => {
+    if (!orderDraft?.accountId) return null;
+    return brokerageAccounts.find((a) => String(a.id) === String(orderDraft.accountId)) || null;
+  }, [brokerageAccounts, orderDraft?.accountId]);
+
+  const isVirtual = selectedAccount ? isVirtualAccount(selectedAccount) : false;
+
   if (!orderDraft) return null;
 
   return (
@@ -49,24 +68,33 @@ export default function ChartOrderDraftPopover({
       </div>
 
       {brokerageAccounts.length > 0 ? (
-        <label className="mb-3 block text-[10px] uppercase font-semibold text-plt-muted font-sans">
-          Brokerage account
-          <select
-            required
-            value={orderDraft.accountId}
-            onChange={(event) =>
-              onUpdateDraft((current) => (current ? { ...current, accountId: event.target.value } : current))
-            }
-            className="mt-1 h-8 w-full rounded-xl border border-white/[0.12] bg-plt-card px-2.5 text-xs font-sans font-semibold text-plt-text outline-none focus:border-plt-border-active"
-          >
-            <option value="">Select EGP brokerage account</option>
-            {brokerageAccounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.accountName || account.customBankName || account.bankName || `Account ${account.id}`} · {Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="mb-3">
+          <label className="block text-[10px] uppercase font-semibold text-plt-muted font-sans">
+            Brokerage account
+            <select
+              required
+              value={orderDraft.accountId}
+              onChange={(event) =>
+                onUpdateDraft((current) => (current ? { ...current, accountId: event.target.value } : current))
+              }
+              className="mt-1 h-8 w-full rounded-xl border border-white/[0.12] bg-plt-card px-2.5 text-xs font-sans font-semibold text-plt-text outline-none focus:border-plt-border-active"
+            >
+              <option value="">Select EGP brokerage account</option>
+              {brokerageAccounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {isVirtualAccount(account)
+                    ? `✨ Virtual Account (Paper) · ${Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP`
+                    : `${account.accountName || account.customBankName || account.bankName || `Account ${account.id}`} · ${Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP`}
+                </option>
+              ))}
+            </select>
+          </label>
+          {isVirtual && (
+            <div className="mt-1.5 px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-[10px] text-plt-muted font-sans">
+              <span className="text-amber-400 font-semibold">💡 Virtual:</span> Tracks on chart with P&amp;L and automated sell exit notifications.
+            </div>
+          )}
+        </div>
       ) : (
         <div className="mb-3 rounded-lg bg-plt-risk-soft px-2.5 py-2 text-[10px] text-plt-risk">
           An EGP brokerage account is required. <a href="/wallet?tab=transactions" className="font-semibold underline">Open Cash &amp; Transactions</a> to create one.
@@ -146,7 +174,7 @@ export default function ChartOrderDraftPopover({
             <span>Saving Position...</span>
           </>
         ) : (
-            <span>{brokerageAccounts.length > 0 ? 'Execute live buy' : 'Select brokerage account'}</span>
+            <span>{isVirtual ? 'Execute virtual buy' : brokerageAccounts.length > 0 ? 'Execute live buy' : 'Select brokerage account'}</span>
         )}
       </button>
     </div>

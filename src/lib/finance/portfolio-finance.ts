@@ -24,6 +24,11 @@ export function isBrokerageAccount(account: Pick<BankAccount, 'accountType'> | {
   return accountType === 'BROKERAGE' || accountType === 'BROKER_CASH';
 }
 
+export function isVirtualAccount(account: { accountName?: string | null; customBankName?: string | null } | null | undefined): boolean {
+  if (!account) return false;
+  return account.accountName === 'Virtual Account' || account.customBankName === 'Virtual Brokerage';
+}
+
 export function toEgp(amount: number, currency: string, fxRates: FxRates | number): number {
   const rate = getEgpFxRate(currency, fxRates);
   return rate === null ? 0 : amount * rate;
@@ -226,7 +231,9 @@ function buildCashTrendForMonthKeys(
     let egpCash = 0;
     let usdCash = 0;
 
+    const hasRealAccounts = accounts.some((a) => !isVirtualAccount(a));
     for (const account of accounts) {
+      if (hasRealAccounts && isVirtualAccount(account)) continue;
       if (account.createdAt && String(account.createdAt).slice(0, 10) > asOf) continue;
 
       let balance = Number(account.balance) || 0;

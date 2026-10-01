@@ -7,6 +7,7 @@ import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices, getCache
 import { createClient } from '@/lib/supabase/server';
 import ChartsWorkspaceView from '@/components/platform/charts/ChartsWorkspaceView';
 import { type WatchlistItem } from '@/components/platform/RightSidebar';
+import { ensureUserVirtualAccount } from '@/lib/banks/virtual-account';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,9 @@ async function ChartsPageContent({
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     userId = user?.id || null;
+    if (userId) {
+      await ensureUserVirtualAccount(userId).catch(() => null);
+    }
   } catch (err) {
     console.warn('ChartsPageContent auth check skipped/failed:', err);
   }

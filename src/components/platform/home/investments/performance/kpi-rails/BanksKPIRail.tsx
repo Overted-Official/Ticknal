@@ -18,6 +18,7 @@ import {
   buildAccountYtdBalanceTrend,
   buildYtdCashTrend,
 } from '@/lib/portfolio-finance';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import AccountBalanceHistoryDrawer from '@/components/platform/wallet/AccountBalanceHistoryDrawer';
 import KPICard, { type KPICardProps } from './KPICard';
 
@@ -93,8 +94,9 @@ export default function BanksKPIRail({
     [accounts, selectedAccountId]
   );
 
-  const cashAccounts = useMemo(() => accounts.filter((a) => !isBrokerageAccount(a)), [accounts]);
-  const brokerageAccounts = useMemo(() => accounts.filter(isBrokerageAccount), [accounts]);
+  const realAccounts = useMemo(() => accounts.filter((a) => !isVirtualAccount(a)), [accounts]);
+  const cashAccounts = useMemo(() => realAccounts.filter((a) => !isBrokerageAccount(a)), [realAccounts]);
+  const brokerageAccounts = useMemo(() => realAccounts.filter(isBrokerageAccount), [realAccounts]);
 
   const totalEgpLiquid = useMemo(
     () =>
@@ -123,11 +125,11 @@ export default function BanksKPIRail({
 
   const totalCombinedEgp = useMemo(
     () =>
-      accounts.reduce(
+      realAccounts.reduce(
         (sum, a) => sum + toEgp(Number(a.balance) || 0, a.currency, usdRate),
         0
       ),
-    [accounts, usdRate]
+    [realAccounts, usdRate]
   );
 
   const egpPct = totalCombinedEgp > 0 ? ((totalEgpLiquid / totalCombinedEgp) * 100).toFixed(0) : '0';
@@ -224,12 +226,12 @@ export default function BanksKPIRail({
 
   // Sort accounts descending by total EGP value
   const sortedAccounts = useMemo(() => {
-    return [...accounts].sort((a, b) => {
+    return [...realAccounts].sort((a, b) => {
       const valB = toEgp(Number(b.balance) || 0, b.currency, usdRate);
       const valA = toEgp(Number(a.balance) || 0, a.currency, usdRate);
       return valB - valA;
     });
-  }, [accounts, usdRate]);
+  }, [realAccounts, usdRate]);
 
   // Pre-calculate sparklines and props for account KPI cards
   const accountCards: KPICardProps[] = useMemo(() => {

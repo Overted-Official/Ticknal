@@ -16,6 +16,7 @@ import {
 import { useToast } from '@/context/ToastContext';
 import { type BankAccount } from '@/types/bank';
 import AccountSelectDropdown from './wallet/AccountSelectDropdown';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -259,8 +260,9 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
     }
 
     const selectedAccount = brokerageAccounts.find((a: BankAccount) => String(a.id) === positionAccountId);
+    const isVirtual = selectedAccount ? isVirtualAccount(selectedAccount) : false;
     const requiredAmount = Number(positionPrice) * Number(positionQty);
-    if (selectedAccount && Number(selectedAccount.balance) < requiredAmount) {
+    if (selectedAccount && !isVirtual && Number(selectedAccount.balance) < requiredAmount) {
       toast.error(
         'Insufficient Cash',
         `Account has ${Number(selectedAccount.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })} ${selectedAccount.currency || 'EGP'} available, but ${requiredAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} is required.`
@@ -286,8 +288,10 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
       if (res.ok) {
         toast.success(
-          'Live Position Opened',
-          `Bought ${positionQty} shares of ${positionSymbol.toUpperCase()} at ${Number(positionPrice).toFixed(2)} EGP. Brokerage balance debited.`
+          isVirtual ? 'Virtual Position Opened' : 'Live Position Opened',
+          isVirtual
+            ? `Tracked ${positionQty} shares of ${positionSymbol.toUpperCase()} at ${Number(positionPrice).toFixed(2)} EGP with Virtual Account. Automated sell alerts active.`
+            : `Bought ${positionQty} shares of ${positionSymbol.toUpperCase()} at ${Number(positionPrice).toFixed(2)} EGP. Brokerage balance debited.`
         );
         mutateAccounts();
         if (onSuccess) onSuccess();
@@ -660,11 +664,21 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                         >
                           {brokerageAccounts.map((b: BankAccount) => (
                             <option key={b.id} value={b.id} className="field-select-option">
-                              {b.accountName || b.customBankName || b.bankName || `Account ${b.id}`} · {Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {b.currency || 'EGP'} available
+                              {isVirtualAccount(b)
+                                ? `✨ Virtual Account (Paper Trading) · ${Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${b.currency || 'EGP'} paper cash`
+                                : `${b.accountName || b.customBankName || b.bankName || `Account ${b.id}`} · ${Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${b.currency || 'EGP'} available`}
                             </option>
                           ))}
                         </select>
                         <ChevronDown className="field-select-chevron w-4 h-4" />
+                      </div>
+                    )}
+                    {positionAccountId && isVirtualAccount(brokerageAccounts.find((b) => String(b.id) === positionAccountId)) && (
+                      <div className="drawer-info-card mt-2">
+                        <div className="drawer-info-dot" />
+                        <p className="drawer-info-text">
+                          💡 Virtual Account: Zero personal bank credentials required. Tracks on charts with live P&amp;L and automated strategy sell notifications.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -746,7 +760,13 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                     className="drawer-confirm-btn"
                   >
                     <TrendingUp className="drawer-btn-icon" />
-                    <span>{isSubmittingPos ? 'Creating...' : 'Create Stock Position'}</span>
+                    <span>
+                      {isSubmittingPos
+                        ? 'Creating...'
+                        : positionAccountId && isVirtualAccount(brokerageAccounts.find((b) => String(b.id) === positionAccountId))
+                        ? 'Track Virtual Position'
+                        : 'Create Stock Position'}
+                    </span>
                   </button>
                 </div>
               </form>

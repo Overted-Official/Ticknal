@@ -6,6 +6,7 @@ import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrate
 import { createClient } from '@/lib/supabase/server';
 import { getCachedDailyPrices } from '@/lib/data-cache';
 import { evaluateHoldingConsensus, type HoldingConsensus } from '@/lib/multi-strategy-consensus';
+import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';
 
 class TradeValidationError extends Error {
   status: number;
@@ -76,13 +77,17 @@ export async function handlePortfolioTradesPost(request: Request) {
   try {
     const body = await request.json();
     const action = String(body.action || '').toUpperCase();
-    const accountId = Number(body.accountId);
+    let targetAccountId = Number(body.accountId);
+    if (!Number.isInteger(targetAccountId) || targetAccountId <= 0) {
+      const virtual = await ensureUserVirtualAccount(user.id);
+      targetAccountId = virtual.id;
+    }
+
     const ticker = normalizeTickerSymbol(String(body.symbol || body.tickerSymbol || ''));
     const price = Number(body.price ?? body.entryPrice ?? body.exitPrice);
     const quantity = Number(body.quantity ?? body.quantityToClose);
 
     if (!['BUY', 'SELL'].includes(action)) throw new TradeValidationError('action must be BUY or SELL');
-    if (!Number.isInteger(accountId) || accountId <= 0) throw new TradeValidationError('A brokerage account is required');
     if (!ticker) throw new TradeValidationError('A ticker is required');
     if (!Number.isFinite(price) || price <= 0) throw new TradeValidationError('Price must be positive');
     if (!Number.isFinite(quantity) || quantity <= 0) throw new TradeValidationError('Quantity must be positive');
@@ -99,7 +104,7 @@ export async function handlePortfolioTradesPost(request: Request) {
       const [account] = await tx.select()
         .from(userBankAccounts)
         .where(and(
-          eq(userBankAccounts.id, accountId),
+          eq(userBankAccounts.id, targetAccountId),
           eq(userBankAccounts.userId, user.id),
           eq(userBankAccounts.isArchived, false),
         ));
@@ -112,15 +117,27 @@ export async function handlePortfolioTradesPost(request: Request) {
         .where(eq(tickers.symbol, ticker));
       if (!instrument) throw new TradeValidationError('Instrument not found', 404);
       const instrumentCurrency = (instrument.currency || 'EGP').toUpperCase();
-      if ((account.currency || 'EGP').toUpperCase() !== instrumentCurrency) {
+
+      const isVirtual = isVirtualAccount(account);
+      if (!isVirtual && (account.currency || 'EGP').toUpperCase() !== instrumentCurrency) {
         throw new TradeValidationError(`A ${instrumentCurrency} brokerage account is required for ${ticker}`);
       }
 
       if (action === 'BUY') {
+        // Auto-replenish virtual account if balance is insufficient
+        if (isVirtual && Number(account.balance) < amount) {
+          await tx.update(userBankAccounts)
+            .set({
+              balance: sql`${userBankAccounts.balance} + ${Math.max(amount * 2, 1000000)}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(userBankAccounts.id, targetAccountId));
+        }
+
         const [debitedAccount] = await tx.update(userBankAccounts)
           .set({ balance: sql`${userBankAccounts.balance} - ${amount}`, updatedAt: new Date() })
           .where(and(
-            eq(userBankAccounts.id, accountId),
+            eq(userBankAccounts.id, targetAccountId),
             eq(userBankAccounts.userId, user.id),
             sql`CAST(${userBankAccounts.balance} AS NUMERIC) >= ${amount}`,
           ))
@@ -133,7 +150,7 @@ export async function handlePortfolioTradesPost(request: Request) {
           tickerSymbol: ticker,
           status: 'OPEN',
           side: 'LONG',
-          accountId,
+          accountId: targetAccountId,
           entryDate: tradeDate,
           entryPrice: String(price),
           quantity: String(quantity),
@@ -149,7 +166,7 @@ export async function handlePortfolioTradesPost(request: Request) {
 
         const [transaction] = await tx.insert(bankTransactions).values({
           userId: user.id,
-          accountId,
+          accountId: targetAccountId,
           type: 'BROKERAGE_BUY',
           amount: String(amount),
           currency: account.currency,
@@ -166,7 +183,7 @@ export async function handlePortfolioTradesPost(request: Request) {
         .from(positions)
         .where(and(
           eq(positions.userId, user.id),
-          eq(positions.accountId, accountId),
+          eq(positions.accountId, targetAccountId),
           eq(positions.tickerSymbol, ticker),
           eq(positions.status, 'OPEN'),
         ))
@@ -200,7 +217,7 @@ export async function handlePortfolioTradesPost(request: Request) {
             tickerSymbol: ticker,
             status: 'CLOSED',
             side: lot.side,
-            accountId,
+            accountId: targetAccountId,
             entryDate: lot.entryDate,
             entryPrice: lot.entryPrice,
             quantity: String(closeQuantity),
@@ -223,12 +240,12 @@ export async function handlePortfolioTradesPost(request: Request) {
 
       const [creditedAccount] = await tx.update(userBankAccounts)
         .set({ balance: sql`${userBankAccounts.balance} + ${amount}`, updatedAt: new Date() })
-        .where(and(eq(userBankAccounts.id, accountId), eq(userBankAccounts.userId, user.id)))
+        .where(and(eq(userBankAccounts.id, targetAccountId), eq(userBankAccounts.userId, user.id)))
         .returning();
 
       const [transaction] = await tx.insert(bankTransactions).values({
         userId: user.id,
-        accountId,
+        accountId: targetAccountId,
         type: 'BROKERAGE_SELL',
         amount: String(amount),
         currency: account.currency,

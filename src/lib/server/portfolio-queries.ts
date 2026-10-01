@@ -10,6 +10,7 @@ import {
 } from '@/db/schema';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
+import { ensureUserVirtualAccount } from '@/lib/banks/virtual-account';
 import {
   buildCashTrend,
   monthEnd,
@@ -720,6 +721,8 @@ async function getTickerMap(): Promise<
 
 export async function getUserBankAccounts(userId: string): Promise<BankAccount[]> {
   try {
+    await ensureUserVirtualAccount(userId).catch(() => null);
+
     const rows = await db
       .select({
         id: userBankAccounts.id,

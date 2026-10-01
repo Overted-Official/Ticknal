@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/icon-library';
 import { useToast } from '@/context/ToastContext';
 import InlineSpinner from '@/components/ui/InlineSpinner';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 
 export type InitialOrderData = {
   symbol: string;
@@ -60,10 +61,14 @@ export type BrokerageAccountOption = {
 const EMPTY_BROKERAGE_ACCOUNTS: BrokerageAccountOption[] = [];
 
 function accountLabel(account: BrokerageAccountOption): string {
+  if (isVirtualAccount(account)) {
+    return '✨ Virtual Account (Paper Trading)';
+  }
   return account.accountName || account.customBankName || account.bankName || `Account ${account.id}`;
 }
 
 function getBrokerInitials(account: BrokerageAccountOption): string {
+  if (isVirtualAccount(account)) return 'VA';
   const name = account.accountName || account.customBankName || account.bankName || '';
   const clean = name.trim().toUpperCase();
   if (clean.includes('THNDR')) return 'TH';
@@ -413,9 +418,16 @@ export default function AddOrderModal({
       });
 
       if (res.ok) {
+        const isVirtual = selectedAccount && isVirtualAccount(selectedAccount);
         toast.success(
-          mode === 'live' ? 'Live position opened' : 'Position Added',
-          mode === 'live'
+          isVirtual
+            ? 'Virtual Position Opened'
+            : mode === 'live'
+            ? 'Live position opened'
+            : 'Position Added',
+          isVirtual
+            ? `${newOrderForm.symbol} tracked in Virtual Account with live P&L and automated sell exit notifications.`
+            : mode === 'live'
             ? `${newOrderForm.symbol} position was opened and brokerage cash debited.`
             : `${newOrderForm.symbol} position recorded successfully.`
         );
@@ -502,7 +514,11 @@ export default function AddOrderModal({
                   Add Position
                 </h2>
                 <p className="text-xs text-white/50 font-normal mt-0.5 font-sans">
-                  {mode === 'live' ? 'Execute a live position via funded brokerage cash' : 'Configure and record a tracked equity position'}
+                  {selectedAccount && isVirtualAccount(selectedAccount)
+                    ? 'Tracked paper trading position with automated exit alerts'
+                    : mode === 'live'
+                    ? 'Execute a live position via funded brokerage cash'
+                    : 'Configure and record a tracked equity position'}
                 </p>
               </div>
 
@@ -793,34 +809,49 @@ export default function AddOrderModal({
 
                   {/* Line 2: Broker: 'brokerage account selector' with circular logo and amount available (all in same line) */}
                   {mode === 'live' && (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {isAccountsLoading && eligibleAccounts.length === 0 ? (
                         <div className="h-9 rounded-lg bg-black border border-white/10 px-3 flex items-center text-xs text-white/50 font-sans">
                           <InlineSpinner className="mr-2 h-3.5 w-3.5" label="Loading accounts" /> Loading accounts...
                         </div>
                       ) : eligibleAccounts.length > 0 ? (
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xs font-medium text-white/60 font-sans shrink-0">Broker:</span>
-                          {selectedAccount && (
-                            <div className="w-6 h-6 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-[10px] font-bold text-white shrink-0 font-sans">
-                              {getBrokerInitials(selectedAccount)}
+                        <>
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xs font-medium text-white/60 font-sans shrink-0">Broker:</span>
+                            {selectedAccount && (
+                              <div
+                                className={`w-6 h-6 rounded-full ${
+                                  isVirtualAccount(selectedAccount)
+                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                    : 'bg-white/10 text-white border-white/15'
+                                } border flex items-center justify-center text-[10px] font-bold shrink-0 font-sans`}
+                              >
+                                {getBrokerInitials(selectedAccount)}
+                              </div>
+                            )}
+                            <div className="relative flex-1">
+                              <select
+                                required
+                                value={newOrderForm.accountId}
+                                onChange={(e) => setNewOrderForm((prev) => ({ ...prev, accountId: e.target.value }))}
+                                className="select-token h-9 bg-black text-white text-xs border-white/10 focus:border-white/40 pr-8"
+                              >
+                                {eligibleAccounts.map((account) => (
+                                  <option key={account.id} value={account.id} className="bg-black text-white font-sans">
+                                    {accountLabel(account)} · {Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {account.currency || 'EGP'} {isVirtualAccount(account) ? 'paper cash' : 'available'}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {selectedAccount && isVirtualAccount(selectedAccount) && (
+                            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/10 text-[11px] text-white/70 font-sans leading-relaxed">
+                              <span className="text-amber-400 font-bold shrink-0">💡 Virtual Account:</span>
+                              <span>Zero personal bank credentials required. Tracks on charts with live P&amp;L and automated strategy sell notifications.</span>
                             </div>
                           )}
-                          <div className="relative flex-1">
-                            <select
-                              required
-                              value={newOrderForm.accountId}
-                              onChange={(e) => setNewOrderForm((prev) => ({ ...prev, accountId: e.target.value }))}
-                              className="select-token h-9 bg-black text-white text-xs border-white/10 focus:border-white/40 pr-8"
-                            >
-                              {eligibleAccounts.map((account) => (
-                                <option key={account.id} value={account.id} className="bg-black text-white font-sans">
-                                  {accountLabel(account)} · {Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {account.currency || 'EGP'} available
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
+                        </>
                       ) : (
                         <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 px-3 py-2 text-xs text-rose-400 flex items-center gap-2 font-sans">
                           <AlertCircle size={14} className="shrink-0 text-rose-400" />
@@ -919,6 +950,8 @@ export default function AddOrderModal({
                   <span>
                     {isSubmitting
                       ? 'Processing...'
+                      : selectedAccount && isVirtualAccount(selectedAccount)
+                      ? 'Execute Virtual Buy'
                       : mode === 'live'
                       ? 'Execute Live Buy'
                       : 'Record Position'}

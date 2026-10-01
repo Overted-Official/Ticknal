@@ -27,6 +27,7 @@ export function getBankShortName(fullName?: string | null): string {
   if (lower.includes('thndr')) return 'Thndr';
   if (lower.includes('instapay')) return 'InstaPay';
   if (lower.includes('vodafone')) return 'Vodafone Cash';
+  if (lower.includes('virtual')) return 'Virtual';
 
   return name;
 }
@@ -40,6 +41,10 @@ export function formatCleanAccountTitle(account: {
 }): { bankShort: string; subName: string } {
   const bankRaw = account.bankName || account.customBankName || account.accountName;
   const bankShort = getBankShortName(bankRaw);
+
+  if (bankRaw.toLowerCase().includes('virtual') || (account.accountName && account.accountName.toLowerCase().includes('virtual'))) {
+    return { bankShort: 'Virtual', subName: 'Paper Trading' };
+  }
 
   let sub = account.accountName || '';
   sub = sub

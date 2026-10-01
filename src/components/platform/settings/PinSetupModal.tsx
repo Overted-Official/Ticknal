@@ -322,7 +322,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                       key={digit}
                       type="button"
                       onClick={() => handleDigit(digit)}
-                      className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[30px] sm:text-[34px] font-sans font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
+                      className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[24px] sm:text-[32px] font-sans font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
                     >
                       {digit}
                     </button>
@@ -335,7 +335,7 @@ export default function PinSetupModal({ isOpen, onClose, onSuccess }: PinSetupMo
                 <button
                   type="button"
                   onClick={() => handleDigit('0')}
-                  className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[30px] sm:text-[34px] font-sans font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
+                  className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full aspect-square bg-white/[0.05] hover:bg-white/[0.12] active:bg-white/[0.22] active:scale-95 border border-white/[0.08] hover:border-white/[0.20] flex items-center justify-center text-[24px] sm:text-[32px] font-sans font-normal leading-none text-white transition-all shadow-sm focus:outline-none cursor-pointer select-none"
                 >
                   0
                 </button>

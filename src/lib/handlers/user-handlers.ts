@@ -6,6 +6,7 @@ import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';
 
 type PositionRow = typeof positions.$inferSelect;
 
@@ -174,6 +175,9 @@ export async function handlePositionsPost(request: Request) {
 
       if (matchingBroker) {
         targetAccountId = matchingBroker.id;
+      } else {
+        const virtual = await ensureUserVirtualAccount(user.id, targetCurrency);
+        targetAccountId = virtual.id;
       }
     }
 
@@ -194,6 +198,16 @@ export async function handlePositionsPost(request: Request) {
 
         if (!account || !['BROKERAGE', 'BROKER_CASH'].includes(account.accountType)) {
           throw new Error('Selected account is not a valid brokerage account');
+        }
+
+        const isVirtual = isVirtualAccount(account);
+        if (isVirtual && Number(account.balance) < tradeAmount) {
+          await tx.update(userBankAccounts)
+            .set({
+              balance: sql`${userBankAccounts.balance} + ${Math.max(tradeAmount * 2, 1000000)}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(userBankAccounts.id, targetAccountId));
         }
 
         const [debited] = await tx.update(userBankAccounts)

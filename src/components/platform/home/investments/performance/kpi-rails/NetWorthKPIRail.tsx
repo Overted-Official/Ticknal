@@ -12,6 +12,7 @@ import {
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type BankAccount } from '@/types/bank';
 import { isBrokerageAccount, toEgp, type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import { type OrderStats } from '../../homeInvestmentsTypes';
 import KPICard from './KPICard';
 
@@ -32,9 +33,10 @@ export default function NetWorthKPIRail({
 }: NetWorthKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
 
-  // Split cash and brokerage accounts
-  const brokerageAccounts = accounts.filter(isBrokerageAccount);
-  const cashAccounts = accounts.filter((account) => !isBrokerageAccount(account));
+  // Split cash and brokerage accounts (excluding virtual paper trading accounts)
+  const realAccounts = accounts.filter((a) => !isVirtualAccount(a));
+  const brokerageAccounts = realAccounts.filter(isBrokerageAccount);
+  const cashAccounts = realAccounts.filter((account) => !isBrokerageAccount(account));
 
   // Liquid cash in commercial bank accounts (EGP + USD)
   const totalEgpLiquidCash = cashAccounts

@@ -286,7 +286,7 @@ export default function PinLockScreen({
                 className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
               >
                 <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
-                  <span className="text-3xl sm:text-4xl font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+                  <span className="text-[24px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
                     {digit}
                   </span>
                 </div>
@@ -306,7 +306,7 @@ export default function PinLockScreen({
             className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
           >
             <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
-              <span className="text-3xl sm:text-4xl font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+              <span className="text-[24px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
                 0
               </span>
             </div>

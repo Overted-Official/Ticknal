@@ -272,10 +272,13 @@ export default function NotificationsDrawer({
     if (brokerageAccounts.length === 0 && !isLoadingAccounts) {
       setIsLoadingAccounts(true);
       try {
-        const res = await fetch('/api/brokerage-accounts');
+        const res = await fetch('/api/banks/accounts');
         if (res.ok) {
           const data = await res.json();
-          setBrokerageAccounts(data.accounts ?? []);
+          const brokerList = (data.accounts ?? []).filter(
+            (a: any) => !a.isArchived && ['BROKERAGE', 'BROKER_CASH'].includes(a.accountType)
+          );
+          setBrokerageAccounts(brokerList);
         }
       } catch { /* silently fall back to empty list */ }
       finally { setIsLoadingAccounts(false); }

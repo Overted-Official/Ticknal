@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { banks, userBankAccounts, bankMonthlySnapshots, bankTransactions } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { maskAccountNumber } from '@/lib/masking';
+import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';
 
 // Helper function: Process daily interest accruals for savings accounts
 async function processAccountInterestAccruals(userId: string, accounts: any[]) {
@@ -98,6 +99,9 @@ export async function handleAccountsGet() {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Ensure standard Virtual Account exists for this user
+    await ensureUserVirtualAccount(user.id);
 
     let accounts = await db
       .select({
@@ -271,6 +275,19 @@ export async function handleAccountsDelete(req: Request) {
 
     if (!id) {
       return NextResponse.json({ error: 'Account ID required' }, { status: 400 });
+    }
+
+    const [target] = await db
+      .select()
+      .from(userBankAccounts)
+      .where(and(eq(userBankAccounts.id, Number(id)), eq(userBankAccounts.userId, user.id)));
+
+    if (!target) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+
+    if (isVirtualAccount(target)) {
+      return NextResponse.json({ error: 'The standard Virtual Account cannot be deleted.' }, { status: 400 });
     }
 
     await db
