@@ -115,8 +115,8 @@ export default function LandingTickerMarquee({ tickers }: LandingTickerMarqueePr
         </p>
       </div>
 
-      {/* Marquee Rails Container with Edge Fade Gradients */}
-      <div className="relative w-full overflow-hidden">
+      {/* Marquee Rails Container with Edge Fade Gradients - strictly dir="ltr" to ensure identical smooth movement across English and Arabic */}
+      <div className="relative w-full overflow-hidden" dir="ltr">
         {/* Cinematic Left & Right Ambient Fade Gradients */}
         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-r from-black via-black/85 to-transparent z-10" />
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-l from-black via-black/85 to-transparent z-10" />

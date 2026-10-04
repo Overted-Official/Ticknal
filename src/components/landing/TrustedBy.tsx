@@ -19,7 +19,7 @@ export default function TrustedBy() {
       <div className="absolute inset-y-0 left-0 w-24 sm:w-48 bg-gradient-to-r from-editorial-dark to-transparent z-10 pointer-events-none" />
       <div className="absolute inset-y-0 right-0 w-24 sm:w-48 bg-gradient-to-l from-editorial-dark to-transparent z-10 pointer-events-none" />
 
-      <div className="relative flex overflow-hidden w-full">
+      <div className="relative flex overflow-hidden w-full" dir="ltr">
         <div className="animate-marquee flex items-center shrink-0">
           {[...logos, ...logos].map((logo, idx) => (
             <div

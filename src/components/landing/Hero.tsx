@@ -90,7 +90,7 @@ export default function Hero() {
 
       {/* Enterprise Partner Ticker across the bottom edge */}
       <div className="relative z-10 max-w-[1440px] w-full mx-auto pt-6 border-t border-white/10">
-        <div className="flex items-center justify-between gap-8 overflow-hidden py-3">
+        <div className="flex items-center justify-between gap-8 overflow-hidden py-3" dir="ltr">
           <div className="animate-marquee flex items-center shrink-0 gap-12 sm:gap-16">
             {[...partnerLogos, ...partnerLogos].map((logo, idx) => (
               <div
