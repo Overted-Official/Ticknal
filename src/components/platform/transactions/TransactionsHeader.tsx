@@ -2,8 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 
 export default function TransactionsHeader() {
+  const { t, locale } = useTranslation();
+
   return (
     <header className="flex items-center justify-between gap-4 select-none pb-1">
       {/* Left: Breadcrumb & Title */}
@@ -12,11 +15,11 @@ export default function TransactionsHeader() {
           href="/home"
           className="text-text-muted font-normal hover:text-text-primary transition-colors"
         >
-          Home
+          {locale === 'ar' ? 'الرئيسية' : 'Home'}
         </Link>
         <span className="text-text-muted">/</span>
         <h1 className="font-semibold text-text-primary">
-          Transactions
+          {locale === 'ar' ? 'المعاملات' : 'Transactions'}
         </h1>
       </div>
     </header>

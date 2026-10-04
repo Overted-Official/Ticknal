@@ -13,6 +13,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type MonthlyDataItem } from '../homeInvestmentsTypes';
 import PerformanceChartTooltip from './PerformanceChartTooltip';
 import PerformanceChartToolbar, { type Timeframe } from './PerformanceChartToolbar';
@@ -24,6 +25,7 @@ interface PerformanceChartProps {
 export default function PerformanceChart({ data }: PerformanceChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>('All');
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
 
   // Summary Metrics Header
   const summary = useMemo(() => {
@@ -109,19 +111,19 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
         {/* Left: Dynamic Legends */}
         <div className="flex items-center gap-3 text-xs flex-wrap">
           <span className="text-[13px] font-semibold text-text-primary tracking-tight mr-0.5">
-            Portfolio Progression
+            {locale === 'ar' ? 'نمو المحفظة' : 'Portfolio Progression'}
           </span>
           <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
             <span className="w-2 h-2 rounded-full bg-brand-blue" />
-            <span>Market Value</span>
+            <span>{locale === 'ar' ? 'القيمة السوقية' : 'Market Value'}</span>
           </span>
           <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
             <span className="w-2 h-2 rounded-full bg-profit-chart" />
-            <span>Realized P/L</span>
+            <span>{locale === 'ar' ? 'الربح/الخسارة المحققة' : 'Realized P/L'}</span>
           </span>
           <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
             <span className="w-2 h-2 rounded-full bg-accent-orange" />
-            <span>ROI</span>
+            <span>{locale === 'ar' ? 'العائد' : 'ROI'}</span>
           </span>
         </div>
 
@@ -136,7 +138,9 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
       <div className="w-full h-[210px] relative">
         {filteredData.length < 2 ? (
           <div className="flex h-full items-center justify-center text-xs text-text-muted">
-            Historical performance progression is not available.
+            {locale === 'ar'
+              ? 'سجل نمو الأداء التاريخي غير متوفر.'
+              : 'Historical performance progression is not available.'}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Delete, LogOut, ShieldCheck, KeyRound, Mail, AlertCircle, CheckCircle2, ArrowRight } from '@/components/ui/icon-library';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n';
 
 interface PinLockScreenProps {
   onUnlock: (pin: string) => Promise<boolean>;
@@ -19,6 +20,7 @@ export default function PinLockScreen({
   securityQuestion,
   onVerifyRecovery,
 }: PinLockScreenProps) {
+  const { t } = useTranslation();
   const [pin, setPin] = useState<string>('');
   const [isError, setIsError] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -80,7 +82,7 @@ export default function PinLockScreen({
         const success = await onUnlock(newPin);
         if (!success) {
           setIsError(true);
-          setErrorMessage('Incorrect PIN. Please try again.');
+          setErrorMessage(t('auth.pinMismatch'));
           try {
             if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
               navigator.vibrate([50, 50, 50]);
@@ -219,10 +221,10 @@ export default function PinLockScreen({
         </div>
 
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Ticknal Security</h2>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('settings.securityTitle')}</h2>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-1.5 rounded-full bg-white/[0.04] border border-white/[0.08]">
             <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] animate-pulse" />
-            <p className="text-[11px] sm:text-xs text-white/60 font-medium">Enter 4-digit passcode to unlock</p>
+            <p className="text-[11px] sm:text-xs text-white/60 font-medium">{t('auth.enterPin')}</p>
           </div>
         </div>
       </div>
@@ -286,7 +288,7 @@ export default function PinLockScreen({
                 className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
               >
                 <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
-                  <span className="text-[24px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+                  <span className="text-[20px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
                     {digit}
                   </span>
                 </div>
@@ -306,7 +308,7 @@ export default function PinLockScreen({
             className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
           >
             <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
-              <span className="text-[24px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+              <span className="text-[20px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
                 0
               </span>
             </div>
@@ -334,7 +336,7 @@ export default function PinLockScreen({
           }}
           className="text-white/40 hover:text-white transition-colors flex items-center gap-1 btn-typography cursor-pointer"
         >
-          <span>Forgot PIN?</span>
+          <span>{t('auth.forgotPin')}</span>
         </button>
 
         <span className="text-white/20">•</span>
@@ -345,7 +347,7 @@ export default function PinLockScreen({
           className="text-white/40 hover:text-white/80 transition-colors flex items-center gap-1 btn-typography cursor-pointer"
         >
           <LogOut size={12} />
-          <span>Sign Out</span>
+          <span>{t('settings.signOut')}</span>
         </button>
       </div>
 

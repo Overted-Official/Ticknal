@@ -8,6 +8,8 @@ import UserProfileWidget, { type SettingsUserProfile } from './UserProfileWidget
 import PinSecurityCard from './PinSecurityCard';
 import PushNotificationCard from './PushNotificationCard';
 import PushDevicesWidget, { type DeviceInfo } from './PushDevicesWidget';
+import LanguagePreferencesCard from './LanguagePreferencesCard';
+import { useTranslation } from '@/lib/i18n';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
 
 export type { SettingsUserProfile, DeviceInfo };
@@ -21,6 +23,7 @@ export default function SettingsPageView({
   userProfile,
   initialDevices = [],
 }: SettingsPageViewProps) {
+  const { t } = useTranslation();
   return (
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
       {/* 1. Header (Breadcrumbs & Actions) */}
@@ -46,9 +49,9 @@ export default function SettingsPageView({
         >
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
             <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Account Profile</h2>
+              <h2 className="section-title">{t('settings.profileTitle')}</h2>
               <p className="section-subtitle">
-                Personal identity, email authentication status, and session controls
+                {t('settings.profileSubtitle')}
               </p>
             </div>
           </div>
@@ -59,7 +62,24 @@ export default function SettingsPageView({
           </div>
         </motion.section>
 
-        {/* SECTION 2: SECURITY & PASSCODE PIN */}
+        {/* SECTION 2: PREFERENCES & LANGUAGE */}
+        <motion.section
+          id="section-preferences"
+          variants={itemFadeInUp}
+          className="section-container scroll-mt-20 space-y-4"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="section-title">{t('settings.languageTitle')}</h2>
+              <p className="section-subtitle">
+                {t('settings.languageSubtitle')}
+              </p>
+            </div>
+          </div>
+          <LanguagePreferencesCard />
+        </motion.section>
+
+        {/* SECTION 3: SECURITY & PASSCODE PIN */}
         <motion.section
           id="section-security"
           variants={itemFadeInUp}
@@ -67,16 +87,16 @@ export default function SettingsPageView({
         >
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
             <div className="flex flex-col gap-0.5">
-              <h2 className="section-title">Security & PIN</h2>
+              <h2 className="section-title">{t('settings.securityTitle')}</h2>
               <p className="section-subtitle">
-                4-digit local passcode, auto-lock timeouts, and device security safeguards
+                {t('settings.securitySubtitle')}
               </p>
             </div>
           </div>
           <PinSecurityCard />
         </motion.section>
 
-        {/* SECTION 3: CONNECTED DEVICES & NOTIFICATIONS */}
+        {/* SECTION 4: CONNECTED DEVICES & NOTIFICATIONS */}
         <motion.section
           id="section-devices"
           variants={itemFadeInUp}
@@ -85,13 +105,13 @@ export default function SettingsPageView({
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <h2 className="section-title">Connected Devices</h2>
+                <h2 className="section-title">{t('settings.devicesTitle')}</h2>
                 {initialDevices.length > 0 && (
                   <span className="badge-count">{initialDevices.length}</span>
                 )}
               </div>
               <p className="section-subtitle">
-                Active web sessions, registered push notification endpoints, and remote revocation
+                {t('settings.devicesSubtitle')}
               </p>
             </div>
           </div>

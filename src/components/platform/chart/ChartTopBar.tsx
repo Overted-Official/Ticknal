@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/icon-library';
 import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import InlineSpinner from '@/components/ui/InlineSpinner';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 
 export interface ChartTopBarProps {
   symbol: string;
@@ -50,6 +52,7 @@ export default function ChartTopBar({
   onOpenPositionsDrawer,
   onOpenAddOrder,
 }: ChartTopBarProps) {
+  const { locale } = useTranslation();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'stocks' | 'funds' | 'metals'>('all');
@@ -219,11 +222,11 @@ export default function ChartTopBar({
             className="flex-1 min-w-0 h-8 px-2.5 rounded-md bg-white/[0.04] active:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
             role="button"
             tabIndex={0}
-            aria-label="Search tickers"
+            aria-label={locale === 'ar' ? 'بحث عن الأسهم والأصول' : 'Search tickers'}
           >
             <Search size={13} className="text-text-muted shrink-0" />
             <span className="text-[11px] text-text-muted truncate select-none">
-              {searchQuery || 'Search tickers...'}
+              {searchQuery || (locale === 'ar' ? 'بحث عن سهم أو أصل...' : 'Search tickers...')}
             </span>
           </div>
 
@@ -232,13 +235,13 @@ export default function ChartTopBar({
             {onOpenPositionsDrawer && (
               <button
                 type="button"
-                title="My Positions & Orders"
-                aria-label="My Positions"
+                title={locale === 'ar' ? 'صفقاتي وأوامري' : 'My Positions & Orders'}
+                aria-label={locale === 'ar' ? 'صفقاتي' : 'My Positions'}
                 onClick={onOpenPositionsDrawer}
                 className="h-8 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white active:bg-white/[0.08] bg-white/[0.03] border border-white/[0.08] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Briefcase size={12} className="shrink-0" />
-                <span>Positions</span>
+                <span>{locale === 'ar' ? 'صفقاتي' : 'Positions'}</span>
                 {openPositionsCount > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none shrink-0">
                     {openPositionsCount}
@@ -251,13 +254,13 @@ export default function ChartTopBar({
             {onOpenAddOrder && (
               <button
                 type="button"
-                title="Add Position"
-                aria-label="Add Position"
+                title={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
+                aria-label={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
                 onClick={onOpenAddOrder}
                 className="h-8 px-2.5 rounded-md bg-white hover:bg-white/90 active:bg-white/80 text-black text-[11px] font-semibold transition-all flex items-center justify-center gap-1 shrink-0 cursor-pointer shadow-xs active:scale-95"
               >
                 <Plus size={13} strokeWidth={2.5} />
-                <span>Add</span>
+                <span>{locale === 'ar' ? 'إضافة' : 'Add'}</span>
               </button>
             )}
           </div>
@@ -270,8 +273,8 @@ export default function ChartTopBar({
             {onTogglePredict && (
               <button
                 type="button"
-                title="AI Price Forecast"
-                aria-label="Predict Price"
+                title={locale === 'ar' ? 'توقعات الأسعار بالذكاء الاصطناعي' : 'AI Price Forecast'}
+                aria-label={locale === 'ar' ? 'توقع السعر' : 'Predict Price'}
                 disabled={isPredicting}
                 onClick={onTogglePredict}
                 className={`h-7 px-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed w-full border ${
@@ -281,11 +284,11 @@ export default function ChartTopBar({
                 }`}
               >
                 {isPredicting ? (
-                  <InlineSpinner className="h-[13px] w-[13px]" label="Generating forecast" />
+                  <InlineSpinner className="h-[13px] w-[13px]" label={locale === 'ar' ? 'جاري إنشاء التوقع' : 'Generating forecast'} />
                 ) : (
                   <Sparkles size={12} className="text-text-muted shrink-0" />
                 )}
-                <span className="truncate">Predict</span>
+                <span className="truncate">{locale === 'ar' ? 'توقع' : 'Predict'}</span>
               </button>
             )}
 
@@ -293,8 +296,8 @@ export default function ChartTopBar({
             {onToggleIndicators && (
               <button
                 type="button"
-                title="Technical Indicators"
-                aria-label="Indicators"
+                title={locale === 'ar' ? 'المؤشرات الفنية' : 'Technical Indicators'}
+                aria-label={locale === 'ar' ? 'المؤشرات' : 'Indicators'}
                 onClick={onToggleIndicators}
                 className={`h-7 px-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full border ${
                   isIndicatorsPopoverOpen || activeIndicatorsCount > 0
@@ -303,7 +306,7 @@ export default function ChartTopBar({
                 }`}
               >
                 <BarChart2 size={12} className="shrink-0" />
-                <span className="truncate">Indicators</span>
+                <span className="truncate">{locale === 'ar' ? 'المؤشرات' : 'Indicators'}</span>
                 {activeIndicatorsCount > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none shrink-0">
                     {activeIndicatorsCount}
@@ -316,13 +319,13 @@ export default function ChartTopBar({
             {onOpenStrategyReport && (
               <button
                 type="button"
-                title="Strategy Report & Performance Backtest"
-                aria-label="Strategy Report"
+                title={locale === 'ar' ? 'تقرير الاستراتيجية واختبار الأداء' : 'Strategy Report & Performance Backtest'}
+                aria-label={locale === 'ar' ? 'تقرير الاستراتيجية' : 'Strategy Report'}
                 onClick={onOpenStrategyReport}
                 className="h-7 px-1 rounded-md text-[11px] font-medium text-text-muted hover:text-white bg-white/[0.03] border border-white/[0.08] active:bg-white/[0.08] transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full"
               >
                 <FileText size={12} className="shrink-0" />
-                <span className="truncate">Report</span>
+                <span className="truncate">{locale === 'ar' ? 'التقرير' : 'Report'}</span>
               </button>
             )}
           </div>
@@ -343,7 +346,7 @@ export default function ChartTopBar({
               className="absolute left-2.5 text-text-muted group-hover:text-white transition-colors pointer-events-none"
             />
             <div className="h-7 w-36 sm:w-44 md:w-52 rounded-md bg-white/[0.04] group-hover:bg-white/[0.07] border border-white/[0.08] group-hover:border-white/20 pl-7 pr-6 text-[11px] text-text-muted group-hover:text-white flex items-center transition-all leading-none font-sans select-none">
-              {searchQuery || 'Search tickers...'}
+              {searchQuery || (locale === 'ar' ? 'بحث عن سهم أو أصل...' : 'Search tickers...')}
             </div>
             <kbd className="hidden md:flex absolute right-1.5 px-1 py-0.5 rounded border border-white/10 text-[9px] text-text-muted font-sans pointer-events-none leading-none">
               ⌘K
@@ -357,8 +360,8 @@ export default function ChartTopBar({
           {onTogglePredict && (
             <button
               type="button"
-              title="AI Price Forecast"
-              aria-label="Predict Price"
+              title={locale === 'ar' ? 'توقعات الأسعار بالذكاء الاصطناعي' : 'AI Price Forecast'}
+              aria-label={locale === 'ar' ? 'توقع السعر' : 'Predict Price'}
               disabled={isPredicting}
               onClick={onTogglePredict}
               className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${
@@ -368,11 +371,11 @@ export default function ChartTopBar({
               }`}
             >
               {isPredicting ? (
-                <InlineSpinner className="h-[13px] w-[13px]" label="Generating price forecast" />
+                <InlineSpinner className="h-[13px] w-[13px]" label={locale === 'ar' ? 'جاري إنشاء توقع السعر' : 'Generating price forecast'} />
               ) : (
                 <Sparkles size={13} className="text-text-muted" />
               )}
-              <span>Predict Price</span>
+              <span>{locale === 'ar' ? 'توقع السعر' : 'Predict Price'}</span>
             </button>
           )}
 
@@ -383,8 +386,8 @@ export default function ChartTopBar({
           {onToggleIndicators && (
             <button
               type="button"
-              title="Technical Indicators"
-              aria-label="Indicators"
+              title={locale === 'ar' ? 'المؤشرات الفنية' : 'Technical Indicators'}
+              aria-label={locale === 'ar' ? 'المؤشرات' : 'Indicators'}
               onClick={onToggleIndicators}
               className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 ${
                 isIndicatorsPopoverOpen || activeIndicatorsCount > 0
@@ -393,7 +396,7 @@ export default function ChartTopBar({
               }`}
             >
               <BarChart2 size={13} />
-              <span>Indicators</span>
+              <span>{locale === 'ar' ? 'المؤشرات الفنية' : 'Indicators'}</span>
               {activeIndicatorsCount > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
                   {activeIndicatorsCount}
@@ -409,13 +412,13 @@ export default function ChartTopBar({
           {onOpenStrategyReport && (
             <button
               type="button"
-              title="Strategy Report & Performance Backtest"
-              aria-label="Strategy Report"
+              title={locale === 'ar' ? 'تقرير الاستراتيجية واختبار الأداء' : 'Strategy Report & Performance Backtest'}
+              aria-label={locale === 'ar' ? 'تقرير الاستراتيجية' : 'Strategy Report'}
               onClick={onOpenStrategyReport}
               className="h-7 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <FileText size={13} />
-              <span>Strategy Report</span>
+              <span>{locale === 'ar' ? 'تقرير الاستراتيجية' : 'Strategy Report'}</span>
             </button>
           )}
         </div>
@@ -426,13 +429,13 @@ export default function ChartTopBar({
           {onOpenPositionsDrawer && (
             <button
               type="button"
-              title="My Positions & Orders"
-              aria-label="My Positions"
+              title={locale === 'ar' ? 'صفقاتي وأوامري' : 'My Positions & Orders'}
+              aria-label={locale === 'ar' ? 'صفقاتي' : 'My Positions'}
               onClick={onOpenPositionsDrawer}
               className="h-7 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <Briefcase size={13} />
-              <span>My Positions</span>
+              <span>{locale === 'ar' ? 'صفقاتي' : 'My Positions'}</span>
               {openPositionsCount > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
                   {openPositionsCount}
@@ -448,13 +451,13 @@ export default function ChartTopBar({
           {onOpenAddOrder && (
             <button
               type="button"
-              title="Add Position"
-              aria-label="Add Position"
+              title={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
+              aria-label={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
               onClick={onOpenAddOrder}
               className="h-7 px-3 rounded-md bg-white hover:bg-white/90 text-black text-[11px] font-semibold transition-all flex items-center justify-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-xs"
             >
               <Plus size={13} strokeWidth={2.5} />
-              <span>Add Position</span>
+              <span>{locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}</span>
             </button>
           )}
         </div>
@@ -482,12 +485,12 @@ export default function ChartTopBar({
                 type="text"
                 placeholder={
                   activeTab === 'funds'
-                    ? 'Search mutual funds by name or ticker...'
+                    ? (locale === 'ar' ? 'بحث في صناديق الاستثمار بالاسم أو الرمز...' : 'Search mutual funds by name or ticker...')
                     : activeTab === 'metals'
-                    ? 'Search precious metals (Gold, Silver)...'
+                    ? (locale === 'ar' ? 'بحث في المعادن الثمينة (الذهب، الفضة)...' : 'Search precious metals (Gold, Silver)...')
                     : activeTab === 'stocks'
-                    ? 'Search stocks by symbol, company, or sector...'
-                    : 'Search stocks, mutual funds, metals, or sectors...'
+                    ? (locale === 'ar' ? 'بحث في الأسهم بالرمز، الشركة، أو القطاع...' : 'Search stocks by symbol, company, or sector...')
+                    : (locale === 'ar' ? 'بحث في الأسهم، الصناديق، المعادن، أو القطاعات...' : 'Search stocks, mutual funds, metals, or sectors...')
                 }
                 value={searchQuery}
                 onChange={(e) => {
@@ -505,7 +508,7 @@ export default function ChartTopBar({
                     searchInputRef.current?.focus();
                   }}
                   className="p-1.5 text-white/40 hover:text-white transition-colors cursor-pointer rounded-md hover:bg-white/[0.06]"
-                  title="Clear search"
+                  title={locale === 'ar' ? 'مسح البحث' : 'Clear search'}
                 >
                   <X size={15} />
                 </button>
@@ -515,7 +518,7 @@ export default function ChartTopBar({
                 onClick={() => setIsSearchOpen(false)}
                 className="px-2.5 py-1 rounded-md text-[11px] font-medium text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer font-sans flex items-center gap-1.5"
               >
-                <span>Close</span>
+                <span>{locale === 'ar' ? 'إغلاق' : 'Close'}</span>
                 <kbd className="hidden sm:inline px-1.5 py-0.5 rounded border border-white/10 text-[9px] text-white/40 bg-white/[0.04]">ESC</kbd>
               </button>
             </div>
@@ -526,10 +529,10 @@ export default function ChartTopBar({
               <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
                 {(
                   [
-                    { id: 'all', label: 'All', count: tabCounts.all },
-                    { id: 'stocks', label: 'Stocks', count: tabCounts.stocks },
-                    { id: 'funds', label: 'Funds', count: tabCounts.funds },
-                    { id: 'metals', label: 'Metals', count: tabCounts.metals },
+                    { id: 'all', label: locale === 'ar' ? 'الكل' : 'All', count: tabCounts.all },
+                    { id: 'stocks', label: locale === 'ar' ? 'الأسهم' : 'Stocks', count: tabCounts.stocks },
+                    { id: 'funds', label: locale === 'ar' ? 'الصناديق' : 'Funds', count: tabCounts.funds },
+                    { id: 'metals', label: locale === 'ar' ? 'المعادن' : 'Metals', count: tabCounts.metals },
                   ] as const
                 ).map((tab) => {
                   const isActive = activeTab === tab.id;
@@ -566,12 +569,12 @@ export default function ChartTopBar({
               <div className="text-[11px] text-white/40 font-medium tabular-nums hidden sm:block">
                 <span>
                   {activeTab === 'funds'
-                    ? `${searchResults.length} funds found`
+                    ? (locale === 'ar' ? `${searchResults.length} صندوق` : `${searchResults.length} funds found`)
                     : activeTab === 'metals'
-                    ? `${searchResults.length} metals found`
+                    ? (locale === 'ar' ? `${searchResults.length} أصل معادن` : `${searchResults.length} metals found`)
                     : activeTab === 'stocks'
-                    ? `${searchResults.length} stocks found`
-                    : `${searchResults.length} instruments found`}
+                    ? (locale === 'ar' ? `${searchResults.length} سهم` : `${searchResults.length} stocks found`)
+                    : (locale === 'ar' ? `${searchResults.length} أداة مالية` : `${searchResults.length} instruments found`)}
                 </span>
               </div>
             </div>
@@ -584,10 +587,14 @@ export default function ChartTopBar({
                     <Search size={18} />
                   </div>
                   <p className="text-white/70 text-xs font-semibold">
-                    No matching {activeTab === 'funds' ? 'funds' : activeTab === 'metals' ? 'metals' : activeTab === 'stocks' ? 'stocks' : 'instruments'} found
+                    {locale === 'ar'
+                      ? `لم يتم العثور على أي ${activeTab === 'funds' ? 'صناديق' : activeTab === 'metals' ? 'معادن' : activeTab === 'stocks' ? 'أسهم' : 'أدوات مالية'}`
+                      : `No matching ${activeTab === 'funds' ? 'funds' : activeTab === 'metals' ? 'metals' : activeTab === 'stocks' ? 'stocks' : 'instruments'} found`}
                   </p>
                   <p className="text-white/35 text-[11px] mt-1 max-w-xs">
-                    Try a different ticker name, company keyword, or switch tabs.
+                    {locale === 'ar'
+                      ? 'جرب البحث برمز أو اسم شركة مختلف، أو قم بتبديل التبويب.'
+                      : 'Try a different ticker name, company keyword, or switch tabs.'}
                   </p>
                 </div>
               ) : (
@@ -639,21 +646,21 @@ export default function ChartTopBar({
 
                             {isMetal ? (
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-amber-400/10 text-amber-300 border border-amber-400/25 shrink-0">
-                                Metal
+                                {locale === 'ar' ? 'معدن' : 'Metal'}
                               </span>
                             ) : isFund ? (
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-cyan-400/10 text-cyan-300 border border-cyan-400/25 shrink-0">
-                                Fund
+                                {locale === 'ar' ? 'صندوق' : 'Fund'}
                               </span>
                             ) : (
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wider uppercase bg-white/[0.05] text-white/50 border border-white/[0.08] shrink-0">
-                                Stock
+                                {locale === 'ar' ? 'سهم' : 'Stock'}
                               </span>
                             )}
 
                             {item.sector && (
                               <span className="hidden sm:inline text-[11px] text-white/40 truncate">
-                                · {item.sector}
+                                · {localizeSectorName(item.sector, locale)}
                               </span>
                             )}
                           </div>
@@ -670,7 +677,7 @@ export default function ChartTopBar({
                           <span className="text-xs sm:text-[13px] font-semibold text-white">
                             {item.price}{' '}
                             <span className="text-[10px] text-white/40 font-normal">
-                              {item.currency || 'EGP'}
+                              {item.currency ? (item.currency === 'EGP' && locale === 'ar' ? 'ج.م' : item.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
                             </span>
                           </span>
                           {item.changePct && (
@@ -695,26 +702,32 @@ export default function ChartTopBar({
               <div className="hidden sm:flex items-center gap-3">
                 <span className="flex items-center gap-1.5">
                   <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↑↓</kbd>
-                  <span>navigate</span>
+                  <span>{locale === 'ar' ? 'تنقل' : 'navigate'}</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↵</kbd>
-                  <span>select</span>
+                  <span>{locale === 'ar' ? 'اختيار' : 'select'}</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Tab</kbd>
-                  <span>filter</span>
+                  <span>{locale === 'ar' ? 'تصفية' : 'filter'}</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Esc</kbd>
-                  <span>close</span>
+                  <span>{locale === 'ar' ? 'إغلاق' : 'close'}</span>
                 </span>
               </div>
               <span className="sm:hidden text-[10px] text-white/40">
-                Tap ticker to view chart
+                {locale === 'ar' ? 'اضغط على السهم لعرض الرسم البياني' : 'Tap ticker to view chart'}
               </span>
               <span className="text-[11px] text-white/30 hidden sm:inline">
-                {activeTab === 'funds' ? 'Mutual Funds' : activeTab === 'metals' ? 'Precious Metals' : activeTab === 'stocks' ? 'EGX Listed Equities' : 'All Markets'}
+                {activeTab === 'funds'
+                  ? (locale === 'ar' ? 'صناديق الاستثمار' : 'Mutual Funds')
+                  : activeTab === 'metals'
+                  ? (locale === 'ar' ? 'المعادن الثمينة' : 'Precious Metals')
+                  : activeTab === 'stocks'
+                  ? (locale === 'ar' ? 'أسهم البورصة المصرية' : 'EGX Listed Equities')
+                  : (locale === 'ar' ? 'جميع الأسواق' : 'All Markets')}
               </span>
             </div>
           </div>

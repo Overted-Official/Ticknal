@@ -13,6 +13,7 @@ import KPICard, { type KPICardProps } from '@/components/platform/home/investmen
 import MoneySupplySection from './MoneySupplySection';
 import type { SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import type { FxFairValueResponse } from '@/lib/handlers/fx-fair-value-handler';
+import { useTranslation } from '@/lib/i18n';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -25,6 +26,7 @@ export default function FxDevaluationSection({
   macroData,
   isLoading = false,
 }: FxDevaluationSectionProps) {
+  const { locale } = useTranslation();
   const { data: fxData } = useSWR<FxFairValueResponse>(
     '/api/macro/fx-fair-value',
     fetcher,
@@ -45,59 +47,61 @@ export default function FxDevaluationSection({
   const kpiCards: KPICardProps[] = [
     {
       id: 'real-egp-fair-value',
-      title: 'Real EGP Fair Value',
+      title: locale === 'ar' ? 'القيمة العادلة الحقيقية للجنيه' : 'Real EGP Fair Value',
       icon: DollarSign,
       iconBgClass: 'bg-brand-blue/20 text-brand-blue',
       iconColorClass: 'text-brand-blue',
       value: compositeFair.toFixed(2),
-      unit: 'EGP FAIR',
-      badgeText: `${gapPct >= 0 ? '+' : ''}${gapPct.toFixed(1)}% Gap`,
+      unit: locale === 'ar' ? 'جنيه عادل' : 'EGP FAIR',
+      badgeText: `${gapPct >= 0 ? '+' : ''}${gapPct.toFixed(1)}% ${locale === 'ar' ? 'فجوة' : 'Gap'}`,
       badgeClass: 'bg-brand-blue/15 text-brand-blue border-brand-blue/25',
-      changeText: `Official ${officialUsd.toFixed(2)} EGP (+${gapEgp.toFixed(2)})`,
+      changeText: `${locale === 'ar' ? 'الرسمي' : 'Official'} ${officialUsd.toFixed(2)} ${locale === 'ar' ? 'ج.م' : 'EGP'} (+${gapEgp.toFixed(2)})`,
       changeColorClass: 'text-text-primary',
-      metaText: 'Triangulated GDR + Gold + CBE',
+      metaText: locale === 'ar' ? 'شهادات الإيداع + الذهب + المركزي' : 'Triangulated GDR + Gold + CBE',
     },
     {
       id: 'devaluation-barometer',
-      title: 'Devaluation Risk',
+      title: locale === 'ar' ? 'مخاطر خفض العملة' : 'Devaluation Risk',
       icon: riskScore < 30 ? ShieldCheck : AlertTriangle,
       iconBgClass: riskScore < 30 ? 'bg-profit-chart/20 text-profit-num' : 'bg-loss-chart/20 text-loss-num',
       iconColorClass: riskScore < 30 ? 'text-profit-num' : 'text-loss-num',
       value: `${riskScore}%`,
-      unit: 'RISK SCORE',
-      badgeText: riskLabel,
+      unit: locale === 'ar' ? 'درجة المخاطرة' : 'RISK SCORE',
+      badgeText: riskScore < 30
+        ? (locale === 'ar' ? 'مخاطر منخفضة (تعويم مدار)' : riskLabel)
+        : (locale === 'ar' ? 'مخاطر مرتفعة' : riskLabel),
       badgeClass: riskScore < 30 ? 'bg-profit-chart/15 text-profit-num border-profit-num/25' : 'bg-loss-chart/15 text-loss-num border-loss-num/25',
-      changeText: 'Managed Float Corridor (48–52)',
+      changeText: locale === 'ar' ? 'نطاق تعويم مدار (48–52)' : 'Managed Float Corridor (48–52)',
       changeColorClass: 'text-profit-num',
-      metaText: 'High Foreign Asset Cushion',
+      metaText: locale === 'ar' ? 'احتياطي أصول أجنبية مرتفع' : 'High Foreign Asset Cushion',
     },
     {
       id: 'cib-gdr-arbitrage',
-      title: 'CIB London GDR Arbitrage',
+      title: locale === 'ar' ? 'مراجحة شهادات إيداع CIB لندن' : 'CIB London GDR Arbitrage',
       icon: Globe,
       iconBgClass: 'bg-accent-orange/20 text-accent-orange',
       iconColorClass: 'text-accent-orange',
       value: gdrRate.toFixed(2),
-      unit: 'EGP IMPLIED',
-      badgeText: `${gdrSpread >= 0 ? '+' : ''}${gdrSpread.toFixed(1)}% Spread`,
+      unit: locale === 'ar' ? 'جنيه ضمني' : 'EGP IMPLIED',
+      badgeText: `${gdrSpread >= 0 ? '+' : ''}${gdrSpread.toFixed(1)}% ${locale === 'ar' ? 'فارق' : 'Spread'}`,
       badgeClass: 'bg-accent-orange/15 text-accent-orange border-accent-orange/25',
-      changeText: `LSE GDR $${gdrPrice.toFixed(3)} USD`,
+      changeText: `${locale === 'ar' ? 'شهادة لندن' : 'LSE GDR'} $${gdrPrice.toFixed(3)} ${locale === 'ar' ? 'دولار' : 'USD'}`,
       changeColorClass: 'text-text-primary',
-      metaText: 'Offshore Arbitrage Clearing Rate',
+      metaText: locale === 'ar' ? 'سعر تصفية المراجحة الخارجية' : 'Offshore Arbitrage Clearing Rate',
     },
     {
       id: 'banking-nfa-buffer',
-      title: 'Banking Net Foreign Assets',
+      title: locale === 'ar' ? 'صافي الأصول الأجنبية للقطاع المصرفي' : 'Banking Net Foreign Assets',
       icon: Coins,
       iconBgClass: 'bg-profit-chart/20 text-profit-num',
       iconColorClass: 'text-profit-num',
-      value: '+$28.4B',
-      unit: 'SURPLUS',
-      badgeText: 'All-Time Record',
+      value: locale === 'ar' ? '+28.4$ مليار' : '+$28.4B',
+      unit: locale === 'ar' ? 'فائض' : 'SURPLUS',
+      badgeText: locale === 'ar' ? 'رقم قياسي تاريخي' : 'All-Time Record',
       badgeClass: 'bg-profit-chart/15 text-profit-num border-profit-num/25',
-      changeText: `${nfaSurplus} (July 2026)`,
+      changeText: locale === 'ar' ? '+28.418$ مليار (يوليو 2026)' : `${nfaSurplus} (July 2026)`,
       changeColorClass: 'text-profit-num',
-      metaText: 'Commercial + CBE Liquidity',
+      metaText: locale === 'ar' ? 'سيولة البنوك التجارية والبنك المركزي' : 'Commercial + CBE Liquidity',
     },
   ];
 
@@ -107,13 +111,17 @@ export default function FxDevaluationSection({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="section-title">FX & Currency Risk</h2>
+            <h2 className="section-title">
+              {locale === 'ar' ? 'مخاطر العملة وأسعار الصرف' : 'FX & Currency Risk'}
+            </h2>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/15 text-brand-blue border border-brand-blue/25">
-              Live Macro
+              {locale === 'ar' ? 'مؤشرات كلية حية' : 'Live Macro'}
             </span>
           </div>
           <p className="section-subtitle">
-            Triangulated EGP shadow fair value, devaluation likelihood barometer, offshore London GDR arbitrage, and CBE broad liquidity
+            {locale === 'ar'
+              ? 'القيمة العادلة المرجحة للجنيه المصري، مقياس مخاطر خفض العملة، مراجحة شهادات إيداع لندن CIB، وسيولة البنك المركزي الموسعة'
+              : 'Triangulated EGP shadow fair value, devaluation likelihood barometer, offshore London GDR arbitrage, and CBE broad liquidity'}
           </p>
         </div>
       </div>

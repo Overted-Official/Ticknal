@@ -17,6 +17,7 @@ import {
 } from '@/lib/market/price-adjustments';
 import { ALL_SNDUK_FUNDS, type SndukFund } from '@/lib/funds/snduk-funds-list';
 import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
+import { syncDailySmartMoney } from '@/lib/smart-money/sync-smart-money';
 
 // ----------------------------------------------------
 // 1. UPDATE STOCKS
@@ -510,6 +511,16 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
         investorFlowResult = await syncDailyInvestorFlows();
       } catch (flowErr: any) {
         console.error('Post-update investor flow sync error:', flowErr);
+      }
+    }
+
+    // Automatically sync daily Smart Money statistics for all 293 EGX equities
+    let smartMoneyResult: any = null;
+    if (totalUpdated > 0 && Date.now() - startTime < 55000) {
+      try {
+        smartMoneyResult = await syncDailySmartMoney();
+      } catch (smErr: any) {
+        console.error('Post-update smart money sync error:', smErr);
       }
     }
 

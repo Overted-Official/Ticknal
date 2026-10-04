@@ -7,6 +7,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceL
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useToast } from '@/context/ToastContext';
+import { useTranslation } from '@/lib/i18n';
 
 export interface TickerOrder {
   id: number;
@@ -53,8 +54,8 @@ function getCurrency(symbol: string, instrumentCurrency?: string): string {
   return 'EGP';
 }
 
-function formatMoney(value: number, currency: string, showSign: boolean = false): string {
-  const formatted = Math.abs(value).toLocaleString('en-US', {
+function formatMoney(value: number, currency: string, showSign: boolean = false, isArabic: boolean = false): string {
+  const formatted = Math.abs(value).toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -62,8 +63,8 @@ function formatMoney(value: number, currency: string, showSign: boolean = false)
   return `${sign}${formatted} ${currency}`;
 }
 
-function formatPrice(value: number, currency: string): string {
-  return `${value.toLocaleString('en-US', {
+function formatPrice(value: number, currency: string, isArabic: boolean = false): string {
+  return `${value.toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} ${currency}`;
@@ -93,6 +94,8 @@ export default function TickerPositions({
   currency: instrumentCurrency,
 }: TickerPositionsProps) {
   const { toast } = useToast();
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const [mounted, setMounted] = useState(false);
   const [filter, setFilter] = useState<'all' | 'open' | 'closed'>('all');
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
@@ -136,7 +139,8 @@ export default function TickerPositions({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCloseModalOpen]);
 
-  const currency = getCurrency(symbol, instrumentCurrency);
+  const rawCurrency = getCurrency(symbol, instrumentCurrency);
+  const currency = rawCurrency === 'EGP' && isArabic ? 'ج.م' : rawCurrency;
   const cleanSymbol = symbol.replace('.CA', '').toUpperCase();
   const displayCompanyName = companyName || tickerMeta.companyName || cleanSymbol;
   const displayLogoUrl = logoUrl || tickerMeta.logoUrl || null;
@@ -308,17 +312,19 @@ export default function TickerPositions({
         <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-border-subtle">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
-              Position Overview
+              {isArabic ? 'نظرة عامة على المركز' : 'Position Overview'}
             </h3>
             <span className="text-xs text-white/50 font-normal">
-              Live Price:{' '}
+              {isArabic ? 'السعر المباشر:' : 'Live Price:'}{' '}
               <strong className="text-white font-semibold tabular-nums">
-                {formatPrice(currentPrice, currency)}
+                {formatPrice(currentPrice, currency, isArabic)}
               </strong>
             </span>
           </div>
           <p className="text-xs text-white/50 leading-relaxed">
-            Portfolio exposure, unrealized performance, and realized returns for this instrument
+            {isArabic
+              ? 'التعرض الاستثماري، والأداء غير المحقق، والعوائد المحققة لهذا السهم'
+              : 'Portfolio exposure, unrealized performance, and realized returns for this instrument'}
           </p>
         </div>
 
@@ -331,14 +337,14 @@ export default function TickerPositions({
                 <Wallet className="w-3 h-3 text-white" strokeWidth={2.4} />
               </div>
               <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
-                Total Invested
+                {isArabic ? 'إجمالي المستثمر' : 'Total Invested'}
               </span>
             </div>
 
             <div className="flex flex-col mt-2 sm:mt-2.5">
               <div className="flex items-baseline gap-1 leading-none">
                 <span className="text-[15px] sm:text-[18px] lg:text-[20px] font-bold text-white tabular-nums tracking-tight truncate">
-                  {Math.abs(totalInvested).toLocaleString('en-US', {
+                  {Math.abs(totalInvested).toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -350,7 +356,7 @@ export default function TickerPositions({
 
               <div className="flex items-baseline gap-1.5 mt-1.5 leading-none">
                 <span className="text-[10px] sm:text-[11px] font-medium tabular-nums text-white/50 truncate">
-                  {openOrders.reduce((sum, o) => sum + o.quantity, 0)} active shares
+                  {openOrders.reduce((sum, o) => sum + o.quantity, 0)} {isArabic ? 'أسهم نشطة' : 'active shares'}
                 </span>
               </div>
             </div>
@@ -371,7 +377,7 @@ export default function TickerPositions({
                 )}
               </div>
               <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
-                Unrealized P/L
+                {isArabic ? 'الأرباح غير المحققة' : 'Unrealized P/L'}
               </span>
             </div>
 
@@ -383,7 +389,7 @@ export default function TickerPositions({
                   }`}
                 >
                   {unrealizedPl > 0 ? '+' : unrealizedPl < 0 ? '-' : ''}
-                  {Math.abs(unrealizedPl).toLocaleString('en-US', {
+                  {Math.abs(unrealizedPl).toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -402,7 +408,9 @@ export default function TickerPositions({
                   {unrealizedPlPct >= 0 ? '+' : ''}
                   {unrealizedPlPct.toFixed(2)}%
                 </span>
-                <span className="text-[9px] sm:text-[10px] text-white/40 font-normal">open</span>
+                <span className="text-[9px] sm:text-[10px] text-white/40 font-normal">
+                  {isArabic ? 'مفتوح' : 'open'}
+                </span>
               </div>
             </div>
           </div>
@@ -418,7 +426,7 @@ export default function TickerPositions({
                 <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={2.4} />
               </div>
               <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
-                Realized P/L
+                {isArabic ? 'الأرباح المحققة' : 'Realized P/L'}
               </span>
             </div>
 
@@ -430,7 +438,7 @@ export default function TickerPositions({
                   }`}
                 >
                   {realizedPl > 0 ? '+' : realizedPl < 0 ? '-' : ''}
-                  {Math.abs(realizedPl).toLocaleString('en-US', {
+                  {Math.abs(realizedPl).toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -446,7 +454,7 @@ export default function TickerPositions({
                     realizedPl >= 0 ? 'text-profit-num' : 'text-loss-num'
                   }`}
                 >
-                  {closedOrders.length} closed
+                  {closedOrders.length} {isArabic ? 'مغلق' : 'closed'}
                 </span>
               </div>
             </div>
@@ -463,19 +471,21 @@ export default function TickerPositions({
           <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-border-subtle">
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
-                P&amp;L Performance Trajectory
+                {isArabic ? 'مسار أداء الأرباح والخسائر' : 'P&L Performance Trajectory'}
               </h3>
               <span
                 className={`text-xs font-semibold tabular-nums ${
                   isTrajectoryProfit ? 'text-profit-num' : 'text-loss-num'
                 }`}
               >
-                {formatMoney(unrealizedPl, currency, true)} ({unrealizedPlPct >= 0 ? '+' : ''}
+                {formatMoney(unrealizedPl, currency, true, isArabic)} ({unrealizedPlPct >= 0 ? '+' : ''}
                 {unrealizedPlPct.toFixed(2)}%)
               </span>
             </div>
             <p className="text-xs text-white/50 leading-relaxed">
-              Historical mark-to-market performance curve for open allocations over holding period
+              {isArabic
+                ? 'المنحنى التاريخي للأداء السوقي للصفقات المفتوحة خلال فترة الاحتفاظ'
+                : 'Historical mark-to-market performance curve for open allocations over holding period'}
             </p>
           </div>
 
@@ -524,11 +534,11 @@ export default function TickerPositions({
                               isUp ? 'text-profit-num' : 'text-loss-num'
                             }`}
                           >
-                            P/L: {d.pl >= 0 ? '+' : ''}
-                            {d.pl.toLocaleString()} {currency}
+                            {isArabic ? 'الأرباح/الخسائر:' : 'P/L:'} {d.pl >= 0 ? '+' : ''}
+                            {d.pl.toLocaleString(isArabic ? 'ar-EG' : 'en-US')} {currency}
                           </div>
                           <div className="text-[11px] text-white/60 tabular-nums mt-0.5">
-                            Value: {d.value.toLocaleString()} {currency}
+                            {isArabic ? 'القيمة:' : 'Value:'} {d.value.toLocaleString(isArabic ? 'ar-EG' : 'en-US')} {currency}
                           </div>
                         </div>
                       );
@@ -558,10 +568,12 @@ export default function TickerPositions({
         {/* Clear Section Header matching Strategy Report Drawer */}
         <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-border-subtle">
           <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
-            Orders &amp; Positions
+            {isArabic ? 'الأوامر والمراكز' : 'Orders & Positions'}
           </h3>
           <p className="text-xs text-white/50 leading-relaxed">
-            Transaction ledger and fill levels for active and historical executions
+            {isArabic
+              ? 'سجل العمليات ومستويات التنفيذ للصفقات النشطة والسابقة'
+              : 'Transaction ledger and fill levels for active and historical executions'}
           </p>
         </div>
 
@@ -576,6 +588,11 @@ export default function TickerPositions({
                   : tab === 'open'
                   ? openOrders.length
                   : closedOrders.length;
+              const tabName = tab === 'all'
+                ? (isArabic ? 'الكل' : 'all')
+                : tab === 'open'
+                ? (isArabic ? 'مفتوحة' : 'open')
+                : (isArabic ? 'مغلقة' : 'closed');
               return (
                 <button
                   key={tab}
@@ -585,7 +602,7 @@ export default function TickerPositions({
                     filter === tab ? 'seg-control-btn-active' : ''
                   }`}
                 >
-                  {tab} ({count})
+                  {tabName} ({count})
                 </button>
               );
             })}
@@ -603,9 +620,9 @@ export default function TickerPositions({
                   setIsCloseModalOpen(true);
                 }}
                 className="btn-token btn-secondary btn-compact"
-                title="Close or reduce position"
+                title={isArabic ? 'إغلاق أو تخفيض المركز' : 'Close or reduce position'}
               >
-                <span>Close</span>
+                <span>{isArabic ? 'إغلاق' : 'Close'}</span>
               </button>
             )}
 
@@ -616,7 +633,7 @@ export default function TickerPositions({
                 className="btn-token btn-primary btn-compact"
               >
                 <Plus size={14} strokeWidth={2.5} />
-                <span>Add Position</span>
+                <span>{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
               </button>
             )}
           </div>
@@ -625,7 +642,9 @@ export default function TickerPositions({
         {/* Compact & Minimal Positions Ledger (No individual close buttons) */}
         {displayedOrders.length === 0 ? (
           <div className="py-12 text-center text-white/40 text-xs">
-            No tracked positions found for {cleanSymbol} matching the selected filter.
+            {isArabic
+              ? `لا توجد صفقات مسجلة لسهم ${cleanSymbol} تطابق الفلتر المحدد.`
+              : `No tracked positions found for ${cleanSymbol} matching the selected filter.`}
           </div>
         ) : (
           <div className="divide-y divide-white/[0.04] border-t border-white/[0.06]">
@@ -659,27 +678,27 @@ export default function TickerPositions({
                         </span>
                         {!isOpen && (
                           <span className="text-[9px] font-semibold text-white/40 uppercase">
-                            Closed
+                            {isArabic ? 'مغلق' : 'Closed'}
                           </span>
                         )}
                       </div>
                       <div className="text-[11px] text-white/50 tabular-nums">
-                        {order.quantity} units @ {formatPrice(order.entryPrice, currency)}
+                        {order.quantity} {isArabic ? 'سهم' : 'units'} @ {formatPrice(order.entryPrice, currency, isArabic)}
                       </div>
                     </div>
                   </div>
 
                   {/* Right: Value & P&L */}
-                  <div className="flex flex-col items-end text-right shrink-0">
+                  <div className="flex flex-col items-end text-right rtl:items-start rtl:text-left shrink-0">
                     <span className="text-xs font-bold text-white tabular-nums tracking-tight">
-                      {formatPrice(currentValue, currency)}
+                      {formatPrice(currentValue, currency, isArabic)}
                     </span>
                     <span
                       className={`text-[11px] font-semibold tabular-nums ${
                         isProfit ? 'text-profit-num' : 'text-loss-num'
                       }`}
                     >
-                      {formatMoney(pl, currency, true)} ({plPct >= 0 ? '+' : ''}
+                      {formatMoney(pl, currency, true, isArabic)} ({plPct >= 0 ? '+' : ''}
                       {plPct.toFixed(2)}%)
                     </span>
                   </div>
@@ -750,12 +769,12 @@ export default function TickerPositions({
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end text-right shrink-0">
+                  <div className="flex flex-col items-end text-right rtl:items-start rtl:text-left shrink-0">
                     <span className="text-sm font-bold text-white tabular-nums tracking-tight">
-                      {formatPrice(currentValue, currency)}
+                      {formatPrice(currentValue, currency, isArabic)}
                     </span>
                     <span className="text-xs text-white/50 tabular-nums">
-                      {totalOpenQuantity} units owned
+                      {totalOpenQuantity} {isArabic ? 'سهم مملوك' : 'units owned'}
                     </span>
                   </div>
                 </div>
@@ -766,7 +785,7 @@ export default function TickerPositions({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-medium text-white/60 uppercase tracking-wider block">
-                      Units to Sell
+                      {isArabic ? 'عدد الأسهم للبيع' : 'Units to Sell'}
                     </label>
                     <input
                       type="number"
@@ -789,7 +808,7 @@ export default function TickerPositions({
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-medium text-white/60 uppercase tracking-wider block">
-                      Price ({currency})
+                      {isArabic ? `السعر (${currency})` : `Price (${currency})`}
                     </label>
                     <input
                       type="number"
@@ -807,9 +826,11 @@ export default function TickerPositions({
                 {/* Toggle to close whole position */}
                 <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <div className="flex flex-col">
-                    <span className="text-xs font-medium text-white">Close whole position</span>
+                    <span className="text-xs font-medium text-white">
+                      {isArabic ? 'إغلاق المركز بالكامل' : 'Close whole position'}
+                    </span>
                     <span className="text-[10px] text-white/40">
-                      Sell all {totalOpenQuantity} owned units
+                      {isArabic ? `بيع جميع الأسهم المملوكة (${totalOpenQuantity})` : `Sell all ${totalOpenQuantity} owned units`}
                     </span>
                   </div>
                   <button
@@ -839,9 +860,9 @@ export default function TickerPositions({
                 {/* Estimated Proceeds preview */}
                 {parseFloat(unitsToSell) > 0 && parseFloat(sellingPrice) > 0 && (
                   <div className="flex items-center justify-between text-xs px-1 text-white/60 tabular-nums">
-                    <span>Estimated Proceeds:</span>
+                    <span>{isArabic ? 'المحصلات التقديرية:' : 'Estimated Proceeds:'}</span>
                     <span className="text-white font-semibold">
-                      {formatPrice(parseFloat(unitsToSell) * parseFloat(sellingPrice), currency)}
+                      {formatPrice(parseFloat(unitsToSell) * parseFloat(sellingPrice), currency, isArabic)}
                     </span>
                   </div>
                 )}
@@ -854,7 +875,7 @@ export default function TickerPositions({
                     disabled={isSubmitting}
                     className="btn-token btn-secondary"
                   >
-                    Cancel
+                    {isArabic ? 'إلغاء' : 'Cancel'}
                   </button>
                   <button
                     type="button"
@@ -870,7 +891,7 @@ export default function TickerPositions({
                     className="btn-token btn-danger"
                   >
                     {isSubmitting && <InlineSpinner className="h-3.5 w-3.5" label="Selling position" />}
-                    <span>{isSubmitting ? 'Selling...' : 'Sell'}</span>
+                    <span>{isArabic ? (isSubmitting ? 'جارٍ البيع...' : 'بيع') : (isSubmitting ? 'Selling...' : 'Sell')}</span>
                   </button>
                 </div>
               </motion.div>

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type BankTransaction } from '@/types/bank';
 import { getDashboardCashFlowKind } from '@/lib/portfolio-finance';
 
@@ -22,6 +23,26 @@ interface TransactionsBreakdownChartProps {
 
 import { TRANSACTION_CATEGORY_COLORS as CATEGORY_COLORS, getCategoryColor } from '@/lib/category-colors';
 
+const CATEGORY_NAMES_AR: Record<string, string> = {
+  'Salary': 'الراتب',
+  'Dining': 'مطاعم',
+  'Shopping': 'تسوق',
+  'Investment': 'استثمار',
+  'Transfer': 'تحويل',
+  'Utilities': 'خدمات ومرافق',
+  'Groceries': 'بقالة ومواد غذائية',
+  'Transport': 'مواصلات',
+  'Transportation': 'مواصلات',
+  'Rent': 'إيجار',
+  'Healthcare': 'رعاية صحية',
+  'Entertainment': 'ترفيه',
+  'Education': 'تعليم',
+  'Travel': 'سفر',
+  'Dividends': 'توزيعات أرباح',
+  'Bonus': 'مكافآت',
+  'Other': 'أخرى',
+};
+
 const FALLBACK_PALETTE = [
   '#06b6d4',
   '#3b82f6',
@@ -40,9 +61,13 @@ export default function TransactionsBreakdownChart({
   transactions = [],
   usdRate = 50.20,
 }: TransactionsBreakdownChartProps) {
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const [flowType, setFlowType] = useState<'expenses' | 'income'>('expenses');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { isPrivacy } = usePrivacyMode();
+
+  const getCategoryName = (name: string) => (isArabic ? CATEGORY_NAMES_AR[name] || name : name);
 
   // Aggregate Transactions by Category for the selected flow type
   const { categories, totalValue } = useMemo(() => {
@@ -93,10 +118,12 @@ export default function TransactionsBreakdownChart({
     };
   }, [transactions, usdRate, flowType]);
 
+  const currencySymbol = isArabic ? 'ج.م' : '£';
+
   const formatMoney = (val: number): string => {
-    if (isPrivacy) return '•••••• £';
-    const formatted = Math.round(val).toLocaleString('en-US');
-    return `${formatted} £`;
+    if (isPrivacy) return `•••••• ${currencySymbol}`;
+    const formatted = Math.round(val).toLocaleString(isArabic ? 'ar-EG' : 'en-US');
+    return `${formatted} ${currencySymbol}`;
   };
 
   const activeSlice =
@@ -109,7 +136,9 @@ export default function TransactionsBreakdownChart({
       {/* 1. Header: Title, Expenses/Income Toggle & Total Value */}
       <div className="flex items-center justify-between gap-2 pb-0.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text-primary">Transactions</span>
+          <span className="text-xs font-semibold text-text-primary">
+            {isArabic ? 'المعاملات' : 'Transactions'}
+          </span>
           {/* Mini Flow Switcher */}
           <div className="seg-control">
             <button
@@ -122,7 +151,7 @@ export default function TransactionsBreakdownChart({
                 flowType === 'expenses' ? 'seg-control-btn-active' : ''
               }`}
             >
-              Expenses
+              {isArabic ? 'المصروفات' : 'Expenses'}
             </button>
             <button
               type="button"
@@ -134,13 +163,13 @@ export default function TransactionsBreakdownChart({
                 flowType === 'income' ? 'seg-control-btn-active' : ''
               }`}
             >
-              Income
+              {isArabic ? 'الدخل' : 'Income'}
             </button>
           </div>
         </div>
 
         <div className="text-xs text-text-muted">
-          Total:{' '}
+          {isArabic ? 'الإجمالي:' : 'Total:'}{' '}
           <span className="text-text-primary font-semibold tabular-nums">
             {formatMoney(totalValue)}
           </span>
@@ -151,7 +180,9 @@ export default function TransactionsBreakdownChart({
       <div className="w-full h-[210px] flex items-center gap-3 min-h-0">
         {categories.length === 0 ? (
           <div className="w-full h-full flex items-center justify-center text-xs text-text-muted">
-            No {flowType} transactions recorded.
+            {isArabic
+              ? (flowType === 'expenses' ? 'لا توجد مصروفات مسجلة.' : 'لا يوجد دخل مسجل.')
+              : `No ${flowType} transactions recorded.`}
           </div>
         ) : (
           <>
@@ -199,19 +230,27 @@ export default function TransactionsBreakdownChart({
                     : `${categories.length}`}
                 </span>
                 <span className="text-[10px] text-text-muted font-medium mt-1 truncate max-w-[80px] px-1">
-                  {activeSlice ? activeSlice.name : (flowType === 'expenses' ? 'Expenses' : 'Income')}
+                  {activeSlice
+                    ? getCategoryName(activeSlice.name)
+                    : (flowType === 'expenses' ? (isArabic ? 'المصروفات' : 'Expenses') : (isArabic ? 'الدخل' : 'Income'))}
                 </span>
               </div>
             </div>
 
             {/* Categories Ranking Table */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-1">
-              <table className="w-full text-left text-xs font-sans border-collapse">
+              <table className="w-full text-left rtl:text-right text-xs font-sans border-collapse">
                 <thead>
                   <tr className="border-b border-border-subtle text-text-muted text-[10px] font-medium sticky top-0 bg-surface-base z-10">
-                    <th className="pb-1.5 text-left font-medium">Category</th>
-                    <th className="pb-1.5 text-right font-medium">Amount</th>
-                    <th className="pb-1.5 text-right font-medium">Share</th>
+                    <th className="pb-1.5 text-left rtl:text-right font-medium">
+                      {isArabic ? 'الفئة' : 'Category'}
+                    </th>
+                    <th className="pb-1.5 text-right rtl:text-left font-medium">
+                      {isArabic ? 'المبلغ' : 'Amount'}
+                    </th>
+                    <th className="pb-1.5 text-right rtl:text-left font-medium">
+                      {isArabic ? 'النسبة' : 'Share'}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle/60">
@@ -226,21 +265,21 @@ export default function TransactionsBreakdownChart({
                           isHovered ? 'bg-surface-elevated/80' : 'hover:bg-surface-elevated/40'
                         }`}
                       >
-                        <td className="py-1.5 text-left pr-1.5">
+                        <td className="py-1.5 text-left rtl:text-right pr-1.5 rtl:pr-0 rtl:pl-1.5">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span
                               className="w-2 h-2 rounded-full shrink-0"
                               style={{ backgroundColor: cat.color }}
                             />
                             <span className="font-medium text-text-primary text-[11px] truncate">
-                              {cat.name}
+                              {getCategoryName(cat.name)}
                             </span>
                           </div>
                         </td>
-                        <td className="py-1.5 text-right font-medium text-text-primary text-[11px] tabular-nums whitespace-nowrap">
+                        <td className="py-1.5 text-right rtl:text-left font-medium text-text-primary text-[11px] tabular-nums whitespace-nowrap">
                           {formatMoney(cat.value)}
                         </td>
-                        <td className="py-1.5 text-right text-[11px] text-text-secondary font-medium tabular-nums pl-1.5">
+                        <td className="py-1.5 text-right rtl:text-left text-[11px] text-text-secondary font-medium tabular-nums pl-1.5 rtl:pl-0 rtl:pr-1.5">
                           {cat.percentage.toFixed(1)}%
                         </td>
                       </tr>

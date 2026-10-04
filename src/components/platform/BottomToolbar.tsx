@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n';
 
 interface BottomToolbarProps {
   symbol?: string;
@@ -35,6 +36,7 @@ export default function BottomToolbar({
   logoUrl,
   chartData = [],
 }: BottomToolbarProps) {
+  const { t, locale } = useTranslation();
   const [cairoTime, setCairoTime] = useState('--:--:--');
   const [selectedRange, setSelectedRange] = useState<string>(
     timeframe === 'W' ? '1W' : timeframe === 'M' ? '1M' : timeframe === '1Y' ? '1Y' : '1D'
@@ -92,7 +94,7 @@ export default function BottomToolbar({
                       : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  {range.label}
+                  {locale === 'ar' ? (range.label === '1D' ? t('charts.tf1D') : range.label === '1W' ? t('charts.tf1W') : range.label === '1M' ? t('charts.tf1M') : t('charts.tf1Y')) : range.label}
                 </Link>
               );
             })}
@@ -102,7 +104,7 @@ export default function BottomToolbar({
         {/* Right Section: Time UTC+3 */}
         <div className="hidden sm:flex items-center shrink-0">
           <div className="tabular-nums text-text-muted font-sans text-[11px] leading-none">
-            {cairoTime} UTC+3
+            {cairoTime} {locale === 'ar' ? '(توقيت القاهرة)' : 'UTC+3'}
           </div>
         </div>
       </div>

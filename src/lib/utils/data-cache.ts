@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache';
 import fs from 'fs';
 import path from 'path';
 import { db } from '@/db';
-import { dailyPrices, intradayCandles, tickers } from '@/db/schema';
+import { dailyPrices, egxTradeStatistics, intradayCandles, tickers } from '@/db/schema';
 import { eq, and, asc, desc, sql } from 'drizzle-orm';
 
 // Fast in-memory cache to guarantee sub-millisecond responses on warm routes
@@ -55,18 +55,44 @@ export const getCachedDailyPrices = async (ticker: string, limitBars?: number, s
       conditions.push(sql`${dailyPrices.date} >= ${sinceDate}`);
     }
 
+    const selectFields = {
+      id: dailyPrices.id,
+      tickerSymbol: dailyPrices.tickerSymbol,
+      date: dailyPrices.date,
+      open: dailyPrices.open,
+      high: dailyPrices.high,
+      low: dailyPrices.low,
+      close: dailyPrices.close,
+      volume: dailyPrices.volume,
+      trades: egxTradeStatistics.trades,
+    };
+
     if (limitBars) {
       const rows = await db
-        .select()
+        .select(selectFields)
         .from(dailyPrices)
+        .leftJoin(
+          egxTradeStatistics,
+          and(
+            eq(egxTradeStatistics.tickerSymbol, dailyPrices.tickerSymbol),
+            eq(egxTradeStatistics.date, dailyPrices.date)
+          )
+        )
         .where(and(...conditions))
         .orderBy(desc(dailyPrices.date))
         .limit(limitBars);
       return rows.reverse();
     } else {
       return await db
-        .select()
+        .select(selectFields)
         .from(dailyPrices)
+        .leftJoin(
+          egxTradeStatistics,
+          and(
+            eq(egxTradeStatistics.tickerSymbol, dailyPrices.tickerSymbol),
+            eq(egxTradeStatistics.date, dailyPrices.date)
+          )
+        )
         .where(and(...conditions))
         .orderBy(asc(dailyPrices.date));
     }

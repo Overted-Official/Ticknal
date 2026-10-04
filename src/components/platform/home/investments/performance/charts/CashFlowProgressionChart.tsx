@@ -13,6 +13,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type BankTransaction, type BankAccount } from '@/types/bank';
 import { getDashboardCashFlowKind } from '@/lib/portfolio-finance';
 
@@ -42,6 +43,8 @@ export default function CashFlowProgressionChart({
   const [chartMode, setChartMode] = useState<CashFlowChartMode>('stacked');
   const timeframe = propTimeframe ?? internalTimeframe;
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
 
   // Helper: Month label formatter (e.g. '2026-08' -> "Aug '26")
   const formatMonthLabel = (ym: string) => {
@@ -160,21 +163,21 @@ export default function CashFlowProgressionChart({
           {pt.rawDate || label}
         </div>
         <div className="flex justify-between gap-4 text-profit-num">
-          <span>Inflows:</span>
+          <span>{locale === 'ar' ? 'الداخل:' : 'Inflows:'}</span>
           <strong className="text-text-primary font-semibold">
-            {isPrivacy ? '•••••••• £' : `+${pt.inflows.toLocaleString('en-US')} £`}
+            {isPrivacy ? `•••••••• ${currencySymbol}` : `+${pt.inflows.toLocaleString('en-US')} ${currencySymbol}`}
           </strong>
         </div>
         <div className="flex justify-between gap-4 text-loss-num">
-          <span>Outflows:</span>
+          <span>{locale === 'ar' ? 'الخارج:' : 'Outflows:'}</span>
           <strong className="text-text-primary font-semibold">
-            {isPrivacy ? '•••••••• £' : `-${pt.outflows.toLocaleString('en-US')} £`}
+            {isPrivacy ? `•••••••• ${currencySymbol}` : `-${pt.outflows.toLocaleString('en-US')} ${currencySymbol}`}
           </strong>
         </div>
         <div className="flex justify-between gap-4 text-zinc-300 pt-1 border-t border-white/5">
-          <span>Net Cash Flow:</span>
+          <span>{locale === 'ar' ? 'صافي التدفق النقدي:' : 'Net Cash Flow:'}</span>
           <strong className={`font-semibold ${pt.netFlow >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-            {isPrivacy ? '•••••••• £' : `${netSign}${pt.netFlow.toLocaleString('en-US')} £`}
+            {isPrivacy ? `•••••••• ${currencySymbol}` : `${netSign}${pt.netFlow.toLocaleString('en-US')} ${currencySymbol}`}
           </strong>
         </div>
       </div>
@@ -187,28 +190,28 @@ export default function CashFlowProgressionChart({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-0.5">
         <div className="flex items-center gap-3 text-xs flex-wrap">
           <span className="text-[13px] font-semibold text-text-primary tracking-tight mr-0.5">
-            Cash Flow Progression
+            {locale === 'ar' ? 'حركة التدفق النقدي' : 'Cash Flow Progression'}
           </span>
           {chartMode !== 'net' ? (
             <>
               <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
                 <span className="w-2 h-2 rounded-full bg-profit-chart" />
-                <span>Inflows</span>
+                <span>{locale === 'ar' ? 'التدفقات الداخلة' : 'Inflows'}</span>
               </span>
               <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
                 <span className="w-2 h-2 rounded-full bg-loss-chart" />
-                <span>Outflows</span>
+                <span>{locale === 'ar' ? 'التدفقات الخارجة' : 'Outflows'}</span>
               </span>
             </>
           ) : (
             <>
               <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
                 <span className="w-2 h-2 rounded-full bg-profit-chart" />
-                <span>Surplus (+)</span>
+                <span>{locale === 'ar' ? 'فائض (+)' : 'Surplus (+)'}</span>
               </span>
               <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
                 <span className="w-2 h-2 rounded-full bg-loss-chart" />
-                <span>Deficit (-)</span>
+                <span>{locale === 'ar' ? 'عجز (-)' : 'Deficit (-)'}</span>
               </span>
             </>
           )}
@@ -220,7 +223,12 @@ export default function CashFlowProgressionChart({
           <div className="seg-control">
             {(['stacked', 'paired', 'net'] as const).map((mode) => {
               const isSelected = chartMode === mode;
-              const label = mode === 'stacked' ? 'Stacked' : mode === 'paired' ? 'Paired' : 'Net';
+              const label =
+                mode === 'stacked'
+                  ? (locale === 'ar' ? 'تراكمي' : 'Stacked')
+                  : mode === 'paired'
+                  ? (locale === 'ar' ? 'مزدوج' : 'Paired')
+                  : (locale === 'ar' ? 'الصافي' : 'Net');
               return (
                 <button
                   key={mode}
@@ -241,6 +249,7 @@ export default function CashFlowProgressionChart({
             <div className="seg-control">
               {TIMEFRAMES.map((tf) => {
                 const isSelected = timeframe === tf;
+                const displayLabel = tf === 'All' && locale === 'ar' ? 'الكل' : tf;
                 return (
                   <button
                     key={tf}
@@ -253,7 +262,7 @@ export default function CashFlowProgressionChart({
                       isSelected ? 'seg-control-btn-active' : ''
                     }`}
                   >
-                    {tf}
+                    {displayLabel}
                   </button>
                 );
               })}
@@ -266,7 +275,9 @@ export default function CashFlowProgressionChart({
       <div className="w-full h-[210px] relative">
         {filteredData.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs text-text-muted">
-            No transaction records found for cash flow progression.
+            {locale === 'ar'
+              ? 'لا توجد سجلات معاملات لعرض التدفق النقدي.'
+              : 'No transaction records found for cash flow progression.'}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

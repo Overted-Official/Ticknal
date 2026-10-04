@@ -11,6 +11,8 @@ import {
   Check,
   X,
 } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 import type { TickerAlphaItem, QuickFilter } from './types';
 import type { TickerChampionInfo } from '@/lib/finance/sectors-math';
 
@@ -72,21 +74,21 @@ const OVERVIEW_DEFAULT_COLUMNS: OptionalColumnId[] = [
   'tradesCount',
 ];
 
-const OVERVIEW_AVAILABLE_COLUMNS: ColumnDefinition[] = [
-  { id: 'company', label: 'Company' },
-  { id: 'setup', label: 'Position' },
-  { id: 'champion', label: 'Best-Fit Model' },
-  { id: 'group', label: 'Sector' },
-  { id: 'price', label: 'Price' },
-  { id: 'alpha', label: 'Alpha vs B&H' },
-  { id: 'sysRoi', label: 'Strategy ROI' },
-  { id: 'bh', label: 'B&H ROI' },
-  { id: 'status', label: 'Status' },
-  { id: 'winRate', label: 'Win Rate' },
-  { id: 'maxDrawdown', label: 'Max DD' },
-  { id: 'avgAdverseExcursion', label: 'Avg MAE' },
-  { id: 'avgBarsHeld', label: 'Avg Bars' },
-  { id: 'tradesCount', label: 'Trades' },
+const getOverviewAvailableColumns = (isAr: boolean): ColumnDefinition[] => [
+  { id: 'company', label: isAr ? 'الشركة' : 'Company' },
+  { id: 'setup', label: isAr ? 'المركز' : 'Position' },
+  { id: 'champion', label: isAr ? 'النموذج الأنسب' : 'Best-Fit Model' },
+  { id: 'group', label: isAr ? 'القطاع' : 'Sector' },
+  { id: 'price', label: isAr ? 'السعر' : 'Price' },
+  { id: 'alpha', label: isAr ? 'ألفا مقابل B&H' : 'Alpha vs B&H' },
+  { id: 'sysRoi', label: isAr ? 'عائد الاستراتيجية' : 'Strategy ROI' },
+  { id: 'bh', label: isAr ? 'عائد B&H' : 'B&H ROI' },
+  { id: 'status', label: isAr ? 'الحالة' : 'Status' },
+  { id: 'winRate', label: isAr ? 'نسبة النجاح' : 'Win Rate' },
+  { id: 'maxDrawdown', label: isAr ? 'أقصى تراجع' : 'Max DD' },
+  { id: 'avgAdverseExcursion', label: isAr ? 'متوسط MAE' : 'Avg MAE' },
+  { id: 'avgBarsHeld', label: isAr ? 'متوسط الشموع' : 'Avg Bars' },
+  { id: 'tradesCount', label: isAr ? 'الصفقات' : 'Trades' },
 ];
 
 // 2. Position Activity View: Focused on current/latest position performance and timing
@@ -104,36 +106,43 @@ const ACTIVITY_DEFAULT_COLUMNS: OptionalColumnId[] = [
   'group',
 ];
 
-const ACTIVITY_AVAILABLE_COLUMNS: ColumnDefinition[] = [
-  { id: 'company', label: 'Company' },
-  { id: 'setup', label: 'Position' },
-  { id: 'champion', label: 'Best-Fit Model' },
-  { id: 'lastSignal', label: 'Signal' },
-  { id: 'signalDate', label: 'Signal Date' },
-  { id: 'barsHeld', label: 'Time in Trade' },
-  { id: 'tradeReturn', label: 'Position ROI' },
-  { id: 'positionMae', label: 'Position MAE' },
-  { id: 'entryPrice', label: 'Entry Price' },
-  { id: 'price', label: 'Current Price' },
-  { id: 'group', label: 'Sector' },
-  { id: 'winRate', label: 'Win Rate' },
-  { id: 'tradesCount', label: 'Trades' },
-  { id: 'alpha', label: 'Alpha vs B&H' },
-  { id: 'sysRoi', label: 'Strategy ROI' },
+const getActivityAvailableColumns = (isAr: boolean): ColumnDefinition[] => [
+  { id: 'company', label: isAr ? 'الشركة' : 'Company' },
+  { id: 'setup', label: isAr ? 'المركز' : 'Position' },
+  { id: 'champion', label: isAr ? 'النموذج الأنسب' : 'Best-Fit Model' },
+  { id: 'lastSignal', label: isAr ? 'الإشارة' : 'Signal' },
+  { id: 'signalDate', label: isAr ? 'تاريخ الإشارة' : 'Signal Date' },
+  { id: 'barsHeld', label: isAr ? 'مدة المركز' : 'Time in Trade' },
+  { id: 'tradeReturn', label: isAr ? 'عائد المركز' : 'Position ROI' },
+  { id: 'positionMae', label: isAr ? 'انحراف المركز' : 'Position MAE' },
+  { id: 'entryPrice', label: isAr ? 'سعر الدخول' : 'Entry Price' },
+  { id: 'price', label: isAr ? 'السعر الحالي' : 'Current Price' },
+  { id: 'group', label: isAr ? 'القطاع' : 'Sector' },
+  { id: 'winRate', label: isAr ? 'نسبة النجاح' : 'Win Rate' },
+  { id: 'tradesCount', label: isAr ? 'الصفقات' : 'Trades' },
+  { id: 'alpha', label: isAr ? 'ألفا مقابل B&H' : 'Alpha vs B&H' },
+  { id: 'sysRoi', label: isAr ? 'عائد الاستراتيجية' : 'Strategy ROI' },
 ];
 
-function formatSignalDate(d?: string): string {
+function formatSignalDate(d?: string, isAr?: boolean): string {
   if (!d) return '—';
   try {
     const parts = d.split('-');
     if (parts.length === 3) {
-      const monthNames = [
+      const enMonthNames = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
       ];
+      const arMonthNames = [
+        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+      ];
       const m = parseInt(parts[1], 10) - 1;
       const day = parseInt(parts[2], 10);
-      return `${monthNames[m] || parts[1]} ${day}, ${parts[0]}`;
+      if (isAr) {
+        return `${day} ${arMonthNames[m] || parts[1]} ${parts[0]}`;
+      }
+      return `${enMonthNames[m] || parts[1]} ${day}, ${parts[0]}`;
     }
   } catch {
     // fallback
@@ -141,12 +150,16 @@ function formatSignalDate(d?: string): string {
   return d;
 }
 
-function formatTimeInTrade(bars?: number, isOpen?: boolean): string {
+function formatTimeInTrade(bars?: number, isOpen?: boolean, isAr?: boolean): string {
   if (bars === undefined || bars === null) return '—';
-  if (bars === 0) return isOpen ? 'Today (0 bars)' : '—';
-  if (bars === 1) return '1 bar';
-  if (bars < 20) return `${bars} bars`;
+  if (bars === 0) return isAr ? (isOpen ? 'اليوم (0 شمعة)' : '—') : (isOpen ? 'Today (0 bars)' : '—');
+  if (bars === 1) return isAr ? 'شمعة واحدة' : '1 bar';
+  if (bars < 20) return isAr ? `${bars} شموع` : `${bars} bars`;
   const months = (bars / 21).toFixed(1);
+  if (isAr) {
+    const moText = months === '1.0' ? 'شهر' : 'أشهر';
+    return `${months} ${moText} (${bars} شمعة)`;
+  }
   return `${months} ${months === '1.0' ? 'Month' : 'Months'} (${bars} bars)`;
 }
 
@@ -158,6 +171,8 @@ export default function AlphaBreakdownSection({
   onOpenChart,
   tickerChampions,
 }: AlphaBreakdownSectionProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
   const [tableView, setTableView] = useState<TableViewMode>('overview');
   const [sortColumn, setSortColumn] = useState<SortColumn>('alpha');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -188,7 +203,10 @@ export default function AlphaBreakdownSection({
 
   // Active view columns and definitions
   const activeVisibleColumns = tableView === 'overview' ? overviewColumns : activityColumns;
-  const activeAvailableColumns = tableView === 'overview' ? OVERVIEW_AVAILABLE_COLUMNS : ACTIVITY_AVAILABLE_COLUMNS;
+  const activeAvailableColumns = useMemo(
+    () => (tableView === 'overview' ? getOverviewAvailableColumns(isAr) : getActivityAvailableColumns(isAr)),
+    [tableView, isAr]
+  );
 
   // Close popovers when clicking outside
   useEffect(() => {
@@ -522,7 +540,7 @@ export default function AlphaBreakdownSection({
               onClick={() => handleViewChange('overview')}
               className={`seg-control-btn ${tableView === 'overview' ? 'seg-control-btn-active' : ''}`}
             >
-              Overview
+              {isAr ? 'نظرة عامة' : 'Overview'}
             </button>
             <button
               type="button"
@@ -531,7 +549,7 @@ export default function AlphaBreakdownSection({
                 tableView === 'activity' ? 'seg-control-btn-active' : ''
               }`}
             >
-              <span>Position Activity</span>
+              <span>{isAr ? 'نشاط المراكز' : 'Position Activity'}</span>
               {inMarketCount > 0 && (
                 <span className="w-1.5 h-1.5 rounded-full bg-[#089981] animate-pulse" />
               )}
@@ -552,23 +570,23 @@ export default function AlphaBreakdownSection({
               className={`filter-control-btn ${
                 entryRecencyFilter !== 'all' ? 'filter-control-btn-active' : ''
               }`}
-              title="Filter by position entry recency"
+              title={isAr ? 'تصفية حسب حداثة دخول المركز' : 'Filter by position entry recency'}
             >
               <Clock size={12} className={entryRecencyFilter !== 'all' ? 'text-[#089981]' : 'text-neutral-400'} />
               <span>
                 {entryRecencyFilter === 'all'
-                  ? 'Entry: All'
+                  ? (isAr ? 'الدخول: الكل' : 'Entry: All')
                   : entryRecencyFilter === 1
-                  ? 'Entry: Today (≤ 1d)'
-                  : `Entry: ≤ ${entryRecencyFilter}d`}
+                  ? (isAr ? 'الدخول: اليوم (≤ 1 يوم)' : 'Entry: Today (≤ 1d)')
+                  : (isAr ? `الدخول: ≤ ${entryRecencyFilter} يوم` : `Entry: ≤ ${entryRecencyFilter}d`)}
               </span>
               <ChevronDown size={11} className="text-neutral-400" />
             </button>
 
             {isRecencyFilterOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-64 bg-[#000000] border border-white/15 rounded-xl shadow-2xl p-3 z-50 text-left font-sans animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute left-0 rtl:left-auto rtl:right-0 top-full mt-1.5 w-64 bg-[#000000] border border-white/15 rounded-xl shadow-2xl p-3 z-50 text-left rtl:text-right font-sans animate-in fade-in zoom-in-95 duration-100">
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
-                  <span className="text-xs font-semibold text-white">Position Entry Recency</span>
+                  <span className="text-xs font-semibold text-white">{isAr ? 'حداثة دخول المركز' : 'Position Entry Recency'}</span>
                   {entryRecencyFilter !== 'all' && (
                     <button
                       type="button"
@@ -578,21 +596,23 @@ export default function AlphaBreakdownSection({
                       }}
                       className="text-[10px] text-text-muted hover:text-white transition-colors cursor-pointer"
                     >
-                      Reset
+                      {isAr ? 'إعادة ضبط' : 'Reset'}
                     </button>
                   )}
                 </div>
                 <p className="text-[11px] text-neutral-400 mb-2">
-                  Show tickers with active positions entered within N trading days:
+                  {isAr
+                    ? 'عرض الأسهم ذات المراكز النشطة التي تم الدخول إليها خلال عدد محدد من أيام التداول:'
+                    : 'Show tickers with active positions entered within N trading days:'}
                 </p>
                 <div className="grid grid-cols-2 gap-1.5 mb-3">
                   {[
-                    { label: 'All Entries', value: 'all' as const },
-                    { label: 'Today (≤ 1d)', value: 1 },
-                    { label: '≤ 3 Days', value: 3 },
-                    { label: '≤ 7 Days (1 Wk)', value: 7 },
-                    { label: '≤ 14 Days (2 Wks)', value: 14 },
-                    { label: '≤ 30 Days (1 Mo)', value: 30 },
+                    { label: isAr ? 'كافة المراكز' : 'All Entries', value: 'all' as const },
+                    { label: isAr ? 'اليوم (≤ 1 يوم)' : 'Today (≤ 1d)', value: 1 },
+                    { label: isAr ? '≤ 3 أيام' : '≤ 3 Days', value: 3 },
+                    { label: isAr ? '≤ 7 أيام (أسبوع)' : '≤ 7 Days (1 Wk)', value: 7 },
+                    { label: isAr ? '≤ 14 يوماً (أسبوعين)' : '≤ 14 Days (2 Wks)', value: 14 },
+                    { label: isAr ? '≤ 30 يوماً (شهر)' : '≤ 30 Days (1 Mo)', value: 30 },
                   ].map((opt) => {
                     const isSel = entryRecencyFilter === opt.value;
                     return (
@@ -604,7 +624,7 @@ export default function AlphaBreakdownSection({
                           setCustomEntryDays('');
                           setIsRecencyFilterOpen(false);
                         }}
-                        className={`px-2 py-1.5 rounded-lg text-xs font-medium text-left transition-colors cursor-pointer flex items-center justify-between ${
+                        className={`px-2 py-1.5 rounded-lg text-xs font-medium text-left rtl:text-right transition-colors cursor-pointer flex items-center justify-between ${
                           isSel
                             ? 'bg-[#089981]/20 text-[#089981] border border-[#089981]/40'
                             : 'text-neutral-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
@@ -624,7 +644,7 @@ export default function AlphaBreakdownSection({
                     type="number"
                     min="1"
                     max="365"
-                    placeholder="Custom days"
+                    placeholder={isAr ? 'أيام مخصصة' : 'Custom days'}
                     value={customEntryDays}
                     onChange={(e) => setCustomEntryDays(e.target.value)}
                     onKeyDown={(e) => {
@@ -649,7 +669,7 @@ export default function AlphaBreakdownSection({
                     }}
                     className="px-2.5 h-7 bg-white/10 hover:bg-white/20 text-white rounded text-xs font-medium cursor-pointer shrink-0 transition-colors"
                   >
-                    Apply
+                    {isAr ? 'تطبيق' : 'Apply'}
                   </button>
                 </div>
               </div>
@@ -668,25 +688,25 @@ export default function AlphaBreakdownSection({
               className={`filter-control-btn ${
                 minPositionRoiFilter !== 'all' ? 'filter-control-btn-active' : ''
               }`}
-              title="Filter by active position return"
+              title={isAr ? 'تصفية حسب عائد المراكز النشطة' : 'Filter by active position return'}
             >
               <TrendingUp size={12} className={minPositionRoiFilter !== 'all' ? 'text-[#089981]' : 'text-neutral-400'} />
               <span>
                 {minPositionRoiFilter === 'all'
-                  ? 'Position ROI: All'
+                  ? (isAr ? 'عائد المركز: الكل' : 'Position ROI: All')
                   : minPositionRoiFilter === 'in_market'
-                  ? 'In Market Only'
+                  ? (isAr ? 'في السوق فقط' : 'In Market Only')
                   : minPositionRoiFilter === 0
-                  ? 'ROI: > 0%'
-                  : `ROI: ≥ +${minPositionRoiFilter}%`}
+                  ? (isAr ? 'العائد: > 0%' : 'ROI: > 0%')
+                  : (isAr ? `العائد: ≥ +${minPositionRoiFilter}%` : `ROI: ≥ +${minPositionRoiFilter}%`)}
               </span>
               <ChevronDown size={11} className="text-neutral-400" />
             </button>
 
             {isRoiFilterOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-64 bg-[#000000] border border-white/15 rounded-xl shadow-2xl p-3 z-50 text-left font-sans animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute left-0 rtl:left-auto rtl:right-0 top-full mt-1.5 w-64 bg-[#000000] border border-white/15 rounded-xl shadow-2xl p-3 z-50 text-left rtl:text-right font-sans animate-in fade-in zoom-in-95 duration-100">
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
-                  <span className="text-xs font-semibold text-white">Minimum Position ROI</span>
+                  <span className="text-xs font-semibold text-white">{isAr ? 'أدنى عائد للمركز' : 'Minimum Position ROI'}</span>
                   {minPositionRoiFilter !== 'all' && (
                     <button
                       type="button"
@@ -696,23 +716,25 @@ export default function AlphaBreakdownSection({
                       }}
                       className="text-[10px] text-text-muted hover:text-white transition-colors cursor-pointer"
                     >
-                      Reset
+                      {isAr ? 'إعادة ضبط' : 'Reset'}
                     </button>
                   )}
                 </div>
                 <p className="text-[11px] text-neutral-400 mb-2">
-                  Show active in-market positions with return at or above threshold:
+                  {isAr
+                    ? 'عرض المراكز النشطة داخل السوق ذات عائد مساوٍ أو يفوق الحد المحدد:'
+                    : 'Show active in-market positions with return at or above threshold:'}
                 </p>
                 <div className="grid grid-cols-2 gap-1.5 mb-3">
                   {[
-                    { label: 'All ROI', value: 'all' as const },
-                    { label: 'In Market (Any)', value: 'in_market' as const },
-                    { label: 'Profitable (> 0%)', value: 0 },
-                    { label: '≥ +3% ROI', value: 3 },
-                    { label: '≥ +5% ROI', value: 5 },
-                    { label: '≥ +10% ROI', value: 10 },
-                    { label: '≥ +15% ROI', value: 15 },
-                    { label: '≥ +20% ROI', value: 20 },
+                    { label: isAr ? 'كافة العوائد' : 'All ROI', value: 'all' as const },
+                    { label: isAr ? 'في السوق (أي عائد)' : 'In Market (Any)', value: 'in_market' as const },
+                    { label: isAr ? 'رابحة (> 0%)' : 'Profitable (> 0%)', value: 0 },
+                    { label: isAr ? '≥ +3% عائد' : '≥ +3% ROI', value: 3 },
+                    { label: isAr ? '≥ +5% عائد' : '≥ +5% ROI', value: 5 },
+                    { label: isAr ? '≥ +10% عائد' : '≥ +10% ROI', value: 10 },
+                    { label: isAr ? '≥ +15% عائد' : '≥ +15% ROI', value: 15 },
+                    { label: isAr ? '≥ +20% عائد' : '≥ +20% ROI', value: 20 },
                   ].map((opt) => {
                     const isSel = minPositionRoiFilter === opt.value;
                     return (
@@ -724,7 +746,7 @@ export default function AlphaBreakdownSection({
                           setCustomMinRoi('');
                           setIsRoiFilterOpen(false);
                         }}
-                        className={`px-2 py-1.5 rounded-lg text-xs font-medium text-left transition-colors cursor-pointer flex items-center justify-between ${
+                        className={`px-2 py-1.5 rounded-lg text-xs font-medium text-left rtl:text-right transition-colors cursor-pointer flex items-center justify-between ${
                           isSel
                             ? 'bg-[#089981]/20 text-[#089981] border border-[#089981]/40'
                             : 'text-neutral-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
@@ -743,7 +765,7 @@ export default function AlphaBreakdownSection({
                   <input
                     type="number"
                     step="0.5"
-                    placeholder="Custom %"
+                    placeholder={isAr ? 'نسبة مخصصة %' : 'Custom %'}
                     value={customMinRoi}
                     onChange={(e) => setCustomMinRoi(e.target.value)}
                     onKeyDown={(e) => {
@@ -769,7 +791,7 @@ export default function AlphaBreakdownSection({
                     }}
                     className="px-2.5 h-7 bg-white/10 hover:bg-white/20 text-white rounded text-xs font-medium cursor-pointer shrink-0 transition-colors"
                   >
-                    Apply
+                    {isAr ? 'تطبيق' : 'Apply'}
                   </button>
                 </div>
               </div>
@@ -782,10 +804,10 @@ export default function AlphaBreakdownSection({
               type="button"
               onClick={handleClearFilters}
               className="filter-reset-btn"
-              title="Reset entry recency and ROI filters"
+              title={isAr ? 'إعادة ضبط فلاتر الدخول والعائد' : 'Reset entry recency and ROI filters'}
             >
               <RotateCcw size={11} />
-              <span>Reset Filters</span>
+              <span>{isAr ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}</span>
             </button>
           )}
         </div>
@@ -793,15 +815,15 @@ export default function AlphaBreakdownSection({
         {/* Right: Ticker Status Counts */}
         <div className="flex items-center gap-2 text-[11px] text-text-muted">
           <span className="tabular-nums text-neutral-300">
-            {displayedTickers.length} of {sectorFiltered.length} tickers
+            {displayedTickers.length} {isAr ? 'من' : 'of'} {sectorFiltered.length} {isAr ? 'سهم' : 'tickers'}
           </span>
           <span className="text-neutral-600">•</span>
           <span className="text-[#089981] font-medium tabular-nums">
-            {inMarketCount} in market
+            {inMarketCount} {isAr ? 'في السوق' : 'in market'}
           </span>
           <span className="text-neutral-600">•</span>
           <span className="text-neutral-400 tabular-nums">
-            {outOfMarketCount} out of market
+            {outOfMarketCount} {isAr ? 'خارج السوق' : 'out of market'}
           </span>
         </div>
       </div>
@@ -815,10 +837,10 @@ export default function AlphaBreakdownSection({
               {/* Symbol & Logo (pinned left) */}
               <th
                 onClick={() => handleSort('symbol')}
-                className="py-2 px-2 sticky left-0 z-30 bg-[#000000] min-w-[76px] w-[76px] cursor-pointer hover:text-white transition-colors"
+                className="py-2 px-2 sticky left-0 rtl:left-auto rtl:right-0 z-30 bg-[#000000] min-w-[76px] w-[76px] cursor-pointer hover:text-white transition-colors"
               >
                 <div className="flex items-center gap-1">
-                  <span className="text-text-primary">Symbol</span>
+                  <span className="text-text-primary">{isAr ? 'الرمز' : 'Symbol'}</span>
                   {renderSortIndicator('symbol')}
                 </div>
               </th>
@@ -830,7 +852,7 @@ export default function AlphaBreakdownSection({
                   className="py-2 px-3 min-w-[150px] max-w-[200px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-1">
-                    <span>Company</span>
+                    <span>{isAr ? 'الشركة' : 'Company'}</span>
                     {renderSortIndicator('company')}
                   </div>
                 </th>
@@ -843,7 +865,7 @@ export default function AlphaBreakdownSection({
                   className="py-2 px-3 text-center min-w-[105px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>Position</span>
+                    <span>{isAr ? 'المركز' : 'Position'}</span>
                     {renderSortIndicator('setup')}
                   </div>
                 </th>
@@ -856,7 +878,7 @@ export default function AlphaBreakdownSection({
                   className="py-2 px-3 text-center min-w-[110px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>Best-Fit Model</span>
+                    <span>{isAr ? 'النموذج الأنسب' : 'Best-Fit Model'}</span>
                     {renderSortIndicator('champion')}
                   </div>
                 </th>
@@ -872,7 +894,7 @@ export default function AlphaBreakdownSection({
                       className="py-2 px-3 text-center min-w-[70px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-center gap-1">
-                        <span>Signal</span>
+                        <span>{isAr ? 'الإشارة' : 'Signal'}</span>
                         {renderSortIndicator('lastSignal')}
                       </div>
                     </th>
@@ -885,7 +907,7 @@ export default function AlphaBreakdownSection({
                       className="py-2 px-3 text-center min-w-[100px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-center gap-1">
-                        <span>Signal Date</span>
+                        <span>{isAr ? 'تاريخ الإشارة' : 'Signal Date'}</span>
                         {renderSortIndicator('signalDate')}
                       </div>
                     </th>
@@ -895,10 +917,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('barsHeld') && (
                     <th
                       onClick={() => handleSort('barsHeld')}
-                      className="py-2 px-3 text-right min-w-[130px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[130px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Time in Trade</span>
+                        <span>{isAr ? 'مدة المركز' : 'Time in Trade'}</span>
                         {renderSortIndicator('barsHeld')}
                       </div>
                     </th>
@@ -908,10 +930,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('tradeReturn') && (
                     <th
                       onClick={() => handleSort('tradeReturn')}
-                      className="py-2 px-3 text-right min-w-[95px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[95px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Position ROI</span>
+                        <span>{isAr ? 'عائد المركز' : 'Position ROI'}</span>
                         {renderSortIndicator('tradeReturn')}
                       </div>
                     </th>
@@ -921,10 +943,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('positionMae') && (
                     <th
                       onClick={() => handleSort('positionMae')}
-                      className="py-2 px-3 text-right min-w-[90px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[90px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Position MAE</span>
+                        <span>{isAr ? 'انحراف المركز' : 'Position MAE'}</span>
                         {renderSortIndicator('positionMae')}
                       </div>
                     </th>
@@ -934,10 +956,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('entryPrice') && (
                     <th
                       onClick={() => handleSort('entryPrice')}
-                      className="py-2 px-3 text-right min-w-[90px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[90px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Entry Price</span>
+                        <span>{isAr ? 'سعر الدخول' : 'Entry Price'}</span>
                         {renderSortIndicator('entryPrice')}
                       </div>
                     </th>
@@ -952,7 +974,7 @@ export default function AlphaBreakdownSection({
                   className="py-2 px-3 min-w-[110px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-1">
-                    <span>Sector</span>
+                    <span>{isAr ? 'القطاع' : 'Sector'}</span>
                     {renderSortIndicator('group')}
                   </div>
                 </th>
@@ -962,10 +984,10 @@ export default function AlphaBreakdownSection({
               {activeVisibleColumns.has('price') && (
                 <th
                   onClick={() => handleSort('price')}
-                  className="py-2 px-3 text-right min-w-[85px] cursor-pointer hover:text-white transition-colors"
+                  className="py-2 px-3 text-right tabular-nums min-w-[85px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1">
-                    <span>{tableView === 'activity' ? 'Current Price' : 'Price'}</span>
+                    <span>{tableView === 'activity' ? (isAr ? 'السعر الحالي' : 'Current Price') : (isAr ? 'السعر' : 'Price')}</span>
                     {renderSortIndicator('price')}
                   </div>
                 </th>
@@ -978,10 +1000,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('alpha') && (
                     <th
                       onClick={() => handleSort('alpha')}
-                      className="py-2 px-3 text-right min-w-[105px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[105px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Alpha vs B&H</span>
+                        <span>{isAr ? 'ألفا مقابل B&H' : 'Alpha vs B&H'}</span>
                         {renderSortIndicator('alpha')}
                       </div>
                     </th>
@@ -991,10 +1013,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('sysRoi') && (
                     <th
                       onClick={() => handleSort('sysRoi')}
-                      className="py-2 px-3 text-right min-w-[95px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[95px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Strategy ROI</span>
+                        <span>{isAr ? 'عائد الاستراتيجية' : 'Strategy ROI'}</span>
                         {renderSortIndicator('sysRoi')}
                       </div>
                     </th>
@@ -1004,10 +1026,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('bh') && (
                     <th
                       onClick={() => handleSort('bh')}
-                      className="py-2 px-3 text-right min-w-[85px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[85px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>B&H ROI</span>
+                        <span>{isAr ? 'عائد B&H' : 'B&H ROI'}</span>
                         {renderSortIndicator('bh')}
                       </div>
                     </th>
@@ -1020,7 +1042,7 @@ export default function AlphaBreakdownSection({
                       className="py-2 px-3 text-center min-w-[95px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-center gap-1">
-                        <span>Status</span>
+                        <span>{isAr ? 'الحالة' : 'Status'}</span>
                         {renderSortIndicator('status')}
                       </div>
                     </th>
@@ -1030,10 +1052,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('maxDrawdown') && (
                     <th
                       onClick={() => handleSort('maxDrawdown')}
-                      className="py-2 px-3 text-right min-w-[80px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[80px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Max DD</span>
+                        <span>{isAr ? 'أقصى تراجع' : 'Max DD'}</span>
                         {renderSortIndicator('maxDrawdown')}
                       </div>
                     </th>
@@ -1043,10 +1065,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('avgAdverseExcursion') && (
                     <th
                       onClick={() => handleSort('avgAdverseExcursion')}
-                      className="py-2 px-3 text-right min-w-[80px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[80px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Avg MAE</span>
+                        <span>{isAr ? 'متوسط MAE' : 'Avg MAE'}</span>
                         {renderSortIndicator('avgAdverseExcursion')}
                       </div>
                     </th>
@@ -1056,10 +1078,10 @@ export default function AlphaBreakdownSection({
                   {activeVisibleColumns.has('avgBarsHeld') && (
                     <th
                       onClick={() => handleSort('avgBarsHeld')}
-                      className="py-2 px-3 text-right min-w-[80px] cursor-pointer hover:text-white transition-colors"
+                      className="py-2 px-3 text-right tabular-nums min-w-[80px] cursor-pointer hover:text-white transition-colors"
                     >
                       <div className="flex items-center justify-end gap-1">
-                        <span>Avg Bars</span>
+                        <span>{isAr ? 'متوسط الشموع' : 'Avg Bars'}</span>
                         {renderSortIndicator('avgBarsHeld')}
                       </div>
                     </th>
@@ -1071,10 +1093,10 @@ export default function AlphaBreakdownSection({
               {activeVisibleColumns.has('winRate') && (
                 <th
                   onClick={() => handleSort('winRate')}
-                  className="py-2 px-3 text-right min-w-[80px] cursor-pointer hover:text-white transition-colors"
+                  className="py-2 px-3 text-right tabular-nums min-w-[80px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1">
-                    <span>Win Rate</span>
+                    <span>{isAr ? 'نسبة النجاح' : 'Win Rate'}</span>
                     {renderSortIndicator('winRate')}
                   </div>
                 </th>
@@ -1084,10 +1106,10 @@ export default function AlphaBreakdownSection({
               {activeVisibleColumns.has('tradesCount') && (
                 <th
                   onClick={() => handleSort('tradesCount')}
-                  className="py-2 px-3 text-right min-w-[70px] cursor-pointer hover:text-white transition-colors"
+                  className="py-2 px-3 text-right tabular-nums min-w-[70px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1">
-                    <span>Trades</span>
+                    <span>{isAr ? 'الصفقات' : 'Trades'}</span>
                     {renderSortIndicator('tradesCount')}
                   </div>
                 </th>
@@ -1097,10 +1119,10 @@ export default function AlphaBreakdownSection({
               {tableView === 'activity' && activeVisibleColumns.has('alpha') && (
                 <th
                   onClick={() => handleSort('alpha')}
-                  className="py-2 px-3 text-right min-w-[105px] cursor-pointer hover:text-white transition-colors"
+                  className="py-2 px-3 text-right tabular-nums min-w-[105px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1">
-                    <span>Alpha vs B&H</span>
+                    <span>{isAr ? 'ألفا مقابل B&H' : 'Alpha vs B&H'}</span>
                     {renderSortIndicator('alpha')}
                   </div>
                 </th>
@@ -1108,10 +1130,10 @@ export default function AlphaBreakdownSection({
               {tableView === 'activity' && activeVisibleColumns.has('sysRoi') && (
                 <th
                   onClick={() => handleSort('sysRoi')}
-                  className="py-2 px-3 text-right min-w-[95px] cursor-pointer hover:text-white transition-colors"
+                  className="py-2 px-3 text-right tabular-nums min-w-[95px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1">
-                    <span>Strategy ROI</span>
+                    <span>{isAr ? 'عائد الاستراتيجية' : 'Strategy ROI'}</span>
                     {renderSortIndicator('sysRoi')}
                   </div>
                 </th>
@@ -1123,12 +1145,12 @@ export default function AlphaBreakdownSection({
                   ref={plusBtnRef}
                   type="button"
                   onClick={handleToggleColumnPicker}
-                  className={`w-6 h-6 rounded flex items-center justify-center transition-colors cursor-pointer ml-auto ${
+                  className={`w-6 h-6 rounded flex items-center justify-center transition-colors cursor-pointer ml-auto rtl:ml-0 rtl:mr-auto ${
                     isColumnPickerOpen
                       ? 'bg-white/20 text-white'
                       : 'text-text-muted hover:text-white hover:bg-white/10'
                   }`}
-                  title={`Customize ${tableView === 'overview' ? 'Overview' : 'Position Activity'} columns`}
+                  title={isAr ? `تخصيص أعمدة ${tableView === 'overview' ? 'النظرة العامة' : 'نشاط المراكز'}` : `Customize ${tableView === 'overview' ? 'Overview' : 'Position Activity'} columns`}
                 >
                   <Plus size={14} />
                 </button>
@@ -1145,9 +1167,13 @@ export default function AlphaBreakdownSection({
                   className="py-12 text-center text-text-muted text-xs bg-black"
                 >
                   <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
-                    <p className="text-neutral-300 font-medium">No tickers match your active screener filters.</p>
+                    <p className="text-neutral-300 font-medium">
+                      {isAr ? 'لا توجد أسهم تطابق فلاتر الماسح النشطة.' : 'No tickers match your active screener filters.'}
+                    </p>
                     <p className="text-neutral-500 text-[11px]">
-                      Try adjusting your entry recency, position ROI, or search query.
+                      {isAr
+                        ? 'جرّب تعديل حداثة الدخول، عائد المركز، أو عبارة البحث.'
+                        : 'Try adjusting your entry recency, position ROI, or search query.'}
                     </p>
                     {hasActiveFilters && (
                       <button
@@ -1156,7 +1182,7 @@ export default function AlphaBreakdownSection({
                         className="mt-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5"
                       >
                         <RotateCcw size={12} />
-                        <span>Reset All Filters</span>
+                        <span>{isAr ? 'إعادة ضبط كافة الفلاتر' : 'Reset All Filters'}</span>
                       </button>
                     )}
                   </div>
@@ -1176,7 +1202,7 @@ export default function AlphaBreakdownSection({
                     className="hover:bg-white/[0.04] transition-colors cursor-pointer group h-10"
                   >
                     {/* 1. Symbol & Circular Logo (pinned left) */}
-                    <td className="py-1 px-2 sticky left-0 z-10 bg-[#000000] whitespace-nowrap min-w-[76px] w-[76px]">
+                    <td className="py-1 px-2 sticky left-0 rtl:left-auto rtl:right-0 z-10 bg-[#000000] whitespace-nowrap min-w-[76px] w-[76px]">
                       <div className="flex items-center gap-1.5">
                         {/* Circular Logo */}
                         <div className="w-4.5 h-4.5 rounded-full bg-neutral-900 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
@@ -1219,12 +1245,18 @@ export default function AlphaBreakdownSection({
                         {item.isOpen ? (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#089981]/15 text-[#089981] border border-[#089981]/30 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#089981] animate-pulse shrink-0" />
-                            <span>In Market{item.isFresh ? ' (New)' : ''}</span>
+                            <span>
+                              {isAr ? 'في السوق' : 'In Market'}
+                              {item.isFresh ? (isAr ? ' (جديد)' : ' (New)') : ''}
+                            </span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-neutral-400 border border-white/10 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-neutral-500 shrink-0" />
-                            <span>Out of Market{item.status === 'EXIT_RECENT' ? ' (Exit)' : ''}</span>
+                            <span>
+                              {isAr ? 'خارج السوق' : 'Out of Market'}
+                              {item.status === 'EXIT_RECENT' ? (isAr ? ' (خروج)' : ' (Exit)') : ''}
+                            </span>
                           </span>
                         )}
                       </td>
@@ -1259,11 +1291,11 @@ export default function AlphaBreakdownSection({
                           <td className="py-1 px-3 text-center whitespace-nowrap min-w-[70px]">
                             {item.lastSignalType === 'BUY' ? (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#089981]/20 text-[#089981] border border-[#089981]/30">
-                                BUY
+                                {isAr ? 'شراء' : 'BUY'}
                               </span>
                             ) : item.lastSignalType === 'EXIT' ? (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#f23645]/20 text-[#f23645] border border-[#f23645]/30">
-                                EXIT
+                                {isAr ? 'خروج' : 'EXIT'}
                               </span>
                             ) : (
                               <span className="text-text-muted text-[11px]">—</span>
@@ -1274,7 +1306,7 @@ export default function AlphaBreakdownSection({
                         {/* Signal Date */}
                         {activeVisibleColumns.has('signalDate') && (
                           <td className="py-1 px-3 text-center whitespace-nowrap min-w-[100px] tabular-nums text-[11px] text-[#d1d4dc]">
-                            {formatSignalDate(item.lastSignalDate)}
+                            {formatSignalDate(item.lastSignalDate, isAr)}
                           </td>
                         )}
 
@@ -1282,7 +1314,7 @@ export default function AlphaBreakdownSection({
                         {activeVisibleColumns.has('barsHeld') && (
                           <td className="py-1 px-3 text-right tabular-nums text-text-muted text-[11px] whitespace-nowrap min-w-[130px]">
                             {item.barsHeld !== undefined && (item.isOpen || item.barsHeld > 0) ? (
-                              <span>{formatTimeInTrade(item.barsHeld, item.isOpen)}</span>
+                              <span>{formatTimeInTrade(item.barsHeld, item.isOpen, isAr)}</span>
                             ) : (
                               <span>—</span>
                             )}
@@ -1326,7 +1358,9 @@ export default function AlphaBreakdownSection({
                             {item.entryPrice && item.entryPrice > 0 ? (
                               <span>
                                 {item.entryPrice.toFixed(2)}{' '}
-                                <span className="text-[10px] text-text-muted font-normal">EGP</span>
+                                <span className="text-[10px] text-text-muted font-normal">
+                                  {isAr ? 'ج.م' : 'EGP'}
+                                </span>
                               </span>
                             ) : (
                               <span className="text-text-muted">—</span>
@@ -1339,7 +1373,11 @@ export default function AlphaBreakdownSection({
                     {/* Sector / Group */}
                     {activeVisibleColumns.has('group') && (
                       <td className="py-1 px-3 text-text-muted text-[11px] whitespace-nowrap min-w-[110px] truncate max-w-[140px]">
-                        {item.group || item.meta?.sector || '—'}
+                        {item.group
+                          ? localizeSectorName(item.group, locale)
+                          : item.meta?.sector
+                          ? localizeSectorName(item.meta.sector, locale)
+                          : '—'}
                       </td>
                     )}
 
@@ -1349,7 +1387,9 @@ export default function AlphaBreakdownSection({
                         {item.price > 0 ? (
                           <span>
                             {item.price.toFixed(2)}{' '}
-                            <span className="text-[10px] text-text-muted font-normal">EGP</span>
+                            <span className="text-[10px] text-text-muted font-normal">
+                              {isAr ? 'ج.م' : 'EGP'}
+                            </span>
                           </span>
                         ) : (
                           <span className="text-text-muted">—</span>
@@ -1408,7 +1448,7 @@ export default function AlphaBreakdownSection({
                                   : 'bg-[#f23645]/15 text-[#f23645] border-[#f23645]/30'
                               }`}
                             >
-                              {isAlphaPos ? 'Beating B&H' : 'Trailing B&H'}
+                              {isAlphaPos ? (isAr ? 'يتفوق على B&H' : 'Beating B&H') : (isAr ? 'يتراجع عن B&H' : 'Trailing B&H')}
                             </span>
                           </td>
                         )}
@@ -1443,7 +1483,7 @@ export default function AlphaBreakdownSection({
                         {activeVisibleColumns.has('avgBarsHeld') && (
                           <td className="py-1 px-3 text-right tabular-nums text-text-muted text-[11px] whitespace-nowrap min-w-[80px]">
                             {item.avgBarsHeld > 0 ? (
-                              <span>{item.avgBarsHeld.toFixed(0)} bars</span>
+                              <span>{item.avgBarsHeld.toFixed(0)} {isAr ? 'شمعة' : 'bars'}</span>
                             ) : (
                               <span>—</span>
                             )}
@@ -1511,7 +1551,7 @@ export default function AlphaBreakdownSection({
                           onOpenChart(item.symbol);
                         }}
                         className="p-1 rounded text-text-muted hover:text-white transition-colors cursor-pointer inline-flex items-center"
-                        title="View Interactive Chart"
+                        title={isAr ? 'عرض الرسم البياني التفاعلي' : 'View Interactive Chart'}
                       >
                         <ExternalLink size={12} />
                       </button>
@@ -1532,20 +1572,33 @@ export default function AlphaBreakdownSection({
           style={{
             position: 'fixed',
             top: `${(plusBtnRect?.bottom ?? 0) + 6}px`,
-            right: `${
-              typeof window !== 'undefined' && plusBtnRect
-                ? Math.max(12, window.innerWidth - plusBtnRect.right)
-                : 16
-            }px`,
+            right: isAr
+              ? undefined
+              : `${
+                  typeof window !== 'undefined' && plusBtnRect
+                    ? Math.max(12, window.innerWidth - plusBtnRect.right)
+                    : 16
+                }px`,
+            left: isAr
+              ? `${
+                  typeof window !== 'undefined' && plusBtnRect
+                    ? Math.max(12, plusBtnRect.left)
+                    : 16
+                }px`
+              : undefined,
             zIndex: 9999,
           }}
-          className="w-64 bg-[#000000] border border-white/15 rounded-xl shadow-2xl p-3 text-left font-sans animate-in fade-in zoom-in-95 duration-100"
+          className="w-64 bg-[#000000] border border-white/15 rounded-xl shadow-2xl p-3 text-left rtl:text-right font-sans animate-in fade-in zoom-in-95 duration-100"
         >
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-white">Customize Columns</span>
+              <span className="text-xs font-semibold text-white">
+                {isAr ? 'تخصيص الأعمدة' : 'Customize Columns'}
+              </span>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white/10 text-white/90 border border-white/15">
-                {tableView === 'overview' ? 'Overview' : 'Position Activity'}
+                {tableView === 'overview'
+                  ? (isAr ? 'النظرة العامة' : 'Overview')
+                  : (isAr ? 'نشاط المراكز' : 'Position Activity')}
               </span>
             </div>
             <button
@@ -1553,13 +1606,15 @@ export default function AlphaBreakdownSection({
               onClick={resetColumnsToDefault}
               className="text-[10px] text-text-muted hover:text-white transition-colors cursor-pointer"
             >
-              Reset
+              {isAr ? 'استعادة الافتراضي' : 'Reset'}
             </button>
           </div>
           <p className="text-[10px] text-text-muted pb-2">
-            Select columns to show in {tableView === 'overview' ? 'Overview' : 'Position Activity'} mode:
+            {isAr
+              ? `حدد الأعمدة لعرضها في وضع ${tableView === 'overview' ? 'النظرة العامة' : 'نشاط المراكز'}:`
+              : `Select columns to show in ${tableView === 'overview' ? 'Overview' : 'Position Activity'} mode:`}
           </p>
-          <div className="space-y-1 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+          <div className="space-y-1 max-h-64 overflow-y-auto custom-scrollbar pr-1 rtl:pr-0 rtl:pl-1">
             {activeAvailableColumns.map((col) => {
               const isVisible = activeVisibleColumns.has(col.id);
               return (

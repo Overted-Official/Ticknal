@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 export interface TransactionNavSection {
   id: string;
@@ -15,7 +16,26 @@ export const TRANSACTION_SECTIONS: TransactionNavSection[] = [
 ];
 
 export default function TransactionsFloatingNav() {
+  const { locale } = useTranslation();
   const [activeSection, setActiveSection] = useState<string>('section-transactions-overview');
+
+  const sections = useMemo<TransactionNavSection[]>(() => [
+    {
+      id: 'section-transactions-overview',
+      label: locale === 'ar' ? 'نظرة عامة على السيولة' : 'Cashflow Overview',
+      shortLabel: locale === 'ar' ? 'نظرة عامة' : 'Overview',
+    },
+    {
+      id: 'section-cashflow-analytics',
+      label: locale === 'ar' ? 'تحليلات التدفقات' : 'Cashflow Analytics',
+      shortLabel: locale === 'ar' ? 'التحليلات' : 'Analytics',
+    },
+    {
+      id: 'section-activity-ledger',
+      label: locale === 'ar' ? 'سجل الحركات' : 'Activity Ledger',
+      shortLabel: locale === 'ar' ? 'السجل' : 'Ledger',
+    },
+  ], [locale]);
 
   const scrollToSection = useCallback((id: string) => {
     const element = document.getElementById(id);
@@ -88,7 +108,7 @@ export default function TransactionsFloatingNav() {
             aria-orientation="horizontal"
             className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full"
           >
-            {TRANSACTION_SECTIONS.map((sec) => {
+            {sections.map((sec) => {
               const isSelected = activeSection === sec.id;
 
               return (

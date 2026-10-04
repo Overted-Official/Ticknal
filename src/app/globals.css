@@ -14,9 +14,20 @@
    ========================================================================== */
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'EuclidCircularSemibold';
+  src: url('/fonts/EuclidCircularSemibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer utilities {
   .font-serif {
     font-family: var(--font-spectral), 'Spectral', 'Sentient', Georgia, serif;
+  }
+  .font-euclid {
+    font-family: EuclidCircularSemibold, sans-serif;
   }
 }
 
@@ -194,7 +205,7 @@
   --chart-grid: var(--palette-chart-grid);
 
   /* Typography Scale */
-  --font-sans-token: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
+  --font-sans-token: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
   --text-8: 0.5rem;
   --text-9: 0.5625rem;
   --text-10: 0.625rem;
@@ -2491,3 +2502,51 @@ a#tv-attr-logo,
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* ==========================================================================
+   Ticknal Arabic Localization & Cairo Typography (Official Arabic Font)
+   ========================================================================== */
+
+[dir="rtl"],
+[lang="ar"],
+html[dir="rtl"],
+body[dir="rtl"] {
+  --font-sans-token: var(--font-cairo), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-family: var(--font-cairo), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+
+/* RTL Icon and layout flip helpers */
+[dir="rtl"] .rtl-mirror,
+[dir="rtl"] .rtl-flip-x {
+  transform: scaleX(-1);
+}
+
+/* In RTL, desktop sidebar navigation border mirrors from left to right */
+[dir="rtl"] .nav-shell {
+  border-left: none !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+/* Ensure numerals with tabular-nums render cleanly without monospace */
+[dir="rtl"] .tabular-nums,
+[lang="ar"] .tabular-nums {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  display: inline-block;
+  unicode-bidi: isolate;
+}
+
+/* In RTL, desktop drawers anchor to the left edge and mirror borders */
+[dir="rtl"] .drawer-overlay {
+  justify-content: flex-start;
+}
+@media (min-width: 768px) {
+  [dir="rtl"] .drawer-sheet-form,
+  [dir="rtl"] .drawer-sheet,
+  [dir="rtl"] .drawer-sheet-viewport-safe-fixed {
+    border-left: 0 !important;
+    border-right: 1px solid var(--border-default) !important;
+  }
+}
+

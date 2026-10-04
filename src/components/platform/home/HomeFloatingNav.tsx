@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 export interface HomeNavSection {
   id: string;
@@ -8,13 +9,18 @@ export interface HomeNavSection {
   shortLabel: string;
 }
 
-export const HOME_SECTIONS: HomeNavSection[] = [
-  { id: 'section-performance-overview', label: 'Performance Overview', shortLabel: 'Overview' },
-  { id: 'section-my-positions', label: 'My Positions', shortLabel: 'Positions' },
-  { id: 'section-market-signals', label: 'Market Signals', shortLabel: 'Signals' },
-];
-
 export default function HomeFloatingNav() {
+  const { t } = useTranslation();
+
+  const sections: HomeNavSection[] = useMemo(
+    () => [
+      { id: 'section-performance-overview', label: t('dashboard.title'), shortLabel: t('dashboard.title') },
+      { id: 'section-my-positions', label: t('dashboard.activePositions'), shortLabel: t('dashboard.activePositions') },
+      { id: 'section-market-signals', label: t('dashboard.recentSignals'), shortLabel: t('dashboard.recentSignals') },
+    ],
+    [t]
+  );
+
   const [activeSection, setActiveSection] = useState<string>('section-performance-overview');
 
   const scrollToSection = useCallback((id: string) => {
@@ -42,8 +48,8 @@ export default function HomeFloatingNav() {
 
   useEffect(() => {
     const handleScroll = () => {
-      for (let i = HOME_SECTIONS.length - 1; i >= 0; i--) {
-        const sectionId = HOME_SECTIONS[i].id;
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const sectionId = sections[i].id;
         const element = document.getElementById(sectionId);
         if (element) {
           const rect = element.getBoundingClientRect();
@@ -53,7 +59,7 @@ export default function HomeFloatingNav() {
           }
         }
       }
-      setActiveSection(HOME_SECTIONS[0].id);
+      setActiveSection(sections[0].id);
     };
 
     const container = document.querySelector('.command-surface-page');
@@ -69,7 +75,7 @@ export default function HomeFloatingNav() {
       }
       window.removeEventListener('scroll', handleScroll, { capture: true });
     };
-  }, []);
+  }, [sections]);
 
   return (
     <nav
@@ -88,7 +94,7 @@ export default function HomeFloatingNav() {
             aria-orientation="horizontal"
             className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full"
           >
-            {HOME_SECTIONS.map((sec) => {
+            {sections.map((sec) => {
               const isSelected = activeSection === sec.id;
 
               return (

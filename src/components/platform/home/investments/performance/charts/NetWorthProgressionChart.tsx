@@ -12,6 +12,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 import { type BankAccount } from '@/types/bank';
 import { type HomeInvestmentOrder } from '../../homeInvestmentsTypes';
@@ -39,6 +40,8 @@ export default function NetWorthProgressionChart({
 }: NetWorthProgressionChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>('All');
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
 
   // 1. Calculate current asset-weighted inflation rate and monthly series deflators
   const chartPoints = useMemo(() => {
@@ -159,26 +162,26 @@ export default function NetWorthProgressionChart({
     if (!active || !payload || !payload.length) return null;
     const pt = payload[0].payload;
     return (
-      <div className="p-3 rounded-xl bg-[#18181b] border border-white/10 text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl">
+      <div className="p-3 rounded-xl bg-surface-raised border border-white/10 text-xs tabular-nums select-none font-sans space-y-1.5 shadow-2xl">
         <div className="font-semibold text-text-primary mb-1 border-b border-white/10 pb-1">
           {pt.fullDate || label}
         </div>
         <div className="flex justify-between gap-4 text-[#089981]">
-          <span>Nominal Net Worth:</span>
+          <span>{locale === 'ar' ? 'صافي القيمة الاسمي:' : 'Nominal Net Worth:'}</span>
           <strong className="text-text-primary">
-            {isPrivacy ? '•••••••• £' : `${pt.nominal.toLocaleString('en-US')} £`}
+            {isPrivacy ? `•••••••• ${currencySymbol}` : `${pt.nominal.toLocaleString('en-US')} ${currencySymbol}`}
           </strong>
         </div>
         <div className="flex justify-between gap-4 text-[#2962ff]">
-          <span>Real Purchasing Power:</span>
+          <span>{locale === 'ar' ? 'القوة الشرائية الحقيقية:' : 'Real Purchasing Power:'}</span>
           <strong className="text-text-primary">
-            {isPrivacy ? '•••••••• £' : `${pt.realValue.toLocaleString('en-US')} £`}
+            {isPrivacy ? `•••••••• ${currencySymbol}` : `${pt.realValue.toLocaleString('en-US')} ${currencySymbol}`}
           </strong>
         </div>
         <div className="flex justify-between gap-4 text-[#f23645]">
-          <span>Inflation Drag:</span>
+          <span>{locale === 'ar' ? 'خسائر التضخم:' : 'Inflation Drag:'}</span>
           <strong className="text-text-primary">
-            {isPrivacy ? '•••••••• £' : `-${pt.drag.toLocaleString('en-US')} £`}
+            {isPrivacy ? `•••••••• ${currencySymbol}` : `-${pt.drag.toLocaleString('en-US')} ${currencySymbol}`}
           </strong>
         </div>
       </div>
@@ -191,19 +194,19 @@ export default function NetWorthProgressionChart({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-0.5">
         <div className="flex items-center gap-3 text-xs flex-wrap">
           <span className="text-[13px] font-semibold text-text-primary tracking-tight mr-0.5">
-            Net Worth vs Inflation
+            {locale === 'ar' ? 'صافي القيمة مقابل التضخم' : 'Net Worth vs Inflation'}
           </span>
           <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
             <span className="w-2 h-2 rounded-full bg-[#089981]" />
-            <span>Nominal</span>
+            <span>{locale === 'ar' ? 'الاسمي' : 'Nominal'}</span>
           </span>
           <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
             <span className="w-2 h-2 rounded-full bg-[#2962ff]" />
-            <span>Real Deflated</span>
+            <span>{locale === 'ar' ? 'الحقيقي' : 'Real Deflated'}</span>
           </span>
           <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
             <span className="w-2 h-2 rounded-full bg-[#f23645]" />
-            <span>Drag</span>
+            <span>{locale === 'ar' ? 'أثر التضخم' : 'Drag'}</span>
           </span>
         </div>
 
@@ -212,6 +215,7 @@ export default function NetWorthProgressionChart({
           <div className="seg-control">
             {TIMEFRAMES.map((tf) => {
               const isSelected = timeframe === tf;
+              const displayLabel = tf === 'All' && locale === 'ar' ? 'الكل' : tf;
               return (
                 <button
                   key={tf}
@@ -219,7 +223,7 @@ export default function NetWorthProgressionChart({
                   onClick={() => setTimeframe(tf)}
                   className={`seg-control-btn ${isSelected ? 'seg-control-btn-active' : ''}`}
                 >
-                  {tf}
+                  {displayLabel}
                 </button>
               );
             })}
@@ -231,7 +235,9 @@ export default function NetWorthProgressionChart({
       <div className="w-full h-[210px] relative">
         {filteredData.length < 2 ? (
           <div className="flex h-full items-center justify-center text-xs text-text-muted">
-            Historical net worth progression is not available.
+            {locale === 'ar'
+              ? 'سجل نمو صافي القيمة التاريخي غير متوفر.'
+              : 'Historical net worth progression is not available.'}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

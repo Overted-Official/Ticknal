@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 import { type HomeInvestmentOrder } from '../homeInvestmentsTypes';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
 
@@ -26,6 +27,8 @@ export default function PositionRowItem({
   onTickerClick,
   onSellClick,
 }: PositionRowItemProps) {
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const [imgError, setImgError] = useState(false);
   const positionVal = order.currentPrice * order.quantity;
   const weightPct = totalMarketValue > 0 ? (order.marketValueEgp / totalMarketValue) * 100 : 0;
@@ -80,7 +83,7 @@ export default function PositionRowItem({
             {exitSignal && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0">
                 <span className="w-1 h-1 rounded-full bg-rose-400 animate-pulse" />
-                SELL
+                {isArabic ? 'بيع' : 'SELL'}
               </span>
             )}
           </div>
@@ -90,20 +93,20 @@ export default function PositionRowItem({
               {cleanSymbol}
             </span>
             <span className="text-[11px] text-text-muted font-normal truncate">
-              · {order.quantity.toLocaleString()} shares
-              {showDetails ? ` @ ${order.entryPrice.toFixed(2)} ${order.currency}` : ''}
+              · {order.quantity.toLocaleString(isArabic ? 'ar-EG' : 'en-US')} {isArabic ? 'سهم' : 'shares'}
+              {showDetails ? ` @ ${order.entryPrice.toFixed(2)} ${order.currency === '£' && isArabic ? 'ج.م' : order.currency}` : ''}
             </span>
           </div>
         </div>
       </div>
 
       {/* Right: Value + P/L Metrics + Sell Action Button */}
-      <div className="flex items-center gap-3 shrink-0 pl-2">
-        <div className="text-right flex flex-col items-end">
+      <div className="flex items-center gap-3 shrink-0 pl-2 rtl:pl-0 rtl:pr-2">
+        <div className="text-right rtl:text-left flex flex-col items-end rtl:items-start">
           <div className="text-[13px] font-semibold text-text-primary tabular-nums">
             {formatMoney(positionVal, false, order.currency)}
           </div>
-          <div className="text-[11px] font-medium tabular-nums text-right mt-0.5 flex items-center justify-end gap-1.5 whitespace-nowrap">
+          <div className="text-[11px] font-medium tabular-nums text-right rtl:text-left mt-0.5 flex items-center justify-end rtl:justify-start gap-1.5 whitespace-nowrap">
             <span className="text-text-muted">{weightPct.toFixed(1)}%</span>
             <span className="text-text-faint">·</span>
             <span
@@ -118,7 +121,7 @@ export default function PositionRowItem({
         </div>
 
         {/* Sell Action Button */}
-        <div className="w-[68px] shrink-0 flex justify-end">
+        <div className="w-[68px] shrink-0 flex justify-end rtl:justify-start">
           <button
             type="button"
             onClick={(e) => {
@@ -131,7 +134,7 @@ export default function PositionRowItem({
                 : 'border border-rose-500/35 bg-rose-500/10 text-rose-400 hover:bg-loss-chart hover:text-white'
             }`}
           >
-            Sell
+            {isArabic ? 'بيع' : 'Sell'}
           </button>
         </div>
       </div>

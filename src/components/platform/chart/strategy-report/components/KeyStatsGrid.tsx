@@ -14,6 +14,7 @@ import {
 import KPICard, { type KPICardProps } from '@/components/platform/home/investments/performance/kpi-rails/KPICard';
 import type { FullBacktestReport } from '@/strategies/registry';
 import type { ComputedReportMetrics } from '../types';
+import { useTranslation } from '@/lib/i18n';
 
 interface KeyStatsGridProps {
   report: FullBacktestReport;
@@ -23,6 +24,7 @@ interface KeyStatsGridProps {
 }
 
 export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
+  const { locale } = useTranslation();
   const { stats, trades = [] } = report;
   const {
     effectiveStrategyRoiPct,
@@ -35,6 +37,8 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
     computedMaxMae,
     currencySymbol,
   } = metrics;
+
+  const displayCurrency = currencySymbol === 'EGP' && locale === 'ar' ? 'ج.م' : currencySymbol;
 
   // Sortino Ratio calculation from downside trade deviation
   const sortinoRatio = useMemo(() => {
@@ -63,7 +67,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
     // 1. Strategy ROI
     {
       id: 'kpi-strategy-roi',
-      title: 'Strategy ROI',
+      title: locale === 'ar' ? 'عائد الاستراتيجية' : 'Strategy ROI',
       icon: TrendingUp,
       iconBgClass: stats.netProfit >= 0 ? 'bg-profit-num text-white' : 'bg-loss-num text-white',
       iconColorClass: 'text-white',
@@ -72,16 +76,16 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
       changeText: `${stats.netProfit >= 0 ? '+' : ''}${stats.netProfit.toLocaleString(undefined, {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1,
-      })} ${currencySymbol}`,
+      })} ${displayCurrency}`,
       changeColorClass: stats.netProfit >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: 'net profit',
+      metaText: locale === 'ar' ? 'صافي الأرباح' : 'net profit',
       showSparkline: false,
     },
 
     // 2. Buy & Hold Benchmark
     {
       id: 'kpi-bnh-benchmark',
-      title: 'B&H Benchmark',
+      title: locale === 'ar' ? 'مؤشر الشراء والاحتفاظ' : 'B&H Benchmark',
       icon: Award,
       iconBgClass: 'bg-brand-blue text-white',
       iconColorClass: 'text-white',
@@ -90,91 +94,93 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
       changeText: `${stats.buyHoldReturn >= 0 ? '+' : ''}${stats.buyHoldReturn.toLocaleString(undefined, {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1,
-      })} ${currencySymbol}`,
+      })} ${displayCurrency}`,
       changeColorClass: stats.buyHoldReturn >= 0 ? 'text-brand-blue' : 'text-loss-num',
-      metaText: 'buy & hold',
+      metaText: locale === 'ar' ? 'شراء واحتفاظ' : 'buy & hold',
       showSparkline: false,
     },
 
     // 3. ROI Alpha (Excess)
     {
       id: 'kpi-roi-alpha',
-      title: 'ROI Alpha (Excess)',
+      title: locale === 'ar' ? 'ألفا العائد الإضافي' : 'ROI Alpha (Excess)',
       icon: Zap,
       iconBgClass: effectiveAlphaPct >= 0 ? 'bg-profit-num text-white' : 'bg-loss-num text-white',
       iconColorClass: 'text-white',
       value: `${effectiveAlphaPct >= 0 ? '+' : ''}${effectiveAlphaPct.toFixed(2)}`,
       unit: '%',
-      changeText: effectiveAlphaPct >= 0 ? 'Outperformed' : 'Lagged',
+      changeText: effectiveAlphaPct >= 0
+        ? locale === 'ar' ? 'تفوق على المؤشر' : 'Outperformed'
+        : locale === 'ar' ? 'تراجع عن المؤشر' : 'Lagged',
       changeColorClass: effectiveAlphaPct >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: 'vs benchmark',
+      metaText: locale === 'ar' ? 'مقارنة بالمؤشر' : 'vs benchmark',
       showSparkline: false,
     },
 
     // 4. Win Rate
     {
       id: 'kpi-win-rate',
-      title: 'Win Rate',
+      title: locale === 'ar' ? 'نسبة الصفقات الرابحة' : 'Win Rate',
       icon: Trophy,
       iconBgClass: effectiveWinRate >= 50 ? 'bg-profit-num text-white' : 'bg-accent-amber text-white',
       iconColorClass: 'text-white',
       value: `${effectiveWinRate.toFixed(1)}`,
       unit: '%',
-      changeText: `${stats.winningTrades}W · ${stats.losingTrades}L`,
+      changeText: locale === 'ar' ? `${stats.winningTrades} رابحة · ${stats.losingTrades} خاسرة` : `${stats.winningTrades}W · ${stats.losingTrades}L`,
       changeColorClass: effectiveWinRate >= 50 ? 'text-profit-num' : 'text-amber-400',
-      metaText: `of ${stats.totalTrades} trades`,
+      metaText: locale === 'ar' ? `من إجمالي ${stats.totalTrades} صفقة` : `of ${stats.totalTrades} trades`,
       showSparkline: false,
     },
 
     // 5. Avg Return / Trade
     {
       id: 'kpi-avg-gain',
-      title: 'Avg Return / Trade',
+      title: locale === 'ar' ? 'متوسط العائد / صفقة' : 'Avg Return / Trade',
       icon: BarChart3,
       iconBgClass: effectiveAvgTradeReturnPct >= 0 ? 'bg-profit-num text-white' : 'bg-loss-num text-white',
       iconColorClass: 'text-white',
       value: `${effectiveAvgTradeReturnPct >= 0 ? '+' : ''}${effectiveAvgTradeReturnPct.toFixed(2)}`,
       unit: '%',
-      changeText: `+${(stats.avgWin > 0 ? stats.avgWin : stats.avgTradePnl).toFixed(1)} ${currencySymbol}`,
+      changeText: `+${(stats.avgWin > 0 ? stats.avgWin : stats.avgTradePnl).toFixed(1)} ${displayCurrency}`,
       changeColorClass: effectiveAvgTradeReturnPct >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: `payoff ${stats.winLossRatio.toFixed(1)}x`,
+      metaText: locale === 'ar' ? `معامل العائد ${stats.winLossRatio.toFixed(1)}x` : `payoff ${stats.winLossRatio.toFixed(1)}x`,
       showSparkline: false,
     },
 
     // 6. Avg Hold Duration
     {
       id: 'kpi-hold-duration',
-      title: 'Avg Hold Duration',
+      title: locale === 'ar' ? 'متوسط فترة الاحتفاظ' : 'Avg Hold Duration',
       icon: Clock,
       iconBgClass: 'bg-brand-blue/80 text-white',
       iconColorClass: 'text-white',
       value: `${effectiveAvgBars}`,
-      unit: 'BARS',
-      changeText: `~${Math.round(Number(effectiveAvgBars) || 0)} Days`,
+      unit: locale === 'ar' ? 'شمعة' : 'BARS',
+      changeText: locale === 'ar' ? `~${Math.round(Number(effectiveAvgBars) || 0)} يوم` : `~${Math.round(Number(effectiveAvgBars) || 0)} Days`,
       changeColorClass: 'text-white',
-      metaText: 'time in market',
+      metaText: locale === 'ar' ? 'المدة في السوق' : 'time in market',
       showSparkline: false,
     },
 
     // 7. Max Adverse Excursion (MAE)
     {
       id: 'kpi-max-mae',
-      title: 'Max Adverse (MAE)',
+      title: locale === 'ar' ? 'أقصى تراجع أثناء الصفقة' : 'Max Adverse (MAE)',
       icon: AlertTriangle,
       iconBgClass: 'bg-loss-num text-white',
       iconColorClass: 'text-white',
       value: `${computedMaxMae.replace('%', '')}`,
       unit: '%',
-      changeText: 'Intra-Trade',
+      changeText: locale === 'ar' ? 'أثناء الصفقة' : 'Intra-Trade',
       changeColorClass: 'text-loss-num',
-      metaText: 'worst drawdown',
+      metaText: locale === 'ar' ? 'أسوأ هبوط' : 'worst drawdown',
       showSparkline: false,
     },
 
     // 8. Max Drawdown
     {
       id: 'kpi-max-drawdown',
-      title: 'Max Drawdown',
+      title: locale === 'ar' ? 'أقصى هبوط للمحفظة' : 'Max Drawdown',
       icon: ShieldAlert,
       iconBgClass: 'bg-loss-num text-white',
       iconColorClass: 'text-white',
@@ -183,9 +189,9 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
       changeText: `-${stats.maxDrawdownAmount.toLocaleString(undefined, {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1,
-      })} ${currencySymbol}`,
+      })} ${displayCurrency}`,
       changeColorClass: 'text-loss-num',
-      metaText: 'peak to trough',
+      metaText: locale === 'ar' ? 'من القمة إلى القاع' : 'peak to trough',
       showSparkline: false,
     },
   ];
@@ -194,7 +200,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
   const detailedMetrics = [
     {
       id: 'sharpe-ratio',
-      title: 'Sharpe Ratio',
+      title: locale === 'ar' ? 'نسبة شارب' : 'Sharpe Ratio',
       value:
         stats.sharpeRatio !== undefined && !isNaN(stats.sharpeRatio)
           ? stats.sharpeRatio.toFixed(2)
@@ -203,13 +209,13 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
     },
     {
       id: 'sortino-ratio',
-      title: 'Sortino Ratio',
+      title: locale === 'ar' ? 'نسبة سورتينو' : 'Sortino Ratio',
       value: sortinoRatio,
       colorClass: 'text-white',
     },
     {
       id: 'profit-factor',
-      title: 'Profit Factor',
+      title: locale === 'ar' ? 'معامل الربحية' : 'Profit Factor',
       value:
         stats.profitFactor !== undefined && !isNaN(stats.profitFactor)
           ? stats.profitFactor.toFixed(2)
@@ -218,7 +224,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
     },
     {
       id: 'annual-cagr',
-      title: 'Annualized CAGR',
+      title: locale === 'ar' ? 'العائد السنوي المركب' : 'Annualized CAGR',
       value:
         stats.annualCagr !== undefined && !isNaN(stats.annualCagr)
           ? `${stats.annualCagr >= 0 ? '+' : ''}${stats.annualCagr.toFixed(2)}%`
@@ -227,7 +233,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
     },
     {
       id: 'win-loss-ratio',
-      title: 'Payoff Ratio',
+      title: locale === 'ar' ? 'معامل المكافأة' : 'Payoff Ratio',
       value:
         stats.winLossRatio !== undefined && !isNaN(stats.winLossRatio)
           ? `${stats.winLossRatio.toFixed(2)}x`
@@ -236,48 +242,50 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
     },
     {
       id: 'gross-profit',
-      title: 'Gross Profit',
+      title: locale === 'ar' ? 'إجمالي الأرباح' : 'Gross Profit',
       value:
         stats.grossProfit !== undefined
           ? `+${stats.grossProfit.toLocaleString(undefined, {
               minimumFractionDigits: 1,
               maximumFractionDigits: 1,
-            })} ${currencySymbol}`
+            })} ${displayCurrency}`
           : '—',
       colorClass: 'text-profit-num',
     },
     {
       id: 'gross-loss',
-      title: 'Gross Loss',
+      title: locale === 'ar' ? 'إجمالي الخسائر' : 'Gross Loss',
       value:
         stats.grossLoss !== undefined
           ? `-${Math.abs(stats.grossLoss).toLocaleString(undefined, {
               minimumFractionDigits: 1,
               maximumFractionDigits: 1,
-            })} ${currencySymbol}`
+            })} ${displayCurrency}`
           : '—',
       colorClass: 'text-loss-num',
     },
     {
       id: 'max-win-streak',
-      title: 'Max Win Streak',
+      title: locale === 'ar' ? 'أطول سلسلة صفقات رابحة' : 'Max Win Streak',
       value:
         stats.maxConsecutiveWins !== undefined
-          ? `${stats.maxConsecutiveWins} trades`
+          ? locale === 'ar' ? `${stats.maxConsecutiveWins} صفقات` : `${stats.maxConsecutiveWins} trades`
           : '—',
       colorClass: 'text-white',
     },
   ];
 
   return (
-    <section id="section-strategy-key-metrics" className="space-y-4 pt-6 border-t border-border-subtle select-none">
+    <section id="section-strategy-key-metrics" className="space-y-4 pt-6 border-t border-border-subtle select-none font-sans">
       {/* Section Header */}
       <div className="flex flex-col gap-0.5 pb-2.5 border-b border-border-subtle">
         <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
-          Key Performance Metrics
+          {locale === 'ar' ? 'مؤشرات الأداء الرئيسية' : 'Key Performance Metrics'}
         </h3>
         <p className="text-xs text-white/50 leading-relaxed">
-          Core algorithmic trading alpha, benchmark return, win rate, and drawdown risk
+          {locale === 'ar'
+            ? 'ألفا التداول الخوارزمي، العائد المعياري، نسبة النجاح، ومخاطر الهبوط'
+            : 'Core algorithmic trading alpha, benchmark return, win rate, and drawdown risk'}
         </p>
       </div>
 
@@ -295,7 +303,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
       {/* Secondary Detailed Metrics: Rail on Phone / 8-column Grid on Desktop */}
       <div className="pt-3 border-t border-white/[0.06] space-y-2.5">
         <h4 className="text-xs font-semibold text-white/70 tracking-tight">
-          Detailed Analytics
+          {locale === 'ar' ? 'التحليلات التفصيلية' : 'Detailed Analytics'}
         </h4>
         <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-5 pb-1 sm:grid sm:grid-cols-4 lg:grid-cols-8 sm:gap-4 sm:overflow-visible sm:pb-0 w-full">
           {detailedMetrics.map((m) => (

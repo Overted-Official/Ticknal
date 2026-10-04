@@ -9,6 +9,7 @@ import {
   TrendingUp,
   X,
 } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
 
 export interface SignalFilterConfig {
   isActive: boolean;
@@ -73,6 +74,7 @@ export default function WatchlistSignalFilterPopover({
   matchingCount,
   totalCount,
 }: WatchlistSignalFilterPopoverProps) {
+  const { locale } = useTranslation();
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Close when clicking outside
@@ -152,7 +154,7 @@ export default function WatchlistSignalFilterPopover({
   return (
     <div
       ref={popoverRef}
-      className="absolute top-11 right-2 z-50 w-72 rounded-lg border border-plt-border bg-plt-raised shadow-2xl p-3 text-plt-text text-[11px] select-none animate-in fade-in zoom-in-95 duration-100"
+      className="absolute top-11 ltr:right-2 rtl:left-2 z-50 w-72 rounded-lg border border-plt-border bg-plt-raised shadow-2xl p-3 text-plt-text text-[11px] select-none animate-in fade-in zoom-in-95 duration-100 font-sans"
       style={{
         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4)',
       }}
@@ -161,23 +163,26 @@ export default function WatchlistSignalFilterPopover({
       <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-plt-border/60">
         <div className="flex items-center gap-1.5">
           <SlidersHorizontal size={13} className="text-plt-accent" />
-          <span className="font-semibold text-[12px] text-plt-text">Signal Screener</span>
+          <span className="font-semibold text-[12px] text-plt-text">
+            {locale === 'ar' ? 'فاحص الإشارات' : 'Signal Screener'}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {filter.isActive && (
             <button
               type="button"
               onClick={handleReset}
-              title="Reset to default"
+              title={locale === 'ar' ? 'إعادة ضبط للافتراضي' : 'Reset to default'}
               className="btn-typography text-plt-muted hover:text-plt-text flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-plt-hover"
             >
               <RotateCcw size={10} />
-              Reset
+              {locale === 'ar' ? 'إعادة ضبط' : 'Reset'}
             </button>
           )}
           <button
             type="button"
             onClick={onClose}
+            aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
             className="text-plt-muted hover:text-plt-text p-0.5 rounded transition-colors"
           >
             <X size={13} />
@@ -188,23 +193,30 @@ export default function WatchlistSignalFilterPopover({
       {/* Filter On/Off Switch */}
       <div className="flex items-center justify-between bg-plt-bg/60 border border-plt-border/50 rounded-md p-2 mb-3">
         <div className="flex flex-col">
-          <span className="font-medium text-[11px] text-plt-text">Filter Tickers List</span>
+          <span className="font-medium text-[11px] text-plt-text">
+            {locale === 'ar' ? 'تصفية قائمة الأوراق' : 'Filter Tickers List'}
+          </span>
           <span className="text-[10px] text-plt-muted">
             {filter.isActive
-              ? `Filtering active (${matchingCount} matched)`
+              ? locale === 'ar'
+                ? `التصفية نشطة (${matchingCount} أوراق مطابقة)`
+                : `Filtering active (${matchingCount} matched)`
+              : locale === 'ar'
+              ? 'عرض جميع الأوراق'
               : 'Showing all tickers'}
           </span>
         </div>
         <button
           type="button"
           onClick={toggleActive}
+          aria-label={locale === 'ar' ? 'تفعيل تصفية الإشارات' : 'Toggle signal filter'}
           className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
             filter.isActive ? 'bg-plt-accent' : 'bg-plt-border'
           }`}
         >
           <span
             className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-              filter.isActive ? 'translate-x-3.5' : 'translate-x-0'
+              filter.isActive ? (locale === 'ar' ? '-translate-x-3.5' : 'translate-x-3.5') : 'translate-x-0'
             }`}
           />
         </button>
@@ -213,18 +225,33 @@ export default function WatchlistSignalFilterPopover({
       {/* Strategies Selection */}
       <div className="mb-3">
         <div className="text-[10px] uppercase font-semibold tracking-wider text-plt-muted mb-1.5 flex items-center justify-between">
-          <span>Strategies</span>
-          <span className="text-[9px] lowercase text-plt-faint font-normal">select 1 or more</span>
+          <span>{locale === 'ar' ? 'النماذج الاستراتيجية' : 'Strategies'}</span>
+          <span className="text-[9px] lowercase text-plt-faint font-normal">
+            {locale === 'ar' ? 'اختر 1 أو أكثر' : 'select 1 or more'}
+          </span>
         </div>
         <div className="space-y-1">
           {STRATEGY_OPTIONS.map((strat) => {
             const isSelected = filter.strategies.includes(strat.id);
+            const stratLabel =
+              strat.id === 'psi'
+                ? locale === 'ar' ? 'استراتيجية تايفون' : 'Typhon Strategy'
+                : strat.id === 'psi_v2'
+                ? locale === 'ar' ? 'استراتيجية سيربيروس' : 'Cerberus Strategy'
+                : locale === 'ar' ? 'استراتيجية هيدرا' : 'Hydra Strategy';
+            const stratSub =
+              strat.id === 'psi'
+                ? locale === 'ar' ? 'التوافق والانعطاف' : 'Consensus & Inflection'
+                : strat.id === 'psi_v2'
+                ? locale === 'ar' ? 'هيكل الزخم ثلاثي المتجهات' : '3-Vector Momentum Architecture'
+                : locale === 'ar' ? 'مزامنة التقلبات التكيفية' : 'Adaptive Volatility Synchronizer';
+
             return (
               <button
                 key={strat.id}
                 type="button"
                 onClick={() => toggleStrategy(strat.id)}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md border text-left transition-all ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md border text-start transition-all ${
                   isSelected
                     ? 'bg-plt-hover border-plt-border-strong text-plt-text'
                     : 'bg-transparent border-plt-border/30 text-plt-muted hover:bg-plt-hover/40'
@@ -232,7 +259,7 @@ export default function WatchlistSignalFilterPopover({
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <div
-                    className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors ${
+                    className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors shrink-0 ${
                       isSelected
                         ? 'bg-plt-accent border-plt-accent text-plt-raised'
                         : 'border-plt-border bg-plt-bg'
@@ -240,16 +267,16 @@ export default function WatchlistSignalFilterPopover({
                   >
                     {isSelected && <Check size={10} className="stroke-[3]" />}
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 text-start">
                     <span className="font-medium truncate text-[11px] leading-tight">
-                      {strat.label}
+                      {stratLabel}
                     </span>
                     <span className="text-[9px] text-plt-muted truncate leading-tight">
-                      {strat.sub}
+                      {stratSub}
                     </span>
                   </div>
                 </div>
-                <span className={`text-[9px] font-sans font-semibold px-1 py-0.5 rounded border ${strat.color}`}>
+                <span className={`text-[9px] font-sans font-semibold px-1 py-0.5 rounded border shrink-0 ${strat.color}`}>
                   {strat.badge}
                 </span>
               </button>
@@ -261,8 +288,10 @@ export default function WatchlistSignalFilterPopover({
       {/* Signal Type Selection */}
       <div className="mb-3">
         <div className="text-[10px] uppercase font-semibold tracking-wider text-plt-muted mb-1.5 flex items-center justify-between">
-          <span>Signal Type</span>
-          <span className="text-[9px] lowercase text-plt-faint font-normal">buy, sell or both</span>
+          <span>{locale === 'ar' ? 'نوع الإشارة' : 'Signal Type'}</span>
+          <span className="text-[9px] lowercase text-plt-faint font-normal">
+            {locale === 'ar' ? 'شراء، بيع أو كلاهما' : 'buy, sell or both'}
+          </span>
         </div>
         <div className="grid grid-cols-2 gap-1.5">
           <button
@@ -275,7 +304,7 @@ export default function WatchlistSignalFilterPopover({
             }`}
           >
             <TrendingUp size={12} />
-            <span>Buy Signals</span>
+            <span>{locale === 'ar' ? 'إشارات شراء' : 'Buy Signals'}</span>
           </button>
           <button
             type="button"
@@ -287,7 +316,7 @@ export default function WatchlistSignalFilterPopover({
             }`}
           >
             <TrendingDown size={12} />
-            <span>Sell Signals</span>
+            <span>{locale === 'ar' ? 'إشارات بيع' : 'Sell Signals'}</span>
           </button>
         </div>
       </div>
@@ -295,9 +324,9 @@ export default function WatchlistSignalFilterPopover({
       {/* Lookback Window */}
       <div className="mb-3">
         <div className="text-[10px] uppercase font-semibold tracking-wider text-plt-muted mb-1.5 flex items-center justify-between">
-          <span>Lookback Window</span>
+          <span>{locale === 'ar' ? 'المدى الزمني للإشارات' : 'Lookback Window'}</span>
           <span className="text-[9px] font-sans tabular-nums text-plt-text">
-            Last {filter.lookbackDays} trading days
+            {locale === 'ar' ? `آخر ${filter.lookbackDays} أيام تداول` : `Last ${filter.lookbackDays} trading days`}
           </span>
         </div>
         <div className="grid grid-cols-5 gap-1">
@@ -323,13 +352,13 @@ export default function WatchlistSignalFilterPopover({
 
       {/* Footer Live Count & Apply */}
       <div className="pt-2 border-t border-plt-border/60 flex items-center justify-between">
-        <div className="text-[10px] text-plt-muted">
+        <div className="text-[10px] text-plt-muted font-sans tabular-nums">
           {filter.isActive ? (
             <span className="text-plt-profit font-medium">
-              {matchingCount} of {totalCount} tickers
+              {locale === 'ar' ? `${matchingCount} من أصل ${totalCount} ورقة` : `${matchingCount} of ${totalCount} tickers`}
             </span>
           ) : (
-            <span>{totalCount} total tickers</span>
+            <span>{locale === 'ar' ? `الإجمالي ${totalCount} ورقة` : `${totalCount} total tickers`}</span>
           )}
         </div>
         <button
@@ -340,9 +369,9 @@ export default function WatchlistSignalFilterPopover({
             }
             onClose();
           }}
-          className="px-2.5 py-1 rounded bg-plt-accent text-plt-raised font-semibold text-[10px] hover:opacity-90 transition-opacity"
+          className="px-2.5 py-1 rounded bg-plt-accent text-plt-raised font-semibold text-[10px] hover:opacity-90 transition-opacity cursor-pointer font-sans"
         >
-          {filter.isActive ? 'Done' : 'Apply Filter'}
+          {locale === 'ar' ? (filter.isActive ? 'تم' : 'تطبيق التصفية') : (filter.isActive ? 'Done' : 'Apply Filter')}
         </button>
       </div>
     </div>

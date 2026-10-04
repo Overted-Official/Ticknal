@@ -6,6 +6,7 @@ import {
   createChart,
   ColorType,
   CrosshairMode,
+  TrackingModeExitMode,
   CandlestickSeries,
   AreaSeries,
   HistogramSeries,
@@ -21,13 +22,14 @@ import {
 } from 'lightweight-charts';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Briefcase, X, Plus } from '@/components/ui/icon-library';
+import { Sparkles, Briefcase, X, Plus, Crosshair, Move } from '@/components/ui/icon-library';
 import AddOrderModal, { type InitialOrderData } from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
 import { INDICATORS, type IndicatorLine } from '@/indicators';
 import { useToast } from '@/context/ToastContext';
+import { useTranslation } from '@/lib/i18n';
 
 // Modular Chart Imports
 import type {
@@ -53,6 +55,7 @@ import ChartPredictPopover from './chart/ChartPredictPopover';
 import ChartOrderOverlays from './chart/ChartOrderOverlays';
 import ChartLoadingSkeleton from './chart/ChartLoadingSkeleton';
 import HydraIndexPanel from './chart/HydraIndexPanel';
+import SmartMoneyPanel from './chart/SmartMoneyPanel';
 import StrategyReportDrawer, { type StrategyReportTab } from './chart/StrategyReportDrawer';
 
 // Re-export shared types for backward compatibility across the app
@@ -84,6 +87,7 @@ export default function ChartWidget({
   currentPrice,
   brokerageAccounts = [],
 }: ChartWidgetProps) {
+  const { locale } = useTranslation();
   const router = useRouter();
   const { toast } = useToast();
   const [positionsDrawerOpen, setPositionsDrawerOpen] = useState(false);
@@ -101,9 +105,15 @@ export default function ChartWidget({
 
   const openPositionsCount = (orders.length > 0 ? orders : tickerPositions).filter((o) => o.status === 'OPEN').length;
   const isHydraPanelOpen = activeIndicators.includes('hydraIndex');
+  const isSmartMoneyPanelOpen = activeIndicators.includes('smartMoneyFlow');
   const hydraOptionsState = useMemo(() => {
     return {
       showMarkers: Boolean(strategyParams['hydraIndex_showMarkers'] ?? true),
+    };
+  }, [strategyParams]);
+  const smartMoneyOptionsState = useMemo(() => {
+    return {
+      showMarkers: Boolean(strategyParams['smartMoneyFlow_showMarkers'] ?? false),
     };
   }, [strategyParams]);
 
@@ -149,6 +159,10 @@ export default function ChartWidget({
   const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
   // Active hovered candle for live OHLCV legend
   const [hoveredCandle, setHoveredCandle] = useState<ChartData | null>(null);
+  const [mobileChartMode, setMobileChartMode] = useState<'pan' | 'inspect'>('pan');
+  const isScrubbingRef = useRef<boolean>(false);
+  const touchHoldTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Close positions drawer on ESC key
   useEffect(() => {
@@ -315,6 +329,21 @@ export default function ChartWidget({
       crosshair: {
         mode: CrosshairMode.Normal,
       },
+      trackingMode: {
+        exitMode: TrackingModeExitMode.OnNextTap,
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: mobileChartMode === 'pan',
+        vertTouchDrag: false,
+      },
+      handleScale: {
+        mouseWheel: true,
+        pinch: true,
+        axisPressedMouseMove: true,
+        axisDoubleClickReset: true,
+      },
       rightPriceScale: {
         borderColor: cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
         minimumWidth: 55,
@@ -379,9 +408,23 @@ export default function ChartWidget({
       }
     });
 
-    // Chart Click Handler: click on chart dismisses context menu
-    chart.subscribeClick(() => {
+    // Chart Click Handler: click or tap on candle snaps crosshair and focuses price
+    chart.subscribeClick((param: MouseEventParams<Time>) => {
       setContextMenu(null);
+      if (param.time) {
+        const timeStr = typeof param.time === 'string' ? param.time : String(param.time);
+        const candle = (data || []).find((d) => d.time === timeStr);
+        if (candle && candlestickSeriesRef.current && chartRef.current) {
+          setHoveredCandle(candle);
+          try {
+            chartRef.current.setCrosshairPosition(
+              candle.close,
+              parseChartTime(candle.time) as any,
+              candlestickSeriesRef.current
+            );
+          } catch {}
+        }
+      }
     });
 
     // Resize Observer
@@ -422,6 +465,132 @@ export default function ChartWidget({
       indicatorLineSeriesRef.current.clear();
     };
   }, [data, isFund]);
+
+  // Dynamically sync scroll behavior when user toggles between Pan and Inspect
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.applyOptions({
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: mobileChartMode === 'pan',
+        vertTouchDrag: false,
+      },
+    });
+  }, [mobileChartMode]);
+
+  // Coordinate-to-candle inspection engine for mobile scrubbing
+  const inspectCoordinate = useCallback(
+    (clientX: number, _clientY?: number) => {
+      if (!chartRef.current || !candlestickSeriesRef.current || !chartContainerRef.current) return;
+      const container = chartContainerRef.current;
+      const rect = container.getBoundingClientRect();
+      const x = clientX - rect.left;
+
+      if (x < 0 || x > rect.width) return;
+
+      const time = chartRef.current.timeScale().coordinateToTime(x);
+      let targetCandle: ChartData | undefined;
+
+      if (time) {
+        const timeStr = typeof time === 'string' ? time : String(time);
+        targetCandle = (data || []).find((d) => d.time === timeStr);
+      }
+
+      if (!targetCandle && data && data.length > 0) {
+        // Fallback: use logical index for smooth edge snapping
+        const logical = chartRef.current.timeScale().coordinateToLogical(x);
+        if (logical !== null) {
+          const clampedIndex = Math.max(0, Math.min(data.length - 1, Math.round(logical)));
+          targetCandle = data[clampedIndex];
+        }
+      }
+
+      if (targetCandle) {
+        setHoveredCandle(targetCandle);
+        try {
+          chartRef.current.setCrosshairPosition(
+            targetCandle.close,
+            parseChartTime(targetCandle.time) as any,
+            candlestickSeriesRef.current
+          );
+        } catch {}
+      }
+    },
+    [data]
+  );
+
+  // Mobile Touch Handlers: 60fps scrubbing with tap & hold detection
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (e.touches.length !== 1) {
+        isScrubbingRef.current = false;
+        if (touchHoldTimerRef.current) clearTimeout(touchHoldTimerRef.current);
+        return;
+      }
+
+      const touch = e.touches[0];
+      touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+
+      if (mobileChartMode === 'inspect') {
+        isScrubbingRef.current = true;
+        inspectCoordinate(touch.clientX, touch.clientY);
+      } else {
+        // In pan mode: brief hold (180ms) without moving engages touch scrubbing
+        if (touchHoldTimerRef.current) clearTimeout(touchHoldTimerRef.current);
+        touchHoldTimerRef.current = setTimeout(() => {
+          isScrubbingRef.current = true;
+          if (chartRef.current) {
+            chartRef.current.applyOptions({
+              handleScroll: { horzTouchDrag: false, vertTouchDrag: false },
+            });
+          }
+          inspectCoordinate(touch.clientX, touch.clientY);
+        }, 180);
+      }
+    },
+    [mobileChartMode, inspectCoordinate]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+
+      // If finger moved > 8px before hold timer in pan mode, cancel hold and let normal pan scroll
+      if (!isScrubbingRef.current && touchStartPosRef.current) {
+        const dx = Math.abs(touch.clientX - touchStartPosRef.current.x);
+        const dy = Math.abs(touch.clientY - touchStartPosRef.current.y);
+        if (dx > 8 || dy > 8) {
+          if (touchHoldTimerRef.current) {
+            clearTimeout(touchHoldTimerRef.current);
+            touchHoldTimerRef.current = null;
+          }
+        }
+      }
+
+      if (isScrubbingRef.current || mobileChartMode === 'inspect') {
+        inspectCoordinate(touch.clientX, touch.clientY);
+      }
+    },
+    [mobileChartMode, inspectCoordinate]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchHoldTimerRef.current) {
+      clearTimeout(touchHoldTimerRef.current);
+      touchHoldTimerRef.current = null;
+    }
+
+    if (isScrubbingRef.current && mobileChartMode === 'pan') {
+      isScrubbingRef.current = false;
+      if (chartRef.current) {
+        chartRef.current.applyOptions({
+          handleScroll: { horzTouchDrag: true, vertTouchDrag: false },
+        });
+      }
+    }
+  }, [mobileChartMode]);
 
   // Sync data to series
   useEffect(() => {
@@ -728,9 +897,13 @@ export default function ChartWidget({
 
       predSeries.setData(formattedPredictions);
       predictionSeriesRef.current = predSeries;
-      toast.success(`Forecasted next ${formattedPredictions.length} trading days`);
+      toast.success(
+        locale === 'ar'
+          ? `تم توقع الأسعار للأيام الـ ${formattedPredictions.length} التالية للتداول`
+          : `Forecasted next ${formattedPredictions.length} trading days`
+      );
     } catch (e: any) {
-      toast.error(e.message || 'Failed to generate prediction');
+      toast.error(e.message || (locale === 'ar' ? 'فشل إنشاء توقع السعر' : 'Failed to generate prediction'));
     } finally {
       setIsPredicting(false);
     }
@@ -826,8 +999,12 @@ export default function ChartWidget({
         {/* Main Lightweight-Charts Container Canvas */}
         <div
           ref={chartContainerRef}
-          className="w-full h-full bg-plt-chart"
+          className="w-full h-full bg-plt-chart touch-none"
           onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         />
 
         {/* Position Visual Overlays on Canvas */}
@@ -846,7 +1023,7 @@ export default function ChartWidget({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-2.5 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider border-b border-border-subtle mb-1">
-              Chart Actions • {symbol.replace('.CA', '')}
+              {locale === 'ar' ? 'إجراءات الرسم البياني • ' : 'Chart Actions • '}{symbol.replace('.CA', '')}
             </div>
             <button
               type="button"
@@ -860,14 +1037,14 @@ export default function ChartWidget({
                 setIsAddOrderOpen(true);
                 setContextMenu(null);
               }}
-              className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-white hover:bg-surface-raised transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left rtl:text-right text-white hover:bg-surface-raised transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 <Plus size={14} className="text-brand-blue" />
-                <span>Add Position</span>
+                <span>{locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}</span>
               </div>
               <span className="font-semibold text-brand-blue tabular-nums">
-                {contextMenu.price.toFixed(2)} {instrumentCurrency}
+                {contextMenu.price.toFixed(2)} {instrumentCurrency === 'EGP' && locale === 'ar' ? 'ج.م' : instrumentCurrency}
               </span>
             </button>
           </div>,
@@ -898,6 +1075,70 @@ export default function ChartWidget({
 
         {/* Loading Shimmer Overlay */}
         <ChartLoadingSkeleton isLoading={isChartLoading} displaySymbol={displaySymbol} />
+
+        {/* Mobile & Touch Inspection / Pan Controller Pill */}
+        <div className="absolute bottom-3 right-3 rtl:right-auto rtl:left-3 z-20 flex items-center gap-1 bg-black/90 border border-white/10 p-0.5 rounded-full shadow-2xl backdrop-blur-md select-none font-sans text-[11px]">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileChartMode('pan');
+              setHoveredCandle(null);
+              chartRef.current?.clearCrosshairPosition();
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors cursor-pointer ${
+              mobileChartMode === 'pan'
+                ? 'bg-white/15 text-white font-medium shadow-sm'
+                : 'text-white/50 hover:text-white/80'
+            }`}
+            title={locale === 'ar' ? 'وضع التحريك: اسحب للتنقل في الخط الزمني' : 'Pan Mode: Drag to scroll timeline'}
+          >
+            <Move size={12} />
+            <span>{locale === 'ar' ? 'تحريك' : 'Pan'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMobileChartMode('inspect');
+              if (data && data.length > 0) {
+                const target = hoveredCandle ?? data[data.length - 1];
+                setHoveredCandle(target);
+                if (chartRef.current && candlestickSeriesRef.current) {
+                  try {
+                    chartRef.current.setCrosshairPosition(
+                      target.close,
+                      parseChartTime(target.time) as any,
+                      candlestickSeriesRef.current
+                    );
+                  } catch {}
+                }
+              }
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors cursor-pointer ${
+              mobileChartMode === 'inspect'
+                ? 'bg-brand-blue/20 text-brand-blue border border-brand-blue/30 font-medium shadow-sm'
+                : 'text-white/50 hover:text-white/80'
+            }`}
+            title={locale === 'ar' ? 'وضع الفحص: مرر إصبعك على الشموع لرؤية الأسعار' : 'Inspect Mode: Glide finger across candles to see prices'}
+          >
+            <Crosshair size={12} />
+            <span>{locale === 'ar' ? 'فحص' : 'Inspect'}</span>
+          </button>
+
+          {hoveredCandle && (
+            <button
+              type="button"
+              onClick={() => {
+                setHoveredCandle(null);
+                chartRef.current?.clearCrosshairPosition();
+              }}
+              className="w-5 h-5 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors ml-0.5 rtl:ml-0 rtl:mr-0.5 cursor-pointer"
+              title={locale === 'ar' ? 'إعادة ضبط المؤشر' : 'Reset Crosshair'}
+            >
+              <X size={11} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 2. Separate HYDRA Index Dedicated Sub-Panel (Opens below chart when toggled) */}
@@ -907,6 +1148,18 @@ export default function ChartWidget({
           mainChart={chartRef.current}
           onClose={() => handleToggleIndicator('hydraIndex')}
           optionsState={hydraOptionsState}
+          activeTime={activeCandle?.time ? String(activeCandle.time) : null}
+        />
+      )}
+
+      {/* 3. Separate Smart Money Flow Dedicated Sub-Panel (Opens below chart when toggled) */}
+      {isSmartMoneyPanelOpen && (
+        <SmartMoneyPanel
+          data={visibleData}
+          mainChart={chartRef.current}
+          onClose={() => handleToggleIndicator('smartMoneyFlow')}
+          optionsState={smartMoneyOptionsState}
+          activeTime={activeCandle?.time ? String(activeCandle.time) : null}
         />
       )}
 
@@ -924,7 +1177,7 @@ export default function ChartWidget({
                 transition={{ duration: 0.22, ease: 'easeOut' }}
                 className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer z-0"
                 onClick={() => setPositionsDrawerOpen(false)}
-                aria-label="Close drawer overlay"
+                aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close drawer overlay'}
               />
 
               {/* Drawer Sheet: slides smoothly from right on BOTH desktop and mobile */}
@@ -939,7 +1192,7 @@ export default function ChartWidget({
                   stiffness: 340,
                   mass: 0.8,
                 }}
-                className="relative drawer-sheet-viewport-safe w-full md:w-1/2 lg:w-1/2 max-w-full bg-black text-text-primary rounded-none border-l border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
+                className="relative drawer-sheet-viewport-safe w-full md:w-1/2 lg:w-1/2 max-w-full bg-black text-text-primary rounded-none border-l rtl:border-l-0 rtl:border-r border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
               >
                 {/* Replicated Strategy Report Header */}
                 <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 sm:py-0 flex items-center justify-between border-b border-white/10 shrink-0 bg-black">
@@ -970,7 +1223,9 @@ export default function ChartWidget({
                           {displaySymbol}
                         </span>
                         <span>•</span>
-                        <span className="text-[11px] text-white/50">Positions &amp; Orders</span>
+                        <span className="text-[11px] text-white/50">
+                          {locale === 'ar' ? 'الصفقات والأوامر' : 'Positions & Orders'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -979,9 +1234,9 @@ export default function ChartWidget({
                   <button
                     type="button"
                     onClick={() => setPositionsDrawerOpen(false)}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0 ml-3"
-                    title="Close (Esc)"
-                    aria-label="Close Positions Drawer"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0 ml-3 rtl:ml-0 rtl:mr-3"
+                    title={locale === 'ar' ? 'إغلاق (Esc)' : 'Close (Esc)'}
+                    aria-label={locale === 'ar' ? 'إغلاق قائمة الصفقات' : 'Close Positions Drawer'}
                   >
                     <X size={16} />
                   </button>

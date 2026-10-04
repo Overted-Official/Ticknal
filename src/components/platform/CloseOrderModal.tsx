@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from '@/lib/i18n';
 import { X } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,6 +34,8 @@ export default function CloseOrderModal({
   order,
 }: CloseOrderModalProps) {
   const { toast } = useToast();
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -72,7 +75,8 @@ export default function CloseOrderModal({
   const exitPriceNum = parseFloat(form.exitPrice) || 0;
   const quantityNum = parseFloat(form.quantityToClose) || 0;
   const totalProceeds = exitPriceNum * quantityNum;
-  const currency = order?.currency || 'EGP';
+  const rawCurrency = order?.currency || 'EGP';
+  const currency = rawCurrency === 'EGP' && isArabic ? 'ج.م' : rawCurrency;
 
   const realizedPl = order?.entryPrice ? (exitPriceNum - order.entryPrice) * quantityNum : null;
   const realizedPlPct = order?.entryPrice && order.entryPrice > 0 ? ((exitPriceNum - order.entryPrice) / order.entryPrice) * 100 : null;
@@ -81,7 +85,10 @@ export default function CloseOrderModal({
     if (!order || !form.exitPrice || !form.quantityToClose || isSubmitting) return;
 
     if (quantityNum <= 0 || quantityNum > order.quantity) {
-      toast.error('Invalid Quantity', `Quantity must be between 1 and ${order.quantity}.`);
+      toast.error(
+        isArabic ? 'كمية غير صالحة' : 'Invalid Quantity',
+        isArabic ? `يجب أن تكون الكمية بين 1 و ${order.quantity}.` : `Quantity must be between 1 and ${order.quantity}.`
+      );
       return;
     }
 
@@ -100,18 +107,20 @@ export default function CloseOrderModal({
 
       if (res.ok) {
         toast.success(
-          'Position Closed',
-          `Closed ${quantityNum} share(s) of ${cleanSymbol} at ${exitPriceNum.toFixed(2)} ${currency}.`
+          isArabic ? 'تم إغلاق الصفقة' : 'Position Closed',
+          isArabic
+            ? `تم بيع ${quantityNum} سهم من ${cleanSymbol} بسعر ${exitPriceNum.toFixed(2)} ${currency}.`
+            : `Closed ${quantityNum} share(s) of ${cleanSymbol} at ${exitPriceNum.toFixed(2)} ${currency}.`
         );
         onSuccess();
         onClose();
       } else {
         const data = await res.json().catch(() => null);
-        toast.error('Close Failed', data?.error || 'Failed to close position.');
+        toast.error(isArabic ? 'فشل الإغلاق' : 'Close Failed', data?.error || (isArabic ? 'فشل إغلاق الصفقة.' : 'Failed to close position.'));
       }
     } catch (e) {
       console.error(e);
-      toast.error('Error', 'An error occurred while closing position.');
+      toast.error(isArabic ? 'خطأ' : 'Error', isArabic ? 'حدث خطأ أثناء إغلاق الصفقة.' : 'An error occurred while closing position.');
     } finally {
       setIsSubmitting(false);
     }
@@ -146,10 +155,10 @@ export default function CloseOrderModal({
             <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between shrink-0 bg-black">
               <div className="flex flex-col min-w-0">
                 <h2 className="font-semibold text-base text-text-primary tracking-tight truncate font-sans">
-                  Close {cleanSymbol} Position
+                  {isArabic ? `إغلاق صفقة ${cleanSymbol}` : `Close ${cleanSymbol} Position`}
                 </h2>
                 <p className="text-xs text-text-muted font-normal mt-0.5 font-sans">
-                  Realize gains or losses for lot #{order.id}
+                  {isArabic ? `تحقيق الأرباح أو الخسائر لدفعة #${order.id}` : `Realize gains or losses for lot #${order.id}`}
                 </p>
               </div>
 
@@ -157,8 +166,8 @@ export default function CloseOrderModal({
                 type="button"
                 onClick={onClose}
                 className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-surface-raised transition cursor-pointer"
-                title="Close (Esc)"
-                aria-label="Close Modal"
+                title={isArabic ? 'إغلاق (Esc)' : 'Close (Esc)'}
+                aria-label={isArabic ? 'إغلاق النافذة' : 'Close Modal'}
               >
                 <X size={16} />
               </button>
@@ -168,7 +177,7 @@ export default function CloseOrderModal({
             <div className="p-5 overflow-y-auto custom-scrollbar space-y-4 flex-1">
               {/* 1. Asset Identity Card */}
               <div className="space-y-1.5">
-                <label className="field-label">Asset Identity</label>
+                <label className="field-label">{isArabic ? 'بيانات السهم' : 'Asset Identity'}</label>
                 <div className="field-card">
                   <div className="flex items-center gap-3 min-w-0">
                     {/* Circular Logo */}
@@ -214,7 +223,7 @@ export default function CloseOrderModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Exit Date */}
                 <div className="space-y-1.5">
-                  <label className="field-label">Exit Date</label>
+                  <label className="field-label">{isArabic ? 'تاريخ البيع' : 'Exit Date'}</label>
                   <input
                     type="date"
                     value={form.exitDate}
@@ -226,9 +235,9 @@ export default function CloseOrderModal({
                 {/* Quantity to Close */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="field-label">Units to Close</label>
+                    <label className="field-label">{isArabic ? 'عدد الأسهم للبيع' : 'Units to Close'}</label>
                     <span className="text-[10px] text-text-muted font-sans tabular-nums">
-                      Max: {order.quantity}
+                      {isArabic ? 'الحد الأقصى:' : 'Max:'} {order.quantity}
                     </span>
                   </div>
                   <div className="field-group">
@@ -247,7 +256,7 @@ export default function CloseOrderModal({
                       onClick={() => setForm((prev) => ({ ...prev, quantityToClose: String(order.quantity) }))}
                       className="px-2 py-0.5 text-[10px] font-semibold text-brand-blue hover:opacity-80 transition cursor-pointer"
                     >
-                      MAX
+                      {isArabic ? 'الكل' : 'MAX'}
                     </button>
                   </div>
                 </div>
@@ -255,7 +264,9 @@ export default function CloseOrderModal({
 
               {/* Exit Price */}
               <div className="space-y-1.5">
-                <label className="field-label">Exit Price ({currency})</label>
+                <label className="field-label">
+                  {isArabic ? `سعر البيع (${currency})` : `Exit Price (${currency})`}
+                </label>
                 <div className="field-group">
                   <input
                     type="number"
@@ -273,22 +284,22 @@ export default function CloseOrderModal({
               {/* 3. Summary Card */}
               <div className="field-card space-y-2 select-none">
                 <div className="flex items-center justify-between">
-                  <span className="field-label">Total Realized Proceeds</span>
+                  <span className="field-label">{isArabic ? 'إجمالي المحصلات المحققة' : 'Total Realized Proceeds'}</span>
                   <span className="text-base font-bold text-text-primary font-sans tabular-nums">
-                    {totalProceeds.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                    {totalProceeds.toLocaleString(isArabic ? 'ar-EG' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                   </span>
                 </div>
 
                 {realizedPl !== null && quantityNum > 0 && (
                   <div className="pt-2 border-t border-border-default flex items-center justify-between text-xs text-zinc-400">
-                    <span className="font-sans">Estimated Realized P/L:</span>
+                    <span className="font-sans">{isArabic ? 'الأرباح/الخسائر التقديرية المحققة:' : 'Estimated Realized P/L:'}</span>
                     <div className="flex items-center gap-1.5 font-sans tabular-nums">
                       <span className={`font-semibold ${realizedPl >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                        {realizedPl >= 0 ? '+' : ''}{realizedPl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                        {realizedPl >= 0 ? '+' : ''}{realizedPl.toLocaleString(isArabic ? 'ar-EG' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                       </span>
                       {realizedPlPct !== null && (
                         <span className={`text-[11px] font-medium ${realizedPl >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                          ({realizedPlPct >= 0 ? '+' : ''}{realizedPlPct.toFixed(2)}%)
+                          ({realizedPl >= 0 ? '+' : ''}{realizedPlPct.toFixed(2)}%)
                         </span>
                       )}
                     </div>
@@ -304,7 +315,7 @@ export default function CloseOrderModal({
                 onClick={onClose}
                 className="px-4 py-2 rounded-lg text-xs font-semibold text-text-muted hover:text-white hover:bg-surface-raised transition-colors cursor-pointer"
               >
-                Cancel
+                {isArabic ? 'إلغاء' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -314,11 +325,11 @@ export default function CloseOrderModal({
               >
                 {isSubmitting ? (
                   <>
-                    <InlineSpinner className="h-4 w-4" label="Closing position" />
-                    <span>Processing...</span>
+                    <InlineSpinner className="h-4 w-4" label={isArabic ? 'جارٍ إغلاق الصفقة' : 'Closing position'} />
+                    <span>{isArabic ? 'جارٍ المعالجة...' : 'Processing...'}</span>
                   </>
                 ) : (
-                  'Confirm Close'
+                  isArabic ? 'تأكيد الإغلاق' : 'Confirm Close'
                 )}
               </button>
             </div>

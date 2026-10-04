@@ -13,6 +13,7 @@ import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type BankAccount } from '@/types/bank';
 import { isBrokerageAccount, toEgp, type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
+import { useTranslation } from '@/lib/i18n';
 import { type OrderStats } from '../../homeInvestmentsTypes';
 import KPICard from './KPICard';
 
@@ -32,6 +33,8 @@ export default function NetWorthKPIRail({
   netWorthHistory = [],
 }: NetWorthKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
 
   // Split cash and brokerage accounts (excluding virtual paper trading accounts)
   const realAccounts = accounts.filter((a) => !isVirtualAccount(a));
@@ -85,88 +88,101 @@ export default function NetWorthKPIRail({
   };
 
   const formatMoney = (value: number): string => {
-    if (isPrivacy) return '•••••• £';
-    if (value === 0) return '0.0 £';
+    if (isPrivacy) return `•••••• ${currencySymbol}`;
+    if (value === 0) return `0.0 ${currencySymbol}`;
     const formatted = Math.abs(value).toLocaleString('en-US', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     });
-    return `${formatted} £`;
+    return `${formatted} ${currencySymbol}`;
   };
 
   const cards = [
     {
       id: 'total-net-worth',
-      title: 'Total Net Worth',
-      shortTitle: 'Net Worth',
+      title: locale === 'ar' ? 'إجمالي صافي القيمة' : 'Total Net Worth',
+      shortTitle: locale === 'ar' ? 'صافي القيمة' : 'Net Worth',
       icon: ShieldCheck,
       iconBgClass: 'bg-brand-blue text-white',
       value: isPrivacy ? '••••••••' : formatMoney(totalNetWorth),
-      metaText: 'Consolidated balance',
+      metaText: locale === 'ar' ? 'الرصيد الموحد' : 'Consolidated balance',
       sparklinePoints: totalNetWorthPoints.length > 1 ? totalNetWorthPoints : undefined,
       sparklineTrend: trendFor(totalNetWorthPoints),
       targetId: 'section-my-positions',
     },
     {
       id: 'invested-capital',
-      title: 'Invested Capital',
-      shortTitle: 'Invested',
+      title: locale === 'ar' ? 'رأس المال المستثمر' : 'Invested Capital',
+      shortTitle: locale === 'ar' ? 'المستثمر' : 'Invested',
       icon: TrendingUp,
       iconBgClass: 'bg-brand-blue text-white',
       value: isPrivacy ? '••••••••' : formatMoney(totalInvested),
-      metaText: `${orderStats.openOrders.length} active holding${orderStats.openOrders.length !== 1 ? 's' : ''}`,
+      metaText:
+        locale === 'ar'
+          ? `${orderStats.openOrders.length} ${orderStats.openOrders.length === 1 ? 'مركز نشط' : 'مراكز نشطة'}`
+          : `${orderStats.openOrders.length} active holding${orderStats.openOrders.length !== 1 ? 's' : ''}`,
       sparklinePoints: investedCapitalPoints.length > 1 ? investedCapitalPoints : undefined,
       sparklineTrend: trendFor(investedCapitalPoints),
       targetId: 'section-my-positions',
     },
     {
       id: 'liquid-bank-cash',
-      title: 'Liquid Bank Cash',
-      shortTitle: 'Bank Cash',
+      title: locale === 'ar' ? 'السيولة البنكية' : 'Liquid Bank Cash',
+      shortTitle: locale === 'ar' ? 'السيولة' : 'Bank Cash',
       icon: Landmark,
       iconBgClass: 'bg-profit-num text-white',
       value: isPrivacy ? '••••••••' : formatMoney(totalEgpLiquidCash + totalUsdCashInEgp),
-      metaText: `${cashAccounts.length} bank account${cashAccounts.length !== 1 ? 's' : ''}`,
+      metaText:
+        locale === 'ar'
+          ? `${cashAccounts.length} ${cashAccounts.length === 1 ? 'حساب بنكي' : 'حسابات بنكية'}`
+          : `${cashAccounts.length} bank account${cashAccounts.length !== 1 ? 's' : ''}`,
       sparklinePoints: liquidBankCashPoints.length > 1 ? liquidBankCashPoints : undefined,
       sparklineTrend: trendFor(liquidBankCashPoints),
       targetId: 'section-my-positions',
     },
     {
       id: 'brokerage-dry-powder',
-      title: 'Brokerage Dry Powder',
-      shortTitle: 'Brokerage',
+      title: locale === 'ar' ? 'سيولة الوساطة النقدية' : 'Brokerage Dry Powder',
+      shortTitle: locale === 'ar' ? 'الوساطة' : 'Brokerage',
       icon: Wallet,
       iconBgClass: 'bg-accent-cyan text-white',
       value: isPrivacy
         ? '••••••••'
         : brokerageAccounts.length > 0
         ? formatMoney(totalBrokerageCashInEgp)
-        : '0.0 £',
-      metaText: brokerageAccounts.length > 0 ? 'Ready to deploy' : 'No brokerage',
+        : `0.0 ${currencySymbol}`,
+      metaText:
+        locale === 'ar'
+          ? brokerageAccounts.length > 0
+            ? 'جاهزة للشراء'
+            : 'لا توجد حسابات'
+          : brokerageAccounts.length > 0
+          ? 'Ready to deploy'
+          : 'No brokerage',
       sparklinePoints: brokerageCashPoints.length > 1 ? brokerageCashPoints : undefined,
       sparklineTrend: trendFor(brokerageCashPoints),
       targetId: 'section-my-positions',
     },
     {
       id: 'real-purchasing-power',
-      title: 'Real Purchasing Power',
-      shortTitle: 'Real Value',
+      title: locale === 'ar' ? 'القوة الشرائية الحقيقية' : 'Real Purchasing Power',
+      shortTitle: locale === 'ar' ? 'القيمة الحقيقية' : 'Real Value',
       icon: Coins,
       iconBgClass: 'bg-accent-amber text-white',
       value: isPrivacy ? '••••••••' : formatMoney(realPurchasingPower),
-      metaText: 'Inflation-adjusted',
+      metaText: locale === 'ar' ? 'معدلة حسب التضخم' : 'Inflation-adjusted',
       sparklinePoints: realPurchasingPowerPoints.length > 1 ? realPurchasingPowerPoints : undefined,
       sparklineTrend: trendFor(realPurchasingPowerPoints),
       targetId: 'section-my-positions',
     },
     {
       id: 'inflation-drag-loss',
-      title: 'Inflation Loss (Drag)',
-      shortTitle: 'Inflation Drag',
+      title: locale === 'ar' ? 'خسائر التضخم (التآكل)' : 'Inflation Loss (Drag)',
+      shortTitle: locale === 'ar' ? 'أثر التضخم' : 'Inflation Drag',
       icon: Flame,
       iconBgClass: 'bg-loss-chart text-white',
       value: isPrivacy ? '••••••••' : `-${formatMoney(inflationLoss)}`,
-      metaText: 'Annual purchasing loss',
+      metaText: locale === 'ar' ? 'فقدان القوة الشرائية سنوياً' : 'Annual purchasing loss',
       sparklinePoints: inflationLossPoints.length > 1 ? inflationLossPoints : undefined,
       sparklineTrend: trendFor(inflationLossPoints),
       targetId: 'section-my-positions',

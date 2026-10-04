@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/lib/i18n';
 import { X } from '@/components/ui/icon-library';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
 import AddOrderModal from '@/components/platform/AddOrderModal';
@@ -34,6 +35,8 @@ export default function TickerPositionsDrawer({
   order,
   onPositionsChanged,
 }: TickerPositionsDrawerProps) {
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const [mounted, setMounted] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [orders, setOrders] = useState<TickerOrder[]>([]);
@@ -218,19 +221,19 @@ export default function TickerPositionsDrawer({
                     {/* Right Side: Live Price Quote & Action Controls */}
                     <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
                       {currentPrice > 0 && (
-                        <div className="hidden sm:flex flex-col items-end text-right">
+                        <div className="hidden sm:flex flex-col items-end rtl:items-start text-right rtl:text-left">
                           <div className="text-sm sm:text-base font-bold text-text-primary tabular-nums tracking-tight font-sans">
-                            {currentPrice.toLocaleString('en-US', {
+                            {currentPrice.toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}{' '}
                             <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-sans">
-                              EGP
+                              {isArabic ? 'ج.م' : 'EGP'}
                             </span>
                           </div>
                           <span className="text-[10px] font-medium text-emerald-400 flex items-center gap-1 leading-none mt-0.5 font-sans">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            Live Price
+                            {isArabic ? 'السعر المباشر' : 'Live Price'}
                           </span>
                         </div>
                       )}
@@ -243,8 +246,8 @@ export default function TickerPositionsDrawer({
                         type="button"
                         onClick={onClose}
                         className="drawer-close-btn"
-                        title="Close (Esc)"
-                        aria-label="Close Positions Drawer"
+                        title={isArabic ? 'إغلاق (Esc)' : 'Close (Esc)'}
+                        aria-label={isArabic ? 'إغلاق نافذة الصفقات' : 'Close Positions Drawer'}
                       >
                         <X size={16} />
                       </button>
@@ -255,7 +258,7 @@ export default function TickerPositionsDrawer({
                 {/* Content Body */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6 safe-area-bottom">
                   {isLoading && orders.length === 0 ? (
-                    <SectionLoadingState className="py-20" label="Loading positions and orders…" />
+                    <SectionLoadingState className="py-20" label={isArabic ? 'جارٍ تحميل الصفقات والأوامر…' : 'Loading positions and orders…'} />
                   ) : (
                     <TickerPositions
                       symbol={symbol}

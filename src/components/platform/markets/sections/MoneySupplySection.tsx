@@ -13,16 +13,17 @@ import {
 import type { MoneySupplyData, SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import { ChevronRight } from '@/components/ui/icon-library';
 import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import { useTranslation } from '@/lib/i18n';
 
 export type SelectedMoneySupplySymbol = 'M2' | 'M1' | 'M0';
 export type MoneySupplyHorizon = '1Y' | '3Y' | '5Y' | '10Y' | 'ALL';
 
-const HORIZONS: { key: MoneySupplyHorizon; label: string; count: number }[] = [
-  { key: '1Y', label: '1Y', count: 12 },
-  { key: '3Y', label: '3Y', count: 36 },
-  { key: '5Y', label: '5Y', count: 60 },
-  { key: '10Y', label: '10Y', count: 120 },
-  { key: 'ALL', label: 'ALL', count: 9999 },
+const HORIZONS: { key: MoneySupplyHorizon; label: string; labelAr: string; count: number }[] = [
+  { key: '1Y', label: '1Y', labelAr: 'سنة', count: 12 },
+  { key: '3Y', label: '3Y', labelAr: '3 سنوات', count: 36 },
+  { key: '5Y', label: '5Y', labelAr: '5 سنوات', count: 60 },
+  { key: '10Y', label: '10Y', labelAr: '10 سنوات', count: 120 },
+  { key: 'ALL', label: 'ALL', labelAr: 'الكل', count: 9999 },
 ];
 
 interface MoneySupplySectionProps {
@@ -36,9 +37,19 @@ export default function MoneySupplySection({
   macroData,
   isLoading = false,
 }: MoneySupplySectionProps) {
+  const { locale } = useTranslation();
   const [selectedSymbol, setSelectedSymbol] = useState<SelectedMoneySupplySymbol>('M2');
   const [horizon, setHorizon] = useState<MoneySupplyHorizon>('5Y');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const getSupplyName = (item?: MoneySupplyData | null) => {
+    if (!item) return '';
+    if (locale !== 'ar') return item.name;
+    if (item.symbol === 'M2') return 'السيولة المحلية (M2)';
+    if (item.symbol === 'M1') return 'المعروض النقدي (M1)';
+    if (item.symbol === 'M0') return 'النقود الاحتياطية (M0)';
+    return item.name;
+  };
 
   const moneySupply = macroData?.moneySupply;
 
@@ -128,7 +139,7 @@ export default function MoneySupplySection({
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-1 cursor-pointer group w-fit">
             <h3 className="text-sm sm:text-base font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
-              Money supply
+              {locale === 'ar' ? 'المعروض النقدي والسيولة' : 'Money supply'}
             </h3>
             <ChevronRight
               size={16}
@@ -152,7 +163,7 @@ export default function MoneySupplySection({
                         : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
                     }`}
                   >
-                    {h.label}
+                    {locale === 'ar' ? h.labelAr : h.label}
                   </button>
                 );
               })}
@@ -201,7 +212,7 @@ export default function MoneySupplySection({
                           isSelected ? 'text-white' : 'text-neutral-200 group-hover:text-white'
                         }`}
                       >
-                        {item.name}
+                        {getSupplyName(item)}
                       </span>
                       <span className="text-[10px] font-bold text-amber-500 ml-0.5">M</span>
                       <span className="text-neutral-500 text-xs ml-0.5">-</span>
@@ -216,7 +227,7 @@ export default function MoneySupplySection({
                         })}
                       </span>
                       <span className="text-[9px] font-medium text-neutral-400 uppercase tracking-tight">
-                        T EGP
+                        {locale === 'ar' ? 'تريليون ج.م' : 'T EGP'}
                       </span>
                       <span
                         className={`text-xs font-bold tabular-nums ml-1 ${
@@ -238,7 +249,7 @@ export default function MoneySupplySection({
             type="button"
             onClick={scrollRight}
             className="w-8 h-8 rounded-full bg-black hover:bg-surface-raised border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition-colors shrink-0 cursor-pointer mb-2"
-            title="Next indicators"
+            title={locale === 'ar' ? 'المؤشرات التالية' : 'Next indicators'}
           >
             <ChevronRight size={16} />
           </button>
@@ -247,10 +258,10 @@ export default function MoneySupplySection({
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
         <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black overflow-hidden pt-2">
           {isLoading ? (
-            <SectionLoadingState className="h-full" label="Loading money supply data…" />
+            <SectionLoadingState className="h-full" label={locale === 'ar' ? 'جاري تحميل بيانات المعروض النقدي…' : 'Loading money supply data…'} />
           ) : chartData.length < 2 ? (
             <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
-              No historical data available for this timeframe.
+              {locale === 'ar' ? 'لا توجد بيانات تاريخية متاحة لهذا الإطار الزمني.' : 'No historical data available for this timeframe.'}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -341,28 +352,30 @@ export default function MoneySupplySection({
                       <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50">
                         <div className="text-neutral-400 font-medium pb-1 border-b border-white/10 flex items-center justify-between gap-4">
                           <span>{data.date}</span>
-                          <span className="font-semibold text-neutral-200">{activeItem?.name}</span>
+                          <span className="font-semibold text-neutral-200">{getSupplyName(activeItem)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4 pt-0.5">
-                          <span className="text-neutral-400">Total Supply:</span>
+                          <span className="text-neutral-400">{locale === 'ar' ? 'إجمالي المعروض:' : 'Total Supply:'}</span>
                           <span className="font-bold text-white tabular-nums text-sm">
                             {inTrillions}{' '}
-                            <span className="text-[10px] text-neutral-400">TRILLION EGP</span>
+                            <span className="text-[10px] text-neutral-400">
+                              {locale === 'ar' ? 'تريليون ج.م' : 'TRILLION EGP'}
+                            </span>
                           </span>
                         </div>
                         <div className="text-[11px] text-neutral-400 tabular-nums flex items-center justify-between gap-4">
-                          <span>Exact Value:</span>
-                          <span className="text-neutral-200">{formattedTotal} EGP</span>
+                          <span>{locale === 'ar' ? 'القيمة الدقيقة:' : 'Exact Value:'}</span>
+                          <span className="text-neutral-200">{formattedTotal} {locale === 'ar' ? 'ج.م' : 'EGP'}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4 pt-1 border-t border-white/5">
-                          <span className="text-neutral-400">Monthly Change:</span>
+                          <span className="text-neutral-400">{locale === 'ar' ? 'التغير الشهري:' : 'Monthly Change:'}</span>
                           <span
                             className={`font-semibold tabular-nums ${
                               isValPos ? 'text-profit-num' : 'text-loss-num'
                             }`}
                           >
                             {isValPos ? '+' : ''}
-                            {formattedChg} EGP ({isValPos ? '+' : ''}
+                            {formattedChg} {locale === 'ar' ? 'ج.م' : 'EGP'} ({isValPos ? '+' : ''}
                             {Number(data.changePercent).toFixed(2)}%)
                           </span>
                         </div>
@@ -400,7 +413,7 @@ export default function MoneySupplySection({
                 className="px-1.5 py-0.5 rounded-[2px] text-[10px] sm:text-[11px] font-bold text-white shadow-lg tabular-nums tracking-tight"
                 style={{ backgroundColor: strokeColor }}
               >
-                {(latestVal / 1e12).toFixed(3)} T
+                {(latestVal / 1e12).toFixed(3)} {locale === 'ar' ? 'تريليون' : 'T'}
               </div>
             </div>
           )}

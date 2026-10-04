@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useRef } from 'react';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 import type { GroupBy, SectorDifferentialItem } from './types';
 
 interface SectorPillRailProps {
@@ -18,13 +20,15 @@ export default function SectorPillRail({
   onSelectSector,
   outperformingSectorsCount,
 }: SectorPillRailProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
   const railRef = useRef<HTMLDivElement>(null);
   const groupLabel =
     groupBy === 'sector'
-      ? 'Sectors'
+      ? isAr ? 'القطاعات' : 'Sectors'
       : groupBy === 'industryGroup'
-      ? 'Groups'
-      : 'Industries';
+      ? isAr ? 'المجموعات' : 'Groups'
+      : isAr ? 'الصناعات' : 'Industries';
 
   return (
     <div
@@ -35,7 +39,7 @@ export default function SectorPillRail({
       <button
         type="button"
         onClick={() => onSelectSector(null)}
-        className={`group relative flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all shrink-0 text-left cursor-pointer ${
+        className={`group relative flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all shrink-0 text-start cursor-pointer ${
           !selectedSectorFilter
             ? 'bg-white/10 border border-white/20 shadow-lg'
             : 'bg-transparent border border-transparent hover:bg-white/[0.04]'
@@ -58,10 +62,12 @@ export default function SectorPillRail({
                 : 'text-neutral-300 group-hover:text-white'
             }`}
           >
-            All {groupLabel}
+            {isAr ? `كافة ${groupLabel}` : `All ${groupLabel}`}
           </span>
           <span className="text-[10px] text-neutral-400 tabular-nums mt-0.5">
-            {outperformingSectorsCount}/{sectorDifferentialList.length} beating B&H
+            {isAr
+              ? `${outperformingSectorsCount}/${sectorDifferentialList.length} تتفوق على B&H`
+              : `${outperformingSectorsCount}/${sectorDifferentialList.length} beating B&H`}
           </span>
         </div>
       </button>
@@ -70,7 +76,8 @@ export default function SectorPillRail({
       {sectorDifferentialList.map((sec) => {
         const isSelected = selectedSectorFilter === sec.sector;
         const hasAlpha = sec.alphaDelta > 0;
-        const initials = sec.sector
+        const localizedName = localizeSectorName(sec.sector, locale);
+        const initials = localizedName
           .split(/\s+/)
           .slice(0, 2)
           .map((w) => w[0])
@@ -82,7 +89,7 @@ export default function SectorPillRail({
             key={sec.sector}
             type="button"
             onClick={() => onSelectSector(isSelected ? null : sec.sector)}
-            className={`group relative flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all shrink-0 text-left cursor-pointer ${
+            className={`group relative flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all shrink-0 text-start cursor-pointer ${
               isSelected
                 ? 'bg-white/10 border border-white/20 shadow-lg'
                 : 'bg-transparent border border-transparent hover:bg-white/[0.04]'
@@ -107,7 +114,7 @@ export default function SectorPillRail({
                     : 'text-neutral-200 group-hover:text-white'
                 }`}
               >
-                {sec.sector}
+                {localizedName}
               </span>
               <div className="flex items-center gap-1.5 mt-1 leading-none">
                 <span

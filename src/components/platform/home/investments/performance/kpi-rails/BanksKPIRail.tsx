@@ -19,6 +19,7 @@ import {
   buildYtdCashTrend,
 } from '@/lib/portfolio-finance';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
+import { useTranslation } from '@/lib/i18n';
 import AccountBalanceHistoryDrawer from '@/components/platform/wallet/AccountBalanceHistoryDrawer';
 import KPICard, { type KPICardProps } from './KPICard';
 
@@ -85,6 +86,8 @@ export default function BanksKPIRail({
   onAccountsUpdated,
 }: BanksKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
   const [showAllAccounts, setShowAllAccounts] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const INITIAL_ACCOUNTS_LIMIT = 4;
@@ -138,14 +141,15 @@ export default function BanksKPIRail({
   const brokeragePct =
     totalCombinedEgp > 0 ? ((totalBrokerageCashEgp / totalCombinedEgp) * 100).toFixed(0) : '0';
 
-  const formatMoney = (value: number, currency: string = '£'): string => {
-    if (isPrivacy) return `•••••• ${currency}`;
-    if (value === 0) return `0.0 ${currency}`;
+  const formatMoney = (value: number, curr?: string): string => {
+    const c = curr ?? currencySymbol;
+    if (isPrivacy) return `•••••• ${c}`;
+    if (value === 0) return `0.0 ${c}`;
     const formatted = Math.abs(value).toLocaleString('en-US', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     });
-    return `${formatted} ${currency}`;
+    return `${formatted} ${c}`;
   };
 
   // Build month-end cash balances from January through the current month.
@@ -162,62 +166,74 @@ export default function BanksKPIRail({
   const macroCards: KPICardProps[] = [
     {
       id: 'total-liquid-cash',
-      title: 'Total Liquid Cash',
-      shortTitle: 'Total Cash',
+      title: locale === 'ar' ? 'إجمالي السيولة النقدية' : 'Total Liquid Cash',
+      shortTitle: locale === 'ar' ? 'إجمالي النقد' : 'Total Cash',
       icon: Coins,
       iconBgClass: 'bg-brand-blue text-white',
-      value: isPrivacy ? '••••••••' : formatMoney(totalCombinedEgp, '£'),
-      badgeText: `${accounts.length} Accounts`,
+      value: isPrivacy ? '••••••••' : formatMoney(totalCombinedEgp),
+      badgeText: locale === 'ar' ? `${accounts.length} حسابات` : `${accounts.length} Accounts`,
       badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
-      metaText: 'Bank + Brokerage combined',
+      metaText: locale === 'ar' ? 'البنوك والوساطة مجتمعة' : 'Bank + Brokerage combined',
       sparklinePoints: totalCashPoints.length > 1 ? totalCashPoints : undefined,
       sparklineTrend: getSparklineTrend(totalCashPoints),
       href: '/wallet?tab=banks',
     },
     {
       id: 'bank-cash-egp',
-      title: 'Bank Cash (EGP)',
-      shortTitle: 'EGP Cash',
+      title: locale === 'ar' ? 'النقد البنكي (جنيه)' : 'Bank Cash (EGP)',
+      shortTitle: locale === 'ar' ? 'نقد بالجنيه' : 'EGP Cash',
       icon: Landmark,
       iconBgClass: 'bg-profit-num text-white',
-      value: isPrivacy ? '••••••••' : formatMoney(totalEgpLiquid, '£'),
-      badgeText: `${egpPct}% of Total`,
+      value: isPrivacy ? '••••••••' : formatMoney(totalEgpLiquid),
+      badgeText: locale === 'ar' ? `${egpPct}% من الإجمالي` : `${egpPct}% of Total`,
       badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
-      metaText: `${cashAccounts.filter((a) => a.currency === 'EGP').length} commercial accounts`,
+      metaText:
+        locale === 'ar'
+          ? `${cashAccounts.filter((a) => a.currency === 'EGP').length} حسابات تجارية`
+          : `${cashAccounts.filter((a) => a.currency === 'EGP').length} commercial accounts`,
       sparklinePoints: bankCashPoints.length > 1 ? bankCashPoints : undefined,
       sparklineTrend: getSparklineTrend(bankCashPoints),
       href: '/wallet?tab=banks',
     },
     {
       id: 'foreign-reserves-usd',
-      title: 'Foreign Reserves (USD)',
-      shortTitle: 'USD Reserves',
+      title: locale === 'ar' ? 'احتياطي العملات (دولار)' : 'Foreign Reserves (USD)',
+      shortTitle: locale === 'ar' ? 'احتياطي الدولار' : 'USD Reserves',
       icon: Globe,
       iconBgClass: 'bg-accent-cyan text-white',
       value: isPrivacy
         ? '••••••••'
         : `$${totalUsdLiquid.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`,
-      badgeText: `${usdPct}% FX Hedge`,
+      badgeText: locale === 'ar' ? `${usdPct}% تحوط بالعملة` : `${usdPct}% FX Hedge`,
       badgeClass: 'text-emerald-400 font-medium text-[9px] bg-emerald-500/10 border border-emerald-500/20',
-      metaText: `≈ ${(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} £`,
+      metaText:
+        locale === 'ar'
+          ? `≈ ${(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} ج.م`
+          : `≈ ${(totalUsdLiquid * usdRate).toLocaleString('en-US', { maximumFractionDigits: 0 })} £`,
       sparklinePoints: usdCashPoints.length > 1 ? usdCashPoints : undefined,
       sparklineTrend: getSparklineTrend(usdCashPoints),
       href: '/wallet?tab=banks',
     },
     {
       id: 'brokerage-cash-powder',
-      title: 'Brokerage Cash',
-      shortTitle: 'Brokerage',
+      title: locale === 'ar' ? 'سيولة الوساطة النقدية' : 'Brokerage Cash',
+      shortTitle: locale === 'ar' ? 'الوساطة' : 'Brokerage',
       icon: Wallet,
       iconBgClass: 'bg-accent-amber text-white',
       value: isPrivacy
         ? '••••••••'
         : brokerageAccounts.length > 0
-        ? formatMoney(totalBrokerageCashEgp, '£')
-        : '0.0 £',
-      badgeText: brokerageAccounts.length > 0 ? `${brokeragePct}% of Total` : 'None',
+        ? formatMoney(totalBrokerageCashEgp)
+        : `0.0 ${currencySymbol}`,
+      badgeText:
+        brokerageAccounts.length > 0
+          ? (locale === 'ar' ? `${brokeragePct}% من الإجمالي` : `${brokeragePct}% of Total`)
+          : (locale === 'ar' ? 'لا يوجد' : 'None'),
       badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
-      metaText: brokerageAccounts.length > 0 ? `${brokerageAccounts.length} trading accounts` : 'No brokerage',
+      metaText:
+        brokerageAccounts.length > 0
+          ? (locale === 'ar' ? `${brokerageAccounts.length} حسابات تداول` : `${brokerageAccounts.length} trading accounts`)
+          : (locale === 'ar' ? 'لا توجد حسابات' : 'No brokerage'),
       sparklinePoints: brokerageCashPoints.length > 1 ? brokerageCashPoints : undefined,
       sparklineTrend: brokerageAccounts.length > 0 ? getSparklineTrend(brokerageCashPoints) : 'neutral',
       href: '/wallet?tab=banks',
@@ -245,13 +261,18 @@ export default function BanksKPIRail({
       const isUsd = curr === 'USD';
 
       const typeLabel = account.accountType
-        ? account.accountType
-            .replace(/_/g, ' ')
-            .toLowerCase()
-            .replace(/\b\w/g, (c) => c.toUpperCase())
+        ? (locale === 'ar'
+            ? account.accountType.toUpperCase().includes('BROKER') || account.accountType.toUpperCase().includes('TRAD')
+              ? 'وساطة'
+              : account.accountType.toUpperCase().includes('SAVING')
+              ? 'توفير'
+              : account.accountType.toUpperCase().includes('CD') || account.accountType.toUpperCase().includes('DEPOSIT')
+              ? 'شهادة ادخار'
+              : 'جاري'
+            : account.accountType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()))
         : isBroker
-        ? 'Brokerage'
-        : 'Checking';
+        ? (locale === 'ar' ? 'وساطة' : 'Brokerage')
+        : (locale === 'ar' ? 'جاري' : 'Checking');
 
       const sparkline = calculateAccountSparkline(account, transactions);
 
@@ -261,13 +282,15 @@ export default function BanksKPIRail({
         ? `$${nativeBalance.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`
         : nativeBalance.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-      const unit = isPrivacy || isUsd ? undefined : '£';
+      const unit = isPrivacy || isUsd ? undefined : currencySymbol;
 
       const metaText = isPrivacy
         ? '••••••'
         : isUsd
-        ? `≈ ${egpBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })} £ (${sharePct}%)`
-        : `${sharePct}% of cash`;
+        ? (locale === 'ar'
+            ? `≈ ${egpBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })} ج.م (${sharePct}%)`
+            : `≈ ${egpBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })} £ (${sharePct}%)`)
+        : (locale === 'ar' ? `${sharePct}% من النقد` : `${sharePct}% of cash`);
 
       const badgeClass = isUsd
         ? 'text-emerald-400 font-medium text-[9px] bg-emerald-500/10 border border-emerald-500/20'
@@ -279,8 +302,8 @@ export default function BanksKPIRail({
 
       return {
         id: `account-${account.id}`,
-        title: account.accountName || account.bankName || `Account #${account.id}`,
-        shortTitle: account.bankName || account.accountName || 'Account',
+        title: account.accountName || account.bankName || (locale === 'ar' ? `حساب #${account.id}` : `Account #${account.id}`),
+        shortTitle: account.bankName || account.accountName || (locale === 'ar' ? 'حساب' : 'Account'),
         icon: isBroker ? Wallet : Building2,
         logoUrl: account.bankLogoUrl,
         iconBgClass: isBroker
@@ -295,7 +318,7 @@ export default function BanksKPIRail({
         metaClass: 'text-zinc-500',
         sparklinePoints: sparkline.points,
         sparklineTrend: sparkline.trend,
-        changeText: isPrivacy ? '•••' : sparkline.changeText,
+        changeText: isPrivacy ? '•••' : (locale === 'ar' && sparkline.changeText === 'Steady' ? 'مستقر' : sparkline.changeText),
         changeColorClass: sparkline.changeColorClass,
         onClick: () => setSelectedAccountId(account.id),
         className: `shrink-0 w-[170px] xs:w-[180px] sm:w-[190px] lg:w-full snap-start cursor-pointer ${
@@ -303,7 +326,7 @@ export default function BanksKPIRail({
         }`,
       };
     });
-  }, [sortedAccounts, transactions, usdRate, totalCombinedEgp, isPrivacy, showAllAccounts]);
+  }, [sortedAccounts, transactions, usdRate, totalCombinedEgp, isPrivacy, showAllAccounts, locale, currencySymbol]);
 
   return (
     <div className="w-full space-y-3 sm:space-y-4 select-none">
@@ -322,7 +345,7 @@ export default function BanksKPIRail({
       <div className="flex items-center justify-between pt-1 pb-0.5 px-0.5">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-text-primary font-sans">
-            Connected Institutions &amp; Balances
+            {locale === 'ar' ? 'المؤسسات والأرصدة المتصلة' : 'Connected Institutions & Balances'}
           </span>
           <span className="badge-count">
             {sortedAccounts.length}
@@ -336,16 +359,16 @@ export default function BanksKPIRail({
               className="hidden lg:inline-flex text-[11px] font-medium text-text-muted hover:text-text-primary transition-colors cursor-pointer select-none"
             >
               {showAllAccounts
-                ? `Show top ${INITIAL_ACCOUNTS_LIMIT}`
-                : `Show all (${sortedAccounts.length})`}
+                ? (locale === 'ar' ? `عرض أعلى ${INITIAL_ACCOUNTS_LIMIT}` : `Show top ${INITIAL_ACCOUNTS_LIMIT}`)
+                : (locale === 'ar' ? `عرض الكل (${sortedAccounts.length})` : `Show all (${sortedAccounts.length})`)}
             </button>
           )}
           <Link
             href="/wallet?tab=banks"
             className="text-[11px] font-semibold text-brand-blue hover:text-brand-blue-light inline-flex items-center gap-0.5 transition-colors"
           >
-            <span>Manage in Wallet</span>
-            <ChevronRight className="w-3 h-3" />
+            <span>{locale === 'ar' ? 'الإدارة في المحفظة' : 'Manage in Wallet'}</span>
+            <ChevronRight className={`w-3 h-3 ${locale === 'ar' ? 'rotate-180' : ''}`} />
           </Link>
         </div>
       </div>
@@ -353,9 +376,11 @@ export default function BanksKPIRail({
       {/* 3. Individual Account Cards Rail / Grid (Sidescrolling on phone, 4-col grid on desktop) */}
       {sortedAccounts.length === 0 ? (
         <div className="p-6 rounded-xl border border-dashed border-border-subtle bg-surface-raised/40 text-center text-xs text-text-muted font-sans">
-          No bank or brokerage accounts connected yet.{' '}
+          {locale === 'ar'
+            ? 'لم يتم ربط أي حسابات بنكية أو وساطة حتى الآن.'
+            : 'No bank or brokerage accounts connected yet.'}{' '}
           <Link href="/wallet?tab=banks" className="text-brand-blue hover:underline ml-1">
-            Connect an account
+            {locale === 'ar' ? 'ربط حساب' : 'Connect an account'}
           </Link>
         </div>
       ) : (

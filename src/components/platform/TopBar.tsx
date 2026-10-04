@@ -6,6 +6,8 @@ import { WatchlistItem } from './RightSidebar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LineChart, Briefcase, LayoutGrid } from '@/components/ui/icon-library';
 import { useAlerts } from './AlertProvider';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 
 export default function TopBar({
   symbol,
@@ -16,6 +18,8 @@ export default function TopBar({
   timeframe: string,
   watchlist?: WatchlistItem[]
 }) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
@@ -73,11 +77,11 @@ export default function TopBar({
               <div className="flex items-center space-x-2 text-[#787b86] text-caption leading-tight font-medium">
                 <span className="text-plt-text font-medium">{displaySymbol}</span>
                 <span className="opacity-40">•</span>
-                <span>{currentTicker.sector === 'Funds' ? 'FUND' : ['GC1!', 'SI1!'].includes(symbol.toUpperCase()) ? 'COMEX' : ['USDEGP', 'EUREGP'].includes(symbol.toUpperCase()) ? 'FOREX' : 'EGX'}</span>
+                <span>{currentTicker.sector === 'Funds' ? (isAr ? 'صندوق' : 'FUND') : ['GC1!', 'SI1!'].includes(symbol.toUpperCase()) ? (isAr ? 'كومكس' : 'COMEX') : ['USDEGP', 'EUREGP'].includes(symbol.toUpperCase()) ? (isAr ? 'فوركس' : 'FOREX') : (isAr ? 'البورصة المصرية' : 'EGX')}</span>
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 ml-2 px-2 py-2 rounded-xl bg-[#18181b] border border-[#3f3f46] text-mini text-[#787b86] tabular-nums">
+            <div className="hidden sm:flex items-center gap-2 ms-2 px-2 py-2 rounded-xl bg-[#18181b] border border-[#3f3f46] text-mini text-[#787b86] tabular-nums">
               <Search size={16} />
               <span>⌘K</span>
             </div>
@@ -85,14 +89,14 @@ export default function TopBar({
         </div>
 
         {/* Center section: Desktop View Switcher Pills — tv-design §6 via pill-switch CSS class */}
-        <div className="pill-switch hidden md:flex">
+        <div className="pill-switch hidden md:flex font-sans">
           <button
             type="button"
             onClick={() => switchView('chart')}
             className={`pill-switch-btn flex items-center gap-1.5 ${activeView === 'chart' ? 'active' : ''}`}
           >
             <LineChart size={14} className={activeView === 'chart' ? 'text-white' : 'text-[#787b86]'} />
-            <span>Chart</span>
+            <span>{isAr ? 'الرسم البياني' : 'Chart'}</span>
           </button>
 
           <button
@@ -101,7 +105,7 @@ export default function TopBar({
             className={`pill-switch-btn flex items-center gap-1.5 ${activeView === 'positions' ? 'active' : ''}`}
           >
             <Briefcase size={14} className={activeView === 'positions' ? 'text-white' : 'text-[#787b86]'} />
-            <span>Positions</span>
+            <span>{isAr ? 'الصفقات' : 'Positions'}</span>
           </button>
 
           <button
@@ -110,13 +114,13 @@ export default function TopBar({
             className={`pill-switch-btn flex items-center gap-1.5 ${activeView === 'sectors' ? 'active' : ''}`}
           >
             <LayoutGrid size={14} className={activeView === 'sectors' ? 'text-white' : 'text-[#787b86]'} />
-            <span>Sectors &amp; Heatmap</span>
+            <span>{isAr ? 'القطاعات والخريطة الحرارية' : 'Sectors & Heatmap'}</span>
           </button>
         </div>
 
         {/* Right side: status message */}
         {statusMessage && (
-          <div className="absolute right-4 top-2 z-50 rounded-xl border border-[#3f3f46] bg-plt-base/95 backdrop-blur-xl px-4 py-2 text-xs text-plt-text shadow-2xl hidden md:block">
+          <div className="absolute end-4 top-2 z-50 rounded-xl border border-[#3f3f46] bg-plt-base/95 backdrop-blur-xl px-4 py-2 text-xs text-plt-text shadow-2xl hidden md:block">
             {statusMessage}
           </div>
         )}
@@ -130,10 +134,10 @@ export default function TopBar({
         >
           <div className="bg-plt-base/95 backdrop-blur-2xl border border-plt-border rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-search-results overflow-hidden animate-in zoom-in-95 duration-150 text-plt-text">
             <div className="flex items-center px-4 py-3 border-b border-plt-border bg-plt-hover">
-              <Search size={14} className="text-plt-muted mr-3 shrink-0" />
+              <Search size={14} className="text-plt-muted me-3 shrink-0" />
               <input
                 type="text"
-                placeholder="Search Egyptian stocks, indices, commodities..."
+                placeholder={isAr ? 'ابحث في الأسهم المصرية، المؤشرات، السلع...' : 'Search Egyptian stocks, indices, commodities...'}
                 className="flex-1 bg-transparent border-none outline-none text-plt-text text-xs font-sans placeholder:text-plt-muted placeholder:text-xs"
                 autoFocus
                 value={searchQuery}
@@ -149,7 +153,7 @@ export default function TopBar({
 
             <div className="flex-1 overflow-y-auto no-scrollbar min-h-76 p-2 space-y-2">
               {filteredWatchlist.length === 0 ? (
-                <div className="p-10 text-center text-plt-muted text-xs">No matching symbols found</div>
+                <div className="p-10 text-center text-plt-muted text-xs font-sans">{isAr ? 'لم يتم العثور على رموز مطابقة' : 'No matching symbols found'}</div>
               ) : (
                 filteredWatchlist.map((item) => (
                   <div
@@ -177,10 +181,10 @@ export default function TopBar({
                     </div>
 
                     <div className="flex items-center space-x-4 shrink-0">
-                      <div className="text-right">
-                        <div className="text-mini text-plt-muted ">{item.sector}</div>
+                      <div className="text-end">
+                        <div className="text-mini text-plt-muted font-sans">{localizeSectorName(item.sector, locale)}</div>
                         <div className="text-xs tabular-nums font-medium text-plt-text">
-                          {item.price ? Number(item.price).toFixed(2) : ''} {item.currency || 'EGP'}
+                          {item.price ? Number(item.price).toFixed(2) : ''} {(item.currency === 'EGP' || !item.currency) && isAr ? 'ج.م' : (item.currency || 'EGP')}
                         </div>
                       </div>
                       <button

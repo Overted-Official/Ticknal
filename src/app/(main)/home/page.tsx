@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { connection } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getServerLocale } from '@/lib/i18n/server';
 import { getCachedOpportunitiesSync, getExitSignalsForHoldings } from '@/lib/opportunities';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
 import {
@@ -26,12 +27,19 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
+    const locale = await getServerLocale();
     return (
       <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-auto bg-plt-base p-8 text-center text-plt-text">
-        <h2 className="text-2xl font-bold mb-4">Welcome to Ticknal</h2>
-        <p className="mb-6 text-plt-muted">Please sign in to view your personalized dashboard and portfolio.</p>
-        <Link href="/" className="rounded-xl bg-plt-accent px-6 py-2 text-plt-base transition hover:opacity-90">
-          Sign In
+        <h2 className="text-2xl font-bold mb-4">
+          {locale === 'ar' ? 'مرحبًا بك في تكنال' : 'Welcome to Ticknal'}
+        </h2>
+        <p className="mb-6 text-plt-muted max-w-sm">
+          {locale === 'ar'
+            ? 'يرجى تسجيل الدخول لعرض لوحة التحكم المخصصة ومحفظتك الاستثمارية.'
+            : 'Please sign in to view your personalized dashboard and portfolio.'}
+        </p>
+        <Link href="/" className="rounded-xl bg-plt-accent px-6 py-2 text-plt-base transition hover:opacity-90 font-medium">
+          {locale === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
         </Link>
       </div>
     );

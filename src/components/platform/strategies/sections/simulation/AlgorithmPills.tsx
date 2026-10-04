@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 interface AlgorithmPillsProps {
   selectedStrategy: string;
@@ -37,6 +38,9 @@ export default function AlgorithmPills({
   onSelectStrategy,
   strategyMetrics,
 }: AlgorithmPillsProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
+
   return (
     <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-1 select-none font-sans">
       {STRATEGY_PILLS.map((st) => {
@@ -51,7 +55,7 @@ export default function AlgorithmPills({
             key={st.id}
             type="button"
             onClick={() => onSelectStrategy(st.id)}
-            className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-full transition-all shrink-0 text-left cursor-pointer ${
+            className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-full transition-all shrink-0 text-start cursor-pointer ${
               isSelected
                 ? 'bg-[#242426] border border-white/10 shadow-lg'
                 : 'bg-transparent border border-transparent hover:bg-white/[0.04]'
@@ -90,27 +94,31 @@ export default function AlgorithmPills({
                       {metrics.roi.toFixed(1)}%
                     </span>
                     <span className="text-[9px] font-medium text-neutral-400 uppercase tracking-tight">
-                      ROI
+                      {isAr ? 'العائد' : 'ROI'}
                     </span>
-                    <span className="text-neutral-500 text-[11px]">vs</span>
+                    <span className="text-neutral-500 text-[11px]">
+                      {isAr ? 'مقابل' : 'vs'}
+                    </span>
                     <span className="text-xs font-medium text-neutral-300 tabular-nums">
                       {isBhPos ? '+' : ''}
                       {metrics.bhRoi.toFixed(1)}%
                     </span>
                     <span className="text-[9px] font-medium text-neutral-400 uppercase tracking-tight">
-                      B&H
+                      {isAr ? 'شراء واحتفاظ' : 'B&H'}
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="text-xs text-neutral-500 tabular-nums">—</span>
                     <span className="text-[9px] font-medium text-neutral-500 uppercase tracking-tight">
-                      ROI
+                      {isAr ? 'العائد' : 'ROI'}
                     </span>
-                    <span className="text-neutral-600 text-[11px]">vs</span>
+                    <span className="text-neutral-600 text-[11px]">
+                      {isAr ? 'مقابل' : 'vs'}
+                    </span>
                     <span className="text-xs text-neutral-500 tabular-nums">—</span>
                     <span className="text-[9px] font-medium text-neutral-500 uppercase tracking-tight">
-                      B&H
+                      {isAr ? 'شراء واحتفاظ' : 'B&H'}
                     </span>
                   </>
                 )}

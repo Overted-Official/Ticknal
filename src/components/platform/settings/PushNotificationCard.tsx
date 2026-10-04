@@ -5,10 +5,12 @@ import { Bell, BellOff, CheckCircle2, Send } from '@/components/ui/icon-library'
 import { useAlerts } from '@/components/platform/AlertProvider';
 import { isNativePlatform, triggerNativeTestNotification } from '@/lib/native/capacitor-bridge';
 import InlineSpinner from '@/components/ui/InlineSpinner';
+import { useTranslation } from '@/lib/i18n';
 
 type PushState = 'idle' | 'requesting' | 'sending_test';
 
 export default function PushNotificationCard() {
+  const { t, locale, isRTL } = useTranslation();
   const { ensurePushSubscription, permission } = useAlerts();
 
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -150,20 +152,22 @@ export default function PushNotificationCard() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
-                Push Notifications
+                {locale === 'ar' ? 'الإشعارات الفورية' : 'Push Notifications'}
               </h2>
               {isSubscribed ? (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-profit-num/10 text-profit-num">
-                  ENABLED
+                  {locale === 'ar' ? 'مفعّل' : 'ENABLED'}
                 </span>
               ) : (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-text-muted">
-                  OFF
+                  {locale === 'ar' ? 'معطل' : 'OFF'}
                 </span>
               )}
             </div>
             <p className="text-xs text-text-muted mt-1 leading-relaxed">
-              Receive real-time trade signals, buy alerts, and portfolio updates on this device.
+              {locale === 'ar'
+                ? 'استلم إشارات التداول اللحظية، وتنبيهات الشراء، وتحديثات المحفظة على هذا الجهاز.'
+                : 'Receive real-time trade signals, buy alerts, and portfolio updates on this device.'}
             </p>
           </div>
         </div>
@@ -215,14 +219,14 @@ export default function PushNotificationCard() {
               {pushState === 'sending_test' ? (
                 <InlineSpinner className="h-3.5 w-3.5" label="Sending test notification" />
               ) : (
-                <Send size={13} className="text-text-muted" />
+                <Send size={13} className={`text-text-muted ${isRTL ? 'rotate-180' : ''}`} />
               )}
-              <span>{pushState === 'sending_test' ? 'Sending...' : 'Send Test Notification'}</span>
+              <span>{pushState === 'sending_test' ? (locale === 'ar' ? 'جاري الإرسال...' : 'Sending...') : (locale === 'ar' ? 'إرسال إشعار تجريبي' : 'Send Test Notification')}</span>
             </button>
 
             <div className="text-xs text-text-muted flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-profit-num animate-pulse" />
-              <span>Live on this device</span>
+              <span>{locale === 'ar' ? 'نشط على هذا الجهاز' : 'Live on this device'}</span>
             </div>
           </div>
 
@@ -231,15 +235,23 @@ export default function PushNotificationCard() {
             <div className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center gap-3 min-w-0">
               <Bell size={16} className="text-text-muted shrink-0" />
               <div className="min-w-0">
-                <h3 className="text-xs font-semibold text-white">Trade Signal Alerts</h3>
-                <p className="text-[11px] text-text-muted mt-0.5">Buy/sell signals delivered the moment they trigger</p>
+                <h3 className="text-xs font-semibold text-white">
+                  {locale === 'ar' ? 'تنبيهات إشارات التداول' : 'Trade Signal Alerts'}
+                </h3>
+                <p className="text-[11px] text-text-muted mt-0.5">
+                  {locale === 'ar' ? 'إشارات البيع والشراء فور إطلاقها من الخوارزميات' : 'Buy/sell signals delivered the moment they trigger'}
+                </p>
               </div>
             </div>
             <div className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center gap-3 min-w-0">
               <CheckCircle2 size={16} className="text-text-muted shrink-0" />
               <div className="min-w-0">
-                <h3 className="text-xs font-semibold text-white">Portfolio Updates</h3>
-                <p className="text-[11px] text-text-muted mt-0.5">Position changes, stop-loss hits, and target reaches</p>
+                <h3 className="text-xs font-semibold text-white">
+                  {locale === 'ar' ? 'تحديثات المحفظة' : 'Portfolio Updates'}
+                </h3>
+                <p className="text-[11px] text-text-muted mt-0.5">
+                  {locale === 'ar' ? 'تغييرات المراكز، وتفعيل وقف الخسارة، وتحقيق الأهداف' : 'Position changes, stop-loss hits, and target reaches'}
+                </p>
               </div>
             </div>
           </div>
@@ -252,7 +264,7 @@ export default function PushNotificationCard() {
               disabled={isLoading}
               className="text-xs font-medium text-loss-num/80 hover:text-loss-num transition-colors cursor-pointer disabled:opacity-50"
             >
-              Disable Push Notifications
+              {locale === 'ar' ? 'تعطيل الإشعارات الفورية' : 'Disable Push Notifications'}
             </button>
           </div>
         </div>

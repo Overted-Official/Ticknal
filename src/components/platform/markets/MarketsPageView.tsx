@@ -17,11 +17,13 @@ import {
   type SectorStrategySignalsResponse,
   aggregateSectorsFromStocks,
 } from '@/lib/sectors-math';
+import { useTranslation } from '@/lib/i18n';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function MarketsPageView() {
   const router = useRouter();
+  const { t, locale, isRTL } = useTranslation();
   const { isNavVisible } = useMobileNavScroll();
 
   // Timeframe & Sizing State (default to 1M for responsive overview)
@@ -124,11 +126,11 @@ export default function MarketsPageView() {
             href="/home"
             className="text-text-muted font-normal hover:text-text-primary transition-colors cursor-pointer"
           >
-            Home
+            {locale === 'ar' ? 'الرئيسية' : 'Home'}
           </Link>
           <span className="text-text-muted">/</span>
           <h1 className="font-semibold text-text-primary">
-            Markets
+            {locale === 'ar' ? 'الأسواق' : 'Markets'}
           </h1>
         </div>
 
@@ -137,7 +139,7 @@ export default function MarketsPageView() {
             type="button"
             onClick={() => mutateMacro()}
             className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer"
-            title="Refresh market data"
+            title={locale === 'ar' ? 'تحديث بيانات السوق' : 'Refresh market data'}
           >
             {isMacroLoading ? (
               <InlineSpinner className="h-3.5 w-3.5" label="Refreshing market data" />

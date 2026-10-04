@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import { X, ChevronDown, Check, BarChart2 } from '@/components/ui/icon-library';
 import { getAvailableIndicators } from '@/indicators';
+import { useTranslation } from '@/lib/i18n';
 
 interface ChartIndicatorsPopoverProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export default function ChartIndicatorsPopover({
   strategyParams,
   onUpdateStrategyParam,
 }: ChartIndicatorsPopoverProps) {
+  const { locale } = useTranslation();
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Close on click outside or Escape
@@ -52,16 +54,54 @@ export default function ChartIndicatorsPopover({
 
   const availableIndicators = getAvailableIndicators();
 
+  const getIndicatorLocalizedName = (id: string, defaultName: string) => {
+    if (locale !== 'ar') return defaultName;
+    switch (id) {
+      case 'smartMoneyFlow':
+        return 'تدفق السيولة الذكية (Smart Money)';
+      case 'hydraIndex':
+        return 'مؤشر هيدرا المتعدد (Hydra Index)';
+      case 'frama':
+        return 'المتوسط المتحرك التكيفي (FRAMA)';
+      case 'evenBetterSinewave':
+        return 'الموجة الجيبية المحسنة (Sinewave)';
+      case 'kalmanFilter':
+        return 'فلتر كالمان (Kalman Filter)';
+      case 'permutationEntropy':
+        return 'إنتروبيا التبديل العشوائي (Entropy)';
+      case 'supportResistance':
+        return 'مستويات الدعم والمقاومة';
+      case 'swingMapper':
+        return 'خريطة القمم والقيعان (Swing Mapper)';
+      default:
+        return defaultName;
+    }
+  };
+
+  const getOptionLocalizedName = (optId: string, defaultName: string) => {
+    if (locale !== 'ar') return defaultName;
+    switch (optId) {
+      case 'majorLevels':
+        return 'المستويات الرئيسية';
+      case 'minorLevels':
+        return 'المستويات الثانوية';
+      case 'showMarkers':
+        return 'إظهار إشارات الدخول والخروج';
+      default:
+        return defaultName;
+    }
+  };
+
   return (
     <div
       ref={popoverRef}
-      className="absolute top-2 left-2 sm:left-64 md:left-72 z-50 w-[270px] sm:w-[285px] max-w-[calc(100vw-16px)] bg-cold-gray-900 border border-white/[0.08] rounded-lg shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none overflow-hidden text-xs font-sans"
+      className="absolute top-2 left-2 sm:left-64 md:left-72 rtl:left-auto rtl:right-2 sm:rtl:right-64 md:rtl:right-72 z-50 w-[270px] sm:w-[285px] max-w-[calc(100vw-16px)] bg-cold-gray-900 border border-white/[0.08] rounded-lg shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none overflow-hidden text-xs font-sans"
     >
       {/* Compact Header */}
       <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between bg-white/[0.02]">
         <div className="flex items-center gap-1.5 font-semibold text-xs text-white">
           <BarChart2 size={13} className="text-white" />
-          <span>Technical Indicators</span>
+          <span>{locale === 'ar' ? 'المؤشرات الفنية' : 'Technical Indicators'}</span>
           {activeIndicators.length > 0 && (
             <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
               {activeIndicators.length}
@@ -72,7 +112,7 @@ export default function ChartIndicatorsPopover({
           type="button"
           onClick={onClose}
           className="h-5 w-5 rounded flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
-          aria-label="Close"
+          aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
         >
           <X size={12} />
         </button>
@@ -95,7 +135,7 @@ export default function ChartIndicatorsPopover({
                 <button
                   type="button"
                   onClick={() => onToggleIndicator(ind.id)}
-                  className="flex items-center gap-2 text-left flex-1 min-w-0 cursor-pointer"
+                  className="flex items-center gap-2 text-left rtl:text-right flex-1 min-w-0 cursor-pointer"
                 >
                   <div
                     className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition-colors ${
@@ -111,7 +151,7 @@ export default function ChartIndicatorsPopover({
                       isActive ? 'font-medium text-white' : 'text-text-muted'
                     }`}
                   >
-                    {ind.name}
+                    {getIndicatorLocalizedName(ind.id, ind.name)}
                   </span>
                 </button>
 
@@ -144,7 +184,9 @@ export default function ChartIndicatorsPopover({
                         key={opt.id}
                         className="flex items-center justify-between text-[10.5px] text-text-muted hover:text-white cursor-pointer select-none py-0.5"
                       >
-                        <span className="truncate pr-2">{opt.name}</span>
+                        <span className="truncate pr-2 rtl:pr-0 rtl:pl-2">
+                          {getOptionLocalizedName(opt.id, opt.name)}
+                        </span>
                         <input
                           type="checkbox"
                           checked={isOptActive}
@@ -163,7 +205,11 @@ export default function ChartIndicatorsPopover({
 
       {/* Compact Status Footer */}
       <div className="px-3 py-1.5 border-t border-white/[0.06] bg-black/30 flex items-center justify-between text-[10px] text-text-muted font-sans">
-        <span>{activeIndicators.length} active on chart</span>
+        <span>
+          {locale === 'ar'
+            ? `${activeIndicators.length} مؤشر نشط على الرسم`
+            : `${activeIndicators.length} active on chart`}
+        </span>
         {activeIndicators.length > 0 && (
           <button
             type="button"
@@ -172,7 +218,7 @@ export default function ChartIndicatorsPopover({
             }}
             className="text-[10px] text-text-muted hover:text-white cursor-pointer transition-colors"
           >
-            Clear all
+            {locale === 'ar' ? 'مسح الكل' : 'Clear all'}
           </button>
         )}
       </div>

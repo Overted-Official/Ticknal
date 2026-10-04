@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import type { StockPerformanceItem } from '@/lib/sectors-math';
 import { LineChart } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
 
 export interface SectorConstituentRowItemProps {
   stock: StockPerformanceItem;
@@ -16,6 +17,7 @@ export default function SectorConstituentRowItem({
   benchmarkReturn,
   onSelectTicker,
 }: SectorConstituentRowItemProps) {
+  const { locale } = useTranslation();
   const [imgError, setImgError] = useState(false);
   const cleanSymbol = stock.symbol.replace('.CA', '').trim().toUpperCase();
   const initial = cleanSymbol.slice(0, 2);
@@ -25,13 +27,16 @@ export default function SectorConstituentRowItem({
 
   const turnoverDisplay = useMemo(() => {
     if (stock.turnover >= 1_000_000_000) {
-      return `${(stock.turnover / 1_000_000_000).toFixed(1)}B`;
+      const val = (stock.turnover / 1_000_000_000).toFixed(1);
+      return locale === 'ar' ? `${val} مليار` : `${val}B`;
     }
     if (stock.turnover >= 1_000_000) {
-      return `${(stock.turnover / 1_000_000).toFixed(1)}M`;
+      const val = (stock.turnover / 1_000_000).toFixed(1);
+      return locale === 'ar' ? `${val} مليون` : `${val}M`;
     }
-    return `${(stock.turnover / 1_000).toFixed(0)}K`;
-  }, [stock.turnover]);
+    const val = (stock.turnover / 1_000).toFixed(0);
+    return locale === 'ar' ? `${val} ألف` : `${val}K`;
+  }, [stock.turnover, locale]);
 
   return (
     <div
@@ -70,7 +75,7 @@ export default function SectorConstituentRowItem({
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="badge-symbol">{cleanSymbol}</span>
             <span className="text-[11px] text-text-muted font-normal truncate">
-              · {stock.endPrice.toFixed(2)} EGP
+              · {stock.endPrice.toFixed(2)} {locale === 'ar' ? 'ج.م' : 'EGP'}
             </span>
           </div>
         </div>
@@ -84,7 +89,7 @@ export default function SectorConstituentRowItem({
               isAlphaPositive ? 'text-profit-num' : 'text-loss-num'
             }`}
           >
-            {alpha >= 0 ? '+' : ''}{alpha.toFixed(2)}% α
+            {alpha >= 0 ? '+' : ''}{alpha.toFixed(2)}% {locale === 'ar' ? 'ألفا' : 'α'}
           </div>
           <div className="text-[11px] font-medium tabular-nums text-right mt-0.5 flex items-center justify-end gap-1.5 whitespace-nowrap">
             <span className={isReturnPositive ? 'text-profit-chart' : 'text-loss-chart'}>
@@ -100,7 +105,7 @@ export default function SectorConstituentRowItem({
           href={`/charts?symbol=${cleanSymbol}`}
           onClick={(e) => e.stopPropagation()}
           className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition-colors cursor-pointer shrink-0"
-          title={`Open ${cleanSymbol} Chart`}
+          title={locale === 'ar' ? `فتح رسم ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
         >
           <LineChart size={14} />
         </Link>

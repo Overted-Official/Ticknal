@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n';
 import { ChevronRight, ChevronDown, ChevronUp, Plus } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type HomeInvestmentOrder } from '../homeInvestmentsTypes';
@@ -24,6 +25,8 @@ export default function MyPositionsSection({
 }: MyPositionsSectionProps) {
   const router = useRouter();
   const { isPrivacy } = usePrivacyMode();
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
 
   const [activeTickerOrder, setActiveTickerOrder] = useState<HomeInvestmentOrder | null>(null);
   const [orderToClose, setOrderToClose] = useState<{
@@ -59,20 +62,23 @@ export default function MyPositionsSection({
     router.refresh();
   };
 
+  const defaultCurrency = isArabic ? 'ج.م' : '£';
+
   // Format currency with privacy masking support
-  const formatMoney = (value: number, showSign: boolean = false, currency: string = '£'): string => {
+  const formatMoney = (value: number, showSign: boolean = false, currency: string = defaultCurrency): string => {
+    const cur = currency === '£' && isArabic ? 'ج.م' : currency;
     if (isPrivacy) {
-      if (value === 0) return `•••••• ${currency}`;
+      if (value === 0) return `•••••• ${cur}`;
       const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
-      return `${sign}•••••• ${currency}`;
+      return `${sign}•••••• ${cur}`;
     }
-    if (value === 0) return `0.0 ${currency}`;
-    const formatted = Math.abs(value).toLocaleString('en-US', {
+    if (value === 0) return `0.0 ${cur}`;
+    const formatted = Math.abs(value).toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     });
     const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
-    return `${sign}${formatted} ${currency}`;
+    return `${sign}${formatted} ${cur}`;
   };
 
   // Map exit signals by symbol for fast lookup
@@ -115,20 +121,24 @@ export default function MyPositionsSection({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
-            <h2 className="section-title">My Positions</h2>
+            <h2 className="section-title">
+              {isArabic ? 'صفقاتي' : 'My Positions'}
+            </h2>
             <span className="badge-count">
               {orders.length}
             </span>
           </div>
           <p className="section-subtitle">
-            Live open market holdings segmented by performance and risk triggers
+            {isArabic
+              ? 'مراكز المحفظة المفتوحة مصنفة حسب الأداء ومؤشرات المخاطر'
+              : 'Live open market holdings segmented by performance and risk triggers'}
           </p>
         </div>
 
         {/* Right side: Total Value + Add Position Button */}
         <div className="flex items-center gap-3 sm:gap-4 self-start sm:self-auto shrink-0">
           <div className="text-xs text-text-muted">
-            Total Market Value:{' '}
+            {isArabic ? 'إجمالي القيمة السوقية:' : 'Total Market Value:'}{' '}
             <span className="text-text-primary font-semibold">
               {formatMoney(totalMarketValue)}
             </span>
@@ -139,7 +149,7 @@ export default function MyPositionsSection({
             className="btn-primary-cta"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Position</span>
+            <span>{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
           </Link>
         </div>
       </div>
@@ -148,7 +158,7 @@ export default function MyPositionsSection({
       <div className="flex-1 min-h-0 w-full overflow-y-auto custom-scrollbar">
         {orders.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs">
-            <span>No active holdings currently in portfolio.</span>
+            <span>{isArabic ? 'لا توجد مراكز نشطة حالياً في المحفظة.' : 'No active holdings currently in portfolio.'}</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
@@ -156,17 +166,17 @@ export default function MyPositionsSection({
             <div className="flex flex-col">
               <div className="flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
                 <div className="flex items-center gap-1 text-base font-bold text-text-primary">
-                  <span>Stock gainers</span>
+                  <span>{isArabic ? 'الأسهم الرابحة' : 'Stock gainers'}</span>
                 </div>
                 <span className="text-[11px] text-text-muted font-medium">
-                  {gainers.length} gainers
+                  {isArabic ? `${gainers.length} رابحة` : `${gainers.length} gainers`}
                 </span>
               </div>
 
               <div className="divide-y divide-border-subtle/70">
                 {gainers.length === 0 ? (
                   <div className="py-8 text-center text-text-muted text-xs">
-                    No positive return positions currently.
+                    {isArabic ? 'لا توجد مراكز بعائد إيجابي حالياً.' : 'No positive return positions currently.'}
                   </div>
                 ) : (
                   visibleGainers.map((order) => (
@@ -192,7 +202,11 @@ export default function MyPositionsSection({
                   onClick={() => setShowAllGainers((prev) => !prev)}
                   className="w-full mt-2.5 py-1.5 px-3 rounded-lg bg-surface-raised hover:bg-surface-hover-raised text-text-muted hover:text-text-primary border border-border-subtle text-xs font-medium font-sans flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
                 >
-                  <span>{showAllGainers ? 'Show top 5 gainers' : `Show all ${gainers.length} gainers`}</span>
+                  <span>
+                    {showAllGainers
+                      ? (isArabic ? 'عرض أفضل 5 رابحة' : 'Show top 5 gainers')
+                      : (isArabic ? `عرض جميع الرابحة (${gainers.length})` : `Show all ${gainers.length} gainers`)}
+                  </span>
                   {showAllGainers ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
               )}
@@ -202,17 +216,17 @@ export default function MyPositionsSection({
             <div className="flex flex-col">
               <div className="flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
                 <div className="flex items-center gap-1 text-base font-bold text-text-primary">
-                  <span>Stock losers</span>
+                  <span>{isArabic ? 'الأسهم الخاسرة' : 'Stock losers'}</span>
                 </div>
                 <span className="text-[11px] text-text-muted font-medium">
-                  {losers.length} holdings
+                  {isArabic ? `${losers.length} مراكز` : `${losers.length} holdings`}
                 </span>
               </div>
 
               <div className="divide-y divide-border-subtle/70">
                 {losers.length === 0 ? (
                   <div className="py-8 text-center text-text-muted text-xs">
-                    No declining positions currently.
+                    {isArabic ? 'لا توجد مراكز متراجعة حالياً.' : 'No declining positions currently.'}
                   </div>
                 ) : (
                   visibleLosers.map((order) => (
@@ -238,7 +252,11 @@ export default function MyPositionsSection({
                   onClick={() => setShowAllLosers((prev) => !prev)}
                   className="w-full mt-2.5 py-1.5 px-3 rounded-lg bg-surface-raised hover:bg-surface-hover-raised text-text-muted hover:text-text-primary border border-border-subtle text-xs font-medium font-sans flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
                 >
-                  <span>{showAllLosers ? 'Show top 5 losers' : `Show all ${losers.length} holdings`}</span>
+                  <span>
+                    {showAllLosers
+                      ? (isArabic ? 'عرض أكثر 5 خاسرة' : 'Show top 5 losers')
+                      : (isArabic ? `عرض جميع الخاسرة (${losers.length})` : `Show all ${losers.length} holdings`)}
+                  </span>
                   {showAllLosers ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
               )}
@@ -253,11 +271,13 @@ export default function MyPositionsSection({
               href="/wallet?tab=positions"
               className="text-xs font-semibold text-brand-blue hover:text-brand-blue-light inline-flex items-center gap-1 transition-colors"
             >
-              View positions transactions log
-              <ChevronRight className="w-3.5 h-3.5" />
+              {isArabic ? 'عرض سجل صفقات المحفظة' : 'View positions transactions log'}
+              <ChevronRight className={`w-3.5 h-3.5 ${isArabic ? 'rotate-180' : ''}`} />
             </Link>
             <span className="text-[11px] text-text-muted">
-              Showing {visibleGainers.length + visibleLosers.length} of {orders.length} total holdings
+              {isArabic
+                ? `عرض ${visibleGainers.length + visibleLosers.length} من إجمالي ${orders.length} مركزاً`
+                : `Showing ${visibleGainers.length + visibleLosers.length} of ${orders.length} total holdings`}
             </span>
           </div>
         )}

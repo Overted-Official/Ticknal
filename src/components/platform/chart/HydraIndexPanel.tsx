@@ -18,12 +18,14 @@ import { X, Activity } from '@/components/ui/icon-library';
 import type { ChartData } from './types';
 import { cssTokenColor, parseChartTime, sanitizeChartSeriesData } from './utils';
 import { computeHydraIndex, type HydraPoint } from '@/indicators/hydra-index';
+import { useTranslation } from '@/lib/i18n';
 
 interface HydraIndexPanelProps {
   data: ChartData[];
   mainChart: IChartApi | null;
   onClose: () => void;
   optionsState?: Record<string, boolean>;
+  activeTime?: string | null;
 }
 
 export default function HydraIndexPanel({
@@ -31,7 +33,9 @@ export default function HydraIndexPanel({
   mainChart,
   onClose,
   optionsState,
+  activeTime,
 }: HydraIndexPanelProps) {
+  const { locale } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -52,6 +56,20 @@ export default function HydraIndexPanel({
   // Current active hover or latest point
   const latestPoint = hydraResult.points[hydraResult.points.length - 1] ?? null;
   const [activePoint, setActivePoint] = useState<HydraPoint | null>(null);
+
+  // Synchronize with external activeTime (e.g. from mobile tap or scrub)
+  useEffect(() => {
+    if (activeTime) {
+      const found = hydraResult.points.find(
+        (p) => String(p.time) === activeTime
+      );
+      if (found) {
+        setActivePoint(found);
+      }
+    } else {
+      setActivePoint(null);
+    }
+  }, [activeTime, hydraResult]);
 
   const displayPoint = activePoint ?? latestPoint;
 
@@ -171,7 +189,7 @@ export default function HydraIndexPanel({
         lineWidth: 2,
         priceFormat: {
           type: 'custom',
-          formatter: (p: number) => (p >= 0.5 ? '1 (INVESTED)' : '0 (CASH)'),
+          formatter: (p: number) => (p >= 0.5 ? (locale === 'ar' ? '1 (مستثمر)' : '1 (INVESTED)') : (locale === 'ar' ? '0 (سيولة)' : '0 (CASH)')),
         },
       });
       chart.priceScale('right').applyOptions({
@@ -184,7 +202,7 @@ export default function HydraIndexPanel({
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
-        title: 'STATE 1: INVESTED',
+        title: locale === 'ar' ? 'الحالة 1: مستثمر' : 'STATE 1: INVESTED',
       });
       const pl0 = series.createPriceLine({
         price: 0.0,
@@ -192,7 +210,7 @@ export default function HydraIndexPanel({
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
-        title: 'STATE 0: CASH',
+        title: locale === 'ar' ? 'الحالة 0: سيولة' : 'STATE 0: CASH',
       });
       priceLinesRef.current = [pl1, pl0];
     } else {
@@ -214,7 +232,7 @@ export default function HydraIndexPanel({
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
-        title: 'SELL ZONE (≥90)',
+        title: locale === 'ar' ? 'منطقة البيع (≥90)' : 'SELL ZONE (≥90)',
       });
       const pl50 = series.createPriceLine({
         price: 50,
@@ -230,7 +248,7 @@ export default function HydraIndexPanel({
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
-        title: 'BUY ZONE (≤1.3)',
+        title: locale === 'ar' ? 'منطقة الشراء (≤1.3)' : 'BUY ZONE (≤1.3)',
       });
       priceLinesRef.current = [pl90, pl50, pl13];
     }
@@ -273,7 +291,7 @@ export default function HydraIndexPanel({
         chartRef.current.timeScale().setVisibleLogicalRange(logicalRange);
       }
     }
-  }, [hydraResult, viewMode, mainChart]);
+  }, [hydraResult, viewMode, mainChart, locale]);
 
   // Synchronize Time Scales (Bidirectional sync)
   useEffect(() => {
@@ -346,14 +364,14 @@ export default function HydraIndexPanel({
   const isInvested = stateNum === 1;
 
   return (
-    <div className="h-40 sm:h-44 w-full border-t border-plt-border bg-plt-base/98 flex flex-col relative shrink-0 select-none animate-in slide-in-from-bottom-2 duration-150">
+    <div className="h-40 sm:h-44 w-full border-t border-plt-border bg-plt-base/98 flex flex-col relative shrink-0 select-none animate-in slide-in-from-bottom-2 duration-150 font-sans">
       {/* Panel Top Header Strip */}
       <div className="h-7 px-3 flex items-center justify-between border-b border-plt-border/40 bg-plt-raised/70 shrink-0 text-xs font-sans">
         {/* Left: Indicator title and live values */}
         <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-1.5 font-bold tracking-wider text-[11px] text-profit-num">
             <Activity className="h-3.5 w-3.5 text-profit-num" />
-            <span>HYDRA BINARY INDEX</span>
+            <span>{locale === 'ar' ? 'مؤشر هيدرا الثنائي' : 'HYDRA BINARY INDEX'}</span>
           </div>
 
           <span className="text-plt-border-subtle">|</span>
@@ -367,8 +385,8 @@ export default function HydraIndexPanel({
             >
               {viewMode === 'binary'
                 ? isInvested
-                  ? '1.0 (INVESTED)'
-                  : '0.0 (CASH)'
+                  ? locale === 'ar' ? '1.0 (مستثمر)' : '1.0 (INVESTED)'
+                  : locale === 'ar' ? '0.0 (سيولة)' : '0.0 (CASH)'
                 : `${(displayPoint?.continuousVal ?? 50).toFixed(1)} / 100`}
             </span>
           </div>
@@ -388,16 +406,16 @@ export default function HydraIndexPanel({
             />
             <span>
               {isInvested
-                ? 'State 1: Bull Wave (Long)'
-                : 'State 0: Cash / Bottom Search'}
+                ? locale === 'ar' ? 'الحالة 1: موجة صاعدة (شراء)' : 'State 1: Bull Wave (Long)'
+                : locale === 'ar' ? 'الحالة 0: سيولة / بحث عن قاع' : 'State 0: Cash / Bottom Search'}
             </span>
           </div>
 
           {/* Performance Pill */}
           <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-profit-num/15 text-profit-num border border-profit-num/30">
             {viewMode === 'continuous'
-              ? 'Continuous 0-100 Bayesian Regime Curve'
-              : 'Adaptive Volatility Synchronizer: >92% Swings Caught | 2.8-Bar Lag | 0% Leakage'}
+              ? locale === 'ar' ? 'منحنى بيزي المستمر 0-100' : 'Continuous 0-100 Bayesian Regime Curve'
+              : locale === 'ar' ? 'مزامنة التقلبات التكيفية: >92% صيد موجات | 2.8 شمعة تأخر | 0% تسرب' : 'Adaptive Volatility Synchronizer: >92% Swings Caught | 2.8-Bar Lag | 0% Leakage'}
           </span>
         </div>
 
@@ -413,9 +431,9 @@ export default function HydraIndexPanel({
                   ? 'bg-profit-num/20 text-profit-num shadow-xs'
                   : 'text-plt-muted hover:text-plt-text'
               }`}
-              title="Binary Regime Index (0 = Cash / 1 = Invested)"
+              title={locale === 'ar' ? 'مؤشر النظام الثنائي (0 = سيولة / 1 = مستثمر)' : 'Binary Regime Index (0 = Cash / 1 = Invested)'}
             >
-              Binary (0 / 1)
+              {locale === 'ar' ? 'ثنائي (0 / 1)' : 'Binary (0 / 1)'}
             </button>
             <button
               type="button"
@@ -425,9 +443,9 @@ export default function HydraIndexPanel({
                   ? 'bg-brand-blue/20 text-brand-blue shadow-xs'
                   : 'text-plt-muted hover:text-plt-text'
               }`}
-              title="Continuous 0-100 Bayesian Regime Curve"
+              title={locale === 'ar' ? 'منحنى بيزي المستمر 0-100' : 'Continuous 0-100 Bayesian Regime Curve'}
             >
-              0-100 Curve
+              {locale === 'ar' ? 'منحنى 0-100' : '0-100 Curve'}
             </button>
           </div>
 
@@ -435,8 +453,8 @@ export default function HydraIndexPanel({
             type="button"
             onClick={onClose}
             className="h-5 w-5 rounded flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-white/[0.08] transition-colors cursor-pointer"
-            title="Close HYDRA Panel"
-            aria-label="Close HYDRA Panel"
+            title={locale === 'ar' ? 'إغلاق لوحة هيدرا' : 'Close HYDRA Panel'}
+            aria-label={locale === 'ar' ? 'إغلاق لوحة هيدرا' : 'Close HYDRA Panel'}
           >
             <X className="h-3.5 w-3.5" />
           </button>

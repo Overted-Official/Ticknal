@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ChevronDown, Check, Landmark } from '@/components/ui/icon-library';
 import { type BankAccount } from '@/types/bank';
 import { formatCleanAccountTitle } from '@/lib/format-bank-name';
+import { useTranslation } from '@/lib/i18n';
 
 interface AccountSelectDropdownProps {
   accounts: BankAccount[];
@@ -18,9 +19,12 @@ export default function AccountSelectDropdown({
   accounts,
   selectedAccountId,
   onSelectAccount,
-  placeholder = 'Select Account...',
+  placeholder,
   excludeAccountId,
 }: AccountSelectDropdownProps) {
+  const { locale, isRTL } = useTranslation();
+  const defaultPlaceholder = locale === 'ar' ? 'اختر حسابًا...' : 'Select Account...';
+  const effectivePlaceholder = placeholder || defaultPlaceholder;
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -107,12 +111,12 @@ export default function AccountSelectDropdown({
 
               {selectedAccount.isDefaultExpense && (
                 <span className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-plt-warning/15 text-plt-warning border border-plt-warning/30 shrink-0 font-sans inline-flex items-center gap-0.5">
-                  ⭐ Main
+                  ⭐ {locale === 'ar' ? 'رئيسي' : 'Main'}
                 </span>
               )}
             </>
           ) : (
-            <span className="text-plt-muted truncate font-sans">{placeholder}</span>
+            <span className="text-plt-muted truncate font-sans">{effectivePlaceholder}</span>
           )}
         </div>
 
@@ -129,7 +133,7 @@ export default function AccountSelectDropdown({
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
-              {!isUsd ? ' £' : ''}
+              {!isUsd ? (locale === 'ar' ? ' ج.م' : ' EGP') : ''}
             </span>
           )}
           <ChevronDown
@@ -146,7 +150,7 @@ export default function AccountSelectDropdown({
         <div className="absolute left-0 right-0 top-full mt-1.5 z-[70] bg-plt-elevated border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-2xl max-h-64 overflow-y-auto custom-scrollbar">
           {filteredAccounts.length === 0 ? (
             <div className="py-4 text-center text-xs text-plt-muted font-sans">
-              No accounts available
+              {locale === 'ar' ? 'لا توجد حسابات متاحة' : 'No accounts available'}
             </div>
           ) : (
             filteredAccounts.map((acc) => {
@@ -206,7 +210,7 @@ export default function AccountSelectDropdown({
 
                     {acc.isDefaultExpense && (
                       <span className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-plt-warning/15 text-plt-warning border border-plt-warning/30 shrink-0 font-sans inline-flex items-center gap-0.5">
-                        ⭐ Main
+                        ⭐ {locale === 'ar' ? 'رئيسي' : 'Main'}
                       </span>
                     )}
                   </div>
@@ -223,7 +227,7 @@ export default function AccountSelectDropdown({
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
-                      {!accUsd ? ' £' : ''}
+                      {!accUsd ? (locale === 'ar' ? ' ج.م' : ' EGP') : ''}
                     </span>
 
                     {isSelected && (

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 export interface SettingsNavSection {
   id: string;
@@ -16,10 +17,13 @@ interface SettingsFloatingNavProps {
 export default function SettingsFloatingNav({
   devicesCount = 0,
 }: SettingsFloatingNavProps) {
+  const { t } = useTranslation();
+
   const sections: SettingsNavSection[] = [
-    { id: 'section-profile', label: 'Profile', shortLabel: 'Profile' },
-    { id: 'section-security', label: 'Security & PIN', shortLabel: 'Security' },
-    { id: 'section-devices', label: 'Devices', shortLabel: 'Devices', badge: devicesCount },
+    { id: 'section-profile', label: t('settings.tabProfile'), shortLabel: t('settings.tabProfile') },
+    { id: 'section-preferences', label: t('settings.tabPreferences'), shortLabel: t('settings.tabPreferences') },
+    { id: 'section-security', label: t('settings.tabSecurity'), shortLabel: t('settings.tabSecurity') },
+    { id: 'section-devices', label: t('settings.tabDevices'), shortLabel: t('settings.tabDevices'), badge: devicesCount },
   ];
 
   const [activeSection, setActiveSection] = useState<string>('section-profile');
@@ -49,7 +53,7 @@ export default function SettingsFloatingNav({
 
   useEffect(() => {
     const handleScroll = () => {
-      const sectionIds = ['section-profile', 'section-security', 'section-devices'];
+      const sectionIds = ['section-profile', 'section-preferences', 'section-security', 'section-devices'];
       for (let i = sectionIds.length - 1; i >= 0; i--) {
         const sectionId = sectionIds[i];
         const element = document.getElementById(sectionId);

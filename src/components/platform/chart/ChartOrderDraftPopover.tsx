@@ -5,6 +5,7 @@ import { X } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
+import { useTranslation } from '@/lib/i18n';
 import type { OrderDraft } from './types';
 
 interface ChartOrderDraftPopoverProps {
@@ -28,6 +29,9 @@ export default function ChartOrderDraftPopover({
   onClose,
   onSave,
 }: ChartOrderDraftPopoverProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
+
   // Auto-select first eligible or default account if none is selected
   useEffect(() => {
     if (orderDraft && !orderDraft.accountId && brokerageAccounts.length > 0) {
@@ -49,17 +53,19 @@ export default function ChartOrderDraftPopover({
 
   return (
     <div
-      className="absolute z-40 w-72 text-xs text-plt-text backdrop-blur-2xl border border-white/[0.16] bg-plt-card/95 p-3.5 rounded-2xl shadow-popover animate-in fade-in zoom-in-95 duration-100 select-none"
+      className="absolute z-40 w-72 text-xs text-plt-text backdrop-blur-2xl border border-white/[0.16] bg-black/95 p-3.5 rounded-2xl shadow-popover animate-in fade-in zoom-in-95 duration-100 select-none font-sans"
       style={{ left: orderDraft.x, top: orderDraft.y }}
     >
       <div className="mb-3 flex items-center justify-between border-b border-white/[0.08] pb-2">
         <div>
-          <div className="font-bold text-xs text-plt-text">Open Long Position</div>
+          <div className="font-bold text-xs text-plt-text">
+            {isAr ? 'فتح مركز شراء (طويل)' : 'Open Long Position'}
+          </div>
           <div className="text-[10px] text-plt-muted font-sans tabular-nums">{symbol.replace('.CA', '')} • {orderDraft.date}</div>
         </div>
         <button
           type="button"
-          aria-label="Close order popover"
+          aria-label={isAr ? 'إغلاق أمر الشراء' : 'Close order popover'}
           onClick={onClose}
           className="flex h-6 w-6 items-center justify-center rounded-lg text-plt-muted transition-colors hover:bg-white/[0.08] hover:text-plt-text cursor-pointer"
         >
@@ -70,20 +76,26 @@ export default function ChartOrderDraftPopover({
       {brokerageAccounts.length > 0 ? (
         <div className="mb-3">
           <label className="block text-[10px] uppercase font-semibold text-plt-muted font-sans">
-            Brokerage account
+            {isAr ? 'حساب التداول / المحفظة' : 'Brokerage account'}
             <select
               required
               value={orderDraft.accountId}
               onChange={(event) =>
                 onUpdateDraft((current) => (current ? { ...current, accountId: event.target.value } : current))
               }
-              className="mt-1 h-8 w-full rounded-xl border border-white/[0.12] bg-plt-card px-2.5 text-xs font-sans font-semibold text-plt-text outline-none focus:border-plt-border-active"
+              className="mt-1 h-8 w-full rounded-xl border border-white/[0.12] bg-black px-2.5 text-xs font-sans font-semibold text-plt-text outline-none focus:border-plt-border-active"
             >
-              <option value="">Select EGP brokerage account</option>
+              <option value="">
+                {isAr ? 'اختر حساب تداول بالجنيه المصري' : 'Select EGP brokerage account'}
+              </option>
               {brokerageAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {isVirtualAccount(account)
-                    ? `✨ Virtual Account (Paper) · ${Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP`
+                    ? isAr
+                      ? `✨ حساب افتراضي (تجريبي) · ${Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} ج.م`
+                      : `✨ Virtual Account (Paper) · ${Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP`
+                    : isAr
+                    ? `${account.accountName || account.customBankName || account.bankName || `حساب ${account.id}`} · ${Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} ج.م`
                     : `${account.accountName || account.customBankName || account.bankName || `Account ${account.id}`} · ${Number(account.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP`}
                 </option>
               ))}
@@ -91,19 +103,30 @@ export default function ChartOrderDraftPopover({
           </label>
           {isVirtual && (
             <div className="mt-1.5 px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-[10px] text-plt-muted font-sans">
-              <span className="text-amber-400 font-semibold">💡 Virtual:</span> Tracks on chart with P&amp;L and automated sell exit notifications.
+              <span className="text-amber-400 font-semibold">{isAr ? '💡 افتراضي:' : '💡 Virtual:'}</span>{' '}
+              {isAr
+                ? 'يتتبع المركز على الرسم البياني مع الأرباح والخسائر وإشعارات الخروج التلقائية.'
+                : 'Tracks on chart with P&L and automated sell exit notifications.'}
             </div>
           )}
         </div>
       ) : (
         <div className="mb-3 rounded-lg bg-plt-risk-soft px-2.5 py-2 text-[10px] text-plt-risk">
-          An EGP brokerage account is required. <a href="/wallet?tab=transactions" className="font-semibold underline">Open Cash &amp; Transactions</a> to create one.
+          {isAr ? (
+            <>
+              يتطلب وجود حساب تداول بالجنيه المصري. <a href="/wallet?tab=transactions" className="font-semibold underline">افتح السيولة والعمليات</a> لإنشاء حساب.
+            </>
+          ) : (
+            <>
+              An EGP brokerage account is required. <a href="/wallet?tab=transactions" className="font-semibold underline">Open Cash &amp; Transactions</a> to create one.
+            </>
+          )}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-2.5">
         <label className="text-[10px] uppercase font-semibold text-plt-muted font-sans block">
-          Entry Price
+          {isAr ? 'سعر الدخول' : 'Entry Price'}
           <input
             type="number"
             step="0.01"
@@ -115,7 +138,7 @@ export default function ChartOrderDraftPopover({
           />
         </label>
         <label className="text-[10px] uppercase font-semibold text-plt-muted font-sans block">
-          Quantity
+          {isAr ? 'الكمية' : 'Quantity'}
           <input
             type="number"
             step="1"
@@ -128,12 +151,12 @@ export default function ChartOrderDraftPopover({
           />
         </label>
         <label className="text-[10px] uppercase font-semibold text-plt-profit/80 font-sans block">
-          Target Price
+          {isAr ? 'السعر المستهدف' : 'Target Price'}
           <input
             type="number"
             step="0.01"
             value={orderDraft.targetPrice}
-            placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
+            placeholder={orderDraft.loadingLevels ? (isAr ? 'جاري التحميل' : 'Loading') : (isAr ? 'اختياري' : 'Optional')}
             onChange={(event) =>
               onUpdateDraft((current) => (current ? { ...current, targetPrice: event.target.value } : current))
             }
@@ -141,12 +164,12 @@ export default function ChartOrderDraftPopover({
           />
         </label>
         <label className="text-[10px] uppercase font-semibold text-plt-risk/80 font-sans block">
-          Stop Loss
+          {isAr ? 'وقف الخسارة' : 'Stop Loss'}
           <input
             type="number"
             step="0.01"
             value={orderDraft.stopPrice}
-            placeholder={orderDraft.loadingLevels ? 'Loading' : 'Optional'}
+            placeholder={orderDraft.loadingLevels ? (isAr ? 'جاري التحميل' : 'Loading') : (isAr ? 'اختياري' : 'Optional')}
             onChange={(event) =>
               onUpdateDraft((current) => (current ? { ...current, stopPrice: event.target.value } : current))
             }
@@ -170,11 +193,17 @@ export default function ChartOrderDraftPopover({
       >
         {savingOrder ? (
           <>
-            <InlineSpinner className="h-3.5 w-3.5" label="Saving position" />
-            <span>Saving Position...</span>
+            <InlineSpinner className="h-3.5 w-3.5" label={isAr ? 'جاري حفظ المركز' : 'Saving position'} />
+            <span>{isAr ? 'جاري حفظ المركز...' : 'Saving Position...'}</span>
           </>
         ) : (
-            <span>{isVirtual ? 'Execute virtual buy' : brokerageAccounts.length > 0 ? 'Execute live buy' : 'Select brokerage account'}</span>
+            <span>
+              {isVirtual
+                ? (isAr ? 'تنفيذ شراء افتراضي' : 'Execute virtual buy')
+                : brokerageAccounts.length > 0
+                ? (isAr ? 'تنفيذ شراء حقيقي' : 'Execute live buy')
+                : (isAr ? 'اختر حساب التداول' : 'Select brokerage account')}
+            </span>
         )}
       </button>
     </div>

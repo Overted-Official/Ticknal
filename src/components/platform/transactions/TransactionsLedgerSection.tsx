@@ -19,6 +19,7 @@ import { formatCleanAccountTitle } from '@/lib/format-bank-name';
 import { type UnifiedLedgerItem, type ClosedTradeItem, type LedgerFilterType } from './types';
 import TransactionRowItem from './TransactionRowItem';
 import LogTransactionDrawer from '@/components/platform/wallet/LogTransactionDrawer';
+import { useTranslation } from '@/lib/i18n';
 
 interface TransactionsLedgerSectionProps {
   transactions: BankTransaction[];
@@ -46,6 +47,7 @@ export default function TransactionsLedgerSection({
   categories = DEFAULT_CATEGORIES,
   onTransactionsChanged,
 }: TransactionsLedgerSectionProps) {
+  const { locale, isRTL } = useTranslation();
   const { isPrivacy } = usePrivacyMode();
 
   // Timeframe presets & date calculations
@@ -85,13 +87,13 @@ export default function TransactionsLedgerSection({
   }, []);
 
   const formatMoney = (value: number, currency: string = 'EGP', showSign: boolean = false): string => {
-    if (isPrivacy) return `•••••• ${currency === 'USD' ? '$' : '£'}`;
+    const unit = currency === 'USD' ? '$' : locale === 'ar' ? 'ج.م' : '£';
+    if (isPrivacy) return `•••••• ${unit}`;
     const formatted = Math.abs(value).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
     const sign = showSign && value > 0 ? '+' : value < 0 ? '-' : '';
-    const unit = currency === 'USD' ? '$' : '£';
     return `${sign}${formatted} ${unit}`;
   };
 
@@ -105,7 +107,7 @@ export default function TransactionsLedgerSection({
     }
 
     const resolveAccountCleanTitle = (acc?: BankAccount | null, fallback?: string): string => {
-      if (!acc) return fallback || 'Account';
+      if (!acc) return fallback || (locale === 'ar' ? 'الحساب' : 'Account');
       const meta = formatCleanAccountTitle(acc);
       if (meta.bankShort && meta.subName && meta.bankShort.toLowerCase() !== meta.subName.toLowerCase()) {
         return `${meta.bankShort} (${meta.subName})`;
@@ -119,7 +121,7 @@ export default function TransactionsLedgerSection({
       const isPositive = ['INCOME', 'DEPOSIT', 'INTEREST', 'BROKERAGE_SELL'].includes(t.type);
 
       const fromAcc = accountMap.get(t.accountId);
-      const fromAccountName = resolveAccountCleanTitle(fromAcc, t.accountName || 'Bank Account');
+      const fromAccountName = resolveAccountCleanTitle(fromAcc, t.accountName || (locale === 'ar' ? 'حساب بنكي' : 'Bank Account'));
 
       let toAccountName: string | null = null;
       if (t.type === 'TRANSFER') {
@@ -146,8 +148,8 @@ export default function TransactionsLedgerSection({
         originalId: t.id,
         kind: 'transaction',
         type: t.type,
-        title: t.notes || (t.type === 'TRANSFER' ? 'Account Transfer' : t.category || 'Transaction'),
-        category: t.category || 'General',
+        title: t.notes || (t.type === 'TRANSFER' ? (locale === 'ar' ? 'تحويل بين الحسابات' : 'Account Transfer') : t.category || (locale === 'ar' ? 'معاملة' : 'Transaction')),
+        category: t.category || (locale === 'ar' ? 'عام' : 'General'),
         accountName: fromAccountName,
         toAccountName: toAccountName,
         bankLogoUrl: t.bankLogoUrl,
@@ -168,9 +170,9 @@ export default function TransactionsLedgerSection({
         originalId: tr.id,
         kind: 'trade',
         type: 'TRADE_CLOSED',
-        title: `${tr.side === 'BUY' ? 'Sold' : 'Covered'} ${tr.tickerSymbol.replace('.CA', '')}`,
-        category: 'Trading',
-        accountName: tr.accountName || 'Brokerage',
+        title: `${tr.side === 'BUY' ? (locale === 'ar' ? 'بيع' : 'Sold') : (locale === 'ar' ? 'تغطية' : 'Covered')} ${tr.tickerSymbol.replace('.CA', '')}`,
+        category: locale === 'ar' ? 'تداول الأسهم' : 'Trading',
+        accountName: tr.accountName || (locale === 'ar' ? 'وساطة مالية' : 'Brokerage'),
         tickerSymbol: tr.tickerSymbol,
         tickerLogoUrl: tr.logoUrl,
         amount: Math.abs(tr.profitLoss),
@@ -196,7 +198,7 @@ export default function TransactionsLedgerSection({
 
   // Account selector options
   const accountOptions = useMemo(() => [
-    { id: 'ALL', label: 'All Accounts' },
+    { id: 'ALL', label: locale === 'ar' ? 'كافة الحسابات' : 'All Accounts' },
     ...accounts.map((a) => {
       const meta = formatCleanAccountTitle(a);
       return {
@@ -204,23 +206,28 @@ export default function TransactionsLedgerSection({
         label: `${meta.bankShort} (${meta.subName})`,
       };
     }),
-  ], [accounts]);
+  ], [accounts, locale]);
 
   const activeAccountLabel = useMemo(() => {
-    if (selectedAccountId === 'ALL') return 'All Accounts';
+    if (selectedAccountId === 'ALL') return locale === 'ar' ? 'كافة الحسابات' : 'All Accounts';
     const match = accountOptions.find((a) => a.id === selectedAccountId);
-    return match ? match.label : 'All Accounts';
-  }, [selectedAccountId, accountOptions]);
+    return match ? match.label : (locale === 'ar' ? 'كافة الحسابات' : 'All Accounts');
+  }, [selectedAccountId, accountOptions, locale]);
 
   const formatMonthName = (ym: string) => {
     if (!ym || ym.length < 7) return ym;
     const [year, month] = ym.split('-');
-    const monthNames = [
+    const monthNamesEn = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December',
     ];
+    const monthNamesAr = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+    ];
     const idx = Number(month) - 1;
-    return `${monthNames[idx] || month} ${year}`;
+    const names = locale === 'ar' ? monthNamesAr : monthNamesEn;
+    return `${names[idx] || month} ${year}`;
   };
 
   const availableMonths = useMemo(() => {
@@ -357,10 +364,10 @@ export default function TransactionsLedgerSection({
   }, [filteredItems]);
 
   const activePeriodDescription = useMemo(() => {
-    if (timePreset === 'ALL') return 'all time';
-    if (timePreset === '3M') return 'the trailing 3 months';
+    if (timePreset === 'ALL') return locale === 'ar' ? 'كافة الفترات' : 'all time';
+    if (timePreset === '3M') return locale === 'ar' ? 'آخر 3 أشهر' : 'the trailing 3 months';
     return formatMonthName(selectedMonth);
-  }, [timePreset, selectedMonth]);
+  }, [timePreset, selectedMonth, locale]);
 
   const handleDeleteTransaction = async (id: number) => {
     try {
@@ -392,17 +399,21 @@ export default function TransactionsLedgerSection({
       {/* 1. Header with Title & Live Stats */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h2 className="section-title">Activity Ledger</h2>
+          <h2 className="section-title">
+            {locale === 'ar' ? 'سجل الحركات' : 'Activity Ledger'}
+          </h2>
           <p className="section-subtitle">
-            Chronological record of banking cashflows, expenses, and investment trade executions
+            {locale === 'ar'
+              ? 'سجل زمني للتدفقات النقدية البنكية، النفقات، وتنفيذ صفقات التداول الاستثمارية'
+              : 'Chronological record of banking cashflows, expenses, and investment trade executions'}
           </p>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4 self-start sm:self-auto shrink-0">
           <div className="text-xs text-text-muted">
-            Total Activity:{' '}
+            {locale === 'ar' ? 'إجمالي الحركات: ' : 'Total Activity: '}
             <span className="text-text-primary font-semibold tabular-nums">
-              {filteredItems.length.toLocaleString()} entries
+              {locale === 'ar' ? `${filteredItems.length.toLocaleString()} حركة` : `${filteredItems.length.toLocaleString()} entries`}
             </span>
           </div>
 
@@ -413,10 +424,10 @@ export default function TransactionsLedgerSection({
               setIsLogDrawerOpen(true);
             }}
             className="btn-primary-cta"
-            title="Log a new bank transaction, expense, or transfer"
+            title={locale === 'ar' ? 'تسجيل معاملة بنكية جديدة، نفقة، أو تحويل' : 'Log a new bank transaction, expense, or transfer'}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Transaction</span>
+            <span>{locale === 'ar' ? 'إضافة معاملة' : 'Add Transaction'}</span>
           </button>
         </div>
       </div>
@@ -429,13 +440,13 @@ export default function TransactionsLedgerSection({
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {/* Search Bar */}
             <div className="relative flex-1 min-w-[160px] sm:min-w-[220px]">
-              <Search className="w-3.5 h-3.5 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-text-muted absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search notes, tickers, accounts..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-white/10 bg-surface-raised/60 hover:bg-surface-raised focus:bg-surface-base text-text-primary text-xs placeholder:text-text-muted outline-none focus:border-brand-blue transition-colors"
+                placeholder={locale === 'ar' ? 'البحث في الملاحظات، الأسهم، الحسابات...' : 'Search notes, tickers, accounts...'}
+                className="w-full pl-8 rtl:pl-3 pr-3 rtl:pr-8 py-1.5 rounded-xl border border-white/10 bg-surface-raised/60 hover:bg-surface-raised focus:bg-surface-base text-text-primary text-xs placeholder:text-text-muted outline-none focus:border-brand-blue transition-colors"
               />
             </div>
 
@@ -451,7 +462,7 @@ export default function TransactionsLedgerSection({
               </button>
 
               {isAccountDropdownOpen && (
-                <div className="absolute left-0 mt-1 w-48 sm:w-56 py-1 rounded-xl bg-surface-raised border border-border-subtle shadow-xl z-50 overflow-hidden">
+                <div className="absolute left-0 rtl:left-auto rtl:right-0 mt-1 w-48 sm:w-56 py-1 rounded-xl bg-surface-raised border border-border-subtle shadow-xl z-50 overflow-hidden text-left rtl:text-right">
                   {accountOptions.map((opt) => (
                     <button
                       key={opt.id}
@@ -460,7 +471,7 @@ export default function TransactionsLedgerSection({
                         setSelectedAccountId(opt.id);
                         setIsAccountDropdownOpen(false);
                       }}
-                      className={`w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-surface-active transition-colors ${
+                      className={`w-full px-3 py-2 text-left rtl:text-right text-xs flex items-center justify-between hover:bg-surface-active transition-colors ${
                         selectedAccountId === opt.id ? 'text-brand-blue font-semibold' : 'text-text-primary'
                       }`}
                     >
@@ -482,9 +493,9 @@ export default function TransactionsLedgerSection({
                   type="button"
                   onClick={handlePrevMonth}
                   className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-surface-active text-text-muted hover:text-text-primary transition-colors"
-                  title="Previous Month"
+                  title={locale === 'ar' ? 'الشهر السابق' : 'Previous Month'}
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" />
                 </button>
 
                 <button
@@ -495,9 +506,9 @@ export default function TransactionsLedgerSection({
                   <Calendar className="w-3.5 h-3.5 text-brand-blue" />
                   <span className="tabular-nums">
                     {timePreset === 'ALL'
-                      ? 'All Months'
+                      ? (locale === 'ar' ? 'كافة الأشهر' : 'All Months')
                       : timePreset === '3M'
-                      ? 'Trailing 3M'
+                      ? (locale === 'ar' ? 'آخر 3 أشهر' : 'Trailing 3M')
                       : formatMonthName(selectedMonth)}
                   </span>
                   <ChevronDown className="w-3 h-3 text-text-muted" />
@@ -507,17 +518,17 @@ export default function TransactionsLedgerSection({
                   type="button"
                   onClick={handleNextMonth}
                   className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-surface-active text-text-muted hover:text-text-primary transition-colors"
-                  title="Next Month"
+                  title={locale === 'ar' ? 'الشهر التالي' : 'Next Month'}
                 >
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
                 </button>
               </div>
 
               {/* Month Dropdown Menu */}
               {isMonthDropdownOpen && (
-                <div className="absolute right-0 mt-1 w-52 py-1 rounded-xl bg-surface-raised border border-border-subtle shadow-xl z-50 overflow-hidden">
+                <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-1 w-52 py-1 rounded-xl bg-surface-raised border border-border-subtle shadow-xl z-50 overflow-hidden text-left rtl:text-right">
                   <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-text-muted border-b border-border-subtle/50">
-                    Select Month
+                    {locale === 'ar' ? 'اختر الشهر' : 'Select Month'}
                   </div>
                   {availableMonths.map((ym) => {
                     const isSelected = (timePreset === 'THIS_MONTH' || timePreset === 'LAST_MONTH' || timePreset === 'CUSTOM') && selectedMonth === ym;
@@ -527,14 +538,14 @@ export default function TransactionsLedgerSection({
                         key={ym}
                         type="button"
                         onClick={() => handleSelectMonth(ym)}
-                        className={`w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-surface-active transition-colors ${
+                        className={`w-full px-3 py-2 text-left rtl:text-right text-xs flex items-center justify-between hover:bg-surface-active transition-colors ${
                           isSelected ? 'text-brand-blue font-semibold' : 'text-text-primary'
                         }`}
                       >
                         <span className="truncate">{formatMonthName(ym)}</span>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className="text-[10px] text-text-muted tabular-nums">
-                            {count} {count === 1 ? 'entry' : 'entries'}
+                            {count} {locale === 'ar' ? 'حركة' : (count === 1 ? 'entry' : 'entries')}
                           </span>
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                         </div>
@@ -552,14 +563,14 @@ export default function TransactionsLedgerSection({
                 onClick={() => handleSelectPreset('THIS_MONTH')}
                 className={`seg-control-btn text-[11px] px-2.5 py-0.5 ${timePreset === 'THIS_MONTH' ? 'seg-control-btn-active' : ''}`}
               >
-                This Month
+                {locale === 'ar' ? 'هذا الشهر' : 'This Month'}
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectPreset('LAST_MONTH')}
                 className={`seg-control-btn text-[11px] px-2.5 py-0.5 ${timePreset === 'LAST_MONTH' ? 'seg-control-btn-active' : ''}`}
               >
-                Last Month
+                {locale === 'ar' ? 'الشهر الماضي' : 'Last Month'}
               </button>
               <button
                 type="button"
@@ -573,7 +584,7 @@ export default function TransactionsLedgerSection({
                 onClick={() => handleSelectPreset('ALL')}
                 className={`seg-control-btn text-[11px] px-2.5 py-0.5 ${timePreset === 'ALL' ? 'seg-control-btn-active' : ''}`}
               >
-                All
+                {locale === 'ar' ? 'الكل' : 'All'}
               </button>
             </div>
           </div>
@@ -585,12 +596,12 @@ export default function TransactionsLedgerSection({
           <div className="seg-control self-start sm:self-auto overflow-x-auto no-scrollbar max-w-full">
             {(
               [
-                { id: 'ALL', label: 'All' },
-                { id: 'INFLOWS', label: 'Inflows' },
-                { id: 'EXPENSES', label: 'Expenses' },
-                { id: 'TRANSFERS', label: 'Transfers' },
-                { id: 'TRADES', label: 'Trades' },
-                { id: 'YIELD', label: 'Yield' },
+                { id: 'ALL', label: locale === 'ar' ? 'الكل' : 'All' },
+                { id: 'INFLOWS', label: locale === 'ar' ? 'الوارد' : 'Inflows' },
+                { id: 'EXPENSES', label: locale === 'ar' ? 'المصروفات' : 'Expenses' },
+                { id: 'TRANSFERS', label: locale === 'ar' ? 'التحويلات' : 'Transfers' },
+                { id: 'TRADES', label: locale === 'ar' ? 'التداول' : 'Trades' },
+                { id: 'YIELD', label: locale === 'ar' ? 'العوائد' : 'Yield' },
               ] as const
             ).map((tab) => (
               <button
@@ -608,10 +619,14 @@ export default function TransactionsLedgerSection({
 
           {/* Active Period / Entry Counter */}
           <div className="text-xs text-text-muted self-start sm:self-auto shrink-0 select-none">
-            Showing <span className="text-text-primary font-semibold tabular-nums">{filteredItems.length}</span> of <span className="tabular-nums">{unifiedItems.length}</span> entries
+            {locale === 'ar' ? 'عرض ' : 'Showing '}
+            <span className="text-text-primary font-semibold tabular-nums">{filteredItems.length}</span>{' '}
+            {locale === 'ar' ? 'من أصل ' : 'of '}
+            <span className="tabular-nums">{unifiedItems.length}</span>{' '}
+            {locale === 'ar' ? 'حركة' : 'entries'}
             {timePreset !== 'ALL' && (
               <span className="text-brand-blue font-medium ml-1">
-                ({timePreset === '3M' ? 'Trailing 3M' : formatMonthName(selectedMonth)})
+                ({timePreset === '3M' ? (locale === 'ar' ? 'آخر 3 أشهر' : 'Trailing 3M') : formatMonthName(selectedMonth)})
               </span>
             )}
           </div>
@@ -622,7 +637,11 @@ export default function TransactionsLedgerSection({
       <div className="flex-1 min-h-0 w-full">
         {filteredItems.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs">
-            <span>No activity found matching your criteria in {activePeriodDescription}.</span>
+            <span>
+              {locale === 'ar'
+                ? `لم يتم العثور على أي نشاط يطابق معايير البحث في ${activePeriodDescription}.`
+                : `No activity found matching your criteria in ${activePeriodDescription}.`}
+            </span>
           </div>
         ) : activeFilter === 'ALL' ? (
           /* When ALL is selected: 2-Column split (Inflows vs Outflows) */
@@ -632,17 +651,19 @@ export default function TransactionsLedgerSection({
               <div className="flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
                 <div className="flex items-center gap-1.5 text-base font-bold text-text-primary">
                   <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
-                  <span>Inflows &amp; Realized Returns</span>
+                  <span>{locale === 'ar' ? 'التدفقات الداخلة والأرباح المحققة' : 'Inflows & Realized Returns'}</span>
                 </div>
                 <span className="text-[11px] text-text-muted font-medium tabular-nums">
-                  {inflowsList.length} entries
+                  {inflowsList.length} {locale === 'ar' ? 'حركة' : 'entries'}
                 </span>
               </div>
 
               <div className="divide-y divide-border-subtle/70">
                 {inflowsList.length === 0 ? (
                   <div className="py-8 text-center text-text-muted text-xs">
-                    No inflows recorded in {activePeriodDescription}.
+                    {locale === 'ar'
+                      ? `لم يتم تسجيل أي تدفقات داخلة في ${activePeriodDescription}.`
+                      : `No inflows recorded in ${activePeriodDescription}.`}
                   </div>
                 ) : (
                   inflowsList.map((item) => (
@@ -662,17 +683,19 @@ export default function TransactionsLedgerSection({
               <div className="flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
                 <div className="flex items-center gap-1.5 text-base font-bold text-text-primary">
                   <ArrowUpRight className="w-4 h-4 text-rose-400" />
-                  <span>Expenses &amp; Outflows</span>
+                  <span>{locale === 'ar' ? 'المصروفات والتدفقات الخارجة' : 'Expenses & Outflows'}</span>
                 </div>
                 <span className="text-[11px] text-text-muted font-medium tabular-nums">
-                  {outflowsList.length} entries
+                  {outflowsList.length} {locale === 'ar' ? 'حركة' : 'entries'}
                 </span>
               </div>
 
               <div className="divide-y divide-border-subtle/70">
                 {outflowsList.length === 0 ? (
                   <div className="py-8 text-center text-text-muted text-xs">
-                    No outflows recorded in {activePeriodDescription}.
+                    {locale === 'ar'
+                      ? `لم يتم تسجيل أي تدفقات خارجة في ${activePeriodDescription}.`
+                      : `No outflows recorded in ${activePeriodDescription}.`}
                   </div>
                 ) : (
                   outflowsList.map((item) => (
@@ -692,10 +715,16 @@ export default function TransactionsLedgerSection({
           <div className="flex flex-col max-w-4xl mx-auto">
             <div className="flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
               <div className="flex items-center gap-1.5 text-base font-bold text-text-primary">
-                <span>{activeFilter.charAt(0) + activeFilter.slice(1).toLowerCase()}</span>
+                <span>
+                  {activeFilter === 'INFLOWS' && (locale === 'ar' ? 'الوارد' : 'Inflows')}
+                  {activeFilter === 'EXPENSES' && (locale === 'ar' ? 'المصروفات' : 'Expenses')}
+                  {activeFilter === 'TRANSFERS' && (locale === 'ar' ? 'التحويلات' : 'Transfers')}
+                  {activeFilter === 'TRADES' && (locale === 'ar' ? 'التداول' : 'Trades')}
+                  {activeFilter === 'YIELD' && (locale === 'ar' ? 'العوائد' : 'Yield')}
+                </span>
               </div>
               <span className="text-[11px] text-text-muted font-medium">
-                {filteredItems.length} entries
+                {filteredItems.length} {locale === 'ar' ? 'حركة' : 'entries'}
               </span>
             </div>
 

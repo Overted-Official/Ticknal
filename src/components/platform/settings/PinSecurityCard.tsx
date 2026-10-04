@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { Lock, Smartphone, Timer, KeyRound } from '@/components/ui/icon-library';
 import { usePinLock } from '@/components/platform/PinLockProvider';
 import PinSetupModal from '@/components/platform/settings/PinSetupModal';
+import { useTranslation } from '@/lib/i18n';
 
 export default function PinSecurityCard() {
+  const { t, locale, isRTL } = useTranslation();
   const { isConfigured, hasSecurityQuestion, securityQuestion, pinSettings, lockApp, removePin, updateSettings } = usePinLock();
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
 
@@ -13,7 +15,7 @@ export default function PinSecurityCard() {
     if (checked) {
       setIsSetupModalOpen(true);
     } else {
-      if (confirm('Are you sure you want to disable the PIN passcode lock?')) {
+      if (confirm(locale === 'ar' ? 'هل أنت متأكد من رغبتك في تعطيل قفل رمز PIN؟' : 'Are you sure you want to disable the PIN passcode lock?')) {
         removePin();
       }
     }
@@ -31,20 +33,22 @@ export default function PinSecurityCard() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
-                4-Digit Passcode & App Lock
+                {locale === 'ar' ? 'رمز المرور المكون من 4 أرقام وقفل التطبيق' : '4-Digit Passcode & App Lock'}
               </h2>
               {isConfigured ? (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-profit-num/10 text-profit-num">
-                  PROTECTED
+                  {locale === 'ar' ? 'مفعّل' : 'PROTECTED'}
                 </span>
               ) : (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-text-muted">
-                  NOT SET
+                  {locale === 'ar' ? 'غير محدد' : 'NOT SET'}
                 </span>
               )}
             </div>
             <p className="text-xs text-text-muted mt-1 leading-relaxed">
-              Lock Ticknal behind a 4-digit PIN to secure your portfolio on mobile and shared devices.
+              {locale === 'ar'
+                ? 'قفل تكنال برمز PIN مكون من 4 أرقام لحماية محفظتك على الهاتف والأجهزة المشتركة.'
+                : 'Lock Ticknal behind a 4-digit PIN to secure your portfolio on mobile and shared devices.'}
             </p>
           </div>
         </div>
@@ -84,7 +88,7 @@ export default function PinSecurityCard() {
                 className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] active:scale-98 text-white transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Lock size={14} className="text-text-muted" />
-                <span>Lock Now</span>
+                <span>{locale === 'ar' ? 'قفل الآن' : 'Lock Now'}</span>
               </button>
 
               <button
@@ -93,13 +97,17 @@ export default function PinSecurityCard() {
                 className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] active:scale-98 text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <KeyRound size={14} className="text-text-muted" />
-                <span>Change PIN & Recovery</span>
+                <span>{locale === 'ar' ? 'تغيير الرمز والاسترداد' : 'Change PIN & Recovery'}</span>
               </button>
             </div>
 
             <div className="text-xs text-text-muted flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${hasSecurityQuestion ? 'bg-profit-num' : 'bg-[#ff9800]'}`} />
-              <span>Recovery Question: {hasSecurityQuestion ? 'Configured' : 'Password Only'}</span>
+              <span>
+                {locale === 'ar'
+                  ? `سؤال الأمان: ${hasSecurityQuestion ? 'مُفعّل' : 'كلمة المرور فقط'}`
+                  : `Recovery Question: ${hasSecurityQuestion ? 'Configured' : 'Password Only'}`}
+              </span>
             </div>
           </div>
 
@@ -109,8 +117,12 @@ export default function PinSecurityCard() {
               <div className="flex items-center gap-3 min-w-0">
                 <Smartphone size={16} className="text-text-muted shrink-0" />
                 <div className="min-w-0">
-                  <h3 className="text-xs font-semibold text-white truncate">Auto-Lock on App Switch</h3>
-                  <p className="text-[11px] text-text-muted truncate">Lock when leaving app or minimizing</p>
+                  <h3 className="text-xs font-semibold text-white truncate">
+                    {locale === 'ar' ? 'القفل التلقائي عند التبديل' : 'Auto-Lock on App Switch'}
+                  </h3>
+                  <p className="text-[11px] text-text-muted truncate">
+                    {locale === 'ar' ? 'القفل عند مغادرة التطبيق أو تصغيره' : 'Lock when leaving app or minimizing'}
+                  </p>
                 </div>
               </div>
 
@@ -140,8 +152,12 @@ export default function PinSecurityCard() {
               <div className="flex items-center gap-3 min-w-0">
                 <Timer size={16} className="text-text-muted shrink-0" />
                 <div className="min-w-0">
-                  <h3 className="text-xs font-semibold text-white truncate">Inactivity Lock</h3>
-                  <p className="text-[11px] text-text-muted truncate">Auto-lock after idle period</p>
+                  <h3 className="text-xs font-semibold text-white truncate">
+                    {locale === 'ar' ? 'قفل عدم النشاط' : 'Inactivity Lock'}
+                  </h3>
+                  <p className="text-[11px] text-text-muted truncate">
+                    {locale === 'ar' ? 'قفل تلقائي بعد فترة من السكون' : 'Auto-lock after idle period'}
+                  </p>
                 </div>
               </div>
 
@@ -151,12 +167,12 @@ export default function PinSecurityCard() {
                   onChange={(e) => updateSettings({ ...pinSettings, idleTimeoutMinutes: Number(e.target.value) })}
                   className="w-full bg-black border border-white/10 hover:border-white/20 focus:border-brand-blue text-xs text-white rounded-lg px-2.5 py-1.5 outline-none transition-colors cursor-pointer"
                 >
-                  <option value={0}>Immediately</option>
-                  <option value={1}>1 Min</option>
-                  <option value={2}>2 Mins</option>
-                  <option value={5}>5 Mins</option>
-                  <option value={15}>15 Mins</option>
-                  <option value={-1}>Never</option>
+                  <option value={0}>{locale === 'ar' ? 'فوراً' : 'Immediately'}</option>
+                  <option value={1}>{locale === 'ar' ? 'دقيقة واحدة' : '1 Min'}</option>
+                  <option value={2}>{locale === 'ar' ? 'دقيقتان' : '2 Mins'}</option>
+                  <option value={5}>{locale === 'ar' ? '5 دقائق' : '5 Mins'}</option>
+                  <option value={15}>{locale === 'ar' ? '15 دقيقة' : '15 Mins'}</option>
+                  <option value={-1}>{locale === 'ar' ? 'أبداً' : 'Never'}</option>
                 </select>
               </div>
             </div>
@@ -167,13 +183,13 @@ export default function PinSecurityCard() {
             <button
               type="button"
               onClick={() => {
-                if (confirm('Are you sure you want to remove your passcode PIN?')) {
+                if (confirm(locale === 'ar' ? 'هل أنت متأكد من رغبتك في إزالة رمز PIN؟' : 'Are you sure you want to remove your passcode PIN?')) {
                   removePin();
                 }
               }}
               className="text-xs font-medium text-loss-num/80 hover:text-loss-num transition-colors cursor-pointer"
             >
-              Remove PIN Protection
+              {locale === 'ar' ? 'إزالة حماية رمز PIN' : 'Remove PIN Protection'}
             </button>
           </div>
         </div>

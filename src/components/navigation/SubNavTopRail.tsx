@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ChevronRight } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import { controlHover, controlTap } from '@/lib/motion';
 
@@ -69,7 +70,8 @@ export default function SubNavTopRail({
 
   const displayName = propUserName || loadedUserName || 'Trader';
   const avatarUrl = propAvatarUrl || loadedAvatarUrl;
-  const displayAccountName = propAccountName || 'Personal Account';
+  const { locale } = useTranslation();
+  const displayAccountName = propAccountName || (locale === 'ar' ? 'حساب التداول الشخصي' : 'Personal Account');
 
   const initials = useMemo(() => {
     if (!displayName) return 'TR';
@@ -120,10 +122,10 @@ export default function SubNavTopRail({
           title="Account Status & Balances"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-plt-profit ring-2 ring-plt-profit/25 animate-pulse shrink-0" />
-          <span className="text-[11px] font-mono font-medium text-plt-text tracking-tight max-w-[130px] truncate">
+          <span className="text-[11px] font-sans tabular-nums font-medium text-plt-text tracking-tight max-w-[130px] truncate">
             {displayAccountName}
           </span>
-          <ChevronRight size={11} className="text-plt-muted shrink-0" />
+          <ChevronRight size={11} className="text-plt-muted shrink-0 rtl:rotate-180" />
         </Link>
       </div>
 

@@ -11,7 +11,7 @@ import {
 
 import { desc, eq, sql } from 'drizzle-orm';
 import { dailyPrices, macroMoneySupply } from '@/db/schema';
-import { getCachedTickers } from '@/lib/data-cache';
+import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
 
 type TradingViewPeriod = {
   time: number;
@@ -235,9 +235,37 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
 
 export async function handleTickersGet() {
   try {
-    const allTickers = await getCachedTickers();
-    return NextResponse.json(allTickers, {
-      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
+    const [allTickers, recentPricesRows] = await Promise.all([
+      getCachedTickers(),
+      getCachedRecentPrices().catch(() => []),
+    ]);
+
+    const priceMap: Record<string, { lastPrice: number; prevPrice: number }> = {};
+    for (const row of (recentPricesRows || [])) {
+      const sym = (row.ticker_symbol as string)?.toUpperCase();
+      const close = Number(row.close);
+      const rn = Number(row.rn);
+      if (!priceMap[sym]) priceMap[sym] = { lastPrice: 0, prevPrice: 0 };
+      if (rn === 1) priceMap[sym].lastPrice = close;
+      if (rn === 2) priceMap[sym].prevPrice = close;
+    }
+
+    const enrichedTickers = allTickers.map((t) => {
+      const cleanSym = (t.symbol || '').replace('.CA', '').toUpperCase();
+      const p = priceMap[cleanSym] || { lastPrice: 0, prevPrice: 0 };
+      const price = p.lastPrice || 0;
+      const change = p.prevPrice && price ? price - p.prevPrice : 0;
+      const changePct = p.prevPrice && p.prevPrice > 0 && price ? (change / p.prevPrice) * 100 : 0;
+      return {
+        ...t,
+        price,
+        change,
+        changePct,
+      };
+    });
+
+    return NextResponse.json(enrichedTickers, {
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
     });
   } catch (error) {
     console.error('Error fetching tickers:', error);

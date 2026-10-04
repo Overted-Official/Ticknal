@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import type { ChartOrder, OrderOverlay } from './types';
 import { X } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
 
 interface ChartOrderOverlaysProps {
   overlays: OrderOverlay[];
@@ -17,6 +18,9 @@ export default function ChartOrderOverlays({
   onSelectOrderToEdit,
   onSelectOrderToClose,
 }: ChartOrderOverlaysProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
+  const displayCurrency = currency === 'EGP' && isAr ? 'ج.م' : currency;
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null);
 
   if (overlays.length === 0) return null;
@@ -89,7 +93,7 @@ export default function ChartOrderOverlays({
                     ? 'bg-emerald-950/80 hover:bg-emerald-900/90 border-emerald-500/50 hover:border-emerald-400 text-emerald-100'
                     : 'bg-rose-950/80 hover:bg-rose-900/90 border-rose-500/50 hover:border-rose-400 text-rose-100'
                 } ${isPopoverOpen ? 'ring-2 ring-white/30' : ''}`}
-                title="Click to view position details"
+                title={isAr ? 'انقر لعرض تفاصيل المركز' : 'Click to view position details'}
               >
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${overlay.isProfit ? 'bg-emerald-400' : 'bg-rose-400'}`} />
                 <span className="font-semibold text-white/95">
@@ -104,12 +108,14 @@ export default function ChartOrderOverlays({
               {/* Detailed Position Popover (Solid pitch-black surface with z-50 to prevent any background bleed) */}
               {isPopoverOpen && (
                 <div
-                  className="absolute left-0 top-full mt-2.5 z-50 w-64 p-4 rounded-xl bg-black border border-border-default shadow-[0_16px_48px_rgba(0,0,0,0.85)] text-xs space-y-3 select-none animate-in fade-in zoom-in-95 duration-100"
+                  className="absolute start-0 top-full mt-2.5 z-50 w-64 p-4 rounded-xl bg-black border border-border-default shadow-[0_16px_48px_rgba(0,0,0,0.85)] text-xs space-y-3 select-none animate-in fade-in zoom-in-95 duration-100"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-white text-xs">Long Position</span>
+                      <span className="font-bold text-white text-xs">
+                        {isAr ? 'مركز شراء (طويل)' : 'Long Position'}
+                      </span>
                       <span className="text-[10px] text-text-muted font-sans tabular-nums">
                         ({overlay.order.entryDate})
                       </span>
@@ -118,7 +124,7 @@ export default function ChartOrderOverlays({
                       type="button"
                       onClick={() => setActivePopoverId(null)}
                       className="p-1 rounded text-text-muted hover:text-white hover:bg-surface-raised transition cursor-pointer"
-                      title="Close popover"
+                      title={isAr ? 'إغلاق' : 'Close popover'}
                     >
                       <X size={13} />
                     </button>
@@ -127,30 +133,38 @@ export default function ChartOrderOverlays({
                   {/* Metrics Grid */}
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-sans">
                     <div className="p-2 rounded-lg bg-surface-raised/60 border border-border-subtle">
-                      <span className="text-text-muted block text-[10px]">Position Size</span>
+                      <span className="text-text-muted block text-[10px]">
+                        {isAr ? 'حجم المركز' : 'Position Size'}
+                      </span>
                       <span className="text-white font-semibold tabular-nums mt-0.5 block">
-                        {(overlay.quantity ?? 0).toLocaleString()} units
+                        {(overlay.quantity ?? 0).toLocaleString()} {isAr ? 'سهم' : 'units'}
                       </span>
                     </div>
 
                     <div className="p-2 rounded-lg bg-surface-raised/60 border border-border-subtle">
-                      <span className="text-text-muted block text-[10px]">Entry Price</span>
+                      <span className="text-text-muted block text-[10px]">
+                        {isAr ? 'سعر الدخول' : 'Entry Price'}
+                      </span>
                       <span className="text-white font-semibold tabular-nums mt-0.5 block">
-                        {(overlay.entryPrice ?? 0).toFixed(2)} {currency}
+                        {(overlay.entryPrice ?? 0).toFixed(2)} {displayCurrency}
                       </span>
                     </div>
 
                     <div className="p-2 rounded-lg bg-surface-raised/60 border border-border-subtle">
-                      <span className="text-text-muted block text-[10px]">Current Price</span>
+                      <span className="text-text-muted block text-[10px]">
+                        {isAr ? 'السعر الحالي' : 'Current Price'}
+                      </span>
                       <span className="text-white font-semibold tabular-nums mt-0.5 block">
-                        {(overlay.currentPrice ?? 0).toFixed(2)} {currency}
+                        {(overlay.currentPrice ?? 0).toFixed(2)} {displayCurrency}
                       </span>
                     </div>
 
                     <div className="p-2 rounded-lg bg-surface-raised/60 border border-border-subtle">
-                      <span className="text-text-muted block text-[10px]">Unrealized P&L</span>
+                      <span className="text-text-muted block text-[10px]">
+                        {isAr ? 'الأرباح/الخسائر غير المحققة' : 'Unrealized P&L'}
+                      </span>
                       <span className={`font-semibold tabular-nums mt-0.5 block ${overlay.isProfit ? 'text-profit-num' : 'text-loss-num'}`}>
-                        {(overlay.profitLoss ?? 0) >= 0 ? '+' : ''}{(overlay.profitLoss ?? 0).toFixed(2)} {currency} ({(overlay.profitLossPct ?? 0) >= 0 ? '+' : ''}{(overlay.profitLossPct ?? 0).toFixed(2)}%)
+                        {(overlay.profitLoss ?? 0) >= 0 ? '+' : ''}{(overlay.profitLoss ?? 0).toFixed(2)} {displayCurrency} ({(overlay.profitLossPct ?? 0) >= 0 ? '+' : ''}{(overlay.profitLossPct ?? 0).toFixed(2)}%)
                       </span>
                     </div>
                   </div>
@@ -165,7 +179,7 @@ export default function ChartOrderOverlays({
                       }}
                       className="flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold text-white bg-surface-raised hover:bg-surface-active border border-border-subtle hover:border-border-default transition-colors text-center cursor-pointer"
                     >
-                      Edit
+                      {isAr ? 'تعديل' : 'Edit'}
                     </button>
                     <button
                       type="button"
@@ -175,7 +189,7 @@ export default function ChartOrderOverlays({
                       }}
                       className="flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold text-loss-num bg-loss-num/10 hover:bg-loss-num/20 border border-loss-num/30 transition-colors text-center cursor-pointer"
                     >
-                      Close
+                      {isAr ? 'إغلاق المركز' : 'Close'}
                     </button>
                   </div>
                 </div>

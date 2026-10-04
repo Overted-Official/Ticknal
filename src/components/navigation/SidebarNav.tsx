@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -16,11 +16,90 @@ import {
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
+import { useTranslation } from '@/lib/i18n';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+function SidebarNavItem({
+  href,
+  title,
+  isActive,
+  icon: Icon,
+}: {
+  href: string;
+  title: string;
+  isActive: boolean;
+  icon: React.ComponentType<any>;
+}) {
+  const iconRef = useRef<{ startAnimation: () => void; stopAnimation: () => void } | null>(null);
+  const handleMouseEnter = () => iconRef.current?.startAnimation();
+  const handleMouseLeave = () => iconRef.current?.stopAnimation();
+
+  return (
+    <div className="w-full relative flex items-center justify-center group">
+      <Link
+        href={href}
+        prefetch={true}
+        className="flex items-center justify-center relative cursor-pointer"
+        title={title}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div
+          className={`nav-icon flex items-center justify-center transition-all duration-150 ${
+            isActive ? 'nav-icon-active' : 'text-[#dbdbdb] hover:text-white'
+          }`}
+        >
+          <Icon ref={iconRef} size={20} strokeWidth={1.5} />
+        </div>
+      </Link>
+    </div>
+  );
+}
+
+function NotificationsNavItem({
+  isOpen,
+  onClick,
+  count,
+  title,
+}: {
+  isOpen: boolean;
+  onClick: () => void;
+  count: number;
+  title: string;
+}) {
+  const iconRef = useRef<{ startAnimation: () => void; stopAnimation: () => void } | null>(null);
+  const handleMouseEnter = () => iconRef.current?.startAnimation();
+  const handleMouseLeave = () => iconRef.current?.stopAnimation();
+
+  return (
+    <div className="w-full flex items-center justify-center relative group">
+      <button
+        type="button"
+        onClick={onClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="flex items-center justify-center relative cursor-pointer"
+        title={title}
+      >
+        <div
+          className={`nav-icon flex items-center justify-center transition-all duration-150 relative ${
+            isOpen ? 'nav-icon-active' : 'text-[#dbdbdb] hover:text-white'
+          }`}
+        >
+          <Bell ref={iconRef} size={20} strokeWidth={1.5} />
+          {count > 0 && (
+            <span className="absolute top-1 end-1 w-2 h-2 rounded-full bg-plt-profit ring-2 ring-plt-base" />
+          )}
+        </div>
+      </button>
+    </div>
+  );
+}
+
 export default function SidebarNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
@@ -50,105 +129,36 @@ export default function SidebarNav() {
       </Link>
 
       <div className="flex-1 flex flex-col space-y-2.5 w-full items-center">
-        {/* 1. Home Direct Link */}
-        <div className="w-full relative flex items-center justify-center group">
-          <Link
-            href="/home"
-            prefetch={true}
-            className="flex items-center justify-center relative"
-            title="Home"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isHomeActive
-                  ? 'nav-icon-active'
-                  : 'text-[#dbdbdb] hover:text-white'
-              }`}
-            >
-              <Home size={20} strokeWidth={1.5} />
-            </div>
-          </Link>
-        </div>
-
-        {/* 2. Charts Direct Link */}
-        <div className="w-full relative flex items-center justify-center group">
-          <Link
-            href="/charts"
-            prefetch={true}
-            className="flex items-center justify-center relative"
-            title="Charts"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isChartsActive
-                  ? 'nav-icon-active'
-                  : 'text-[#dbdbdb] hover:text-white'
-              }`}
-            >
-              <LineChart size={20} strokeWidth={1.5} />
-            </div>
-          </Link>
-        </div>
-
-        {/* 3. Markets Direct Link */}
-        <div className="w-full relative flex items-center justify-center group">
-          <Link
-            href="/markets"
-            prefetch={true}
-            className="flex items-center justify-center relative"
-            title="Markets"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isMarketsActive
-                  ? 'nav-icon-active'
-                  : 'text-[#dbdbdb] hover:text-white'
-              }`}
-            >
-              <LayoutGrid size={20} strokeWidth={1.5} />
-            </div>
-          </Link>
-        </div>
-
-        {/* 4. Strategies Direct Link */}
-        <div className="w-full relative flex items-center justify-center group">
-          <Link
-            href="/strategies"
-            prefetch={true}
-            className="flex items-center justify-center relative"
-            title="Strategies"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isStrategiesActive
-                  ? 'nav-icon-active'
-                  : 'text-[#dbdbdb] hover:text-white'
-              }`}
-            >
-              <Zap size={20} strokeWidth={1.5} />
-            </div>
-          </Link>
-        </div>
-
-        {/* 5. Transactions Direct Link */}
-        <div className="w-full relative flex items-center justify-center group">
-          <Link
-            href="/transactions"
-            prefetch={true}
-            className="flex items-center justify-center relative"
-            title="Transactions"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                isTransactionsActive
-                  ? 'nav-icon-active'
-                  : 'text-[#dbdbdb] hover:text-white'
-              }`}
-            >
-              <ArrowRightLeft size={20} strokeWidth={1.5} />
-            </div>
-          </Link>
-        </div>
+        <SidebarNavItem
+          href="/home"
+          title={t('nav.home')}
+          isActive={isHomeActive}
+          icon={Home}
+        />
+        <SidebarNavItem
+          href="/charts"
+          title={t('nav.charts')}
+          isActive={isChartsActive}
+          icon={LineChart}
+        />
+        <SidebarNavItem
+          href="/markets"
+          title={t('nav.markets')}
+          isActive={isMarketsActive}
+          icon={LayoutGrid}
+        />
+        <SidebarNavItem
+          href="/strategies"
+          title={t('nav.strategies')}
+          isActive={isStrategiesActive}
+          icon={Zap}
+        />
+        <SidebarNavItem
+          href="/transactions"
+          title={t('nav.transactions')}
+          isActive={isTransactionsActive}
+          icon={ArrowRightLeft}
+        />
       </div>
 
       {/* Notifications & Settings at the bottom */}
@@ -165,47 +175,20 @@ export default function SidebarNav() {
         </div>
 
         {/* Notifications Bell */}
-        <div className="w-full flex items-center justify-center relative group">
-          <button
-            type="button"
-            onClick={() => setIsNotificationsOpen(true)}
-            className="flex items-center justify-center relative"
-            title="Trade Notifications & Alerts"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 relative ${
-                isNotificationsOpen
-                  ? 'nav-icon-active'
-                  : 'text-[#dbdbdb] hover:text-white'
-              }`}
-            >
-              <Bell size={20} strokeWidth={1.5} />
-              {notificationCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-plt-profit ring-2 ring-plt-base" />
-              )}
-            </div>
-          </button>
-        </div>
+        <NotificationsNavItem
+          isOpen={isNotificationsOpen}
+          onClick={() => setIsNotificationsOpen(true)}
+          count={notificationCount}
+          title={t('nav.notifications')}
+        />
 
         {/* Settings */}
-        <div className="w-full flex items-center justify-center relative group">
-          <Link
-            href="/settings"
-            prefetch={true}
-            className="flex items-center justify-center relative"
-            title="Settings"
-          >
-            <div
-              className={`nav-icon flex items-center justify-center transition-all duration-150 ${
-                pathname === '/settings'
-                  ? 'nav-icon-active'
-                  : 'text-[#dbdbdb] hover:text-white'
-              }`}
-            >
-              <Settings size={20} strokeWidth={1.5} />
-            </div>
-          </Link>
-        </div>
+        <SidebarNavItem
+          href="/settings"
+          title={t('nav.settings')}
+          isActive={pathname === '/settings'}
+          icon={Settings}
+        />
       </div>
 
       <NotificationsDrawer

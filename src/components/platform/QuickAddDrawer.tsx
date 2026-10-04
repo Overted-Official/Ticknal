@@ -17,6 +17,7 @@ import { useToast } from '@/context/ToastContext';
 import { type BankAccount } from '@/types/bank';
 import AccountSelectDropdown from './wallet/AccountSelectDropdown';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
+import { useTranslation } from '@/lib/i18n';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -37,6 +38,23 @@ const CATEGORIES = [
   'Other',
 ];
 
+const CATEGORIES_MAP_AR: Record<string, string> = {
+  'Living & Bills': 'المعيشة والفواتير',
+  'Housing & Rent': 'السكن والإيجار',
+  'Food & Dining': 'الطعام والمطاعم',
+  'Salary & Income': 'الراتب والدخل',
+  'Interest & Yield': 'الفوائد والعوائد',
+  'Trading Injection': 'إيداع للتداول',
+  'Trading Withdrawal': 'سحب من التداول',
+  'Savings & CD': 'المدخرات والشهادات',
+  'Investments': 'الاستثمارات',
+  'Subscriptions': 'الاشتراكات والخدمات',
+  'Healthcare': 'الرعاية الصحية',
+  'Transport': 'المواصلات والانتقالات',
+  'Entertainment': 'الترفيه',
+  'Other': 'أخرى',
+};
+
 const modeDescriptions: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION', string> = {
   EXPENSE: 'Outflow from selected bank account for living, bills, or operational costs.',
   INCOME: 'Inflow adding liquid cash to your selected bank or treasury balance.',
@@ -44,11 +62,22 @@ const modeDescriptions: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJEC
   BROKER_INJECTION: 'Inject funds directly into your brokerage account to back stock purchases.',
 };
 
+const modeDescriptionsAr: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION', string> = {
+  EXPENSE: 'خصم من الحساب البنكي المختار لمصاريف المعيشة والفواتير والتكاليف التشغيلية.',
+  INCOME: 'إيداع سيولة نقدية في رصيد الحساب البنكي أو الخزينة المحددة.',
+  TRANSFER: 'تحويل رأس المال بين حسابين دون التأثير على إجمالي صافي الثروة.',
+  BROKER_INJECTION: 'تحويل أموال مباشرة إلى حساب الوساطة لتمويل شراء الأسهم.',
+};
+
 type Ticker = {
   symbol: string;
   companyName: string;
   sector?: string;
   logoUrl?: string | null;
+  currency?: string;
+  price?: number;
+  change?: number;
+  changePct?: number;
 };
 
 interface QuickAddDrawerProps {
@@ -60,6 +89,7 @@ interface QuickAddDrawerProps {
 export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddDrawerProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { t, locale, isRTL } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -336,11 +366,11 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
           {/* Drawer Sheet (Desktop: Right-to-Left | Mobile: Bottom-to-Top) */}
           <motion.div
             key="quick-add-drawer-sheet"
-            initial={isMobile ? { y: '100%' } : { x: '100%' }}
+            initial={isMobile ? { y: '100%' } : { x: isRTL ? '-100%' : '100%' }}
             animate={isMobile ? { y: 0 } : { x: 0 }}
-            exit={isMobile ? { y: '100%' } : { x: '100%' }}
+            exit={isMobile ? { y: '100%' } : { x: isRTL ? '-100%' : '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className={`drawer-sheet-form ${!isMobile ? 'drawer-sheet-viewport-safe' : ''}`}
+            className={`drawer-sheet-form ${!isMobile ? 'drawer-sheet-viewport-safe' : ''} rtl:border-l-0 rtl:border-r`}
           >
             {/* Header */}
             <div className="drawer-header">
@@ -365,12 +395,14 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   </div>
                   <div className="drawer-header-titles">
                     <h2 className="drawer-title">
-                      {activeSwitch === 'transaction' ? 'Quick Ledger Transaction' : 'Quick Stock Position'}
+                      {activeSwitch === 'transaction'
+                        ? (locale === 'ar' ? 'معاملة دفتر الأستاذ السريعة' : 'Quick Ledger Transaction')
+                        : (locale === 'ar' ? 'تسجيل صفقة سريعة' : 'Quick Stock Position')}
                     </h2>
                     <p className="drawer-subtitle">
                       {activeSwitch === 'transaction'
-                        ? 'Record banking expenses, inflows, transfers & cashflows'
-                        : 'Log buy execution for an EGX stock position'}
+                        ? (locale === 'ar' ? 'تسجيل المصروفات، الإيداعات، التحويلات والتدفقات النقدية' : 'Record banking expenses, inflows, transfers & cashflows')
+                        : (locale === 'ar' ? 'تسجيل تنفيذ شراء لصفقة في البورصة المصرية' : 'Log buy execution for an EGX stock position')}
                     </p>
                   </div>
                 </div>
@@ -398,7 +430,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   }`}
                 >
                   <ArrowRightLeft className="w-3.5 h-3.5" />
-                  <span>Add Transaction</span>
+                  <span>{locale === 'ar' ? 'إضافة معاملة' : 'Add Transaction'}</span>
                 </button>
                 <button
                   type="button"
@@ -408,7 +440,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   }`}
                 >
                   <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Add Position</span>
+                  <span>{locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}</span>
                 </button>
               </div>
             </div>
@@ -420,40 +452,40 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Mode Hint Info Card */}
                   <div className="drawer-info-card">
                     <div className="drawer-info-dot" />
-                    <p className="drawer-info-text">{modeDescriptions[txMode]}</p>
+                    <p className="drawer-info-text">{locale === 'ar' ? modeDescriptionsAr[txMode] : modeDescriptions[txMode]}</p>
                   </div>
 
                   {/* Transaction Type Segmented Control */}
                   <div className="drawer-form-field">
-                    <label className="field-label">Transaction Type</label>
+                    <label className="field-label">{locale === 'ar' ? 'نوع المعاملة' : 'Transaction Type'}</label>
                     <div className="pill-switch pill-switch-full">
                       <button
                         type="button"
                         onClick={() => setTxMode('EXPENSE')}
                         className={`pill-switch-btn ${txMode === 'EXPENSE' ? 'pill-switch-btn-active' : ''}`}
                       >
-                        Expense
+                        {locale === 'ar' ? 'مصروف' : 'Expense'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTxMode('INCOME')}
                         className={`pill-switch-btn ${txMode === 'INCOME' ? 'pill-switch-btn-active' : ''}`}
                       >
-                        Income
+                        {locale === 'ar' ? 'دخل' : 'Income'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTxMode('TRANSFER')}
                         className={`pill-switch-btn ${txMode === 'TRANSFER' ? 'pill-switch-btn-active' : ''}`}
                       >
-                        Transfer
+                        {locale === 'ar' ? 'تحويل' : 'Transfer'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTxMode('BROKER_INJECTION')}
                         className={`pill-switch-btn ${txMode === 'BROKER_INJECTION' ? 'pill-switch-btn-active' : ''}`}
                       >
-                        To Stocks
+                        {locale === 'ar' ? 'إلى الأسهم' : 'To Stocks'}
                       </button>
                     </div>
                   </div>
@@ -461,19 +493,23 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Account Selection */}
                   <div className="drawer-form-field">
                     <label className="field-label">
-                      {txMode === 'TRANSFER' ? 'From Account (Source) *' : 'Account *'}
+                      {txMode === 'TRANSFER'
+                        ? (locale === 'ar' ? 'من حساب (المصدر) *' : 'From Account (Source) *')
+                        : (locale === 'ar' ? 'الحساب *' : 'Account *')}
                     </label>
                     {accounts.length === 0 ? (
                       <div className="drawer-info-card">
                         <div className="drawer-info-dot" />
-                        <p className="drawer-info-text">No accounts found. Please add a bank account first.</p>
+                        <p className="drawer-info-text">
+                          {locale === 'ar' ? 'لم يتم العثور على حسابات. يرجى إضافة حساب بنكي أولاً.' : 'No accounts found. Please add a bank account first.'}
+                        </p>
                       </div>
                     ) : (
                       <AccountSelectDropdown
                         accounts={accounts}
                         selectedAccountId={accountId}
                         onSelectAccount={handleAccountChange}
-                        placeholder="Select bank account..."
+                        placeholder={locale === 'ar' ? 'اختر حساب بنكي...' : 'Select bank account...'}
                       />
                     )}
                   </div>
@@ -481,13 +517,13 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Destination Account (If Transfer) */}
                   {txMode === 'TRANSFER' && (
                     <div className="drawer-form-field">
-                      <label className="field-label">To Account (Destination) *</label>
+                      <label className="field-label">{locale === 'ar' ? 'إلى حساب (الوجهة) *' : 'To Account (Destination) *'}</label>
                       <AccountSelectDropdown
                         accounts={accounts}
                         selectedAccountId={toAccountId}
                         onSelectAccount={setToAccountId}
                         excludeAccountId={accountId}
-                        placeholder="Select destination bank account..."
+                        placeholder={locale === 'ar' ? 'اختر حساب بنكي مستلم...' : 'Select destination bank account...'}
                       />
                     </div>
                   )}
@@ -495,7 +531,9 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Amount & Date Grid */}
                   <div className="drawer-form-grid-2">
                     <div className="drawer-form-field">
-                      <label className="field-label">Amount ({currency}) *</label>
+                      <label className="field-label">
+                        {locale === 'ar' ? `المبلغ (${currency === 'EGP' ? 'ج.م' : currency}) *` : `Amount (${currency}) *`}
+                      </label>
                       <div className="field-group">
                         <input
                           type="number"
@@ -506,12 +544,12 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                           onChange={(e) => setAmount(e.target.value)}
                           className="field-input"
                         />
-                        <span className="field-suffix">{currency}</span>
+                        <span className="field-suffix">{currency === 'EGP' && locale === 'ar' ? 'ج.م' : currency}</span>
                       </div>
                     </div>
 
                     <div className="drawer-form-field">
-                      <label className="field-label">Date *</label>
+                      <label className="field-label">{locale === 'ar' ? 'التاريخ *' : 'Date *'}</label>
                       <input
                         type="date"
                         required
@@ -525,7 +563,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Category (if not transfer) */}
                   {txMode !== 'TRANSFER' && (
                     <div className="drawer-form-field">
-                      <label className="field-label">Category</label>
+                      <label className="field-label">{locale === 'ar' ? 'التصنيف' : 'Category'}</label>
                       <div className="field-select-wrapper">
                         <select
                           value={category}
@@ -534,7 +572,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                         >
                           {CATEGORIES.map((c) => (
                             <option key={c} value={c} className="field-select-option">
-                              {c}
+                              {locale === 'ar' ? (CATEGORIES_MAP_AR[c] || c) : c}
                             </option>
                           ))}
                         </select>
@@ -545,10 +583,10 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
                   {/* Notes / Description */}
                   <div className="drawer-form-field">
-                    <label className="field-label">Notes & Description</label>
+                    <label className="field-label">{locale === 'ar' ? 'ملاحظات ووصف' : 'Notes & Description'}</label>
                     <input
                       type="text"
-                      placeholder="e.g. Salary wire, Monthly rent, Grocery trip"
+                      placeholder={locale === 'ar' ? 'مثال: راتب شهري، إيجار، مشتريات' : 'e.g. Salary wire, Monthly rent, Grocery trip'}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       className="field-text-input"
@@ -563,7 +601,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                     onClick={onClose}
                     className="drawer-cancel-btn"
                   >
-                    Cancel
+                    {locale === 'ar' ? 'إلغاء' : 'Cancel'}
                   </button>
                   <button
                     type="submit"
@@ -571,7 +609,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                     className="drawer-confirm-btn"
                   >
                     <Check className="drawer-btn-icon" />
-                    <span>{isSubmittingTx ? 'Recording...' : 'Record Transaction'}</span>
+                    <span>{isSubmittingTx ? (locale === 'ar' ? 'جاري التسجيل...' : 'Recording...') : (locale === 'ar' ? 'تسجيل المعاملة' : 'Record Transaction')}</span>
                   </button>
                 </div>
               </form>
@@ -585,19 +623,21 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   <div className="drawer-info-card">
                     <div className="drawer-info-dot" />
                     <p className="drawer-info-text">
-                      Enter execution details for your stock buy. Position will immediately reflect in your portfolio.
+                      {locale === 'ar'
+                        ? 'أدخل تفاصيل تنفيذ شراء السهم. ستنعكس الصفقة فوراً في محفظتك الاستثمارية.'
+                        : 'Enter execution details for your stock buy. Position will immediately reflect in your portfolio.'}
                     </p>
                   </div>
 
                   {/* EGX Ticker Search */}
                   <div className="drawer-form-field relative" ref={tickerSearchRef}>
-                    <label className="field-label">EGX Ticker Symbol *</label>
+                    <label className="field-label">{locale === 'ar' ? 'رمز سهم البورصة المصرية *' : 'EGX Ticker Symbol *'}</label>
                     <div className="field-group relative">
-                      <Search className="w-3.5 h-3.5 text-text-muted shrink-0 mr-2" />
+                      <Search className="w-3.5 h-3.5 text-text-muted shrink-0 me-2" />
                       <input
                         type="text"
                         required
-                        placeholder="Search ticker (e.g. COMI, ABUK, HRHO)..."
+                        placeholder={locale === 'ar' ? 'ابحث عن سهم (مثل COMI، ABUK، HRHO)...' : 'Search ticker (e.g. COMI, ABUK, HRHO)...'}
                         value={positionSymbol}
                         onChange={(e) => {
                           setPositionSymbol(e.target.value.toUpperCase());
@@ -610,48 +650,117 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
 
                     {/* Auto-suggest Dropdown */}
                     {isTickerDropdownOpen && filteredTickers.length > 0 && (
-                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 max-h-48 overflow-y-auto bg-black border border-white/10 rounded-xl shadow-2xl z-50 divide-y divide-white/[0.06] custom-scrollbar">
-                        {filteredTickers.map((t) => (
-                          <button
-                            key={t.symbol}
-                            type="button"
-                            onClick={() => {
-                              setPositionSymbol(t.symbol);
-                              setIsTickerDropdownOpen(false);
-                            }}
-                            className="w-full p-2.5 hover:bg-white/[0.04] flex items-center justify-between transition-colors text-left cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="font-semibold text-text-primary text-xs font-sans">
-                                {t.symbol}
-                              </span>
-                              <span className="text-text-muted text-[11px] truncate max-w-[180px] font-sans">
-                                {t.companyName}
-                              </span>
-                            </div>
-                            {t.sector && (
-                              <span className="text-[10px] text-text-muted px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/10 font-sans shrink-0">
-                                {t.sector}
-                              </span>
-                            )}
-                          </button>
-                        ))}
+                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 max-h-60 overflow-y-auto bg-black border border-white/10 rounded-xl shadow-2xl z-50 divide-y divide-white/[0.04] custom-scrollbar p-1">
+                        {filteredTickers.map((t) => {
+                          const clean = t.symbol.replace('.CA', '').toUpperCase();
+                          const priceNum = t.price || 0;
+                          return (
+                            <button
+                              key={t.symbol}
+                              type="button"
+                              onClick={() => {
+                                setPositionSymbol(clean);
+                                if (priceNum > 0) {
+                                  setPositionPrice(String(priceNum));
+                                }
+                                setIsTickerDropdownOpen(false);
+                              }}
+                              className="w-full px-2.5 py-2 hover:bg-white/[0.08] active:bg-white/[0.12] rounded-lg flex items-center justify-between transition-colors text-left cursor-pointer gap-2.5"
+                            >
+                              {/* Left: small logo + 2-row text info */}
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div className="w-7 h-7 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                  {t.logoUrl ? (
+                                    <img
+                                      src={t.logoUrl}
+                                      alt={clean}
+                                      className="w-full h-full object-contain rounded-full"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-white/80 font-sans">
+                                      {clean.slice(0, 2)}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="min-w-0 flex flex-col flex-1">
+                                  <span className="font-medium text-white text-xs truncate font-sans leading-tight" title={t.companyName}>
+                                    {t.companyName || clean}
+                                  </span>
+                                  <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-white bg-white/10 border border-white/15 tabular-nums font-sans shrink-0 leading-tight">
+                                      {clean}
+                                    </span>
+                                    {t.sector && (
+                                      <>
+                                        <span className="text-[10px] text-white/30 shrink-0">•</span>
+                                        <span className="text-[10px] text-white/50 truncate font-sans">
+                                          {t.sector}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right: Latest price + optional change % */}
+                              <div className="flex flex-col items-end shrink-0 pl-2 font-sans tabular-nums text-right">
+                                {priceNum > 0 ? (
+                                  <>
+                                    <span className="text-xs font-semibold text-white">
+                                      {priceNum.toFixed(2)}{' '}
+                                      <span className="text-[10px] text-white/40 font-normal">
+                                        {t.currency === 'EGP' && locale === 'ar' ? 'ج.م' : t.currency || 'EGP'}
+                                      </span>
+                                    </span>
+                                    {t.changePct !== undefined && t.changePct !== 0 && (
+                                      <span
+                                        className={`text-[10px] font-medium ${
+                                          t.changePct > 0 ? 'text-profit-num' : 'text-loss-num'
+                                        }`}
+                                      >
+                                        {t.changePct > 0 ? '+' : ''}{Number(t.changePct).toFixed(2)}%
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-white/30 font-medium">—</span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
 
                   {/* Brokerage Account Selection */}
                   <div className="drawer-form-field">
-                    <label className="field-label">Brokerage Account *</label>
+                    <label className="field-label">{locale === 'ar' ? 'حساب التداول والوساطة *' : 'Brokerage Account *'}</label>
                     {brokerageAccounts.length === 0 ? (
                       <div className="drawer-info-card">
                         <div className="drawer-info-dot" />
                         <p className="drawer-info-text">
-                          No brokerage account found. Please add an EGP brokerage account in{' '}
-                          <a href="/wallet?tab=transactions" className="underline font-semibold">
-                            Cash &amp; Transactions
-                          </a>{' '}
-                          first.
+                          {locale === 'ar' ? (
+                            <>
+                              لم يتم العثور على حساب تداول. يرجى إضافة حساب تداول بالجنيه في{' '}
+                              <a href="/wallet?tab=transactions" className="underline font-semibold">
+                                السيولة والمعاملات
+                              </a>{' '}
+                              أولاً.
+                            </>
+                          ) : (
+                            <>
+                              No brokerage account found. Please add an EGP brokerage account in{' '}
+                              <a href="/wallet?tab=transactions" className="underline font-semibold">
+                                Cash &amp; Transactions
+                              </a>{' '}
+                              first.
+                            </>
+                          )}
                         </p>
                       </div>
                     ) : (
@@ -665,8 +774,8 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                           {brokerageAccounts.map((b: BankAccount) => (
                             <option key={b.id} value={b.id} className="field-select-option">
                               {isVirtualAccount(b)
-                                ? `✨ Virtual Account (Paper Trading) · ${Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${b.currency || 'EGP'} paper cash`
-                                : `${b.accountName || b.customBankName || b.bankName || `Account ${b.id}`} · ${Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${b.currency || 'EGP'} available`}
+                                ? `✨ ${locale === 'ar' ? 'حساب افتراضي (تداول تجريبي)' : 'Virtual Account (Paper Trading)'} · ${Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${b.currency === 'EGP' && locale === 'ar' ? 'ج.م' : b.currency || 'EGP'} ${locale === 'ar' ? 'رصيد تجريبي' : 'paper cash'}`
+                                : `${b.accountName || b.customBankName || b.bankName || (locale === 'ar' ? `حساب ${b.id}` : `Account ${b.id}`)} · ${Number(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${b.currency === 'EGP' && locale === 'ar' ? 'ج.م' : b.currency || 'EGP'} ${locale === 'ar' ? 'متاح' : 'available'}`}
                             </option>
                           ))}
                         </select>
@@ -677,7 +786,9 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                       <div className="drawer-info-card mt-2">
                         <div className="drawer-info-dot" />
                         <p className="drawer-info-text">
-                          💡 Virtual Account: Zero personal bank credentials required. Tracks on charts with live P&amp;L and automated strategy sell notifications.
+                          {locale === 'ar'
+                            ? '💡 حساب افتراضي: لا يتطلب أي بيانات بنكية. يتتبع الصفقة على الرسم البياني مع الأرباح والخسائر اللحظية وتنبيهات الخروج الآلية.'
+                            : '💡 Virtual Account: Zero personal bank credentials required. Tracks on charts with live P&L and automated strategy sell notifications.'}
                         </p>
                       </div>
                     )}
@@ -686,7 +797,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Price & Quantity Grid */}
                   <div className="drawer-form-grid-2">
                     <div className="drawer-form-field">
-                      <label className="field-label">Entry Price (EGP) *</label>
+                      <label className="field-label">{locale === 'ar' ? 'سعر الدخول (ج.م) *' : 'Entry Price (EGP) *'}</label>
                       <div className="field-group">
                         <input
                           type="number"
@@ -697,12 +808,12 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                           onChange={(e) => setPositionPrice(e.target.value)}
                           className="field-input"
                         />
-                        <span className="field-suffix">EGP</span>
+                        <span className="field-suffix">{locale === 'ar' ? 'ج.م' : 'EGP'}</span>
                       </div>
                     </div>
 
                     <div className="drawer-form-field">
-                      <label className="field-label">Quantity (Shares) *</label>
+                      <label className="field-label">{locale === 'ar' ? 'الكمية (أسهم) *' : 'Quantity (Shares) *'}</label>
                       <div className="field-group">
                         <input
                           type="number"
@@ -713,7 +824,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                           onChange={(e) => setPositionQty(e.target.value)}
                           className="field-input"
                         />
-                        <span className="field-suffix">Shares</span>
+                        <span className="field-suffix">{locale === 'ar' ? 'سهم' : 'Shares'}</span>
                       </div>
                     </div>
                   </div>
@@ -721,20 +832,20 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                   {/* Total Position Value Preview Card */}
                   {positionTotalVal > 0 && (
                     <div className="field-card">
-                      <span className="field-label">Estimated Position Value</span>
+                      <span className="field-label">{locale === 'ar' ? 'القيمة المقدرة للصفقة' : 'Estimated Position Value'}</span>
                       <span className="text-sm font-bold text-text-primary tabular-nums font-sans">
                         {positionTotalVal.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}{' '}
-                        EGP
+                        {locale === 'ar' ? 'ج.م' : 'EGP'}
                       </span>
                     </div>
                   )}
 
                   {/* Entry Date */}
                   <div className="drawer-form-field">
-                    <label className="field-label">Entry Date *</label>
+                    <label className="field-label">{locale === 'ar' ? 'تاريخ الدخول *' : 'Entry Date *'}</label>
                     <input
                       type="date"
                       required
@@ -752,7 +863,7 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                     onClick={onClose}
                     className="drawer-cancel-btn"
                   >
-                    Cancel
+                    {locale === 'ar' ? 'إلغاء' : 'Cancel'}
                   </button>
                   <button
                     type="submit"
@@ -762,10 +873,10 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
                     <TrendingUp className="drawer-btn-icon" />
                     <span>
                       {isSubmittingPos
-                        ? 'Creating...'
+                        ? (locale === 'ar' ? 'جاري الإنشاء...' : 'Creating...')
                         : positionAccountId && isVirtualAccount(brokerageAccounts.find((b) => String(b.id) === positionAccountId))
-                        ? 'Track Virtual Position'
-                        : 'Create Stock Position'}
+                        ? (locale === 'ar' ? 'تتبع صفقة افتراضية' : 'Track Virtual Position')
+                        : (locale === 'ar' ? 'إنشاء صفقة أسهم' : 'Create Stock Position')}
                     </span>
                   </button>
                 </div>

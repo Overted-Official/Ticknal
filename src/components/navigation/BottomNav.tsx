@@ -20,6 +20,7 @@ import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
+import { useTranslation } from '@/lib/i18n';
 import { controlHover, controlTap } from '@/lib/motion';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -72,9 +73,114 @@ const NAV_ITEMS: NavItemConfig[] = [
   },
 ];
 
+
+function BottomNavItem({
+  item,
+  isActive,
+  onSelect,
+}: {
+  item: NavItemConfig;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const iconRef = useRef<{ startAnimation: () => void; stopAnimation: () => void } | null>(null);
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      prefetch={true}
+      onClick={() => {
+        iconRef.current?.startAnimation();
+        onSelect();
+      }}
+      onMouseEnter={() => iconRef.current?.startAnimation()}
+      onMouseLeave={() => iconRef.current?.stopAnimation()}
+      aria-current={isActive ? 'page' : undefined}
+      className="flex flex-col items-center justify-center h-full py-1 cursor-pointer group focus:outline-none min-w-0 active:scale-95 transition-transform duration-100"
+    >
+      {/* Subtle active indicator pill */}
+      <div
+        className={`h-[2px] w-5 rounded-full transition-all duration-200 mb-1 ${
+          isActive
+            ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]'
+            : 'bg-transparent'
+        }`}
+      />
+
+      {/* Icon */}
+      <div className="flex items-center justify-center">
+        <Icon
+          ref={iconRef}
+          size={20}
+          strokeWidth={isActive ? 2.2 : 1.7}
+          className={`transition-colors duration-150 ${
+            isActive
+              ? 'text-white'
+              : 'text-zinc-500 group-hover:text-zinc-300'
+          }`}
+        />
+      </div>
+
+      {/* Micro label */}
+      <span
+        className={`text-[10px] font-sans tracking-tight leading-tight mt-0.5 truncate max-w-[62px] text-center transition-colors duration-150 ${
+          isActive
+            ? 'font-semibold text-white'
+            : 'font-medium text-zinc-500 group-hover:text-zinc-300'
+        }`}
+      >
+        {item.label}
+      </span>
+    </Link>
+  );
+}
+
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t, isRTL } = useTranslation();
+
+  const navItems: NavItemConfig[] = useMemo(() => {
+    const items: NavItemConfig[] = [
+      {
+        id: 'home',
+        label: t('nav.home'),
+        href: '/home',
+        icon: Home,
+        isActive: (p) => p === '/home' || p === '/dashboard',
+      },
+      {
+        id: 'charts',
+        label: t('nav.charts'),
+        href: '/charts',
+        icon: LineChart,
+        isActive: (p) => p === '/charts' || p.startsWith('/charts/') || p === '/invest',
+      },
+      {
+        id: 'markets',
+        label: t('nav.markets'),
+        href: '/markets',
+        icon: LayoutGrid,
+        isActive: (p) => p === '/markets' || p.startsWith('/markets/') || p === '/sectors' || p.startsWith('/sectors/'),
+      },
+      {
+        id: 'strategies',
+        label: t('nav.strategies'),
+        href: '/strategies',
+        icon: Zap,
+        isActive: (p) => p === '/strategies' || p.startsWith('/strategies/'),
+      },
+      {
+        id: 'transactions',
+        label: t('nav.transactions'),
+        href: '/transactions',
+        icon: ArrowRightLeft,
+        isActive: (p) => p === '/transactions' || p.startsWith('/transactions/'),
+      },
+    ];
+    return isRTL ? [...items].reverse() : items;
+  }, [t, isRTL]);
   const { isNavVisible, setIsNavVisible } = useMobileNavScroll();
   const isChartRoute = pathname === '/charts' || pathname.startsWith('/charts/');
   // The chart workspace has no reliable vertical page scroll to restore hidden navigation.
@@ -206,7 +312,7 @@ export default function BottomNav() {
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.85, x: 8 }}
                 transition={{ duration: 0.16, ease: 'easeOut' }}
-                className="absolute right-12 bottom-0 flex items-center gap-1.5 p-1 rounded-full bg-black/95 backdrop-blur-2xl border border-white/15 shadow-2xl z-50"
+                className="absolute end-12 bottom-0 flex items-center gap-1.5 p-1 rounded-full bg-black/95 backdrop-blur-2xl border border-white/15 shadow-2xl z-50"
               >
                 {/* Balance Masking / Privacy Toggle (Eye) */}
                 <PrivacyToggleButton
@@ -220,7 +326,7 @@ export default function BottomNav() {
                   prefetch={true}
                   onClick={() => setIsMoreOpen(false)}
                   className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-white flex items-center justify-center transition-colors cursor-pointer"
-                  title="Settings"
+                  title={t('nav.settings')}
                 >
                   <Settings size={18} strokeWidth={1.8} />
                 </Link>
@@ -241,54 +347,14 @@ export default function BottomNav() {
       >
         <nav className="relative bg-black border-t border-white/[0.08] shadow-[0_-4px_24px_rgba(0,0,0,0.85)] pb-[var(--ticknal-safe-area-bottom)]">
           <div className="h-[56px] grid grid-cols-5 w-full items-center px-1">
-            {NAV_ITEMS.map((item) => {
-              const isActive = currentNavId === item.id;
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  prefetch={true}
-                  onClick={() => setOptimisticNavId(item.id)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className="flex flex-col items-center justify-center h-full py-1 cursor-pointer group focus:outline-none min-w-0 active:scale-95 transition-transform duration-100"
-                >
-                  {/* Subtle active indicator pill */}
-                  <div
-                    className={`h-[2px] w-5 rounded-full transition-all duration-200 mb-1 ${
-                      isActive
-                        ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]'
-                        : 'bg-transparent'
-                    }`}
-                  />
-
-                  {/* Icon */}
-                  <div className="flex items-center justify-center">
-                    <Icon
-                      size={20}
-                      strokeWidth={isActive ? 2.2 : 1.7}
-                      className={`transition-colors duration-150 ${
-                        isActive
-                          ? 'text-white'
-                          : 'text-zinc-500 group-hover:text-zinc-300'
-                      }`}
-                    />
-                  </div>
-
-                  {/* Micro label */}
-                  <span
-                    className={`text-[10px] font-sans tracking-tight leading-tight mt-0.5 truncate max-w-[62px] text-center transition-colors duration-150 ${
-                      isActive
-                        ? 'font-semibold text-white'
-                        : 'font-medium text-zinc-500 group-hover:text-zinc-300'
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
+            {navItems.map((item) => (
+              <BottomNavItem
+                key={item.id}
+                item={item}
+                isActive={currentNavId === item.id}
+                onSelect={() => setOptimisticNavId(item.id)}
+              />
+            ))}
           </div>
         </nav>
       </div>

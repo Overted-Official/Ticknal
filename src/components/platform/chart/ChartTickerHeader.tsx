@@ -5,6 +5,7 @@ import { Globe } from '@/components/ui/icon-library';
 import type { ChartData } from './types';
 import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import { formatVolume } from './utils';
+import { useTranslation } from '@/lib/i18n';
 
 interface ChartTickerHeaderProps {
   symbol?: string;
@@ -25,6 +26,7 @@ export default function ChartTickerHeader({
   activeCandle,
   currency = 'EGP',
 }: ChartTickerHeaderProps) {
+  const { locale } = useTranslation();
   const displaySymbol = symbol.replace('.CA', '');
   const currentTickerItem = useMemo(() => {
     return (
@@ -49,10 +51,15 @@ export default function ChartTickerHeader({
   const diffPct = open > 0 ? (diff / open) * 100 : 0;
   const isUp = diff >= 0;
 
+  const currencyDisplay =
+    currency.toUpperCase() === 'EGP' && locale === 'ar'
+      ? 'ج.م'
+      : currency.toUpperCase();
+
   return (
-    <div className="absolute top-2.5 left-3 z-20 pointer-events-none select-none flex flex-col gap-0.5">
-      {/* Top Row: Logo + Company Name / Symbol · Timeframe · EGX */}
-      <div className="flex items-center gap-1.5 text-left">
+    <div className="absolute top-2.5 start-3 z-20 pointer-events-none select-none flex flex-col gap-0.5">
+      {/* Top Row: Logo + Company Name / Symbol · Timeframe · Currency */}
+      <div className="flex items-center gap-1.5 text-start">
         <div className="w-4 h-4 rounded-full flex items-center justify-center overflow-hidden shrink-0 text-white">
           {currentTickerItem.logoUrl ? (
             <img
@@ -70,7 +77,7 @@ export default function ChartTickerHeader({
             {currentTickerItem.companyName || displaySymbol}
           </span>
           <span className="text-text-muted font-normal text-xs shrink-0">
-            · {timeframe} · {currency.toUpperCase()}
+            · {timeframe} · {currencyDisplay}
           </span>
         </span>
       </div>
@@ -78,28 +85,43 @@ export default function ChartTickerHeader({
       {/* Bottom Row: OHLCV + Change Metrics */}
       {activeCandle && (
         <div className="flex items-center gap-2 font-sans text-[10px] sm:text-[11px] leading-tight tabular-nums overflow-x-auto no-scrollbar max-w-[calc(100vw-24px)]">
+          {activeCandle.time && (
+            <span className="text-white/70 font-medium bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded text-[9px] shrink-0">
+              {String(activeCandle.time)}
+            </span>
+          )}
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">O</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+              {locale === 'ar' ? 'اف:' : 'O'}
+            </span>
             <span className="text-text-primary font-medium">{open.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">H</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+              {locale === 'ar' ? 'أع:' : 'H'}
+            </span>
             <span className="text-text-primary font-medium">{high.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">L</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+              {locale === 'ar' ? 'أد:' : 'L'}
+            </span>
             <span className="text-text-primary font-medium">{low.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">C</span>
+            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+              {locale === 'ar' ? 'إغ:' : 'C'}
+            </span>
             <span className="text-text-primary font-medium">{close.toFixed(2)}</span>
           </div>
 
           <div className="hidden sm:flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[11px]">Vol</span>
+            <span className="text-text-muted font-sans text-[11px]">
+              {locale === 'ar' ? 'حجم:' : 'Vol'}
+            </span>
             <span className="text-text-primary font-medium">{formatVolume(volume)}</span>
           </div>
 

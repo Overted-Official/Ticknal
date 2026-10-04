@@ -10,6 +10,7 @@ import {
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type BankTransaction } from '@/types/bank';
 import { toEgp } from '@/lib/portfolio-finance';
+import { useTranslation } from '@/lib/i18n';
 import KPICard, { type KPICardProps } from '@/components/platform/home/investments/performance/kpi-rails/KPICard';
 import { type ClosedTradeItem, type LedgerPeriod, type TransactionsTimeframe } from './types';
 
@@ -28,6 +29,9 @@ export default function TransactionsKPIRail({
   overviewView = 'all',
 }: TransactionsKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
+  const currencySymbol = isAr ? 'ج.م' : '£';
 
   const formatNumber = (value: number, showSign: boolean = false): string => {
     if (isPrivacy) return '••••••';
@@ -108,23 +112,132 @@ export default function TransactionsKPIRail({
 
   // Dynamic titles and labels based on overviewView
   const inflowsConfig = {
-    title: overviewView === 'banking' ? 'Operating Inflows' : overviewView === 'investments' ? 'Capital Injected' : 'Total Inflows',
-    shortTitle: overviewView === 'investments' ? 'Injected' : 'Inflows',
-    badgeText: overviewView === 'investments' ? `${metrics.inflowCount} additions` : `${metrics.inflowCount} deposits`,
-    metaText: overviewView === 'banking' ? 'salary & income' : overviewView === 'investments' ? 'brokerage deposits' : 'received',
+    title:
+      overviewView === 'banking'
+        ? isAr
+          ? 'التدفقات التشغيلية'
+          : 'Operating Inflows'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'رأس المال المودع'
+          : 'Capital Injected'
+        : isAr
+        ? 'إجمالي التدفقات الواردة'
+        : 'Total Inflows',
+    shortTitle:
+      overviewView === 'investments'
+        ? isAr
+          ? 'المودع'
+          : 'Injected'
+        : isAr
+        ? 'الوارد'
+        : 'Inflows',
+    badgeText:
+      overviewView === 'investments'
+        ? isAr
+          ? `${metrics.inflowCount} إيداع`
+          : `${metrics.inflowCount} additions`
+        : isAr
+        ? `${metrics.inflowCount} إيداع`
+        : `${metrics.inflowCount} deposits`,
+    metaText:
+      overviewView === 'banking'
+        ? isAr
+          ? 'الراتب والدخل'
+          : 'salary & income'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'إيداعات التداول'
+          : 'brokerage deposits'
+        : isAr
+        ? 'مقبوضات'
+        : 'received',
   };
 
   const outflowsConfig = {
-    title: overviewView === 'banking' ? 'Living Expenses' : overviewView === 'investments' ? 'Capital Withdrawn' : 'Total Outflows',
-    shortTitle: overviewView === 'banking' ? 'Living Out' : overviewView === 'investments' ? 'Withdrawn' : 'Outflows',
-    badgeText: overviewView === 'investments' ? `${metrics.outflowCount} redemptions` : `${metrics.outflowCount} expenses`,
-    metaText: overviewView === 'banking' ? 'bills & lifestyle' : overviewView === 'investments' ? 'returned capital' : 'spent',
+    title:
+      overviewView === 'banking'
+        ? isAr
+          ? 'مصاريف المعيشة'
+          : 'Living Expenses'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'رأس المال المسحوب'
+          : 'Capital Withdrawn'
+        : isAr
+        ? 'إجمالي التدفقات الخارجة'
+        : 'Total Outflows',
+    shortTitle:
+      overviewView === 'banking'
+        ? isAr
+          ? 'المصاريف'
+          : 'Living Out'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'المسحوب'
+          : 'Withdrawn'
+        : isAr
+        ? 'الخارج'
+        : 'Outflows',
+    badgeText:
+      overviewView === 'investments'
+        ? isAr
+          ? `${metrics.outflowCount} سحب`
+          : `${metrics.outflowCount} redemptions`
+        : isAr
+        ? `${metrics.outflowCount} مصروف`
+        : `${metrics.outflowCount} expenses`,
+    metaText:
+      overviewView === 'banking'
+        ? isAr
+          ? 'الفواتير والمعيشة'
+          : 'bills & lifestyle'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'رأس مال مسترجع'
+          : 'returned capital'
+        : isAr
+        ? 'مدفوعات'
+        : 'spent',
   };
 
   const netFlowConfig = {
-    title: overviewView === 'banking' ? 'Net Living Surplus' : overviewView === 'investments' ? 'Net Capital Flow' : 'Net Cash Flow',
-    shortTitle: overviewView === 'banking' ? 'Net Surplus' : overviewView === 'investments' ? 'Net Injected' : 'Net Flow',
-    metaText: overviewView === 'banking' ? 'retained cash' : overviewView === 'investments' ? 'net allocated' : 'net surplus',
+    title:
+      overviewView === 'banking'
+        ? isAr
+          ? 'صافي فائض المعيشة'
+          : 'Net Living Surplus'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'صافي تدفق رأس المال'
+          : 'Net Capital Flow'
+        : isAr
+        ? 'صافي التدفق النقدي'
+        : 'Net Cash Flow',
+    shortTitle:
+      overviewView === 'banking'
+        ? isAr
+          ? 'صافي الفائض'
+          : 'Net Surplus'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'صافي المودع'
+          : 'Net Injected'
+        : isAr
+        ? 'صافي التدفق'
+        : 'Net Flow',
+    metaText:
+      overviewView === 'banking'
+        ? isAr
+          ? 'نقد محتجز'
+          : 'retained cash'
+        : overviewView === 'investments'
+        ? isAr
+          ? 'صافي مخصص'
+          : 'net allocated'
+        : isAr
+        ? 'فائض نقد'
+        : 'net surplus',
   };
 
   const cards: KPICardProps[] = [
@@ -137,10 +250,10 @@ export default function TransactionsKPIRail({
       iconBgClass: 'bg-profit-num text-white',
       iconColorClass: 'text-white',
       value: formatNumber(metrics.totalInflows),
-      unit: '£',
+      unit: currencySymbol,
       badgeText: inflowsConfig.badgeText,
       badgeClass: 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded',
-      changeText: `+${metrics.inflowCount} in`,
+      changeText: isAr ? `+${metrics.inflowCount} حركة` : `+${metrics.inflowCount} in`,
       changeColorClass: 'text-profit-num',
       metaText: inflowsConfig.metaText,
       sparklinePoints: metrics.inflowSpark,
@@ -155,10 +268,10 @@ export default function TransactionsKPIRail({
       iconBgClass: 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
       value: formatNumber(metrics.totalOutflows),
-      unit: '£',
+      unit: currencySymbol,
       badgeText: outflowsConfig.badgeText,
       badgeClass: 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
-      changeText: `-${metrics.outflowCount} out`,
+      changeText: isAr ? `-${metrics.outflowCount} حركة` : `-${metrics.outflowCount} out`,
       changeColorClass: 'text-loss-num',
       metaText: outflowsConfig.metaText,
       sparklinePoints: metrics.outflowSpark,
@@ -173,8 +286,15 @@ export default function TransactionsKPIRail({
       iconBgClass: metrics.netCashflow >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
       value: formatNumber(metrics.netCashflow, true),
-      unit: '£',
-      badgeText: metrics.savingsRate > 0 ? `${metrics.savingsRate.toFixed(1)}% saved` : 'Deficit',
+      unit: currencySymbol,
+      badgeText:
+        metrics.savingsRate > 0
+          ? isAr
+            ? `ادخار ${metrics.savingsRate.toFixed(1)}%`
+            : `${metrics.savingsRate.toFixed(1)}% saved`
+          : isAr
+          ? 'عجز'
+          : 'Deficit',
       badgeClass: metrics.netCashflow >= 0
         ? 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded'
         : 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
@@ -188,38 +308,50 @@ export default function TransactionsKPIRail({
       ? {
           id: 'kpi-savings-rate',
           targetId: 'section-activity-ledger',
-          title: 'Savings Rate',
-          shortTitle: 'Savings Rate',
+          title: isAr ? 'معدل الادخار' : 'Savings Rate',
+          shortTitle: isAr ? 'معدل الادخار' : 'Savings Rate',
           icon: Scale,
           iconBgClass: metrics.savingsRate >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
           iconColorClass: 'text-white',
           value: isPrivacy ? '••••••' : `${metrics.savingsRate.toFixed(1)}`,
           unit: '%',
-          badgeText: metrics.savingsRate > 0 ? `${formatNumber(metrics.netCashflow, true)} £` : 'Deficit',
+          badgeText:
+            metrics.savingsRate > 0
+              ? `${formatNumber(metrics.netCashflow, true)} ${currencySymbol}`
+              : isAr
+              ? 'عجز'
+              : 'Deficit',
           badgeClass: metrics.savingsRate >= 0
             ? 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded'
             : 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
           changeText: `${metrics.savingsRate >= 0 ? '+' : ''}${metrics.savingsRate.toFixed(1)}%`,
           changeColorClass: metrics.savingsRate >= 0 ? 'text-profit-num' : 'text-loss-num',
-          metaText: 'retained / income',
+          metaText: isAr ? 'محتجز / الدخل' : 'retained / income',
           sparklinePoints: metrics.netFlowSpark,
           sparklineTrend: metrics.savingsRate >= 0 ? 'up' : 'down',
         }
       : {
           id: 'kpi-capital-traded',
           targetId: 'section-activity-ledger',
-          title: 'Trading Realized P/L',
-          shortTitle: 'Trading P/L',
+          title: isAr ? 'أرباح/خسائر التداول المحققة' : 'Trading Realized P/L',
+          shortTitle: isAr ? 'أرباح التداول' : 'Trading P/L',
           icon: TrendingUp,
           iconBgClass: metrics.totalRealizedPnl >= 0 ? 'bg-brand-blue text-white' : 'bg-loss-chart text-white',
           iconColorClass: 'text-white',
           value: formatNumber(metrics.totalRealizedPnl, true),
-          unit: '£',
-          badgeText: metrics.tradeWinRate !== null ? `${metrics.tradeWinRate.toFixed(0)}% win` : `${metrics.closedTradeCount} trades`,
+          unit: currencySymbol,
+          badgeText:
+            metrics.tradeWinRate !== null
+              ? isAr
+                ? `${metrics.tradeWinRate.toFixed(0)}% صفقات رابحة`
+                : `${metrics.tradeWinRate.toFixed(0)}% win`
+              : isAr
+              ? `${metrics.closedTradeCount} صفقة`
+              : `${metrics.closedTradeCount} trades`,
           badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/5 px-1.5 py-0.5 rounded',
-          changeText: `${metrics.closedTradeCount} closed`,
+          changeText: isAr ? `${metrics.closedTradeCount} مغلقة` : `${metrics.closedTradeCount} closed`,
           changeColorClass: 'text-zinc-400',
-          metaText: 'realized',
+          metaText: isAr ? 'محقق' : 'realized',
           sparklinePoints: metrics.tradeSpark,
           sparklineTrend: metrics.totalRealizedPnl >= 0 ? 'up' : 'down',
         },

@@ -4,6 +4,8 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { computeTreemap, type TreemapNode, type TreemapRect } from '@/lib/finance/treemapMath';
 import type { SectorPerformanceItem, StockPerformanceItem, TickerStrategySignalState } from '@/lib/sectors-math';
 import { Sparkles, TrendingUp, TrendingDown, CircleDot, LogOut, Target, Zap, Layers, X } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 
 interface SectorTreemapProps {
   sectors: SectorPerformanceItem[];
@@ -102,6 +104,7 @@ export default function SectorTreemap({
   onSelectSector,
   onSelectTicker,
 }: SectorTreemapProps) {
+  const { locale } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 500 });
   const [hoveredStock, setHoveredStock] = useState<StockPerformanceItem | null>(null);
@@ -243,7 +246,11 @@ export default function SectorTreemap({
           onClick={() => onSelectSector('')}
           className="absolute top-2 right-2 z-30 bg-black/80 hover:bg-black text-xs text-neutral-300 hover:text-white px-2.5 py-1 rounded-md border border-white/10 backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer shadow-lg"
         >
-          <span>Reset {selectedSector}</span>
+          <span>
+            {locale === 'ar'
+              ? `إعادة ضبط ${localizeSectorName(selectedSector, locale)}`
+              : `Reset ${selectedSector}`}
+          </span>
           <X size={12} />
         </button>
       )}
@@ -252,7 +259,9 @@ export default function SectorTreemap({
       <div className="flex-1 min-h-0 relative w-full h-full overflow-hidden">
         {layout.length === 0 && (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-neutral-500 text-xs">
-            <span>No market heatmap data available</span>
+            <span>
+              {locale === 'ar' ? 'لا تتوفر بيانات لخريطة أداء السوق' : 'No market heatmap data available'}
+            </span>
           </div>
         )}
         {layout.map((sectorRect) => {
@@ -305,7 +314,7 @@ export default function SectorTreemap({
                     }`}
                   >
                     <span className="truncate max-w-[65%]">
-                      {sectorData.sector}
+                      {localizeSectorName(sectorData.sector, locale)}
                     </span>
                     {analysisMode === 'strategy' ? (
                       <div className="flex items-center gap-1.5 tabular-nums text-[10px]">
@@ -317,7 +326,7 @@ export default function SectorTreemap({
                         </span>
                         {(activeW > 0 || activeL > 0) && (
                           <span className="text-white/50 font-normal">
-                            ({activeW}W/{activeL}L)
+                            ({activeW}{locale === 'ar' ? ' ربح' : 'W'}/{activeL}{locale === 'ar' ? ' خسارة' : 'L'})
                           </span>
                         )}
                       </div>
@@ -442,14 +451,14 @@ export default function SectorTreemap({
                           <span className="text-[10px] text-white/60 tabular-nums font-normal mt-0.5">
                             {analysisMode === 'strategy'
                               ? isBuy
-                                ? 'Fresh Buy'
+                                ? (locale === 'ar' ? 'شراء فوري' : 'Fresh Buy')
                                 : isLong
-                                ? `Long (${signalState?.tradeReturnPct ? (signalState.tradeReturnPct > 0 ? '+' : '') + signalState.tradeReturnPct.toFixed(0) + '%' : 'Hold'})`
+                                ? `${locale === 'ar' ? 'شراء' : 'Long'} (${signalState?.tradeReturnPct ? (signalState.tradeReturnPct > 0 ? '+' : '') + signalState.tradeReturnPct.toFixed(0) + '%' : (locale === 'ar' ? 'احتفاظ' : 'Hold')})`
                                 : isExit
-                                ? 'Exited'
+                                ? (locale === 'ar' ? 'خروج' : 'Exited')
                                 : stratTradesCount > 0
-                                ? `ROI: ${stratRoi > 0 ? '+' : ''}${stratRoi.toFixed(0)}%`
-                                : 'Flat'
+                                ? `${locale === 'ar' ? 'العائد:' : 'ROI:'} ${stratRoi > 0 ? '+' : ''}${stratRoi.toFixed(0)}%`
+                                : (locale === 'ar' ? 'مستقر' : 'Flat')
                               : stock.endPrice.toFixed(2)}
                           </span>
                         )}
@@ -498,24 +507,24 @@ export default function SectorTreemap({
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="font-bold text-white text-sm tabular-nums">{hoveredStock.symbol}</span>
                   <span className="text-[10px] text-plt-muted font-medium px-1.5 py-0.5 rounded bg-white/[0.06] truncate">
-                    {hoveredStock.sector}
+                    {localizeSectorName(hoveredStock.sector, locale)}
                   </span>
                 </div>
                 {signalsMap[hoveredStock.symbol].status === 'BUY_FRESH' ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-400 text-black animate-pulse shadow-xs">
-                    BUY NOW
+                    {locale === 'ar' ? 'شراء فوري' : 'BUY NOW'}
                   </span>
                 ) : signalsMap[hoveredStock.symbol].status === 'LONG_ACTIVE' ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/50">
-                    ACTIVE LONG
+                    {locale === 'ar' ? 'مركز شراء نشط' : 'ACTIVE LONG'}
                   </span>
                 ) : signalsMap[hoveredStock.symbol].status === 'EXIT_RECENT' ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-400/50">
-                    RECENT EXIT
+                    {locale === 'ar' ? 'خروج حديث' : 'RECENT EXIT'}
                   </span>
                 ) : (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-white/[0.06] text-plt-muted">
-                    FLAT / CASH
+                    {locale === 'ar' ? 'مستقر / سيولة' : 'FLAT / CASH'}
                   </span>
                 )}
               </div>
@@ -527,7 +536,9 @@ export default function SectorTreemap({
               {/* Strategy Model Cumulative Performance & Alpha Breakdown */}
               <div className="flex flex-col gap-1 pt-0.5 border-t border-plt-border/40 text-xs tabular-nums">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-plt-muted font-medium">Strategy Alpha (α):</span>
+                  <span className="text-[11px] text-plt-muted font-medium">
+                    {locale === 'ar' ? 'ألفا الاستراتيجية (α):' : 'Strategy Alpha (α):'}
+                  </span>
                   <span
                     className={`font-bold ${
                       ((signalsMap[hoveredStock.symbol].sysRoi ?? 0) - hoveredStock.returnPct) >= 0
@@ -536,18 +547,18 @@ export default function SectorTreemap({
                     }`}
                   >
                     {((signalsMap[hoveredStock.symbol].sysRoi ?? 0) - hoveredStock.returnPct) > 0 ? '+' : ''}
-                    {((signalsMap[hoveredStock.symbol].sysRoi ?? 0) - hoveredStock.returnPct).toFixed(1)}% α
+                    {((signalsMap[hoveredStock.symbol].sysRoi ?? 0) - hoveredStock.returnPct).toFixed(1)}% {locale === 'ar' ? 'ألفا' : 'α'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-plt-muted">
-                  <span>Strategy Net ROI:</span>
+                  <span>{locale === 'ar' ? 'صافي عائد الاستراتيجية:' : 'Strategy Net ROI:'}</span>
                   <span className={`font-semibold ${(signalsMap[hoveredStock.symbol].sysRoi ?? 0) >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>
                     {(signalsMap[hoveredStock.symbol].sysRoi ?? 0) > 0 ? '+' : ''}
                     {(signalsMap[hoveredStock.symbol].sysRoi ?? 0).toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-plt-muted">
-                  <span>Buy & Hold ROI:</span>
+                  <span>{locale === 'ar' ? 'عائد الشراء والاحتفاظ:' : 'Buy & Hold ROI:'}</span>
                   <span className={`font-semibold ${hoveredStock.returnPct >= 0 ? 'text-plt-profit/80' : 'text-plt-risk/80'}`}>
                     {hoveredStock.returnPct > 0 ? '+' : ''}
                     {hoveredStock.returnPct.toFixed(1)}%
@@ -559,7 +570,9 @@ export default function SectorTreemap({
               {(signalsMap[hoveredStock.symbol].status === 'LONG_ACTIVE' || signalsMap[hoveredStock.symbol].status === 'BUY_FRESH') ? (
                 <div className="bg-white/[0.03] border border-cyan-500/20 rounded-lg p-2 flex flex-col gap-1.5 tabular-nums">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-cyan-300 font-semibold">Open Position Gain/Loss:</span>
+                    <span className="text-[11px] text-cyan-300 font-semibold">
+                      {locale === 'ar' ? 'ربح/خسارة المركز المفتوح:' : 'Open Position Gain/Loss:'}
+                    </span>
                     <span
                       className={`font-bold text-xs ${
                         (signalsMap[hoveredStock.symbol].tradeReturnPct ?? 0) >= 0
@@ -572,44 +585,56 @@ export default function SectorTreemap({
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-plt-muted">
-                    <span>Entry Price:</span>
+                    <span>{locale === 'ar' ? 'سعر الدخول:' : 'Entry Price:'}</span>
                     <span className="text-plt-text font-medium">
                       {signalsMap[hoveredStock.symbol].entryPrice
-                        ? `${signalsMap[hoveredStock.symbol].entryPrice!.toFixed(2)} EGP`
-                        : 'N/A'}
+                        ? `${signalsMap[hoveredStock.symbol].entryPrice!.toFixed(2)} ${locale === 'ar' ? 'ج.م' : 'EGP'}`
+                        : (locale === 'ar' ? 'غير متوفر' : 'N/A')}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-plt-muted">
-                    <span>Current Price:</span>
+                    <span>{locale === 'ar' ? 'السعر الحالي:' : 'Current Price:'}</span>
                     <span className="text-plt-text font-medium">
-                      {(signalsMap[hoveredStock.symbol].currentPrice || hoveredStock.endPrice).toFixed(2)} EGP
+                      {(signalsMap[hoveredStock.symbol].currentPrice || hoveredStock.endPrice).toFixed(2)} {locale === 'ar' ? 'ج.م' : 'EGP'}
                     </span>
                   </div>
                   {signalsMap[hoveredStock.symbol].barsHeld !== undefined && (
                     <div className="flex items-center justify-between text-[11px] text-plt-muted">
-                      <span>Holding Duration:</span>
+                      <span>{locale === 'ar' ? 'مدة الاحتفاظ:' : 'Holding Duration:'}</span>
                       <span className="text-plt-text font-medium">
-                        {signalsMap[hoveredStock.symbol].barsHeld} Trading Days
+                        {signalsMap[hoveredStock.symbol].barsHeld} {locale === 'ar' ? 'أيام تداول' : 'Trading Days'}
                       </span>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-2 flex items-center justify-between text-[11px] text-plt-muted">
-                  <span>Open Trade Status:</span>
-                  <span className="text-plt-muted font-medium">No open position (Flat)</span>
+                  <span>{locale === 'ar' ? 'حالة التداول:' : 'Open Trade Status:'}</span>
+                  <span className="text-plt-muted font-medium">
+                    {locale === 'ar' ? 'لا يوجد مركز مفتوح (مستقر)' : 'No open position (Flat)'}
+                  </span>
                 </div>
               )}
 
               {/* Strategy Model Historical Track Record on this Stock */}
               <div className="pt-1 border-t border-white/[0.08] flex flex-col gap-1 text-[10px] text-plt-muted tabular-nums">
                 <div className="flex items-center justify-between">
-                  <span>Model Win Rate: <span className="font-bold text-white">{signalsMap[hoveredStock.symbol].winRate !== undefined ? `${signalsMap[hoveredStock.symbol].winRate!.toFixed(0)}%` : 'N/A'}</span></span>
-                  <span>Total Trades: <span className="font-bold text-white">{signalsMap[hoveredStock.symbol].tradesCount || 0}</span></span>
+                  <span>
+                    {locale === 'ar' ? 'نسبة نجاح النموذج: ' : 'Model Win Rate: '}
+                    <span className="font-bold text-white">
+                      {signalsMap[hoveredStock.symbol].winRate !== undefined
+                        ? `${signalsMap[hoveredStock.symbol].winRate!.toFixed(0)}%`
+                        : (locale === 'ar' ? 'غير متوفر' : 'N/A')}
+                    </span>
+                  </span>
+                  <span>
+                    {locale === 'ar' ? 'إجمالي الصفقات: ' : 'Total Trades: '}
+                    <span className="font-bold text-white">{signalsMap[hoveredStock.symbol].tradesCount || 0}</span>
+                  </span>
                 </div>
                 {signalsMap[hoveredStock.symbol].maxAdverseExcursion !== undefined && signalsMap[hoveredStock.symbol].maxAdverseExcursion !== 0 && (
                   <div className="flex items-center justify-between pt-0.5 border-t border-white/[0.04]">
-                    <span>Max Adverse Excursion (MAE):</span>
+                    <span>{locale === 'ar' ? 'أقصى تراجع معاكس (MAE):' : 'Max Adverse Excursion (MAE):'}</span>
                     <span className="font-semibold text-rose-400">
                       {signalsMap[hoveredStock.symbol].maxAdverseExcursion!.toFixed(1)}%
                     </span>
@@ -624,7 +649,7 @@ export default function SectorTreemap({
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="font-bold text-white text-sm tabular-nums">{hoveredStock.symbol}</span>
                   <span className="text-[10px] text-plt-muted font-medium px-1.5 py-0.5 rounded bg-white/[0.06] truncate">
-                    {hoveredStock.sector}
+                    {localizeSectorName(hoveredStock.sector, locale)}
                   </span>
                 </div>
                 <span
@@ -645,17 +670,17 @@ export default function SectorTreemap({
 
               <div className="space-y-1 pt-0.5 text-xs tabular-nums">
                 <div className="flex items-center justify-between text-plt-muted">
-                  <span>Price Range:</span>
+                  <span>{locale === 'ar' ? 'نطاق السعر:' : 'Price Range:'}</span>
                   <span className="text-plt-text font-medium">
-                    {hoveredStock.startPrice.toFixed(2)} → {hoveredStock.endPrice.toFixed(2)} EGP
+                    {hoveredStock.startPrice.toFixed(2)} → {hoveredStock.endPrice.toFixed(2)} {locale === 'ar' ? 'ج.م' : 'EGP'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-plt-muted">
-                  <span>Traded Turnover:</span>
+                  <span>{locale === 'ar' ? 'قيمة التداول:' : 'Traded Turnover:'}</span>
                   <span className="text-plt-text font-medium">
                     {hoveredStock.turnover >= 1_000_000_000
-                      ? `${(hoveredStock.turnover / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bn EGP`
-                      : `${(hoveredStock.turnover / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} M EGP`}
+                      ? `${(hoveredStock.turnover / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${locale === 'ar' ? 'مليار ج.م' : 'Bn EGP'}`
+                      : `${(hoveredStock.turnover / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${locale === 'ar' ? 'مليون ج.م' : 'M EGP'}`}
                   </span>
                 </div>
               </div>

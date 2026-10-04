@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/icon-library';
 import { createClient } from '@/lib/supabase/client';
 import InlineSpinner from '@/components/ui/InlineSpinner';
+import { useTranslation } from '@/lib/i18n';
 
 export type SettingsUserProfile = {
   id: string;
@@ -28,6 +29,7 @@ interface UserProfileWidgetProps {
 
 export default function UserProfileWidget({ userProfile }: UserProfileWidgetProps) {
   const router = useRouter();
+  const { t, locale, isRTL } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(userProfile.avatarUrl);
@@ -38,14 +40,14 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
 
   const memberSince = useMemo(() => {
     try {
-      return new Date(userProfile.createdAt).toLocaleDateString('en-US', {
+      return new Date(userProfile.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', {
         month: 'short',
         year: 'numeric',
       });
     } catch {
-      return 'Recently';
+      return locale === 'ar' ? 'حديثاً' : 'Recently';
     }
-  }, [userProfile.createdAt]);
+  }, [userProfile.createdAt, locale]);
 
   const initials = useMemo(() => {
     if (userProfile.name) {
@@ -161,10 +163,10 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-text-muted">
               <span className="flex items-center gap-1">
                 <Calendar size={12} />
-                Member since {memberSince}
+                {locale === 'ar' ? `عضو منذ ${memberSince}` : `Member since ${memberSince}`}
               </span>
               <span>•</span>
-              <span className="capitalize">Auth: {userProfile.provider}</span>
+              <span className="capitalize">{locale === 'ar' ? 'المصادقة' : 'Auth'}: {userProfile.provider}</span>
               <span>•</span>
               <button
                 type="button"
@@ -173,7 +175,7 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
                 className="text-brand-blue hover:opacity-80 inline-flex items-center gap-1 cursor-pointer font-medium transition-colors"
               >
                 <Camera size={11} />
-                <span>{isUploadingAvatar ? 'Uploading...' : 'Change Photo'}</span>
+                <span>{isUploadingAvatar ? (locale === 'ar' ? 'جاري الرفع...' : 'Uploading...') : (locale === 'ar' ? 'تغيير الصورة' : 'Change Photo')}</span>
               </button>
             </div>
 
@@ -192,8 +194,8 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
           disabled={isLoggingOut}
           className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-loss-num bg-loss-num/10 hover:bg-loss-num/20 border border-loss-num/30 transition-colors cursor-pointer shrink-0"
         >
-          <LogOut size={14} />
-          <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
+          <LogOut size={14} className={isRTL ? 'rotate-180' : ''} />
+          <span>{isLoggingOut ? (locale === 'ar' ? 'جاري الخروج...' : 'Signing out...') : (locale === 'ar' ? 'تسجيل الخروج' : 'Sign Out')}</span>
         </button>
       </div>
     </div>

@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 
 import type { StrategySimulationSectionProps, GroupBy, QuickFilter, StrategyTimeframe } from './simulation/types';
 import { useStrategySimulation } from './simulation/useStrategySimulation';
@@ -32,6 +34,8 @@ export default function StrategySimulationSection({
   customEndDate = '',
   onCustomEndDateChange = () => {},
 }: StrategySimulationSectionProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
   const router = useRouter();
   const [selectedSectorFilter, setSelectedSectorFilter] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useState<GroupBy>('sector');
@@ -62,9 +66,13 @@ export default function StrategySimulationSection({
       {/* 1. Section Header + Timeframe Controls Next to Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h2 className="section-title">Algorithms Performance</h2>
+          <h2 className="section-title">
+            {isAr ? 'أداء الخوارزميات' : 'Algorithms Performance'}
+          </h2>
           <p className="section-subtitle">
-            Simulate algorithmic strategy returns across all sectors and tickers against Buy &amp; Hold and the EGX30 benchmark
+            {isAr
+              ? 'محاكاة عوائد الاستراتيجيات الخوارزمية عبر كافة القطاعات والأسهم مقارنة باستراتيجية الشراء والاحتفاظ ومؤشر EGX30'
+              : 'Simulate algorithmic strategy returns across all sectors and tickers against Buy & Hold and the EGX30 benchmark'}
           </p>
         </div>
 
@@ -87,10 +95,10 @@ export default function StrategySimulationSection({
               className={`seg-control-btn flex items-center gap-1 ${
                 timeframePreset === 'custom' ? 'seg-control-btn-active' : ''
               }`}
-              title="Custom Date Range"
+              title={isAr ? 'نطاق زمني مخصص' : 'Custom Date Range'}
             >
               <Calendar size={11} />
-              <span className="hidden sm:inline">Custom</span>
+              <span className="hidden sm:inline">{isAr ? 'مخصص' : 'Custom'}</span>
             </button>
           </div>
 
@@ -134,14 +142,16 @@ export default function StrategySimulationSection({
       <div className="space-y-3 pt-2">
         {/* Screener Header */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-text-primary">Screener</span>
+          <span className="text-sm font-semibold text-text-primary font-sans">
+            {isAr ? 'الماسح' : 'Screener'}
+          </span>
           {selectedSectorFilter && (
             <button
               type="button"
               onClick={() => setSelectedSectorFilter(null)}
-              className="ml-1 flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/[0.15] border border-white/15 text-[11px] font-medium text-white transition cursor-pointer"
+              className="ms-1 flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/[0.15] border border-white/15 text-[11px] font-medium text-white transition cursor-pointer font-sans"
             >
-              <span>{selectedSectorFilter}</span>
+              <span>{localizeSectorName(selectedSectorFilter, locale)}</span>
               <span className="text-white/60">✕</span>
             </button>
           )}

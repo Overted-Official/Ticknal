@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 export interface StrategyNavSection {
   id: string;
@@ -8,12 +9,17 @@ export interface StrategyNavSection {
   shortLabel: string;
 }
 
-export const STRATEGY_SECTIONS: StrategyNavSection[] = [
-  { id: 'simulation-overview', label: 'Performance Simulation', shortLabel: 'Simulation' },
-  { id: 'strategy-models', label: 'Algorithmic Models', shortLabel: 'Models' },
-];
-
 export default function StrategiesFloatingNav() {
+  const { t, locale } = useTranslation();
+
+  const sections: StrategyNavSection[] = useMemo(
+    () => [
+      { id: 'simulation-overview', label: locale === 'ar' ? 'محاكاة الأداء' : 'Performance Simulation', shortLabel: locale === 'ar' ? 'المحاكاة' : 'Simulation' },
+      { id: 'strategy-models', label: locale === 'ar' ? 'النماذج الخوارزمية' : 'Algorithmic Models', shortLabel: locale === 'ar' ? 'النماذج' : 'Models' },
+    ],
+    [locale]
+  );
+
   const [activeSection, setActiveSection] = useState<string>('simulation-overview');
 
   const scrollToSection = useCallback((id: string) => {
@@ -40,8 +46,8 @@ export default function StrategiesFloatingNav() {
 
   useEffect(() => {
     const handleScroll = () => {
-      for (let i = STRATEGY_SECTIONS.length - 1; i >= 0; i--) {
-        const sectionId = STRATEGY_SECTIONS[i].id;
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const sectionId = sections[i].id;
         const element = document.getElementById(sectionId);
         if (element) {
           const rect = element.getBoundingClientRect();
@@ -51,7 +57,7 @@ export default function StrategiesFloatingNav() {
           }
         }
       }
-      setActiveSection(STRATEGY_SECTIONS[0].id);
+      setActiveSection(sections[0].id);
     };
 
     const container = document.querySelector('.command-surface-page');
@@ -67,7 +73,7 @@ export default function StrategiesFloatingNav() {
       }
       window.removeEventListener('scroll', handleScroll, { capture: true });
     };
-  }, []);
+  }, [sections]);
 
   return (
     <nav
@@ -86,7 +92,7 @@ export default function StrategiesFloatingNav() {
             aria-orientation="horizontal"
             className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full"
           >
-            {STRATEGY_SECTIONS.map((sec) => {
+            {sections.map((sec) => {
               const isSelected = activeSection === sec.id;
 
               return (

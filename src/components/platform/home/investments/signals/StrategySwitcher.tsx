@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 export interface StrategyMeta {
   name: string;
@@ -90,6 +91,9 @@ export default function StrategySwitcher({
   onSelectStrategy,
   availableStrategies,
 }: StrategySwitcherProps) {
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
+
   // Always include all active system strategies in the switcher
   const systemStrategies = ['ALL', 'psi', 'psi_v2', 'hydra'];
   const strategyList = Array.from(new Set([...systemStrategies, ...(availableStrategies || []).filter((s) => s !== 'thoth_egx_macro')]));
@@ -102,6 +106,7 @@ export default function StrategySwitcher({
           shortName: id.toUpperCase(),
         };
         const isSelected = selectedStrategy === id;
+        const displayName = id === 'ALL' && isArabic ? 'جميع الاستراتيجيات' : meta.name;
 
         return (
           <button
@@ -110,7 +115,7 @@ export default function StrategySwitcher({
             onClick={() => onSelectStrategy(id)}
             className={`seg-control-btn whitespace-nowrap ${isSelected ? 'seg-control-btn-active' : ''}`}
           >
-            {meta.name}
+            {displayName}
           </button>
         );
       })}

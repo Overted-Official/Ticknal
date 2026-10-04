@@ -9,6 +9,8 @@ import WatchlistSignalFilterPopover, {
   type SignalFilterConfig,
   DEFAULT_SIGNAL_FILTER,
 } from './sidebar/WatchlistSignalFilterPopover';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -48,6 +50,7 @@ export default function RightSidebar({
   timeframe = 'D',
   rangeData
 }: RightSidebarProps) {
+  const { locale, isRTL } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: quoteData } = useSWR(`/api/quote?symbol=${selectedSymbol}`, fetcher, {
@@ -326,11 +329,11 @@ export default function RightSidebar({
 
   return (
     <div
-      className="bg-cold-gray-900 border-l border-border-subtle flex flex-col select-none relative shrink-0 text-plt-text font-sans"
+      className="bg-cold-gray-900 ltr:border-l rtl:border-r border-border-subtle flex flex-col select-none relative shrink-0 text-plt-text font-sans"
       style={{ width: `${sidebarWidth}px` }}
     >
       <div
-        className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-white/40 active:bg-white/70 z-50 transition-colors"
+        className="absolute ltr:left-0 rtl:right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-white/40 active:bg-white/70 z-50 transition-colors"
         onMouseDown={() => setIsResizing(true)}
       />
 
@@ -338,21 +341,21 @@ export default function RightSidebar({
       <div className="p-2 border-b border-white/[0.08] bg-black/60 shrink-0 flex flex-col gap-2">
         <div className="flex items-center gap-1.5">
           <div className="relative flex items-center flex-1 min-w-0">
-            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-muted">
+            <div className="absolute inset-y-0 start-0 ps-2.5 flex items-center pointer-events-none text-text-muted">
               <Search size={13} />
             </div>
             <input
               type="text"
-              placeholder={`Search ${selectedCategory.toLowerCase()}...`}
+              placeholder={locale === 'ar' ? 'بحث عن أسهم أو شركات...' : `Search ${selectedCategory.toLowerCase()}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-7 w-full rounded-md bg-surface-input border border-border-subtle pl-7 pr-6 text-[11px] text-text-primary placeholder:text-text-muted placeholder:text-[11px] focus:border-border-input-hover focus:outline-none transition-colors leading-none"
+              className="h-7 w-full rounded-md bg-surface-input border border-border-subtle ps-7 pe-6 text-[11px] text-text-primary placeholder:text-text-muted placeholder:text-[11px] focus:border-border-input-hover focus:outline-none transition-colors leading-none"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-2 flex items-center text-text-muted hover:text-white transition-colors"
+                className="absolute inset-y-0 end-0 pe-2 flex items-center text-text-muted hover:text-white transition-colors"
               >
                 <X size={13} />
               </button>
@@ -363,11 +366,15 @@ export default function RightSidebar({
               type="button"
               onClick={() => setIsFilterOpen((prev) => !prev)}
               title={
-                signalFilter.isActive
+                locale === 'ar'
+                  ? signalFilter.isActive
+                    ? `تصفية الإشارات نشطة (${matchingCount} أوراق مطابقة)`
+                    : 'تصفية الأوراق المالية حسب إشارات النماذج'
+                  : signalFilter.isActive
                   ? `Signal Filter Active (${matchingCount} tickers matched)`
                   : 'Filter tickers by strategy signals'
               }
-              aria-label="Filter tickers"
+              aria-label={locale === 'ar' ? 'تصفية الأوراق المالية' : 'Filter tickers'}
               className={`h-7 w-7 rounded-md border flex items-center justify-center shrink-0 transition-all relative ${
                 signalFilter.isActive
                   ? 'bg-brand-blue/15 border-brand-blue text-brand-blue shadow-xs'
@@ -395,16 +402,19 @@ export default function RightSidebar({
 
         {/* Category Switcher: EGX | Metals | Funds */}
         <div className="pill-switch pill-switch-full">
-          {(['EGX', 'Metals', 'Funds'] as const).map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`pill-switch-btn ${selectedCategory === cat ? 'pill-switch-btn-active font-semibold' : ''}`}
-            >
-              {cat}
-            </button>
-          ))}
+          {(['EGX', 'Metals', 'Funds'] as const).map((cat) => {
+            const label = cat === 'EGX' ? (locale === 'ar' ? 'البورصة' : 'EGX') : cat === 'Metals' ? (locale === 'ar' ? 'المعادن' : 'Metals') : (locale === 'ar' ? 'الصناديق' : 'Funds');
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`pill-switch-btn ${selectedCategory === cat ? 'pill-switch-btn-active font-semibold' : ''}`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -414,46 +424,54 @@ export default function RightSidebar({
           <div className="flex items-center gap-1.5 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-blue shrink-0 animate-pulse" />
             <span className="text-text-muted truncate">
-              Signals:{' '}
+              {locale === 'ar' ? 'الإشارات: ' : 'Signals: '}
               <span className="text-plt-text font-medium">
-                {signalFilter.signals.join('/')}
+                {signalFilter.signals.map((s) => (locale === 'ar' ? (s === 'BUY' ? 'شراء' : 'بيع') : s)).join('/')}
               </span>{' '}
               ·{' '}
               <span className="text-plt-text font-medium">
                 {signalFilter.strategies
-                  .map((s) => (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon'))
+                  .map((s) => (locale === 'ar' ? (s === 'hydra' ? 'هيدرا' : s === 'psi_v2' ? 'سيربيروس' : s === 'thoth_egx_macro' ? 'مؤرشف' : 'تايفون') : (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon')))
                   .join(', ')}
               </span>{' '}
-              ({signalFilter.lookbackDays}D)
+              ({signalFilter.lookbackDays}{locale === 'ar' ? ' يوم' : 'D'})
             </span>
           </div>
           <button
             type="button"
             onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
             className="btn-typography text-text-muted hover:text-loss-num px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-surface-hover-subtle"
-            title="Clear filter"
+            title={locale === 'ar' ? 'مسح التصفية' : 'Clear filter'}
           >
-            Clear
+            {locale === 'ar' ? 'مسح' : 'Clear'}
           </button>
         </div>
       )}
 
       {/* Columns Header */}
       <div className="watchlist-header shrink-0">
-        <div className="truncate">Symbol</div>
-        <div className="text-right">Last</div>
-        <div className="text-right">Chg%</div>
-        <div className="text-right">Vol</div>
+        <div className="truncate">{locale === 'ar' ? 'الرمز' : 'Symbol'}</div>
+        <div className="text-right">{locale === 'ar' ? 'السعر' : 'Last'}</div>
+        <div className="text-right">{locale === 'ar' ? 'التغير%' : 'Chg%'}</div>
+        <div className="text-right">{locale === 'ar' ? 'الحجم' : 'Vol'}</div>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {groupedWatchlist.length === 0 ? (
           <div className="p-6 text-center text-text-muted flex flex-col items-center justify-center space-y-2 h-52">
             <SlidersHorizontal size={22} className="text-text-muted stroke-1" />
-            <p className="text-[11px] font-medium text-plt-text">No matching {selectedCategory} tickers</p>
+            <p className="text-[11px] font-medium text-plt-text">
+              {locale === 'ar'
+                ? `لم يتم العثور على أوراق مالية مطابقة في ${selectedCategory === 'EGX' ? 'البورصة' : selectedCategory === 'Metals' ? 'المعادن' : 'الصناديق'}`
+                : `No matching ${selectedCategory} tickers`}
+            </p>
             <p className="text-[10px] text-text-muted max-w-[200px] leading-relaxed">
               {signalFilter.isActive
-                ? `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map(s => s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon').join(', ')} in the last ${signalFilter.lookbackDays} days.`
+                ? locale === 'ar'
+                  ? `لم تظهر إشارات ${signalFilter.signals.map((s) => (s === 'BUY' ? 'شراء' : 'بيع')).join(' أو ')} من ${signalFilter.strategies.map((s) => (s === 'hydra' ? 'هيدرا' : s === 'psi_v2' ? 'سيربيروس' : s === 'thoth_egx_macro' ? 'مؤرشف' : 'تايفون')).join('، ')} خلال آخر ${signalFilter.lookbackDays} أيام.`
+                  : `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map((s) => (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon')).join(', ')} in the last ${signalFilter.lookbackDays} days.`
+                : locale === 'ar'
+                ? 'جرب البحث بكلمات أخرى.'
                 : 'Try a different search query.'}
             </p>
             {signalFilter.isActive && (
@@ -462,7 +480,7 @@ export default function RightSidebar({
                 onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
                 className="mt-1 btn-typography text-brand-blue hover:underline"
               >
-                Clear signal filter
+                {locale === 'ar' ? 'إلغاء تصفية الإشارات' : 'Clear signal filter'}
               </button>
             )}
           </div>
@@ -478,7 +496,7 @@ export default function RightSidebar({
                   className="flex w-full items-center gap-1.5 px-2.5 h-[25px] text-left text-[10.5px] tracking-wider text-text-muted transition-colors hover:text-plt-text group border-b border-white/[0.08] bg-cold-gray-900 sticky top-0 z-10"
                 >
                   {collapsed ? <ChevronRight size={13} className="text-text-muted/60 group-hover:text-plt-text shrink-0" /> : <ChevronDown size={13} className="text-text-muted/60 group-hover:text-plt-text shrink-0" />}
-                  <span className="min-w-0 flex-1 truncate font-medium">{sector}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">{localizeSectorName(sector, locale)}</span>
                   <span className="text-[9.5px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-surface-raised text-text-muted shrink-0">{items.length}</span>
                 </button>
 
@@ -520,14 +538,14 @@ export default function RightSidebar({
                           </span>
                           {matchingSignal && (
                             <span
-                              title={`${matchingSignal.strategyLabel}: ${matchingSignal.signal.signal} on ${matchingSignal.signal.date} (${matchingSignal.signal.barsAgo ?? 0} bars ago)`}
+                              title={`${matchingSignal.strategyLabel}: ${matchingSignal.signal.signal === 'BUY' ? (locale === 'ar' ? 'شراء' : 'BUY') : (locale === 'ar' ? 'بيع' : 'SELL')} on ${matchingSignal.signal.date} (${matchingSignal.signal.barsAgo ?? 0} ${locale === 'ar' ? 'شمعات مضت' : 'bars ago'})`}
                               className={`text-[7.5px] font-sans tabular-nums font-semibold px-1 py-[1.5px] rounded leading-none border shrink-0 ${
                                 matchingSignal.signal.signal === 'BUY'
                                   ? 'bg-profit-num/15 text-profit-num border-profit-num/30'
                                   : 'bg-loss-num/15 text-loss-num border-loss-num/30'
                               }`}
                             >
-                              {matchingSignal.signal.signal}
+                              {locale === 'ar' ? (matchingSignal.signal.signal === 'BUY' ? 'شراء' : 'بيع') : matchingSignal.signal.signal}
                             </span>
                           )}
                         </div>
@@ -580,7 +598,7 @@ export default function RightSidebar({
                 <span className="font-medium text-plt-text text-xs tracking-tight truncate">{displaySelectedSymbol}</span>
                 {isDetailsCollapsed && (
                   <span className={`text-[11px] tabular-nums font-semibold ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
-                    {selectedItem.price || '0.00'} {selectedItem.currency || 'EGP'}
+                    {selectedItem.price || '0.00'} {selectedItem.currency ? (selectedItem.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedItem.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
                   </span>
                 )}
               </div>
@@ -589,7 +607,7 @@ export default function RightSidebar({
             <button
               type="button"
               className="p-2 rounded-xl text-text-muted hover:text-plt-text transition-colors"
-              aria-label={isDetailsCollapsed ? 'Expand details' : 'Collapse details'}
+              aria-label={isDetailsCollapsed ? (locale === 'ar' ? 'توسيع التفاصيل' : 'Expand details') : (locale === 'ar' ? 'طي التفاصيل' : 'Collapse details')}
             >
               <ChevronDown size={16} className={`transition-transform duration-200 ${isDetailsCollapsed ? 'rotate-180 text-text-muted' : ''}`} />
             </button>
@@ -603,11 +621,11 @@ export default function RightSidebar({
                   {selectedItem.companyName}
                 </div>
                 <div className="flex items-center text-[10px] text-text-muted space-x-1.5 mt-0.5">
-                  <span>{selectedItem.sector === 'Funds' ? 'FUND' : ['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? 'COMEX' : ['USDEGP', 'EUREGP'].includes(selectedSymbol.toUpperCase()) ? 'FOREX' : 'EGX'}</span>
+                  <span>{selectedItem.sector === 'Funds' ? (locale === 'ar' ? 'صندوق' : 'FUND') : ['GC1!', 'SI1!'].includes(selectedSymbol.toUpperCase()) ? (locale === 'ar' ? 'كومكس' : 'COMEX') : ['USDEGP', 'EUREGP'].includes(selectedSymbol.toUpperCase()) ? (locale === 'ar' ? 'فوركس' : 'FOREX') : (locale === 'ar' ? 'البورصة' : 'EGX')}</span>
                   {selectedItem.sector && (
                     <>
                       <span>•</span>
-                      <span className="truncate">{selectedItem.sector}</span>
+                      <span className="truncate">{localizeSectorName(selectedItem.sector, locale)}</span>
                     </>
                   )}
                 </div>
@@ -620,7 +638,7 @@ export default function RightSidebar({
                     {selectedItem.price || '0.00'}
                   </span>
                   <span className="text-[11px] text-text-muted font-sans font-medium">
-                    {selectedItem.currency || 'EGP'}
+                    {selectedItem.currency ? (selectedItem.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedItem.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
                   </span>
                   <div className={`ml-2 text-xs font-semibold tabular-nums ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
                     {selectedItem.changePct || (selectedItem.change ? (selectedItem.change.includes('(') ? selectedItem.change.split('(')[1]?.replace(')', '') : selectedItem.change) : '')}
@@ -628,7 +646,7 @@ export default function RightSidebar({
                 </div>
 
                 <div className="flex items-center text-text-muted text-[10px]">
-                  <span>Last update at {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:28 GMT+3</span>
+                  <span>{locale === 'ar' ? `آخر تحديث في ${new Date().toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}، 14:28 بتوقيت القاهرة` : `Last update at ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:28 GMT+3`}</span>
                 </div>
               </div>
 
@@ -637,14 +655,14 @@ export default function RightSidebar({
                 <div>
                   <div className="flex justify-between text-[11px] mb-1.5 font-sans">
                     <span className="text-plt-text tabular-nums font-semibold">{dLow.toFixed(2)}</span>
-                    <span className="text-text-muted text-[10px] tracking-wider font-sans font-medium uppercase">Day&apos;s Range</span>
+                    <span className="text-text-muted text-[10px] tracking-wider font-sans font-medium uppercase">{locale === 'ar' ? 'نطاق اليوم' : "Day's Range"}</span>
                     <span className="text-plt-text tabular-nums font-semibold">{dHigh.toFixed(2)}</span>
                   </div>
                   {/* Track */}
                   <div className="h-1.5 bg-surface-raised rounded-full relative overflow-hidden">
                     <div
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-profit-num' : 'bg-loss-num'}`}
-                      style={{ width: `${dayPct}%`, left: 0 }}
+                      style={{ width: `${dayPct}%`, insetInlineStart: 0 }}
                     />
                   </div>
                 </div>
@@ -652,13 +670,13 @@ export default function RightSidebar({
                 <div>
                   <div className="flex justify-between text-[11px] mb-1.5 font-sans">
                     <span className="text-plt-text tabular-nums font-semibold">{yLow.toFixed(2)}</span>
-                    <span className="text-text-muted text-[10px] tracking-wider font-sans font-medium uppercase">52Wk Range</span>
+                    <span className="text-text-muted text-[10px] tracking-wider font-sans font-medium uppercase">{locale === 'ar' ? 'نطاق 52 أسبوع' : '52Wk Range'}</span>
                     <span className="text-plt-text tabular-nums font-semibold">{yHigh.toFixed(2)}</span>
                   </div>
                   <div className="h-1.5 bg-surface-raised rounded-full relative overflow-hidden">
                     <div
                       className={`absolute h-full rounded-full ${selectedItem.isUp ? 'bg-profit-num' : 'bg-loss-num'}`}
-                      style={{ width: `${yearPct}%`, left: 0 }}
+                      style={{ width: `${yearPct}%`, insetInlineStart: 0 }}
                     />
                   </div>
                 </div>

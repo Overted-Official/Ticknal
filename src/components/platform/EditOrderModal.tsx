@@ -6,6 +6,8 @@ import { X } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/context/ToastContext';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName } from '@/lib/finance/sector-translations';
 
 export type EditOrderRow = {
   id: number;
@@ -32,6 +34,8 @@ export default function EditOrderModal({
   onSuccess,
   order,
 }: EditOrderModalProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,6 +77,7 @@ export default function EditOrderModal({
   const quantityNum = parseFloat(form.quantity) || 0;
   const totalCost = entryPriceNum * quantityNum;
   const currency = order?.currency || 'EGP';
+  const displayCurrency = currency === 'EGP' && isAr ? 'ج.م' : currency;
 
   const handleEditOrder = async () => {
     if (!order || !form.entryPrice || !form.quantity || isSubmitting) return;
@@ -90,16 +95,27 @@ export default function EditOrderModal({
       });
 
       if (res.ok) {
-        toast.success('Position Updated', `Updated lot #${order.id} for ${cleanSymbol} successfully.`);
+        toast.success(
+          isAr ? 'تم تحديث المركز' : 'Position Updated',
+          isAr
+            ? `تم تحديث بيانات الصفقة رقم #${order.id} لـ ${cleanSymbol} بنجاح.`
+            : `Updated lot #${order.id} for ${cleanSymbol} successfully.`
+        );
         onSuccess();
         onClose();
       } else {
         const data = await res.json().catch(() => null);
-        toast.error('Update Failed', data?.error || 'Failed to edit position.');
+        toast.error(
+          isAr ? 'فشل التحديث' : 'Update Failed',
+          data?.error || (isAr ? 'فشل تعديل بيانات المركز.' : 'Failed to edit position.')
+        );
       }
     } catch (e) {
       console.error(e);
-      toast.error('Error', 'Error editing position.');
+      toast.error(
+        isAr ? 'خطأ' : 'Error',
+        isAr ? 'حدث خطأ أثناء تعديل المركز.' : 'Error editing position.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -119,7 +135,7 @@ export default function EditOrderModal({
             transition={{ duration: 0.15 }}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
             onClick={onClose}
-            aria-label="Close modal overlay"
+            aria-label={isAr ? 'إغلاق النافذة' : 'Close modal overlay'}
           />
 
           {/* Centered Modal Dialog */}
@@ -134,10 +150,12 @@ export default function EditOrderModal({
             <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between shrink-0 bg-black">
               <div className="flex flex-col min-w-0">
                 <h2 className="font-semibold text-base text-text-primary tracking-tight truncate font-sans">
-                  Edit {cleanSymbol} Position
+                  {isAr ? `تعديل مركز ${cleanSymbol}` : `Edit ${cleanSymbol} Position`}
                 </h2>
                 <p className="text-xs text-text-muted font-normal mt-0.5 font-sans">
-                  Modify entry parameters for lot #{order.id}
+                  {isAr
+                    ? `تعديل بيانات الدخول للصفقة رقم #${order.id}`
+                    : `Modify entry parameters for lot #${order.id}`}
                 </p>
               </div>
 
@@ -145,8 +163,8 @@ export default function EditOrderModal({
                 type="button"
                 onClick={onClose}
                 className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-surface-raised transition cursor-pointer"
-                title="Close (Esc)"
-                aria-label="Close Modal"
+                title={isAr ? 'إغلاق (Esc)' : 'Close (Esc)'}
+                aria-label={isAr ? 'إغلاق النافذة' : 'Close Modal'}
               >
                 <X size={16} />
               </button>
@@ -156,7 +174,7 @@ export default function EditOrderModal({
             <div className="p-5 overflow-y-auto custom-scrollbar space-y-4 flex-1">
               {/* 1. Asset Identity Card */}
               <div className="space-y-1.5">
-                <label className="field-label">Asset Identity</label>
+                <label className="field-label">{isAr ? 'بيانات الأصل' : 'Asset Identity'}</label>
                 <div className="field-card flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {/* Circular Logo */}
@@ -184,7 +202,9 @@ export default function EditOrderModal({
                         {order.sector && (
                           <>
                             <span className="text-zinc-600 text-[10px] shrink-0">•</span>
-                            <span className="truncate max-w-[150px] sm:max-w-xs font-sans">{order.sector}</span>
+                            <span className="truncate max-w-[150px] sm:max-w-xs font-sans">
+                              {localizeSectorName(order.sector, locale)}
+                            </span>
                           </>
                         )}
                         <span className="text-zinc-600 text-[10px] shrink-0">•</span>
@@ -197,7 +217,7 @@ export default function EditOrderModal({
                   </div>
 
                   <span className="badge-count text-[11px]">
-                    Lot #{order.id}
+                    {isAr ? `صفقة #${order.id}` : `Lot #${order.id}`}
                   </span>
                 </div>
               </div>
@@ -206,7 +226,7 @@ export default function EditOrderModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Entry Date */}
                 <div className="space-y-1.5">
-                  <label className="field-label">Entry Date</label>
+                  <label className="field-label">{isAr ? 'تاريخ الدخول' : 'Entry Date'}</label>
                   <input
                     type="date"
                     value={form.entryDate}
@@ -217,7 +237,7 @@ export default function EditOrderModal({
 
                 {/* Quantity */}
                 <div className="space-y-1.5">
-                  <label className="field-label"># of Units (Shares)</label>
+                  <label className="field-label">{isAr ? 'عدد الأسهم (الكمية)' : '# of Units (Shares)'}</label>
                   <div className="field-group">
                     <input
                       type="number"
@@ -228,14 +248,14 @@ export default function EditOrderModal({
                       onChange={(e) => setForm((prev) => ({ ...prev, quantity: e.target.value }))}
                       className="field-input"
                     />
-                    <span className="field-suffix shrink-0">Units</span>
+                    <span className="field-suffix shrink-0">{isAr ? 'سهم' : 'Units'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Entry Price */}
               <div className="space-y-1.5">
-                <label className="field-label">Entry Price ({currency})</label>
+                <label className="field-label">{isAr ? `سعر الدخول (${displayCurrency})` : `Entry Price (${currency})`}</label>
                 <div className="field-group">
                   <input
                     type="number"
@@ -246,16 +266,16 @@ export default function EditOrderModal({
                     onChange={(e) => setForm((prev) => ({ ...prev, entryPrice: e.target.value }))}
                     className="field-input"
                   />
-                  <span className="field-suffix shrink-0">{currency}</span>
+                  <span className="field-suffix shrink-0">{displayCurrency}</span>
                 </div>
               </div>
 
               {/* 3. Summary Card */}
               <div className="field-card space-y-2 select-none">
                 <div className="flex items-center justify-between">
-                  <span className="field-label">Total Position Cost</span>
+                  <span className="field-label">{isAr ? 'إجمالي تكلفة المركز' : 'Total Position Cost'}</span>
                   <span className="text-base font-bold text-text-primary font-sans tabular-nums">
-                    {totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                    {totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {displayCurrency}
                   </span>
                 </div>
               </div>
@@ -268,7 +288,7 @@ export default function EditOrderModal({
                 onClick={onClose}
                 className="px-4 py-2 rounded-lg text-xs font-semibold text-text-muted hover:text-white hover:bg-surface-raised transition-colors cursor-pointer"
               >
-                Cancel
+                {isAr ? 'إلغاء' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -278,11 +298,11 @@ export default function EditOrderModal({
               >
                 {isSubmitting ? (
                   <>
-                    <InlineSpinner className="h-4 w-4" label="Saving position" />
-                    <span>Saving...</span>
+                    <InlineSpinner className="h-4 w-4" label={isAr ? 'جاري حفظ المركز' : 'Saving position'} />
+                    <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
                   </>
                 ) : (
-                  'Save Changes'
+                  isAr ? 'حفظ التعديلات' : 'Save Changes'
                 )}
               </button>
             </div>

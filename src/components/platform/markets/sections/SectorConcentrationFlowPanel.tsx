@@ -4,6 +4,8 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import type { SectorPerformanceItem } from '@/lib/sectors-math';
 import { LineChart } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName, localizeRegimeName } from '@/lib/finance/sector-translations';
 
 export interface SectorConcentrationFlowPanelProps {
   sector: SectorPerformanceItem | null;
@@ -36,18 +38,21 @@ function StockLogoAvatar({ logoUrl, symbol }: { logoUrl?: string | null; symbol:
   );
 }
 
-function formatTurnoverDisplay(val: number): string {
-  if (!val || isNaN(val)) return '0 EGP';
+function formatTurnoverDisplay(val: number, locale: string = 'en'): string {
+  if (!val || isNaN(val)) return locale === 'ar' ? '0 ج.م' : '0 EGP';
   if (val >= 1_000_000_000_000) {
-    return `${(val / 1_000_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Tn EGP`;
+    const num = (val / 1_000_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return locale === 'ar' ? `${num} تريليون ج.م` : `${num} Tn EGP`;
   }
   if (val >= 1_000_000_000) {
-    return `${(val / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bn EGP`;
+    const num = (val / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return locale === 'ar' ? `${num} مليار ج.م` : `${num} Bn EGP`;
   }
   if (val >= 1_000_000) {
-    return `${(val / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M EGP`;
+    const num = (val / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return locale === 'ar' ? `${num} مليون ج.م` : `${num} M EGP`;
   }
-  return `${val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} EGP`;
+  return `${val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ${locale === 'ar' ? 'ج.م' : 'EGP'}`;
 }
 
 export default function SectorConcentrationFlowPanel({
@@ -55,10 +60,16 @@ export default function SectorConcentrationFlowPanel({
   totalMarketTurnover = 0,
   benchmarkReturn = 0,
 }: SectorConcentrationFlowPanelProps) {
+  const { locale } = useTranslation();
+
   if (!sector) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center text-neutral-500 text-xs font-sans">
-        <p>Select any sector on the matrix to view capital flow & concentration analysis</p>
+        <p>
+          {locale === 'ar'
+            ? 'اختر أي قطاع من مصفوفة الدوران لعرض تدفق السيولة ومخاطر التركز'
+            : 'Select any sector on the matrix to view capital flow & concentration analysis'}
+        </p>
       </div>
     );
   }
@@ -159,14 +170,16 @@ export default function SectorConcentrationFlowPanel({
         <div className="min-w-0 pr-2">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-semibold text-white truncate max-w-[190px]" title={sector.sector}>
-              {sector.sector}
+              {localizeSectorName(sector.sector, locale)}
             </h3>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${regimeBadgeStyle}`}>
-              {sector.rotationRegime}
+              {localizeRegimeName(sector.rotationRegime, locale)}
             </span>
           </div>
           <p className="text-[11px] text-neutral-400 mt-0.5">
-            {sector.stockCount} {sector.stockCount === 1 ? 'constituent' : 'constituents'} · Flow & Concentration
+            {locale === 'ar'
+              ? `${sector.stockCount} سهم · التدفق والتركز`
+              : `${sector.stockCount} ${sector.stockCount === 1 ? 'constituent' : 'constituents'} · Flow & Concentration`}
           </p>
         </div>
 
@@ -177,9 +190,11 @@ export default function SectorConcentrationFlowPanel({
                 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
                 : 'bg-rose-500/15 text-rose-400 border border-rose-500/20'
             }`}
-            title="Volume-weighted sector return"
+            title={locale === 'ar' ? 'عائد القطاع المرجح بالسيولة' : 'Volume-weighted sector return'}
           >
-            <span className="text-[10px] font-medium uppercase tracking-wider opacity-75">Return</span>
+            <span className="text-[10px] font-medium uppercase tracking-wider opacity-75">
+              {locale === 'ar' ? 'العائد' : 'Return'}
+            </span>
             <span>
               {sector.turnoverWeightedReturn > 0 ? '+' : ''}
               {sector.turnoverWeightedReturn.toFixed(1)}%
@@ -192,19 +207,19 @@ export default function SectorConcentrationFlowPanel({
       <div className="py-2.5 flex flex-col gap-1.5 shrink-0">
         <div className="flex items-center justify-between text-xs">
           <span className="text-[11px] font-medium text-text-muted">
-            Market Liquidity Share
+            {locale === 'ar' ? 'حصة السيولة من السوق' : 'Market Liquidity Share'}
           </span>
           <span className="font-semibold tabular-nums text-white">
-            {marketSharePct.toFixed(1)}% of EGX
+            {marketSharePct.toFixed(1)}% {locale === 'ar' ? 'من البورصة المصرية' : 'of EGX'}
           </span>
         </div>
 
         <div className="flex items-baseline justify-between">
           <span className="text-base font-bold tabular-nums text-white">
-            {formatTurnoverDisplay(sectorTurnover)}
+            {formatTurnoverDisplay(sectorTurnover, locale)}
           </span>
           <span className="text-[10px] text-text-muted">
-            Traded Turnover
+            {locale === 'ar' ? 'قيمة التداول' : 'Traded Turnover'}
           </span>
         </div>
 
@@ -221,22 +236,22 @@ export default function SectorConcentrationFlowPanel({
       <div className="py-2.5 flex flex-col gap-1.5 shrink-0">
         <div className="flex items-center justify-between text-xs">
           <span className="text-[11px] font-medium text-text-muted">
-            Rally Participation (Breadth)
+            {locale === 'ar' ? 'مشاركة الصعود (الاتساع)' : 'Rally Participation (Breadth)'}
           </span>
           <span className="font-semibold tabular-nums text-white">
-            {breadth.advancerPct}% Advancing
+            {breadth.advancerPct}% {locale === 'ar' ? 'صاعد' : 'Advancing'}
           </span>
         </div>
 
         <div className="flex items-center justify-between text-xs tabular-nums">
           <span className="text-profit-num font-semibold">
-            {breadth.gainers} Advancing (W)
+            {breadth.gainers} {locale === 'ar' ? 'صاعد (ربح)' : 'Advancing (W)'}
           </span>
           <span className="text-text-muted text-[11px]">
-            {breadth.unchanged} Flat
+            {breadth.unchanged} {locale === 'ar' ? 'مستقر' : 'Flat'}
           </span>
           <span className="text-loss-num font-semibold">
-            {breadth.losers} Declining (L)
+            {breadth.losers} {locale === 'ar' ? 'هابط (خسارة)' : 'Declining (L)'}
           </span>
         </div>
 
@@ -245,21 +260,21 @@ export default function SectorConcentrationFlowPanel({
             <div
               className="h-full bg-profit-chart transition-all duration-300"
               style={{ width: `${breadth.advancerPct}%` }}
-              title={`Advancing: ${breadth.advancerPct}%`}
+              title={locale === 'ar' ? `صاعد: ${breadth.advancerPct}%` : `Advancing: ${breadth.advancerPct}%`}
             />
           )}
           {breadth.unchangedPct > 0 && (
             <div
               className="h-full bg-white/15 transition-all duration-300"
               style={{ width: `${breadth.unchangedPct}%` }}
-              title={`Flat: ${breadth.unchangedPct}%`}
+              title={locale === 'ar' ? `مستقر: ${breadth.unchangedPct}%` : `Flat: ${breadth.unchangedPct}%`}
             />
           )}
           {breadth.declinerPct > 0 && (
             <div
               className="h-full bg-loss-chart transition-all duration-300"
               style={{ width: `${breadth.declinerPct}%` }}
-              title={`Declining: ${breadth.declinerPct}%`}
+              title={locale === 'ar' ? `هابط: ${breadth.declinerPct}%` : `Declining: ${breadth.declinerPct}%`}
             />
           )}
         </div>
@@ -269,10 +284,16 @@ export default function SectorConcentrationFlowPanel({
       <div className="py-2.5 flex flex-col gap-1.5 shrink-0">
         <div className="flex items-center justify-between text-xs">
           <span className="text-[11px] font-medium text-text-muted">
-            Concentration Risk
+            {locale === 'ar' ? 'مخاطر تركز السيولة' : 'Concentration Risk'}
           </span>
           <span className="text-[10px] font-medium px-2 py-0.5 rounded border border-white/10 bg-white/[0.06] text-neutral-300">
-            {concentration.riskLevel === 'high'
+            {locale === 'ar'
+              ? concentration.riskLevel === 'high'
+                ? 'تركز مرتفع'
+                : concentration.riskLevel === 'moderate'
+                ? 'تركز متوسط'
+                : 'موزع جيداً'
+              : concentration.riskLevel === 'high'
               ? 'High Skew'
               : concentration.riskLevel === 'moderate'
               ? 'Moderate'
@@ -282,10 +303,18 @@ export default function SectorConcentrationFlowPanel({
 
         <div className="flex items-baseline justify-between text-xs">
           <span className="font-semibold text-white">
-            Top 3 Stocks Drive <span className="tabular-nums font-bold text-white">{concentration.top3Share.toFixed(1)}%</span>
+            {locale === 'ar' ? (
+              <>
+                أعلى 3 أسهم تستحوذ على <span className="tabular-nums font-bold text-white">{concentration.top3Share.toFixed(1)}%</span>
+              </>
+            ) : (
+              <>
+                Top 3 Stocks Drive <span className="tabular-nums font-bold text-white">{concentration.top3Share.toFixed(1)}%</span>
+              </>
+            )}
           </span>
           <span className="text-[10px] text-text-muted">
-            of Sector Volume
+            {locale === 'ar' ? 'من تداولات القطاع' : 'of Sector Volume'}
           </span>
         </div>
 
@@ -305,7 +334,7 @@ export default function SectorConcentrationFlowPanel({
             <div
               className="h-full bg-white/10 transition-all duration-300"
               style={{ width: `${concentration.otherShare}%` }}
-              title={`Others: ${concentration.otherShare.toFixed(1)}%`}
+              title={locale === 'ar' ? `أخرى: ${concentration.otherShare.toFixed(1)}%` : `Others: ${concentration.otherShare.toFixed(1)}%`}
             />
           )}
         </div>
@@ -314,14 +343,14 @@ export default function SectorConcentrationFlowPanel({
       {/* 5. Key Catalysts: Pushers & Draggers (Transparent Background, Circular Logo, Full Name + Ticker Below) */}
       <div className="pt-2.5 flex flex-col gap-2 shrink-0">
         <span className="text-[11px] font-medium text-text-muted">
-          Key Catalysts (Alpha vs EGX30)
+          {locale === 'ar' ? 'المحركات الرئيسية (ألفا مقابل EGX30)' : 'Key Catalysts (Alpha vs EGX30)'}
         </span>
 
         <div className="grid grid-cols-2 gap-3.5">
           {/* Left Column: Pushers */}
           <div className="space-y-2">
             <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
-              Pushers
+              {locale === 'ar' ? 'الداعمون للصعود' : 'Pushers'}
             </span>
             <div className="space-y-1.5">
               {catalysts.drivers.length > 0 ? (
@@ -354,7 +383,7 @@ export default function SectorConcentrationFlowPanel({
                       <Link
                         href={`/charts?symbol=${drv.symbol}`}
                         className="w-4 h-4 rounded flex items-center justify-center text-neutral-500 hover:text-white transition-colors"
-                        title={`Open ${drv.symbol} Chart`}
+                        title={locale === 'ar' ? `فتح رسم ${drv.symbol}` : `Open ${drv.symbol} Chart`}
                       >
                         <LineChart size={11} />
                       </Link>
@@ -362,7 +391,7 @@ export default function SectorConcentrationFlowPanel({
                   </div>
                 ))
               ) : (
-                <span className="text-[11px] text-text-muted italic">None</span>
+                <span className="text-[11px] text-text-muted italic">{locale === 'ar' ? 'لا يوجد' : 'None'}</span>
               )}
             </div>
           </div>
@@ -370,7 +399,7 @@ export default function SectorConcentrationFlowPanel({
           {/* Right Column: Draggers */}
           <div className="space-y-2">
             <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
-              Draggers
+              {locale === 'ar' ? 'المسبّبون للهبوط' : 'Draggers'}
             </span>
             <div className="space-y-1.5">
               {catalysts.drags.length > 0 ? (
@@ -403,7 +432,7 @@ export default function SectorConcentrationFlowPanel({
                       <Link
                         href={`/charts?symbol=${drg.symbol}`}
                         className="w-4 h-4 rounded flex items-center justify-center text-neutral-500 hover:text-white transition-colors"
-                        title={`Open ${drg.symbol} Chart`}
+                        title={locale === 'ar' ? `فتح رسم ${drg.symbol}` : `Open ${drg.symbol} Chart`}
                       >
                         <LineChart size={11} />
                       </Link>
@@ -411,7 +440,7 @@ export default function SectorConcentrationFlowPanel({
                   </div>
                 ))
               ) : (
-                <span className="text-[11px] text-text-muted italic">None</span>
+                <span className="text-[11px] text-text-muted italic">{locale === 'ar' ? 'لا يوجد' : 'None'}</span>
               )}
             </div>
           </div>

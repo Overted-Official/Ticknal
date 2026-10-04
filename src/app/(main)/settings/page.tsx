@@ -4,6 +4,7 @@ import { desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { profiles, pushSubscriptions, devicePushTokens } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
+import { getServerLocale } from '@/lib/i18n/server';
 import SettingsPageView, {
   type SettingsUserProfile,
   type DeviceInfo,
@@ -17,15 +18,20 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
+    const locale = await getServerLocale();
     return (
       <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-auto bg-transparent p-8 text-center text-white select-none">
-        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">Ticknal Settings</h2>
-        <p className="mb-6 text-xs text-text-muted max-w-sm">Please sign in to manage your account profile, devices, and alert triggers.</p>
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">
+          {locale === 'ar' ? 'إعدادات تكنال' : 'Ticknal Settings'}
+        </h2>
+        <p className="mb-6 text-xs text-text-muted max-w-sm">
+          {locale === 'ar' ? 'يرجى تسجيل الدخول لإدارة الملف الشخصي، الأجهزة، وتنبيهات الأسعار.' : 'Please sign in to manage your account profile, devices, and alert triggers.'}
+        </p>
         <Link
           href="/"
           className="px-5 py-2 rounded-lg text-xs font-semibold bg-brand-blue hover:opacity-90 text-white transition-colors shadow-xs"
         >
-          Sign In
+          {locale === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
         </Link>
       </div>
     );

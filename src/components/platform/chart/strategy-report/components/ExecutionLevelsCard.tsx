@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Radio, Activity } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
 
 interface ExecutionLevelsCardProps {
   signalAction: 'BUY' | 'HOLD' | 'SELL';
@@ -34,10 +35,18 @@ export default function ExecutionLevelsCard({
   masterIndex,
   mdm,
 }: ExecutionLevelsCardProps) {
+  const { locale } = useTranslation();
   const isBuy = signalAction === 'BUY';
   const isSell = signalAction === 'SELL';
 
-  const decisionText = isBuy ? 'Buy' : isSell ? 'Exit / Flat' : 'Hold';
+  const displayCurrency = currencySymbol === 'EGP' && locale === 'ar' ? 'ج.م' : currencySymbol;
+
+  const decisionText = isBuy
+    ? locale === 'ar' ? 'شراء' : 'Buy'
+    : isSell
+    ? locale === 'ar' ? 'خروج / سيولة' : 'Exit / Flat'
+    : locale === 'ar' ? 'احتفاظ' : 'Hold';
+
   const decisionColor = isBuy ? 'text-emerald-400' : isSell ? 'text-rose-400' : 'text-brand-blue';
 
   const miStatus =
@@ -48,6 +57,13 @@ export default function ExecutionLevelsCard({
         ? 'Overbought'
         : 'Neutral'
       : 'Neutral';
+
+  const miStatusDisplay =
+    miStatus === 'Oversold'
+      ? locale === 'ar' ? 'تشبع بيعي' : 'Oversold'
+      : miStatus === 'Overbought'
+      ? locale === 'ar' ? 'تشبع شرائي' : 'Overbought'
+      : locale === 'ar' ? 'محايد' : 'Neutral';
 
   const miColor =
     miStatus === 'Oversold'
@@ -62,15 +78,17 @@ export default function ExecutionLevelsCard({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 pb-2.5 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
           <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
-            Market State
+            {locale === 'ar' ? 'حالة السوق وإشارات التنفيذ' : 'Market State'}
           </h3>
           <p className="text-xs text-white/50 leading-relaxed">
-            Current algorithmic execution trigger, bracket boundaries, and cyclical momentum sentiment
+            {locale === 'ar'
+              ? 'إشارة التنفيذ الخوارزمية الحالية، حدود وقف الخسارة والأهداف، وزخم السوق الدوري'
+              : 'Current algorithmic execution trigger, bracket boundaries, and cyclical momentum sentiment'}
           </p>
         </div>
       </div>
 
-      {/* 2-Card KPI Layout: Adjust size to fit side-by-side on all screens without rail */}
+      {/* 2-Card KPI Layout */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
         {/* Card 1: Algorithm Decision */}
         <div className="w-full bg-black border border-white/10 hover:border-white/20 transition-all rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[155px] sm:min-h-[170px]">
@@ -88,7 +106,7 @@ export default function ExecutionLevelsCard({
               <Radio className="w-3 h-3" strokeWidth={2.4} />
             </div>
             <span className="text-xs sm:text-[13px] font-semibold text-white tracking-tight truncate">
-              Algorithm Decision
+              {locale === 'ar' ? 'قرار النموذج' : 'Algorithm Decision'}
             </span>
           </div>
 
@@ -100,17 +118,17 @@ export default function ExecutionLevelsCard({
               </span>
               {triggerPrice !== null && (
                 <span className="text-xs sm:text-[13px] font-semibold text-white/50 tabular-nums">
-                  @ {triggerPrice.toFixed(2)} {currencySymbol}
+                  @ {triggerPrice.toFixed(2)} {displayCurrency}
                 </span>
               )}
             </div>
             <span className="text-[10px] sm:text-[12px] text-white/50 truncate mt-1">
               {reason ||
                 (isBuy
-                  ? 'Active long entry setup triggered'
+                  ? locale === 'ar' ? 'إشارة دخول شراء نشطة قيد التفعيل' : 'Active long entry setup triggered'
                   : isSell
-                  ? 'Strategy exit rule reached'
-                  : 'Position holding / waiting for trigger conditions')}
+                  ? locale === 'ar' ? 'تم الوصول لقاعدة الخروج من الاستراتيجية' : 'Strategy exit rule reached'
+                  : locale === 'ar' ? 'احتفاظ بالصفقة / بانتظار شروط الدخول' : 'Position holding / waiting for trigger conditions')}
             </span>
           </div>
 
@@ -118,9 +136,9 @@ export default function ExecutionLevelsCard({
           {hasRR ? (
             <div className="pt-2 border-t border-white/10 space-y-1 sm:space-y-1.5 tabular-nums">
               <div className="flex justify-between text-[9px] sm:text-[11px] font-semibold truncate">
-                <span className="text-loss-num">SL {stopLossPrice!.toFixed(1)}</span>
-                <span className="text-white/60">Entry {triggerPrice!.toFixed(1)}</span>
-                <span className="text-profit-num">TP {targetPrice!.toFixed(1)}</span>
+                <span className="text-loss-num">{locale === 'ar' ? 'وقف' : 'SL'} {stopLossPrice!.toFixed(1)}</span>
+                <span className="text-white/60">{locale === 'ar' ? 'دخول' : 'Entry'} {triggerPrice!.toFixed(1)}</span>
+                <span className="text-profit-num">{locale === 'ar' ? 'هدف' : 'TP'} {targetPrice!.toFixed(1)}</span>
               </div>
               <div className="h-1.5 w-full rounded-full overflow-hidden flex bg-white/10">
                 <div
@@ -131,11 +149,11 @@ export default function ExecutionLevelsCard({
                 <div className="bg-profit-num h-full flex-1 rounded-r-full" />
               </div>
               <div className="flex justify-between text-[8px] sm:text-[10px] text-white/50">
-                <span>Risk: {riskAmt.toFixed(1)}</span>
+                <span>{locale === 'ar' ? 'المخاطرة' : 'Risk'}: {riskAmt.toFixed(1)}</span>
                 {rrRatio !== null && (
-                  <span className="text-white font-medium">R:R {rrRatio.toFixed(1)}x</span>
+                  <span className="text-white font-medium">{locale === 'ar' ? 'المكافأة:المخاطرة' : 'R:R'} {rrRatio.toFixed(1)}x</span>
                 )}
-                <span>Reward: {rewardAmt.toFixed(1)}</span>
+                <span>{locale === 'ar' ? 'العائد' : 'Reward'}: {rewardAmt.toFixed(1)}</span>
               </div>
             </div>
           ) : (
@@ -165,16 +183,16 @@ export default function ExecutionLevelsCard({
               </div>
               <div className="flex justify-between text-[8px] sm:text-[10px] tabular-nums font-medium text-white/40">
                 <span className={`truncate ${isSell ? 'text-rose-400 font-semibold' : ''}`}>
-                  <span className="sm:hidden">Exit</span>
-                  <span className="hidden sm:inline">Exit / Flat</span>
+                  <span className="sm:hidden">{locale === 'ar' ? 'خروج' : 'Exit'}</span>
+                  <span className="hidden sm:inline">{locale === 'ar' ? 'خروج / سيولة' : 'Exit / Flat'}</span>
                 </span>
                 <span className={`truncate text-center ${signalAction === 'HOLD' ? 'text-brand-blue font-semibold' : ''}`}>
-                  <span className="sm:hidden">Hold</span>
-                  <span className="hidden sm:inline">Hold In-Market</span>
+                  <span className="sm:hidden">{locale === 'ar' ? 'احتفاظ' : 'Hold'}</span>
+                  <span className="hidden sm:inline">{locale === 'ar' ? 'احتفاظ بالسوق' : 'Hold In-Market'}</span>
                 </span>
                 <span className={`truncate text-right ${isBuy ? 'text-emerald-400 font-semibold' : ''}`}>
-                  <span className="sm:hidden">Buy</span>
-                  <span className="hidden sm:inline">Active Buy</span>
+                  <span className="sm:hidden">{locale === 'ar' ? 'شراء' : 'Buy'}</span>
+                  <span className="hidden sm:inline">{locale === 'ar' ? 'شراء نشط' : 'Active Buy'}</span>
                 </span>
               </div>
             </div>
@@ -189,7 +207,7 @@ export default function ExecutionLevelsCard({
               <Activity className="w-3 h-3" strokeWidth={2.4} />
             </div>
             <span className="text-xs sm:text-[13px] font-semibold text-white tracking-tight truncate">
-              Master Index (MI)
+              {locale === 'ar' ? 'مؤشر الزخم الرئيسي (MI)' : 'Master Index (MI)'}
             </span>
           </div>
 
@@ -197,7 +215,7 @@ export default function ExecutionLevelsCard({
           <div className="flex flex-col mt-2 sm:mt-2.5">
             <div className="flex items-baseline gap-1.5 leading-none">
               <span className={`text-base sm:text-[22px] font-bold tracking-tight ${miColor}`}>
-                {miStatus}
+                {miStatusDisplay}
               </span>
               <span className="text-xs sm:text-[13px] font-semibold text-white/50 tabular-nums">
                 ({masterIndex !== null ? masterIndex.toFixed(1) : '—'} / 100)
@@ -206,7 +224,7 @@ export default function ExecutionLevelsCard({
             <span className="text-[10px] sm:text-[12px] text-white/50 truncate mt-1">
               {mdm !== null
                 ? `MDM: ${mdm.toFixed(2)}%`
-                : 'Cyclical Momentum Engine'}
+                : locale === 'ar' ? 'محرك الزخم الدوري' : 'Cyclical Momentum Engine'}
             </span>
           </div>
 
@@ -223,16 +241,16 @@ export default function ExecutionLevelsCard({
             </div>
             <div className="flex justify-between text-[8px] sm:text-[10px] tabular-nums text-white/40 font-medium">
               <span className="text-emerald-400/80">
-                <span className="sm:hidden">Oversold</span>
-                <span className="hidden sm:inline">0 Oversold</span>
+                <span className="sm:hidden">{locale === 'ar' ? 'تشبع بيعي' : 'Oversold'}</span>
+                <span className="hidden sm:inline">{locale === 'ar' ? '0 تشبع بيعي' : '0 Oversold'}</span>
               </span>
               <span className="text-center">
-                <span className="sm:hidden">Neutral</span>
-                <span className="hidden sm:inline">50 Neutral</span>
+                <span className="sm:hidden">{locale === 'ar' ? 'محايد' : 'Neutral'}</span>
+                <span className="hidden sm:inline">{locale === 'ar' ? '50 محايد' : '50 Neutral'}</span>
               </span>
               <span className="text-rose-400/80 text-right">
-                <span className="sm:hidden">Overbought</span>
-                <span className="hidden sm:inline">100 Overbought</span>
+                <span className="sm:hidden">{locale === 'ar' ? 'تشبع شرائي' : 'Overbought'}</span>
+                <span className="hidden sm:inline">{locale === 'ar' ? '100 تشبع شرائي' : '100 Overbought'}</span>
               </span>
             </div>
           </div>

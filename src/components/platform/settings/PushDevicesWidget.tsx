@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/icon-library';
 import { useAlerts } from '@/components/platform/AlertProvider';
 import { triggerNativeTestNotification, isNativePlatform, checkNativePushStatus } from '@/lib/native/capacitor-bridge';
+import { useTranslation } from '@/lib/i18n';
 
 export type DeviceInfo = {
   id: number;
@@ -55,6 +56,7 @@ function parseUserAgent(ua: string | null): {
 }
 
 export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetProps) {
+  const { t, locale, isRTL } = useTranslation();
   const { ensurePushSubscription, permission } = useAlerts();
 
   const [devices, setDevices] = useState<DeviceInfo[]>(initialDevices);
@@ -206,27 +208,27 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-white truncate">
+                <span className="text-sm font-semibold text-white truncate" suppressHydrationWarning>
                   {currentClient.browser} on {currentClient.os}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-white/70">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-white/70" suppressHydrationWarning>
                   {currentClient.deviceType}
                 </span>
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-profit-num/10 text-profit-num">
                   <span className="w-1.5 h-1.5 rounded-full bg-profit-num animate-pulse" />
-                  Active Now
+                  {locale === 'ar' ? 'نشط الآن' : 'Active Now'}
                 </span>
               </div>
               <div className="text-xs text-text-muted mt-1 truncate">
                 {isCurrentDeviceSubscribed ? (
                   <span className="text-profit-num flex items-center gap-1.5 font-medium">
                     <CheckCircle2 size={13} />
-                    Subscribed to real-time trade signals &amp; alert triggers
+                    {locale === 'ar' ? 'مشترك في إشارات التداول وتنبيهات الأسعار اللحظية' : 'Subscribed to real-time trade signals & alert triggers'}
                   </span>
                 ) : (
                   <span className="text-text-muted flex items-center gap-1.5">
                     <BellOff size={13} />
-                    Push alerts inactive on this browser session
+                    {locale === 'ar' ? 'الإشعارات غير نشطة في جلسة المتصفح الحالية' : 'Push alerts inactive on this browser session'}
                   </span>
                 )}
               </div>
@@ -247,10 +249,10 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
               <Bell size={14} />
               <span>
                 {isEnablingPush
-                  ? 'Connecting...'
+                  ? (locale === 'ar' ? 'جاري الاتصال...' : 'Connecting...')
                   : isCurrentDeviceSubscribed
-                  ? 'Send Test Push Alert'
-                  : 'Enable Push on This Device'}
+                  ? (locale === 'ar' ? 'إرسال إشعار تجريبي' : 'Send Test Push Alert')
+                  : (locale === 'ar' ? 'تفعيل الإشعارات على هذا الجهاز' : 'Enable Push on This Device')}
               </span>
             </button>
           </div>
@@ -268,16 +270,20 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-1">
           <h3 className="text-xs sm:text-sm font-semibold text-white tracking-tight">
-            Linked Notification Endpoints ({devices.length})
+            {locale === 'ar' ? `الأجهزة المسجلة للإشعارات (${devices.length})` : `Linked Notification Endpoints (${devices.length})`}
           </h3>
         </div>
 
         {devices.length === 0 ? (
           <div className="py-8 px-4 text-center rounded-xl bg-white/[0.02]">
             <Smartphone size={28} className="mx-auto mb-2 text-white/30" />
-            <p className="text-xs text-white/80 font-medium">No additional background devices registered</p>
+            <p className="text-xs text-white/80 font-medium">
+              {locale === 'ar' ? 'لا توجد أجهزة إضافية مسجلة' : 'No additional background devices registered'}
+            </p>
             <p className="text-[11px] text-text-muted mt-1 max-w-sm mx-auto">
-              Click &quot;Enable Push on This Device&quot; to link this browser, or log in from the Ticknal mobile app to receive instant trade notifications.
+              {locale === 'ar'
+                ? 'اضغط على "تفعيل الإشعارات على هذا الجهاز" لربط هذا المتصفح، أو سجل الدخول من تطبيق تكنال للهاتف لاستلام تنبيهات التداول الفورية.'
+                : 'Click "Enable Push on This Device" to link this browser, or log in from the Ticknal mobile app to receive instant trade notifications.'}
             </p>
           </div>
         ) : (
@@ -314,16 +320,22 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
                         </span>
                         {isCurrent && (
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-sans font-semibold bg-profit-num/10 text-profit-num shrink-0">
-                            Current
+                            {locale === 'ar' ? 'الحالي' : 'Current'}
                           </span>
                         )}
                       </div>
                       <div className="text-[11px] text-text-muted mt-0.5 tabular-nums">
-                        Registered {new Date(device.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                        {locale === 'ar'
+                          ? `تم التسجيل في ${new Date(device.createdAt).toLocaleDateString('ar-EG', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}`
+                          : `Registered ${new Date(device.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}`}
                       </div>
                     </div>
                   </div>
@@ -333,7 +345,7 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
                     onClick={() => handleDeleteDevice(device)}
                     disabled={deletingDeviceId === device.id}
                     className="p-2 rounded-lg text-white/40 hover:text-loss-num hover:bg-loss-num/10 transition-colors shrink-0 cursor-pointer"
-                    title="Disconnect Device"
+                    title={locale === 'ar' ? 'فصل الجهاز' : 'Disconnect Device'}
                   >
                     <Trash2 size={15} />
                   </button>

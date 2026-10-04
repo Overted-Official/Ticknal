@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n';
 import { Plus } from '@/components/ui/icon-library';
 import AddAccountDrawer from '@/components/platform/wallet/AddAccountDrawer';
 import PerformanceKPIRails, { type PerformanceViewTab } from './kpi-rails/PerformanceKPIRails';
@@ -89,19 +90,29 @@ export default function PerformanceOverviewSection({
     router.refresh();
   };
 
+  const { locale } = useTranslation();
+
   return (
     <section id="section-performance-overview" className="section-container section-viewport-fit space-y-3 sm:space-y-4">
       {/* Section Header with 3-Way Switcher Rail & Add Account Button */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h2 className="section-title">Performance Overview</h2>
+          <h2 className="section-title">
+            {locale === 'ar' ? 'نظرة عامة على الأداء' : 'Performance Overview'}
+          </h2>
           <p className="section-subtitle">
             {activeTab === 'net-worth' &&
-              'Mark-to-market consolidated net worth, capital allocation, and CBE inflation drag'}
+              (locale === 'ar'
+                ? 'صافي القيمة الموحدة بسعر السوق، وتوزيع رأس المال، ومعدل تضخم البنك المركزي المصري'
+                : 'Mark-to-market consolidated net worth, capital allocation, and CBE inflation drag')}
             {activeTab === 'investments' &&
-              'Mark-to-market portfolio returns, win rates, and monthly capital progression'}
+              (locale === 'ar'
+                ? 'عوائد المحفظة المحدثة بسعر السوق، ونسب النجاح، والنمو الشهري لرأس المال'
+                : 'Mark-to-market portfolio returns, win rates, and monthly capital progression')}
             {activeTab === 'banks' &&
-              'Aggregated liquidity, foreign currency reserves, and connected institution balances'}
+              (locale === 'ar'
+                ? 'إجمالي السيولة النقدية، واحتياطيات النقد الأجنبي، وأرصدة الحسابات البنكية'
+                : 'Aggregated liquidity, foreign currency reserves, and connected institution balances')}
           </p>
         </div>
 
@@ -113,21 +124,21 @@ export default function PerformanceOverviewSection({
               onClick={() => setActiveTab('net-worth')}
               className={`seg-control-btn ${activeTab === 'net-worth' ? 'seg-control-btn-active' : ''}`}
             >
-              Net Worth
+              {locale === 'ar' ? 'صافي القيمة' : 'Net Worth'}
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('investments')}
               className={`seg-control-btn ${activeTab === 'investments' ? 'seg-control-btn-active' : ''}`}
             >
-              Investments
+              {locale === 'ar' ? 'الاستثمارات' : 'Investments'}
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('banks')}
               className={`seg-control-btn ${activeTab === 'banks' ? 'seg-control-btn-active' : ''}`}
             >
-              Banks &amp; Accounts
+              {locale === 'ar' ? 'البنوك والحسابات' : 'Banks & Accounts'}
             </button>
           </div>
 
@@ -136,10 +147,10 @@ export default function PerformanceOverviewSection({
             type="button"
             onClick={() => setIsAddAccountOpen(true)}
             className="btn-primary-cta"
-            title="Create a new bank or brokerage account"
+            title={locale === 'ar' ? 'إنشاء حساب بنكي أو وساطة جديد' : 'Create a new bank or brokerage account'}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Account</span>
+            <span>{locale === 'ar' ? 'إضافة حساب' : 'Add Account'}</span>
           </button>
         </div>
       </div>

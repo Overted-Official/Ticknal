@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
 
 export interface GroupedMarketSignal {
@@ -38,10 +39,34 @@ const regimeColorClass: Record<NonNullable<Opportunity['rotationRegime']>, strin
   Lagging: 'text-loss-chart',
 };
 
+const REGIME_NAMES_AR: Record<NonNullable<Opportunity['rotationRegime']>, string> = {
+  Leading: 'متصدر',
+  Improving: 'متحسن',
+  Weakening: 'متراجع',
+  Lagging: 'متأخر',
+};
+
+const SECTOR_NAMES_AR: Record<string, string> = {
+  'Equities': 'الأسهم',
+  'Real Estate': 'العقارات',
+  'Banking': 'البنوك',
+  'Basic Resources': 'الموارد الأساسية',
+  'Healthcare': 'الرعاية الصحية',
+  'Industrial Goods': 'السلع الصناعية',
+  'Telecommunications': 'الاتصالات',
+  'Financial Services': 'الخدمات المالية',
+  'Food & Beverage': 'الأغذية والمشروبات',
+  'Energy': 'الطاقة',
+  'Technology': 'التكنولوجيا',
+  'Consumer Goods': 'السلع الاستهلاكية',
+};
+
 export default function MarketSignalRowItem({
   item,
   opp,
 }: MarketSignalRowItemProps) {
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const signalData = (item || opp)!;
   const [imgError, setImgError] = useState(false);
 
@@ -65,10 +90,18 @@ export default function MarketSignalRowItem({
 
   let signalAgeText = '';
   if (typeof barsAgo === 'number') {
-    signalAgeText = barsAgo === 0 ? 'Today' : `${barsAgo}D ago`;
+    if (barsAgo === 0) {
+      signalAgeText = isArabic ? 'اليوم' : 'Today';
+    } else {
+      signalAgeText = isArabic ? `منذ ${barsAgo} أيام` : `${barsAgo}D ago`;
+    }
   } else if (rawSignalDate) {
     signalAgeText = rawSignalDate;
   }
+
+  const rawSector = signalData.sector || 'Equities';
+  const displaySector = isArabic ? (SECTOR_NAMES_AR[rawSector] || rawSector) : rawSector;
+  const displayRegime = rotationRegime ? (isArabic ? (REGIME_NAMES_AR[rotationRegime] || rotationRegime) : rotationRegime) : null;
 
   return (
     <Link
@@ -97,7 +130,7 @@ export default function MarketSignalRowItem({
           {signalAgeText && (
             <span
               className="shrink-0 text-[10px] font-medium tabular-nums text-text-muted"
-              title={rawSignalDate ? `Signal date: ${rawSignalDate}` : undefined}
+              title={rawSignalDate ? (isArabic ? `تاريخ الإشارة: ${rawSignalDate}` : `Signal date: ${rawSignalDate}`) : undefined}
             >
               {signalAgeText}
             </span>
@@ -108,10 +141,10 @@ export default function MarketSignalRowItem({
           <span className="min-w-0 truncate text-text-muted">
             <span className="font-semibold text-text-primary">{cleanSymbol}</span>
             <span className="px-1">•</span>
-            <span>{signalData.sector || 'Equities'}</span>
+            <span>{displaySector}</span>
             {rotationRegime && (
-              <span className={`ml-1 ${regimeColorClass[rotationRegime]}`}>
-                ({rotationRegime})
+              <span className={`ml-1 rtl:ml-0 rtl:mr-1 ${regimeColorClass[rotationRegime]}`}>
+                ({displayRegime})
               </span>
             )}
           </span>

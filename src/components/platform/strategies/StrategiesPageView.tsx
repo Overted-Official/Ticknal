@@ -13,10 +13,12 @@ import {
   type SectorStrategySignalsResponse,
   aggregateSectorsFromStocks,
 } from '@/lib/finance/sectors-math';
+import { useTranslation } from '@/lib/i18n';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function StrategiesPageView() {
+  const { t, locale, isRTL } = useTranslation();
   const [timeframePreset, setTimeframePreset] = useState<StrategyTimeframe>('custom');
   const [selectedStrategy, setSelectedStrategy] = useState<string>('psi');
 
@@ -148,11 +150,11 @@ export default function StrategiesPageView() {
             href="/home"
             className="text-text-muted font-normal hover:text-text-primary transition-colors cursor-pointer"
           >
-            Home
+            {locale === 'ar' ? 'الرئيسية' : 'Home'}
           </Link>
           <span className="text-text-muted">/</span>
           <h1 className="font-semibold text-text-primary">
-            Strategies
+            {locale === 'ar' ? 'الاستراتيجيات' : 'Strategies'}
           </h1>
         </div>
 
@@ -161,10 +163,10 @@ export default function StrategiesPageView() {
           type="button"
           onClick={handleRefresh}
           className="p-1.5 rounded-lg border border-white/10 hover:bg-white/[0.06] text-neutral-400 hover:text-white transition cursor-pointer"
-          title="Refresh Strategy Data"
+          title={locale === 'ar' ? 'تحديث بيانات الاستراتيجيات' : 'Refresh Strategy Data'}
         >
           {isSignalsLoading ? (
-            <InlineSpinner className="h-3.5 w-3.5" label="Refreshing strategy data" />
+            <InlineSpinner className="h-3.5 w-3.5" label={locale === 'ar' ? 'جارٍ تحديث بيانات الاستراتيجيات' : 'Refreshing strategy data'} />
           ) : (
             <RefreshCw size={14} />
           )}

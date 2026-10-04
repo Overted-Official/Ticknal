@@ -13,6 +13,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import type { EquityPoint } from '@/strategies/registry';
+import { useTranslation } from '@/lib/i18n';
 
 interface EquityCurveChartProps {
   equityCurve: EquityPoint[];
@@ -45,21 +46,12 @@ function formatXAxisDate(dateStr: string): string {
   return dateStr;
 }
 
-function formatTooltipDate(dateStr: string): string {
+function formatTooltipDate(dateStr: string, isArabic: boolean): string {
   if (!dateStr) return '';
   const clean = dateStr.trim();
-  const parts = clean.split(/[-/ ]/);
-  if (parts.length >= 3) {
-    const year = parts[0];
-    const monthIdx = parseInt(parts[1], 10) - 1;
-    const day = parseInt(parts[2], 10);
-    if (monthIdx >= 0 && monthIdx < 12 && !isNaN(day)) {
-      return `${day} ${MONTH_NAMES[monthIdx]} ${year}`;
-    }
-  }
   const parsed = new Date(clean);
   if (!isNaN(parsed.getTime())) {
-    return parsed.toLocaleDateString('en-GB', {
+    return parsed.toLocaleDateString(isArabic ? 'ar-EG' : 'en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -73,8 +65,11 @@ export default function EquityCurveChart({
   initialCapital,
   currencySymbol,
 }: EquityCurveChartProps) {
+  const { locale } = useTranslation();
   const [showCumulativePnl, setShowCumulativePnl] = useState(true);
   const [showBuyHold, setShowBuyHold] = useState(true);
+
+  const displayCurrency = currencySymbol === 'EGP' && locale === 'ar' ? 'ج.م' : currencySymbol;
 
   // Transform data to percentage returns from initial capital
   const chartData = useMemo(() => {
@@ -108,16 +103,17 @@ export default function EquityCurveChart({
   }, [chartData]);
 
   return (
-    <section id="section-strategy-equity-curve" className="space-y-3.5 pt-6 border-t border-border-subtle">
+    <section id="section-strategy-equity-curve" className="space-y-3.5 pt-6 border-t border-border-subtle font-sans">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
           <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
-            Cumulative Growth Curve
+            {locale === 'ar' ? 'منحنى النمو التراكمي' : 'Cumulative Growth Curve'}
           </h3>
           <p className="text-xs text-white/50 leading-relaxed">
-            Cumulative strategy performance compared against Buy &amp; Hold benchmark starting at{' '}
-            {initialCapital.toLocaleString()} {currencySymbol}
+            {locale === 'ar'
+              ? `أداء الاستراتيجية التراكمي مقارنة بمؤشر الشراء والاحتفاظ برأس مال أولي قدره ${initialCapital.toLocaleString()} ${displayCurrency}`
+              : `Cumulative strategy performance compared against Buy & Hold benchmark starting at ${initialCapital.toLocaleString()} ${currencySymbol}`}
           </p>
         </div>
 
@@ -131,26 +127,26 @@ export default function EquityCurveChart({
             }`}
           >
             <span className="w-2.5 h-2.5 rounded-full bg-profit-num" />
-            <span>Cumulative ROI</span>
+            <span>{locale === 'ar' ? 'العائد التراكمي' : 'Cumulative ROI'}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowBuyHold(!showBuyHold)}
             className={`flex items-center gap-1.5 transition-opacity cursor-pointer ${
               showBuyHold ? 'text-white font-medium' : 'text-white/40 opacity-60'
-}`}
+            }`}
           >
             <span className="w-2.5 h-2.5 rounded-full bg-[#2962ff]" />
-            <span>Buy &amp; Hold</span>
+            <span>{locale === 'ar' ? 'الشراء والاحتفاظ' : 'Buy & Hold'}</span>
           </button>
         </div>
       </div>
 
-      {/* Seamless Chart Canvas (No Box Borders, Clean Left & Right Breathing Margins) */}
+      {/* Seamless Chart Canvas */}
       <div className="w-full h-[260px] sm:h-[300px] relative select-none">
         {chartData.length < 2 ? (
           <div className="flex h-full items-center justify-center text-xs text-text-muted">
-            Not enough historical backtest points in period.
+            {locale === 'ar' ? 'لا تتوفر نقاط كافية للاختبار التاريخي في هذه الفترة.' : 'Not enough historical backtest points in period.'}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -239,7 +235,7 @@ export default function EquityCurveChart({
               )}
 
               <RechartsTooltip
-                content={<StrategyChartTooltip currencySymbol={currencySymbol} />}
+                content={<StrategyChartTooltip currencySymbol={displayCurrency} isArabic={locale === 'ar'} />}
                 cursor={{ stroke: 'rgba(255, 255, 255, 0.18)', strokeWidth: 1, strokeDasharray: '3 3' }}
               />
 
@@ -247,7 +243,7 @@ export default function EquityCurveChart({
                 <Area
                   type="monotone"
                   dataKey="equityPct"
-                  name="Strategy ROI"
+                  name={locale === 'ar' ? 'عائد الاستراتيجية' : 'Strategy ROI'}
                   stroke="var(--palette-positive)"
                   strokeWidth={2}
                   fill="url(#modularTvEquityGrad)"
@@ -259,7 +255,7 @@ export default function EquityCurveChart({
                 <Line
                   type="monotone"
                   dataKey="buyHoldPct"
-                  name="Buy & Hold"
+                  name={locale === 'ar' ? 'الشراء والاحتفاظ' : 'Buy & Hold'}
                   stroke="#2962ff"
                   strokeWidth={1.5}
                   dot={false}
@@ -278,17 +274,18 @@ function StrategyChartTooltip({
   active,
   payload,
   currencySymbol = 'EGP',
+  isArabic = false,
 }: any) {
   if (active && payload && payload.length) {
     const d = payload[0].payload as EquityPoint & { equityPct: number; buyHoldPct: number };
-    const dateFormatted = formatTooltipDate(d.date);
+    const dateFormatted = formatTooltipDate(d.date, isArabic);
 
     return (
       <div className="p-3 rounded-xl bg-[#3D3D3D] shadow-2xl text-xs tabular-nums select-none font-sans min-w-[220px] space-y-2 border border-white/10">
         <div className="font-semibold text-white/90 text-xs border-b border-white/15 pb-1.5 flex items-center justify-between">
           <span>{dateFormatted}</span>
           <span className="text-[10px] text-white/50 font-normal uppercase tracking-wider">
-            Report
+            {isArabic ? 'تقرير' : 'Report'}
           </span>
         </div>
 
@@ -297,7 +294,7 @@ function StrategyChartTooltip({
           <div className="flex justify-between items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5 text-zinc-300">
               <span className="w-2 h-2 rounded-full bg-profit-num shrink-0" />
-              <span>Strategy:</span>
+              <span>{isArabic ? 'الاستراتيجية:' : 'Strategy:'}</span>
             </div>
             <div className="flex items-center gap-1.5 font-semibold text-right">
               <span className="text-profit-num">
@@ -313,7 +310,7 @@ function StrategyChartTooltip({
           <div className="flex justify-between items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5 text-zinc-300">
               <span className="w-2 h-2 rounded-full bg-[#2962ff] shrink-0" />
-              <span>Buy &amp; Hold:</span>
+              <span>{isArabic ? 'الشراء والاحتفاظ:' : 'Buy & Hold:'}</span>
             </div>
             <div className="flex items-center gap-1.5 font-semibold text-right">
               <span className="text-white">
@@ -328,7 +325,7 @@ function StrategyChartTooltip({
           {/* Drawdown */}
           {d.drawdown !== undefined && d.drawdown !== 0 && (
             <div className="flex justify-between items-center gap-4 text-xs pt-1 border-t border-white/10">
-              <span className="text-zinc-400">Drawdown:</span>
+              <span className="text-zinc-400">{isArabic ? 'الهبوط:' : 'Drawdown:'}</span>
               <span className="text-loss-num font-semibold">
                 -{Math.abs(d.drawdown).toFixed(2)}%
               </span>

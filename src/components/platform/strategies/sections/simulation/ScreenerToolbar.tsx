@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Search } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
 import type { GroupBy, QuickFilter } from './types';
 
 interface ScreenerToolbarProps {
@@ -13,19 +14,6 @@ interface ScreenerToolbarProps {
   onSearchQueryChange: (q: string) => void;
 }
 
-const QUICK_FILTERS: { id: QuickFilter; label: string }[] = [
-  { id: 'all', label: 'All Tickers' },
-  { id: 'beating', label: 'Beating B&H' },
-  { id: 'trailing', label: 'Trailing B&H' },
-  { id: 'active', label: 'Active Setups' },
-];
-
-const GROUP_OPTIONS: { id: GroupBy; label: string }[] = [
-  { id: 'sector', label: 'Sectors' },
-  { id: 'industryGroup', label: 'Groups' },
-  { id: 'industry', label: 'Industries' },
-];
-
 export default function ScreenerToolbar({
   quickFilter,
   onQuickFilterChange,
@@ -34,12 +22,28 @@ export default function ScreenerToolbar({
   searchQuery,
   onSearchQueryChange,
 }: ScreenerToolbarProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
+
+  const quickFilters: { id: QuickFilter; label: string }[] = [
+    { id: 'all', label: isAr ? 'كافة الأسهم' : 'All Tickers' },
+    { id: 'beating', label: isAr ? 'تتفوق على B&H' : 'Beating B&H' },
+    { id: 'trailing', label: isAr ? 'تتراجع عن B&H' : 'Trailing B&H' },
+    { id: 'active', label: isAr ? 'إشارات نشطة' : 'Active Setups' },
+  ];
+
+  const groupOptions: { id: GroupBy; label: string }[] = [
+    { id: 'sector', label: isAr ? 'القطاعات' : 'Sectors' },
+    { id: 'industryGroup', label: isAr ? 'المجموعات' : 'Groups' },
+    { id: 'industry', label: isAr ? 'الصناعات' : 'Industries' },
+  ];
+
   return (
     <div className="flex items-center justify-between gap-3 flex-wrap py-0.5 text-xs select-none font-sans">
       {/* Left: Quick filters (All Tickers, Beating B&H, Trailing B&H, Active Setups) + Granularity (Sectors, Groups, Industries) */}
       <div className="flex items-center gap-2.5 flex-wrap">
         <div className="seg-control">
-          {QUICK_FILTERS.map((qf) => (
+          {quickFilters.map((qf) => (
             <button
               key={qf.id}
               type="button"
@@ -52,7 +56,7 @@ export default function ScreenerToolbar({
         </div>
 
         <div className="seg-control">
-          {GROUP_OPTIONS.map((g) => (
+          {groupOptions.map((g) => (
             <button
               key={g.id}
               type="button"
@@ -72,7 +76,7 @@ export default function ScreenerToolbar({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
-          placeholder="Search symbol, company..."
+          placeholder={isAr ? 'ابحث عن رمز، شركة...' : 'Search symbol, company...'}
           className="bg-transparent text-text-primary placeholder:text-text-muted focus:outline-hidden text-xs w-full"
         />
         {searchQuery && (

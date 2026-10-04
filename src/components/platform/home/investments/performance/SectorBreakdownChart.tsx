@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type HomeInvestmentOrder, type SectorDataItem } from '../homeInvestmentsTypes';
 
 export interface SectorItem {
@@ -41,6 +42,27 @@ export default function SectorBreakdownChart({
 }: SectorBreakdownChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
+
+  const localizeSector = (secName: string) => {
+    if (locale !== 'ar') return secName;
+    const map: Record<string, string> = {
+      Equities: 'الأسهم',
+      'Real Estate': 'العقارات',
+      Banking: 'البنوك',
+      Technology: 'التكنولوجيا',
+      Industrial: 'الصناعة',
+      Healthcare: 'الرعاية الصحية',
+      'Basic Resources': 'الموارد الأساسية',
+      'Financial Services': 'الخدمات المالية',
+      Telecommunications: 'الاتصالات',
+      'Consumer Goods': 'السلع الاستهلاكية',
+      Energy: 'الطاقة',
+      Utilities: 'المرافق',
+    };
+    return map[secName] || secName;
+  };
 
   // Resolve total portfolio market value
   const totalValue = useMemo(() => {
@@ -107,16 +129,16 @@ export default function SectorBreakdownChart({
   // Format currency helper
   const formatMoney = (val: number, showSign: boolean = false): string => {
     if (isPrivacy) {
-      if (val === 0) return '•••••• £';
+      if (val === 0) return `•••••• ${currencySymbol}`;
       const sign = showSign && val > 0 ? '+' : val < 0 ? '-' : '';
-      return `${sign}•••••• £`;
+      return `${sign}•••••• ${currencySymbol}`;
     }
     const formatted = Math.abs(val).toLocaleString('en-US', {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     });
     const sign = showSign && val > 0 ? '+' : val < 0 ? '-' : '';
-    return `${sign}${formatted} £`;
+    return `${sign}${formatted} ${currencySymbol}`;
   };
 
   const activeSlice =
@@ -129,14 +151,16 @@ export default function SectorBreakdownChart({
       {/* 1. Header: Title + Total Allocation Value */}
       <div className="flex items-center justify-between gap-2.5 pb-0.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text-primary">Sector Breakdown</span>
+          <span className="text-xs font-semibold text-text-primary">
+            {locale === 'ar' ? 'توزيع القطاعات' : 'Sector Breakdown'}
+          </span>
           <span className="badge-count">
             {sectors.length}
           </span>
         </div>
 
         <div className="text-xs text-text-muted">
-          Total:{' '}
+          {locale === 'ar' ? 'الإجمالي:' : 'Total:'}{' '}
           <span className="text-text-primary font-semibold tabular-nums">
             {formatMoney(totalValue)}
           </span>
@@ -147,7 +171,7 @@ export default function SectorBreakdownChart({
       <div className="w-full h-[210px] flex items-center gap-3 min-h-0">
         {sectors.length === 0 ? (
           <div className="w-full h-full flex items-center justify-center text-xs text-text-muted">
-            No sector allocation data available.
+            {locale === 'ar' ? 'لا تتوفر بيانات لتوزيع القطاعات.' : 'No sector allocation data available.'}
           </div>
         ) : (
           <>
@@ -195,7 +219,7 @@ export default function SectorBreakdownChart({
                     : `${sectors.length}`}
                 </span>
                 <span className="text-[10px] text-text-muted font-medium mt-1 truncate max-w-[80px] px-1">
-                  {activeSlice ? activeSlice.name : 'Sectors'}
+                  {activeSlice ? localizeSector(activeSlice.name) : (locale === 'ar' ? 'القطاعات' : 'Sectors')}
                 </span>
               </div>
             </div>
@@ -205,10 +229,18 @@ export default function SectorBreakdownChart({
               <table className="w-full text-left text-xs font-sans border-collapse">
                 <thead>
                   <tr className="border-b border-border-subtle text-text-muted text-[10px] font-medium sticky top-0 bg-surface-base z-10">
-                    <th className="pb-1.5 text-left font-medium">Sector</th>
-                    <th className="pb-1.5 text-right font-medium">Value</th>
-                    <th className="pb-1.5 text-right font-medium">Alloc.</th>
-                    <th className="pb-1.5 text-right font-medium hidden sm:table-cell">Gain/Loss</th>
+                    <th className="pb-1.5 text-left font-medium">
+                      {locale === 'ar' ? 'القطاع' : 'Sector'}
+                    </th>
+                    <th className="pb-1.5 text-right font-medium">
+                      {locale === 'ar' ? 'القيمة' : 'Value'}
+                    </th>
+                    <th className="pb-1.5 text-right font-medium">
+                      {locale === 'ar' ? 'النسبة' : 'Alloc.'}
+                    </th>
+                    <th className="pb-1.5 text-right font-medium hidden sm:table-cell">
+                      {locale === 'ar' ? 'الربح/الخسارة' : 'Gain/Loss'}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle/60">
@@ -232,7 +264,7 @@ export default function SectorBreakdownChart({
                               style={{ backgroundColor: sec.color }}
                             />
                             <span className="text-text-primary text-[11px] font-medium truncate max-w-[90px] sm:max-w-[120px] group-hover:text-brand-blue transition-colors">
-                              {sec.name}
+                              {localizeSector(sec.name)}
                             </span>
                           </div>
                         </td>
@@ -247,7 +279,7 @@ export default function SectorBreakdownChart({
                                 minimumFractionDigits: 0,
                                 maximumFractionDigits: 0,
                               })}
-                              <span className="text-[9px] text-text-muted ml-0.5">£</span>
+                              <span className="text-[9px] text-text-muted ml-0.5">{currencySymbol}</span>
                             </>
                           )}
                         </td>
@@ -275,7 +307,7 @@ export default function SectorBreakdownChart({
                                     maximumFractionDigits: 0,
                                   })}
                               {!isPrivacy && (
-                                <span className="text-[9px] ml-0.5">£</span>
+                                <span className="text-[9px] ml-0.5">{currencySymbol}</span>
                               )}
                             </span>
                           ) : (

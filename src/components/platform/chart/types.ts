@@ -10,6 +10,7 @@ export interface ChartData {
   low: number;
   close: number;
   volume: number;
+  trades?: number;
 }
 
 export interface StrategySignal {

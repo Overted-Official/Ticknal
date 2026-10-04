@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type BankAccount } from '@/types/bank';
 import { type HomeInvestmentOrder } from '../../homeInvestmentsTypes';
 
@@ -21,13 +22,13 @@ interface NetWorthBreakdownChartProps {
   usdRate?: number;
 }
 
-const ASSET_CLASS_CONFIG: Record<string, { name: string; color: string }> = {
-  STOCKS: { name: 'EGX Equities', color: '#2962ff' },
-  FUNDS: { name: 'Mutual Funds & ETFs', color: '#00bcd4' },
-  BROKERAGE: { name: 'Brokerage Cash', color: '#f59e0b' },
-  USD_CASH: { name: 'USD Cash Reserves', color: '#089981' },
-  EGP_CASH: { name: 'EGP Liquid Cash', color: '#9c27b0' },
-  CDS: { name: 'Certificates & Deposits', color: '#e91e63' },
+const ASSET_CLASS_CONFIG: Record<string, { name: string; nameAr: string; color: string }> = {
+  STOCKS: { name: 'EGX Equities', nameAr: 'أسهم البورصة المصرية', color: '#2962ff' },
+  FUNDS: { name: 'Mutual Funds & ETFs', nameAr: 'صناديق الاستثمار والمؤشرات', color: '#00bcd4' },
+  BROKERAGE: { name: 'Brokerage Cash', nameAr: 'سيولة الوساطة النقدية', color: '#f59e0b' },
+  USD_CASH: { name: 'USD Cash Reserves', nameAr: 'احتياطي الدولار', color: '#089981' },
+  EGP_CASH: { name: 'EGP Liquid Cash', nameAr: 'السيولة النقدية بالجنيه', color: '#9c27b0' },
+  CDS: { name: 'Certificates & Deposits', nameAr: 'الشهادات والودائع', color: '#e91e63' },
 };
 
 export default function NetWorthBreakdownChart({
@@ -37,6 +38,8 @@ export default function NetWorthBreakdownChart({
 }: NetWorthBreakdownChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
 
   // Aggregate assets into slices
   const { slices, totalValue } = useMemo(() => {
@@ -89,7 +92,7 @@ export default function NetWorthBreakdownChart({
     const rawList: AssetAllocationSlice[] = [
       {
         id: 'stocks',
-        name: ASSET_CLASS_CONFIG.STOCKS.name,
+        name: locale === 'ar' ? ASSET_CLASS_CONFIG.STOCKS.nameAr : ASSET_CLASS_CONFIG.STOCKS.name,
         value: stocksVal,
         percentage: (stocksVal / safeTotal) * 100,
         color: ASSET_CLASS_CONFIG.STOCKS.color,
@@ -97,7 +100,7 @@ export default function NetWorthBreakdownChart({
       },
       {
         id: 'funds',
-        name: ASSET_CLASS_CONFIG.FUNDS.name,
+        name: locale === 'ar' ? ASSET_CLASS_CONFIG.FUNDS.nameAr : ASSET_CLASS_CONFIG.FUNDS.name,
         value: fundsVal,
         percentage: (fundsVal / safeTotal) * 100,
         color: ASSET_CLASS_CONFIG.FUNDS.color,
@@ -105,7 +108,7 @@ export default function NetWorthBreakdownChart({
       },
       {
         id: 'brokerage',
-        name: ASSET_CLASS_CONFIG.BROKERAGE.name,
+        name: locale === 'ar' ? ASSET_CLASS_CONFIG.BROKERAGE.nameAr : ASSET_CLASS_CONFIG.BROKERAGE.name,
         value: brokerageVal,
         percentage: (brokerageVal / safeTotal) * 100,
         color: ASSET_CLASS_CONFIG.BROKERAGE.color,
@@ -113,7 +116,7 @@ export default function NetWorthBreakdownChart({
       },
       {
         id: 'usd_cash',
-        name: ASSET_CLASS_CONFIG.USD_CASH.name,
+        name: locale === 'ar' ? ASSET_CLASS_CONFIG.USD_CASH.nameAr : ASSET_CLASS_CONFIG.USD_CASH.name,
         value: usdCashVal,
         percentage: (usdCashVal / safeTotal) * 100,
         color: ASSET_CLASS_CONFIG.USD_CASH.color,
@@ -121,7 +124,7 @@ export default function NetWorthBreakdownChart({
       },
       {
         id: 'egp_cash',
-        name: ASSET_CLASS_CONFIG.EGP_CASH.name,
+        name: locale === 'ar' ? ASSET_CLASS_CONFIG.EGP_CASH.nameAr : ASSET_CLASS_CONFIG.EGP_CASH.name,
         value: egpCashVal,
         percentage: (egpCashVal / safeTotal) * 100,
         color: ASSET_CLASS_CONFIG.EGP_CASH.color,
@@ -129,7 +132,7 @@ export default function NetWorthBreakdownChart({
       },
       {
         id: 'cds',
-        name: ASSET_CLASS_CONFIG.CDS.name,
+        name: locale === 'ar' ? ASSET_CLASS_CONFIG.CDS.nameAr : ASSET_CLASS_CONFIG.CDS.name,
         value: cdsVal,
         percentage: (cdsVal / safeTotal) * 100,
         color: ASSET_CLASS_CONFIG.CDS.color,
@@ -141,12 +144,12 @@ export default function NetWorthBreakdownChart({
       slices: rawList.sort((a, b) => b.value - a.value),
       totalValue: total,
     };
-  }, [accounts, openOrders, usdRate]);
+  }, [accounts, openOrders, usdRate, locale]);
 
   const formatMoney = (val: number): string => {
-    if (isPrivacy) return '•••••• £';
+    if (isPrivacy) return `•••••• ${currencySymbol}`;
     const formatted = Math.round(val).toLocaleString('en-US');
-    return `${formatted} £`;
+    return `${formatted} ${currencySymbol}`;
   };
 
   const activeSlice =
@@ -159,14 +162,16 @@ export default function NetWorthBreakdownChart({
       {/* 1. Header: Title + Total Net Worth */}
       <div className="flex items-center justify-between gap-2.5 pb-0.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text-primary">Asset Allocation</span>
+          <span className="text-xs font-semibold text-text-primary">
+            {locale === 'ar' ? 'توزيع الأصول' : 'Asset Allocation'}
+          </span>
           <span className="badge-count">
             {slices.length}
           </span>
         </div>
 
         <div className="text-xs text-text-muted">
-          Total:{' '}
+          {locale === 'ar' ? 'الإجمالي:' : 'Total:'}{' '}
           <span className="text-text-primary font-semibold tabular-nums">
             {formatMoney(totalValue)}
           </span>
@@ -177,7 +182,7 @@ export default function NetWorthBreakdownChart({
       <div className="w-full h-[210px] flex items-center gap-3 min-h-0">
         {slices.length === 0 ? (
           <div className="w-full h-full flex items-center justify-center text-xs text-text-muted">
-            No asset allocation data available.
+            {locale === 'ar' ? 'لا تتوفر بيانات لتوزيع الأصول.' : 'No asset allocation data available.'}
           </div>
         ) : (
           <>
@@ -225,7 +230,7 @@ export default function NetWorthBreakdownChart({
                     : `${slices.length}`}
                 </span>
                 <span className="text-[10px] text-text-muted font-medium mt-1 truncate max-w-[80px] px-1">
-                  {activeSlice ? activeSlice.name : 'Assets'}
+                  {activeSlice ? activeSlice.name : (locale === 'ar' ? 'الأصول' : 'Assets')}
                 </span>
               </div>
             </div>
@@ -235,9 +240,15 @@ export default function NetWorthBreakdownChart({
               <table className="w-full text-left text-xs font-sans border-collapse">
                 <thead>
                   <tr className="border-b border-border-subtle text-text-muted text-[10px] font-medium sticky top-0 bg-surface-base z-10">
-                    <th className="pb-1.5 text-left font-medium">Asset Class</th>
-                    <th className="pb-1.5 text-right font-medium">Value</th>
-                    <th className="pb-1.5 text-right font-medium">Alloc.</th>
+                    <th className="pb-1.5 text-left font-medium">
+                      {locale === 'ar' ? 'فئة الأصول' : 'Asset Class'}
+                    </th>
+                    <th className="pb-1.5 text-right font-medium">
+                      {locale === 'ar' ? 'القيمة' : 'Value'}
+                    </th>
+                    <th className="pb-1.5 text-right font-medium">
+                      {locale === 'ar' ? 'النسبة' : 'Alloc.'}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle/60">

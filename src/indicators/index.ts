@@ -7,6 +7,7 @@ import { evenBetterSinewaveIndicator } from './even-better-sinewave';
 import { kalmanFilterIndicator } from './kalman-filter';
 import { permutationEntropyIndicator } from './permutation-entropy';
 import { hydraIndicator } from './hydra-index';
+import { smartMoneyIndicator } from './smart-money';
 
 export interface IndicatorLine {
   id: string;
@@ -39,6 +40,7 @@ export interface IndicatorDefinition {
 
 // Registry of all available indicators
 export const INDICATORS: Record<string, IndicatorDefinition> = {
+  [smartMoneyIndicator.id]: smartMoneyIndicator,
   [hydraIndicator.id]: hydraIndicator,
   [framaIndicator.id]: framaIndicator,
   [evenBetterSinewaveIndicator.id]: evenBetterSinewaveIndicator,

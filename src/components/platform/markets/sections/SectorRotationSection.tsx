@@ -12,6 +12,7 @@ import SectorRotationMatrix from '../SectorRotationMatrix';
 import SectorConcentrationFlowPanel from './SectorConcentrationFlowPanel';
 import { X } from '@/components/ui/icon-library';
 import { type MarketTimeframe, TIMEFRAMES } from './MarketOverviewSection';
+import { useTranslation } from '@/lib/i18n';
 
 export type GICSGranularity = 'sector' | 'industryGroup' | 'industry';
 
@@ -32,6 +33,7 @@ export default function SectorRotationSection({
   timeframe,
   onTimeframeChange,
 }: SectorRotationSectionProps) {
+  const { locale } = useTranslation();
   const [granularity, setGranularity] = useState<GICSGranularity>('sector');
   const [internalTimeframe, setInternalTimeframe] = useState<MarketTimeframe>('1M');
   const [internalSelectedCategory, setInternalSelectedCategory] = useState<string | null>(null);
@@ -104,9 +106,13 @@ export default function SectorRotationSection({
     <section id="sector-rotation" className="section-container space-y-4 pt-1 font-sans select-none scroll-mt-16">
       {/* 1. Section Header Title */}
       <div className="flex flex-col gap-0.5 min-w-0 pb-2 border-b border-border-subtle">
-        <h2 className="section-title">Sector Rotation (RRG)</h2>
+        <h2 className="section-title">
+          {locale === 'ar' ? 'دوران القطاعات (RRG)' : 'Sector Rotation (RRG)'}
+        </h2>
         <p className="section-subtitle">
-          Track sector momentum against the EGX30 benchmark to identify institutional rotation cycles and capital shifts
+          {locale === 'ar'
+            ? 'تتبع زخم القطاعات مقارنة بمؤشر EGX30 لرصد دورات التدوير المؤسسي وانتقال السيولة'
+            : 'Track sector momentum against the EGX30 benchmark to identify institutional rotation cycles and capital shifts'}
         </p>
       </div>
 
@@ -115,9 +121,9 @@ export default function SectorRotationSection({
         {/* Left: 3-Level GICS Switcher */}
         <div className="seg-control">
           {[
-            { id: 'sector', label: 'Sector' },
-            { id: 'industryGroup', label: 'Group' },
-            { id: 'industry', label: 'Industry' },
+            { id: 'sector', label: 'Sector', labelAr: 'القطاع' },
+            { id: 'industryGroup', label: 'Group', labelAr: 'المجموعة' },
+            { id: 'industry', label: 'Industry', labelAr: 'الصناعة' },
           ].map((lvl) => (
             <button
               key={lvl.id}
@@ -128,7 +134,7 @@ export default function SectorRotationSection({
               }}
               className={`seg-control-btn ${granularity === lvl.id ? 'seg-control-btn-active' : ''}`}
             >
-              {lvl.label}
+              {locale === 'ar' ? lvl.labelAr : lvl.label}
             </button>
           ))}
         </div>
@@ -219,7 +225,7 @@ export default function SectorRotationSection({
                   {/* Drawer Header Close Button Bar */}
                   <div className="px-4 py-2 flex items-center justify-between border-b border-white/[0.08] shrink-0">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                      Sector Analysis
+                      {locale === 'ar' ? 'تحليل القطاع' : 'Sector Analysis'}
                     </span>
                     <button
                       type="button"

@@ -6,6 +6,7 @@ import {
   Calendar,
 } from '@/components/ui/icon-library';
 import type { ComputedReportMetrics, BacktestPreset } from './types';
+import { useTranslation } from '@/lib/i18n';
 
 interface StrategyReportHeaderProps {
   symbol: string;
@@ -53,6 +54,7 @@ export default function StrategyReportHeader({
   activePreset,
   onClose,
 }: StrategyReportHeaderProps) {
+  const { locale, isRTL } = useTranslation();
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
@@ -70,15 +72,15 @@ export default function StrategyReportHeader({
       type="button"
       onClick={onClose}
       className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0"
-      title="Close Report (Esc)"
-      aria-label="Close Strategy Report Drawer"
+      title={locale === 'ar' ? 'إغلاق التقرير (Esc)' : 'Close Report (Esc)'}
+      aria-label={locale === 'ar' ? 'إغلاق تقرير الاستراتيجية' : 'Close Strategy Report Drawer'}
     >
       <X size={16} />
     </button>
   );
 
   return (
-    <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 xl:py-0 flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 xl:gap-4 border-b border-white/10 shrink-0 bg-black">
+    <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 xl:py-0 flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 xl:gap-4 border-b border-white/10 shrink-0 bg-black font-sans">
       {/* Top row on smaller screens / Left side on desktop: Company Info Lockup + Mobile Close */}
       <div className="flex items-center justify-between xl:justify-start gap-3 min-w-0 flex-1 overflow-hidden">
         <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
@@ -96,7 +98,7 @@ export default function StrategyReportHeader({
               </span>
             )}
           </div>
-          <div className="flex flex-col min-w-0 flex-1 overflow-hidden leading-tight">
+          <div className="flex flex-col min-w-0 flex-1 overflow-hidden leading-tight text-start">
             <span
               className="font-semibold text-xs sm:text-sm text-white tracking-tight truncate block"
               title={companyName || symbol}
@@ -122,6 +124,13 @@ export default function StrategyReportHeader({
           <div className="seg-control shrink-0">
             {STRATEGY_SWITCHERS.map((strat) => {
               const isSelected = selectedStrategy === strat.id;
+              const name =
+                strat.id === 'psi'
+                  ? locale === 'ar' ? 'تايفون' : 'Typhon'
+                  : strat.id === 'psi_v2'
+                  ? locale === 'ar' ? 'سيربيروس' : 'Cerberus'
+                  : locale === 'ar' ? 'هيدرا' : 'Hydra';
+
               return (
                 <button
                   key={strat.id}
@@ -129,7 +138,7 @@ export default function StrategyReportHeader({
                   onClick={() => setSelectedStrategy(strat.id)}
                   className={`seg-control-btn ${isSelected ? 'seg-control-btn-active' : ''}`}
                 >
-                  {strat.name}
+                  {name}
                 </button>
               );
             })}
@@ -140,45 +149,58 @@ export default function StrategyReportHeader({
 
         {/* Timeframe Presets & Custom Trigger */}
         <div className="seg-control shrink-0">
-          {TIMEFRAME_PRESETS.map((tf) => (
-            <button
-              key={tf.id}
-              type="button"
-              onClick={() => onSelectPresetDate(tf.id)}
-              className={`seg-control-btn ${isPresetActive(tf.id) ? 'seg-control-btn-active' : ''}`}
-            >
-              {tf.label}
-            </button>
-          ))}
+          {TIMEFRAME_PRESETS.map((tf) => {
+            const label =
+              tf.id === '3m'
+                ? locale === 'ar' ? '3 أشهر' : '3M'
+                : tf.id === '6m'
+                ? locale === 'ar' ? '6 أشهر' : '6M'
+                : tf.id === 'ytd'
+                ? locale === 'ar' ? 'بداية العام' : 'YTD'
+                : tf.id === '1y'
+                ? locale === 'ar' ? '1 سنة' : '1Y'
+                : locale === 'ar' ? 'الكل' : 'ALL';
+
+            return (
+              <button
+                key={tf.id}
+                type="button"
+                onClick={() => onSelectPresetDate(tf.id)}
+                className={`seg-control-btn ${isPresetActive(tf.id) ? 'seg-control-btn-active' : ''}`}
+              >
+                {label}
+              </button>
+            );
+          })}
           <button
             type="button"
             onClick={() => onSelectPresetDate('custom')}
             className={`seg-control-btn flex items-center gap-1 ${
               activePreset === 'custom' ? 'seg-control-btn-active' : ''
             }`}
-            title="Custom Date Range"
+            title={locale === 'ar' ? 'نطاق زمني مخصص' : 'Custom Date Range'}
           >
             <Calendar size={11} />
-            <span>Custom</span>
+            <span>{locale === 'ar' ? 'مخصص' : 'Custom'}</span>
           </button>
         </div>
 
-        {/* Inline Custom Date Inputs (matches StrategySimulationSection) */}
+        {/* Inline Custom Date Inputs */}
         {activePreset === 'custom' && (
-          <div className="input-control-compact text-xs shrink-0 animate-in fade-in duration-150">
+          <div className="input-control-compact text-xs shrink-0 animate-in fade-in duration-150 font-sans">
             <Calendar className="w-3.5 h-3.5 text-text-muted shrink-0" />
             <input
               type="date"
               value={strategyStartDate || '2025-01-01'}
               onChange={(e) => onSetCustomStartDate?.(e.target.value)}
-              className="bg-transparent text-text-primary focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none"
+              className="bg-transparent text-text-primary focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
             />
-            <span className="text-text-muted select-none text-[11px] leading-none">→</span>
+            <span className="text-text-muted select-none text-[11px] leading-none">{isRTL ? '←' : '→'}</span>
             <input
               type="date"
               value={strategyEndDate || ''}
               onChange={(e) => onSetCustomEndDate?.(e.target.value)}
-              className="bg-transparent text-text-primary focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none"
+              className="bg-transparent text-text-primary focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
             />
           </div>
         )}

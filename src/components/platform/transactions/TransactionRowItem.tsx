@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type UnifiedLedgerItem } from './types';
 import { getCategoryBadgeStyle } from '@/lib/category-colors';
 
@@ -23,6 +24,7 @@ export default function TransactionRowItem({
   formatMoney,
   onClick,
 }: TransactionRowItemProps) {
+  const { locale, isRTL } = useTranslation();
   const { isPrivacy } = usePrivacyMode();
 
   const isTransfer = item.type === 'TRANSFER' || item.category.toLowerCase().includes('transfer');
@@ -56,27 +58,50 @@ export default function TransactionRowItem({
     const parts = dateStr.slice(0, 10).split('-');
     if (parts.length === 3) {
       const [year, month, day] = parts;
-      const monthNames = [
+      const monthNamesEn = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
       ];
-      const m = monthNames[Number(month) - 1] || month;
-      return `${m} ${Number(day)}, ${year}`;
+      const monthNamesAr = [
+        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+      ];
+      const m = (locale === 'ar' ? monthNamesAr : monthNamesEn)[Number(month) - 1] || month;
+      return `${Number(day)} ${m} ${year}`;
     }
     return dateStr;
   };
 
+  // Category translation map
+  const categoryLabel = (cat: string) => {
+    if (locale !== 'ar') return cat;
+    const catMap: Record<string, string> = {
+      'Living & Bills': 'المعيشة والفواتير',
+      'Housing & Rent': 'السكن والإيجار',
+      'Food & Dining': 'الطعام والمطاعم',
+      'Trading & Investments': 'التداول والاستثمار',
+      'Salary & Income': 'الراتب والدخل',
+      'Savings': 'المدخرات',
+      'Interest & Yield': 'الفوائد والعوائد',
+      'Investments': 'الاستثمارات',
+      'Trading': 'التداول',
+      'Trading Injection': 'تمويل تداول',
+      'Other': 'أخرى',
+    };
+    return catMap[cat] || cat;
+  };
+
   // Note text resolution
-  const noteText = item.notes?.trim() || item.title?.trim() || item.category || 'Transaction';
+  const noteText = item.notes?.trim() || item.title?.trim() || (item.category ? categoryLabel(item.category) : (locale === 'ar' ? 'معاملة' : 'Transaction'));
 
   // Formatter for Value
   const formattedValue = () => {
-    if (isPrivacy) return `•••••• ${item.currency === 'USD' ? '$' : '£'}`;
+    const unit = item.currency === 'USD' ? '$' : (locale === 'ar' ? 'ج.م' : 'EGP');
+    if (isPrivacy) return `•••••• ${unit}`;
     const formatted = Math.abs(item.amount).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-    const unit = item.currency === 'USD' ? '$' : '£';
     if (isTransfer) return `${formatted} ${unit}`;
     const sign = isInflow ? '+' : '-';
     return `${sign}${formatted} ${unit}`;
@@ -119,7 +144,7 @@ export default function TransactionRowItem({
                     : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
                 }`}
               >
-                {item.tradeDetails.side}
+                {item.tradeDetails.side === 'BUY' ? (locale === 'ar' ? 'شراء' : 'BUY') : (locale === 'ar' ? 'بيع' : 'SELL')}
               </span>
             )}
           </div>
@@ -130,7 +155,7 @@ export default function TransactionRowItem({
               className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border select-none transition-colors shrink-0"
               style={getCategoryBadgeStyle(item.category)}
             >
-              {item.category}
+              {categoryLabel(item.category)}
             </span>
             <span className="text-zinc-600 text-xs select-none">·</span>
             {isTransfer && item.toAccountName ? (
@@ -138,7 +163,7 @@ export default function TransactionRowItem({
                 <span className="text-text-primary/90 font-medium truncate max-w-[110px] sm:max-w-[150px]" title={item.accountName}>
                   {item.accountName}
                 </span>
-                <ArrowRight className="w-3 h-3 text-sky-400 shrink-0 mx-0.5" />
+                <ArrowRight className={`w-3 h-3 text-sky-400 shrink-0 mx-0.5 ${isRTL ? 'rotate-180' : ''}`} />
                 <span className="text-sky-300 font-medium truncate max-w-[110px] sm:max-w-[150px]" title={item.toAccountName}>
                   {item.toAccountName}
                 </span>
@@ -153,7 +178,7 @@ export default function TransactionRowItem({
       </div>
 
       {/* Right: Value (Top) & Date (Bottom) */}
-      <div className="flex items-center gap-2.5 shrink-0 text-right">
+      <div className="flex items-center gap-2.5 shrink-0 text-right rtl:text-left">
         <div>
           <div
             className={`text-[13px] sm:text-sm font-semibold tabular-nums ${
@@ -170,7 +195,7 @@ export default function TransactionRowItem({
             {formatDate(item.date)}
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-text-muted/40 group-hover:text-text-primary transition-colors shrink-0" />
+        <ChevronRight className={`w-4 h-4 text-text-muted/40 group-hover:text-text-primary transition-colors shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
       </div>
     </div>
   );

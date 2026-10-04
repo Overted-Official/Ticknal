@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Sparkles, X } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
+import { useTranslation } from '@/lib/i18n';
 
 interface ChartPredictPopoverProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export default function ChartPredictPopover({
   onRunPrediction,
   isPredicting,
 }: ChartPredictPopoverProps) {
+  const { locale } = useTranslation();
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Close on click outside or Escape
@@ -51,19 +53,19 @@ export default function ChartPredictPopover({
   return (
     <div
       ref={popoverRef}
-      className="absolute top-2 left-2 sm:left-48 md:left-52 z-50 w-[270px] sm:w-[280px] max-w-[calc(100vw-16px)] bg-cold-gray-900 border border-white/[0.08] rounded-lg shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none overflow-hidden text-xs font-sans"
+      className="absolute top-2 left-2 sm:left-48 md:left-52 rtl:left-auto rtl:right-2 sm:rtl:right-48 md:rtl:right-52 z-50 w-[270px] sm:w-[280px] max-w-[calc(100vw-16px)] bg-cold-gray-900 border border-white/[0.08] rounded-lg shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none overflow-hidden text-xs font-sans"
     >
       {/* Compact Header */}
       <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between bg-white/[0.02]">
         <div className="flex items-center gap-1.5 font-semibold text-xs text-white">
           <Sparkles size={13} className="text-white" />
-          <span>AI Price Forecast</span>
+          <span>{locale === 'ar' ? 'توقعات الأسعار بالذكاء الاصطناعي' : 'AI Price Forecast'}</span>
         </div>
         <button
           type="button"
           onClick={onClose}
           className="h-5 w-5 rounded flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
-          aria-label="Close"
+          aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
         >
           <X size={12} />
         </button>
@@ -73,8 +75,10 @@ export default function ChartPredictPopover({
       <div className="p-3 space-y-2.5">
         <div>
           <div className="flex items-center justify-between mb-1.5 text-[10px] text-text-muted font-medium uppercase tracking-wider">
-            <span>Forecast Horizon</span>
-            <span className="tabular-nums font-sans">{predictDaysInput || 10} Days</span>
+            <span>{locale === 'ar' ? 'أفق التوقع' : 'Forecast Horizon'}</span>
+            <span className="tabular-nums font-sans">
+              {predictDaysInput || 10} {locale === 'ar' ? 'أيام' : 'Days'}
+            </span>
           </div>
 
           {/* Quick Preset Pills */}
@@ -92,7 +96,7 @@ export default function ChartPredictPopover({
                       : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08] border border-white/[0.04]'
                   }`}
                 >
-                  {days}D
+                  {days}{locale === 'ar' ? 'يوم' : 'D'}
                 </button>
               );
             })}
@@ -108,10 +112,12 @@ export default function ChartPredictPopover({
                 value={predictDaysInput}
                 onChange={(e) => onChangePredictDays(e.target.value)}
                 className="h-7 w-full rounded-md border border-white/[0.08] bg-white/[0.03] focus:bg-white/[0.06] px-2 text-xs font-sans tabular-nums text-white outline-none focus:border-white/20 transition-colors"
-                placeholder="Custom days..."
+                placeholder={locale === 'ar' ? 'أيام مخصصة...' : 'Custom days...'}
               />
             </div>
-            <span className="text-[11px] text-text-muted font-sans shrink-0">Days</span>
+            <span className="text-[11px] text-text-muted font-sans shrink-0">
+              {locale === 'ar' ? 'يوم' : 'Days'}
+            </span>
           </div>
         </div>
 
@@ -128,13 +134,13 @@ export default function ChartPredictPopover({
         >
           {isPredicting ? (
             <>
-              <InlineSpinner className="h-3.5 w-3.5" label="Generating forecast" />
-              <span>Forecasting...</span>
+              <InlineSpinner className="h-3.5 w-3.5" label={locale === 'ar' ? 'جاري إنشاء التوقع' : 'Generating forecast'} />
+              <span>{locale === 'ar' ? 'جاري التوقع...' : 'Forecasting...'}</span>
             </>
           ) : (
             <>
               <Sparkles size={13} />
-              <span>Generate Forecast</span>
+              <span>{locale === 'ar' ? 'إنشاء التوقع' : 'Generate Forecast'}</span>
             </>
           )}
         </button>

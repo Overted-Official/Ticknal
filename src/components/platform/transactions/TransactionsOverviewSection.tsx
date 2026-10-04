@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from '@/lib/i18n';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { isBrokerageAccount } from '@/lib/portfolio-finance';
 import { type ClosedTradeItem, type TransactionsTimeframe } from './types';
@@ -30,6 +31,7 @@ export default function TransactionsOverviewSection({
   timeframe,
   onTimeframeChange,
 }: TransactionsOverviewSectionProps) {
+  const { locale } = useTranslation();
   const [overviewView, setOverviewView] = useState<TransactionsOverviewView>('all');
 
   const brokerageAccountIds = useMemo(() => {
@@ -75,14 +77,22 @@ export default function TransactionsOverviewSection({
       {/* 1. Header with Section Title, View Switcher & Timeframe Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h2 className="section-title">Transactions Overview</h2>
+          <h2 className="section-title">
+            {locale === 'ar' ? 'نظرة عامة على المعاملات' : 'Transactions Overview'}
+          </h2>
           <p className="section-subtitle">
             {overviewView === 'all' &&
-              'Consolidated cashflow velocity, income generation, and monthly turnover dynamics'}
+              (locale === 'ar'
+                ? 'التدفقات النقدية المجمعة، توليد الدخل، وديناميكيات حجم التداول الشهري'
+                : 'Consolidated cashflow velocity, income generation, and monthly turnover dynamics')}
             {overviewView === 'banking' &&
-              'Liquid bank operating cashflow, living expenses, and net savings retention'}
+              (locale === 'ar'
+                ? 'التدفقات النقدية البنكية السائلة، مصاريف المعيشة، وصافي المدخرات المحتجزة'
+                : 'Liquid bank operating cashflow, living expenses, and net savings retention')}
             {overviewView === 'investments' &&
-              'Capital injected, capital withdrawn, trading turnover, and realized investment returns'}
+              (locale === 'ar'
+                ? 'رأس المال المودع والمسحوب، حجم التداول، وعوائد الاستثمار المحققة'
+                : 'Capital injected, capital withdrawn, trading turnover, and realized investment returns')}
           </p>
         </div>
 
@@ -95,21 +105,21 @@ export default function TransactionsOverviewSection({
               onClick={() => setOverviewView('all')}
               className={`seg-control-btn ${overviewView === 'all' ? 'seg-control-btn-active' : ''}`}
             >
-              All Flows
+              {locale === 'ar' ? 'كافة التدفقات' : 'All Flows'}
             </button>
             <button
               type="button"
               onClick={() => setOverviewView('banking')}
               className={`seg-control-btn ${overviewView === 'banking' ? 'seg-control-btn-active' : ''}`}
             >
-              Banking
+              {locale === 'ar' ? 'العمليات البنكية' : 'Banking'}
             </button>
             <button
               type="button"
               onClick={() => setOverviewView('investments')}
               className={`seg-control-btn ${overviewView === 'investments' ? 'seg-control-btn-active' : ''}`}
             >
-              Investments
+              {locale === 'ar' ? 'الاستثمارات' : 'Investments'}
             </button>
           </div>
 
@@ -124,7 +134,7 @@ export default function TransactionsOverviewSection({
                   onClick={() => onTimeframeChange(tf)}
                   className={`seg-control-btn ${isSelected ? 'seg-control-btn-active' : ''}`}
                 >
-                  {tf}
+                  {tf === 'All' ? (locale === 'ar' ? 'الكل' : 'All') : tf}
                 </button>
               );
             })}

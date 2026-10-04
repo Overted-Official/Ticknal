@@ -12,17 +12,24 @@ interface PrivacyToggleButtonProps {
 export default function PrivacyToggleButton({ className = '', iconOnly = false }: PrivacyToggleButtonProps) {
   const { isPrivacy, togglePrivacy } = usePrivacyMode();
   const title = isPrivacy ? 'Privacy Mode Active (Values Masked) - Click to Reveal' : 'Values Visible - Click to Mask';
+  const iconRef = React.useRef<{ startAnimation: () => void; stopAnimation: () => void } | null>(null);
+
   const icon = isPrivacy ? (
-    <EyeOff size={iconOnly ? 18 : 14} className="text-current" />
+    <EyeOff ref={iconRef} size={iconOnly ? 18 : 14} className="text-current" />
   ) : (
-    <Eye size={iconOnly ? 18 : 16} className="text-current" />
+    <Eye ref={iconRef} size={iconOnly ? 18 : 16} className="text-current" />
   );
+
+  const handleMouseEnter = () => iconRef.current?.startAnimation();
+  const handleMouseLeave = () => iconRef.current?.stopAnimation();
 
   if (iconOnly) {
     return (
       <button
         type="button"
         onClick={togglePrivacy}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className={`flex items-center justify-center select-none ${className}`}
         title={title}
         aria-label={title}
@@ -37,6 +44,8 @@ export default function PrivacyToggleButton({ className = '', iconOnly = false }
     <button
       type="button"
       onClick={togglePrivacy}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={`btn-token btn-secondary btn-compact select-none ${className}`}
       title={title}
       aria-label={title}

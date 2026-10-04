@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 export type Timeframe = '1M' | '3M' | '6M' | '1Y' | 'All';
 
@@ -17,11 +18,14 @@ export default function PerformanceChartToolbar({
   onTimeframeChange,
   className = '',
 }: PerformanceChartToolbarProps) {
+  const { locale } = useTranslation();
+
   return (
     <div className={`flex items-center gap-1 select-none ${className}`}>
       <div className="seg-control">
         {TIMEFRAMES.map((tf) => {
           const isSelected = timeframe === tf;
+          const displayLabel = tf === 'All' && locale === 'ar' ? 'الكل' : tf;
           return (
             <button
               key={tf}
@@ -29,7 +33,7 @@ export default function PerformanceChartToolbar({
               onClick={() => onTimeframeChange(tf)}
               className={`seg-control-btn ${isSelected ? 'seg-control-btn-active' : ''}`}
             >
-              {tf}
+              {displayLabel}
             </button>
           );
         })}

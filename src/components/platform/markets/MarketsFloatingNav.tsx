@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 export interface MarketNavSection {
   id: string;
@@ -8,14 +9,19 @@ export interface MarketNavSection {
   shortLabel: string;
 }
 
-export const MARKET_SECTIONS: MarketNavSection[] = [
-  { id: 'market-overview', label: 'Market Overview', shortLabel: 'Overview' },
-  { id: 'fx-devaluation', label: 'FX & Currency', shortLabel: 'FX Risk' },
-  { id: 'sector-rotation', label: 'Sector Rotation', shortLabel: 'Rotation' },
-  { id: 'market-heatmap', label: 'Market Heatmap', shortLabel: 'Heatmap' },
-];
-
 export default function MarketsFloatingNav() {
+  const { t, locale } = useTranslation();
+
+  const sections: MarketNavSection[] = useMemo(
+    () => [
+      { id: 'market-overview', label: t('markets.title'), shortLabel: t('markets.title') },
+      { id: 'fx-devaluation', label: locale === 'ar' ? 'العملات والتحوط' : 'FX & Currency', shortLabel: locale === 'ar' ? 'العملات' : 'FX' },
+      { id: 'sector-rotation', label: locale === 'ar' ? 'دوران القطاعات' : 'Sector Rotation', shortLabel: t('markets.sectors') },
+      { id: 'market-heatmap', label: locale === 'ar' ? 'خريطة السوق' : 'Market Heatmap', shortLabel: locale === 'ar' ? 'الخريطة' : 'Heatmap' },
+    ],
+    [t, locale]
+  );
+
   const [activeSection, setActiveSection] = useState<string>('market-overview');
 
   const scrollToSection = useCallback((id: string) => {
@@ -43,8 +49,8 @@ export default function MarketsFloatingNav() {
 
   useEffect(() => {
     const handleScroll = () => {
-      for (let i = MARKET_SECTIONS.length - 1; i >= 0; i--) {
-        const sectionId = MARKET_SECTIONS[i].id;
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const sectionId = sections[i].id;
         const element = document.getElementById(sectionId);
         if (element) {
           const rect = element.getBoundingClientRect();
@@ -54,7 +60,7 @@ export default function MarketsFloatingNav() {
           }
         }
       }
-      setActiveSection(MARKET_SECTIONS[0].id);
+      setActiveSection(sections[0].id);
     };
 
     const container = document.querySelector('.command-surface-page');
@@ -70,7 +76,7 @@ export default function MarketsFloatingNav() {
       }
       window.removeEventListener('scroll', handleScroll, { capture: true });
     };
-  }, []);
+  }, [sections]);
 
   return (
     <nav
@@ -89,7 +95,7 @@ export default function MarketsFloatingNav() {
             aria-orientation="horizontal"
             className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full"
           >
-            {MARKET_SECTIONS.map((sec) => {
+            {sections.map((sec) => {
               const isSelected = activeSection === sec.id;
 
               return (

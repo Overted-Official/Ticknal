@@ -8,6 +8,7 @@ import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { useToast } from '@/context/ToastContext';
 import useSWR from 'swr';
 import AccountSelectDropdown from './AccountSelectDropdown';
+import { useTranslation } from '@/lib/i18n';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -21,13 +22,6 @@ interface LogTransactionDrawerProps {
   onDeleteTransaction?: (id: number) => Promise<void> | void;
 }
 
-const modeDescriptions: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION', string> = {
-  EXPENSE: 'Outflow from the selected account for living, bills, or operational costs.',
-  INCOME: 'Inflow adding liquid cash to your selected bank or treasury balance.',
-  TRANSFER: 'Move capital between two accounts without altering overall net worth.',
-  BROKER_INJECTION: 'Inject funds directly into your brokerage account to back stock purchases.',
-};
-
 export default function LogTransactionDrawer({
   isOpen,
   onClose,
@@ -37,10 +31,36 @@ export default function LogTransactionDrawer({
   transactionToEdit,
   onDeleteTransaction,
 }: LogTransactionDrawerProps) {
+  const { locale, isRTL } = useTranslation();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const modeDescriptions: Record<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION', string> = {
+    EXPENSE: locale === 'ar' ? 'تدفق خارج من الحساب المحدد لتغطية مصاريف المعيشة، الفواتير، أو التكاليف التشغيلية.' : 'Outflow from the selected account for living, bills, or operational costs.',
+    INCOME: locale === 'ar' ? 'تدفق داخل يضيف سيولة نقدية إلى رصيدك البنكي أو رصيد الخزينة المحدد.' : 'Inflow adding liquid cash to your selected bank or treasury balance.',
+    TRANSFER: locale === 'ar' ? 'نقل رأس المال بين حسابين دون التأثير على إجمالي صافي ثروتك.' : 'Move capital between two accounts without altering overall net worth.',
+    BROKER_INJECTION: locale === 'ar' ? 'إيداع أموال مباشرة في حساب الوساطة المالي لدعم مشتريات الأسهم.' : 'Inject funds directly into your brokerage account to back stock purchases.',
+  };
+
+  const getCategoryLabel = (cat: string) => {
+    if (locale !== 'ar') return cat;
+    const catMap: Record<string, string> = {
+      'Living & Bills': 'المعيشة والفواتير',
+      'Housing & Rent': 'السكن والإيجار',
+      'Food & Dining': 'الطعام والمطاعم',
+      'Trading & Investments': 'التداول والاستثمار',
+      'Salary & Income': 'الراتب والدخل',
+      'Savings': 'المدخرات',
+      'Interest & Yield': 'الفوائد والعوائد',
+      'Investments': 'الاستثمارات',
+      'Trading': 'التداول',
+      'Trading Injection': 'تمويل تداول',
+      'Other': 'أخرى',
+    };
+    return catMap[cat] || cat;
+  };
 
   // Fallback to fetch accounts dynamically if not provided by parent
   const { data: fetchedAccountsData } = useSWR<{ accounts: BankAccount[] }>(
@@ -216,9 +236,9 @@ export default function LogTransactionDrawer({
           {/* Drawer Sheet */}
           <motion.div
             key="log-transaction-drawer-sheet"
-            initial={isMobile ? { y: '100%' } : { x: '100%' }}
+            initial={isMobile ? { y: '100%' } : { x: isRTL ? '-100%' : '100%' }}
             animate={isMobile ? { y: 0 } : { x: 0 }}
-            exit={isMobile ? { y: '100%' } : { x: '100%' }}
+            exit={isMobile ? { y: '100%' } : { x: isRTL ? '-100%' : '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
             className={`drawer-sheet-form ${!isMobile ? 'drawer-sheet-viewport-safe' : ''}`}
           >
@@ -228,7 +248,7 @@ export default function LogTransactionDrawer({
               <div
                 className="drawer-drag-pill-container"
                 onClick={onClose}
-                aria-label="Drag handle to close"
+                aria-label={locale === 'ar' ? 'سحب للإغلاق' : 'Drag handle to close'}
               >
                 <div className="drawer-drag-pill" />
               </div>
@@ -241,12 +261,14 @@ export default function LogTransactionDrawer({
                   </div>
                   <div className="drawer-header-titles">
                     <h2 className="drawer-title">
-                      {isEditMode ? 'Edit Transaction' : 'Log Transaction'}
+                      {isEditMode
+                        ? (locale === 'ar' ? 'تعديل المعاملة' : 'Edit Transaction')
+                        : (locale === 'ar' ? 'تسجيل معاملة' : 'Log Transaction')}
                     </h2>
                     <p className="drawer-subtitle">
                       {isEditMode
-                        ? 'Modify transaction details & recalculate account balances'
-                        : 'Record transfers, expenses, income & cash flows'}
+                        ? (locale === 'ar' ? 'تعديل تفاصيل المعاملة وإعادة احتساب أرصدة الحسابات' : 'Modify transaction details & recalculate account balances')
+                        : (locale === 'ar' ? 'تسجيل التحويلات، المصروفات، الدخل، والتدفقات النقدية' : 'Record transfers, expenses, income & cash flows')}
                     </p>
                   </div>
                 </div>
@@ -255,8 +277,8 @@ export default function LogTransactionDrawer({
                   type="button"
                   onClick={onClose}
                   className="drawer-close-btn"
-                  aria-label="Close drawer"
-                  title="Close drawer"
+                  aria-label={locale === 'ar' ? 'إغلاق' : 'Close drawer'}
+                  title={locale === 'ar' ? 'إغلاق' : 'Close drawer'}
                 >
                   <X className="drawer-close-icon" />
                 </button>
@@ -271,28 +293,28 @@ export default function LogTransactionDrawer({
                   onClick={() => setTxMode('EXPENSE')}
                   className={`pill-switch-btn ${txMode === 'EXPENSE' ? 'pill-switch-btn-active' : ''}`}
                 >
-                  Expense
+                  {locale === 'ar' ? 'مصروف' : 'Expense'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setTxMode('INCOME')}
                   className={`pill-switch-btn ${txMode === 'INCOME' ? 'pill-switch-btn-active' : ''}`}
                 >
-                  Income
+                  {locale === 'ar' ? 'دخل' : 'Income'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setTxMode('TRANSFER')}
                   className={`pill-switch-btn ${txMode === 'TRANSFER' ? 'pill-switch-btn-active' : ''}`}
                 >
-                  Transfer
+                  {locale === 'ar' ? 'تحويل' : 'Transfer'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setTxMode('BROKER_INJECTION')}
                   className={`pill-switch-btn ${txMode === 'BROKER_INJECTION' ? 'pill-switch-btn-active' : ''}`}
                 >
-                  To Stocks
+                  {locale === 'ar' ? 'للأسهم' : 'To Stocks'}
                 </button>
               </div>
             </div>
@@ -309,7 +331,9 @@ export default function LogTransactionDrawer({
                 {/* Source Account Selection */}
                 <div className="drawer-form-field">
                   <label className="field-label">
-                    {txMode === 'TRANSFER' ? 'From Account (Source) *' : 'Account *'}
+                    {txMode === 'TRANSFER'
+                      ? (locale === 'ar' ? 'من حساب (المصدر) *' : 'From Account (Source) *')
+                      : (locale === 'ar' ? 'الحساب *' : 'Account *')}
                   </label>
                   <AccountSelectDropdown
                     accounts={resolvedAccounts}
@@ -319,20 +343,22 @@ export default function LogTransactionDrawer({
                       const sel = resolvedAccounts.find((a) => String(a.id) === accId);
                       if (sel) setCurrency(sel.currency);
                     }}
-                    placeholder="Select source bank account..."
+                    placeholder={locale === 'ar' ? 'اختر حساب المصدر البنكي...' : 'Select source bank account...'}
                   />
                 </div>
 
                 {/* Destination Account Selection (Transfers only) */}
                 {txMode === 'TRANSFER' && (
                   <div className="drawer-form-field">
-                    <label className="field-label">To Account (Destination) *</label>
+                    <label className="field-label">
+                      {locale === 'ar' ? 'إلى حساب (الوجهة) *' : 'To Account (Destination) *'}
+                    </label>
                     <AccountSelectDropdown
                       accounts={resolvedAccounts}
                       selectedAccountId={toAccountId}
                       onSelectAccount={setToAccountId}
                       excludeAccountId={accountId}
-                      placeholder="Select destination bank account..."
+                      placeholder={locale === 'ar' ? 'اختر حساب الوجهة البنكي...' : 'Select destination bank account...'}
                     />
                   </div>
                 )}
@@ -340,7 +366,9 @@ export default function LogTransactionDrawer({
                 {/* Amount & Date 2-Column Grid */}
                 <div className="drawer-form-grid-2">
                   <div className="drawer-form-field">
-                    <label className="field-label">Amount ({currency}) *</label>
+                    <label className="field-label">
+                      {locale === 'ar' ? `المبلغ (${currency === 'EGP' ? 'ج.م' : currency}) *` : `Amount (${currency}) *`}
+                    </label>
                     <div className="field-group">
                       <input
                         type="number"
@@ -351,12 +379,14 @@ export default function LogTransactionDrawer({
                         onChange={(e) => setAmount(e.target.value)}
                         className="field-input"
                       />
-                      <span className="field-suffix">{currency}</span>
+                      <span className="field-suffix">{currency === 'EGP' && locale === 'ar' ? 'ج.م' : currency}</span>
                     </div>
                   </div>
 
                   <div className="drawer-form-field">
-                    <label className="field-label">Transaction Date</label>
+                    <label className="field-label">
+                      {locale === 'ar' ? 'تاريخ المعاملة' : 'Transaction Date'}
+                    </label>
                     <input
                       type="date"
                       required
@@ -370,7 +400,9 @@ export default function LogTransactionDrawer({
                 {/* Category (Non-transfers) */}
                 {txMode !== 'TRANSFER' && (
                   <div className="drawer-form-field">
-                    <label className="field-label">Category</label>
+                    <label className="field-label">
+                      {locale === 'ar' ? 'التصنيف' : 'Category'}
+                    </label>
                     <div className="field-select-wrapper">
                       <select
                         value={category}
@@ -379,7 +411,7 @@ export default function LogTransactionDrawer({
                       >
                         {categories.map((c) => (
                           <option key={c} value={c} className="field-select-option">
-                            {c}
+                            {getCategoryLabel(c)}
                           </option>
                         ))}
                       </select>
@@ -390,10 +422,12 @@ export default function LogTransactionDrawer({
 
                 {/* Notes / Description */}
                 <div className="drawer-form-field">
-                  <label className="field-label">Notes / Description (Optional)</label>
+                  <label className="field-label">
+                    {locale === 'ar' ? 'ملاحظات / الوصف (اختياري)' : 'Notes / Description (Optional)'}
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. Salary wire, Monthly rent, Grocery trip"
+                    placeholder={locale === 'ar' ? 'مثال: راتب، إيجار شهري، مشتريات' : 'e.g. Salary wire, Monthly rent, Grocery trip'}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className="field-text-input"
@@ -409,10 +443,10 @@ export default function LogTransactionDrawer({
                     onClick={handleDelete}
                     disabled={isDeleting || isSubmitting}
                     className="h-10 px-3.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold font-sans flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
-                    title="Delete transaction"
+                    title={locale === 'ar' ? 'حذف المعاملة' : 'Delete transaction'}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                    <span>{isDeleting ? (locale === 'ar' ? 'جارٍ الحذف...' : 'Deleting...') : (locale === 'ar' ? 'حذف' : 'Delete')}</span>
                   </button>
                 )}
                 <button
@@ -420,7 +454,7 @@ export default function LogTransactionDrawer({
                   onClick={onClose}
                   className="drawer-cancel-btn"
                 >
-                  Cancel
+                  {locale === 'ar' ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -430,12 +464,12 @@ export default function LogTransactionDrawer({
                   <Check className="drawer-btn-icon" strokeWidth={2.5} />
                   <span>
                     {isSubmitting
-                      ? isEditMode ? 'Saving...' : 'Recording...'
+                      ? (isEditMode ? (locale === 'ar' ? 'جارٍ الحفظ...' : 'Saving...') : (locale === 'ar' ? 'جارٍ التسجيل...' : 'Recording...'))
                       : isEditMode
-                      ? 'Save Changes'
+                      ? (locale === 'ar' ? 'حفظ التغييرات' : 'Save Changes')
                       : txMode === 'TRANSFER'
-                      ? 'Transfer Funds'
-                      : 'Record Transaction'}
+                      ? (locale === 'ar' ? 'تحويل الأموال' : 'Transfer Funds')
+                      : (locale === 'ar' ? 'تسجيل المعاملة' : 'Record Transaction')}
                   </span>
                 </button>
               </div>

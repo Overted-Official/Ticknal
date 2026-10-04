@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { Trophy, Clock, BarChart3, AlertTriangle, Shield } from '@/components/ui/icon-library';
 import KPICard, { type KPICardProps } from './KPICard';
 import { type OrderStats } from '../../homeInvestmentsTypes';
@@ -12,6 +13,7 @@ interface TradingMetricsKPIRailProps {
 
 export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
 
   const formatNumber = (value: number, showSign: boolean = false): string => {
     if (isPrivacy) return '••••••';
@@ -29,66 +31,63 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
   const displayWinRate = hasClosedTrades && winRate !== null ? `${winRate.toFixed(1)}` : '—';
   const winRateBadge =
     !hasClosedTrades || winRate === null
-      ? 'No data'
+      ? (locale === 'ar' ? 'لا توجد بيانات' : 'No data')
       : winRate >= 60
-      ? 'Optimal'
+      ? (locale === 'ar' ? 'ممتاز' : 'Optimal')
       : winRate >= 50
-      ? 'Positive'
-      : 'Active';
+      ? (locale === 'ar' ? 'إيجابي' : 'Positive')
+      : (locale === 'ar' ? 'نشط' : 'Active');
 
   const avgBars = orderStats.avgBarsPerTrade !== null ? Math.round(orderStats.avgBarsPerTrade) : null;
   const displayAvgBars = avgBars !== null ? `${avgBars}` : '—';
   const avgBarsBadge =
     avgBars !== null
       ? avgBars > 20
-        ? 'Position'
+        ? (locale === 'ar' ? 'استثماري' : 'Position')
         : avgBars > 5
-        ? 'Swing'
-        : 'Intraday'
-      : 'No data';
+        ? (locale === 'ar' ? 'متوسط المدى' : 'Swing')
+        : (locale === 'ar' ? 'يومي' : 'Intraday')
+      : (locale === 'ar' ? 'لا توجد بيانات' : 'No data');
 
   let avgGain: number | null = null;
-  let avgGainMeta = 'Completed trades';
   if (orderStats.closedCount > 0) {
     avgGain = orderStats.realized / orderStats.closedCount;
-    avgGainMeta = `${orderStats.closedCount} closed trades`;
   } else if (orderStats.openOrders.length > 0) {
     avgGain = orderStats.unrealized / orderStats.openOrders.length;
-    avgGainMeta = `${orderStats.openOrders.length} active holdings`;
   }
   const displayAvgGain = avgGain !== null ? formatNumber(avgGain, true) : '—';
   const avgGainBadge =
     avgGain !== null
       ? avgGain > 0
-        ? 'Profit'
+        ? (locale === 'ar' ? 'ربح' : 'Profit')
         : avgGain < 0
-        ? 'Loss'
-        : 'Even'
-      : 'No trades';
+        ? (locale === 'ar' ? 'خسارة' : 'Loss')
+        : (locale === 'ar' ? 'تعادل' : 'Even')
+      : (locale === 'ar' ? 'لا توجد صفقات' : 'No trades');
 
   const mae = orderStats.avgAdverseExcursion;
   const displayMae = mae !== null ? `-${Math.abs(mae).toFixed(1)}` : '—';
   const maeBadge =
     mae === null
-      ? 'No data'
+      ? (locale === 'ar' ? 'لا توجد بيانات' : 'No data')
       : Math.abs(mae) < 2.5
-      ? 'Low Risk'
-      : 'Moderate';
+      ? (locale === 'ar' ? 'مخاطرة منخفضة' : 'Low Risk')
+      : (locale === 'ar' ? 'متوسطة' : 'Moderate');
 
   const mdd = orderStats.maxDrawdownPct;
   const displayMdd = mdd !== null ? `-${Math.abs(mdd).toFixed(1)}` : '—';
   const mddBadge =
     mdd === null
-      ? 'No data'
+      ? (locale === 'ar' ? 'لا توجد بيانات' : 'No data')
       : Math.abs(mdd) <= 5
-      ? 'Controlled'
-      : 'Elevated';
+      ? (locale === 'ar' ? 'مضبوط' : 'Controlled')
+      : (locale === 'ar' ? 'مرتفع' : 'Elevated');
 
   const cards: KPICardProps[] = [
     {
       id: 'win-rate',
       targetId: 'section-active-positions',
-      title: 'Win Rate',
+      title: locale === 'ar' ? 'نسبة النجاح' : 'Win Rate',
       icon: Trophy,
       iconBgClass: (winRate ?? 0) >= 50 ? 'bg-profit-num text-white' : 'bg-accent-amber text-white',
       iconColorClass: 'text-white',
@@ -96,44 +95,46 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       unit: winRate !== null ? '%' : '',
       changeText: winRateBadge,
       changeColorClass: (winRate ?? 0) >= 50 ? 'text-profit-num' : 'text-accent-amber',
-      metaText: hasClosedTrades ? `${orderStats.closedWinning}W · ${orderStats.closedLosing}L` : 'no closed trades',
+      metaText: hasClosedTrades
+        ? (locale === 'ar' ? `${orderStats.closedWinning} رابحة · ${orderStats.closedLosing} خاسرة` : `${orderStats.closedWinning}W · ${orderStats.closedLosing}L`)
+        : (locale === 'ar' ? 'لا توجد صفقات مغلقة' : 'no closed trades'),
       sparklineTrend: (winRate ?? 0) >= 50 ? 'up' : 'down',
     },
     {
       id: 'avg-bars',
       targetId: 'section-active-positions',
-      title: 'Avg. Bars',
-      shortTitle: 'Avg. Bars',
+      title: locale === 'ar' ? 'متوسط الفترات' : 'Avg. Bars',
+      shortTitle: locale === 'ar' ? 'الفترات' : 'Avg. Bars',
       icon: Clock,
       iconBgClass: 'bg-accent-cyan text-white',
       iconColorClass: 'text-white',
       value: displayAvgBars,
-      unit: avgBars !== null ? 'BARS' : '',
+      unit: avgBars !== null ? (locale === 'ar' ? 'شمعة' : 'BARS') : '',
       changeText: avgBarsBadge,
       changeColorClass: 'text-accent-cyan',
-      metaText: 'hold time',
+      metaText: locale === 'ar' ? 'مدة الاحتفاظ' : 'hold time',
       sparklineTrend: 'neutral',
     },
     {
       id: 'avg-gain',
       targetId: 'section-active-positions',
-      title: 'Avg. Gain',
-      shortTitle: 'Avg. Gain',
+      title: locale === 'ar' ? 'متوسط الربح' : 'Avg. Gain',
+      shortTitle: locale === 'ar' ? 'متوسط الربح' : 'Avg. Gain',
       icon: BarChart3,
       iconBgClass: (avgGain ?? 0) >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
       value: isPrivacy && avgGain !== null ? '••••••' : displayAvgGain,
-      unit: '£',
+      unit: locale === 'ar' ? 'ج.م' : '£',
       changeText: avgGainBadge,
       changeColorClass: (avgGain ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: 'per trade',
+      metaText: locale === 'ar' ? 'لكل صفقة' : 'per trade',
       sparklineTrend: (avgGain ?? 0) >= 0 ? 'up' : 'down',
     },
     {
       id: 'max-adverse-excursion',
       targetId: 'section-active-positions',
-      title: 'MAE Risk',
-      shortTitle: 'MAE Risk',
+      title: locale === 'ar' ? 'مخاطر MAE' : 'MAE Risk',
+      shortTitle: locale === 'ar' ? 'مخاطر MAE' : 'MAE Risk',
       icon: AlertTriangle,
       iconBgClass: 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
@@ -141,14 +142,14 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       unit: '%',
       changeText: maeBadge,
       changeColorClass: 'text-loss-num',
-      metaText: 'worst move',
+      metaText: locale === 'ar' ? 'أسوأ حركة' : 'worst move',
       sparklineTrend: 'down',
     },
     {
       id: 'max-drawdown',
       targetId: 'section-monthly-progression',
-      title: 'Max Drawdown',
-      shortTitle: 'Max Drawdown',
+      title: locale === 'ar' ? 'أقصى تراجع' : 'Max Drawdown',
+      shortTitle: locale === 'ar' ? 'أقصى تراجع' : 'Max Drawdown',
       icon: Shield,
       iconBgClass: 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
@@ -156,7 +157,7 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       unit: '%',
       changeText: mddBadge,
       changeColorClass: 'text-loss-num',
-      metaText: 'peak→trough',
+      metaText: locale === 'ar' ? 'من القمة للقاع' : 'peak→trough',
       sparklineTrend: 'down',
     },
   ];

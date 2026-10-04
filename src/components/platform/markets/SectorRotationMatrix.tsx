@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { SectorPerformanceItem } from '@/lib/sectors-math';
 import { TrendingUp, Zap, AlertTriangle, TrendingDown, Info, X } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName, localizeRegimeName } from '@/lib/finance/sector-translations';
 
 interface SectorRotationMatrixProps {
   sectors: SectorPerformanceItem[];
@@ -16,6 +18,7 @@ export default function SectorRotationMatrix({
   selectedSector,
   onSelectSector,
 }: SectorRotationMatrixProps) {
+  const { locale } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 500 });
   const [hoveredSector, setHoveredSector] = useState<SectorPerformanceItem | null>(null);
@@ -356,9 +359,11 @@ export default function SectorRotationMatrix({
               }`}
             >
               <Zap size={14} className="text-sky-400" />
-              <span>Improving</span>
+              <span>{locale === 'ar' ? 'في تحسن' : 'Improving'}</span>
               <span className="text-[10px] text-neutral-400 font-normal tabular-nums">({regimeCounts.Improving})</span>
-              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">• accumulate</span>
+              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">
+                {locale === 'ar' ? '• تجميع' : '• accumulate'}
+              </span>
               {activeRegimeFilter === 'Improving' && <X size={12} className="ml-0.5 text-sky-400" />}
             </button>
           </div>
@@ -380,9 +385,11 @@ export default function SectorRotationMatrix({
               }`}
             >
               <TrendingUp size={14} className="text-emerald-400" />
-              <span>Leading</span>
+              <span>{locale === 'ar' ? 'رائد ومتقدم' : 'Leading'}</span>
               <span className="text-[10px] text-neutral-400 font-normal tabular-nums">({regimeCounts.Leading})</span>
-              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">• alpha wave</span>
+              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">
+                {locale === 'ar' ? '• موجة ألفا' : '• alpha wave'}
+              </span>
               {activeRegimeFilter === 'Leading' && <X size={12} className="ml-0.5 text-emerald-400" />}
             </button>
           </div>
@@ -404,9 +411,11 @@ export default function SectorRotationMatrix({
               }`}
             >
               <TrendingDown size={14} className="text-rose-400" />
-              <span>Lagging</span>
+              <span>{locale === 'ar' ? 'متراجع ومتأخر' : 'Lagging'}</span>
               <span className="text-[10px] text-neutral-400 font-normal tabular-nums">({regimeCounts.Lagging})</span>
-              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">• avoid</span>
+              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">
+                {locale === 'ar' ? '• تجنب' : '• avoid'}
+              </span>
               {activeRegimeFilter === 'Lagging' && <X size={12} className="ml-0.5 text-rose-400" />}
             </button>
           </div>
@@ -428,9 +437,11 @@ export default function SectorRotationMatrix({
               }`}
             >
               <AlertTriangle size={14} className="text-amber-400" />
-              <span>Weakening</span>
+              <span>{locale === 'ar' ? 'في ضعف' : 'Weakening'}</span>
               <span className="text-[10px] text-neutral-400 font-normal tabular-nums">({regimeCounts.Weakening})</span>
-              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">• take profit</span>
+              <span className="text-[10px] text-neutral-500 font-normal lowercase tracking-normal hidden md:inline">
+                {locale === 'ar' ? '• جني أرباح' : '• take profit'}
+              </span>
               {activeRegimeFilter === 'Weakening' && <X size={12} className="ml-0.5 text-amber-400" />}
             </button>
           </div>
@@ -494,7 +505,7 @@ export default function SectorRotationMatrix({
                 onMouseLeave={() => setHoveredSector(null)}
               >
                 <span className="font-sans font-semibold tracking-tight text-[11px] sm:text-xs">
-                  {sector.sector}
+                  {localizeSectorName(sector.sector, locale)}
                 </span>
               </div>
             );
@@ -523,16 +534,18 @@ export default function SectorRotationMatrix({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-bold text-white leading-snug tracking-tight break-words">
-                    {hoveredSector.sector}
+                    {localizeSectorName(hoveredSector.sector, locale)}
                   </h4>
                   <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-300 font-sans">
                     <span className="flex items-center gap-1.5 font-medium">
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${currentRegime.dot}`} />
-                      <span className={currentRegime.text}>{hoveredSector.rotationRegime}</span>
+                      <span className={currentRegime.text}>{localizeRegimeName(hoveredSector.rotationRegime, locale)}</span>
                     </span>
                     <span className="text-neutral-500">•</span>
                     <span className="text-neutral-300 tabular-nums">
-                      {hoveredSector.stockCount} {hoveredSector.stockCount === 1 ? 'constituent' : 'constituents'}
+                      {locale === 'ar'
+                        ? `${hoveredSector.stockCount} سهم`
+                        : `${hoveredSector.stockCount} ${hoveredSector.stockCount === 1 ? 'constituent' : 'constituents'}`}
                     </span>
                   </div>
                 </div>
@@ -554,22 +567,24 @@ export default function SectorRotationMatrix({
                 {/* Traded Turnover */}
                 <div className="bg-black/25 rounded-lg p-2.5 flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">
-                    Turnover
+                    {locale === 'ar' ? 'قيمة التداول' : 'Turnover'}
                   </span>
                   <span className="text-xs font-bold text-white tabular-nums">
                     {hoveredSector.totalTurnover >= 1_000_000_000
-                      ? `${(hoveredSector.totalTurnover / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bn EGP`
-                      : `${(hoveredSector.totalTurnover / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} M EGP`}
+                      ? `${(hoveredSector.totalTurnover / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${locale === 'ar' ? ' مليار ج.م' : ' Bn EGP'}`
+                      : `${(hoveredSector.totalTurnover / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${locale === 'ar' ? ' مليون ج.م' : ' M EGP'}`}
                   </span>
                   <span className="text-[10px] text-neutral-400 tabular-nums">
-                    {hoveredSector.turnoverShare.toFixed(1)}% of market
+                    {locale === 'ar'
+                      ? `${hoveredSector.turnoverShare.toFixed(1)}% من السوق`
+                      : `${hoveredSector.turnoverShare.toFixed(1)}% of market`}
                   </span>
                 </div>
 
                 {/* Alpha vs Benchmark */}
                 <div className="bg-black/25 rounded-lg p-2.5 flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">
-                    Alpha vs EGX 30
+                    {locale === 'ar' ? 'ألفا مقابل EGX 30' : 'Alpha vs EGX 30'}
                   </span>
                   <span
                     className={`text-xs font-bold tabular-nums ${
@@ -580,7 +595,7 @@ export default function SectorRotationMatrix({
                     {hoveredSector.relativeStrengthVsBenchmark.toFixed(2)}%
                   </span>
                   <span className="text-[10px] text-neutral-400">
-                    Relative momentum
+                    {locale === 'ar' ? 'الزخم النسبي' : 'Relative momentum'}
                   </span>
                 </div>
               </div>
@@ -588,16 +603,16 @@ export default function SectorRotationMatrix({
               {/* Market Breadth Row */}
               <div className="bg-black/25 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-xs">
                 <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">
-                  Market Breadth
+                  {locale === 'ar' ? 'اتساع السوق' : 'Market Breadth'}
                 </span>
                 <div className="flex items-center gap-2 tabular-nums text-xs font-medium">
                   <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                    <span className="text-[10px] text-emerald-400/70 font-normal">Gainers:</span>
+                    <span className="text-[10px] text-emerald-400/70 font-normal">{locale === 'ar' ? 'صاعد:' : 'Gainers:'}</span>
                     {hoveredSector.gainersCount}
                   </span>
                   <span className="text-neutral-500">/</span>
                   <span className="text-rose-400 flex items-center gap-1 font-semibold">
-                    <span className="text-[10px] text-rose-400/70 font-normal">Losers:</span>
+                    <span className="text-[10px] text-rose-400/70 font-normal">{locale === 'ar' ? 'هابط:' : 'Losers:'}</span>
                     {hoveredSector.losersCount}
                   </span>
                 </div>
@@ -611,9 +626,15 @@ export default function SectorRotationMatrix({
       <div className="h-8 px-4 flex items-center justify-between text-[11px] text-neutral-400 bg-black/90 border-t border-white/[0.06] shrink-0 z-20">
         <div className="flex items-center gap-2">
           <Info size={13} className="text-neutral-500" />
-          <span>Horizontal = Alpha vs EGX30 | Vertical = Momentum Spread</span>
+          <span>
+            {locale === 'ar'
+              ? 'الأفقي = ألفا مقابل EGX30 | الرأسي = فارق الزخم'
+              : 'Horizontal = Alpha vs EGX30 | Vertical = Momentum Spread'}
+          </span>
           <span className="text-neutral-600 hidden sm:inline">•</span>
-          <span className="text-neutral-400 hidden sm:inline">Adaptive Dynamic Quadrants</span>
+          <span className="text-neutral-400 hidden sm:inline">
+            {locale === 'ar' ? 'مربعات ديناميكية متكيفة' : 'Adaptive Dynamic Quadrants'}
+          </span>
         </div>
         {activeRegimeFilter ? (
           <button
@@ -621,10 +642,16 @@ export default function SectorRotationMatrix({
             onClick={() => setActiveRegimeFilter(null)}
             className="text-white hover:text-neutral-300 transition flex items-center gap-1 font-medium cursor-pointer"
           >
-            <span>Showing {activeRegimeFilter} only (Reset ✕)</span>
+            <span>
+              {locale === 'ar'
+                ? `عرض (${localizeRegimeName(activeRegimeFilter, locale)}) فقط (إلغاء ✕)`
+                : `Showing ${activeRegimeFilter} only (Reset ✕)`}
+            </span>
           </button>
         ) : (
-          <span className="text-[10px] text-neutral-500">Click any quadrant badge to filter</span>
+          <span className="text-[10px] text-neutral-500">
+            {locale === 'ar' ? 'اضغط على أي ربع لتصفية القطاعات' : 'Click any quadrant badge to filter'}
+          </span>
         )}
       </div>
     </div>

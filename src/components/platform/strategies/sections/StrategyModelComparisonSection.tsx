@@ -5,6 +5,7 @@ import {
   Search,
   ArrowRight,
 } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
 import type { StrategyTimeframe } from './simulation/types';
 import type {
   SectorStrategySignalsResponse,
@@ -65,6 +66,8 @@ export default function StrategyModelComparisonSection({
   modelsComparison,
   winningUniverseComparison,
 }: StrategyModelComparisonSectionProps) {
+  const { locale } = useTranslation();
+  const isAr = locale === 'ar';
   const [activeTab, setActiveTab] = useState<ScreenerTab>('all');
   const [universeMode, setUniverseMode] = useState<'all' | 'winning'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -269,16 +272,22 @@ export default function StrategyModelComparisonSection({
       {/* 1. Header */}
       <div className="flex flex-col gap-0.5 min-w-0 pb-2 border-b border-border-subtle">
         <div className="flex items-center gap-2">
-          <h2 className="section-title">Algorithmic Models</h2>
+          <h2 className="section-title">
+            {isAr ? 'النماذج الخوارزمية' : 'Algorithmic Models'}
+          </h2>
           {timeframePreset && (
             <span className="badge-count">
-              {timeframePreset === 'custom' ? 'Custom Range' : timeframePreset}
+              {timeframePreset === 'custom' ? (isAr ? 'نطاق مخصص' : 'Custom Range') : timeframePreset}
             </span>
           )}
         </div>
         <p className="section-subtitle">
           {universeMode === 'winning'
-            ? 'Performance metrics computed exclusively across each model’s winning universe of stocks (Alpha vs Buy & Hold > 0)'
+            ? isAr
+              ? 'مقاييس الأداء المحسوبة حصرياً عبر نطاق الأسهم الرابحة لكل نموذج (ألفا مقابل الشراء والاحتفاظ > 0)'
+              : 'Performance metrics computed exclusively across each model’s winning universe of stocks (Alpha vs Buy & Hold > 0)'
+            : isAr
+            ? 'مقارنة أداء تفصيلية للنماذج الكمية مقابل المؤشرات واستراتيجية الشراء والاحتفاظ للنطاق الزمني المحدد'
             : 'Side-by-side performance comparison of quantitative trading models against benchmarks and Buy & Hold for the selected timeframe'}
         </p>
       </div>
@@ -291,10 +300,10 @@ export default function StrategyModelComparisonSection({
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="seg-control">
               {[
-                { id: 'all' as ScreenerTab, label: 'All Metrics' },
-                { id: 'performance' as ScreenerTab, label: 'Performance & Alpha' },
-                { id: 'risk' as ScreenerTab, label: 'Risk & Drawdown' },
-                { id: 'execution' as ScreenerTab, label: 'Execution Dynamics' },
+                { id: 'all' as ScreenerTab, label: isAr ? 'كافة المقاييس' : 'All Metrics' },
+                { id: 'performance' as ScreenerTab, label: isAr ? 'الأداء والألفا' : 'Performance & Alpha' },
+                { id: 'risk' as ScreenerTab, label: isAr ? 'المخاطر والتراجع' : 'Risk & Drawdown' },
+                { id: 'execution' as ScreenerTab, label: isAr ? 'ديناميكيات التنفيذ' : 'Execution Dynamics' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -313,17 +322,17 @@ export default function StrategyModelComparisonSection({
                 type="button"
                 onClick={() => setUniverseMode('all')}
                 className={`seg-control-btn ${universeMode === 'all' ? 'seg-control-btn-active' : ''}`}
-                title="Evaluate models across the entire market (256 tickers)"
+                title={isAr ? 'تقييم النماذج عبر السوق بالكامل (256 سهماً)' : 'Evaluate models across the entire market (256 tickers)'}
               >
-                All Stocks (256)
+                {isAr ? 'كافة الأسهم (256)' : 'All Stocks (256)'}
               </button>
               <button
                 type="button"
                 onClick={() => setUniverseMode('winning')}
                 className={`seg-control-btn ${universeMode === 'winning' ? 'seg-control-btn-active' : ''}`}
-                title="Evaluate models only across their winning universe where Alpha vs Buy & Hold > 0"
+                title={isAr ? 'تقييم النماذج فقط عبر نطاق الأسهم الرابحة (ألفا > 0)' : 'Evaluate models only across their winning universe where Alpha vs Buy & Hold > 0'}
               >
-                Winning Universe (α &gt; 0)
+                {isAr ? 'النطاق الرابح (α > 0)' : 'Winning Universe (α > 0)'}
               </button>
             </div>
           </div>
@@ -331,7 +340,7 @@ export default function StrategyModelComparisonSection({
           {/* Right: Search Box & Model Count */}
           <div className="flex items-center gap-2.5">
             <span className="text-[11px] text-text-muted tabular-nums hidden sm:inline">
-              {filteredAndSortedModels.length} models
+              {filteredAndSortedModels.length} {isAr ? 'نماذج' : 'models'}
             </span>
             <div className="input-control-compact w-44 sm:w-56">
               <Search size={13} className="text-text-muted shrink-0" />
@@ -339,7 +348,7 @@ export default function StrategyModelComparisonSection({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search models..."
+                placeholder={isAr ? 'ابحث في النماذج...' : 'Search models...'}
                 className="bg-transparent text-text-primary placeholder:text-text-muted focus:outline-hidden text-xs w-full"
               />
               {searchQuery && (
@@ -357,17 +366,17 @@ export default function StrategyModelComparisonSection({
 
         {/* 2b. Screener Table */}
         <div className="w-full min-w-0 overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-start text-xs border-collapse font-sans">
             {/* Table Header: Sticky top, no vertical dividing borders */}
-            <thead className="sticky top-0 z-20 bg-[#000000] border-b border-white/10 text-text-muted text-[11px] font-semibold">
+            <thead className="sticky top-0 z-20 bg-[#000000] border-b border-white/10 text-text-muted text-[11px] font-semibold font-sans">
               <tr className="h-9 select-none">
                 {/* Column 1: Model Name (Sticky left, no border-r) */}
                 <th
                   onClick={() => handleSort('name')}
-                  className="py-2 px-3 sticky left-0 z-30 bg-[#000000] min-w-[170px] cursor-pointer hover:text-white transition-colors"
+                  className="py-2 px-3 sticky start-0 z-30 bg-[#000000] min-w-[170px] cursor-pointer hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span>Model</span>
+                    <span>{isAr ? 'النموذج' : 'Model'}</span>
                     {renderSortIndicator('name')}
                   </div>
                 </th>
@@ -376,10 +385,14 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'performance') && (
                   <th
                     onClick={() => handleSort('simulatedRoi')}
-                    className="py-2 px-3 text-right min-w-[95px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[95px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>{universeMode === 'winning' ? 'Simulated ROI (Winners)' : 'Simulated ROI'}</span>
+                      <span>
+                        {universeMode === 'winning'
+                          ? (isAr ? 'العائد المحاكى (الرابحين)' : 'Simulated ROI (Winners)')
+                          : (isAr ? 'العائد المحاكى' : 'Simulated ROI')}
+                      </span>
                       {renderSortIndicator('simulatedRoi')}
                     </div>
                   </th>
@@ -388,10 +401,14 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'performance') && (
                   <th
                     onClick={() => handleSort('alphaVsBh')}
-                    className="py-2 px-3 text-right min-w-[105px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[105px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>{universeMode === 'winning' ? 'Alpha vs B&H (Winners)' : 'Alpha vs B&H'}</span>
+                      <span>
+                        {universeMode === 'winning'
+                          ? (isAr ? 'ألفا vs شراء واحتفاظ (الرابحين)' : 'Alpha vs B&H (Winners)')
+                          : (isAr ? 'ألفا vs شراء واحتفاظ' : 'Alpha vs B&H')}
+                      </span>
                       {renderSortIndicator('alphaVsBh')}
                     </div>
                   </th>
@@ -400,10 +417,10 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'performance') && (
                   <th
                     onClick={() => handleSort('alphaVsEgx')}
-                    className="py-2 px-3 text-right min-w-[110px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[110px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Alpha vs EGX30</span>
+                      <span>{isAr ? 'ألفا vs إيجي إكس 30' : 'Alpha vs EGX30'}</span>
                       {renderSortIndicator('alphaVsEgx')}
                     </div>
                   </th>
@@ -412,10 +429,10 @@ export default function StrategyModelComparisonSection({
                 {activeTab === 'performance' && (
                   <th
                     onClick={() => handleSort('cagr')}
-                    className="py-2 px-3 text-right min-w-[90px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[90px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>CAGR</span>
+                      <span>{isAr ? 'النمو السنوي المركب' : 'CAGR'}</span>
                       {renderSortIndicator('cagr')}
                     </div>
                   </th>
@@ -424,10 +441,10 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'performance') && (
                   <th
                     onClick={() => handleSort('profitFactor')}
-                    className="py-2 px-3 text-right min-w-[95px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[95px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Profit Factor</span>
+                      <span>{isAr ? 'معامل الربحية' : 'Profit Factor'}</span>
                       {renderSortIndicator('profitFactor')}
                     </div>
                   </th>
@@ -437,10 +454,10 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'risk') && (
                   <th
                     onClick={() => handleSort('maxDrawdown')}
-                    className="py-2 px-3 text-right min-w-[95px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[95px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Max Drawdown</span>
+                      <span>{isAr ? 'أقصى تراجع' : 'Max Drawdown'}</span>
                       {renderSortIndicator('maxDrawdown')}
                     </div>
                   </th>
@@ -449,10 +466,10 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'risk') && (
                   <th
                     onClick={() => handleSort('sharpeRatio')}
-                    className="py-2 px-3 text-right min-w-[90px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[90px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Sharpe</span>
+                      <span>{isAr ? 'شارب' : 'Sharpe'}</span>
                       {renderSortIndicator('sharpeRatio')}
                     </div>
                   </th>
@@ -461,10 +478,10 @@ export default function StrategyModelComparisonSection({
                 {activeTab === 'risk' && (
                   <th
                     onClick={() => handleSort('sortinoRatio')}
-                    className="py-2 px-3 text-right min-w-[90px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[90px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Sortino</span>
+                      <span>{isAr ? 'سورتينو' : 'Sortino'}</span>
                       {renderSortIndicator('sortinoRatio')}
                     </div>
                   </th>
@@ -473,18 +490,18 @@ export default function StrategyModelComparisonSection({
                 {activeTab === 'risk' && (
                   <th
                     onClick={() => handleSort('calmarRatio')}
-                    className="py-2 px-3 text-right min-w-[90px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[90px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Calmar</span>
+                      <span>{isAr ? 'كالمار' : 'Calmar'}</span>
                       {renderSortIndicator('calmarRatio')}
                     </div>
                   </th>
                 )}
 
                 {activeTab === 'risk' && (
-                  <th className="py-2 px-3 text-right min-w-[100px]">
-                    <span>Ann. Volatility</span>
+                  <th className="py-2 px-3 text-end min-w-[100px]">
+                    <span>{isAr ? 'التقلب السنوي' : 'Ann. Volatility'}</span>
                   </th>
                 )}
 
@@ -492,10 +509,10 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'execution') && (
                   <th
                     onClick={() => handleSort('winRate')}
-                    className="py-2 px-3 text-right min-w-[95px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[95px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Win Rate</span>
+                      <span>{isAr ? 'نسبة الربح' : 'Win Rate'}</span>
                       {renderSortIndicator('winRate')}
                     </div>
                   </th>
@@ -504,28 +521,32 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'performance' || activeTab === 'execution') && (
                   <th
                     onClick={() => handleSort('winLossRatio')}
-                    className="py-2 px-3 text-right min-w-[100px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[100px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Win/Loss Ratio</span>
+                      <span>{isAr ? 'نسبة الربح/الخسارة' : 'Win/Loss Ratio'}</span>
                       {renderSortIndicator('winLossRatio')}
                     </div>
                   </th>
                 )}
 
                 {(activeTab === 'all' || activeTab === 'execution') && (
-                  <th className="py-2 px-3 text-right min-w-[100px]">
-                    <span>Avg Holding</span>
+                  <th className="py-2 px-3 text-end min-w-[100px]">
+                    <span>{isAr ? 'متوسط فترة الاحتفاظ' : 'Avg Holding'}</span>
                   </th>
                 )}
 
                 {(activeTab === 'all' || activeTab === 'execution') && (
                   <th
                     onClick={() => handleSort(universeMode === 'winning' ? 'winningBreadthPct' : 'breadthBeatRate')}
-                    className="py-2 px-3 text-right min-w-[125px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[125px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>{universeMode === 'winning' ? 'Winning Universe' : 'Breadth Beat'}</span>
+                      <span>
+                        {universeMode === 'winning'
+                          ? (isAr ? 'النطاق الرابح' : 'Winning Universe')
+                          : (isAr ? 'اتساع التفوق' : 'Breadth Beat')}
+                      </span>
                       {renderSortIndicator(universeMode === 'winning' ? 'winningBreadthPct' : 'breadthBeatRate')}
                     </div>
                   </th>
@@ -534,17 +555,19 @@ export default function StrategyModelComparisonSection({
                 {(activeTab === 'all' || activeTab === 'execution') && (
                   <th
                     onClick={() => handleSort('totalTrades')}
-                    className="py-2 px-3 text-right min-w-[90px] cursor-pointer hover:text-white transition-colors"
+                    className="py-2 px-3 text-end min-w-[90px] cursor-pointer hover:text-white transition-colors"
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <span>Trades</span>
+                      <span>{isAr ? 'الصفقات' : 'Trades'}</span>
                       {renderSortIndicator('totalTrades')}
                     </div>
                   </th>
                 )}
 
                 {/* Action CTA */}
-                <th className="py-2 px-3 text-right min-w-[115px]">Action</th>
+                <th className="py-2 px-3 text-end min-w-[115px]">
+                  {isAr ? 'الإجراء' : 'Action'}
+                </th>
               </tr>
             </thead>
 
@@ -552,8 +575,10 @@ export default function StrategyModelComparisonSection({
             <tbody className="divide-y divide-white/[0.05]">
               {filteredAndSortedModels.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="py-12 text-center text-text-muted text-xs bg-black">
-                    No algorithmic models match &quot;{searchQuery}&quot;
+                  <td colSpan={14} className="py-12 text-center text-text-muted text-xs bg-black font-sans">
+                    {isAr
+                      ? `لا توجد نماذج خوارزمية تطابق "${searchQuery}"`
+                      : `No algorithmic models match "${searchQuery}"`}
                   </td>
                 </tr>
               ) : (
@@ -747,7 +772,7 @@ export default function StrategyModelComparisonSection({
                           <div className="flex items-center justify-end">
                             {isActive ? (
                               <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#089981]/15 text-[#089981] border border-[#089981]/30">
-                                Active
+                                {isAr ? 'نشط' : 'Active'}
                               </span>
                             ) : (
                               <button
@@ -758,8 +783,8 @@ export default function StrategyModelComparisonSection({
                                 }}
                                 className="px-2 py-0.5 rounded text-[11px] font-medium bg-white/10 hover:bg-white/15 text-white transition-colors cursor-pointer flex items-center gap-1"
                               >
-                                <span>Select</span>
-                                <ArrowRight size={10} />
+                                <span>{isAr ? 'اختيار' : 'Select'}</span>
+                                <ArrowRight size={10} className="rtl:rotate-180" />
                               </button>
                             )}
                           </div>

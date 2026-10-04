@@ -9,6 +9,8 @@ import SectorConstituentRowItem from './SectorConstituentRowItem';
 import { X } from '@/components/ui/icon-library';
 import { TIMEFRAMES } from './MarketOverviewSection';
 import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import { useTranslation } from '@/lib/i18n';
+import { localizeSectorName, localizeRegimeName } from '@/lib/finance/sector-translations';
 
 interface MarketHeatmapSectionProps {
   sectors?: SectorPerformanceItem[];
@@ -45,6 +47,7 @@ export default function MarketHeatmapSection({
   onSelectTicker,
   isLoading = false,
 }: MarketHeatmapSectionProps) {
+  const { locale } = useTranslation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -101,9 +104,13 @@ export default function MarketHeatmapSection({
     <section id="market-heatmap" className="section-container space-y-4 pt-1 font-sans select-none scroll-mt-16">
       {/* 1. Section Header Title */}
       <div className="flex flex-col gap-0.5 min-w-0 pb-2 border-b border-border-subtle">
-        <h2 className="section-title">Market Heatmap</h2>
+        <h2 className="section-title">
+          {locale === 'ar' ? 'خريطة أداء السوق' : 'Market Heatmap'}
+        </h2>
         <p className="section-subtitle">
-          Visual map of EGX equities structured by GICS hierarchy and trading turnover
+          {locale === 'ar'
+            ? 'خريطة مرئية لأسهم البورصة المصرية مهيكلة وفق تصنيف GICS وقيم التداول'
+            : 'Visual map of EGX equities structured by GICS hierarchy and trading turnover'}
         </p>
       </div>
 
@@ -114,9 +121,9 @@ export default function MarketHeatmapSection({
           {/* Granularity Switcher */}
           <div className="seg-control seg-control-compact shrink-0">
             {[
-              { id: 'sector', label: 'Sector' },
-              { id: 'industryGroup', label: 'Group' },
-              { id: 'industry', label: 'Industry' },
+              { id: 'sector', label: locale === 'ar' ? 'القطاع' : 'Sector' },
+              { id: 'industryGroup', label: locale === 'ar' ? 'المجموعة' : 'Group' },
+              { id: 'industry', label: locale === 'ar' ? 'الصناعة' : 'Industry' },
             ].map((lvl) => (
               <button
                 key={lvl.id}
@@ -135,9 +142,9 @@ export default function MarketHeatmapSection({
           {/* Sizing Metric Switcher */}
           <div className="seg-control seg-control-compact shrink-0">
             {[
-              { id: 'turnover', label: 'Turnover' },
-              { id: 'volume', label: 'Volume' },
-              { id: 'equal', label: 'Equal Weight' },
+              { id: 'turnover', label: locale === 'ar' ? 'قيمة التداول' : 'Turnover' },
+              { id: 'volume', label: locale === 'ar' ? 'كمية التداول' : 'Volume' },
+              { id: 'equal', label: locale === 'ar' ? 'أوزان متساوية' : 'Equal Weight' },
             ].map((m) => (
               <button
                 key={m.id}
@@ -174,7 +181,7 @@ export default function MarketHeatmapSection({
             <SectionLoadingState
               className="h-full w-full"
               spinnerClassName="h-8 w-8"
-              label="Aggregating EGX market performance…"
+              label={locale === 'ar' ? 'جاري تجميع أداء سوق البورصة المصرية…' : 'Aggregating EGX market performance…'}
             />
           ) : (
             <SectorTreemap
@@ -195,7 +202,8 @@ export default function MarketHeatmapSection({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold text-white truncate max-w-[200px]" title={activeSectorData?.sector}>
-                  {activeSectorData?.sector || 'Constituents'}
+                  {(activeSectorData && localizeSectorName(activeSectorData.sector, locale)) ||
+                    (locale === 'ar' ? 'الأسهم' : 'Constituents')}
                 </h3>
                 {activeSectorData && (
                   <span
@@ -209,12 +217,12 @@ export default function MarketHeatmapSection({
                         : 'bg-rose-500/20 text-rose-300'
                     }`}
                   >
-                    {activeSectorData.rotationRegime}
+                    {localizeRegimeName(activeSectorData.rotationRegime, locale)}
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-neutral-400 mt-0.5">
-                {sortedConstituents.length} {sortedConstituents.length === 1 ? 'ticker' : 'tickers'}
+                {sortedConstituents.length} {locale === 'ar' ? 'سهم' : sortedConstituents.length === 1 ? 'ticker' : 'tickers'}
               </p>
             </div>
 
@@ -225,10 +233,10 @@ export default function MarketHeatmapSection({
                     ? 'bg-emerald-500/15 text-emerald-300'
                     : 'bg-rose-500/15 text-rose-300'
                 }`}
-                title="Volume/turnover-weighted sector return (ROI)"
+                title={locale === 'ar' ? 'عائد القطاع المرجح بالسيولة' : 'Volume/turnover-weighted sector return (ROI)'}
               >
                 <span className="text-[10px] font-medium uppercase tracking-wider opacity-75">
-                  Return
+                  {locale === 'ar' ? 'العائد' : 'Return'}
                 </span>
                 <span>
                   {activeSectorData.turnoverWeightedReturn > 0 ? '+' : ''}
@@ -251,7 +259,9 @@ export default function MarketHeatmapSection({
               ))
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-6 text-center text-neutral-500 text-xs">
-                Select a sector on the heatmap to view constituent tickers
+                {locale === 'ar'
+                  ? 'اختر قطاعاً من الخريطة لعرض الأسهم المكونة'
+                  : 'Select a sector on the heatmap to view constituent tickers'}
               </div>
             )}
           </div>
@@ -273,7 +283,7 @@ export default function MarketHeatmapSection({
                   transition={{ duration: 0.2 }}
                   className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
                   onClick={() => setIsDrawerOpen(false)}
-                  aria-label="Close drawer"
+                  aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close drawer'}
                 />
 
                 {/* Bottom Sheet Surface */}
@@ -297,7 +307,7 @@ export default function MarketHeatmapSection({
                   <div
                     className="w-full flex items-center justify-center pt-3 pb-1 cursor-pointer"
                     onClick={() => setIsDrawerOpen(false)}
-                    aria-label="Drag down to close"
+                    aria-label={locale === 'ar' ? 'اسحب لأسفل للإغلاق' : 'Drag down to close'}
                   >
                     <div className="w-10 h-1 bg-white/25 rounded-full hover:bg-white/40 transition-colors" />
                   </div>
@@ -307,7 +317,7 @@ export default function MarketHeatmapSection({
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-bold text-white truncate max-w-[180px] sm:max-w-[260px]">
-                          {activeSectorData.sector}
+                          {localizeSectorName(activeSectorData.sector, locale)}
                         </h3>
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
@@ -320,11 +330,11 @@ export default function MarketHeatmapSection({
                               : 'bg-rose-500/20 text-rose-300'
                           }`}
                         >
-                          {activeSectorData.rotationRegime}
+                          {localizeRegimeName(activeSectorData.rotationRegime, locale)}
                         </span>
                       </div>
                       <p className="text-xs text-neutral-400 mt-0.5">
-                        {sortedConstituents.length} {sortedConstituents.length === 1 ? 'ticker' : 'tickers'}
+                        {sortedConstituents.length} {locale === 'ar' ? 'سهم' : sortedConstituents.length === 1 ? 'ticker' : 'tickers'}
                       </p>
                     </div>
 
@@ -335,10 +345,10 @@ export default function MarketHeatmapSection({
                             ? 'bg-emerald-500/15 text-emerald-300'
                             : 'bg-rose-500/15 text-rose-300'
                         }`}
-                        title="Volume/turnover-weighted sector return (ROI)"
+                        title={locale === 'ar' ? 'عائد القطاع المرجح بالسيولة' : 'Volume/turnover-weighted sector return (ROI)'}
                       >
                         <span className="text-[10px] font-medium uppercase tracking-wider opacity-75">
-                          Return
+                          {locale === 'ar' ? 'العائد' : 'Return'}
                         </span>
                         <span>
                           {activeSectorData.turnoverWeightedReturn > 0 ? '+' : ''}
@@ -350,7 +360,7 @@ export default function MarketHeatmapSection({
                         type="button"
                         onClick={() => setIsDrawerOpen(false)}
                         className="w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
-                        aria-label="Close"
+                        aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
                       >
                         <X size={16} />
                       </button>
@@ -370,7 +380,7 @@ export default function MarketHeatmapSection({
                       ))
                     ) : (
                       <div className="flex flex-col items-center justify-center h-48 text-center text-neutral-500 text-xs">
-                        No constituent tickers found
+                        {locale === 'ar' ? 'لم يتم العثور على أسهم' : 'No constituent tickers found'}
                       </div>
                     )}
                   </div>

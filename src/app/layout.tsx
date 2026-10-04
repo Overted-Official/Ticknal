@@ -1,12 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Spectral } from "next/font/google";
+import { Geist, Spectral, Cairo } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
 import NativeBridgeProvider from "@/components/platform/NativeBridgeProvider";
+import { LocaleProvider } from "@/lib/i18n";
+import { getServerLocale, getServerDirection } from "@/lib/i18n/server";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic", "latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 const spectral = Spectral({
@@ -58,21 +67,26 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getServerLocale();
+  const dir = getServerDirection(locale);
+
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${spectral.variable} h-full antialiased font-sans bg-plt-base`}
+      lang={locale}
+      dir={dir}
+      className={`${geistSans.variable} ${cairo.variable} ${spectral.variable} h-full antialiased font-sans bg-plt-base`}
       suppressHydrationWarning
     >
-
       <body
         className="min-h-full flex flex-col font-sans bg-plt-base text-plt-text overflow-x-hidden max-w-full"
         suppressHydrationWarning
       >
-        {children}
-        <ServiceWorkerRegistration />
-        <NativeBridgeProvider />
+        <LocaleProvider initialLocale={locale}>
+          {children}
+          <ServiceWorkerRegistration />
+          <NativeBridgeProvider />
+        </LocaleProvider>
       </body>
     </html>
   );

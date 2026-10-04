@@ -467,3 +467,24 @@ export const intradayCandles = pgTable('intraday_candles', {
     ),
   };
 });
+
+export const egxTradeStatistics = pgTable('egx_trade_statistics', {
+  id: serial('id').primaryKey(),
+  tickerSymbol: varchar('ticker_symbol', { length: 20 })
+    .notNull()
+    .references(() => tickers.symbol, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  trades: integer('trades').default(0),
+  volume: numeric('volume', { precision: 18, scale: 2 }).default('0'),
+  value: numeric('value', { precision: 18, scale: 2 }).default('0'),
+  averageTradeSize: numeric('average_trade_size', { precision: 18, scale: 2 }).default('0'),
+  absorptionRatio: numeric('absorption_ratio', { precision: 10, scale: 4 }).default('1.0000'),
+  clv: numeric('clv', { precision: 6, scale: 4 }).default('0'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    tickerDateUnique: unique('egx_trade_stats_ticker_date_unique').on(table.tickerSymbol, table.date),
+    tickerDateIdx: index('egx_trade_stats_ticker_date_idx').on(table.tickerSymbol, table.date),
+  };
+});

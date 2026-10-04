@@ -13,6 +13,7 @@ import {
 import type { MajorIndexData, SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import { ChevronRight } from '@/components/ui/icon-library';
 import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import { useTranslation } from '@/lib/i18n';
 
 export type SelectedIndexSymbol = 'EGX30' | 'EGX70' | 'EGX100';
 
@@ -27,6 +28,7 @@ export default function MajorIndicesSection({
   macroData,
   isLoading = false,
 }: MajorIndicesSectionProps) {
+  const { locale } = useTranslation();
   const [selectedSymbol, setSelectedSymbol] = useState<SelectedIndexSymbol>('EGX30');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +115,7 @@ export default function MajorIndicesSection({
         {/* 1. Header: 'Major indices›' (Clean, smaller title) */}
         <div className="flex items-center gap-1 mb-3 cursor-pointer group w-fit">
           <h3 className="text-sm sm:text-base font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
-            Major indices
+            {locale === 'ar' ? 'المؤشرات الرئيسية' : 'Major indices'}
           </h3>
           <ChevronRight
             size={16}
@@ -177,7 +179,7 @@ export default function MajorIndicesSection({
                         })}
                       </span>
                       <span className="text-[9px] font-medium text-neutral-400 uppercase tracking-tight">
-                        POINT
+                        {locale === 'ar' ? 'نقطة' : 'POINT'}
                       </span>
                       <span
                         className={`text-xs font-bold tabular-nums ml-1 ${
@@ -199,7 +201,7 @@ export default function MajorIndicesSection({
             type="button"
             onClick={scrollRight}
             className="w-8 h-8 rounded-full bg-black hover:bg-surface-raised border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition-colors shrink-0 cursor-pointer mb-2"
-            title="Next indices"
+            title={locale === 'ar' ? 'المؤشرات التالية' : 'Next indices'}
           >
             <ChevronRight size={16} />
           </button>
@@ -208,10 +210,10 @@ export default function MajorIndicesSection({
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
         <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black overflow-hidden pt-2">
           {isLoading ? (
-            <SectionLoadingState className="h-full" label="Loading market index data…" />
+            <SectionLoadingState className="h-full" label={locale === 'ar' ? 'جاري تحميل بيانات المؤشرات…' : 'Loading market index data…'} />
           ) : chartData.length < 2 ? (
             <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
-              No historical data available for this timeframe.
+              {locale === 'ar' ? 'لا توجد بيانات تاريخية متاحة لهذا الإطار الزمني.' : 'No historical data available for this timeframe.'}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -297,17 +299,17 @@ export default function MajorIndicesSection({
                           <span className="font-semibold text-neutral-200">{activeIndex?.name}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4 pt-1">
-                          <span className="text-neutral-400">Close:</span>
+                          <span className="text-neutral-400">{locale === 'ar' ? 'الإغلاق:' : 'Close:'}</span>
                           <span className="font-bold text-white tabular-nums text-sm">
                             {Number(data.close).toLocaleString('en-US', {
                               minimumFractionDigits: 3,
                               maximumFractionDigits: 3,
                             })}{' '}
-                            <span className="text-[10px] text-neutral-400">POINT</span>
+                            <span className="text-[10px] text-neutral-400">{locale === 'ar' ? 'نقطة' : 'POINT'}</span>
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-4">
-                          <span className="text-neutral-400">Daily Change:</span>
+                          <span className="text-neutral-400">{locale === 'ar' ? 'التغير اليومي:' : 'Daily Change:'}</span>
                           <span
                             className={`font-semibold tabular-nums ${
                               isPtPos ? 'text-profit-num' : 'text-loss-num'
@@ -320,9 +322,9 @@ export default function MajorIndicesSection({
                         </div>
                         {data.open && (
                           <div className="flex items-center justify-between gap-4 text-neutral-500 text-[11px] pt-1 border-t border-white/5">
-                            <span>O: {Number(data.open).toFixed(1)}</span>
-                            <span>H: {Number(data.high).toFixed(1)}</span>
-                            <span>L: {Number(data.low).toFixed(1)}</span>
+                            <span>{locale === 'ar' ? 'الافتتاح: ' : 'O: '}{Number(data.open).toFixed(1)}</span>
+                            <span>{locale === 'ar' ? 'الأعلى: ' : 'H: '}{Number(data.high).toFixed(1)}</span>
+                            <span>{locale === 'ar' ? 'الأدنى: ' : 'L: '}{Number(data.low).toFixed(1)}</span>
                           </div>
                         )}
                       </div>

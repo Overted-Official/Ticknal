@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { Wallet, TrendingUp, CheckCircle2, Target } from '@/components/ui/icon-library';
 import KPICard, { type KPICardProps } from './KPICard';
 import { type OrderStats } from '../../homeInvestmentsTypes';
@@ -12,6 +13,8 @@ interface FinancialsKPIRailProps {
 
 export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencyUnit = locale === 'ar' ? 'ج.م' : '£';
 
   const formatNumber = (value: number, showSign: boolean = false): string => {
     if (isPrivacy) return '••••••';
@@ -45,60 +48,63 @@ export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps
     {
       id: 'portfolio-value',
       targetId: 'section-monthly-progression',
-      title: 'Portfolio Value',
+      title: locale === 'ar' ? 'قيمة المحفظة' : 'Portfolio Value',
       icon: Wallet,
       iconBgClass: 'bg-brand-blue text-white',
       iconColorClass: 'text-white',
       value: formatNumber(orderStats.openMarketValue),
-      unit: '£',
+      unit: currencyUnit,
       changeText: `${unrealizedPct >= 0 ? '+' : ''}${unrealizedPct.toFixed(1)}%`,
       changeColorClass: unrealizedPct >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: 'total',
+      metaText: locale === 'ar' ? 'الإجمالي' : 'total',
       sparklinePoints: marketValPoints && marketValPoints.length > 1 ? marketValPoints : undefined,
       sparklineTrend: unrealizedPct >= 0 ? 'up' : 'down',
     },
     {
       id: 'unrealized-gain',
       targetId: 'section-active-positions',
-      title: 'Unrealized Gain',
+      title: locale === 'ar' ? 'الأرباح غير المحققة' : 'Unrealized Gain',
       icon: TrendingUp,
       iconBgClass: orderStats.unrealized >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
       value: formatNumber(orderStats.unrealized, true),
-      unit: '£',
+      unit: currencyUnit,
       changeText: `${unrealizedPct >= 0 ? '+' : ''}${unrealizedPct.toFixed(1)}%`,
       changeColorClass: orderStats.unrealized >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: 'open',
+      metaText: locale === 'ar' ? 'المفتوحة' : 'open',
       sparklinePoints: unrealizedPoints && unrealizedPoints.length > 1 ? unrealizedPoints : undefined,
       sparklineTrend: orderStats.unrealized >= 0 ? 'up' : 'down',
     },
     {
       id: 'realized-gain',
       targetId: 'section-monthly-progression',
-      title: 'Realized Gain',
+      title: locale === 'ar' ? 'الأرباح المحققة' : 'Realized Gain',
       icon: CheckCircle2,
       iconBgClass: orderStats.realized >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
       value: formatNumber(orderStats.realized, true),
-      unit: '£',
-      changeText: `${orderStats.closedWinning}W · ${orderStats.closedLosing}L`,
+      unit: currencyUnit,
+      changeText:
+        locale === 'ar'
+          ? `${orderStats.closedWinning} رابحة · ${orderStats.closedLosing} خاسرة`
+          : `${orderStats.closedWinning}W · ${orderStats.closedLosing}L`,
       changeColorClass: orderStats.realized >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: 'closed',
+      metaText: locale === 'ar' ? 'المغلقة' : 'closed',
       sparklinePoints: realizedPoints && realizedPoints.length > 1 ? realizedPoints : undefined,
       sparklineTrend: orderStats.realized >= 0 ? 'up' : 'down',
     },
     {
       id: 'total-gain',
       targetId: 'section-monthly-progression',
-      title: 'Total Gain',
+      title: locale === 'ar' ? 'إجمالي الأرباح' : 'Total Gain',
       icon: Target,
       iconBgClass: totalGain >= 0 ? 'bg-accent-amber text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
       value: formatNumber(totalGain, true),
-      unit: '£',
+      unit: currencyUnit,
       changeText: `${totalRoi >= 0 ? '+' : ''}${totalRoi.toFixed(1)}%`,
       changeColorClass: totalGain >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: 'ROI',
+      metaText: locale === 'ar' ? 'العائد' : 'ROI',
       sparklinePoints: roiPoints && roiPoints.length > 1 ? roiPoints : undefined,
       sparklineTrend: totalGain >= 0 ? 'up' : 'down',
     },

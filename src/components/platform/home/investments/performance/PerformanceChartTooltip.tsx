@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { useTranslation } from '@/lib/i18n';
 import { type MonthlyDataItem } from '../homeInvestmentsTypes';
 
 interface PerformanceChartTooltipProps {
@@ -11,6 +12,8 @@ interface PerformanceChartTooltipProps {
 
 export default function PerformanceChartTooltip({ active, payload }: PerformanceChartTooltipProps) {
   const { isPrivacy } = usePrivacyMode();
+  const { locale } = useTranslation();
+  const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
 
   if (!active || !payload || !payload.length) return null;
   const d = payload[0].payload as MonthlyDataItem;
@@ -39,34 +42,34 @@ export default function PerformanceChartTooltip({ active, payload }: Performance
       <div className="flex flex-col justify-between flex-1 pt-1.5 space-y-1.5">
         {d.marketValue !== undefined && d.marketValue > 0 && (
           <div className="flex justify-between items-center text-white leading-none">
-            <span>Market:</span>
+            <span>{locale === 'ar' ? 'السوق:' : 'Market:'}</span>
             <span className="font-semibold text-white">
-              {isPrivacy ? '••••' : `${formatVal(d.marketValue)} £`}
+              {isPrivacy ? '••••' : `${formatVal(d.marketValue)} ${currencySymbol}`}
             </span>
           </div>
         )}
 
         <div className="flex justify-between items-center text-white leading-none">
-          <span>Realized:</span>
+          <span>{locale === 'ar' ? 'المحقق:' : 'Realized:'}</span>
           <span className="font-semibold text-white">
-            {isPrivacy ? '••••' : `${d.pl >= 0 ? '+' : '-'}${formatVal(d.pl)} £`}
+            {isPrivacy ? '••••' : `${d.pl >= 0 ? '+' : '-'}${formatVal(d.pl)} ${currencySymbol}`}
           </span>
         </div>
 
         {d.unrealizedPl !== undefined && d.unrealizedPl !== 0 && (
           <div className="flex justify-between items-center text-white leading-none">
-            <span>Unrealized:</span>
+            <span>{locale === 'ar' ? 'غير المحقق:' : 'Unrealized:'}</span>
             <span className="font-semibold text-white">
-              {isPrivacy ? '••••' : `${d.unrealizedPl >= 0 ? '+' : '-'}${formatVal(d.unrealizedPl)} £`}
+              {isPrivacy ? '••••' : `${d.unrealizedPl >= 0 ? '+' : '-'}${formatVal(d.unrealizedPl)} ${currencySymbol}`}
             </span>
           </div>
         )}
 
         {d.invested > 0 && (
           <div className="flex justify-between items-center text-white leading-none">
-            <span>Invested:</span>
+            <span>{locale === 'ar' ? 'المستثمر:' : 'Invested:'}</span>
             <span className="font-semibold text-white">
-              {isPrivacy ? '••••' : `${formatVal(d.invested)} £`}
+              {isPrivacy ? '••••' : `${formatVal(d.invested)} ${currencySymbol}`}
             </span>
           </div>
         )}

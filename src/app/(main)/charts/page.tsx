@@ -227,6 +227,7 @@ async function ChartsPageContent({
         low: Number(record.low),
         close: Number(record.close),
         volume: Number(record.volume),
+        trades: (record as any).trades ? Number((record as any).trades) : undefined,
         _sortKey: sortKey,
       };
     })
@@ -239,6 +240,7 @@ async function ChartsPageContent({
     low: number;
     close: number;
     volume: number;
+    trades?: number;
   }> = [];
 
   let lastKey = -Infinity;
@@ -251,6 +253,7 @@ async function ChartsPageContent({
         low: item.low,
         close: item.close,
         volume: item.volume,
+        trades: item.trades,
       });
       lastKey = item._sortKey;
     } else if (item._sortKey === lastKey && formattedChartData.length > 0) {
@@ -261,6 +264,7 @@ async function ChartsPageContent({
         low: item.low,
         close: item.close,
         volume: item.volume,
+        trades: item.trades,
       };
     }
   }
