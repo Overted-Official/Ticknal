@@ -146,52 +146,52 @@ const PRICING_FEATURES: FeatureItem[] = [
 
 const AR_PRICING_FEATURES: Record<string, { label: string; freeText: string; plusText: string; eliteText: string }> = {
   CHARTS_PER_TAB: {
-    label: 'عدد الرسوم البيانية لكل مساحة عمل',
-    freeText: 'رسمان بيانيان لكل تبويب',
-    plusText: '4 رسوم بيانية لكل تبويب',
-    eliteText: '8 رسوم بيانية لكل تبويب',
+    label: 'شارتات لكل مساحة عمل',
+    freeText: 'شارتين لكل تاب',
+    plusText: '4 شارتات لكل تاب',
+    eliteText: '8 شارتات لكل تاب',
   },
   INDICATORS_ON_CHART: {
-    label: 'المؤشرات لكل رسم بياني',
-    freeText: '5 مؤشرات لكل رسم بياني',
-    plusText: '10 مؤشرات لكل رسم بياني',
-    eliteText: '25 مؤشراً لكل رسم بياني',
+    label: 'مؤشرات فنية لكل شارت',
+    freeText: '5 مؤشرات لكل شارت',
+    plusText: '10 مؤشرات لكل شارت',
+    eliteText: '25 مؤشر لكل شارت',
   },
   HISTORICAL_BARS: {
-    label: 'سجل الشموع والبيانات اللحظية',
+    label: 'سجل الشموع التاريخية',
     freeText: '2,000 شمعة تاريخية',
     plusText: '10,000 شمعة تاريخية',
     eliteText: '40,000 شمعة تاريخية',
   },
   PARALLEL_CONNECTIONS: {
-    label: 'الاتصالات المتوازية للرسوم البيانية',
-    freeText: '5 اتصالات متوازية',
-    plusText: '20 اتصالاً متوازياً',
-    eliteText: '100 اتصال متوازٍ',
+    label: 'اتصالات متزامنة للشارت',
+    freeText: '5 اتصالات متزامنة',
+    plusText: '20 اتصال متزامن',
+    eliteText: '100 اتصال متزامن',
   },
   PRICE_ALERTS: {
-    label: 'تنبيهات الأسعار',
-    freeText: 'بدون تنبيهات أسعار',
+    label: 'تنبيهات حركة الأسعار',
+    freeText: 'مفيش تنبيهات أسعار',
     plusText: '100 تنبيه سعر',
     eliteText: '500 تنبيه سعر',
   },
   TECHNICAL_ALERTS: {
-    label: 'التنبيهات الفنية',
-    freeText: 'بدون تنبيهات فنية',
+    label: 'تنبيهات فنية للمؤشرات',
+    freeText: 'مفيش تنبيهات فنية',
     plusText: '100 تنبيه فني',
     eliteText: '500 تنبيه فني',
   },
   PUSH_TELEGRAM_ALERTS: {
-    label: 'تنبيهات فورية عبر الهاتف وتيليجرام',
-    freeText: 'بدون تنبيهات تيليجرام',
-    plusText: '25 تنبيهاً فورياً وتيليجرام',
-    eliteText: 'تنبيهات غير محدودة عبر الهاتف وتيليجرام',
+    label: 'تنبيهات لايف على الموبايل وتيليجرام',
+    freeText: 'مفيش تنبيهات تيليجرام',
+    plusText: '25 تنبيه فوري وتيليجرام',
+    eliteText: 'تنبيهات غير محدودة عالموبايل وتيليجرام',
   },
   BREAKOUT_DETECTION: {
-    label: 'كشف الاختراقات السعرية الشاذة',
-    freeText: 'بدون كشف اختراقات',
-    plusText: 'تنبيهات الاختراق اللحظي أثناء الجلسة',
-    eliteText: 'محرك كشف الاختراقات متعدد الأطر الزمنية',
+    label: 'كشف الاختراقات السعرية المفاجئة',
+    freeText: 'مفيش كشف اختراقات',
+    plusText: 'تنبيهات الاختراق اللحظي وسط الجلسة',
+    eliteText: 'محرك كشف اختراقات على كل الفريمات',
   },
   HYDRA_INDICATOR: {
     label: 'مؤشر Hydra للزخم التكيفي',
@@ -200,40 +200,40 @@ const AR_PRICING_FEATURES: Record<string, { label: string; freeText: string; plu
     eliteText: 'مؤشر Hydra للزخم التكيفي المتقدم',
   },
   TYPHOON_INDICATOR: {
-    label: 'محرك Typhoon لاختلالات أحجام التداول',
+    label: 'محرك Typhoon لتحليل فجوات السيولة وأحجام التداول',
     freeText: 'محرك Typhoon',
     plusText: 'محرك Typhoon',
     eliteText: 'محرك Typhoon لاختلالات أحجام التداول',
   },
   CERBERUS_INDICATOR: {
-    label: 'نموذج Cerberus لتوافق العوامل المتعددة',
+    label: 'نموذج Cerberus للتوافق متعدد العوامل',
     freeText: 'نموذج Cerberus',
     plusText: 'نموذج Cerberus',
-    eliteText: 'نموذج Cerberus لتوافق العوامل المتعددة',
+    eliteText: 'نموذج Cerberus للتوافق متعدد العوامل',
   },
   EGX_MARKET_COVERAGE: {
-    label: 'أكثر من 290 سهماً بالبورصة و160 صندوقاً استثمارياً',
-    freeText: 'تغطية شاملة لأسهم وصناديق مصر',
-    plusText: 'تغطية شاملة لأسهم وصناديق مصر',
-    eliteText: 'تغطية شاملة لأسهم وصناديق مصر',
+    label: 'أكتر من 290 سهم بالبورصة و160 صندوق استثمار',
+    freeText: 'تغطية كاملة لأسهم وصناديق مصر',
+    plusText: 'تغطية كاملة لأسهم وصناديق مصر',
+    eliteText: 'تغطية كاملة لأسهم وصناديق مصر',
   },
   SCREENERS: {
-    label: 'أدوات مسح اتساع السوق ودوران القطاعات',
-    freeText: 'اتساع القطاعات وماسح الأسهم',
-    plusText: 'اتساع القطاعات وماسح الأسهم',
-    eliteText: 'اتساع القطاعات وماسح الأسهم',
+    label: 'أدوات مسح اتساع السوق ودوران السيولة بين القطاعات',
+    freeText: 'اتساع القطاعات وفلترة الأسهم',
+    plusText: 'اتساع القطاعات وفلترة الأسهم',
+    eliteText: 'اتساع القطاعات وفلترة الأسهم',
   },
   DEVICES_SYNC: {
-    label: 'تطبيقات الويب وسطح المكتب والهاتف',
-    freeText: 'تطبيقات الويب والديسكتوب والموبايل',
-    plusText: 'تطبيقات الويب والديسكتوب والموبايل',
-    eliteText: 'تطبيقات الويب والديسكتوب والموبايل',
+    label: 'تطبيقات الويب والديسكتوب والموبايل',
+    freeText: 'تطبيقات الويب والكمبيوتر والموبايل',
+    plusText: 'تطبيقات الويب والكمبيوتر والموبايل',
+    eliteText: 'تطبيقات الويب والكمبيوتر والموبايل',
   },
   NO_ADS: {
-    label: 'تجربة نظيفة خالية من الإعلانات',
-    freeText: 'بدون إعلانات',
-    plusText: 'بدون إعلانات',
-    eliteText: 'بدون إعلانات',
+    label: 'تجربة نظيفة تماماً من غير أي إعلانات',
+    freeText: 'من غير إعلانات',
+    plusText: 'من غير إعلانات',
+    eliteText: 'من غير إعلانات',
   },
 };
 
@@ -270,12 +270,12 @@ export default function LandingPricingSection() {
         >
           <h2 className="section-title text-center text-white">
             {locale === 'ar'
-              ? 'استثمر بثقة وتفوق بأقل من تكلفة صفقة خاسرة واحدة'
+              ? 'استثمر بقرار مظبوط.. بأقل من تكلفة صفقة واحدة خاسرة'
               : 'Invest with Conviction for Less Than One Bad Trade'}
           </h2>
           <p className="section-subtitle text-center text-zinc-400 mt-3 sm:mt-4">
             {locale === 'ar'
-              ? 'ابدأ مجاناً مع تغطية شاملة لكامل السوق المصري. وقم بالترقية إلى Plus لتنبيهات فورية أو Elite للحصول على المؤشرات الكمية المؤسسية.'
+              ? 'ابدأ ببلاش مع تغطية كاملة للبورصة وصناديق الاستثمار والذهب. وممكن ترقّي لـ Plus عشان التنبيهات الفورية أو Elite لمؤشرات المؤسسات.'
               : 'Start free with full Egyptian market coverage. Upgrade to Plus for real-time alerts or Elite for institutional indicators.'}
           </p>
 
@@ -342,7 +342,7 @@ export default function LandingPricingSection() {
                 {locale === 'ar' ? 'سنوي' : 'Annual'}
               </span>
               <span className="px-2 py-0.5 text-xs font-medium rounded bg-white/10 text-white border border-white/10 flex items-center gap-1 transition-transform group-hover:scale-105">
-                {locale === 'ar' ? 'وفر حتى 17%' : 'Save up to 17%'} <span role="img" aria-label="fire">🔥</span>
+                {locale === 'ar' ? 'وفر لحد 17%' : 'Save up to 17%'} <span role="img" aria-label="fire">🔥</span>
               </span>
             </button>
           </div>
@@ -424,10 +424,10 @@ export default function LandingPricingSection() {
                         </span>
                       </div>
                       <div className="text-xs text-zinc-400 mt-1">
-                        {locale === 'ar' ? 'مجاني دائماً' : 'free forever'}
+                        {locale === 'ar' ? 'مجاني على طول' : 'free forever'}
                       </div>
                       <div className="text-xs text-zinc-500 mt-1">
-                        {locale === 'ar' ? 'لا حاجة لبطاقة ائتمان' : 'No credit card required'}
+                        {locale === 'ar' ? 'مش محتاج كارت بنكي' : 'No credit card required'}
                       </div>
                     </div>
 
@@ -437,7 +437,7 @@ export default function LandingPricingSection() {
                         href="/login?mode=signup"
                         className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
                       >
-                        {locale === 'ar' ? 'ابدأ الآن' : 'Start now'}
+                        {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
                       </Link>
                     </div>
 
@@ -505,7 +505,7 @@ export default function LandingPricingSection() {
                       href="/login?mode=signup"
                       className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
                     >
-                      {locale === 'ar' ? 'ابدأ الآن' : 'Start now'}
+                      {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
                     </Link>
                   </div>
                 </div>
@@ -519,7 +519,7 @@ export default function LandingPricingSection() {
                         Plus
                       </h3>
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-black bg-white px-2 py-0.5 rounded shadow-sm">
-                        {locale === 'ar' ? 'الأكثر طلباً' : 'Most Popular'}
+                        {locale === 'ar' ? 'الأكتر طلباً' : 'Most Popular'}
                       </span>
                     </div>
 
@@ -568,7 +568,7 @@ export default function LandingPricingSection() {
                           <>
                             <span>
                               {locale === 'ar'
-                                ? `وفر ${plusSavedYear} ج.م سنوياً`
+                                ? `وفر ${plusSavedYear} ج.م في السنة`
                                 : `Save ${plusSavedYear} EGP a year`}
                             </span>
                             <span
@@ -590,7 +590,7 @@ export default function LandingPricingSection() {
                         href="/login?mode=signup"
                         className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_24px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
                       >
-                        {locale === 'ar' ? 'ابدأ الآن' : 'Start now'}
+                        {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
                       </Link>
                     </div>
 
@@ -658,7 +658,7 @@ export default function LandingPricingSection() {
                       href="/login?mode=signup"
                       className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_24px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
                     >
-                      {locale === 'ar' ? 'ابدأ الآن' : 'Start now'}
+                      {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
                     </Link>
                   </div>
                 </div>
@@ -721,7 +721,7 @@ export default function LandingPricingSection() {
                           <>
                             <span>
                               {locale === 'ar'
-                                ? `وفر ${eliteSavedYear} ج.م سنوياً`
+                                ? `وفر ${eliteSavedYear} ج.م في السنة`
                                 : `Save ${eliteSavedYear} EGP a year`}
                             </span>
                             <span
@@ -743,7 +743,7 @@ export default function LandingPricingSection() {
                         href="/login?mode=signup"
                         className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
                       >
-                        {locale === 'ar' ? 'ابدأ الآن' : 'Start now'}
+                        {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
                       </Link>
                     </div>
 
@@ -817,7 +817,7 @@ export default function LandingPricingSection() {
                       href="/login?mode=signup"
                       className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
                     >
-                      {locale === 'ar' ? 'ابدأ الآن' : 'Start now'}
+                      {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
                     </Link>
                   </div>
                 </div>
@@ -893,11 +893,11 @@ export default function LandingPricingSection() {
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{locale === 'ar' ? 'بدون قيود على بطاقات الدفع بالعملة الأجنبية' : 'No Foreign Currency Limit Issues'}</span>
+              <span>{locale === 'ar' ? 'من غير ليميت ولا قيود على الدفع بالدولار' : 'No Foreign Currency Limit Issues'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{locale === 'ar' ? 'تفعيل فوري وآلي للاشتراك' : 'Instant Automated Activation'}</span>
+              <span>{locale === 'ar' ? 'تفعيل فوري وآلي لاشتراكك' : 'Instant Automated Activation'}</span>
             </div>
           </div>
         </motion.div>

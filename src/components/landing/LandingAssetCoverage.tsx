@@ -255,30 +255,30 @@ function CategoryCard({
   const categorySubtitle =
     card.id === 'equities'
       ? locale === 'ar'
-        ? 'أفضل أسهم البورصة المصرية أداءً بالعائد الشهري'
+        ? 'أكتر أسهم البورصة المصرية تحقيقاً للعائد الشهري'
         : card.subtitle
       : card.id === 'funds'
       ? locale === 'ar'
-        ? 'أفضل الصناديق أداءً لدى مديري الأصول في مصر'
+        ? 'أفضل الصناديق أداءً عند مديري الأصول في مصر'
         : card.subtitle
       : card.id === 'metals'
       ? locale === 'ar'
-        ? 'أسعار الذهب والفضة اللحظية في مصر'
+        ? 'أسعار الذهب والفضة والسبائك لايف في مصر'
         : card.subtitle
       : card.subtitle;
 
   const ctaLabel =
     card.id === 'equities'
       ? locale === 'ar'
-        ? 'عرض جميع الأسهم المصرية'
+        ? 'شوف كل الأسهم المصرية'
         : card.ctaText
       : card.id === 'funds'
       ? locale === 'ar'
-        ? 'عرض جميع صناديق الاستثمار'
+        ? 'شوف كل صناديق الاستثمار'
         : card.ctaText
       : card.id === 'metals'
       ? locale === 'ar'
-        ? 'عرض جميع المعادن والسبائك'
+        ? 'شوف كل المعادن والسبائك'
         : card.ctaText
       : card.ctaText;
 
@@ -288,7 +288,7 @@ function CategoryCard({
         ? 'المعادن الثمينة المرجعية'
         : 'Benchmark Precious Metals'
       : locale === 'ar'
-      ? 'أفضل الأصول حسب العائد'
+      ? 'أعلى الأصول حسب العائد'
       : 'Top Assets by Return';
 
   return (
@@ -538,7 +538,7 @@ export default function LandingAssetCoverage({
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="section-title text-center text-white"
           >
-            <span>{locale === 'ar' ? 'ثلاث ركائز استثمارية. ' : 'Three Asset Pillars. '}</span>
+            <span>{locale === 'ar' ? '3 ركائز استثمارية. ' : 'Three Asset Pillars. '}</span>
             <motion.span
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -549,7 +549,7 @@ export default function LandingAssetCoverage({
                 backgroundImage: 'linear-gradient(90deg, #0099ff 0%, #2962ff 50%, #a822ff 100%)',
               }}
             >
-              {locale === 'ar' ? 'تغطية شاملة للسوق.' : 'Complete Market Coverage.'}
+              {locale === 'ar' ? 'تغطية شاملة لكل السوق.' : 'Complete Market Coverage.'}
             </motion.span>
           </motion.h2>
           <motion.p
@@ -560,7 +560,7 @@ export default function LandingAssetCoverage({
             className="section-subtitle text-center text-zinc-400"
           >
             {locale === 'ar'
-              ? 'تابع الأسهم المصرية الواعدة، وصناديق الاستثمار، والسبائك الذهبية مع بيانات تاريخية وأسعار لحظية مباشرة.'
+              ? 'تابع أقوى الأسهم في البورصة، وصناديق الاستثمار، وأسعار الذهب والسبائك لايف مع بيانات تاريخية وأسعار لحظية.'
               : 'Track high-conviction Egyptian equities, mutual funds, and physical bullion with historical benchmarks and real-time pricing.'}
           </motion.p>
         </div>
@@ -599,7 +599,7 @@ export default function LandingAssetCoverage({
             ))}
           </div>
           <span className="text-[11px] text-zinc-500 font-medium">
-            {locale === 'ar' ? 'اسحب أفقياً لعرض المزيد' : 'Swipe sideways to view more'}
+            {locale === 'ar' ? 'اسحب عشان تشوف باقي الأصول' : 'Swipe sideways to view more'}
           </span>
         </div>
       </div>

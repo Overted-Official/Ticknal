@@ -112,7 +112,7 @@ export default function LandingCtaSection() {
   const handleStoreClick = (platform: 'App Store' | 'Google Play') => {
     setStoreToast(
       locale === 'ar'
-        ? `تطبيق ${platform} سينطلق قريباً! يمكنك تسجيل الدخول عبر Google بالأعلى لاستخدام منصة الويب الآن.`
+        ? `تطبيق ${platform} هينزل قريب جداً! تقدر تسجل دخول بجوجل فوق وتستخدم المنصة من المتصفح دلوقتي.`
         : `${platform} app is launching soon! You can sign in with Google above to use the web terminal now.`
     );
     setTimeout(() => {
@@ -142,7 +142,7 @@ export default function LandingCtaSection() {
             {/* 1. Main Headline                                                  */}
             {/* ================================================================= */}
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-[1.08] max-w-3xl">
-              {locale === 'ar' ? 'صفقتك القادمة تستحق أقصى درجات الدقة.' : 'Your Next Trade Deserves Precision.'}
+              {locale === 'ar' ? 'صفقتك الجاية تستحق أعلى درجات الدقة.' : 'Your Next Trade Deserves Precision.'}
             </h2>
 
             {/* ================================================================= */}
@@ -150,7 +150,7 @@ export default function LandingCtaSection() {
             {/* ================================================================= */}
             <p className="mt-4 sm:mt-5 text-sm sm:text-base lg:text-lg text-zinc-400 font-normal leading-relaxed max-w-xl mx-auto">
               {locale === 'ar'
-                ? 'انضم إلى آلاف المستثمرين في مصر الذين يستخدمون المنصة لمتابعة أكثر من 290 سهماً، واختبار الاستراتيجيات الكمية، والتنفيذ بأعلى درجات الثقة.'
+                ? 'انضم لآلاف المستثمرين في مصر اللي بيعتمدوا على تكنال عشان يتابعوا أكتر من 290 سهم، ويختبروا استراتيجياتهم الكمية، وينفذوا بثقة تامة.'
                 : 'Join thousands of Egyptian investors using Ticknal to track 290+ equities, backtest quantitative strategies, and execute with conviction.'}
             </p>
 
@@ -193,12 +193,12 @@ export default function LandingCtaSection() {
 
               {/* Secondary Email Link */}
               <div className="mt-3.5 flex items-center justify-center gap-1.5 text-xs text-zinc-500">
-                <span>{locale === 'ar' ? 'أو التسجيل عبر البريد الإلكتروني —' : 'Or register with email —'}</span>
+                <span>{locale === 'ar' ? 'أو سجل بإيميلك — ' : 'Or register with email —'}</span>
                 <Link
                   href="/login?mode=signup"
                   className="text-zinc-300 hover:text-white underline underline-offset-4 decoration-white/20 hover:decoration-white transition-colors"
                 >
-                  {locale === 'ar' ? 'أنشئ حساباً مجانياً' : 'Create free account'}
+                  {locale === 'ar' ? 'اعمل حساب مجاني دلوقتي' : 'Create free account'}
                 </Link>
               </div>
 
@@ -215,7 +215,7 @@ export default function LandingCtaSection() {
             <div className="w-full max-w-md flex items-center gap-3 my-8">
               <div className="h-px bg-white/[0.08] flex-1" />
               <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium select-none">
-                {locale === 'ar' ? 'أو حمّل التطبيق المرافق للهاتف' : 'Or download the mobile companion'}
+                {locale === 'ar' ? 'أو نزّل تطبيق الموبايل' : 'Or download the mobile companion'}
               </span>
               <div className="h-px bg-white/[0.08] flex-1" />
             </div>
@@ -231,7 +231,7 @@ export default function LandingCtaSection() {
                 <AppleIcon className="w-5 h-5 text-black shrink-0 group-hover:scale-105 transition-transform" />
                 <div className="text-left rtl:text-right flex flex-col">
                   <span className="text-[9px] uppercase tracking-wider text-neutral-500 font-medium leading-none">
-                    {locale === 'ar' ? 'حمّل من' : 'Download on the'}
+                    {locale === 'ar' ? 'حمّله من' : 'Download on the'}
                   </span>
                   <span className="text-xs sm:text-[13px] font-semibold text-neutral-900 tracking-tight leading-tight mt-0.5">
                     App Store
@@ -270,22 +270,22 @@ export default function LandingCtaSection() {
             <div className="mt-12 pt-6 border-t border-white/[0.06] w-full max-w-2xl flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-zinc-400 font-normal">
               <div className="flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                <span>{locale === 'ar' ? 'تشغيل فوري' : 'Instant Setup'}</span>
+                <span>{locale === 'ar' ? 'شغال في ثواني' : 'Instant Setup'}</span>
               </div>
               <span className="text-zinc-700 hidden sm:inline">•</span>
               <div className="flex items-center gap-2">
                 <CreditCard className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                <span>{locale === 'ar' ? 'لا حاجة لبطاقة ائتمان' : 'No Credit Card Required'}</span>
+                <span>{locale === 'ar' ? 'مش محتاج كارت بنكي' : 'No Credit Card Required'}</span>
               </div>
               <span className="text-zinc-700 hidden sm:inline">•</span>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                <span>{locale === 'ar' ? 'باقة مجانية مدى الحياة' : 'Free Forever Tier'}</span>
+                <span>{locale === 'ar' ? 'باقة مجانية على طول' : 'Free Forever Tier'}</span>
               </div>
               <span className="text-zinc-700 hidden sm:inline">•</span>
               <div className="flex items-center gap-2">
                 <Lock className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                <span>{locale === 'ar' ? 'أمان كامل لأموالك' : 'Full Capital Custody'}</span>
+                <span>{locale === 'ar' ? 'فلوسك في أمان تام' : 'Full Capital Custody'}</span>
               </div>
             </div>
           </div>

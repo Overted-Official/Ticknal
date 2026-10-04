@@ -105,12 +105,12 @@ export default function LandingTickerMarquee({ tickers }: LandingTickerMarqueePr
       <div className="flex flex-col items-center text-center gap-2 mb-8 sm:mb-12 max-w-2xl mx-auto px-4">
         <h2 className="section-title text-center text-white">
           {locale === 'ar'
-            ? 'منصة واحدة لجميع الأصول الاستثمارية في مصر'
+            ? 'منصة واحدة لكل استثماراتك في مصر'
             : 'One Terminal for Every Asset in Egypt'}
         </h2>
         <p className="section-subtitle text-center text-zinc-400">
           {locale === 'ar'
-            ? 'تحليلات مؤسسية لأكثر من 290 سهماً بالبورصة المصرية، و160 صندوقاً استثمارياً، والمعادن الثمينة، والمؤشرات السيادية الكلية.'
+            ? 'تحليلات بمستوى احترافي لأكتر من 290 سهم بالبورصة المصرية، و160 صندوق استثمار، والذهب والفضة، مع أهم مؤشرات الاقتصاد الكلي.'
             : 'Institutional analytics across 290+ EGX equities, 160+ investment funds, precious metals, and sovereign macro indicators.'}
         </p>
       </div>

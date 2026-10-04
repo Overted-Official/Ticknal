@@ -110,7 +110,7 @@ export default function LandingFooter() {
                     <>
                       ذكاء مالي لمصر.
                       <br />
-                      صفقة تلو الأخرى!
+                      صفقة ورا صفقة!
                     </>
                   ) : (
                     <>
@@ -131,7 +131,7 @@ export default function LandingFooter() {
                 </p>
                 <p className="mt-1 text-white/65">
                   {locale === 'ar'
-                    ? 'صُممت خصيصاً للمستثمرين وأصحاب القرارات الحاسمة في مصر.'
+                    ? 'صُممت مخصوص للمستثمرين وأصحاب القرارات في مصر.'
                     : 'Engineered for high-conviction Egyptian investors.'}
                 </p>
               </div>
@@ -155,7 +155,7 @@ export default function LandingFooter() {
                   <ul className="space-y-3 text-xs sm:text-[13px] text-white/80 font-medium">
                     <li>
                       <Link href="/markets" prefetch={false} className="hover:text-white transition-colors">
-                        {locale === 'ar' ? 'نظرة عامة على الأسواق' : 'Markets Overview'}
+                        {locale === 'ar' ? 'نظرة عامة عالأسواق' : 'Markets Overview'}
                       </Link>
                     </li>
                     <li>
@@ -165,7 +165,7 @@ export default function LandingFooter() {
                     </li>
                     <li>
                       <Link href="/news" prefetch={false} className="hover:text-white transition-colors">
-                        {locale === 'ar' ? 'أخبار وبيانات السوق' : 'Market Wire'}
+                        {locale === 'ar' ? 'شريط الأخبار' : 'Market Wire'}
                       </Link>
                     </li>
                   </ul>
@@ -208,7 +208,7 @@ export default function LandingFooter() {
                 {/* Newsletter & Socials (6 cols) */}
                 <div className="sm:col-span-2 md:col-span-6 flex flex-col">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">
-                    {locale === 'ar' ? 'اشترك للحصول على آخر التحديثات.' : 'Get the Latest from Ticknal.'}
+                    {locale === 'ar' ? 'اشترك عشان يوصلك كل جديد.' : 'Get the Latest from Ticknal.'}
                   </h4>
 
                   {/* Pill Subscription Input Form: Crisp white border edges & matching white placeholder */}
@@ -221,7 +221,7 @@ export default function LandingFooter() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder={locale === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
+                        placeholder={locale === 'ar' ? 'اكتب إيميلك هنا' : 'Email Address'}
                         required
                         suppressHydrationWarning
                         className="w-full bg-transparent px-4 sm:px-5 py-2 text-xs sm:text-sm text-white placeholder-white placeholder:text-white placeholder:opacity-95 outline-hidden font-sans"
@@ -233,10 +233,10 @@ export default function LandingFooter() {
                         {subscribed ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>{locale === 'ar' ? 'تم الاشتراك' : 'Joined'}</span>
+                            <span>{locale === 'ar' ? 'تم الاشتراك 👍' : 'Joined'}</span>
                           </>
                         ) : (
-                          <span>{locale === 'ar' ? 'اشتراك' : 'Subscribe'}</span>
+                          <span>{locale === 'ar' ? 'اشترك' : 'Subscribe'}</span>
                         )}
                       </button>
                     </div>
@@ -245,7 +245,7 @@ export default function LandingFooter() {
                   {/* Follow Us Social Icons */}
                   <div className="mt-7">
                     <h5 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
-                      {locale === 'ar' ? 'تابعنا' : 'Follow Us'}
+                      {locale === 'ar' ? 'تابعنا على السوشيال ميديا' : 'Follow Us'}
                     </h5>
                     <div className="flex items-center gap-2.5">
                       {/* Instagram */}

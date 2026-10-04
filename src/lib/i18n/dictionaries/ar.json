@@ -200,11 +200,11 @@
   "landing": {
     "navMarkets": "الأسواق",
     "navAssets": "الأصول",
-    "navWorkflow": "آلية العمل",
-    "navBrokers": "شركات الوساطة",
+    "navWorkflow": "إزاي بنشتغل",
+    "navBrokers": "الوسطاء",
     "navPricing": "الأسعار",
     "navFaq": "الأسئلة الشائعة",
-    "navGetStarted": "ابدأ الآن",
+    "navGetStarted": "ابدأ دلوقتي",
     "navSignIn": "تسجيل الدخول"
   }
 }

@@ -25,7 +25,7 @@ export default function LandingHero() {
           }}
         >
           <span className="block">
-            {locale === 'ar' ? 'كل استثمار في مصر.' : 'Every Investment in Egypt.'}
+            {locale === 'ar' ? 'كل استثماراتك في مصر.' : 'Every Investment in Egypt.'}
           </span>
           <span
             className="block bg-clip-text text-transparent mt-0.5 sm:mt-1"
@@ -33,7 +33,7 @@ export default function LandingHero() {
               backgroundImage: 'linear-gradient(90deg, #0099ff 0%, #2962ff 50%, #a822ff 100%)',
             }}
           >
-            {locale === 'ar' ? 'في منصة واحدة.' : 'In One Place.'}
+            {locale === 'ar' ? 'في مكان واحد.' : 'In One Place.'}
           </span>
         </h1>
 
@@ -43,7 +43,7 @@ export default function LandingHero() {
           style={{ textShadow: '0 1px 12px rgba(0,0,0,0.9)' }}
         >
           {locale === 'ar'
-            ? 'رسوم بيانية مؤسسية، إشارات كمية متطورة، وتحليلات فورية للسوق المصري — صُممت للمتداولين المحترفين في مصر.'
+            ? 'شارتات بمستوى مؤسسي، إشارات كمّية مدروسة، وتحليلات لحظية للبورصة المصرية — معمولة مخصوص للمستثمر اللي مابيعتمدش على الحظ.'
             : 'Institutional technical charting, quantitative signals, and real-time market intelligence — built for high-conviction Egyptian traders.'}
         </p>
 
@@ -60,7 +60,7 @@ export default function LandingHero() {
             }}
           >
             <span className="tracking-tight whitespace-nowrap">
-              {locale === 'ar' ? 'افتح منصة التداول' : 'Launch Terminal'}
+              {locale === 'ar' ? 'افتح المنصة دلوقتي' : 'Launch Terminal'}
             </span>
           </Link>
         </div>
