@@ -1,9 +1,23 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
-import { X, ChevronDown, Check, BarChart2 } from '@/components/ui/icon-library';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ProgramView } from '@ticknal/quant-engine/canonical';
+
+import { BarChart2, Check, ChevronDown, Search, X } from '@/components/ui/icon-library';
 import { getAvailableIndicators } from '@/indicators';
+import type {
+  CanonicalIndicatorSelection,
+  CanonicalIndicatorViewState,
+} from '@/indicators/canonical/types';
 import { useTranslation } from '@/lib/i18n';
+import {
+  filterIndicatorBrowserEntries,
+  getIndicatorBrowserEntries,
+  groupIndicatorBrowserEntries,
+} from './canonical/browser-model';
+import IndicatorBrowserEntry from './canonical/IndicatorBrowserEntry';
+
+type SelectionPatch = Partial<Pick<CanonicalIndicatorSelection, 'parameters' | 'visibleOutputs' | 'placementOverrides'>>;
 
 interface ChartIndicatorsPopoverProps {
   isOpen: boolean;
@@ -12,216 +26,145 @@ interface ChartIndicatorsPopoverProps {
   onToggleIndicator: (id: string) => void;
   expandedIndicators: Record<string, boolean>;
   onToggleExpanded: (id: string) => void;
-  strategyParams: Record<string, any>;
-  onUpdateStrategyParam: (key: string, val: any) => void;
+  strategyParams: Record<string, unknown>;
+  onUpdateStrategyParam: (key: string, val: unknown) => void;
+  canonicalIndicatorStates: Record<string, CanonicalIndicatorViewState>;
+  canonicalSelections?: readonly CanonicalIndicatorSelection[];
+  onAddCanonical?: (definitionId: string) => void;
+  onUpdateCanonical?: (instanceId: string, patch: SelectionPatch) => void;
+  onRemoveCanonical?: (instanceId: string) => void;
+  onReorderCanonical?: (instanceId: string, direction: -1 | 1) => void;
 }
 
 export default function ChartIndicatorsPopover({
-  isOpen,
-  onClose,
-  activeIndicators,
-  onToggleIndicator,
-  expandedIndicators,
-  onToggleExpanded,
-  strategyParams,
-  onUpdateStrategyParam,
+  isOpen, onClose, activeIndicators, onToggleIndicator, expandedIndicators,
+  onToggleExpanded, strategyParams, onUpdateStrategyParam, canonicalIndicatorStates,
+  canonicalSelections = [], onAddCanonical, onUpdateCanonical, onRemoveCanonical, onReorderCanonical,
 }: ChartIndicatorsPopoverProps) {
   const { locale } = useTranslation();
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('all');
+  const [surface, setSurface] = useState<ProgramView | 'all'>('all');
 
-  // Close on click outside or Escape
   useEffect(() => {
     if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+    const clickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) onClose();
     };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('keydown', handleKeyDown);
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    document.addEventListener('mousedown', clickOutside);
+    window.addEventListener('keydown', escape);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', clickOutside);
+      window.removeEventListener('keydown', escape);
     };
   }, [isOpen, onClose]);
 
+  const entries = useMemo(() => getIndicatorBrowserEntries(locale), [locale]);
+  const groups = useMemo(() => groupIndicatorBrowserEntries(entries), [entries]);
+  const filtered = useMemo(
+    () => filterIndicatorBrowserEntries(entries, query, surface, category),
+    [category, entries, query, surface],
+  );
+  const filteredGroups = useMemo(() => groupIndicatorBrowserEntries(filtered), [filtered]);
   if (!isOpen) return null;
 
-  const availableIndicators = getAvailableIndicators();
-
-  const getIndicatorLocalizedName = (id: string, defaultName: string) => {
-    if (locale !== 'ar') return defaultName;
-    switch (id) {
-      case 'smartMoneyFlow':
-        return 'تدفق السيولة الذكية (Smart Money)';
-      case 'hydraIndex':
-        return 'مؤشر هيدرا المتعدد (Hydra Index)';
-      case 'frama':
-        return 'المتوسط المتحرك التكيفي (FRAMA)';
-      case 'evenBetterSinewave':
-        return 'الموجة الجيبية المحسنة (Sinewave)';
-      case 'kalmanFilter':
-        return 'فلتر كالمان (Kalman Filter)';
-      case 'permutationEntropy':
-        return 'إنتروبيا التبديل العشوائي (Entropy)';
-      case 'supportResistance':
-        return 'مستويات الدعم والمقاومة';
-      case 'swingMapper':
-        return 'خريطة القمم والقيعان (Swing Mapper)';
-      default:
-        return defaultName;
-    }
-  };
-
-  const getOptionLocalizedName = (optId: string, defaultName: string) => {
-    if (locale !== 'ar') return defaultName;
-    switch (optId) {
-      case 'majorLevels':
-        return 'المستويات الرئيسية';
-      case 'minorLevels':
-        return 'المستويات الثانوية';
-      case 'showMarkers':
-        return 'إظهار إشارات الدخول والخروج';
-      default:
-        return defaultName;
-    }
+  const advanced = getAvailableIndicators();
+  const activeCount = activeIndicators.length + canonicalSelections.length;
+  const localizedAdvancedName = (id: string, name: string) => {
+    if (locale !== 'ar') return name;
+    const names: Record<string, string> = {
+      smartMoneyFlow: 'تدفق السيولة الذكية', hydraIndex: 'مؤشر هيدرا',
+      frama: 'المتوسط المتحرك التكيفي', supportResistance: 'مستويات الدعم والمقاومة',
+    };
+    return names[id] ?? name;
   };
 
   return (
-    <div
-      ref={popoverRef}
-      className="absolute top-2 left-2 sm:left-64 md:left-72 rtl:left-auto rtl:right-2 sm:rtl:right-64 md:rtl:right-72 z-50 w-[270px] sm:w-[285px] max-w-[calc(100vw-16px)] bg-cold-gray-900 border border-white/[0.08] rounded-lg shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none overflow-hidden text-xs font-sans"
-    >
-      {/* Compact Header */}
-      <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between bg-white/[0.02]">
-        <div className="flex items-center gap-1.5 font-semibold text-xs text-white">
-          <BarChart2 size={13} className="text-white" />
-          <span>{locale === 'ar' ? 'المؤشرات الفنية' : 'Technical Indicators'}</span>
-          {activeIndicators.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
-              {activeIndicators.length}
-            </span>
-          )}
+    <div ref={popoverRef} dir={locale === 'ar' ? 'rtl' : 'ltr'}
+      className="absolute left-2 top-2 z-50 flex max-h-[min(80vh,720px)] w-[min(440px,calc(100vw-16px))] flex-col overflow-hidden rounded-none border border-white/10 bg-black font-sans text-xs shadow-2xl max-sm:fixed max-sm:inset-0 max-sm:max-h-none max-sm:w-full sm:left-64 md:left-72 rtl:left-auto rtl:right-2 sm:rtl:right-64 md:rtl:right-72">
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-white/10 px-3">
+        <div className="flex items-center gap-2 font-semibold text-white">
+          <BarChart2 size={14} />
+          <span>{locale === 'ar' ? 'مكتبة المؤشرات' : 'Indicator library'}</span>
+          <span className="tabular-nums text-[10px] text-white/45">411 · {activeCount} {locale === 'ar' ? 'نشط' : 'active'}</span>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="h-5 w-5 rounded flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
-          aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
-        >
-          <X size={12} />
-        </button>
+        <button type="button" onClick={onClose} className="p-2 text-white/55 hover:text-white" aria-label="Close indicator library"><X size={14} /></button>
+      </header>
+
+      <div className="shrink-0 space-y-2 border-b border-white/10 p-3">
+        <label className="flex h-9 items-center gap-2 border border-white/10 bg-black px-2 text-white/45 focus-within:border-white/30">
+          <Search size={14} />
+          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)}
+            placeholder={locale === 'ar' ? 'ابحث في 411 مؤشر…' : 'Search 411 indicators…'}
+            className="min-w-0 flex-1 bg-transparent font-sans text-white outline-none placeholder:text-white/30" />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <select value={category} onChange={(event) => setCategory(event.target.value)} className="h-8 rounded-none border border-white/10 bg-black px-2 text-white/70 outline-none">
+            <option value="all">{locale === 'ar' ? 'كل المجموعات' : 'All categories'}</option>
+            {groups.map((group) => <option key={group.category} value={group.category}>{group.category}</option>)}
+          </select>
+          <select value={surface} onChange={(event) => setSurface(event.target.value as ProgramView | 'all')} className="h-8 rounded-none border border-white/10 bg-black px-2 text-white/70 outline-none">
+            <option value="all">{locale === 'ar' ? 'كل طرق العرض' : 'All surfaces'}</option>
+            {(['Overlay', 'Pane', 'Market', 'Card', 'Pane or Overlay'] as const).map((view) => <option key={view} value={view}>{view}</option>)}
+          </select>
+        </div>
       </div>
 
-      {/* Indicators List */}
-      <div className="p-1 max-h-72 overflow-y-auto no-scrollbar space-y-0.5">
-        {availableIndicators.map((ind) => {
-          const isActive = activeIndicators.includes(ind.id);
-          const isExpanded = !!expandedIndicators[ind.id];
-
-          return (
-            <div
-              key={ind.id}
-              className={`rounded-md transition-colors ${
-                isActive ? 'bg-white/[0.06]' : 'hover:bg-white/[0.03]'
-              }`}
-            >
-              <div className="flex items-center justify-between px-2.5 py-1.5 cursor-pointer">
-                <button
-                  type="button"
-                  onClick={() => onToggleIndicator(ind.id)}
-                  className="flex items-center gap-2 text-left rtl:text-right flex-1 min-w-0 cursor-pointer"
-                >
-                  <div
-                    className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition-colors ${
-                      isActive
-                        ? 'border-white bg-white text-black font-semibold'
-                        : 'border-white/20 bg-transparent text-transparent'
-                    }`}
-                  >
-                    <Check size={10} strokeWidth={3} />
-                  </div>
-                  <span
-                    className={`text-[11.5px] truncate ${
-                      isActive ? 'font-medium text-white' : 'text-text-muted'
-                    }`}
-                  >
-                    {getIndicatorLocalizedName(ind.id, ind.name)}
-                  </span>
-                </button>
-
-                {ind.options && ind.options.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => onToggleExpanded(ind.id)}
-                    className="p-1 text-text-muted hover:text-white transition-colors rounded cursor-pointer"
-                    aria-label={`Toggle ${ind.name} options`}
-                  >
-                    <ChevronDown
-                      size={13}
-                      className={`transition-transform duration-150 ${
-                        isExpanded ? 'rotate-180 text-white' : ''
-                      }`}
-                    />
-                  </button>
-                )}
-              </div>
-
-              {/* Sub-options if expanded */}
-              {isExpanded && ind.options && ind.options.length > 0 && (
-                <div className="px-3 pb-2 pt-1 border-t border-white/[0.04] space-y-1 bg-black/25 rounded-b-md">
-                  {ind.options.map((opt) => {
-                    const optKey = `${ind.id}_${opt.id}`;
-                    const isOptActive = strategyParams[optKey] ?? opt.defaultActive;
-
-                    return (
-                      <label
-                        key={opt.id}
-                        className="flex items-center justify-between text-[10.5px] text-text-muted hover:text-white cursor-pointer select-none py-0.5"
-                      >
-                        <span className="truncate pr-2 rtl:pr-0 rtl:pl-2">
-                          {getOptionLocalizedName(opt.id, opt.name)}
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={isOptActive}
-                          onChange={(e) => onUpdateStrategyParam(optKey, e.target.checked)}
-                          className="accent-white h-3 w-3 rounded cursor-pointer"
-                        />
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {filteredGroups.map((group) => (
+          <section key={group.category}>
+            <div className="sticky top-0 z-10 border-y border-white/[0.06] bg-black px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/40">
+              {group.category} <span className="tabular-nums">({group.entries.length})</span>
             </div>
-          );
-        })}
+            {group.entries.map((entry) => (
+              <IndicatorBrowserEntry key={entry.backlogId} entry={entry} locale={locale}
+                selections={canonicalSelections} states={canonicalIndicatorStates}
+                onAdd={(definitionId) => onAddCanonical?.(definitionId) ?? onToggleIndicator(definitionId)}
+                onUpdate={(instanceId, patch) => onUpdateCanonical?.(instanceId, patch)}
+                onRemove={(instanceId) => onRemoveCanonical?.(instanceId)}
+                onReorder={(instanceId, direction) => onReorderCanonical?.(instanceId, direction)} />
+            ))}
+          </section>
+        ))}
+
+        <section>
+          <div className="sticky top-0 z-10 border-y border-white/[0.06] bg-black px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/40">
+            {locale === 'ar' ? 'مؤشرات متقدمة حالية' : 'Existing advanced indicators'}
+          </div>
+          {advanced.map((indicator) => {
+            const active = activeIndicators.includes(indicator.id);
+            const expanded = !!expandedIndicators[indicator.id];
+            return (
+              <div key={indicator.id} className="border-b border-white/[0.06] px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <button type="button" onClick={() => onToggleIndicator(indicator.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left rtl:text-right">
+                    <span className={`flex h-4 w-4 items-center justify-center border ${active ? 'border-white bg-white text-black' : 'border-white/20 text-transparent'}`}><Check size={10} /></span>
+                    <span className={active ? 'text-white' : 'text-white/55'}>{localizedAdvancedName(indicator.id, indicator.name)}</span>
+                  </button>
+                  {!!indicator.options?.length && <button type="button" onClick={() => onToggleExpanded(indicator.id)} className="p-1 text-white/45 hover:text-white"><ChevronDown size={13} className={expanded ? 'rotate-180' : ''} /></button>}
+                </div>
+                {expanded && indicator.options?.map((option) => {
+                  const key = `${indicator.id}_${option.id}`;
+                  return <label key={option.id} className="mt-2 flex items-center justify-between pl-6 text-[10px] text-white/45 rtl:pl-0 rtl:pr-6">
+                    <span>{option.name}</span>
+                    <input type="checkbox" checked={Boolean(strategyParams[key] ?? option.defaultActive)} onChange={(event) => onUpdateStrategyParam(key, event.target.checked)} className="accent-white" />
+                  </label>;
+                })}
+              </div>
+            );
+          })}
+        </section>
       </div>
 
-      {/* Compact Status Footer */}
-      <div className="px-3 py-1.5 border-t border-white/[0.06] bg-black/30 flex items-center justify-between text-[10px] text-text-muted font-sans">
-        <span>
-          {locale === 'ar'
-            ? `${activeIndicators.length} مؤشر نشط على الرسم`
-            : `${activeIndicators.length} active on chart`}
-        </span>
-        {activeIndicators.length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              activeIndicators.forEach((id) => onToggleIndicator(id));
-            }}
-            className="text-[10px] text-text-muted hover:text-white cursor-pointer transition-colors"
-          >
-            {locale === 'ar' ? 'مسح الكل' : 'Clear all'}
-          </button>
-        )}
-      </div>
+      <footer className="flex h-10 shrink-0 items-center justify-between border-t border-white/10 px-3 text-[10px] text-white/45">
+        <span>{filtered.length} / 411</span>
+        {activeCount > 0 && <button type="button" onClick={() => {
+          canonicalSelections.forEach((selection) => onRemoveCanonical?.(selection.instanceId));
+          activeIndicators.forEach(onToggleIndicator);
+        }} className="hover:text-white">{locale === 'ar' ? 'مسح الكل' : 'Clear all'}</button>}
+      </footer>
     </div>
   );
 }
