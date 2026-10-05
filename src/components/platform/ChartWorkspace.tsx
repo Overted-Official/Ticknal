@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useSearchParams, usePathname } from 'next/navigation';
 import ChartWidget, { type ChartData } from '@/components/platform/ChartWidget';
 import { STRATEGIES } from '@/strategies/registry';
@@ -10,6 +10,17 @@ import { prefetchWatchlist } from '@/lib/client-price-cache';
 import { WatchlistItem } from '@/components/platform/RightSidebar';
 import { TickerOrder } from '@/components/platform/TickerPositions';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
+import { PROGRAM_MANIFEST } from '@ticknal/quant-engine/canonical';
+import {
+  createIndicatorSelection,
+  parseIndicatorQuery,
+  removeIndicatorSelection,
+  reorderIndicatorSelection,
+  updateIndicatorSelection,
+  writeIndicatorQuery,
+} from '@/indicators/canonical/selection-state';
+import type { CanonicalIndicatorSelection } from '@/indicators/canonical/types';
+import type { CanonicalIndicatorSelectionPatch } from '@/components/platform/chart/types';
 
 interface ChartWorkspaceProps {
   data: ChartData[];
@@ -37,23 +48,76 @@ export default function ChartWorkspace({
 
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const [activeIndicators, setActiveIndicators] = useState<string[]>(() => {
-    return searchParams?.get('indicators')?.split(',').filter(Boolean) || [];
-  });
+  const selectableCanonicalIds = useMemo(() => new Set(
+    PROGRAM_MANIFEST.filter((entry) => entry.state === 'integrated' && entry.canonicalId)
+      .map((entry) => entry.canonicalId!),
+  ), []);
+  const initialIndicatorState = useMemo(() => parseIndicatorQuery(
+    new URLSearchParams(searchParams?.toString() ?? ''),
+    selectableCanonicalIds,
+  ), [searchParams, selectableCanonicalIds]);
+  const [activeIndicators, setActiveIndicators] = useState<string[]>(() => [...initialIndicatorState.legacyIds]);
+  const [activeCanonicalIndicators, setActiveCanonicalIndicators] = useState<readonly CanonicalIndicatorSelection[]>(
+    () => initialIndicatorState.selections,
+  );
+
+  const persistIndicators = useCallback((
+    canonicalSelections: readonly CanonicalIndicatorSelection[],
+    legacyIds: readonly string[],
+  ) => {
+    const params = writeIndicatorQuery(
+      new URLSearchParams(window.location.search),
+      canonicalSelections,
+      legacyIds,
+    );
+    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+  }, [pathname]);
 
   const handleToggleIndicator = useCallback((id: string) => {
     setActiveIndicators((prev) => {
       const next = prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id];
-      const params = new URLSearchParams(window.location.search);
-      if (next.length > 0) {
-        params.set('indicators', next.join(','));
-      } else {
-        params.delete('indicators');
-      }
-      window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+      persistIndicators(activeCanonicalIndicators, next);
       return next;
     });
-  }, [pathname]);
+  }, [activeCanonicalIndicators, persistIndicators]);
+
+  const handleAddCanonicalIndicator = useCallback((definitionId: string) => {
+    setActiveCanonicalIndicators((current) => {
+      const next = [...current, createIndicatorSelection(definitionId, current, selectableCanonicalIds)];
+      persistIndicators(next, activeIndicators);
+      return next;
+    });
+  }, [activeIndicators, persistIndicators, selectableCanonicalIds]);
+
+  const handleUpdateCanonicalIndicator = useCallback((instanceId: string, patch: CanonicalIndicatorSelectionPatch) => {
+    setActiveCanonicalIndicators((current) => {
+      try {
+        const next = updateIndicatorSelection(current, instanceId, patch, selectableCanonicalIds);
+        persistIndicators(next, activeIndicators);
+        return next;
+      } catch {
+        return current;
+      }
+    });
+  }, [activeIndicators, persistIndicators, selectableCanonicalIds]);
+
+  const handleRemoveCanonicalIndicator = useCallback((instanceId: string) => {
+    setActiveCanonicalIndicators((current) => {
+      const next = removeIndicatorSelection(current, instanceId);
+      persistIndicators(next, activeIndicators);
+      return next;
+    });
+  }, [activeIndicators, persistIndicators]);
+
+  const handleReorderCanonicalIndicator = useCallback((instanceId: string, direction: -1 | 1) => {
+    setActiveCanonicalIndicators((current) => {
+      const index = current.findIndex((selection) => selection.instanceId === instanceId);
+      if (index < 0) return current;
+      const next = reorderIndicatorSelection(current, instanceId, index + direction);
+      persistIndicators(next, activeIndicators);
+      return next;
+    });
+  }, [activeIndicators, persistIndicators]);
 
   const requestedStrategy = searchParams?.get('strategy');
   const initialStrategy = requestedStrategy && STRATEGIES[requestedStrategy]
@@ -82,6 +146,8 @@ export default function ChartWorkspace({
 
   const rawTf = searchParams?.get('timeframe') || 'D';
   const timeframe = (rawTf === '1H' || rawTf === '60' || rawTf === '1h') ? 'D' : rawTf;
+  const normalizedRawTimeframe = rawTf.trim().toUpperCase();
+  const canonicalTimeframe = normalizedRawTimeframe === '60' ? '1H' : normalizedRawTimeframe;
 
   // A strategy supplied by a notification (or a user-selected URL) always
   // wins. With no explicit strategy, resolve the ticker's best-fit model by
@@ -250,6 +316,7 @@ export default function ChartWorkspace({
         data={activeChartData}
         symbol={symbol}
         timeframe={timeframe}
+        canonicalTimeframe={canonicalTimeframe}
         watchlist={watchlist}
         selectedStrategy={selectedStrategy}
         setSelectedStrategy={handleStrategyChange}
@@ -260,6 +327,11 @@ export default function ChartWorkspace({
         setStrategyEndDate={(val) => updateGlobalParam('strategyEnd', val)}
         activeIndicators={activeIndicators}
         onToggleIndicator={handleToggleIndicator}
+        activeCanonicalIndicators={activeCanonicalIndicators}
+        onAddCanonicalIndicator={handleAddCanonicalIndicator}
+        onUpdateCanonicalIndicator={handleUpdateCanonicalIndicator}
+        onRemoveCanonicalIndicator={handleRemoveCanonicalIndicator}
+        onReorderCanonicalIndicator={handleReorderCanonicalIndicator}
         onUpdateStrategyParam={updateStrategyParam}
         bulkUpdateStrategyParams={bulkUpdateStrategyParams}
         showSignals={true}

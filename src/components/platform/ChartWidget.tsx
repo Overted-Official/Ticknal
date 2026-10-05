@@ -28,6 +28,7 @@ import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
 import { INDICATORS, type IndicatorLine } from '@/indicators';
+import type { CanonicalIndicatorViewState } from '@/indicators/canonical/types';
 import { useToast } from '@/context/ToastContext';
 import { useTranslation } from '@/lib/i18n';
 
@@ -51,6 +52,7 @@ import {
 import ChartTickerHeader from './chart/ChartTickerHeader';
 import ChartTopBar from './chart/ChartTopBar';
 import ChartIndicatorsPopover from './chart/ChartIndicatorsPopover';
+import CanonicalIndicatorWorkspace from './chart/canonical/CanonicalIndicatorWorkspace';
 import ChartPredictPopover from './chart/ChartPredictPopover';
 import ChartOrderOverlays from './chart/ChartOrderOverlays';
 import ChartLoadingSkeleton from './chart/ChartLoadingSkeleton';
@@ -65,6 +67,7 @@ export default function ChartWidget({
   data,
   symbol,
   timeframe = 'D',
+  canonicalTimeframe = timeframe,
   watchlist = [],
   selectedStrategy = 'psi',
   setSelectedStrategy,
@@ -75,6 +78,11 @@ export default function ChartWidget({
   setStrategyEndDate,
   activeIndicators = [],
   onToggleIndicator,
+  activeCanonicalIndicators = [],
+  onAddCanonicalIndicator,
+  onUpdateCanonicalIndicator,
+  onRemoveCanonicalIndicator,
+  onReorderCanonicalIndicator,
   onUpdateStrategyParam,
   bulkUpdateStrategyParams,
   showSignals = true,
@@ -90,6 +98,9 @@ export default function ChartWidget({
   const { locale } = useTranslation();
   const router = useRouter();
   const { toast } = useToast();
+  const [canonicalIndicatorStates, setCanonicalIndicatorStates] = useState<
+    Record<string, CanonicalIndicatorViewState>
+  >({});
   const [positionsDrawerOpen, setPositionsDrawerOpen] = useState(false);
   const [positionsImgError, setPositionsImgError] = useState(false);
   const [isStrategyReportOpen, setIsStrategyReportOpen] = useState(false);
@@ -317,7 +328,7 @@ export default function ChartWidget({
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: ColorType.Solid, color: cssTokenColor('--plt-bg-chart', '#121212') },
+        background: { type: ColorType.Solid, color: cssTokenColor('--plt-bg-chart', '#000000') },
         textColor: cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
         fontSize: 11,
         attributionLogo: false,
@@ -673,7 +684,6 @@ export default function ChartWidget({
     currentLines.clear();
 
     const gatheredMarkers: SeriesMarker<Time>[] = [];
-
     activeIndicators.forEach((indId) => {
       const config = INDICATORS[indId];
       if (!config) return;
@@ -964,7 +974,7 @@ export default function ChartWidget({
         isPredicting={isPredicting}
         isPredictPopoverOpen={predictPopoverOpen}
         onTogglePredict={() => setPredictPopoverOpen((prev) => !prev)}
-        activeIndicatorsCount={activeIndicators.length}
+        activeIndicatorsCount={activeIndicators.length + activeCanonicalIndicators.length}
         isIndicatorsPopoverOpen={indicatorsPopoverOpen}
         onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
         onOpenStrategyReport={() => {
@@ -1061,6 +1071,12 @@ export default function ChartWidget({
           onToggleExpanded={toggleIndicatorExpanded}
           strategyParams={strategyParams}
           onUpdateStrategyParam={handleUpdateStrategyParam}
+          canonicalIndicatorStates={canonicalIndicatorStates}
+          canonicalSelections={activeCanonicalIndicators}
+          onAddCanonical={onAddCanonicalIndicator}
+          onUpdateCanonical={onUpdateCanonicalIndicator}
+          onRemoveCanonical={onRemoveCanonicalIndicator}
+          onReorderCanonical={onReorderCanonicalIndicator}
         />
 
         {/* AI Predict Popover */}
@@ -1140,6 +1156,21 @@ export default function ChartWidget({
           )}
         </div>
       </div>
+
+      <CanonicalIndicatorWorkspace
+        selections={activeCanonicalIndicators}
+        symbol={symbol}
+        timeframe={canonicalTimeframe}
+        locale={locale}
+        data={visibleData}
+        mainChart={chartRef.current}
+        mainSeries={candlestickSeriesRef.current}
+        seriesReadyKey={seriesReadyKey}
+        onStatesChange={setCanonicalIndicatorStates}
+        onUpdate={(instanceId, patch) => onUpdateCanonicalIndicator?.(instanceId, patch)}
+        onRemove={(instanceId) => onRemoveCanonicalIndicator?.(instanceId)}
+        onReorder={(instanceId, direction) => onReorderCanonicalIndicator?.(instanceId, direction)}
+      />
 
       {/* 2. Separate HYDRA Index Dedicated Sub-Panel (Opens below chart when toggled) */}
       {isHydraPanelOpen && (

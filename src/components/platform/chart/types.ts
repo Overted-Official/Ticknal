@@ -2,6 +2,12 @@ import type { SeriesMarker, Time } from 'lightweight-charts';
 import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import type { TickerOrder } from '@/components/platform/TickerPositions';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
+import type { CanonicalIndicatorSelection } from '@/indicators/canonical/types';
+
+export type CanonicalIndicatorSelectionPatch = Partial<Pick<
+  CanonicalIndicatorSelection,
+  'parameters' | 'visibleOutputs' | 'placementOverrides'
+>>;
 
 export interface ChartData {
   time: string | number; // "YYYY-MM-DD" or numeric epoch seconds
@@ -83,6 +89,7 @@ export interface ChartWidgetProps {
   data: ChartData[];
   symbol: string;
   timeframe?: string;
+  canonicalTimeframe?: string;
   selectedStrategy?: string;
   setSelectedStrategy?: (strategy: string) => void;
   strategyParams?: Record<string, any>;
@@ -92,6 +99,11 @@ export interface ChartWidgetProps {
   setStrategyEndDate?: (d: string) => void;
   activeIndicators?: string[];
   onToggleIndicator?: (id: string) => void;
+  activeCanonicalIndicators?: readonly CanonicalIndicatorSelection[];
+  onAddCanonicalIndicator?: (definitionId: string) => void;
+  onUpdateCanonicalIndicator?: (instanceId: string, patch: CanonicalIndicatorSelectionPatch) => void;
+  onRemoveCanonicalIndicator?: (instanceId: string) => void;
+  onReorderCanonicalIndicator?: (instanceId: string, direction: -1 | 1) => void;
   onUpdateStrategyParam?: (key: string, val: any) => void;
   bulkUpdateStrategyParams?: (newParams: Record<string, any>) => void;
   watchlist?: WatchlistItem[];
