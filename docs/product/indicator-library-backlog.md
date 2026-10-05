@@ -90,6 +90,8 @@ Each implementation must declare its warm-up requirement, missing-data behavior,
 
 ## 1. Price and return basics
 
+Implementation status: all 20 Price and Return definitions are formula-verified and integrated into the Charts indicator browser, overlays, synchronized panes, parameter editing, and versioned URL persistence as Wave 1 of the 411-indicator program.
+
 These are reusable primitives. They look simple, but they prevent every later indicator from reimplementing price transformations differently.
 
 | ID | Indicator | Everyday explanation | Outputs and common parameters | View | Assets and data | Stage and status |

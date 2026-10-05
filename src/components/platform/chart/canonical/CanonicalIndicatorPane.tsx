@@ -139,7 +139,7 @@ export default function CanonicalIndicatorPane({
   };
 
   return (
-    <section className="relative flex w-full flex-col border-t border-white/10 bg-black font-sans" style={{ height: collapsed ? 32 : height }}>
+    <section data-testid="canonical-indicator-pane" data-instance-id={pane.instanceId} className="relative flex w-full flex-col border-t border-white/10 bg-black font-sans" style={{ height: collapsed ? 32 : height }}>
       <header className="flex h-8 shrink-0 items-center justify-between border-b border-white/[0.06] px-3 text-[11px]">
         <div className="flex min-w-0 items-center gap-2">
           <button type="button" onClick={onToggleCollapse} className="text-white/60 hover:text-white" aria-label="Collapse indicator pane">

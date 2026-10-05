@@ -82,7 +82,7 @@ export default function ChartIndicatorsPopover({
   };
 
   return (
-    <div ref={popoverRef} dir={locale === 'ar' ? 'rtl' : 'ltr'}
+    <div ref={popoverRef} data-testid="indicator-browser" dir={locale === 'ar' ? 'rtl' : 'ltr'}
       className="absolute left-2 top-2 z-50 flex max-h-[min(80vh,720px)] w-[min(440px,calc(100vw-16px))] flex-col overflow-hidden rounded-none border border-white/10 bg-black font-sans text-xs shadow-2xl max-sm:fixed max-sm:inset-0 max-sm:max-h-none max-sm:w-full sm:left-64 md:left-72 rtl:left-auto rtl:right-2 sm:rtl:right-64 md:rtl:right-72">
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-white/10 px-3">
         <div className="flex items-center gap-2 font-semibold text-white">
@@ -121,7 +121,10 @@ export default function ChartIndicatorsPopover({
             {group.entries.map((entry) => (
               <IndicatorBrowserEntry key={entry.backlogId} entry={entry} locale={locale}
                 selections={canonicalSelections} states={canonicalIndicatorStates}
-                onAdd={(definitionId) => onAddCanonical?.(definitionId) ?? onToggleIndicator(definitionId)}
+                onAdd={(definitionId) => {
+                  if (onAddCanonical) onAddCanonical(definitionId);
+                  else onToggleIndicator(definitionId);
+                }}
                 onUpdate={(instanceId, patch) => onUpdateCanonical?.(instanceId, patch)}
                 onRemove={(instanceId) => onRemoveCanonical?.(instanceId)}
                 onReorder={(instanceId, direction) => onReorderCanonical?.(instanceId, direction)} />

@@ -113,6 +113,15 @@ export default function CanonicalIndicatorWorkspace({
 
   return (
     <>
+      {surfaces.overlays.length > 0 && (
+        <div data-testid="canonical-overlay-legend" className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 bg-black px-3 py-1 font-sans text-[10px] text-white/55">
+          {surfaces.overlays.map((visual) => (
+            <span key={visual.id} className="tabular-nums">
+              {visual.indicatorName[locale]} · {visual.outputLabel}: {visual.latestValue === null ? '—' : String(visual.latestValue)}
+            </span>
+          ))}
+        </div>
+      )}
       <CanonicalMetricsDock visuals={[...surfaces.cards, ...surfaces.legends]} locale={locale} />
       <CanonicalIndicatorPaneHost
         panes={surfaces.panes} states={states} locale={locale}

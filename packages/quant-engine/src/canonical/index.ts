@@ -17,6 +17,7 @@ export * from './execution/execute-time-series-indicator';
 export * from './execution/execution-fingerprint';
 export * from './indicators/price-return';
 export * from './program/program-manifest';
+export * from './program/categories';
 export * from './program/types';
 export * from './registry/category-registry';
 export * from './registry/presentation-registry';

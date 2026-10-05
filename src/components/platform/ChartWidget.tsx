@@ -31,6 +31,7 @@ import { INDICATORS, type IndicatorLine } from '@/indicators';
 import type { CanonicalIndicatorViewState } from '@/indicators/canonical/types';
 import { useToast } from '@/context/ToastContext';
 import { useTranslation } from '@/lib/i18n';
+import { useGuestGuard } from '@/context/GuestGuardContext';
 
 // Modular Chart Imports
 import type {
@@ -96,6 +97,7 @@ export default function ChartWidget({
   brokerageAccounts = [],
 }: ChartWidgetProps) {
   const { locale } = useTranslation();
+  const { isGuest, isLoading: isGuestStatusLoading } = useGuestGuard();
   const router = useRouter();
   const { toast } = useToast();
   const [canonicalIndicatorStates, setCanonicalIndicatorStates] = useState<
@@ -298,6 +300,7 @@ export default function ChartWidget({
 
   // Fetch active orders for overlays
   useEffect(() => {
+    if (isGuestStatusLoading || isGuest) return;
     let active = true;
     const fetchOrders = async () => {
       try {
@@ -315,7 +318,7 @@ export default function ChartWidget({
     return () => {
       active = false;
     };
-  }, [symbol, positionsRefreshKey]);
+  }, [isGuest, isGuestStatusLoading, symbol, positionsRefreshKey]);
 
   // Core Chart Canvas Lifecycle
   useEffect(() => {

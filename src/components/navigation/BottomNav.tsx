@@ -15,24 +15,45 @@ import {
   Plus,
   MoreHorizontal,
   Settings,
+  Radio,
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  Terminal,
+  Shield,
+  Activity,
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
+import LanguageToggleButton from './LanguageToggleButton';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import { useTranslation } from '@/lib/i18n';
 import { controlHover, controlTap } from '@/lib/motion';
+import { useGuestGuard } from '@/context/GuestGuardContext';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-type NavItemId = 'home' | 'charts' | 'markets' | 'strategies' | 'transactions';
+type NavItemId =
+  | 'home'
+  | 'charts'
+  | 'markets'
+  | 'news'
+  | 'strategies'
+  | 'transactions'
+  | 'overview'
+  | 'users'
+  | 'subscriptions'
+  | 'signals'
+  | 'logs';
 
 interface NavItemConfig {
   id: NavItemId;
   label: string;
   href: string;
-  icon: typeof Home;
+  icon: React.ComponentType<any>;
   isActive: (pathname: string) => boolean;
+  isProtected?: boolean;
 }
 
 const NAV_ITEMS: NavItemConfig[] = [
@@ -42,6 +63,7 @@ const NAV_ITEMS: NavItemConfig[] = [
     href: '/home',
     icon: Home,
     isActive: (p) => p === '/home' || p === '/dashboard',
+    isProtected: true,
   },
   {
     id: 'charts',
@@ -58,18 +80,19 @@ const NAV_ITEMS: NavItemConfig[] = [
     isActive: (p) => p === '/markets' || p.startsWith('/markets/') || p === '/sectors' || p.startsWith('/sectors/'),
   },
   {
+    id: 'news',
+    label: 'News',
+    href: '/news',
+    icon: Radio,
+    isActive: (p) => p === '/news' || p.startsWith('/news/'),
+  },
+  {
     id: 'strategies',
     label: 'Strategies',
     href: '/strategies',
     icon: Zap,
     isActive: (p) => p === '/strategies' || p.startsWith('/strategies/'),
-  },
-  {
-    id: 'transactions',
-    label: 'Transactions',
-    href: '/transactions',
-    icon: ArrowRightLeft,
-    isActive: (p) => p === '/transactions' || p.startsWith('/transactions/'),
+    isProtected: true,
   },
 ];
 
@@ -83,19 +106,37 @@ function BottomNavItem({
   isActive: boolean;
   onSelect: () => void;
 }) {
-  const iconRef = useRef<{ startAnimation: () => void; stopAnimation: () => void } | null>(null);
+  const { requireAuth } = useGuestGuard();
+  const iconRef = useRef<{ startAnimation?: () => void; stopAnimation?: () => void } | any>(null);
   const Icon = item.icon;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (item.isProtected) {
+      if (!requireAuth(e, item.label, `Unlock ${item.label}`)) {
+        return;
+      }
+    }
+    if (typeof iconRef.current?.startAnimation === 'function') {
+      iconRef.current.startAnimation();
+    }
+    onSelect();
+  };
 
   return (
     <Link
       href={item.href}
-      prefetch={true}
-      onClick={() => {
-        iconRef.current?.startAnimation();
-        onSelect();
+      prefetch={!item.isProtected}
+      onClick={handleClick}
+      onMouseEnter={() => {
+        if (typeof iconRef.current?.startAnimation === 'function') {
+          iconRef.current.startAnimation();
+        }
       }}
-      onMouseEnter={() => iconRef.current?.startAnimation()}
-      onMouseLeave={() => iconRef.current?.stopAnimation()}
+      onMouseLeave={() => {
+        if (typeof iconRef.current?.stopAnimation === 'function') {
+          iconRef.current.stopAnimation();
+        }
+      }}
       aria-current={isActive ? 'page' : undefined}
       className="flex flex-col items-center justify-center h-full py-1 cursor-pointer group focus:outline-none min-w-0 active:scale-95 transition-transform duration-100"
     >
@@ -140,8 +181,60 @@ export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { t, isRTL } = useTranslation();
+  const { isGuest, isLoading, requireAuth } = useGuestGuard();
+
+  const isConsole = pathname.startsWith('/console');
+
+  // Check admin status for non-guest users
+  const { data: adminCheck } = useSWR<{ isAdmin: boolean }>(
+    isGuest ? null : '/api/console/check',
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 60000 }
+  );
+  const isAdmin = adminCheck?.isAdmin ?? false;
 
   const navItems: NavItemConfig[] = useMemo(() => {
+    if (isConsole) {
+      const consoleItems: NavItemConfig[] = [
+        {
+          id: 'overview',
+          label: 'Overview',
+          href: '/console/overview',
+          icon: LayoutDashboard,
+          isActive: (p) => p === '/console' || p === '/console/overview',
+        },
+        {
+          id: 'users',
+          label: 'Users',
+          href: '/console/users',
+          icon: Users,
+          isActive: (p) => p === '/console/users',
+        },
+        {
+          id: 'subscriptions',
+          label: 'Billing',
+          href: '/console/subscriptions',
+          icon: CreditCard,
+          isActive: (p) => p === '/console/subscriptions',
+        },
+        {
+          id: 'signals',
+          label: 'Signals',
+          href: '/console/signals',
+          icon: Activity,
+          isActive: (p) => p === '/console/signals',
+        },
+        {
+          id: 'logs',
+          label: 'Logs',
+          href: '/console/logs',
+          icon: Terminal,
+          isActive: (p) => p === '/console/logs',
+        },
+      ];
+      return isRTL ? [...consoleItems].reverse() : consoleItems;
+    }
+
     const items: NavItemConfig[] = [
       {
         id: 'home',
@@ -149,6 +242,7 @@ export default function BottomNav() {
         href: '/home',
         icon: Home,
         isActive: (p) => p === '/home' || p === '/dashboard',
+        isProtected: true,
       },
       {
         id: 'charts',
@@ -165,22 +259,23 @@ export default function BottomNav() {
         isActive: (p) => p === '/markets' || p.startsWith('/markets/') || p === '/sectors' || p.startsWith('/sectors/'),
       },
       {
+        id: 'news',
+        label: t('nav.news'),
+        href: '/news',
+        icon: Radio,
+        isActive: (p) => p === '/news' || p.startsWith('/news/'),
+      },
+      {
         id: 'strategies',
         label: t('nav.strategies'),
         href: '/strategies',
         icon: Zap,
         isActive: (p) => p === '/strategies' || p.startsWith('/strategies/'),
-      },
-      {
-        id: 'transactions',
-        label: t('nav.transactions'),
-        href: '/transactions',
-        icon: ArrowRightLeft,
-        isActive: (p) => p === '/transactions' || p.startsWith('/transactions/'),
+        isProtected: true,
       },
     ];
     return isRTL ? [...items].reverse() : items;
-  }, [t, isRTL]);
+  }, [t, isRTL, isConsole]);
   const { isNavVisible, setIsNavVisible } = useMobileNavScroll();
   const isChartRoute = pathname === '/charts' || pathname.startsWith('/charts/');
   // The chart workspace has no reliable vertical page scroll to restore hidden navigation.
@@ -198,7 +293,7 @@ export default function BottomNav() {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  const { data: notifData } = useSWR<{ notifications: unknown[] }>('/api/notifications', fetcher, {
+  const { data: notifData } = useSWR<{ notifications: unknown[] }>(isGuest || isLoading ? null : '/api/notifications', fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
     revalidateOnFocus: true,
     dedupingInterval: 30000,
@@ -209,9 +304,9 @@ export default function BottomNav() {
 
   // Resolve active navigation tab based on the current URL
   const routeNavId = useMemo<NavItemId>(() => {
-    const matched = NAV_ITEMS.find((item) => item.isActive(pathname));
-    return matched ? matched.id : 'home';
-  }, [pathname]);
+    const matched = navItems.find((item) => item.isActive(pathname));
+    return matched ? matched.id : isConsole ? 'overview' : 'home';
+  }, [pathname, navItems, isConsole]);
 
   // Reset optimistic tab override once the router matches the destination
   useEffect(() => {
@@ -222,10 +317,10 @@ export default function BottomNav() {
 
   // Prefetch all top-level mobile destinations for zero-latency page transitions
   useEffect(() => {
-    NAV_ITEMS.forEach((item) => {
+    navItems.forEach((item) => {
       router.prefetch(item.href);
     });
-  }, [router]);
+  }, [router, navItems]);
 
   // Handle outside clicks to close the More actions popover
   useEffect(() => {
@@ -244,7 +339,11 @@ export default function BottomNav() {
     <>
       {/* Mobile Floating Action Buttons (Positioned safely above the bottom tab bar) */}
       <div
-        className={`fixed bottom-[calc(56px+var(--ticknal-safe-area-bottom)+16px)] right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
+        className={`fixed ${
+          isGuest
+            ? 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+56px+12px)]'
+            : 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+16px)]'
+        } right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
           isNavVisible
             ? 'translate-y-0 opacity-100 pointer-events-auto'
             : 'translate-y-16 opacity-0 pointer-events-none'
@@ -254,7 +353,11 @@ export default function BottomNav() {
         {/* 1. Alerts & Notifications Button (44x44) */}
         <motion.button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            if (isGuest) {
+              requireAuth(e, 'Live Market Notifications', 'Unlock Live Market Alerts');
+              return;
+            }
             setIsMoreOpen(false);
             setIsNotificationsOpen(true);
           }}
@@ -274,7 +377,16 @@ export default function BottomNav() {
         {/* 2. Quick Add Position / Transaction Button (44x44) */}
         <motion.button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            if (isGuest) {
+              requireAuth(
+                e,
+                'Portfolio Orders',
+                'Unlock Portfolio Trading',
+                'Create a free account to track buy & sell orders, sync cash balances, and monitor your realized gains.'
+              );
+              return;
+            }
             setIsMoreOpen(false);
             setIsQuickAddOpen(true);
           }}
@@ -320,11 +432,66 @@ export default function BottomNav() {
                   className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-white flex items-center justify-center transition-colors cursor-pointer"
                 />
 
+                {isConsole ? (
+                  /* Return to Platform Link */
+                  <Link
+                    href="/home"
+                    prefetch={false}
+                    onClick={() => setIsMoreOpen(false)}
+                    className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-white flex items-center justify-center transition-colors cursor-pointer"
+                    title="Return to Platform"
+                  >
+                    <Home size={18} strokeWidth={1.8} />
+                  </Link>
+                ) : (
+                  <>
+                    {/* Transactions Link (ArrowRightLeft) */}
+                    <Link
+                      href="/transactions"
+                      prefetch={false}
+                      onClick={(e) => {
+                        setIsMoreOpen(false);
+                        if (isGuest) {
+                          requireAuth(e, 'Transactions', 'Unlock Portfolio Transactions');
+                        }
+                      }}
+                      className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-white flex items-center justify-center transition-colors cursor-pointer"
+                      title={t('nav.transactions')}
+                    >
+                      <ArrowRightLeft size={18} strokeWidth={1.8} />
+                    </Link>
+
+                    {/* Admin Console Link (Shield) */}
+                    {isAdmin && (
+                      <Link
+                        href="/console/overview"
+                        prefetch={false}
+                        onClick={() => setIsMoreOpen(false)}
+                        className="w-9 h-9 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors cursor-pointer border border-emerald-500/30"
+                        title="Admin Console"
+                      >
+                        <Shield size={18} strokeWidth={1.8} />
+                      </Link>
+                    )}
+                  </>
+                )}
+
+                {/* Display Language Shortcut (Globe) */}
+                <LanguageToggleButton
+                  variant="mobile"
+                  onToggle={() => setIsMoreOpen(false)}
+                />
+
                 {/* Settings Link (Gear) */}
                 <Link
                   href="/settings"
-                  prefetch={true}
-                  onClick={() => setIsMoreOpen(false)}
+                  prefetch={false}
+                  onClick={(e) => {
+                    setIsMoreOpen(false);
+                    if (isGuest) {
+                      requireAuth(e, 'Settings', 'Unlock Account Settings');
+                    }
+                  }}
                   className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-white flex items-center justify-center transition-colors cursor-pointer"
                   title={t('nav.settings')}
                 >

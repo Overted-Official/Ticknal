@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isNativePlatform, requestNativePushPermission } from '@/lib/native/capacitor-bridge';
+import { useGuestGuard } from '@/context/GuestGuardContext';
 
 type AlertContextValue = {
   alertedSymbols: Set<string>;
@@ -18,6 +19,7 @@ const AlertContext = createContext<AlertContextValue | null>(null);
 const DEVICE_ID_KEY = 'ticknal-device-id';
 
 export function AlertProvider({ children }: { children: React.ReactNode }) {
+  const { isGuest, isLoading } = useGuestGuard();
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [alertedSymbols, setAlertedSymbols] = useState<Set<string>>(new Set());
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() => getNotificationPermission());
@@ -25,14 +27,19 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (isLoading) return;
+    if (isGuest) {
+      setReady(true);
+      return;
+    }
     window.setTimeout(() => {
       setDeviceId(getOrCreateDeviceId());
       setPermission(getNotificationPermission());
     }, 0);
-  }, []);
+  }, [isGuest, isLoading]);
 
   useEffect(() => {
-    if (!deviceId) return;
+    if (!deviceId || isGuest || isLoading) return;
 
     const controller = new AbortController();
     async function loadAlerts() {
@@ -52,7 +59,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
     loadAlerts();
     return () => controller.abort();
-  }, [deviceId]);
+  }, [deviceId, isGuest, isLoading]);
 
   const ensurePushSubscription = useCallback(async (options?: { forceResubscribe?: boolean }): Promise<{ success: boolean; error?: string }> => {
     if (isNativePlatform()) {
