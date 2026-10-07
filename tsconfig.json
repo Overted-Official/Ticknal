@@ -31,6 +31,9 @@
       ],
       "@ticknal/quant-engine": [
         "./packages/quant-engine/src"
+      ],
+      "@ticknal/quant-engine/canonical": [
+        "./packages/quant-engine/src/canonical"
       ]
     }
   },

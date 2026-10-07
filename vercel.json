@@ -2,27 +2,35 @@
   "crons": [
     {
       "path": "/api/cron/update-stocks",
-      "schedule": "0 15 * * 0-4"
-    },
-    {
-      "path": "/api/cron/update-investor-flows",
-      "schedule": "15 15 * * 0-4"
-    },
-    {
-      "path": "/api/cron/update-funds",
-      "schedule": "0 18 * * 0-4"
-    },
-    {
-      "path": "/api/cron/update-commodities",
-      "schedule": "0 22 * * 1-5"
-    },
-    {
-      "path": "/api/cron/update-macro",
-      "schedule": "30 18 1 * *"
+      "schedule": "0 12 * * 0-4"
     },
     {
       "path": "/api/cron/process-signals",
-      "schedule": "30 15 * * 0-4"
+      "schedule": "15 12 * * 0-4"
+    },
+    {
+      "path": "/api/cron/update-investor-flows",
+      "schedule": "30 12 * * 0-4"
+    },
+    {
+      "path": "/api/cron/update-funds",
+      "schedule": "40 12 * * 0-4"
+    },
+    {
+      "path": "/api/cron/update-commodities",
+      "schedule": "45 12 * * 0-4"
+    },
+    {
+      "path": "/api/cron/update-macro",
+      "schedule": "50 12 * * 0-4"
+    },
+    {
+      "path": "/api/cron/ticknal-take",
+      "schedule": "0 13 * * 0-4"
+    },
+    {
+      "path": "/api/cron/update-news",
+      "schedule": "0 7,9,11,13,15,17,19 * * *"
     },
     {
       "path": "/api/cron/watchdog",

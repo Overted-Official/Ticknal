@@ -1,6 +1,6 @@
 {
   "name": "ticknal",
-  "version": "0.1.0",
+  "version": "3.0.0",
   "private": true,
   "packageManager": "npm@11.12.1",
   "workspaces": [
@@ -15,6 +15,7 @@
     "type-check": "tsc --noEmit",
     "turbo:build": "turbo run build",
     "turbo:type-check": "turbo run type-check",
+    "generate:icons": "node scripts/generate-brand-assets.mjs",
     "db:init-local": "tsx scripts/seed/init_local_db.ts"
   },
   "dependencies": {
@@ -36,6 +37,8 @@
     "@types/gsap": "^1.20.2",
     "@types/three": "^0.185.4",
     "@types/web-push": "^3.6.4",
+    "border-beam": "^1.4.1",
+    "clsx": "^2.1.1",
     "csv-parse": "^7.0.2",
     "d3-geo": "^3.1.1",
     "drizzle-orm": "^0.45.2",
@@ -55,6 +58,7 @@
     "recharts": "^3.10.1",
     "sharp": "^0.35.4",
     "swr": "^2.5.1",
+    "tailwind-merge": "^3.7.0",
     "technicalindicators": "^3.1.0",
     "three": "^0.185.1",
     "web-push": "^3.6.7"

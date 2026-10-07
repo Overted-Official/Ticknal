@@ -41,3 +41,13 @@ Before EVERY SINGLE response where code was created or edited:
 - NEVER use `font-mono` for UI text, including tickers, numbers, badges, buttons, inputs, dates, ROI, or prices.
 - Ticknal exclusively uses modern sans-serif typography (`font-sans`, Inter / Geist / system sans).
 - When numeric column alignment is needed (e.g. prices or quantities in tables/KPIs), use CSS `tabular-nums` on a sans-serif element, NEVER `font-mono`.
+
+## 3. Brand Wordmark & Logo Typography ("ticknal")
+- **Mandatory Default Rule**: Whenever writing or rendering the **ticknal** brand name or logo mark anywhere across the platform:
+  - **Font**: Must strictly use `EuclidCircularSemibold` (via the utility class `font-euclid` or `ticknal-wordmark`, or CSS `font-family: EuclidCircularSemibold, Inter, -apple-system, sans-serif`).
+  - **Font Weight**: Must be `600` (`font-semibold`).
+  - **Letter Casing**: MUST BE ALL-LOWERCASE (`ticknal`), NEVER title-cased `Ticknal` or uppercase `TICKNAL` in brand marks.
+  - **Letter Spacing**: `-0.04em` (`tracking-[-0.04em]`).
+  - **Leading**: `leading-none`.
+  - **Standard Component**: Use `<TicknalBrand />` from `@/components/ui/TicknalBrand` whenever rendering the brand icon and/or wordmark.
+
