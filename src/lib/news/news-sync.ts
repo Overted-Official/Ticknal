@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { marketNews } from '@/db/schema';
 import https from 'https';
+import { synthesizeAssetNewsBundle, type RawHeadlineItem } from './asset-news-synthesizer';
 
 /**
  * Standard HTTP GET with custom headers and timeout
@@ -260,47 +261,39 @@ export async function syncExternalTradingViewNews(): Promise<NewsSyncResult> {
       }
     }
 
-    // Sort by publication timestamp descending
-    candidates.sort((a, b) => {
-      const timeB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-      const timeA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-      return timeB - timeA;
-    });
+    // Group polled headlines by target asset
+    const assetBuckets: Record<string, RawHeadlineItem[]> = {};
 
-    // Batch upsert up to top 100 most recent stories
-    const topBatch = candidates.slice(0, 100);
+    for (const item of candidates) {
+      const primaryTicker = item.tickers?.[0]?.toUpperCase().replace(/^[@$]/, '') || '';
+      let assetKey = primaryTicker;
 
-    for (const item of topBatch) {
+      if (item.category === 'gold_silver' || primaryTicker.includes('GOLD') || primaryTicker.includes('XAU')) {
+        assetKey = 'GOLD';
+      } else if (primaryTicker === 'CIB_ADR') {
+        assetKey = 'COMI';
+      }
+
+      if (!assetKey) continue;
+      if (!assetBuckets[assetKey]) assetBuckets[assetKey] = [];
+
+      assetBuckets[assetKey].push({
+        id: item.id,
+        title: item.title,
+        published: item.publishedAt ? Math.floor(new Date(item.publishedAt).getTime() / 1000) : Math.floor(Date.now() / 1000),
+        source: item.source,
+        link: item.sourceUrl || undefined,
+      });
+    }
+
+    // Synthesize bundled asset posts
+    for (const [assetKey, headlines] of Object.entries(assetBuckets)) {
+      if (headlines.length === 0) continue;
       try {
-        const existing = await db
-          .select({ id: marketNews.id })
-          .from(marketNews)
-          .where(eq(marketNews.id, item.id))
-          .limit(1);
-
-        if (existing.length > 0) {
-          await db
-            .update(marketNews)
-            .set({
-              title: item.title,
-              summary: item.summary,
-              category: item.category,
-              categoryLabel: item.categoryLabel,
-              tickers: item.tickers,
-              sentiment: item.sentiment,
-              source: item.source,
-              sourceUrl: item.sourceUrl,
-              publishedAt: item.publishedAt,
-              updatedAt: new Date(),
-            })
-            .where(eq(marketNews.id, item.id));
-          updated++;
-        } else {
-          await db.insert(marketNews).values(item);
-          inserted++;
-        }
+        const ok = await synthesizeAssetNewsBundle(assetKey, headlines);
+        if (ok) inserted++;
       } catch (err: any) {
-        console.warn(`[news-sync] Failed to upsert article ${item.id}:`, err?.message);
+        console.warn(`[news-sync] Failed to synthesize bundle for ${assetKey}:`, err?.message);
       }
     }
 
