@@ -26,7 +26,7 @@ export default function NewsFeedTimeline({
     return (
       <div className="divide-y divide-white/[0.06] font-sans">
         {[1, 2, 3, 4, 5].map((key) => (
-          <div key={key} className="p-4 flex gap-3 animate-pulse">
+          <div key={key} className="p-4 sm:p-5 flex gap-3.5 animate-pulse">
             <div className="w-10 h-10 rounded-full bg-white/[0.06] shrink-0" />
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">

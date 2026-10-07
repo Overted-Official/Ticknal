@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply } from '@/db/schema';
+import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply, egxInvestorFlows } from '@/db/schema';
 import { sql, inArray, eq, and, lt, gt, gte, desc } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
@@ -18,6 +18,9 @@ import {
 import { ALL_SNDUK_FUNDS, type SndukFund } from '@/lib/funds/snduk-funds-list';
 import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 import { syncDailySmartMoney } from '@/lib/smart-money/sync-smart-money';
+import { syncOfficialMacroData } from '@/lib/macro/sync-official-macro';
+import { syncExternalTradingViewNews } from '@/lib/news/news-sync';
+import { generateTheTicknalTakePosts } from '@/lib/news/ticknal-take-generator';
 
 // ----------------------------------------------------
 // 1. UPDATE STOCKS
@@ -506,7 +509,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
 
     // Automatically sync daily investor flows for the completed trading session
     let investorFlowResult: any = null;
-    if (totalUpdated > 0 && Date.now() - startTime < 55000) {
+    if (Date.now() - startTime < 55000) {
       try {
         investorFlowResult = await syncDailyInvestorFlows();
       } catch (flowErr: any) {
@@ -951,9 +954,10 @@ export async function handleUpdateMacro(req: Request) {
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    const [inflationResult, moneySupplyResult] = await Promise.allSettled([
+    const [inflationResult, moneySupplyResult, officialMacroResult] = await Promise.allSettled([
       syncAllMacroInflation(),
       syncTradingViewMoneySupply(),
+      syncOfficialMacroData(),
     ]);
 
     const moneySupplyData = moneySupplyResult.status === 'fulfilled' ? moneySupplyResult.value : { updated: 0, errors: [] };
@@ -972,6 +976,7 @@ export async function handleUpdateMacro(req: Request) {
         inflationStatus: inflationResult.status,
         moneySupplyUpdated: moneySupplyData.updated,
         moneySupplyErrors: moneySupplyData.errors,
+        officialMacro: officialMacroResult.status === 'fulfilled' ? officialMacroResult.value : { error: String(officialMacroResult.reason) },
       },
     });
 
@@ -979,6 +984,7 @@ export async function handleUpdateMacro(req: Request) {
       message: 'Macro sync completed',
       inflation: inflationResult.status,
       moneySupply: moneySupplyData,
+      officialMacro: officialMacroResult.status === 'fulfilled' ? officialMacroResult.value : { status: 'failed', error: String(officialMacroResult.reason) },
     }, { status: 200 });
   } catch (error) {
     console.error('Error syncing macro data:', error);
@@ -1065,8 +1071,8 @@ export async function handleWatchdog(req: Request) {
 
     // Determine expected latest date for EGX stocks (Market closes at 14:30 Cairo = 11:30 or 12:30 UTC)
     let expectedEgxDate = todayStr;
-    if (now.getUTCHours() < 15) {
-      // If before 15:00 UTC, expected date is the previous trading session
+    if (now.getUTCHours() < 13) {
+      // If before 13:00 UTC (4:00 PM Cairo), expected date is the previous trading session
       const prevSession = new Date(now);
       if (dayOfWeek === 0) {
         prevSession.setDate(now.getDate() - 3); // Sunday morning -> expects Thursday
@@ -1137,11 +1143,33 @@ export async function handleWatchdog(req: Request) {
       }
     }
 
+    // Verify and repair EGX investor flows for completed sessions
+    let investorFlowsMissing = false;
+    if (isEgxTradingDay) {
+      try {
+        const existingFlow = await db
+          .select({ id: egxInvestorFlows.id })
+          .from(egxInvestorFlows)
+          .where(eq(egxInvestorFlows.date, expectedEgxDate))
+          .limit(1);
+
+        if (!existingFlow[0]) {
+          investorFlowsMissing = true;
+          const flowResult = await syncDailyInvestorFlows({ targetDate: expectedEgxDate });
+          if (flowResult.success) {
+            triggersTriggered.push(`update-investor-flows (${expectedEgxDate})`);
+          }
+        }
+      } catch (e) {
+        console.error('Watchdog failed to verify/sync investor flows:', e);
+      }
+    }
+
     await db.insert(systemLogs).values({
       source: 'cron-watchdog',
       level: 'INFO',
-      message: `Watchdog health check completed. Triggers triggered: ${triggersTriggered.join(', ') || 'None'}. (Missing stocks: ${stocksMissingCount})`,
-      metadata: { triggersTriggered, stocksMissingCount, stocksMissing, fundsMissing, commoditiesMissing, expectedEgxDate }
+      message: `Watchdog health check completed. Triggers triggered: ${triggersTriggered.join(', ') || 'None'}. (Missing stocks: ${stocksMissingCount}, investor flows missing: ${investorFlowsMissing})`,
+      metadata: { triggersTriggered, stocksMissingCount, stocksMissing, fundsMissing, commoditiesMissing, investorFlowsMissing, expectedEgxDate }
     });
 
     return NextResponse.json({ message: 'Watchdog check completed', triggersTriggered, stocksMissingCount, expectedEgxDate }, { status: 200 });
@@ -1186,6 +1214,70 @@ export async function handleUpdateInvestorFlows(req: Request) {
       source: 'cron-investor-flows',
       level: 'ERROR',
       message: `Failed to update EGX investor flows: ${(error as Error).message}`,
+      metadata: { error: (error as Error).message },
+    });
+    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------
+// 10. UPDATE EXTERNAL NEWS
+// ----------------------------------------------------
+export async function handleUpdateNews(req: Request) {
+  const authErr = verifyCronAuth(req);
+  if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
+
+  try {
+    const result = await syncExternalTradingViewNews();
+    await db.insert(systemLogs).values({
+      source: 'cron-update-news',
+      level: result.success ? 'INFO' : 'ERROR',
+      message: `External news sync completed: ${result.inserted} inserted, ${result.updated} updated (${result.totalPolled} polled)`,
+      metadata: result,
+    });
+    return NextResponse.json(result, { status: result.success ? 200 : 500 });
+  } catch (error) {
+    console.error('Error in handleUpdateNews:', error);
+    await db.insert(systemLogs).values({
+      source: 'cron-update-news',
+      level: 'ERROR',
+      message: `Failed to sync external news: ${(error as Error).message}`,
+      metadata: { error: (error as Error).message },
+    });
+    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------
+// 11. GENERATE THE TICKNAL TAKE (DAILY AI BRIEFINGS)
+// ----------------------------------------------------
+export async function handleGenerateTicknalTake(req: Request) {
+  const authErr = verifyCronAuth(req);
+  if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
+
+  try {
+    const result = await generateTheTicknalTakePosts();
+
+    try {
+      revalidatePath('/news');
+      revalidatePath('/home');
+      revalidatePath('/markets');
+    } catch {}
+
+    await db.insert(systemLogs).values({
+      source: 'cron-ticknal-take',
+      level: result.success ? 'INFO' : 'ERROR',
+      message: `The Ticknal Take briefing generation completed: ${result.postsCreated} posts published for date ${result.date}.`,
+      metadata: result,
+    });
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.error('Error in handleGenerateTicknalTake:', error);
+    await db.insert(systemLogs).values({
+      source: 'cron-ticknal-take',
+      level: 'ERROR',
+      message: `Failed to generate The Ticknal Take: ${(error as Error).message}`,
       metadata: { error: (error as Error).message },
     });
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
