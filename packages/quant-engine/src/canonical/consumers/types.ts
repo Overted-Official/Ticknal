@@ -2,7 +2,9 @@ import type {
   Diagnostic,
   ExecutionContext,
   IndicatorExecutionIdentity,
+  IndicatorInputBundle,
   IndicatorInputProvenance,
+  ContextualInputProvenance,
   IndicatorOutputKind,
   IndicatorOutputPlacement,
   IndicatorOutputUnit,
@@ -18,6 +20,7 @@ export interface CanonicalConsumerEvidence {
   readonly identity: IndicatorExecutionIdentity;
   readonly normalizedParameters: Readonly<Record<string, unknown>> | null;
   readonly provenance: IndicatorInputProvenance;
+  readonly contextualProvenance: readonly ContextualInputProvenance[];
   readonly executionFingerprint: string;
   readonly calculatedAt: string;
   readonly resultFinality: IndicatorResult['resultFinality'];
@@ -65,6 +68,7 @@ export interface CanonicalConsumerRequest {
   readonly frame: TimeSeriesFrame;
   readonly parameters: Readonly<Record<string, unknown>>;
   readonly context: ExecutionContext;
+  readonly inputs?: IndicatorInputBundle;
 }
 
 export interface CanonicalOutputConsumerRequest extends CanonicalConsumerRequest {
@@ -113,6 +117,7 @@ export function consumerEvidence(result: IndicatorResult): CanonicalConsumerEvid
     identity: result.identity,
     normalizedParameters: result.normalizedParameters,
     provenance: result.provenance,
+    contextualProvenance: result.contextualProvenance,
     executionFingerprint: result.executionFingerprint,
     calculatedAt: result.calculatedAt,
     resultFinality: result.resultFinality,

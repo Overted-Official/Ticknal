@@ -1,0 +1,6 @@
+import { buildCategoryPresentationEntries } from '../shared/category-presentation';
+import { CYCLE_DEFINITIONS, CYCLE_OPERATIONAL_DEFINITIONS } from './definitions';
+const ARABIC_NAMES = ["موجة جيبية محسنة","موجة إهلرز الجيبية","فترة الدورة المهيمنة بتحويل هيلبرت","وضع الاتجاه بتحويل هيلبرت","المتوسط المتحرك المتكيف ميسا","الدورة السيبرانية","مرشح السقف","مرشح التنعيم الفائق","مرشح تمرير عال ثنائي القطب","مرشح تمرير نطاقي","مزيل الدورات","مذبذب إزالة الدورات","خط الاتجاه اللحظي","مخطط الارتباط الذاتي الدوري","الدورة المهيمنة بفورييه","كاشف دورات جورتزل","طاقة المويجات","اتجاه ودورة هودريك بريسكوت","مرشح دورة باكستر كينغ","مرشح كريستيانو فيتزجيرالد","ملف العائد الموسمي","موسمية رمضان والعطلات","حالة طور الدورة","إجماع بنك المرشحات"] as const;
+export const CYCLE_PRESENTATION_ENTRIES = buildCategoryPresentationEntries(CYCLE_DEFINITIONS, { arabicNames: ARABIC_NAMES, decimalKeys: ['alpha', 'bandwidth', 'fastLimit', 'slowLimit', 'lambda'], histogramKeys: ['wave', 'cycle', 'band_pass', 'high_pass', 'score'] });
+const operationalIds = new Set(CYCLE_OPERATIONAL_DEFINITIONS.map((definition) => definition.id));
+export const CYCLE_OPERATIONAL_PRESENTATION_ENTRIES = Object.freeze(CYCLE_PRESENTATION_ENTRIES.filter((entry) => operationalIds.has(entry.id)));

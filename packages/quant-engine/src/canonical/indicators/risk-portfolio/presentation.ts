@@ -1,0 +1,6 @@
+import { buildCategoryPresentationEntries } from '../shared/category-presentation';
+import { RISK_PORTFOLIO_DEFINITIONS,RISK_PORTFOLIO_OPERATIONAL_DEFINITIONS } from './definitions';
+const ARABIC_NAMES=["العائد البسيط","العائد السنوي","معدل النمو السنوي المركب","أقصى تراجع","التراجع الحالي","مدة التراجع","التقلب","الانحراف السلبي","نسبة شارب","نسبة سورتينو","نسبة كالمار","نسبة أوميغا","نسبة المعلومات","نسبة ترينور","ألفا جنسن","خطأ التتبع","القيمة المعرضة للخطر التاريخية","القيمة المعرضة للخطر المعلمية","الخسارة المتوقعة","أقصى حركة معاكسة","أقصى حركة مواتية","عامل الربح","معدل الفوز","القيمة المتوقعة","نسبة العائد إلى الخسارة","كسر كيلي","خطر الإفلاس","مؤشر أداء أولسر","نسبة المكسب إلى الألم","عامل الاسترداد","بيتا المحفظة","المساهمة الحدية في المخاطر","التركيز ومؤشر هيرفندال","نسبة التنويع","ضغط الارتباط","أثر التضخم"] as const;
+export const RISK_PORTFOLIO_PRESENTATION_ENTRIES=buildCategoryPresentationEntries(RISK_PORTFOLIO_DEFINITIONS,{arabicNames:ARABIC_NAMES,decimalKeys:['targetAnnualPct','riskFreeAnnualPct','thresholdAnnualPct','confidencePct'],histogramKeys:['return_pct','drawdown_pct']});
+const ids=new Set(RISK_PORTFOLIO_OPERATIONAL_DEFINITIONS.map((definition)=>definition.id));
+export const RISK_PORTFOLIO_OPERATIONAL_PRESENTATION_ENTRIES=Object.freeze(RISK_PORTFOLIO_PRESENTATION_ENTRIES.filter((entry)=>ids.has(entry.id)));

@@ -1,0 +1,6 @@
+import { buildCategoryPresentationEntries } from '../shared/category-presentation';
+import { RELATIVE_INTERMARKET_DEFINITIONS,RELATIVE_INTERMARKET_OPERATIONAL_DEFINITIONS } from './definitions';
+const ARABIC_NAMES=["مؤشر Price Ratio","مؤشر Relative Strength versus Benchmark","مؤشر Relative Strength Line","مؤشر Relative Strength Momentum","مؤشر Mansfield Relative Strength","مؤشر Relative Rotation Graph metrics","مؤشر Cross-sectional momentum rank","مؤشر Risk-adjusted momentum rank","مؤشر Dual Momentum","مؤشر Sector Relative Strength","مؤشر Rolling Correlation Matrix","مؤشر Rolling Beta Matrix","مؤشر Lead-Lag Correlation","مؤشر Cointegration Spread","مؤشر Pair Ratio Z-score","مؤشر EGX versus Gold Relative Strength","مؤشر EGX versus USD Relative Strength","مؤشر Fund versus Benchmark Attribution","مؤشر Currency-adjusted return","مؤشر Inflation-adjusted return"] as const;
+export const RELATIVE_INTERMARKET_PRESENTATION_ENTRIES=buildCategoryPresentationEntries(RELATIVE_INTERMARKET_DEFINITIONS,{arabicNames:ARABIC_NAMES,decimalKeys:['thresholdPct']});
+const ids=new Set(RELATIVE_INTERMARKET_OPERATIONAL_DEFINITIONS.map((definition)=>definition.id));
+export const RELATIVE_INTERMARKET_OPERATIONAL_PRESENTATION_ENTRIES=Object.freeze(RELATIVE_INTERMARKET_PRESENTATION_ENTRIES.filter((entry)=>ids.has(entry.id)));

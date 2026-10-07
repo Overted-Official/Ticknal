@@ -23,6 +23,7 @@ export function evaluateChartSeries(request: CanonicalConsumerRequest): Canonica
     request.frame,
     request.parameters,
     request.context,
+    request.inputs,
   );
   const series: CanonicalConsumerSeries[] = [];
 

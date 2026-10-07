@@ -2,6 +2,7 @@ import {
   CANONICAL_PRESENTATION_REGISTRY,
   PROGRAM_MANIFEST,
   getIndicatorDefinition,
+  isIndicatorOperational,
   type CanonicalIndicatorCatalogEntry,
   type ProgramEntry,
   type ProgramState,
@@ -20,6 +21,7 @@ export interface IndicatorBrowserEntry {
   readonly view: ProgramView | null;
   readonly state: ProgramState;
   readonly enabled: boolean;
+  readonly operational: boolean;
   readonly availability: string;
   readonly catalog: CanonicalIndicatorCatalogEntry | null;
 }
@@ -52,6 +54,7 @@ export function buildIndicatorBrowserEntries(
       && catalog !== null
       && definition !== undefined
       && definition.formulaVersion === catalog.formulaVersion;
+    const operational = definition !== undefined && isIndicatorOperational(definition.id);
     const name = catalog?.name[locale] || program.name;
     const description = catalog?.description[locale] || program.explanation;
     return Object.freeze({
@@ -66,7 +69,10 @@ export function buildIndicatorBrowserEntries(
       view: program.view,
       state: program.state,
       enabled,
-      availability: AVAILABILITY[program.state][locale],
+      operational,
+      availability: enabled && !operational
+        ? (locale === 'ar' ? 'يتطلب مصدر بيانات إضافيًا' : 'Additional data adapter required')
+        : AVAILABILITY[program.state][locale],
       catalog,
     });
   }));

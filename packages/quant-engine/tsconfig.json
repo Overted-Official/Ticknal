@@ -11,5 +11,5 @@
       "@ticknal/types": ["../../packages/types/src"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts"]
 }

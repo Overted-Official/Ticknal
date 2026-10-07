@@ -28,6 +28,7 @@ import {
 } from './overlay-controller';
 import { partitionCanonicalSurfaces } from './surface-model';
 import { useCanonicalIndicatorExecutions } from './useCanonicalIndicatorExecutions';
+import { formatIndicatorDiagnostic } from './indicator-diagnostic-message';
 
 const COLOR_BY_ROLE = {
   primary: '#2962ff', secondary: '#7c4dff', positive: '#089981',
@@ -63,6 +64,16 @@ export default function CanonicalIndicatorWorkspace({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [heights, setHeights] = useState<Readonly<Record<string, number>>>({});
   const [marketOpen, setMarketOpen] = useState(true);
+  const visibleDiagnostics = useMemo(() => selections.flatMap((selection) => {
+    const state = states[selection.instanceId];
+    if (!state || (state.status !== 'unavailable' && state.status !== 'error')) return [];
+    const entry = getIndicatorCatalogEntry(selection.definitionId);
+    const message = state.message
+      ?? (state.diagnostics?.[0]
+        ? formatIndicatorDiagnostic(state.diagnostics[0], locale)
+        : locale === 'ar' ? 'بيانات المؤشر غير متاحة.' : 'Indicator data is unavailable.');
+    return [{ instanceId: selection.instanceId, name: entry?.name[locale] ?? selection.definitionId, message }];
+  }), [locale, selections, states]);
 
   useEffect(() => onStatesChange(states), [onStatesChange, states]);
 
@@ -113,6 +124,17 @@ export default function CanonicalIndicatorWorkspace({
 
   return (
     <>
+      {visibleDiagnostics.length > 0 && (
+        <div data-testid="canonical-indicator-diagnostics" className="border-t border-white/10 bg-black px-3 py-2 font-sans text-[10px] text-[#ffb74d]">
+          {visibleDiagnostics.map((diagnostic) => (
+            <div key={diagnostic.instanceId} className="leading-5">
+              <span className="font-semibold text-white/75">{diagnostic.name}</span>
+              <span className="px-1 text-white/25">·</span>
+              <span>{diagnostic.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {surfaces.overlays.length > 0 && (
         <div data-testid="canonical-overlay-legend" className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 bg-black px-3 py-1 font-sans text-[10px] text-white/55">
           {surfaces.overlays.map((visual) => (

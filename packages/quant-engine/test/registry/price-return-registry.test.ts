@@ -61,7 +61,7 @@ describe('price and return registry', () => {
   });
 
   it('composes one frozen root registry and resolves either stable identity', () => {
-    expect(CANONICAL_INDICATOR_REGISTRY).toHaveLength(20);
+    expect(CANONICAL_INDICATOR_REGISTRY).toHaveLength(411);
     expect(Object.isFrozen(CANONICAL_INDICATOR_REGISTRY)).toBe(true);
 
     for (const definition of PRICE_RETURN_DEFINITIONS) {

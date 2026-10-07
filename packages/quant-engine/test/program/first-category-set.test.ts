@@ -121,14 +121,10 @@ describe('first seven program category fragments', () => {
     );
   });
 
-  it('assigns reviewed canonical IDs only to the 20 PRC entries', () => {
-    expect(PRICE_RETURN_PROGRAM_ENTRIES.every((entry) => entry.canonicalId !== null)).toBe(true);
-    expect(PRICE_RETURN_PROGRAM_ENTRIES.every((entry) => entry.state === 'integrated')).toBe(
-      true,
-    );
-
-    const laterCategories = FIRST_PROGRAM_CATEGORY_ENTRIES.slice(1).flat();
-    expect(laterCategories.every((entry) => entry.canonicalId === null)).toBe(true);
-    expect(laterCategories.every((entry) => entry.state === 'unimplemented')).toBe(true);
+  it('assigns canonical IDs to every implemented first-set entry', () => {
+    const entries = FIRST_PROGRAM_CATEGORY_ENTRIES.flat();
+    expect(entries.every((entry) => entry.canonicalId !== null)).toBe(true);
+    expect(entries.every((entry) => entry.state === 'integrated')).toBe(true);
+    expect(new Set(entries.map((entry) => entry.canonicalId)).size).toBe(226);
   });
 });

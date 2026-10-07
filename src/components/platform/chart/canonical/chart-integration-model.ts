@@ -1,13 +1,17 @@
 import {
   parseIndicatorQuery,
   removeIndicatorSelection,
-} from '@/indicators/canonical/selection-state';
-import type { CanonicalIndicatorSelection } from '@/indicators/canonical/types';
+} from '../../../../indicators/canonical/selection-state';
+import type { CanonicalIndicatorSelection } from '../../../../indicators/canonical/types';
 
 export interface ChartIndicatorState {
   readonly canonicalSelections: readonly CanonicalIndicatorSelection[];
   readonly legacyIds: readonly string[];
   readonly activeCount: number;
+}
+
+export function stableChartWidgetKey(symbol: string, timeframe: string): string {
+  return `${symbol}:${timeframe}`;
 }
 
 export function initializeChartIndicatorState(

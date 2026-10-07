@@ -25,11 +25,27 @@ export type IndicatorParameterDefinition =
       readonly step: number;
     }
   | {
+      readonly kind: 'number';
+      readonly key: string;
+      readonly label: LocalizedText;
+      readonly defaultValue: number;
+      readonly min: number;
+      readonly max: number;
+      readonly step: number;
+    }
+  | {
       readonly kind: 'select';
       readonly key: string;
       readonly label: LocalizedText;
       readonly defaultValue: string;
       readonly options: readonly IndicatorParameterOption[];
+    }
+  | {
+      readonly kind: 'symbol' | 'text';
+      readonly key: string;
+      readonly label: LocalizedText;
+      readonly defaultValue: string;
+      readonly placeholder?: LocalizedText;
     }
   | {
       readonly kind: 'anchor-date';

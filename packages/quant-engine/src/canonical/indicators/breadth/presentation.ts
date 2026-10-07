@@ -1,0 +1,6 @@
+import { buildCategoryPresentationEntries } from '../shared/category-presentation';
+import { BREADTH_DEFINITIONS,BREADTH_OPERATIONAL_DEFINITIONS } from './definitions';
+const ARABIC_NAMES=["مؤشر Advance-Decline Line","مؤشر Advance-Decline Ratio","مؤشر Advance-Decline Percent","مؤشر Up-Down Volume","مؤشر Up-Down Volume Ratio","مؤشر Arms Index (TRIN)","مؤشر McClellan Oscillator","مؤشر McClellan Summation Index","مؤشر New Highs-New Lows","مؤشر High-Low Logic Index","مؤشر Percent Above Moving Average","مؤشر Bullish Percent Index","مؤشر Breadth Thrust","مؤشر Zweig Breadth Thrust","مؤشر Absolute Breadth Index","مؤشر Breadth Momentum","مؤشر Sector Breadth","مؤشر Index Participation Score","مؤشر Equal-Weight versus Cap-Weight Spread","مؤشر Median Stock Return","مؤشر Cross-sectional dispersion","مؤشر Market Concentration","مؤشر Breadth Divergence","مؤشر Volume Breadth Divergence","مؤشر Participation Regime"] as const;
+export const BREADTH_PRESENTATION_ENTRIES=buildCategoryPresentationEntries(BREADTH_DEFINITIONS,{arabicNames:ARABIC_NAMES,decimalKeys:['thresholdPct']});
+const ids=new Set(BREADTH_OPERATIONAL_DEFINITIONS.map((definition)=>definition.id));
+export const BREADTH_OPERATIONAL_PRESENTATION_ENTRIES=Object.freeze(BREADTH_PRESENTATION_ENTRIES.filter((entry)=>ids.has(entry.id)));

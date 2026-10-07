@@ -7,6 +7,7 @@ import type {
 } from '@/indicators/canonical/types';
 import IndicatorParameterEditor from './IndicatorParameterEditor';
 import type { IndicatorBrowserEntry as BrowserEntry } from './browser-model';
+import { formatIndicatorDiagnostic } from './indicator-diagnostic-message';
 
 type SelectionPatch = Partial<Pick<CanonicalIndicatorSelection, 'parameters' | 'visibleOutputs' | 'placementOverrides'>>;
 
@@ -32,7 +33,7 @@ export default function IndicatorBrowserEntry({ entry, locale, selections, state
             <span className="text-[9px] tabular-nums text-white/35">{entry.backlogId}</span>
           </div>
           <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-white/45">{entry.description}</p>
-          <span className={`mt-1 inline-block text-[9px] ${entry.enabled ? 'text-[#089981]' : 'text-white/30'}`}>{entry.availability}</span>
+          <span className={`mt-1 inline-block text-[9px] ${entry.enabled && entry.operational ? 'text-[#089981]' : entry.enabled ? 'text-[#ff9800]' : 'text-white/30'}`}>{entry.availability}</span>
         </div>
         <button type="button" disabled={!entry.enabled || !entry.definitionId}
           onClick={() => entry.definitionId && onAdd(entry.definitionId)}
@@ -53,6 +54,11 @@ export default function IndicatorBrowserEntry({ entry, locale, selections, state
                 <button type="button" onClick={() => onRemove(selection.instanceId)} className="p-1 hover:text-white"><X size={12} /></button>
               </div>
             </div>
+            {state?.diagnostics?.[0] && (
+              <p className="mb-2 text-[10px] leading-4 text-[#ffb74d]">
+                {formatIndicatorDiagnostic(state.diagnostics[0], locale)}
+              </p>
+            )}
             {entry.catalog && entry.catalog.parameters.length > 0 && (
               <div className="grid gap-2 sm:grid-cols-2">
                 {entry.catalog.parameters.map((schema) => (

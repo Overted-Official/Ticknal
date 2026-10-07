@@ -16,6 +16,7 @@ import type { CanonicalIndicatorViewState } from '@/indicators/canonical/types';
 import { parseChartTime } from '../utils';
 import { synchronizeChartSurface } from './chart-sync';
 import type { CanonicalPaneModel } from './surface-model';
+import { formatIndicatorDiagnostic } from './indicator-diagnostic-message';
 
 const COLOR_BY_ROLE = {
   primary: '#2962ff', secondary: '#7c4dff', positive: '#089981',
@@ -44,6 +45,9 @@ export default function CanonicalIndicatorPane({
   onToggleCollapse, onHeightChange, onMoveUp, onMoveDown, onResetParameters, onClose,
 }: CanonicalIndicatorPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const diagnosticMessage = state?.diagnostics?.[0]
+    ? formatIndicatorDiagnostic(state.diagnostics[0], locale)
+    : undefined;
 
   useEffect(() => {
     if (collapsed || !containerRef.current || state?.status !== 'ok') return;
@@ -164,7 +168,7 @@ export default function CanonicalIndicatorPane({
         <>
           {state?.status === 'ok' ? <div ref={containerRef} className="min-h-0 flex-1" /> : (
             <div className="flex flex-1 items-center justify-center text-xs text-white/45">
-              {state?.message ?? (state?.status === 'unavailable' ? 'Required market data is unavailable.' : 'Loading indicator…')}
+              {state?.message ?? diagnosticMessage ?? (state?.status === 'unavailable' ? 'Required market data is unavailable.' : 'Loading indicator…')}
             </div>
           )}
           <div onPointerDown={beginResize} className="absolute inset-x-0 bottom-0 h-1 cursor-row-resize bg-transparent hover:bg-white/10" />

@@ -6,6 +6,7 @@ import type {
   CanonicalIndicatorSelection,
   CanonicalIndicatorViewState,
 } from '@/indicators/canonical/types';
+import { indicatorViewStateFromExecution } from './contextual-execution';
 
 export interface ActiveIndicatorEvaluation {
   readonly executions: readonly CanonicalChartExecution[];
@@ -24,19 +25,7 @@ export function evaluateActiveIndicators(
     try {
       const execution = executeChartIndicator(selection, frame, { calculatedAt });
       executions.push(execution);
-      states[selection.instanceId] = {
-        status: execution.result.status === 'ok'
-          ? 'ok'
-          : execution.result.status === 'unavailable'
-            ? 'unavailable'
-            : 'error',
-        asOf: execution.result.evidence.provenance.asOf,
-        provisional: execution.result.evidence.resultFinality === 'provisional',
-        diagnostics: execution.result.diagnostics,
-        message: execution.result.status === 'invalid'
-          ? 'Canonical input validation failed.'
-          : undefined,
-      };
+      states[selection.instanceId] = indicatorViewStateFromExecution(execution);
     } catch (error) {
       states[selection.instanceId] = {
         status: 'error',
