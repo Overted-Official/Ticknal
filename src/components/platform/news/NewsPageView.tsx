@@ -108,7 +108,7 @@ export default function NewsPageView() {
     {
       id: 'gold_silver',
       label: locale === 'ar' ? 'الذهب والفضة' : 'Gold & Silver',
-      shortLabel: locale === 'ar' ? 'الذهب' : 'Gold/FX',
+      shortLabel: locale === 'ar' ? 'الذهب' : 'Gold',
       count: data?.categories?.find((c) => c.id === 'gold_silver')?.count,
     },
   ];

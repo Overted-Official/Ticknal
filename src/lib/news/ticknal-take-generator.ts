@@ -313,9 +313,17 @@ Interpret whether offshore markets signal FX pressure or stability.`;
     generateBilingualInsight(fxPrompt, fxFallback),
   ]);
 
-  const egx30ChartSvg = generateEgx30ChartSvg(snapshot.egx30);
-  const flowsChartSvg = generateInvestorFlowsChartSvg(snapshot.flows);
-  const fxChartSvg = generateFxArbitrageChartSvg(snapshot.fx);
+  const egx30ChartSvgEn = generateEgx30ChartSvg(snapshot.egx30, 'en');
+  const egx30ChartSvgAr = generateEgx30ChartSvg(snapshot.egx30, 'ar');
+  const egx30ChartSvg = JSON.stringify({ en: egx30ChartSvgEn, ar: egx30ChartSvgAr });
+
+  const flowsChartSvgEn = generateInvestorFlowsChartSvg(snapshot.flows, 'en');
+  const flowsChartSvgAr = generateInvestorFlowsChartSvg(snapshot.flows, 'ar');
+  const flowsChartSvg = JSON.stringify({ en: flowsChartSvgEn, ar: flowsChartSvgAr });
+
+  const fxChartSvgEn = generateFxArbitrageChartSvg(snapshot.fx, 'en');
+  const fxChartSvgAr = generateFxArbitrageChartSvg(snapshot.fx, 'ar');
+  const fxChartSvg = JSON.stringify({ en: fxChartSvgEn, ar: fxChartSvgAr });
 
   // 4. Upsert items into database
   const publishedAt = new Date();

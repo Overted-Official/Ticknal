@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import SocialButton from '@/components/ui/social-button';
 import NewsImageLightbox from './NewsImageLightbox';
+import { resolveLocalizedChartSvg } from '@/lib/news/ticknal-take-charts';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 
 interface FeedPostProps {
@@ -311,6 +312,14 @@ export default function FeedPost({
     textDir = 'ltr';
   }
 
+  const isArabic = hasBoth
+    ? ((locale === 'ar' && !altLang) || (locale !== 'ar' && altLang))
+    : (locale === 'ar');
+
+  const localizedImageUrl = useMemo(() => {
+    return resolveLocalizedChartSvg(item.imageUrl, isArabic ? 'ar' : 'en');
+  }, [item.imageUrl, isArabic]);
+
   const [origin, setOrigin] = useState('https://ticknal.com');
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -461,7 +470,7 @@ export default function FeedPost({
           </div>
 
           {/* Attached Full-Width Media Card (if image exists) with Click-to-Zoom Lightbox */}
-          {item.imageUrl && !postImageError && (
+          {localizedImageUrl && !postImageError && (
             <div
               role="button"
               tabIndex={0}
@@ -479,7 +488,7 @@ export default function FeedPost({
               title="Click to view chart in full screen"
             >
               <img
-                src={item.imageUrl}
+                src={localizedImageUrl}
                 alt={item.title || 'Market Chart'}
                 className="w-full h-auto max-h-[360px] object-contain bg-black transition-transform duration-200 group-hover/img:scale-[1.01]"
                 loading="lazy"
@@ -495,10 +504,10 @@ export default function FeedPost({
           )}
 
           {/* Fullscreen Interactive Lightbox Modal */}
-          {item.imageUrl && (
+          {localizedImageUrl && (
             <NewsImageLightbox
               isOpen={isLightboxOpen}
-              imageUrl={item.imageUrl}
+              imageUrl={localizedImageUrl}
               title={item.title}
               sourceName={meta.name}
               onClose={() => setIsLightboxOpen(false)}
