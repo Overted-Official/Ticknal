@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Sparkles,
@@ -55,6 +56,7 @@ export default function ChartTopBar({
   const { locale } = useTranslation();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'stocks' | 'funds' | 'metals'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -63,6 +65,10 @@ export default function ChartTopBar({
 
   useEffect(() => {
     setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const isMetalItem = (item: WatchlistItem) => {
@@ -218,6 +224,7 @@ export default function ChartTopBar({
         <div className="h-10 px-2 flex items-center justify-between gap-1.5 w-full">
           {/* Mobile Search Bar Trigger */}
           <div
+            data-testid="mobile-search-trigger"
             onClick={() => setIsSearchOpen(true)}
             className="flex-1 min-w-0 h-8 px-2.5 rounded-md bg-white/[0.04] active:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
             role="button"
@@ -463,275 +470,310 @@ export default function ChartTopBar({
         </div>
       </div>
 
-      {/* ─── Portal Search Command Palette & Dropdown (Immune to parent overflow clipping) ─── */}
-      {mounted && isSearchOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-6 select-none">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-150"
-            onClick={() => setIsSearchOpen(false)}
-          />
-
-          {/* Search Card Container - Centralized, Sleek Pure Black Surface */}
-          <div
-            className="relative z-10 w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-black border border-white/[0.12] rounded-2xl shadow-[0_32px_96px_-12px_rgba(0,0,0,0.95),0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-[0.98] duration-150 font-sans"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Search Input Bar */}
-            <div className="h-13 sm:h-14 px-4 sm:px-5 flex items-center gap-3 border-b border-white/[0.08] bg-black">
-              <Search size={17} className="text-white/40 shrink-0" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={
-                  activeTab === 'funds'
-                    ? (locale === 'ar' ? 'بحث في صناديق الاستثمار بالاسم أو الرمز...' : 'Search mutual funds by name or ticker...')
-                    : activeTab === 'metals'
-                    ? (locale === 'ar' ? 'بحث في المعادن الثمينة (الذهب، الفضة)...' : 'Search precious metals (Gold, Silver)...')
-                    : activeTab === 'stocks'
-                    ? (locale === 'ar' ? 'بحث في الأسهم بالرمز، الشركة، أو القطاع...' : 'Search stocks by symbol, company, or sector...')
-                    : (locale === 'ar' ? 'بحث في الأسهم، الصناديق، المعادن، أو القطاعات...' : 'Search stocks, mutual funds, metals, or sectors...')
-                }
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setFocusedIndex(0);
-                }}
-                className="flex-1 bg-transparent text-sm sm:text-[15px] text-white placeholder:text-white/30 focus:outline-none font-sans tracking-tight"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setFocusedIndex(0);
-                    searchInputRef.current?.focus();
-                  }}
-                  className="p-1.5 text-white/40 hover:text-white transition-colors cursor-pointer rounded-md hover:bg-white/[0.06]"
-                  title={locale === 'ar' ? 'مسح البحث' : 'Clear search'}
-                >
-                  <X size={15} />
-                </button>
-              )}
-              <button
-                type="button"
+      {/* ─── Portal Search Drawer (Mobile) & Command Palette (Desktop) ─── */}
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isSearchOpen && (
+            <div
+              key="chart-search-portal"
+              className="fixed inset-0 z-[150] flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-6 select-none overflow-hidden"
+            >
+              {/* Backdrop */}
+              <motion.div
+                key="chart-search-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="fixed inset-0 bg-black/80 backdrop-blur-md cursor-pointer"
                 onClick={() => setIsSearchOpen(false)}
-                className="px-2.5 py-1 rounded-md text-[11px] font-medium text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer font-sans flex items-center gap-1.5"
-              >
-                <span>{locale === 'ar' ? 'إغلاق' : 'Close'}</span>
-                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded border border-white/10 text-[9px] text-white/40 bg-white/[0.04]">ESC</kbd>
-              </button>
-            </div>
+                aria-label={locale === 'ar' ? 'إغلاق البحث' : 'Close search'}
+              />
 
-            {/* Filter Tabs & Header Bar */}
-            <div className="px-4 sm:px-5 py-2.5 border-b border-white/[0.06] bg-black flex items-center justify-between gap-3">
-              {/* Tabs */}
-              <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
-                {(
-                  [
-                    { id: 'all', label: locale === 'ar' ? 'الكل' : 'All', count: tabCounts.all },
-                    { id: 'stocks', label: locale === 'ar' ? 'الأسهم' : 'Stocks', count: tabCounts.stocks },
-                    { id: 'funds', label: locale === 'ar' ? 'الصناديق' : 'Funds', count: tabCounts.funds },
-                    { id: 'metals', label: locale === 'ar' ? 'المعادن' : 'Metals', count: tabCounts.metals },
-                  ] as const
-                ).map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveTab(tab.id);
+              {/* Drawer Sheet (Phone) / Modal Dialog (Desktop) */}
+              <motion.div
+                key="chart-search-sheet"
+                initial={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.98, y: -6 }}
+                animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+                exit={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.98, y: -6 }}
+                transition={
+                  isMobile
+                    ? { type: 'spring', damping: 28, stiffness: 280 }
+                    : { duration: 0.15, ease: 'easeOut' }
+                }
+                className="relative z-10 w-full sm:max-w-xl md:max-w-2xl h-[88dvh] sm:h-auto sm:max-h-[85vh] bg-black border-t sm:border border-white/[0.12] rounded-none sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.9),0_32px_96px_-12px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col font-sans"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Mobile Drag Indicator Handle */}
+                <div
+                  className="sm:hidden w-full flex items-center justify-center pt-3 pb-1 cursor-pointer shrink-0"
+                  onClick={() => setIsSearchOpen(false)}
+                  aria-label={locale === 'ar' ? 'سحب للإغلاق' : 'Drag handle to close'}
+                >
+                  <div className="w-10 h-1 rounded-full bg-white/20 active:bg-white/40 transition-colors" />
+                </div>
+
+                {/* Search Input Bar */}
+                <div className="px-4 sm:px-5 pb-3 pt-1 sm:py-3.5 flex items-center gap-3 border-b border-white/[0.08] bg-black shrink-0">
+                  <div className="flex-1 flex items-center gap-2.5 h-10 px-3.5 rounded-xl bg-white/[0.05] border border-white/[0.08] focus-within:border-white/25 focus-within:bg-white/[0.08] transition-all">
+                    <Search size={16} className="text-white/40 shrink-0" />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder={
+                        activeTab === 'funds'
+                          ? (locale === 'ar' ? 'بحث في صناديق الاستثمار بالاسم أو الرمز...' : 'Search mutual funds by name or ticker...')
+                          : activeTab === 'metals'
+                          ? (locale === 'ar' ? 'بحث في المعادن الثمينة (الذهب، الفضة)...' : 'Search precious metals (Gold, Silver)...')
+                          : activeTab === 'stocks'
+                          ? (locale === 'ar' ? 'بحث في الأسهم بالرمز، الشركة، أو القطاع...' : 'Search stocks by symbol, company, or sector...')
+                          : (locale === 'ar' ? 'بحث في الأسهم، الصناديق، المعادن، أو القطاعات...' : 'Search stocks, mutual funds, metals, or sectors...')
+                      }
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
                         setFocusedIndex(0);
                       }}
-                      className={`px-3 py-1 rounded-md text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isActive
-                          ? 'bg-white text-black font-semibold shadow-xs'
-                          : 'text-white/50 hover:text-white hover:bg-white/[0.04] font-medium'
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded-full tabular-nums leading-none ${
-                          isActive
-                            ? 'bg-black/15 text-black font-bold'
-                            : 'bg-white/[0.06] text-white/40'
-                        }`}
+                      style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
+                      className="flex-1 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm sm:text-[14px] text-white placeholder:text-white/35 font-sans tracking-tight p-0"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setFocusedIndex(0);
+                          searchInputRef.current?.focus();
+                        }}
+                        className="w-6 h-6 flex items-center justify-center text-white/40 hover:text-white active:bg-white/10 rounded-full transition-colors cursor-pointer shrink-0"
+                        title={locale === 'ar' ? 'مسح البحث' : 'Clear search'}
                       >
-                        {tab.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Status info */}
-              <div className="text-[11px] text-white/40 font-medium tabular-nums hidden sm:block">
-                <span>
-                  {activeTab === 'funds'
-                    ? (locale === 'ar' ? `${searchResults.length} صندوق` : `${searchResults.length} funds found`)
-                    : activeTab === 'metals'
-                    ? (locale === 'ar' ? `${searchResults.length} أصل معادن` : `${searchResults.length} metals found`)
-                    : activeTab === 'stocks'
-                    ? (locale === 'ar' ? `${searchResults.length} سهم` : `${searchResults.length} stocks found`)
-                    : (locale === 'ar' ? `${searchResults.length} أداة مالية` : `${searchResults.length} instruments found`)}
-                </span>
-              </div>
-            </div>
-
-            {/* Results List */}
-            <div className="max-h-[380px] sm:max-h-[440px] overflow-y-auto no-scrollbar py-1 divide-y divide-white/[0.03]">
-              {searchResults.length === 0 ? (
-                <div className="py-12 px-4 text-center flex flex-col items-center justify-center">
-                  <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3 text-white/40">
-                    <Search size={18} />
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
-                  <p className="text-white/70 text-xs font-semibold">
-                    {locale === 'ar'
-                      ? `لم يتم العثور على أي ${activeTab === 'funds' ? 'صناديق' : activeTab === 'metals' ? 'معادن' : activeTab === 'stocks' ? 'أسهم' : 'أدوات مالية'}`
-                      : `No matching ${activeTab === 'funds' ? 'funds' : activeTab === 'metals' ? 'metals' : activeTab === 'stocks' ? 'stocks' : 'instruments'} found`}
-                  </p>
-                  <p className="text-white/35 text-[11px] mt-1 max-w-xs">
-                    {locale === 'ar'
-                      ? 'جرب البحث برمز أو اسم شركة مختلف، أو قم بتبديل التبويب.'
-                      : 'Try a different ticker name, company keyword, or switch tabs.'}
-                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchOpen(false)}
+                    className="h-10 px-3 rounded-xl text-xs font-semibold text-white/70 hover:text-white active:bg-white/10 hover:bg-white/[0.06] transition-colors cursor-pointer font-sans flex items-center gap-1.5 shrink-0"
+                  >
+                    <span>{locale === 'ar' ? 'إلغاء' : 'Cancel'}</span>
+                    <kbd className="hidden sm:inline px-1.5 py-0.5 rounded border border-white/10 text-[9px] text-white/40 bg-white/[0.04]">ESC</kbd>
+                  </button>
                 </div>
-              ) : (
-                searchResults.map((item, index) => {
-                  const isSelected = item.symbol === symbol;
-                  const isFocused = index === focusedIndex;
-                  const itemDisplay = item.symbol.replace('.CA', '');
-                  const isMetal = isMetalItem(item);
-                  const isFund = isFundItem(item);
 
-                  return (
-                    <div
-                      key={item.symbol}
-                      onClick={() => handleSelectTicker(item.symbol)}
-                      onMouseEnter={() => setFocusedIndex(index)}
-                      className={`flex items-center justify-between px-4 sm:px-5 py-2.5 sm:py-3 cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'bg-white/[0.08] text-white font-medium'
-                          : isFocused
-                          ? 'bg-white/[0.04] text-white'
-                          : 'hover:bg-white/[0.03] text-text-primary'
-                      }`}
-                    >
-                      {/* Left: Avatar/Logo + Symbol + Type Badge + Sector + Company Name */}
-                      <div className="flex items-center gap-3 min-w-0 pr-3">
-                        <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
-                          {item.logoUrl ? (
-                            <img
-                              src={item.logoUrl}
-                              alt={item.symbol}
-                              className="ticker-logo-image ticker-logo-fill"
-                            />
-                          ) : (
-                            <span className="text-[10px] font-bold text-white/75">
-                              {itemDisplay.substring(0, 2)}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex flex-col gap-0.5">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-xs sm:text-[13px] font-bold font-sans tracking-tight ${
-                                isSelected ? 'text-white' : 'text-white/90'
-                              }`}
-                            >
-                              {itemDisplay}
-                            </span>
-
-                            {isMetal ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-amber-400/10 text-amber-300 border border-amber-400/25 shrink-0">
-                                {locale === 'ar' ? 'معدن' : 'Metal'}
-                              </span>
-                            ) : isFund ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-cyan-400/10 text-cyan-300 border border-cyan-400/25 shrink-0">
-                                {locale === 'ar' ? 'صندوق' : 'Fund'}
-                              </span>
-                            ) : (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wider uppercase bg-white/[0.05] text-white/50 border border-white/[0.08] shrink-0">
-                                {locale === 'ar' ? 'سهم' : 'Stock'}
-                              </span>
-                            )}
-
-                            {item.sector && (
-                              <span className="hidden sm:inline text-[11px] text-white/40 truncate">
-                                · {localizeSectorName(item.sector, locale)}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-[11px] text-white/50 truncate max-w-[220px] sm:max-w-[340px]">
-                            {item.companyName}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Price + Change % */}
-                      <div className="flex items-center gap-2.5 shrink-0 font-sans tabular-nums text-right">
-                        <div className="flex flex-col items-end">
-                          <span className="text-xs sm:text-[13px] font-semibold text-white">
-                            {item.price}{' '}
-                            <span className="text-[10px] text-white/40 font-normal">
-                              {item.currency ? (item.currency === 'EGP' && locale === 'ar' ? 'ج.م' : item.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
-                            </span>
+                {/* Filter Tabs & Header Bar */}
+                <div className="px-4 sm:px-5 py-2.5 border-b border-white/[0.08] bg-black flex items-center justify-between gap-3 shrink-0 overflow-x-auto no-scrollbar">
+                  {/* Tabs */}
+                  <div className="flex items-center gap-1.5 sm:gap-1 bg-white/[0.03] p-1 sm:p-0.5 rounded-xl sm:rounded-lg border border-white/[0.08] shrink-0">
+                    {(
+                      [
+                        { id: 'all', label: locale === 'ar' ? 'الكل' : 'All', count: tabCounts.all },
+                        { id: 'stocks', label: locale === 'ar' ? 'الأسهم' : 'Stocks', count: tabCounts.stocks },
+                        { id: 'funds', label: locale === 'ar' ? 'الصناديق' : 'Funds', count: tabCounts.funds },
+                        { id: 'metals', label: locale === 'ar' ? 'المعادن' : 'Metals', count: tabCounts.metals },
+                      ] as const
+                    ).map((tab) => {
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(tab.id);
+                            setFocusedIndex(0);
+                          }}
+                          className={`px-3.5 sm:px-3 py-1.5 sm:py-1 rounded-lg sm:rounded-md text-xs transition-all cursor-pointer flex items-center gap-1.5 select-none shrink-0 ${
+                            isActive
+                              ? 'bg-white text-black font-semibold shadow-xs'
+                              : 'text-white/50 hover:text-white hover:bg-white/[0.04] font-medium'
+                          }`}
+                        >
+                          <span>{tab.label}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full tabular-nums leading-none ${
+                              isActive
+                                ? 'bg-black/15 text-black font-bold'
+                                : 'bg-white/[0.06] text-white/40'
+                            }`}
+                          >
+                            {tab.count}
                           </span>
-                          {item.changePct && (
-                            <span
-                              className={`text-[10px] font-medium ${
-                                item.isUp ? 'text-profit-num' : 'text-loss-num'
-                              }`}
-                            >
-                              {item.changePct}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-            {/* Footer */}
-            <div className="px-4 sm:px-5 py-2.5 border-t border-white/[0.06] bg-black flex items-center justify-between text-[11px] text-white/40 font-sans">
-              <div className="hidden sm:flex items-center gap-3">
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↑↓</kbd>
-                  <span>{locale === 'ar' ? 'تنقل' : 'navigate'}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↵</kbd>
-                  <span>{locale === 'ar' ? 'اختيار' : 'select'}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Tab</kbd>
-                  <span>{locale === 'ar' ? 'تصفية' : 'filter'}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Esc</kbd>
-                  <span>{locale === 'ar' ? 'إغلاق' : 'close'}</span>
-                </span>
-              </div>
-              <span className="sm:hidden text-[10px] text-white/40">
-                {locale === 'ar' ? 'اضغط على السهم لعرض الرسم البياني' : 'Tap ticker to view chart'}
-              </span>
-              <span className="text-[11px] text-white/30 hidden sm:inline">
-                {activeTab === 'funds'
-                  ? (locale === 'ar' ? 'صناديق الاستثمار' : 'Mutual Funds')
-                  : activeTab === 'metals'
-                  ? (locale === 'ar' ? 'المعادن الثمينة' : 'Precious Metals')
-                  : activeTab === 'stocks'
-                  ? (locale === 'ar' ? 'أسهم البورصة المصرية' : 'EGX Listed Equities')
-                  : (locale === 'ar' ? 'جميع الأسواق' : 'All Markets')}
-              </span>
+                  {/* Status info */}
+                  <div className="text-[11px] text-white/40 font-medium tabular-nums hidden sm:block shrink-0">
+                    <span>
+                      {activeTab === 'funds'
+                        ? (locale === 'ar' ? `${searchResults.length} صندوق` : `${searchResults.length} funds`)
+                        : activeTab === 'metals'
+                        ? (locale === 'ar' ? `${searchResults.length} أصل معادن` : `${searchResults.length} metals`)
+                        : activeTab === 'stocks'
+                        ? (locale === 'ar' ? `${searchResults.length} سهم` : `${searchResults.length} stocks`)
+                        : (locale === 'ar' ? `${searchResults.length} أداة مالية` : `${searchResults.length} instruments`)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Results List */}
+                <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar py-1 divide-y divide-white/[0.03]">
+                  {searchResults.length === 0 ? (
+                    <div className="py-16 px-4 text-center flex flex-col items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3 text-white/40">
+                        <Search size={20} />
+                      </div>
+                      <p className="text-white/80 text-sm font-semibold">
+                        {locale === 'ar'
+                          ? `لم يتم العثور على أي ${activeTab === 'funds' ? 'صناديق' : activeTab === 'metals' ? 'معادن' : activeTab === 'stocks' ? 'أسهم' : 'أدوات مالية'}`
+                          : `No matching ${activeTab === 'funds' ? 'funds' : activeTab === 'metals' ? 'metals' : activeTab === 'stocks' ? 'stocks' : 'instruments'} found`}
+                      </p>
+                      <p className="text-white/40 text-xs mt-1.5 max-w-xs leading-relaxed">
+                        {locale === 'ar'
+                          ? 'جرب البحث برمز أو اسم شركة مختلف، أو قم باختيار تبويب آخر.'
+                          : 'Try searching with a different ticker, name, or change the filter tab.'}
+                      </p>
+                    </div>
+                  ) : (
+                    searchResults.map((item, index) => {
+                      const isSelected = item.symbol === symbol;
+                      const isFocused = index === focusedIndex;
+                      const itemDisplay = item.symbol.replace('.CA', '');
+                      const isMetal = isMetalItem(item);
+                      const isFund = isFundItem(item);
+
+                      return (
+                        <div
+                          key={item.symbol}
+                          onClick={() => handleSelectTicker(item.symbol)}
+                          onMouseEnter={() => setFocusedIndex(index)}
+                          className={`flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-3 cursor-pointer transition-colors active:bg-white/[0.08] min-h-[58px] sm:min-h-[52px] ${
+                            isSelected
+                              ? 'bg-white/[0.08] text-white font-medium'
+                              : isFocused
+                              ? 'bg-white/[0.04] text-white'
+                              : 'hover:bg-white/[0.03] text-text-primary'
+                          }`}
+                        >
+                          {/* Left: Avatar/Logo + Symbol + Type Badge + Sector + Company Name */}
+                          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 pr-3">
+                            <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+                              {item.logoUrl ? (
+                                <img
+                                  src={item.logoUrl}
+                                  alt={item.symbol}
+                                  className="ticker-logo-image ticker-logo-fill"
+                                />
+                              ) : (
+                                <span className="text-[11px] sm:text-[10px] font-bold text-white/75 font-sans">
+                                  {itemDisplay.substring(0, 2)}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex flex-col gap-0.5">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`text-sm sm:text-[13px] font-bold font-sans tracking-tight ${
+                                    isSelected ? 'text-white' : 'text-white/95'
+                                  }`}
+                                >
+                                  {itemDisplay}
+                                </span>
+
+                                {isMetal ? (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-amber-400/10 text-amber-300 border border-amber-400/25 shrink-0 font-sans">
+                                    {locale === 'ar' ? 'معدن' : 'Metal'}
+                                  </span>
+                                ) : isFund ? (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase bg-cyan-400/10 text-cyan-300 border border-cyan-400/25 shrink-0 font-sans">
+                                    {locale === 'ar' ? 'صندوق' : 'Fund'}
+                                  </span>
+                                ) : (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wider uppercase bg-white/[0.05] text-white/50 border border-white/[0.08] shrink-0 font-sans">
+                                    {locale === 'ar' ? 'سهم' : 'Stock'}
+                                  </span>
+                                )}
+
+                                {item.sector && (
+                                  <span className="hidden sm:inline text-[11px] text-white/40 truncate font-sans">
+                                    · {localizeSectorName(item.sector, locale)}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="text-xs sm:text-[11px] text-white/50 truncate max-w-[200px] sm:max-w-[340px] font-sans">
+                                {item.companyName}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Price + Change % */}
+                          <div className="flex items-center gap-2.5 shrink-0 font-sans tabular-nums text-right">
+                            <div className="flex flex-col items-end">
+                              <span className="text-sm sm:text-[13px] font-bold text-white">
+                                {item.price}{' '}
+                                <span className="text-[10px] text-white/40 font-normal">
+                                  {item.currency ? (item.currency === 'EGP' && locale === 'ar' ? 'ج.م' : item.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
+                                </span>
+                              </span>
+                              {item.changePct && (
+                                <span
+                                  className={`text-[11px] sm:text-[10px] font-semibold mt-0.5 ${
+                                    item.isUp ? 'text-profit-num' : 'text-loss-num'
+                                  }`}
+                                >
+                                  {item.changePct}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-4 sm:px-5 py-3 sm:py-2.5 border-t border-white/[0.08] bg-black flex items-center justify-between text-[11px] text-white/40 font-sans shrink-0 pb-[max(1rem,calc(var(--ticknal-safe-area-bottom)+0.75rem))]">
+                  <div className="hidden sm:flex items-center gap-3">
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↑↓</kbd>
+                      <span>{locale === 'ar' ? 'تنقل' : 'navigate'}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↵</kbd>
+                      <span>{locale === 'ar' ? 'اختيار' : 'select'}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Tab</kbd>
+                      <span>{locale === 'ar' ? 'تصفية' : 'filter'}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Esc</kbd>
+                      <span>{locale === 'ar' ? 'إغلاق' : 'close'}</span>
+                    </span>
+                  </div>
+                  <span className="sm:hidden text-xs text-white/50 font-medium">
+                    {locale === 'ar' ? 'اضغط على أي أصل لعرض الرسم البياني' : 'Tap any ticker to open chart'}
+                  </span>
+                  <span className="text-[11px] text-white/30 hidden sm:inline">
+                    {activeTab === 'funds'
+                      ? (locale === 'ar' ? 'صناديق الاستثمار' : 'Mutual Funds')
+                      : activeTab === 'metals'
+                      ? (locale === 'ar' ? 'المعادن الثمينة' : 'Precious Metals')
+                      : activeTab === 'stocks'
+                      ? (locale === 'ar' ? 'أسهم البورصة المصرية' : 'EGX Listed Equities')
+                      : (locale === 'ar' ? 'جميع الأسواق' : 'All Markets')}
+                  </span>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </div>,
+          )}
+        </AnimatePresence>,
         document.body
       )}
     </div>
