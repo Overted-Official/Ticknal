@@ -75,6 +75,7 @@ export interface SocialButtonProps {
   title?: string;
   shareCount?: number;
   variant?: 'compact' | 'default';
+  iconOnly?: boolean;
 }
 
 export default function SocialButton({
@@ -83,6 +84,7 @@ export default function SocialButton({
   title,
   shareCount,
   variant = 'compact',
+  iconOnly = false,
 }: SocialButtonProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -135,7 +137,15 @@ export default function SocialButton({
   const isCompact = variant === 'compact';
 
   // Crisp dimensions
-  const collapsedWidth = isCompact ? (typeof shareCount === 'number' ? 52 : 72) : 120;
+  const collapsedWidth = isCompact
+    ? iconOnly
+      ? 28
+      : typeof shareCount === 'number'
+      ? 52
+      : 72
+    : iconOnly
+    ? 48
+    : 120;
   const expandedWidth = isCompact ? 154 : 210;
   const height = isCompact ? 28 : 48;
 
@@ -170,7 +180,10 @@ export default function SocialButton({
           {!isExpanded ? (
             <motion.div
               key="share-collapsed"
-              className="w-full h-full flex items-center justify-center gap-1.5 px-2.5"
+              className={cn(
+                'w-full h-full flex items-center justify-center',
+                iconOnly ? 'px-0' : 'gap-1.5 px-2.5'
+              )}
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.85 }}
@@ -182,14 +195,16 @@ export default function SocialButton({
                   isCompact ? 'text-zinc-300 shrink-0' : 'h-4 w-4 shrink-0'
                 )}
               />
-              <span
-                className={cn(
-                  'font-medium text-white tabular-nums select-none',
-                  isCompact ? 'text-[11.5px]' : 'text-sm'
-                )}
-              >
-                {typeof shareCount === 'number' ? shareCount : 'Share'}
-              </span>
+              {!iconOnly && (
+                <span
+                  className={cn(
+                    'font-medium text-white tabular-nums select-none',
+                    isCompact ? 'text-[11.5px]' : 'text-sm'
+                  )}
+                >
+                  {typeof shareCount === 'number' ? shareCount : 'Share'}
+                </span>
+              )}
             </motion.div>
           ) : (
             <motion.div

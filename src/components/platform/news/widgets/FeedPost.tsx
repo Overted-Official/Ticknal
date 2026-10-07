@@ -10,9 +10,11 @@ import {
   Coins,
   TrendingUp,
   Layers,
+  Maximize2,
 } from '@/components/ui/icon-library';
 import { cn } from '@/lib/utils';
 import SocialButton from '@/components/ui/social-button';
+import NewsImageLightbox from './NewsImageLightbox';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 
 interface FeedPostProps {
@@ -238,15 +240,6 @@ function formatRelativeTime(isoString: string): string {
   }
 }
 
-function getDeterministicCount(id: string, base: number, variance: number): number {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash << 5) - hash + id.charCodeAt(i);
-    hash |= 0;
-  }
-  return base + Math.abs(hash % variance);
-}
-
 export default function FeedPost({
   item,
   onSelectTicker,
@@ -256,13 +249,7 @@ export default function FeedPost({
   const [postImageError, setPostImageError] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-
-  const baseLikeCount = React.useMemo(() => getDeterministicCount(item.id, 9, 15), [item.id]);
-  const baseSaveCount = React.useMemo(() => getDeterministicCount(item.id + '_s', 4, 10), [item.id]);
-  const shareCount = React.useMemo(() => getDeterministicCount(item.id + '_sh', 2, 6), [item.id]);
-
-  const likeCount = isLiked ? baseLikeCount + 1 : baseLikeCount;
-  const saveCount = isSaved ? baseSaveCount + 1 : baseSaveCount;
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const meta = resolveSourceMeta(item);
   const timeAgo = formatRelativeTime(item.publishedAt);
@@ -321,49 +308,53 @@ export default function FeedPost({
         {/* Right: Post stream content */}
         <div className="flex-1 min-w-0">
           {/* Post Header Row */}
-          <div className="flex items-center justify-between gap-1.5 min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0 truncate">
-              {/* Display Name */}
-              <span className="font-medium text-white text-[12.5px] truncate">
-                {meta.name}
-              </span>
+          <div className="flex items-start sm:items-center justify-between gap-2 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 min-w-0">
+              {/* Display Name & Verified Blue Badge */}
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="font-semibold text-white text-[13px] sm:text-[12.5px] truncate">
+                  {meta.name}
+                </span>
 
-              {/* Verified Blue Badge */}
-              {meta.verified && (
-                <svg
-                  viewBox="0 0 22 22"
-                  aria-label="Verified"
-                  className="w-3 h-3 text-[#1d9bf0] fill-current shrink-0"
+                {meta.verified && (
+                  <svg
+                    viewBox="0 0 22 22"
+                    aria-label="Verified"
+                    className="w-3.5 h-3.5 text-[#1d9bf0] fill-current shrink-0"
+                  >
+                    <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.136 2.136 5.477-5.477 1.294 1.294-6.771 6.777z" />
+                  </svg>
+                )}
+              </div>
+
+              {/* Handle + Timestamp (below name on phone, inline on desktop) */}
+              <div className="flex items-center gap-1.5 text-zinc-500 text-[11.5px] sm:text-[12px] font-normal">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectTicker?.(meta.handle.replace(/^@/, ''));
+                  }}
+                  className="text-zinc-500 hover:text-[#1d9bf0] truncate cursor-pointer transition-colors"
+                  title={`Filter by ${meta.handle}`}
                 >
-                  <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.136 2.136 5.477-5.477 1.294 1.294-6.771 6.777z" />
-                </svg>
-              )}
+                  {meta.handle}
+                </button>
 
-              {/* Ticker / Symbol Handle (@COMI) */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectTicker?.(meta.handle.replace(/^@/, ''));
-                }}
-                className="text-zinc-500 hover:text-[#1d9bf0] text-[12px] truncate font-normal cursor-pointer transition-colors"
-                title={`Filter by ${meta.handle}`}
-              >
-                {meta.handle}
-              </button>
+                <span className="text-zinc-600 text-[11px]">·</span>
 
-              <span className="text-zinc-600 text-[11px]">·</span>
-
-              {/* Timestamp */}
-              <time className="text-zinc-500 text-[11.5px] tabular-nums shrink-0 font-normal">
-                {timeAgo}
-              </time>
+                <time className="text-zinc-500 tabular-nums shrink-0 font-normal">
+                  {timeAgo}
+                </time>
+              </div>
             </div>
 
-            {/* Quiet Category Pill on far right */}
-            <span className="text-[10px] text-zinc-400 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] font-normal shrink-0">
-              {item.categoryLabel}
-            </span>
+            {/* Category Pill: Completely removed for The Ticknal Take */}
+            {!meta.isTicknalTake && item.categoryLabel !== 'The Ticknal Take' && item.categoryLabel && (
+              <span className="text-[10px] text-zinc-400 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] font-normal shrink-0">
+                {item.categoryLabel}
+              </span>
+            )}
           </div>
 
           {/* Unified Post Body: All in 12px font size, smaller weight, no title/body split */}
@@ -371,71 +362,97 @@ export default function FeedPost({
             {postText}
           </p>
 
-          {/* Attached Full-Width Media Card (if image exists) */}
+          {/* Attached Full-Width Media Card (if image exists) with Click-to-Zoom Lightbox */}
           {item.imageUrl && !postImageError && (
-            <div className="mt-3.5 rounded-xl overflow-hidden border border-white/[0.08] bg-black max-h-[360px] w-full flex items-center justify-center">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLightboxOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsLightboxOpen(true);
+                }
+              }}
+              className="mt-3.5 rounded-xl overflow-hidden border border-white/[0.08] hover:border-white/20 bg-black max-h-[360px] w-full flex items-center justify-center relative cursor-zoom-in group/img transition-all"
+              title="Click to view chart in full screen"
+            >
               <img
                 src={item.imageUrl}
-                alt=""
-                className="w-full h-auto max-h-[360px] object-contain bg-black"
+                alt={item.title || 'Market Chart'}
+                className="w-full h-auto max-h-[360px] object-contain bg-black transition-transform duration-200 group-hover/img:scale-[1.01]"
                 loading="lazy"
                 onError={() => setPostImageError(true)}
               />
+
+              {/* Discreet view chart indicator */}
+              <div className="absolute bottom-2.5 right-2.5 px-2 py-1 rounded-md bg-black/75 backdrop-blur-sm border border-white/15 text-white/70 group-hover/img:text-white group-hover/img:bg-black/90 group-hover/img:border-white/30 text-[11px] font-sans flex items-center gap-1.5 transition-all opacity-80 group-hover/img:opacity-100 shadow-md pointer-events-none">
+                <Maximize2 size={12} className="text-white/80" />
+                <span className="hidden sm:inline">View chart</span>
+              </div>
             </div>
           )}
 
-          {/* Action Buttons Row: Styled as dark outline capsule buttons matching user reference image */}
-          <div className="mt-3.5 pt-2.5 border-t border-white/[0.04] flex items-center gap-2.5 flex-wrap">
-            {/* 1. Like Capsule Button (replaces Chart button) */}
+          {/* Fullscreen Interactive Lightbox Modal */}
+          {item.imageUrl && (
+            <NewsImageLightbox
+              isOpen={isLightboxOpen}
+              imageUrl={item.imageUrl}
+              title={item.title}
+              sourceName={meta.name}
+              onClose={() => setIsLightboxOpen(false)}
+            />
+          )}
+
+          {/* Action Buttons Row: Clean dark outline action buttons without fake reaction numbers */}
+          <div className="mt-3.5 pt-2.5 border-t border-white/[0.04] flex items-center gap-2 flex-wrap">
+            {/* 1. Like Action Button */}
             <button
               type="button"
               onClick={handleToggleLike}
               className={cn(
-                'h-7 px-2.5 rounded-[8px] border transition-all flex items-center gap-1.5 bg-black hover:bg-white/[0.06] cursor-pointer select-none',
+                'h-7 w-7 rounded-[8px] border transition-all flex items-center justify-center bg-black hover:bg-white/[0.06] cursor-pointer select-none',
                 isLiked
-                  ? 'border-rose-500/40 text-rose-400'
-                  : 'border-white/15 hover:border-white/30 text-white'
+                  ? 'border-rose-500/40 text-rose-400 bg-rose-500/10'
+                  : 'border-white/15 hover:border-white/30 text-zinc-300 hover:text-white'
               )}
               title={isLiked ? 'Unlike post' : 'Like post'}
             >
               <Heart
-                size={13}
+                size={13.5}
                 fill={isLiked ? 'currentColor' : 'none'}
                 className={isLiked ? 'text-rose-500 shrink-0' : 'text-zinc-300 shrink-0'}
               />
-              <span className="text-[11.5px] font-medium tabular-nums text-white">
-                {likeCount}
-              </span>
             </button>
 
-            {/* 2. Save Capsule Button */}
+            {/* 2. Save Action Button */}
             <button
               type="button"
               onClick={handleToggleSave}
               className={cn(
-                'h-7 px-2.5 rounded-[8px] border transition-all flex items-center gap-1.5 bg-black hover:bg-white/[0.06] cursor-pointer select-none',
+                'h-7 w-7 rounded-[8px] border transition-all flex items-center justify-center bg-black hover:bg-white/[0.06] cursor-pointer select-none',
                 isSaved
-                  ? 'border-amber-400/40 text-amber-400'
-                  : 'border-white/15 hover:border-white/30 text-white'
+                  ? 'border-amber-400/40 text-amber-400 bg-amber-400/10'
+                  : 'border-white/15 hover:border-white/30 text-zinc-300 hover:text-white'
               )}
               title={isSaved ? 'Remove bookmark' : 'Bookmark disclosure'}
             >
               <Bookmark
-                size={13}
+                size={13.5}
                 fill={isSaved ? 'currentColor' : 'none'}
                 className={isSaved ? 'text-amber-400 shrink-0' : 'text-zinc-300 shrink-0'}
               />
-              <span className="text-[11.5px] font-medium tabular-nums text-white">
-                {saveCount}
-              </span>
             </button>
 
-            {/* 3. Share Button: Animated Framer Motion SocialButton */}
+            {/* 3. Share Button: Animated Framer Motion SocialButton without fake counts */}
             <SocialButton
               variant="compact"
+              iconOnly
               url={itemUrl}
               title={item.title}
-              shareCount={shareCount}
             />
 
             {/* 4. Official Filing Capsule Button (if sourceUrl exists) */}
