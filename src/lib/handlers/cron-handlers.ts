@@ -1229,6 +1229,13 @@ export async function handleUpdateNews(req: Request) {
 
   try {
     const result = await syncExternalTradingViewNews();
+
+    try {
+      revalidatePath('/news');
+      revalidatePath('/home');
+      revalidatePath('/markets');
+    } catch {}
+
     await db.insert(systemLogs).values({
       source: 'cron-update-news',
       level: result.success ? 'INFO' : 'ERROR',

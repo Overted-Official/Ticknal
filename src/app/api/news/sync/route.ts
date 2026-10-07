@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { syncExternalTradingViewNews } from '@/lib/news/news-sync';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {

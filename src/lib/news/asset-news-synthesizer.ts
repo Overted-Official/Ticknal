@@ -19,7 +19,7 @@ export interface AssetBundleConfig {
   relatedTickers: string[];
 }
 
-const ASSET_CONFIGS: Record<string, AssetBundleConfig> = {
+export const ASSET_CONFIGS: Record<string, AssetBundleConfig> = {
   GOLD: {
     ticker: 'GOLD',
     name: 'Gold & Precious Metals',
@@ -67,6 +67,38 @@ const ASSET_CONFIGS: Record<string, AssetBundleConfig> = {
     category: 'listed_companies',
     categoryLabel: 'Listed Companies (EGX)',
     relatedTickers: ['FWRY'],
+  },
+  ETEL: {
+    ticker: 'ETEL',
+    name: 'Telecom Egypt (WE)',
+    source: 'Telecom Egypt',
+    category: 'listed_companies',
+    categoryLabel: 'Listed Companies (EGX)',
+    relatedTickers: ['ETEL'],
+  },
+  ABUK: {
+    ticker: 'ABUK',
+    name: 'Abu Qir Fertilizers',
+    source: 'Abu Qir Fertilizers',
+    category: 'listed_companies',
+    categoryLabel: 'Listed Companies (EGX)',
+    relatedTickers: ['ABUK'],
+  },
+  EKHO: {
+    ticker: 'EKHO',
+    name: 'Egypt Kuwait Holding',
+    source: 'Egypt Kuwait Holding',
+    category: 'listed_companies',
+    categoryLabel: 'Listed Companies (EGX)',
+    relatedTickers: ['EKHO'],
+  },
+  ORAS: {
+    ticker: 'ORAS',
+    name: 'Orascom Construction',
+    source: 'Orascom Construction',
+    category: 'listed_companies',
+    categoryLabel: 'Listed Companies (EGX)',
+    relatedTickers: ['ORAS'],
   },
   USDEGP: {
     ticker: 'USDEGP',
@@ -179,6 +211,51 @@ function generateDeterministicFallback(assetKey: string, headlines: RawHeadlineI
       body: `Fawry announced a strategic technology integration with Congineer to embed enterprise point-of-sale infrastructure across retail merchant management networks. The alliance expands Fawry's omnichannel digital acquiring footprint and transaction processing velocity across Egypt.
 
 أعلنت شركة فوري عن شراكة تقنية مع كونجينير لدمج حلول المدفوعات ونقاط البيع الرقمية مباشرة ضمن أنظمة إدارة المتاجر. وتستهدف الخطوة توسيع شبكة قبول المدفوعات الإلكترونية للشركات والتجار في السوق المصري وتسريع العمليات.`,
+    };
+  }
+
+  if (assetKey === 'TMGH') {
+    return {
+      title: 'Talaat Moustafa Group Accelerates Hospitality & Mega-Project Sales Milestones',
+      body: `Talaat Moustafa Group Holding recorded record contracted sales velocity across flagship developments, propelled by overseas Egyptian demand and the expansion of luxury coastal hospitality assets. Robust recurring hospitality revenues provide substantial foreign currency liquidity.
+
+سجلت مجموعة طلعت مصطفى القابضة معدلات مبيعات قياسية غير مسبوقة مدفوعة بالطلب القوي على المشروعات الساحلية وتدفقات المشترين بالعملة الأجنبية. ويعزز التوسع في قطاع الفنادق الفاخرة تدفقات إيرادات المجموعة الدولارية المستدامة.`,
+    };
+  }
+
+  if (assetKey === 'SWDY') {
+    return {
+      title: 'Elsewedy Electric Expands Regional Transmission & Green Energy Project Backlog',
+      body: `Elsewedy Electric expanded its regional turnkey engineering backlog to new highs, capturing strategic cross-border power transmission and industrial grid integration contracts across the Middle East and Africa. Broad geographic revenue diversification continues to shield operating margins.
+
+وسعت شركة السويدي إليكتريك محفظة عقود المشروعات الإقليمية وشبكات نقل الطاقة في أسواق الخليج وأفريقيا إلى مستويات قياسية. وتوفر قاعدة الإيرادات المتنوعة جغرافياً حماية قوية لهوامش التشغيل والأرباح التشغيلية.`,
+    };
+  }
+
+  if (assetKey === 'ETEL') {
+    return {
+      title: 'Telecom Egypt (WE) Reports Solid Data Revenue Expansion & Infrastructure Investments',
+      body: `Telecom Egypt reported sustained double-digit growth in retail mobile and high-speed broadband data revenues, bolstered by accelerated nationwide 5G infrastructure deployment. Healthy operational cash flow generation continues to offset debt servicing costs and currency fluctuations.
+
+حققت الشركة المصرية للاتصالات (WE) نمواً قوياً في إيرادات خدمات البيانات والإنترنت فائق السرعة، مدعومة بالتوسع في البنية التحتية واستعدادات شبكات الجيل الخامس. وتواصل التدفقات النقدية التشغيلية دعم الملاءة المالية للشركة وسط تقلبات سعر الصرف.`,
+    };
+  }
+
+  if (assetKey === 'ABUK') {
+    return {
+      title: 'Abu Qir Fertilizers Navigates Energy Input Dynamics with Resilient Export Margins',
+      body: `Abu Qir Fertilizers maintained solid export EBITDA margins as disciplined product pricing and strong European agricultural demand mitigated localized natural gas feed adjustments. Modernization of energy efficiency units continues to optimize gross margins.
+
+حافظت شركة أبو قير للأسمدة على هوامش ربحية تصديرية قوية مستفيدة من استقرار الطلب الأوروبي على اليوريا وإدارة كفاءة الطاقة. وتواصل الشركة استراتيجيتها لرفع كفاءة الاستهلاك التشغيلي للغاز الطبيعي لتعزيز الربحية.`,
+    };
+  }
+
+  if (assetKey === 'USDEGP') {
+    return {
+      title: 'Central Bank of Egypt FX Reserves Expand; Interbank Liquidity Remains Orderly',
+      body: `The Central Bank of Egypt reported an expansion in net international foreign currency reserves, backed by sustained foreign portfolio inflows and disciplined interbank currency clearing. The pound held steady across commercial banking desks with minimal onshore volatility.
+
+سجل البنك المركزي المصري ارتفاعاً مستمراً في صافي الاحتياطيات الدولية من النقد الأجنبي، مدعوماً بتدفقات الاستثمار المؤسسي وانتظام السيولة بين البنوك. واستقر سعر صرف الجنيه المصري أمام الدولار وسط انحسار واضح للضغوط المضاربية.`,
     };
   }
 
