@@ -102,7 +102,7 @@ export default function NewsFilterSidebar({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={locale === 'ar' ? 'بحث في الأخبار...' : 'Search wire or ticker...'}
+            placeholder={locale === 'ar' ? 'بحث في الأخبار...' : 'Search news or ticker...'}
             className="w-full pl-7 pr-6 py-1.5 text-[11px] rounded-lg bg-white/[0.04] border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#1d9bf0] transition-colors"
           />
           {searchQuery && (

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { RefreshCw, Search } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import NewsFloatingNav, { type NewsFloatingCategory } from './NewsFloatingNav';
@@ -30,6 +31,9 @@ export default function NewsPageView() {
   const { isGuest } = useGuestGuard();
   const { isNavVisible } = useMobileNavScroll();
 
+  const searchParams = useSearchParams();
+  const targetItemId = searchParams?.get('item') || searchParams?.get('id') || null;
+
   // Filter State
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
@@ -40,11 +44,12 @@ export default function NewsPageView() {
   const [proModalFeature, setProModalFeature] = useState('News Bookmarking');
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // SWR Query for Live Market Wire from Database API
+  // SWR Query for Live News from Database API
   const queryParams = new URLSearchParams();
   if (activeCategory && activeCategory !== 'all') queryParams.set('category', activeCategory);
   if (selectedTicker) queryParams.set('ticker', selectedTicker);
   if (searchQuery.trim()) queryParams.set('q', searchQuery.trim());
+  if (targetItemId) queryParams.set('item', targetItemId);
 
   const { data, isLoading, mutate } = useSWR<NewsApiResponse>(
     `/api/news?${queryParams.toString()}`,
@@ -57,10 +62,22 @@ export default function NewsPageView() {
 
   const items = data?.items || [];
 
+  // Smooth-scroll and highlight target post when arriving from shared link (?item=...)
+  useEffect(() => {
+    if (!targetItemId || isLoading || items.length === 0) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(targetItemId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [targetItemId, isLoading, items]);
+
   const floatingCategories: NewsFloatingCategory[] = [
     {
       id: 'all',
-      label: locale === 'ar' ? 'كل الأخبار' : 'All Wire',
+      label: locale === 'ar' ? 'كل الأخبار' : 'All News',
       shortLabel: locale === 'ar' ? 'الكل' : 'All',
       count: data?.categories?.find((c) => c.id === 'all')?.count ?? items.length,
     },
@@ -99,7 +116,7 @@ export default function NewsPageView() {
   const sidebarCategories = [
     {
       id: 'all',
-      label: locale === 'ar' ? 'كل الأخبار' : 'All Wire',
+      label: locale === 'ar' ? 'كل الأخبار' : 'All News',
       count: data?.categories?.find((c) => c.id === 'all')?.count ?? items.length,
     },
     {
@@ -173,7 +190,7 @@ export default function NewsPageView() {
           </Link>
           <span className="text-zinc-600">/</span>
           <h1 className="font-semibold text-white">
-            {locale === 'ar' ? 'الأخبار والإفصاحات' : 'Market Wire'}
+            {locale === 'ar' ? 'الأخبار' : 'News'}
           </h1>
         </div>
 
@@ -183,10 +200,10 @@ export default function NewsPageView() {
             onClick={handleRefreshWire}
             disabled={isLoading || isSyncing}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
-            title={locale === 'ar' ? 'تحديث الأخبار' : 'Refresh wire'}
+            title={locale === 'ar' ? 'تحديث الأخبار' : 'Refresh news'}
           >
             {isLoading || isSyncing ? (
-              <InlineSpinner className="h-3.5 w-3.5" label="Refreshing wire" />
+              <InlineSpinner className="h-3.5 w-3.5" label="Refreshing news" />
             ) : (
               <RefreshCw size={14} />
             )}
@@ -206,7 +223,7 @@ export default function NewsPageView() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              {locale === 'ar' ? 'نبض وأخبار السوق' : 'Market Wire'}
+              {locale === 'ar' ? 'الأخبار' : 'News'}
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
               {locale === 'ar'
@@ -222,7 +239,7 @@ export default function NewsPageView() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={locale === 'ar' ? 'بحث في الأخبار أو الأسهم...' : 'Search wire or ticker...'}
+              placeholder={locale === 'ar' ? 'بحث في الأخبار أو الأسهم...' : 'Search news or ticker...'}
               className="w-full pl-8 pr-7 py-1.5 text-xs rounded-full bg-white/[0.05] border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 transition-all"
             />
             {searchQuery && (
@@ -307,6 +324,7 @@ export default function NewsPageView() {
           <NewsFeedTimeline
             items={items}
             isLoading={isLoading}
+            targetItemId={targetItemId}
             onSelectTicker={handleSelectTicker}
             onBookmarkClick={handleTriggerPro}
             onResetFilters={handleResetFilters}
@@ -315,7 +333,7 @@ export default function NewsPageView() {
       </div>
 
       {/* Full-width Glassy Conversion Mini-Docker */}
-      <GuestConversionBanner currentFeature="Market Wire Feed" />
+      <GuestConversionBanner currentFeature="News Feed" />
 
       {/* Pro Lock Modal */}
       <GuestProLockModal

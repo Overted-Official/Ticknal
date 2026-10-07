@@ -38,6 +38,7 @@ export interface NewsQueryFilters {
   category?: string;
   ticker?: string;
   query?: string;
+  itemId?: string;
   limit?: number;
   offset?: number;
 }
@@ -93,7 +94,7 @@ export async function ensureMarketNewsTable(): Promise<void> {
 export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   await ensureMarketNewsTable();
 
-  const { category, ticker, query, limit = 50, offset = 0 } = filters;
+  const { category, ticker, query, itemId, limit = 50, offset = 0 } = filters;
 
   // Query all news items ordered by publication timestamp descending
   const rows = await db
@@ -155,6 +156,13 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
         tickersArr.some((t) => String(t).toLowerCase().replace(/^[@$]/, '').includes(cleanQuery))
       );
     });
+  }
+
+  if (itemId) {
+    const targetItem = rows.find((r) => r.id === itemId);
+    if (targetItem) {
+      filtered = [targetItem, ...filtered.filter((r) => r.id !== itemId)];
+    }
   }
 
   const paginated = filtered.slice(offset, offset + limit);

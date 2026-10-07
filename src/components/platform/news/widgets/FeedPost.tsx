@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Heart,
   Bookmark,
@@ -20,6 +20,7 @@ import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 
 interface FeedPostProps {
   item: MarketNewsItemDTO;
+  isTargetItem?: boolean;
   onSelectTicker?: (ticker: string) => void;
   onBookmarkClick?: (feature: string) => void;
 }
@@ -274,6 +275,7 @@ function parseBilingualContent(rawText: string): { en: string; ar: string; hasBo
 
 export default function FeedPost({
   item,
+  isTargetItem = false,
   onSelectTicker,
   onBookmarkClick,
 }: FeedPostProps) {
@@ -309,10 +311,14 @@ export default function FeedPost({
     textDir = 'ltr';
   }
 
-  const itemUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/news?item=${encodeURIComponent(item.id)}`
-      : `https://ticknal.com/news?item=${encodeURIComponent(item.id)}`;
+  const [origin, setOrigin] = useState('https://ticknal.com');
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
+  const itemUrl = `${origin}/news?item=${encodeURIComponent(item.id)}`;
 
   const handleToggleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -326,7 +332,16 @@ export default function FeedPost({
   };
 
   return (
-    <article className="p-4 sm:p-5 sm:py-4.5 border-b border-white/[0.06] transition-colors hover:bg-white/[0.02] font-sans select-none">
+    <article
+      id={item.id}
+      data-post-id={item.id}
+      className={cn(
+        'p-4 sm:p-5 sm:py-4.5 border-b border-white/[0.06] transition-colors font-sans select-none',
+        isTargetItem
+          ? 'bg-[#1d9bf0]/[0.05] ring-1 ring-[#1d9bf0]/40'
+          : 'hover:bg-white/[0.02]'
+      )}
+    >
       <div className="flex items-start gap-3 sm:gap-3.5">
         {/* Left: Scaled circular avatar (36px) with authentic Ticknal logo mark for Ticknal Take */}
         <div className="w-9 h-9 rounded-full overflow-hidden bg-black ring-1 ring-white/10 shrink-0 flex items-center justify-center">
@@ -396,12 +411,20 @@ export default function FeedPost({
               </div>
             </div>
 
-            {/* Category Pill: Completely removed for The Ticknal Take */}
-            {!meta.isTicknalTake && item.categoryLabel !== 'The Ticknal Take' && item.categoryLabel && (
-              <span className="text-[10px] text-zinc-400 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] font-normal shrink-0">
-                {item.categoryLabel}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isTargetItem && (
+                <span className="text-[10px] text-[#1d9bf0] bg-[#1d9bf0]/10 border border-[#1d9bf0]/25 px-1.5 py-0.5 rounded font-medium shrink-0">
+                  {locale === 'ar' ? 'منشور مشارك' : 'Shared Post'}
+                </span>
+              )}
+
+              {/* Category Pill: Completely removed for The Ticknal Take */}
+              {!meta.isTicknalTake && item.categoryLabel !== 'The Ticknal Take' && item.categoryLabel && (
+                <span className="text-[10px] text-zinc-400 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] font-normal shrink-0">
+                  {item.categoryLabel}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Unified Post Body with dynamic language resolution and zero cutoff */}
@@ -483,13 +506,13 @@ export default function FeedPost({
           )}
 
           {/* Action Buttons Row: Clean dark outline action buttons without fake reaction numbers */}
-          <div className="mt-3.5 pt-2.5 border-t border-white/[0.04] flex items-center gap-2 flex-wrap">
+          <div className="mt-3.5 pt-2.5 border-t border-white/[0.04] flex items-center gap-1.5 sm:gap-2 flex-nowrap">
             {/* 1. Like Action Button */}
             <button
               type="button"
               onClick={handleToggleLike}
               className={cn(
-                'h-7 w-7 rounded-[8px] border transition-all flex items-center justify-center bg-black hover:bg-white/[0.06] cursor-pointer select-none',
+                'h-7 w-7 rounded-[8px] border transition-all flex items-center justify-center bg-black hover:bg-white/[0.06] cursor-pointer select-none shrink-0',
                 isLiked
                   ? 'border-rose-500/40 text-rose-400 bg-rose-500/10'
                   : 'border-white/15 hover:border-white/30 text-zinc-300 hover:text-white'
@@ -508,7 +531,7 @@ export default function FeedPost({
               type="button"
               onClick={handleToggleSave}
               className={cn(
-                'h-7 w-7 rounded-[8px] border transition-all flex items-center justify-center bg-black hover:bg-white/[0.06] cursor-pointer select-none',
+                'h-7 w-7 rounded-[8px] border transition-all flex items-center justify-center bg-black hover:bg-white/[0.06] cursor-pointer select-none shrink-0',
                 isSaved
                   ? 'border-amber-400/40 text-amber-400 bg-amber-400/10'
                   : 'border-white/15 hover:border-white/30 text-zinc-300 hover:text-white'
@@ -522,7 +545,7 @@ export default function FeedPost({
               />
             </button>
 
-            {/* 3. Share Button: Animated Framer Motion SocialButton without fake counts */}
+            {/* 3. Share Button: Animated Framer Motion SocialButton */}
             <SocialButton
               variant="compact"
               iconOnly
@@ -530,18 +553,18 @@ export default function FeedPost({
               title={item.title}
             />
 
-            {/* 4. Official Filing Capsule Button (if sourceUrl exists) */}
+            {/* 4. Official Filing Button: Icon-only on mobile (28x28), full text on desktop */}
             {item.sourceUrl && (
               <a
                 href={item.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="h-7 px-2.5 rounded-[8px] border border-white/15 bg-black hover:bg-white/[0.06] hover:border-white/30 transition-all flex items-center gap-1.5 text-white cursor-pointer select-none ml-auto"
+                className="h-7 w-7 sm:w-auto sm:px-2.5 rounded-[8px] border border-white/15 bg-black hover:bg-white/[0.06] hover:border-white/30 transition-all flex items-center justify-center sm:justify-start gap-1.5 text-white cursor-pointer select-none ml-auto shrink-0"
                 title="View official filing"
               >
                 <ExternalLink size={13} className="text-zinc-300 shrink-0" />
-                <span className="text-[11.5px] font-medium">Filing ↗</span>
+                <span className="hidden sm:inline text-[11.5px] font-medium">Filing ↗</span>
               </a>
             )}
           </div>

@@ -165,7 +165,7 @@ export default function LandingFooter() {
                     </li>
                     <li>
                       <Link href="/news" prefetch={false} className="hover:text-white transition-colors">
-                        {locale === 'ar' ? 'شريط الأخبار' : 'Market Wire'}
+                        {locale === 'ar' ? 'الأخبار' : 'News'}
                       </Link>
                     </li>
                   </ul>

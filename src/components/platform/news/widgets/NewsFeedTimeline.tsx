@@ -8,6 +8,7 @@ import { useTranslation } from '@/lib/i18n';
 interface NewsFeedTimelineProps {
   items: MarketNewsItemDTO[];
   isLoading: boolean;
+  targetItemId?: string | null;
   onSelectTicker: (ticker: string) => void;
   onBookmarkClick: (feature: string) => void;
   onResetFilters: () => void;
@@ -16,6 +17,7 @@ interface NewsFeedTimelineProps {
 export default function NewsFeedTimeline({
   items,
   isLoading,
+  targetItemId,
   onSelectTicker,
   onBookmarkClick,
   onResetFilters,
@@ -74,6 +76,7 @@ export default function NewsFeedTimeline({
         <FeedPost
           key={item.id}
           item={item}
+          isTargetItem={Boolean(targetItemId && item.id === targetItemId)}
           onSelectTicker={onSelectTicker}
           onBookmarkClick={onBookmarkClick}
         />

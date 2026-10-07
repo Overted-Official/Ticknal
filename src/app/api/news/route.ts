@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || undefined;
     const ticker = searchParams.get('ticker') || undefined;
     const query = searchParams.get('q') || undefined;
+    const itemId = searchParams.get('item') || searchParams.get('id') || undefined;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 50;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
 
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
       category,
       ticker,
       query,
+      itemId,
       limit,
       offset,
     });

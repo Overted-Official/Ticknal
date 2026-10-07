@@ -25,7 +25,7 @@ export default function NewsFloatingNav({
 
   return (
     <nav
-      aria-label="Market Wire Categories"
+      aria-label="News Categories"
       className="sticky top-0 z-30 w-full py-2.5 sm:py-3 px-3 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
     >
       <div className="w-full max-w-full min-w-0 flex items-center justify-center">
