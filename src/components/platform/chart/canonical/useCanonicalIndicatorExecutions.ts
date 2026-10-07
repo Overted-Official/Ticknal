@@ -43,7 +43,7 @@ export function useCanonicalIndicatorExecutions({
       localEvaluation = evaluateActiveIndicators(
         partitioned.local,
         frameState.frame,
-        new Date().toISOString(),
+        frameState.frame.meta.asOf,
       );
     } else {
       const state: CanonicalIndicatorViewState = frameState.status === 'loading'

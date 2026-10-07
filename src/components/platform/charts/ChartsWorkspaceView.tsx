@@ -43,7 +43,7 @@ export default function ChartsWorkspaceView({
   return (
     <div className="flex-1 h-full w-full min-w-0 flex flex-row overflow-hidden select-none relative">
       {/* Chart Canvas + Bottom Toolbar */}
-      <div className={`flex-1 flex flex-col min-w-0 relative h-full overflow-hidden ${isGuest ? 'pb-[108px] md:pb-14' : 'pb-14 md:pb-0'}`}>
+      <div className="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
         <ChartWorkspace
           key={`${symbol}-${timeframe}`}
           data={chartData}
@@ -66,7 +66,7 @@ export default function ChartsWorkspaceView({
       </div>
 
       {/* Right Sidebar */}
-      <div className={`hidden lg:flex h-full shrink-0 ${isGuest ? 'pb-13 sm:pb-14' : ''}`}>
+      <div className="hidden lg:flex h-full shrink-0">
         <RightSidebar
           watchlist={watchlist}
           selectedSymbol={symbol}

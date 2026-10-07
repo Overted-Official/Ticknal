@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { useGuestGuard } from '@/context/GuestGuardContext';
@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { isNativePlatform } from '@/lib/native/capacitor-bridge';
 import { Browser } from '@capacitor/browser';
 import InlineSpinner from '@/components/ui/InlineSpinner';
+import { X } from '@/components/ui/icon-library';
 
 interface GuestConversionBannerProps {
   currentFeature?: string;
@@ -29,6 +30,26 @@ export default function GuestConversionBanner({
   const { isGuest, isLoading } = useGuestGuard();
   const { isNavVisible } = useMobileNavScroll();
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && sessionStorage.getItem('ticknal_guest_banner_dismissed') === 'true') {
+        setIsDismissed(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    setIsDismissed(true);
+    try {
+      sessionStorage.setItem('ticknal_guest_banner_dismissed', 'true');
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const isChartRoute = pathname === '/charts' || pathname.startsWith('/charts/');
   const isBottomNavVisible = isChartRoute || isNavVisible;
@@ -112,7 +133,7 @@ export default function GuestConversionBanner({
   }, [pathname, router]);
 
   // Only render for unauthenticated guest visitors once auth state has resolved
-  if (isLoading || !isGuest) return null;
+  if (isLoading || !isGuest || isDismissed) return null;
 
   return (
     <aside
@@ -127,11 +148,21 @@ export default function GuestConversionBanner({
         {/* 1. Upper Fading Gradient: Smoothly dissolves background content into pure black */}
         <div
           aria-hidden="true"
-          className="w-full h-20 sm:h-28 bg-gradient-to-t from-black via-black/85 to-transparent pointer-events-none"
+          className="w-full h-16 sm:h-24 bg-gradient-to-t from-black via-black/85 to-transparent pointer-events-none"
         />
 
         {/* 2. Solid Pure Black Call To Action Section */}
-        <div className="w-full bg-black px-4 pt-1 pb-6 sm:pb-8 flex flex-col items-center justify-center text-center">
+        <div className="relative w-full bg-black px-4 pt-1.5 pb-5 sm:pb-8 flex flex-col items-center justify-center text-center">
+          {/* Dismiss Close Button */}
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="Dismiss banner"
+            className="absolute top-2 end-3 sm:end-6 p-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer rounded-full hover:bg-white/10"
+          >
+            <X size={16} />
+          </button>
+
           {/* Main Title */}
           <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
             {displayTitle}

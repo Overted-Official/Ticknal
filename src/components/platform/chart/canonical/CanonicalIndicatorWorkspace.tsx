@@ -75,7 +75,40 @@ export default function CanonicalIndicatorWorkspace({
     return [{ instanceId: selection.instanceId, name: entry?.name[locale] ?? selection.definitionId, message }];
   }), [locale, selections, states]);
 
-  useEffect(() => onStatesChange(states), [onStatesChange, states]);
+  const prevStatesRef = useRef<Readonly<Record<string, CanonicalIndicatorViewState>>>({});
+
+  useEffect(() => {
+    const prev = prevStatesRef.current;
+    const prevKeys = Object.keys(prev);
+    const newKeys = Object.keys(states);
+
+    let isDifferent = prevKeys.length !== newKeys.length;
+    if (!isDifferent) {
+      for (const k of newKeys) {
+        const a = prev[k];
+        const b = states[k];
+        if (!a || !b) {
+          isDifferent = true;
+          break;
+        }
+        if (
+          a.status !== b.status ||
+          a.message !== b.message ||
+          a.provisional !== b.provisional ||
+          a.asOf !== b.asOf ||
+          a.diagnostics?.length !== b.diagnostics?.length
+        ) {
+          isDifferent = true;
+          break;
+        }
+      }
+    }
+
+    if (isDifferent) {
+      prevStatesRef.current = states;
+      onStatesChange(states);
+    }
+  }, [onStatesChange, states]);
 
   useEffect(() => {
     if (!mainChart || !mainSeries) return;

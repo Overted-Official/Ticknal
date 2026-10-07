@@ -342,69 +342,71 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Mobile Floating Action Buttons (Positioned safely above the bottom tab bar) */}
-      <div
-        className={`fixed ${
-          isGuest
-            ? 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+56px+12px)]'
-            : 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+16px)]'
-        } right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
-          isNavVisible
-            ? 'translate-y-0 opacity-100 pointer-events-auto'
-            : 'translate-y-16 opacity-0 pointer-events-none'
-        }`}
-        aria-label="Mobile Quick Actions"
-      >
-        {/* 1. Alerts & Notifications Button (44x44) */}
-        <motion.button
-          type="button"
-          onClick={(e) => {
-            if (isGuest) {
-              requireAuth(e, 'Live Market Notifications', 'Unlock Live Market Alerts');
-              return;
-            }
-            setIsNotificationsOpen(true);
-          }}
-          whileHover={controlHover}
-          whileTap={controlTap}
-          className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
-          title="Trade Notifications & Alerts"
+      {/* Mobile Floating Action Buttons (Positioned safely above the bottom tab bar - hidden on chart view to give full canvas to chart controls and price scale) */}
+      {!isChartRoute && (
+        <div
+          className={`fixed ${
+            isGuest
+              ? 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+56px+12px)]'
+              : 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+16px)]'
+          } right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
+            isNavVisible
+              ? 'translate-y-0 opacity-100 pointer-events-auto'
+              : 'translate-y-16 opacity-0 pointer-events-none'
+          }`}
+          aria-label="Mobile Quick Actions"
         >
-          <Bell size={20} strokeWidth={1.8} className="text-white" />
-          {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-black">
-              {notificationCount > 9 ? '9+' : notificationCount}
-            </span>
-          )}
-        </motion.button>
+          {/* 1. Alerts & Notifications Button (44x44) */}
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              if (isGuest) {
+                requireAuth(e, 'Live Market Notifications', 'Unlock Live Market Alerts');
+                return;
+              }
+              setIsNotificationsOpen(true);
+            }}
+            whileHover={controlHover}
+            whileTap={controlTap}
+            className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
+            title="Trade Notifications & Alerts"
+          >
+            <Bell size={20} strokeWidth={1.8} className="text-white" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-black">
+                {notificationCount > 9 ? '9+' : notificationCount}
+              </span>
+            )}
+          </motion.button>
 
-        {/* 2. Quick Add Position / Transaction Button (44x44) */}
-        <motion.button
-          type="button"
-          onClick={(e) => {
-            if (isGuest) {
-              requireAuth(
-                e,
-                'Portfolio Orders',
-                'Unlock Portfolio Trading',
-                'Create a free account to track buy & sell orders, sync cash balances, and monitor your realized gains.'
-              );
-              return;
-            }
-            setIsQuickAddOpen(true);
-          }}
-          whileHover={controlHover}
-          whileTap={controlTap}
-          className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all group"
-          title="Quick Add Position or Transaction"
-        >
-          <Plus size={22} strokeWidth={2.2} className="text-white group-hover:scale-110 transition-transform" />
-        </motion.button>
-      </div>
+          {/* 2. Quick Add Position / Transaction Button (44x44) */}
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              if (isGuest) {
+                requireAuth(
+                  e,
+                  'Portfolio Orders',
+                  'Unlock Portfolio Trading',
+                  'Create a free account to track buy & sell orders, sync cash balances, and monitor your realized gains.'
+                );
+                return;
+              }
+              setIsQuickAddOpen(true);
+            }}
+            whileHover={controlHover}
+            whileTap={controlTap}
+            className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all group"
+            title="Quick Add Position or Transaction"
+          >
+            <Plus size={22} strokeWidth={2.2} className="text-white group-hover:scale-110 transition-transform" />
+          </motion.button>
+        </div>
+      )}
 
       {/* Main Native Mobile Bottom Bar — Pure Black, Flawlessly Centered, Crisp Active States */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 md:hidden transition-transform duration-300 ease-out select-none ${
+        className={`fixed inset-x-0 bottom-0 z-50 md:hidden transition-transform duration-300 ease-out select-none ${
           isBottomNavVisible
             ? 'translate-y-0 pointer-events-auto'
             : 'translate-y-[calc(100%+1.5rem)] pointer-events-none'

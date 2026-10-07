@@ -103,6 +103,22 @@ export default function ChartWidget({
   const [canonicalIndicatorStates, setCanonicalIndicatorStates] = useState<
     Record<string, CanonicalIndicatorViewState>
   >({});
+
+  const handleCanonicalStatesChange = useCallback((newStates: Readonly<Record<string, CanonicalIndicatorViewState>>) => {
+    setCanonicalIndicatorStates((prev) => {
+      const prevKeys = Object.keys(prev);
+      const newKeys = Object.keys(newStates);
+      if (prevKeys.length !== newKeys.length) return newStates as Record<string, CanonicalIndicatorViewState>;
+      for (const k of newKeys) {
+        const a = prev[k];
+        const b = newStates[k];
+        if (!a || !b || a.status !== b.status || a.message !== b.message || a.asOf !== b.asOf) {
+          return newStates as Record<string, CanonicalIndicatorViewState>;
+        }
+      }
+      return prev;
+    });
+  }, []);
   const [positionsDrawerOpen, setPositionsDrawerOpen] = useState(false);
   const [positionsImgError, setPositionsImgError] = useState(false);
   const [isStrategyReportOpen, setIsStrategyReportOpen] = useState(false);
@@ -412,12 +428,12 @@ export default function ChartWidget({
         param.point.y < 0 ||
         param.point.y > container.clientHeight
       ) {
-        setHoveredCandle(null);
+        setHoveredCandle((prev) => (prev === null ? prev : null));
       } else {
         const timeStr = typeof param.time === 'string' ? param.time : String(param.time);
         const candle = (data || []).find((d) => d.time === timeStr);
         if (candle) {
-          setHoveredCandle(candle);
+          setHoveredCandle((prev) => (prev?.time === candle.time ? prev : candle));
         }
       }
     });
@@ -1169,7 +1185,7 @@ export default function ChartWidget({
         mainChart={chartRef.current}
         mainSeries={candlestickSeriesRef.current}
         seriesReadyKey={seriesReadyKey}
-        onStatesChange={setCanonicalIndicatorStates}
+        onStatesChange={handleCanonicalStatesChange}
         onUpdate={(instanceId, patch) => onUpdateCanonicalIndicator?.(instanceId, patch)}
         onRemove={(instanceId) => onRemoveCanonicalIndicator?.(instanceId)}
         onReorder={(instanceId, direction) => onReorderCanonicalIndicator?.(instanceId, direction)}
