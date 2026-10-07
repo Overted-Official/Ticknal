@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Heart,
   Bookmark,
@@ -13,6 +13,7 @@ import {
   Maximize2,
 } from '@/components/ui/icon-library';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 import SocialButton from '@/components/ui/social-button';
 import NewsImageLightbox from './NewsImageLightbox';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
@@ -240,27 +241,73 @@ function formatRelativeTime(isoString: string): string {
   }
 }
 
+function parseBilingualContent(rawText: string): { en: string; ar: string; hasBoth: boolean } {
+  if (!rawText) return { en: '', ar: '', hasBoth: false };
+
+  const paragraphs = rawText.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const arabicCharCount = (str: string) => (str.match(/[\u0600-\u06FF]/g) || []).length;
+  const latinCharCount = (str: string) => (str.match(/[a-zA-Z]/g) || []).length;
+
+  const arParagraphs: string[] = [];
+  const enParagraphs: string[] = [];
+
+  for (const p of paragraphs) {
+    const arCount = arabicCharCount(p);
+    const enCount = latinCharCount(p);
+
+    if (arCount > enCount) {
+      arParagraphs.push(p);
+    } else {
+      enParagraphs.push(p);
+    }
+  }
+
+  const en = enParagraphs.join('\n\n').trim();
+  const ar = arParagraphs.join('\n\n').trim();
+
+  return {
+    en,
+    ar,
+    hasBoth: Boolean(en && ar),
+  };
+}
+
 export default function FeedPost({
   item,
   onSelectTicker,
   onBookmarkClick,
 }: FeedPostProps) {
+  const { locale } = useTranslation();
   const [avatarError, setAvatarError] = useState(false);
   const [postImageError, setPostImageError] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [altLang, setAltLang] = useState(false);
 
   const meta = resolveSourceMeta(item);
   const timeAgo = formatRelativeTime(item.publishedAt);
   const primaryTicker = item.tickers?.[0]?.replace(/^[@$]/, '') || meta.handle.replace(/^@/, '');
 
-  // Unified single body text without title/body split, capped at 500 characters
+  // Parse bilingual content without artificial truncation
   const rawText = item.summary || item.title;
-  const postText =
-    rawText.length > 500
-      ? `${rawText.slice(0, 497)}...`
-      : rawText;
+  const { en, ar, hasBoth } = useMemo(() => parseBilingualContent(rawText), [rawText]);
+
+  // Determine active text and direction according to locale and user toggle
+  let displayText = rawText;
+  let textDir: 'ltr' | 'rtl' = 'ltr';
+
+  if (hasBoth) {
+    const showArabic = (locale === 'ar' && !altLang) || (locale !== 'ar' && altLang);
+    displayText = showArabic ? ar : en;
+    textDir = showArabic ? 'rtl' : 'ltr';
+  } else if (ar && !en) {
+    displayText = ar;
+    textDir = 'rtl';
+  } else if (en) {
+    displayText = en;
+    textDir = 'ltr';
+  }
 
   const itemUrl =
     typeof window !== 'undefined'
@@ -357,10 +404,38 @@ export default function FeedPost({
             )}
           </div>
 
-          {/* Unified Post Body: All in 12px font size, smaller weight, no title/body split */}
-          <p className="text-[12px] text-zinc-300 leading-[1.65] font-normal select-text mt-2 whitespace-pre-line" dir="auto">
-            {postText}
-          </p>
+          {/* Unified Post Body with dynamic language resolution and zero cutoff */}
+          <div className="mt-2 select-text font-sans">
+            <p
+              className="text-[12.5px] sm:text-[12px] text-zinc-300 leading-[1.65] font-normal whitespace-pre-line"
+              dir={textDir}
+            >
+              {displayText}
+            </p>
+
+            {hasBoth && (
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAltLang(!altLang);
+                  }}
+                  className="text-[11px] text-zinc-500 hover:text-[#1d9bf0] transition-colors cursor-pointer select-none inline-flex items-center gap-1"
+                >
+                  <span>
+                    {locale === 'ar'
+                      ? altLang
+                        ? '← العودة إلى العربية'
+                        : 'View in English →'
+                      : altLang
+                      ? '← View in English'
+                      : 'عرض بالعربية →'}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Attached Full-Width Media Card (if image exists) with Click-to-Zoom Lightbox */}
           {item.imageUrl && !postImageError && (
