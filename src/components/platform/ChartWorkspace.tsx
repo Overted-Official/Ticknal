@@ -21,6 +21,7 @@ import {
 } from '@/indicators/canonical/selection-state';
 import type { CanonicalIndicatorSelection } from '@/indicators/canonical/types';
 import type { CanonicalIndicatorSelectionPatch } from '@/components/platform/chart/types';
+import { stableChartWidgetKey } from '@/components/platform/chart/canonical/chart-integration-model';
 
 interface ChartWorkspaceProps {
   data: ChartData[];
@@ -300,13 +301,7 @@ export default function ChartWorkspace({
     window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
   }, [searchParams, pathname]);
 
-  const chartKey = [
-    symbol,
-    timeframe,
-    activeChartData.length,
-    activeChartData[0]?.time ?? 'none',
-    activeChartData[activeChartData.length - 1]?.time ?? 'none',
-  ].join(':');
+  const chartKey = stableChartWidgetKey(symbol, timeframe);
 
   const [metrics, setMetrics] = useState<Record<string, string> | null>(null);
   return (

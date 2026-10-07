@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { egxInvestorFlows } from '@/db/schema';
-import { desc, asc, gte } from 'drizzle-orm';
+import { egxInvestorFlows, dailyPrices } from '@/db/schema';
+import { desc, asc, gte, notInArray } from 'drizzle-orm';
+import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 
 export interface InvestorFlowDailyItem {
   date: string;
@@ -49,11 +50,37 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     else if (horizon === '1Y') limit = 250;
     else if (horizon === 'ALL') limit = 1000;
 
-    const rows = await db
+    let rows = await db
       .select()
       .from(egxInvestorFlows)
       .orderBy(desc(egxInvestorFlows.date))
       .limit(limit);
+
+    // Self-healing: Check if daily_prices has a newer trading session than egxInvestorFlows
+    try {
+      const latestDailyPrice = await db
+        .select({ date: dailyPrices.date })
+        .from(dailyPrices)
+        .where(notInArray(dailyPrices.tickerSymbol, ['EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SILVER']))
+        .orderBy(desc(dailyPrices.date))
+        .limit(1);
+
+      const latestPriceDate = latestDailyPrice[0]?.date ? String(latestDailyPrice[0].date) : null;
+      const latestFlowDate = rows[0]?.date ? String(rows[0].date) : null;
+
+      if (latestPriceDate && (!latestFlowDate || latestPriceDate > latestFlowDate)) {
+        const syncRes = await syncDailyInvestorFlows({ targetDate: latestPriceDate });
+        if (syncRes.success) {
+          rows = await db
+            .select()
+            .from(egxInvestorFlows)
+            .orderBy(desc(egxInvestorFlows.date))
+            .limit(limit);
+        }
+      }
+    } catch (selfHealErr) {
+      console.warn('On-demand investor flows self-healing sync warning:', selfHealErr);
+    }
 
     if (rows.length === 0) {
       return NextResponse.json({

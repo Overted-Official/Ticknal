@@ -1,10 +1,17 @@
 'use client';
 
 import React from 'react';
+import {
+  Trophy,
+  Clock,
+  BarChart3,
+  AlertTriangle,
+  Shield,
+} from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { useTranslation } from '@/lib/i18n';
-import { Trophy, Clock, BarChart3, AlertTriangle, Shield } from '@/components/ui/icon-library';
-import KPICard, { type KPICardProps } from './KPICard';
+import IndexPillRail from './IndexPillRail';
+import { type IndexPillProps } from './IndexPill';
 import { type OrderStats } from '../../homeInvestmentsTypes';
 
 interface TradingMetricsKPIRailProps {
@@ -26,28 +33,17 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
     return `${sign}${formatted}`;
   };
 
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const hasClosedTrades = orderStats.closedCount > 0;
   const winRate = orderStats.winRate;
   const displayWinRate = hasClosedTrades && winRate !== null ? `${winRate.toFixed(1)}` : '—';
-  const winRateBadge =
-    !hasClosedTrades || winRate === null
-      ? (locale === 'ar' ? 'لا توجد بيانات' : 'No data')
-      : winRate >= 60
-      ? (locale === 'ar' ? 'ممتاز' : 'Optimal')
-      : winRate >= 50
-      ? (locale === 'ar' ? 'إيجابي' : 'Positive')
-      : (locale === 'ar' ? 'نشط' : 'Active');
 
-  const avgBars = orderStats.avgBarsPerTrade !== null ? Math.round(orderStats.avgBarsPerTrade) : null;
-  const displayAvgBars = avgBars !== null ? `${avgBars}` : '—';
-  const avgBarsBadge =
-    avgBars !== null
-      ? avgBars > 20
-        ? (locale === 'ar' ? 'استثماري' : 'Position')
-        : avgBars > 5
-        ? (locale === 'ar' ? 'متوسط المدى' : 'Swing')
-        : (locale === 'ar' ? 'يومي' : 'Intraday')
-      : (locale === 'ar' ? 'لا توجد بيانات' : 'No data');
+  const avgDays = orderStats.avgBarsPerTrade !== null ? Math.round(orderStats.avgBarsPerTrade) : null;
+  const displayAvgDays = avgDays !== null ? `${avgDays}` : '—';
 
   let avgGain: number | null = null;
   if (orderStats.closedCount > 0) {
@@ -56,121 +52,60 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
     avgGain = orderStats.unrealized / orderStats.openOrders.length;
   }
   const displayAvgGain = avgGain !== null ? formatNumber(avgGain, true) : '—';
-  const avgGainBadge =
-    avgGain !== null
-      ? avgGain > 0
-        ? (locale === 'ar' ? 'ربح' : 'Profit')
-        : avgGain < 0
-        ? (locale === 'ar' ? 'خسارة' : 'Loss')
-        : (locale === 'ar' ? 'تعادل' : 'Even')
-      : (locale === 'ar' ? 'لا توجد صفقات' : 'No trades');
 
   const mae = orderStats.avgAdverseExcursion;
   const displayMae = mae !== null ? `-${Math.abs(mae).toFixed(1)}` : '—';
-  const maeBadge =
-    mae === null
-      ? (locale === 'ar' ? 'لا توجد بيانات' : 'No data')
-      : Math.abs(mae) < 2.5
-      ? (locale === 'ar' ? 'مخاطرة منخفضة' : 'Low Risk')
-      : (locale === 'ar' ? 'متوسطة' : 'Moderate');
 
   const mdd = orderStats.maxDrawdownPct;
   const displayMdd = mdd !== null ? `-${Math.abs(mdd).toFixed(1)}` : '—';
-  const mddBadge =
-    mdd === null
-      ? (locale === 'ar' ? 'لا توجد بيانات' : 'No data')
-      : Math.abs(mdd) <= 5
-      ? (locale === 'ar' ? 'مضبوط' : 'Controlled')
-      : (locale === 'ar' ? 'مرتفع' : 'Elevated');
 
-  const cards: KPICardProps[] = [
+  const pills: IndexPillProps[] = [
     {
       id: 'win-rate',
-      targetId: 'section-active-positions',
-      title: locale === 'ar' ? 'نسبة النجاح' : 'Win Rate',
       icon: Trophy,
-      iconBgClass: (winRate ?? 0) >= 50 ? 'bg-profit-num text-white' : 'bg-accent-amber text-white',
-      iconColorClass: 'text-white',
+      iconClass: (winRate ?? 0) >= 50 ? 'text-profit-num' : 'text-amber-500',
+      title: locale === 'ar' ? 'نسبة النجاح' : 'Win Rate',
       value: displayWinRate,
       unit: winRate !== null ? '%' : '',
-      changeText: winRateBadge,
-      changeColorClass: (winRate ?? 0) >= 50 ? 'text-profit-num' : 'text-accent-amber',
-      metaText: hasClosedTrades
-        ? (locale === 'ar' ? `${orderStats.closedWinning} رابحة · ${orderStats.closedLosing} خاسرة` : `${orderStats.closedWinning}W · ${orderStats.closedLosing}L`)
-        : (locale === 'ar' ? 'لا توجد صفقات مغلقة' : 'no closed trades'),
-      sparklineTrend: (winRate ?? 0) >= 50 ? 'up' : 'down',
+      onClick: () => scrollTo('section-my-positions'),
     },
     {
-      id: 'avg-bars',
-      targetId: 'section-active-positions',
-      title: locale === 'ar' ? 'متوسط الفترات' : 'Avg. Bars',
-      shortTitle: locale === 'ar' ? 'الفترات' : 'Avg. Bars',
+      id: 'avg-days',
       icon: Clock,
-      iconBgClass: 'bg-accent-cyan text-white',
-      iconColorClass: 'text-white',
-      value: displayAvgBars,
-      unit: avgBars !== null ? (locale === 'ar' ? 'شمعة' : 'BARS') : '',
-      changeText: avgBarsBadge,
-      changeColorClass: 'text-accent-cyan',
-      metaText: locale === 'ar' ? 'مدة الاحتفاظ' : 'hold time',
-      sparklineTrend: 'neutral',
+      iconClass: 'text-accent-cyan',
+      title: locale === 'ar' ? 'متوسط الأيام لكل صفقة' : 'Avg. Days per Trade',
+      value: displayAvgDays,
+      unit: avgDays !== null ? (locale === 'ar' ? 'يوم' : 'DAYS') : '',
+      onClick: () => scrollTo('section-my-positions'),
     },
     {
       id: 'avg-gain',
-      targetId: 'section-active-positions',
-      title: locale === 'ar' ? 'متوسط الربح' : 'Avg. Gain',
-      shortTitle: locale === 'ar' ? 'متوسط الربح' : 'Avg. Gain',
       icon: BarChart3,
-      iconBgClass: (avgGain ?? 0) >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
-      iconColorClass: 'text-white',
+      iconClass: (avgGain ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num',
+      title: locale === 'ar' ? 'متوسط الربح' : 'Avg. Gain',
       value: isPrivacy && avgGain !== null ? '••••••' : displayAvgGain,
       unit: locale === 'ar' ? 'ج.م' : '£',
-      changeText: avgGainBadge,
-      changeColorClass: (avgGain ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: locale === 'ar' ? 'لكل صفقة' : 'per trade',
-      sparklineTrend: (avgGain ?? 0) >= 0 ? 'up' : 'down',
+      onClick: () => scrollTo('section-my-positions'),
     },
     {
       id: 'max-adverse-excursion',
-      targetId: 'section-active-positions',
-      title: locale === 'ar' ? 'مخاطر MAE' : 'MAE Risk',
-      shortTitle: locale === 'ar' ? 'مخاطر MAE' : 'MAE Risk',
       icon: AlertTriangle,
-      iconBgClass: 'bg-loss-chart text-white',
-      iconColorClass: 'text-white',
+      iconClass: 'text-rose-400',
+      title: locale === 'ar' ? 'مخاطر MAE' : 'MAE Risk',
       value: displayMae,
-      unit: '%',
-      changeText: maeBadge,
-      changeColorClass: 'text-loss-num',
-      metaText: locale === 'ar' ? 'أسوأ حركة' : 'worst move',
-      sparklineTrend: 'down',
+      unit: mae !== null ? '%' : '',
+      onClick: () => scrollTo('section-my-positions'),
     },
     {
       id: 'max-drawdown',
-      targetId: 'section-monthly-progression',
-      title: locale === 'ar' ? 'أقصى تراجع' : 'Max Drawdown',
-      shortTitle: locale === 'ar' ? 'أقصى تراجع' : 'Max Drawdown',
       icon: Shield,
-      iconBgClass: 'bg-loss-chart text-white',
-      iconColorClass: 'text-white',
+      iconClass: 'text-rose-400',
+      title: locale === 'ar' ? 'أقصى تراجع' : 'Max Drawdown',
       value: displayMdd,
-      unit: '%',
-      changeText: mddBadge,
-      changeColorClass: 'text-loss-num',
-      metaText: locale === 'ar' ? 'من القمة للقاع' : 'peak→trough',
-      sparklineTrend: 'down',
+      unit: mdd !== null ? '%' : '',
+      onClick: () => scrollTo('section-monthly-progression'),
     },
   ];
 
-  return (
-    <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 pb-1 md:grid md:grid-cols-3 lg:grid-cols-5 lg:gap-3 lg:overflow-visible lg:pb-0">
-      {cards.map((card) => (
-        <KPICard
-          key={card.id}
-          {...card}
-          className="shrink-0 w-[170px] xs:w-[180px] sm:w-[190px] md:w-full snap-start"
-        />
-      ))}
-    </div>
-  );
+  return <IndexPillRail items={pills} />;
 }

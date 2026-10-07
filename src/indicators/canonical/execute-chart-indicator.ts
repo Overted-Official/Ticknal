@@ -1,6 +1,7 @@
 import {
   evaluateChartSeries,
   type ExecutionContext,
+  type IndicatorInputBundle,
   type TimeSeriesFrame,
 } from '@ticknal/quant-engine/canonical';
 
@@ -14,6 +15,7 @@ export function executeChartIndicator(
   selection: CanonicalIndicatorSelection,
   frame: TimeSeriesFrame,
   context: ExecutionContext,
+  inputs?: IndicatorInputBundle,
 ): CanonicalChartExecution {
   const entry = getIndicatorCatalogEntry(selection.definitionId);
   if (!entry) {
@@ -31,6 +33,7 @@ export function executeChartIndicator(
     frame,
     parameters: selection.parameters,
     context,
+    inputs,
   });
 
   if (result.status !== 'ok') {

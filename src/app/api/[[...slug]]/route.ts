@@ -31,6 +31,8 @@ import {
   handleSignals as handleCronSignals,
   handleWatchdog,
   handleUpdateInvestorFlows,
+  handleUpdateNews,
+  handleGenerateTicknalTake,
 } from '@/lib/cron-handlers';
 import {
   handleQuoteGet,
@@ -93,6 +95,7 @@ import {
 } from '@/lib/intraday-bot-handlers';
 
 import { createClient } from '@/lib/supabase/server';
+import { getCurrentUserAndProfile } from '@/lib/server/admin-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,6 +164,10 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
         return handleWatchdog(req);
       case 'update-investor-flows':
         return handleUpdateInvestorFlows(req);
+      case 'update-news':
+        return handleUpdateNews(req);
+      case 'ticknal-take':
+        return handleGenerateTicknalTake(req);
       default:
         return NextResponse.json({ error: `Unknown cron job: ${sub}` }, { status: 404 });
     }
@@ -293,6 +300,18 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     return NextResponse.json({ error: `Unknown bot action: ${sub}` }, { status: 404 });
   }
 
+  // 11. Admin Console Status Check
+  if (root === 'console' && sub === 'check') {
+    try {
+      const current = await getCurrentUserAndProfile();
+      const role = current?.profile?.role?.toLowerCase() || '';
+      const isAdmin = role === 'admin' || role === 'superadmin';
+      return NextResponse.json({ isAdmin });
+    } catch {
+      return NextResponse.json({ isAdmin: false });
+    }
+  }
+
   return NextResponse.json({ error: `API route not found: /api/${segments.join('/')}` }, { status: 404 });
 }
 
@@ -310,6 +329,10 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
     switch (sub) {
       case 'update-investor-flows':
         return handleUpdateInvestorFlows(req);
+      case 'update-news':
+        return handleUpdateNews(req);
+      case 'ticknal-take':
+        return handleGenerateTicknalTake(req);
       default:
         return NextResponse.json({ error: `Unknown cron action: ${sub}` }, { status: 404 });
     }

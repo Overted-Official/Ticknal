@@ -475,55 +475,79 @@ export function getCachedOpportunitiesSync(limitBars = 5, strategyScope = 'all')
 export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5): Promise<OpportunitySignal[]> {
   const cleanSymbols = Array.from(new Set(symbols.map(normalizeTickerSymbol).filter(Boolean)));
   if (cleanSymbols.length === 0) return [];
-  const [tickerRows, priceRows] = await Promise.all([
+  const { getCachedDailyPrices } = await import('@/lib/data-cache');
+  const [tickerRows, priceBarsList] = await Promise.all([
     db.select().from(tickers).where(inArray(tickers.symbol, cleanSymbols)),
-    db.select({
-      tickerSymbol: dailyPrices.tickerSymbol,
-      date: dailyPrices.date,
-      open: dailyPrices.open,
-      high: dailyPrices.high,
-      low: dailyPrices.low,
-      close: dailyPrices.close,
-      volume: dailyPrices.volume,
-    }).from(dailyPrices).where(and(inArray(dailyPrices.tickerSymbol, cleanSymbols), gte(dailyPrices.date, DEFAULT_START_DATE))).orderBy(dailyPrices.tickerSymbol, dailyPrices.date),
+    Promise.all(
+      cleanSymbols.map(async (symbol) => {
+        const rows = await getCachedDailyPrices(symbol);
+        const bars: PriceBar[] = rows
+          .map((row: any) => ({
+            date: typeof row.date === 'string' ? row.date.split('T')[0] : (row.date as Date).toISOString().split('T')[0],
+            open: Number(row.open),
+            high: Number(row.high),
+            low: Number(row.low),
+            close: Number(row.close),
+            volume: Number(row.volume ?? 0),
+          }))
+          .filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
+        return [symbol, bars] as const;
+      })
+    ),
   ]);
   const metadata = new Map(tickerRows.map((ticker) => [normalizeTickerSymbol(ticker.symbol), ticker]));
-  const barsByTicker = new Map<string, PriceBar[]>();
-  for (const row of priceRows) {
-    const symbol = normalizeTickerSymbol(row.tickerSymbol);
-    const bars = barsByTicker.get(symbol) ?? [];
-    bars.push({ date: toSignalDate(row.date), open: Number(row.open), high: Number(row.high), low: Number(row.low), close: Number(row.close), volume: Number(row.volume ?? 0) });
-    barsByTicker.set(symbol, bars);
-  }
+  const barsByTicker = new Map<string, PriceBar[]>(priceBarsList);
   const exits: OpportunitySignal[] = [];
   for (const symbol of cleanSymbols) {
     const bars = barsByTicker.get(symbol) ?? [];
     if (bars.length < 80) continue;
-    for (const strategyId of strategyScopeToIds('all')) {
-      const analysis = await analyzeStrategy(symbol, bars, strategyId, { startDate: DEFAULT_START_DATE, lookbackBars: limitBars });
-      const latest = analysis.latestActionableSignal;
-      if (!latest || latest.signal !== 'SELL') continue;
-      const ticker = metadata.get(symbol);
-      const badge = getStrategyBadge(strategyId);
-      exits.push({
-        symbol,
-        companyName: ticker?.companyName ?? symbol,
-        sector: ticker?.sector ?? 'Unclassified',
-        industryGroup: ticker?.industryGroup ?? ticker?.sector ?? 'Unclassified',
-        industry: ticker?.industry ?? ticker?.industryGroup ?? ticker?.sector ?? 'Unclassified',
-        logoUrl: ticker?.logoUrl ?? null,
-        strategyId,
-        strategyLabel: STRATEGIES[strategyId]?.label ?? strategyLabel(strategyId),
-        strategyShortName: badge.label,
-        strategyBadgeClassName: badge.className,
-        analysisStart: analysis.analysisStart,
-        analysisEnd: analysis.analysisEnd,
-        dataAsOf: analysis.dataAsOf,
-        signalAgeBars: analysis.signalAgeBars,
-        metrics: analysis.metrics,
-        signal: { signal: 'SELL', date: latest.date, price: latest.price, barsAgo: latest.barsAgo, reasoning: latest.reason },
+
+    // Use the ticker's true champion strategy to ensure 100% alignment
+    // with the chart's default model and the push notification alert engine.
+    let champion = null;
+    try {
+      champion = await analyzeTickerChampion(symbol, bars, {
+        startDate: DEFAULT_START_DATE,
+        timeframe: 'D',
+        lookbackBars: limitBars,
       });
+    } catch {
+      continue;
     }
+
+    if (!champion) continue;
+    const championAnalysis = champion.analyses.find((a) => a.strategyId === champion.strategyId);
+    if (!championAnalysis) continue;
+
+    const latest = championAnalysis.latestActionableSignal;
+    if (!latest || (latest.signal !== 'SELL' && latest.signal !== 'BUY')) continue;
+
+    const ticker = metadata.get(symbol);
+    const badge = getStrategyBadge(champion.strategyId);
+    exits.push({
+      symbol,
+      companyName: ticker?.companyName ?? symbol,
+      sector: ticker?.sector ?? 'Unclassified',
+      industryGroup: ticker?.industryGroup ?? ticker?.sector ?? 'Unclassified',
+      industry: ticker?.industry ?? ticker?.industryGroup ?? ticker?.sector ?? 'Unclassified',
+      logoUrl: ticker?.logoUrl ?? null,
+      strategyId: champion.strategyId,
+      strategyLabel: STRATEGIES[champion.strategyId]?.label ?? strategyLabel(champion.strategyId),
+      strategyShortName: badge.label,
+      strategyBadgeClassName: badge.className,
+      analysisStart: championAnalysis.analysisStart,
+      analysisEnd: championAnalysis.analysisEnd,
+      dataAsOf: championAnalysis.dataAsOf,
+      signalAgeBars: championAnalysis.signalAgeBars,
+      metrics: championAnalysis.metrics,
+      signal: {
+        signal: latest.signal,
+        date: latest.date,
+        price: latest.price,
+        barsAgo: latest.barsAgo,
+        reasoning: latest.reason,
+      },
+    });
   }
   return exits.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
 }

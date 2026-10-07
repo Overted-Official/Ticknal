@@ -51,7 +51,7 @@ export default function MarketSignalsSection({
     for (const opp of buyOpportunities) {
       const cleanSymbol = opp.symbol.replace('.CA', '').trim().toUpperCase();
       const stratMeta = resolveStrategyMeta(opp.strategyId, opp.strategyShortName);
-      const barsAgo = opp.signal.barsAgo ?? opp.signalAgeBars ?? null;
+      const barsAgo = opp.signal?.barsAgo ?? opp.signalAgeBars ?? null;
       const candidateAlpha = typeof opp.metrics?.alpha === 'number' && Number.isFinite(opp.metrics.alpha)
         ? opp.metrics.alpha
         : null;
@@ -69,8 +69,8 @@ export default function MarketSignalsSection({
         rotationRegime: opp.rotationRegime,
         logoUrl: opp.logoUrl,
         strategies: [stratMeta],
-        signalPrice: opp.signal.price,
-        signalDate: opp.signal.date,
+        signalPrice: opp.signal?.price ?? 0,
+        signalDate: opp.signal?.date ?? '',
         barsAgo,
         winningAlpha: candidateAlpha,
         metrics: opp.metrics,
@@ -143,12 +143,12 @@ export default function MarketSignalsSection({
 
   return (
     <section id="section-market-signals" className="section-container section-viewport-fit space-y-4">
-      {/* 1. Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+      {/* 1. Section Header: Title on left, Quick Switch + Timeframe Selector on right on desktop */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
             <h2 className="section-title">
-              {isArabic ? 'إشارات السوق' : 'Market Signals'}
+              {isArabic ? 'فرص الشراء' : 'Buy Opportunities'}
             </h2>
             <span className="badge-count">
               {filteredSignals.length}
@@ -160,12 +160,98 @@ export default function MarketSignalsSection({
               : 'Live algorithmic buy opportunities computed across quantitative strategy models'}
           </p>
         </div>
+
+        {/* Desktop / Tablet Controls: On the right side of the screen */}
+        <div className="hidden md:flex items-center gap-2 shrink-0">
+          {/* Quick Range Switch */}
+          <div className="seg-control shrink-0 [&_.seg-control-btn]:px-2">
+            {(['1D', '5D', '10D'] as const).map((r) => {
+              const isActive = quickRange === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => handleQuickRangeClick(r)}
+                  className={`seg-control-btn ${isActive ? 'seg-control-btn-active' : ''}`}
+                >
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* From / To Date Inputs (compact auto-width, not stretching) */}
+          <div className="flex h-9 shrink-0 items-center gap-1.5 overflow-hidden rounded-xl border border-border-subtle bg-surface-raised px-2.5 text-xs text-text-muted sm:gap-2 sm:px-3">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
+              {isArabic ? 'من' : 'From'}
+            </span>
+            <input
+              type="date"
+              value={effectiveFromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setQuickRange(null);
+                setShowAllSignals(false);
+              }}
+              className="w-[110px] cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
+            />
+            <span className="text-zinc-600 text-xs shrink-0 select-none">•</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
+              {isArabic ? 'إلى' : 'To'}
+            </span>
+            <input
+              type="date"
+              value={effectiveToDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setQuickRange(null);
+                setShowAllSignals(false);
+              }}
+              className="w-[110px] cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* 2. Date Range & Quick Buttons */}
-      <div className="flex w-full min-w-0 flex-nowrap items-center gap-2">
-        {/* Quick Range Switch Buttons */}
-        <div className="seg-control shrink-0 [&_.seg-control-btn]:px-2">
+      {/* 2. Mobile View: Date selector in its own line, Quick select on different line below it */}
+      <div className="flex flex-col gap-2 w-full md:hidden">
+        {/* Line 1: Date Selector on its own line */}
+        <div className="flex h-9 w-full items-center justify-between overflow-hidden rounded-xl border border-border-subtle bg-surface-raised px-3 text-xs text-text-muted">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
+              {isArabic ? 'من' : 'From'}
+            </span>
+            <input
+              type="date"
+              value={effectiveFromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setQuickRange(null);
+                setShowAllSignals(false);
+              }}
+              className="w-full min-w-0 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
+            />
+          </div>
+          <span className="text-zinc-600 text-xs shrink-0 select-none px-1.5">•</span>
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
+              {isArabic ? 'إلى' : 'To'}
+            </span>
+            <input
+              type="date"
+              value={effectiveToDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setQuickRange(null);
+                setShowAllSignals(false);
+              }}
+              className="w-full min-w-0 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
+            />
+          </div>
+        </div>
+
+        {/* Line 2: Quick Select on different line below it */}
+        <div className="seg-control w-full grid grid-cols-3 text-center">
           {(['1D', '5D', '10D'] as const).map((r) => {
             const isActive = quickRange === r;
             return (
@@ -173,43 +259,14 @@ export default function MarketSignalsSection({
                 key={r}
                 type="button"
                 onClick={() => handleQuickRangeClick(r)}
-                className={`seg-control-btn ${isActive ? 'seg-control-btn-active' : ''}`}
+                className={`seg-control-btn w-full justify-center text-center ${
+                  isActive ? 'seg-control-btn-active' : ''
+                }`}
               >
                 {r}
               </button>
             );
           })}
-        </div>
-
-        {/* From / To Date Inputs */}
-        <div className="flex h-9 min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-xl border border-border-subtle bg-surface-raised px-2 text-xs text-text-muted sm:gap-2 sm:px-3">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
-            {isArabic ? 'من' : 'From'}
-          </span>
-          <input
-            type="date"
-            value={effectiveFromDate}
-            onChange={(e) => {
-              setFromDate(e.target.value);
-              setQuickRange(null);
-              setShowAllSignals(false);
-            }}
-            className="w-full min-w-0 max-w-[118px] flex-1 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
-          />
-          <span className="text-zinc-600 text-xs shrink-0 select-none">•</span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
-            {isArabic ? 'إلى' : 'To'}
-          </span>
-          <input
-            type="date"
-            value={effectiveToDate}
-            onChange={(e) => {
-              setToDate(e.target.value);
-              setQuickRange(null);
-              setShowAllSignals(false);
-            }}
-            className="w-full min-w-0 max-w-[118px] flex-1 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
-          />
         </div>
       </div>
 

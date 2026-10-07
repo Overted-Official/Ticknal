@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import webpush from 'web-push';
 import { db } from '@/db';
-import { signalNotifications, tickers, pushSubscriptions, devicePushTokens } from '@/db/schema';
+import { signalNotifications, tickers, pushSubscriptions, devicePushTokens, profiles } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 import { sendFCMMessage } from '@/lib/fcm-v1';
@@ -10,6 +10,67 @@ import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 
 const notificationsMemCache = new Map<string, { data: any[]; timestamp: number }>();
 const NOTIFS_CACHE_TTL = 30 * 1000; // 30s cache per user
+
+export async function seedUserNotifications(userId: string): Promise<number> {
+  try {
+    const canonicalSignals = await db.execute(sql`
+      SELECT DISTINCT ON (ticker_symbol, strategy, signal_date, signal)
+        ticker_symbol,
+        strategy,
+        signal_date,
+        signal,
+        signal_price,
+        signal_bars_ago,
+        signal_reason,
+        analysis_start,
+        analysis_end,
+        data_as_of,
+        metrics,
+        parameter_version,
+        sent_at
+      FROM signal_notifications
+      WHERE signal = 'BUY'
+        AND signal_date >= CURRENT_DATE - INTERVAL '14 days'
+      ORDER BY ticker_symbol, strategy, signal_date, signal, sent_at DESC;
+    `);
+
+    const rawRows = Array.isArray(canonicalSignals) ? canonicalSignals : (canonicalSignals as any).rows ?? [];
+
+    if (rawRows.length > 0) {
+      const toInsert = rawRows.map((r: any) => ({
+        userId,
+        tickerSymbol: r.ticker_symbol,
+        strategy: r.strategy,
+        signalDate: typeof r.signal_date === 'string' ? r.signal_date : new Date(r.signal_date).toISOString().split('T')[0],
+        signal: r.signal,
+        signalPrice: r.signal_price ? String(r.signal_price) : null,
+        signalBarsAgo: r.signal_bars_ago !== null && r.signal_bars_ago !== undefined ? Number(r.signal_bars_ago) : null,
+        signalReason: r.signal_reason || null,
+        analysisStart: r.analysis_start ? (typeof r.analysis_start === 'string' ? r.analysis_start : new Date(r.analysis_start).toISOString().split('T')[0]) : null,
+        analysisEnd: r.analysis_end ? (typeof r.analysis_end === 'string' ? r.analysis_end : new Date(r.analysis_end).toISOString().split('T')[0]) : null,
+        dataAsOf: r.data_as_of ? (typeof r.data_as_of === 'string' ? r.data_as_of : new Date(r.data_as_of).toISOString().split('T')[0]) : null,
+        metrics: r.metrics || null,
+        parameterVersion: r.parameter_version || null,
+        sentAt: r.sent_at ? new Date(r.sent_at) : new Date(),
+      }));
+
+      for (let i = 0; i < toInsert.length; i += 50) {
+        const slice = toInsert.slice(i, i + 50);
+        await db.insert(signalNotifications).values(slice).onConflictDoNothing();
+      }
+    }
+
+    await db
+      .update(profiles)
+      .set({ notificationsSeededAt: new Date(), updatedAt: new Date() })
+      .where(eq(profiles.id, userId));
+
+    return rawRows.length;
+  } catch (error) {
+    console.error(`Failed to seed notifications for user ${userId}:`, error);
+    return 0;
+  }
+}
 
 export async function handleNotificationsGet() {
   const supabase = await createClient();
@@ -26,7 +87,7 @@ export async function handleNotificationsGet() {
   }
 
   try {
-    const rows = await db
+    let rows = await db
       .select({
         id: signalNotifications.id,
         tickerSymbol: signalNotifications.tickerSymbol,
@@ -45,6 +106,41 @@ export async function handleNotificationsGet() {
       .where(eq(signalNotifications.userId, user.id))
       .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
       .limit(50);
+
+    if (rows.length === 0) {
+      const [profile] = await db
+        .select({
+          notificationsSeededAt: profiles.notificationsSeededAt,
+          notificationsClearedAt: profiles.notificationsClearedAt,
+        })
+        .from(profiles)
+        .where(eq(profiles.id, user.id))
+        .limit(1);
+
+      if (!profile?.notificationsSeededAt && !profile?.notificationsClearedAt) {
+        await seedUserNotifications(user.id);
+
+        rows = await db
+          .select({
+            id: signalNotifications.id,
+            tickerSymbol: signalNotifications.tickerSymbol,
+            strategy: signalNotifications.strategy,
+            signalDate: signalNotifications.signalDate,
+            signal: signalNotifications.signal,
+            signalBarsAgo: signalNotifications.signalBarsAgo,
+            dataAsOf: signalNotifications.dataAsOf,
+            sentAt: signalNotifications.sentAt,
+            companyName: tickers.companyName,
+            logoUrl: tickers.logoUrl,
+            sector: tickers.sector,
+          })
+          .from(signalNotifications)
+          .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
+          .where(eq(signalNotifications.userId, user.id))
+          .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
+          .limit(50);
+      }
+    }
 
     if (rows.length === 0) {
       notificationsMemCache.set(user.id, { data: [], timestamp: Date.now() });
@@ -89,9 +185,10 @@ export async function handleNotificationsDelete(request: Request) {
         .delete(signalNotifications)
         .where(and(eq(signalNotifications.userId, user.id), eq(signalNotifications.id, Number(id))));
     } else {
-      await db
-        .delete(signalNotifications)
-        .where(eq(signalNotifications.userId, user.id));
+      await Promise.all([
+        db.delete(signalNotifications).where(eq(signalNotifications.userId, user.id)),
+        db.update(profiles).set({ notificationsClearedAt: new Date(), updatedAt: new Date() }).where(eq(profiles.id, user.id)),
+      ]);
     }
 
     notificationsMemCache.delete(user.id);

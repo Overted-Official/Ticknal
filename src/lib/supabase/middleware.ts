@@ -39,8 +39,6 @@ export async function updateSession(request: NextRequest) {
   // Protected routes: redirect unauthenticated users to login
   const protectedPaths = [
     '/home',
-    '/charts',
-    '/markets',
     '/strategies',
     '/transactions',
     '/settings',
@@ -50,19 +48,53 @@ export async function updateSession(request: NextRequest) {
     '/money',
     '/positions',
     '/analysis',
+    '/console',
   ];
+  // Note: /markets, /charts, and /news are public freemium routes accessible in Guest Mode.
   const isProtectedRoute = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    const rawSegment = request.nextUrl.pathname.replace(/^\//, '').split('/')[0];
+    const featureLabels: Record<string, string> = {
+      home: 'Home Dashboard',
+      dashboard: 'Home Dashboard',
+      strategies: 'Strategy Backtester',
+      transactions: 'Portfolio Transactions',
+      wallet: 'Portfolio Wallet',
+      money: 'Portfolio & Balances',
+      positions: 'Position Manager',
+      settings: 'Account Settings',
+      invest: 'SuperCharts Workspace',
+      analysis: 'Alpha Analysis',
+      console: 'Admin Console',
+    };
+    const feature = featureLabels[rawSegment] || 'Terminal';
+    url.pathname = '/markets';
+    url.search = `?auth_modal=1&feature=${encodeURIComponent(feature)}`;
     return NextResponse.redirect(url);
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as-is.
-  // If you're creating a new response object with NextResponse.next(),
-  // make sure to copy the cookies over.
-  return supabaseResponse;
+  // Forward verified user ID downstream via request headers to prevent duplicate auth roundtrips
+  const requestHeaders = new Headers(request.headers);
+  if (user?.id) {
+    requestHeaders.set('x-user-id', user.id);
+  } else {
+    requestHeaders.delete('x-user-id');
+  }
+
+  const finalResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Preserve cookies set by Supabase SSR client
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    finalResponse.cookies.set(cookie);
+  });
+
+  return finalResponse;
 }

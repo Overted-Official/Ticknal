@@ -84,14 +84,14 @@ export default function HomePageView({
           initialInflationSeries={initialInflationSeries}
         />
 
-        {/* SECTION 2: My Positions (Stock Gainers & Stock Losers) */}
+        {/* SECTION 2: Positions (Stock Gainers & Stock Losers) */}
         <MyPositionsSection
           orders={orderStats.openOrders}
           totalMarketValue={orderStats.openMarketValue}
           exitSignals={exitSignals}
         />
 
-        {/* SECTION 3: Market Signals (Algorithmic Buy Opportunities with Strategy Switcher) */}
+        {/* SECTION 3: Buy Opportunities (Algorithmic Buy Opportunities with Strategy Switcher) */}
         <MarketSignalsSection
           buyOpportunities={buyOpportunities.length > 0 ? buyOpportunities : liveBuyOpps}
           isLoading={buyOpportunities.length === 0 && isLoadingOpps}

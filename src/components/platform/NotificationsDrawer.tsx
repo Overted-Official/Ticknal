@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -147,7 +148,7 @@ export default function NotificationsDrawer({
   const router = useRouter();
   const { t, locale, isRTL } = useTranslation();
   const isAr = locale === 'ar';
-  const [activeTab, setActiveTab] = useState<'signals' | 'system'>('signals');
+  const activeTab = 'signals';
   const [selectedRegime, setSelectedRegime] = useState<'all' | 'Leading' | 'Improving' | 'Weakening' | 'Lagging'>('all');
   const [isRegimeMenuOpen, setIsRegimeMenuOpen] = useState(false);
   const regimeMenuRef = useRef<HTMLDivElement>(null);
@@ -166,17 +167,6 @@ export default function NotificationsDrawer({
     dedupingInterval: 30000,
     isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
-
-  const { data: logsData, isLoading: isLoadingLogs } = useSWR<{ logs: SystemLogItem[] }>(
-    isOpen ? '/api/system-logs' : null,
-    fetcher,
-    {
-      refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
-    }
-  );
 
   const notifications = useMemo(() => {
     const list = signalsData?.notifications ?? [];
@@ -218,7 +208,6 @@ export default function NotificationsDrawer({
     return groups;
   }, [filteredNotifications]);
 
-  const systemLogs = logsData?.logs ?? [];
   const [isClearing, setIsClearing] = useState(false);
 
   // Outside click — regime menu
@@ -362,34 +351,16 @@ export default function NotificationsDrawer({
 
               {/* 2. Compact Toolbar: Micro-Tab Switcher + Inline Regime Filter */}
               <div className="px-3.5 py-1.5 border-b border-border-default bg-black shrink-0 flex items-center justify-between gap-2">
-                {/* Micro segmented switcher */}
-                <div className="inline-flex p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.08] shrink-0">
-                  {(['signals', 'system'] as const).map((tab) => {
-                    const isActive = activeTab === tab;
-                    const count = tab === 'signals' ? notifications.length : systemLogs.length;
-                    const label = tab === 'signals' ? (isAr ? 'التنبيهات' : 'Alerts') : (isAr ? 'السجلات' : 'Logs');
-                    return (
-                      <button
-                        key={tab}
-                        type="button"
-                        onClick={() => setActiveTab(tab)}
-                        className={`h-6 px-2.5 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                          isActive
-                            ? 'bg-white/[0.12] text-white shadow-xs'
-                            : 'text-text-muted hover:text-white'
-                        }`}
-                      >
-                        <span>{label}</span>
-                        {count > 0 && (
-                          <span className={`px-1 rounded text-[9.5px] tabular-nums ${
-                            isActive ? 'bg-black/60 text-white' : 'text-text-muted'
-                          }`}>
-                            {count}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                {/* Alert count indicator */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] font-semibold text-white">
+                    {isAr ? 'إشارات وتنبيهات التداول' : 'Trading Alerts'}
+                  </span>
+                  {notifications.length > 0 && (
+                    <span className="px-1.5 py-0.2 rounded text-[9.5px] tabular-nums bg-white/[0.08] text-zinc-300 font-medium">
+                      {notifications.length}
+                    </span>
+                  )}
                 </div>
 
                 {/* Regime filter — compact inline dropdown */}
@@ -455,8 +426,7 @@ export default function NotificationsDrawer({
 
               {/* 3. Main Scrollable List — compact high-density design */}
               <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y custom-scrollbar">
-                {activeTab === 'signals' ? (
-                  isLoadingSignals && notifications.length === 0 ? (
+                {isLoadingSignals && notifications.length === 0 ? (
                     <SectionLoadingState className="py-20" label={isAr ? 'جارٍ تحميل الإشارات…' : 'Loading signals…'} />
                   ) : notifications.length === 0 ? (
                     <div className="py-24 text-center text-text-muted text-xs flex flex-col items-center justify-center gap-2.5 px-6">
@@ -591,87 +561,20 @@ export default function NotificationsDrawer({
                         </div>
                       ))}
                     </div>
-                  )
-                ) : (
-                  // System Logs tab — sleek compact rows
-                  isLoadingLogs && systemLogs.length === 0 ? (
-                    <SectionLoadingState className="py-20" label={isAr ? 'جارٍ تحميل سجلات النظام…' : 'Loading system logs…'} />
-                  ) : systemLogs.length === 0 ? (
-                    <div className="py-24 text-center text-text-muted text-xs flex flex-col items-center justify-center gap-2.5 px-6">
-                      <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-text-muted mb-1">
-                        <Clock size={18} />
-                      </div>
-                      <span className="font-semibold text-white text-sm block font-sans">{isAr ? 'لا توجد سجلات للنظام' : 'No system logs'}</span>
-                      <span className="text-xs text-text-muted block leading-relaxed max-w-xs font-sans">
-                        {isAr
-                          ? 'ستظهر هنا سجلات تنفيذ المهام وتحديثات البيانات وحالة النظام.'
-                          : 'Cron job executions, cache updates, and system status logs will appear here.'}
-                      </span>
-                    </div>
-                  ) : (
-                    <div>
-                      {systemLogs.map((log) => {
-                        const isError = log.level === 'ERROR';
-                        const isWarning = log.level === 'WARNING';
+                  )}
+              </div>
 
-                        return (
-                          <div
-                            key={log.id}
-                            className="py-2 px-3.5 flex items-center justify-between hover:bg-white/[0.03] transition-colors group cursor-pointer border-b border-white/[0.06] last:border-b-0"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2 rtl:pr-0 rtl:pl-2">
-                              <div className="w-7 h-7 rounded-full bg-black border border-white/10 flex items-center justify-center shrink-0 shadow-xs">
-                                {isError ? (
-                                  <AlertCircle size={13} className="text-loss-chart" />
-                                ) : isWarning ? (
-                                  <AlertCircle size={13} className="text-accent-amber" />
-                                ) : (
-                                  <CheckCircle2 size={13} className="text-profit-chart" />
-                                )}
-                              </div>
-
-                              <div className="min-w-0 flex-1">
-                                <div className="text-[12px] font-medium text-white truncate max-w-[200px] sm:max-w-[260px] leading-tight">
-                                  {log.message}
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-0.5 leading-none">
-                                  <span className="inline-flex items-center px-1 py-0.2 rounded text-[9.5px] font-semibold bg-white/[0.06] text-text-secondary border border-white/[0.08] uppercase tracking-wider font-sans">
-                                    {formatUiLabel(log.source)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2.5 shrink-0 pl-1.5 rtl:pl-0 rtl:pr-1.5">
-                              <div className="text-right rtl:text-left leading-tight">
-                                <div className="text-[11px] font-medium text-white tabular-nums">
-                                  {formatTimeAgo(log.createdAt, isAr)}
-                                </div>
-                                <div className="text-[9.5px] text-text-muted font-medium tabular-nums mt-0.5">
-                                  {log.level}
-                                </div>
-                              </div>
-
-                              <div className="w-[54px] shrink-0 flex justify-end">
-                                <div
-                                  className={`w-[54px] h-6 rounded text-[10px] font-bold text-white shadow-xs flex items-center justify-center ${
-                                    isError
-                                      ? 'bg-loss-chart'
-                                      : isWarning
-                                      ? 'bg-accent-amber'
-                                      : 'bg-white/[0.06] text-text-secondary border border-white/[0.08]'
-                                  }`}
-                                >
-                                  {isError ? (isAr ? 'خطأ' : 'Error') : isWarning ? (isAr ? 'تحذير' : 'Warning') : (isAr ? 'سليم' : 'OK')}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )
-                )}
+              {/* Drawer footer link to system console */}
+              <div className="px-4 py-2.5 border-t border-white/10 bg-black flex justify-between items-center text-[11px] text-zinc-400 shrink-0">
+                <span>{isAr ? 'نظام إشارات تكنال' : 'Ticknal Signal Intelligence'}</span>
+                <Link
+                  href="/console/operations"
+                  onClick={onClose}
+                  className="hover:text-white transition-colors flex items-center gap-1 font-medium"
+                >
+                  <span>{isAr ? 'مركز العمليات والمهام' : 'Platform Operations'}</span>
+                  <span className="text-[10px]">↗</span>
+                </Link>
               </div>
             </motion.div>
           </div>

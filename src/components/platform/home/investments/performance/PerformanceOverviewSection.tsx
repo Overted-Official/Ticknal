@@ -116,8 +116,8 @@ export default function PerformanceOverviewSection({
           </p>
         </div>
 
-        {/* View Switcher Rail & Add Account Action */}
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+        {/* Desktop View Switcher Rail & Add Account Action */}
+        <div className="hidden sm:flex items-center gap-2 self-auto shrink-0">
           <div className="seg-control">
             <button
               type="button"
@@ -151,6 +151,43 @@ export default function PerformanceOverviewSection({
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{locale === 'ar' ? 'إضافة حساب' : 'Add Account'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile View: Add Account button full width FIRST, then Switcher full width SECOND */}
+      <div className="flex flex-col gap-2 w-full sm:hidden">
+        <button
+          type="button"
+          onClick={() => setIsAddAccountOpen(true)}
+          className="btn-primary-cta w-full justify-center py-2 text-xs font-semibold"
+          title={locale === 'ar' ? 'إنشاء حساب بنكي أو وساطة جديد' : 'Create a new bank or brokerage account'}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>{locale === 'ar' ? 'إضافة حساب' : 'Add Account'}</span>
+        </button>
+
+        <div className="seg-control w-full grid grid-cols-3 text-center">
+          <button
+            type="button"
+            onClick={() => setActiveTab('net-worth')}
+            className={`seg-control-btn w-full justify-center text-center ${activeTab === 'net-worth' ? 'seg-control-btn-active' : ''}`}
+          >
+            {locale === 'ar' ? 'صافي القيمة' : 'Net Worth'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('investments')}
+            className={`seg-control-btn w-full justify-center text-center ${activeTab === 'investments' ? 'seg-control-btn-active' : ''}`}
+          >
+            {locale === 'ar' ? 'الاستثمارات' : 'Investments'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('banks')}
+            className={`seg-control-btn w-full justify-center text-center ${activeTab === 'banks' ? 'seg-control-btn-active' : ''}`}
+          >
+            {locale === 'ar' ? 'الحسابات' : 'Banks & Accounts'}
           </button>
         </div>
       </div>

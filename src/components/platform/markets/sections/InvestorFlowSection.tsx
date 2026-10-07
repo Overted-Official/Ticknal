@@ -33,7 +33,7 @@ export default function InvestorFlowSection({
 }: InvestorFlowSectionProps) {
   const { locale } = useTranslation();
   const [horizon, setHorizon] = useState<FlowHorizon>('1M');
-  const [chartMode, setChartMode] = useState<FlowChartMode>('stacked_share');
+  const [chartMode, setChartMode] = useState<FlowChartMode>('foreign_net');
 
   const { data, isLoading } = useSWR<InvestorFlowsResponse>(
     `/api/macro/investor-flows?horizon=${horizon}`,
@@ -195,6 +195,7 @@ export default function InvestorFlowSection({
                   minTickGap={25}
                 />
                 <Tooltip
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.04)' }}
                   content={({ active, payload }) => {
                     if (!active || !payload || payload.length === 0) return null;
                     const d = payload[0].payload;
@@ -271,6 +272,7 @@ export default function InvestorFlowSection({
                 />
                 <ReferenceLine y={0} stroke="#333333" strokeDasharray="3 3" />
                 <Tooltip
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.04)' }}
                   content={({ active, payload }) => {
                     if (!active || !payload || payload.length === 0) return null;
                     const d = payload[0].payload;

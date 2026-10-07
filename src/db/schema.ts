@@ -6,6 +6,8 @@ export const profiles = pgTable('profiles', {
   fullName: text('full_name'),
   avatarUrl: text('avatar_url'),
   role: varchar('role', { length: 50 }).default('user').notNull(),
+  notificationsSeededAt: timestamp('notifications_seeded_at', { withTimezone: true }),
+  notificationsClearedAt: timestamp('notifications_cleared_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
@@ -297,6 +299,32 @@ export const macroMoneySupply = pgTable('macro_money_supply', {
   };
 });
 
+export const macroObservations = pgTable('macro_observations', {
+  id: serial('id').primaryKey(),
+  seriesCode: varchar('series_code', { length: 64 }).notNull(),
+  observationDate: date('observation_date').notNull(),
+  value: numeric('value', { precision: 24, scale: 8 }).notNull(),
+  unit: varchar('unit', { length: 32 }).notNull(),
+  publishedAt: timestamp('published_at', { withTimezone: true }).notNull(),
+  sourceName: varchar('source_name', { length: 100 }).notNull(),
+  sourceUrl: text('source_url').notNull(),
+  sourceRevision: varchar('source_revision', { length: 64 }).notNull(),
+  isLatest: boolean('is_latest').default(true).notNull(),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>(),
+  retrievedAt: timestamp('retrieved_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  revisionUnique: unique('macro_observations_revision_unique').on(
+    table.seriesCode,
+    table.observationDate,
+    table.sourceRevision,
+  ),
+  seriesDateIdx: index('macro_observations_series_date_idx').on(table.seriesCode, table.observationDate),
+  publishedAtIdx: index('macro_observations_published_at_idx').on(table.publishedAt),
+  latestIdx: index('macro_observations_latest_idx').on(table.seriesCode, table.isLatest, table.observationDate),
+}));
+
 export const egxInvestorFlows = pgTable('egx_investor_flows', {
   id: serial('id').primaryKey(),
   date: date('date').notNull().unique(), // stored as YYYY-MM-DD
@@ -486,5 +514,73 @@ export const egxTradeStatistics = pgTable('egx_trade_statistics', {
   return {
     tickerDateUnique: unique('egx_trade_stats_ticker_date_unique').on(table.tickerSymbol, table.date),
     tickerDateIdx: index('egx_trade_stats_ticker_date_idx').on(table.tickerSymbol, table.date),
+  };
+});
+
+export const marketNews = pgTable('market_news', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  title: text('title').notNull(),
+  summary: text('summary').notNull(),
+  content: text('content'),
+  category: varchar('category', { length: 50 }).notNull(), // 'egx_disclosures' | 'cbe_macro' | 'bullion_fx' | 'earnings' | 'sectors'
+  categoryLabel: varchar('category_label', { length: 100 }).notNull(),
+  tickers: jsonb('tickers').$type<string[]>().default([]).notNull(),
+  sentiment: varchar('sentiment', { length: 20 }).default('neutral').notNull(), // 'bullish' | 'neutral' | 'bearish'
+  source: varchar('source', { length: 100 }).notNull(),
+  sourceUrl: text('source_url'),
+  importance: varchar('importance', { length: 20 }).default('normal').notNull(), // 'critical' | 'high' | 'normal'
+  impactMetric: varchar('impact_metric', { length: 100 }),
+  readTime: varchar('read_time', { length: 30 }).default('2 min read').notNull(),
+  imageUrl: text('image_url'),
+  publishedAt: timestamp('published_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    categoryIdx: index('market_news_category_idx').on(table.category),
+    publishedAtIdx: index('market_news_published_at_idx').on(table.publishedAt),
+    sentimentIdx: index('market_news_sentiment_idx').on(table.sentiment),
+  };
+});
+
+// ==========================================
+// CONSOLE / ADMIN & MONETIZATION TABLES
+// ==========================================
+
+export const auditLogs = pgTable('audit_logs', {
+  id: serial('id').primaryKey(),
+  adminId: uuid('admin_id').notNull(),
+  action: varchar('action', { length: 100 }).notNull(), // e.g. 'user.role_update', 'subscription.grant', 'cron.trigger'
+  targetId: varchar('target_id', { length: 255 }),      // User ID, ticker, or entity identifier
+  metadata: jsonb('metadata'),                          // Audit details, payload, diff
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    adminIdx: index('audit_logs_admin_id_idx').on(table.adminId),
+    actionIdx: index('audit_logs_action_idx').on(table.action),
+    createdIdx: index('audit_logs_created_at_idx').on(table.createdAt),
+  };
+});
+
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').references(() => profiles.id, { onDelete: 'cascade' }).notNull(),
+  tier: varchar('tier', { length: 50 }).default('pro_monthly').notNull(), // 'free' | 'pro_monthly' | 'pro_annual' | 'elite'
+  status: varchar('status', { length: 50 }).default('active').notNull(),   // 'active' | 'past_due' | 'canceled' | 'trialing'
+  currentPeriodStart: timestamp('current_period_start', { withTimezone: true }).defaultNow().notNull(),
+  currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }).notNull(),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false).notNull(),
+  provider: varchar('provider', { length: 50 }).default('manual').notNull(), // 'stripe' | 'manual' | 'promo'
+  providerCustomerId: varchar('provider_customer_id', { length: 255 }),
+  providerSubscriptionId: varchar('provider_subscription_id', { length: 255 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index('user_subscriptions_user_id_idx').on(table.userId),
+    statusIdx: index('user_subscriptions_status_idx').on(table.status),
+    tierIdx: index('user_subscriptions_tier_idx').on(table.tier),
   };
 });

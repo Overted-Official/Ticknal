@@ -138,6 +138,13 @@ export async function syncDailyInvestorFlows(options?: {
   const realTurnover = Number(turnoverRow?.total_turnover || 0);
 
   if (realTurnover <= 0) {
+    await db.insert(systemLogs).values({
+      source: 'cron-investor-flows',
+      level: 'WARN',
+      message: `Investor flows sync skipped for session ${dateStr}: No active market trading turnover recorded in daily_prices.`,
+      metadata: { date: dateStr },
+    });
+
     return {
       success: false,
       date: dateStr,

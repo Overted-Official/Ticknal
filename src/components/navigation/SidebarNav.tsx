@@ -218,15 +218,9 @@ export default function SidebarNav() {
               icon={CreditCard}
             />
             <SidebarNavItem
-              href="/console/signals"
-              title="Signals"
-              isActive={pathname === '/console/signals'}
-              icon={Activity}
-            />
-            <SidebarNavItem
-              href="/console/logs"
-              title="Audit & Crons"
-              isActive={pathname === '/console/logs'}
+              href="/console/operations"
+              title="Operations"
+              isActive={pathname.startsWith('/console/operations') || pathname === '/console/signals' || pathname === '/console/logs'}
               icon={Terminal}
             />
           </>

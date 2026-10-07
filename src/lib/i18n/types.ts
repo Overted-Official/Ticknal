@@ -32,6 +32,7 @@ export interface Dictionary {
     transactions: string;
     settings: string;
     notifications: string;
+    more: string;
     privacyMode: string;
     searchPlaceholder: string;
     quickOrder: string;

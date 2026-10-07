@@ -1,7 +1,7 @@
 import webPush from 'web-push';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens } from '@/db/schema';
+import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, profiles } from '@/db/schema';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 import {
@@ -68,15 +68,17 @@ export async function dispatchSignalNotifications(options: {
   const symbolFilter = new Set((options.symbols ?? []).map(normalizeTickerSymbol));
   
   // 1. Fetch user alerts and open positions
-  const [explicitAlertRows, openOrderRows, subscriptionRows, deviceTokenRows] = await Promise.all([
+  const [explicitAlertRows, openOrderRows, subscriptionRows, deviceTokenRows, profileRows] = await Promise.all([
     db.select().from(tickerAlerts).where(eq(tickerAlerts.enabled, true)),
     db.select({ tickerSymbol: positions.tickerSymbol, userId: positions.userId }).from(positions).where(eq(positions.status, 'OPEN')),
     db.select().from(pushSubscriptions),
     db.select().from(devicePushTokens).where(eq(devicePushTokens.isActive, true)),
+    db.select({ id: profiles.id }).from(profiles),
   ]);
 
   // Collect all distinct active user IDs
   const userIds = new Set<string>();
+  profileRows.forEach(p => { if (p.id) userIds.add(p.id); });
   subscriptionRows.forEach(s => { if (s.userId) userIds.add(s.userId); });
   deviceTokenRows.forEach(d => { if (d.userId) userIds.add(d.userId); });
   openOrderRows.forEach(o => { if (o.userId) userIds.add(o.userId); });
@@ -137,6 +139,7 @@ export async function dispatchSignalNotifications(options: {
   }> = [];
 
   const pushTasks: Array<() => Promise<void>> = [];
+  const championCache = new Map<string, TickerChampionAnalysis | null>();
 
   for (const userId of userIds) {
     const [userOpenRows, userAlertRows, existingNotifs] = await Promise.all([
@@ -190,14 +193,21 @@ export async function dispatchSignalNotifications(options: {
       // The same highest-alpha calculation is used for notification routing
       // and the chart's default strategy. Never determine the winner from a
       // strategy-specific signal snapshot.
-      let champion: TickerChampionAnalysis;
-      try {
-        champion = await analyzeTickerChampion(ticker, bars, {
-          startDate: '2025-01-01',
-          timeframe: 'D',
-          lookbackBars,
-        });
-      } catch {
+      let champion: TickerChampionAnalysis | null | undefined = championCache.get(ticker);
+      if (champion === undefined) {
+        try {
+          champion = await analyzeTickerChampion(ticker, bars, {
+            startDate: '2025-01-01',
+            timeframe: 'D',
+            lookbackBars,
+          });
+          championCache.set(ticker, champion);
+        } catch {
+          championCache.set(ticker, null);
+          champion = null;
+        }
+      }
+      if (!champion) {
         result.skipped += 1;
         continue;
       }

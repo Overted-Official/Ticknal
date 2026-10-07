@@ -12,6 +12,9 @@ import MarketOverviewSection, { type MarketTimeframe } from './sections/MarketOv
 import FxDevaluationSection from './sections/FxDevaluationSection';
 import SectorRotationSection from './sections/SectorRotationSection';
 import MarketHeatmapSection from './sections/MarketHeatmapSection';
+import GuestConversionBanner from '@/components/platform/auth/GuestConversionBanner';
+import GuestProLockModal from '@/components/platform/auth/GuestProLockModal';
+import { useGuestGuard } from '@/context/GuestGuardContext';
 import {
   type SectorsPerformanceResponse,
   type SectorStrategySignalsResponse,
@@ -25,6 +28,7 @@ export default function MarketsPageView() {
   const router = useRouter();
   const { t, locale, isRTL } = useTranslation();
   const { isNavVisible } = useMobileNavScroll();
+  const { isGuest } = useGuestGuard();
 
   // Timeframe & Sizing State (default to 1M for responsive overview)
   const [timeframePreset, setTimeframePreset] = useState<MarketTimeframe | 'custom'>('1M');
@@ -41,6 +45,10 @@ export default function MarketsPageView() {
   // Selection state
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
+
+  // Pro Lock Modal State
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [proFeature, setProFeature] = useState('Sector Alpha Screener');
 
   // Compute start/end dates
   const { start, end } = useMemo(() => {
@@ -156,7 +164,11 @@ export default function MarketsPageView() {
       {/* 3. Main 4-Section Executive Scroll */}
       <main
         className={`app-page page-sections-stack pt-3 space-y-8 sm:space-y-10 ${
-          isNavVisible
+          isGuest
+            ? isNavVisible
+              ? 'pb-[calc(112px+var(--ticknal-safe-area-bottom)+1rem)] md:pb-24'
+              : 'pb-[calc(56px+var(--ticknal-safe-area-bottom)+1.25rem)] md:pb-24'
+            : isNavVisible
             ? 'pb-[calc(56px+var(--ticknal-safe-area-bottom)+1rem)] md:pb-24'
             : 'pb-[max(var(--ticknal-safe-area-bottom),1.25rem)] md:pb-24'
         }`}
@@ -206,6 +218,18 @@ export default function MarketsPageView() {
           isLoading={isMacroLoading}
         />
       </main>
+
+      {/* Floating Guest Conversion Pill */}
+      <GuestConversionBanner currentFeature="Markets Overview" />
+
+      {/* Pro Lock Modal */}
+      <GuestProLockModal
+        isOpen={isProModalOpen}
+        onClose={() => setIsProModalOpen(false)}
+        featureName={proFeature}
+        title="Access Ticknal's Full Power"
+        description="Sign in to monitor your Egyptian market portfolio, automate your trading alerts, and test custom strategies."
+      />
     </div>
   );
 }

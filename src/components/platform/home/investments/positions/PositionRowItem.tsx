@@ -15,6 +15,7 @@ interface PositionRowItemProps {
   showDetails?: boolean;
   onTickerClick: (order: HomeInvestmentOrder) => void;
   onSellClick: (order: HomeInvestmentOrder) => void;
+  onBuyClick?: (order: HomeInvestmentOrder) => void;
 }
 
 export default function PositionRowItem({
@@ -26,6 +27,7 @@ export default function PositionRowItem({
   showDetails = false,
   onTickerClick,
   onSellClick,
+  onBuyClick,
 }: PositionRowItemProps) {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
@@ -35,6 +37,10 @@ export default function PositionRowItem({
   const isPositive = order.profitLoss >= 0;
   const cleanSymbol = order.tickerSymbol.replace('.CA', '').trim().toUpperCase();
   const initial = cleanSymbol.slice(0, 2);
+
+  const signalType = exitSignal?.signal?.signal;
+  const isSell = signalType === 'SELL';
+  const isBuy = signalType === 'BUY';
 
   return (
     <div
@@ -48,15 +54,17 @@ export default function PositionRowItem({
         }
       }}
       className={`py-2.5 px-1.5 flex items-center justify-between hover:bg-surface-active/30 transition-colors group cursor-pointer border-b border-border-subtle/80 outline-none select-none ${
-        exitSignal ? 'bg-rose-500/[0.03]' : ''
+        isSell ? 'bg-rose-500/[0.03]' : isBuy ? 'bg-emerald-500/[0.02]' : ''
       }`}
     >
       {/* Left: Circular Avatar + Stacked Name & Ticker */}
-      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-1.5 sm:pr-2">
         <div
           className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-xs ${
-            exitSignal
+            isSell
               ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+              : isBuy
+              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
               : isPositive
               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
               : 'bg-surface-active text-text-primary/90 border-white/5'
@@ -75,17 +83,11 @@ export default function PositionRowItem({
           )}
         </div>
 
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-text-primary truncate max-w-[120px] sm:max-w-[160px] md:max-w-[200px] group-hover:text-brand-blue transition-colors">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-[13px] font-medium text-text-primary truncate group-hover:text-brand-blue transition-colors">
               {order.companyName || cleanSymbol}
             </span>
-            {exitSignal && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0">
-                <span className="w-1 h-1 rounded-full bg-rose-400 animate-pulse" />
-                {isArabic ? 'بيع' : 'SELL'}
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-1.5 mt-0.5">
@@ -100,8 +102,8 @@ export default function PositionRowItem({
         </div>
       </div>
 
-      {/* Right: Value + P/L Metrics + Sell Action Button */}
-      <div className="flex items-center gap-3 shrink-0 pl-2 rtl:pl-0 rtl:pr-2">
+      {/* Right: Value + P/L Metrics + Dynamic Action Status Button */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 pl-1.5 sm:pl-2 rtl:pl-0 rtl:pr-1.5 sm:rtl:pr-2">
         <div className="text-right rtl:text-left flex flex-col items-end rtl:items-start">
           <div className="text-[13px] font-semibold text-text-primary tabular-nums">
             {formatMoney(positionVal, false, order.currency)}
@@ -120,22 +122,49 @@ export default function PositionRowItem({
           </div>
         </div>
 
-        {/* Sell Action Button */}
-        <div className="w-[68px] shrink-0 flex justify-end rtl:justify-start">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSellClick(order);
-            }}
-            className={`w-[64px] py-1 text-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-              exitSignal
-                ? 'bg-loss-chart text-white hover:bg-loss-hover animate-pulse'
-                : 'border border-rose-500/35 bg-rose-500/10 text-rose-400 hover:bg-loss-chart hover:text-white'
-            }`}
-          >
-            {isArabic ? 'بيع' : 'Sell'}
-          </button>
+        {/* Dynamic Action Status Button: Buy / Hold / Sell */}
+        <div className="w-[58px] sm:w-[68px] shrink-0 flex justify-end rtl:justify-start">
+          {isSell ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSellClick(order);
+              }}
+              className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer shadow-xs bg-loss-chart text-white hover:bg-loss-hover animate-pulse"
+              title={isArabic ? 'إغلاق أو تخفيض المركز' : 'Sell or close position'}
+            >
+              {isArabic ? 'بيع' : 'Sell'}
+            </button>
+          ) : isBuy ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onBuyClick) {
+                  onBuyClick(order);
+                } else {
+                  onTickerClick(order);
+                }
+              }}
+              className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer shadow-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white"
+              title={isArabic ? 'إضافة إلى المركز' : 'Add to position'}
+            >
+              {isArabic ? 'شراء' : 'Buy'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTickerClick(order);
+              }}
+              className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-medium transition-all cursor-pointer shadow-xs bg-white/[0.04] text-zinc-300 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+              title={isArabic ? 'مركز نشط - عرض التفاصيل' : 'Active position - View details'}
+            >
+              {isArabic ? 'احتفاظ' : 'Hold'}
+            </button>
+          )}
         </div>
       </div>
     </div>

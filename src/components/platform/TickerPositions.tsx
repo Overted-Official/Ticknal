@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Wallet, CheckCircle2, TrendingUp, TrendingDown } from '@/components/ui/icon-library';
+import { Plus, Wallet, CheckCircle2, TrendingUp, TrendingDown, ChevronRight } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,6 +13,7 @@ export interface TickerOrder {
   id: number;
   status: string;
   side: string;
+  accountId?: number | null;
   entryDate: string;
   entryPrice: number;
   quantity: number;
@@ -268,15 +269,15 @@ export default function TickerPositions({
         if (remainingToClose <= 0) break;
         const closeFromThisLot = Math.min(order.quantity, remainingToClose);
 
-        const res = await fetch('/api/positions', {
-          method: 'PATCH',
+        const res = await fetch('/api/positions/close', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: order.id,
-            status: 'CLOSED',
+            positionId: order.id,
             exitPrice: price,
             exitDate: today,
             quantityToClose: closeFromThisLot,
+            accountId: order.accountId || undefined,
           }),
         });
 
@@ -333,8 +334,8 @@ export default function TickerPositions({
           {/* Total Invested */}
           <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
-              <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs bg-brand-blue text-white">
-                <Wallet className="w-3 h-3 text-white" strokeWidth={2.4} />
+              <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs bg-brand-blue text-white overflow-hidden">
+                <Wallet size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
               </div>
               <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
                 {isArabic ? 'إجمالي المستثمر' : 'Total Invested'}
@@ -366,14 +367,14 @@ export default function TickerPositions({
           <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs ${
+                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs overflow-hidden ${
                   unrealizedPl >= 0 ? 'bg-profit-num text-white' : 'bg-loss-num text-white'
                 }`}
               >
                 {unrealizedPl >= 0 ? (
-                  <TrendingUp className="w-3 h-3 text-white" strokeWidth={2.4} />
+                  <TrendingUp size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
                 ) : (
-                  <TrendingDown className="w-3 h-3 text-white" strokeWidth={2.4} />
+                  <TrendingDown size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
                 )}
               </div>
               <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
@@ -419,11 +420,11 @@ export default function TickerPositions({
           <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs ${
+                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs overflow-hidden ${
                   realizedPl >= 0 ? 'bg-profit-num text-white' : 'bg-loss-num text-white'
                 }`}
               >
-                <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={2.4} />
+                <CheckCircle2 size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
               </div>
               <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
                 {isArabic ? 'الأرباح المحققة' : 'Realized P/L'}
@@ -578,9 +579,10 @@ export default function TickerPositions({
         </div>
 
         {/* Filter Controls & Action Buttons */}
-        <div className="flex items-center justify-between gap-3 pt-1">
+        {/* Filter Controls & Action Buttons */}
+        <div className="flex items-center justify-between gap-2 sm:gap-3 pt-1 min-w-0">
           {/* Segmented control */}
-          <div className="seg-control shrink-0">
+          <div className="seg-control seg-control-compact shrink-0">
             {(['all', 'open', 'closed'] as const).map((tab) => {
               const count =
                 tab === 'all'
@@ -609,7 +611,7 @@ export default function TickerPositions({
           </div>
 
           {/* Action CTAs: Close Position & Add Position */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {openOrders.length > 0 && (
               <button
                 type="button"
@@ -619,7 +621,7 @@ export default function TickerPositions({
                   setIsCloseWholePosition(true);
                   setIsCloseModalOpen(true);
                 }}
-                className="btn-token btn-secondary btn-compact"
+                className="btn-token btn-secondary btn-compact shrink-0"
                 title={isArabic ? 'إغلاق أو تخفيض المركز' : 'Close or reduce position'}
               >
                 <span>{isArabic ? 'إغلاق' : 'Close'}</span>
@@ -630,16 +632,18 @@ export default function TickerPositions({
               <button
                 type="button"
                 onClick={onAddNew}
-                className="btn-token btn-primary btn-compact"
+                className="btn-token btn-primary btn-compact px-2.5 sm:px-3 shrink-0"
+                title={isArabic ? 'إضافة صفقة' : 'Add Position'}
+                aria-label={isArabic ? 'إضافة صفقة' : 'Add Position'}
               >
                 <Plus size={14} strokeWidth={2.5} />
-                <span>{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
+                <span className="hidden sm:inline">{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Compact & Minimal Positions Ledger (No individual close buttons) */}
+        {/* Compact & Clickable Positions Ledger */}
         {displayedOrders.length === 0 ? (
           <div className="py-12 text-center text-white/40 text-xs">
             {isArabic
@@ -662,7 +666,17 @@ export default function TickerPositions({
               return (
                 <div
                   key={order.id}
-                  className="py-2 px-1 sm:px-2 transition-colors flex items-center justify-between gap-3 hover:bg-white/[0.02]"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onEditOrder?.(order)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onEditOrder?.(order);
+                    }
+                  }}
+                  className="py-2.5 px-2 sm:px-2.5 transition-all flex items-center justify-between gap-3 hover:bg-white/[0.04] active:bg-white/[0.08] cursor-pointer rounded-lg group select-none"
+                  title={isArabic ? 'انقر لتعديل بيانات الصفقة' : 'Click to edit position details'}
                 >
                   {/* Left: Status dot + Date + units & price */}
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -673,7 +687,7 @@ export default function TickerPositions({
                     />
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-white tabular-nums tracking-tight">
+                        <span className="text-xs font-semibold text-white tabular-nums tracking-tight group-hover:text-white">
                           {order.entryDate}
                         </span>
                         {!isOpen && (
@@ -681,6 +695,9 @@ export default function TickerPositions({
                             {isArabic ? 'مغلق' : 'Closed'}
                           </span>
                         )}
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-zinc-400 font-normal hidden sm:inline">
+                          ({isArabic ? 'تعديل' : 'Edit'})
+                        </span>
                       </div>
                       <div className="text-[11px] text-white/50 tabular-nums">
                         {order.quantity} {isArabic ? 'سهم' : 'units'} @ {formatPrice(order.entryPrice, currency, isArabic)}
@@ -688,19 +705,25 @@ export default function TickerPositions({
                     </div>
                   </div>
 
-                  {/* Right: Value & P&L */}
-                  <div className="flex flex-col items-end text-right rtl:items-start rtl:text-left shrink-0">
-                    <span className="text-xs font-bold text-white tabular-nums tracking-tight">
-                      {formatPrice(currentValue, currency, isArabic)}
-                    </span>
-                    <span
-                      className={`text-[11px] font-semibold tabular-nums ${
-                        isProfit ? 'text-profit-num' : 'text-loss-num'
-                      }`}
-                    >
-                      {formatMoney(pl, currency, true, isArabic)} ({plPct >= 0 ? '+' : ''}
-                      {plPct.toFixed(2)}%)
-                    </span>
+                  {/* Right: Value & P&L + Subtle Chevron */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-col items-end text-right rtl:items-start rtl:text-left">
+                      <span className="text-xs font-bold text-white tabular-nums tracking-tight">
+                        {formatPrice(currentValue, currency, isArabic)}
+                      </span>
+                      <span
+                        className={`text-[11px] font-semibold tabular-nums ${
+                          isProfit ? 'text-profit-num' : 'text-loss-num'
+                        }`}
+                      >
+                        {formatMoney(pl, currency, true, isArabic)} ({plPct >= 0 ? '+' : ''}
+                        {plPct.toFixed(2)}%)
+                      </span>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="text-zinc-600 group-hover:text-white transition-colors shrink-0 rtl:rotate-180"
+                    />
                   </div>
                 </div>
               );

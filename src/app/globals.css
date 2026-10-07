@@ -13,6 +13,7 @@
    LAYER 0: Framework & Engine
    ========================================================================== */
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 @font-face {
   font-family: 'EuclidCircularSemibold';
@@ -27,7 +28,14 @@
     font-family: var(--font-spectral), 'Spectral', 'Sentient', Georgia, serif;
   }
   .font-euclid {
-    font-family: EuclidCircularSemibold, sans-serif;
+    font-family: EuclidCircularSemibold, Inter, -apple-system, sans-serif;
+  }
+  .ticknal-wordmark {
+    font-family: EuclidCircularSemibold, Inter, -apple-system, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    text-transform: lowercase;
+    line-height: 1;
   }
 }
 
@@ -205,7 +213,7 @@
   --chart-grid: var(--palette-chart-grid);
 
   /* Typography Scale */
-  --font-sans-token: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
+  --font-sans-token: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, Inter, sans-serif;
   --text-8: 0.5rem;
   --text-9: 0.5625rem;
   --text-10: 0.625rem;
@@ -646,6 +654,23 @@ input::placeholder, textarea::placeholder {
   font-size: var(--text-12);
   line-height: var(--line-height-title);
   opacity: 1;
+}
+
+#footer input::placeholder {
+  color: #ffffff !important;
+  opacity: 0.9 !important;
+}
+
+#footer .social-icon-btn {
+  border: 1.5px solid #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+#footer .social-icon-btn:hover {
+  border-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
 }
 
 /* Non-destructive button defaults */
@@ -1726,11 +1751,11 @@ textarea:focus-visible {
 .kpi-card-root {
   position: relative;
   overflow: hidden;
-  border-radius: 1rem; /* rounded-2xl */
+  border-radius: 0.875rem; /* rounded-xl */
   background-color: var(--surface-base);
   border: 1px solid var(--border-default);
-  height: 156px;
-  padding: 0.875rem;
+  height: 138px;
+  padding: 0.75rem;
   transition: all 0.2s ease;
   cursor: pointer;
   display: flex;
@@ -1739,7 +1764,9 @@ textarea:focus-visible {
 }
 @media (min-width: 640px) {
   .kpi-card-root {
+    border-radius: 1rem;
     height: 160px;
+    padding: 0.875rem;
   }
 }
 .kpi-card-root:hover {
@@ -2466,6 +2493,20 @@ textarea:focus-visible {
   animation-play-state: paused;
 }
 
+@keyframes marquee-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
+}
+
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee-reverse var(--duration-marquee) linear infinite;
+}
+.animate-marquee-reverse:hover {
+  animation-play-state: paused;
+}
+
 .animate-in {
   animation: enter-fade var(--duration-base) var(--ease-standard) both;
 }
@@ -2480,6 +2521,20 @@ textarea:focus-visible {
   transform-box: fill-box;
   transform-origin: center;
   animation: loading-ui-comet-rotation var(--duration, 1.7s) linear infinite;
+}
+
+@keyframes gradient-line-slide {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: -200% 0%;
+  }
+}
+
+.animate-gradient-flow {
+  background-size: 200% 100%;
+  animation: gradient-line-slide 3.5s linear infinite;
 }
 
 /* Accessibility: Respect Reduced Motion Preferences */
@@ -2549,4 +2604,30 @@ body[dir="rtl"] {
     border-right: 1px solid var(--border-default) !important;
   }
 }
+
+/* ==========================================================================
+   Universal Recharts Subtle & Sleek Tooltip Cursor (Dark Theme)
+   Overrides Recharts' jarring default solid white/gray (#ccc / #f5f5f5)
+   column highlight blocks with a subtle, sleek dark surface highlight.
+   ========================================================================== */
+
+/* Universal Bar and Column chart hover cursor */
+.recharts-tooltip-cursor,
+path.recharts-tooltip-cursor,
+rect.recharts-tooltip-cursor,
+.recharts-rectangle.recharts-tooltip-cursor {
+  fill: rgba(255, 255, 255, 0.04) !important;
+  stroke: rgba(255, 255, 255, 0.06) !important;
+  stroke-width: 1px !important;
+}
+
+/* Universal Line & Area crosshair cursor */
+line.recharts-tooltip-cursor,
+.recharts-curve.recharts-tooltip-cursor {
+  stroke: rgba(255, 255, 255, 0.15) !important;
+  stroke-width: 1px !important;
+  stroke-dasharray: 3 3 !important;
+  fill: none !important;
+}
+
 

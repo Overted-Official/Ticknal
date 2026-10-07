@@ -28,6 +28,7 @@ export interface KPICardProps {
   onClick?: () => void;
   hideBadgeOnMobile?: boolean;
   className?: string;
+  iconSize?: number;
 }
 
 export default function KPICard({
@@ -38,6 +39,7 @@ export default function KPICard({
   logoUrl,
   iconBgClass = 'bg-brand-blue text-white',
   iconColorClass = 'text-white',
+  iconSize = 11,
   value,
   unit,
   badgeText,
@@ -140,7 +142,7 @@ export default function KPICard({
             {logoUrl ? (
               <img src={logoUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <Icon className={`w-3 h-3 ${iconColorClass}`} strokeWidth={2.4} />
+              <Icon size={iconSize} className={`w-[11px] h-[11px] ${iconColorClass}`} strokeWidth={2.2} />
             )}
           </div>
           <span
@@ -168,27 +170,27 @@ export default function KPICard({
       </div>
 
       {/* 2. Middle row: Value (bold large) + Unit (e.g. £, %, BARS) - Positioned directly under header in upper card */}
-      <div className="flex flex-col mt-2.5 z-10">
+      <div className="flex flex-col mt-2 sm:mt-2.5 z-10">
         <div className="flex items-baseline gap-1 leading-none">
-          <span className="text-[20px] font-bold text-white tabular-nums tracking-tight">
+          <span className="text-[17px] xs:text-[18px] sm:text-[20px] font-bold text-white tabular-nums tracking-tight">
             {value}
           </span>
           {unit && (
-            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider ml-0.5">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-zinc-400 uppercase tracking-wider ml-0.5">
               {unit}
             </span>
           )}
         </div>
 
         {/* 3. Change row: Single clean line directly under value */}
-        <div className="flex items-baseline gap-1.5 mt-1.5 leading-none">
+        <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5 leading-none">
           {changeText && (
-            <span className={`text-[12px] font-medium tabular-nums ${changeColorClass}`}>
+            <span className={`text-[11px] sm:text-[12px] font-medium tabular-nums ${changeColorClass}`}>
               {changeText}
             </span>
           )}
           {metaText && (
-            <span className={`text-[11px] truncate text-zinc-400 font-normal ${metaClass}`}>
+            <span className={`text-[10px] sm:text-[11px] truncate text-zinc-400 font-normal ${metaClass}`}>
               {metaText}
             </span>
           )}

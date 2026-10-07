@@ -10,15 +10,27 @@ export interface HomeNavSection {
 }
 
 export default function HomeFloatingNav() {
-  const { t } = useTranslation();
+  const { locale } = useTranslation();
 
   const sections: HomeNavSection[] = useMemo(
     () => [
-      { id: 'section-performance-overview', label: t('dashboard.title'), shortLabel: t('dashboard.title') },
-      { id: 'section-my-positions', label: t('dashboard.activePositions'), shortLabel: t('dashboard.activePositions') },
-      { id: 'section-market-signals', label: t('dashboard.recentSignals'), shortLabel: t('dashboard.recentSignals') },
+      {
+        id: 'section-performance-overview',
+        label: locale === 'ar' ? 'نظرة عامة على الأداء' : 'Performance Overview',
+        shortLabel: locale === 'ar' ? 'نظرة عامة' : 'Overview',
+      },
+      {
+        id: 'section-my-positions',
+        label: locale === 'ar' ? 'الصفقات' : 'Positions',
+        shortLabel: locale === 'ar' ? 'الصفقات' : 'Positions',
+      },
+      {
+        id: 'section-market-signals',
+        label: locale === 'ar' ? 'فرص الشراء' : 'Buy Opportunities',
+        shortLabel: locale === 'ar' ? 'الفرص' : 'Opportunities',
+      },
     ],
-    [t]
+    [locale]
   );
 
   const [activeSection, setActiveSection] = useState<string>('section-performance-overview');

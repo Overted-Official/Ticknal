@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
-import { X } from '@/components/ui/icon-library';
+import { X, LineChart } from '@/components/ui/icon-library';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
 import AddOrderModal from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
@@ -34,6 +36,7 @@ export default function TickerPositionsDrawer({
   onClose,
   order,
   onPositionsChanged,
+  exitSignal,
 }: TickerPositionsDrawerProps) {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
@@ -65,6 +68,7 @@ export default function TickerPositionsDrawer({
     companyName?: string;
     logoUrl?: string | null;
     sector?: string;
+    accountId?: number | null;
   } | null>(null);
 
   useEffect(() => {
@@ -84,6 +88,20 @@ export default function TickerPositionsDrawer({
   const cleanSymbol = symbol.replace('.CA', '').trim().toUpperCase();
   const displaySymbol = cleanSymbol;
   const currentPrice = order?.currentPrice ?? 0;
+  const router = useRouter();
+
+  const strategyId = (exitSignal as any)?.strategyId;
+  const strategyParam = strategyId ? `&strategy=${encodeURIComponent(strategyId)}` : '';
+  const chartUrl = `/charts?ticker=${encodeURIComponent(cleanSymbol)}${strategyParam}`;
+
+  const handleGoToChart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      onClose();
+      router.push(chartUrl);
+    },
+    [chartUrl, onClose, router]
+  );
 
   // Fetch active orders for this ticker
   const fetchOrders = useCallback(async () => {
@@ -175,8 +193,13 @@ export default function TickerPositionsDrawer({
                   {/* Main Header Row */}
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      {/* Clean Circular Brand Logo */}
-                      <div className="w-10 h-10 rounded-full bg-white border border-border-default p-1 flex items-center justify-center shrink-0 overflow-hidden">
+                      {/* Clean Circular Brand Logo (links to chart) */}
+                      <Link
+                        href={chartUrl}
+                        onClick={handleGoToChart}
+                        className="w-10 h-10 rounded-full bg-white border border-border-default p-1 flex items-center justify-center shrink-0 overflow-hidden hover:opacity-85 transition-opacity cursor-pointer"
+                        title={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
+                      >
                         {order.logoUrl && !imgError ? (
                           <img
                             src={order.logoUrl}
@@ -187,20 +210,27 @@ export default function TickerPositionsDrawer({
                         ) : (
                           <span className="text-xs font-bold font-sans text-zinc-900">{displaySymbol.slice(0, 2)}</span>
                         )}
-                      </div>
+                      </Link>
 
                       {/* Company Name & Ticker Metadata */}
                       <div className="flex flex-col min-w-0 justify-center">
-                        <h2
-                          className="font-semibold text-sm sm:text-base text-text-primary tracking-tight truncate font-sans leading-tight"
-                          title={order.companyName || cleanSymbol}
+                        <Link
+                          href={chartUrl}
+                          onClick={handleGoToChart}
+                          className="font-semibold text-sm sm:text-base text-text-primary hover:text-white tracking-tight truncate font-sans leading-tight transition-colors cursor-pointer"
+                          title={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
                         >
                           {order.companyName || cleanSymbol}
-                        </h2>
+                        </Link>
                         <div className="flex items-center gap-1.5 sm:gap-2 mt-1 min-w-0 flex-wrap">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-sans font-semibold bg-surface-raised text-text-primary border border-border-subtle tracking-wider shrink-0">
+                          <Link
+                            href={chartUrl}
+                            onClick={handleGoToChart}
+                            className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-sans font-semibold bg-surface-raised hover:bg-white/10 text-text-primary border border-border-subtle tracking-wider shrink-0 transition-colors"
+                            title={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
+                          >
                             {cleanSymbol}
-                          </span>
+                          </Link>
                           {order.sector && (
                             <>
                               <span className="text-zinc-600 text-[10px] shrink-0">•</span>
@@ -219,7 +249,7 @@ export default function TickerPositionsDrawer({
                     </div>
 
                     {/* Right Side: Live Price Quote & Action Controls */}
-                    <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                       {currentPrice > 0 && (
                         <div className="hidden sm:flex flex-col items-end rtl:items-start text-right rtl:text-left">
                           <div className="text-sm sm:text-base font-bold text-text-primary tabular-nums tracking-tight font-sans">
@@ -241,6 +271,20 @@ export default function TickerPositionsDrawer({
                       {currentPrice > 0 && (
                         <div className="h-6 w-px bg-border-default hidden sm:block shrink-0" />
                       )}
+
+                      {/* Go to Ticker Chart Button (next to Close button) */}
+                      <Link
+                        href={chartUrl}
+                        onClick={handleGoToChart}
+                        className="h-8 px-2 sm:px-2.5 rounded-lg border border-white/10 hover:border-white/25 bg-white/[0.04] hover:bg-white/[0.08] text-white flex items-center gap-1.5 transition-all cursor-pointer font-sans select-none shrink-0"
+                        title={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
+                        aria-label={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
+                      >
+                        <LineChart size={15} strokeWidth={1.8} className="text-zinc-300" />
+                        <span className="hidden sm:inline font-medium text-xs whitespace-nowrap">
+                          {isArabic ? 'الرسم البياني' : 'Chart'}
+                        </span>
+                      </Link>
 
                       <button
                         type="button"
@@ -290,6 +334,7 @@ export default function TickerPositionsDrawer({
                           companyName: order?.companyName,
                           logoUrl: order?.logoUrl,
                           sector: order?.sector,
+                          accountId: ord.accountId,
                         })
                       }
                       onAddNew={() => setIsAddOrderOpen(true)}

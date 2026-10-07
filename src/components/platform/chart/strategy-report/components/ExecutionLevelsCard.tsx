@@ -95,7 +95,7 @@ export default function ExecutionLevelsCard({
           {/* Header */}
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+              className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${
                 isBuy
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : isSell
@@ -103,7 +103,7 @@ export default function ExecutionLevelsCard({
                   : 'bg-brand-blue/20 text-brand-blue'
               }`}
             >
-              <Radio className="w-3 h-3" strokeWidth={2.4} />
+              <Radio size={11} className="w-[11px] h-[11px]" strokeWidth={2.2} />
             </div>
             <span className="text-xs sm:text-[13px] font-semibold text-white tracking-tight truncate">
               {locale === 'ar' ? 'قرار النموذج' : 'Algorithm Decision'}
@@ -203,8 +203,8 @@ export default function ExecutionLevelsCard({
         <div className="w-full bg-black border border-white/10 hover:border-white/20 transition-all rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[155px] sm:min-h-[170px]">
           {/* Header */}
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-brand-blue/20 text-brand-blue">
-              <Activity className="w-3 h-3" strokeWidth={2.4} />
+            <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-brand-blue/20 text-brand-blue overflow-hidden">
+              <Activity size={11} className="w-[11px] h-[11px]" strokeWidth={2.2} />
             </div>
             <span className="text-xs sm:text-[13px] font-semibold text-white tracking-tight truncate">
               {locale === 'ar' ? 'مؤشر الزخم الرئيسي (MI)' : 'Master Index (MI)'}

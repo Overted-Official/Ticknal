@@ -62,25 +62,13 @@ export default function SectorConcentrationFlowPanel({
 }: SectorConcentrationFlowPanelProps) {
   const { locale } = useTranslation();
 
-  if (!sector) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-neutral-500 text-xs font-sans">
-        <p>
-          {locale === 'ar'
-            ? 'اختر أي قطاع من مصفوفة الدوران لعرض تدفق السيولة ومخاطر التركز'
-            : 'Select any sector on the matrix to view capital flow & concentration analysis'}
-        </p>
-      </div>
-    );
-  }
-
-  const sectorTurnover = sector.totalTurnover || 0;
+  const sectorTurnover = sector?.totalTurnover || 0;
   const marketSharePct =
     totalMarketTurnover > 0 ? (sectorTurnover / totalMarketTurnover) * 100 : 0;
 
   // 1. Pareto Concentration Analysis (Top 3 stocks turnover share)
   const concentration = useMemo(() => {
-    if (!sector.stocks || sector.stocks.length === 0) {
+    if (!sector?.stocks || sector.stocks.length === 0) {
       return { top3Share: 0, riskLevel: 'low' as const, topStocks: [], otherShare: 0 };
     }
     const sorted = [...sector.stocks].sort((a, b) => b.turnover - a.turnover);
@@ -101,10 +89,21 @@ export default function SectorConcentrationFlowPanel({
       })),
       otherShare: Math.max(0, 100 - top3Share),
     };
-  }, [sector.stocks, sectorTurnover]);
+  }, [sector?.stocks, sectorTurnover]);
 
   // 2. Market Breadth & Internal Participation
   const breadth = useMemo(() => {
+    if (!sector) {
+      return {
+        gainers: 0,
+        losers: 0,
+        unchanged: 0,
+        total: 1,
+        advancerPct: 0,
+        declinerPct: 0,
+        unchangedPct: 0,
+      };
+    }
     const total = sector.stocks?.length || 1;
     const gainers = sector.gainersCount ?? sector.stocks?.filter((s) => s.returnPct > 0).length ?? 0;
     const losers = sector.losersCount ?? sector.stocks?.filter((s) => s.returnPct < 0).length ?? 0;
@@ -126,7 +125,7 @@ export default function SectorConcentrationFlowPanel({
 
   // 3. Catalysts: Top 3 Pushers vs Top 3 Draggers
   const catalysts = useMemo(() => {
-    if (!sector.stocks || sector.stocks.length === 0) {
+    if (!sector?.stocks || sector.stocks.length === 0) {
       return { drivers: [], drags: [] };
     }
     const sortedByAlpha = [...sector.stocks].sort((a, b) => {
@@ -152,7 +151,19 @@ export default function SectorConcentrationFlowPanel({
     }));
 
     return { drivers, drags };
-  }, [sector.stocks, benchmarkReturn]);
+  }, [sector?.stocks, benchmarkReturn]);
+
+  if (!sector) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-neutral-500 text-xs font-sans">
+        <p>
+          {locale === 'ar'
+            ? 'اختر أي قطاع من مصفوفة الدوران لعرض تدفق السيولة ومخاطر التركز'
+            : 'Select any sector on the matrix to view capital flow & concentration analysis'}
+        </p>
+      </div>
+    );
+  }
 
   const regimeBadgeStyle =
     sector.rotationRegime === 'Leading'

@@ -49,6 +49,7 @@ export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps
       id: 'portfolio-value',
       targetId: 'section-monthly-progression',
       title: locale === 'ar' ? 'قيمة المحفظة' : 'Portfolio Value',
+      shortTitle: locale === 'ar' ? 'المحفظة' : 'Portfolio',
       icon: Wallet,
       iconBgClass: 'bg-brand-blue text-white',
       iconColorClass: 'text-white',
@@ -64,6 +65,7 @@ export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps
       id: 'unrealized-gain',
       targetId: 'section-active-positions',
       title: locale === 'ar' ? 'الأرباح غير المحققة' : 'Unrealized Gain',
+      shortTitle: locale === 'ar' ? 'غير محققة' : 'Unrealized',
       icon: TrendingUp,
       iconBgClass: orderStats.unrealized >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
@@ -79,6 +81,7 @@ export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps
       id: 'realized-gain',
       targetId: 'section-monthly-progression',
       title: locale === 'ar' ? 'الأرباح المحققة' : 'Realized Gain',
+      shortTitle: locale === 'ar' ? 'المحققة' : 'Realized',
       icon: CheckCircle2,
       iconBgClass: orderStats.realized >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
@@ -97,6 +100,7 @@ export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps
       id: 'total-gain',
       targetId: 'section-monthly-progression',
       title: locale === 'ar' ? 'إجمالي الأرباح' : 'Total Gain',
+      shortTitle: locale === 'ar' ? 'الإجمالي' : 'Total Gain',
       icon: Target,
       iconBgClass: totalGain >= 0 ? 'bg-accent-amber text-white' : 'bg-loss-chart text-white',
       iconColorClass: 'text-white',
@@ -111,12 +115,12 @@ export default function FinancialsKPIRail({ orderStats }: FinancialsKPIRailProps
   ];
 
   return (
-    <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 pb-1 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
+    <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2 pb-1 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
       {cards.map((card) => (
         <KPICard
           key={card.id}
           {...card}
-          className="shrink-0 w-[170px] xs:w-[180px] sm:w-[190px] lg:w-full snap-start"
+          className="shrink-0 w-[138px] xs:w-[145px] sm:w-[180px] lg:w-full snap-start"
         />
       ))}
     </div>

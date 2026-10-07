@@ -1,6 +1,6 @@
 # Ticknal Indicator Library Backlog
 
-Last updated: 2026-10-04
+Last updated: 2026-10-05
 
 ## Purpose
 
@@ -13,6 +13,10 @@ This document is the canonical product backlog for Ticknal's indicator library. 
 5. Receive alerts from the same calculation used in the backtest.
 
 An indicator computes information. It does not decide whether the user should buy or sell. Buy and sell decisions belong to the future rule builder, where users combine indicator outputs with explicit conditions.
+
+## Implementation status
+
+All 411 backlog identities are registered in the canonical engine and integrated into the Charts indicator browser. Every indicator owns a dedicated `<category>/<indicator-id>/logic.ts` module; category files contain metadata and registration only. The current single-series market-bar contract can execute 299 indicators directly. The remaining 112 are explicitly data-gated until Ticknal supplies their authentic breadth, benchmark, portfolio, macro, order-book, trade-history, calendar, or protected-strategy inputs; they return typed availability diagnostics instead of fabricated values.
 
 ## Product taxonomy
 
@@ -90,7 +94,7 @@ Each implementation must declare its warm-up requirement, missing-data behavior,
 
 ## 1. Price and return basics
 
-Implementation status: all 20 Price and Return definitions are formula-verified and integrated into the Charts indicator browser, overlays, synchronized panes, parameter editing, and versioned URL persistence as Wave 1 of the 411-indicator program.
+All 20 Price and Return definitions are formula-verified and integrated into the Charts indicator browser, overlays, synchronized panes, parameter editing, and versioned URL persistence.
 
 These are reusable primitives. They look simple, but they prevent every later indicator from reimplementing price transformations differently.
 

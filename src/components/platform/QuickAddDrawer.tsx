@@ -84,9 +84,15 @@ interface QuickAddDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialMode?: 'transaction' | 'position';
 }
 
-export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddDrawerProps) {
+export default function QuickAddDrawer({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialMode = 'transaction',
+}: QuickAddDrawerProps) {
   const { toast } = useToast();
   const router = useRouter();
   const { t, locale, isRTL } = useTranslation();
@@ -94,7 +100,13 @@ export default function QuickAddDrawer({ isOpen, onClose, onSuccess }: QuickAddD
   const [isMobile, setIsMobile] = useState(false);
 
   // Active Tab Switch: 'transaction' | 'position'
-  const [activeSwitch, setActiveSwitch] = useState<'transaction' | 'position'>('transaction');
+  const [activeSwitch, setActiveSwitch] = useState<'transaction' | 'position'>(initialMode);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveSwitch(initialMode);
+    }
+  }, [isOpen, initialMode]);
 
   // --- 1. Transaction Form State ---
   const [txMode, setTxMode] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER' | 'BROKER_INJECTION'>('EXPENSE');

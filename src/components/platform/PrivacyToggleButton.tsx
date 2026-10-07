@@ -12,7 +12,7 @@ interface PrivacyToggleButtonProps {
 export default function PrivacyToggleButton({ className = '', iconOnly = false }: PrivacyToggleButtonProps) {
   const { isPrivacy, togglePrivacy } = usePrivacyMode();
   const title = isPrivacy ? 'Privacy Mode Active (Values Masked) - Click to Reveal' : 'Values Visible - Click to Mask';
-  const iconRef = React.useRef<{ startAnimation: () => void; stopAnimation: () => void } | null>(null);
+  const iconRef = React.useRef<{ startAnimation?: () => void; stopAnimation?: () => void } | any>(null);
 
   const icon = isPrivacy ? (
     <EyeOff ref={iconRef} size={iconOnly ? 18 : 14} className="text-current" />
@@ -20,8 +20,16 @@ export default function PrivacyToggleButton({ className = '', iconOnly = false }
     <Eye ref={iconRef} size={iconOnly ? 18 : 16} className="text-current" />
   );
 
-  const handleMouseEnter = () => iconRef.current?.startAnimation();
-  const handleMouseLeave = () => iconRef.current?.stopAnimation();
+  const handleMouseEnter = () => {
+    if (typeof iconRef.current?.startAnimation === 'function') {
+      iconRef.current.startAnimation();
+    }
+  };
+  const handleMouseLeave = () => {
+    if (typeof iconRef.current?.stopAnimation === 'function') {
+      iconRef.current.stopAnimation();
+    }
+  };
 
   if (iconOnly) {
     return (

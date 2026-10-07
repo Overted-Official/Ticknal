@@ -6,6 +6,8 @@ import BottomToolbar from '@/components/platform/BottomToolbar';
 import RightSidebar, { WatchlistItem } from '@/components/platform/RightSidebar';
 import { TickerOrder } from '@/components/platform/TickerPositions';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
+import GuestConversionBanner from '@/components/platform/auth/GuestConversionBanner';
+import { useGuestGuard } from '@/context/GuestGuardContext';
 
 export interface ChartsWorkspaceViewProps {
   symbol: string;
@@ -36,10 +38,12 @@ export default function ChartsWorkspaceView({
   rangeData,
   brokerageAccounts = [],
 }: ChartsWorkspaceViewProps) {
+  const { isGuest } = useGuestGuard();
+
   return (
     <div className="flex-1 h-full w-full min-w-0 flex flex-row overflow-hidden select-none relative">
       {/* Chart Canvas + Bottom Toolbar */}
-      <div className="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
+      <div className={`flex-1 flex flex-col min-w-0 relative h-full overflow-hidden ${isGuest ? 'pb-[108px] md:pb-14' : 'pb-14 md:pb-0'}`}>
         <ChartWorkspace
           key={`${symbol}-${timeframe}`}
           data={chartData}
@@ -62,7 +66,7 @@ export default function ChartsWorkspaceView({
       </div>
 
       {/* Right Sidebar */}
-      <div className="hidden lg:flex h-full shrink-0">
+      <div className={`hidden lg:flex h-full shrink-0 ${isGuest ? 'pb-13 sm:pb-14' : ''}`}>
         <RightSidebar
           watchlist={watchlist}
           selectedSymbol={symbol}
@@ -70,6 +74,9 @@ export default function ChartsWorkspaceView({
           rangeData={rangeData}
         />
       </div>
+
+      {/* Guest Mode Conversion Banner */}
+      <GuestConversionBanner currentFeature="SuperCharts" />
     </div>
   );
 }

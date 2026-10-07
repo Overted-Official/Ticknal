@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import useSWR from 'swr';
 import { useTranslation } from '@/lib/i18n';
-import { X } from '@/components/ui/icon-library';
+import { X, Building2, ChevronDown } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/context/ToastContext';
+import { type BankAccount } from '@/types/bank';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export type CloseOrderRow = {
   id: number;
@@ -18,6 +23,7 @@ export type CloseOrderRow = {
   logoUrl?: string | null;
   sector?: string;
   currency?: string;
+  accountId?: number | null;
 };
 
 interface CloseOrderModalProps {
@@ -45,6 +51,18 @@ export default function CloseOrderModal({
     quantityToClose: '',
   });
 
+  const [destinationAccountId, setDestinationAccountId] = useState<number | null>(null);
+
+  const { data: accountsData } = useSWR<{ accounts: BankAccount[] }>(
+    isOpen ? '/api/banks/accounts' : null,
+    fetcher
+  );
+
+  const brokerageAccounts = useMemo(() => {
+    const list = accountsData?.accounts || [];
+    return list.filter((a) => !a.isArchived && ['BROKERAGE', 'BROKER_CASH'].includes(a.accountType));
+  }, [accountsData]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -57,8 +75,16 @@ export default function CloseOrderModal({
         quantityToClose: order.quantity ? String(order.quantity) : '1',
       });
       setIsSubmitting(false);
+
+      if (order.accountId && brokerageAccounts.some((a) => a.id === order.accountId)) {
+        setDestinationAccountId(order.accountId);
+      } else {
+        const nonVirtual = brokerageAccounts.filter((a) => !isVirtualAccount(a));
+        const defaultAcc = nonVirtual.find((a) => a.isDefaultExpense) || nonVirtual[0] || brokerageAccounts[0];
+        setDestinationAccountId(defaultAcc ? defaultAcc.id : null);
+      }
     }
-  }, [isOpen, order]);
+  }, [isOpen, order, brokerageAccounts]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -102,6 +128,7 @@ export default function CloseOrderModal({
           exitDate: form.exitDate,
           exitPrice: exitPriceNum,
           quantityToClose: quantityNum,
+          accountId: destinationAccountId || undefined,
         }),
       });
 
@@ -303,6 +330,49 @@ export default function CloseOrderModal({
                         </span>
                       )}
                     </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Destination Brokerage Account */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="field-label">
+                    {isArabic ? 'إيداع المحصلات في المحفظة' : 'Deposit Proceeds To'}
+                  </label>
+                  <span className="text-[10px] text-text-muted font-sans">
+                    {isArabic ? 'حساب الوساطة والتداول' : 'Brokerage account'}
+                  </span>
+                </div>
+
+                {brokerageAccounts.length > 1 ? (
+                  <div className="relative">
+                    <select
+                      value={destinationAccountId || ''}
+                      onChange={(e) => setDestinationAccountId(Number(e.target.value) || null)}
+                      className="field-input w-full appearance-none pr-8 cursor-pointer font-sans"
+                    >
+                      {brokerageAccounts.map((acc) => (
+                        <option key={acc.id} value={acc.id} className="bg-black text-text-primary">
+                          {acc.customBankName || acc.accountName} ({acc.currency || 'EGP'})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-text-muted absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                ) : (
+                  <div className="field-card flex items-center justify-between py-2.5 px-3">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-text-muted shrink-0" />
+                      <span className="text-xs font-semibold text-text-primary font-sans">
+                        {brokerageAccounts[0]?.customBankName ||
+                          brokerageAccounts[0]?.accountName ||
+                          (isArabic ? 'حساب الوساطة' : 'Brokerage Account')}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold font-sans">
+                      {brokerageAccounts[0]?.currency || rawCurrency}
+                    </span>
                   </div>
                 )}
               </div>

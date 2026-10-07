@@ -22,6 +22,9 @@ import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import { useTranslation } from '@/lib/i18n';
 import AccountBalanceHistoryDrawer from '@/components/platform/wallet/AccountBalanceHistoryDrawer';
 import KPICard, { type KPICardProps } from './KPICard';
+import IndexPillRail from './IndexPillRail';
+import { type IndexPillProps } from './IndexPill';
+import { formatCleanAccountTitle } from '@/lib/format-bank-name';
 
 interface BanksKPIRailProps {
   accounts?: BankAccount[];
@@ -51,17 +54,19 @@ function calculateAccountSparkline(
 
   if (Math.abs(delta) < 0.01) {
     trend = 'neutral';
-    changeText = 'Steady';
-    changeColorClass = 'text-zinc-400';
+    changeText = '0.0%';
+    changeColorClass = 'text-neutral-400';
   } else if (delta > 0) {
     trend = 'up';
-    const pct = startBalance > 0 ? (delta / startBalance) * 100 : 100;
-    changeText = `+${pct > 999 ? '>999' : pct.toFixed(1)}%`;
+    const rawPct = startBalance > 1 ? (delta / startBalance) * 100 : 100;
+    const cappedPct = Math.min(rawPct, 100);
+    changeText = `+${cappedPct.toFixed(1)}%`;
     changeColorClass = 'text-profit-num';
   } else {
     trend = 'down';
-    const pct = startBalance > 0 ? (Math.abs(delta) / startBalance) * 100 : 100;
-    changeText = `-${pct > 999 ? '>999' : pct.toFixed(1)}%`;
+    const rawPct = startBalance > 1 ? (Math.abs(delta) / startBalance) * 100 : 100;
+    const cappedPct = Math.min(rawPct, 100);
+    changeText = `-${cappedPct.toFixed(1)}%`;
     changeColorClass = 'text-loss-num';
   }
 
@@ -249,32 +254,42 @@ export default function BanksKPIRail({
     });
   }, [realAccounts, usdRate]);
 
-  // Pre-calculate sparklines and props for account KPI cards
-  const accountCards: KPICardProps[] = useMemo(() => {
-    return sortedAccounts.map((account, index) => {
+  // Pre-calculate props for account pills (indices switch style)
+  const accountPills: IndexPillProps[] = useMemo(() => {
+    return sortedAccounts.map((account) => {
       const nativeBalance = Number(account.balance) || 0;
-      const egpBalance = toEgp(nativeBalance, account.currency, usdRate);
-      const sharePct =
-        totalCombinedEgp > 0 ? ((egpBalance / totalCombinedEgp) * 100).toFixed(1) : '0';
       const isBroker = isBrokerageAccount(account);
       const curr = account.currency || 'EGP';
       const isUsd = curr === 'USD';
-
-      const typeLabel = account.accountType
-        ? (locale === 'ar'
-            ? account.accountType.toUpperCase().includes('BROKER') || account.accountType.toUpperCase().includes('TRAD')
-              ? 'وساطة'
-              : account.accountType.toUpperCase().includes('SAVING')
-              ? 'توفير'
-              : account.accountType.toUpperCase().includes('CD') || account.accountType.toUpperCase().includes('DEPOSIT')
-              ? 'شهادة ادخار'
-              : 'جاري'
-            : account.accountType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()))
-        : isBroker
-        ? (locale === 'ar' ? 'وساطة' : 'Brokerage')
-        : (locale === 'ar' ? 'جاري' : 'Checking');
-
       const sparkline = calculateAccountSparkline(account, transactions);
+
+      const cleanMeta = formatCleanAccountTitle({
+        accountName: account.accountName,
+        bankName: account.bankName,
+        customBankName: account.customBankName,
+        accountType: account.accountType,
+        currency: account.currency,
+      });
+
+      const title =
+        locale === 'ar'
+          ? (account.accountName || account.bankName || `حساب #${account.id}`)
+          : cleanMeta.bankShort.toLowerCase() === cleanMeta.subName.toLowerCase() ||
+            cleanMeta.subName.toLowerCase().startsWith(cleanMeta.bankShort.toLowerCase())
+          ? cleanMeta.subName
+          : `${cleanMeta.bankShort} ${cleanMeta.subName}`;
+
+      const tag = isUsd
+        ? 'USD'
+        : isBroker
+        ? (locale === 'ar' ? 'وساطة' : 'BROKER')
+        : curr;
+
+      const tagColorClass = isUsd
+        ? 'text-emerald-400'
+        : isBroker
+        ? 'text-amber-500'
+        : 'text-neutral-400';
 
       const formattedValue = isPrivacy
         ? '••••••••'
@@ -284,59 +299,58 @@ export default function BanksKPIRail({
 
       const unit = isPrivacy || isUsd ? undefined : currencySymbol;
 
-      const metaText = isPrivacy
-        ? '••••••'
-        : isUsd
-        ? (locale === 'ar'
-            ? `≈ ${egpBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })} ج.م (${sharePct}%)`
-            : `≈ ${egpBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })} £ (${sharePct}%)`)
-        : (locale === 'ar' ? `${sharePct}% من النقد` : `${sharePct}% of cash`);
+      const change = isPrivacy ? '•••' : sparkline.changeText;
 
-      const badgeClass = isUsd
-        ? 'text-emerald-400 font-medium text-[9px] bg-emerald-500/10 border border-emerald-500/20'
-        : isBroker
-        ? 'text-amber-400 font-medium text-[9px] bg-amber-500/10 border border-amber-500/20'
-        : 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10';
+      const getBankCode = (bankName?: string | null, broker?: boolean): string => {
+        if (broker) return 'TH';
+        if (!bankName) return 'BK';
+        const upper = bankName.toUpperCase();
+        if (upper.includes('THNDR')) return 'TH';
+        if (upper.includes('CIB') || upper.includes('COMMERCIAL INTERNATIONAL')) return 'CIB';
+        if (upper.includes('MISR') || upper.includes('MIST')) return 'BM';
+        if (upper.includes('HSBC')) return 'HSBC';
+        if (upper.includes('ALEX')) return 'ALX';
+        if (upper.includes('QNB')) return 'QNB';
+        if (upper.includes('NBE') || upper.includes('NATIONAL BANK')) return 'NBE';
+        if (upper.includes('FAISAL')) return 'FIB';
+        if (upper.includes('FAB')) return 'FAB';
+        if (upper.includes('AAIB')) return 'AAIB';
+        const words = bankName.trim().split(/\s+/);
+        if (words.length >= 2) {
+          return (words[0][0] + words[1][0]).toUpperCase();
+        }
+        return bankName.slice(0, 3).toUpperCase();
+      };
 
-      const isDesktopHidden = !showAllAccounts && index >= INITIAL_ACCOUNTS_LIMIT;
+      const bankRaw = account.bankName || account.customBankName || cleanMeta.bankShort;
 
       return {
         id: `account-${account.id}`,
-        title: account.accountName || account.bankName || (locale === 'ar' ? `حساب #${account.id}` : `Account #${account.id}`),
-        shortTitle: account.bankName || account.accountName || (locale === 'ar' ? 'حساب' : 'Account'),
+        title,
+        tag,
+        tagColorClass,
+        logoUrl: account.bankLogoUrl || null,
         icon: isBroker ? Wallet : Building2,
-        logoUrl: account.bankLogoUrl,
-        iconBgClass: isBroker
-          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-          : 'bg-surface-active text-text-primary border border-border-subtle',
-        iconColorClass: isBroker ? 'text-amber-400' : 'text-zinc-200',
+        iconClass: isBroker ? 'text-amber-500' : 'text-neutral-300',
+        badge: getBankCode(bankRaw, isBroker),
         value: formattedValue,
         unit,
-        badgeText: `${curr} • ${typeLabel}`,
-        badgeClass,
-        metaText,
-        metaClass: 'text-zinc-500',
-        sparklinePoints: sparkline.points,
-        sparklineTrend: sparkline.trend,
-        changeText: isPrivacy ? '•••' : (locale === 'ar' && sparkline.changeText === 'Steady' ? 'مستقر' : sparkline.changeText),
+        change,
         changeColorClass: sparkline.changeColorClass,
         onClick: () => setSelectedAccountId(account.id),
-        className: `shrink-0 w-[170px] xs:w-[180px] sm:w-[190px] lg:w-full snap-start cursor-pointer ${
-          isDesktopHidden ? 'lg:hidden' : ''
-        }`,
       };
     });
-  }, [sortedAccounts, transactions, usdRate, totalCombinedEgp, isPrivacy, showAllAccounts, locale, currencySymbol]);
+  }, [sortedAccounts, transactions, isPrivacy, locale, currencySymbol]);
 
   return (
     <div className="w-full space-y-3 sm:space-y-4 select-none">
       {/* 1. Macro Liquidity Cards Rail (Sidescrolling on mobile, 4-col grid on desktop) */}
-      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 pb-1 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
+      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2 pb-1 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
         {macroCards.map((card) => (
           <KPICard
             key={card.id}
             {...card}
-            className="shrink-0 w-[170px] xs:w-[180px] sm:w-[190px] lg:w-full snap-start"
+            className="shrink-0 w-[138px] xs:w-[145px] sm:w-[180px] lg:w-full snap-start"
           />
         ))}
       </div>
@@ -351,45 +365,24 @@ export default function BanksKPIRail({
             {sortedAccounts.length}
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          {sortedAccounts.length > INITIAL_ACCOUNTS_LIMIT && (
-            <button
-              type="button"
-              onClick={() => setShowAllAccounts((prev) => !prev)}
-              className="hidden lg:inline-flex text-[11px] font-medium text-text-muted hover:text-text-primary transition-colors cursor-pointer select-none"
-            >
-              {showAllAccounts
-                ? (locale === 'ar' ? `عرض أعلى ${INITIAL_ACCOUNTS_LIMIT}` : `Show top ${INITIAL_ACCOUNTS_LIMIT}`)
-                : (locale === 'ar' ? `عرض الكل (${sortedAccounts.length})` : `Show all (${sortedAccounts.length})`)}
-            </button>
-          )}
-          <Link
-            href="/wallet?tab=banks"
-            className="text-[11px] font-semibold text-brand-blue hover:text-brand-blue-light inline-flex items-center gap-0.5 transition-colors"
-          >
-            <span>{locale === 'ar' ? 'الإدارة في المحفظة' : 'Manage in Wallet'}</span>
-            <ChevronRight className={`w-3 h-3 ${locale === 'ar' ? 'rotate-180' : ''}`} />
-          </Link>
-        </div>
+        <Link
+          href="/wallet?tab=banks"
+          className="text-[11px] font-semibold text-brand-blue hover:text-brand-blue-light inline-flex items-center gap-0.5 transition-colors"
+        >
+          <span>{locale === 'ar' ? 'الإدارة في المحفظة' : 'Manage in Wallet'}</span>
+          <ChevronRight className={`w-3 h-3 ${locale === 'ar' ? 'rotate-180' : ''}`} />
+        </Link>
       </div>
 
-      {/* 3. Individual Account Cards Rail / Grid (Sidescrolling on phone, 4-col grid on desktop) */}
-      {sortedAccounts.length === 0 ? (
-        <div className="p-6 rounded-xl border border-dashed border-border-subtle bg-surface-raised/40 text-center text-xs text-text-muted font-sans">
-          {locale === 'ar'
+      {/* 3. Individual Account Pills Rail (1-to-1 with Markets indices switch) */}
+      <IndexPillRail
+        items={accountPills}
+        emptyMessage={
+          locale === 'ar'
             ? 'لم يتم ربط أي حسابات بنكية أو وساطة حتى الآن.'
-            : 'No bank or brokerage accounts connected yet.'}{' '}
-          <Link href="/wallet?tab=banks" className="text-brand-blue hover:underline ml-1">
-            {locale === 'ar' ? 'ربط حساب' : 'Connect an account'}
-          </Link>
-        </div>
-      ) : (
-        <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 pb-1 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
-          {accountCards.map((card) => (
-            <KPICard key={card.id} {...card} />
-          ))}
-        </div>
-      )}
+            : 'No bank or brokerage accounts connected yet.'
+        }
+      />
       <AccountBalanceHistoryDrawer
         account={selectedAccount}
         isOpen={selectedAccount !== null}

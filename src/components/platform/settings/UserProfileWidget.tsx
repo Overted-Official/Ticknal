@@ -25,9 +25,13 @@ export type SettingsUserProfile = {
 
 interface UserProfileWidgetProps {
   userProfile: SettingsUserProfile;
+  hideSignOutButton?: boolean;
 }
 
-export default function UserProfileWidget({ userProfile }: UserProfileWidgetProps) {
+export default function UserProfileWidget({
+  userProfile,
+  hideSignOutButton = false,
+}: UserProfileWidgetProps) {
   const router = useRouter();
   const { t, locale, isRTL } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -188,15 +192,17 @@ export default function UserProfileWidget({ userProfile }: UserProfileWidgetProp
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSignOut}
-          disabled={isLoggingOut}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-loss-num bg-loss-num/10 hover:bg-loss-num/20 border border-loss-num/30 transition-colors cursor-pointer shrink-0"
-        >
-          <LogOut size={14} className={isRTL ? 'rotate-180' : ''} />
-          <span>{isLoggingOut ? (locale === 'ar' ? 'جاري الخروج...' : 'Signing out...') : (locale === 'ar' ? 'تسجيل الخروج' : 'Sign Out')}</span>
-        </button>
+        {!hideSignOutButton && (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={isLoggingOut}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-loss-num bg-loss-num/10 hover:bg-loss-num/20 border border-loss-num/30 transition-colors cursor-pointer shrink-0"
+          >
+            <LogOut size={14} className={isRTL ? 'rotate-180' : ''} />
+            <span>{isLoggingOut ? (locale === 'ar' ? 'جاري الخروج...' : 'Signing out...') : (locale === 'ar' ? 'تسجيل الخروج' : 'Sign Out')}</span>
+          </button>
+        )}
       </div>
     </div>
   );

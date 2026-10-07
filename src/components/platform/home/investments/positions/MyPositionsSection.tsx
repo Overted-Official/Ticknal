@@ -11,6 +11,9 @@ import { type Opportunity } from '@/components/platform/OpportunityTable';
 import PositionRowItem from './PositionRowItem';
 import TickerPositionsDrawer from './TickerPositionsDrawer';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
+import AddOrderModal, { type InitialOrderData } from '@/components/platform/AddOrderModal';
+import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
+import { useGuestGuard } from '@/context/GuestGuardContext';
 
 interface MyPositionsSectionProps {
   orders: HomeInvestmentOrder[];
@@ -25,6 +28,7 @@ export default function MyPositionsSection({
 }: MyPositionsSectionProps) {
   const router = useRouter();
   const { isPrivacy } = usePrivacyMode();
+  const { isGuest, requireAuth } = useGuestGuard();
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
 
@@ -35,10 +39,39 @@ export default function MyPositionsSection({
     quantity: number;
     currentPrice: number;
     currency: string;
+    accountId?: number | null;
   } | null>(null);
+  const [orderToAdd, setOrderToAdd] = useState<InitialOrderData | null>(null);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+
+  const handleAddPositionClick = (e: React.MouseEvent) => {
+    if (isGuest) {
+      if (
+        !requireAuth(
+          e,
+          'Portfolio Orders',
+          'Unlock Portfolio Trading',
+          'Create a free account to track buy & sell orders, sync cash balances, and monitor your realized gains.'
+        )
+      ) {
+        return;
+      }
+    }
+    setIsQuickAddOpen(true);
+  };
 
   const handleTickerClick = (order: HomeInvestmentOrder) => {
     setActiveTickerOrder(order);
+  };
+
+  const handleBuyClick = (order: HomeInvestmentOrder) => {
+    setOrderToAdd({
+      symbol: order.tickerSymbol,
+      companyName: order.companyName,
+      logoUrl: order.logoUrl,
+      currency: order.currency,
+      price: order.currentPrice,
+    });
   };
 
   const handleSellClick = (order: {
@@ -47,6 +80,7 @@ export default function MyPositionsSection({
     quantity: number;
     currentPrice: number;
     currency: string;
+    accountId?: number | null;
   }) => {
     setOrderToClose({
       id: order.id,
@@ -54,6 +88,7 @@ export default function MyPositionsSection({
       quantity: order.quantity,
       currentPrice: order.currentPrice,
       currency: order.currency,
+      accountId: order.accountId,
     });
   };
 
@@ -107,10 +142,115 @@ export default function MyPositionsSection({
 
   const [showAllGainers, setShowAllGainers] = useState(false);
   const [showAllLosers, setShowAllLosers] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'gainers' | 'losers'>('gainers');
   const INITIAL_ROWS = 5;
 
   const visibleGainers = showAllGainers ? gainers : gainers.slice(0, INITIAL_ROWS);
   const visibleLosers = showAllLosers ? losers : losers.slice(0, INITIAL_ROWS);
+
+  const renderGainersList = () => (
+    <div className="flex flex-col">
+      <div className="hidden md:flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
+        <div className="flex items-center gap-1 text-base font-bold text-text-primary">
+          <span>{isArabic ? 'الأسهم الرابحة' : 'Stock gainers'}</span>
+        </div>
+        <span className="text-[11px] text-text-muted font-medium">
+          {isArabic ? `${gainers.length} رابحة` : `${gainers.length} gainers`}
+        </span>
+      </div>
+
+      <div className="divide-y divide-border-subtle/70">
+        {gainers.length === 0 ? (
+          <div className="py-8 text-center text-text-muted text-xs">
+            {isArabic ? 'لا توجد مراكز بعائد إيجابي حالياً.' : 'No positive return positions currently.'}
+          </div>
+        ) : (
+          visibleGainers.map((order) => (
+            <PositionRowItem
+              key={order.id}
+              order={order}
+              totalMarketValue={totalMarketValue}
+              formatMoney={formatMoney}
+              isPrivacy={isPrivacy}
+              exitSignal={exitSignalsMap.get(
+                order.tickerSymbol.replace('.CA', '').trim().toUpperCase()
+              )}
+              onTickerClick={handleTickerClick}
+              onSellClick={handleSellClick}
+              onBuyClick={handleBuyClick}
+            />
+          ))
+        )}
+      </div>
+
+      {gainers.length > INITIAL_ROWS && (
+        <button
+          type="button"
+          onClick={() => setShowAllGainers((prev) => !prev)}
+          className="w-full mt-2.5 py-1.5 px-3 rounded-lg bg-surface-raised hover:bg-surface-hover-raised text-text-muted hover:text-text-primary border border-border-subtle text-xs font-medium font-sans flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
+        >
+          <span>
+            {showAllGainers
+              ? (isArabic ? 'عرض أفضل 5 رابحة' : 'Show top 5 gainers')
+              : (isArabic ? `عرض جميع الرابحة (${gainers.length})` : `Show all ${gainers.length} gainers`)}
+          </span>
+          {showAllGainers ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+      )}
+    </div>
+  );
+
+  const renderLosersList = () => (
+    <div className="flex flex-col">
+      <div className="hidden md:flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
+        <div className="flex items-center gap-1 text-base font-bold text-text-primary">
+          <span>{isArabic ? 'الأسهم الخاسرة' : 'Stock losers'}</span>
+        </div>
+        <span className="text-[11px] text-text-muted font-medium">
+          {isArabic ? `${losers.length} مراكز` : `${losers.length} holdings`}
+        </span>
+      </div>
+
+      <div className="divide-y divide-border-subtle/70">
+        {losers.length === 0 ? (
+          <div className="py-8 text-center text-text-muted text-xs">
+            {isArabic ? 'لا توجد مراكز متراجعة حالياً.' : 'No declining positions currently.'}
+          </div>
+        ) : (
+          visibleLosers.map((order) => (
+            <PositionRowItem
+              key={order.id}
+              order={order}
+              totalMarketValue={totalMarketValue}
+              formatMoney={formatMoney}
+              isPrivacy={isPrivacy}
+              exitSignal={exitSignalsMap.get(
+                order.tickerSymbol.replace('.CA', '').trim().toUpperCase()
+              )}
+              onTickerClick={handleTickerClick}
+              onSellClick={handleSellClick}
+              onBuyClick={handleBuyClick}
+            />
+          ))
+        )}
+      </div>
+
+      {losers.length > INITIAL_ROWS && (
+        <button
+          type="button"
+          onClick={() => setShowAllLosers((prev) => !prev)}
+          className="w-full mt-2.5 py-1.5 px-3 rounded-lg bg-surface-raised hover:bg-surface-hover-raised text-text-muted hover:text-text-primary border border-border-subtle text-xs font-medium font-sans flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
+        >
+          <span>
+            {showAllLosers
+              ? (isArabic ? 'عرض أكثر 5 خاسرة' : 'Show top 5 losers')
+              : (isArabic ? `عرض جميع الخاسرة (${losers.length})` : `Show all ${losers.length} holdings`)}
+          </span>
+          {showAllLosers ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <section id="section-my-positions" className="section-container section-viewport-fit space-y-4 relative">
@@ -118,11 +258,11 @@ export default function MyPositionsSection({
       <span id="section-active-positions" className="sr-only pointer-events-none absolute -top-24" />
 
       {/* 1. Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
             <h2 className="section-title">
-              {isArabic ? 'صفقاتي' : 'My Positions'}
+              {isArabic ? 'الصفقات' : 'Positions'}
             </h2>
             <span className="badge-count">
               {orders.length}
@@ -135,133 +275,94 @@ export default function MyPositionsSection({
           </p>
         </div>
 
-        {/* Right side: Total Value + Add Position Button */}
-        <div className="flex items-center gap-3 sm:gap-4 self-start sm:self-auto shrink-0">
+        {/* Right side: Total Value + Add Position Button (Desktop/Tablet) */}
+        <div className="hidden md:flex items-center gap-4 shrink-0">
           <div className="text-xs text-text-muted">
             {isArabic ? 'إجمالي القيمة السوقية:' : 'Total Market Value:'}{' '}
-            <span className="text-text-primary font-semibold">
+            <span className="text-text-primary font-semibold tabular-nums">
               {formatMoney(totalMarketValue)}
             </span>
           </div>
 
-          <Link
-            href="/charts"
-            className="btn-primary-cta"
+          <button
+            type="button"
+            onClick={handleAddPositionClick}
+            className="btn-primary-cta cursor-pointer"
+            title={isArabic ? 'إضافة صفقة جديدة' : 'Add a new position'}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
-          </Link>
+          </button>
         </div>
       </div>
 
-      {/* 2. Main 2-Column Content: Stock Gainers (Left) and Stock Losers (Right) */}
+      {/* Mobile: Total Value row, Add Position button full width FIRST, Switcher full width SECOND */}
+      <div className="flex flex-col gap-2 md:hidden">
+        <div className="text-xs text-text-muted flex items-center justify-between">
+          <span>{isArabic ? 'إجمالي القيمة السوقية:' : 'Total Market Value:'}</span>
+          <span className="text-text-primary font-semibold tabular-nums">
+            {formatMoney(totalMarketValue)}
+          </span>
+        </div>
+
+        {/* 1. Add Position Button - Full Width First */}
+        <button
+          type="button"
+          onClick={handleAddPositionClick}
+          className="btn-primary-cta w-full justify-center py-2 text-xs font-semibold cursor-pointer"
+          title={isArabic ? 'إضافة صفقة جديدة' : 'Add a new position'}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
+        </button>
+
+        {/* 2. Switcher Button - Full Width Second */}
+        {orders.length > 0 && (
+          <div className="seg-control w-full grid grid-cols-2 text-center">
+            <button
+              type="button"
+              onClick={() => setMobileTab('gainers')}
+              className={`seg-control-btn w-full justify-center gap-1.5 ${
+                mobileTab === 'gainers' ? 'seg-control-btn-active' : ''
+              }`}
+            >
+              <span>{isArabic ? 'الرابحة' : 'Gainers'}</span>
+              <span className="text-[11px] opacity-75 tabular-nums">({gainers.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMobileTab('losers')}
+              className={`seg-control-btn w-full justify-center gap-1.5 ${
+                mobileTab === 'losers' ? 'seg-control-btn-active' : ''
+              }`}
+            >
+              <span>{isArabic ? 'الخاسرة' : 'Losers'}</span>
+              <span className="text-[11px] opacity-75 tabular-nums">({losers.length})</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 2. Main Content */}
       <div className="flex-1 min-h-0 w-full overflow-y-auto custom-scrollbar">
         {orders.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs">
             <span>{isArabic ? 'لا توجد مراكز نشطة حالياً في المحفظة.' : 'No active holdings currently in portfolio.'}</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-            {/* COLUMN 1: STOCK GAINERS */}
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
-                <div className="flex items-center gap-1 text-base font-bold text-text-primary">
-                  <span>{isArabic ? 'الأسهم الرابحة' : 'Stock gainers'}</span>
-                </div>
-                <span className="text-[11px] text-text-muted font-medium">
-                  {isArabic ? `${gainers.length} رابحة` : `${gainers.length} gainers`}
-                </span>
-              </div>
-
-              <div className="divide-y divide-border-subtle/70">
-                {gainers.length === 0 ? (
-                  <div className="py-8 text-center text-text-muted text-xs">
-                    {isArabic ? 'لا توجد مراكز بعائد إيجابي حالياً.' : 'No positive return positions currently.'}
-                  </div>
-                ) : (
-                  visibleGainers.map((order) => (
-                    <PositionRowItem
-                      key={order.id}
-                      order={order}
-                      totalMarketValue={totalMarketValue}
-                      formatMoney={formatMoney}
-                      isPrivacy={isPrivacy}
-                      exitSignal={exitSignalsMap.get(
-                        order.tickerSymbol.replace('.CA', '').trim().toUpperCase()
-                      )}
-                      onTickerClick={handleTickerClick}
-                      onSellClick={handleSellClick}
-                    />
-                  ))
-                )}
-              </div>
-
-              {gainers.length > INITIAL_ROWS && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllGainers((prev) => !prev)}
-                  className="w-full mt-2.5 py-1.5 px-3 rounded-lg bg-surface-raised hover:bg-surface-hover-raised text-text-muted hover:text-text-primary border border-border-subtle text-xs font-medium font-sans flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
-                >
-                  <span>
-                    {showAllGainers
-                      ? (isArabic ? 'عرض أفضل 5 رابحة' : 'Show top 5 gainers')
-                      : (isArabic ? `عرض جميع الرابحة (${gainers.length})` : `Show all ${gainers.length} gainers`)}
-                  </span>
-                  {showAllGainers ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
-              )}
+          <>
+            {/* Mobile View: Renders only the selected tab */}
+            <div className="md:hidden">
+              {mobileTab === 'gainers' ? renderGainersList() : renderLosersList()}
             </div>
 
-            {/* COLUMN 2: STOCK LOSERS */}
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2 mb-1 border-b border-border-subtle">
-                <div className="flex items-center gap-1 text-base font-bold text-text-primary">
-                  <span>{isArabic ? 'الأسهم الخاسرة' : 'Stock losers'}</span>
-                </div>
-                <span className="text-[11px] text-text-muted font-medium">
-                  {isArabic ? `${losers.length} مراكز` : `${losers.length} holdings`}
-                </span>
-              </div>
-
-              <div className="divide-y divide-border-subtle/70">
-                {losers.length === 0 ? (
-                  <div className="py-8 text-center text-text-muted text-xs">
-                    {isArabic ? 'لا توجد مراكز متراجعة حالياً.' : 'No declining positions currently.'}
-                  </div>
-                ) : (
-                  visibleLosers.map((order) => (
-                    <PositionRowItem
-                      key={order.id}
-                      order={order}
-                      totalMarketValue={totalMarketValue}
-                      formatMoney={formatMoney}
-                      isPrivacy={isPrivacy}
-                      exitSignal={exitSignalsMap.get(
-                        order.tickerSymbol.replace('.CA', '').trim().toUpperCase()
-                      )}
-                      onTickerClick={handleTickerClick}
-                      onSellClick={handleSellClick}
-                    />
-                  ))
-                )}
-              </div>
-
-              {losers.length > INITIAL_ROWS && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllLosers((prev) => !prev)}
-                  className="w-full mt-2.5 py-1.5 px-3 rounded-lg bg-surface-raised hover:bg-surface-hover-raised text-text-muted hover:text-text-primary border border-border-subtle text-xs font-medium font-sans flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
-                >
-                  <span>
-                    {showAllLosers
-                      ? (isArabic ? 'عرض أكثر 5 خاسرة' : 'Show top 5 losers')
-                      : (isArabic ? `عرض جميع الخاسرة (${losers.length})` : `Show all ${losers.length} holdings`)}
-                  </span>
-                  {showAllLosers ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
-              )}
+            {/* Desktop View: 2 columns side-by-side */}
+            <div className="hidden md:grid md:grid-cols-2 gap-6 lg:gap-8">
+              {renderGainersList()}
+              {renderLosersList()}
             </div>
-          </div>
+          </>
         )}
 
         {/* Section Footer: View full transactions log link + total count */}
@@ -288,6 +389,13 @@ export default function MyPositionsSection({
         isOpen={!!activeTickerOrder}
         onClose={() => setActiveTickerOrder(null)}
         order={activeTickerOrder}
+        exitSignal={
+          activeTickerOrder
+            ? exitSignalsMap.get(
+                activeTickerOrder.tickerSymbol.replace('.CA', '').trim().toUpperCase()
+              )
+            : undefined
+        }
         onPositionsChanged={handleCloseSuccess}
       />
 
@@ -297,6 +405,28 @@ export default function MyPositionsSection({
         onClose={() => setOrderToClose(null)}
         onSuccess={handleCloseSuccess}
         order={orderToClose}
+      />
+
+      {/* Add/Buy Position Modal */}
+      <AddOrderModal
+        isOpen={!!orderToAdd}
+        onClose={() => setOrderToAdd(null)}
+        initialData={orderToAdd ?? undefined}
+        onSuccess={() => {
+          setOrderToAdd(null);
+          router.refresh();
+        }}
+      />
+
+      {/* Quick Add Position Drawer */}
+      <QuickAddDrawer
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        initialMode="position"
+        onSuccess={() => {
+          setIsQuickAddOpen(false);
+          router.refresh();
+        }}
       />
     </section>
   );

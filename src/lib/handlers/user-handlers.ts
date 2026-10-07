@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { desc, eq, and, sql } from 'drizzle-orm';
+import { desc, eq, and, sql, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { positions, profiles, systemLogs, userBankAccounts, bankTransactions, tickers } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
@@ -280,6 +280,170 @@ export async function handlePositionsPost(request: Request) {
   }
 }
 
+/**
+ * Resolves an eligible brokerage account for a user, prioritizing explicit choice,
+ * then non-virtual real brokerage accounts (like Thndr) matching currency,
+ * and falling back to paper virtual accounts if no real brokerages exist.
+ */
+async function resolveBrokerageAccount(
+  tx: any,
+  userId: string,
+  preferredAccountId?: number | null,
+  currency: string = 'EGP'
+) {
+  if (preferredAccountId && Number.isInteger(preferredAccountId) && preferredAccountId > 0) {
+    const [acc] = await tx.select()
+      .from(userBankAccounts)
+      .where(and(
+        eq(userBankAccounts.id, preferredAccountId),
+        eq(userBankAccounts.userId, userId),
+        eq(userBankAccounts.isArchived, false)
+      ));
+    if (acc) return acc;
+  }
+
+  const userAccounts = await tx.select()
+    .from(userBankAccounts)
+    .where(and(
+      eq(userBankAccounts.userId, userId),
+      eq(userBankAccounts.isArchived, false),
+      inArray(userBankAccounts.accountType, ['BROKERAGE', 'BROKER_CASH'])
+    ));
+
+  if (!userAccounts || userAccounts.length === 0) {
+    return null;
+  }
+
+  const nonVirtual = userAccounts.filter((a: any) => !isVirtualAccount(a));
+  const targetCurr = (currency || 'EGP').toUpperCase();
+
+  const nonVirtualMatching = nonVirtual.filter((a: any) => (a.currency || 'EGP').toUpperCase() === targetCurr);
+  const allMatching = userAccounts.filter((a: any) => (a.currency || 'EGP').toUpperCase() === targetCurr);
+
+  // 1. Non-virtual matching currency with isDefaultExpense
+  const defaultNonVirtual = nonVirtualMatching.find((a: any) => a.isDefaultExpense);
+  if (defaultNonVirtual) return defaultNonVirtual;
+
+  // 2. Any non-virtual matching currency (e.g. Thndr)
+  if (nonVirtualMatching.length > 0) return nonVirtualMatching[0];
+
+  // 3. Any non-virtual account
+  if (nonVirtual.length > 0) return nonVirtual[0];
+
+  // 4. Any account matching currency (e.g. virtual)
+  if (allMatching.length > 0) return allMatching[0];
+
+  // 5. Any remaining brokerage account
+  return userAccounts[0];
+}
+
+interface ClosePositionParams {
+  tx: any;
+  userId: string;
+  positionId: number;
+  existingPosition: PositionRow;
+  exitDate: string;
+  exitPrice: number;
+  quantityToClose: number;
+  preferredAccountId?: number | null;
+  notes?: string | null;
+}
+
+async function executeClosePosition(params: ClosePositionParams) {
+  const {
+    tx,
+    userId,
+    positionId,
+    existingPosition,
+    exitDate,
+    exitPrice,
+    quantityToClose,
+    preferredAccountId,
+    notes,
+  } = params;
+
+  const currentQty = Number(existingPosition.quantity);
+  const tradeProceeds = exitPrice * quantityToClose;
+
+  // Determine target brokerage account to credit
+  const targetAccount = await resolveBrokerageAccount(
+    tx,
+    userId,
+    preferredAccountId ?? existingPosition.accountId,
+    'EGP'
+  );
+
+  let closedPositionId = positionId;
+
+  if (quantityToClose < currentQty) {
+    // Partial close: update remaining open lot and insert new closed lot
+    const remainingQty = currentQty - quantityToClose;
+    await tx.update(positions)
+      .set({ quantity: remainingQty.toString(), updatedAt: new Date() })
+      .where(and(eq(positions.id, positionId), eq(positions.userId, userId)));
+
+    const [closedLot] = await tx.insert(positions).values({
+      userId,
+      tickerSymbol: existingPosition.tickerSymbol,
+      status: 'CLOSED',
+      side: existingPosition.side,
+      accountId: targetAccount ? targetAccount.id : existingPosition.accountId,
+      entryDate: existingPosition.entryDate,
+      entryPrice: existingPosition.entryPrice,
+      quantity: quantityToClose.toString(),
+      targetPrice: existingPosition.targetPrice,
+      stopPrice: existingPosition.stopPrice,
+      exitDate,
+      exitPrice: exitPrice.toString(),
+      entryStrategyId: existingPosition.entryStrategyId,
+      entrySignalDate: existingPosition.entrySignalDate,
+      entrySignalPrice: existingPosition.entrySignalPrice,
+      entrySource: existingPosition.entrySource,
+      notes: typeof notes === 'string' ? notes : existingPosition.notes,
+      createdAt: existingPosition.createdAt,
+      updatedAt: new Date(),
+    }).returning();
+
+    closedPositionId = closedLot.id;
+  } else {
+    // Full close
+    await tx.update(positions)
+      .set({
+        status: 'CLOSED',
+        exitDate,
+        exitPrice: exitPrice.toString(),
+        accountId: targetAccount ? targetAccount.id : existingPosition.accountId,
+        notes: typeof notes === 'string' ? notes : existingPosition.notes,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(positions.id, positionId), eq(positions.userId, userId)));
+  }
+
+  // Credit brokerage account and record BROKERAGE_SELL transaction
+  if (targetAccount) {
+    await tx.update(userBankAccounts)
+      .set({
+        balance: sql`${userBankAccounts.balance} + ${tradeProceeds}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(userBankAccounts.id, targetAccount.id), eq(userBankAccounts.userId, userId)));
+
+    await tx.insert(bankTransactions).values({
+      userId,
+      accountId: targetAccount.id,
+      type: 'BROKERAGE_SELL',
+      amount: tradeProceeds.toFixed(4),
+      currency: targetAccount.currency || 'EGP',
+      category: 'Investments',
+      transactionDate: exitDate,
+      positionId: closedPositionId,
+      notes: notes || `Sell ${existingPosition.tickerSymbol} · ${quantityToClose} shares @ ${exitPrice.toFixed(2)}`,
+    });
+  }
+
+  return { closedPositionId, targetAccount, tradeProceeds };
+}
+
 /** Close a position or lot, credit brokerage balance, and record BROKERAGE_SELL transaction. */
 export async function handlePositionsClosePost(request: Request) {
   const supabase = await createClient();
@@ -319,80 +483,19 @@ export async function handlePositionsClosePost(request: Request) {
       return NextResponse.json({ error: `Cannot close ${quantityToClose} shares; only ${currentQty} open shares available.` }, { status: 400 });
     }
 
-    const tradeProceeds = exitPrice * quantityToClose;
-
     // Execute in transaction
     await db.transaction(async (tx) => {
-      let closedPositionId = positionId;
-
-      if (quantityToClose < currentQty) {
-        // Partial close: update remaining open lot and insert new closed lot
-        const remainingQty = currentQty - quantityToClose;
-        await tx.update(positions)
-          .set({ quantity: remainingQty.toString(), updatedAt: new Date() })
-          .where(and(eq(positions.id, positionId), eq(positions.userId, user.id)));
-
-        const [closedLot] = await tx.insert(positions).values({
-          userId: user.id,
-          tickerSymbol: existingPosition.tickerSymbol,
-          status: 'CLOSED',
-          side: existingPosition.side,
-          accountId: existingPosition.accountId,
-          entryDate: existingPosition.entryDate,
-          entryPrice: existingPosition.entryPrice,
-          quantity: quantityToClose.toString(),
-          targetPrice: existingPosition.targetPrice,
-          stopPrice: existingPosition.stopPrice,
-          exitDate,
-          exitPrice: exitPrice.toString(),
-          entryStrategyId: existingPosition.entryStrategyId,
-          entrySignalDate: existingPosition.entrySignalDate,
-          entrySignalPrice: existingPosition.entrySignalPrice,
-          entrySource: existingPosition.entrySource,
-          notes: typeof body.notes === 'string' ? body.notes : existingPosition.notes,
-          createdAt: existingPosition.createdAt,
-          updatedAt: new Date(),
-        }).returning();
-
-        closedPositionId = closedLot.id;
-      } else {
-        // Full close
-        await tx.update(positions)
-          .set({
-            status: 'CLOSED',
-            exitDate,
-            exitPrice: exitPrice.toString(),
-            notes: typeof body.notes === 'string' ? body.notes : existingPosition.notes,
-            updatedAt: new Date(),
-          })
-          .where(and(eq(positions.id, positionId), eq(positions.userId, user.id)));
-      }
-
-      // If associated with a brokerage account, credit cash and record BROKERAGE_SELL transaction
-      if (existingPosition.accountId) {
-        await tx.update(userBankAccounts)
-          .set({
-            balance: sql`${userBankAccounts.balance} + ${tradeProceeds}`,
-            updatedAt: new Date(),
-          })
-          .where(and(eq(userBankAccounts.id, existingPosition.accountId), eq(userBankAccounts.userId, user.id)));
-
-        const [account] = await tx.select({ currency: userBankAccounts.currency })
-          .from(userBankAccounts)
-          .where(eq(userBankAccounts.id, existingPosition.accountId));
-
-        await tx.insert(bankTransactions).values({
-          userId: user.id,
-          accountId: existingPosition.accountId,
-          type: 'BROKERAGE_SELL',
-          amount: tradeProceeds.toFixed(4),
-          currency: account?.currency || 'EGP',
-          category: 'Investments',
-          transactionDate: exitDate,
-          positionId: closedPositionId,
-          notes: body.notes || `Sell ${existingPosition.tickerSymbol} · ${quantityToClose} shares @ ${exitPrice.toFixed(2)}`,
-        });
-      }
+      await executeClosePosition({
+        tx,
+        userId: user.id,
+        positionId,
+        existingPosition,
+        exitDate,
+        exitPrice,
+        quantityToClose,
+        preferredAccountId: Number(body.accountId) || null,
+        notes: typeof body.notes === 'string' ? body.notes : null,
+      });
     });
 
     const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
@@ -475,44 +578,36 @@ export async function handlePositionsPatch(request: Request) {
     const exitDate = typeof body.exitDate === 'string' && body.exitDate ? body.exitDate.split('T')[0] : null;
     const quantityToClose = toNullableNumber(body.quantityToClose);
 
-    if (status === 'CLOSED' && quantityToClose !== null && quantityToClose > 0 && quantityToClose < Number(existingPosition.quantity)) {
-      const remainingQty = Number(existingPosition.quantity) - quantityToClose;
+    if (status === 'CLOSED') {
+      const currentQty = Number(existingPosition.quantity);
+      const effectiveCloseQty = quantityToClose !== null && quantityToClose > 0 ? Math.min(quantityToClose, currentQty) : currentQty;
+      const effectiveExitPrice = exitPrice !== null && exitPrice > 0 ? exitPrice : (toNullableNumber(existingPosition.entryPrice) ?? 0);
+      const effectiveExitDate = exitDate ?? new Date().toISOString().split('T')[0];
 
-      const [updatedPosition] = await db
-        .update(positions)
-        .set({ quantity: remainingQty.toString(), updatedAt: new Date() })
-        .where(and(eq(positions.id, id), eq(positions.userId, user.id)))
-        .returning();
-
-      await db.insert(positions).values({
-        userId: user.id,
-        tickerSymbol: existingPosition.tickerSymbol,
-        status: 'CLOSED',
-        side: existingPosition.side,
-        entryDate: existingPosition.entryDate,
-        entryPrice: existingPosition.entryPrice,
-        quantity: quantityToClose.toString(),
-        targetPrice: existingPosition.targetPrice,
-        stopPrice: existingPosition.stopPrice,
-        exitDate: exitDate ?? new Date().toISOString().split('T')[0],
-        exitPrice: exitPrice !== null ? exitPrice.toString() : null,
-        notes: typeof body.notes === 'string' ? body.notes : existingPosition.notes,
-        createdAt: existingPosition.createdAt,
+      await db.transaction(async (tx) => {
+        await executeClosePosition({
+          tx,
+          userId: user.id,
+          positionId: id,
+          existingPosition,
+          exitDate: effectiveExitDate,
+          exitPrice: effectiveExitPrice,
+          quantityToClose: effectiveCloseQty,
+          preferredAccountId: Number(body.accountId) || null,
+          notes: typeof body.notes === 'string' ? body.notes : null,
+        });
       });
 
       const [priceMap, tickerMap] = await Promise.all([getLatestPriceMap(), getTickerMap()]);
-      return NextResponse.json({ order: formatPosition(updatedPosition, priceMap, tickerMap) });
+      const [freshPosition] = await db.select().from(positions).where(eq(positions.id, id));
+      return NextResponse.json({ order: freshPosition ? formatPosition(freshPosition, priceMap, tickerMap) : null });
     }
 
     const setValues: Partial<typeof positions.$inferInsert> = {
       updatedAt: new Date(),
     };
 
-    if (status === 'OPEN' || status === 'CLOSED') setValues.status = status;
-    if (status === 'CLOSED') {
-      setValues.exitDate = exitDate ?? new Date().toISOString().split('T')[0];
-      if (exitPrice !== null) setValues.exitPrice = exitPrice.toString();
-    }
+    if (status === 'OPEN') setValues.status = status;
     if (typeof body.notes === 'string') setValues.notes = body.notes;
     
     if (typeof body.entryDate === 'string' && body.entryDate) {
