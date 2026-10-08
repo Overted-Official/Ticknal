@@ -628,6 +628,7 @@ export interface ConsoleUsersPageData {
     percentage: number;
     color: string;
   }[];
+  acquisitionStats: ConsoleAcquisitionStats;
 }
 
 /**
@@ -1010,6 +1011,8 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       adminUsers: ytdAdminPoints,
     };
 
+    const acquisitionStats = await getConsoleAcquisitionStats('30d');
+
     return {
       users,
       kpis: {
@@ -1025,9 +1028,24 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       },
       cohorts,
       tierDistribution,
+      acquisitionStats,
     };
   } catch (err) {
     console.error('[getConsoleUsersPageData] Error:', err);
+    const fallbackAcquisition = await getConsoleAcquisitionStats('30d').catch(() => ({
+      microKpis: {
+        totalSessions: 0,
+        uniqueUsers: 0,
+        topChannel: { name: 'Direct Access', sharePct: 0 },
+        topGovernorate: { name: 'Cairo Governorate', userCount: 0 },
+        mobileSharePct: 0,
+      },
+      geoDistribution: { countries: [] },
+      channels: [],
+      devices: { formFactors: [], operatingSystems: [], clientPlatforms: [] },
+      activeUsersTrend: [],
+    }));
+
     return {
       users: [],
       kpis: {
@@ -1049,6 +1067,7 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       },
       cohorts: [],
       tierDistribution: [],
+      acquisitionStats: fallbackAcquisition,
     };
   }
 }

@@ -1,9 +1,9 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { profiles, userSubscriptions, auditLogs } from '@/db/schema';
+import { profiles, userSubscriptions, auditLogs, positions, tickers } from '@/db/schema';
 import { assertAdminUser, logAdminAction } from '@/lib/server/admin-guard';
 import {
   handleUpdateStocks,
@@ -327,3 +327,323 @@ export async function cancelSubscriptionAction(params: {
     return { success: false, error: String(error) };
   }
 }
+
+/**
+ * 6. Bulk Update User Plan Tier
+ */
+export async function bulkUpdateUserTierAction(params: {
+  targetUserIds: string[];
+  tier: 'free' | 'plus' | 'elite' | 'vip';
+}) {
+  const { user: adminUser } = await assertAdminUser();
+  const { targetUserIds, tier } = params;
+  if (!targetUserIds || targetUserIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const now = new Date();
+  const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+  for (const uid of targetUserIds) {
+    const [sub] = await db
+      .select()
+      .from(userSubscriptions)
+      .where(eq(userSubscriptions.userId, uid))
+      .limit(1);
+
+    if (sub) {
+      await db
+        .update(userSubscriptions)
+        .set({
+          tier,
+          status: 'active',
+          currentPeriodStart: now,
+          currentPeriodEnd: oneYearFromNow,
+          updatedAt: now,
+        })
+        .where(eq(userSubscriptions.id, sub.id));
+    } else {
+      await db.insert(userSubscriptions).values({
+        userId: uid,
+        tier,
+        status: 'active',
+        currentPeriodStart: now,
+        currentPeriodEnd: oneYearFromNow,
+        provider: 'admin_bulk',
+      });
+    }
+
+    await logAdminAction({
+      adminId: adminUser.id,
+      action: 'user.bulk_tier_update',
+      targetId: uid,
+      metadata: { tier },
+    });
+  }
+
+  revalidatePath('/console/users');
+  revalidatePath('/console/overview');
+  return { success: true, count: targetUserIds.length };
+}
+
+/**
+ * 7. Bulk Delete Users
+ */
+export async function bulkDeleteUsersAction(params: {
+  targetUserIds: string[];
+}) {
+  const { user: adminUser } = await assertAdminUser();
+  const { targetUserIds } = params;
+  if (!targetUserIds || targetUserIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  let deletedCount = 0;
+  for (const uid of targetUserIds) {
+    // Prevent self-deletion of active admin
+    if (uid === adminUser.id) continue;
+
+    await db.delete(userSubscriptions).where(eq(userSubscriptions.userId, uid));
+    await db.delete(profiles).where(eq(profiles.id, uid));
+
+    await logAdminAction({
+      adminId: adminUser.id,
+      action: 'user.bulk_delete',
+      targetId: uid,
+    });
+    deletedCount++;
+  }
+
+  revalidatePath('/console/users');
+  revalidatePath('/console/overview');
+  return { success: true, count: deletedCount };
+}
+
+/**
+ * 8. Bulk Suspend / Activate Users
+ */
+export async function bulkUpdateUserStatusAction(params: {
+  targetUserIds: string[];
+  status: 'active' | 'suspended';
+}) {
+  const { user: adminUser } = await assertAdminUser();
+  const { targetUserIds, status } = params;
+  if (!targetUserIds || targetUserIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const now = new Date();
+  for (const uid of targetUserIds) {
+    if (uid === adminUser.id && status === 'suspended') continue;
+
+    const [sub] = await db
+      .select()
+      .from(userSubscriptions)
+      .where(eq(userSubscriptions.userId, uid))
+      .limit(1);
+
+    if (sub) {
+      await db
+        .update(userSubscriptions)
+        .set({
+          status: status === 'suspended' ? 'canceled' : 'active',
+          updatedAt: now,
+        })
+        .where(eq(userSubscriptions.id, sub.id));
+    }
+
+    await logAdminAction({
+      adminId: adminUser.id,
+      action: 'user.bulk_status_update',
+      targetId: uid,
+      metadata: { status },
+    });
+  }
+
+  revalidatePath('/console/users');
+  revalidatePath('/console/overview');
+  return { success: true, count: targetUserIds.length };
+}
+
+/**
+ * 9. Fetch Open Positions for a Single User (for detail drawer)
+ */
+export async function getUserPositionsAction(params: { targetUserId: string }) {
+  await assertAdminUser();
+  const rows = await db
+    .select({
+      id: positions.id,
+      tickerSymbol: positions.tickerSymbol,
+      side: positions.side,
+      entryDate: positions.entryDate,
+      entryPrice: positions.entryPrice,
+      quantity: positions.quantity,
+      status: positions.status,
+      companyName: tickers.companyName,
+      logoUrl: tickers.logoUrl,
+    })
+    .from(positions)
+    .leftJoin(tickers, eq(positions.tickerSymbol, tickers.symbol))
+    .where(and(eq(positions.userId, params.targetUserId), eq(positions.status, 'OPEN')))
+    .orderBy(desc(positions.createdAt));
+
+  const items = rows.map((r) => {
+    const entryPrice = parseFloat(r.entryPrice) || 0;
+    const quantity = parseFloat(r.quantity) || 0;
+    return {
+      id: r.id,
+      tickerSymbol: r.tickerSymbol,
+      companyName: r.companyName || r.tickerSymbol,
+      logoUrl: r.logoUrl,
+      side: r.side,
+      status: r.status,
+      entryDate: r.entryDate,
+      entryPrice,
+      quantity,
+      totalExposure: entryPrice * quantity,
+    };
+  });
+
+  return { success: true, positions: items };
+}
+
+/**
+ * 10. Update Single User Subscription Tier
+ */
+export async function updateSingleUserTierAction(params: {
+  targetUserId: string;
+  tier: 'free' | 'plus' | 'elite' | 'vip';
+  durationDays?: number;
+}) {
+  const { user: adminUser } = await assertAdminUser();
+  const { targetUserId, tier, durationDays = 365 } = params;
+
+  const now = new Date();
+  const periodEnd =
+    tier === 'free'
+      ? new Date(now.getTime() + 100 * 365 * 24 * 60 * 60 * 1000)
+      : new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+
+  const [sub] = await db
+    .select()
+    .from(userSubscriptions)
+    .where(eq(userSubscriptions.userId, targetUserId))
+    .limit(1);
+
+  if (sub) {
+    await db
+      .update(userSubscriptions)
+      .set({
+        tier,
+        status: 'active',
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        updatedAt: now,
+      })
+      .where(eq(userSubscriptions.id, sub.id));
+  } else {
+    await db.insert(userSubscriptions).values({
+      userId: targetUserId,
+      tier,
+      status: 'active',
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      provider: 'manual_admin',
+    });
+  }
+
+  await logAdminAction({
+    adminId: adminUser.id,
+    action: 'user.single_tier_update',
+    targetId: targetUserId,
+    metadata: { tier, durationDays },
+  });
+
+  revalidatePath('/console/users');
+  revalidatePath('/console/overview');
+  return { success: true, tier };
+}
+
+/**
+ * 11. Update Single User Member Status (Active vs Suspended)
+ */
+export async function updateSingleUserStatusAction(params: {
+  targetUserId: string;
+  status: 'active' | 'suspended';
+}) {
+  const { user: adminUser } = await assertAdminUser();
+  const { targetUserId, status } = params;
+
+  if (targetUserId === adminUser.id && status === 'suspended') {
+    return { success: false, error: 'Cannot suspend your own admin account.' };
+  }
+
+  const now = new Date();
+  const [sub] = await db
+    .select()
+    .from(userSubscriptions)
+    .where(eq(userSubscriptions.userId, targetUserId))
+    .limit(1);
+
+  if (sub) {
+    await db
+      .update(userSubscriptions)
+      .set({
+        status: status === 'suspended' ? 'canceled' : 'active',
+        updatedAt: now,
+      })
+      .where(eq(userSubscriptions.id, sub.id));
+  }
+
+  await logAdminAction({
+    adminId: adminUser.id,
+    action: 'user.single_status_update',
+    targetId: targetUserId,
+    metadata: { status },
+  });
+
+  revalidatePath('/console/users');
+  revalidatePath('/console/overview');
+  return { success: true, status };
+}
+
+/**
+ * 12. Delete Single User
+ */
+export async function deleteSingleUserAction(params: { targetUserId: string }) {
+  const { user: adminUser } = await assertAdminUser();
+  const { targetUserId } = params;
+
+  if (targetUserId === adminUser.id) {
+    return { success: false, error: 'Cannot delete your own admin account.' };
+  }
+
+  await db.delete(userSubscriptions).where(eq(userSubscriptions.userId, targetUserId));
+  await db.delete(profiles).where(eq(profiles.id, targetUserId));
+
+  await logAdminAction({
+    adminId: adminUser.id,
+    action: 'user.single_delete',
+    targetId: targetUserId,
+  });
+
+  revalidatePath('/console/users');
+  revalidatePath('/console/overview');
+  return { success: true };
+}
+
+/**
+ * 13. Fetch Acquisition Stats Dynamically (for Console timeframe toggle)
+ */
+export async function getAcquisitionStatsAction(params: {
+  timeframe: '30d' | '90d' | '120d' | 'ytd' | 'custom';
+  customStart?: string;
+  customEnd?: string;
+}) {
+  await assertAdminUser();
+  const { getConsoleAcquisitionStats } = await import('@/lib/server/console-queries');
+  const stats = await getConsoleAcquisitionStats(params.timeframe, params.customStart, params.customEnd);
+  return { success: true, stats };
+}
+
+

@@ -7,9 +7,22 @@ import {
   User,
   Shield,
   Layers,
-  Smartphone,
-  Globe,
+  Coins,
+  CheckSquare,
+  Square,
+  Trash2,
+  Ban,
+  CheckCircle2,
+  ChevronDown,
+  RefreshCw,
+  X,
 } from '@/components/ui/icon-library';
+import { useTranslation } from '@/lib/i18n';
+import {
+  bulkUpdateUserTierAction,
+  bulkDeleteUsersAction,
+  bulkUpdateUserStatusAction,
+} from '@/lib/server/console-actions';
 import type { ConsoleUserRowItem } from '@/lib/server/console-queries';
 
 interface UserDirectoryScreenerProps {
@@ -19,29 +32,51 @@ interface UserDirectoryScreenerProps {
 }
 
 function formatDate(iso: string | null) {
-  if (!iso) return 'N/A';
+  if (!iso) return '—';
   try {
     const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
     return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
   } catch {
-    return iso;
+    return '—';
   }
 }
 
-function getTierBadgeClass(tier: string) {
-  switch (tier) {
+function formatCurrency(amount: number) {
+  if (!amount || amount === 0) return '—';
+  return `${amount.toLocaleString()} EGP`;
+}
+
+function getTierBadge(tier: string) {
+  const t = tier.toLowerCase();
+  switch (t) {
+    case 'vip':
+      return {
+        label: 'VIP',
+        className: 'bg-surface-raised text-text-primary border border-border-hover',
+      };
     case 'elite':
-      return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
-    case 'pro_annual':
-      return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+      return {
+        label: 'Elite',
+        className: 'bg-surface-raised text-text-primary border border-border-default',
+      };
+    case 'plus':
     case 'pro_monthly':
-      return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+    case 'pro_annual':
+    case 'pro':
+      return {
+        label: 'Plus',
+        className: 'bg-surface-raised text-text-primary border border-border-default',
+      };
     default:
-      return 'bg-white/10 text-zinc-300 border border-white/10';
+      return {
+        label: 'Free',
+        className: 'bg-surface-input text-text-muted border border-border-subtle',
+      };
   }
 }
 
@@ -79,22 +114,31 @@ function ScreenerUserAvatar({ src, name }: { src: string | null; name: string })
 export default function UserDirectoryScreener({
   users,
   onSelectUser,
+  onRefresh,
 }: UserDirectoryScreenerProps) {
+  const { locale } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSegment, setSelectedSegment] = useState<'all' | 'paid' | 'annual' | 'free' | 'staff'>('all');
+  const [selectedSegment, setSelectedSegment] = useState<
+    'all' | 'plus' | 'elite' | 'vip' | 'free' | 'staff'
+  >('all');
+
+  // Multi-selection state
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [isTierMenuOpen, setIsTierMenuOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       // Segment filter
-      if (selectedSegment === 'paid' && (u.subscription.tier === 'free' || u.subscription.status !== 'active')) {
-        return false;
-      }
-      if (selectedSegment === 'annual' && u.subscription.tier !== 'pro_annual') {
-        return false;
-      }
-      if (selectedSegment === 'free' && u.subscription.tier !== 'free') {
-        return false;
-      }
+      const t = (u.subscription.tier || 'free').toLowerCase();
+      if (selectedSegment === 'plus' && t !== 'plus') return false;
+      if (selectedSegment === 'elite' && t !== 'elite') return false;
+      if (selectedSegment === 'vip' && t !== 'vip') return false;
+      if (selectedSegment === 'free' && t !== 'free') return false;
       if (selectedSegment === 'staff' && u.role !== 'admin' && u.role !== 'superadmin') {
         return false;
       }
@@ -110,9 +154,120 @@ export default function UserDirectoryScreener({
     });
   }, [users, selectedSegment, searchTerm]);
 
+  // Bulk selection helpers
+  const allFilteredSelected =
+    filteredUsers.length > 0 &&
+    filteredUsers.every((u) => selectedUserIds.has(u.id));
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedUserIds(new Set());
+    } else {
+      const next = new Set<string>();
+      filteredUsers.forEach((u) => next.add(u.id));
+      setSelectedUserIds(next);
+    }
+  };
+
+  const toggleSelectUser = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkChangeTier = async (tier: 'free' | 'plus' | 'elite' | 'vip') => {
+    setIsTierMenuOpen(false);
+    if (selectedUserIds.size === 0) return;
+    setIsProcessing(true);
+    setActionFeedback(null);
+    try {
+      const res = await bulkUpdateUserTierAction({
+        targetUserIds: Array.from(selectedUserIds),
+        tier,
+      });
+      if (res.success) {
+        setActionFeedback({
+          text: `Updated ${res.count} members to ${tier.toUpperCase()}`,
+          type: 'success',
+        });
+        setSelectedUserIds(new Set());
+        onRefresh?.();
+      } else {
+        setActionFeedback({ text: 'Failed to update plan tiers', type: 'error' });
+      }
+    } catch (err: any) {
+      setActionFeedback({ text: err.message || 'Error updating tiers', type: 'error' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUserIds.size === 0) return;
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ${selectedUserIds.size} selected member account(s)? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setIsProcessing(true);
+    setActionFeedback(null);
+    try {
+      const res = await bulkDeleteUsersAction({
+        targetUserIds: Array.from(selectedUserIds),
+      });
+      if (res.success) {
+        setActionFeedback({
+          text: `Deleted ${res.count} member account(s)`,
+          type: 'success',
+        });
+        setSelectedUserIds(new Set());
+        onRefresh?.();
+      } else {
+        setActionFeedback({ text: 'Failed to delete members', type: 'error' });
+      }
+    } catch (err: any) {
+      setActionFeedback({ text: err.message || 'Error deleting accounts', type: 'error' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBulkSuspend = async (status: 'active' | 'suspended') => {
+    if (selectedUserIds.size === 0) return;
+    setIsProcessing(true);
+    setActionFeedback(null);
+    try {
+      const res = await bulkUpdateUserStatusAction({
+        targetUserIds: Array.from(selectedUserIds),
+        status,
+      });
+      if (res.success) {
+        setActionFeedback({
+          text: `${status === 'suspended' ? 'Suspended' : 'Activated'} ${res.count} member(s)`,
+          type: 'success',
+        });
+        setSelectedUserIds(new Set());
+        onRefresh?.();
+      } else {
+        setActionFeedback({ text: 'Failed to update member status', type: 'error' });
+      }
+    } catch (err: any) {
+      setActionFeedback({ text: err.message || 'Error updating status', type: 'error' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Search & Segment Toolbar */}
+    <div className="space-y-3.5 select-none">
+      {/* 1. Search & Segment Toolbar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border border-white/10 p-3 bg-transparent rounded-xl">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
@@ -121,7 +276,11 @@ export default function UserDirectoryScreener({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, email, or UUID..."
+            placeholder={
+              locale === 'ar'
+                ? 'البحث بالاسم، البريد الإلكتروني، أو المعرف...'
+                : 'Search members by name, email, or UUID...'
+            }
             className="w-full bg-black border border-white/15 text-white placeholder-zinc-500 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-white transition-colors"
           />
         </div>
@@ -131,9 +290,10 @@ export default function UserDirectoryScreener({
           {(
             [
               { id: 'all', label: `All (${users.length})` },
-              { id: 'paid', label: 'Paid Seats' },
-              { id: 'annual', label: 'Annual Lock' },
-              { id: 'free', label: 'Free Tier' },
+              { id: 'plus', label: 'Plus' },
+              { id: 'elite', label: 'Elite' },
+              { id: 'vip', label: 'VIP' },
+              { id: 'free', label: 'Free' },
               { id: 'staff', label: 'Staff' },
             ] as const
           ).map((seg) => {
@@ -155,52 +315,259 @@ export default function UserDirectoryScreener({
         </div>
       </div>
 
-      {/* Screener Table */}
+      {/* 2. Feedback banner if present */}
+      {actionFeedback && (
+        <div
+          className={`px-3 py-2 rounded-lg text-xs flex items-center justify-between border ${
+            actionFeedback.type === 'success'
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+          }`}
+        >
+          <span>{actionFeedback.text}</span>
+          <button
+            onClick={() => setActionFeedback(null)}
+            className="text-zinc-400 hover:text-white ml-2"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* 3. Bulk Actions Bar (appears when 1 or more rows selected) */}
+      {selectedUserIds.size > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-surface-base border border-border-default text-xs shadow-lg animate-in fade-in duration-150">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-brand-blue" />
+            <span className="font-semibold text-text-primary tabular-nums">
+              {selectedUserIds.size} member{selectedUserIds.size === 1 ? '' : 's'} selected
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Change Tier dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={() => setIsTierMenuOpen(!isTierMenuOpen)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-raised hover:bg-surface-hover-subtle text-text-primary font-medium border border-border-default transition-colors cursor-pointer"
+              >
+                <span>Change Plan Tier</span>
+                <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
+              </button>
+
+              {isTierMenuOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-surface-base border border-border-default p-1 shadow-2xl z-50 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleBulkChangeTier('free')}
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover-subtle transition-colors flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Free</span>
+                    <span className="text-[10px] text-text-muted">0 EGP</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBulkChangeTier('plus')}
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover-subtle transition-colors flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Plus</span>
+                    <span className="text-[10px] text-text-muted">99 EGP</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBulkChangeTier('elite')}
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover-subtle transition-colors flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Elite</span>
+                    <span className="text-[10px] text-text-muted">199 EGP</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBulkChangeTier('vip')}
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover-subtle transition-colors flex items-center justify-between cursor-pointer"
+                  >
+                    <span>VIP</span>
+                    <span className="text-[10px] text-text-muted">0 EGP</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Suspend / Activate buttons */}
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={() => handleBulkSuspend('suspended')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-raised hover:bg-surface-hover-subtle text-text-secondary hover:text-text-primary font-medium border border-border-default transition-colors cursor-pointer"
+            >
+              <Ban className="w-3.5 h-3.5 text-text-muted" />
+              <span>Suspend</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={() => handleBulkSuspend('active')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-raised hover:bg-surface-hover-subtle text-text-secondary hover:text-text-primary font-medium border border-border-default transition-colors cursor-pointer"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-profit-num" />
+              <span>Activate</span>
+            </button>
+
+            {/* Delete button */}
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={handleBulkDelete}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-raised hover:bg-surface-hover-subtle text-text-muted hover:text-loss-num font-medium border border-border-default transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete</span>
+            </button>
+
+            {/* Deselect All */}
+            <button
+              type="button"
+              onClick={() => setSelectedUserIds(new Set())}
+              className="px-2.5 py-1.5 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+            >
+              Deselect All
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Members Table */}
       <div className="border border-white/10 bg-transparent rounded-xl overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-xs font-sans border-collapse">
             <thead>
               <tr className="border-b border-white/10 text-zinc-400 text-[11px] font-medium bg-black">
-                <th className="py-2.5 px-4 text-left font-medium">Member Profile</th>
-                <th className="py-2.5 px-3 text-left font-medium">Plan Tier</th>
-                <th className="py-2.5 px-3 text-left font-medium">Renewal Status</th>
-                <th className="py-2.5 px-3 text-center font-medium">Engagement</th>
-                <th className="py-2.5 px-3 text-left font-medium">Auth / Role</th>
-                <th className="py-2.5 pr-4 pl-2 text-right font-medium">Action</th>
+                {/* 0. Multiselect checkbox header */}
+                <th className="py-2.5 pl-4 pr-2 text-center w-8">
+                  <button
+                    type="button"
+                    onClick={toggleSelectAll}
+                    className="text-zinc-400 hover:text-white transition-colors focus:outline-none"
+                    title={allFilteredSelected ? 'Deselect all' : 'Select all'}
+                  >
+                    {allFilteredSelected ? (
+                      <CheckSquare className="w-4 h-4 text-blue-400" />
+                    ) : (
+                      <Square className="w-4 h-4" />
+                    )}
+                  </button>
+                </th>
+
+                {/* 1. Member Profile */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[200px]">
+                  Member Profile
+                </th>
+
+                {/* 2. Plan Tier */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[100px]">
+                  Plan Tier
+                </th>
+
+                {/* 3. Subscription Date */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[120px]">
+                  Subscription Date
+                </th>
+
+                {/* 4. Next Subscription Date */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[130px]">
+                  Next Subscription Date
+                </th>
+
+                {/* 5. Sign Up Date */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[110px]">
+                  Sign Up Date
+                </th>
+
+                {/* 6. Last Login / Usage */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[130px]">
+                  Last Login/Usage
+                </th>
+
+                {/* 7. Member Status */}
+                <th className="py-2.5 px-3 text-center font-medium min-w-[100px]">
+                  Status
+                </th>
+
+                {/* 8. Open Positions (Count) */}
+                <th className="py-2.5 px-3 text-center font-medium min-w-[110px]">
+                  Open Positions
+                </th>
+
+                {/* 9. Open Exposure (Value) */}
+                <th className="py-2.5 px-3 text-right font-medium min-w-[120px]">
+                  Open Exposure
+                </th>
+
+                {/* 10. Actions */}
+                <th className="py-2.5 pr-4 pl-2 text-right font-medium w-20">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-zinc-400">
+                  <td colSpan={11} className="py-12 text-center text-zinc-400">
                     No members match your search or segment filter.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((u) => {
-                  const isPaid = u.subscription.tier !== 'free' && u.subscription.status === 'active';
-                  const isExpiringSoon = isPaid && u.subscription.daysRemaining <= 14;
+                  const isSelected = selectedUserIds.has(u.id);
+                  const tierBadge = getTierBadge(u.subscription.tier);
+                  const isStaff = u.role === 'admin' || u.role === 'superadmin';
+                  const isActiveStatus = u.memberStatus === 'active';
 
                   return (
                     <tr
                       key={u.id}
                       onClick={() => onSelectUser(u)}
-                      className="hover:bg-white/[0.03] transition-colors cursor-pointer group"
+                      className={`hover:bg-white/[0.04] transition-colors cursor-pointer group ${
+                        isSelected ? 'bg-blue-500/[0.08]' : ''
+                      }`}
                     >
+                      {/* 0. Row Checkbox */}
+                      <td
+                        className="py-3 pl-4 pr-2 text-center"
+                        onClick={(e) => toggleSelectUser(u.id, e)}
+                      >
+                        <button
+                          type="button"
+                          className="text-zinc-400 hover:text-white transition-colors focus:outline-none"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-blue-400" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </button>
+                      </td>
+
                       {/* 1. Member Profile */}
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3">
                         <div className="flex items-center gap-2.5">
-                          <ScreenerUserAvatar src={u.avatarUrl} name={u.fullName || 'Member'} />
+                          <ScreenerUserAvatar
+                            src={u.avatarUrl}
+                            name={u.fullName || 'Member'}
+                          />
                           <div className="min-w-0">
-                            <div className="font-medium text-white truncate group-hover:text-primary transition-colors flex items-center gap-1.5">
-                              <span>{u.fullName || 'Anonymous Member'}</span>
-                              {(u.role === 'admin' || u.role === 'superadmin') && (
+                            <div className="font-medium text-white truncate group-hover:text-blue-400 transition-colors flex items-center gap-1.5">
+                              <span>{u.fullName || 'Member'}</span>
+                              {isStaff && (
                                 <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/20">
                                   STAFF
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-zinc-400 truncate max-w-[220px]">
+                            <div className="text-[11px] text-zinc-400 truncate max-w-[200px]">
                               {u.email || u.id}
                             </div>
                           </div>
@@ -210,71 +577,86 @@ export default function UserDirectoryScreener({
                       {/* 2. Plan Tier */}
                       <td className="py-3 px-3">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-tight border capitalize ${getTierBadgeClass(
-                            u.subscription.tier
-                          )}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-tight ${tierBadge.className}`}
                         >
-                          {u.subscription.tier.replace('_', ' ')}
+                          {tierBadge.label}
                         </span>
                       </td>
 
-                      {/* 3. Renewal Status */}
-                      <td className="py-3 px-3">
-                        {isPaid ? (
+                      {/* 3. Subscription Date */}
+                      <td className="py-3 px-3 text-zinc-300 tabular-nums">
+                        {formatDate(u.subscription.currentPeriodStart)}
+                      </td>
+
+                      {/* 4. Next Subscription Date */}
+                      <td className="py-3 px-3 tabular-nums">
+                        {u.subscription.tier === 'free' ? (
+                          <span className="text-zinc-500 text-[11px]">No Expiry</span>
+                        ) : u.subscription.currentPeriodEnd ? (
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                              <span className="text-white text-[11px] font-medium tabular-nums">
-                                {u.subscription.daysRemaining} days left
-                              </span>
+                            <div className="text-white text-[11px] font-medium">
+                              {formatDate(u.subscription.currentPeriodEnd)}
                             </div>
                             <div className="text-[10px] text-zinc-400">
-                              Exp: {formatDate(u.subscription.currentPeriodEnd)}
+                              {u.subscription.daysRemaining > 0
+                                ? `${u.subscription.daysRemaining} days remaining`
+                                : 'Due for renewal'}
                             </div>
                           </div>
                         ) : (
-                          <div className="text-[11px] text-zinc-400">
-                            Free Member (No expiry)
-                          </div>
+                          <span className="text-zinc-500 text-[11px]">—</span>
                         )}
                       </td>
 
-                      {/* 4. Engagement Metrics */}
+                      {/* 5. Sign Up Date */}
+                      <td className="py-3 px-3 text-zinc-300 tabular-nums">
+                        {formatDate(u.createdAt)}
+                      </td>
+
+                      {/* 6. Last Login / Usage */}
+                      <td className="py-3 px-3 text-zinc-300 tabular-nums">
+                        <div className="text-white text-[11px] font-medium">
+                          {formatDate(u.lastActiveAt)}
+                        </div>
+                      </td>
+
+                      {/* 7. Member Status */}
                       <td className="py-3 px-3 text-center">
-                        <div className="inline-flex items-center gap-2 text-zinc-400 text-[11px] tabular-nums">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            isActiveStatus
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
+                          }`}
+                        >
                           <span
-                            title="Open Positions"
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/5"
-                          >
-                            <Layers className="w-3 h-3 text-blue-400" />
-                            <span className="text-white font-medium">{u.positionsCount}</span>
-                          </span>
-                          <span
-                            title="Active Alerts"
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/5"
-                          >
-                            <Smartphone className="w-3 h-3 text-emerald-400" />
-                            <span className="text-white font-medium">{u.pushDevicesCount}</span>
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isActiveStatus ? 'bg-emerald-400' : 'bg-zinc-500'
+                            }`}
+                          />
+                          <span className="capitalize">{u.memberStatus}</span>
+                        </span>
+                      </td>
+
+                      {/* 8. Open Positions (Count) */}
+                      <td className="py-3 px-3 text-center">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.04] border border-white/5 text-[11px] tabular-nums">
+                          <Layers className="w-3 h-3 text-blue-400 shrink-0" />
+                          <span className="font-semibold text-white">
+                            {u.openPositionsCount}
                           </span>
                         </div>
                       </td>
 
-                      {/* 5. Auth / Role */}
-                      <td className="py-3 px-3">
-                        <div className="space-y-0.5">
-                          <div className="text-white text-[11px] font-medium capitalize flex items-center gap-1">
-                            <Globe className="w-3 h-3 text-zinc-400" />
-                            {u.authProvider}
-                          </div>
-                          <div className="text-[10px] text-zinc-400">
-                            Joined {formatDate(u.createdAt)}
-                          </div>
-                        </div>
+                      {/* 9. Open Exposure (Value) */}
+                      <td className="py-3 px-3 text-right font-medium tabular-nums text-white">
+                        {formatCurrency(u.openPositionsValue)}
                       </td>
 
-                      {/* 6. Action */}
+                      {/* 10. Action */}
                       <td className="py-3 pr-4 pl-2 text-right">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             onSelectUser(u);
