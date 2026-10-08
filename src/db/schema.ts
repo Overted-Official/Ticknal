@@ -584,3 +584,42 @@ export const userSubscriptions = pgTable('user_subscriptions', {
     tierIdx: index('user_subscriptions_tier_idx').on(table.tier),
   };
 });
+
+export const userTelemetryEvents = pgTable('user_telemetry_events', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').references(() => profiles.id, { onDelete: 'set null' }),
+  sessionId: varchar('session_id', { length: 128 }).notNull(),
+
+  // Granular Geolocation (Targeting & Retargeting)
+  country: varchar('country', { length: 100 }).notNull(),
+  countryCode: varchar('country_code', { length: 10 }).notNull(),
+  regionOrGovernorate: varchar('region_or_governorate', { length: 100 }),
+  city: varchar('city', { length: 100 }),
+  latitude: numeric('latitude', { precision: 10, scale: 6 }),
+  longitude: numeric('longitude', { precision: 10, scale: 6 }),
+  timezone: varchar('timezone', { length: 50 }),
+  ispOrCarrier: varchar('isp_or_carrier', { length: 100 }),
+
+  // Attribution & Channel
+  channel: varchar('channel', { length: 50 }).default('direct').notNull(),
+  referrer: text('referrer'),
+  utmSource: varchar('utm_source', { length: 100 }),
+  utmMedium: varchar('utm_medium', { length: 100 }),
+  utmCampaign: varchar('utm_campaign', { length: 100 }),
+  landingPath: text('landing_path').default('/').notNull(),
+
+  // Device & Client Specs
+  deviceType: varchar('device_type', { length: 20 }).default('desktop').notNull(),
+  os: varchar('os', { length: 50 }).notNull(),
+  browser: varchar('browser', { length: 50 }).notNull(),
+  isPwaOrNative: boolean('is_pwa_or_native').default(false).notNull(),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index('user_telemetry_user_id_idx').on(table.userId),
+    channelIdx: index('user_telemetry_channel_idx').on(table.channel),
+    countryIdx: index('user_telemetry_country_idx').on(table.countryCode),
+    createdIdx: index('user_telemetry_created_at_idx').on(table.createdAt),
+  };
+});
