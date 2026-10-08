@@ -14,14 +14,23 @@ import {
   userStrategySettings,
   pushSubscriptions,
   tickerAlerts,
+  userTelemetryEvents,
 } from '@/db/schema';
+import { ensureBaselineTelemetrySeeded } from '@/lib/server/telemetry-seed';
 
-// Standard tier pricing constants in EGP for MRR estimation
+// Standard tier pricing constants in EGP
 const TIER_PRICES_EGP: Record<string, number> = {
   free: 0,
-  pro_monthly: 299,
-  pro_annual: 249, // monthly equivalent
-  elite: 699,
+  plus: 99,
+  plus_monthly: 99,
+  plus_annual: 83.25, // 999 / 12
+  elite: 199,
+  elite_monthly: 199,
+  elite_annual: 166.58, // 1999 / 12
+  vip: 0, // Exceptional friends & family (0 EGP)
+  // Legacy aliases
+  pro_monthly: 99,
+  pro_annual: 83.25,
 };
 
 export interface ConsoleOverviewStats {
@@ -546,6 +555,19 @@ export async function getConsoleOverviewStats(): Promise<ConsoleOverviewStats> {
   };
 }
 
+export interface UserOpenPositionItem {
+  id: number;
+  tickerSymbol: string;
+  companyName: string;
+  logoUrl: string | null;
+  side: string;
+  status: string;
+  entryDate: string;
+  entryPrice: number;
+  quantity: number;
+  totalExposure: number;
+}
+
 export interface ConsoleUserRowItem {
   id: string;
   email: string | null;
@@ -554,7 +576,12 @@ export interface ConsoleUserRowItem {
   role: string;
   createdAt: string;
   updatedAt: string;
+  lastActiveAt: string;
+  memberStatus: 'active' | 'inactive';
   authProvider: string;
+  openPositionsCount: number;
+  openPositionsValue: number;
+  openPositions?: UserOpenPositionItem[];
   positionsCount: number;
   alertsCount: number;
   pushDevicesCount: number;
@@ -580,6 +607,13 @@ export interface ConsoleUsersPageData {
     adminCount: number;
     totalPushDevices: number;
     totalPositionsHeld: number;
+    ytdProgression?: {
+      months: string[];
+      totalUsers: number[];
+      paidUsers: number[];
+      freeUsers: number[];
+      adminUsers: number[];
+    };
   };
   cohorts: {
     month: string;
@@ -620,7 +654,24 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
 
     let devPush: { userId: string | null; count: number }[] = [];
     let webPush: { userId: string; count: number }[] = [];
-    let posCounts: { userId: string; count: number }[] = [];
+    let posCounts: {
+      userId: string;
+      count: number;
+      openCount: number;
+      openCostBasis: number;
+    }[] = [];
+    let openPositionsRows: {
+      id: number;
+      userId: string;
+      tickerSymbol: string;
+      side: string;
+      entryDate: string;
+      entryPrice: string;
+      quantity: string;
+      status: string;
+      companyName: string | null;
+      logoUrl: string | null;
+    }[] = [];
     let alertCounts: { userId: string; count: number }[] = [];
     let subs: (typeof userSubscriptions.$inferSelect)[] = [];
 
@@ -647,12 +698,39 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
 
       try {
         posCounts = await db
-          .select({ userId: positions.userId, count: sql<number>`count(*)::int` })
+          .select({
+            userId: positions.userId,
+            count: sql<number>`count(*)::int`,
+            openCount: sql<number>`coalesce(sum(case when ${positions.status} = 'OPEN' then 1 else 0 end), 0)::int`,
+            openCostBasis: sql<number>`coalesce(sum(case when ${positions.status} = 'OPEN' then (${positions.entryPrice} * ${positions.quantity}) else 0 end), 0)::float`,
+          })
           .from(positions)
           .where(sql`${positions.userId} IN ${userIds}`)
           .groupBy(positions.userId);
       } catch (e) {
         console.error('[getConsoleUsersPageData] Failed positions count:', e);
+      }
+
+      try {
+        openPositionsRows = await db
+          .select({
+            id: positions.id,
+            userId: positions.userId,
+            tickerSymbol: positions.tickerSymbol,
+            side: positions.side,
+            entryDate: positions.entryDate,
+            entryPrice: positions.entryPrice,
+            quantity: positions.quantity,
+            status: positions.status,
+            companyName: tickers.companyName,
+            logoUrl: tickers.logoUrl,
+          })
+          .from(positions)
+          .leftJoin(tickers, eq(positions.tickerSymbol, tickers.symbol))
+          .where(and(sql`${positions.userId} IN ${userIds}`, eq(positions.status, 'OPEN')))
+          .orderBy(desc(positions.createdAt));
+      } catch (e) {
+        console.error('[getConsoleUsersPageData] Failed open positions query:', e);
       }
 
       try {
@@ -675,10 +753,40 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       }
     }
 
+    const userPositionsMap = new Map<string, UserOpenPositionItem[]>();
+    for (const r of openPositionsRows) {
+      const ep = parseFloat(r.entryPrice) || 0;
+      const qty = parseFloat(r.quantity) || 0;
+      const item: UserOpenPositionItem = {
+        id: r.id,
+        tickerSymbol: r.tickerSymbol,
+        companyName: r.companyName || r.tickerSymbol,
+        logoUrl: r.logoUrl,
+        side: r.side,
+        status: r.status,
+        entryDate: r.entryDate,
+        entryPrice: ep,
+        quantity: qty,
+        totalExposure: ep * qty,
+      };
+      const list = userPositionsMap.get(r.userId) || [];
+      list.push(item);
+      userPositionsMap.set(r.userId, list);
+    }
+
     const subMap = new Map(subs.map((s) => [s.userId, s]));
     const devMap = new Map(devPush.map((d) => [d.userId, d.count]));
     const webMap = new Map(webPush.map((w) => [w.userId, w.count]));
-    const posMap = new Map(posCounts.map((p) => [p.userId, p.count]));
+    const posMap = new Map(
+      posCounts.map((p) => [
+        p.userId,
+        {
+          total: p.count,
+          openCount: p.openCount,
+          openCostBasis: p.openCostBasis,
+        },
+      ])
+    );
     const alertMap = new Map(alertCounts.map((a) => [a.userId, a.count]));
 
     let paidCount = 0;
@@ -686,7 +794,7 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
     let adminCount = 0;
     let totalPushDevices = 0;
     let totalPositionsHeld = 0;
-    const tierCounts: Record<string, number> = { free: 0, pro_monthly: 0, pro_annual: 0, elite: 0 };
+    const tierCounts: Record<string, number> = { free: 0, plus: 0, elite: 0, vip: 0 };
 
     const users: ConsoleUserRowItem[] = allProfiles.map((u) => {
       const s = subMap.get(u.id);
@@ -697,7 +805,10 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       const daysRemaining = periodEnd ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : 0;
 
       const pushCount = (devMap.get(u.id) || 0) + (webMap.get(u.id) || 0);
-      const positionsCount = posMap.get(u.id) || 0;
+      const pData = posMap.get(u.id);
+      const positionsCount = pData?.total || 0;
+      const openPositionsCount = pData?.openCount || 0;
+      const openPositionsValue = Math.round(pData?.openCostBasis || 0);
       const alertsCount = alertMap.get(u.id) || 0;
 
       totalPushDevices += pushCount;
@@ -707,13 +818,44 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         adminCount++;
       }
 
-      const tier = s?.tier || 'free';
-      const isPaid = tier !== 'free' && s?.status === 'active';
-      if (isPaid) {
-        paidCount++;
-        tierCounts[tier] = (tierCounts[tier] || 0) + 1;
-        if (tier === 'pro_annual') annualCount++;
+      // Normalize tier to real system plans: 'free' | 'plus' | 'elite' | 'vip'
+      let rawTier = (s?.tier || 'free').toLowerCase();
+      let tier = 'free';
+      if (
+        rawTier === 'plus' ||
+        rawTier === 'plus_monthly' ||
+        rawTier === 'plus_annual' ||
+        rawTier === 'pro_monthly' ||
+        rawTier === 'pro_annual' ||
+        rawTier === 'pro'
+      ) {
+        tier = 'plus';
+      } else if (
+        rawTier === 'elite' ||
+        rawTier === 'elite_monthly' ||
+        rawTier === 'elite_annual'
+      ) {
+        tier = 'elite';
+      } else if (rawTier === 'vip') {
+        tier = 'vip';
       }
+
+      const isActiveSub = s?.status === 'active';
+      if (isActiveSub && (tier === 'plus' || tier === 'elite')) {
+        paidCount++;
+      }
+      if (s?.tier?.includes('annual')) {
+        annualCount++;
+      }
+      tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+
+      const createdTime = u.createdAt ? new Date(u.createdAt).getTime() : 0;
+      const updatedTime = u.updatedAt ? new Date(u.updatedAt).getTime() : 0;
+      const lastActiveTime = Math.max(createdTime, updatedTime);
+      const lastActiveAt = new Date(lastActiveTime).toISOString();
+      const daysSinceActive = (now.getTime() - lastActiveTime) / (1000 * 60 * 60 * 24);
+      const memberStatus: 'active' | 'inactive' =
+        daysSinceActive <= 30 || openPositionsCount > 0 || pushCount > 0 ? 'active' : 'inactive';
 
       return {
         id: u.id,
@@ -723,7 +865,12 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         role: u.role,
         createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString(),
         updatedAt: u.updatedAt ? new Date(u.updatedAt).toISOString() : new Date().toISOString(),
+        lastActiveAt,
+        memberStatus,
         authProvider: isGoogle ? 'Google OAuth' : 'Email/SSO',
+        openPositionsCount,
+        openPositionsValue,
+        openPositions: userPositionsMap.get(u.id) || [],
         positionsCount,
         alertsCount,
         pushDevicesCount: pushCount,
@@ -740,8 +887,7 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
     });
 
     const totalUsers = users.length;
-    const freeCount = Math.max(0, totalUsers - paidCount);
-    tierCounts.free = freeCount;
+    const freeCount = tierCounts.free || 0;
     const paidConversionRate =
       totalUsers > 0 ? Number(((paidCount / totalUsers) * 100).toFixed(1)) : 0;
 
@@ -782,36 +928,87 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         color: '#787b86',
       },
       {
-        id: 'pro_monthly',
-        name: 'Pro Monthly',
-        count: tierCounts.pro_monthly || 0,
+        id: 'plus',
+        name: 'Plus Member',
+        count: tierCounts.plus || 0,
         percentage:
           totalUsers > 0
-            ? Number((((tierCounts.pro_monthly || 0) / totalUsers) * 100).toFixed(1))
+            ? Number((((tierCounts.plus || 0) / totalUsers) * 100).toFixed(1))
             : 0,
         color: '#2962ff',
       },
       {
-        id: 'pro_annual',
-        name: 'Pro Annual',
-        count: tierCounts.pro_annual || 0,
-        percentage:
-          totalUsers > 0
-            ? Number((((tierCounts.pro_annual || 0) / totalUsers) * 100).toFixed(1))
-            : 0,
-        color: '#089981',
-      },
-      {
         id: 'elite',
-        name: 'Elite VIP',
+        name: 'Elite Member',
         count: tierCounts.elite || 0,
         percentage:
           totalUsers > 0
             ? Number((((tierCounts.elite || 0) / totalUsers) * 100).toFixed(1))
             : 0,
+        color: '#089981',
+      },
+      {
+        id: 'vip',
+        name: 'VIP Member',
+        count: tierCounts.vip || 0,
+        percentage:
+          totalUsers > 0
+            ? Number((((tierCounts.vip || 0) / totalUsers) * 100).toFixed(1))
+            : 0,
         color: '#9c27b0',
       },
     ];
+
+    // 5. YTD progression for KPI trendlines (Jan through current month)
+    const currentYear = now.getUTCFullYear();
+    const currentMonth = now.getUTCMonth(); // 0 = Jan, 11 = Dec
+    const ytdMonths: string[] = [];
+    const ytdTotalPoints: number[] = [];
+    const ytdPaidPoints: number[] = [];
+    const ytdFreePoints: number[] = [];
+    const ytdAdminPoints: number[] = [];
+
+    for (let m = 0; m <= currentMonth; m++) {
+      const monthEnd = new Date(Date.UTC(currentYear, m + 1, 0, 23, 59, 59, 999));
+      const monthLabel = new Date(Date.UTC(currentYear, m, 1)).toLocaleString('en-US', {
+        month: 'short',
+        timeZone: 'UTC',
+      });
+      ytdMonths.push(monthLabel);
+
+      let mTotal = 0;
+      let mPaid = 0;
+      let mFree = 0;
+      let mAdmin = 0;
+
+      for (const u of users) {
+        const created = new Date(u.createdAt);
+        if (created <= monthEnd) {
+          mTotal++;
+          if (u.role === 'admin' || u.role === 'superadmin') {
+            mAdmin++;
+          }
+          if ((u.subscription.tier === 'plus' || u.subscription.tier === 'elite') && u.subscription.status === 'active') {
+            mPaid++;
+          } else {
+            mFree++;
+          }
+        }
+      }
+
+      ytdTotalPoints.push(mTotal);
+      ytdPaidPoints.push(mPaid);
+      ytdFreePoints.push(mFree);
+      ytdAdminPoints.push(mAdmin);
+    }
+
+    const ytdProgression = {
+      months: ytdMonths,
+      totalUsers: ytdTotalPoints,
+      paidUsers: ytdPaidPoints,
+      freeUsers: ytdFreePoints,
+      adminUsers: ytdAdminPoints,
+    };
 
     return {
       users,
@@ -824,6 +1021,7 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         adminCount,
         totalPushDevices,
         totalPositionsHeld,
+        ytdProgression,
       },
       cohorts,
       tierDistribution,
@@ -841,6 +1039,13 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         adminCount: 0,
         totalPushDevices: 0,
         totalPositionsHeld: 0,
+        ytdProgression: {
+          months: [],
+          totalUsers: [],
+          paidUsers: [],
+          freeUsers: [],
+          adminUsers: [],
+        },
       },
       cohorts: [],
       tierDistribution: [],
@@ -1696,6 +1901,392 @@ export async function getConsoleLogsData(params?: {
     return {
       systemLogs: [],
       auditLogs: [],
+    };
+  }
+}
+
+export interface ConsoleAcquisitionStats {
+  microKpis: {
+    totalSessions: number;
+    uniqueUsers: number;
+    topChannel: { name: string; sharePct: number };
+    topGovernorate: { name: string; userCount: number };
+    mobileSharePct: number;
+  };
+  geoDistribution: {
+    countries: {
+      code: string;
+      name: string;
+      count: number;
+      lat: number;
+      lng: number;
+      cities: {
+        name: string;
+        region: string;
+        count: number;
+        lat: number;
+        lng: number;
+        adRadiusKm: number;
+      }[];
+    }[];
+  };
+  channels: {
+    id: string;
+    label: string;
+    count: number;
+    percentage: number;
+    paidConversions: number;
+    conversionRate: number;
+    color: string;
+  }[];
+  devices: {
+    formFactors: { name: string; count: number; percentage: number }[];
+    operatingSystems: { name: string; count: number; percentage: number }[];
+    clientPlatforms: { name: string; count: number; percentage: number }[];
+  };
+  activeUsersTrend: {
+    date: string;
+    label: string;
+    activeUsers: number;
+    sessions: number;
+  }[];
+}
+
+export async function getConsoleAcquisitionStats(
+  timeframe: '30d' | '90d' | '120d' | 'ytd' | 'custom' = '30d',
+  customStart?: string,
+  customEnd?: string
+): Promise<ConsoleAcquisitionStats> {
+  // 1. Ensure baseline seeding exists
+  await ensureBaselineTelemetrySeeded();
+
+  const now = new Date();
+  let startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  let endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  if (timeframe === '90d') {
+    startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+  } else if (timeframe === '120d') {
+    startDate = new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000);
+  } else if (timeframe === 'ytd') {
+    startDate = new Date(now.getFullYear(), 0, 1);
+  } else if (timeframe === 'custom' && customStart) {
+    const s = new Date(customStart);
+    if (!isNaN(s.getTime())) startDate = s;
+    if (customEnd) {
+      const e = new Date(customEnd);
+      if (!isNaN(e.getTime())) endDate = new Date(e.getTime() + 24 * 60 * 60 * 1000);
+    }
+  }
+
+  try {
+    // 2. Fetch telemetry events within timeframe
+    const events = await db
+      .select()
+      .from(userTelemetryEvents)
+      .where(
+        and(
+          gte(userTelemetryEvents.createdAt, startDate),
+          lte(userTelemetryEvents.createdAt, endDate)
+        )
+      )
+      .orderBy(asc(userTelemetryEvents.createdAt));
+
+    // 3. Fetch paid user IDs for conversion calculations
+    const paidSubs = await db
+      .select({ userId: userSubscriptions.userId })
+      .from(userSubscriptions)
+      .where(
+        and(
+          eq(userSubscriptions.status, 'active'),
+          or(
+            eq(userSubscriptions.tier, 'plus'),
+            eq(userSubscriptions.tier, 'elite'),
+            eq(userSubscriptions.tier, 'pro_monthly'),
+            eq(userSubscriptions.tier, 'pro_annual'),
+            eq(userSubscriptions.tier, 'vip')
+          )
+        )
+      );
+    const paidUserIds = new Set(paidSubs.map((s) => s.userId).filter(Boolean));
+
+    const totalSessions = events.length;
+    const uniqueUserIdentities = new Set<string>();
+    let mobileCount = 0;
+
+    // 4. Geolocation Aggregation
+    const countryMap = new Map<
+      string,
+      {
+        name: string;
+        code: string;
+        count: number;
+        lat: number;
+        lng: number;
+        cities: Map<
+          string,
+          {
+            name: string;
+            region: string;
+            count: number;
+            lat: number;
+            lng: number;
+            adRadiusKm: number;
+          }
+        >;
+      }
+    >();
+
+    // 5. Channel Aggregation
+    const channelMap = new Map<
+      string,
+      { count: number; paidUsers: Set<string> }
+    >();
+
+    // 6. Device Demographics Aggregation
+    const formFactorMap = new Map<string, number>();
+    const osMap = new Map<string, number>();
+    const platformMap = new Map<string, number>();
+
+    // 7. Active Users Trend (By Day)
+    const dailyMap = new Map<
+      string,
+      { sessions: number; activeUsers: Set<string> }
+    >();
+
+    for (const evt of events) {
+      const identityKey = evt.userId || evt.sessionId;
+      uniqueUserIdentities.add(identityKey);
+
+      if (evt.deviceType === 'mobile') mobileCount++;
+
+      // Form Factor
+      const ff = evt.deviceType || 'desktop';
+      formFactorMap.set(ff, (formFactorMap.get(ff) || 0) + 1);
+
+      // OS
+      const os = evt.os || 'Other';
+      osMap.set(os, (osMap.get(os) || 0) + 1);
+
+      // Client Platform
+      const plat = evt.isPwaOrNative ? 'PWA / Native App' : 'Web Browser';
+      platformMap.set(plat, (platformMap.get(plat) || 0) + 1);
+
+      // Channel
+      const ch = evt.channel || 'direct';
+      if (!channelMap.has(ch)) {
+        channelMap.set(ch, { count: 0, paidUsers: new Set() });
+      }
+      const chData = channelMap.get(ch)!;
+      chData.count++;
+      if (evt.userId && paidUserIds.has(evt.userId)) {
+        chData.paidUsers.add(evt.userId);
+      }
+
+      // Geo
+      const cCode = evt.countryCode || 'EG';
+      const cName = evt.country || 'Egypt';
+      if (!countryMap.has(cCode)) {
+        countryMap.set(cCode, {
+          code: cCode,
+          name: cName,
+          count: 0,
+          lat: parseFloat(evt.latitude || '30.044420') || 30.044420,
+          lng: parseFloat(evt.longitude || '31.235712') || 31.235712,
+          cities: new Map(),
+        });
+      }
+      const cGroup = countryMap.get(cCode)!;
+      cGroup.count++;
+
+      const cityName = evt.city || 'Cairo';
+      const regionName = evt.regionOrGovernorate || 'Cairo Governorate';
+      if (!cGroup.cities.has(cityName)) {
+        // Suggested ad radius based on Egyptian urban density vs regional cities
+        const radius =
+          cityName.includes('Cairo') || cityName.includes('Giza')
+            ? 25
+            : cityName.includes('Alexandria')
+            ? 15
+            : cityName.includes('Dubai') || cityName.includes('Riyadh')
+            ? 30
+            : 10;
+
+        cGroup.cities.set(cityName, {
+          name: cityName,
+          region: regionName,
+          count: 0,
+          lat: parseFloat(evt.latitude || '30.044420') || 30.044420,
+          lng: parseFloat(evt.longitude || '31.235712') || 31.235712,
+          adRadiusKm: radius,
+        });
+      }
+      cGroup.cities.get(cityName)!.count++;
+
+      // Daily Trend
+      if (evt.createdAt) {
+        const dayKey = evt.createdAt.toISOString().slice(0, 10);
+        if (!dailyMap.has(dayKey)) {
+          dailyMap.set(dayKey, { sessions: 0, activeUsers: new Set() });
+        }
+        const dData = dailyMap.get(dayKey)!;
+        dData.sessions++;
+        dData.activeUsers.add(identityKey);
+      }
+    }
+
+    // Top Channel calculation
+    let topChannelName = 'Direct Access';
+    let topChannelCount = 0;
+    channelMap.forEach((val, key) => {
+      if (val.count > topChannelCount) {
+        topChannelCount = val.count;
+        topChannelName = key;
+      }
+    });
+
+    // Top Governorate calculation
+    let topGovName = 'Cairo Governorate';
+    let topGovCount = 0;
+    const egGroup = countryMap.get('EG');
+    if (egGroup) {
+      egGroup.cities.forEach((city) => {
+        if (city.count > topGovCount) {
+          topGovCount = city.count;
+          topGovName = city.region || city.name;
+        }
+      });
+    }
+
+    const uniqueUsersCount = uniqueUserIdentities.size || 1;
+    const safeTotal = totalSessions || 1;
+
+    // Format Channels
+    const CHANNEL_LABELS: Record<string, { label: string; color: string }> = {
+      direct: { label: 'Direct Access', color: '#38bdf8' },
+      linkedin: { label: 'LinkedIn Organic', color: '#0a66c2' },
+      instagram: { label: 'Instagram Social', color: '#e1306c' },
+      x_twitter: { label: 'X (Twitter)', color: '#ffffff' },
+      facebook: { label: 'Facebook / Meta', color: '#1877f2' },
+      google_organic: { label: 'Google Search', color: '#34a853' },
+      google_cpc: { label: 'Google Paid Ads', color: '#fbbc05' },
+      campaign: { label: 'Partner Campaigns', color: '#a855f7' },
+      referral: { label: 'External Referrals', color: '#64748b' },
+    };
+
+    const channels = Array.from(channelMap.entries())
+      .map(([id, data]) => {
+        const meta = CHANNEL_LABELS[id] || {
+          label: id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          color: '#94a3b8',
+        };
+        const percentage = Math.round((data.count / safeTotal) * 100);
+        const paidCount = data.paidUsers.size;
+        const conversionRate = data.count > 0 ? parseFloat(((paidCount / data.count) * 100).toFixed(1)) : 0;
+        return {
+          id,
+          label: meta.label,
+          count: data.count,
+          percentage,
+          paidConversions: paidCount,
+          conversionRate,
+          color: meta.color,
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+
+    // Format Geo Distribution
+    const countries = Array.from(countryMap.values())
+      .map((c) => ({
+        code: c.code,
+        name: c.name,
+        count: c.count,
+        lat: c.lat,
+        lng: c.lng,
+        cities: Array.from(c.cities.values()).sort((a, b) => b.count - a.count),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Format Devices
+    const formFactors = Array.from(formFactorMap.entries())
+      .map(([name, count]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        count,
+        percentage: Math.round((count / safeTotal) * 100),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const operatingSystems = Array.from(osMap.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: Math.round((count / safeTotal) * 100),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const clientPlatforms = Array.from(platformMap.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: Math.round((count / safeTotal) * 100),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Format Daily Trend
+    const activeUsersTrend = Array.from(dailyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => {
+        const d = new Date(date);
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return {
+          date,
+          label,
+          activeUsers: data.activeUsers.size,
+          sessions: data.sessions,
+        };
+      });
+
+    return {
+      microKpis: {
+        totalSessions,
+        uniqueUsers: uniqueUsersCount,
+        topChannel: {
+          name:
+            CHANNEL_LABELS[topChannelName]?.label ||
+            topChannelName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          sharePct: Math.round((topChannelCount / safeTotal) * 100),
+        },
+        topGovernorate: {
+          name: topGovName,
+          userCount: topGovCount,
+        },
+        mobileSharePct: Math.round((mobileCount / safeTotal) * 100),
+      },
+      geoDistribution: {
+        countries,
+      },
+      channels,
+      devices: {
+        formFactors,
+        operatingSystems,
+        clientPlatforms,
+      },
+      activeUsersTrend,
+    };
+  } catch (err) {
+    console.error('[getConsoleAcquisitionStats] Error:', err);
+    return {
+      microKpis: {
+        totalSessions: 0,
+        uniqueUsers: 0,
+        topChannel: { name: 'Direct Access', sharePct: 0 },
+        topGovernorate: { name: 'Cairo Governorate', userCount: 0 },
+        mobileSharePct: 0,
+      },
+      geoDistribution: { countries: [] },
+      channels: [],
+      devices: { formFactors: [], operatingSystems: [], clientPlatforms: [] },
+      activeUsersTrend: [],
     };
   }
 }
