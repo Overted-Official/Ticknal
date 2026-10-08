@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Spectral, Cairo } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
 import NativeBridgeProvider from "@/components/platform/NativeBridgeProvider";
+import TelemetryTracker from "@/components/telemetry/TelemetryTracker";
 import { LocaleProvider } from "@/lib/i18n";
 import { getServerLocale, getServerDirection } from "@/lib/i18n/server";
 import "./globals.css";
@@ -83,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         suppressHydrationWarning
       >
         <LocaleProvider initialLocale={locale}>
+          <TelemetryTracker />
           {children}
           <ServiceWorkerRegistration />
           <NativeBridgeProvider />
