@@ -687,6 +687,22 @@ async function getLatestPriceMap(symbols?: string[]): Promise<Record<string, num
         priceMap[String(row.ticker_symbol)] = Number(row.close);
       }
     }
+
+    // During active trading hours, enrich with live 15-minute delayed intraday quotes
+    if (symbols && symbols.length > 0) {
+      try {
+        const { getIntradayPriceMap } = await import('@/lib/market/intraday-feed');
+        const liveMap = await getIntradayPriceMap(symbols);
+        for (const [sym, livePrice] of Object.entries(liveMap)) {
+          if (typeof livePrice === 'number' && Number.isFinite(livePrice) && livePrice > 0) {
+            priceMap[sym] = livePrice;
+          }
+        }
+      } catch {
+        // Silently preserve historical database prices on any live feed hiccup
+      }
+    }
+
     return priceMap;
   } catch (err) {
     console.error('Error in getLatestPriceMap:', err);
