@@ -15,6 +15,7 @@ interface ChartTickerHeaderProps {
   watchlist?: WatchlistItem[];
   activeCandle: ChartData | null;
   currency?: string;
+  isLiveIntraday?: boolean;
 }
 
 export default function ChartTickerHeader({
@@ -25,6 +26,7 @@ export default function ChartTickerHeader({
   watchlist = [],
   activeCandle,
   currency = 'EGP',
+  isLiveIntraday = false,
 }: ChartTickerHeaderProps) {
   const { locale } = useTranslation();
   const displaySymbol = symbol.replace('.CA', '');
@@ -76,8 +78,14 @@ export default function ChartTickerHeader({
           <span className="truncate max-w-[240px] sm:max-w-none">
             {currentTickerItem.companyName || displaySymbol}
           </span>
-          <span className="text-text-muted font-normal text-xs shrink-0">
-            · {timeframe} · {currencyDisplay}
+          <span className="text-text-muted font-normal text-xs shrink-0 flex items-center gap-1.5">
+            <span>· {timeframe} · {currencyDisplay}</span>
+            {isLiveIntraday && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tabular-nums">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{locale === 'ar' ? 'مؤجل ١٥ دقيقة' : '15m Delayed'}</span>
+              </span>
+            )}
           </span>
         </span>
       </div>
