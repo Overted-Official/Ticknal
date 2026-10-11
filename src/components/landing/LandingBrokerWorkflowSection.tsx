@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/lib/i18n';
+import LandingProductScene from './product-scenes/LandingProductScene';
+import type { LandingProductSceneId } from './product-scenes/landing-product-scene-choreography';
 
 interface WorkflowStep {
   title: string;
@@ -46,6 +47,8 @@ const AR_WORKFLOW_STEPS: WorkflowStep[] = [
   },
 ];
 
+const BROKER_SCENES: LandingProductSceneId[] = ['broker-setup', 'broker-alerts', 'broker-handoff'];
+
 function PhoneMockupHero({ index = 0 }: { index?: number }) {
   return (
     <motion.div
@@ -63,19 +66,19 @@ function PhoneMockupHero({ index = 0 }: { index?: number }) {
           'drop-shadow(0 25px 50px rgba(0,0,0,0.95)) drop-shadow(0 10px 20px rgba(0,0,0,0.85))',
       }}
     >
-      {/* 1. Pure OLED Clean Empty Screen (No screens on the phones yet) */}
+      {/* First-party product viewport, masked by the hardware frame. */}
       <div
-        className="absolute bg-black overflow-hidden flex flex-col justify-between items-center"
+        className="absolute bg-black overflow-hidden"
         style={{
-          left: '7.25%',
-          top: '3.54%',
-          width: '85.78%',
-          height: '92.91%',
-          borderRadius: '42px',
+          left: '7.18%',
+          top: '3.49%',
+          width: '85.9%',
+          height: '93.02%',
         }}
       >
+        <LandingProductScene scene={BROKER_SCENES[index]} />
         {/* Minimal iOS Status Bar */}
-        <div className="h-8 w-full bg-black flex items-center justify-between px-5 text-[10px] font-semibold text-white/35 shrink-0 pt-1.5 select-none">
+        <div className="absolute inset-x-0 top-0 z-20 h-8 w-full bg-black flex items-center justify-between px-5 text-[10px] font-semibold text-white/35 shrink-0 pt-1.5 select-none">
           <span className="tabular-nums">9:41</span>
           {/* Dynamic Island Pill */}
           <div className="w-16 h-3.5 bg-black rounded-full border border-white/[0.06]" />
@@ -87,19 +90,8 @@ function PhoneMockupHero({ index = 0 }: { index?: number }) {
           </div>
         </div>
 
-        {/* Clean Empty State: Subtle Ticknal Monogram at 15% opacity */}
-        <div className="flex flex-col items-center justify-center gap-2 opacity-15 pointer-events-none select-none my-auto">
-          <Image
-            src="/logo-white.svg"
-            alt="Ticknal"
-            width={38}
-            height={38}
-            className="object-contain"
-          />
-        </div>
-
         {/* iOS Home Indicator Bar */}
-        <div className="h-5 w-full flex items-center justify-center pb-2 select-none opacity-25">
+        <div className="absolute inset-x-0 bottom-0 z-20 h-5 w-full flex items-center justify-center pb-2 select-none opacity-25">
           <div className="w-28 h-1 bg-white/40 rounded-full" />
         </div>
       </div>

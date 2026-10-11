@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import Image from 'next/image';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/lib/i18n';
+import LandingProductScene from './product-scenes/LandingProductScene';
+import type { LandingProductSceneId } from './product-scenes/landing-product-scene-choreography';
 
 interface StepData {
   id: string;
@@ -69,7 +70,7 @@ const AR_STEPS: StepData[] = [
 ];
 
 // Tablet Mockup Component (iPad Pro 13" Landscape)
-function TabletMockupStage({ className = '' }: { className?: string }) {
+function TabletMockupStage({ className = '', scene, onCycleComplete }: { className?: string; scene: LandingProductSceneId; onCycleComplete?: () => void }) {
   return (
     <div
       className={`relative aspect-[2952/2264] shrink-0 select-none pointer-events-none ${className}`}
@@ -80,17 +81,17 @@ function TabletMockupStage({ className = '' }: { className?: string }) {
     >
       {/* 1. OLED Screen Layer */}
       <div
-        className="absolute bg-black overflow-hidden flex flex-col justify-between items-center"
+        className="absolute bg-black overflow-hidden"
         style={{
-          left: '3.5%',
-          top: '4.6%',
-          width: '93.0%',
-          height: '90.8%',
-          borderRadius: '3.2%',
+          left: '3.39%',
+          top: '4.42%',
+          width: '93.22%',
+          height: '91.17%',
         }}
       >
+        <LandingProductScene scene={scene} onCycleComplete={onCycleComplete} />
         {/* Minimal iPad Status Bar */}
-        <div className="w-full h-6 sm:h-7 flex items-center justify-between px-5 opacity-25 select-none pt-1">
+        <div className="absolute inset-x-0 top-0 z-20 w-full h-6 sm:h-7 flex items-center justify-between px-5 opacity-45 select-none pt-1 bg-black">
           <span className="text-[10px] font-medium tracking-wider text-zinc-400 tabular-nums">9:41</span>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
@@ -98,19 +99,8 @@ function TabletMockupStage({ className = '' }: { className?: string }) {
           </div>
         </div>
 
-        {/* Clean Center Monogram */}
-        <div className="flex flex-col items-center justify-center gap-1.5 opacity-20 pointer-events-none select-none my-auto">
-          <Image
-            src="/logo-white.svg"
-            alt="Ticknal"
-            width={38}
-            height={38}
-            className="object-contain"
-          />
-        </div>
-
         {/* Home Indicator */}
-        <div className="w-full h-5 flex items-center justify-center pb-2 select-none opacity-25">
+        <div className="absolute inset-x-0 bottom-0 z-20 w-full h-5 flex items-center justify-center pb-2 select-none opacity-25">
           <div className="w-24 h-0.5 bg-white/30 rounded-full" />
         </div>
       </div>
@@ -137,7 +127,7 @@ function TabletMockupStage({ className = '' }: { className?: string }) {
 }
 
 export default function LandingWorkflowPipeline() {
-  const { locale, isRTL } = useTranslation();
+  const { locale } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const [activeMobileCard, setActiveMobileCard] = useState(0);
   const mobileCarouselRef = useRef<HTMLDivElement>(null);
@@ -270,7 +260,7 @@ export default function LandingWorkflowPipeline() {
                     }}
                   />
 
-                  <TabletMockupStage className="w-[240px] sm:w-[270px]" />
+                  <TabletMockupStage className="w-[240px] sm:w-[270px]" scene={`workflow-${step.id}` as LandingProductSceneId} />
                 </div>
               </motion.div>
             ))}
@@ -465,7 +455,7 @@ export default function LandingWorkflowPipeline() {
                 className="relative w-full flex items-center justify-center [perspective:1200px]"
               >
                 <div className="transition-transform duration-500 ease-out hover:[transform:rotateX(2deg)_rotateY(-2deg)]">
-                  <TabletMockupStage className="w-[340px] sm:w-[420px] md:w-[480px] lg:w-[500px] xl:w-[560px]" />
+                  <TabletMockupStage className="w-[340px] sm:w-[420px] md:w-[480px] lg:w-[500px] xl:w-[560px]" scene={`workflow-${steps[activeStep].id}` as LandingProductSceneId} onCycleComplete={() => setActiveStep((current) => current === activeStep ? (current + 1) % steps.length : current)} />
                 </div>
               </motion.div>
             </div>

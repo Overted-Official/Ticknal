@@ -8,15 +8,57 @@ import { createClient } from '@/lib/supabase/server';
 import ChartsWorkspaceView from '@/components/platform/charts/ChartsWorkspaceView';
 import { type WatchlistItem } from '@/components/platform/RightSidebar';
 import { ensureUserVirtualAccount } from '@/lib/banks/virtual-account';
+import { HERO_SCENE_CHART } from '@/components/landing/hero-scenes/hero-scene-snapshot';
 
 export const dynamic = 'force-dynamic';
 
 interface ChartsPageProps {
-  searchParams: Promise<{ ticker?: string; timeframe?: string }>;
+  searchParams: Promise<{ ticker?: string; timeframe?: string; heroScene?: string }>;
 }
 
 export default async function ChartsPage(props: ChartsPageProps) {
   const searchParams = await props.searchParams;
+  if (searchParams.heroScene === 'landing') {
+    const snapshot = HERO_SCENE_CHART;
+    const ticker = snapshot.tickers.find((item) => item.symbol === 'COMI');
+    const watchlist: WatchlistItem[] = snapshot.tickers.map((item) => ({
+      symbol: item.symbol,
+      companyName: item.companyName,
+      sector: item.industryGroup || item.sector || 'EGX',
+      currency: item.currency || 'EGP',
+      price: Number(item.price || 0).toFixed(2),
+      change: `${Number(item.change || 0) >= 0 ? '+' : ''}${Number(item.change || 0).toFixed(2)} (${Number(item.changePct || 0).toFixed(2)}%)`,
+      changePct: `${Number(item.changePct || 0) >= 0 ? '+' : ''}${Number(item.changePct || 0).toFixed(2)}%`,
+      isUp: Number(item.change || 0) >= 0,
+      logoUrl: ['COMI', 'SWDY', 'EFID', 'HRHO'].includes(item.symbol)
+        ? `/images/hero-scenes/logos/${item.symbol.toLowerCase()}.svg`
+        : item.logoUrl,
+    }));
+
+    return (
+      <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-[calc(56px+var(--ticknal-safe-area-bottom))] md:pb-0">
+        <ChartsWorkspaceView
+          symbol="COMI"
+          timeframe="D"
+          chartData={snapshot.chart}
+          dailyChartData={snapshot.chart}
+          watchlist={watchlist}
+          tickerPositions={[]}
+          currentPrice={snapshot.quote.price}
+          companyName={ticker?.companyName}
+          logoUrl="/images/hero-scenes/logos/comi.svg"
+          currency="EGP"
+          rangeData={{
+            dayHigh: snapshot.quote.dayHigh,
+            dayLow: snapshot.quote.dayLow,
+            yearHigh: snapshot.quote.yearHigh,
+            yearLow: snapshot.quote.yearLow,
+          }}
+          brokerageAccounts={[]}
+        />
+      </div>
+    );
+  }
   const selectedSymbol = normalizeTickerSymbol(searchParams?.ticker || 'COMI');
   const rawTf = searchParams?.timeframe || 'D';
   const timeframe = (rawTf === '1H' || rawTf === '60' || rawTf === '1h') ? 'D' : rawTf;

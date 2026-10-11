@@ -108,8 +108,7 @@ export default function ConsoleSectionNav({ sections }: ConsoleSectionNavProps) 
                       : 'bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.06] active:bg-white/10'
                   }`}
                 >
-                  <span className="leading-none sm:hidden">{sec.shortLabel}</span>
-                  <span className="leading-none hidden sm:inline">{sec.label}</span>
+                  <span className="leading-none">{sec.label}</span>
                 </button>
               );
             })}

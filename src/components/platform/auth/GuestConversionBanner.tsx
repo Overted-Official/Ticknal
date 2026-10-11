@@ -10,6 +10,7 @@ import { isNativePlatform } from '@/lib/native/capacitor-bridge';
 import { Browser } from '@capacitor/browser';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { X } from '@/components/ui/icon-library';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 
 interface GuestConversionBannerProps {
   currentFeature?: string;
@@ -29,6 +30,7 @@ export default function GuestConversionBanner({
   const { locale } = useTranslation();
   const { isGuest, isLoading } = useGuestGuard();
   const { isNavVisible } = useMobileNavScroll();
+  const isHeroScene = useHeroSceneMode();
   const [oauthLoading, setOauthLoading] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -133,7 +135,7 @@ export default function GuestConversionBanner({
   }, [pathname, router]);
 
   // Only render for unauthenticated guest visitors once auth state has resolved
-  if (isLoading || !isGuest || isDismissed) return null;
+  if (isHeroScene || isLoading || !isGuest || isDismissed) return null;
 
   return (
     <aside

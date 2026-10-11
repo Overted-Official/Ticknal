@@ -16,15 +16,18 @@ import type {
   LandingMarqueeTicker,
   LandingCoverageCard,
 } from '@/lib/server/landing-queries';
+import type { SerializedSubscriptionPlan } from '@/components/landing/LandingPricingSection';
 
 interface LandingPageViewProps {
   initialTickers?: LandingMarqueeTicker[];
   initialCoverageCards?: LandingCoverageCard[];
+  initialPlans?: SerializedSubscriptionPlan[];
 }
 
 export default function LandingPageView({
   initialTickers = [],
   initialCoverageCards = [],
+  initialPlans = [],
 }: LandingPageViewProps) {
   return (
     <SmoothScroll>
@@ -49,7 +52,7 @@ export default function LandingPageView({
           <LandingBrokerWorkflowSection />
 
           {/* 6. Transparent Local Pricing in EGP */}
-          <LandingPricingSection />
+          <LandingPricingSection initialPlans={initialPlans} />
 
           {/* 8. Final Call to Action: Stop Trading in the Dark */}
           <LandingCtaSection />

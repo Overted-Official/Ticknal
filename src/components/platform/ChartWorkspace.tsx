@@ -48,6 +48,7 @@ export default function ChartWorkspace({
 }: ChartWorkspaceProps) {
 
   const searchParams = useSearchParams();
+  const isHeroScene = searchParams?.get('heroScene') === 'landing';
   const pathname = usePathname();
   const selectableCanonicalIds = useMemo(() => new Set(
     PROGRAM_MANIFEST.filter((entry) => entry.state === 'integrated' && entry.canonicalId)
@@ -155,6 +156,7 @@ export default function ChartWorkspace({
   // alpha so the chart opens on the same algorithm that can generate its
   // notification.
   useEffect(() => {
+    if (isHeroScene) return;
     if (requestedStrategy && STRATEGIES[requestedStrategy]) return;
 
     let cancelled = false;
@@ -195,7 +197,7 @@ export default function ChartWorkspace({
       cancelled = true;
       controller.abort();
     };
-  }, [requestedStrategy, symbol, timeframe]);
+  }, [isHeroScene, requestedStrategy, symbol, timeframe]);
 
   // Client-side IndexedDB caching & delta sync
   const [activeChartData, setActiveChartData] = useState<ChartData[]>(data);
@@ -205,6 +207,7 @@ export default function ChartWorkspace({
   }, [data]);
 
   useEffect(() => {
+    if (isHeroScene) return;
     let isCancelled = false;
 
     // 1. Instantly check IndexedDB for cached historical bars
@@ -233,7 +236,7 @@ export default function ChartWorkspace({
     return () => {
       isCancelled = true;
     };
-  }, [symbol, timeframe, watchlist]);
+  }, [isHeroScene, symbol, timeframe, watchlist]);
 
   // Sync strategy if URL query param changes
   useEffect(() => {

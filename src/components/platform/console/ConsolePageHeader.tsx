@@ -17,7 +17,7 @@ export default function ConsolePageHeader({ pageTitle, rightAction }: ConsolePag
       {/* Left: Breadcrumb matching HomeInvestmentsHeader & MarketsPageHeader */}
       <div className="flex items-center gap-1.5 text-xs sm:text-sm font-sans">
         <Link
-          href="/console/overview"
+          href="/console/users"
           className="text-text-muted font-normal hover:text-text-primary transition-colors cursor-pointer"
         >
           {locale === 'ar' ? 'لوحة التحكم' : 'Console'}

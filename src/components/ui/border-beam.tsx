@@ -2636,5 +2636,5 @@ export const BeamBorder = forwardRef<HTMLDivElement, BeamBorderProps>(function B
   );
 });
 
-export { BeamBorder, BeamBorder as BorderBeam };
+export { BeamBorder as BorderBeam };
 export default BeamBorder;

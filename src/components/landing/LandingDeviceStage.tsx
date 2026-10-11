@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+import { HeroIpadScene, HeroPhoneScene } from '@/components/landing/hero-scenes/HeroDeviceScenes';
 
 export default function LandingDeviceStage() {
   return (
@@ -19,40 +19,24 @@ export default function LandingDeviceStage() {
               filter: 'drop-shadow(0 30px 70px rgba(0,0,0,0.98))',
             }}
           >
-            {/* A. Clean OLED Screen Layer (Clean Empty State) */}
+            {/* A. The hardware overlay masks the display to its exact curved opening. */}
             <div
-              className="absolute bg-black overflow-hidden flex flex-col justify-between items-center"
+              className="absolute bg-black overflow-hidden"
               style={{
                 left: '3.39%',
                 top: '4.42%',
                 width: '93.22%',
                 height: '91.17%',
-                borderRadius: '24px',
               }}
             >
-              {/* Top Space / Minimal indicator */}
-              <div className="w-full h-8 flex items-center justify-between px-7 opacity-20 select-none pt-2">
-                <span className="text-[11px] font-medium tracking-wider text-zinc-500 tabular-nums">9:41</span>
+              <HeroIpadScene />
+
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex h-7 items-center justify-between px-7 pt-2 text-[10px] font-medium tracking-wider text-white/30 select-none">
+                <span className="tabular-nums">9:41</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-zinc-600" />
-                  <div className="w-4 h-2 rounded-[2px] border border-zinc-600" />
+                  <div className="h-2 w-2 rounded-full bg-white/25" />
+                  <div className="h-2 w-4 border border-white/25" />
                 </div>
-              </div>
-
-              {/* Clean Center Monogram */}
-              <div className="flex flex-col items-center justify-center gap-2 opacity-20 pointer-events-none select-none my-auto">
-                <Image
-                  src="/logo-white.svg"
-                  alt="Ticknal"
-                  width={52}
-                  height={52}
-                  className="object-contain"
-                />
-              </div>
-
-              {/* Bottom Home Indicator */}
-              <div className="w-full h-8 flex items-center justify-center pb-3 select-none opacity-25">
-                <div className="w-40 h-1 bg-white/20 rounded-full" />
               </div>
             </div>
 
@@ -60,7 +44,7 @@ export default function LandingDeviceStage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/mockups/ipad-pro-13-landscape-black.webp"
-              alt="iPad Pro 13 M4 Space Black Frame"
+              alt=""
               className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
               loading="eager"
             />
@@ -91,44 +75,31 @@ export default function LandingDeviceStage() {
                 'drop-shadow(0 25px 50px rgba(0,0,0,0.98)) drop-shadow(0 8px 16px rgba(0,0,0,0.9))',
             }}
           >
-            {/* A. Clean OLED Screen Layer */}
+            {/* A. Keep the scene square beneath the hardware's display cutout. */}
             <div
-              className="absolute bg-black overflow-hidden flex flex-col justify-between items-center"
+              className="absolute bg-black overflow-hidden"
               style={{
                 left: '7.25%',
                 top: '3.54%',
                 width: '85.78%',
                 height: '92.91%',
-                borderRadius: '42px',
               }}
             >
-              {/* Minimal iOS Status Bar */}
-              <div className="h-8 sm:h-9 w-full bg-black flex items-center justify-between px-5 text-[9px] sm:text-[10px] font-semibold text-white/35 shrink-0 pt-1.5 select-none">
+              <HeroPhoneScene />
+
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex h-8 items-center justify-between px-5 pt-1.5 text-[9px] font-semibold text-white/35 select-none">
                 <span className="tabular-nums">9:41</span>
-                {/* Dynamic Island Spacer */}
-                <div className="w-16 h-3 bg-black rounded-full" />
+                <div className="h-3 w-16 rounded-full bg-black" />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px]">5G</span>
-                  <div className="w-3.5 h-1.5 rounded-xs border border-white/35 p-0.5 flex items-center">
-                    <div className="w-full h-full bg-white/35 rounded-[1px]" />
+                  <span>5G</span>
+                  <div className="flex h-1.5 w-3.5 items-center border border-white/35 p-0.5">
+                    <div className="h-full w-full bg-white/35" />
                   </div>
                 </div>
               </div>
 
-              {/* Clean Center Monogram */}
-              <div className="flex flex-col items-center justify-center gap-1.5 opacity-20 pointer-events-none select-none my-auto">
-                <Image
-                  src="/logo-white.svg"
-                  alt="Ticknal"
-                  width={36}
-                  height={36}
-                  className="object-contain"
-                />
-              </div>
-
-              {/* iOS Home Indicator Bar */}
-              <div className="h-4 w-full flex items-center justify-center pb-1 select-none opacity-25">
-                <div className="w-24 h-1 bg-white/20 rounded-full" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-1 z-30 flex h-4 items-center justify-center select-none">
+                <div className="h-1 w-24 rounded-full bg-white/30" />
               </div>
             </div>
 
@@ -136,7 +107,7 @@ export default function LandingDeviceStage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/mockups/iphone-16-pro-black.webp"
-              alt="iPhone 16 Pro Black Titanium Frame"
+              alt=""
               className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
               loading="eager"
             />

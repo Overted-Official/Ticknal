@@ -10,6 +10,14 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const headers = req.headers;
+    const userAgent = headers.get('user-agent') || '';
+    if (
+      userAgent.includes('HeadlessChrome') ||
+      userAgent.includes('Playwright') ||
+      userAgent.includes('Puppeteer')
+    ) {
+      return NextResponse.json({ success: true, ignored: true });
+    }
 
     // 1. Resolve client IP
     const forwarded = headers.get('x-forwarded-for');

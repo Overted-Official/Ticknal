@@ -36,6 +36,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (request.nextUrl.pathname === '/landing-scenes/strategy'
+    && request.nextUrl.searchParams.get('heroScene') !== 'landing') {
+    return new NextResponse(null, { status: 404 });
+  }
+
   // Protected routes: redirect unauthenticated users to login
   const protectedPaths = [
     '/home',

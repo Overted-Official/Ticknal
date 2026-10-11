@@ -16,6 +16,8 @@ import { ChevronRight } from '@/components/ui/icon-library';
 import SectionLoadingState from '@/components/ui/SectionLoadingState';
 import type { InvestorFlowsResponse } from '@/lib/handlers/investor-flow-handler';
 import { useTranslation } from '@/lib/i18n';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
+import { HERO_SCENE_FLOWS } from '@/components/landing/hero-scenes/hero-scene-snapshot';
 
 export type FlowHorizon = '1M' | '3M' | '6M' | 'YTD' | '1Y';
 export type FlowChartMode = 'stacked_share' | 'foreign_net';
@@ -32,14 +34,17 @@ export default function InvestorFlowSection({
   id = 'investor-flows',
 }: InvestorFlowSectionProps) {
   const { locale } = useTranslation();
+  const isHeroScene = useHeroSceneMode();
   const [horizon, setHorizon] = useState<FlowHorizon>('1M');
   const [chartMode, setChartMode] = useState<FlowChartMode>('foreign_net');
 
-  const { data, isLoading } = useSWR<InvestorFlowsResponse>(
-    `/api/macro/investor-flows?horizon=${horizon}`,
+  const { data: liveData, isLoading: liveIsLoading } = useSWR<InvestorFlowsResponse>(
+    isHeroScene ? null : `/api/macro/investor-flows?horizon=${horizon}`,
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 120000 }
   );
+  const data = isHeroScene ? HERO_SCENE_FLOWS.data as InvestorFlowsResponse : liveData;
+  const isLoading = !isHeroScene && liveIsLoading;
 
   const history = data?.history || [];
   const summary = data?.summary;

@@ -8,6 +8,7 @@ import { useTranslation } from '@/lib/i18n';
 interface NewsFeedTimelineProps {
   items: MarketNewsItemDTO[];
   isLoading: boolean;
+  asOf?: string;
   targetItemId?: string | null;
   onSelectTicker: (ticker: string) => void;
   onBookmarkClick: (feature: string) => void;
@@ -17,6 +18,7 @@ interface NewsFeedTimelineProps {
 export default function NewsFeedTimeline({
   items,
   isLoading,
+  asOf,
   targetItemId,
   onSelectTicker,
   onBookmarkClick,
@@ -76,6 +78,7 @@ export default function NewsFeedTimeline({
         <FeedPost
           key={item.id}
           item={item}
+          asOf={asOf}
           isTargetItem={Boolean(targetItemId && item.id === targetItemId)}
           onSelectTicker={onSelectTicker}
           onBookmarkClick={onBookmarkClick}
@@ -84,4 +87,3 @@ export default function NewsFeedTimeline({
     </div>
   );
 }
-

@@ -1,0 +1,65 @@
+import type { SignalNotificationItem } from '@/components/platform/NotificationsDrawer';
+
+const sessionDate = '2026-10-07';
+
+// Illustrative data displayed only in the landing-page device sequence.
+// The rows themselves are rendered by the platform's NotificationsDrawer.
+export const HERO_SCENE_NOTIFICATIONS: SignalNotificationItem[] = [
+  {
+    id: -1,
+    tickerSymbol: 'COMI',
+    companyName: 'Commercial International Bank',
+    logoUrl: '/images/hero-scenes/logos/comi.svg',
+    referencePrice: 124.65,
+    dataAsOf: sessionDate,
+    signalDate: `${sessionDate}T10:45:00Z`,
+    sentAt: `${sessionDate}T10:45:00Z`,
+    signal: 'BUY',
+    strategy: 'psi',
+    signalBarsAgo: 0,
+    industryGroup: 'Banks',
+    rotationRegime: 'Leading',
+  },
+  {
+    id: -2,
+    tickerSymbol: 'SWDY',
+    companyName: 'Elsewedy Electric',
+    logoUrl: '/images/hero-scenes/logos/swdy.svg',
+    dataAsOf: sessionDate,
+    signalDate: `${sessionDate}T10:23:00Z`,
+    sentAt: `${sessionDate}T10:23:00Z`,
+    signal: 'SELL',
+    strategy: 'psi',
+    signalBarsAgo: 0,
+    industryGroup: 'Industrial Goods',
+    rotationRegime: 'Weakening',
+  },
+  {
+    id: -3,
+    tickerSymbol: 'EFID',
+    companyName: 'Edita Food Industries',
+    logoUrl: '/images/hero-scenes/logos/efid.svg',
+    dataAsOf: sessionDate,
+    signalDate: `${sessionDate}T09:56:00Z`,
+    sentAt: `${sessionDate}T09:56:00Z`,
+    signal: 'BUY',
+    strategy: 'psi',
+    signalBarsAgo: 0,
+    industryGroup: 'Food & Beverages',
+    rotationRegime: 'Improving',
+  },
+  {
+    id: -4,
+    tickerSymbol: 'HRHO',
+    companyName: 'EFG Holding',
+    logoUrl: '/images/hero-scenes/logos/hrho.svg',
+    dataAsOf: sessionDate,
+    signalDate: `${sessionDate}T09:31:00Z`,
+    sentAt: `${sessionDate}T09:31:00Z`,
+    signal: 'SELL',
+    strategy: 'psi',
+    signalBarsAgo: 0,
+    industryGroup: 'Financial Services',
+    rotationRegime: 'Lagging',
+  },
+];

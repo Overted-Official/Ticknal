@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,6 +11,42 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+
+export interface SerializedSubscriptionPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  monthlyPriceEgp: number;
+  annualPriceEgp: number;
+  annualDiscountPct: number;
+  badge: string | null;
+  color: string;
+  displayOrder: number;
+  isActive: boolean;
+  limits: {
+    chartsPerTab: number;
+    indicatorsPerChart: number;
+    historicalBars: number;
+    parallelConnections: number;
+    priceAlerts: number;
+    technicalAlerts: number;
+    pushAlerts: number;
+  };
+  features: {
+    breakoutDetection: 'none' | 'intraday' | 'multi_timeframe';
+    hydraIndicator: boolean;
+    typhoonEngine: boolean;
+    cerberusConfluence: boolean;
+    egxCoverage: boolean;
+    screeners: boolean;
+    devicesSync: boolean;
+    noAds: boolean;
+  };
+}
+
+export interface LandingPricingSectionProps {
+  initialPlans?: SerializedSubscriptionPlan[];
+}
 
 interface FeatureItem {
   key: string;
@@ -237,20 +273,33 @@ const AR_PRICING_FEATURES: Record<string, { label: string; freeText: string; plu
   },
 };
 
-export default function LandingPricingSection() {
+export default function LandingPricingSection({
+  initialPlans = [],
+}: LandingPricingSectionProps) {
   const { locale, isRTL } = useTranslation();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
 
-  // Pricing values in EGP
-  const plusMonthly = 50;
-  const plusAnnualTotal = 500;
-  const plusAnnualMonthly = Math.round(plusAnnualTotal / 12);
-  const plusSavedYear = plusMonthly * 12 - plusAnnualTotal; // 100 EGP
+  const plusPlan = initialPlans.find((p) => p.id === 'plus');
+  const elitePlan = initialPlans.find((p) => p.id === 'elite');
 
-  const eliteMonthly = 95;
-  const eliteAnnualTotal = 950;
+  // Pricing values in EGP (dynamic from centralized database with canonical fallback)
+  const plusMonthly = plusPlan ? plusPlan.monthlyPriceEgp : 50;
+  const plusAnnualTotal = plusPlan ? plusPlan.annualPriceEgp : 500;
+  const plusAnnualMonthly = Math.round(plusAnnualTotal / 12);
+  const plusSavedYear = Math.max(0, plusMonthly * 12 - plusAnnualTotal);
+  const plusDiscountPct =
+    plusPlan?.annualDiscountPct ??
+    (plusMonthly > 0 ? Math.round((plusSavedYear / (plusMonthly * 12)) * 100) : 17);
+
+  const eliteMonthly = elitePlan ? elitePlan.monthlyPriceEgp : 95;
+  const eliteAnnualTotal = elitePlan ? elitePlan.annualPriceEgp : 950;
   const eliteAnnualMonthly = Math.round(eliteAnnualTotal / 12);
-  const eliteSavedYear = eliteMonthly * 12 - eliteAnnualTotal; // 190 EGP
+  const eliteSavedYear = Math.max(0, eliteMonthly * 12 - eliteAnnualTotal);
+  const eliteDiscountPct =
+    elitePlan?.annualDiscountPct ??
+    (eliteMonthly > 0 ? Math.round((eliteSavedYear / (eliteMonthly * 12)) * 100) : 17);
+
+  const maxDiscountPct = Math.max(plusDiscountPct, eliteDiscountPct, 17);
 
   const isAnnual = billingCycle === 'annual';
 
@@ -342,7 +391,7 @@ export default function LandingPricingSection() {
                 {locale === 'ar' ? 'سنوي' : 'Annual'}
               </span>
               <span className="px-2 py-0.5 text-xs font-medium rounded bg-white/10 text-white border border-white/10 flex items-center gap-1 transition-transform group-hover:scale-105">
-                {locale === 'ar' ? 'وفر لحد 17%' : 'Save up to 17%'} <span role="img" aria-label="fire">🔥</span>
+                {locale === 'ar' ? `وفر لحد ${maxDiscountPct}%` : `Save up to ${maxDiscountPct}%`} <span role="img" aria-label="fire">🔥</span>
               </span>
             </button>
           </div>

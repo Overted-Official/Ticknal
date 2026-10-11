@@ -564,6 +564,23 @@ export const auditLogs = pgTable('audit_logs', {
   };
 });
 
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: varchar('id', { length: 50 }).primaryKey(), // 'free' | 'plus' | 'elite' | 'vip'
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  monthlyPriceEgp: numeric('monthly_price_egp', { precision: 10, scale: 2 }).default('0').notNull(),
+  annualPriceEgp: numeric('annual_price_egp', { precision: 10, scale: 2 }).default('0').notNull(),
+  annualDiscountPct: integer('annual_discount_pct').default(0).notNull(),
+  badge: varchar('badge', { length: 50 }),
+  color: varchar('color', { length: 20 }).default('#787b86').notNull(),
+  displayOrder: integer('display_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  limits: jsonb('limits').notNull(),
+  features: jsonb('features').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const userSubscriptions = pgTable('user_subscriptions', {
   id: serial('id').primaryKey(),
   userId: uuid('user_id').references(() => profiles.id, { onDelete: 'cascade' }).notNull(),

@@ -68,6 +68,7 @@ export default function TelemetryTracker() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (typeof navigator !== 'undefined' && navigator.webdriver) return;
     if (lastLoggedPath.current === pathname) return;
     lastLoggedPath.current = pathname;
 

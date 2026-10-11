@@ -32,6 +32,7 @@ import type { CanonicalIndicatorViewState } from '@/indicators/canonical/types';
 import { useToast } from '@/context/ToastContext';
 import { useTranslation } from '@/lib/i18n';
 import { useGuestGuard } from '@/context/GuestGuardContext';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 
 // Modular Chart Imports
 import type {
@@ -98,6 +99,7 @@ export default function ChartWidget({
 }: ChartWidgetProps) {
   const { locale } = useTranslation();
   const { isGuest, isLoading: isGuestStatusLoading } = useGuestGuard();
+  const isHeroScene = useHeroSceneMode();
   const router = useRouter();
   const { toast } = useToast();
   const [canonicalIndicatorStates, setCanonicalIndicatorStates] = useState<
@@ -267,12 +269,115 @@ export default function ChartWidget({
     window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
   };
 
+  const [isLiveIntraday, setIsLiveIntraday] = useState(false);
+  const [liveIntradayCandle, setLiveIntradayCandle] = useState<ChartData | null>(null);
+
   const visibleData = data;
-  const activeCandle = hoveredCandle ?? (data.length > 0 ? data[data.length - 1] : null);
+  const activeCandle = hoveredCandle ?? (liveIntradayCandle ?? (data.length > 0 ? data[data.length - 1] : null));
+
+  // Reset live intraday bar on instrument change
+  useEffect(() => {
+    setIsLiveIntraday(false);
+    setLiveIntradayCandle(null);
+  }, [symbol, data]);
+
+  // Intraday 15-minute live feed polling (EGX, Gold, Silver during active market hours)
+  useEffect(() => {
+    const isDaily = timeframe === 'D' || timeframe === '1D';
+    if (isHeroScene || isFund || !isDaily) {
+      setIsLiveIntraday(false);
+      setLiveIntradayCandle(null);
+      return;
+    }
+
+    let isSubscribed = true;
+    let lastFetchTimestamp = 0;
+
+    const fetchLiveBar = async () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/market/intraday?ticker=${encodeURIComponent(symbol)}`);
+        if (!res.ok) return;
+
+        const result = await res.json();
+        if (!isSubscribed) return;
+
+        if (result.active && result.bar) {
+          const bar = result.bar;
+          const chartTime = parseChartTime(bar.time);
+
+          const liveCandle: ChartData = {
+            time: bar.time,
+            open: bar.open,
+            high: bar.high,
+            low: bar.low,
+            close: bar.close,
+            volume: bar.volume,
+          };
+
+          setLiveIntradayCandle(liveCandle);
+          setIsLiveIntraday(true);
+
+          if (candlestickSeriesRef.current) {
+            try {
+              (candlestickSeriesRef.current as ISeriesApi<'Candlestick'>).update({
+                time: chartTime as any,
+                open: bar.open,
+                high: bar.high,
+                low: bar.low,
+                close: bar.close,
+              });
+            } catch {}
+          }
+
+          if (volumeSeriesRef.current) {
+            try {
+              volumeSeriesRef.current.update({
+                time: chartTime as any,
+                value: bar.volume,
+                color: bar.close >= bar.open
+                  ? cssTokenColor('--plt-profit', 'rgb(8, 153, 129)')
+                  : cssTokenColor('--plt-risk', 'rgb(242, 54, 69)'),
+              });
+            } catch {}
+          }
+        } else {
+          setIsLiveIntraday(false);
+        }
+      } catch {
+        // Silently preserve historical bars
+      } finally {
+        lastFetchTimestamp = Date.now();
+      }
+    };
+
+    const initialTimer = setTimeout(fetchLiveBar, 600);
+    const intervalId = setInterval(fetchLiveBar, 180 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastFetchTimestamp > 180 * 1000) {
+        fetchLiveBar();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isSubscribed = false;
+      clearTimeout(initialTimer);
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      setIsLiveIntraday(false);
+      setLiveIntradayCandle(null);
+    };
+  }, [symbol, isFund, timeframe, isHeroScene]);
 
   // Fetch signals
   useEffect(() => {
-    if (!showSignals) {
+    if (isHeroScene || !showSignals) {
       setChartSignals([]);
       return;
     }
@@ -312,11 +417,11 @@ export default function ChartWidget({
     return () => {
       active = false;
     };
-  }, [onMetricsChange, selectedStrategy, showSignals, strategyEndDate, strategyParams, strategyStartDate, symbol, timeframe]);
+  }, [isHeroScene, onMetricsChange, selectedStrategy, showSignals, strategyEndDate, strategyParams, strategyStartDate, symbol, timeframe]);
 
   // Fetch active orders for overlays
   useEffect(() => {
-    if (isGuestStatusLoading || isGuest) return;
+    if (isHeroScene || isGuestStatusLoading || isGuest) return;
     let active = true;
     const fetchOrders = async () => {
       try {
@@ -334,7 +439,7 @@ export default function ChartWidget({
     return () => {
       active = false;
     };
-  }, [isGuest, isGuestStatusLoading, symbol, positionsRefreshKey]);
+  }, [isHeroScene, isGuest, isGuestStatusLoading, symbol, positionsRefreshKey]);
 
   // Core Chart Canvas Lifecycle
   useEffect(() => {
@@ -1023,6 +1128,7 @@ export default function ChartWidget({
           watchlist={watchlist}
           activeCandle={activeCandle}
           currency={instrumentCurrency}
+          isLiveIntraday={isLiveIntraday}
         />
 
         {/* Main Lightweight-Charts Container Canvas */}

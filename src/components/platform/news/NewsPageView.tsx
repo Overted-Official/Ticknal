@@ -15,6 +15,8 @@ import { useGuestGuard } from '@/context/GuestGuardContext';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import { useTranslation } from '@/lib/i18n';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
+import { HERO_SCENE_NEWS } from '@/components/landing/hero-scenes/hero-scene-snapshot';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -32,6 +34,7 @@ export default function NewsPageView() {
   const { isNavVisible } = useMobileNavScroll();
 
   const searchParams = useSearchParams();
+  const isHeroScene = useHeroSceneMode();
   const targetItemId = searchParams?.get('item') || searchParams?.get('id') || null;
 
   // Filter State
@@ -51,14 +54,16 @@ export default function NewsPageView() {
   if (searchQuery.trim()) queryParams.set('q', searchQuery.trim());
   if (targetItemId) queryParams.set('item', targetItemId);
 
-  const { data, isLoading, mutate } = useSWR<NewsApiResponse>(
-    `/api/news?${queryParams.toString()}`,
+  const { data: liveData, isLoading: liveIsLoading, mutate } = useSWR<NewsApiResponse>(
+    isHeroScene ? null : `/api/news?${queryParams.toString()}`,
     fetcher,
     {
       revalidateOnFocus: true,
       dedupingInterval: 30000,
     }
   );
+  const data = isHeroScene ? HERO_SCENE_NEWS.data as unknown as NewsApiResponse : liveData;
+  const isLoading = !isHeroScene && liveIsLoading;
 
   const items = data?.items || [];
 
@@ -163,7 +168,7 @@ export default function NewsPageView() {
   };
 
   const handleRefreshWire = async () => {
-    if (isLoading || isSyncing) return;
+    if (isHeroScene || isLoading || isSyncing) return;
     setIsSyncing(true);
     try {
       await fetch('/api/news/sync', { method: 'POST' });
@@ -195,7 +200,7 @@ export default function NewsPageView() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
+          {!isHeroScene && <button
             type="button"
             onClick={handleRefreshWire}
             disabled={isLoading || isSyncing}
@@ -207,7 +212,7 @@ export default function NewsPageView() {
             ) : (
               <RefreshCw size={14} />
             )}
-          </button>
+          </button>}
         </div>
       </header>
 
@@ -227,8 +232,12 @@ export default function NewsPageView() {
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
               {locale === 'ar'
-                ? 'إفصاحات حية، تحليلات كمية، وتغطية استثمارية فورية للشركات والأسواق'
-                : 'Live disclosures, quantitative pulse, and breaking financial intelligence across EGX and macro markets'}
+                ? isHeroScene
+                  ? 'لقطة أخبار السوق · ١٠ أكتوبر ٢٠٢٦'
+                  : 'إفصاحات حية، تحليلات كمية، وتغطية استثمارية فورية للشركات والأسواق'
+                : isHeroScene
+                  ? 'Market news snapshot · 10 Oct 2026'
+                  : 'Live disclosures, quantitative pulse, and breaking financial intelligence across EGX and macro markets'}
             </p>
           </div>
 
@@ -324,6 +333,7 @@ export default function NewsPageView() {
           <NewsFeedTimeline
             items={items}
             isLoading={isLoading}
+            asOf={isHeroScene ? HERO_SCENE_NEWS.asOf : undefined}
             targetItemId={targetItemId}
             onSelectTicker={handleSelectTicker}
             onBookmarkClick={handleTriggerPro}

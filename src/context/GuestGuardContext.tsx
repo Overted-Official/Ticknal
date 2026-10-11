@@ -83,6 +83,11 @@ export function GuestGuardProvider({ children }: { children: React.ReactNode }) 
   });
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('heroScene') === 'landing') {
+      setIsGuest(true);
+      setIsLoading(false);
+      return;
+    }
     let isMounted = true;
     const supabase = createClient();
 

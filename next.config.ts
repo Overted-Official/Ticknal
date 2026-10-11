@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ['127.0.0.1', 'localhost', '192.168.1.6'],
   transpilePackages: ["@ticknal/quant-engine", "@ticknal/types"],
   serverExternalPackages: ["onnxruntime-node", "onnxruntime-web", "@electric-sql/pglite"],
   images: {
@@ -67,10 +68,43 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Landing-page device scenes use only these first-party routes in same-origin frames.
+        source: '/charts',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
+      {
+        source: '/markets',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
+      {
+        source: '/landing-scenes/strategy',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
     ];
   },
   async redirects() {
     return [
+      {
+        source: '/console/overview',
+        destination: '/console/users',
+        permanent: true,
+      },
       {
         source: '/invest',
         has: [

@@ -26,6 +26,8 @@ import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import LanguageToggleButton from './LanguageToggleButton';
 import { useTranslation } from '@/lib/i18n';
 import { useGuestGuard } from '@/context/GuestGuardContext';
+import { HERO_SCENE_NOTIFICATIONS } from '@/components/landing/hero-scenes/hero-scene-notifications';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -71,6 +73,7 @@ function SidebarNavItem({
     <div className="w-full relative flex items-center justify-center group">
       <Link
         href={href}
+        data-hero-action={href.startsWith('/markets') ? 'markets' : href.startsWith('/news') ? 'news' : undefined}
         prefetch={!isProtected}
         onClick={handleClick}
         className="flex items-center justify-center relative cursor-pointer"
@@ -95,11 +98,13 @@ function NotificationsNavItem({
   onClick,
   count,
   title,
+  isHeroScene,
 }: {
   isOpen: boolean;
   onClick: (e: React.MouseEvent) => void;
   count: number;
   title: string;
+  isHeroScene: boolean;
 }) {
   const iconRef = useRef<{ startAnimation?: () => void; stopAnimation?: () => void } | any>(null);
   const handleMouseEnter = () => {
@@ -117,6 +122,8 @@ function NotificationsNavItem({
     <div className="w-full flex items-center justify-center relative group">
       <button
         type="button"
+        data-hero-action="alerts"
+        data-hero-scene-ready={isHeroScene ? 'true' : undefined}
         onClick={onClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -140,24 +147,25 @@ function NotificationsNavItem({
 
 export default function SidebarNav() {
   const pathname = usePathname();
+  const isHeroScene = useHeroSceneMode(pathname);
   const { t, locale } = useTranslation();
   const { isGuest, isLoading, requireAuth } = useGuestGuard();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  const { data: notifData } = useSWR<{ notifications: unknown[] }>(isGuest || isLoading ? null : '/api/notifications', fetcher, {
+  const { data: notifData } = useSWR<{ notifications: unknown[] }>(isGuest || isLoading || isHeroScene ? null : '/api/notifications', fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
     revalidateOnFocus: true,
     dedupingInterval: 30000,
     isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
 
-  const notificationCount = notifData?.notifications?.length ?? 0;
+  const notificationCount = isHeroScene ? HERO_SCENE_NOTIFICATIONS.length : notifData?.notifications?.length ?? 0;
 
   const isConsole = pathname.startsWith('/console');
 
   // Check admin access for non-guest users to show Console icon
   const { data: adminCheck } = useSWR<{ isAdmin: boolean }>(
-    isGuest ? null : '/api/console/check',
+    isGuest || isHeroScene ? null : '/api/console/check',
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 60000 }
   );
@@ -171,7 +179,7 @@ export default function SidebarNav() {
   const isTransactionsActive = pathname === '/transactions' || pathname.startsWith('/transactions/');
 
   const handleNotificationsClick = (e: React.MouseEvent) => {
-    if (isGuest) {
+    if (isGuest && !isHeroScene) {
       requireAuth(
         e,
         'Live Market Notifications',
@@ -189,7 +197,7 @@ export default function SidebarNav() {
     <div className="nav-shell w-[45px] h-full flex flex-col items-center py-2.5 border-l select-none">
       {/* Brand Logo */}
       <Link
-        href={isConsole ? '/console/overview' : isGuest ? '/markets' : '/home'}
+        href={isConsole ? '/console/users' : isGuest ? '/markets' : '/home'}
         className="mb-3 w-8 h-8 relative flex-shrink-0 group transition-opacity hover:opacity-80 flex items-center justify-center"
         title={isConsole ? 'Ticknal Console' : 'Ticknal Home'}
       >
@@ -200,15 +208,9 @@ export default function SidebarNav() {
         {isConsole ? (
           <>
             <SidebarNavItem
-              href="/console/overview"
-              title="Overview"
-              isActive={pathname === '/console' || pathname === '/console/overview'}
-              icon={LayoutDashboard}
-            />
-            <SidebarNavItem
               href="/console/users"
               title="Users"
-              isActive={pathname === '/console/users'}
+              isActive={pathname === '/console' || pathname === '/console/users'}
               icon={Users}
             />
             <SidebarNavItem
@@ -246,13 +248,13 @@ export default function SidebarNav() {
               icon={LineChart}
             />
             <SidebarNavItem
-              href="/markets"
+              href={isHeroScene ? '/markets?heroScene=landing' : '/markets'}
               title={t('nav.markets')}
               isActive={isMarketsActive}
               icon={LayoutGrid}
             />
             <SidebarNavItem
-              href="/news"
+              href={isHeroScene ? '/news?heroScene=landing' : '/news'}
               title={t('nav.news')}
               isActive={isNewsActive}
               icon={Radio}
@@ -285,7 +287,7 @@ export default function SidebarNav() {
             />
             {isAdmin && (
               <SidebarNavItem
-                href="/console/overview"
+                href="/console/users"
                 title="Admin Console"
                 isActive={false}
                 icon={Shield}
@@ -314,6 +316,7 @@ export default function SidebarNav() {
           onClick={handleNotificationsClick}
           count={notificationCount}
           title={t('nav.notifications')}
+          isHeroScene={isHeroScene}
         />
 
         {/* Display Language Shortcut (above Settings) */}
@@ -351,6 +354,7 @@ export default function SidebarNav() {
       <NotificationsDrawer
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
+        sceneNotifications={isHeroScene ? HERO_SCENE_NOTIFICATIONS : undefined}
       />
     </div>
   );

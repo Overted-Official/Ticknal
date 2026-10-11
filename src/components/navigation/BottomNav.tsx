@@ -16,7 +16,6 @@ import {
   MoreHorizontal,
   Settings,
   Radio,
-  LayoutDashboard,
   Users,
   CreditCard,
   Terminal,
@@ -30,6 +29,8 @@ import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import { useTranslation } from '@/lib/i18n';
 import { controlHover, controlTap } from '@/lib/motion';
 import { useGuestGuard } from '@/context/GuestGuardContext';
+import { HERO_SCENE_NOTIFICATIONS } from '@/components/landing/hero-scenes/hero-scene-notifications';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -140,6 +141,7 @@ function BottomNavItem({
   return (
     <Link
       href={item.href}
+      data-hero-action={item.id === 'markets' || item.id === 'news' ? item.id : undefined}
       prefetch={!item.isProtected && item.id !== 'more'}
       onClick={handleClick}
       onMouseEnter={() => {
@@ -194,6 +196,7 @@ function BottomNavItem({
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const isHeroScene = useHeroSceneMode(pathname);
   const router = useRouter();
   const { t, isRTL } = useTranslation();
   const { isGuest, isLoading, requireAuth } = useGuestGuard();
@@ -206,22 +209,15 @@ export default function BottomNav() {
     if (isConsole) {
       const consoleItems: NavItemConfig[] = [
         {
-          id: 'overview',
-          label: 'Overview',
-          href: '/console/overview',
-          icon: LayoutDashboard,
-          isActive: (p) => p === '/console' || p === '/console/overview',
-        },
-        {
           id: 'users',
           label: 'Users',
           href: '/console/users',
           icon: Users,
-          isActive: (p) => p === '/console/users',
+          isActive: (p) => p === '/console' || p === '/console/users',
         },
         {
           id: 'subscriptions',
-          label: 'Billing',
+          label: 'Subscriptions',
           href: '/console/subscriptions',
           icon: CreditCard,
           isActive: (p) => p === '/console/subscriptions',
@@ -233,6 +229,13 @@ export default function BottomNav() {
           icon: Terminal,
           isActive: (p) =>
             p.startsWith('/console/operations') || p === '/console/signals' || p === '/console/logs',
+        },
+        {
+          id: 'home',
+          label: 'Platform',
+          href: '/home',
+          icon: Home,
+          isActive: (p) => p === '/home',
         },
         {
           id: 'more',
@@ -264,14 +267,14 @@ export default function BottomNav() {
       {
         id: 'markets',
         label: t('nav.markets'),
-        href: '/markets',
+        href: isHeroScene ? '/markets?heroScene=landing' : '/markets',
         icon: LayoutGrid,
         isActive: (p) => p === '/markets' || p.startsWith('/markets/') || p === '/sectors' || p.startsWith('/sectors/'),
       },
       {
         id: 'news',
         label: t('nav.news'),
-        href: '/news',
+        href: isHeroScene ? '/news?heroScene=landing' : '/news',
         icon: Radio,
         isActive: (p) => p === '/news' || p.startsWith('/news/'),
       },
@@ -292,11 +295,11 @@ export default function BottomNav() {
       },
     ];
     return isRTL ? [...items].reverse() : items;
-  }, [t, isRTL, isConsole, isMoreDrawerOpen]);
+  }, [t, isRTL, isConsole, isMoreDrawerOpen, isHeroScene]);
   const { isNavVisible, setIsNavVisible } = useMobileNavScroll();
   const isChartRoute = pathname === '/charts' || pathname.startsWith('/charts/');
   // The chart workspace has no reliable vertical page scroll to restore hidden navigation.
-  const isBottomNavVisible = isChartRoute || isNavVisible;
+  const isBottomNavVisible = isHeroScene || isChartRoute || isNavVisible;
 
   useEffect(() => {
     if (isChartRoute) {
@@ -308,20 +311,20 @@ export default function BottomNav() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
-  const { data: notifData } = useSWR<{ notifications: unknown[] }>(isGuest || isLoading ? null : '/api/notifications', fetcher, {
+  const { data: notifData } = useSWR<{ notifications: unknown[] }>(isGuest || isLoading || isHeroScene ? null : '/api/notifications', fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
     revalidateOnFocus: true,
     dedupingInterval: 30000,
     isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
 
-  const notificationCount = notifData?.notifications?.length ?? 0;
+  const notificationCount = isHeroScene ? HERO_SCENE_NOTIFICATIONS.length : notifData?.notifications?.length ?? 0;
 
   // Resolve active navigation tab based on the current URL
   const routeNavId = useMemo<NavItemId>(() => {
     if (isMoreDrawerOpen) return 'more';
     const matched = navItems.find((item) => item.isActive(pathname));
-    return matched ? matched.id : isConsole ? 'overview' : 'home';
+    return matched ? matched.id : isConsole ? 'users' : 'home';
   }, [pathname, navItems, isConsole, isMoreDrawerOpen]);
 
   // Reset optimistic tab override once the router matches the destination
@@ -343,7 +346,7 @@ export default function BottomNav() {
   return (
     <>
       {/* Mobile Floating Action Buttons (Positioned safely above the bottom tab bar - hidden on chart view to give full canvas to chart controls and price scale) */}
-      {!isChartRoute && (
+      {!isChartRoute && !isConsole && (
         <div
           className={`fixed ${
             isGuest
@@ -359,8 +362,10 @@ export default function BottomNav() {
           {/* 1. Alerts & Notifications Button (44x44) */}
           <motion.button
             type="button"
+            data-hero-action="alerts"
+            data-hero-scene-ready={isHeroScene ? 'true' : undefined}
             onClick={(e) => {
-              if (isGuest) {
+              if (isGuest && !isHeroScene) {
                 requireAuth(e, 'Live Market Notifications', 'Unlock Live Market Alerts');
                 return;
               }
@@ -443,6 +448,7 @@ export default function BottomNav() {
       <NotificationsDrawer
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
+        sceneNotifications={isHeroScene ? HERO_SCENE_NOTIFICATIONS : undefined}
       />
 
       {/* Quick Add (Transaction / Position) Drawer */}

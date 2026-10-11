@@ -64,7 +64,7 @@ function getTierMeta(tier: string) {
       return {
         label: 'Elite',
         tag: 'Full Signals & Terminal',
-        price: '199 EGP / mo · 1,999 EGP / yr',
+        price: '95 EGP / mo · 950 EGP / yr',
       };
     case 'plus':
     case 'pro_monthly':
@@ -73,7 +73,7 @@ function getTierMeta(tier: string) {
       return {
         label: 'Plus',
         tag: 'Advanced Screener',
-        price: '99 EGP / mo · 999 EGP / yr',
+        price: '50 EGP / mo · 500 EGP / yr',
       };
     default:
       return {
@@ -108,6 +108,7 @@ function DrawerUserAvatar({ src, name }: { src: string | null; name: string }) {
       <img
         src={src}
         alt={name}
+        referrerPolicy="no-referrer"
         className="w-full h-full object-cover"
         onError={() => setHasError(true)}
       />
@@ -563,7 +564,7 @@ export default function ConsoleUserDetailDrawer({
                         )}
                       </div>
                       <div className="text-[11px] text-text-muted mt-1 tabular-nums">
-                        {selectedDuration === 'year' ? '999 EGP / yr' : '99 EGP / mo'}
+                        {selectedDuration === 'year' ? '500 EGP / yr' : '50 EGP / mo'}
                       </div>
                     </button>
 
@@ -585,7 +586,7 @@ export default function ConsoleUserDetailDrawer({
                         )}
                       </div>
                       <div className="text-[11px] text-text-muted mt-1 tabular-nums">
-                        {selectedDuration === 'year' ? '1,999 EGP / yr' : '199 EGP / mo'}
+                        {selectedDuration === 'year' ? '950 EGP / yr' : '95 EGP / mo'}
                       </div>
                     </button>
 

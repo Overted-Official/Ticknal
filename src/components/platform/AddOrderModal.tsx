@@ -89,6 +89,7 @@ export default function AddOrderModal({
   mode = 'live',
   brokerageAccounts = EMPTY_BROKERAGE_ACCOUNTS,
   entrySource = 'CHART',
+  previewOnly = false,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -97,6 +98,7 @@ export default function AddOrderModal({
   mode?: 'import' | 'live';
   brokerageAccounts?: BrokerageAccountOption[];
   entrySource?: 'CHART' | 'COMMAND_CENTER';
+  previewOnly?: boolean;
 }) {
   const { toast } = useToast();
   const { t, locale, isRTL } = useTranslation();
@@ -164,7 +166,7 @@ export default function AddOrderModal({
 
   // Fetch accounts if not passed via props and in live mode
   useEffect(() => {
-    if (isOpen && mode === 'live') {
+    if (isOpen && mode === 'live' && !previewOnly) {
       if (!brokerageAccounts || brokerageAccounts.length === 0) {
         setIsAccountsLoading(true);
         fetch('/api/banks/accounts')
@@ -178,7 +180,7 @@ export default function AddOrderModal({
           .finally(() => setIsAccountsLoading(false));
       }
     }
-  }, [isOpen, mode, brokerageAccounts]);
+  }, [isOpen, mode, brokerageAccounts, previewOnly]);
 
   const allAccounts = brokerageAccounts.length > 0 ? brokerageAccounts : fetchedAccounts;
 
@@ -217,7 +219,7 @@ export default function AddOrderModal({
       setIsSearchOpen(!sym);
       setSearchQuery('');
 
-      fetch('/api/tickers')
+      if (!previewOnly) fetch('/api/tickers')
         .then((r) => r.json())
         .then((data) => {
           if (Array.isArray(data)) {
@@ -241,7 +243,7 @@ export default function AddOrderModal({
         })
         .catch(console.error);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, previewOnly]);
 
   // Auto-select account when eligibleAccounts arrive asynchronously
   useEffect(() => {
@@ -281,7 +283,7 @@ export default function AddOrderModal({
 
   // Evaluate candidate models to extract winning algorithm historical risk/reward metrics
   useEffect(() => {
-    if (!cleanSymbol || !isOpen) return;
+    if (!cleanSymbol || !isOpen || previewOnly) return;
 
     let isCancelled = false;
     setWinningMetrics((prev) => ({ ...prev, isLoading: true }));
@@ -380,6 +382,7 @@ export default function AddOrderModal({
   };
 
   const handleAddOrder = async () => {
+    if (previewOnly) return;
     if (!newOrderForm.symbol || !newOrderForm.entryPrice) {
       toast.warning('Missing Fields', 'Please enter a ticker symbol and entry price.');
       return;
@@ -491,6 +494,7 @@ export default function AddOrderModal({
 
           {/* Drawer Sheet: slides from right on desktop (left in RTL), slides from bottom on phone */}
           <motion.div
+            data-landing-preview-order={previewOnly ? 'true' : undefined}
             key="add-order-drawer-sheet"
             initial={isMobile ? { y: '100%' } : { x: isRTL ? '-100%' : '100%' }}
             animate={isMobile ? { y: 0 } : { x: 0 }}
@@ -520,7 +524,7 @@ export default function AddOrderModal({
                   {locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
                 </h2>
                 <p className="text-xs text-white/50 font-normal mt-0.5 font-sans">
-                  {locale === 'ar'
+                  {previewOnly ? (locale === 'ar' ? 'عرض توضيحي — لن يتم تنفيذ أمر' : 'Illustrative preview — no order will be placed') : locale === 'ar'
                     ? selectedAccount && isVirtualAccount(selectedAccount)
                       ? 'صفقة تداول افتراضي مع تنبيهات خروج آلية'
                       : mode === 'live'
@@ -551,7 +555,7 @@ export default function AddOrderModal({
               {/* SECTION 1: RISK / REWARD OVERVIEW                         */}
               {/* Derived from Winning Algo Historical Backtest Data        */}
               {/* ========================================================= */}
-              <div className="space-y-3">
+              {!previewOnly && <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-semibold text-white uppercase tracking-wider font-sans flex items-center gap-1.5">
@@ -679,7 +683,7 @@ export default function AddOrderModal({
                     </span>
                   </div>
                 </div>
-              </div>
+              </div>}
 
               {/* ========================================================= */}
               {/* SECTION 2: ORDER EXECUTION                                */}
@@ -896,6 +900,12 @@ export default function AddOrderModal({
                             </div>
                           )}
                         </>
+                      ) : previewOnly ? (
+                        <div data-landing-broker-handoff="true" className="border border-white/10 bg-black px-3 py-2 text-xs text-white/65 font-sans leading-relaxed">
+                          {locale === 'ar'
+                            ? 'بعد مراجعة تفاصيل الصفقة، اختر وسيطك المرخّص ونفّذ الأمر بنفسك. أموالك تظل لدى وسيطك دائماً.'
+                            : 'Review the order, then choose your licensed broker to place it yourself. Your funds remain with your broker.'}
+                        </div>
                       ) : (
                         <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 px-3 py-2 text-xs text-rose-400 flex items-center gap-2 font-sans">
                           <AlertCircle size={14} className="shrink-0 text-rose-400" />
@@ -988,7 +998,7 @@ export default function AddOrderModal({
                 <button
                   type="button"
                   onClick={handleAddOrder}
-                  disabled={isSubmitting || !newOrderForm.symbol || !newOrderForm.entryPrice}
+                  disabled={previewOnly || isSubmitting || !newOrderForm.symbol || !newOrderForm.entryPrice}
                   className="btn-token btn-primary btn-compact"
                 >
                   {isSubmitting && <InlineSpinner className="h-3.5 w-3.5" label="Processing order" />}

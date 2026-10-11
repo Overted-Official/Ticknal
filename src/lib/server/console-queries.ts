@@ -17,20 +17,25 @@ import {
   userTelemetryEvents,
 } from '@/db/schema';
 import { ensureBaselineTelemetrySeeded } from '@/lib/server/telemetry-seed';
+import {
+  getSubscriptionPlans,
+  type PlanLimits,
+  type PlanFeatures,
+} from '@/lib/server/plans-service';
 
-// Standard tier pricing constants in EGP
+// Standard tier pricing constants in EGP (aligned with Landing Page)
 const TIER_PRICES_EGP: Record<string, number> = {
   free: 0,
-  plus: 99,
-  plus_monthly: 99,
-  plus_annual: 83.25, // 999 / 12
-  elite: 199,
-  elite_monthly: 199,
-  elite_annual: 166.58, // 1999 / 12
+  plus: 50,
+  plus_monthly: 50,
+  plus_annual: 41.67, // 500 / 12
+  elite: 95,
+  elite_monthly: 95,
+  elite_annual: 79.17, // 950 / 12
   vip: 0, // Exceptional friends & family (0 EGP)
   // Legacy aliases
-  pro_monthly: 99,
-  pro_annual: 83.25,
+  pro_monthly: 50,
+  pro_annual: 41.67,
 };
 
 export interface ConsoleOverviewStats {
@@ -192,36 +197,42 @@ export async function getConsoleOverviewStats(): Promise<ConsoleOverviewStats> {
     pro_monthly: 0,
     pro_annual: 0,
     elite: 0,
+    vip: 0,
   };
   const tierMrrMap: Record<string, number> = {
     free: 0,
     pro_monthly: 0,
     pro_annual: 0,
     elite: 0,
+    vip: 0,
   };
 
   for (const sub of allSubs) {
     const tier = sub.tier || 'free';
-    const isPaid = tier !== 'free';
+    const isPaid = tier !== 'free' && tier !== 'vip';
     const isActive = sub.status === 'active';
 
-    if (isActive && isPaid) {
-      activePaidCount++;
-      const price = TIER_PRICES_EGP[tier] ?? 299;
-      mrr += price;
-      tierCounts[tier] = (tierCounts[tier] || 0) + 1;
-      tierMrrMap[tier] = (tierMrrMap[tier] || 0) + price;
+    if (isActive) {
+      if (isPaid) {
+        activePaidCount++;
+        const price = TIER_PRICES_EGP[tier] ?? 299;
+        mrr += price;
+        tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+        tierMrrMap[tier] = (tierMrrMap[tier] || 0) + price;
 
-      if (tier === 'pro_annual') {
-        annualSeatsCount++;
-      }
+        if (tier === 'pro_annual') {
+          annualSeatsCount++;
+        }
 
-      const periodEnd = new Date(sub.currentPeriodEnd);
-      if (periodEnd <= fourteenDaysFromNow) {
-        expiring14dCount++;
-      }
-      if (periodEnd <= thirtyDaysFromNow) {
-        expiring30dCount++;
+        const periodEnd = new Date(sub.currentPeriodEnd);
+        if (periodEnd <= fourteenDaysFromNow) {
+          expiring14dCount++;
+        }
+        if (periodEnd <= thirtyDaysFromNow) {
+          expiring30dCount++;
+        }
+      } else if (tier === 'vip') {
+        tierCounts.vip = (tierCounts.vip || 0) + 1;
       }
     }
 
@@ -234,7 +245,7 @@ export async function getConsoleOverviewStats(): Promise<ConsoleOverviewStats> {
     }
   }
 
-  const freeCount = Math.max(0, totalUsers - activePaidCount);
+  const freeCount = Math.max(0, totalUsers - activePaidCount - (tierCounts.vip || 0));
   tierCounts.free = freeCount;
 
   const arr = mrr * 12;
@@ -256,38 +267,50 @@ export async function getConsoleOverviewStats(): Promise<ConsoleOverviewStats> {
     },
     {
       id: 'pro_monthly',
-      name: 'Pro Monthly',
+      name: 'Plus Monthly',
       count: tierCounts.pro_monthly || 0,
       percentage:
         totalUsers > 0
           ? Number((((tierCounts.pro_monthly || 0) / totalUsers) * 100).toFixed(1))
           : 0,
-      monthlyPrice: 299,
+      monthlyPrice: 50,
       mrrContribution: tierMrrMap.pro_monthly || 0,
       color: '#2962ff',
     },
     {
       id: 'pro_annual',
-      name: 'Pro Annual',
+      name: 'Plus Annual',
       count: tierCounts.pro_annual || 0,
       percentage:
         totalUsers > 0
           ? Number((((tierCounts.pro_annual || 0) / totalUsers) * 100).toFixed(1))
           : 0,
-      monthlyPrice: 249,
+      monthlyPrice: 42,
       mrrContribution: tierMrrMap.pro_annual || 0,
       color: '#089981',
     },
     {
       id: 'elite',
-      name: 'Elite VIP',
+      name: 'Elite Member',
       count: tierCounts.elite || 0,
       percentage:
         totalUsers > 0
           ? Number((((tierCounts.elite || 0) / totalUsers) * 100).toFixed(1))
           : 0,
-      monthlyPrice: 699,
+      monthlyPrice: 95,
       mrrContribution: tierMrrMap.elite || 0,
+      color: '#eab308',
+    },
+    {
+      id: 'vip',
+      name: 'VIP Member',
+      count: tierCounts.vip || 0,
+      percentage:
+        totalUsers > 0
+          ? Number((((tierCounts.vip || 0) / totalUsers) * 100).toFixed(1))
+          : 0,
+      monthlyPrice: 0,
+      mrrContribution: 0,
       color: '#9c27b0',
     },
   ];
@@ -577,7 +600,7 @@ export interface ConsoleUserRowItem {
   createdAt: string;
   updatedAt: string;
   lastActiveAt: string;
-  memberStatus: 'active' | 'inactive';
+  memberStatus: 'active' | 'inactive' | 'suspended';
   authProvider: string;
   openPositionsCount: number;
   openPositionsValue: number;
@@ -855,8 +878,14 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       const lastActiveTime = Math.max(createdTime, updatedTime);
       const lastActiveAt = new Date(lastActiveTime).toISOString();
       const daysSinceActive = (now.getTime() - lastActiveTime) / (1000 * 60 * 60 * 24);
-      const memberStatus: 'active' | 'inactive' =
-        daysSinceActive <= 30 || openPositionsCount > 0 || pushCount > 0 ? 'active' : 'inactive';
+      let memberStatus: 'active' | 'inactive' | 'suspended' = 'active';
+      if (s?.status === 'canceled' || s?.status === 'suspended') {
+        memberStatus = 'suspended';
+      } else if (daysSinceActive > 60 && openPositionsCount === 0 && pushCount === 0) {
+        memberStatus = 'inactive';
+      } else {
+        memberStatus = 'active';
+      }
 
       return {
         id: u.id,
@@ -902,7 +931,11 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         cohortBuckets[key] = { month: monthLabel, signups: 0, paidSeats: 0 };
       }
       cohortBuckets[key].signups++;
-      if (u.subscription.tier !== 'free' && u.subscription.status === 'active') {
+      if (
+        u.subscription.tier !== 'free' &&
+        u.subscription.tier !== 'vip' &&
+        u.subscription.status === 'active'
+      ) {
         cohortBuckets[key].paidSeats++;
       }
     }
@@ -1043,6 +1076,7 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       geoDistribution: { countries: [] },
       channels: [],
       devices: { formFactors: [], operatingSystems: [], clientPlatforms: [] },
+      platformActivity: { daily: [], monthly: [], hourly: [] },
       activeUsersTrend: [],
     }));
 
@@ -1202,6 +1236,7 @@ export interface SubscriptionItemEnriched {
   positionsCount: number;
   alertsCount: number;
   pushDevicesCount: number;
+  createdAt?: string;
 }
 
 export interface ConsoleSubscriptionsPageData {
@@ -1218,18 +1253,31 @@ export interface ConsoleSubscriptionsPageData {
     expiring30dCount: number;
     churnRiskCount: number;
     totalLedgerRecords: number;
+    ytdProgression?: {
+      months: string[];
+      mrr: number[];
+      arr: number[];
+      activePaidSeats: number[];
+      arpuPaid: number[];
+      annualSeats: number[];
+    };
   };
   tierSummary: {
     tier: string;
     name: string;
+    description?: string | null;
     monthlyPriceEgp: number;
     annualPriceEgp: number;
+    annualDiscountPct?: number;
+    badge?: string | null;
     activeSeats: number;
     mrrContribution: number;
     revenueSharePct: number;
     color: string;
     badgeColor: 'blue' | 'emerald' | 'purple' | 'zinc';
     features: string[];
+    limits?: PlanLimits;
+    planFeatures?: PlanFeatures;
   }[];
   renewalPipeline: {
     expiring7d: SubscriptionItemEnriched[];
@@ -1256,6 +1304,7 @@ export async function getConsoleSubscriptionsPageData(): Promise<ConsoleSubscrip
         currentPeriodEnd: userSubscriptions.currentPeriodEnd,
         cancelAtPeriodEnd: userSubscriptions.cancelAtPeriodEnd,
         provider: userSubscriptions.provider,
+        createdAt: userSubscriptions.createdAt,
         userEmail: profiles.email,
         userName: profiles.fullName,
         avatarUrl: profiles.avatarUrl,
@@ -1349,6 +1398,9 @@ export async function getConsoleSubscriptionsPageData(): Promise<ConsoleSubscrip
       const billingCycle: SubscriptionItemEnriched['billingCycle'] =
         tierClean === 'pro_annual' ? 'annual' : tierClean === 'free' ? 'free' : 'monthly';
 
+      const rawProv = (r.provider || 'card').toLowerCase();
+      const providerClean = rawProv.includes('stripe') ? 'card' : rawProv;
+
       return {
         id: r.id,
         userId: r.userId,
@@ -1361,25 +1413,61 @@ export async function getConsoleSubscriptionsPageData(): Promise<ConsoleSubscrip
         currentPeriodStart: periodStart.toISOString(),
         currentPeriodEnd: periodEnd.toISOString(),
         cancelAtPeriodEnd: Boolean(r.cancelAtPeriodEnd),
-        provider: r.provider || 'manual',
+        provider: providerClean,
         priceEgp,
         billingCycle,
         daysRemaining,
         positionsCount: posMap.get(r.userId) || 0,
         alertsCount: alertMap.get(r.userId) || 0,
         pushDevicesCount: pushMap.get(r.userId) || 0,
+        createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : periodStart.toISOString(),
       };
     });
 
+    // Ensure all registered profiles appear in ledger (unmonetized as free members)
+    try {
+      const allProfilesList = await db.select().from(profiles).orderBy(desc(profiles.createdAt));
+      const assignedUserIds = new Set(subscriptions.map((s) => s.userId));
+      for (const p of allProfilesList) {
+        if (!assignedUserIds.has(p.id)) {
+          subscriptions.push({
+            id: -1,
+            userId: p.id,
+            email: p.email,
+            fullName: p.fullName || (p.email ? p.email.split('@')[0] : 'Member'),
+            avatarUrl: p.avatarUrl,
+            role: p.role || 'user',
+            tier: 'free',
+            status: 'active',
+            currentPeriodStart: p.createdAt ? new Date(p.createdAt).toISOString() : now.toISOString(),
+            currentPeriodEnd: p.createdAt ? new Date(p.createdAt).toISOString() : now.toISOString(),
+            cancelAtPeriodEnd: false,
+            provider: 'direct',
+            priceEgp: 0,
+            billingCycle: 'free',
+            daysRemaining: 0,
+            positionsCount: posMap.get(p.id) || 0,
+            alertsCount: alertMap.get(p.id) || 0,
+            pushDevicesCount: pushMap.get(p.id) || 0,
+            createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : now.toISOString(),
+          });
+        }
+      }
+    } catch (e) {
+      console.error('[getConsoleSubscriptionsPageData] Failed unassigned profiles merge:', e);
+    }
+
     // 5. Aggregate KPIs
     const activePaidSubs = subscriptions.filter(
-      (s) => s.status.toLowerCase() === 'active' && s.tier !== 'free'
+      (s) => s.status.toLowerCase() === 'active' && s.tier !== 'free' && s.tier !== 'vip'
     );
     const mrr = activePaidSubs.reduce((sum, s) => sum + s.priceEgp, 0);
     const arr = mrr * 12;
     const activePaidSeats = activePaidSubs.length;
     const arpuPaid = activePaidSeats > 0 ? Math.round(mrr / activePaidSeats) : 0;
-    const annualSeats = activePaidSubs.filter((s) => s.tier === 'pro_annual').length;
+    const annualSeats = activePaidSubs.filter(
+      (s) => s.billingCycle === 'annual' || s.tier.includes('annual')
+    ).length;
     const annualMixPct =
       activePaidSeats > 0 ? Number(((annualSeats / activePaidSeats) * 100).toFixed(1)) : 0;
     const totalFreeMembers = Math.max(0, totalProfilesCount - activePaidSeats);
@@ -1393,96 +1481,116 @@ export async function getConsoleSubscriptionsPageData(): Promise<ConsoleSubscrip
       (s) => s.cancelAtPeriodEnd || s.daysRemaining <= 7
     );
 
-    // 7. Tier summary breakdown
-    const tierCounts: Record<string, { seats: number; mrr: number }> = {
-      free: { seats: totalFreeMembers, mrr: 0 },
-      pro_monthly: { seats: 0, mrr: 0 },
-      pro_annual: { seats: 0, mrr: 0 },
+    // 7. Dynamic Centralized Tier Summary Breakdown
+    const plans = await getSubscriptionPlans();
+
+    const planCounts: Record<string, { seats: number; mrr: number }> = {
+      free: { seats: 0, mrr: 0 },
+      plus: { seats: 0, mrr: 0 },
       elite: { seats: 0, mrr: 0 },
+      vip: { seats: 0, mrr: 0 },
     };
 
-    activePaidSubs.forEach((s) => {
-      if (tierCounts[s.tier]) {
-        tierCounts[s.tier].seats += 1;
-        tierCounts[s.tier].mrr += s.priceEgp;
+    subscriptions.forEach((s) => {
+      if (s.status.toLowerCase() !== 'active') return;
+      let t = (s.tier || 'free').toLowerCase();
+      if (t === 'pro_monthly' || t === 'pro_annual' || t === 'pro') t = 'plus';
+      if (!planCounts[t]) planCounts[t] = { seats: 0, mrr: 0 };
+      planCounts[t].seats += 1;
+      if (t !== 'free' && t !== 'vip') {
+        planCounts[t].mrr += s.priceEgp;
       }
     });
 
-    const tierSummary: ConsoleSubscriptionsPageData['tierSummary'] = [
-      {
-        tier: 'free',
-        name: 'Free Standard',
-        monthlyPriceEgp: 0,
-        annualPriceEgp: 0,
-        activeSeats: tierCounts.free.seats,
-        mrrContribution: 0,
-        revenueSharePct: 0,
-        color: '#787b86',
-        badgeColor: 'zinc',
-        features: [
-          'Delayed alpha signals (15m delay)',
-          '1 Custom Watchlist & Holdings tracker',
-          'Public EGX market data and news feeds',
-          'Standard community market breadth',
-        ],
-      },
-      {
-        tier: 'pro_monthly',
-        name: 'Pro Monthly',
-        monthlyPriceEgp: 299,
-        annualPriceEgp: 3588,
-        activeSeats: tierCounts.pro_monthly.seats,
-        mrrContribution: tierCounts.pro_monthly.mrr,
-        revenueSharePct:
-          mrr > 0 ? Number(((tierCounts.pro_monthly.mrr / mrr) * 100).toFixed(1)) : 0,
-        color: '#2962ff',
-        badgeColor: 'blue',
-        features: [
-          'Real-time EGX algorithmic signals (PSI-30)',
-          'Unlimited watchlists & multi-factor screener',
-          'Instant web push & mobile Telegram alerting',
-          'Live market breadth & sentiment telemetry',
-        ],
-      },
-      {
-        tier: 'pro_annual',
-        name: 'Pro Annual',
-        monthlyPriceEgp: 249,
-        annualPriceEgp: 2990,
-        activeSeats: tierCounts.pro_annual.seats,
-        mrrContribution: tierCounts.pro_annual.mrr,
-        revenueSharePct:
-          mrr > 0 ? Number(((tierCounts.pro_annual.mrr / mrr) * 100).toFixed(1)) : 0,
-        color: '#089981',
-        badgeColor: 'emerald',
-        features: [
-          'All Pro Monthly entitlements included',
-          'Priority quantitative strategy backtesting',
-          'Exclusive VIP Telegram & analyst community',
-          'Historical alpha strategy data exports',
-          'Annual prepayment savings (17% discount)',
-        ],
-      },
-      {
-        tier: 'elite',
-        name: 'Elite VIP',
-        monthlyPriceEgp: 699,
-        annualPriceEgp: 8388,
-        activeSeats: tierCounts.elite.seats,
-        mrrContribution: tierCounts.elite.mrr,
-        revenueSharePct:
-          mrr > 0 ? Number(((tierCounts.elite.mrr / mrr) * 100).toFixed(1)) : 0,
-        color: '#9c27b0',
-        badgeColor: 'purple',
-        features: [
-          'Direct webhook API execution endpoints',
-          'Raw low-latency algorithmic signal feeds',
-          'Custom portfolio risk mandates & sizing',
-          '1-on-1 strategy optimization with quant team',
-          'Priority direct support & engineering SLA',
-        ],
-      },
-    ];
+    // Unassigned active profiles default to free
+    const assignedSeats = Object.values(planCounts).reduce((acc, c) => acc + c.seats, 0);
+    planCounts.free.seats += Math.max(0, totalProfilesCount - assignedSeats);
+
+    const tierSummary: ConsoleSubscriptionsPageData['tierSummary'] = plans.map((plan) => {
+      const counts = planCounts[plan.id] || { seats: 0, mrr: 0 };
+      const mrrContribution = counts.mrr;
+      const revenueSharePct = mrr > 0 ? Number(((mrrContribution / mrr) * 100).toFixed(1)) : 0;
+
+      const badgeColor: 'blue' | 'emerald' | 'purple' | 'zinc' =
+        plan.id === 'plus'
+          ? 'blue'
+          : plan.id === 'elite'
+          ? 'emerald'
+          : plan.id === 'vip'
+          ? 'purple'
+          : 'zinc';
+
+      // Build feature bullets from limits and flags
+      const featureList: string[] = [];
+      if (plan.limits.chartsPerTab) featureList.push(`${plan.limits.chartsPerTab} charts per layout`);
+      if (plan.limits.indicatorsPerChart) featureList.push(`${plan.limits.indicatorsPerChart} indicators per chart`);
+      if (plan.limits.historicalBars) featureList.push(`${(plan.limits.historicalBars / 1000).toFixed(0)}K historical bars`);
+      if (plan.limits.priceAlerts === -1) featureList.push('Unlimited price alerts');
+      else if (plan.limits.priceAlerts > 0) featureList.push(`${plan.limits.priceAlerts} price alerts`);
+      else featureList.push('0 price alerts');
+      if (plan.limits.pushAlerts === -1) featureList.push('Unlimited push & Telegram alerts');
+      else if (plan.limits.pushAlerts > 0) featureList.push(`${plan.limits.pushAlerts} push & Telegram alerts`);
+      if (plan.features.breakoutDetection === 'multi_timeframe') featureList.push('Multi-timeframe breakout engine');
+      else if (plan.features.breakoutDetection === 'intraday') featureList.push('Intraday breakout alerts');
+      if (plan.features.hydraIndicator) featureList.push('Hydra Adaptive Momentum');
+      if (plan.features.typhoonEngine) featureList.push('Typhoon Volume Engine');
+      if (plan.features.cerberusConfluence) featureList.push('Cerberus Confluence');
+
+      return {
+        tier: plan.id,
+        name: plan.name,
+        description: plan.description,
+        monthlyPriceEgp: plan.monthlyPriceEgp,
+        annualPriceEgp: plan.annualPriceEgp,
+        annualDiscountPct: plan.annualDiscountPct,
+        badge: plan.badge,
+        badgeColor,
+        activeSeats: counts.seats,
+        mrrContribution,
+        revenueSharePct,
+        color: plan.color,
+        features: featureList,
+        limits: plan.limits,
+        planFeatures: plan.features,
+      };
+    });
+
+    // 8. Calculate YTD Progression
+    const currentYear = now.getFullYear();
+    const currentMonthIdx = now.getMonth(); // 0 to 11
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const ytdMonths = monthNames.slice(0, currentMonthIdx + 1);
+
+    const ytdMrr: number[] = [];
+    const ytdArr: number[] = [];
+    const ytdActivePaidSeats: number[] = [];
+    const ytdArpuPaid: number[] = [];
+    const ytdAnnualSeats: number[] = [];
+
+    for (let m = 0; m <= currentMonthIdx; m++) {
+      const endOfMonth = new Date(currentYear, m + 1, 0, 23, 59, 59, 999);
+      const subsAsOfDate = subscriptions.filter((s) => {
+        const cDate = s.createdAt ? new Date(s.createdAt) : new Date(s.currentPeriodStart);
+        return cDate <= endOfMonth;
+      });
+
+      const paidSubsAsOf = subsAsOfDate.filter(
+        (s) => s.status.toLowerCase() === 'active' && s.tier !== 'free' && s.tier !== 'vip'
+      );
+      const mVal = paidSubsAsOf.reduce((sum, s) => sum + s.priceEgp, 0);
+      const aVal = mVal * 12;
+      const seatsVal = paidSubsAsOf.length;
+      const arpuVal = seatsVal > 0 ? Math.round(mVal / seatsVal) : 0;
+      const annualVal = paidSubsAsOf.filter(
+        (s) => s.billingCycle === 'annual' || s.tier.includes('annual')
+      ).length;
+
+      ytdMrr.push(mVal);
+      ytdArr.push(aVal);
+      ytdActivePaidSeats.push(seatsVal);
+      ytdArpuPaid.push(arpuVal);
+      ytdAnnualSeats.push(annualVal);
+    }
 
     return {
       subscriptions,
@@ -1498,6 +1606,14 @@ export async function getConsoleSubscriptionsPageData(): Promise<ConsoleSubscrip
         expiring30dCount: expiring30d.length,
         churnRiskCount: churnRisk.length,
         totalLedgerRecords: subscriptions.length,
+        ytdProgression: {
+          months: ytdMonths,
+          mrr: ytdMrr,
+          arr: ytdArr,
+          activePaidSeats: ytdActivePaidSeats,
+          arpuPaid: ytdArpuPaid,
+          annualSeats: ytdAnnualSeats,
+        },
       },
       tierSummary,
       renewalPipeline: {
@@ -1933,6 +2049,8 @@ export interface ConsoleAcquisitionStats {
     mobileSharePct: number;
   };
   geoDistribution: {
+    totalSessions?: number;
+    totalUniqueUsers?: number;
     countries: {
       code: string;
       name: string;
@@ -1943,9 +2061,12 @@ export interface ConsoleAcquisitionStats {
         name: string;
         region: string;
         count: number;
+        sessionCount: number;
+        userCount: number;
         lat: number;
         lng: number;
         adRadiusKm: number;
+        userProfiles?: { name: string; email: string; avatarUrl: string | null }[];
       }[];
     }[];
   };
@@ -1953,15 +2074,36 @@ export interface ConsoleAcquisitionStats {
     id: string;
     label: string;
     count: number;
+    uniqueUsers: number;
     percentage: number;
     paidConversions: number;
     conversionRate: number;
     color: string;
   }[];
   devices: {
-    formFactors: { name: string; count: number; percentage: number }[];
-    operatingSystems: { name: string; count: number; percentage: number }[];
-    clientPlatforms: { name: string; count: number; percentage: number }[];
+    formFactors: { name: string; count: number; userCount: number; percentage: number }[];
+    operatingSystems: { name: string; count: number; userCount: number; percentage: number }[];
+    clientPlatforms: { name: string; count: number; userCount: number; percentage: number }[];
+  };
+  platformActivity: {
+    daily: {
+      date: string;
+      label: string;
+      sessions: number;
+      users: number;
+    }[];
+    monthly: {
+      month: string;
+      label: string;
+      sessions: number;
+      users: number;
+    }[];
+    hourly: {
+      hour: number;
+      label: string;
+      sessions: number;
+      users: number;
+    }[];
   };
   activeUsersTrend: {
     date: string;
@@ -2012,26 +2154,30 @@ export async function getConsoleAcquisitionStats(
       .orderBy(asc(userTelemetryEvents.createdAt));
 
     // 3. Fetch paid user IDs for conversion calculations
-    const paidSubs = await db
-      .select({ userId: userSubscriptions.userId })
-      .from(userSubscriptions)
-      .where(
-        and(
-          eq(userSubscriptions.status, 'active'),
-          or(
-            eq(userSubscriptions.tier, 'plus'),
-            eq(userSubscriptions.tier, 'elite'),
-            eq(userSubscriptions.tier, 'pro_monthly'),
-            eq(userSubscriptions.tier, 'pro_annual'),
-            eq(userSubscriptions.tier, 'vip')
+    const [paidSubs, allProfiles] = await Promise.all([
+      db
+        .select({ userId: userSubscriptions.userId })
+        .from(userSubscriptions)
+        .where(
+          and(
+            eq(userSubscriptions.status, 'active'),
+            or(
+              eq(userSubscriptions.tier, 'plus'),
+              eq(userSubscriptions.tier, 'elite'),
+              eq(userSubscriptions.tier, 'pro_monthly'),
+              eq(userSubscriptions.tier, 'pro_annual')
+            )
           )
         )
-      );
+        .catch(() => []),
+      db.select().from(profiles).catch(() => []),
+    ]);
     const paidUserIds = new Set(paidSubs.map((s) => s.userId).filter(Boolean));
+    const profileMap = new Map(allProfiles.map((p) => [p.id, p]));
 
-    const totalSessions = events.length;
-    const uniqueUserIdentities = new Set<string>();
-    let mobileCount = 0;
+    const uniqueSessionIds = new Set<string>();
+    const verifiedUserIdentities = new Set<string>();
+    const mobileSessionIds = new Set<string>();
 
     // 4. Geolocation Aggregation
     const countryMap = new Map<
@@ -2039,7 +2185,7 @@ export async function getConsoleAcquisitionStats(
       {
         name: string;
         code: string;
-        count: number;
+        sessionIds: Set<string>;
         lat: number;
         lng: number;
         cities: Map<
@@ -2047,10 +2193,11 @@ export async function getConsoleAcquisitionStats(
           {
             name: string;
             region: string;
-            count: number;
+            sessionIds: Set<string>;
             lat: number;
             lng: number;
             adRadiusKm: number;
+            userProfiles: Map<string, { name: string; email: string; avatarUrl: string | null }>;
           }
         >;
       }
@@ -2059,47 +2206,80 @@ export async function getConsoleAcquisitionStats(
     // 5. Channel Aggregation
     const channelMap = new Map<
       string,
-      { count: number; paidUsers: Set<string> }
+      { sessionIds: Set<string>; uniqueUsers: Set<string>; paidUsers: Set<string> }
     >();
 
     // 6. Device Demographics Aggregation
-    const formFactorMap = new Map<string, number>();
-    const osMap = new Map<string, number>();
-    const platformMap = new Map<string, number>();
+    const formFactorMap = new Map<string, { sessionIds: Set<string>; users: Set<string> }>();
+    const osMap = new Map<string, { sessionIds: Set<string>; users: Set<string> }>();
+    const platformMap = new Map<string, { sessionIds: Set<string>; users: Set<string> }>();
 
-    // 7. Active Users Trend (By Day)
+    // 7. Activity Trends (Daily, Monthly, Hourly)
     const dailyMap = new Map<
       string,
-      { sessions: number; activeUsers: Set<string> }
+      { sessionIds: Set<string>; activeUsers: Set<string> }
     >();
+    const monthlyMap = new Map<
+      string,
+      { sessionIds: Set<string>; activeUsers: Set<string> }
+    >();
+    const hourlyMap = new Map<
+      number,
+      { sessionIds: Set<string>; activeUsers: Set<string> }
+    >();
+    for (let h = 0; h < 24; h++) {
+      hourlyMap.set(h, { sessionIds: new Set(), activeUsers: new Set() });
+    }
 
     for (const evt of events) {
-      const identityKey = evt.userId || evt.sessionId;
-      uniqueUserIdentities.add(identityKey);
+      uniqueSessionIds.add(evt.sessionId);
+      if (evt.userId) {
+        verifiedUserIdentities.add(evt.userId);
+      }
 
-      if (evt.deviceType === 'mobile') mobileCount++;
+      if (evt.deviceType === 'mobile') {
+        mobileSessionIds.add(evt.sessionId);
+      }
 
       // Form Factor
       const ff = evt.deviceType || 'desktop';
-      formFactorMap.set(ff, (formFactorMap.get(ff) || 0) + 1);
+      if (!formFactorMap.has(ff)) {
+        formFactorMap.set(ff, { sessionIds: new Set(), users: new Set() });
+      }
+      const ffData = formFactorMap.get(ff)!;
+      ffData.sessionIds.add(evt.sessionId);
+      if (evt.userId) ffData.users.add(evt.userId);
 
       // OS
       const os = evt.os || 'Other';
-      osMap.set(os, (osMap.get(os) || 0) + 1);
+      if (!osMap.has(os)) {
+        osMap.set(os, { sessionIds: new Set(), users: new Set() });
+      }
+      const osData = osMap.get(os)!;
+      osData.sessionIds.add(evt.sessionId);
+      if (evt.userId) osData.users.add(evt.userId);
 
       // Client Platform
       const plat = evt.isPwaOrNative ? 'PWA / Native App' : 'Web Browser';
-      platformMap.set(plat, (platformMap.get(plat) || 0) + 1);
+      if (!platformMap.has(plat)) {
+        platformMap.set(plat, { sessionIds: new Set(), users: new Set() });
+      }
+      const platData = platformMap.get(plat)!;
+      platData.sessionIds.add(evt.sessionId);
+      if (evt.userId) platData.users.add(evt.userId);
 
       // Channel
       const ch = evt.channel || 'direct';
       if (!channelMap.has(ch)) {
-        channelMap.set(ch, { count: 0, paidUsers: new Set() });
+        channelMap.set(ch, { sessionIds: new Set(), uniqueUsers: new Set(), paidUsers: new Set() });
       }
       const chData = channelMap.get(ch)!;
-      chData.count++;
-      if (evt.userId && paidUserIds.has(evt.userId)) {
-        chData.paidUsers.add(evt.userId);
+      chData.sessionIds.add(evt.sessionId);
+      if (evt.userId) {
+        chData.uniqueUsers.add(evt.userId);
+        if (paidUserIds.has(evt.userId)) {
+          chData.paidUsers.add(evt.userId);
+        }
       }
 
       // Geo
@@ -2109,76 +2289,141 @@ export async function getConsoleAcquisitionStats(
         countryMap.set(cCode, {
           code: cCode,
           name: cName,
-          count: 0,
+          sessionIds: new Set(),
           lat: parseFloat(evt.latitude || '30.044420') || 30.044420,
           lng: parseFloat(evt.longitude || '31.235712') || 31.235712,
           cities: new Map(),
         });
       }
       const cGroup = countryMap.get(cCode)!;
-      cGroup.count++;
+      cGroup.sessionIds.add(evt.sessionId);
 
       const cityName = evt.city || 'Cairo';
       const regionName = evt.regionOrGovernorate || 'Cairo Governorate';
       if (!cGroup.cities.has(cityName)) {
         // Suggested ad radius based on Egyptian urban density vs regional cities
         const radius =
-          cityName.includes('Cairo') || cityName.includes('Giza')
+          cityName.includes('Cairo') || cityName.includes('Giza') || cityName.includes('Maadi') || cityName.includes('Zayed')
             ? 25
             : cityName.includes('Alexandria')
             ? 15
-            : cityName.includes('Dubai') || cityName.includes('Riyadh')
-            ? 30
             : 10;
 
         cGroup.cities.set(cityName, {
           name: cityName,
           region: regionName,
-          count: 0,
+          sessionIds: new Set(),
           lat: parseFloat(evt.latitude || '30.044420') || 30.044420,
           lng: parseFloat(evt.longitude || '31.235712') || 31.235712,
           adRadiusKm: radius,
+          userProfiles: new Map(),
         });
       }
-      cGroup.cities.get(cityName)!.count++;
+      const cityObj = cGroup.cities.get(cityName)!;
+      cityObj.sessionIds.add(evt.sessionId);
+      if (evt.userId && profileMap.has(evt.userId)) {
+        const p = profileMap.get(evt.userId)!;
+        cityObj.userProfiles.set(p.id, {
+          name: p.fullName || p.email || 'User',
+          email: p.email || '',
+          avatarUrl: p.avatarUrl || null,
+        });
+      }
 
-      // Daily Trend
+      // Activity Trends (Daily, Monthly, Hourly)
       if (evt.createdAt) {
-        const dayKey = evt.createdAt.toISOString().slice(0, 10);
+        const evtDate = new Date(evt.createdAt);
+
+        // Daily
+        const dayKey = evtDate.toISOString().slice(0, 10);
         if (!dailyMap.has(dayKey)) {
-          dailyMap.set(dayKey, { sessions: 0, activeUsers: new Set() });
+          dailyMap.set(dayKey, { sessionIds: new Set(), activeUsers: new Set() });
         }
         const dData = dailyMap.get(dayKey)!;
-        dData.sessions++;
-        dData.activeUsers.add(identityKey);
+        dData.sessionIds.add(evt.sessionId);
+        if (evt.userId) {
+          dData.activeUsers.add(evt.userId);
+        }
+
+        // Monthly
+        const monthKey = evtDate.toISOString().slice(0, 7);
+        if (!monthlyMap.has(monthKey)) {
+          monthlyMap.set(monthKey, { sessionIds: new Set(), activeUsers: new Set() });
+        }
+        const mData = monthlyMap.get(monthKey)!;
+        mData.sessionIds.add(evt.sessionId);
+        if (evt.userId) {
+          mData.activeUsers.add(evt.userId);
+        }
+
+        // Hourly (Cairo timezone)
+        try {
+          const cairoHour = parseInt(
+            new Intl.DateTimeFormat('en-US', {
+              timeZone: 'Africa/Cairo',
+              hour: 'numeric',
+              hourCycle: 'h23',
+            }).format(evtDate),
+            10
+          );
+          if (!isNaN(cairoHour) && hourlyMap.has(cairoHour)) {
+            const hData = hourlyMap.get(cairoHour)!;
+            hData.sessionIds.add(evt.sessionId);
+            if (evt.userId) {
+              hData.activeUsers.add(evt.userId);
+            }
+          }
+        } catch {
+          const fallbackHour = evtDate.getUTCHours();
+          if (hourlyMap.has(fallbackHour)) {
+            const hData = hourlyMap.get(fallbackHour)!;
+            hData.sessionIds.add(evt.sessionId);
+            if (evt.userId) {
+              hData.activeUsers.add(evt.userId);
+            }
+          }
+        }
       }
     }
+
+    const totalSessions = uniqueSessionIds.size;
+    const safeTotal = totalSessions || 1;
+    const uniqueUsersCount = verifiedUserIdentities.size || (totalSessions > 0 ? 1 : 0);
 
     // Top Channel calculation
     let topChannelName = 'Direct Access';
     let topChannelCount = 0;
     channelMap.forEach((val, key) => {
-      if (val.count > topChannelCount) {
-        topChannelCount = val.count;
+      const sCount = val.sessionIds.size;
+      if (sCount > topChannelCount) {
+        topChannelCount = sCount;
         topChannelName = key;
       }
     });
 
-    // Top Governorate calculation
+    // Top Governorate calculation (by distinct verified users)
     let topGovName = 'Cairo Governorate';
     let topGovCount = 0;
     const egGroup = countryMap.get('EG');
     if (egGroup) {
+      const govUsersMap = new Map<string, Set<string>>();
       egGroup.cities.forEach((city) => {
-        if (city.count > topGovCount) {
-          topGovCount = city.count;
-          topGovName = city.region || city.name;
+        const gov = city.region || city.name;
+        if (!govUsersMap.has(gov)) govUsersMap.set(gov, new Set());
+        city.userProfiles.forEach((_, userId) => {
+          govUsersMap.get(gov)!.add(userId);
+        });
+      });
+      govUsersMap.forEach((users, gov) => {
+        if (users.size > topGovCount) {
+          topGovCount = users.size;
+          topGovName = gov;
         }
       });
+      if (topGovCount === 0) {
+        topGovCount = egGroup.cities.size > 0 ? 1 : 0;
+      }
     }
-
-    const uniqueUsersCount = uniqueUserIdentities.size || 1;
-    const safeTotal = totalSessions || 1;
 
     // Format Channels
     const CHANNEL_LABELS: Record<string, { label: string; color: string }> = {
@@ -2199,13 +2444,16 @@ export async function getConsoleAcquisitionStats(
           label: id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
           color: '#94a3b8',
         };
-        const percentage = Math.round((data.count / safeTotal) * 100);
+        const sCount = data.sessionIds.size;
+        const percentage = Math.round((sCount / safeTotal) * 100);
         const paidCount = data.paidUsers.size;
-        const conversionRate = data.count > 0 ? parseFloat(((paidCount / data.count) * 100).toFixed(1)) : 0;
+        const uniqueCount = data.uniqueUsers.size || (sCount > 0 ? 1 : 0);
+        const conversionRate = uniqueCount > 0 ? parseFloat(((paidCount / uniqueCount) * 100).toFixed(1)) : 0;
         return {
           id,
           label: meta.label,
-          count: data.count,
+          count: sCount,
+          uniqueUsers: uniqueCount,
           percentage,
           paidConversions: paidCount,
           conversionRate,
@@ -2219,40 +2467,61 @@ export async function getConsoleAcquisitionStats(
       .map((c) => ({
         code: c.code,
         name: c.name,
-        count: c.count,
+        count: c.sessionIds.size,
         lat: c.lat,
         lng: c.lng,
-        cities: Array.from(c.cities.values()).sort((a, b) => b.count - a.count),
+        cities: Array.from(c.cities.values())
+          .map((city) => {
+            const userProfilesArr = Array.from(city.userProfiles.values());
+            const userCount = userProfilesArr.length || (city.sessionIds.size > 0 ? 1 : 0);
+            return {
+              name: city.name,
+              region: city.region,
+              count: city.sessionIds.size,
+              sessionCount: city.sessionIds.size,
+              userCount,
+              lat: city.lat,
+              lng: city.lng,
+              adRadiusKm: city.adRadiusKm,
+              userProfiles: userProfilesArr,
+            };
+          })
+          .sort((a, b) => b.userCount - a.userCount || b.count - a.count),
       }))
       .sort((a, b) => b.count - a.count);
 
     // Format Devices
     const formFactors = Array.from(formFactorMap.entries())
-      .map(([name, count]) => ({
+      .map(([name, data]) => ({
         name: name.charAt(0).toUpperCase() + name.slice(1),
-        count,
-        percentage: Math.round((count / safeTotal) * 100),
+        count: data.sessionIds.size,
+        userCount: data.users.size,
+        percentage: Math.round((data.sessionIds.size / safeTotal) * 100),
       }))
       .sort((a, b) => b.count - a.count);
 
+    const mobileCount = formFactorMap.get('mobile')?.sessionIds.size || 0;
+
     const operatingSystems = Array.from(osMap.entries())
-      .map(([name, count]) => ({
+      .map(([name, data]) => ({
         name,
-        count,
-        percentage: Math.round((count / safeTotal) * 100),
+        count: data.sessionIds.size,
+        userCount: data.users.size,
+        percentage: Math.round((data.sessionIds.size / safeTotal) * 100),
       }))
       .sort((a, b) => b.count - a.count);
 
     const clientPlatforms = Array.from(platformMap.entries())
-      .map(([name, count]) => ({
+      .map(([name, data]) => ({
         name,
-        count,
-        percentage: Math.round((count / safeTotal) * 100),
+        count: data.sessionIds.size,
+        userCount: data.users.size,
+        percentage: Math.round((data.sessionIds.size / safeTotal) * 100),
       }))
       .sort((a, b) => b.count - a.count);
 
     // Format Daily Trend
-    const activeUsersTrend = Array.from(dailyMap.entries())
+    const dailyActivity = Array.from(dailyMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, data]) => {
         const d = new Date(date);
@@ -2260,10 +2529,47 @@ export async function getConsoleAcquisitionStats(
         return {
           date,
           label,
-          activeUsers: data.activeUsers.size,
-          sessions: data.sessions,
+          sessions: data.sessionIds.size,
+          users: data.activeUsers.size,
         };
       });
+
+    // Format Monthly Trend
+    const monthlyActivity = Array.from(monthlyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, data]) => {
+        const [y, m] = month.split('-').map(Number);
+        const d = new Date(Date.UTC(y, m - 1, 1));
+        const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+        return {
+          month,
+          label,
+          sessions: data.sessionIds.size,
+          users: data.activeUsers.size,
+        };
+      });
+
+    // Format Hourly Trend (0-23)
+    const hourlyActivity = Array.from(hourlyMap.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([hour, data]) => {
+        const h12 =
+          hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+        return {
+          hour,
+          label: h12,
+          sessions: data.sessionIds.size,
+          users: data.activeUsers.size,
+        };
+      });
+
+    // Legacy activeUsersTrend adapter
+    const activeUsersTrend = dailyActivity.map((d) => ({
+      date: d.date,
+      label: d.label,
+      activeUsers: d.users,
+      sessions: d.sessions,
+    }));
 
     return {
       microKpis: {
@@ -2282,6 +2588,8 @@ export async function getConsoleAcquisitionStats(
         mobileSharePct: Math.round((mobileCount / safeTotal) * 100),
       },
       geoDistribution: {
+        totalSessions,
+        totalUniqueUsers: uniqueUsersCount,
         countries,
       },
       channels,
@@ -2289,6 +2597,11 @@ export async function getConsoleAcquisitionStats(
         formFactors,
         operatingSystems,
         clientPlatforms,
+      },
+      platformActivity: {
+        daily: dailyActivity,
+        monthly: monthlyActivity,
+        hourly: hourlyActivity,
       },
       activeUsersTrend,
     };
@@ -2305,6 +2618,7 @@ export async function getConsoleAcquisitionStats(
       geoDistribution: { countries: [] },
       channels: [],
       devices: { formFactors: [], operatingSystems: [], clientPlatforms: [] },
+      platformActivity: { daily: [], monthly: [], hourly: [] },
       activeUsersTrend: [],
     };
   }

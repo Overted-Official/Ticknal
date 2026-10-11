@@ -66,7 +66,7 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
 
   // Fetch full profile data via SWR
   const { data: profileData, isLoading: isProfileLoading } = useSWR<any>(
-    '/api/profile',
+    isOpen && !isGuest && !isGuestLoading ? '/api/profile' : null,
     fetcher,
     { revalidateOnFocus: true, dedupingInterval: 30000, shouldRetryOnError: false }
   );
@@ -134,7 +134,7 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
               id: 'console',
               title: locale === 'ar' ? 'لوحة الإدارة' : 'Admin Console',
               subtitle: locale === 'ar' ? 'إدارة المنصة ومتابعة النظام' : 'Platform operations & system health',
-              href: '/console/overview',
+              href: '/console/users',
               icon: Shield,
               isProtected: false,
               badge: 'Admin',

@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { useTranslation } from '@/lib/i18n';
-import { BarChart3, Calendar } from '@/components/ui/icon-library';
+import { Calendar } from '@/components/ui/icon-library';
 import type { ConsoleUserRowItem } from '@/lib/server/console-queries';
 
 export type TimeframeOption = '30D' | '90D' | '120D' | 'YTD' | 'Custom';
@@ -393,7 +393,7 @@ export default function UserTierBarChart({ users }: UserTierBarChartProps) {
       {
         id: 'plus',
         name: locale === 'ar' ? 'بلس' : 'Plus Member',
-        subtitle: '99 EGP/mo · 999/yr',
+        subtitle: '50 EGP/mo · 500/yr',
         count: p,
         percentage: (p / tot) * 100,
         color: TIER_COLORS.plus,
@@ -401,7 +401,7 @@ export default function UserTierBarChart({ users }: UserTierBarChartProps) {
       {
         id: 'elite',
         name: locale === 'ar' ? 'إيليت' : 'Elite Member',
-        subtitle: '199 EGP/mo · 1999/yr',
+        subtitle: '95 EGP/mo · 950/yr',
         count: e,
         percentage: (e / tot) * 100,
         color: TIER_COLORS.elite,
@@ -420,12 +420,11 @@ export default function UserTierBarChart({ users }: UserTierBarChartProps) {
   const TIMEFRAME_OPTIONS: TimeframeOption[] = ['30D', '90D', '120D', 'YTD', 'Custom'];
 
   return (
-    <div className="border border-white/10 rounded-xl p-4 sm:p-5 bg-transparent space-y-4 select-none">
+    <div className="bg-transparent space-y-4 select-none">
       {/* 1. Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-white/10 pb-3">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-blue-400 shrink-0" />
             <h3 className="text-sm font-semibold text-white tracking-tight">
               {locale === 'ar'
                 ? 'نمو المستخدمين حسب خطة الدفع'
@@ -444,8 +443,8 @@ export default function UserTierBarChart({ users }: UserTierBarChartProps) {
           </div>
           <p className="text-[11px] text-zinc-400">
             {locale === 'ar'
-              ? 'توزيع شهري لإجمالي الحسابات عبر باقات Free، Plus (99 EGP)، Elite (199 EGP)، و VIP (0 EGP)'
-              : 'Monthly breakdown across Free (0 EGP), Plus (99 EGP/mo), Elite (199 EGP/mo), and VIP (0 EGP)'}
+              ? 'توزيع شهري لإجمالي الحسابات عبر باقات Free، Plus (50 EGP)، Elite (95 EGP)، و VIP (0 EGP)'
+              : 'Monthly breakdown across Free (0 EGP), Plus (50 EGP/mo), Elite (95 EGP/mo), and VIP (0 EGP)'}
           </p>
         </div>
 
@@ -639,7 +638,7 @@ export default function UserTierBarChart({ users }: UserTierBarChartProps) {
                             className="w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: TIER_COLORS.plus }}
                           />
-                          <span>{locale === 'ar' ? 'بلس (99 EGP)' : 'Plus (99 EGP)'}</span>
+                          <span>{locale === 'ar' ? 'بلس (50 EGP)' : 'Plus (50 EGP)'}</span>
                         </div>
                         <span className="text-white font-medium">
                           {d.plus.toLocaleString()} (
@@ -653,7 +652,7 @@ export default function UserTierBarChart({ users }: UserTierBarChartProps) {
                             className="w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: TIER_COLORS.elite }}
                           />
-                          <span>{locale === 'ar' ? 'إيليت (199 EGP)' : 'Elite (199 EGP)'}</span>
+                          <span>{locale === 'ar' ? 'إيليت (95 EGP)' : 'Elite (95 EGP)'}</span>
                         </div>
                         <span className="text-white font-medium">
                           {d.elite.toLocaleString()} (
@@ -710,37 +709,38 @@ export default function UserTierBarChart({ users }: UserTierBarChartProps) {
         </ResponsiveContainer>
       </div>
 
-      {/* 4. Legend & Summary Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/10">
-        {tierSummaries.map((tier) => (
-          <div
-            key={tier.id}
-            className="flex flex-col gap-1 p-2.5 rounded-lg bg-black/40 border border-white/[0.06] hover:border-white/20 transition-colors cursor-default"
-          >
-            <div className="flex items-center justify-between gap-2 min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: tier.color }}
-                />
-                <span className="text-xs font-semibold text-white truncate">
+      {/* 4. Tier Summary Metric Cards — Minimalist, Sleek, No Dots */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-3 border-t border-white/[0.08]">
+        {tierSummaries.map((tier) => {
+          const pctFormatted =
+            tier.percentage % 1 === 0
+              ? tier.percentage.toFixed(0)
+              : tier.percentage.toFixed(1);
+
+          return (
+            <div
+              key={tier.id}
+              className="flex flex-col justify-between p-3 sm:p-3.5 rounded-lg bg-black border border-white/[0.08] hover:border-white/20 transition-all duration-150 cursor-default"
+            >
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <span className="text-xs font-medium text-zinc-300 tracking-tight truncate">
                   {tier.name}
                 </span>
+                <span className="text-[10px] text-zinc-400 tabular-nums shrink-0">
+                  {tier.subtitle}
+                </span>
               </div>
-              <div className="flex items-baseline gap-1 shrink-0 ml-1">
-                <span className="text-xs font-bold text-white tabular-nums">
+              <div className="flex items-baseline gap-1.5 mt-2.5">
+                <span className="text-lg sm:text-xl font-bold text-white tabular-nums tracking-tight">
                   {tier.count.toLocaleString()}
                 </span>
-                <span className="text-[10px] text-zinc-400 tabular-nums">
-                  ({tier.percentage.toFixed(0)}%)
+                <span className="text-[11px] text-zinc-400 tabular-nums font-normal">
+                  ({pctFormatted}%)
                 </span>
               </div>
             </div>
-            <div className="text-[10px] text-zinc-400 font-medium">
-              {tier.subtitle}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

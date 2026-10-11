@@ -31,6 +31,7 @@ export type SignalNotificationItem = {
   sentAt: string;
   companyName?: string | null;
   logoUrl?: string | null;
+  referencePrice?: number | null;
   sector?: string | null;
   industryGroup?: string | null;
   rotationRegime?: 'Leading' | 'Improving' | 'Weakening' | 'Lagging' | null;
@@ -48,14 +49,14 @@ export type SystemLogItem = {
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 /** Returns a concise label for a date grouping header */
-function formatGroupLabel(dateStr: string, isAr = false): string {
+function formatGroupLabel(dateStr: string, isAr = false, referenceDate?: Date): string {
   try {
     const datePart = dateStr.split('T')[0];
     const [year, month, day] = datePart.split('-').map(Number);
     const d = year && month && day
       ? new Date(year, month - 1, day)
       : new Date(dateStr);
-    const now = new Date();
+    const now = referenceDate ?? new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000);
@@ -79,10 +80,10 @@ function formatSignalAge(item: SignalNotificationItem, isAr = false): string {
   return formatGroupLabel(item.signalDate, isAr);
 }
 
-function formatTimeAgo(dateStr: string, isAr = false): string {
+function formatTimeAgo(dateStr: string, isAr = false, referenceDate?: Date): string {
   try {
     const d = new Date(dateStr);
-    const now = new Date();
+    const now = referenceDate ?? new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffMin = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMin / 60);
@@ -141,13 +142,16 @@ function getRegimeBadge(regime?: string | null, isAr = false): { label: string; 
 export default function NotificationsDrawer({
   isOpen,
   onClose,
+  sceneNotifications,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  sceneNotifications?: SignalNotificationItem[];
 }) {
   const router = useRouter();
   const { t, locale, isRTL } = useTranslation();
   const isAr = locale === 'ar';
+  const sceneClock = sceneNotifications ? new Date('2026-10-10T18:30:00Z') : undefined;
   const activeTab = 'signals';
   const [selectedRegime, setSelectedRegime] = useState<'all' | 'Leading' | 'Improving' | 'Weakening' | 'Lagging'>('all');
   const [isRegimeMenuOpen, setIsRegimeMenuOpen] = useState(false);
@@ -161,7 +165,7 @@ export default function NotificationsDrawer({
 
   const { data: signalsData, mutate: mutateSignals, isLoading: isLoadingSignals } = useSWR<{
     notifications: SignalNotificationItem[];
-  }>(isOpen ? '/api/notifications' : null, fetcher, {
+  }>(isOpen && !sceneNotifications ? '/api/notifications' : null, fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,
     revalidateOnFocus: false,
     dedupingInterval: 30000,
@@ -169,13 +173,13 @@ export default function NotificationsDrawer({
   });
 
   const notifications = useMemo(() => {
-    const list = signalsData?.notifications ?? [];
+    const list = sceneNotifications ?? signalsData?.notifications ?? [];
     return [...list].sort((a, b) => {
       const dateCompare = b.signalDate.localeCompare(a.signalDate);
       if (dateCompare !== 0) return dateCompare;
       return new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime();
     });
-  }, [signalsData?.notifications]);
+  }, [sceneNotifications, signalsData?.notifications]);
 
   const regimeCounts = useMemo(() => {
     const counts = { all: notifications.length, Leading: 0, Improving: 0, Weakening: 0, Lagging: 0 };
@@ -202,11 +206,11 @@ export default function NotificationsDrawer({
         groups[seen.get(key)!].items.push(item);
       } else {
         seen.set(key, groups.length);
-        groups.push({ label: formatGroupLabel(item.signalDate), dateKey: key, items: [item] });
+        groups.push({ label: formatGroupLabel(item.signalDate, isAr, sceneClock), dateKey: key, items: [item] });
       }
     }
     return groups;
-  }, [filteredNotifications]);
+  }, [filteredNotifications, isAr, sceneClock]);
 
   const [isClearing, setIsClearing] = useState(false);
 
@@ -258,10 +262,12 @@ export default function NotificationsDrawer({
       signal: isBuy ? 'BUY' : 'SELL',
       strategyId: item.strategy ?? undefined,
       signalDate: item.signalDate,
+      date: sceneNotifications ? item.signalDate.split('T')[0] : undefined,
+      price: sceneNotifications ? item.referencePrice ?? undefined : undefined,
     });
     setOrderModalOpen(true);
 
-    if (brokerageAccounts.length === 0 && !isLoadingAccounts) {
+    if (!sceneNotifications && brokerageAccounts.length === 0 && !isLoadingAccounts) {
       setIsLoadingAccounts(true);
       try {
         const res = await fetch('/api/banks/accounts');
@@ -307,6 +313,7 @@ export default function NotificationsDrawer({
             {/* Drawer Panel — sleek executive width */}
             <motion.div
               initial={{ x: isRTL ? '-100%' : '100%' }}
+              data-hero-drawer="alerts"
               animate={{ x: 0 }}
               exit={{ x: isRTL ? '-100%' : '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
@@ -318,6 +325,11 @@ export default function NotificationsDrawer({
                   <h2 className="text-sm font-bold text-white tracking-tight font-sans truncate">
                     {isAr ? 'الإشعارات والتنبيهات' : t('nav.notifications')}
                   </h2>
+                  {sceneNotifications && (
+                    <span className="text-[9px] font-medium text-white/45 shrink-0">
+                      {isAr ? 'عرض توضيحي' : 'Illustrative'}
+                    </span>
+                  )}
                   {notifications.length > 0 && (
                     <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white/[0.06] border border-white/10 text-white tabular-nums shrink-0">
                       {notifications.length}
@@ -326,7 +338,7 @@ export default function NotificationsDrawer({
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {activeTab === 'signals' && notifications.length > 0 && (
+                  {activeTab === 'signals' && notifications.length > 0 && !sceneNotifications && (
                     <button
                       type="button"
                       onClick={handleClearAll}
@@ -339,6 +351,7 @@ export default function NotificationsDrawer({
                   )}
                   <button
                     type="button"
+                    data-hero-action="close-alerts"
                     onClick={onClose}
                     className="p-1.5 text-text-muted hover:text-white hover:bg-white/[0.06] rounded-md transition-colors cursor-pointer"
                     title={isAr ? 'إغلاق (Esc)' : 'Close (Esc)'}
@@ -460,7 +473,7 @@ export default function NotificationsDrawer({
                             <div className="flex items-center gap-2">
                               <div className="w-1 h-3 rounded-full bg-gradient-to-b from-[#00BCE6] via-[#2962FF] to-[#D500F9] shrink-0" />
                               <span className="text-[10px] font-bold text-white/90 uppercase tracking-widest font-sans">
-                                {formatGroupLabel(group.dateKey, isAr)}
+                                {formatGroupLabel(group.dateKey, isAr, sceneClock)}
                               </span>
                             </div>
                             <span className="text-[9.5px] text-text-muted tabular-nums px-1.5 py-0.2 rounded-full bg-white/[0.04] border border-white/[0.06]">
@@ -516,7 +529,7 @@ export default function NotificationsDrawer({
                                   {/* Compact Time + Date */}
                                   <div
                                     className="text-right rtl:text-left leading-tight shrink-0 max-w-[78px]"
-                                    title={isAr ? `تم الإرسال ${formatTimeAgo(item.sentAt, isAr)}` : `Delivered ${formatTimeAgo(item.sentAt)}`}
+                                    title={isAr ? `تم الإرسال ${formatTimeAgo(item.sentAt, isAr, sceneClock)}` : `Delivered ${formatTimeAgo(item.sentAt, false, sceneClock)}`}
                                   >
                                     <div className="text-[10px] font-medium text-white tabular-nums whitespace-nowrap">
                                       {formatSignalAge(item, isAr)}
@@ -590,6 +603,7 @@ export default function NotificationsDrawer({
         mode="live"
         brokerageAccounts={brokerageAccounts}
         entrySource="COMMAND_CENTER"
+        previewOnly={Boolean(sceneNotifications)}
       />
     </>
   );

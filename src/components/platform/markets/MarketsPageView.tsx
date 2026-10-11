@@ -21,6 +21,8 @@ import {
   aggregateSectorsFromStocks,
 } from '@/lib/sectors-math';
 import { useTranslation } from '@/lib/i18n';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
+import { HERO_SCENE_MARKETS } from '@/components/landing/hero-scenes/hero-scene-snapshot';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -29,6 +31,7 @@ export default function MarketsPageView() {
   const { t, locale, isRTL } = useTranslation();
   const { isNavVisible } = useMobileNavScroll();
   const { isGuest } = useGuestGuard();
+  const isHeroScene = useHeroSceneMode();
 
   // Timeframe & Sizing State (default to 1M for responsive overview)
   const [timeframePreset, setTimeframePreset] = useState<MarketTimeframe | 'custom'>('1M');
@@ -52,7 +55,7 @@ export default function MarketsPageView() {
 
   // Compute start/end dates
   const { start, end } = useMemo(() => {
-    const today = new Date();
+    const today = isHeroScene ? new Date('2026-10-10T12:00:00Z') : new Date();
     const endStr = today.toISOString().split('T')[0];
 
     if (timeframePreset === 'custom') {
@@ -80,11 +83,11 @@ export default function MarketsPageView() {
     }
 
     return { start: d.toISOString().split('T')[0], end: endStr };
-  }, [timeframePreset, customStartDate, customEndDate]);
+  }, [timeframePreset, customStartDate, customEndDate, isHeroScene]);
 
   // 1. SWR Query for Market Macro Data (cached by date range)
-  const { data: macroData, error: macroError, isLoading: isMacroLoading, mutate: mutateMacro } = useSWR<SectorsPerformanceResponse>(
-    `/api/sectors/performance?start=${start}&end=${end}&strategy=${selectedStrategy}`,
+  const { data: liveMacroData, isLoading: isLiveMacroLoading, mutate: mutateMacro } = useSWR<SectorsPerformanceResponse>(
+    isHeroScene ? null : `/api/sectors/performance?start=${start}&end=${end}&strategy=${selectedStrategy}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -93,14 +96,18 @@ export default function MarketsPageView() {
   );
 
   // 2. SWR Query for Algorithmic Strategy Signals across EGX
-  const { data: signalsData, isLoading: isSignalsLoading } = useSWR<SectorStrategySignalsResponse>(
-    `/api/sectors/signals?strategy=${selectedStrategy}&start=${start}&end=${end}`,
+  const { data: signalsData } = useSWR<SectorStrategySignalsResponse>(
+    isHeroScene ? null : `/api/sectors/signals?strategy=${selectedStrategy}&start=${start}&end=${end}`,
     fetcher,
     {
       revalidateOnFocus: false,
       dedupingInterval: 120000,
     }
   );
+  const macroData = isHeroScene
+    ? HERO_SCENE_MARKETS.data as unknown as SectorsPerformanceResponse
+    : liveMacroData;
+  const isMacroLoading = !isHeroScene && isLiveMacroLoading;
 
   // Instant in-memory hierarchy aggregation (0ms UI latency when changing granularity!)
   const { sectors, marketSummary } = useMemo(() => {
@@ -143,7 +150,7 @@ export default function MarketsPageView() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
+          {!isHeroScene && <button
             type="button"
             onClick={() => mutateMacro()}
             className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer"
@@ -154,7 +161,7 @@ export default function MarketsPageView() {
             ) : (
               <RefreshCw size={14} />
             )}
-          </button>
+          </button>}
         </div>
       </header>
 

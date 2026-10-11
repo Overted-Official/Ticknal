@@ -21,6 +21,7 @@ import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 
 interface FeedPostProps {
   item: MarketNewsItemDTO;
+  asOf?: string;
   isTargetItem?: boolean;
   onSelectTicker?: (ticker: string) => void;
   onBookmarkClick?: (feature: string) => void;
@@ -228,9 +229,9 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
   };
 }
 
-function formatRelativeTime(isoString: string): string {
+function formatRelativeTime(isoString: string, asOf?: string): string {
   try {
-    const diffMs = Date.now() - new Date(isoString).getTime();
+    const diffMs = (asOf ? new Date(asOf).getTime() : Date.now()) - new Date(isoString).getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     if (diffMinutes < 1) return 'now';
     if (diffMinutes < 60) return `${diffMinutes}m`;
@@ -276,6 +277,7 @@ function parseBilingualContent(rawText: string): { en: string; ar: string; hasBo
 
 export default function FeedPost({
   item,
+  asOf,
   isTargetItem = false,
   onSelectTicker,
   onBookmarkClick,
@@ -289,7 +291,7 @@ export default function FeedPost({
   const [altLang, setAltLang] = useState(false);
 
   const meta = resolveSourceMeta(item);
-  const timeAgo = formatRelativeTime(item.publishedAt);
+  const timeAgo = formatRelativeTime(item.publishedAt, asOf);
   const primaryTicker = item.tickers?.[0]?.replace(/^[@$]/, '') || meta.handle.replace(/^@/, '');
 
   // Parse bilingual content without artificial truncation

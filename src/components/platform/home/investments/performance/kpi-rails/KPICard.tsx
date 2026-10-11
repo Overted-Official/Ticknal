@@ -23,6 +23,7 @@ export interface KPICardProps {
   sparklinePoints?: number[];
   sparklineTrend?: 'up' | 'down' | 'neutral';
   showSparkline?: boolean;
+  customBottomContent?: React.ReactNode;
   targetId?: string;
   href?: string;
   onClick?: () => void;
@@ -51,6 +52,7 @@ export default function KPICard({
   sparklinePoints,
   sparklineTrend = 'up',
   showSparkline = true,
+  customBottomContent,
   targetId,
   href,
   onClick,
@@ -125,7 +127,7 @@ export default function KPICard({
     <div
       id={`kpi-${id}`}
       onClick={handleClick}
-      className={`kpi-card-root ${!showSparkline ? '!h-auto min-h-[108px] sm:min-h-[114px] justify-between pb-3.5' : ''} ${className}`}
+      className={`kpi-card-root ${!showSparkline && !customBottomContent ? '!h-auto min-h-[108px] sm:min-h-[114px] justify-between pb-3.5' : ''} ${className}`}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -137,16 +139,16 @@ export default function KPICard({
     >
       {/* 1. Top row: Solid Circle Icon + Full Title */}
       <div className="flex items-center justify-between gap-1.5 w-full z-10">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs ${iconBgClass} overflow-hidden`}>
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className={`w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs ${iconBgClass} overflow-hidden`}>
             {logoUrl ? (
-              <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+               <img src={logoUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <Icon size={iconSize} className={`w-[11px] h-[11px] ${iconColorClass}`} strokeWidth={2.2} />
+              <Icon size={iconSize} className={`w-[10px] h-[10px] sm:w-[11px] sm:h-[11px] ${iconColorClass}`} strokeWidth={2.2} />
             )}
           </div>
           <span
-            className="text-[13px] font-semibold text-white tracking-tight truncate"
+            className="text-[11px] xs:text-[12px] sm:text-[13px] font-semibold text-white tracking-tight truncate"
             title={title}
           >
             {shortTitle ? (
@@ -169,14 +171,14 @@ export default function KPICard({
         )}
       </div>
 
-      {/* 2. Middle row: Value (bold large) + Unit (e.g. £, %, BARS) - Positioned directly under header in upper card */}
-      <div className="flex flex-col mt-2 sm:mt-2.5 z-10">
+      {/* 2. Middle row: Value (bold large) + Unit (e.g. £, %, BARS) */}
+      <div className="flex flex-col mt-1.5 sm:mt-2.5 z-10">
         <div className="flex items-baseline gap-1 leading-none">
-          <span className="text-[17px] xs:text-[18px] sm:text-[20px] font-bold text-white tabular-nums tracking-tight">
+          <span className="text-[15px] xs:text-[16px] sm:text-[20px] font-bold text-white tabular-nums tracking-tight">
             {value}
           </span>
           {unit && (
-            <span className="text-[10px] sm:text-[11px] font-semibold text-zinc-400 uppercase tracking-wider ml-0.5">
+            <span className="text-[9px] sm:text-[10px] font-semibold text-white/50 uppercase tracking-wider ml-0.5">
               {unit}
             </span>
           )}
@@ -185,21 +187,25 @@ export default function KPICard({
         {/* 3. Change row: Single clean line directly under value */}
         <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5 leading-none">
           {changeText && (
-            <span className={`text-[11px] sm:text-[12px] font-medium tabular-nums ${changeColorClass}`}>
+            <span className={`text-[10px] sm:text-[11px] font-medium tabular-nums ${changeColorClass}`}>
               {changeText}
             </span>
           )}
           {metaText && (
-            <span className={`text-[10px] sm:text-[11px] truncate text-zinc-400 font-normal ${metaClass}`}>
+            <span className={`text-[9px] sm:text-[10px] truncate text-white/50 font-normal ${metaClass}`}>
               {metaText}
             </span>
           )}
         </div>
       </div>
 
-      {/* 4. Bottom Edge-to-Edge Sparkline Area Graph (Dedicated 48px height, 0 side/bottom padding, zero text overlap) */}
-      {showSparkline && sparklineData && (
-        <div className="absolute inset-x-0 bottom-0 h-12 w-full overflow-hidden rounded-b-2xl pointer-events-none">
+      {/* 4. Bottom Custom Distribution or Edge-to-Edge Sparkline Area Graph */}
+      {customBottomContent ? (
+        <div className="absolute inset-x-0 bottom-0 px-2 sm:px-3 pb-2 pt-1 w-full pointer-events-none z-10">
+          {customBottomContent}
+        </div>
+      ) : showSparkline && sparklineData ? (
+        <div className="absolute inset-x-0 bottom-0 h-10 sm:h-12 w-full overflow-hidden rounded-b-2xl pointer-events-none">
           <svg viewBox="0 0 100 32" className="w-full h-full block" preserveAspectRatio="none">
             <defs>
               <linearGradient id={`kpi-grad-${id}`} x1="0" y1="0" x2="0" y2="1">
@@ -218,7 +224,7 @@ export default function KPICard({
             />
           </svg>
 
-          {/* Endpoint glowing dot - True 1:1 circle, centered precisely on the sparkline line endpoint */}
+          {/* Endpoint glowing dot */}
           <div
             className="absolute w-[7px] h-[7px] rounded-full pointer-events-none"
             style={{
@@ -230,7 +236,7 @@ export default function KPICard({
             }}
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

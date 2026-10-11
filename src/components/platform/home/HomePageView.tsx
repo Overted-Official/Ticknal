@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import HomeInvestmentsHeader from './investments/HomeInvestmentsHeader';
 import HomeFloatingNav from './HomeFloatingNav';
 import PerformanceOverviewSection from './investments/performance/PerformanceOverviewSection';
@@ -61,6 +62,35 @@ export default function HomePageView({
       isMounted = false;
     };
   }, [buyOpportunities]);
+
+  const router = useRouter();
+
+  // Intraday live portfolio refresh: softly refreshes server component data every 3 minutes
+  useEffect(() => {
+    let lastRefreshTime = Date.now();
+
+    const triggerRefresh = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        router.refresh();
+        lastRefreshTime = Date.now();
+      }
+    };
+
+    const intervalId = setInterval(triggerRefresh, 180 * 1000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastRefreshTime > 180 * 1000) {
+        triggerRefresh();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [router]);
 
   return (
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none">

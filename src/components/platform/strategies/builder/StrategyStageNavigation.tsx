@@ -38,47 +38,63 @@ export default function StrategyStageNavigation({
   };
 
   return (
-    <nav className="border-b border-white/10 bg-black" aria-label={isAr ? 'مراحل الاستراتيجية' : 'Strategy stages'}>
-      <div className="custom-scrollbar overflow-x-auto">
-        <div className="grid min-w-[660px] grid-cols-3" role="tablist" aria-label={isAr ? 'مراحل مساحة العمل' : 'Workspace stages'}>
-          {STAGES.map((stage, index) => {
-            const status = statuses[stage];
-            const StatusIcon = STATUS_ICONS[status];
-            const selected = activeStage === stage;
-            return (
-              <button
-                key={stage}
-                type="button"
-                role="tab"
-                id={`strategy-stage-${stage}`}
-                aria-controls={`strategy-stage-panel-${stage}`}
-                aria-selected={selected}
-                onClick={() => onSelect(stage)}
-                className={`group flex min-h-16 items-center justify-between gap-3 border-b-2 px-4 text-start transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#2962ff] ${
-                  selected ? 'border-[#2962ff] text-white' : 'border-transparent text-[#787b86] hover:border-white/20 hover:text-white'
-                }`}
-              >
-                <span className="min-w-0">
-                  <span className="block text-[10px] font-semibold uppercase tracking-[0.1em]">
-                    {String(index + 1).padStart(2, '0')} {stageLabels[stage]}
+    <nav
+      aria-label={isAr ? 'مراحل الاستراتيجية' : 'Strategy stages'}
+      className="flex w-full select-none items-center justify-center py-1 font-sans"
+    >
+      <div className="flex w-full min-w-0 max-w-full items-center justify-center">
+        {/* TradingView Floating Pill Container */}
+        <div
+          data-name="round-tabs-anchors"
+          className="relative flex max-w-[calc(100vw-24px)] items-center justify-center rounded-full border border-white/15 bg-black/90 p-1 shadow-lg backdrop-blur-xl sm:max-w-full sm:p-1.5"
+        >
+          <div
+            id="strategy-navigation-tabs"
+            role="tablist"
+            aria-orientation="horizontal"
+            className="no-scrollbar flex max-w-full items-center gap-1 overflow-x-auto sm:gap-1.5"
+          >
+            {STAGES.map((stage, index) => {
+              const status = statuses[stage];
+              const StatusIcon = STATUS_ICONS[status];
+              const selected = activeStage === stage;
+              return (
+                <button
+                  key={stage}
+                  id={`strategy-stage-${stage}`}
+                  role="tab"
+                  tabIndex={selected ? 0 : -1}
+                  aria-selected={selected}
+                  aria-controls={`strategy-stage-panel-${stage}`}
+                  type="button"
+                  onClick={() => onSelect(stage)}
+                  className={`relative inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium outline-none transition-all duration-150 sm:px-4 sm:py-2 sm:text-[13px] ${
+                    selected
+                      ? 'bg-white/15 font-semibold text-white shadow-xs'
+                      : 'bg-transparent text-plt-muted hover:bg-white/[0.06] hover:text-white active:bg-white/10'
+                  }`}
+                >
+                  <span className="text-[10px] font-semibold tabular-nums opacity-60 sm:text-[11px]">
+                    {String(index + 1).padStart(2, '0')}
                   </span>
-                  <span className="mt-1 block text-[9px] text-[#787b86]">
-                    {stage === 'build'
-                      ? (isAr ? 'أنشئ القواعد' : 'Compose the rules')
-                      : stage === 'visualize'
-                        ? (isAr ? 'افهم السلوك' : 'Understand the behavior')
-                        : (isAr ? 'قِس الأداء' : 'Measure performance')}
+                  <span className="leading-none">{stageLabels[stage]}</span>
+                  <span className="sr-only">{String(index + 1).padStart(2, '0')} {stageLabels[stage]}</span>
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-medium ${
+                      status === 'ready'
+                        ? 'text-plt-profit'
+                        : status === 'protected'
+                        ? 'text-white/60'
+                        : 'text-plt-warning'
+                    }`}
+                  >
+                    <StatusIcon size={12} aria-hidden="true" />
+                    <span className="hidden md:inline">{statusLabels[status]}</span>
                   </span>
-                </span>
-                <span className={`inline-flex shrink-0 items-center gap-1 text-[9px] font-semibold ${
-                  status === 'ready' ? 'text-[#089981]' : status === 'protected' ? 'text-white/55' : 'text-[#d6a316]'
-                }`}>
-                  <StatusIcon size={12} aria-hidden="true" />
-                  {statusLabels[status]}
-                </span>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </nav>

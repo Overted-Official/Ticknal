@@ -63,7 +63,6 @@ export async function updateUserRoleAction(params: {
   });
 
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
 
   return { success: true, oldRole, newRole: roleClean };
 }
@@ -145,7 +144,6 @@ export async function grantProAccessAction(params: {
 
   revalidatePath('/console/subscriptions');
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
 
   return { success: true, periodEnd: periodEnd.toISOString() };
 }
@@ -217,8 +215,7 @@ export async function triggerCronAction(jobName: string) {
     revalidatePath('/console/operations');
     revalidatePath('/console/signals');
     revalidatePath('/console/logs');
-    revalidatePath('/console/overview');
-
+  
     return { success: true, summary: resultSummary };
   } catch (error) {
     console.error(`[triggerCronAction] Error running ${jobName}:`, error);
@@ -319,8 +316,7 @@ export async function cancelSubscriptionAction(params: {
 
     revalidatePath('/console/subscriptions');
     revalidatePath('/console/users');
-    revalidatePath('/console/overview');
-
+  
     return { success: true };
   } catch (error) {
     console.error('[cancelSubscriptionAction] Error:', error);
@@ -382,7 +378,6 @@ export async function bulkUpdateUserTierAction(params: {
   }
 
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
   return { success: true, count: targetUserIds.length };
 }
 
@@ -415,7 +410,6 @@ export async function bulkDeleteUsersAction(params: {
   }
 
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
   return { success: true, count: deletedCount };
 }
 
@@ -461,7 +455,6 @@ export async function bulkUpdateUserStatusAction(params: {
   }
 
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
   return { success: true, count: targetUserIds.length };
 }
 
@@ -560,7 +553,6 @@ export async function updateSingleUserTierAction(params: {
   });
 
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
   return { success: true, tier };
 }
 
@@ -603,7 +595,6 @@ export async function updateSingleUserStatusAction(params: {
   });
 
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
   return { success: true, status };
 }
 
@@ -628,7 +619,6 @@ export async function deleteSingleUserAction(params: { targetUserId: string }) {
   });
 
   revalidatePath('/console/users');
-  revalidatePath('/console/overview');
   return { success: true };
 }
 

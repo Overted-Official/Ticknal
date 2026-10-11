@@ -11,6 +11,7 @@ import WatchlistSignalFilterPopover, {
 } from './sidebar/WatchlistSignalFilterPopover';
 import { useTranslation } from '@/lib/i18n';
 import { localizeSectorName } from '@/lib/finance/sector-translations';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -53,7 +54,8 @@ export default function RightSidebar({
   const { locale, isRTL } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: quoteData } = useSWR(`/api/quote?symbol=${selectedSymbol}`, fetcher, {
+  const isHeroScene = useHeroSceneMode();
+  const { data: quoteData } = useSWR(isHeroScene ? null : `/api/quote?symbol=${selectedSymbol}`, fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 30000,
     revalidateOnFocus: true,
     dedupingInterval: 15000,
@@ -152,7 +154,7 @@ export default function RightSidebar({
 
   // Fetch opportunities/signals across all tickers (cached server-side)
   const { data: oppsData } = useSWR<{ opportunities: OpportunitySignal[] }>(
-    '/api/opportunities?bars=15',
+    isHeroScene ? null : '/api/opportunities?bars=15',
     fetcher,
     {
       revalidateOnFocus: false,
@@ -646,7 +648,7 @@ export default function RightSidebar({
                 </div>
 
                 <div className="flex items-center text-text-muted text-[10px]">
-                  <span>{locale === 'ar' ? `آخر تحديث في ${new Date().toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}، 14:28 بتوقيت القاهرة` : `Last update at ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:28 GMT+3`}</span>
+                  <span>{locale === 'ar' ? `آخر تحديث في ${(isHeroScene ? new Date('2026-10-07T12:00:00Z') : new Date()).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}، 14:28 بتوقيت القاهرة` : `Last update at ${(isHeroScene ? new Date('2026-10-07T12:00:00Z') : new Date()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 14:28 GMT+3`}</span>
                 </div>
               </div>
 

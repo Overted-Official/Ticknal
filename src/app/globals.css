@@ -14,6 +14,7 @@
    ========================================================================== */
 @import "tailwindcss";
 @import "lenis/dist/lenis.css";
+@import "leaflet/dist/leaflet.css";
 
 @font-face {
   font-family: 'EuclidCircularSemibold';
@@ -2321,6 +2322,270 @@ textarea:focus-visible {
 .data-table th, .data-table td { padding: var(--space-2); }
 .data-table td { vertical-align: middle; }
 
+/* --- 4.6.1 Console Operations ---
+ * The operations console shares the platform primitives above, while these
+ * composition classes keep its dense monitoring surfaces consistent across
+ * feeds, crons, diagnostics, and audit history. */
+.operations-section-header {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-bottom: 0.625rem;
+  border-bottom: var(--border-width-default) solid var(--plt-border);
+}
+
+.operations-kpi-rail {
+  display: flex;
+  gap: var(--gap-kpi-grid);
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.operations-kpi-rail::-webkit-scrollbar { display: none; }
+.operations-kpi-rail .tv-kpi-card {
+  flex: 0 0 min(78vw, 17rem);
+  scroll-snap-align: start;
+  cursor: default;
+}
+.operations-kpi-rail .tv-kpi-card:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+@media (min-width: 640px) {
+  .operations-kpi-rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    padding-bottom: 0;
+  }
+  .operations-kpi-rail .tv-kpi-card { min-width: 0; }
+}
+@media (min-width: 1024px) {
+  .operations-kpi-rail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.operations-kpi-chip {
+  display: inline-flex;
+  min-height: 1.125rem;
+  max-width: 9rem;
+  align-items: center;
+  gap: 0.25rem;
+  overflow: hidden;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: var(--radius-full);
+  padding: 0 0.5rem;
+  font-family: var(--font-sans-token);
+  font-size: var(--text-10);
+  font-weight: var(--btn-font-weight-semibold);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operations-kpi-chip-neutral {
+  border-color: var(--plt-border);
+  background: var(--plt-bg-hover);
+  color: var(--plt-text-secondary);
+}
+.operations-kpi-chip-profit {
+  border-color: var(--plt-profit-border);
+  background: var(--plt-profit-soft);
+  color: var(--plt-profit);
+}
+.operations-kpi-chip-warning {
+  border-color: var(--plt-warning-border);
+  background: var(--plt-warning-soft);
+  color: var(--plt-warning);
+}
+.operations-kpi-chip-risk {
+  border-color: var(--plt-risk-border);
+  background: var(--plt-risk-soft);
+  color: var(--plt-risk);
+}
+.operations-kpi-chip-info {
+  border-color: var(--plt-info-border);
+  background: var(--plt-info-soft);
+  color: var(--plt-info);
+}
+.operations-kpi-chip-accent {
+  border-color: var(--plt-accent-border);
+  background: var(--plt-accent-soft);
+  color: var(--plt-accent);
+}
+
+.operations-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: var(--radius-surface);
+  background: transparent;
+}
+@media (min-width: 640px) {
+  .operations-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.operations-search {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+}
+.operations-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  transform: translateY(-50%);
+  color: var(--plt-text-muted);
+  pointer-events: none;
+}
+.operations-search .input-token {
+  padding-left: 2rem;
+  background: var(--color-black);
+}
+
+.operations-feedback {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: var(--radius-surface);
+  background: var(--color-black);
+  color: var(--plt-text-secondary);
+  font-size: var(--text-12);
+}
+.operations-feedback-success { border-color: var(--plt-profit-border); }
+.operations-feedback-error { border-color: var(--plt-risk-border); }
+.operations-feedback-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 auto;
+  margin-top: 0.0625rem;
+}
+
+.operations-table-shell {
+  overflow: hidden;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: var(--radius-surface);
+  background: transparent;
+}
+.operations-table-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.operations-table {
+  min-width: 48rem;
+  font-family: var(--font-sans-token);
+  font-size: var(--text-12);
+  text-align: left;
+}
+.operations-table thead {
+  background: var(--color-black);
+  font-size: var(--text-10);
+  letter-spacing: 0.02em;
+}
+.operations-table th { white-space: nowrap; }
+.operations-table tbody tr[role="button"] { cursor: pointer; }
+.operations-table-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-top: var(--border-width-default) solid var(--plt-border);
+  background: var(--color-black);
+  color: var(--plt-text-muted);
+  font-size: var(--text-11);
+}
+@media (min-width: 640px) {
+  .operations-table-footer {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.operations-jobs-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+@media (min-width: 768px) {
+  .operations-jobs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .operations-jobs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.operations-job-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: var(--radius-surface);
+  background: transparent;
+  transition: border-color var(--duration-base) var(--ease-standard),
+              background-color var(--duration-base) var(--ease-standard);
+}
+.operations-job-card:hover {
+  border-color: var(--plt-border-strong);
+  background: rgba(255, 255, 255, 0.02);
+}
+.operations-icon-tile {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: 0.5rem;
+  background: transparent;
+}
+
+.operations-log-drawer {
+  background: var(--color-black);
+}
+@media (min-width: 768px) {
+  .operations-log-drawer {
+    width: min(100%, 32rem);
+    max-width: 32rem;
+  }
+}
+.operations-detail-card {
+  padding: 0.875rem;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: var(--radius-surface);
+  background: transparent;
+}
+.operations-code-block {
+  overflow-x: auto;
+  padding: 0.75rem;
+  border: var(--border-width-default) solid var(--plt-border);
+  border-radius: 0.5rem;
+  background: var(--color-black);
+  color: var(--plt-text-secondary);
+  font-family: var(--font-sans-token);
+  font-size: var(--text-11);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
 .portfolio-ticker-name {
   color: var(--plt-text-primary);
   font-family: var(--font-sans-token);
@@ -2630,4 +2895,86 @@ line.recharts-tooltip-cursor,
   fill: none !important;
 }
 
+/* ==========================================================================
+   Leaflet Dark Terminal Overrides (CartoDB Dark Matter & OpenStreetMap)
+   ========================================================================== */
+.leaflet-container {
+  background: #000000 !important;
+  font-family: inherit !important;
+  outline: none;
+}
+.leaflet-bar {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  overflow: hidden;
+  box-shadow: none !important;
+}
+.leaflet-bar a {
+  background-color: #121214 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #d1d4dc !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  font-size: 14px !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.leaflet-bar a:hover {
+  background-color: #27272a !important;
+  color: #ffffff !important;
+}
+.leaflet-bar a:last-child {
+  border-bottom: none !important;
+}
+.leaflet-popup-content-wrapper {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 8px 10px -6px rgba(0, 0, 0, 0.8) !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+}
+.leaflet-popup-tip {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: #71717a !important;
+  padding: 6px !important;
+  top: 4px !important;
+  right: 6px !important;
+}
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #ffffff !important;
+}
+.leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #71717a !important;
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+  border-top-left-radius: 4px !important;
+}
+.leaflet-control-attribution a {
+  color: #9ca3af !important;
+  text-decoration: none !important;
+}
+.leaflet-control-attribution a:hover {
+  text-decoration: underline !important;
+}
 
+/* Dark Terminal Canvas for Map Tiles */
+.esri-dark-base-tiles {
+  filter: brightness(0.85) contrast(120%);
+}
+.esri-dark-labels-tiles {
+  filter: brightness(1.1) contrast(110%);
+}
+.leaflet-container {
+  background: #000000 !important;
+}

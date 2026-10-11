@@ -12,14 +12,31 @@ import {
   Search,
   Check,
   ChevronDown,
+  Plus,
+  Minus,
+  ExternalLink,
+  RefreshCw,
 } from '@/components/ui/icon-library';
 import { useToast } from '@/context/ToastContext';
 import { type BankAccount } from '@/types/bank';
 import AccountSelectDropdown from './wallet/AccountSelectDropdown';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import { useTranslation } from '@/lib/i18n';
+import { getThndrTradeUrl } from '@/lib/thndr';
+
+interface AddedPositionSummary {
+  symbol: string;
+  price: number;
+  quantity: number;
+  totalValue: number;
+  date: string;
+  accountName: string;
+  isVirtual: boolean;
+  thndrUrl: string;
+}
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
 
 const CATEGORIES = [
   'Living & Bills',
@@ -105,6 +122,10 @@ export default function QuickAddDrawer({
   useEffect(() => {
     if (isOpen) {
       setActiveSwitch(initialMode);
+    } else {
+      setShowSuccessModal(false);
+      setAddedPosition(null);
+      setIsTickerSelected(false);
     }
   }, [isOpen, initialMode]);
 
@@ -127,7 +148,31 @@ export default function QuickAddDrawer({
   const [positionAccountId, setPositionAccountId] = useState<string>('');
   const [isSubmittingPos, setIsSubmittingPos] = useState(false);
   const [isTickerDropdownOpen, setIsTickerDropdownOpen] = useState(false);
+  const [isTickerSelected, setIsTickerSelected] = useState(false);
   const tickerSearchRef = useRef<HTMLDivElement>(null);
+
+  // Success Modal State (with Thndr Order Redirect)
+  const [addedPosition, setAddedPosition] = useState<AddedPositionSummary | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Stepper adjustments for Price and Quantity
+  const adjustPrice = (delta: number) => {
+    const current = parseFloat(positionPrice) || 0;
+    const next = Math.max(0.01, current + delta);
+    setPositionPrice(next.toFixed(2));
+  };
+
+  const adjustQty = (delta: number) => {
+    const current = parseInt(positionQty, 10) || 0;
+    const next = Math.max(1, current + delta);
+    setPositionQty(String(next));
+  };
+
+  const addQtyPreset = (amount: number) => {
+    const current = parseInt(positionQty, 10) || 0;
+    setPositionQty(String(Math.max(1, current + amount)));
+  };
+
 
   // SWR: Bank Accounts
   const { data: accountsData, mutate: mutateAccounts } = useSWR<{ accounts: BankAccount[] }>(
@@ -216,6 +261,18 @@ export default function QuickAddDrawer({
         t.companyName.toLowerCase().includes(positionSymbol.toLowerCase())
     )
     .slice(0, 30);
+
+  // Selected Ticker Details
+  const selectedTicker = useMemo(() => {
+    if (!positionSymbol.trim()) return null;
+    const clean = positionSymbol.trim().toUpperCase();
+    return (
+      (tickers || []).find((t) => {
+        const symClean = t.symbol.replace('.CA', '').toUpperCase();
+        return symClean === clean || t.symbol.toUpperCase() === clean;
+      }) || null
+    );
+  }, [tickers, positionSymbol]);
 
   // --- Submit Handlers ---
 
@@ -338,11 +395,31 @@ export default function QuickAddDrawer({
         mutateAccounts();
         if (onSuccess) onSuccess();
         router.refresh();
-        onClose();
+
+        const cleanSym = positionSymbol.trim().toUpperCase();
+        const priceNum = Number(positionPrice);
+        const qtyNum = Number(positionQty);
+        const { url: thndrUrl } = getThndrTradeUrl(cleanSym, locale as 'ar' | 'en');
+
+        setAddedPosition({
+          symbol: cleanSym,
+          price: priceNum,
+          quantity: qtyNum,
+          totalValue: priceNum * qtyNum,
+          date: positionDate,
+          accountName: selectedAccount
+            ? (selectedAccount.accountName || selectedAccount.customBankName || selectedAccount.bankName || (locale === 'ar' ? `حساب ${selectedAccount.id}` : `Account ${selectedAccount.id}`))
+            : (locale === 'ar' ? 'حساب الوساطة' : 'Brokerage Account'),
+          isVirtual,
+          thndrUrl,
+        });
+        setShowSuccessModal(true);
+
         // Reset form
         setPositionSymbol('');
         setPositionPrice('');
         setPositionQty('100');
+        setIsTickerSelected(false);
       } else {
         const data = await res.json().catch(() => null);
         toast.error('Position Failed', data?.error || 'Failed to add position.');
@@ -360,8 +437,9 @@ export default function QuickAddDrawer({
   if (!mounted) return null;
 
   return createPortal(
-    <AnimatePresence>
-      {isOpen && (
+    <>
+      <AnimatePresence>
+        {isOpen && (
         <div key="quick-add-drawer-overlay" className="drawer-overlay">
           {/* Backdrop */}
           <motion.div
@@ -432,13 +510,15 @@ export default function QuickAddDrawer({
             </div>
 
             {/* 2-Way Tab Switcher */}
-            <div className="drawer-mode-bar">
-              <div className="pill-switch pill-switch-full">
+            <div className="px-4 sm:px-6 py-2 border-b border-white/10 shrink-0 bg-black">
+              <div className="w-full grid grid-cols-2 p-0.5 bg-white/[0.04] border border-white/10 rounded-lg gap-1">
                 <button
                   type="button"
                   onClick={() => setActiveSwitch('transaction')}
-                  className={`pill-switch-btn flex items-center justify-center gap-1.5 ${
-                    activeSwitch === 'transaction' ? 'pill-switch-btn-active font-semibold' : ''
+                  className={`h-7.5 px-3 rounded-md text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    activeSwitch === 'transaction'
+                      ? 'bg-white/15 text-white font-semibold shadow-sm'
+                      : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
                   <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -447,8 +527,10 @@ export default function QuickAddDrawer({
                 <button
                   type="button"
                   onClick={() => setActiveSwitch('position')}
-                  className={`pill-switch-btn flex items-center justify-center gap-1.5 ${
-                    activeSwitch === 'position' ? 'pill-switch-btn-active font-semibold' : ''
+                  className={`h-7.5 px-3 rounded-md text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    activeSwitch === 'position'
+                      ? 'bg-white/15 text-white font-semibold shadow-sm'
+                      : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
                   <TrendingUp className="w-3.5 h-3.5" />
@@ -470,32 +552,48 @@ export default function QuickAddDrawer({
                   {/* Transaction Type Segmented Control */}
                   <div className="drawer-form-field">
                     <label className="field-label">{locale === 'ar' ? 'نوع المعاملة' : 'Transaction Type'}</label>
-                    <div className="pill-switch pill-switch-full">
+                    <div className="w-full grid grid-cols-4 p-0.5 bg-white/[0.04] border border-white/10 rounded-lg gap-0.5">
                       <button
                         type="button"
                         onClick={() => setTxMode('EXPENSE')}
-                        className={`pill-switch-btn ${txMode === 'EXPENSE' ? 'pill-switch-btn-active' : ''}`}
+                        className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
+                          txMode === 'EXPENSE'
+                            ? 'bg-white/15 text-white font-semibold shadow-sm'
+                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                        }`}
                       >
                         {locale === 'ar' ? 'مصروف' : 'Expense'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTxMode('INCOME')}
-                        className={`pill-switch-btn ${txMode === 'INCOME' ? 'pill-switch-btn-active' : ''}`}
+                        className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
+                          txMode === 'INCOME'
+                            ? 'bg-white/15 text-white font-semibold shadow-sm'
+                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                        }`}
                       >
                         {locale === 'ar' ? 'دخل' : 'Income'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTxMode('TRANSFER')}
-                        className={`pill-switch-btn ${txMode === 'TRANSFER' ? 'pill-switch-btn-active' : ''}`}
+                        className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
+                          txMode === 'TRANSFER'
+                            ? 'bg-white/15 text-white font-semibold shadow-sm'
+                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                        }`}
                       >
                         {locale === 'ar' ? 'تحويل' : 'Transfer'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTxMode('BROKER_INJECTION')}
-                        className={`pill-switch-btn ${txMode === 'BROKER_INJECTION' ? 'pill-switch-btn-active' : ''}`}
+                        className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
+                          txMode === 'BROKER_INJECTION'
+                            ? 'bg-white/15 text-white font-semibold shadow-sm'
+                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                        }`}
                       >
                         {locale === 'ar' ? 'إلى الأسهم' : 'To Stocks'}
                       </button>
@@ -631,121 +729,228 @@ export default function QuickAddDrawer({
             {activeSwitch === 'position' && (
               <form onSubmit={handlePositionSubmit} className="drawer-form">
                 <div className="drawer-body custom-scrollbar drawer-form-fields">
-                  {/* Position Info Card */}
-                  <div className="drawer-info-card">
-                    <div className="drawer-info-dot" />
-                    <p className="drawer-info-text">
-                      {locale === 'ar'
-                        ? 'أدخل تفاصيل تنفيذ شراء السهم. ستنعكس الصفقة فوراً في محفظتك الاستثمارية.'
-                        : 'Enter execution details for your stock buy. Position will immediately reflect in your portfolio.'}
-                    </p>
-                  </div>
-
-                  {/* EGX Ticker Search */}
+                  {/* EGX Ticker Search or Selected Card */}
                   <div className="drawer-form-field relative" ref={tickerSearchRef}>
-                    <label className="field-label">{locale === 'ar' ? 'رمز سهم البورصة المصرية *' : 'EGX Ticker Symbol *'}</label>
-                    <div className="field-group relative">
-                      <Search className="w-3.5 h-3.5 text-text-muted shrink-0 me-2" />
-                      <input
-                        type="text"
-                        required
-                        placeholder={locale === 'ar' ? 'ابحث عن سهم (مثل COMI، ABUK، HRHO)...' : 'Search ticker (e.g. COMI, ABUK, HRHO)...'}
-                        value={positionSymbol}
-                        onChange={(e) => {
-                          setPositionSymbol(e.target.value.toUpperCase());
-                          setIsTickerDropdownOpen(true);
-                        }}
-                        onFocus={() => setIsTickerDropdownOpen(true)}
-                        className="field-input uppercase"
-                      />
-                    </div>
+                    <label className="field-label">{locale === 'ar' ? 'سهم البورصة المصرية *' : 'EGX Ticker *'}</label>
 
-                    {/* Auto-suggest Dropdown */}
-                    {isTickerDropdownOpen && filteredTickers.length > 0 && (
-                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 max-h-60 overflow-y-auto bg-black border border-white/10 rounded-xl shadow-2xl z-50 divide-y divide-white/[0.04] custom-scrollbar p-1">
-                        {filteredTickers.map((t) => {
-                          const clean = t.symbol.replace('.CA', '').toUpperCase();
-                          const priceNum = t.price || 0;
-                          return (
-                            <button
-                              key={t.symbol}
-                              type="button"
-                              onClick={() => {
-                                setPositionSymbol(clean);
-                                if (priceNum > 0) {
-                                  setPositionPrice(String(priceNum));
-                                }
-                                setIsTickerDropdownOpen(false);
-                              }}
-                              className="w-full px-2.5 py-2 hover:bg-white/[0.08] active:bg-white/[0.12] rounded-lg flex items-center justify-between transition-colors text-left cursor-pointer gap-2.5"
-                            >
-                              {/* Left: small logo + 2-row text info */}
-                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div className="w-7 h-7 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
-                                  {t.logoUrl ? (
-                                    <img
-                                      src={t.logoUrl}
-                                      alt={clean}
-                                      className="w-full h-full object-contain rounded-full"
-                                      onError={(e) => {
-                                        (e.currentTarget as HTMLElement).style.display = 'none';
-                                      }}
-                                    />
-                                  ) : (
-                                    <span className="text-[10px] font-bold text-white/80 font-sans">
-                                      {clean.slice(0, 2)}
+                    {isTickerSelected && (selectedTicker || positionSymbol) ? (
+                      /* Rich Selected Ticker View: Logo, Full Name, Symbol, Price & Change Action */
+                      <div className="p-3 bg-white/[0.04] border border-white/10 rounded-xl flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {/* Profile Image / Avatar */}
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                            {selectedTicker?.logoUrl ? (
+                              <img
+                                src={selectedTicker.logoUrl}
+                                alt={positionSymbol}
+                                className="w-full h-full object-contain rounded-full"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <span className="text-[11px] font-bold text-white font-sans tabular-nums">
+                                {positionSymbol.slice(0, 2)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Company Name, Symbol Badge & Sector / Price */}
+                          <div className="min-w-0 flex-1 flex flex-col">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className="font-semibold text-white text-xs sm:text-sm truncate font-sans leading-tight"
+                                title={selectedTicker?.companyName || positionSymbol}
+                              >
+                                {selectedTicker?.companyName || positionSymbol}
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-white/10 border border-white/15 tabular-nums font-sans shrink-0 leading-tight">
+                                {positionSymbol}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 mt-1 min-w-0 text-[11px] text-text-muted font-sans">
+                              {selectedTicker?.sector && (
+                                <span className="truncate">{selectedTicker.sector}</span>
+                              )}
+                              {selectedTicker?.price !== undefined && selectedTicker.price > 0 && (
+                                <>
+                                  {selectedTicker?.sector && <span className="text-white/30">•</span>}
+                                  <span className="tabular-nums font-medium text-white/80">
+                                    {Number(selectedTicker.price).toFixed(2)}{' '}
+                                    <span className="text-[10px] text-white/40">
+                                      {selectedTicker.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedTicker.currency || 'EGP'}
+                                    </span>
+                                  </span>
+                                  {selectedTicker.changePct !== undefined && selectedTicker.changePct !== 0 && (
+                                    <span
+                                      className={`tabular-nums font-medium ${
+                                        selectedTicker.changePct > 0 ? 'text-profit-num' : 'text-loss-num'
+                                      }`}
+                                    >
+                                      {selectedTicker.changePct > 0 ? '+' : ''}
+                                      {Number(selectedTicker.changePct).toFixed(2)}%
                                     </span>
                                   )}
-                                </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
 
-                                <div className="min-w-0 flex flex-col flex-1">
-                                  <span className="font-medium text-white text-xs truncate font-sans leading-tight" title={t.companyName}>
-                                    {t.companyName || clean}
-                                  </span>
-                                  <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-white bg-white/10 border border-white/15 tabular-nums font-sans shrink-0 leading-tight">
-                                      {clean}
-                                    </span>
-                                    {t.sector && (
-                                      <>
-                                        <span className="text-[10px] text-white/30 shrink-0">•</span>
-                                        <span className="text-[10px] text-white/50 truncate font-sans">
-                                          {t.sector}
+                        {/* Change Ticker Action Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsTickerSelected(false);
+                            setIsTickerDropdownOpen(true);
+                          }}
+                          className="h-7 px-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-[11px] font-medium transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                          title={locale === 'ar' ? 'تغيير السهم' : 'Change ticker'}
+                        >
+                          <RefreshCw className="w-3 h-3 text-white/60" />
+                          <span>{locale === 'ar' ? 'تغيير' : 'Change'}</span>
+                        </button>
+                      </div>
+                    ) : (
+                      /* Search Input + Dropdown */
+                      <>
+                        <div className="field-group relative">
+                          <Search className="w-3.5 h-3.5 text-text-muted shrink-0 me-2" />
+                          <input
+                            type="text"
+                            required
+                            placeholder={locale === 'ar' ? 'ابحث عن سهم (مثل COMI، ABUK، HRHO)...' : 'Search ticker (e.g. COMI, ABUK, HRHO)...'}
+                            value={positionSymbol}
+                            onChange={(e) => {
+                              setPositionSymbol(e.target.value.toUpperCase());
+                              setIsTickerDropdownOpen(true);
+                            }}
+                            onFocus={() => setIsTickerDropdownOpen(true)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (filteredTickers.length > 0) {
+                                  const top = filteredTickers[0];
+                                  const clean = top.symbol.replace('.CA', '').toUpperCase();
+                                  setPositionSymbol(clean);
+                                  if (top.price && top.price > 0 && !positionPrice) {
+                                    setPositionPrice(String(top.price));
+                                  }
+                                  setIsTickerSelected(true);
+                                  setIsTickerDropdownOpen(false);
+                                } else if (positionSymbol.trim()) {
+                                  setIsTickerSelected(true);
+                                  setIsTickerDropdownOpen(false);
+                                }
+                              }
+                            }}
+                            className="field-input uppercase"
+                          />
+                          {positionSymbol && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPositionSymbol('');
+                                setIsTickerDropdownOpen(false);
+                              }}
+                              className="p-1 text-white/40 hover:text-white transition-colors"
+                              title={locale === 'ar' ? 'مسح' : 'Clear'}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Auto-suggest Dropdown */}
+                        {isTickerDropdownOpen && filteredTickers.length > 0 && (
+                          <div className="absolute top-[calc(100%+4px)] left-0 right-0 max-h-60 overflow-y-auto bg-black border border-white/10 rounded-xl shadow-2xl z-50 divide-y divide-white/[0.04] custom-scrollbar p-1">
+                            {filteredTickers.map((t) => {
+                              const clean = t.symbol.replace('.CA', '').toUpperCase();
+                              const priceNum = t.price || 0;
+                              return (
+                                <button
+                                  key={t.symbol}
+                                  type="button"
+                                  onClick={() => {
+                                    setPositionSymbol(clean);
+                                    if (priceNum > 0 && !positionPrice) {
+                                      setPositionPrice(String(priceNum));
+                                    }
+                                    setIsTickerSelected(true);
+                                    setIsTickerDropdownOpen(false);
+                                  }}
+                                  className="w-full px-2.5 py-2 hover:bg-white/[0.08] active:bg-white/[0.12] rounded-lg flex items-center justify-between transition-colors text-left rtl:text-right cursor-pointer gap-2.5"
+                                >
+                                  {/* Left: small logo + 2-row text info */}
+                                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                    <div className="w-7 h-7 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                      {t.logoUrl ? (
+                                        <img
+                                          src={t.logoUrl}
+                                          alt={clean}
+                                          className="w-full h-full object-contain rounded-full"
+                                          onError={(e) => {
+                                            (e.currentTarget as HTMLElement).style.display = 'none';
+                                          }}
+                                        />
+                                      ) : (
+                                        <span className="text-[10px] font-bold text-white/80 font-sans">
+                                          {clean.slice(0, 2)}
                                         </span>
+                                      )}
+                                    </div>
+
+                                    <div className="min-w-0 flex flex-col flex-1">
+                                      <span className="font-medium text-white text-xs truncate font-sans leading-tight" title={t.companyName}>
+                                        {t.companyName || clean}
+                                      </span>
+                                      <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-white bg-white/10 border border-white/15 tabular-nums font-sans shrink-0 leading-tight">
+                                          {clean}
+                                        </span>
+                                        {t.sector && (
+                                          <>
+                                            <span className="text-[10px] text-white/30 shrink-0">•</span>
+                                            <span className="text-[10px] text-white/50 truncate font-sans">
+                                              {t.sector}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Right: Latest price + optional change % */}
+                                  <div className="flex flex-col items-end shrink-0 pl-2 rtl:pl-0 rtl:pr-2 font-sans tabular-nums text-right rtl:text-left">
+                                    {priceNum > 0 ? (
+                                      <>
+                                        <span className="text-xs font-semibold text-white">
+                                          {priceNum.toFixed(2)}{' '}
+                                          <span className="text-[10px] text-white/40 font-normal">
+                                            {t.currency === 'EGP' && locale === 'ar' ? 'ج.م' : t.currency || 'EGP'}
+                                          </span>
+                                        </span>
+                                        {t.changePct !== undefined && t.changePct !== 0 && (
+                                          <span
+                                            className={`text-[10px] font-medium ${
+                                              t.changePct > 0 ? 'text-profit-num' : 'text-loss-num'
+                                            }`}
+                                          >
+                                            {t.changePct > 0 ? '+' : ''}{Number(t.changePct).toFixed(2)}%
+                                          </span>
+                                        )}
                                       </>
+                                    ) : (
+                                      <span className="text-xs text-white/30 font-medium">—</span>
                                     )}
                                   </div>
-                                </div>
-                              </div>
-
-                              {/* Right: Latest price + optional change % */}
-                              <div className="flex flex-col items-end shrink-0 pl-2 font-sans tabular-nums text-right">
-                                {priceNum > 0 ? (
-                                  <>
-                                    <span className="text-xs font-semibold text-white">
-                                      {priceNum.toFixed(2)}{' '}
-                                      <span className="text-[10px] text-white/40 font-normal">
-                                        {t.currency === 'EGP' && locale === 'ar' ? 'ج.م' : t.currency || 'EGP'}
-                                      </span>
-                                    </span>
-                                    {t.changePct !== undefined && t.changePct !== 0 && (
-                                      <span
-                                        className={`text-[10px] font-medium ${
-                                          t.changePct > 0 ? 'text-profit-num' : 'text-loss-num'
-                                        }`}
-                                      >
-                                        {t.changePct > 0 ? '+' : ''}{Number(t.changePct).toFixed(2)}%
-                                      </span>
-                                    )}
-                                  </>
-                                ) : (
-                                  <span className="text-xs text-white/30 font-medium">—</span>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -794,49 +999,118 @@ export default function QuickAddDrawer({
                         <ChevronDown className="field-select-chevron w-4 h-4" />
                       </div>
                     )}
-                    {positionAccountId && isVirtualAccount(brokerageAccounts.find((b) => String(b.id) === positionAccountId)) && (
-                      <div className="drawer-info-card mt-2">
-                        <div className="drawer-info-dot" />
-                        <p className="drawer-info-text">
-                          {locale === 'ar'
-                            ? '💡 حساب افتراضي: لا يتطلب أي بيانات بنكية. يتتبع الصفقة على الرسم البياني مع الأرباح والخسائر اللحظية وتنبيهات الخروج الآلية.'
-                            : '💡 Virtual Account: Zero personal bank credentials required. Tracks on charts with live P&L and automated strategy sell notifications.'}
-                        </p>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Price & Quantity Grid */}
+                  {/* Entry Date (Positioned right after Brokerage Account) */}
+                  <div className="drawer-form-field">
+                    <label className="field-label">{locale === 'ar' ? 'تاريخ الدخول *' : 'Entry Date *'}</label>
+                    <input
+                      type="date"
+                      required
+                      value={positionDate}
+                      onChange={(e) => setPositionDate(e.target.value)}
+                      className="field-date-input"
+                    />
+                  </div>
+
+                  {/* Price & Quantity Grid with Incremental Steppers */}
                   <div className="drawer-form-grid-2">
+                    {/* Entry Price */}
                     <div className="drawer-form-field">
-                      <label className="field-label">{locale === 'ar' ? 'سعر الدخول (ج.م) *' : 'Entry Price (EGP) *'}</label>
-                      <div className="field-group">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="field-label mb-0">{locale === 'ar' ? 'سعر الدخول (ج.م) *' : 'Entry Price (EGP) *'}</label>
+                        <span className="text-[10px] text-text-muted font-sans tabular-nums">
+                          {locale === 'ar' ? 'خطوة: 0.10' : 'Step: 0.10'}
+                        </span>
+                      </div>
+                      <div className="flex items-center rounded-lg border border-white/10 bg-black overflow-hidden focus-within:border-white/25 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => adjustPrice(-0.1)}
+                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-r border-white/10 rtl:border-r-0 rtl:border-l"
+                          title={locale === 'ar' ? 'إنقاص السعر 0.10' : 'Decrease price by 0.10'}
+                          aria-label="Decrease price"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
                         <input
                           type="number"
-                          step="any"
+                          step="0.01"
+                          min="0.01"
                           required
                           placeholder="0.00"
                           value={positionPrice}
                           onChange={(e) => setPositionPrice(e.target.value)}
-                          className="field-input"
+                          className="flex-1 min-w-0 bg-transparent text-center font-sans font-semibold text-sm text-white px-2 py-2 focus:outline-none tabular-nums"
                         />
-                        <span className="field-suffix">{locale === 'ar' ? 'ج.م' : 'EGP'}</span>
+                        <span className="text-[11px] font-medium text-text-muted px-1 shrink-0 font-sans select-none">
+                          {locale === 'ar' ? 'ج.م' : 'EGP'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => adjustPrice(0.1)}
+                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-l border-white/10 rtl:border-l-0 rtl:border-r"
+                          title={locale === 'ar' ? 'زيادة السعر 0.10' : 'Increase price by 0.10'}
+                          aria-label="Increase price"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 
+                    {/* Quantity */}
                     <div className="drawer-form-field">
-                      <label className="field-label">{locale === 'ar' ? 'الكمية (أسهم) *' : 'Quantity (Shares) *'}</label>
-                      <div className="field-group">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="field-label mb-0">{locale === 'ar' ? 'الكمية (أسهم) *' : 'Quantity (Shares) *'}</label>
+                        <span className="text-[10px] text-text-muted font-sans tabular-nums">
+                          {locale === 'ar' ? 'خطوة: 10' : 'Step: 10'}
+                        </span>
+                      </div>
+                      <div className="flex items-center rounded-lg border border-white/10 bg-black overflow-hidden focus-within:border-white/25 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => adjustQty(-10)}
+                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-r border-white/10 rtl:border-r-0 rtl:border-l"
+                          title={locale === 'ar' ? 'إنقاص الكمية 10' : 'Decrease shares by 10'}
+                          aria-label="Decrease shares"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
                         <input
                           type="number"
                           step="1"
+                          min="1"
                           required
                           placeholder="100"
                           value={positionQty}
                           onChange={(e) => setPositionQty(e.target.value)}
-                          className="field-input"
+                          className="flex-1 min-w-0 bg-transparent text-center font-sans font-semibold text-sm text-white px-2 py-2 focus:outline-none tabular-nums"
                         />
-                        <span className="field-suffix">{locale === 'ar' ? 'سهم' : 'Shares'}</span>
+                        <span className="text-[11px] font-medium text-text-muted px-1 shrink-0 font-sans select-none">
+                          {locale === 'ar' ? 'سهم' : 'Shares'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => adjustQty(10)}
+                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-l border-white/10 rtl:border-l-0 rtl:border-r"
+                          title={locale === 'ar' ? 'زيادة الكمية 10' : 'Increase shares by 10'}
+                          aria-label="Increase shares"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {/* Quick lot preset chips */}
+                      <div className="flex items-center gap-1.5 mt-2">
+                        {[10, 50, 100, 500].map((lot) => (
+                          <button
+                            key={lot}
+                            type="button"
+                            onClick={() => addQtyPreset(lot)}
+                            className="flex-1 py-1 px-1.5 text-[10px] font-semibold text-text-muted hover:text-white bg-white/[0.03] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/[0.08] rounded transition-all tabular-nums font-sans cursor-pointer text-center"
+                          >
+                            +{lot}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -854,18 +1128,6 @@ export default function QuickAddDrawer({
                       </span>
                     </div>
                   )}
-
-                  {/* Entry Date */}
-                  <div className="drawer-form-field">
-                    <label className="field-label">{locale === 'ar' ? 'تاريخ الدخول *' : 'Entry Date *'}</label>
-                    <input
-                      type="date"
-                      required
-                      value={positionDate}
-                      onChange={(e) => setPositionDate(e.target.value)}
-                      className="field-date-input"
-                    />
-                  </div>
                 </div>
 
                 {/* Sticky Footer */}
@@ -885,10 +1147,10 @@ export default function QuickAddDrawer({
                     <TrendingUp className="drawer-btn-icon" />
                     <span>
                       {isSubmittingPos
-                        ? (locale === 'ar' ? 'جاري الإنشاء...' : 'Creating...')
+                        ? (locale === 'ar' ? 'جاري التسجيل...' : 'Recording...')
                         : positionAccountId && isVirtualAccount(brokerageAccounts.find((b) => String(b.id) === positionAccountId))
                         ? (locale === 'ar' ? 'تتبع صفقة افتراضية' : 'Track Virtual Position')
-                        : (locale === 'ar' ? 'إنشاء صفقة أسهم' : 'Create Stock Position')}
+                        : (locale === 'ar' ? 'تتبع الصفقة' : 'Track Position')}
                     </span>
                   </button>
                 </div>
@@ -897,7 +1159,145 @@ export default function QuickAddDrawer({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>,
-    document.body
-  );
+    </AnimatePresence>
+
+    {/* Position Added Success Modal (with Thndr Redirect CTA) */}
+    <AnimatePresence>
+      {showSuccessModal && addedPosition && (
+        <div
+          key="thndr-position-success-overlay"
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          onClick={() => {
+            setShowSuccessModal(false);
+            onClose();
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm bg-black border border-white/15 rounded-2xl p-6 text-center shadow-2xl overflow-hidden"
+          >
+            {/* Subtle Thndr yellow top accent */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-1 bg-[#FFE500]/60 blur-sm rounded-full" />
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowSuccessModal(false);
+                onClose();
+              }}
+              className="absolute top-4 right-4 rtl:right-auto rtl:left-4 p-1.5 text-text-muted hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Success Icon */}
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/10">
+              <Check className="w-6 h-6 stroke-[2.5]" />
+            </div>
+
+            {/* Title & Subtitle */}
+            <h3 className="text-base font-bold text-white mb-1 font-sans">
+              {locale === 'ar' ? 'تمت إضافة الصفقة بنجاح' : 'Position Added'}
+            </h3>
+            <p className="text-xs text-text-muted leading-relaxed mb-5 font-sans">
+              {locale === 'ar'
+                ? `تم تسجيل صفقة ${addedPosition.symbol} في محفظتك. يمكنك الآن الانتقال لتنفيذ الأمر عبر ثاندر.`
+                : `Your position for ${addedPosition.symbol} has been recorded in your portfolio. You can now place the order on Thndr.`}
+            </p>
+
+            {/* Position Details Card */}
+            <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3.5 mb-5 text-start font-sans">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded text-xs font-bold text-white bg-white/10 border border-white/15 tabular-nums">
+                    {addedPosition.symbol}
+                  </span>
+                  <span className="text-xs text-text-muted truncate max-w-[140px]">
+                    {addedPosition.accountName}
+                  </span>
+                </div>
+                <span className="text-[10px] text-text-muted tabular-nums">
+                  {addedPosition.date}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <span className="block text-[10px] text-text-muted mb-0.5">
+                    {locale === 'ar' ? 'السعر' : 'Price'}
+                  </span>
+                  <span className="text-xs font-semibold text-white tabular-nums">
+                    {addedPosition.price.toFixed(2)}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-text-muted mb-0.5">
+                    {locale === 'ar' ? 'الكمية' : 'Shares'}
+                  </span>
+                  <span className="text-xs font-semibold text-white tabular-nums">
+                    {addedPosition.quantity.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-text-muted mb-0.5">
+                    {locale === 'ar' ? 'الإجمالي' : 'Total'}
+                  </span>
+                  <span className="text-xs font-bold text-emerald-400 tabular-nums">
+                    {addedPosition.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2.5">
+              {/* Primary CTA: Yellow Thndr Button with Thndr Bolt Icon */}
+              <a
+                href={addedPosition.thndrUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  onClose();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#FFE500] hover:bg-[#F2D900] active:scale-[0.98] text-black font-bold rounded-xl transition-all text-xs tracking-tight shadow-lg shadow-[#FFE500]/20 cursor-pointer"
+              >
+                <svg
+                  className="w-4 h-4 fill-black shrink-0"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+                <span>
+                  {locale === 'ar' ? 'الانتقال إلى ثاندر لتنفيذ الأمر' : 'Go to Thndr to place order'}
+                </span>
+                <ExternalLink className="w-3.5 h-3.5 stroke-[2.5] text-black/70 shrink-0" />
+              </a>
+
+              {/* Secondary CTA: Stay in Ticknal */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  onClose();
+                }}
+                className="w-full py-2.5 px-4 text-xs font-medium text-text-muted hover:text-white hover:bg-white/[0.04] rounded-xl transition-colors cursor-pointer border border-transparent hover:border-white/10"
+              >
+                {locale === 'ar' ? 'البقاء في تكنال' : 'Stay in Ticknal'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  </>,
+  document.body
+);
 }

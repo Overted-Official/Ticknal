@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   User,
   Shield,
-  Layers,
   Coins,
   CheckSquare,
   Square,
@@ -104,6 +103,7 @@ function ScreenerUserAvatar({ src, name }: { src: string | null; name: string })
       <img
         src={src}
         alt={name}
+        referrerPolicy="no-referrer"
         className="w-full h-full object-cover"
         onError={() => setHasError(true)}
       />
@@ -268,10 +268,14 @@ export default function UserDirectoryScreener({
   return (
     <div className="space-y-3.5 select-none">
       {/* 1. Search & Segment Toolbar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border border-white/10 p-3 bg-transparent rounded-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-1 bg-transparent">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 shrink-0 rtl:left-auto rtl:right-3"
+            strokeWidth={1.8}
+          />
           <input
             type="text"
             value={searchTerm}
@@ -281,12 +285,22 @@ export default function UserDirectoryScreener({
                 ? 'البحث بالاسم، البريد الإلكتروني، أو المعرف...'
                 : 'Search members by name, email, or UUID...'
             }
-            className="w-full bg-black border border-white/15 text-white placeholder-zinc-500 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-white transition-colors"
+            className="h-9 w-full bg-black border border-white/[0.08] hover:border-white/20 focus:border-white/30 text-white placeholder-zinc-500 text-xs pl-9 pr-8 rtl:pl-3 rtl:pr-9 rounded-lg focus:outline-none transition-colors"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-zinc-400 hover:text-white transition-colors cursor-pointer rtl:right-auto rtl:left-2.5"
+              title="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Segment Filter Pills */}
-        <div className="inline-flex items-center p-0.5 rounded-lg bg-black border border-white/15 overflow-x-auto no-scrollbar shrink-0">
+        {/* Segment Filter Pills: Styled with .seg-control matching UserTierBarChart */}
+        <div className="seg-control seg-control-compact overflow-x-auto no-scrollbar shrink-0">
           {(
             [
               { id: 'all', label: `All (${users.length})` },
@@ -301,12 +315,9 @@ export default function UserDirectoryScreener({
             return (
               <button
                 key={seg.id}
+                type="button"
                 onClick={() => setSelectedSegment(seg.id)}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
+                className={`seg-control-btn ${isActive ? 'seg-control-btn-active' : ''}`}
               >
                 {seg.label}
               </button>
@@ -373,7 +384,7 @@ export default function UserDirectoryScreener({
                     className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover-subtle transition-colors flex items-center justify-between cursor-pointer"
                   >
                     <span>Plus</span>
-                    <span className="text-[10px] text-text-muted">99 EGP</span>
+                    <span className="text-[10px] text-text-muted">50 EGP</span>
                   </button>
                   <button
                     type="button"
@@ -381,7 +392,7 @@ export default function UserDirectoryScreener({
                     className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover-subtle transition-colors flex items-center justify-between cursor-pointer"
                   >
                     <span>Elite</span>
-                    <span className="text-[10px] text-text-muted">199 EGP</span>
+                    <span className="text-[10px] text-text-muted">95 EGP</span>
                   </button>
                   <button
                     type="button"
@@ -440,7 +451,7 @@ export default function UserDirectoryScreener({
       )}
 
       {/* 4. Members Table */}
-      <div className="border border-white/10 bg-transparent rounded-xl overflow-hidden">
+      <div className="bg-transparent overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-xs font-sans border-collapse">
             <thead>
@@ -623,29 +634,43 @@ export default function UserDirectoryScreener({
                       {/* 7. Member Status */}
                       <td className="py-3 px-3 text-center">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                            isActiveStatus
+                          title={
+                            u.memberStatus === 'active'
+                              ? 'Account active & in good standing (recent platform activity)'
+                              : u.memberStatus === 'suspended'
+                              ? 'Account access suspended by administrator'
+                              : 'Dormant account (>60 days with no activity)'
+                          }
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium cursor-default ${
+                            u.memberStatus === 'active'
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : u.memberStatus === 'suspended'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                               : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
                           }`}
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              isActiveStatus ? 'bg-emerald-400' : 'bg-zinc-500'
+                              u.memberStatus === 'active'
+                                ? 'bg-emerald-400'
+                                : u.memberStatus === 'suspended'
+                                ? 'bg-rose-400'
+                                : 'bg-zinc-500'
                             }`}
                           />
                           <span className="capitalize">{u.memberStatus}</span>
                         </span>
                       </td>
 
-                      {/* 8. Open Positions (Count) */}
+                      {/* 8. Open Positions (Count) — Sleek, No Icons */}
                       <td className="py-3 px-3 text-center">
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.04] border border-white/5 text-[11px] tabular-nums">
-                          <Layers className="w-3 h-3 text-blue-400 shrink-0" />
-                          <span className="font-semibold text-white">
+                        {u.openPositionsCount > 0 ? (
+                          <span className="inline-flex items-center justify-center min-w-[26px] px-2 py-0.5 rounded text-[11px] font-semibold text-white bg-white/[0.06] border border-white/10 tabular-nums">
                             {u.openPositionsCount}
                           </span>
-                        </div>
+                        ) : (
+                          <span className="text-zinc-600 text-xs tabular-nums">—</span>
+                        )}
                       </td>
 
                       {/* 9. Open Exposure (Value) */}

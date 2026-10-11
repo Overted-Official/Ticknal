@@ -1,7 +1,14 @@
 import type { AdvancedStrategyNode } from './advanced-strategy-model';
 import type { StrategyBuilderIndicatorOption, StrategyRule, StrategyRuleSide } from './strategy-builder-model';
 
-export type StrategyInspectorTab = 'configure' | 'learn' | 'output' | 'usage';
+export type StrategyInspectorTab =
+  | 'configure'
+  | 'learn'
+  | 'visualizer'
+  | 'formula'
+  | 'signals'
+  | 'output'
+  | 'usage';
 
 export type StrategyInspectorTarget =
   | { readonly kind: 'simple-rule'; readonly side: StrategyRuleSide; readonly rule: StrategyRule; readonly indicator: StrategyBuilderIndicatorOption | null }

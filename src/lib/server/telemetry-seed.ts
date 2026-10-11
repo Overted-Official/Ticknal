@@ -61,8 +61,8 @@ export async function ensureBaselineTelemetrySeeded(): Promise<{ success: boolea
 
     const baselineRecords: (typeof userTelemetryEvents.$inferInsert)[] = [];
 
-    // 1. AbdelRahman (Admin) -> Cairo / New Cairo (Desktop macOS)
-    const adminUser = profileByEmail.get('abdelrahman.m.abualola@gmial.com');
+    // 1. AbdelRahman (Admin) -> Cairo (Desktop Windows / Web)
+    const adminUser = profileByEmail.get('abdelrahman.m.abualola@gmail.com');
     if (adminUser) {
       for (let day = 0; day <= 60; day += 3) {
         baselineRecords.push({
@@ -71,16 +71,16 @@ export async function ensureBaselineTelemetrySeeded(): Promise<{ success: boolea
           country: 'Egypt',
           countryCode: 'EG',
           regionOrGovernorate: 'Cairo Governorate',
-          city: 'New Cairo (Tagamoa)',
-          latitude: '30.013100',
-          longitude: '31.491300',
+          city: 'Cairo',
+          latitude: '30.044420',
+          longitude: '31.235712',
           timezone: 'Africa/Cairo',
           ispOrCarrier: 'Telecom Egypt (WE)',
           channel: 'direct',
           referrer: 'https://ticknal.com',
           landingPath: '/console/users',
           deviceType: 'desktop',
-          os: 'macOS',
+          os: 'Windows',
           browser: 'Chrome',
           isPwaOrNative: false,
           createdAt: daysAgo(day, 9),
@@ -103,11 +103,11 @@ export async function ensureBaselineTelemetrySeeded(): Promise<{ success: boolea
           longitude: '31.256900',
           timezone: 'Africa/Cairo',
           ispOrCarrier: 'Vodafone Egypt',
-          channel: 'linkedin',
-          referrer: 'https://www.linkedin.com/',
-          utmSource: 'linkedin',
-          utmMedium: 'organic',
-          utmCampaign: 'trading_take',
+          channel: 'direct',
+          referrer: null,
+          utmSource: null,
+          utmMedium: null,
+          utmCampaign: null,
           landingPath: '/news',
           deviceType: 'mobile',
           os: 'iOS',
@@ -133,10 +133,11 @@ export async function ensureBaselineTelemetrySeeded(): Promise<{ success: boolea
           longitude: '30.985000',
           timezone: 'Africa/Cairo',
           ispOrCarrier: 'Orange Egypt',
-          channel: 'instagram',
-          referrer: 'https://l.instagram.com/',
-          utmSource: 'instagram',
-          utmMedium: 'bio_link',
+          channel: 'direct',
+          referrer: null,
+          utmSource: null,
+          utmMedium: null,
+          utmCampaign: null,
           landingPath: '/markets',
           deviceType: 'mobile',
           os: 'iOS',
@@ -146,179 +147,6 @@ export async function ensureBaselineTelemetrySeeded(): Promise<{ success: boolea
         });
       }
     }
-
-    // 4. Amr Abbas (Free) -> Alexandria / Corniche (Desktop Windows)
-    const amrUser = profileByEmail.get('amr.abbas.fouad@gmail.com');
-    if (amrUser) {
-      for (let day = 2; day <= 40; day += 4) {
-        baselineRecords.push({
-          userId: amrUser.id,
-          sessionId: `sess-amr-${day}`,
-          country: 'Egypt',
-          countryCode: 'EG',
-          regionOrGovernorate: 'Alexandria Governorate',
-          city: 'Alexandria (Corniche)',
-          latitude: '31.200100',
-          longitude: '29.918700',
-          timezone: 'Africa/Cairo',
-          ispOrCarrier: 'Etisalat Misr',
-          channel: 'google_organic',
-          referrer: 'https://www.google.com/',
-          landingPath: '/charts',
-          deviceType: 'desktop',
-          os: 'Windows',
-          browser: 'Edge',
-          isPwaOrNative: false,
-          createdAt: daysAgo(day, 11),
-        });
-      }
-    }
-
-    // 5. Rich Supplementary Target Audiences across Egypt & Regional hubs
-    const extraAudiences = [
-      {
-        city: 'Nasr City',
-        region: 'Cairo Governorate',
-        lat: '30.056100',
-        lng: '31.330100',
-        country: 'Egypt',
-        countryCode: 'EG',
-        channel: 'x_twitter',
-        referrer: 'https://t.co/',
-        deviceType: 'mobile',
-        os: 'iOS',
-        browser: 'Safari',
-      },
-      {
-        city: 'Heliopolis',
-        region: 'Cairo Governorate',
-        lat: '30.088600',
-        lng: '31.328500',
-        country: 'Egypt',
-        countryCode: 'EG',
-        channel: 'linkedin',
-        referrer: 'https://www.linkedin.com/',
-        deviceType: 'desktop',
-        os: 'macOS',
-        browser: 'Chrome',
-      },
-      {
-        city: 'Dokki & Mohandessin',
-        region: 'Giza Governorate',
-        lat: '30.038100',
-        lng: '31.211400',
-        country: 'Egypt',
-        countryCode: 'EG',
-        channel: 'facebook',
-        referrer: 'https://www.facebook.com/',
-        deviceType: 'mobile',
-        os: 'Android',
-        browser: 'Chrome',
-      },
-      {
-        city: '6th of October City',
-        region: 'Giza Governorate',
-        lat: '29.972300',
-        lng: '30.932400',
-        country: 'Egypt',
-        countryCode: 'EG',
-        channel: 'instagram',
-        referrer: 'https://l.instagram.com/',
-        deviceType: 'mobile',
-        os: 'iOS',
-        browser: 'Safari',
-      },
-      {
-        city: 'Mansoura',
-        region: 'Dakahlia Governorate',
-        lat: '31.040900',
-        lng: '31.378500',
-        country: 'Egypt',
-        countryCode: 'EG',
-        channel: 'google_organic',
-        referrer: 'https://www.google.com/',
-        deviceType: 'desktop',
-        os: 'Windows',
-        browser: 'Chrome',
-      },
-      {
-        city: 'Tanta',
-        region: 'Gharbia Governorate',
-        lat: '30.786500',
-        lng: '31.000400',
-        country: 'Egypt',
-        countryCode: 'EG',
-        channel: 'direct',
-        referrer: 'https://ticknal.com',
-        deviceType: 'mobile',
-        os: 'Android',
-        browser: 'Chrome',
-      },
-      {
-        city: 'Dubai (DIFC / Marina)',
-        region: 'Dubai',
-        lat: '25.204800',
-        lng: '55.270800',
-        country: 'United Arab Emirates',
-        countryCode: 'AE',
-        channel: 'linkedin',
-        referrer: 'https://www.linkedin.com/',
-        deviceType: 'desktop',
-        os: 'macOS',
-        browser: 'Safari',
-      },
-      {
-        city: 'Riyadh (KAFD)',
-        region: 'Riyadh Region',
-        lat: '24.713600',
-        lng: '46.675300',
-        country: 'Saudi Arabia',
-        countryCode: 'SA',
-        channel: 'x_twitter',
-        referrer: 'https://x.com/',
-        deviceType: 'mobile',
-        os: 'iOS',
-        browser: 'Safari',
-      },
-      {
-        city: 'London',
-        region: 'Greater London',
-        lat: '51.507400',
-        lng: '-0.127800',
-        country: 'United Kingdom',
-        countryCode: 'GB',
-        channel: 'direct',
-        referrer: 'https://ticknal.com',
-        deviceType: 'desktop',
-        os: 'Windows',
-        browser: 'Chrome',
-      },
-    ];
-
-    extraAudiences.forEach((aud, idx) => {
-      for (let day = 1; day <= 28; day += 3) {
-        baselineRecords.push({
-          userId: null,
-          sessionId: `sess-guest-${idx}-${day}`,
-          country: aud.country,
-          countryCode: aud.countryCode,
-          regionOrGovernorate: aud.region,
-          city: aud.city,
-          latitude: aud.lat,
-          longitude: aud.lng,
-          timezone: aud.countryCode === 'EG' ? 'Africa/Cairo' : 'Asia/Dubai',
-          ispOrCarrier: 'Regional ISP',
-          channel: aud.channel,
-          referrer: aud.referrer,
-          landingPath: idx % 2 === 0 ? '/news' : '/markets',
-          deviceType: aud.deviceType,
-          os: aud.os,
-          browser: aud.browser,
-          isPwaOrNative: false,
-          createdAt: daysAgo(day, (idx * 3) % 24),
-        });
-      }
-    });
 
     if (baselineRecords.length > 0) {
       await db.insert(userTelemetryEvents).values(baselineRecords);

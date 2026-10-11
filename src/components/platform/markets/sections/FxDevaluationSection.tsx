@@ -14,6 +14,8 @@ import MoneySupplySection from './MoneySupplySection';
 import type { SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import type { FxFairValueResponse } from '@/lib/handlers/fx-fair-value-handler';
 import { useTranslation } from '@/lib/i18n';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
+import { HERO_SCENE_FX } from '@/components/landing/hero-scenes/hero-scene-snapshot';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -27,11 +29,13 @@ export default function FxDevaluationSection({
   isLoading = false,
 }: FxDevaluationSectionProps) {
   const { locale } = useTranslation();
-  const { data: fxData } = useSWR<FxFairValueResponse>(
-    '/api/macro/fx-fair-value',
+  const isHeroScene = useHeroSceneMode();
+  const { data: liveFxData } = useSWR<FxFairValueResponse>(
+    isHeroScene ? null : '/api/macro/fx-fair-value',
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 120000 }
   );
+  const fxData = isHeroScene ? HERO_SCENE_FX.data as FxFairValueResponse : liveFxData;
 
   const officialUsd = fxData?.officialUsd ?? 51.89;
   const compositeFair = fxData?.compositeFairValue ?? 52.68;
@@ -115,7 +119,7 @@ export default function FxDevaluationSection({
               {locale === 'ar' ? 'مخاطر العملة وأسعار الصرف' : 'FX & Currency Risk'}
             </h2>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/15 text-brand-blue border border-brand-blue/25">
-              {locale === 'ar' ? 'مؤشرات كلية حية' : 'Live Macro'}
+              {isHeroScene ? (locale === 'ar' ? 'لقطة ١٠ أكتوبر' : 'Oct 10 snapshot') : (locale === 'ar' ? 'مؤشرات كلية حية' : 'Live Macro')}
             </span>
           </div>
           <p className="section-subtitle">

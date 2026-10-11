@@ -1,11 +1,12 @@
 import StrategiesPageView from '@/components/platform/strategies/StrategiesPageView';
+import { getStrategyIndicatorCatalog } from '@/components/platform/strategies/strategy-indicator-catalog';
 
 export const dynamic = 'force-dynamic';
 
 export default function StrategiesPage() {
   return (
     <div className="flex-1 h-full w-full flex flex-col bg-black text-white overflow-hidden pb-[calc(64px+max(var(--ticknal-safe-area-bottom),0.5rem))] md:pb-0">
-      <StrategiesPageView />
+      <StrategiesPageView indicatorCatalog={getStrategyIndicatorCatalog()} />
     </div>
   );
 }

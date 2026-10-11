@@ -6,8 +6,7 @@ import ConsolePageHeader from '../ConsolePageHeader';
 import ConsoleSectionNav, { type ConsoleNavSection } from '../ConsoleSectionNav';
 import SubscriptionMonetizationKpis from './SubscriptionMonetizationKpis';
 import SubscriptionBillingLedger from './SubscriptionBillingLedger';
-import SubscriptionRenewalPipeline from './SubscriptionRenewalPipeline';
-import SubscriptionPlansMatrix from './SubscriptionPlansMatrix';
+import PricingPlansSection from './pricing-plans/PricingPlansSection';
 import ConsoleUserDetailDrawer from '../users/ConsoleUserDetailDrawer';
 import type {
   ConsoleSubscriptionsPageData,
@@ -19,9 +18,8 @@ interface ConsoleSubscriptionsViewProps {
 }
 
 const SECTIONS: ConsoleNavSection[] = [
-  { id: 'section-subs-metrics', label: 'Revenue KPIs', shortLabel: 'KPIs' },
-  { id: 'section-subs-ledger', label: 'Billing Ledger', shortLabel: 'Ledger' },
-  { id: 'section-subs-renewals', label: 'Renewal Pipeline', shortLabel: 'Renewals' },
+  { id: 'section-subs-overview', label: 'Subscriptions Overview', shortLabel: 'Overview' },
+  { id: 'section-subs-ledger', label: 'Customer Billing & Ledger', shortLabel: 'Ledger' },
   { id: 'section-subs-plans', label: 'Pricing Plans', shortLabel: 'Plans' },
 ];
 
@@ -38,18 +36,18 @@ export default function ConsoleSubscriptionsView({ data }: ConsoleSubscriptionsV
       {/* 1. Header (Breadcrumbs) */}
       <ConsolePageHeader pageTitle="Subscriptions & Billing" />
 
-      {/* 2. Floating Section Nav */}
+      {/* 2. Floating Section Nav (3 Focused Sections) */}
       <ConsoleSectionNav sections={SECTIONS} />
 
       {/* 3. Sections Stack */}
       <div className="app-page page-sections-stack pb-28 md:pb-20 pt-1 space-y-10 max-w-[1600px] mx-auto w-full px-3 sm:px-6">
         {/* ========================================================= */}
-        {/* SECTION 1: MONETIZATION KPIS & REVENUE TRAJECTORY */}
+        {/* SECTION 1: SUBSCRIPTIONS OVERVIEW */}
         {/* ========================================================= */}
-        <section id="section-subs-metrics" className="section-container space-y-4">
+        <section id="section-subs-overview" className="section-container space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-white/10">
             <div className="flex flex-col gap-0.5 min-w-0">
-              <h2 className="section-title">Subscriptions & Revenue Trajectory</h2>
+              <h2 className="section-title">Subscriptions Overview</h2>
               <p className="section-subtitle">
                 Monthly recurring revenue run, active paid licenses, and tier pricing specifications
               </p>
@@ -64,18 +62,19 @@ export default function ConsoleSubscriptionsView({ data }: ConsoleSubscriptionsV
           <SubscriptionMonetizationKpis
             kpis={data.kpis}
             tierSummary={data.tierSummary}
+            subscriptions={data.subscriptions}
           />
         </section>
 
         {/* ========================================================= */}
-        {/* SECTION 2: CUSTOMER BILLING LEDGER */}
+        {/* SECTION 2: CUSTOMER BILLING & LEDGER (WITH MERGED RENEWALS) */}
         {/* ========================================================= */}
         <section id="section-subs-ledger" className="section-container space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-white/10">
             <div className="flex flex-col gap-0.5 min-w-0">
-              <h2 className="section-title">Customer Billing Ledger</h2>
+              <h2 className="section-title">Customer Billing & Ledger</h2>
               <p className="section-subtitle">
-                Individual subscriber status, billing cycles, payment gateways, and manual license grants
+                Subscriber status, renewal pipeline watch, billing cycles, and license management
               </p>
             </div>
             <span className="text-[11px] text-zinc-400 tabular-nums self-start sm:self-auto">
@@ -91,39 +90,19 @@ export default function ConsoleSubscriptionsView({ data }: ConsoleSubscriptionsV
         </section>
 
         {/* ========================================================= */}
-        {/* SECTION 3: RENEWAL PIPELINE & CHURN PREVENTION */}
-        {/* ========================================================= */}
-        <section id="section-subs-renewals" className="section-container space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-white/10">
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <h2 className="section-title">Renewal Pipeline & Churn Prevention</h2>
-              <p className="section-subtitle">
-                Upcoming expirations, scheduled monthly renewals, and auto-renew cancellation flags
-              </p>
-            </div>
-          </div>
-
-          <SubscriptionRenewalPipeline
-            renewalPipeline={data.renewalPipeline}
-            onSelectUser={setActiveUser}
-            onRefresh={handleRefresh}
-          />
-        </section>
-
-        {/* ========================================================= */}
-        {/* SECTION 4: COMMERCIAL PRICING PLANS & PACKAGING MATRIX */}
+        {/* SECTION 3: PRICING PLANS */}
         {/* ========================================================= */}
         <section id="section-subs-plans" className="section-container space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-white/10">
             <div className="flex flex-col gap-0.5 min-w-0">
-              <h2 className="section-title">Pricing & Commercial Packaging Matrix</h2>
+              <h2 className="section-title">Pricing Plans</h2>
               <p className="section-subtitle">
-                Current platform plan tiers, feature entitlements, live subscriber volumes, and yields
+                Live commercial tier packaging, quotas, feature allocations, and subscriber yields
               </p>
             </div>
           </div>
 
-          <SubscriptionPlansMatrix tierSummary={data.tierSummary} />
+          <PricingPlansSection tierSummary={data.tierSummary} onRefresh={handleRefresh} />
         </section>
       </div>
 
