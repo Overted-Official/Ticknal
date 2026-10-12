@@ -272,14 +272,28 @@ export default function ChartWidget({
   const [isLiveIntraday, setIsLiveIntraday] = useState(false);
   const [liveIntradayCandle, setLiveIntradayCandle] = useState<ChartData | null>(null);
 
-  const visibleData = data;
-  const activeCandle = hoveredCandle ?? (liveIntradayCandle ?? (data.length > 0 ? data[data.length - 1] : null));
+  const visibleData = useMemo(() => {
+    if (!liveIntradayCandle || isFund) return data;
+    if (!data || data.length === 0) return [liveIntradayCandle];
+    const lastBar = data[data.length - 1];
+    if (liveIntradayCandle.time === lastBar.time) {
+      return [...data.slice(0, -1), liveIntradayCandle];
+    } else if (liveIntradayCandle.time > lastBar.time) {
+      return [...data, liveIntradayCandle];
+    }
+    return data;
+  }, [data, liveIntradayCandle, isFund]);
+
+  const visibleDataRef = useRef(visibleData);
+  visibleDataRef.current = visibleData;
+
+  const activeCandle = hoveredCandle ?? (visibleData && visibleData.length > 0 ? visibleData[visibleData.length - 1] : null);
 
   // Reset live intraday bar on instrument change
   useEffect(() => {
     setIsLiveIntraday(false);
     setLiveIntradayCandle(null);
-  }, [symbol, data]);
+  }, [symbol]);
 
   // Intraday 15-minute live feed polling (EGX, Gold, Silver during active market hours)
   useEffect(() => {
@@ -299,7 +313,9 @@ export default function ChartWidget({
       }
 
       try {
-        const res = await fetch(`/api/market/intraday?ticker=${encodeURIComponent(symbol)}`);
+        const res = await fetch(`/api/market/intraday?ticker=${encodeURIComponent(symbol)}&_t=${Date.now()}`, {
+          cache: 'no-store',
+        });
         if (!res.ok) return;
 
         const result = await res.json();
@@ -536,7 +552,7 @@ export default function ChartWidget({
         setHoveredCandle((prev) => (prev === null ? prev : null));
       } else {
         const timeStr = typeof param.time === 'string' ? param.time : String(param.time);
-        const candle = (data || []).find((d) => d.time === timeStr);
+        const candle = (visibleDataRef.current || []).find((d) => d.time === timeStr);
         if (candle) {
           setHoveredCandle((prev) => (prev?.time === candle.time ? prev : candle));
         }
@@ -548,7 +564,7 @@ export default function ChartWidget({
       setContextMenu(null);
       if (param.time) {
         const timeStr = typeof param.time === 'string' ? param.time : String(param.time);
-        const candle = (data || []).find((d) => d.time === timeStr);
+        const candle = (visibleDataRef.current || []).find((d) => d.time === timeStr);
         if (candle && candlestickSeriesRef.current && chartRef.current) {
           setHoveredCandle(candle);
           try {
@@ -629,15 +645,15 @@ export default function ChartWidget({
 
       if (time) {
         const timeStr = typeof time === 'string' ? time : String(time);
-        targetCandle = (data || []).find((d) => d.time === timeStr);
+        targetCandle = (visibleDataRef.current || []).find((d) => d.time === timeStr);
       }
 
-      if (!targetCandle && data && data.length > 0) {
+      if (!targetCandle && visibleDataRef.current && visibleDataRef.current.length > 0) {
         // Fallback: use logical index for smooth edge snapping
         const logical = chartRef.current.timeScale().coordinateToLogical(x);
         if (logical !== null) {
-          const clampedIndex = Math.max(0, Math.min(data.length - 1, Math.round(logical)));
-          targetCandle = data[clampedIndex];
+          const clampedIndex = Math.max(0, Math.min(visibleDataRef.current.length - 1, Math.round(logical)));
+          targetCandle = visibleDataRef.current[clampedIndex];
         }
       }
 
@@ -1241,8 +1257,8 @@ export default function ChartWidget({
             type="button"
             onClick={() => {
               setMobileChartMode('inspect');
-              if (data && data.length > 0) {
-                const target = hoveredCandle ?? data[data.length - 1];
+              if (visibleDataRef.current && visibleDataRef.current.length > 0) {
+                const target = hoveredCandle ?? visibleDataRef.current[visibleDataRef.current.length - 1];
                 setHoveredCandle(target);
                 if (chartRef.current && candlestickSeriesRef.current) {
                   try {
@@ -1398,7 +1414,7 @@ export default function ChartWidget({
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6 safe-area-bottom custom-scrollbar bg-black">
+                <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-black">
                   <TickerPositions
                     symbol={symbol}
                     companyName={companyName}
@@ -1408,6 +1424,10 @@ export default function ChartWidget({
                     chartData={data}
                     currency={instrumentCurrency}
                     onOrdersChange={() => setPositionsRefreshKey((k) => k + 1)}
+                    onDeletePosition={() => {
+                      setPositionsDrawerOpen(false);
+                      setPositionsRefreshKey((k) => k + 1);
+                    }}
                     onEditOrder={(order) => setSelectedOrderToEdit(order as any)}
                     onCloseOrder={(order) => setSelectedOrderToClose(order as any)}
                     onAddNew={() => {

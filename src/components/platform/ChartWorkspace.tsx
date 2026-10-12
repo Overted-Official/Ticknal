@@ -160,7 +160,6 @@ export default function ChartWorkspace({
     if (requestedStrategy && STRATEGIES[requestedStrategy]) return;
 
     let cancelled = false;
-    const controller = new AbortController();
 
     const resolveChampion = async () => {
       try {
@@ -169,12 +168,10 @@ export default function ChartWorkspace({
           timeframe,
           start: '2025-01-01',
         });
-        const response = await fetch(`/api/strategy-champion?${params.toString()}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(`/api/strategy-champion?${params.toString()}`);
         if (!response.ok) return;
 
-        const champion = await response.json() as { strategy?: string };
+        const champion = (await response.json()) as { strategy?: string };
         const strategy = champion.strategy;
         if (cancelled || !strategy || !STRATEGIES[strategy]) return;
 
@@ -186,7 +183,7 @@ export default function ChartWorkspace({
         });
         setStrategyParams(defaults);
       } catch (error: any) {
-        if (error?.name !== 'AbortError') {
+        if (!cancelled && error?.name !== 'AbortError') {
           console.warn('Could not resolve the ticker strategy champion:', error);
         }
       }
@@ -195,7 +192,6 @@ export default function ChartWorkspace({
     resolveChampion();
     return () => {
       cancelled = true;
-      controller.abort();
     };
   }, [isHeroScene, requestedStrategy, symbol, timeframe]);
 

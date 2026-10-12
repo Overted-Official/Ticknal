@@ -40,6 +40,7 @@ export async function ensureTelemetryTableExists(): Promise<void> {
     isTableEnsured = true;
   } catch (err) {
     console.error('[telemetry-seed] Failed to ensure user_telemetry_events table:', err);
+    isTableEnsured = true;
   }
 }
 

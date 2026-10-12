@@ -63,12 +63,15 @@ export default function RightSidebar({
   });
 
   const liveData = useMemo(() => {
-    if (!quoteData || !quoteData.data) return null;
-    const { close, previous_close } = quoteData.data;
-    const change = close - previous_close;
-    const changePct = previous_close ? (change / previous_close) * 100 : 0;
+    if (!quoteData) return null;
+    const data = quoteData.data || quoteData;
+    const priceVal = typeof data.price === 'number' ? data.price : (typeof data.close === 'number' ? data.close : null);
+    if (priceVal === null) return null;
+    const prevPriceVal = typeof data.previous_close === 'number' ? data.previous_close : (typeof data.price === 'number' && typeof data.change === 'number' ? data.price - data.change : priceVal);
+    const change = typeof data.change === 'number' ? data.change : priceVal - prevPriceVal;
+    const changePct = typeof data.changePercent === 'number' ? data.changePercent : (prevPriceVal ? (change / prevPriceVal) * 100 : 0);
     return {
-      price: close.toFixed(2),
+      price: priceVal.toFixed(2),
       change: `${change > 0 ? '+' : ''}${change.toFixed(2)} (${changePct.toFixed(2)}%)`,
       changePct: `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}%`,
       isUp: change >= 0
@@ -319,7 +322,7 @@ export default function RightSidebar({
     router.push(`?${params.toString()}`);
   };
 
-  const currentPriceNum = parseFloat(selectedItem?.price || '0');
+  const currentPriceNum = liveData?.price ? parseFloat(liveData.price) : parseFloat(selectedItem?.price || '0');
   const validPrice = !isNaN(currentPriceNum) && currentPriceNum > 0 ? currentPriceNum : 100;
   const dLow = quoteData?.dayLow ?? (rangeData?.dayHigh ? rangeData.dayLow : (quoteData?.low ? Number(quoteData.low) : validPrice * 0.98));
   const dHigh = quoteData?.dayHigh ?? (rangeData?.dayHigh ? rangeData.dayHigh : (quoteData?.high ? Number(quoteData.high) : validPrice * 1.02));
@@ -599,8 +602,8 @@ export default function RightSidebar({
               <div className="flex items-baseline gap-2 min-w-0">
                 <span className="font-medium text-plt-text text-xs tracking-tight truncate">{displaySelectedSymbol}</span>
                 {isDetailsCollapsed && (
-                  <span className={`text-[11px] tabular-nums font-semibold ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
-                    {selectedItem.price || '0.00'} {selectedItem.currency ? (selectedItem.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedItem.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
+                  <span className={`text-[11px] tabular-nums font-semibold ${(liveData?.isUp ?? selectedItem.isUp) ? 'text-profit-num' : 'text-loss-num'}`}>
+                    {(liveData?.price || selectedItem.price) || '0.00'} {selectedItem.currency ? (selectedItem.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedItem.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
                   </span>
                 )}
               </div>
@@ -636,14 +639,14 @@ export default function RightSidebar({
               {/* Price & Change */}
               <div className="py-1 space-y-1">
                 <div className="flex items-baseline space-x-2">
-                  <span className={`text-3xl font-bold tabular-nums tracking-tight ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
-                    {selectedItem.price || '0.00'}
+                  <span className={`text-3xl font-bold tabular-nums tracking-tight ${(liveData?.isUp ?? selectedItem.isUp) ? 'text-profit-num' : 'text-loss-num'}`}>
+                    {(liveData?.price || selectedItem.price) || '0.00'}
                   </span>
                   <span className="text-[11px] text-text-muted font-sans font-medium">
                     {selectedItem.currency ? (selectedItem.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedItem.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
                   </span>
-                  <div className={`ml-2 text-xs font-semibold tabular-nums ${selectedItem.isUp ? 'text-profit-num' : 'text-loss-num'}`}>
-                    {selectedItem.changePct || (selectedItem.change ? (selectedItem.change.includes('(') ? selectedItem.change.split('(')[1]?.replace(')', '') : selectedItem.change) : '')}
+                  <div className={`ml-2 text-xs font-semibold tabular-nums ${(liveData?.isUp ?? selectedItem.isUp) ? 'text-profit-num' : 'text-loss-num'}`}>
+                    {liveData?.changePct || selectedItem.changePct || (selectedItem.change ? (selectedItem.change.includes('(') ? selectedItem.change.split('(')[1]?.replace(')', '') : selectedItem.change) : '')}
                   </div>
                 </div>
 

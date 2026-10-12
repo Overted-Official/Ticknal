@@ -300,9 +300,9 @@ export default function TickerPositionsDrawer({
                 </div>
 
                 {/* Content Body */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6 safe-area-bottom">
+                <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-black">
                   {isLoading && orders.length === 0 ? (
-                    <SectionLoadingState className="py-20" label={isArabic ? 'جارٍ تحميل الصفقات والأوامر…' : 'Loading positions and orders…'} />
+                    <SectionLoadingState className="py-20 p-4 sm:p-6" label={isArabic ? 'جارٍ تحميل الصفقات والأوامر…' : 'Loading positions and orders…'} />
                   ) : (
                     <TickerPositions
                       symbol={symbol}
@@ -312,6 +312,10 @@ export default function TickerPositionsDrawer({
                       currentPrice={currentPrice}
                       chartData={[]}
                       onOrdersChange={() => setPositionsRefreshKey((k) => k + 1)}
+                      onDeletePosition={() => {
+                        onClose();
+                        onPositionsChanged?.();
+                      }}
                       onEditOrder={(ord) =>
                         setSelectedOrderToEdit({
                           id: ord.id,

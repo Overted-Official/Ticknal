@@ -25,6 +25,9 @@
 }
 
 @layer utilities {
+  .font-cairo {
+    font-family: var(--font-cairo), 'Cairo', sans-serif;
+  }
   .font-serif {
     font-family: var(--font-spectral), 'Spectral', 'Sentient', Georgia, serif;
   }
@@ -2978,3 +2981,100 @@ line.recharts-tooltip-cursor,
 .leaflet-container {
   background: #000000 !important;
 }
+
+/* Strategy Studio: the canvas, cards and controls share the platform's pure-black surface. */
+.strategy-flow-canvas { position: relative; background-color: #000; background-image: radial-gradient(circle, #1c1c1c 0.8px, transparent 0.8px); background-size: 12px 12px; }
+.strategy-flow-graph-frame { position: absolute; inset: 100px 0 77px; }
+.strategy-flow-canvas .react-flow { background: transparent; }
+.strategy-flow-canvas .react-flow__node-strategy { width: 248px; }
+.strategy-flow-stage { position: relative; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: transparent; color: #fff; }
+.strategy-flow-stage-header { position: relative; min-height: 108px; border-bottom: 1px solid rgba(255,255,255,.09); border-radius: 12px 12px 0 0; background: #000; padding: 14px 14px 11px; }
+.strategy-flow-stage-number { display: inline-flex; min-width: 19px; align-items: center; color: rgba(255,255,255,.38); font-size: 10px; font-weight: 600; line-height: 16px; }
+.strategy-flow-stage-action { display: inline-flex; min-height: 26px; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; background: #000; padding: 0 7px; color: rgba(255,255,255,.62); font-size: 10px; font-weight: 600; transition: border-color .16s ease, color .16s ease; }
+.strategy-flow-stage-action:hover:not(:disabled), .strategy-flow-stage-action:focus-visible { border-color: rgba(255,255,255,.35); color: #fff; }
+.strategy-flow-stage-action:disabled { cursor: not-allowed; opacity: .35; }
+.strategy-flow-stage-add { border-color: rgba(41,98,255,.45); color: #fff; }
+.strategy-flow-stage-empty { margin: 33px 16px 0; border: 1px dashed rgba(255,255,255,.13); border-radius: 8px; padding: 19px 12px; color: rgba(255,255,255,.38); font-size: 10px; line-height: 1.5; text-align: center; }
+.strategy-flow-canvas .react-flow__edge-path { filter: drop-shadow(0 0 3px rgba(79, 142, 208, .28)); }
+.strategy-flow-canvas .react-flow__edge:hover .react-flow__edge-path { stroke-width: 2.5px !important; }
+.strategy-flow-current { fill: none; stroke-width: 3px; stroke-linecap: round; stroke-dasharray: 3 97; pointer-events: none; filter: drop-shadow(0 0 5px currentColor); animation: strategy-flow-charge 5.4s ease-in-out infinite; }
+@keyframes strategy-flow-charge { 0% { stroke-dashoffset: 100; opacity: 0; } 5% { opacity: .92; } 27% { stroke-dashoffset: 0; opacity: .92; } 33%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .strategy-flow-current { animation: none; opacity: 0; } }
+.strategy-flow-canvas .react-flow__controls { display: flex; gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px; background: #000; box-shadow: 0 8px 26px rgba(0,0,0,.55); }
+.strategy-flow-canvas .react-flow__controls-button { width: 26px; height: 26px; border: 0; border-radius: 5px; background: #000; color: rgba(255,255,255,.7); }
+.strategy-flow-canvas .react-flow__controls-button:hover { background: rgba(255,255,255,.06); color: #fff; }
+.strategy-flow-canvas .react-flow__controls-button svg { fill: currentColor; }
+.strategy-flow-card { position: relative; overflow: visible; width: 248px; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; background: #000; color: #fff; box-shadow: 0 14px 40px rgba(0,0,0,.65), 0 0 28px color-mix(in srgb, var(--node-accent) 9%, transparent); transition: border-color .16s ease, box-shadow .16s ease; }
+.strategy-flow-card:hover, .strategy-flow-card-selected { border-color: color-mix(in srgb, var(--node-accent) 60%, white 10%); box-shadow: 0 16px 44px rgba(0,0,0,.7), 0 0 30px color-mix(in srgb, var(--node-accent) 15%, transparent); }
+.strategy-flow-card-heading { display: flex; align-items: center; gap: 7px; min-height: 37px; padding: 7px 9px 7px 12px; }
+.strategy-flow-card-dot { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--node-accent); box-shadow: 0 0 9px var(--node-accent); }
+.strategy-flow-icon { display: inline-flex; width: 23px; height: 23px; flex: none; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 5px; color: rgba(255,255,255,.45); transition: color .15s ease, background .15s ease; }
+.strategy-flow-icon:hover, .strategy-flow-icon:focus-visible { background: rgba(255,255,255,.07); color: #fff; outline: none; }
+.strategy-flow-card-content { padding: 0 6px 6px; }
+.strategy-flow-card-inset { border: 1px solid var(--color-cold-gray-800); border-radius: 8px; background: var(--color-cold-gray-850); padding: 9px; }
+.strategy-flow-card-summary { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; color: rgba(255,255,255,.78); font-size: 10px; line-height: 1.5; }
+.strategy-flow-chip { border: 1px solid rgba(255,255,255,.12); border-radius: 4px; background: rgba(0,0,0,.22); padding: 3px 5px; color: rgba(255,255,255,.7); font-size: 8px; font-weight: 600; letter-spacing: .04em; }
+.strategy-flow-settings { max-height: 390px; overflow-y: auto; margin-top: 12px; border-top: 1px solid rgba(255,255,255,.1); padding-top: 11px; }
+.strategy-flow-settings > div > .grid { grid-template-columns: minmax(0, 1fr); }
+.strategy-flow-handle { width: 8px !important; height: 8px !important; border: 2px solid #000 !important; background: var(--node-accent) !important; box-shadow: 0 0 0 1px var(--node-accent), 0 0 10px var(--node-accent); }
+.strategy-flow-handle.react-flow__handle-left { left: -5px; }
+.strategy-flow-handle.react-flow__handle-right { right: -5px; }
+.strategy-flow-handle.react-flow__handle-top { top: -5px; }
+.strategy-flow-handle.react-flow__handle-bottom { bottom: -5px; }
+.strategy-flow-handle-idle { opacity: 0; }
+.react-flow__node-strategy:hover .strategy-flow-handle-idle { opacity: .45; }
+.strategy-flow-floating-toolbar { position: absolute; z-index: 5; right: 18px; top: 18px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.13); border-radius: 9px; background: #000; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.65); }
+.strategy-studio-identity { position: absolute; z-index: 6; top: 4px; inset-inline-start: 26px; max-width: min(340px, calc(100% - 48px)); pointer-events: none; }
+.strategy-studio-identity-title { color: rgba(255,255,255,.28); font-size: 21px; font-weight: 600; letter-spacing: -.035em; line-height: 1.2; }
+.strategy-studio-identity-caption { margin-top: 2px; color: rgba(255,255,255,.36); font-size: 11px; line-height: 1.3; }
+.strategy-studio-identity :is(input, button) { pointer-events: auto; }
+.strategy-studio-dock { position: absolute; z-index: 10; bottom: 17px; left: 50%; display: flex; width: max-content; max-width: calc(100% - 40px); min-height: 54px; align-items: center; gap: 7px; overflow: visible; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(0,0,0,.84); padding: 6px; box-shadow: 0 18px 48px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.07); backdrop-filter: blur(18px) saturate(130%); transform: translateX(-50%); scrollbar-width: none; }
+.strategy-studio-dock::-webkit-scrollbar { display: none; }
+.strategy-studio-selector { width: 184px; flex: none; }
+.strategy-studio-selector button[aria-haspopup="listbox"] { height: 40px; border-color: rgba(255,255,255,.13); border-radius: 999px; background: rgba(255,255,255,.04); padding-inline: 16px; }
+.strategy-studio-selector button[aria-haspopup="listbox"]:hover { border-color: rgba(255,255,255,.26); background: rgba(255,255,255,.07); }
+.strategy-studio-dock .seg-control { height: 40px; border-color: rgba(255,255,255,.1); border-radius: 999px; background: rgba(255,255,255,.035); }
+.strategy-studio-dock .seg-control-btn { border-radius: 999px; padding-inline: 12px; }
+.strategy-studio-dock .seg-control-btn.active { background: rgba(255,255,255,.13); box-shadow: none; }
+.strategy-studio-dock-divider { width: 1px; height: 22px; flex: none; margin-inline: 3px; background: rgba(255,255,255,.14); }
+.strategy-flow-add, .strategy-studio-save-button { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; gap: 5px; border: 1px solid #0878d8; border-radius: 6px; background: #0878d8; padding: 0 10px; color: #fff; font-size: 11px; font-weight: 600; transition: background .15s ease; }
+.strategy-flow-add:hover, .strategy-studio-save-button:hover { background: #168cf3; }
+.strategy-studio-toolbar-button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 7px; background: #000; padding: 0 10px; color: rgba(255,255,255,.72); font-size: 11px; font-weight: 600; white-space: nowrap; transition: border-color .15s ease, color .15s ease; }
+.strategy-studio-toolbar-button:hover { border-color: rgba(255,255,255,.3); color: #fff; }
+.strategy-studio-dock .strategy-studio-toolbar-button { min-height: 40px; border-color: transparent; border-radius: 999px; background: transparent; padding-inline: 12px; color: rgba(255,255,255,.76); font-size: 12px; transition: background .16s ease, color .16s ease; }
+.strategy-studio-dock .strategy-studio-toolbar-button:hover { border-color: transparent; background: rgba(255,255,255,.07); color: #fff; }
+.strategy-studio-dock .strategy-studio-save-button { min-height: 40px; border-color: rgba(255,255,255,.14); border-radius: 999px; background: rgba(255,255,255,.09); padding-inline: 14px; font-size: 12px; transition: border-color .16s ease, background .16s ease; }
+.strategy-studio-dock .strategy-studio-save-button:hover { border-color: rgba(255,255,255,.27); background: rgba(255,255,255,.14); }
+.strategy-studio-analytics-button { display: inline-flex; min-height: 40px; flex: none; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; background: var(--color-tv-blue-500); padding-inline: 16px; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; box-shadow: 0 4px 20px rgba(41,98,255,.28); transition: filter .16s ease, box-shadow .16s ease; }
+.strategy-studio-analytics-button:hover { filter: brightness(1.13); box-shadow: 0 5px 25px rgba(41,98,255,.4); }
+.strategy-studio-analytics-button[aria-expanded="true"] { box-shadow: 0 0 0 1px rgba(255,255,255,.3), 0 5px 25px rgba(41,98,255,.4); }
+.strategy-studio-dock-rail { position: absolute; z-index: 10; bottom: 17px; inset-inline-end: 12px; width: 44px; height: 44px; }
+.strategy-studio-dock-rail-trigger { display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(0,0,0,.9); color: rgba(255,255,255,.8); box-shadow: 0 12px 32px rgba(0,0,0,.65); backdrop-filter: blur(12px); transition: border-color .16s ease, color .16s ease; }
+.strategy-studio-dock-rail-trigger:hover, .strategy-studio-dock-rail-trigger[aria-expanded="true"] { border-color: rgba(255,255,255,.38); color: #fff; }
+.strategy-studio-dock--rail { position: absolute; bottom: 52px; left: auto; right: auto; inset-inline-end: 0; width: 196px; max-width: min(196px, calc(100vw - 96px)); min-height: 0; flex-direction: column; align-items: stretch; gap: 5px; border-radius: 20px; padding: 8px; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(6px); transition: opacity .16s ease, transform .16s ease, visibility .16s ease; }
+.strategy-studio-dock--rail.is-open { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
+.strategy-studio-dock--rail .strategy-studio-selector { width: 100%; }
+.strategy-studio-dock--rail .seg-control { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.strategy-studio-dock--rail .strategy-studio-dock-divider { width: 100%; height: 1px; margin: 3px 0; }
+.strategy-studio-dock--rail :is(.strategy-studio-toolbar-button, .strategy-studio-save-button, .strategy-studio-analytics-button) { width: 100%; }
+.strategy-studio-dock--rail .strategy-studio-toolbar-button { justify-content: flex-start; padding-inline: 14px; }
+@media (max-width: 900px) { .strategy-studio-dock { bottom: 12px; max-width: calc(100% - 20px); overflow-x: auto; } .strategy-studio-identity { inset-inline-start: 14px; } .strategy-flow-floating-toolbar { right: 14px; top: 86px; } }
+.strategy-studio-dock-rail .strategy-studio-dock--rail { bottom: 52px; max-width: min(196px, calc(100vw - 96px)); overflow: visible; }
+.strategy-studio-resize-handle { z-index: 6; width: 7px; flex: none; cursor: col-resize; background: #000; border-left: 1px solid rgba(255,255,255,.12); }
+.strategy-studio-resize-handle:hover, .strategy-studio-resize-handle:focus-visible { background: #0878d8; outline: none; }
+.strategy-analytics-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.strategy-analytics-kpi { min-width: 0; min-height: 78px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #000; padding: 11px 12px; }
+.strategy-industry-table { table-layout: fixed; }
+.strategy-industry-table th, .strategy-industry-table td { padding: 10px 5px; }
+.strategy-industry-table th:first-child, .strategy-industry-table td:first-child { width: 45%; padding-inline-start: 8px; }
+.strategy-industry-table th:last-child, .strategy-industry-table td:last-child { padding-inline-end: 8px; }
+.strategy-industry-table th button { color: inherit; font: inherit; white-space: nowrap; }
+.strategy-industry-table th button[aria-pressed="true"] { color: #fff; }
+.strategy-industry-table th button:hover { color: #fff; }
+.strategy-company-list { max-height: 254px; overflow-y: auto; border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); }
+.strategy-company-row { display: flex; min-height: 55px; align-items: center; gap: 10px; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.strategy-company-row:last-child { border-bottom: 0; }
+.strategy-company-row:hover { background: rgba(255,255,255,.04); }
+.strategy-company-row.is-active { box-shadow: inset 2px 0 0 var(--color-tv-blue-500); }
+.strategy-flow-picker-layer { position: absolute; z-index: 8; inset: 0; pointer-events: none; }
+.strategy-flow-picker { position: absolute; top: 16px; bottom: 16px; left: 16px; width: min(350px, calc(100% - 32px)); overflow-y: auto; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: #000; box-shadow: 0 30px 80px rgba(0,0,0,.8); pointer-events: auto; }

@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { connection } from 'next/server';
+import { eq } from 'drizzle-orm';
+import { db } from '@/db';
+import { profiles } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { getServerLocale } from '@/lib/i18n/server';
 import { getCachedOpportunitiesSync, getExitSignalsForHoldings } from '@/lib/opportunities';
@@ -55,8 +58,10 @@ export default async function HomePage() {
   let netWorthHistory: NetWorthHistoryPoint[] = [];
   let inflationSeries: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }> = [];
 
+  let profileRow: typeof profiles.$inferSelect | undefined;
+
   try {
-    const [statsResult, alertResult, accountsResult, txResult, fxRatesResult, inflationResult, seriesResult] = await Promise.allSettled([
+    const [statsResult, alertResult, accountsResult, txResult, fxRatesResult, inflationResult, seriesResult, profileResult] = await Promise.allSettled([
       getOrderStats(user.id),
       getActiveAlertCount(user.id),
       getUserBankAccounts(user.id),
@@ -64,6 +69,7 @@ export default async function HomePage() {
       getFxRates(),
       getLatestInflationRate(),
       getHistoricalInflationSeries(),
+      db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1),
     ]);
 
     if (statsResult.status === 'fulfilled') {
@@ -108,6 +114,10 @@ export default async function HomePage() {
         usCpiInflation: r.usCpiInflation ? String(r.usCpiInflation) : undefined,
       }));
     }
+
+    if (profileResult.status === 'fulfilled' && profileResult.value?.[0]) {
+      profileRow = profileResult.value[0];
+    }
   } catch (err) {
     console.error('Unexpected error in HomePage data loading:', err);
   }
@@ -131,6 +141,12 @@ export default async function HomePage() {
     ? (cachedOpps.filter((item) => item.signal.signal === 'BUY').slice(0, 50) as Opportunity[])
     : [];
 
+  const userProfile = {
+    name: profileRow?.fullName || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Investor',
+    avatarUrl: profileRow?.avatarUrl || user.user_metadata?.avatar_url || null,
+    email: user.email || '',
+  };
+
   return (
     <HomePageView
       orderStats={orderStats}
@@ -143,6 +159,7 @@ export default async function HomePage() {
       cbeInflationRate={cbeInflationRate}
       initialNetWorthHistory={netWorthHistory}
       initialInflationSeries={inflationSeries}
+      userProfile={userProfile}
     />
   );
 }

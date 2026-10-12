@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { dailyPrices, egxInvestorFlows, systemLogs } from '@/db/schema';
+import { dailyPrices, egxInvestorFlows, systemLogs, tickers } from '@/db/schema';
 import { sql, eq, and, notInArray, desc } from 'drizzle-orm';
 import { revalidateTag, revalidatePath } from 'next/cache';
 
@@ -113,7 +113,13 @@ export async function syncDailyInvestorFlows(options?: {
     const latestPrice = await db
       .select({ date: dailyPrices.date })
       .from(dailyPrices)
-      .where(notInArray(dailyPrices.tickerSymbol, ['EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SILVER']))
+      .innerJoin(tickers, eq(dailyPrices.tickerSymbol, tickers.symbol))
+      .where(
+        and(
+          notInArray(tickers.sector, ['Funds', 'Macro', 'Indices']),
+          sql`${dailyPrices.volume}::numeric > 0`
+        )
+      )
       .orderBy(desc(dailyPrices.date))
       .limit(1);
 
@@ -123,26 +129,17 @@ export async function syncDailyInvestorFlows(options?: {
     dateStr = typeof latestPrice[0].date === 'string' ? latestPrice[0].date : new Date(latestPrice[0].date).toISOString().split('T')[0];
   }
 
-  // 3. Calculate real aggregate trading turnover from daily_prices for that date
-  const turnoverRes: any = await db.execute(sql`
-    SELECT 
-      SUM(close::numeric * volume::numeric) as total_turnover,
-      COUNT(DISTINCT ticker_symbol) as active_tickers
-    FROM ${dailyPrices}
-    WHERE date = ${dateStr}
-      AND ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SILVER')
-  `);
+  // Check day of week (EGX trading days are Sun-Thu; Fri=5, Sat=6 are non-trading days)
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const targetDateObj = new Date(Date.UTC(y, m - 1, d));
+  const dayOfWeek = targetDateObj.getUTCDay();
 
-  const rows = Array.isArray(turnoverRes) ? turnoverRes : turnoverRes?.rows ?? [];
-  const turnoverRow = rows[0];
-  const realTurnover = Number(turnoverRow?.total_turnover || 0);
-
-  if (realTurnover <= 0) {
+  if (dayOfWeek === 5 || dayOfWeek === 6) {
     await db.insert(systemLogs).values({
       source: 'cron-investor-flows',
       level: 'WARN',
-      message: `Investor flows sync skipped for session ${dateStr}: No active market trading turnover recorded in daily_prices.`,
-      metadata: { date: dateStr },
+      message: `Investor flows sync skipped for session ${dateStr}: ${dayOfWeek === 5 ? 'Friday' : 'Saturday'} is an EGX weekend.`,
+      metadata: { date: dateStr, dayOfWeek },
     });
 
     return {
@@ -154,7 +151,47 @@ export async function syncDailyInvestorFlows(options?: {
       arabNet: 0,
       foreignSharePct: 0,
       source: 'DECOMPOSED_SESSION',
-      message: `No active market trading volume recorded for session ${dateStr}.`,
+      message: `Session ${dateStr} falls on an EGX weekend (market closed).`,
+    };
+  }
+
+  // 3. Calculate real aggregate trading turnover from daily_prices for that date
+  const turnoverRes: any = await db.execute(sql`
+    SELECT 
+      SUM(dp.close::numeric * dp.volume::numeric) as total_turnover,
+      COUNT(DISTINCT dp.ticker_symbol) as active_tickers
+    FROM ${dailyPrices} dp
+    JOIN ${tickers} t ON dp.ticker_symbol = t.symbol
+    WHERE dp.date = ${dateStr}
+      AND dp.volume::numeric > 0
+      AND t.sector NOT IN ('Funds', 'Macro', 'Indices')
+  `);
+
+  const rows = Array.isArray(turnoverRes) ? turnoverRes : turnoverRes?.rows ?? [];
+  const turnoverRow = rows[0];
+  const realTurnover = Number(turnoverRow?.total_turnover || 0);
+  const activeTickers = Number(turnoverRow?.active_tickers || 0);
+
+  // EGX regular sessions have 200+ traded equities and billions in turnover.
+  // Holidays or closed sessions have 0 active equities (or rare isolated anomalies).
+  if (activeTickers < 20 || realTurnover < 100_000_000) {
+    await db.insert(systemLogs).values({
+      source: 'cron-investor-flows',
+      level: 'WARN',
+      message: `Investor flows sync skipped for session ${dateStr}: Insufficient EGX trading activity (activeTickers: ${activeTickers}, turnover: ${(realTurnover / 1e6).toFixed(2)}M EGP). Market was closed or official holiday.`,
+      metadata: { date: dateStr, activeTickers, realTurnover },
+    });
+
+    return {
+      success: false,
+      date: dateStr,
+      totalTurnover: realTurnover,
+      foreignNet: 0,
+      egyptianNet: 0,
+      arabNet: 0,
+      foreignSharePct: 0,
+      source: 'DECOMPOSED_SESSION',
+      message: `No active market trading volume recorded for session ${dateStr} (${activeTickers} active equities, ${(realTurnover / 1e6).toFixed(2)}M turnover).`,
     };
   }
 
@@ -167,7 +204,7 @@ export async function syncDailyInvestorFlows(options?: {
   const existingFlow = existingRows[0];
 
   // If already present with valid non-zero values, preserve it unless explicitly forced
-  if (existingFlow && Number(existingFlow.totalTurnover) > 0) {
+  if (existingFlow && Number(existingFlow.totalTurnover) >= 100_000_000) {
     const foreignNet = Number(existingFlow.foreignNet);
     const egyptianNet = Number(existingFlow.egyptianNet);
     const arabNet = Number(existingFlow.arabNet);
@@ -191,10 +228,11 @@ export async function syncDailyInvestorFlows(options?: {
   // 5. Institutional Volume Decomposition
   // Analyze session movement of blue-chip institutional proxies (COMI, HRHO, ETEL, TMGH)
   const institutionalProxies: any = await db.execute(sql`
-    SELECT ticker_symbol, close, open, volume
-    FROM ${dailyPrices}
-    WHERE date = ${dateStr}
-      AND ticker_symbol IN ('COMI', 'HRHO', 'ETEL', 'TMGH', 'SWDY')
+    SELECT dp.ticker_symbol, dp.close, dp.open, dp.volume
+    FROM ${dailyPrices} dp
+    WHERE dp.date = ${dateStr}
+      AND dp.ticker_symbol IN ('COMI', 'HRHO', 'ETEL', 'TMGH', 'SWDY')
+      AND dp.volume::numeric > 0
   `);
   const proxyRows = Array.isArray(institutionalProxies) ? institutionalProxies : institutionalProxies?.rows ?? [];
 

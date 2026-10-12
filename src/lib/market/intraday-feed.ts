@@ -87,8 +87,9 @@ export async function fetchTradingViewBar(tvSymbol: string): Promise<any | null>
         const periods = chart.periods;
         cleanup();
         if (periods && periods.length > 0) {
-          const last = periods[periods.length - 1];
-          resolve(last);
+          const sorted = [...periods].sort((a: any, b: any) => Number(b.time) - Number(a.time));
+          const newest = sorted[0];
+          resolve(newest);
         } else {
           resolve(null);
         }
@@ -165,6 +166,12 @@ export async function getIntradayBar(symbol: string, sectorOverride?: string | n
       const dateObj = new Date(rawBar.time * 1000);
       const cairo = getCairoTime(dateObj);
       const timeStr = cairo.dateStr;
+
+      // For EGX instruments, verify that this bar belongs to today's active trading session
+      const currentCairo = getCairoTime(new Date());
+      if (assetClass === 'EGX' && timeStr < currentCairo.dateStr) {
+        return { active: false, ticker: cleanTicker, assetClass, reason: 'no_trades_today' };
+      }
 
       let open = Number(rawBar.open);
       let high = Number(rawBar.max);

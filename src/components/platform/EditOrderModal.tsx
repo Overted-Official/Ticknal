@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from '@/components/ui/icon-library';
+import { X, Trash2 } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/context/ToastContext';
@@ -39,6 +39,8 @@ export default function EditOrderModal({
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [form, setForm] = useState({
     entryDate: '',
@@ -58,6 +60,8 @@ export default function EditOrderModal({
         quantity: order.quantity ? String(order.quantity) : '',
       });
       setIsSubmitting(false);
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   }, [order]);
 
@@ -118,6 +122,41 @@ export default function EditOrderModal({
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!order || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/positions?id=${order.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        toast.success(
+          isAr ? 'تم حذف الصفقة' : 'Lot Deleted',
+          isAr
+            ? `تم حذف الصفقة #${order.id} من المركز بنجاح.`
+            : `Lot #${order.id} was completely removed from your portfolio.`
+        );
+        onSuccess();
+        onClose();
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error(
+          isAr ? 'فشل الحذف' : 'Delete Failed',
+          data?.error || (isAr ? 'فشل حذف الصفقة.' : 'Failed to delete lot.')
+        );
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error(
+        isAr ? 'خطأ' : 'Error',
+        e?.message || (isAr ? 'حدث خطأ أثناء حذف الصفقة.' : 'Error deleting lot.')
+      );
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -282,29 +321,69 @@ export default function EditOrderModal({
             </div>
 
             {/* Footer Buttons */}
-            <div className="px-5 py-3.5 border-t border-border-subtle bg-black flex items-center justify-end gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-text-muted hover:text-white hover:bg-surface-raised transition-colors cursor-pointer"
-              >
-                {isAr ? 'إلغاء' : 'Cancel'}
-              </button>
-              <button
-                type="button"
-                onClick={handleEditOrder}
-                disabled={isSubmitting || !form.entryPrice || !form.quantity || quantityNum <= 0 || entryPriceNum <= 0}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-brand-blue hover:opacity-90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <InlineSpinner className="h-4 w-4" label={isAr ? 'جاري حفظ المركز' : 'Saving position'} />
-                    <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
-                  </>
+            <div className="px-5 py-3.5 border-t border-border-subtle bg-black flex items-center justify-between gap-3 shrink-0">
+              {/* Delete Lot Button / Confirmation */}
+              <div>
+                {showDeleteConfirm ? (
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-[11px] text-rose-400 font-medium">
+                      {isAr ? 'تأكيد الحذف؟' : 'Confirm?'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleDeleteOrder}
+                      disabled={isDeleting}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      {isDeleting ? <InlineSpinner className="h-3 w-3" label={isAr ? 'جاري الحذف' : 'Deleting'} /> : <Trash2 size={12} />}
+                      <span>{isAr ? 'حذف' : 'Delete'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="px-2 py-1.5 rounded-lg text-xs text-white/50 hover:text-white transition-colors cursor-pointer"
+                    >
+                      {isAr ? 'إلغاء' : 'Cancel'}
+                    </button>
+                  </div>
                 ) : (
-                  isAr ? 'حفظ التعديلات' : 'Save Changes'
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center gap-1.5 cursor-pointer border border-rose-500/20"
+                    title={isAr ? 'حذف هذه الصفقة بالكامل' : 'Delete this lot'}
+                  >
+                    <Trash2 size={13} strokeWidth={2} />
+                    <span>{isAr ? 'حذف الصفقة' : 'Delete Lot'}</span>
+                  </button>
                 )}
-              </button>
+              </div>
+
+              {/* Cancel & Save Buttons */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-text-muted hover:text-white hover:bg-surface-raised transition-colors cursor-pointer"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEditOrder}
+                  disabled={isSubmitting || isDeleting || !form.entryPrice || !form.quantity || quantityNum <= 0 || entryPriceNum <= 0}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-brand-blue hover:opacity-90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <InlineSpinner className="h-4 w-4" label={isAr ? 'جاري حفظ المركز' : 'Saving position'} />
+                      <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                    </>
+                  ) : (
+                    isAr ? 'حفظ التعديلات' : 'Save Changes'
+                  )}
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>

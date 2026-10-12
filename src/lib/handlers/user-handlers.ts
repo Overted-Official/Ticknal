@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { desc, eq, and, sql, inArray } from 'drizzle-orm';
+import { desc, eq, and, or, sql, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { positions, profiles, systemLogs, userBankAccounts, bankTransactions, tickers } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
@@ -641,21 +641,109 @@ export async function handlePositionsDelete(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const id = Number(searchParams.get('id'));
+  const idParam = searchParams.get('id');
+  const symbolParam = searchParams.get('symbol') || searchParams.get('tickerSymbol');
 
-  if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ error: 'A valid position id is required' }, { status: 400 });
+  let body: any = null;
+  if (request.headers.get('content-type')?.includes('application/json')) {
+    body = await request.json().catch(() => null);
+  }
+
+  const targetId = idParam ? Number(idParam) : (body?.id ? Number(body.id) : null);
+  const targetSymbol = symbolParam || body?.symbol || body?.tickerSymbol || null;
+
+  if ((!targetId || targetId <= 0) && !targetSymbol) {
+    return NextResponse.json({ error: 'A valid position id or symbol is required' }, { status: 400 });
   }
 
   try {
-    const [deletedPosition] = await db.delete(positions)
-      .where(and(eq(positions.id, id), eq(positions.userId, user.id)))
-      .returning();
-      
-    if (!deletedPosition) {
+    const deletedCount = await db.transaction(async (tx) => {
+      // Find matching positions
+      let matchingPositions: PositionRow[] = [];
+      if (targetId && targetId > 0) {
+        matchingPositions = await tx.select()
+          .from(positions)
+          .where(and(eq(positions.id, targetId), eq(positions.userId, user.id)));
+      } else if (targetSymbol) {
+        const clean = targetSymbol.replace('.CA', '').trim().toUpperCase();
+        matchingPositions = await tx.select()
+          .from(positions)
+          .where(
+            and(
+              eq(positions.userId, user.id),
+              or(
+                eq(positions.tickerSymbol, clean),
+                eq(positions.tickerSymbol, `${clean}.CA`)
+              )
+            )
+          );
+      }
+
+      if (matchingPositions.length === 0) {
+        return 0;
+      }
+
+      const positionIds = matchingPositions.map((p) => p.id);
+
+      // Refund and clean up associated bank transactions
+      const linkedTransactions = await tx.select()
+        .from(bankTransactions)
+        .where(
+          and(
+            eq(bankTransactions.userId, user.id),
+            inArray(bankTransactions.positionId, positionIds)
+          )
+        );
+
+      for (const txn of linkedTransactions) {
+        if (txn.type === 'BROKERAGE_BUY' && txn.accountId) {
+          // Re-credit the account balance
+          await tx.update(userBankAccounts)
+            .set({
+              balance: sql`${userBankAccounts.balance} + ${txn.amount}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(userBankAccounts.id, txn.accountId));
+        } else if (txn.type === 'BROKERAGE_SELL' && txn.accountId) {
+          // Debit the sold proceeds back if deleting a closed lot
+          await tx.update(userBankAccounts)
+            .set({
+              balance: sql`${userBankAccounts.balance} - ${txn.amount}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(userBankAccounts.id, txn.accountId));
+        }
+      }
+
+      // Delete linked bank transactions
+      if (positionIds.length > 0) {
+        await tx.delete(bankTransactions)
+          .where(
+            and(
+              eq(bankTransactions.userId, user.id),
+              inArray(bankTransactions.positionId, positionIds)
+            )
+          );
+      }
+
+      // Delete positions
+      const deleted = await tx.delete(positions)
+        .where(
+          and(
+            eq(positions.userId, user.id),
+            inArray(positions.id, positionIds)
+          )
+        )
+        .returning();
+
+      return deleted.length;
+    });
+
+    if (deletedCount === 0) {
       return NextResponse.json({ error: 'Position not found' }, { status: 404 });
     }
-    return NextResponse.json({ ok: true });
+
+    return NextResponse.json({ ok: true, deletedCount });
   } catch (error) {
     console.error('Error deleting position:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

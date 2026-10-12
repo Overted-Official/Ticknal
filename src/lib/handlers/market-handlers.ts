@@ -108,6 +108,39 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
     return NextResponse.json(cached.data, { headers: QUOTE_CACHE_HEADERS });
   }
 
+  // Check intraday feed first for real-time live delayed quote
+  try {
+    const { getIntradayBar } = await import('@/lib/market/intraday-feed');
+    const intraday = await getIntradayBar(cleanSym);
+    if (intraday.active && intraday.bar) {
+      const dbRanges = await getDbQuoteAndRanges(cleanSym);
+      const prevPrice = dbRanges?.price || intraday.bar.open;
+      const currentPrice = intraday.bar.close;
+      const change = currentPrice - prevPrice;
+      const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : 0;
+
+      const payload = {
+        symbol: cleanSym,
+        price: currentPrice,
+        change: Number(change.toFixed(2)),
+        changePercent: Number(changePercent.toFixed(2)),
+        open: intraday.bar.open,
+        high: intraday.bar.high,
+        low: intraday.bar.low,
+        dayHigh: intraday.bar.high,
+        dayLow: intraday.bar.low,
+        yearHigh: dbRanges?.yearHigh || intraday.bar.high,
+        yearLow: dbRanges?.yearLow || intraday.bar.low,
+        volume: intraday.bar.volume,
+        updatedAt: intraday.bar.time,
+        source: 'intraday-feed',
+      };
+
+      quoteMemoryCache.set(cleanSym, { data: payload, timestamp: Date.now() });
+      return NextResponse.json(payload, { headers: QUOTE_CACHE_HEADERS });
+    }
+  } catch {}
+
   try {
     let tvSymbol = `EGX:${cleanSym}`;
     if (cleanSym === 'EGX30') {

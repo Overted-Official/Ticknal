@@ -57,13 +57,49 @@ const EDGE_CACHE_HEADERS = {
 export async function handlePerformanceGet(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('start') || `${new Date().getFullYear()}-01-01`;
-    const endDate = searchParams.get('end') || new Date().toISOString().split('T')[0];
+    const timeframeParam = searchParams.get('timeframe') || '';
+    let startDate = searchParams.get('start') || `${new Date().getFullYear()}-01-01`;
+    let endDate = searchParams.get('end') || new Date().toISOString().split('T')[0];
     const strategy = searchParams.get('strategy') || 'psi';
     const strategyModel = searchParams.get('model') || 'psi8';
     const granularity = (searchParams.get('granularity') || 'sector') as 'sector' | 'industryGroup' | 'industry' | 'ticker';
 
-    const cacheKey = `${startDate}_${endDate}_${strategy}_${strategyModel}`;
+    const is1D = timeframeParam === '1D' || startDate === endDate;
+
+    if (is1D) {
+      // Check if endDate has at least 10 active equity records
+      const countCheck = await db.execute(sql`
+        SELECT COUNT(DISTINCT dp.ticker_symbol) as count
+        FROM daily_prices dp
+        WHERE dp.date = ${endDate}
+          AND dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+          AND dp.volume::numeric > 0
+      `);
+      const rowCount = Number((Array.isArray(countCheck) ? countCheck[0] : (countCheck as any)?.rows?.[0])?.count || 0);
+
+      if (rowCount < 10) {
+        // Resolve to the latest active trading session with active equities
+        const latestSessionRes = await db.execute(sql`
+          SELECT dp.date
+          FROM daily_prices dp
+          WHERE dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+            AND dp.volume::numeric > 0
+          ORDER BY dp.date DESC
+          LIMIT 1
+        `);
+        const latestDateRow = (Array.isArray(latestSessionRes) ? latestSessionRes[0] : (latestSessionRes as any)?.rows?.[0]);
+        if (latestDateRow?.date) {
+          const rawDate = latestDateRow.date;
+          const resolvedDateStr = typeof rawDate === 'string' ? rawDate : new Date(rawDate).toISOString().split('T')[0];
+          startDate = resolvedDateStr;
+          endDate = resolvedDateStr;
+        }
+      } else {
+        startDate = endDate;
+      }
+    }
+
+    const cacheKey = `${timeframeParam}_${startDate}_${endDate}_${strategy}_${strategyModel}`;
     const cached = memPerformanceCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       const { sectors, marketSummary } = aggregateSectorsFromStocks(
@@ -87,21 +123,42 @@ export async function handlePerformanceGet(request: Request) {
       tickerMap.set(t.symbol, t);
     }
 
-    // High-performance single-pass GROUP BY query with array_agg
+    // High-performance single-pass GROUP BY query with CTE for prior session close
     const aggregationQuery = sql`
+      WITH window_prices AS (
+        SELECT 
+          ticker_symbol,
+          date,
+          open::numeric as open,
+          close::numeric as close,
+          volume::numeric as volume,
+          LAG(close::numeric) OVER (PARTITION BY ticker_symbol ORDER BY date ASC) as prior_close
+        FROM daily_prices
+        WHERE date <= ${endDate}
+          AND date >= (${startDate}::date - INTERVAL '14 days')
+      )
       SELECT 
         ticker_symbol,
-        (array_agg(close::numeric ORDER BY date ASC))[1] as start_price,
+        COUNT(DISTINCT date) as days_count,
         (array_agg(date ORDER BY date ASC))[1] as start_date,
-        (array_agg(close::numeric ORDER BY date DESC))[1] as end_price,
         (array_agg(date ORDER BY date DESC))[1] as end_date,
-        SUM(volume::numeric) as total_volume,
-        SUM((close::numeric) * (volume::numeric)) as total_turnover
-      FROM daily_prices
-      WHERE date >= ${startDate} AND date <= ${endDate}
+        (array_agg(close ORDER BY date DESC))[1] as end_price,
+        CASE 
+          WHEN COUNT(DISTINCT date) > 1 THEN (array_agg(close ORDER BY date ASC))[1]
+          ELSE COALESCE((array_agg(prior_close ORDER BY date ASC))[1], (array_agg(open ORDER BY date ASC))[1])
+        END as start_price,
+        SUM(volume) as total_volume,
+        SUM(close * volume) as total_turnover
+      FROM window_prices
+      WHERE date >= ${startDate}
       GROUP BY ticker_symbol
-      HAVING (array_agg(close::numeric ORDER BY date ASC))[1] > 0
-         AND (array_agg(close::numeric ORDER BY date DESC))[1] > 0;
+      HAVING (array_agg(close ORDER BY date DESC))[1] > 0
+         AND (
+           CASE 
+             WHEN COUNT(DISTINCT date) > 1 THEN (array_agg(close ORDER BY date ASC))[1]
+             ELSE COALESCE((array_agg(prior_close ORDER BY date ASC))[1], (array_agg(open ORDER BY date ASC))[1])
+           END
+         ) > 0;
     `;
 
     const majorIndicesQuery = sql`
@@ -116,18 +173,29 @@ export async function handlePerformanceGet(request: Request) {
       FROM daily_prices
       WHERE ticker_symbol IN ('EGX30', 'EGX70', 'EGX100')
         AND date <= ${endDate}
-        AND date >= (${startDate}::date - INTERVAL '10 days')
+        AND date >= (${startDate}::date - INTERVAL '14 days')
       ORDER BY date ASC;
     `;
 
     const dailyBreadthQuery = sql`
+      WITH window_breadth AS (
+        SELECT 
+          ticker_symbol,
+          date,
+          close::numeric as close,
+          open::numeric as open,
+          LAG(close::numeric) OVER (PARTITION BY ticker_symbol ORDER BY date ASC) as prior_close
+        FROM daily_prices
+        WHERE date <= ${endDate}
+          AND date >= (${startDate}::date - INTERVAL '14 days')
+          AND ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP')
+      )
       SELECT 
         date,
-        COUNT(*) FILTER (WHERE close > open)::int as gainers,
-        COUNT(*) FILTER (WHERE close < open)::int as losers
-      FROM daily_prices
+        COUNT(*) FILTER (WHERE close > COALESCE(prior_close, open))::int as gainers,
+        COUNT(*) FILTER (WHERE close < COALESCE(prior_close, open))::int as losers
+      FROM window_breadth
       WHERE date >= ${startDate} AND date <= ${endDate}
-        AND ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP')
       GROUP BY date
       ORDER BY date ASC;
     `;
@@ -275,16 +343,18 @@ export async function handlePerformanceGet(request: Request) {
       majorIndices[sym].history = chartHist;
 
       if (allHist.length > 0) {
-        const last = allHist[allHist.length - 1];
-        const prev = allHist.length > 1 ? allHist[allHist.length - 2].close : last.open;
+        const last = chartHist.length > 0 ? chartHist[chartHist.length - 1] : allHist[allHist.length - 1];
+        const priorInAll = allHist.filter((h) => h.date < last.date);
+        const prevClose = priorInAll.length > 0 ? priorInAll[priorInAll.length - 1].close : last.open;
         const first = chartHist.length > 0 ? chartHist[0] : last;
 
         const points = last.close;
-        const periodChange = points - first.open;
-        const periodChangePercent = first.open > 0 ? (periodChange / first.open) * 100 : 0;
+        const baselinePrice = chartHist.length <= 1 ? prevClose : first.open;
+        const periodChange = points - baselinePrice;
+        const periodChangePercent = baselinePrice > 0 ? (periodChange / baselinePrice) * 100 : 0;
 
-        const dailyChange = points - prev;
-        const dailyChangePercent = prev > 0 ? (dailyChange / prev) * 100 : 0;
+        const dailyChange = points - prevClose;
+        const dailyChangePercent = prevClose > 0 ? (dailyChange / prevClose) * 100 : 0;
 
         majorIndices[sym].points = points;
         majorIndices[sym].change = Number(periodChange.toFixed(2));
@@ -529,10 +599,46 @@ export async function handleSignalsGet(request?: Request) {
   try {
     const url = request ? new URL(request.url) : null;
     const strategy = url?.searchParams.get('strategy') || 'psi';
-    const startDate = url?.searchParams.get('start') || '2025-01-01';
-    const endDate = url?.searchParams.get('end') || new Date().toISOString().split('T')[0];
+    const timeframeParam = url?.searchParams.get('timeframe') || '';
+    let startDate = url?.searchParams.get('start') || '2025-01-01';
+    let endDate = url?.searchParams.get('end') || new Date().toISOString().split('T')[0];
     const refresh = url?.searchParams.get('refresh') === 'true';
-    const cacheKey = `signals_${strategy}_${startDate}_${endDate}`;
+
+    const is1D = timeframeParam === '1D' || startDate === endDate;
+    if (is1D) {
+      // Check if endDate has at least 10 active equity records
+      const countCheck = await db.execute(sql`
+        SELECT COUNT(DISTINCT dp.ticker_symbol) as count
+        FROM daily_prices dp
+        WHERE dp.date = ${endDate}
+          AND dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+          AND dp.volume::numeric > 0
+      `);
+      const rowCount = Number((Array.isArray(countCheck) ? countCheck[0] : (countCheck as any)?.rows?.[0])?.count || 0);
+
+      if (rowCount < 10) {
+        // Resolve to the latest active trading session with active equities
+        const latestSessionRes = await db.execute(sql`
+          SELECT dp.date
+          FROM daily_prices dp
+          WHERE dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+            AND dp.volume::numeric > 0
+          ORDER BY dp.date DESC
+          LIMIT 1
+        `);
+        const latestDateRow = (Array.isArray(latestSessionRes) ? latestSessionRes[0] : (latestSessionRes as any)?.rows?.[0]);
+        if (latestDateRow?.date) {
+          const rawDate = latestDateRow.date;
+          const resolvedDateStr = typeof rawDate === 'string' ? rawDate : new Date(rawDate).toISOString().split('T')[0];
+          startDate = resolvedDateStr;
+          endDate = resolvedDateStr;
+        }
+      } else {
+        startDate = endDate;
+      }
+    }
+
+    const cacheKey = `signals_${strategy}_${timeframeParam}_${startDate}_${endDate}`;
     const now = Date.now();
 
     if (!refresh) {
@@ -563,6 +669,11 @@ export async function handleSignalsGet(request?: Request) {
           const first = chartHist[0];
           const last = chartHist[chartHist.length - 1];
           egx30Return = first.close > 0 ? ((last.close - first.close) / first.close) * 100 : 0;
+        } else if (chartHist.length === 1) {
+          const last = chartHist[0];
+          const priorInAll = egxBars.filter((b) => b.date < last.date);
+          const prevClose = priorInAll.length > 0 ? priorInAll[priorInAll.length - 1].close : last.open;
+          egx30Return = prevClose > 0 ? ((last.close - prevClose) / prevClose) * 100 : 0;
         }
       }
 
@@ -636,9 +747,16 @@ export async function handleSignalsGet(request?: Request) {
         // Tickers with fewer than 130 trading bars don't have enough history for 120-day moving average quantitative models
         if (bars.length < 130) {
           const firstBarInPeriod = bars.find((b) => b.date >= startDate) || bars[0];
-          const buyHoldRoi = (firstBarInPeriod && firstBarInPeriod.close > 0)
-            ? ((lastBar.close - firstBarInPeriod.close) / firstBarInPeriod.close) * 100
-            : 0;
+          let buyHoldRoi = 0;
+          if (firstBarInPeriod && firstBarInPeriod.close > 0) {
+            if (firstBarInPeriod.date === lastBar.date) {
+              const priorInAll = bars.filter((b) => b.date < lastBar.date);
+              const prevClose = priorInAll.length > 0 ? priorInAll[priorInAll.length - 1].close : lastBar.open;
+              buyHoldRoi = prevClose > 0 ? ((lastBar.close - prevClose) / prevClose) * 100 : 0;
+            } else {
+              buyHoldRoi = ((lastBar.close - firstBarInPeriod.close) / firstBarInPeriod.close) * 100;
+            }
+          }
 
           sectorSummary[sectorName].sumBuyHoldRoi += buyHoldRoi;
           sumBuyHoldRoi += buyHoldRoi;
@@ -721,7 +839,13 @@ export async function handleSignalsGet(request?: Request) {
         if (buyHoldRoi === 0 && bars.length > 1) {
           const firstBarInPeriod = bars.find((b) => b.date >= startDate) || bars[0];
           if (firstBarInPeriod && firstBarInPeriod.close > 0) {
-            buyHoldRoi = ((lastBar.close - firstBarInPeriod.close) / firstBarInPeriod.close) * 100;
+            if (firstBarInPeriod.date === lastBar.date) {
+              const priorInAll = bars.filter((b) => b.date < lastBar.date);
+              const prevClose = priorInAll.length > 0 ? priorInAll[priorInAll.length - 1].close : lastBar.open;
+              buyHoldRoi = prevClose > 0 ? ((lastBar.close - prevClose) / prevClose) * 100 : 0;
+            } else {
+              buyHoldRoi = ((lastBar.close - firstBarInPeriod.close) / firstBarInPeriod.close) * 100;
+            }
             roiMargin = sysRoi - buyHoldRoi;
           }
         }

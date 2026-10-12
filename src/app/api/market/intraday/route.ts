@@ -13,12 +13,9 @@ export async function GET(req: NextRequest) {
 
   const response = await getIntradayBar(rawTicker);
 
-  const maxAge = response.active ? 180 : response.reason === 'funds_excluded' ? 86400 : 300;
-  const swr = response.active ? 300 : response.reason === 'funds_excluded' ? 86400 : 600;
-
   return NextResponse.json(response, {
     headers: {
-      'Cache-Control': `public, s-maxage=${maxAge}, stale-while-revalidate=${swr}`,
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
   });
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import HomeInvestmentsHeader from './investments/HomeInvestmentsHeader';
 import HomeFloatingNav from './HomeFloatingNav';
+import MobileHomeHero from './MobileHomeHero';
 import PerformanceOverviewSection from './investments/performance/PerformanceOverviewSection';
 import MyPositionsSection from './investments/positions/MyPositionsSection';
 import MarketSignalsSection from './investments/signals/MarketSignalsSection';
@@ -23,18 +24,25 @@ interface HomePageViewProps {
   cbeInflationRate?: number;
   initialNetWorthHistory?: NetWorthHistoryPoint[];
   initialInflationSeries?: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }>;
+  userProfile?: {
+    name: string;
+    avatarUrl?: string | null;
+    email?: string;
+  };
 }
 
 export default function HomePageView({
   orderStats,
   buyOpportunities = [],
   exitSignals = [],
+  activeAlertCount = 0,
   initialAccounts = [],
   initialTransactions = [],
   usdRate = 50.20,
   cbeInflationRate = 14.9,
   initialNetWorthHistory = [],
   initialInflationSeries = [],
+  userProfile,
 }: HomePageViewProps) {
   const [liveBuyOpps, setLiveBuyOpps] = useState<Opportunity[]>([]);
   const [isLoadingOpps, setIsLoadingOpps] = useState(!buyOpportunities || buyOpportunities.length === 0);
@@ -94,8 +102,13 @@ export default function HomePageView({
 
   return (
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none">
-      {/* 1. Header (Breadcrumbs) */}
-      <div className="px-4 sm:px-6 pt-3 pb-1 shrink-0 bg-plt-base">
+      {/* 1. Mobile-Only Hero Banner with Wavy Gradient */}
+      <div className="block md:hidden shrink-0 relative z-40">
+        <MobileHomeHero userProfile={userProfile} activeAlertCount={activeAlertCount} />
+      </div>
+
+      {/* Desktop/Tablet Header (Breadcrumbs) */}
+      <div className="hidden md:block px-4 sm:px-6 pt-3 pb-1 shrink-0 bg-plt-base">
         <HomeInvestmentsHeader />
       </div>
 

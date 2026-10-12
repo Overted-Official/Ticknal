@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply, egxInvestorFlows } from '@/db/schema';
-import { sql, inArray, eq, and, lt, gt, gte, desc } from 'drizzle-orm';
+import { sql, inArray, notInArray, eq, and, lt, gt, gte, desc } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
 import { verifyCronAuth } from '@/lib/cron-auth';
@@ -509,7 +509,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
 
     // Automatically sync daily investor flows for the completed trading session
     let investorFlowResult: any = null;
-    if (Date.now() - startTime < 55000) {
+    if (totalUpdated > 0 && Date.now() - startTime < 55000) {
       try {
         investorFlowResult = await syncDailyInvestorFlows();
       } catch (flowErr: any) {
@@ -1147,17 +1147,34 @@ export async function handleWatchdog(req: Request) {
     let investorFlowsMissing = false;
     if (isEgxTradingDay) {
       try {
-        const existingFlow = await db
-          .select({ id: egxInvestorFlows.id })
-          .from(egxInvestorFlows)
-          .where(eq(egxInvestorFlows.date, expectedEgxDate))
-          .limit(1);
+        // Ensure genuine stock prices exist for expectedEgxDate before considering it missing
+        const stockPricesForDate = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(dailyPrices)
+          .innerJoin(tickers, eq(dailyPrices.tickerSymbol, tickers.symbol))
+          .where(
+            and(
+              eq(dailyPrices.date, expectedEgxDate),
+              notInArray(tickers.sector, ['Funds', 'Macro', 'Indices']),
+              sql`${dailyPrices.volume}::numeric > 0`
+            )
+          );
 
-        if (!existingFlow[0]) {
-          investorFlowsMissing = true;
-          const flowResult = await syncDailyInvestorFlows({ targetDate: expectedEgxDate });
-          if (flowResult.success) {
-            triggersTriggered.push(`update-investor-flows (${expectedEgxDate})`);
+        const activeStockCount = Number(stockPricesForDate[0]?.count || 0);
+
+        if (activeStockCount >= 20) {
+          const existingFlow = await db
+            .select({ id: egxInvestorFlows.id })
+            .from(egxInvestorFlows)
+            .where(eq(egxInvestorFlows.date, expectedEgxDate))
+            .limit(1);
+
+          if (!existingFlow[0]) {
+            investorFlowsMissing = true;
+            const flowResult = await syncDailyInvestorFlows({ targetDate: expectedEgxDate });
+            if (flowResult.success) {
+              triggersTriggered.push(`update-investor-flows (${expectedEgxDate})`);
+            }
           }
         }
       } catch (e) {

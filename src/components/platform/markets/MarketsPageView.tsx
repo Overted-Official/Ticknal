@@ -62,13 +62,12 @@ export default function MarketsPageView() {
       return { start: customStartDate, end: customEndDate };
     }
 
-    const d = new Date(today);
     if (timeframePreset === '1D') {
-      // For 1D, step back across weekend if today is Fri/Sat/Sun
-      const day = today.getDay();
-      const backDays = day === 5 ? 2 : day === 6 ? 3 : day === 0 ? 3 : 1;
-      d.setDate(d.getDate() - backDays);
-    } else if (timeframePreset === '5D') {
+      return { start: endStr, end: endStr };
+    }
+
+    const d = new Date(today);
+    if (timeframePreset === '5D') {
       d.setDate(d.getDate() - 7);
     } else if (timeframePreset === '1M') {
       d.setMonth(d.getMonth() - 1);
@@ -87,7 +86,7 @@ export default function MarketsPageView() {
 
   // 1. SWR Query for Market Macro Data (cached by date range)
   const { data: liveMacroData, isLoading: isLiveMacroLoading, mutate: mutateMacro } = useSWR<SectorsPerformanceResponse>(
-    isHeroScene ? null : `/api/sectors/performance?start=${start}&end=${end}&strategy=${selectedStrategy}`,
+    isHeroScene ? null : `/api/sectors/performance?start=${start}&end=${end}&strategy=${selectedStrategy}&timeframe=${timeframePreset}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -97,7 +96,7 @@ export default function MarketsPageView() {
 
   // 2. SWR Query for Algorithmic Strategy Signals across EGX
   const { data: signalsData } = useSWR<SectorStrategySignalsResponse>(
-    isHeroScene ? null : `/api/sectors/signals?strategy=${selectedStrategy}&start=${start}&end=${end}`,
+    isHeroScene ? null : `/api/sectors/signals?strategy=${selectedStrategy}&start=${start}&end=${end}&timeframe=${timeframePreset}`,
     fetcher,
     {
       revalidateOnFocus: false,

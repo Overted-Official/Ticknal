@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Wallet, CheckCircle2, TrendingUp, TrendingDown, ChevronRight } from '@/components/ui/icon-library';
+import { Plus, Wallet, CheckCircle2, TrendingUp, TrendingDown, ChevronRight, Trash2, X } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -36,7 +36,7 @@ export interface ChartBar {
   volume: number;
 }
 
-interface TickerPositionsProps {
+export interface TickerPositionsProps {
   symbol: string;
   orders: TickerOrder[];
   currentPrice: number;
@@ -47,6 +47,7 @@ interface TickerPositionsProps {
   onEditOrder?: (order: TickerOrder) => void;
   onCloseOrder?: (order: TickerOrder) => void;
   onAddNew?: () => void;
+  onDeletePosition?: () => void;
   currency?: string;
 }
 
@@ -92,6 +93,7 @@ export default function TickerPositions({
   onEditOrder,
   onCloseOrder,
   onAddNew,
+  onDeletePosition,
   currency: instrumentCurrency,
 }: TickerPositionsProps) {
   const { toast } = useToast();
@@ -101,9 +103,11 @@ export default function TickerPositions({
   const [filter, setFilter] = useState<'all' | 'open' | 'closed'>('all');
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
   const [isCloseWholePosition, setIsCloseWholePosition] = useState(true);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [unitsToSell, setUnitsToSell] = useState<string>('');
   const [sellingPrice, setSellingPrice] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [imgError, setImgError] = useState(false);
 
   const [tickerMeta, setTickerMeta] = useState<{ companyName?: string; logoUrl?: string | null }>({});
@@ -129,16 +133,20 @@ export default function TickerPositions({
     }
   }, [symbol, companyName, logoUrl]);
 
-  // Handle ESC key to close modal
+  // Handle ESC key to close modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isCloseModalOpen) {
-        setIsCloseModalOpen(false);
+      if (e.key === 'Escape') {
+        if (isDeleteModalOpen) {
+          setIsDeleteModalOpen(false);
+        } else if (isCloseModalOpen) {
+          setIsCloseModalOpen(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCloseModalOpen]);
+  }, [isCloseModalOpen, isDeleteModalOpen]);
 
   const rawCurrency = getCurrency(symbol, instrumentCurrency);
   const currency = rawCurrency === 'EGP' && isArabic ? 'ج.م' : rawCurrency;
@@ -303,12 +311,45 @@ export default function TickerPositions({
     }
   };
 
+  const handleDeleteEntirePosition = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/positions?symbol=${encodeURIComponent(cleanSymbol)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || 'Failed to delete position.');
+      }
+      toast.success(
+        isArabic ? 'تم حذف المركز' : 'Position Deleted',
+        isArabic
+          ? `تم حذف مركز ${displayCompanyName} بالكامل من المحفظة.`
+          : `Position in ${displayCompanyName} was completely removed from your portfolio.`
+      );
+      setIsDeleteModalOpen(false);
+      onDeletePosition?.();
+      onOrdersChange?.();
+    } catch (err: any) {
+      console.error('Error deleting position:', err);
+      toast.error(
+        isArabic ? 'فشل حذف المركز' : 'Failed to Delete',
+        err?.message || 'An error occurred while deleting position.'
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col space-y-6 sm:space-y-8 text-white select-none font-sans">
-      {/* ================================================================= */}
-      {/* 1. POSITION SUMMARY SECTION                                      */}
-      {/* ================================================================= */}
-      <section className="space-y-3">
+    <div className="flex flex-col flex-1 min-h-full text-white select-none font-sans">
+      {/* Scrollable Content Body */}
+      <div className="flex-1 p-4 sm:p-6 space-y-6 sm:space-y-8 pb-6">
+        {/* ================================================================= */}
+        {/* 1. POSITION SUMMARY SECTION                                      */}
+        {/* ================================================================= */}
+        <section className="space-y-3">
         {/* Clear Section Header matching Strategy Report Drawer */}
         <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-border-subtle">
           <div className="flex items-center justify-between gap-2">
@@ -329,15 +370,15 @@ export default function TickerPositions({
           </p>
         </div>
 
-        {/* 3 KPI Metrics Cards */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+        {/* 3 KPI Metrics Cards: Swipable rail on mobile (showing 2.35 cards so the 3rd card peeks out), 3-col grid on desktop */}
+        <div className="flex sm:grid sm:grid-cols-3 gap-2 sm:gap-2.5 overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory pb-1 sm:pb-0">
           {/* Total Invested */}
-          <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
+          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs bg-brand-blue text-white overflow-hidden">
                 <Wallet size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
+              <span className="text-xs sm:text-[12px] font-semibold text-white tracking-tight truncate">
                 {isArabic ? 'إجمالي المستثمر' : 'Total Invested'}
               </span>
             </div>
@@ -364,7 +405,7 @@ export default function TickerPositions({
           </div>
 
           {/* Unrealized P/L */}
-          <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
+          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs overflow-hidden ${
@@ -377,7 +418,7 @@ export default function TickerPositions({
                   <TrendingDown size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
                 )}
               </div>
-              <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
+              <span className="text-xs sm:text-[12px] font-semibold text-white tracking-tight truncate">
                 {isArabic ? 'الأرباح غير المحققة' : 'Unrealized P/L'}
               </span>
             </div>
@@ -417,7 +458,7 @@ export default function TickerPositions({
           </div>
 
           {/* Realized P/L */}
-          <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
+          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs overflow-hidden ${
@@ -426,7 +467,7 @@ export default function TickerPositions({
               >
                 <CheckCircle2 size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-[11px] sm:text-[12px] font-semibold text-white tracking-tight truncate">
+              <span className="text-xs sm:text-[12px] font-semibold text-white tracking-tight truncate">
                 {isArabic ? 'الأرباح المحققة' : 'Realized P/L'}
               </span>
             </div>
@@ -467,30 +508,8 @@ export default function TickerPositions({
       {/* 2. P&L TRAJECTORY AREA CHART (NO ICON, HIDDEN Y-AXIS, FULL WIDTH) */}
       {/* ================================================================= */}
       {trajectoryData.length > 1 && openOrders.length > 0 && (
-        <section className="space-y-3">
-          {/* Clear Section Header matching Strategy Report Drawer */}
-          <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-border-subtle">
-            <div className="flex items-baseline justify-between gap-2">
-              <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
-                {isArabic ? 'مسار أداء الأرباح والخسائر' : 'P&L Performance Trajectory'}
-              </h3>
-              <span
-                className={`text-xs font-semibold tabular-nums ${
-                  isTrajectoryProfit ? 'text-profit-num' : 'text-loss-num'
-                }`}
-              >
-                {formatMoney(unrealizedPl, currency, true, isArabic)} ({unrealizedPlPct >= 0 ? '+' : ''}
-                {unrealizedPlPct.toFixed(2)}%)
-              </span>
-            </div>
-            <p className="text-xs text-white/50 leading-relaxed">
-              {isArabic
-                ? 'المنحنى التاريخي للأداء السوقي للصفقات المفتوحة خلال فترة الاحتفاظ'
-                : 'Historical mark-to-market performance curve for open allocations over holding period'}
-            </p>
-          </div>
-
-          <div className="h-32 w-full pt-1">
+        <section className="w-full">
+          <div className="h-28 sm:h-32 w-full pt-1">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trajectoryData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                 <defs>
@@ -578,8 +597,7 @@ export default function TickerPositions({
           </p>
         </div>
 
-        {/* Filter Controls & Action Buttons */}
-        {/* Filter Controls & Action Buttons */}
+        {/* Filter Controls */}
         <div className="flex items-center justify-between gap-2 sm:gap-3 pt-1 min-w-0">
           {/* Segmented control */}
           <div className="seg-control seg-control-compact shrink-0">
@@ -608,38 +626,6 @@ export default function TickerPositions({
                 </button>
               );
             })}
-          </div>
-
-          {/* Action CTAs: Close Position & Add Position */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {openOrders.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setUnitsToSell(String(totalOpenQuantity));
-                  setSellingPrice(currentPrice ? String(currentPrice) : '');
-                  setIsCloseWholePosition(true);
-                  setIsCloseModalOpen(true);
-                }}
-                className="btn-token btn-secondary btn-compact shrink-0"
-                title={isArabic ? 'إغلاق أو تخفيض المركز' : 'Close or reduce position'}
-              >
-                <span>{isArabic ? 'إغلاق' : 'Close'}</span>
-              </button>
-            )}
-
-            {onAddNew && (
-              <button
-                type="button"
-                onClick={onAddNew}
-                className="btn-token btn-primary btn-compact px-2.5 sm:px-3 shrink-0"
-                title={isArabic ? 'إضافة صفقة' : 'Add Position'}
-                aria-label={isArabic ? 'إضافة صفقة' : 'Add Position'}
-              >
-                <Plus size={14} strokeWidth={2.5} />
-                <span className="hidden sm:inline">{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -688,7 +674,7 @@ export default function TickerPositions({
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-semibold text-white tabular-nums tracking-tight group-hover:text-white">
-                          {order.entryDate}
+                          {order.quantity} {isArabic ? 'سهم' : 'units'} @ {formatPrice(order.entryPrice, currency, isArabic)}
                         </span>
                         {!isOpen && (
                           <span className="text-[9px] font-semibold text-white/40 uppercase">
@@ -700,7 +686,7 @@ export default function TickerPositions({
                         </span>
                       </div>
                       <div className="text-[11px] text-white/50 tabular-nums">
-                        {order.quantity} {isArabic ? 'سهم' : 'units'} @ {formatPrice(order.entryPrice, currency, isArabic)}
+                        {order.entryDate}
                       </div>
                     </div>
                   </div>
@@ -731,6 +717,63 @@ export default function TickerPositions({
           </div>
         )}
       </section>
+      </div>
+
+      {/* ================================================================= */}
+      {/* STICKY BOTTOM ACTIONS BAR                                         */}
+      {/* Pinned to bottom of the drawer on both desktop and mobile         */}
+      {/* ================================================================= */}
+      <div className="sticky bottom-0 z-20 shrink-0 border-t border-white/10 bg-black px-4 sm:px-6 py-3 sm:py-3.5 pb-[max(0.75rem,calc(var(--ticknal-safe-area-bottom)+0.5rem))] md:pb-3.5 flex items-center justify-between gap-2.5 select-none">
+        {/* Left / Destructive Action: Delete Entire Position */}
+        <div>
+          {orders.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="btn-token btn-danger text-xs font-semibold px-3 py-2 shrink-0 flex items-center gap-1.5 cursor-pointer"
+              title={isArabic ? 'حذف المركز بالكامل ومعاملاته' : 'Completely delete this position and its transactions'}
+            >
+              <Trash2 size={13} className="shrink-0" />
+              <span className="hidden sm:inline">{isArabic ? 'حذف المركز' : 'Delete Position'}</span>
+              <span className="sm:hidden">{isArabic ? 'حذف' : 'Delete'}</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right / Portfolio Actions: Close Position & Add Position */}
+        <div className="flex items-center gap-2 shrink-0">
+          {openOrders.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setUnitsToSell(String(totalOpenQuantity));
+                setSellingPrice(currentPrice ? String(currentPrice) : '');
+                setIsCloseWholePosition(true);
+                setIsCloseModalOpen(true);
+              }}
+              className="btn-token btn-secondary text-xs font-semibold px-3 py-2 shrink-0 flex items-center gap-1.5 cursor-pointer"
+              title={isArabic ? 'إغلاق أو تخفيض المركز' : 'Close or reduce position'}
+            >
+              <span className="hidden sm:inline">{isArabic ? 'إغلاق المركز' : 'Close Position'}</span>
+              <span className="sm:hidden">{isArabic ? 'إغلاق' : 'Close'}</span>
+            </button>
+          )}
+
+          {onAddNew && (
+            <button
+              type="button"
+              onClick={onAddNew}
+              className="btn-token btn-primary text-xs font-semibold px-3 py-2 shrink-0 flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title={isArabic ? 'إضافة صفقة جديدة' : 'Add new lot/position'}
+              aria-label={isArabic ? 'إضافة صفقة' : 'Add Position'}
+            >
+              <Plus size={14} strokeWidth={2.5} />
+              <span className="hidden sm:inline">{isArabic ? 'إضافة صفقة' : 'Add Position'}</span>
+              <span className="sm:hidden">{isArabic ? 'إضافة' : 'Add'}</span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* ================================================================= */}
       {/* 4. CLOSE / SELL POSITION MODAL                                     */}
@@ -915,6 +958,116 @@ export default function TickerPositions({
                   >
                     {isSubmitting && <InlineSpinner className="h-3.5 w-3.5" label="Selling position" />}
                     <span>{isArabic ? (isSubmitting ? 'جارٍ البيع...' : 'بيع') : (isSubmitting ? 'Selling...' : 'Sell')}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* ================================================================= */}
+      {/* 5. DELETE ENTIRE POSITION CONFIRMATION MODAL                      */}
+      {/* ================================================================= */}
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isDeleteModalOpen && (
+            <div
+              key="delete-entire-position-modal-container"
+              className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm select-none"
+              onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
+            >
+              <motion.div
+                key="delete-entire-position-modal-card"
+                initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md bg-black border border-white/10 rounded-xl shadow-2xl p-5 space-y-4 font-sans text-white overflow-hidden"
+              >
+                {/* Header */}
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                    <Trash2 size={18} />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug">
+                      {isArabic ? 'حذف المركز بالكامل؟' : 'Delete Entire Position?'}
+                    </h3>
+                    <p className="text-xs text-white/50 leading-relaxed mt-1">
+                      {isArabic
+                        ? 'سيتم حذف جميع صفقات هذا المركز وسجل معاملاته بشكل نهائي، واسترداد أي رصيد نقدي مرتبط به في المحفظة. استخدم هذا الخيار إذا تمت إضافة المركز عن طريق الخطأ.'
+                        : 'This will permanently remove all orders, lots, and linked cash ledger transactions for this ticker. Use this if you added the position by mistake.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Target Position Info Summary */}
+                <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                      {displayLogoUrl && !imgError ? (
+                        <img
+                          src={displayLogoUrl}
+                          alt={cleanSymbol}
+                          className="w-full h-full object-contain rounded-full"
+                          onError={() => setImgError(true)}
+                        />
+                      ) : (
+                        <span className="text-[10px] font-bold text-white uppercase font-sans">
+                          {cleanSymbol.slice(0, 2)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-semibold text-white truncate max-w-[170px]" title={displayCompanyName}>
+                        {displayCompanyName}
+                      </span>
+                      <span className="text-[11px] text-white/50 uppercase font-sans">
+                        {cleanSymbol}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-end shrink-0 tabular-nums">
+                    <span className="text-white font-medium">
+                      {orders.length} {isArabic ? (orders.length === 1 ? 'صفقة' : 'صفقات') : (orders.length === 1 ? 'lot' : 'lots')}
+                    </span>
+                    <span className="text-[11px] text-white/50">
+                      {totalOpenQuantity.toLocaleString()} {isArabic ? 'سهم مفتوح' : 'open shares'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteModalOpen(false)}
+                    disabled={isDeleting}
+                    className="btn-token btn-secondary text-xs font-semibold px-3.5 py-2 rounded-md"
+                  >
+                    {isArabic ? 'إلغاء' : 'Cancel'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteEntirePosition}
+                    disabled={isDeleting}
+                    className="btn-token text-xs font-semibold px-3.5 py-2 rounded-md bg-rose-600 hover:bg-rose-500 text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <InlineSpinner className="h-3.5 w-3.5" label="Deleting position" />
+                        <span>{isArabic ? 'جارٍ الحذف...' : 'Deleting...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={13} />
+                        <span>{isArabic ? 'تأكيد الحذف' : 'Confirm Delete'}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </motion.div>

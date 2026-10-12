@@ -96,6 +96,7 @@ export async function getMarketDataSnapshot(): Promise<MarketDataSnapshot> {
   const flowRows = await db
     .select()
     .from(egxInvestorFlows)
+    .where(sql`total_turnover::numeric >= 50000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`)
     .orderBy(desc(egxInvestorFlows.date))
     .limit(30);
 

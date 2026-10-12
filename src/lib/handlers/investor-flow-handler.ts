@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { egxInvestorFlows, dailyPrices } from '@/db/schema';
-import { desc, asc, gte, notInArray } from 'drizzle-orm';
+import { egxInvestorFlows, dailyPrices, tickers } from '@/db/schema';
+import { desc, asc, gte, notInArray, sql, and, eq } from 'drizzle-orm';
 import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 
 export interface InvestorFlowDailyItem {
@@ -15,11 +15,16 @@ export interface InvestorFlowDailyItem {
   foreignBuy: number;
   foreignSell: number;
   foreignNet: number;
+  hotMoneyNet: number;
+  hotMoneyBuy: number;
+  hotMoneySell: number;
+  hotMoneySharePct: number;
   totalTurnover: number;
   egyptianSharePct: number;
   arabSharePct: number;
   foreignSharePct: number;
   cumulativeForeignNet: number;
+  cumulativeHotMoneyNet: number;
 }
 
 export interface InvestorFlowsResponse {
@@ -28,11 +33,14 @@ export interface InvestorFlowsResponse {
     foreignNetToday: number;
     egyptianNetToday: number;
     arabNetToday: number;
+    hotMoneyNetToday: number;
     foreignShareToday: number;
     egyptianShareToday: number;
     arabShareToday: number;
+    hotMoneyShareToday: number;
     totalTurnoverToday: number;
     cumulativeForeignNet: number;
+    cumulativeHotMoneyNet: number;
     foreignTrend: 'BUYING' | 'SELLING' | 'NEUTRAL';
   };
   history: InvestorFlowDailyItem[];
@@ -50,9 +58,12 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     else if (horizon === '1Y') limit = 250;
     else if (horizon === 'ALL') limit = 1000;
 
+    const validFlowFilter = sql`total_turnover::numeric >= 50000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`;
+
     let rows = await db
       .select()
       .from(egxInvestorFlows)
+      .where(validFlowFilter)
       .orderBy(desc(egxInvestorFlows.date))
       .limit(limit);
 
@@ -61,7 +72,13 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       const latestDailyPrice = await db
         .select({ date: dailyPrices.date })
         .from(dailyPrices)
-        .where(notInArray(dailyPrices.tickerSymbol, ['EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SILVER']))
+        .innerJoin(tickers, eq(dailyPrices.tickerSymbol, tickers.symbol))
+        .where(
+          and(
+            notInArray(tickers.sector, ['Funds', 'Macro', 'Indices']),
+            sql`${dailyPrices.volume}::numeric > 0`
+          )
+        )
         .orderBy(desc(dailyPrices.date))
         .limit(1);
 
@@ -74,6 +91,7 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
           rows = await db
             .select()
             .from(egxInvestorFlows)
+            .where(validFlowFilter)
             .orderBy(desc(egxInvestorFlows.date))
             .limit(limit);
         }
@@ -89,11 +107,14 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
           foreignNetToday: 0,
           egyptianNetToday: 0,
           arabNetToday: 0,
+          hotMoneyNetToday: 0,
           foreignShareToday: 0,
           egyptianShareToday: 0,
           arabShareToday: 0,
+          hotMoneyShareToday: 0,
           totalTurnoverToday: 0,
           cumulativeForeignNet: 0,
+          cumulativeHotMoneyNet: 0,
           foreignTrend: 'NEUTRAL',
         },
         history: [],
@@ -104,6 +125,7 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     rows.sort((a, b) => (a.date < b.date ? -1 : 1));
 
     let runningForeignNet = 0;
+    let runningHotMoneyNet = 0;
     const history: InvestorFlowDailyItem[] = [];
 
     for (const r of rows) {
@@ -119,8 +141,13 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       const fSell = Number(r.foreignSell);
       const fNet = Number(r.foreignNet);
 
+      const hmNet = fNet + aNet;
+      const hmBuy = fBuy + aBuy;
+      const hmSell = fSell + aSell;
+
       const turnover = Number(r.totalTurnover || (eBuy + aBuy + fBuy));
       runningForeignNet += fNet;
+      runningHotMoneyNet += hmNet;
 
       // 100% Volume shares (Buy + Sell volume for each group divided by 2 * Turnover)
       const eTotal = eBuy + eSell;
@@ -131,6 +158,7 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       const eShare = Math.round((eTotal / grandTotal) * 1000) / 10;
       const aShare = Math.round((aTotal / grandTotal) * 1000) / 10;
       const fShare = Math.max(0, Math.round((100 - eShare - aShare) * 10) / 10);
+      const hmShare = Math.round((fShare + aShare) * 10) / 10;
 
       const dateStr = typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().split('T')[0];
 
@@ -145,11 +173,16 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
         foreignBuy: fBuy,
         foreignSell: fSell,
         foreignNet: fNet,
+        hotMoneyNet: hmNet,
+        hotMoneyBuy: hmBuy,
+        hotMoneySell: hmSell,
+        hotMoneySharePct: hmShare,
         totalTurnover: turnover,
         egyptianSharePct: eShare,
         arabSharePct: aShare,
         foreignSharePct: fShare,
         cumulativeForeignNet: runningForeignNet,
+        cumulativeHotMoneyNet: runningHotMoneyNet,
       });
     }
 
@@ -162,11 +195,14 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
         foreignNetToday: latest.foreignNet,
         egyptianNetToday: latest.egyptianNet,
         arabNetToday: latest.arabNet,
+        hotMoneyNetToday: latest.hotMoneyNet,
         foreignShareToday: latest.foreignSharePct,
         egyptianShareToday: latest.egyptianSharePct,
         arabShareToday: latest.arabSharePct,
+        hotMoneyShareToday: latest.hotMoneySharePct,
         totalTurnoverToday: latest.totalTurnover,
         cumulativeForeignNet: runningForeignNet,
+        cumulativeHotMoneyNet: runningHotMoneyNet,
         foreignTrend: recentForeignSum > 50_000_000 ? 'BUYING' : recentForeignSum < -50_000_000 ? 'SELLING' : 'NEUTRAL',
       },
       history,

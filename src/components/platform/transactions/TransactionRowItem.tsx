@@ -47,7 +47,7 @@ export default function TransactionRowItem({
       return 'bg-sky-500/10 border-sky-500/25';
     }
     if (isInflow) {
-      return 'bg-profit-num/15 border-profit-num/30';
+      return 'bg-profit-chart/15 border-profit-chart/30';
     }
     return 'bg-loss-chart/15 border-loss-chart/30';
   };
@@ -118,7 +118,7 @@ export default function TransactionRowItem({
           onClick(item);
         }
       }}
-      className="py-2.5 px-2 flex items-center justify-between hover:bg-surface-active/30 transition-colors group cursor-pointer border-b border-border-subtle/80 outline-none select-none gap-3"
+      className="py-2.5 px-2 flex items-center justify-between hover:bg-white/[0.04] transition-colors group cursor-pointer border-b border-border-subtle/80 outline-none select-none gap-3 rounded-md focus-visible:ring-1 focus-visible:ring-brand-blue/50"
     >
       {/* Left: Directional Icon + Note & Category • Account */}
       <div className="flex items-center gap-2.5 min-w-0 pr-1 flex-1">
@@ -138,10 +138,10 @@ export default function TransactionRowItem({
             </span>
             {item.tradeDetails && (
               <span
-                className={`inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold border shrink-0 ${
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shrink-0 ${
                   item.tradeDetails.side === 'BUY'
-                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                    : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                    ? 'bg-profit-chart/15 text-profit-num border-profit-chart/30'
+                    : 'bg-loss-chart/15 text-loss-num border-loss-chart/30'
                 }`}
               >
                 {item.tradeDetails.side === 'BUY' ? (locale === 'ar' ? 'شراء' : 'BUY') : (locale === 'ar' ? 'بيع' : 'SELL')}
@@ -157,7 +157,7 @@ export default function TransactionRowItem({
             >
               {categoryLabel(item.category)}
             </span>
-            <span className="text-zinc-600 text-xs select-none">·</span>
+            <span className="text-text-faint text-xs select-none">·</span>
             {isTransfer && item.toAccountName ? (
               <div className="flex items-center gap-1 text-[11px] text-text-muted font-normal truncate min-w-0">
                 <span className="text-text-primary/90 font-medium truncate max-w-[110px] sm:max-w-[150px]" title={item.accountName}>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Cairo } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
 import NativeBridgeProvider from "@/components/platform/NativeBridgeProvider";
 import TelemetryTracker from "@/components/telemetry/TelemetryTracker";
@@ -12,9 +12,12 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const cairo = {
-  variable: "font-cairo",
-};
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 const spectral = {
   variable: "font-spectral",
