@@ -9,7 +9,12 @@ import {
 } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
 import { BorderBeam } from 'border-beam';
-import MobileSearchScreen from './MobileSearchScreen';
+import dynamic from 'next/dynamic';
+
+const MobileSearchScreen = dynamic(
+  () => import('./MobileSearchScreen'),
+  { ssr: false }
+);
 
 export interface MobileHomeHeroProps {
   userProfile?: {
@@ -179,11 +184,13 @@ export default function MobileHomeHero({
         </div>
       </div>
 
-      {/* Full-Page Mobile Search Screen Modal */}
-      <MobileSearchScreen
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
+      {/* Full-Page Mobile Search Screen Modal - Dynamically loaded only when user taps search */}
+      {isSearchOpen && (
+        <MobileSearchScreen
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+        />
+      )}
     </>
   );
 }

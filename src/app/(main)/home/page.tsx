@@ -58,7 +58,7 @@ export default async function HomePage() {
   let netWorthHistory: NetWorthHistoryPoint[] = [];
   let inflationSeries: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }> = [];
 
-  let profileRow: typeof profiles.$inferSelect | undefined;
+  let profileRow: { fullName: string | null; avatarUrl: string | null } | undefined;
 
   try {
     const [statsResult, alertResult, accountsResult, txResult, fxRatesResult, inflationResult, seriesResult, profileResult] = await Promise.allSettled([
@@ -69,7 +69,10 @@ export default async function HomePage() {
       getFxRates(),
       getLatestInflationRate(),
       getHistoricalInflationSeries(),
-      db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1),
+      db.select({
+        fullName: profiles.fullName,
+        avatarUrl: profiles.avatarUrl,
+      }).from(profiles).where(eq(profiles.id, user.id)).limit(1),
     ]);
 
     if (statsResult.status === 'fulfilled') {

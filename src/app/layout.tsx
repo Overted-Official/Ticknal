@@ -14,9 +14,10 @@ const geistSans = Geist({
 
 const cairo = Cairo({
   variable: "--font-cairo",
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
+  subsets: ["arabic"],
+  weight: ["600"],
   display: "swap",
+  preload: false,
 });
 
 const spectral = {

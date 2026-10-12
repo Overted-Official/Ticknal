@@ -266,8 +266,18 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
   }
 }
 
+let tickersResponseCache: { data: any[]; timestamp: number } | null = null;
+const TICKERS_RESPONSE_CACHE_TTL = 60 * 1000; // 60s in-memory cache
+
 export async function handleTickersGet() {
   try {
+    const now = Date.now();
+    if (tickersResponseCache && now - tickersResponseCache.timestamp < TICKERS_RESPONSE_CACHE_TTL) {
+      return NextResponse.json(tickersResponseCache.data, {
+        headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
+      });
+    }
+
     const [allTickers, recentPricesRows] = await Promise.all([
       getCachedTickers(),
       getCachedRecentPrices().catch(() => []),
@@ -296,6 +306,8 @@ export async function handleTickersGet() {
         changePct,
       };
     });
+
+    tickersResponseCache = { data: enrichedTickers, timestamp: Date.now() };
 
     return NextResponse.json(enrichedTickers, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },

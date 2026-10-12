@@ -166,9 +166,9 @@ export default function MobileSearchScreen({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Fetch all tickers with live enriched prices immediately
+  // Fetch all tickers with live enriched prices when search modal is open
   const { data: apiTickers } = useSWR<any[]>(
-    '/api/tickers',
+    isOpen ? '/api/tickers' : null,
     fetcher,
     {
       revalidateOnFocus: false,
