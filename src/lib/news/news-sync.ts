@@ -1,8 +1,8 @@
-import { sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { marketNews } from '@/db/schema';
+import { sql } from 'drizzle-orm';
 import https from 'https';
-import { synthesizeAssetNewsBundle, ASSET_CONFIGS, type RawHeadlineItem } from './asset-news-synthesizer';
+import crypto from 'crypto';
 
 /**
  * Standard HTTP GET with custom headers and timeout
@@ -45,34 +45,46 @@ function fetchJson(url: string, timeoutMs = 6000): Promise<any> {
  */
 export const TARGET_EXTERNAL_NEWS_SYMBOLS = [
   'EGX:COMI',
-  'EGX:EAST',
-  'EGX:FWRY',
   'EGX:TMGH',
   'EGX:SWDY',
+  'EGX:EAST',
+  'EGX:FWRY',
   'EGX:ETEL',
   'EGX:ABUK',
   'EGX:EKHO',
   'EGX:ORAS',
-  'FX_IDC:USDEGP',
+  'EGX:ESRS',
+  'EGX:HRHO',
+  'EGX:MFPC',
+  'EGX:ISPH',
+  'EGX:AMOC',
+  'EGX:EGX30',
   'TVC:GOLD',
   'OANDA:XAUUSD',
+  'FX_IDC:USDEGP',
 ];
 
 /**
  * Specific company and catalyst keywords to ensure absolute precision when digesting headlines
  */
 const ASSET_RELEVANCE_KEYWORDS: Record<string, string[]> = {
-  COMI: ['cib', 'comi', 'تجاري', 'التجاري الدولي', 'بنك تجاري', 'mnt', 'eroglu'],
-  EAST: ['eastern', 'الشرقية للدخان', 'ايسترن كومباني', 'إيسترن', 'دخان', 'سجائر', 'تبغ'],
-  FWRY: ['fawry', 'فوري', 'مدفوعات', 'congineer', 'al-futtaim'],
-  TMGH: ['talaat', 'moustafa', 'طلعت مصطفى', 'tmgh', 'southmed', 'مدينتي', 'بن سويلم'],
+  COMI: ['cib', 'comi', 'تجاري', 'التجاري الدولي', 'بنك تجاري', 'cib_adr', 'eroglu', 'mnt'],
+  TMGH: ['talaat', 'moustafa', 'طلعت مصطفى', 'tmgh', 'southmed', 'مدينتي', 'بن سويلم', 'roshn', 'spine', 'axa'],
   SWDY: ['elsewedy', 'sewedy', 'السويدي', 'swdy', 'كابلات'],
+  EAST: ['eastern', 'الشرقية للدخان', 'ايسترن كومباني', 'إيسترن', 'دخان', 'سجائر', 'تبغ'],
+  FWRY: ['fawry', 'فوري', 'مدفوعات', 'congineer'],
   ETEL: ['telecom egypt', 'we', 'المصرية للاتصالات', 'etel', 'اتصالات'],
   ABUK: ['abu qir', 'أبو قير', 'abuk', 'أسمدة'],
   EKHO: ['ekho', 'kuwait holding', 'القابضة المصرية الكويتية', 'كويتية'],
   ORAS: ['orascom', 'أوراسكوم', 'oras', 'إنشاءات'],
+  ESRS: ['ezz', 'حديد عز', 'esrs', 'صلب'],
+  HRHO: ['hermes', 'هيرميس', 'hrho', 'efg'],
+  MFPC: ['mopco', 'موبكو', 'mfpc', 'مصر لإنتاج الأسمدة'],
+  ISPH: ['ibnsina', 'ابن سينا', 'isph', 'أدوية'],
+  AMOC: ['amoc', 'أموك', 'إسكندرية للزيوت', 'بترول'],
+  EGX30: ['egx', 'egx30', 'بورصة مصر', 'البورصة المصرية', 'مؤشر', 'أسهم مصر', 'gulf', 'الخليج'],
   GOLD: ['gold', 'xau', 'ذهب', 'الذهب', 'سبائك', 'أونصة', 'bullion', 'silver', 'فضة'],
-  USDEGP: ['pound', 'جنيه', 'usd/egp', 'مركزي', 'تضخم', 'cbe', 'dollar', 'دولار', 'تعويم', 'فائدة', 'سعر الصرف'],
+  USDEGP: ['pound', 'جنيه', 'usd/egp', 'مركزي', 'تضخم', 'cbe', 'dollar', 'دولار', 'تعويم', 'فائدة', 'سعر الصرف', 'احتياطي'],
 };
 
 /**
@@ -86,12 +98,11 @@ function cleanTicker(sym: string): string {
 /**
  * Map polled symbol to one of our strictly tracked asset keys
  */
-function getTargetAssetKey(sym: string): string | null {
+function getTargetAssetKey(sym: string): string {
   const clean = cleanTicker(sym);
   if (clean === 'GOLD' || clean === 'XAUUSD') return 'GOLD';
   if (clean === 'USDEGP') return 'USDEGP';
-  if (ASSET_CONFIGS[clean]) return clean;
-  return null;
+  return clean;
 }
 
 /**
@@ -108,7 +119,70 @@ function normalizeHeadline(t: string): string {
   return t
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]/gu, '')
-    .slice(0, 50);
+    .slice(0, 60);
+}
+
+function generateNewsId(rawId: string): string {
+  const clean = String(rawId).replace(/[^a-zA-Z0-9_-]/g, '_');
+  if (clean.length <= 58) {
+    return `tv-${clean}`;
+  }
+  const hash = crypto.createHash('md5').update(rawId).digest('hex');
+  return `tv-${clean.slice(0, 24)}-${hash}`;
+}
+
+function cleanSourceName(rawSource?: string, rawProvider?: string): string {
+  const src = (rawSource || rawProvider || '').trim();
+  const lower = src.toLowerCase();
+  if (lower.includes('reuters')) return 'Reuters';
+  if (lower.includes('zawya')) return 'Zawya';
+  if (lower.includes('dow jones') || lower.includes('djn')) return 'Dow Jones Newswires';
+  if (lower.includes('trading economics')) return 'Trading Economics';
+  if (lower.includes('arabictrader')) return 'ArabicTrader';
+  if (lower.includes('zacks')) return 'Zacks';
+  if (lower.includes('bloomberg')) return 'Bloomberg';
+  if (lower.includes('asharq')) return 'Asharq Business';
+  if (lower.includes('mubasher') || lower.includes('مباشر')) return 'Mubasher';
+  if (lower.includes('moneycontrol')) return 'Moneycontrol';
+  return src || 'Market Wire';
+}
+
+function getCategoryForAsset(assetKey: string, title: string): { category: string; categoryLabel: string } {
+  const t = (title || '').toLowerCase();
+  if (t.includes('صندوق') || t.includes('صناديق') || t.includes('وثائق') || t.includes('fund') || t.includes('etf')) {
+    return { category: 'funds', categoryLabel: 'Investment Funds' };
+  }
+  if (assetKey === 'GOLD' || assetKey === 'XAUUSD') {
+    return { category: 'gold_silver', categoryLabel: 'Gold & Silver' };
+  }
+  if (assetKey === 'USDEGP' || t.includes('cbe') || t.includes('مركزي') || t.includes('تضخم') || t.includes('احتياطي')) {
+    return { category: 'macro_market', categoryLabel: 'Macro Market' };
+  }
+  return { category: 'listed_companies', categoryLabel: 'Listed Companies (EGX)' };
+}
+
+function detectSentiment(title: string): 'bullish' | 'bearish' | 'neutral' {
+  const t = (title || '').toLowerCase();
+  const bullishWords = [
+    'rises', 'surges', 'jumps', 'gains', 'soars', 'record', 'advances', 'profit rises', 'higher',
+    'expansion', 'positive', 'ارتفاع', 'صعود', 'نمو', 'مكاسب', 'أرباح', 'قفزة', 'طفرة', 'توسع',
+  ];
+  const bearishWords = [
+    'falls', 'drops', 'plunges', 'slumps', 'slides', 'declines', 'loss', 'losses', 'deficit', 'lower',
+    'negative', 'تراجع', 'انخفاض', 'هبوط', 'خسائر', 'انكماش', 'عجز',
+  ];
+  if (bullishWords.some((w) => t.includes(w))) return 'bullish';
+  if (bearishWords.some((w) => t.includes(w))) return 'bearish';
+  return 'neutral';
+}
+
+function detectImportance(title: string): 'critical' | 'high' | 'normal' {
+  const t = (title || '').toLowerCase();
+  const criticalWords = ['devaluation', 'تعويم', 'فائدة', 'rate cut', 'rate hike', 'emergency', 'قرار عاجل'];
+  if (criticalWords.some((w) => t.includes(w))) return 'critical';
+  const highWords = ['q1', 'q2', 'q3', 'q4', 'annual', 'earnings', 'profit', 'acquisition', 'partner', 'invest', 'أرباح', 'استحواذ', 'صفقة', 'شراكة', 'مشروع'];
+  if (highWords.some((w) => t.includes(w))) return 'high';
+  return 'normal';
 }
 
 export interface NewsSyncResult {
@@ -122,8 +196,9 @@ export interface NewsSyncResult {
 
 /**
  * High-Performance Continuous Market Wire Sync Service:
- * Ingests live external market wires from TradingView, cleans & bundles them by asset,
- * digests them via OpenRouter Nemotron AI, and posts them under the respective asset identity.
+ * Ingests live, authentic external market wires directly from institutional providers
+ * (Reuters, Zawya, Dow Jones, Trading Economics) with real publication timestamps,
+ * strict relevance checking, and bulletproof deduplication.
  */
 export async function syncExternalTradingViewNews(): Promise<NewsSyncResult> {
   const startTime = Date.now();
@@ -131,19 +206,30 @@ export async function syncExternalTradingViewNews(): Promise<NewsSyncResult> {
   let inserted = 0;
   const updated = 0;
 
-  const seenIds = new Set<string>();
-  const seenNormTitles = new Set<string>();
-
   try {
-    // 1. Build concurrent polling tasks for English and Arabic wires
+    // 1. Purge legacy or synthetic fake asset-* posts to ensure 100% authentic database state
+    try {
+      await db.execute(sql`DELETE FROM public.market_news WHERE id LIKE 'asset-%';`);
+    } catch (cleanErr: any) {
+      console.warn('[news-sync] Cleanup query notice:', cleanErr?.message);
+    }
+
+    // 2. Pre-load recent published titles from the database for cross-sync deduplication
+    const existingRows = await db
+      .select({ title: marketNews.title })
+      .from(marketNews)
+      .where(sql`${marketNews.publishedAt} > NOW() - INTERVAL '30 days'`);
+    const seenTitles = new Set<string>(existingRows.map((r) => normalizeHeadline(r.title)));
+
+    // 3. Build concurrent polling tasks for English and Arabic wires
     const fetchTasks: Array<{ lang: string; sym: string }> = [];
-    for (const lang of ['en', 'ar']) {
+    for (const lang of ['ar', 'en']) {
       for (const sym of TARGET_EXTERNAL_NEWS_SYMBOLS) {
         fetchTasks.push({ lang, sym });
       }
     }
 
-    // 2. Fetch all symbol feeds concurrently in parallel (~300ms)
+    // 4. Fetch all symbol feeds concurrently in parallel (~300-500ms)
     const fetchResults = await Promise.allSettled(
       fetchTasks.map(async ({ lang, sym }) => {
         const url = `https://news-headlines.tradingview.com/v2/headlines?client=web&lang=${lang}&symbol=${encodeURIComponent(sym)}`;
@@ -152,77 +238,70 @@ export async function syncExternalTradingViewNews(): Promise<NewsSyncResult> {
       })
     );
 
-    // 3. Bucket headlines strictly into curated asset targets with precision keyword relevance
-    const assetBuckets: Record<string, RawHeadlineItem[]> = {};
+    const seenIds = new Set<string>();
+    const validRecords: any[] = [];
 
     for (const res of fetchResults) {
       if (res.status !== 'fulfilled') continue;
       const { sym, items } = res.value;
       const assetKey = getTargetAssetKey(sym);
-      if (!assetKey) continue;
-
       totalPolled += items.length;
 
-      for (const it of items) {
-        if (!it.id || seenIds.has(it.id)) continue;
-        seenIds.add(it.id);
+      for (const item of items) {
+        if (!item.id || !item.title) continue;
+
+        const newsId = generateNewsId(item.id);
+        if (seenIds.has(newsId)) continue;
+        seenIds.add(newsId);
 
         // Discard stories that don't specifically mention the asset or its operations
-        if (!isHeadlineRelevantToAsset(it.title || '', assetKey)) continue;
+        if (!isHeadlineRelevantToAsset(item.title, assetKey)) continue;
 
-        // Deduplicate repetitive variations
-        const normTitle = normalizeHeadline(it.title || '');
-        if (seenNormTitles.has(normTitle)) continue;
-        seenNormTitles.add(normTitle);
+        // Deduplicate syndicated and repetitive variations across languages and symbols
+        const norm = normalizeHeadline(item.title);
+        if (seenTitles.has(norm)) continue;
+        seenTitles.add(norm);
 
-        if (!assetBuckets[assetKey]) assetBuckets[assetKey] = [];
-        assetBuckets[assetKey].push({
-          id: `tv-${it.id}`.slice(0, 64),
-          title: it.title,
-          published: it.published ? it.published : Math.floor(Date.now() / 1000),
-          source: it.source || it.provider || 'TradingView Wire',
-          link: it.link || (it.storyPath ? `https://www.tradingview.com${it.storyPath}` : undefined),
+        const publishedAt = item.published ? new Date(item.published * 1000) : new Date();
+        const source = cleanSourceName(item.source, item.provider);
+        const { category, categoryLabel } = getCategoryForAsset(assetKey, item.title);
+        const sentiment = detectSentiment(item.title);
+        const importance = detectImportance(item.title);
+        const sourceUrl = item.storyPath
+          ? `https://www.tradingview.com${item.storyPath}`
+          : (item.link || 'https://www.tradingview.com');
+
+        validRecords.push({
+          id: newsId,
+          title: item.title.trim(),
+          summary: item.title.trim(),
+          content: null,
+          category,
+          categoryLabel,
+          tickers: [assetKey],
+          sentiment,
+          source,
+          sourceUrl,
+          importance,
+          impactMetric: `${assetKey} Market Wire`,
+          readTime: '2 min read',
+          publishedAt,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         });
       }
     }
 
-    // 4. Synthesize bundled asset posts concurrently in parallel (~3-5s)
-    const synthesisTasks = Object.entries(assetBuckets).map(async ([assetKey, headlines]) => {
-      if (!headlines || headlines.length === 0) return false;
-      try {
-        return await synthesizeAssetNewsBundle(assetKey, headlines);
-      } catch (err: any) {
-        console.warn(`[news-sync] Failed to synthesize bundle for ${assetKey}:`, err?.message);
-        return false;
-      }
-    });
-
-    const synthResults = await Promise.allSettled(synthesisTasks);
-    for (const r of synthResults) {
-      if (r.status === 'fulfilled' && r.value) {
-        inserted++;
-      }
-    }
-
-    // 5. Purge any non-tracked or legacy rogue IDs to ensure clean database state
-    try {
-      await db.execute(sql`
-        DELETE FROM public.market_news
-        WHERE id LIKE 'asset-%'
-          AND id NOT LIKE 'asset-comi-%'
-          AND id NOT LIKE 'asset-gold-%'
-          AND id NOT LIKE 'asset-east-%'
-          AND id NOT LIKE 'asset-fwry-%'
-          AND id NOT LIKE 'asset-tmgh-%'
-          AND id NOT LIKE 'asset-swdy-%'
-          AND id NOT LIKE 'asset-etel-%'
-          AND id NOT LIKE 'asset-abuk-%'
-          AND id NOT LIKE 'asset-ekho-%'
-          AND id NOT LIKE 'asset-oras-%'
-          AND id NOT LIKE 'asset-usdegp-%';
-      `);
-    } catch (cleanErr: any) {
-      console.warn('[news-sync] Cleanup query notice:', cleanErr?.message);
+    // 5. Batch insert new authentic records with conflict avoidance
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < validRecords.length; i += CHUNK_SIZE) {
+      const chunk = validRecords.slice(i, i + CHUNK_SIZE);
+      const res = await db
+        .insert(marketNews)
+        .values(chunk)
+        .onConflictDoNothing({ target: marketNews.id })
+        .returning({ id: marketNews.id });
+      inserted += res.length;
     }
 
     return {

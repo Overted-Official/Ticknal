@@ -97,10 +97,20 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   const { category, ticker, query, itemId, limit = 50, offset = 0 } = filters;
 
   // Query all news items ordered by publication timestamp descending
-  const rows = await db
+  const rawRows = await db
     .select()
     .from(marketNews)
     .orderBy(desc(marketNews.publishedAt));
+
+  // Deduplicate any identical normalized headlines to guarantee a 100% clean feed without duplicates
+  const seenNormHeadlines = new Set<string>();
+  const rows: typeof rawRows = [];
+  for (const row of rawRows) {
+    const norm = row.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').slice(0, 60);
+    if (seenNormHeadlines.has(norm)) continue;
+    seenNormHeadlines.add(norm);
+    rows.push(row);
+  }
 
   // Compute category statistics from all records in database
   const allCategoriesCount: Record<string, number> = {
