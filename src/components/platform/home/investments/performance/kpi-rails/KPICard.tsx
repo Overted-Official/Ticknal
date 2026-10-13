@@ -30,6 +30,7 @@ export interface KPICardProps {
   hideBadgeOnMobile?: boolean;
   className?: string;
   iconSize?: number;
+  isLoading?: boolean;
 }
 
 export default function KPICard({
@@ -58,6 +59,7 @@ export default function KPICard({
   onClick,
   hideBadgeOnMobile = false,
   className = '',
+  isLoading = false,
 }: KPICardProps) {
   const router = useRouter();
 
@@ -173,38 +175,47 @@ export default function KPICard({
 
       {/* 2. Middle row: Value (bold large) + Unit (e.g. £, %, BARS) */}
       <div className="flex flex-col mt-1.5 sm:mt-2.5 z-10">
-        <div className="flex items-baseline gap-1 leading-none">
-          <span className="text-[15px] xs:text-[16px] sm:text-[20px] font-bold text-white tabular-nums tracking-tight">
-            {value}
-          </span>
-          {unit && (
-            <span className="text-[9px] sm:text-[10px] font-semibold text-white/50 uppercase tracking-wider ml-0.5">
-              {unit}
-            </span>
-          )}
-        </div>
+        {isLoading ? (
+          <div className="space-y-1.5 py-0.5">
+            <div className="h-4 sm:h-5 w-16 sm:w-20 bg-white/[0.08] rounded-xs animate-pulse" />
+            <div className="h-2.5 sm:h-3 w-12 sm:w-16 bg-white/[0.04] rounded-xs animate-pulse" />
+          </div>
+        ) : (
+          <>
+            <div className="flex items-baseline gap-1 leading-none">
+              <span className="text-[15px] xs:text-[16px] sm:text-[20px] font-bold text-white tabular-nums tracking-tight">
+                {value}
+              </span>
+              {unit && (
+                <span className="text-[9px] sm:text-[10px] font-semibold text-white/50 uppercase tracking-wider ml-0.5">
+                  {unit}
+                </span>
+              )}
+            </div>
 
-        {/* 3. Change row: Single clean line directly under value */}
-        <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5 leading-none">
-          {changeText && (
-            <span className={`text-[10px] sm:text-[11px] font-medium tabular-nums ${changeColorClass}`}>
-              {changeText}
-            </span>
-          )}
-          {metaText && (
-            <span className={`text-[9px] sm:text-[10px] truncate text-white/50 font-normal ${metaClass}`}>
-              {metaText}
-            </span>
-          )}
-        </div>
+            {/* 3. Change row: Single clean line directly under value */}
+            <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5 leading-none">
+              {changeText && (
+                <span className={`text-[10px] sm:text-[11px] font-medium tabular-nums ${changeColorClass}`}>
+                  {changeText}
+                </span>
+              )}
+              {metaText && (
+                <span className={`text-[9px] sm:text-[10px] truncate text-white/50 font-normal ${metaClass}`}>
+                  {metaText}
+                </span>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* 4. Bottom Custom Distribution or Edge-to-Edge Sparkline Area Graph */}
-      {customBottomContent ? (
+      {!isLoading && customBottomContent ? (
         <div className="absolute inset-x-0 bottom-0 px-2 sm:px-3 pb-2 pt-1 w-full pointer-events-none z-10">
           {customBottomContent}
         </div>
-      ) : showSparkline && sparklineData ? (
+      ) : !isLoading && showSparkline && sparklineData ? (
         <div className="absolute inset-x-0 bottom-0 h-10 sm:h-12 w-full overflow-hidden rounded-b-2xl pointer-events-none">
           <svg viewBox="0 0 100 32" className="w-full h-full block" preserveAspectRatio="none">
             <defs>

@@ -20,7 +20,7 @@ import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows
 import { syncDailySmartMoney } from '@/lib/smart-money/sync-smart-money';
 import { syncOfficialMacroData } from '@/lib/macro/sync-official-macro';
 import { syncExternalTradingViewNews } from '@/lib/news/news-sync';
-import { generateTheTicknalTakePosts } from '@/lib/news/ticknal-take-generator';
+import { generateTheTicknalTakePosts, retryPendingTicknalTakePosts } from '@/lib/news/ticknal-take-generator';
 
 // ----------------------------------------------------
 // 1. UPDATE STOCKS
@@ -1259,6 +1259,11 @@ export async function handleUpdateNews(req: Request) {
       message: `External news sync completed: ${result.inserted} inserted, ${result.updated} updated (${result.totalPolled} polled)`,
       metadata: result,
     });
+    // Background retry for any Ticknal Take posts that are on fallback templates
+    retryPendingTicknalTakePosts().catch((err) =>
+      console.warn('[cron-update-news] Background take retry skipped:', err?.message || err)
+    );
+
     return NextResponse.json(result, { status: result.success ? 200 : 500 });
   } catch (error) {
     console.error('Error in handleUpdateNews:', error);

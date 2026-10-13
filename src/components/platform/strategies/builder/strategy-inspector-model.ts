@@ -15,7 +15,7 @@ export type StrategyInspectorTarget =
   | { readonly kind: 'advanced-node'; readonly node: AdvancedStrategyNode };
 
 export type StrategyInspectorChange =
-  | { readonly kind: 'simple-rule'; readonly changes: Partial<Pick<StrategyRule, 'period' | 'operator' | 'value' | 'connector'>> }
+  | { readonly kind: 'simple-rule'; readonly changes: Partial<Pick<StrategyRule, 'outputKey' | 'period' | 'operator' | 'value' | 'connector'>> }
   | { readonly kind: 'advanced-node'; readonly changes: Partial<Pick<AdvancedStrategyNode, 'customName' | 'outputName' | 'connections' | 'parameters'>> };
 
 export function isInspectorReadOnly(target: StrategyInspectorTarget): boolean {

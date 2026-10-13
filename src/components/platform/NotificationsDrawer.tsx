@@ -17,7 +17,7 @@ import {
 import { formatUiLabel } from '@/lib/format-ui-label';
 import AddOrderModal, { type InitialOrderData, type BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 import InlineSpinner from '@/components/ui/InlineSpinner';
-import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 
 export type SignalNotificationItem = {
@@ -440,8 +440,27 @@ export default function NotificationsDrawer({
               {/* 3. Main Scrollable List — compact high-density design */}
               <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y custom-scrollbar">
                 {isLoadingSignals && notifications.length === 0 ? (
-                    <SectionLoadingState className="py-20" label={isAr ? 'جارٍ تحميل الإشارات…' : 'Loading signals…'} />
-                  ) : notifications.length === 0 ? (
+                  <div className="divide-y divide-white/[0.06]">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="py-2.5 px-3.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <Skeleton className="w-8 h-8 rounded-none shrink-0" />
+                          <div className="space-y-1.5 flex-1">
+                            <Skeleton className="h-3.5 w-28 sm:w-36 rounded-none" />
+                            <div className="flex items-center gap-1.5">
+                              <Skeleton className="h-2.5 w-10 rounded-none" />
+                              <Skeleton className="h-2.5 w-16 rounded-none" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-3 w-12 rounded-none" />
+                          <Skeleton className="h-6 w-14 rounded-none" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : notifications.length === 0 ? (
                     <div className="py-24 text-center text-text-muted text-xs flex flex-col items-center justify-center gap-2.5 px-6">
                       <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-text-muted mb-1">
                         <Bell size={18} />

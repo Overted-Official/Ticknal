@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import type { MajorIndexData, SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import { ChevronRight } from '@/components/ui/icon-library';
-import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 
 export type SelectedIndexSymbol = 'EGX30' | 'EGX70' | 'EGX100';
@@ -210,7 +210,22 @@ export default function MajorIndicesSection({
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
         <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black overflow-hidden pt-2">
           {isLoading ? (
-            <SectionLoadingState className="h-full" label={locale === 'ar' ? 'جاري تحميل بيانات المؤشرات…' : 'Loading market index data…'} />
+            <div className="w-full h-full flex flex-col justify-between p-6 select-none" role="status" aria-label={locale === 'ar' ? 'جاري تحميل بيانات المؤشرات…' : 'Loading market index data…'}>
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-28" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div className="flex-1 flex items-end gap-2 py-6 opacity-30">
+                {[30, 45, 52, 48, 62, 58, 72, 68, 80, 76, 88, 92].map((h, i) => (
+                  <div key={i} className="flex-1 bg-white/[0.20] rounded-xs animate-pulse" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+              <div className="flex justify-between border-t border-white/[0.06] pt-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-2.5 w-10" />
+                ))}
+              </div>
+            </div>
           ) : chartData.length < 2 ? (
             <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
               {locale === 'ar' ? 'لا توجد بيانات تاريخية متاحة لهذا الإطار الزمني.' : 'No historical data available for this timeframe.'}

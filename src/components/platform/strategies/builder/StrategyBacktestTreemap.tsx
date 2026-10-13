@@ -3,6 +3,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { computeTreemap, type TreemapNode, type TreemapRect } from '@/lib/finance/treemapMath';
 import { X } from '@/components/ui/icon-library';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import type { BacktestGroupItem, BacktestTickerItem } from './strategy-builder-fixtures';
 
 interface StrategyBacktestTreemapProps {
@@ -79,6 +80,9 @@ export default function StrategyBacktestTreemap({
   onSelectTicker,
 }: StrategyBacktestTreemapProps) {
   const isAr = locale === 'ar';
+  const { isPrivacy } = usePrivacyMode();
+  const percent = (value: number) => isPrivacy ? '••••' : `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+  const number = (value: number, digits = 0) => isPrivacy ? '••••' : value.toFixed(digits);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 500 });
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -143,7 +147,7 @@ export default function StrategyBacktestTreemap({
   const treemapTree = useMemo<TreemapNode<BacktestGroupItem | BacktestTickerItem>[]>(() => {
     return groups.map((group) => {
       const children: TreemapNode<BacktestTickerItem>[] = group.tickers.map((stock) => {
-        const stockValue = Math.max(30, Math.round(Math.abs(stock.returnPct) * 12) + stock.trades * 10);
+        const stockValue = Math.max(1, stock.trades);
         return {
           id: stock.id,
           name: stock.symbol,
@@ -246,8 +250,7 @@ export default function StrategyBacktestTreemap({
                       groupData.returnPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'
                     }`}
                   >
-                    {groupData.returnPct >= 0 ? '+' : ''}
-                    {groupData.returnPct.toFixed(1)}%
+                    {percent(groupData.returnPct)}
                   </span>
                 </div>
               )}
@@ -284,23 +287,24 @@ export default function StrategyBacktestTreemap({
                     {!isMicro ? (
                       <div className="flex flex-col items-center justify-center h-full text-center leading-none">
                         <span
-                          className={`font-bold text-xs tracking-tight tabular-nums truncate max-w-full ${colors.text}`}
+                          className="font-bold text-xs tracking-tight tabular-nums truncate max-w-full"
+                          style={{ color: colors.text }}
                         >
                           {stock.symbol}
                         </span>
                         {!isTiny && (
                           <span className="text-[11px] font-semibold tabular-nums mt-0.5 text-white/90">
-                            {stock.returnPct > 0 ? `+${stock.returnPct.toFixed(1)}%` : `${stock.returnPct.toFixed(1)}%`}
+                            {percent(stock.returnPct)}
                           </span>
                         )}
                         {stockRect.height > 52 && stockRect.width > 56 && (
                           <span className="text-[10px] text-white/60 tabular-nums font-normal mt-0.5">
-                            {stock.endPrice.toFixed(2)}
+                            {number(stock.endPrice, 2)}
                           </span>
                         )}
                       </div>
                     ) : (
-                      <div className={`m-auto text-[9px] font-bold tabular-nums ${colors.text}`}>
+                      <div className="m-auto text-[9px] font-bold tabular-nums" style={{ color: colors.text }}>
                         {stock.symbol.slice(0, 3)}
                       </div>
                     )}
@@ -330,8 +334,7 @@ export default function StrategyBacktestTreemap({
                 hoveredStock.stock.returnPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'
               }`}
             >
-              {hoveredStock.stock.returnPct >= 0 ? '+' : ''}
-              {hoveredStock.stock.returnPct.toFixed(1)}%
+              {percent(hoveredStock.stock.returnPct)}
             </span>
           </div>
 
@@ -349,22 +352,21 @@ export default function StrategyBacktestTreemap({
                   hoveredStock.stock.alphaPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'
                 }`}
               >
-                {hoveredStock.stock.alphaPct >= 0 ? '+' : ''}
-                {hoveredStock.stock.alphaPct.toFixed(1)}%
+                {percent(hoveredStock.stock.alphaPct)}
               </span>
             </div>
             <div className="flex justify-between text-neutral-300">
               <span className="text-plt-muted">{isAr ? 'نسبة الفوز:' : 'Win Rate:'}</span>
-              <span className="font-semibold text-white tabular-nums">{hoveredStock.stock.winRate}%</span>
+              <span className="font-semibold text-white tabular-nums">{isPrivacy ? '••••' : `${hoveredStock.stock.winRate}%`}</span>
             </div>
             <div className="flex justify-between text-neutral-300">
               <span className="text-plt-muted">{isAr ? 'الصفقات:' : 'Trades:'}</span>
-              <span className="font-semibold text-white tabular-nums">{hoveredStock.stock.trades}</span>
+              <span className="font-semibold text-white tabular-nums">{number(hoveredStock.stock.trades)}</span>
             </div>
             <div className="flex justify-between text-neutral-300">
               <span className="text-plt-muted">{isAr ? 'آخر سعر:' : 'Last Price:'}</span>
               <span className="font-medium text-white tabular-nums">
-                {hoveredStock.stock.endPrice.toFixed(2)} EGP
+                {number(hoveredStock.stock.endPrice, 2)} EGP
               </span>
             </div>
           </div>

@@ -5,11 +5,21 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Browser } from '@capacitor/browser';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { createClient } from '@/lib/supabase/client';
 
 export function isNativePlatform(): boolean {
   if (typeof window === 'undefined') return false;
   return Capacitor.isNativePlatform();
+}
+
+export async function dismissNativeSplashScreen(fadeOutDuration = 250): Promise<void> {
+  if (!isNativePlatform()) return;
+  try {
+    await SplashScreen.hide({ fadeOutDuration });
+  } catch (e) {
+    console.debug('Failed to hide native splash screen', e);
+  }
 }
 
 /**
@@ -108,8 +118,13 @@ export async function initNativeBridge(options?: {
 
     // 4. Initialize Native Push Notifications (FCM)
     await setupNativePushNotifications(options?.onNavigate, options?.userId);
+
+    // 5. Smoothly crossfade and dismiss native splash screen
+    await dismissNativeSplashScreen();
   } catch (error) {
     console.error('Failed to initialize native bridge:', error);
+    // Dismiss splash screen on error so app doesn't stay frozen on splash screen
+    await dismissNativeSplashScreen();
   }
 }
 

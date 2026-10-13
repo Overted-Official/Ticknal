@@ -22,6 +22,15 @@ const config: CapacitorConfig = {
       smallIcon: 'ic_launcher_foreground',
       iconColor: '#000000',
     },
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: false,
+      backgroundColor: '#000000',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
   },
 };
 

@@ -225,41 +225,26 @@ export const TYPHON_BLUEPRINT_NODES: readonly AdvancedStrategyNode[] = [
     ],
     protected: true,
   },
-  {
-    id: 'typhon-buy-logic',
-    stage: 'output',
-    kind: 'output',
-    title: { en: 'Buy Logic', ar: 'منطق الشراء' },
-    summary: { en: 'Receives the qualified priority crossover and emits the entry event.', ar: 'يستقبل اختراق الأولوية المؤهل ويصدر حدث الدخول.' },
-    tags: ['BUY'],
-    protected: true,
-  },
-  {
-    id: 'typhon-sell-logic',
-    stage: 'output',
-    kind: 'output',
-    title: { en: 'Sell Logic', ar: 'منطق البيع' },
-    summary: { en: 'Receives either protected exit branch and emits its named exit event.', ar: 'يستقبل أي مسار خروج محمي ويصدر حدث الخروج المسمى.' },
-    tags: ['SELL_TP', 'SELL_TRAIL'],
-    protected: true,
-  },
 ];
 
 export const ADVANCED_BLOCK_TEMPLATES: readonly AdvancedBlockTemplate[] = [
   { id: 'market-input', stage: 'inputs', kind: 'input', libraryGroup: 'marketData', title: { en: 'Market data', ar: 'بيانات السوق' }, description: { en: 'OHLCV, benchmark or another available series.', ar: 'OHLCV أو مؤشر مرجعي أو سلسلة أخرى متاحة.' } },
   { id: 'parameter', stage: 'inputs', kind: 'input', libraryGroup: 'marketData', title: { en: 'Reusable value', ar: 'قيمة قابلة لإعادة الاستخدام' }, description: { en: 'A named value reused across several blocks.', ar: 'قيمة مسماة يعاد استخدامها في عدة كتل.' } },
-  { id: 'indicator', stage: 'signal', kind: 'calculation', libraryGroup: 'indicators', title: { en: 'Indicator', ar: 'مؤشر' }, description: { en: 'Add one indicator from the Ticknal library.', ar: 'أضف مؤشراً من مكتبة Ticknal.' } },
+  { id: 'indicator', stage: 'inputs', kind: 'input', libraryGroup: 'indicators', title: { en: 'Indicator', ar: 'مؤشر' }, description: { en: 'Add one indicator from the Ticknal library.', ar: 'أضف مؤشراً من مكتبة Ticknal.' } },
   { id: 'weighted-composite', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Weighted calculation', ar: 'حساب موزون' }, description: { en: 'Normalize and combine several values by weight.', ar: 'وحّد وادمج عدة قيم حسب الأوزان.' } },
   { id: 'transform', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Transform or smooth', ar: 'تحويل أو تنعيم' }, description: { en: 'Apply EMA, SMA, normalization or another transformation.', ar: 'طبق EMA أو SMA أو التوحيد أو تحويلاً آخر.' } },
   { id: 'rolling-statistic', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Rolling statistic', ar: 'إحصاء متحرك' }, description: { en: 'Calculate a moving minimum, maximum, mean or median.', ar: 'احسب الحد الأدنى أو الأقصى أو المتوسط أو الوسيط المتحرك.' } },
   { id: 'math-operation', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Math operation', ar: 'عملية حسابية' }, description: { en: 'Add, subtract, multiply or divide available values.', ar: 'اجمع أو اطرح أو اضرب أو اقسم القيم المتاحة.' } },
   { id: 'condition', stage: 'entry', kind: 'decision', libraryGroup: 'rules', title: { en: 'Create a rule', ar: 'إنشاء قاعدة' }, description: { en: 'Compare two values or detect a crossover.', ar: 'قارن قيمتين أو اكتشف اختراقاً.' } },
+  { id: 'sell-condition', stage: 'exit', kind: 'exit', libraryGroup: 'rules', title: { en: 'Create a sell rule', ar: 'إنشاء قاعدة بيع' }, description: { en: 'Compare values or detect a crossover that closes a position.', ar: 'قارن القيم أو اكتشف اختراقاً يغلق الصفقة.' } },
   { id: 'priority-trigger', stage: 'entry', kind: 'decision', libraryGroup: 'combine', title: { en: 'Combine or prioritize rules', ar: 'دمج القواعد أو ترتيبها' }, description: { en: 'Join rules with AND/OR or evaluate them in order.', ar: 'اربط القواعد باستخدام و/أو أو قيّمها بالترتيب.' } },
   { id: 'position-memory', stage: 'state', kind: 'state', libraryGroup: 'holding', title: { en: 'Remember a value', ar: 'تذكر قيمة' }, description: { en: 'Store entry values and update them while holding.', ar: 'احفظ قيم الدخول وحدثها أثناء الاحتفاظ.' } },
   { id: 'rolling-state', stage: 'state', kind: 'state', libraryGroup: 'holding', title: { en: 'Track high or low', ar: 'تتبع أعلى أو أدنى قيمة' }, description: { en: 'Track an extreme since the position opened.', ar: 'تتبع قيمة قصوى منذ فتح الصفقة.' } },
   { id: 'dynamic-target', stage: 'exit', kind: 'exit', libraryGroup: 'protect', title: { en: 'Profit target', ar: 'هدف ربح' }, description: { en: 'Calculate a fixed or dynamic profit target.', ar: 'احسب هدف ربح ثابتاً أو ديناميكياً.' } },
   { id: 'trailing-exit', stage: 'exit', kind: 'exit', libraryGroup: 'protect', title: { en: 'Stop or trailing protection', ar: 'إيقاف أو حماية متحركة' }, description: { en: 'Protect the trade with a stop or trailing rule.', ar: 'احمِ الصفقة بإيقاف أو قاعدة متحركة.' } },
 ];
+
+export const NON_EXECUTABLE_ADVANCED_TEMPLATES = new Set(['position-memory', 'rolling-state', 'dynamic-target', 'trailing-exit']);
 
 export function createAdvancedDraftNodes(): readonly AdvancedStrategyNode[] {
   return [
@@ -275,30 +260,5 @@ export function createAdvancedDraftNodes(): readonly AdvancedStrategyNode[] {
       tags: ['OHLCV'],
       protected: true,
     },
-    {
-      id: 'custom-buy-logic',
-      stage: 'output',
-      kind: 'output',
-      title: { en: 'Buy Logic', ar: 'منطق الشراء' },
-      summary: { en: 'Connect the final rule that should open a position.', ar: 'اربط القاعدة النهائية التي يجب أن تفتح الصفقة.' },
-      templateId: 'buy-terminal',
-      outputName: 'BUY',
-      connections: [],
-      parameters: { combineMode: 'all' },
-      protected: true,
-    },
-    {
-      id: 'custom-sell-logic',
-      stage: 'output',
-      kind: 'output',
-      title: { en: 'Sell Logic', ar: 'منطق البيع' },
-      summary: { en: 'Connect any rule that should close the position.', ar: 'اربط أي قاعدة يجب أن تغلق الصفقة.' },
-      templateId: 'sell-terminal',
-      outputName: 'SELL',
-      connections: [],
-      parameters: { combineMode: 'any' },
-      protected: true,
-    },
   ];
 }
-

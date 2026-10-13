@@ -8,7 +8,7 @@ import SectorTreemap from '../SectorTreemap';
 import SectorConstituentRowItem from './SectorConstituentRowItem';
 import { X } from '@/components/ui/icon-library';
 import { TIMEFRAMES } from './MarketOverviewSection';
-import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 import { localizeSectorName, localizeRegimeName } from '@/lib/finance/sector-translations';
 
@@ -178,11 +178,31 @@ export default function MarketHeatmapSection({
         {/* Left Canvas: Treemap without outer border */}
         <div className="w-full lg:flex-1 min-w-0 bg-black overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] min-h-[500px] sm:min-h-[580px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
           {isLoading ? (
-            <SectionLoadingState
-              className="h-full w-full"
-              spinnerClassName="h-8 w-8"
-              label={locale === 'ar' ? 'جاري تجميع أداء سوق البورصة المصرية…' : 'Aggregating EGX market performance…'}
-            />
+            <div className="h-full w-full grid grid-cols-3 sm:grid-cols-4 grid-rows-3 gap-2 p-3 select-none" role="status" aria-label={locale === 'ar' ? 'جاري تجميع أداء سوق البورصة المصرية…' : 'Aggregating EGX market performance…'}>
+              <div className="col-span-2 row-span-2 border border-white/[0.08] p-4 flex flex-col justify-between">
+                <Skeleton className="h-4 w-28" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-3 w-14" />
+                </div>
+              </div>
+              <div className="col-span-1 row-span-1 border border-white/[0.08] p-3 flex flex-col justify-between">
+                <Skeleton className="h-3.5 w-16" />
+                <Skeleton className="h-4 w-12" />
+              </div>
+              <div className="col-span-1 row-span-2 border border-white/[0.08] p-3 flex flex-col justify-between">
+                <Skeleton className="h-3.5 w-16" />
+                <Skeleton className="h-5 w-14" />
+              </div>
+              <div className="col-span-1 row-span-1 border border-white/[0.08] p-3 flex flex-col justify-between">
+                <Skeleton className="h-3.5 w-14" />
+                <Skeleton className="h-4 w-10" />
+              </div>
+              <div className="col-span-2 row-span-1 border border-white/[0.08] p-3 flex items-center justify-between">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </div>
           ) : (
             <SectorTreemap
               sectors={sectors}

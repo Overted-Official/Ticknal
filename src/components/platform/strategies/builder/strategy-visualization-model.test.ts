@@ -60,7 +60,7 @@ describe('strategy visualization model', () => {
       ticker: 'SWDY',
       draft,
       advancedNodes: [],
-      indicators: [{ id: 'rsi', backlogId: 'M-1', name: 'RSI', description: 'desc', category: 'Momentum', available: true }],
+      indicators: [{ id: 'rsi', formulaVersion: '1.0.0', backlogId: 'M-1', name: 'RSI', description: 'desc', category: 'Momentum', available: true, defaultParameters: { period: 14 }, outputs: [{ key: 'rsi', kind: 'number', unit: 'percent' }], requiredCapabilities: [] }],
     });
 
     expect(result).not.toBeNull();

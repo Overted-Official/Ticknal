@@ -4,6 +4,7 @@ import {
   addRuleToDraft,
   createEmptyStrategyDraft,
   filterIndicatorOptions,
+  isSimpleRuleIndicatorSupported,
   isStrategyDraftTestable,
   localizeIndicatorCatalog,
   removeRuleFromDraft,
@@ -14,27 +15,39 @@ import {
 const INDICATORS: readonly StrategyBuilderIndicatorOption[] = [
   {
     id: 'relative-strength-index',
+    formulaVersion: '1.0.0',
     backlogId: 'MOM-001',
     name: 'Relative Strength Index',
     description: 'Measures momentum on a bounded scale.',
     category: 'Momentum',
     available: true,
+    defaultParameters: { period: 14 },
+    outputs: [{ key: 'rsi', kind: 'number', unit: 'percent' }],
+    requiredCapabilities: [],
   },
   {
     id: 'moving-average-convergence-divergence',
+    formulaVersion: '1.0.0',
     backlogId: 'MOM-002',
     name: 'Moving Average Convergence Divergence',
     description: 'Compares fast and slow moving averages.',
     category: 'Momentum',
     available: true,
+    defaultParameters: { fast: 12, slow: 26 },
+    outputs: [{ key: 'macd', kind: 'number', unit: 'price' }, { key: 'signal', kind: 'number', unit: 'price' }],
+    requiredCapabilities: [],
   },
   {
     id: 'egypt-investor-flow',
+    formulaVersion: '1.0.0',
     backlogId: 'EGY-031',
     name: 'Egypt Investor Flow',
     description: 'Tracks local and foreign investor flows.',
     category: 'Egypt',
     available: false,
+    defaultParameters: {},
+    outputs: [],
+    requiredCapabilities: ['market-flow'],
   },
 ];
 
@@ -42,18 +55,26 @@ describe('strategy builder model', () => {
   it('derives localized display metadata from stable catalog identities', () => {
     const catalog = [{
       id: 'relative-strength-index',
+      formulaVersion: '1.0.0',
       backlogId: 'MOM-001',
       category: 'momentum',
       available: true,
+      defaultParameters: { period: 14 },
+      outputs: [{ key: 'rsi', kind: 'number', unit: 'percent' }],
+      requiredCapabilities: [],
       name: { en: 'Relative Strength Index', ar: 'مؤشر القوة النسبية' },
       description: { en: 'Momentum oscillator.', ar: 'مذبذب الزخم.' },
     }] as const;
 
     expect(localizeIndicatorCatalog(catalog, 'ar')).toEqual([{
       id: 'relative-strength-index',
+      formulaVersion: '1.0.0',
       backlogId: 'MOM-001',
       category: 'momentum',
       available: true,
+      defaultParameters: { period: 14 },
+      outputs: [{ key: 'rsi', kind: 'number', unit: 'percent' }],
+      requiredCapabilities: [],
       name: 'مؤشر القوة النسبية',
       description: 'مذبذب الزخم.',
     }]);
@@ -66,6 +87,13 @@ describe('strategy builder model', () => {
     expect(filterIndicatorOptions(INDICATORS, 'investor', 'all')).toEqual([]);
   });
 
+  it('limits simple-rule choices to numeric indicators whose current controls can configure them', () => {
+    expect(isSimpleRuleIndicatorSupported(INDICATORS[0])).toBe(true);
+    expect(isSimpleRuleIndicatorSupported(INDICATORS[1])).toBe(false);
+    expect(isSimpleRuleIndicatorSupported(INDICATORS[2])).toBe(false);
+    expect(isSimpleRuleIndicatorSupported({ ...INDICATORS[0], repaintBehavior: 'confirmed-with-delay' })).toBe(false);
+  });
+
   it('adds an indicator as a configurable buy rule only once per side', () => {
     const draft = createEmptyStrategyDraft();
     const added = addRuleToDraft(draft, 'buy', INDICATORS[0]);
@@ -74,11 +102,18 @@ describe('strategy builder model', () => {
     expect(duplicate.buyRules).toEqual([{
       id: 'buy-relative-strength-index-1',
       indicatorId: 'relative-strength-index',
+      outputKey: 'rsi',
       period: 14,
       operator: 'crossesAbove',
       value: 30,
       connector: 'and',
     }]);
+  });
+
+  it('prefills the canonical period and single output when metadata is available', () => {
+    const metadata = { ...INDICATORS[0], defaultParameters: { period: 21 }, outputs: [{ key: 'rsi', kind: 'number' as const, unit: 'percent' as const }] };
+    const added = addRuleToDraft(createEmptyStrategyDraft(), 'buy', metadata);
+    expect(added.buyRules[0]).toMatchObject({ period: 21, outputKey: 'rsi' });
   });
 
   it('allows the same indicator to have independent buy and sell rules', () => {

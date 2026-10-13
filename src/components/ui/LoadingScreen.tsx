@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CometSpinner } from '@/components/ui/CometSpinner';
+import TicknalBrand from '@/components/ui/TicknalBrand';
 
 interface LoadingScreenProps {
   label?: string;
@@ -14,7 +15,7 @@ export default function LoadingScreen({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 flex select-none items-center justify-center overflow-hidden bg-black px-6 pt-[var(--ticknal-safe-area-top)] pb-[var(--ticknal-safe-area-bottom)]',
+        'fixed inset-0 z-50 flex select-none flex-col items-center justify-center overflow-hidden bg-black px-6 pt-[var(--ticknal-safe-area-top)] pb-[var(--ticknal-safe-area-bottom)] animate-in fade-in duration-200',
         className,
       )}
       role="status"
@@ -36,6 +37,9 @@ export default function LoadingScreen({
           className="relative z-10 object-contain"
           priority
         />
+      </div>
+      <div className="mt-5 flex flex-col items-center gap-1.5">
+        <TicknalBrand href={null} showIcon={false} showText={true} size="sm" className="text-white/80" />
       </div>
       <span className="sr-only">{label}</span>
     </div>

@@ -12,7 +12,7 @@ import AddOrderModal from '@/components/platform/AddOrderModal';
 import EditOrderModal from '@/components/platform/EditOrderModal';
 import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import { type HomeInvestmentOrder } from '../homeInvestmentsTypes';
-import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import Skeleton from '@/components/ui/Skeleton';
 
 export interface TickerPositionsDrawerProps {
   isOpen: boolean;
@@ -302,7 +302,32 @@ export default function TickerPositionsDrawer({
                 {/* Content Body */}
                 <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-black">
                   {isLoading && orders.length === 0 ? (
-                    <SectionLoadingState className="py-20 p-4 sm:p-6" label={isArabic ? 'جارٍ تحميل الصفقات والأوامر…' : 'Loading positions and orders…'} />
+                    <div className="p-4 sm:p-6 space-y-4">
+                      {/* Summary Metric cards skeleton */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="p-3 border border-white/[0.06] bg-white/[0.02] space-y-2">
+                            <Skeleton className="h-3 w-16 rounded-none" />
+                            <Skeleton className="h-5 w-24 rounded-none" />
+                          </div>
+                        ))}
+                      </div>
+                      {/* Position items skeleton */}
+                      <div className="space-y-2 pt-2">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="p-3.5 border border-white/[0.06] bg-white/[0.02] flex items-center justify-between">
+                            <div className="space-y-1.5">
+                              <Skeleton className="h-4 w-28 rounded-none" />
+                              <Skeleton className="h-3 w-20 rounded-none" />
+                            </div>
+                            <div className="flex flex-col items-end space-y-1.5">
+                              <Skeleton className="h-4 w-16 rounded-none" />
+                              <Skeleton className="h-3 w-12 rounded-none" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ) : (
                     <TickerPositions
                       symbol={symbol}

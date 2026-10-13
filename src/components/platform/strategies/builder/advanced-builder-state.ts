@@ -22,6 +22,7 @@ const DEFAULT_PARAMETERS: Readonly<Record<string, Readonly<Record<string, string
   'rolling-statistic': { operation: 'mean', period: '20' },
   'math-operation': { operation: 'add' },
   condition: { operator: 'crossesAbove', compareMode: 'value', compareValue: '0' },
+  'sell-condition': { operator: 'crossesBelow', compareMode: 'value', compareValue: '0' },
   'priority-trigger': { thresholds: '23.6, 14.6, 38.2, 50, 61.8' },
   'position-memory': { capture: 'entry', update: 'eachBar' },
   'rolling-state': { operation: 'maximum' },
@@ -106,6 +107,7 @@ export function moveAdvancedNode(
 ): readonly AdvancedStrategyNode[] {
   const currentIndex = nodes.findIndex((node) => node.id === nodeId);
   if (currentIndex < 0) return nodes;
+  if (nodes[currentIndex].protected) return nodes;
   const stage = nodes[currentIndex].stage;
   const stageIndices = nodes
     .map((node, index) => node.stage === stage ? index : -1)
@@ -116,6 +118,7 @@ export function moveAdvancedNode(
 
   const next = [...nodes];
   const targetIndex = stageIndices[targetPosition];
+  if (next[targetIndex].protected) return nodes;
   [next[currentIndex], next[targetIndex]] = [next[targetIndex], next[currentIndex]];
   return next;
 }
@@ -140,7 +143,7 @@ function projectRule(
   rule: StrategyRule,
   indicators: readonly StrategyBuilderIndicatorOption[],
 ): AdvancedStrategyNode {
-  const conditionTemplate = ADVANCED_BLOCK_TEMPLATES.find((template) => template.id === 'condition');
+  const conditionTemplate = ADVANCED_BLOCK_TEMPLATES.find((template) => template.id === (side === 'sell' ? 'sell-condition' : 'condition'));
   if (!conditionTemplate) throw new Error('Advanced condition template is unavailable');
   const id = projectedNodeId(side, rule);
   const indicator = indicators.find((candidate) => candidate.id === rule.indicatorId);
@@ -150,11 +153,13 @@ function projectRule(
   return {
     ...node,
     customName: indicatorName,
+    connections: ['custom-market-data'],
     parameters: {
       ...node.parameters,
       sourceRuleId: rule.id,
       actionSide: side,
       indicatorId: rule.indicatorId,
+      outputKey: rule.outputKey ?? '',
       indicatorName,
       period: String(rule.period),
       operator: rule.operator,
@@ -206,4 +211,26 @@ export function hasAdvancedOnlyFeatures(nodes: readonly AdvancedStrategyNode[]):
     if (node.id === 'custom-market-data') return false;
     return !node.parameters?.sourceRuleId;
   });
+}
+
+export function reconcileSimpleDraftFromFlow(draft: StrategyDraft, nodes: readonly AdvancedStrategyNode[]): StrategyDraft {
+  const projectedByRuleId = new Map(nodes
+    .filter((node) => node.parameters?.sourceRuleId)
+    .map((node) => [node.parameters!.sourceRuleId, node]));
+  const updateRules = (rules: readonly StrategyRule[]): readonly StrategyRule[] => rules
+    .filter((rule) => projectedByRuleId.has(rule.id))
+    .map((rule) => {
+      const parameters = projectedByRuleId.get(rule.id)?.parameters ?? {};
+      const period = Number(parameters.period);
+      const value = Number(parameters.compareValue);
+      return {
+        ...rule,
+        period: Number.isFinite(period) && period > 0 ? period : rule.period,
+        outputKey: parameters.outputKey || undefined,
+        value: Number.isFinite(value) ? value : rule.value,
+        operator: ['crossesAbove', 'crossesBelow', 'isAbove', 'isBelow'].includes(parameters.operator) ? parameters.operator as StrategyRule['operator'] : rule.operator,
+        connector: parameters.connector === 'or' ? 'or' as const : 'and' as const,
+      };
+    });
+  return { ...draft, buyRules: updateRules(draft.buyRules), sellRules: updateRules(draft.sellRules) };
 }

@@ -45,12 +45,6 @@ const STATIC_KPI_SNAPSHOTS: Readonly<Record<string, Readonly<Record<StaticSnapsh
     holdoutBuild: { strategyReturn: 14.2, alpha: 7.7, benchmarkReturn: 6.5, winRate: 66.7, maxDrawdown: -5.6, totalTrades: 68 },
     holdoutUnseen: { strategyReturn: 7.7, alpha: 4.2, benchmarkReturn: 3.5, winRate: 66.7, maxDrawdown: -4.1, totalTrades: 37 },
   },
-  'custom-draft': {
-    all: { strategyReturn: 12.8, alpha: 1.5, benchmarkReturn: 11.3, winRate: 55.4, maxDrawdown: -11.8, totalTrades: 102 },
-    custom: { strategyReturn: 9.7, alpha: 1.1, benchmarkReturn: 8.6, winRate: 55.4, maxDrawdown: -10.3, totalTrades: 78 },
-    holdoutBuild: { strategyReturn: 7.3, alpha: 0.8, benchmarkReturn: 6.5, winRate: 55.4, maxDrawdown: -8.9, totalTrades: 58 },
-    holdoutUnseen: { strategyReturn: 4, alpha: 0.5, benchmarkReturn: 3.5, winRate: 55.4, maxDrawdown: -6.6, totalTrades: 32 },
-  },
 };
 
 export function getMockBacktestPreview(
@@ -60,9 +54,10 @@ export function getMockBacktestPreview(
   hasRules: boolean,
   phase: BacktestPhase,
 ): MockBacktestPreview | null {
-  if (strategyId === 'custom-draft' && !hasRules) return null;
+  if (!hasRules) return null;
 
-  const snapshots = STATIC_KPI_SNAPSHOTS[strategyId] ?? STATIC_KPI_SNAPSHOTS.psi!;
+  const snapshots = STATIC_KPI_SNAPSHOTS[strategyId];
+  if (!snapshots) return null;
   const snapshotKey: StaticSnapshotKey = mode === 'holdout'
     ? (phase === 'unseen' ? 'holdoutUnseen' : 'holdoutBuild')
     : mode;

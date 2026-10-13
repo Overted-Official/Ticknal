@@ -1,4 +1,4 @@
-import { boolean, date, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, jsonb, numeric, pgTable, primaryKey, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
 
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey(),
@@ -188,6 +188,20 @@ export const userStrategySettings = pgTable('user_strategy_settings', {
     userTickerStrategyUnique: unique('user_strategy_settings_unique').on(table.userId, table.tickerSymbol, table.strategyName),
   };
 });
+
+export const userStrategies = pgTable('user_strategies', {
+  userId: uuid('user_id').notNull(),
+  id: varchar('id', { length: 100 }).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  mode: varchar('mode', { length: 12 }).notNull(),
+  definition: jsonb('definition').notNull(),
+  selectedSymbols: jsonb('selected_symbols').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.id] }),
+  userUpdatedIdx: index('user_strategies_user_updated_idx').on(table.userId, table.updatedAt),
+}));
 
 export const banks = pgTable('banks', {
   id: serial('id').primaryKey(),

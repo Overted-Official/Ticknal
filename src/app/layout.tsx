@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Cairo } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/platform/ServiceWorkerRegistration";
 import NativeBridgeProvider from "@/components/platform/NativeBridgeProvider";
+import AppSplash from "@/components/platform/splash/AppSplash";
+import { SPLASH_BOOT_SCRIPT } from "@/components/platform/splash/splash-boot-script";
 import TelemetryTracker from "@/components/telemetry/TelemetryTracker";
 import { LocaleProvider } from "@/lib/i18n";
 import { getServerLocale, getServerDirection } from "@/lib/i18n/server";
@@ -77,10 +79,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${geistSans.variable} ${cairo.variable} ${spectral.variable} h-full antialiased font-sans bg-plt-base`}
       suppressHydrationWarning
     >
+      <head>
+        {/* Runs during HTML parsing, before first paint: decides whether the animated launch splash plays. */}
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_BOOT_SCRIPT }} />
+      </head>
       <body
         className="min-h-full flex flex-col font-sans bg-plt-base text-plt-text overflow-x-hidden max-w-full"
         suppressHydrationWarning
       >
+        <AppSplash />
         <LocaleProvider initialLocale={locale}>
           <TelemetryTracker />
           {children}

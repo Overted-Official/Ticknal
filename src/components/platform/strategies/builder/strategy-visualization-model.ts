@@ -118,7 +118,7 @@ export function getStrategyVisualizationModel(input: {
   const filtered = (input.startDate || input.endDate)
     ? rawPoints.filter((p) => (!input.startDate || p.date >= input.startDate) && (!input.endDate || p.date <= input.endDate))
     : rawPoints;
-  const points = filtered.length >= 2 ? filtered : rawPoints;
+  const points = filtered;
 
   let buyBlockId = 'buy-rule';
   let buyBlockTitle = 'Buy logic';

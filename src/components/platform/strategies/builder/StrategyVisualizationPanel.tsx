@@ -14,6 +14,7 @@ interface StrategyVisualizationPanelProps {
   readonly onFocusBlock: (blockId: string) => void;
   readonly onBack?: () => void;
   readonly onContinue?: () => void;
+  readonly showTickerSearch?: boolean;
 }
 
 export default function StrategyVisualizationPanel({
@@ -25,6 +26,7 @@ export default function StrategyVisualizationPanel({
   onFocusBlock,
   onBack,
   onContinue,
+  showTickerSearch = true,
 }: StrategyVisualizationPanelProps) {
   const isAr = locale === 'ar';
 
@@ -69,16 +71,23 @@ export default function StrategyVisualizationPanel({
     );
   }
 
+  if (visiblePoints.length === 0) {
+    return <section className="border border-dashed border-white/10 bg-black px-5 py-10 text-center" aria-label={isAr ? 'تصور الاستراتيجية' : 'Strategy visualization'}>
+      <h2 className="text-sm font-semibold text-white">{isAr ? 'لا توجد بيانات في هذه الفترة' : 'No chart data in this period'}</h2>
+      <p className="mt-2 text-xs text-plt-muted">{isAr ? 'اختر فترة ضمن البيانات التوضيحية المتاحة لعام ٢٠٢٥.' : 'Choose a window within the available 2025 illustrative data.'}</p>
+    </section>;
+  }
+
   return (
     <section className="bg-black p-0" aria-label={isAr ? 'تصور الاستراتيجية' : 'Strategy visualization'}>
       {/* Ticker Search-Select row */}
-      <div className="mb-2 flex items-center justify-between gap-2">
+      {showTickerSearch && <div className="mb-2 flex items-center justify-between gap-2">
         <StrategyTickerSearchSelect
           value={ticker}
           onChange={onTickerChange}
           locale={locale}
         />
-      </div>
+      </div>}
 
       {/* Unified Multi-Pane Strategy Chart (Price on top with signals, full-width indicator panes below) */}
       <UnifiedStrategyChart

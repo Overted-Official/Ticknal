@@ -18,7 +18,7 @@ import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { useToast } from '@/context/ToastContext';
 import { isBrokerageAccount } from '@/lib/portfolio-finance';
 import { type BankAccount, type BankMonthlySnapshot } from '@/types/bank';
-import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import Skeleton from '@/components/ui/Skeleton';
 
 interface AccountBalanceHistoryDrawerProps {
   account: BankAccount | null;
@@ -332,7 +332,26 @@ export default function AccountBalanceHistoryDrawer({
 
                 <div className="h-[190px] w-full border-y border-border-default py-3">
                   {isLoading ? (
-                    <SectionLoadingState className="h-full py-0" label="Loading balance history…" />
+                    <div className="h-full w-full flex flex-col justify-between px-2">
+                      <div className="flex justify-between items-center">
+                        <Skeleton className="h-3 w-16 rounded-none" />
+                        <Skeleton className="h-3 w-12 rounded-none" />
+                      </div>
+                      <div className="relative w-full flex-1 flex items-end my-1">
+                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 30">
+                          <path
+                            d="M 0 25 Q 35 22, 60 12 T 100 4 L 100 30 L 0 30 Z"
+                            fill="rgba(255, 255, 255, 0.04)"
+                            className="animate-pulse"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-white/[0.06]">
+                        {[...Array(4)].map((_, i) => (
+                          <Skeleton key={i} className="h-2 w-10 rounded-none" />
+                        ))}
+                      </div>
+                    </div>
                   ) : chartData.length < 2 ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-xs text-text-muted">
                       Record at least two month-end balances to see the trend line.
@@ -431,7 +450,19 @@ export default function AccountBalanceHistoryDrawer({
                   <h3 id="balance-history-list-title" className="text-sm font-semibold text-text-primary">Recorded snapshots</h3>
                   <span className="text-[11px] text-text-muted">Click a row to edit</span>
                 </div>
-                {snapshots.length === 0 ? (
+                {isLoading ? (
+                  <div className="divide-y divide-border-default border-y border-border-default">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-between py-2.5">
+                        <div className="space-y-1">
+                          <Skeleton className="h-3.5 w-20 rounded-none" />
+                          <Skeleton className="h-2.5 w-28 rounded-none" />
+                        </div>
+                        <Skeleton className="h-3.5 w-16 rounded-none" />
+                      </div>
+                    ))}
+                  </div>
+                ) : snapshots.length === 0 ? (
                   <div className="border-y border-border-default py-6 text-center text-xs text-text-muted">
                     No balance snapshots recorded yet.
                   </div>

@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { dailyPrices, egxInvestorFlows, marketNews, tickers } from '@/db/schema';
+import { dailyPrices, egxInvestorFlows, marketNews, systemLogs, tickers } from '@/db/schema';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import {
   generateEgx30ChartSvg,
@@ -9,12 +9,12 @@ import {
   type InvestorFlowsChartData,
   type FxArbitrageChartData,
 } from './ticknal-take-charts';
-
-const OPENROUTER_MODELS = [
-  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-  'nvidia/nemotron-3.5-lightning:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-];
+import {
+  completeWithKeyPool,
+  getKeyPoolStatus,
+  type AICompletionResult,
+  type KeyPoolStatus,
+} from '@/lib/ai/openrouter-client';
 
 interface MarketDataSnapshot {
   date: string;
@@ -191,84 +191,43 @@ export async function getMarketDataSnapshot(): Promise<MarketDataSnapshot> {
 }
 
 /**
- * 2. Generate Bilingual Commentary with OpenRouter Models
+ * 2. Generate Bilingual Commentary with Resilient Multi-Key OpenRouter Pool
  */
 async function generateBilingualInsight(
   promptContext: string,
   fallbackText: string
-): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return fallbackText;
-  }
-
+): Promise<AICompletionResult> {
   const systemPrompt = `You are a Senior Quantitative Strategist at Ticknal, Egypt's premier financial intelligence terminal.
 Rules:
 1. Output ONLY the briefing text. No introductory remarks, no thinking logs, no meta explanations.
 2. Structure: Exactly 2 concise sentences in English explaining the figures and institutional meaning, followed by a blank line, then 2 concise sentences in Arabic. Professional executive tone.`;
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://ticknal.com',
-          'X-Title': 'Ticknal Terminal',
-        },
-        body: JSON.stringify({
-          models: OPENROUTER_MODELS,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: promptContext },
-          ],
-          temperature: 0.2,
-          max_tokens: 500,
-        }),
-        signal: AbortSignal.timeout(25000), // 25s timeout
-      });
+  return completeWithKeyPool({
+    systemPrompt,
+    userPrompt: promptContext,
+    fallbackText,
+    temperature: 0.2,
+    maxTokens: 500,
+    timeoutMs: 25000,
+  });
+}
 
-      if (!res.ok) {
-        console.warn(`[ticknal-take] OpenRouter response not ok (${res.status}):`, await res.text());
-        continue;
-      }
-
-      const data = await res.json();
-      let text = data?.choices?.[0]?.message?.content?.trim() || '';
-
-      // Strip any thinking tags or preamble
-      text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-      text = text.replace(/^Here's a thinking process:[\s\S]*?\n\n/i, '').trim();
-      text = text.replace(/^(here is|briefing|summary:)[\s\S]*?\n/i, '').trim();
-
-      const isThinkingScratchpad =
-        text.includes('Analyze User') ||
-        text.includes('Deconstruct') ||
-        text.includes('User is asking') ||
-        text.includes('Strict output rules') ||
-        text.includes('Drafting -') ||
-        text.includes('Key insight:');
-
-      if (!isThinkingScratchpad && text.length > 30 && !text.toLowerCase().includes('count')) {
-        return text;
-      }
-    } catch (err: any) {
-      console.warn(`[ticknal-take] OpenRouter attempt ${attempt} failed:`, err?.message || err);
-    }
-  }
-
-  return fallbackText;
+export interface GenerateTicknalTakeResult {
+  success: boolean;
+  postsCreated: number;
+  date: string;
+  telemetry: {
+    egx30: { source: 'ai_generated' | 'fallback_template'; model?: string; key?: string; error?: string };
+    flows: { source: 'ai_generated' | 'fallback_template'; model?: string; key?: string; error?: string };
+    fx: { source: 'ai_generated' | 'fallback_template'; model?: string; key?: string; error?: string };
+  };
+  keyPool: KeyPoolStatus;
 }
 
 /**
  * 3. Generate and Upsert the Daily Ticknal Take Posts
  */
-export async function generateTheTicknalTakePosts(): Promise<{
-  success: boolean;
-  postsCreated: number;
-  date: string;
-}> {
+export async function generateTheTicknalTakePosts(): Promise<GenerateTicknalTakeResult> {
   const snapshot = await getMarketDataSnapshot();
   const date = snapshot.date;
 
@@ -307,8 +266,8 @@ State whether hot money is accumulating or fleeing, and how domestic liquidity s
 - Devaluation Risk: ${snapshot.fx.riskScore}% (${snapshot.fx.riskLabel}).
 Interpret whether offshore markets signal FX pressure or stability.`;
 
-  // Generate all 3 insights in parallel for high speed
-  const [egx30Body, flowsBody, fxBody] = await Promise.all([
+  // Generate all 3 insights in parallel for high speed with pool failover
+  const [egx30Insight, flowsInsight, fxInsight] = await Promise.all([
     generateBilingualInsight(egx30Prompt, egx30Fallback),
     generateBilingualInsight(flowsPrompt, flowsFallback),
     generateBilingualInsight(fxPrompt, fxFallback),
@@ -326,15 +285,15 @@ Interpret whether offshore markets signal FX pressure or stability.`;
   const fxChartSvgAr = generateFxArbitrageChartSvg(snapshot.fx, 'ar');
   const fxChartSvg = JSON.stringify({ en: fxChartSvgEn, ar: fxChartSvgAr });
 
-  // 4. Upsert items into database
+  // 4. Upsert items into database with tracking markers
   const publishedAt = new Date();
 
   const posts = [
     {
       id: `tt-egx30-${date}`,
       title: `EGX30 Market Wrap & Breadth: ${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}%`,
-      summary: egx30Body,
-      content: egx30Body,
+      summary: egx30Insight.text,
+      content: `${egx30Insight.text}\n\n<!-- ticknal_ai_status:${egx30Insight.source}|model:${egx30Insight.modelUsed || 'none'}|key:${egx30Insight.maskedKeyUsed || 'none'} -->`,
       category: 'ticknal_take',
       categoryLabel: 'The Ticknal Take',
       tickers: ['EGX30', 'COMI', 'TMGH', 'SWDY'],
@@ -350,8 +309,8 @@ Interpret whether offshore markets signal FX pressure or stability.`;
     {
       id: `tt-flows-${date}`,
       title: `Hot Money Barometer: 30D Rolling Foreign Net ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)}M EGP`,
-      summary: flowsBody,
-      content: flowsBody,
+      summary: flowsInsight.text,
+      content: `${flowsInsight.text}\n\n<!-- ticknal_ai_status:${flowsInsight.source}|model:${flowsInsight.modelUsed || 'none'}|key:${flowsInsight.maskedKeyUsed || 'none'} -->`,
       category: 'ticknal_take',
       categoryLabel: 'The Ticknal Take',
       tickers: ['EGX30', 'COMI'],
@@ -367,8 +326,8 @@ Interpret whether offshore markets signal FX pressure or stability.`;
     {
       id: `tt-fx-${date}`,
       title: `USD/EGP Arbitrage: CIB London GDR Implies ${snapshot.fx.gdrImpliedRate.toFixed(2)} EGP`,
-      summary: fxBody,
-      content: fxBody,
+      summary: fxInsight.text,
+      content: `${fxInsight.text}\n\n<!-- ticknal_ai_status:${fxInsight.source}|model:${fxInsight.modelUsed || 'none'}|key:${fxInsight.maskedKeyUsed || 'none'} -->`,
       category: 'ticknal_take',
       categoryLabel: 'The Ticknal Take',
       tickers: ['USDEGP', 'COMI', 'CIB_ADR'],
@@ -430,9 +389,154 @@ Interpret whether offshore markets signal FX pressure or stability.`;
     console.warn('[ticknal-take] Could not cleanup obsolete gold posts:', err?.message || err);
   }
 
+  const keyPool = getKeyPoolStatus();
+  const telemetry = {
+    egx30: {
+      source: egx30Insight.source,
+      model: egx30Insight.modelUsed,
+      key: egx30Insight.maskedKeyUsed,
+      error: egx30Insight.error,
+    },
+    flows: {
+      source: flowsInsight.source,
+      model: flowsInsight.modelUsed,
+      key: flowsInsight.maskedKeyUsed,
+      error: flowsInsight.error,
+    },
+    fx: {
+      source: fxInsight.source,
+      model: fxInsight.modelUsed,
+      key: fxInsight.maskedKeyUsed,
+      error: fxInsight.error,
+    },
+  };
+
+  try {
+    await db.insert(systemLogs).values({
+      source: 'cron-ticknal-take',
+      level: 'INFO',
+      message: `The Ticknal Take briefings created: ${postsCreated} posts. AI status: EGX30=${egx30Insight.source}, Flows=${flowsInsight.source}, FX=${fxInsight.source}`,
+      metadata: {
+        date,
+        postsCreated,
+        telemetry,
+        keyPool,
+      },
+    });
+  } catch (logErr) {
+    console.warn('[ticknal-take] Could not write system log:', logErr);
+  }
+
   return {
     success: true,
     postsCreated,
     date,
+    telemetry,
+    keyPool,
+  };
+}
+
+export interface RetryPendingResult {
+  attempted: number;
+  upgraded: number;
+  date: string;
+  posts: {
+    id: string;
+    status: 'upgraded' | 'already_ai' | 'still_fallback';
+    model?: string;
+    error?: string;
+  }[];
+  keyPool: KeyPoolStatus;
+}
+
+/**
+ * 4. Retry Queue: Check and re-enhance any Ticknal Take posts that are currently on data fallback templates
+ */
+export async function retryPendingTicknalTakePosts(targetDate?: string): Promise<RetryPendingResult> {
+  const snapshot = await getMarketDataSnapshot();
+  const date = targetDate || snapshot.date;
+
+  const targetIds = [`tt-egx30-${date}`, `tt-flows-${date}`, `tt-fx-${date}`];
+  const existingPosts = await db
+    .select()
+    .from(marketNews)
+    .where(inArray(marketNews.id, targetIds));
+
+  let upgraded = 0;
+  const postResults: {
+    id: string;
+    status: 'upgraded' | 'already_ai' | 'still_fallback';
+    model?: string;
+    error?: string;
+  }[] = [];
+
+  for (const post of existingPosts) {
+    const isFallback =
+      post.content?.includes('<!-- ticknal_ai_status:fallback_template') ||
+      post.content?.includes('institutional positioning consolidated') ||
+      post.content?.includes('30-day cumulative net position');
+
+    if (!isFallback) {
+      postResults.push({ id: post.id, status: 'already_ai' });
+      continue;
+    }
+
+    let prompt = '';
+    let fallback = '';
+
+    if (post.id === `tt-egx30-${date}`) {
+      prompt = `EGX30 Closing Pulse for ${date}:
+- Close: ${snapshot.egx30.close.toFixed(2)} pts (${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}%)
+- Turnover: ${snapshot.egx30.turnoverBillion}B EGP
+- Breadth: ${snapshot.egx30.advancers} Advancers, ${snapshot.egx30.decliners} Decliners, ${snapshot.egx30.flat} Flat.
+Analyze the technical momentum and institutional positioning.`;
+      fallback = post.content?.replace(/\n\n<!-- ticknal_ai_status[\s\S]*$/, '') || '';
+    } else if (post.id === `tt-flows-${date}`) {
+      const isAccumulating = snapshot.flows.rolling30dForeignNetMillion >= 0;
+      prompt = `EGX Foreign Institutional Flows (30-Day Rolling Barometer) for ${date}:
+- Today: Foreign Net ${snapshot.flows.todayForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.todayForeignNetMillion.toFixed(1)}M EGP | Egyptian Net +${snapshot.flows.todayEgyptianNetMillion.toFixed(1)}M EGP
+- 30-Day Cumulative Foreign Net: ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)}M EGP (${isAccumulating ? 'Net Accumulation' : 'Net Capital Flight'})
+- Flow Sessions: ${snapshot.flows.inflowDaysCount} Inflow vs ${snapshot.flows.outflowDaysCount} Outflow sessions (${Math.round((snapshot.flows.inflowDaysCount / Math.max(1, snapshot.flows.dailyBars30d.length)) * 100)}% ratio).
+State whether hot money is accumulating or fleeing, and how domestic liquidity supports the market.`;
+      fallback = post.content?.replace(/\n\n<!-- ticknal_ai_status[\s\S]*$/, '') || '';
+    } else if (post.id === `tt-fx-${date}`) {
+      prompt = `Currency & CIB London GDR Arbitrage for ${date}:
+- Official Interbank USD: ${snapshot.fx.officialUsd.toFixed(2)} EGP
+- CIB London GDR: $${snapshot.fx.londonGdrUsd.toFixed(3)} | Cairo COMI: ${snapshot.fx.cairoComiEgp.toFixed(2)} EGP
+- Implied Rate: ${snapshot.fx.gdrImpliedRate.toFixed(2)} EGP | Spread: ${snapshot.fx.gdrSpreadPct >= 0 ? '+' : ''}${snapshot.fx.gdrSpreadPct}%
+- Devaluation Risk: ${snapshot.fx.riskScore}% (${snapshot.fx.riskLabel}).
+Interpret whether offshore markets signal FX pressure or stability.`;
+      fallback = post.content?.replace(/\n\n<!-- ticknal_ai_status[\s\S]*$/, '') || '';
+    }
+
+    if (!prompt) continue;
+
+    const aiRes = await generateBilingualInsight(prompt, fallback);
+    if (aiRes.source === 'ai_generated') {
+      const taggedContent = `${aiRes.text}\n\n<!-- ticknal_ai_status:${aiRes.source}|model:${aiRes.modelUsed || 'none'}|key:${aiRes.maskedKeyUsed || 'none'}|retried:${new Date().toISOString()} -->`;
+      await db
+        .update(marketNews)
+        .set({
+          summary: aiRes.text,
+          content: taggedContent,
+          updatedAt: new Date(),
+        })
+        .where(eq(marketNews.id, post.id));
+
+      upgraded++;
+      postResults.push({ id: post.id, status: 'upgraded', model: aiRes.modelUsed });
+    } else {
+      postResults.push({ id: post.id, status: 'still_fallback', error: aiRes.error });
+    }
+  }
+
+  const keyPool = getKeyPoolStatus();
+
+  return {
+    attempted: existingPosts.length,
+    upgraded,
+    date,
+    posts: postResults,
+    keyPool,
   };
 }

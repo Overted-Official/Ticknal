@@ -1,0 +1,364 @@
+/*
+ * Ticknal animated launch splash.
+ *
+ * Choreography (ms from first paint):
+ *   200-920   Left bar (cyan tail, white head) slides in from the left edge, as thick as the left arm
+ *   300-1020  Right bar (violet) slides in from the right edge into the top arm
+ *   400-1120  Bottom bar (blue) slides up from the bottom edge into the stem
+ *             Each bar's head hits its arm's outer tip at speed (55% of 720ms); the arm then
+ *             continues revealing inward while the bar's tail is pulled in through the tip.
+ *   596-1216  Arm reveals (left, top, stem), handed off from each bar
+ *   1200-1720 White glow pulse on the completed mark + ambient brand aura
+ *   1250-1600 "ticknal" wordmark rises in
+ *
+ * Everything is pure CSS so it runs from the server-rendered HTML with zero JS.
+ * The overlay is only displayed when the inline boot script sets
+ * html[data-ticknal-splash="on"] (native app / installed PWA cold start, or ?splash=1).
+ */
+
+.tks-root {
+  display: none;
+}
+
+html[data-ticknal-splash='on'] .tks-root {
+  display: flex;
+}
+
+.tks-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+  background: #000000;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: opacity 360ms cubic-bezier(0.3, 0, 1, 1);
+}
+
+.tks-root[data-phase='exit'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tks-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 360ms cubic-bezier(0.3, 0, 1, 1);
+}
+
+.tks-root[data-phase='exit'] .tks-stage {
+  transform: scale(1.06);
+}
+
+/* ---------- Logo box ---------- */
+
+.tks-logo {
+  position: relative;
+  width: 84px;
+  height: 84px;
+}
+
+@media (min-width: 768px) {
+  .tks-logo {
+    width: 104px;
+    height: 104px;
+  }
+}
+
+.tks-logo-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: tks-logo-glow 520ms 1150ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.tks-mask-stroke {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 22;
+  /* Flat leading edge so the reveal matches the flat head of the incoming bar. */
+  stroke-linecap: butt;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  /* Starts with velocity (bar hand-off), then settles. */
+  animation: tks-draw 420ms cubic-bezier(0.25, 0.6, 0.35, 1) both;
+}
+
+.tks-mask-fill {
+  opacity: 0;
+  animation: tks-mask-fill-in 160ms 1200ms forwards;
+}
+
+/* Each delay = streak delay + head arrival (55% of 720ms = 396ms). */
+.tks-mask-stroke--left {
+  animation-delay: 596ms;
+}
+
+.tks-mask-stroke--right {
+  animation-delay: 696ms;
+}
+
+.tks-mask-stroke--stem {
+  animation-delay: 796ms;
+}
+
+/* ---------- Ambient aura ---------- */
+
+.tks-aura {
+  position: absolute;
+  inset: -90%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(41, 98, 255, 0.55) 0%,
+    rgba(0, 188, 230, 0.28) 35%,
+    rgba(213, 0, 249, 0.16) 60%,
+    transparent 75%
+  );
+  filter: blur(28px);
+  opacity: 0;
+  pointer-events: none;
+  animation:
+    tks-aura-in 600ms 1200ms cubic-bezier(0.4, 0, 0.2, 1) forwards,
+    tks-aura-breathe 2600ms 1800ms ease-in-out infinite;
+}
+
+/* ---------- Streaks ---------- */
+/*
+ * Each streak is a solid bar exactly as thick as the logo arm it feeds (10 of 54 units = 18.52%),
+ * aligned edge-to-edge with that arm, so it reads as the arm itself sliding in from the screen edge.
+ * Geometry from the logo path (viewBox 5 6 54 54):
+ *   left arm   y 22-32  -> top 29.63%  ; outer tip x=6  -> right 98.15%
+ *   top arm    y 10-20  -> top  7.41%  ; outer tip x=58 -> left  98.15%
+ *   stem       x 27.5-37.5 -> left 41.67% ; foot y=56   -> top   92.59%
+ */
+
+.tks-streak {
+  position: absolute;
+  pointer-events: none;
+}
+
+.tks-streak > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation-duration: 720ms;
+  animation-fill-mode: both;
+}
+
+.tks-streak--left {
+  top: 29.63%;
+  right: 98.15%;
+  width: 50vw;
+  height: 18.52%;
+  filter: drop-shadow(0 0 10px rgba(0, 188, 230, 0.55));
+}
+
+.tks-streak--left > span {
+  background: linear-gradient(
+    to right,
+    rgba(0, 188, 230, 0) 0%,
+    rgba(0, 188, 230, 0.45) 45%,
+    #00bce6 82%,
+    #ffffff 96%
+  );
+  animation-name: tks-streak-from-left;
+  animation-delay: 200ms;
+}
+
+.tks-streak--right {
+  top: 7.41%;
+  left: 98.15%;
+  width: 50vw;
+  height: 18.52%;
+  filter: drop-shadow(0 0 10px rgba(213, 0, 249, 0.55));
+}
+
+.tks-streak--right > span {
+  background: linear-gradient(
+    to left,
+    rgba(213, 0, 249, 0) 0%,
+    rgba(213, 0, 249, 0.45) 45%,
+    #d500f9 82%,
+    #ffffff 96%
+  );
+  animation-name: tks-streak-from-right;
+  animation-delay: 300ms;
+}
+
+.tks-streak--bottom {
+  top: 92.59%;
+  left: 41.67%;
+  width: 18.52%;
+  height: 50vh;
+  filter: drop-shadow(0 0 10px rgba(41, 98, 255, 0.6));
+}
+
+.tks-streak--bottom > span {
+  background: linear-gradient(
+    to top,
+    rgba(41, 98, 255, 0) 0%,
+    rgba(41, 98, 255, 0.45) 45%,
+    #2962ff 82%,
+    #ffffff 96%
+  );
+  animation-name: tks-streak-from-bottom;
+  animation-delay: 400ms;
+}
+
+/* ---------- Wordmark ---------- */
+
+.tks-wordmark {
+  margin-top: 22px;
+  opacity: 0;
+  animation: tks-rise 350ms 1250ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+/* ---------- Keyframes ---------- */
+/*
+ * 0-55%: the head travels from off-screen to the arm's outer tip, accelerating so it arrives
+ *        with speed and the logo mask continues the motion.
+ * 55-100%: the tail is pulled in through the tip and disappears into the arm.
+ */
+
+@keyframes tks-streak-from-left {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.85, 0.65);
+  }
+  55% {
+    clip-path: inset(0 0 0 0);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.2, 1);
+  }
+  100% {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+@keyframes tks-streak-from-right {
+  0% {
+    clip-path: inset(0 0 0 100%);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.85, 0.65);
+  }
+  55% {
+    clip-path: inset(0 0 0 0);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.2, 1);
+  }
+  100% {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+@keyframes tks-streak-from-bottom {
+  0% {
+    clip-path: inset(100% 0 0 0);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.85, 0.65);
+  }
+  55% {
+    clip-path: inset(0 0 0 0);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.2, 1);
+  }
+  100% {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+@keyframes tks-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes tks-mask-fill-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tks-logo-glow {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  35% {
+    filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.55));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+}
+
+@keyframes tks-aura-in {
+  to {
+    opacity: 0.22;
+  }
+}
+
+@keyframes tks-aura-breathe {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.12;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes tks-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Reduced motion: show the finished mark immediately ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .tks-streak {
+    display: none;
+  }
+
+  .tks-mask-stroke {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .tks-mask-fill {
+    animation: none;
+    opacity: 1;
+  }
+
+  .tks-logo-svg,
+  .tks-aura {
+    animation: none;
+  }
+
+  .tks-aura {
+    opacity: 0.18;
+  }
+
+  .tks-wordmark {
+    animation: none;
+    opacity: 1;
+  }
+
+  .tks-root,
+  .tks-stage {
+    transition-duration: 200ms;
+  }
+
+  .tks-root[data-phase='exit'] .tks-stage {
+    transform: none;
+  }
+}

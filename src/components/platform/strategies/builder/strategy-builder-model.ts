@@ -1,23 +1,24 @@
-export interface StrategyBuilderIndicatorOption {
+import type { IndicatorExecutionMetadata } from './compile-simple-strategy';
+import type { StrategyComparisonOperator } from '../../../../lib/strategies/strategy-program';
+
+export interface StrategyBuilderIndicatorOption extends IndicatorExecutionMetadata {
   readonly id: string;
   readonly backlogId: string;
   readonly name: string;
   readonly description: string;
   readonly category: string;
-  readonly available: boolean;
 }
 
-export interface StrategyBuilderIndicatorCatalogItem {
+export interface StrategyBuilderIndicatorCatalogItem extends IndicatorExecutionMetadata {
   readonly id: string;
   readonly backlogId: string;
   readonly category: string;
-  readonly available: boolean;
   readonly name: Readonly<Record<'en' | 'ar', string>>;
   readonly description: Readonly<Record<'en' | 'ar', string>>;
 }
 
 export interface StrategyDraft {
-  readonly id: 'custom-draft';
+  readonly id: string;
   readonly name: string;
   readonly buyRules: readonly StrategyRule[];
   readonly sellRules: readonly StrategyRule[];
@@ -25,11 +26,12 @@ export interface StrategyDraft {
 
 export type StrategyRuleSide = 'buy' | 'sell';
 export type StrategyRuleConnector = 'and' | 'or';
-export type StrategyRuleOperator = 'crossesAbove' | 'crossesBelow' | 'isAbove' | 'isBelow';
+export type StrategyRuleOperator = StrategyComparisonOperator;
 
 export interface StrategyRule {
   readonly id: string;
   readonly indicatorId: string;
+  readonly outputKey?: string;
   readonly period: number;
   readonly operator: StrategyRuleOperator;
   readonly value: number;
@@ -62,6 +64,15 @@ export function filterIndicatorOptions(
   });
 }
 
+export function isSimpleRuleIndicatorSupported(indicator: StrategyBuilderIndicatorOption): boolean {
+  return indicator.available
+    && indicator.requiredCapabilities.length === 0
+    && indicator.repaintBehavior !== 'confirmed-with-delay'
+    && Number.isSafeInteger(indicator.defaultParameters.period)
+    && Number(indicator.defaultParameters.period) > 0
+    && indicator.outputs.some((output) => output.kind === 'number');
+}
+
 export function addRuleToDraft(
   draft: StrategyDraft,
   side: StrategyRuleSide,
@@ -74,7 +85,10 @@ export function addRuleToDraft(
   const nextRule: StrategyRule = {
     id: `${side}-${indicator.id}-${rules.length + 1}`,
     indicatorId: indicator.id,
-    period: 14,
+    ...(indicator.outputs.filter((output) => output.kind === 'number').length === 1
+      ? { outputKey: indicator.outputs.find((output) => output.kind === 'number')?.key }
+      : {}),
+    period: typeof indicator.defaultParameters.period === 'number' ? indicator.defaultParameters.period : 14,
     operator: 'crossesAbove',
     value: 30,
     connector: 'and',
@@ -87,7 +101,7 @@ export function updateStrategyRule(
   draft: StrategyDraft,
   side: StrategyRuleSide,
   ruleId: string,
-  changes: Partial<Pick<StrategyRule, 'period' | 'operator' | 'value' | 'connector'>>,
+  changes: Partial<Pick<StrategyRule, 'outputKey' | 'period' | 'operator' | 'value' | 'connector'>>,
 ): StrategyDraft {
   const key = side === 'buy' ? 'buyRules' : 'sellRules';
   return { ...draft, [key]: draft[key].map((rule) => rule.id === ruleId ? { ...rule, ...changes } : rule) };
@@ -113,5 +127,10 @@ export function localizeIndicatorCatalog(
     description: indicator.description[locale],
     category: indicator.category,
     available: indicator.available,
+    formulaVersion: indicator.formulaVersion,
+    defaultParameters: indicator.defaultParameters,
+    outputs: indicator.outputs,
+    requiredCapabilities: indicator.requiredCapabilities,
+    repaintBehavior: indicator.repaintBehavior,
   }));
 }

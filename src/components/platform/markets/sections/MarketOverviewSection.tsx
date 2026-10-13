@@ -406,6 +406,7 @@ export default function MarketOverviewSection({
           <KPICard
             key={card.id}
             {...card}
+            isLoading={isLoading}
             className="shrink-0 w-[132px] xs:w-[140px] sm:w-[170px] md:w-[185px] lg:w-full snap-start"
           />
         ))}

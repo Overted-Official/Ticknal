@@ -13,7 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import { ChevronRight } from '@/components/ui/icon-library';
-import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import Skeleton from '@/components/ui/Skeleton';
 import type { InvestorFlowsResponse } from '@/lib/handlers/investor-flow-handler';
 import { useTranslation } from '@/lib/i18n';
 import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
@@ -201,7 +201,14 @@ export default function InvestorFlowSection({
         </div>
 
         {/* 2. Executive Quick Stats Bar / Dynamic Contextual Legend */}
-        {summary && (
+        {isLoading ? (
+          <div className="flex items-center gap-3 sm:gap-5 text-xs pb-2 border-b border-white/5">
+            <Skeleton className="h-4 w-32 rounded-none" />
+            <Skeleton className="h-4 w-28 rounded-none" />
+            <Skeleton className="h-4 w-28 rounded-none" />
+            <Skeleton className="h-4 w-24 rounded-none ml-auto hidden md:block" />
+          </div>
+        ) : summary && (
           <div className="flex items-center gap-3 sm:gap-5 text-xs pb-2 border-b border-white/5 overflow-x-auto no-scrollbar">
             {chartMode === 'stacked_share' ? (
               /* Mode A Legend: 100% Turnover Share (Category Colors Match Stacked Bars) */
@@ -301,7 +308,20 @@ export default function InvestorFlowSection({
         {/* 3. TradingView Dark Surface Canvas */}
         <div className="relative mt-2 w-full min-w-0 h-[360px] sm:h-[400px] bg-black overflow-hidden pt-2">
           {isLoading ? (
-            <SectionLoadingState className="h-full" label={locale === 'ar' ? 'جاري تحميل تدفقات المستثمرين…' : 'Loading investor flow data…'} />
+            <div className="w-full h-full flex flex-col justify-end p-4 pb-8 space-y-4">
+              <div className="flex items-end justify-between gap-1 sm:gap-2 h-full w-full pt-8">
+                {[65, 40, 80, 55, 30, 90, 45, 70, 35, 85, 60, 50, 75, 40].map((h, i) => (
+                  <div key={i} className="flex-1 flex flex-col justify-end items-center h-full gap-1">
+                    <Skeleton className="w-full rounded-none" style={{ height: `${h}%` }} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-white/[0.06]">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-2.5 w-10 sm:w-12 rounded-none" />
+                ))}
+              </div>
+            </div>
           ) : normalizedHistory.length < 2 ? (
             <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
               {locale === 'ar' ? 'لا توجد بيانات متاحة لتدفقات المستثمرين في هذا الإطار الزمني.' : 'No investor flow history available for this timeframe.'}

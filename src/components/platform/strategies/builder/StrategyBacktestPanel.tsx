@@ -1,41 +1,14 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronDown, LayoutGrid, Table2 } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import {
-  BACKTEST_GROUPS,
-  type BacktestGroupItem,
-  type BacktestViewMode,
-} from './strategy-builder-fixtures';
+import type { BacktestGroupItem, BacktestViewMode } from './strategy-builder-fixtures';
 import StrategyBacktestTreemap from './StrategyBacktestTreemap';
-import { getMockBacktestPreview, type BacktestMode } from './strategy-backtest-model';
-
-function TickerLogoAvatar({ logoUrl, symbol }: { logoUrl?: string | null; symbol: string }) {
-  const [imgError, setImgError] = useState(false);
-  const cleanSymbol = symbol.replace('.CA', '').trim().toUpperCase();
-  const initial = cleanSymbol.slice(0, 2);
-
-  if (logoUrl && !imgError) {
-    return (
-      <div className="w-6 h-6 rounded-full border border-white/10 bg-white/[0.04] overflow-hidden flex items-center justify-center shrink-0">
-        <img
-          src={logoUrl}
-          alt={cleanSymbol}
-          className="w-full h-full object-cover"
-          onError={() => setImgError(true)}
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-6 h-6 rounded-full border border-white/10 bg-white/[0.04] flex items-center justify-center text-[9px] font-bold text-neutral-300 shrink-0 select-none">
-      {initial}
-    </div>
-  );
-}
+import { getMockBacktestPreview } from './strategy-backtest-model';
+import type { ExecutableStrategyProgram } from '../../../../lib/strategies/strategy-program';
+import StrategyLiveUniversePanel from './StrategyLiveUniversePanel';
+import type { StrategyUniverseCompany } from './strategy-universe-catalog';
 
 interface StrategyBacktestPanelProps {
   readonly strategyId: string;
@@ -43,286 +16,114 @@ interface StrategyBacktestPanelProps {
   readonly hasRules: boolean;
   readonly draftRevision: number;
   readonly locale: 'en' | 'ar';
+  readonly simpleProgram: ExecutableStrategyProgram | null;
+  readonly selectedSymbols: readonly string[] | null;
+  readonly universe: readonly StrategyUniverseCompany[];
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly onChooseCompanies: () => void;
   readonly onSelectTicker?: (symbol: string) => void;
 }
 
-export default function StrategyBacktestPanel({
-  strategyId,
-  hasRules,
-  locale,
-  onSelectTicker,
-}: StrategyBacktestPanelProps) {
+type GroupSort = 'return' | 'alpha' | 'trades';
+
+export default function StrategyBacktestPanel({ strategyId, hasRules, locale, simpleProgram, selectedSymbols, universe, startDate, endDate, onChooseCompanies, onSelectTicker }: StrategyBacktestPanelProps) {
   const isAr = locale === 'ar';
   const { isPrivacy } = usePrivacyMode();
-  const [viewMode, setViewMode] = useState<BacktestViewMode>('heatmap');
-  const [selectedTickerId, setSelectedTickerId] = useState<string | null>(null);
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const mode: BacktestMode = 'all';
+  const [viewMode, setViewMode] = useState<BacktestViewMode>('table');
+  const [sortBy, setSortBy] = useState<GroupSort>('return');
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const preview = useMemo(() => getMockBacktestPreview(strategyId, 'all', 'industryGroup', hasRules, 'primary'), [strategyId, hasRules]);
+  const groups = useMemo(() => [...(preview?.groups ?? [])].sort((a, b) => {
+    const metric = sortBy === 'return' ? 'returnPct' : sortBy === 'alpha' ? 'alphaPct' : 'trades';
+    return b[metric] - a[metric];
+  }), [preview, sortBy]);
+  const percent = (value: number) => isPrivacy ? '••••' : `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+  const plainPercent = (value: number) => isPrivacy ? '••••' : `${value.toFixed(0)}%`;
+  const count = (value: number) => isPrivacy ? '••••' : String(value);
 
-  const toggleGroupCollapse = (groupId: string) => {
-    setCollapsedGroups((prev) => ({
-      ...prev,
-      [groupId]: !prev[groupId],
-    }));
-  };
+  if (simpleProgram) return <StrategyLiveUniversePanel strategyId={strategyId} program={simpleProgram} selectedSymbols={selectedSymbols} universe={universe} locale={locale} startDate={startDate} endDate={endDate} onChooseCompanies={onChooseCompanies} onSelectTicker={(symbol) => onSelectTicker?.(symbol)} />;
 
-  const preview = useMemo(
-    () => getMockBacktestPreview(strategyId, mode, 'industryGroup', hasRules, 'primary'),
-    [hasRules, mode, strategyId],
-  );
+  if (!preview) return <section className="flex min-h-[360px] flex-col items-center justify-center border border-dashed border-white/10 px-6 text-center" aria-label={isAr ? 'نظرة عامة على السوق' : 'Market overview'}>
+    <LayoutGrid size={24} className="text-white/25" />
+    <h2 className="mt-4 text-sm font-semibold">{hasRules ? (isAr ? 'لا توجد نتائج اختبار بعد' : 'No backtest results yet') : (isAr ? 'أكمل قواعد الاستراتيجية' : 'Complete the strategy rules')}</h2>
+    <p className="mt-2 max-w-sm text-xs leading-5 text-plt-muted">{hasRules ? (isAr ? 'سير العمل المخصص غير متصل بعد بمحرك اختبار خلفي. لن نعرض عوائد نموذجية على أنها نتائجه.' : 'This custom workflow is not connected to a backtest engine yet. Example returns are not shown as its results.') : (isAr ? 'أضف قاعدة شراء وقاعدة بيع لعرض معاينة الأداء.' : 'Add a buy and a sell rule to open the performance preview.')}</p>
+  </section>;
 
-  const groups = useMemo<readonly BacktestGroupItem[]>(() => {
-    return preview?.groups ?? BACKTEST_GROUPS;
-  }, [preview]);
+  const kpis = [
+    { id: 'return', label: isAr ? 'عائد الاستراتيجية' : 'Strategy return', value: percent(preview.kpis.strategyReturn), context: isAr ? 'عينة EGX' : 'EGX sample', tone: 'positive' },
+    { id: 'alpha', label: isAr ? 'ألفا مقابل EGX 30' : 'Alpha vs EGX 30', value: percent(preview.kpis.alpha), context: isAr ? `المؤشر ${percent(preview.kpis.benchmarkReturn)}` : `benchmark ${percent(preview.kpis.benchmarkReturn)}`, tone: 'positive' },
+    { id: 'win-rate', label: isAr ? 'نسبة الصفقات الرابحة' : 'Win rate', value: plainPercent(preview.kpis.winRate), context: isAr ? `${count(preview.kpis.totalTrades)} صفقة` : `${count(preview.kpis.totalTrades)} closed trades`, tone: 'neutral' },
+    { id: 'drawdown', label: isAr ? 'أقصى تراجع' : 'Max drawdown', value: percent(preview.kpis.maxDrawdown), context: isAr ? 'من القمة إلى القاع' : 'peak to trough', tone: 'negative' },
+  ] as const;
 
-  const handleSelectTicker = (symbol: string) => {
-    setSelectedTickerId(symbol);
-    onSelectTicker?.(symbol);
-  };
+  return <section className="min-w-0 bg-black" aria-label={isAr ? 'نظرة عامة على السوق' : 'Market overview'}>
+    <div className="border-b border-white/10 pb-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div><h2 className="text-sm font-semibold text-white">{isAr ? 'نظرة عامة على السوق' : 'Market overview'}</h2><p className="mt-1 text-[11px] text-plt-muted">{isAr ? 'مقارنة إجمالية ونتائج حسب مجموعة الصناعة' : 'Aggregate comparison and industry-group results'}</p></div>
+        <span className="badge badge-warning">{isAr ? 'معاينة توضيحية' : 'Illustrative preview'}</span>
+      </div>
+      <p className="mt-3 text-[11px] leading-4 text-white/55">{isAr ? 'نتائج نموذجية، لم تُحسب من سير العمل هذا. تواريخ الرسم البياني لا تغير هذه الأرقام.' : 'Sample results, not calculated from this workflow. Chart dates do not recalculate these figures.'}</p>
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-white/45 tabular-nums">
+        <span>{isAr ? 'الفترة النموذجية: ٥ يناير – ٢٨ ديسمبر ٢٠٢٥' : 'Sample period: 5 Jan – 28 Dec 2025'}</span>
+        <span>{isAr ? `${groups.length} مجموعات صناعية` : `${groups.length} industry groups`}</span>
+      </div>
+    </div>
 
-  const percent = (value: number) => (isPrivacy ? '••••' : `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`);
-  const plainPercent = (value: number) => (isPrivacy ? '••••' : `${value.toFixed(0)}%`);
-  const count = (value: number) => (isPrivacy ? '••••' : String(value));
+    <div className="strategy-analytics-kpis mt-4" aria-label={isAr ? 'مؤشرات الأداء النموذجية' : 'Sample performance metrics'}>
+      {kpis.map((kpi) => <div key={kpi.id} className="strategy-analytics-kpi">
+        <span className="text-[11px] text-plt-muted">{kpi.label}</span>
+        <strong className={`mt-2 block text-xl font-semibold tabular-nums ${kpi.tone === 'positive' ? 'text-plt-profit' : kpi.tone === 'negative' ? 'text-plt-risk' : 'text-white'}`}>{kpi.value}</strong>
+        <span className="mt-1 block text-[10px] text-white/45 tabular-nums">{kpi.context}</span>
+      </div>)}
+    </div>
 
-  const kpis = preview
-    ? [
-        {
-          id: 'return',
-          label: isAr ? 'عائد الاستراتيجية' : 'Strategy return',
-          value: percent(preview.kpis.strategyReturn),
-          context: isAr ? 'سوق EGX' : 'EGX universe',
-          tone: 'positive' as const,
-        },
-        {
-          id: 'alpha',
-          label: isAr ? 'ألفا مقابل EGX 30' : 'Alpha vs EGX 30',
-          value: percent(preview.kpis.alpha),
-          context: isAr
-            ? `المؤشر ${percent(preview.kpis.benchmarkReturn)}`
-            : `benchmark ${percent(preview.kpis.benchmarkReturn)}`,
-          tone: 'positive' as const,
-        },
-        {
-          id: 'win-rate',
-          label: isAr ? 'نسبة الفوز' : 'Win rate',
-          value: plainPercent(preview.kpis.winRate),
-          context: isAr ? `${count(preview.kpis.totalTrades)} صفقة مغلقة` : `${count(preview.kpis.totalTrades)} closed trades`,
-          tone: 'neutral' as const,
-        },
-        {
-          id: 'drawdown',
-          label: isAr ? 'أقصى تراجع' : 'Max drawdown',
-          value: percent(preview.kpis.maxDrawdown),
-          context: isAr ? 'من القمة إلى القاع' : 'peak to trough',
-          tone: 'negative' as const,
-        },
-      ]
-    : [];
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+      <div><h3 className="text-xs font-semibold text-white">{isAr ? 'الأداء حسب مجموعة الصناعة' : 'Industry-group performance'}</h3><p className="mt-1 text-[10px] text-plt-muted">{isAr ? 'حدد مجموعة لعرض شركاتها' : 'Open a group to inspect its companies'}</p></div>
+      <div className="seg-control" role="tablist" aria-label={isAr ? 'نوع العرض' : 'View mode'}>
+        <button type="button" role="tab" aria-selected={viewMode === 'table'} onClick={() => setViewMode('table')} className={`seg-control-btn inline-flex items-center gap-1 ${viewMode === 'table' ? 'active' : ''}`} aria-label={isAr ? 'عرض الجدول' : 'Table view'}><Table2 size={13} />{isAr ? 'جدول' : 'Table'}</button>
+        <button type="button" role="tab" aria-selected={viewMode === 'heatmap'} onClick={() => setViewMode('heatmap')} className={`seg-control-btn inline-flex items-center gap-1 ${viewMode === 'heatmap' ? 'active' : ''}`} aria-label={isAr ? 'عرض الخريطة' : 'Treemap view'}><LayoutGrid size={13} />{isAr ? 'خريطة' : 'Treemap'}</button>
+      </div>
+    </div>
 
-  return (
-    <section className="min-w-0 bg-black p-0" aria-label={isAr ? 'لوحة الاختبار الخلفي' : 'Backtesting dashboard'}>
-      {preview ? (
-        <>
-          {/* 1. View Mode Switch (Treemap vs Table) */}
-          <div className="mb-2.5 flex items-center justify-end">
-            <div className="seg-control shrink-0" role="tablist" aria-label={isAr ? 'نوع العرض' : 'View mode'}>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewMode === 'heatmap'}
-                onClick={() => setViewMode('heatmap')}
-                className={`seg-control-btn inline-flex items-center gap-1.5 ${
-                  viewMode === 'heatmap' ? 'seg-control-btn-active active' : ''
-                }`}
-                aria-label={isAr ? 'عرض خريطة الأداء' : 'Treemap view'}
-              >
-                <LayoutGrid size={13} />
-                <span>{isAr ? 'خريطة الأداء' : 'Treemap'}</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewMode === 'table'}
-                onClick={() => setViewMode('table')}
-                className={`seg-control-btn inline-flex items-center gap-1.5 ${
-                  viewMode === 'table' ? 'seg-control-btn-active active' : ''
-                }`}
-                aria-label={isAr ? 'عرض الجدول' : 'Table view'}
-              >
-                <Table2 size={13} />
-                <span>{isAr ? 'الجدول' : 'Table'}</span>
-              </button>
-            </div>
-          </div>
+    {viewMode === 'heatmap' ? <div data-testid="strategy-backtest-heatmap" className="pt-3">
+      <p className="mb-2 text-[10px] text-plt-muted">{isAr ? 'المساحة = عدد الصفقات النموذجية · اللون = العائد النموذجي' : 'Area = sample trade count · Colour = sample return'}</p>
+      <StrategyBacktestTreemap groups={groups} selectedTickerId={null} locale={locale} onSelectTicker={(symbol) => onSelectTicker?.(symbol)} />
+    </div> : <div data-testid="strategy-backtest-table" className="min-w-0 overflow-x-auto custom-scrollbar">
+      <table className="data-table strategy-industry-table w-full text-xs">
+        <thead><tr>
+          <th className="text-start">{isAr ? 'المجموعة / الشركة' : 'Group / company'}</th>
+          <th className="text-end"><button type="button" aria-label="Sort groups by return" aria-pressed={sortBy === 'return'} onClick={() => setSortBy('return')}>{isAr ? 'العائد' : 'Return'}</button></th>
+          <th className="text-end"><button type="button" aria-label="Sort groups by alpha" aria-pressed={sortBy === 'alpha'} onClick={() => setSortBy('alpha')}>{isAr ? 'ألفا' : 'Alpha'}</button></th>
+          <th className="text-end"><button type="button" aria-label="Sort groups by trades" aria-pressed={sortBy === 'trades'} onClick={() => setSortBy('trades')}>{isAr ? 'الصفقات' : 'Trades'}</button></th>
+        </tr></thead>
+        <tbody>{groups.map((group: BacktestGroupItem) => <FragmentGroup key={group.id} group={group} isAr={isAr} expanded={expandedGroup === group.id} percent={percent} count={count} onToggle={() => setExpandedGroup((current) => current === group.id ? null : group.id)} onSelectTicker={onSelectTicker} />)}</tbody>
+      </table>
+    </div>}
+  </section>;
+}
 
-          {/* 2. Sleek & Condensed KPI Rail */}
-          <div className="mb-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
-            {kpis.map((kpi) => (
-              <div
-                key={kpi.id}
-                className="group flex flex-col justify-between rounded-lg border border-white/10 bg-black px-3 py-2 sm:px-3.5 sm:py-2.5 transition-colors hover:border-white/20 hover:bg-white/[0.02] cursor-default"
-              >
-                <div className="flex items-center justify-between gap-2 leading-none">
-                  <span className="truncate text-[10px] sm:text-[11px] font-medium text-white/50 tracking-tight">
-                    {kpi.label}
-                  </span>
-                  <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                      kpi.tone === 'positive'
-                        ? 'bg-plt-profit shadow-[0_0_6px_rgba(34,197,94,0.4)]'
-                        : kpi.tone === 'negative'
-                        ? 'bg-plt-risk shadow-[0_0_6px_rgba(239,68,68,0.4)]'
-                        : 'bg-white/30'
-                    }`}
-                  />
-                </div>
-                <div className="mt-1.5 flex items-baseline justify-between gap-2 leading-none">
-                  <span
-                    className={`shrink-0 text-sm sm:text-base font-bold tabular-nums tracking-tight ${
-                      kpi.tone === 'positive'
-                        ? 'text-plt-profit'
-                        : kpi.tone === 'negative'
-                        ? 'text-plt-risk'
-                        : 'text-white'
-                    }`}
-                  >
-                    {kpi.value}
-                  </span>
-                  <span className="truncate text-end text-[9px] sm:text-[10px] font-normal text-white/40 tabular-nums">
-                    {isPrivacy ? '••••' : kpi.context}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 3. Treemap vs Table View */}
-          {viewMode === 'heatmap' ? (
-            <div data-testid="strategy-backtest-heatmap">
-              <StrategyBacktestTreemap
-                groups={groups}
-                selectedTickerId={selectedTickerId}
-                locale={locale}
-                onSelectTicker={handleSelectTicker}
-              />
-            </div>
-          ) : (
-            <div
-              className="custom-scrollbar max-h-[500px] overflow-auto rounded-xl border border-white/10"
-              data-testid="strategy-backtest-table"
-            >
-              <table className="w-full min-w-[560px] border-collapse font-sans text-xs">
-                <thead className="sticky top-0 z-10 border-b border-white/10 bg-black text-[10px] font-medium text-plt-muted">
-                  <tr>
-                    <th className="py-2.5 px-3 text-start font-medium">{isAr ? 'المجموعة / السهم' : 'Group / Ticker'}</th>
-                    <th className="px-3 py-2.5 text-end font-medium">{isAr ? 'العائد' : 'Return'}</th>
-                    <th className="px-3 py-2.5 text-end font-medium">{isAr ? 'ألفا' : 'Alpha'}</th>
-                    <th className="px-3 py-2.5 text-end font-medium">{isAr ? 'نسبة الفوز' : 'Win rate'}</th>
-                    <th className="px-3 py-2.5 text-end font-medium">{isAr ? 'الصفقات' : 'Trades'}</th>
-                    <th className="px-3 py-2.5 text-center font-medium">{isAr ? 'إجراء' : 'Action'}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.06]">
-                  {groups.map((group) => {
-                    const isCollapsed = Boolean(collapsedGroups[group.id]);
-                    return (
-                      <React.Fragment key={group.id}>
-                        {/* Group Header Row */}
-                        <tr
-                          onClick={() => toggleGroupCollapse(group.id)}
-                          className="bg-white/[0.03] hover:bg-white/[0.06] text-white font-semibold text-[11px] cursor-pointer transition-colors select-none"
-                        >
-                          <td className="py-2.5 px-3">
-                            <div className="flex items-center gap-2">
-                              <ChevronDown
-                                size={13}
-                                className={`text-white/50 transition-transform duration-200 shrink-0 ${
-                                  isCollapsed ? (isAr ? 'rotate-90' : '-rotate-90') : 'rotate-0'
-                                }`}
-                              />
-                              <span className="truncate">{isAr ? group.nameAr : group.name}</span>
-                              <span className="text-[10px] text-white/40 font-normal">
-                                ({group.tickers.length} {isAr ? 'أسهم' : 'tickers'})
-                              </span>
-                            </div>
-                          </td>
-                          <td
-                            className={`px-3 py-2.5 text-end tabular-nums font-bold ${
-                              group.returnPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'
-                            }`}
-                          >
-                            {percent(group.returnPct)}
-                          </td>
-                          <td className="px-3 py-2.5 text-end tabular-nums text-white/70">{percent(group.alphaPct)}</td>
-                          <td className="px-3 py-2.5 text-end tabular-nums text-white/70">{group.winRate}%</td>
-                          <td className="px-3 py-2.5 text-end tabular-nums text-white/70">{group.trades}</td>
-                          <td className="px-3 py-2.5 text-center text-white/30 text-[10px]">—</td>
-                        </tr>
-
-                        {/* Constituent Ticker Rows */}
-                        {!isCollapsed &&
-                          group.tickers.map((t) => (
-                            <tr
-                              key={t.id}
-                              onClick={() => handleSelectTicker(t.symbol)}
-                              className="hover:bg-white/[0.06] transition-colors cursor-pointer group"
-                            >
-                              <td className="py-2.5 ps-7 pe-3 text-start">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <TickerLogoAvatar logoUrl={t.logoUrl} symbol={t.symbol} />
-                                  <div className="min-w-0 flex items-center gap-2">
-                                    <span className="font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
-                                      {isAr ? t.nameAr : t.name}
-                                    </span>
-                                    <span className="text-[10px] text-white/50 font-normal px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 shrink-0">
-                                      {t.symbol}
-                                    </span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td
-                                className={`px-3 py-2.5 text-end tabular-nums font-bold ${
-                                  t.returnPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'
-                                }`}
-                              >
-                                {percent(t.returnPct)}
-                              </td>
-                              <td className="px-3 py-2.5 text-end tabular-nums text-white/70">{percent(t.alphaPct)}</td>
-                              <td className="px-3 py-2.5 text-end tabular-nums text-white/70">{t.winRate}%</td>
-                              <td className="px-3 py-2.5 text-end tabular-nums text-white/70">{t.trades}</td>
-                              <td className="px-3 py-2.5 text-center">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSelectTicker(t.symbol);
-                                  }}
-                                  className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
-                                >
-                                  {isAr ? 'عرض ←' : 'View →'}
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 py-12 text-center">
-          <LayoutGrid size={24} className="text-white/25" />
-          <h3 className="mt-4 text-sm font-semibold text-white">{isAr ? 'أكمل قواعد الاستراتيجية' : 'Complete the strategy rules'}</h3>
-          <p className="mt-2 max-w-sm text-xs leading-5 text-plt-muted">
-            {isAr
-              ? 'أضف قاعدة شراء واحدة وقاعدة بيع واحدة على الأقل لعرض معاينة الأداء.'
-              : 'Add at least one buy rule and one sell rule to unlock the performance preview.'}
-          </p>
-        </div>
-      )}
-    </section>
-  );
+function FragmentGroup({ group, isAr, expanded, percent, count, onToggle, onSelectTicker }: {
+  readonly group: BacktestGroupItem;
+  readonly isAr: boolean;
+  readonly expanded: boolean;
+  readonly percent: (value: number) => string;
+  readonly count: (value: number) => string;
+  readonly onToggle: () => void;
+  readonly onSelectTicker?: (symbol: string) => void;
+}) {
+  return <>
+    <tr data-testid="industry-group-row" aria-expanded={expanded}>
+      <td><button type="button" className="flex min-w-0 items-center gap-1.5 text-start font-semibold text-white" onClick={onToggle} aria-expanded={expanded}><ChevronDown size={13} className={`shrink-0 text-plt-muted transition-transform ${expanded ? '' : '-rotate-90'}`} /><span className="truncate">{isAr ? group.nameAr : group.name}</span></button></td>
+      <td className={`text-end font-semibold tabular-nums ${group.returnPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>{percent(group.returnPct)}</td>
+      <td className="text-end tabular-nums">{percent(group.alphaPct)}</td>
+      <td className="text-end tabular-nums">{count(group.trades)}</td>
+    </tr>
+    {expanded && group.tickers.map((stock) => <tr key={stock.id}>
+      <td><button type="button" className="ps-5 text-start text-tv-blue-400 hover:underline" onClick={() => onSelectTicker?.(stock.symbol)}>{stock.symbol}<span className="sr-only">{isAr ? ' عرض التفاصيل' : ' View company'}</span></button></td>
+      <td className={`text-end tabular-nums ${stock.returnPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>{percent(stock.returnPct)}</td>
+      <td className="text-end tabular-nums">{percent(stock.alphaPct)}</td>
+      <td className="text-end tabular-nums">{count(stock.trades)}</td>
+    </tr>)}
+  </>;
 }

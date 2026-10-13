@@ -9,16 +9,20 @@ interface StrategySelectorDropdownProps {
   readonly selectedStrategyId: string;
   readonly draft: StrategyDraft;
   readonly profiles: readonly StrategyProfile[];
+  readonly savedStrategies?: readonly { readonly id: string; readonly name: string }[];
   readonly locale: 'en' | 'ar';
   readonly onSelect: (strategyId: string) => void;
+  readonly openUp?: boolean;
 }
 
 export default function StrategySelectorDropdown({
   selectedStrategyId,
   draft,
   profiles,
+  savedStrategies = [],
   locale,
   onSelect,
+  openUp = false,
 }: StrategySelectorDropdownProps) {
   const isAr = locale === 'ar';
   const [open, setOpen] = useState(false);
@@ -51,10 +55,10 @@ export default function StrategySelectorDropdown({
   // Current selected label
   const selectedProfile = profiles.find((p) => p.id === selectedStrategyId);
   const currentLabel = selectedStrategyId === draft.id
-    ? (isAr ? 'استراتيجية بلا اسم' : draft.name)
+    ? draft.name
     : selectedProfile
       ? (isAr ? STRATEGY_PROFILE_ARABIC[selectedProfile.id]?.name ?? selectedProfile.name : selectedProfile.name)
-      : (isAr ? 'اختر استراتيجية' : 'Select strategy');
+      : savedStrategies.find((strategy) => strategy.id === selectedStrategyId)?.name ?? (isAr ? 'اختر استراتيجية' : 'Select strategy');
 
   return (
     <div ref={containerRef} className="relative min-w-44 select-none">
@@ -79,7 +83,7 @@ export default function StrategySelectorDropdown({
         <div
           role="listbox"
           aria-label={isAr ? 'قائمة الاستراتيجيات' : 'Strategies list'}
-          className="absolute start-0 top-full z-50 mt-1.5 min-w-[200px] w-full rounded-xl border border-white/15 bg-black p-1 shadow-2xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-100"
+          className={`absolute start-0 z-50 min-w-[200px] w-full rounded-xl border border-white/15 bg-black p-1 shadow-2xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-100 ${openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
         >
           {profiles.map((profile) => {
             const isSelected = profile.id === selectedStrategyId;
@@ -111,8 +115,10 @@ export default function StrategySelectorDropdown({
 
           <div className="my-1 border-t border-white/[0.08]" />
 
+          {savedStrategies.map((strategy) => <button key={strategy.id} role="option" type="button" aria-selected={strategy.id === selectedStrategyId} onClick={() => { onSelect(strategy.id); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-start text-[11px] transition-colors ${strategy.id === selectedStrategyId ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/[0.06]'}`}><span className="truncate">{strategy.name}</span>{strategy.id === selectedStrategyId && <Check size={12} />}</button>)}
+
           {/* Custom Draft Option */}
-          <button
+          {!savedStrategies.some((strategy) => strategy.id === draft.id) && <button
             role="option"
             type="button"
             aria-selected={draft.id === selectedStrategyId}
@@ -126,9 +132,9 @@ export default function StrategySelectorDropdown({
                 : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
             }`}
           >
-            <span className="truncate">{isAr ? 'استراتيجية بلا اسم' : draft.name}</span>
+            <span className="truncate">{draft.name}</span>
             {draft.id === selectedStrategyId && <Check size={12} className="shrink-0 text-white" />}
-          </button>
+          </button>}
         </div>
       )}
     </div>

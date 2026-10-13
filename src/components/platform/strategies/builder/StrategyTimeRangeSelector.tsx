@@ -10,6 +10,7 @@ interface StrategyTimeRangeSelectorProps {
   readonly endDate: string;
   readonly locale: 'en' | 'ar';
   readonly onChange: (startDate: string, endDate: string, preset: TimeRangePreset) => void;
+  readonly purpose?: 'chart' | 'backtest';
 }
 
 const PRESETS: readonly { id: TimeRangePreset; labelEn: string; labelAr: string }[] = [
@@ -22,8 +23,18 @@ const PRESETS: readonly { id: TimeRangePreset; labelEn: string; labelAr: string 
 ];
 
 const ANCHOR_END = '2025-12-28';
+const SAMPLE_START = '2025-01-05';
 
-function getDatesForPreset(preset: TimeRangePreset): { start: string; end: string } {
+function getDatesForPreset(preset: TimeRangePreset, purpose: 'chart' | 'backtest'): { start: string; end: string } {
+  if (purpose === 'backtest') {
+    const end = new Date();
+    const start = new Date(end);
+    if (preset === 'ALL') return { start: '2000-01-01', end: end.toISOString().slice(0, 10) };
+    if (preset === 'YTD') return { start: `${end.getUTCFullYear()}-01-01`, end: end.toISOString().slice(0, 10) };
+    if (preset === '1M' || preset === '3M' || preset === '6M') start.setUTCMonth(start.getUTCMonth() - Number.parseInt(preset, 10));
+    else start.setUTCFullYear(start.getUTCFullYear() - 1);
+    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  }
   switch (preset) {
     case '1M':
       return { start: '2025-11-28', end: ANCHOR_END };
@@ -32,11 +43,11 @@ function getDatesForPreset(preset: TimeRangePreset): { start: string; end: strin
     case '6M':
       return { start: '2025-06-28', end: ANCHOR_END };
     case 'YTD':
-      return { start: '2025-01-01', end: ANCHOR_END };
+      return { start: SAMPLE_START, end: ANCHOR_END };
     case '1Y':
     case 'ALL':
     default:
-      return { start: '2025-01-05', end: ANCHOR_END };
+      return { start: SAMPLE_START, end: ANCHOR_END };
   }
 }
 
@@ -45,10 +56,11 @@ export default function StrategyTimeRangeSelector({
   endDate,
   locale,
   onChange,
+  purpose = 'chart',
 }: StrategyTimeRangeSelectorProps) {
   const isAr = locale === 'ar';
   const [isOpen, setIsOpen] = useState(false);
-  const [activePreset, setActivePreset] = useState<TimeRangePreset>('1Y');
+  const [activePreset, setActivePreset] = useState<TimeRangePreset>('CUSTOM');
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close when clicking outside or pressing Escape
@@ -76,7 +88,7 @@ export default function StrategyTimeRangeSelector({
 
   const handleSelectPreset = (preset: TimeRangePreset) => {
     setActivePreset(preset);
-    const { start, end } = getDatesForPreset(preset);
+    const { start, end } = getDatesForPreset(preset, purpose);
     onChange(start, end, preset);
   };
 
@@ -98,7 +110,7 @@ export default function StrategyTimeRangeSelector({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        aria-label={isAr ? 'تحديد النطاق الزمني' : 'Select time range'}
+        aria-label={purpose === 'backtest' ? (isAr ? 'فترة الاختبار الخلفي' : 'Backtest period') : (isAr ? 'نافذة الرسم البياني' : 'Chart window')}
         className={`filter-control-btn inline-flex items-center gap-2 cursor-pointer select-none transition-all ${
           isOpen ? 'filter-control-btn-active active border-white/30' : 'hover:border-white/20'
         }`}
@@ -130,7 +142,7 @@ export default function StrategyTimeRangeSelector({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
             <span className="font-sans text-xs font-semibold text-white">
-              {isAr ? 'النطاق الزمني للاختبار' : 'Backtest Time Range'}
+              {purpose === 'backtest' ? (isAr ? 'فترة الاختبار الخلفي' : 'Backtest period') : (isAr ? 'نافذة الرسم البياني' : 'Chart window')}
             </span>
             <button
               type="button"
@@ -178,6 +190,7 @@ export default function StrategyTimeRangeSelector({
                 <input
                   type="date"
                   value={startDate}
+                  min={purpose === 'backtest' ? '2000-01-01' : SAMPLE_START}
                   max={endDate}
                   onChange={(e) => handleStartChange(e.target.value)}
                   className="min-h-9 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2.5 font-sans text-[11px] tabular-nums text-white [color-scheme:dark] outline-none transition-colors hover:border-white/20 focus:border-white/40"
@@ -189,6 +202,7 @@ export default function StrategyTimeRangeSelector({
                   type="date"
                   value={endDate}
                   min={startDate}
+                  max={purpose === 'backtest' ? undefined : ANCHOR_END}
                   onChange={(e) => handleEndChange(e.target.value)}
                   className="min-h-9 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2.5 font-sans text-[11px] tabular-nums text-white [color-scheme:dark] outline-none transition-colors hover:border-white/20 focus:border-white/40"
                 />

@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import type { MoneySupplyData, SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import { ChevronRight } from '@/components/ui/icon-library';
-import SectionLoadingState from '@/components/ui/SectionLoadingState';
+import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 
 export type SelectedMoneySupplySymbol = 'M2' | 'M1' | 'M0';
@@ -258,7 +258,33 @@ export default function MoneySupplySection({
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
         <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black overflow-hidden pt-2">
           {isLoading ? (
-            <SectionLoadingState className="h-full" label={locale === 'ar' ? 'جاري تحميل بيانات المعروض النقدي…' : 'Loading money supply data…'} />
+            <div className="w-full h-full flex flex-col justify-between p-4 pb-8 space-y-4">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-4 w-32 rounded-none" />
+                <Skeleton className="h-4 w-20 rounded-none" />
+              </div>
+              <div className="relative w-full flex-1 flex items-end">
+                <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 40">
+                  <path
+                    d="M 0 35 Q 25 30, 50 18 T 100 5 L 100 40 L 0 40 Z"
+                    fill="rgba(255, 255, 255, 0.04)"
+                    className="animate-pulse"
+                  />
+                  <path
+                    d="M 0 35 Q 25 30, 50 18 T 100 5"
+                    fill="none"
+                    stroke="rgba(255, 255, 255, 0.15)"
+                    strokeWidth="1.5"
+                    strokeDasharray="3 3"
+                  />
+                </svg>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-white/[0.06]">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-2.5 w-10 sm:w-12 rounded-none" />
+                ))}
+              </div>
+            </div>
           ) : chartData.length < 2 ? (
             <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
               {locale === 'ar' ? 'لا توجد بيانات تاريخية متاحة لهذا الإطار الزمني.' : 'No historical data available for this timeframe.'}

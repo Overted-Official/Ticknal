@@ -47,9 +47,11 @@ export default function AdvancedNodeEditor({
     () => new Set(parameters.indicatorId ? [parameters.indicatorId] : []),
     [parameters.indicatorId],
   );
+  const ruleIndicator = indicators.find((indicator) => indicator.id === parameters.indicatorId);
+  const numericOutputs = ruleIndicator?.outputs.filter((output) => output.kind === 'number') ?? [];
   const showsConnectionWeights = node.templateId === 'weighted-composite';
   const isMultiConnection = showsConnectionWeights || node.templateId === 'math-operation' || isTerminal;
-  const supportsConnections = !['market-input', 'parameter'].includes(node.templateId ?? '');
+  const supportsConnections = !parameters.sourceRuleId && !['market-input', 'parameter'].includes(node.templateId ?? '');
 
   const updateParameter = (key: string, value: string) => {
     onChange({ parameters: { ...parameters, [key]: value } });
@@ -67,14 +69,14 @@ export default function AdvancedNodeEditor({
     switch (node.templateId) {
       case 'market-input':
         return (
-          <label>
+          <><label>
             <span className={LABEL_CLASS}>{isAr ? 'سلسلة البيانات' : 'Data series'}</span>
             <select value={parameters.series ?? 'ohlcv'} onChange={(event) => updateParameter('series', event.target.value)} className={INPUT_CLASS}>
               <option value="ohlcv">OHLCV</option>
-              <option value="benchmark">{isAr ? 'مؤشر مرجعي' : 'Benchmark index'}</option>
-              <option value="external">{isAr ? 'سلسلة سوق أخرى' : 'Another market series'}</option>
+              <option value="benchmark" disabled>{isAr ? 'مؤشر مرجعي · قريباً' : 'Benchmark index · coming soon'}</option>
+              <option value="external" disabled>{isAr ? 'سلسلة سوق أخرى · قريباً' : 'Another market series · coming soon'}</option>
             </select>
-          </label>
+          </label><label><span className={LABEL_CLASS}>{isAr ? 'حقل الأسعار' : 'Price field'}</span><select value={parameters.field ?? 'close'} onChange={(event) => updateParameter('field', event.target.value)} className={INPUT_CLASS}><option value="close">Close</option><option value="open">Open</option><option value="high">High</option><option value="low">Low</option><option value="volume">Volume</option></select></label></>
         );
       case 'parameter':
         return (
@@ -124,6 +126,7 @@ export default function AdvancedNodeEditor({
               <span className={LABEL_CLASS}>{isAr ? 'الفترة' : 'Period'}</span>
               <input type="number" min="1" value={parameters.period ?? '14'} onChange={(event) => updateParameter('period', event.target.value)} className={INPUT_CLASS} />
             </label>
+            {numericOutputs.length > 1 && <label><span className={LABEL_CLASS}>{isAr ? 'مخرج المؤشر' : 'Indicator output'}</span><select value={parameters.outputKey ?? ''} onChange={(event) => updateParameter('outputKey', event.target.value)} className={INPUT_CLASS}><option value="">{isAr ? 'اختر مخرجاً' : 'Choose an output'}</option>{numericOutputs.map((output) => <option key={output.key} value={output.key}>{output.key}</option>)}</select></label>}
           </>
         );
       case 'weighted-composite':
@@ -187,8 +190,27 @@ export default function AdvancedNodeEditor({
           </label>
         );
       case 'condition':
+      case 'sell-condition':
         return (
           <>
+            {parameters.sourceRuleId && numericOutputs.length > 1 && <label>
+              <span className={LABEL_CLASS}>{isAr ? 'مخرج المؤشر' : 'Indicator output'}</span>
+              <select value={parameters.outputKey ?? ''} onChange={(event) => updateParameter('outputKey', event.target.value)} className={INPUT_CLASS}>
+                <option value="">{isAr ? 'اختر مخرجاً' : 'Choose an output'}</option>
+                {numericOutputs.map((output) => <option key={output.key} value={output.key}>{output.key}</option>)}
+              </select>
+            </label>}
+            {nodes.filter((candidate) => candidate.templateId === node.templateId).findIndex((candidate) => candidate.id === node.id) > 0 && <label>
+              <span className={LABEL_CLASS}>{isAr ? 'اربط بالقاعدة السابقة' : 'Join with previous rule'}</span>
+              <select value={parameters.connector ?? 'and'} onChange={(event) => updateParameter('connector', event.target.value)} className={INPUT_CLASS}>
+                <option value="and">{isAr ? 'و — يجب تحقق القاعدتين' : 'AND — both rules must match'}</option>
+                <option value="or">{isAr ? 'أو — تكفي إحدى القاعدتين' : 'OR — either rule can match'}</option>
+              </select>
+            </label>}
+            {parameters.sourceRuleId && ruleIndicator && Object.hasOwn(ruleIndicator.defaultParameters, 'period') && <label>
+              <span className={LABEL_CLASS}>{isAr ? 'الفترة' : 'Period'}</span>
+              <input type="number" min="1" value={parameters.period ?? '14'} onChange={(event) => updateParameter('period', event.target.value)} className={INPUT_CLASS} />
+            </label>}
             <label>
               <span className={LABEL_CLASS}>{isAr ? 'المقارنة' : 'Comparison'}</span>
               <select value={parameters.operator ?? 'crossesAbove'} onChange={(event) => updateParameter('operator', event.target.value)} className={INPUT_CLASS}>
