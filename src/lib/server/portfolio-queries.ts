@@ -55,7 +55,15 @@ export const emptyOrderStats: OrderStats = {
   closedCount: 0,
 };
 
+const userOrderStatsCache = new Map<string, { value: OrderStats; timestamp: number }>();
+const ORDER_STATS_CACHE_TTL_MS = 30 * 1000; // 30 seconds
+
 export async function getOrderStats(userId: string): Promise<OrderStats> {
+  const cached = userOrderStatsCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < ORDER_STATS_CACHE_TTL_MS) {
+    return cached.value;
+  }
+
   try {
     const [openRows, closedRows] = await Promise.all([
       db
@@ -69,6 +77,11 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
         .where(and(eq(positions.status, 'CLOSED'), eq(positions.userId, userId)))
         .orderBy(desc(positions.createdAt)),
     ]);
+
+    if (openRows.length === 0 && closedRows.length === 0) {
+      userOrderStatsCache.set(userId, { value: emptyOrderStats, timestamp: Date.now() });
+      return emptyOrderStats;
+    }
 
     // Only fetch prices for this user's positions. The previous all-tickers
     // window query could time out and cause the entire home-page stats object
@@ -335,7 +348,7 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
     const unrealized = openOrders.reduce((sum, order) => sum + order.profitLossEgp, 0);
     const totalRoi = totalCostBasis > 0 ? ((unrealized + realized) / totalCostBasis) * 100 : 0;
 
-    return {
+    const result: OrderStats = {
       openOrders,
       openMarketValue: totalMarketValue,
       openCostBasis,
@@ -356,6 +369,8 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
       closedLosing,
       closedCount,
     };
+    userOrderStatsCache.set(userId, { value: result, timestamp: Date.now() });
+    return result;
   } catch (err) {
     console.error('Error in getOrderStats:', err);
     return emptyOrderStats;
@@ -578,12 +593,21 @@ async function getMonthlyCloseMap(symbols: string[], startDate: string): Promise
   }
 }
 
+const netWorthHistoryCache = new Map<string, { value: NetWorthHistoryPoint[]; timestamp: number }>();
+const NET_WORTH_CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
 export async function getNetWorthHistory(
   userId: string,
   accounts: BankAccount[],
   transactions: BankTransaction[],
   fxRates: FxRates,
 ): Promise<NetWorthHistoryPoint[]> {
+  const cacheKey = `${userId}:${accounts.length}:${transactions.length}`;
+  const cached = netWorthHistoryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < NET_WORTH_CACHE_TTL_MS) {
+    return cached.value;
+  }
+
   const monthKeys = recentMonthKeys(12);
   const cashTrend = buildCashTrend(accounts, transactions, fxRates, 12);
 
@@ -600,16 +624,32 @@ export async function getNetWorthHistory(
       .from(positions)
       .where(eq(positions.userId, userId));
 
+    if (positionRows.length === 0) {
+      const res = monthKeys.map((yearMonth, index) => {
+        const cashEgp = cashTrend[index]?.totalEgp ?? 0;
+        return {
+          yearMonth,
+          month: cashTrend[index]?.month ?? yearMonth,
+          nominalEgp: cashEgp,
+          cashEgp,
+          brokerageCashEgp: cashTrend[index]?.brokerageCashEgp ?? 0,
+          investedEgp: 0,
+        };
+      });
+      netWorthHistoryCache.set(cacheKey, { value: res, timestamp: Date.now() });
+      return res;
+    }
+
     const symbols = Array.from(new Set(positionRows.map((row) => row.tickerSymbol.trim().toUpperCase())));
     const [monthlyCloseMap, latestPrices, tickerMap] = await Promise.all([
       getMonthlyCloseMap(symbols, `${monthKeys[0]}-01`),
-      getLatestPriceMap(),
+      getLatestPriceMap(symbols),
       getTickerMap(),
     ]);
     const currentMonth = monthKeys[monthKeys.length - 1];
     const lastKnownCloseBySymbol = new Map<string, number>();
 
-    return monthKeys.map((yearMonth, index) => {
+    const res = monthKeys.map((yearMonth, index) => {
       const asOfDate = monthEnd(yearMonth);
       let investedEgp = 0;
 
@@ -641,6 +681,9 @@ export async function getNetWorthHistory(
         investedEgp,
       };
     });
+
+    netWorthHistoryCache.set(cacheKey, { value: res, timestamp: Date.now() });
+    return res;
   } catch (error) {
     console.error('Error calculating net worth history:', error);
     return [];
@@ -692,7 +735,11 @@ async function getLatestPriceMap(symbols?: string[]): Promise<Record<string, num
     if (symbols && symbols.length > 0) {
       try {
         const { getIntradayPriceMap } = await import('@/lib/market/intraday-feed');
-        const liveMap = await getIntradayPriceMap(symbols);
+        const liveFeedPromise = getIntradayPriceMap(symbols);
+        const timeoutPromise = new Promise<Record<string, number>>((resolve) =>
+          setTimeout(() => resolve({}), 800)
+        );
+        const liveMap = await Promise.race([liveFeedPromise, timeoutPromise]);
         for (const [sym, livePrice] of Object.entries(liveMap)) {
           if (typeof livePrice === 'number' && Number.isFinite(livePrice) && livePrice > 0) {
             priceMap[sym] = livePrice;
@@ -801,8 +848,16 @@ export async function getUserBankTransactions(userId: string): Promise<BankTrans
   }
 }
 
+let cachedFxRates: { value: FxRates; timestamp: number } | null = null;
+const FX_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
 export async function getFxRates(): Promise<FxRates> {
-  const rates: FxRates = { EGP: 1 };
+  const now = Date.now();
+  if (cachedFxRates && now - cachedFxRates.timestamp < FX_CACHE_TTL_MS) {
+    return cachedFxRates.value;
+  }
+
+  const rates: FxRates = { EGP: 1, USD: 50.2, EUR: 54.5 };
   try {
     const latest = await getLatestPriceMap(['USDEGP', 'EUREGP']);
     for (const [currency, symbol] of Object.entries({ USD: 'USDEGP', EUR: 'EUREGP' })) {
@@ -811,6 +866,7 @@ export async function getFxRates(): Promise<FxRates> {
         rates[currency] = rate;
       }
     }
+    cachedFxRates = { value: rates, timestamp: now };
   } catch (err) {
     console.error('Error fetching FX rates:', err);
   }
@@ -824,9 +880,12 @@ export async function getUsdRate(): Promise<number> {
 
 export async function getOpenPositionsForNetWorth(userId: string): Promise<PositionItem[]> {
   try {
-    const [rows, latestPrices, tickerMap] = await Promise.all([
-      db.select().from(positions).where(and(eq(positions.status, 'OPEN'), eq(positions.userId, userId))),
-      getLatestPriceMap().catch(() => ({} as Record<string, number>)),
+    const rows = await db.select().from(positions).where(and(eq(positions.status, 'OPEN'), eq(positions.userId, userId)));
+    if (rows.length === 0) return [];
+
+    const symbols = Array.from(new Set(rows.map((p) => p.tickerSymbol.trim().toUpperCase())));
+    const [latestPrices, tickerMap] = await Promise.all([
+      getLatestPriceMap(symbols).catch(() => ({} as Record<string, number>)),
       getTickerMap().catch(
         () => ({} as Record<string, { companyName: string; sector: string; logoUrl: string | null; currency: string }>)
       ),

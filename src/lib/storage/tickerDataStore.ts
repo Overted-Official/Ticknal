@@ -229,6 +229,8 @@ export const tickerDataStore = {
       url.searchParams.set('timeframe', timeframe);
       if (lastDate && !forceRefresh) {
         url.searchParams.set('since', lastDate);
+      } else {
+        url.searchParams.set('limit', '500');
       }
 
       const response = await fetch(url.toString());
@@ -249,6 +251,7 @@ export const tickerDataStore = {
         refreshUrl.searchParams.set('ticker', cleanSym);
         refreshUrl.searchParams.set('timeframe', timeframe);
         refreshUrl.searchParams.set('fresh', '1');
+        refreshUrl.searchParams.set('limit', '500');
         const refreshResponse = await fetch(refreshUrl.toString(), { cache: 'no-store' });
         if (!refreshResponse.ok) return null;
         const refreshData = await refreshResponse.json();
@@ -348,6 +351,70 @@ export const tickerDataStore = {
       const store = tx.objectStore(STORES.SYNC_META);
       store.put({ ...meta, syncedAt: Date.now() }, makeKey(symbol, timeframe));
     } catch {}
+  },
+
+  /**
+   * Fetches older historical bars backward from a given before date.
+   * Merges with locally stored bars, saves to IndexedDB, and returns updated series.
+   */
+  async fetchOlderBars(
+    symbol: string,
+    timeframe: string = 'D',
+    beforeDate: string,
+    limit: number = 500,
+    currentBars?: PriceBar[]
+  ): Promise<{ bars: PriceBar[]; addedCount: number }> {
+    const cleanSym = symbol.trim().toUpperCase().replace('.CA', '');
+    if (typeof window === 'undefined') {
+      return { bars: currentBars || [], addedCount: 0 };
+    }
+
+    try {
+      const url = new URL('/api/history', window.location.origin);
+      url.searchParams.set('ticker', cleanSym);
+      url.searchParams.set('timeframe', timeframe);
+      url.searchParams.set('before', beforeDate);
+      url.searchParams.set('limit', String(limit));
+
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        return { bars: currentBars || [], addedCount: 0 };
+      }
+
+      const data = await response.json();
+      const incomingBars: PriceBar[] = data?.bars || [];
+      if (incomingBars.length === 0) {
+        return { bars: currentBars || [], addedCount: 0 };
+      }
+
+      // Merge with existing local bars and current bars
+      const storedBars = await this.getStoredBars(cleanSym, timeframe);
+      const barMap = new Map<string, PriceBar>();
+      for (const bar of incomingBars) barMap.set(String(bar.time), bar);
+      if (currentBars) {
+        for (const bar of currentBars) barMap.set(String(bar.time), bar);
+      }
+      for (const bar of storedBars) barMap.set(String(bar.time), bar);
+
+      const merged = Array.from(barMap.values()).sort((a, b) => {
+        const timeA = typeof a.time === 'number' ? a.time : Date.parse(String(a.time));
+        const timeB = typeof b.time === 'number' ? b.time : Date.parse(String(b.time));
+        return timeA - timeB;
+      });
+
+      const baseLength = currentBars && currentBars.length > 0 ? currentBars.length : storedBars.length;
+      const addedCount = Math.max(0, merged.length - baseLength);
+
+      if (addedCount > 0) {
+        const meta = await this.getSyncMeta(cleanSym, timeframe);
+        this.saveBars(cleanSym, merged, timeframe, meta?.adjustmentRevision ?? null).catch(() => {});
+      }
+
+      return { bars: merged, addedCount };
+    } catch (err) {
+      console.warn(`[tickerDataStore] Failed to fetch older bars for ${symbol}:`, err);
+      return { bars: currentBars || [], addedCount: 0 };
+    }
   },
 
   /**

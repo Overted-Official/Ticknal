@@ -116,4 +116,5 @@ export interface ChartWidgetProps {
   tickerPositions?: TickerOrder[];
   currentPrice?: number;
   brokerageAccounts?: BrokerageAccountOption[];
+  onLoadMoreHistory?: () => Promise<number | void>;
 }

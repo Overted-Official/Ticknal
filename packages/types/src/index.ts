@@ -62,15 +62,16 @@ export interface StrategyTrade {
   type: "long";
   entryDate: string;
   entryPrice: number;
-  exitDate: string;
-  exitPrice: number;
+  exitDate?: string;
+  exitPrice?: number;
   shares: number;
   positionValue: number;
   netPnl: number;
   returnPct: number;
-  exitReason: string;
+  exitReason?: string;
   barsHeld: number;
   cumulativeEquity: number;
+  isOpen?: boolean;
 }
 
 export interface FullBacktestReport {

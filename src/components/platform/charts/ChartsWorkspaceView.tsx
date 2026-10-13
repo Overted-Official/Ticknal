@@ -13,7 +13,7 @@ export interface ChartsWorkspaceViewProps {
   symbol: string;
   timeframe: string;
   chartData: Array<{ time: string; open: number; high: number; low: number; close: number; volume: number }>;
-  dailyChartData: Array<{ time: string; open: number; high: number; low: number; close: number; volume: number }>;
+  dailyChartData?: Array<{ time: string; open: number; high: number; low: number; close: number; volume: number }>;
   watchlist: WatchlistItem[];
   tickerPositions: TickerOrder[];
   currentPrice: number;
@@ -59,7 +59,7 @@ export default function ChartsWorkspaceView({
         <BottomToolbar
           symbol={symbol}
           timeframe={timeframe}
-          chartData={dailyChartData}
+          chartData={dailyChartData || chartData}
           companyName={companyName}
           logoUrl={logoUrl}
         />

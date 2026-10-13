@@ -357,6 +357,39 @@ export function runHydraStrategy(
     });
   }
 
+  // If position is still open at the end (no exit signal occurred yet), include it in trades with no exit date
+  if (isLong && activeShares > 0) {
+    const lastBar = bars[bars.length - 1];
+    const effectiveExitPrice = lastBar.close * (1.0 - slippageRate);
+    const grossProceeds = activeShares * effectiveExitPrice;
+    const netProceeds = grossProceeds * (1.0 - commissionRate);
+    const totalCost = activeShares * entryPrice * (1.0 + commissionRate);
+    const netPnl = netProceeds - totalCost;
+    const returnPct = ((netProceeds - totalCost) / totalCost) * 100.0;
+    const maxFavorableExcursion = ((highestInTrade - entryPrice) / entryPrice) * 100.0;
+    const maxAdverseExcursion = ((lowestInTrade - entryPrice) / entryPrice) * 100.0;
+
+    trades.push({
+      id: trades.length + 1,
+      tradeNumber: trades.length + 1,
+      type: 'long',
+      entryDate,
+      entryPrice: Number(entryPrice.toFixed(4)),
+      exitDate: '',
+      exitPrice: Number(lastBar.close.toFixed(4)),
+      shares: activeShares,
+      positionValue: Number((activeShares * entryPrice).toFixed(2)),
+      netPnl: Number(netPnl.toFixed(2)),
+      returnPct: Number(returnPct.toFixed(2)),
+      exitReason: 'Open Position',
+      barsHeld,
+      cumulativeEquity: Number((currentBalance + netProceeds).toFixed(2)),
+      favorableExcursion: Number(maxFavorableExcursion.toFixed(2)),
+      adverseExcursion: Number(maxAdverseExcursion.toFixed(2)),
+      isOpen: true,
+    });
+  }
+
   // If position is still open at the end, close it virtually for final stats accounting
   const lastBar = bars[bars.length - 1];
   let finalEquity = currentBalance;

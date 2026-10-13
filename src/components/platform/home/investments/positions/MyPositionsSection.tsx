@@ -8,12 +8,27 @@ import { ChevronRight, ChevronDown, ChevronUp, Plus } from '@/components/ui/icon
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { type HomeInvestmentOrder } from '../homeInvestmentsTypes';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
+import dynamic from 'next/dynamic';
 import PositionRowItem from './PositionRowItem';
-import TickerPositionsDrawer from './TickerPositionsDrawer';
-import CloseOrderModal from '@/components/platform/CloseOrderModal';
-import AddOrderModal, { type InitialOrderData } from '@/components/platform/AddOrderModal';
-import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
+import { type InitialOrderData } from '@/components/platform/AddOrderModal';
 import { useGuestGuard } from '@/context/GuestGuardContext';
+
+const TickerPositionsDrawer = dynamic(
+  () => import('./TickerPositionsDrawer'),
+  { ssr: false }
+);
+const CloseOrderModal = dynamic(
+  () => import('@/components/platform/CloseOrderModal'),
+  { ssr: false }
+);
+const AddOrderModal = dynamic(
+  () => import('@/components/platform/AddOrderModal'),
+  { ssr: false }
+);
+const QuickAddDrawer = dynamic(
+  () => import('@/components/platform/QuickAddDrawer'),
+  { ssr: false }
+);
 
 interface MyPositionsSectionProps {
   orders: HomeInvestmentOrder[];

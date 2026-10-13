@@ -120,15 +120,26 @@ export const getCachedHourlyPrices = async (ticker: string, limitBars?: number) 
   const fetchHourly = async () => {
     try {
       // 1. Try DB
-      const query = db
-        .select()
-        .from(intradayCandles)
-        .where(sql`${intradayCandles.tickerSymbol} = ${ticker} AND ${intradayCandles.timeframe} = '1h'`)
-        .orderBy(asc(intradayCandles.timestamp));
+      let query;
+      if (limitBars && limitBars > 0) {
+        query = db
+          .select()
+          .from(intradayCandles)
+          .where(sql`${intradayCandles.tickerSymbol} = ${ticker} AND ${intradayCandles.timeframe} = '1h'`)
+          .orderBy(desc(intradayCandles.timestamp))
+          .limit(limitBars);
+      } else {
+        query = db
+          .select()
+          .from(intradayCandles)
+          .where(sql`${intradayCandles.tickerSymbol} = ${ticker} AND ${intradayCandles.timeframe} = '1h'`)
+          .orderBy(asc(intradayCandles.timestamp));
+      }
       
       const rows = await query;
       if (rows && rows.length > 0) {
-        return rows.map((r) => ({
+        const sorted = limitBars && limitBars > 0 ? rows.reverse() : rows;
+        return sorted.map((r) => ({
           date: typeof r.timestamp === 'string' ? r.timestamp : (r.timestamp as Date).toISOString(),
           open: r.open,
           high: r.high,

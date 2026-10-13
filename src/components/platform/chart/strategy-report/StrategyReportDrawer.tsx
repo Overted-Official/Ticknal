@@ -333,11 +333,23 @@ export default function StrategyReportDrawer({
       'Trade #', 'Direction', 'Entry Date', 'Entry Price', 'Exit Date', 'Exit Price',
       'Units', 'Position Value', 'Net PnL', 'Return %', 'Bars Held', 'Exit Reason',
     ];
-    const rows = trades.map((t) => [
-      t.tradeNumber, 'LONG', t.entryDate, t.entryPrice.toFixed(2), t.exitDate, t.exitPrice.toFixed(2),
-      t.shares, t.positionValue.toFixed(2), t.netPnl.toFixed(2), `${t.returnPct.toFixed(2)}%`,
-      t.barsHeld, `"${t.exitReason}"`,
-    ]);
+    const rows = trades.map((t) => {
+      const isOpen = !t.exitDate || t.isOpen || t.exitDate === '' || t.exitReason === 'Backtest End' || t.exitReason === 'Open Position';
+      return [
+        t.tradeNumber,
+        'LONG',
+        t.entryDate,
+        t.entryPrice.toFixed(2),
+        isOpen ? '' : (t.exitDate || ''),
+        isOpen ? '' : (t.exitPrice !== undefined && t.exitPrice !== null ? t.exitPrice.toFixed(2) : ''),
+        t.shares,
+        t.positionValue.toFixed(2),
+        t.netPnl.toFixed(2),
+        `${t.returnPct.toFixed(2)}%`,
+        t.barsHeld,
+        `"${isOpen ? 'Open Position' : (t.exitReason || '')}"`,
+      ];
+    });
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

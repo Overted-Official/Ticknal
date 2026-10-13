@@ -4,8 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { Plus } from '@/components/ui/icon-library';
-import AddAccountDrawer from '@/components/platform/wallet/AddAccountDrawer';
+import dynamic from 'next/dynamic';
 import PerformanceKPIRails, { type PerformanceViewTab } from './kpi-rails/PerformanceKPIRails';
+
+const AddAccountDrawer = dynamic(
+  () => import('@/components/platform/wallet/AddAccountDrawer'),
+  { ssr: false }
+);
 import PerformanceChart from './PerformanceChart';
 import SectorBreakdownChart from './SectorBreakdownChart';
 import NetWorthProgressionChart from './charts/NetWorthProgressionChart';

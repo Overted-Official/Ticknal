@@ -656,6 +656,41 @@ export function runPsiV2Strategy(
     });
   }
 
+  // 3.5. Include active open position in trades if backtest finishes without an exit signal
+  if (isLong && activeShares > 0) {
+    const lastBar = bars[bars.length - 1];
+    const lastBarClose = lastBar?.close || entryPrice;
+    const effectiveExitPrice = lastBarClose * (1.0 - SLIPPAGE_RATE);
+    const grossProceeds = activeShares * effectiveExitPrice;
+    const exitCommission = grossProceeds * COMMISSION_RATE;
+    const netProceeds = grossProceeds - exitCommission;
+    const totalCost = activeShares * entryPrice * (1.0 + COMMISSION_RATE);
+    const netPnl = netProceeds - totalCost;
+    const returnPct = ((netProceeds - totalCost) / totalCost) * 100.0;
+    const maxFavorableExcursion = ((highestInTrade - entryPrice) / entryPrice) * 100.0;
+    const maxAdverseExcursion = ((lowestInTrade - entryPrice) / entryPrice) * 100.0;
+
+    trades.push({
+      id: trades.length + 1,
+      tradeNumber: trades.length + 1,
+      type: 'long',
+      entryDate,
+      entryPrice: Number(entryPrice.toFixed(4)),
+      exitDate: '',
+      exitPrice: Number(lastBarClose.toFixed(4)),
+      shares: activeShares,
+      positionValue: Number((activeShares * entryPrice).toFixed(2)),
+      netPnl: Number(netPnl.toFixed(2)),
+      returnPct: Number(returnPct.toFixed(2)),
+      exitReason: 'Open Position',
+      barsHeld,
+      cumulativeEquity: Number((currentBalance + netProceeds).toFixed(2)),
+      favorableExcursion: Number(maxFavorableExcursion.toFixed(2)),
+      adverseExcursion: Number(maxAdverseExcursion.toFixed(2)),
+      isOpen: true,
+    });
+  }
+
   // 4. Calculate Key Strategy Performance Statistics
   const lastBar = bars[bars.length - 1];
   const finalEquity = equityCurve.length > 0 ? equityCurve[equityCurve.length - 1].equity : initialCapital;

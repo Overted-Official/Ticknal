@@ -13,17 +13,18 @@ export interface StrategyTrade {
   type: "long";
   entryDate: string;
   entryPrice: number;
-  exitDate: string;
-  exitPrice: number;
+  exitDate?: string;
+  exitPrice?: number;
   shares: number;
   positionValue: number;
   netPnl: number;
   returnPct: number;
-  exitReason: string;
+  exitReason?: string;
   barsHeld: number;
   cumulativeEquity: number;
   favorableExcursion: number;
   adverseExcursion: number;
+  isOpen?: boolean;
 }
 
 export interface EquityPoint {
@@ -200,7 +201,9 @@ export function runFullStrategyBacktest(
       lowestPrice = Math.min(lowestPrice, bar.low);
 
       const exitSignal = getExitSignal(bar, params, entryPrice, targetPrice, highestPrice);
-      if (exitSignal !== null || i === validBars.length - 1) {
+      const isLastBar = i === validBars.length - 1;
+
+      if (exitSignal !== null || isLastBar) {
         const shares = activeShares;
         const exitP = bar.close;
         const pnl = shares * (exitP - entryPrice);
@@ -210,37 +213,42 @@ export function runFullStrategyBacktest(
 
         balance += pnl;
 
+        const isRealExit = exitSignal !== null;
+
         tradeClosedThisBar = {
           id: tradeCount,
           tradeNumber: tradeCount,
           type: "long",
           entryDate,
           entryPrice,
-          exitDate: bar.date,
+          exitDate: isRealExit ? bar.date : "",
           exitPrice: exitP,
           shares,
           positionValue: shares * entryPrice,
           netPnl: pnl,
           returnPct,
-          exitReason: exitSignal ? exitSignal.reason : "Backtest End",
+          exitReason: isRealExit ? exitSignal.reason : "Open Position",
           barsHeld: currentBarsHeld,
           cumulativeEquity: balance,
           favorableExcursion,
           adverseExcursion,
+          isOpen: !isRealExit,
         };
 
         trades.push(tradeClosedThisBar);
 
-        signals.push({
-          date: bar.date,
-          signal: exitSignal?.signal ?? "SELL_TRAIL",
-          confidence: exitSignal?.confidence ?? 1,
-          price: exitP,
-          masterIndex: currentMaster ?? 0,
-          medianDailyMove: bar.medianDailyMove,
-          exitReason: exitSignal?.reason ?? "End of period",
-          modelVersion: is40 ? "psi40-platform" : "psi-v9-platform",
-        });
+        if (isRealExit) {
+          signals.push({
+            date: bar.date,
+            signal: exitSignal.signal,
+            confidence: exitSignal.confidence,
+            price: exitP,
+            masterIndex: currentMaster ?? 0,
+            medianDailyMove: bar.medianDailyMove,
+            exitReason: exitSignal.reason,
+            modelVersion: is40 ? "psi40-platform" : "psi-v9-platform",
+          });
+        }
 
         active = false;
         activeShares = 0;

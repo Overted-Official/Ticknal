@@ -106,6 +106,7 @@ export default function ListOfTradesTab({
                 .reverse()
                 .map((t) => {
                   const isWin = t.netPnl > 0;
+                  const isOpen = !t.exitDate || t.isOpen || t.exitDate === '' || t.exitReason === 'Backtest End' || t.exitReason === 'Open Position';
                   return (
                     <tr key={t.id} className="tabular-nums hover:bg-white/[0.02] transition-colors">
                       <td className="py-2.5 px-3 font-semibold text-white/70 text-start">{t.tradeNumber}</td>
@@ -113,9 +114,19 @@ export default function ListOfTradesTab({
                       <td className="py-2.5 px-3 text-end text-white font-medium">
                         {t.entryPrice.toFixed(2)}
                       </td>
-                      <td className="py-2.5 px-3 text-white/70 text-start">{t.exitDate}</td>
-                      <td className="py-2.5 px-3 text-end text-white font-medium">
-                        {t.exitPrice.toFixed(2)}
+                      <td className="py-2.5 px-3 text-start">
+                        {isOpen ? (
+                          <span className="text-white/35 font-normal select-none">—</span>
+                        ) : (
+                          <span className="text-white/70">{t.exitDate}</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-end font-medium">
+                        {isOpen ? (
+                          <span className="text-white/35 font-normal select-none">—</span>
+                        ) : (
+                          <span className="text-white">{t.exitPrice ? t.exitPrice.toFixed(2) : '—'}</span>
+                        )}
                       </td>
                       <td className="py-2.5 px-3 text-end text-white/60">
                         {t.shares.toLocaleString()}
@@ -136,8 +147,15 @@ export default function ListOfTradesTab({
                         {isWin ? '+' : ''}
                         {t.returnPct.toFixed(2)}%
                       </td>
-                      <td className="py-2.5 px-3 text-white/50 text-[11px] truncate max-w-[180px] text-start">
-                        {t.exitReason}
+                      <td className="py-2.5 px-3 text-start text-[11px] truncate max-w-[180px]">
+                        {isOpen ? (
+                          <span className="text-amber-400/90 font-medium inline-flex items-center gap-1.5">
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            <span>{locale === 'ar' ? 'صفقة مفتوحة' : 'Open Position'}</span>
+                          </span>
+                        ) : (
+                          <span className="text-white/50">{t.exitReason}</span>
+                        )}
                       </td>
                     </tr>
                   );

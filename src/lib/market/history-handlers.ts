@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { dailyPrices, intradayCandles, priceAdjustments } from '@/db/schema';
-import { eq, and, gt, asc, desc } from 'drizzle-orm';
+import { eq, and, gt, lt, asc, desc } from 'drizzle-orm';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 
 export async function handleHistoryGet(req: Request) {
@@ -15,6 +15,7 @@ export async function handleHistoryGet(req: Request) {
     const symbol = normalizeTickerSymbol(rawSymbol);
     const timeframe = (searchParams.get('timeframe') || 'D').toUpperCase();
     const since = searchParams.get('since');
+    const before = searchParams.get('before');
     const fresh = searchParams.get('fresh') === '1';
     const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined;
 
@@ -30,18 +31,40 @@ export async function handleHistoryGet(req: Request) {
       if (since) {
         conditions.push(gt(intradayCandles.timestamp, new Date(since)));
       }
-
-      let query = db
-        .select()
-        .from(intradayCandles)
-        .where(and(...conditions))
-        .orderBy(asc(intradayCandles.timestamp));
-
-      if (limit && Number.isFinite(limit) && limit > 0) {
-        query = query.limit(limit) as any;
+      if (before) {
+        conditions.push(lt(intradayCandles.timestamp, new Date(before)));
       }
 
-      const rows = await query;
+      const effectiveLimit = limit && Number.isFinite(limit) && limit > 0 ? limit : (!since || before ? 500 : undefined);
+
+      let rows: any[];
+      if (before || (effectiveLimit && !since)) {
+        let query = db
+          .select()
+          .from(intradayCandles)
+          .where(and(...conditions))
+          .orderBy(desc(intradayCandles.timestamp));
+
+        if (effectiveLimit) {
+          query = query.limit(effectiveLimit) as any;
+        }
+
+        const descRows = await query;
+        rows = descRows.reverse();
+      } else {
+        let query = db
+          .select()
+          .from(intradayCandles)
+          .where(and(...conditions))
+          .orderBy(asc(intradayCandles.timestamp));
+
+        if (effectiveLimit) {
+          query = query.limit(effectiveLimit) as any;
+        }
+
+        rows = await query;
+      }
+
       const bars = rows.map((r) => ({
         time: typeof r.timestamp === 'string' ? r.timestamp : new Date(r.timestamp).toISOString(),
         open: Number(r.open),
@@ -51,11 +74,19 @@ export async function handleHistoryGet(req: Request) {
         volume: Number(r.volume || 0),
       }));
 
+      const cacheHeader = fresh
+        ? 'no-store'
+        : before
+        ? 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800'
+        : since
+        ? 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'
+        : 'public, max-age=300, s-maxage=86400, stale-while-revalidate=86400';
+
       return NextResponse.json(
-        { symbol, timeframe, count: bars.length, since: since || null, bars },
+        { symbol, timeframe, count: bars.length, since: since || null, before: before || null, bars },
         {
           headers: {
-            'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=86400',
+            'Cache-Control': cacheHeader,
           },
         }
       );
@@ -66,25 +97,54 @@ export async function handleHistoryGet(req: Request) {
     if (since) {
       conditions.push(gt(dailyPrices.date, since));
     }
-
-    let query = db
-      .select({
-        date: dailyPrices.date,
-        open: dailyPrices.open,
-        high: dailyPrices.high,
-        low: dailyPrices.low,
-        close: dailyPrices.close,
-        volume: dailyPrices.volume,
-      })
-      .from(dailyPrices)
-      .where(and(...conditions))
-      .orderBy(asc(dailyPrices.date));
-
-    if (limit && Number.isFinite(limit) && limit > 0) {
-      query = query.limit(limit) as any;
+    if (before) {
+      conditions.push(lt(dailyPrices.date, before));
     }
 
-    const rows = await query;
+    const effectiveLimit = limit && Number.isFinite(limit) && limit > 0 ? limit : (!since || before ? 500 : undefined);
+
+    let rows: any[];
+    if (before || (effectiveLimit && !since)) {
+      let query = db
+        .select({
+          date: dailyPrices.date,
+          open: dailyPrices.open,
+          high: dailyPrices.high,
+          low: dailyPrices.low,
+          close: dailyPrices.close,
+          volume: dailyPrices.volume,
+        })
+        .from(dailyPrices)
+        .where(and(...conditions))
+        .orderBy(desc(dailyPrices.date));
+
+      if (effectiveLimit) {
+        query = query.limit(effectiveLimit) as any;
+      }
+
+      const descRows = await query;
+      rows = descRows.reverse();
+    } else {
+      let query = db
+        .select({
+          date: dailyPrices.date,
+          open: dailyPrices.open,
+          high: dailyPrices.high,
+          low: dailyPrices.low,
+          close: dailyPrices.close,
+          volume: dailyPrices.volume,
+        })
+        .from(dailyPrices)
+        .where(and(...conditions))
+        .orderBy(asc(dailyPrices.date));
+
+      if (effectiveLimit) {
+        query = query.limit(effectiveLimit) as any;
+      }
+
+      rows = await query;
+    }
+
     const bars = rows.map((r) => ({
       time: r.date,
       open: Number(r.open),
@@ -118,12 +178,14 @@ export async function handleHistoryGet(req: Request) {
 
     const cacheHeader = fresh
       ? 'no-store'
+      : before
+      ? 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800'
       : since
       ? 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'
       : 'public, max-age=300, s-maxage=86400, stale-while-revalidate=86400';
 
     return NextResponse.json(
-      { symbol, timeframe: 'D', count: bars.length, since: since || null, adjustmentRevision, bars },
+      { symbol, timeframe: 'D', count: bars.length, since: since || null, before: before || null, adjustmentRevision, bars },
       {
         headers: {
           'Cache-Control': cacheHeader,

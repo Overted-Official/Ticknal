@@ -112,7 +112,7 @@ async function ChartsPageContent({
           .from(positions)
           .where(and(eq(positions.tickerSymbol, selectedSymbol), eq(positions.userId, userId)))
       : Promise.resolve([]),
-    is1H ? getCachedHourlyPrices(selectedSymbol) : getCachedDailyPrices(selectedSymbol),
+    is1H ? getCachedHourlyPrices(selectedSymbol, 500) : getCachedDailyPrices(selectedSymbol, 500),
     userId
       ? db.select().from(userBankAccounts).where(and(eq(userBankAccounts.userId, userId), eq(userBankAccounts.isArchived, false)))
       : Promise.resolve([]),
@@ -369,7 +369,7 @@ async function ChartsPageContent({
         symbol={selectedSymbol}
         timeframe={timeframe}
         chartData={chartData}
-        dailyChartData={dailyChartData}
+        dailyChartData={timeframe === 'D' ? undefined : dailyChartData}
         watchlist={watchlist}
         tickerPositions={tickerPositions}
         currentPrice={currentPriceForSymbol}

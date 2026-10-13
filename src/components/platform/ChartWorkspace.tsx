@@ -1,11 +1,10 @@
 'use client';
 
-import { useCallback, useState, useEffect, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, usePathname } from 'next/navigation';
 import ChartWidget, { type ChartData } from '@/components/platform/ChartWidget';
 import { STRATEGIES } from '@/strategies/registry';
 import { tickerDataStore } from '@/lib/storage/tickerDataStore';
-import { prefetchWatchlist } from '@/lib/client-price-cache';
 
 import { WatchlistItem } from '@/components/platform/RightSidebar';
 import { TickerOrder } from '@/components/platform/TickerPositions';
@@ -224,15 +223,47 @@ export default function ChartWorkspace({
       console.warn('Ticker data delta sync warning:', err);
     });
 
-    // 3. Pre-warm user's watchlist symbols in background during idle time
-    if (watchlist && watchlist.length > 0) {
-      prefetchWatchlist(watchlist.map((w) => w.symbol), timeframe);
-    }
-
     return () => {
       isCancelled = true;
     };
-  }, [isHeroScene, symbol, timeframe, watchlist]);
+  }, [isHeroScene, symbol, timeframe, data]);
+
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
+  const isLoadingMoreHistoryRef = useRef(false);
+
+  useEffect(() => {
+    setHasMoreHistory(true);
+  }, [symbol, timeframe]);
+
+  const handleLoadMoreHistory = useCallback(async (): Promise<number> => {
+    if (isLoadingMoreHistoryRef.current || !hasMoreHistory || isHeroScene) return 0;
+    if (!activeChartData || activeChartData.length === 0) return 0;
+
+    const earliestBar = activeChartData[0];
+    const before = String(earliestBar.time).split('T')[0];
+
+    isLoadingMoreHistoryRef.current = true;
+    try {
+      const result = await tickerDataStore.fetchOlderBars(
+        symbol,
+        timeframe,
+        before,
+        500,
+        activeChartData as any
+      );
+      if (result.addedCount === 0) {
+        setHasMoreHistory(false);
+        return 0;
+      }
+      setActiveChartData(result.bars as ChartData[]);
+      return result.addedCount;
+    } catch (err) {
+      console.warn('Failed to load older historical bars:', err);
+      return 0;
+    } finally {
+      isLoadingMoreHistoryRef.current = false;
+    }
+  }, [activeChartData, hasMoreHistory, isHeroScene, symbol, timeframe]);
 
   // Sync strategy if URL query param changes
   useEffect(() => {
@@ -337,6 +368,7 @@ export default function ChartWorkspace({
         tickerPositions={tickerPositions}
         currentPrice={currentPrice}
         brokerageAccounts={brokerageAccounts}
+        onLoadMoreHistory={handleLoadMoreHistory}
       />
     </div>
   );

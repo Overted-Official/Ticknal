@@ -471,6 +471,14 @@ export function getCachedOpportunitiesSync(limitBars = 5, strategyScope = 'all')
   return cached && Date.now() - cached.timestamp < MEM_CACHE_TTL ? cached.data : null;
 }
 
+interface ExitSignalTickerEntry {
+  timestamp: number;
+  lastBarDate: string;
+  signal: OpportunitySignal | null;
+}
+const exitSignalTickerCache = new Map<string, ExitSignalTickerEntry>();
+const EXIT_TICKER_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
 /** Shared sell scan for dashboard surfaces. It uses the exact same analyzer as the chart and command center. */
 export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5): Promise<OpportunitySignal[]> {
   const cleanSymbols = Array.from(new Set(symbols.map(normalizeTickerSymbol).filter(Boolean)));
@@ -497,10 +505,17 @@ export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5
   ]);
   const metadata = new Map(tickerRows.map((ticker) => [normalizeTickerSymbol(ticker.symbol), ticker]));
   const barsByTicker = new Map<string, PriceBar[]>(priceBarsList);
-  const exits: OpportunitySignal[] = [];
-  for (const symbol of cleanSymbols) {
+
+  const signalPromises = cleanSymbols.map(async (symbol): Promise<OpportunitySignal | null> => {
     const bars = barsByTicker.get(symbol) ?? [];
-    if (bars.length < 80) continue;
+    if (bars.length < 80) return null;
+
+    const lastBarDate = bars[bars.length - 1]?.date ?? '';
+    const cacheKey = `${symbol}:${limitBars}`;
+    const cached = exitSignalTickerCache.get(cacheKey);
+    if (cached && cached.lastBarDate === lastBarDate && Date.now() - cached.timestamp < EXIT_TICKER_CACHE_TTL_MS) {
+      return cached.signal;
+    }
 
     // Use the ticker's true champion strategy to ensure 100% alignment
     // with the chart's default model and the push notification alert engine.
@@ -512,19 +527,29 @@ export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5
         lookbackBars: limitBars,
       });
     } catch {
-      continue;
+      exitSignalTickerCache.set(cacheKey, { timestamp: Date.now(), lastBarDate, signal: null });
+      return null;
     }
 
-    if (!champion) continue;
+    if (!champion) {
+      exitSignalTickerCache.set(cacheKey, { timestamp: Date.now(), lastBarDate, signal: null });
+      return null;
+    }
     const championAnalysis = champion.analyses.find((a) => a.strategyId === champion.strategyId);
-    if (!championAnalysis) continue;
+    if (!championAnalysis) {
+      exitSignalTickerCache.set(cacheKey, { timestamp: Date.now(), lastBarDate, signal: null });
+      return null;
+    }
 
     const latest = championAnalysis.latestActionableSignal;
-    if (!latest || (latest.signal !== 'SELL' && latest.signal !== 'BUY')) continue;
+    if (!latest || (latest.signal !== 'SELL' && latest.signal !== 'BUY')) {
+      exitSignalTickerCache.set(cacheKey, { timestamp: Date.now(), lastBarDate, signal: null });
+      return null;
+    }
 
     const ticker = metadata.get(symbol);
     const badge = getStrategyBadge(champion.strategyId);
-    exits.push({
+    const oppSignal: OpportunitySignal = {
       symbol,
       companyName: ticker?.companyName ?? symbol,
       sector: ticker?.sector ?? 'Unclassified',
@@ -547,7 +572,13 @@ export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5
         barsAgo: latest.barsAgo,
         reasoning: latest.reason,
       },
-    });
-  }
+    };
+
+    exitSignalTickerCache.set(cacheKey, { timestamp: Date.now(), lastBarDate, signal: oppSignal });
+    return oppSignal;
+  });
+
+  const settled = await Promise.all(signalPromises);
+  const exits = settled.filter((s): s is OpportunitySignal => s !== null);
   return exits.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
 }

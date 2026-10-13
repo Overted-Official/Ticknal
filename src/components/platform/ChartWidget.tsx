@@ -19,6 +19,7 @@ import {
   type MouseEventParams,
   type SeriesMarker,
   type Time,
+  type LogicalRange,
 } from 'lightweight-charts';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -96,6 +97,7 @@ export default function ChartWidget({
   tickerPositions = [],
   currentPrice,
   brokerageAccounts = [],
+  onLoadMoreHistory,
 }: ChartWidgetProps) {
   const { locale } = useTranslation();
   const { isGuest, isLoading: isGuestStatusLoading } = useGuestGuard();
@@ -288,6 +290,17 @@ export default function ChartWidget({
   visibleDataRef.current = visibleData;
 
   const activeCandle = hoveredCandle ?? (visibleData && visibleData.length > 0 ? visibleData[visibleData.length - 1] : null);
+
+  const isFetchingOlderRef = useRef(false);
+  const pendingHistoryShiftRef = useRef<number>(0);
+  const hasMoreHistoryRef = useRef(true);
+
+  // Reset lazy load history state on symbol or timeframe change
+  useEffect(() => {
+    hasMoreHistoryRef.current = true;
+    isFetchingOlderRef.current = false;
+    pendingHistoryShiftRef.current = 0;
+  }, [symbol, timeframe]);
 
   // Reset live intraday bar on instrument change
   useEffect(() => {
@@ -747,6 +760,8 @@ export default function ChartWidget({
   useEffect(() => {
     if (!candlestickSeriesRef.current || !volumeSeriesRef.current) return;
 
+    const currentLogicalRange = chartRef.current?.timeScale().getVisibleLogicalRange();
+
     if (isFund) {
       const areaData = sanitizeChartSeriesData(
         visibleData.map((d) => ({ time: parseChartTime(d.time), value: d.close }))
@@ -773,6 +788,15 @@ export default function ChartWidget({
       }))
     );
     volumeSeriesRef.current.setData(volumeData);
+
+    if (pendingHistoryShiftRef.current > 0 && chartRef.current && currentLogicalRange) {
+      const shift = pendingHistoryShiftRef.current;
+      pendingHistoryShiftRef.current = 0;
+      chartRef.current.timeScale().setVisibleLogicalRange({
+        from: currentLogicalRange.from + shift,
+        to: currentLogicalRange.to + shift,
+      });
+    }
 
     const frame = window.requestAnimationFrame(() => setIsChartLoading(false));
     return () => window.cancelAnimationFrame(frame);
@@ -980,25 +1004,52 @@ export default function ChartWidget({
   }, [orders, data, visibleData, seriesReadyKey]);
 
   // Subscribe to time scale changes (pan, zoom) so overlays stay locked to candles
+  // and trigger backward lazy-loading when scrolling near the historical edge
   useEffect(() => {
     if (!chartRef.current) return;
     const timeScale = chartRef.current.timeScale();
-    const handleRangeChange = () => {
+    const handleRangeChange = (logicalRange?: LogicalRange | null) => {
       updateOrderOverlays();
+
+      if (
+        !logicalRange ||
+        isFetchingOlderRef.current ||
+        !hasMoreHistoryRef.current ||
+        !onLoadMoreHistory
+      ) {
+        return;
+      }
+
+      // If user scrolls within 25 bars of the beginning of current history
+      if (logicalRange.from < 25) {
+        isFetchingOlderRef.current = true;
+        onLoadMoreHistory()
+          .then((addedCount) => {
+            if (typeof addedCount === 'number' && addedCount > 0) {
+              pendingHistoryShiftRef.current = addedCount;
+            } else if (addedCount === 0) {
+              hasMoreHistoryRef.current = false;
+            }
+          })
+          .catch(() => {})
+          .finally(() => {
+            isFetchingOlderRef.current = false;
+          });
+      }
     };
 
     timeScale.subscribeVisibleLogicalRangeChange(handleRangeChange);
-    timeScale.subscribeVisibleTimeRangeChange(handleRangeChange);
+    timeScale.subscribeVisibleTimeRangeChange(updateOrderOverlays);
 
     updateOrderOverlays();
 
     return () => {
       try {
         timeScale.unsubscribeVisibleLogicalRangeChange(handleRangeChange);
-        timeScale.unsubscribeVisibleTimeRangeChange(handleRangeChange);
+        timeScale.unsubscribeVisibleTimeRangeChange(updateOrderOverlays);
       } catch {}
     };
-  }, [updateOrderOverlays, visibleData, seriesReadyKey]);
+  }, [updateOrderOverlays, visibleData, seriesReadyKey, onLoadMoreHistory]);
 
   // AI Prediction Handler
   const handleRunPrediction = async (days: number) => {

@@ -222,10 +222,20 @@ export async function syncAllMacroInflation(): Promise<{ cbeSynced: boolean; usC
   return { cbeSynced, usCpiSynced };
 }
 
+let cachedCbeRate: { value: number; timestamp: number } | null = null;
+let cachedUsCpiRate: { value: number; timestamp: number } | null = null;
+let cachedInflationSeries: { value: any[]; timestamp: number } | null = null;
+const MACRO_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour in-memory cache for monthly macro stats
+
 /**
  * Gets latest inflation rates (both CBE and US CPI)
  */
 export async function getLatestInflationRate(): Promise<number> {
+  const now = Date.now();
+  if (cachedCbeRate && now - cachedCbeRate.timestamp < MACRO_CACHE_TTL_MS) {
+    return cachedCbeRate.value;
+  }
+
   try {
     const rows = await db
       .select()
@@ -235,7 +245,9 @@ export async function getLatestInflationRate(): Promise<number> {
       .limit(1);
 
     if (rows.length > 0 && Number(rows[0].cbeHeadlineInflation) > 0) {
-      return Number(rows[0].cbeHeadlineInflation);
+      const val = Number(rows[0].cbeHeadlineInflation);
+      cachedCbeRate = { value: val, timestamp: now };
+      return val;
     }
   } catch (err) {
     console.error('[CBE DB] Error querying inflation rate:', err);
@@ -243,6 +255,7 @@ export async function getLatestInflationRate(): Promise<number> {
 
   const live = await scrapeLatestCbeInflation();
   if (live) {
+    cachedCbeRate = { value: live.headlineYoY, timestamp: now };
     return live.headlineYoY;
   }
 
@@ -253,6 +266,11 @@ export async function getLatestInflationRate(): Promise<number> {
  * Gets latest US CPI rate from DB or BLS API
  */
 export async function getLatestUsCpiRate(): Promise<number> {
+  const now = Date.now();
+  if (cachedUsCpiRate && now - cachedUsCpiRate.timestamp < MACRO_CACHE_TTL_MS) {
+    return cachedUsCpiRate.value;
+  }
+
   try {
     const rows = await db
       .select()
@@ -262,7 +280,9 @@ export async function getLatestUsCpiRate(): Promise<number> {
       .limit(1);
 
     if (rows.length > 0 && Number(rows[0].usCpiInflation) > 0) {
-      return Number(rows[0].usCpiInflation);
+      const val = Number(rows[0].usCpiInflation);
+      cachedUsCpiRate = { value: val, timestamp: now };
+      return val;
     }
   } catch (err) {
     console.error('[BLS DB] Error querying US CPI rate:', err);
@@ -275,11 +295,18 @@ export async function getLatestUsCpiRate(): Promise<number> {
  * Retrieves full historical series from DB
  */
 export async function getHistoricalInflationSeries() {
+  const now = Date.now();
+  if (cachedInflationSeries && now - cachedInflationSeries.timestamp < MACRO_CACHE_TTL_MS) {
+    return cachedInflationSeries.value;
+  }
+
   try {
-    return await db
+    const rows = await db
       .select()
       .from(macroInflationRates)
       .orderBy(desc(macroInflationRates.yearMonth));
+    cachedInflationSeries = { value: rows, timestamp: now };
+    return rows;
   } catch (err) {
     console.error('[CBE DB] Error querying historical inflation series:', err);
     return [];
