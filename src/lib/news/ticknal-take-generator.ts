@@ -1,98 +1,128 @@
 import { db } from '@/db';
-import { dailyPrices, egxInvestorFlows, marketNews, systemLogs, tickers } from '@/db/schema';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { dailyPrices, egxInvestorFlows, marketNews, systemLogs } from '@/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
 import {
-  generateEgx30ChartSvg,
-  generateInvestorFlowsChartSvg,
-  generateFxArbitrageChartSvg,
-  type Egx30ChartData,
-  type InvestorFlowsChartData,
-  type FxArbitrageChartData,
+  generateHotMoneyChartSvg,
+  generateTradeSummaryChartSvg,
+  generateMarketBreadthChartSvg,
+  generateGainersLosersChartSvg,
+  generateUsdEgpUpdateChartSvg,
+  generateLocalizedTakeBundle,
 } from './ticknal-take-charts';
-import {
-  completeWithKeyPool,
-  getKeyPoolStatus,
-  type AICompletionResult,
-  type KeyPoolStatus,
-} from '@/lib/ai/openrouter-client';
+import { completeWithKeyPool } from '@/lib/ai/openrouter-client';
+import { handleFxFairValueGet, type FxFairValueResponse } from '@/lib/handlers/fx-fair-value-handler';
+import { ensureMarketNewsTable } from './news-service';
 
-interface MarketDataSnapshot {
+export interface TicknalTakeGenerationResult {
+  success: boolean;
   date: string;
-  egx30: Egx30ChartData;
-  flows: InvestorFlowsChartData;
-  fx: FxArbitrageChartData;
+  postsCreated: number;
+  durationMs: number;
+  takes: string[];
 }
 
 /**
- * 1. Fetch real-time market numbers from database
+ * Phase 2: Generates the 5 Canonical "Ticknal take" Intelligence Briefings
  */
-export async function getMarketDataSnapshot(): Promise<MarketDataSnapshot> {
+export async function generateAllDailyTakes(): Promise<TicknalTakeGenerationResult> {
+  const startTime = Date.now();
+  await ensureMarketNewsTable();
+
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // A. Latest EGX30 prices
-  const egx30Rows = await db
-    .select()
+  // 1. Ingest Latest EGX Benchmark Prices (EGX30, EGX70, EGX100)
+  const [egx30Rows, egx70Rows, egx100Rows] = await Promise.all([
+    db.select().from(dailyPrices).where(eq(dailyPrices.tickerSymbol, 'EGX30')).orderBy(desc(dailyPrices.date)).limit(2),
+    db.select().from(dailyPrices).where(eq(dailyPrices.tickerSymbol, 'EGX70')).orderBy(desc(dailyPrices.date)).limit(2),
+    db.select().from(dailyPrices).where(eq(dailyPrices.tickerSymbol, 'EGX100')).orderBy(desc(dailyPrices.date)).limit(2),
+  ]);
+
+  const targetDate = egx30Rows[0]?.date ? String(egx30Rows[0].date).slice(0, 10) : todayStr;
+
+  const getPriceMetrics = (rows: typeof egx30Rows, fallbackClose: number) => {
+    const cur = rows[0];
+    const prev = rows[1];
+    const close = cur ? Number(cur.close) : fallbackClose;
+    const prevClose = prev ? Number(prev.close) : close;
+    const changePct = prevClose > 0 ? Number((((close - prevClose) / prevClose) * 100).toFixed(2)) : 0;
+    return { close, changePct };
+  };
+
+  const egx30 = getPriceMetrics(egx30Rows, 30800);
+  const egx70 = getPriceMetrics(egx70Rows, 7450);
+  const egx100 = getPriceMetrics(egx100Rows, 10600);
+
+  // 2. Compute Market Breadth & Top Gainers/Losers
+  const allTodayPrices = await db
+    .select({
+      ticker: dailyPrices.tickerSymbol,
+      close: dailyPrices.close,
+      open: dailyPrices.open,
+      high: dailyPrices.high,
+      low: dailyPrices.low,
+      volume: dailyPrices.volume,
+    })
     .from(dailyPrices)
-    .where(eq(dailyPrices.tickerSymbol, 'EGX30'))
+    .where(eq(dailyPrices.date, targetDate));
+
+  // Determine previous date to compute real price changes for every stock
+  const prevDateRow = await db
+    .select({ date: dailyPrices.date })
+    .from(dailyPrices)
+    .where(sql`${dailyPrices.date} < ${targetDate}`)
     .orderBy(desc(dailyPrices.date))
-    .limit(10);
+    .limit(1);
 
-  const latestEgx30 = egx30Rows[0];
-  const prevEgx30 = egx30Rows[1];
+  const prevDate = prevDateRow[0]?.date ? String(prevDateRow[0].date).slice(0, 10) : targetDate;
 
-  const targetDate = latestEgx30?.date ? String(latestEgx30.date).slice(0, 10) : todayStr;
-  const close = latestEgx30 ? Number(latestEgx30.close) : 66767.4;
-  const prevClose = prevEgx30 ? Number(prevEgx30.close) : 67055.5;
-  const changePts = Number((close - prevClose).toFixed(2));
-  const changePct = Number(((changePts / prevClose) * 100).toFixed(2));
-  const open = latestEgx30 ? Number(latestEgx30.open) : close;
-  const high = latestEgx30 ? Number(latestEgx30.high) : close;
-  const low = latestEgx30 ? Number(latestEgx30.low) : close;
+  const prevPrices = await db
+    .select({ ticker: dailyPrices.tickerSymbol, close: dailyPrices.close })
+    .from(dailyPrices)
+    .where(eq(dailyPrices.date, prevDate));
 
-  const recentBars = egx30Rows.map((r) => Number(r.close)).reverse();
-
-  const prevDate = prevEgx30?.date ? String(prevEgx30.date).slice(0, 10) : targetDate;
-
-  // B. Advance/Decline Breadth on target date (Fast indexed lookup)
-  let advancers = 18;
-  let decliners = 9;
-  let flat = 3;
-
-  try {
-    const [todayRows, prevRows] = await Promise.all([
-      db.select({ ticker: dailyPrices.tickerSymbol, close: dailyPrices.close })
-        .from(dailyPrices)
-        .where(eq(dailyPrices.date, targetDate)),
-      db.select({ ticker: dailyPrices.tickerSymbol, close: dailyPrices.close })
-        .from(dailyPrices)
-        .where(eq(dailyPrices.date, prevDate)),
-    ]);
-
-    const prevMap = new Map<string, number>();
-    for (const r of prevRows) {
-      if (r.ticker) prevMap.set(r.ticker, Number(r.close));
-    }
-
-    let a = 0, d = 0, f = 0;
-    for (const r of todayRows) {
-      if (!r.ticker) continue;
-      const prevClose = prevMap.get(r.ticker);
-      if (prevClose === undefined) continue;
-      const cur = Number(r.close);
-      if (cur > prevClose) a++;
-      else if (cur < prevClose) d++;
-      else f++;
-    }
-    if (a + d + f > 0) {
-      advancers = a;
-      decliners = d;
-      flat = f;
-    }
-  } catch (e) {
-    console.warn('[ticknal-take] Breadth query fallback:', e);
+  const prevMap = new Map<string, number>();
+  for (const p of prevPrices) {
+    if (p.ticker) prevMap.set(p.ticker, Number(p.close));
   }
 
-  // C. 30-Day Rolling Investor Flows (Hot Money Barometer)
+  let advancers = 0;
+  let decliners = 0;
+  let flat = 0;
+  const stockChanges: Array<{ ticker: string; close: number; changePct: number; volume: number; turnover: number }> = [];
+
+  for (const s of allTodayPrices) {
+    if (!s.ticker || s.ticker.startsWith('EGX') || s.ticker.startsWith('USD')) continue;
+    const curClose = Number(s.close);
+    const pClose = prevMap.get(s.ticker) ?? curClose;
+    const changePct = pClose > 0 ? Number((((curClose - pClose) / pClose) * 100).toFixed(2)) : 0;
+    const vol = Number(s.volume || 0);
+    const turnover = curClose * vol;
+
+    if (curClose > pClose) advancers++;
+    else if (curClose < pClose) decliners++;
+    else flat++;
+
+    stockChanges.push({
+      ticker: s.ticker,
+      close: curClose,
+      changePct,
+      volume: vol,
+      turnover,
+    });
+  }
+
+  const totalStocks = Math.max(1, advancers + decliners + flat);
+  const advancersPct = Number(((advancers / totalStocks) * 100).toFixed(1));
+  const declinersPct = Number(((decliners / totalStocks) * 100).toFixed(1));
+
+  // Filter top 5 gainers and losers with minimum turnover of 1M EGP (or top by volume if low)
+  const liquidStocks = stockChanges.filter((s) => s.turnover >= 500_000 || s.volume >= 50_000);
+  const eligiblePool = liquidStocks.length >= 10 ? liquidStocks : stockChanges;
+
+  const topGainers = [...eligiblePool].sort((a, b) => b.changePct - a.changePct).slice(0, 5);
+  const topLosers = [...eligiblePool].sort((a, b) => a.changePct - b.changePct).slice(0, 5);
+
+  // 3. 30-Day Rolling Investor Flows (Hot Money Barometer)
   const flowRows = await db
     .select()
     .from(egxInvestorFlows)
@@ -100,443 +130,363 @@ export async function getMarketDataSnapshot(): Promise<MarketDataSnapshot> {
     .orderBy(desc(egxInvestorFlows.date))
     .limit(30);
 
-  const latestFlow = flowRows[0];
-  const totalTurnover = latestFlow ? Number(latestFlow.totalTurnover) : 9137040843;
-  const turnoverBillion = Number((totalTurnover / 1_000_000_000).toFixed(2));
+  const flows30d = [...flowRows].reverse();
+  let cumulative = 0;
+  let inflowDays = 0;
+  let outflowDays = 0;
 
-  const todayForeignNetMillion = latestFlow ? Number((Number(latestFlow.foreignNet) / 1_000_000).toFixed(2)) : -67.43;
-  const todayArabNetMillion = latestFlow ? Number((Number(latestFlow.arabNet) / 1_000_000).toFixed(2)) : -20.97;
-  const todayEgyptianNetMillion = latestFlow ? Number((Number(latestFlow.egyptianNet) / 1_000_000).toFixed(2)) : 88.40;
-
-  // Process 30-day chronological sequence (oldest to newest)
-  const chronologicalFlows = [...flowRows].reverse();
-  let runningCum = 0;
-  let inflowDaysCount = 0;
-  let outflowDaysCount = 0;
-
-  const dailyBars30d = chronologicalFlows.map((row) => {
-    const fNet = Number((Number(row.foreignNet) / 1_000_000).toFixed(2));
-    runningCum += fNet;
-    if (fNet >= 0) inflowDaysCount++;
-    else outflowDaysCount++;
+  const dailyBars30d = flows30d.map((r) => {
+    const netM = Number(r.foreignNetMillions || 0);
+    cumulative += netM;
+    if (netM > 0) inflowDays++;
+    else if (netM < 0) outflowDays++;
     return {
-      date: String(row.date).slice(0, 10),
-      foreignNetMillion: fNet,
-      cumulativeMillion: Number(runningCum.toFixed(2)),
+      date: String(r.date).slice(5, 10),
+      foreignNetMillion: Number(netM.toFixed(1)),
+      cumulativeMillion: Number(cumulative.toFixed(1)),
     };
   });
 
-  const rolling30dForeignNetMillion = Number(runningCum.toFixed(2));
+  const latestFlow = flowRows[0];
+  const totalTurnoverB = latestFlow ? Number(latestFlow.totalTurnover) / 1_000_000_000 : 3.85;
+  const todayForeignNetM = latestFlow ? Number(latestFlow.foreignNetMillions || 0) : -45.2;
+  const todayArabNetM = latestFlow ? Number(latestFlow.arabNetMillions || 0) : 28.4;
+  const todayEgyptianNetM = latestFlow ? Number(latestFlow.egyptianNetMillions || 0) : 16.8;
+  const rolling30dForeignNetM = Number(cumulative.toFixed(1));
+  const isFlightRisk = rolling30dForeignNetM < -250 || (outflowDays >= 18 && todayForeignNetM < 0);
 
-  // D. Core FX & CIB Arbitrage
-  const [usdRow, comiRow] = await Promise.all([
-    db.query.dailyPrices.findFirst({
-      where: eq(dailyPrices.tickerSymbol, 'USDEGP'),
-      orderBy: [desc(dailyPrices.date)],
-    }),
-    db.query.dailyPrices.findFirst({
-      where: eq(dailyPrices.tickerSymbol, 'COMI'),
-      orderBy: [desc(dailyPrices.date)],
-    }),
-  ]);
+  // 4. Ingest USD/EGP & Macro Currency Triangulation
+  let fxData: FxFairValueResponse | null = null;
+  try {
+    const fxRes = await handleFxFairValueGet();
+    fxData = (await fxRes.json()) as FxFairValueResponse;
+  } catch (fxErr) {
+    console.warn('[ticknal-take] FX data retrieval warning:', fxErr);
+  }
 
-  const officialUsd = usdRow ? Number(usdRow.close) : 52.34;
-  const cairoComiEgp = comiRow ? Number(comiRow.close) : 125.16;
+  const officialUsd = fxData?.officialUsd ?? 52.60;
+  const compositeFair = fxData?.compositeFairValue ?? 52.02;
+  const saghaGoldUsd = fxData?.goldImpliedRate ?? 52.78;
+  const londonGdrUsd = fxData?.gdrImpliedRate ?? 51.16;
+  const atr14 = fxData?.atr14 ?? 0.20;
+  const atr90 = fxData?.atr90 ?? 0.27;
+  const atrCompressionRatio = fxData?.atrCompressionRatio ?? 0.74;
+  const devaluationRiskScore = fxData?.devaluationRisk?.score ?? 17;
+  const devaluationRiskLabel = fxData?.devaluationRisk?.label ?? 'Low Risk (Organic Float)';
 
-  // CIB London GDR proxy (London GDR ~ $2.365)
-  const londonGdrUsd = 2.365;
-  const gdrImpliedRate = Number((cairoComiEgp / londonGdrUsd).toFixed(2));
-  const gdrSpreadPct = Number((((gdrImpliedRate - officialUsd) / officialUsd) * 100).toFixed(2));
-  const riskScore = Math.abs(gdrSpreadPct) < 5 ? 15 : Math.abs(gdrSpreadPct) < 10 ? 35 : 65;
-  const riskLabel = riskScore < 30 ? 'Low Risk (Managed Crawl)' : riskScore < 50 ? 'Moderate Spread' : 'High Pressure';
+  // ==========================================
+  // GENERATE THE 5 DEDICATED TICKNAL TAKES
+  // ==========================================
+  const createdTakes: string[] = [];
 
-  return {
+  // ------------------------------------------
+  // TAKE 1: Hot Money Status ("نبض الأموال الساخنة")
+  // ------------------------------------------
+  const hotMoneyChart = generateLocalizedTakeBundle(generateHotMoneyChartSvg, {
     date: targetDate,
-    egx30: {
-      date: targetDate,
-      close,
-      open,
-      high,
-      low,
-      changePct,
-      changePts,
-      turnoverBillion,
-      advancers,
-      decliners,
-      flat,
-      recentBars,
-    },
-    flows: {
-      date: targetDate,
-      totalTurnoverBillion: turnoverBillion,
-      todayForeignNetMillion,
-      todayArabNetMillion,
-      todayEgyptianNetMillion,
-      rolling30dForeignNetMillion,
-      inflowDaysCount,
-      outflowDaysCount,
-      dailyBars30d,
-    },
-    fx: {
-      date: targetDate,
-      officialUsd,
-      gdrImpliedRate,
-      gdrSpreadPct,
-      londonGdrUsd,
-      cairoComiEgp,
-      riskScore,
-      riskLabel,
-    },
-  };
-}
-
-/**
- * 2. Generate Bilingual Commentary with Resilient Multi-Key OpenRouter Pool
- */
-async function generateBilingualInsight(
-  promptContext: string,
-  fallbackText: string
-): Promise<AICompletionResult> {
-  const systemPrompt = `You are a Senior Quantitative Strategist at Ticknal, Egypt's premier financial intelligence terminal.
-Rules:
-1. Output ONLY the briefing text. No introductory remarks, no thinking logs, no meta explanations.
-2. Structure: Exactly 2 concise sentences in English explaining the figures and institutional meaning, followed by a blank line, then 2 concise sentences in Arabic. Professional executive tone.`;
-
-  return completeWithKeyPool({
-    systemPrompt,
-    userPrompt: promptContext,
-    fallbackText,
-    temperature: 0.2,
-    maxTokens: 500,
-    timeoutMs: 25000,
+    totalTurnoverBillion: totalTurnoverB,
+    todayForeignNetMillion: todayForeignNetM,
+    todayArabNetMillion: todayArabNetM,
+    todayEgyptianNetMillion: todayEgyptianNetM,
+    rolling30dForeignNetMillion: rolling30dForeignNetM,
+    inflowDaysCount: inflowDays,
+    outflowDaysCount: outflowDays,
+    isFlightRisk,
+    dailyBars30d,
   });
-}
 
-export interface GenerateTicknalTakeResult {
-  success: boolean;
-  postsCreated: number;
-  date: string;
-  telemetry: {
-    egx30: { source: 'ai_generated' | 'fallback_template'; model?: string; key?: string; error?: string };
-    flows: { source: 'ai_generated' | 'fallback_template'; model?: string; key?: string; error?: string };
-    fx: { source: 'ai_generated' | 'fallback_template'; model?: string; key?: string; error?: string };
-  };
-  keyPool: KeyPoolStatus;
-}
+  const hotMoneyAiPrompt = `Analyze 30-Day Egyptian Hot Money & Institutional Liquidity:
+- 30D Rolling Foreign Net: ${rolling30dForeignNetM}M EGP (${inflowDays} inflow vs ${outflowDays} outflow sessions)
+- Today Foreign Net: ${todayForeignNetM}M EGP | Arab Net: ${todayArabNetM}M EGP
+- Capital Flight Alert: ${isFlightRisk ? 'ELEVATED FLIGHT DETECTED' : 'BALANCED LIQUIDITY'}
+CRITICAL QUANTITATIVE DIRECTIVE:
+Follow the money. If foreigners/Arabs are escaping, explicitly warn investors that buying purely on technical signals is hazardous when institutional exit is accelerating. Provide a concise 400-char actionable briefing.`;
 
-/**
- * 3. Generate and Upsert the Daily Ticknal Take Posts
- */
-export async function generateTheTicknalTakePosts(): Promise<GenerateTicknalTakeResult> {
-  const snapshot = await getMarketDataSnapshot();
-  const date = snapshot.date;
+  const hotMoneyInsight = await completeWithKeyPool({
+    systemPrompt: 'You are a chief market strategist and quantitative flow analyst at Ticknal.',
+    userPrompt: hotMoneyAiPrompt,
+    fallbackText: isFlightRisk
+      ? 'Foreign institutional capital continues sustained liquidation over the 30-day window. Caution is strongly advised before initiating new swing buy orders until institutional flows stabilize.'
+      : 'Institutional foreign and Arab positioning remains stable across the 30-day cycle without severe capital flight signals. Domestic liquidity continues absorbing routine sector reallocations.',
+    maxTokens: 220,
+    temperature: 0.3,
+  });
 
-  // --- POST 1: EGX30 Market Breadth & Price Action ---
-  const egx30Fallback = `EGX30 closed at ${snapshot.egx30.close.toLocaleString()} pts (${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}%), recording ${snapshot.egx30.turnoverBillion}B EGP turnover. Market breadth registered ${snapshot.egx30.advancers} advancers against ${snapshot.egx30.decliners} decliners as institutional positioning consolidated near upper resistance.
-
-أغلق مؤشر EGX30 عند ${snapshot.egx30.close.toLocaleString()} نقطة (${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}%) بتداولات ${snapshot.egx30.turnoverBillion} مليار جنيه. سجل اتساع السوق ${snapshot.egx30.advancers} سهماً رابحاً مقابل ${snapshot.egx30.decliners} خاسراً في حركة تماسك مؤسسية صحية.`;
-
-  const egx30Prompt = `EGX30 Closing Pulse for ${date}:
-- Close: ${snapshot.egx30.close.toFixed(2)} pts (${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}%)
-- Turnover: ${snapshot.egx30.turnoverBillion}B EGP
-- Breadth: ${snapshot.egx30.advancers} Advancers, ${snapshot.egx30.decliners} Decliners, ${snapshot.egx30.flat} Flat.
-Analyze the technical momentum and institutional positioning.`;
-
-  // --- POST 2: Hot Money Barometer & 30-Day Rolling Foreign Net Flows ---
-  const isAccumulating = snapshot.flows.rolling30dForeignNetMillion >= 0;
-  const flowsFallback = `Foreign institutions hold a 30-day cumulative net position of ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)}M EGP across ${snapshot.flows.inflowDaysCount} inflow sessions (${Math.round((snapshot.flows.inflowDaysCount / Math.max(1, snapshot.flows.dailyBars30d.length)) * 100)}% accumulation rate). Despite today's session net of ${snapshot.flows.todayForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.todayForeignNetMillion.toFixed(1)}M EGP, persistent rolling inflows confirm sustained structural hot money appetite.
-
-تحتفظ المؤسسات الأجنبية بصافي تراكمي إيجابي لمدة 30 يوماً قدره ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)} مليون جنيه عبر ${snapshot.flows.inflowDaysCount} جلسة شراء. ورغم تسجيل صافي ${snapshot.flows.todayForeignNetMillion >= 0 ? 'شراء +' : 'بيع '}${snapshot.flows.todayForeignNetMillion.toFixed(1)} مليون جنيه اليوم، يؤكد المسار التراكمي استمرار تدفقات الأموال الساخنة.`;
-
-  const flowsPrompt = `EGX Foreign Institutional Flows (30-Day Rolling Barometer) for ${date}:
-- Today: Foreign Net ${snapshot.flows.todayForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.todayForeignNetMillion.toFixed(1)}M EGP | Egyptian Net +${snapshot.flows.todayEgyptianNetMillion.toFixed(1)}M EGP
-- 30-Day Cumulative Foreign Net: ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)}M EGP (${isAccumulating ? 'Net Accumulation' : 'Net Capital Flight'})
-- Flow Sessions: ${snapshot.flows.inflowDaysCount} Inflow vs ${snapshot.flows.outflowDaysCount} Outflow sessions (${Math.round((snapshot.flows.inflowDaysCount / Math.max(1, snapshot.flows.dailyBars30d.length)) * 100)}% ratio).
-State whether hot money is accumulating or fleeing, and how domestic liquidity supports the market.`;
-
-  // --- POST 3: USD/EGP Arbitrage & CIB London GDR Implied Valuation ---
-  const fxFallback = `CIB London GDR currently trades at $${snapshot.fx.londonGdrUsd.toFixed(3)}, implying a USD/EGP rate of ${snapshot.fx.gdrImpliedRate.toFixed(2)} vs official interbank at ${snapshot.fx.officialUsd.toFixed(2)}. The arbitrage spread stands at ${snapshot.fx.gdrSpreadPct >= 0 ? '+' : ''}${snapshot.fx.gdrSpreadPct}%, reflecting low devaluation risk (${snapshot.fx.riskScore}% score).
-
-تتداول شهادات CIB في بورصة لندن عند $${snapshot.fx.londonGdrUsd.toFixed(3)}، مما يعكس سعراً ضمنياً للدولار عند ${snapshot.fx.gdrImpliedRate.toFixed(2)} ج.م مقابل ${snapshot.fx.officialUsd.toFixed(2)} ج.م رسمياً. استقر فارق المراجحة عند ${snapshot.fx.gdrSpreadPct >= 0 ? '+' : ''}${snapshot.fx.gdrSpreadPct}%، مؤكداً استقرار التسعير وانخفاض مخاطر خفض العملة.`;
-
-  const fxPrompt = `Currency & CIB London GDR Arbitrage for ${date}:
-- Official Interbank USD: ${snapshot.fx.officialUsd.toFixed(2)} EGP
-- CIB London GDR: $${snapshot.fx.londonGdrUsd.toFixed(3)} | Cairo COMI: ${snapshot.fx.cairoComiEgp.toFixed(2)} EGP
-- Implied Rate: ${snapshot.fx.gdrImpliedRate.toFixed(2)} EGP | Spread: ${snapshot.fx.gdrSpreadPct >= 0 ? '+' : ''}${snapshot.fx.gdrSpreadPct}%
-- Devaluation Risk: ${snapshot.fx.riskScore}% (${snapshot.fx.riskLabel}).
-Interpret whether offshore markets signal FX pressure or stability.`;
-
-  // Generate all 3 insights in parallel for high speed with pool failover
-  const [egx30Insight, flowsInsight, fxInsight] = await Promise.all([
-    generateBilingualInsight(egx30Prompt, egx30Fallback),
-    generateBilingualInsight(flowsPrompt, flowsFallback),
-    generateBilingualInsight(fxPrompt, fxFallback),
-  ]);
-
-  const egx30ChartSvgEn = generateEgx30ChartSvg(snapshot.egx30, 'en');
-  const egx30ChartSvgAr = generateEgx30ChartSvg(snapshot.egx30, 'ar');
-  const egx30ChartSvg = JSON.stringify({ en: egx30ChartSvgEn, ar: egx30ChartSvgAr });
-
-  const flowsChartSvgEn = generateInvestorFlowsChartSvg(snapshot.flows, 'en');
-  const flowsChartSvgAr = generateInvestorFlowsChartSvg(snapshot.flows, 'ar');
-  const flowsChartSvg = JSON.stringify({ en: flowsChartSvgEn, ar: flowsChartSvgAr });
-
-  const fxChartSvgEn = generateFxArbitrageChartSvg(snapshot.fx, 'en');
-  const fxChartSvgAr = generateFxArbitrageChartSvg(snapshot.fx, 'ar');
-  const fxChartSvg = JSON.stringify({ en: fxChartSvgEn, ar: fxChartSvgAr });
-
-  // 4. Upsert items into database with tracking markers
-  const publishedAt = new Date();
-
-  const posts = [
-    {
-      id: `tt-egx30-${date}`,
-      title: `EGX30 Market Wrap & Breadth: ${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}%`,
-      summary: egx30Insight.text,
-      content: `${egx30Insight.text}\n\n<!-- ticknal_ai_status:${egx30Insight.source}|model:${egx30Insight.modelUsed || 'none'}|key:${egx30Insight.maskedKeyUsed || 'none'} -->`,
+  const hotMoneyId = `take-${targetDate}-hot-money`;
+  await db
+    .insert(marketNews)
+    .values({
+      id: hotMoneyId,
+      title: 'Hot Money Status: 30-Day Foreign & Arab Flow Trajectory',
+      summary: hotMoneyInsight.text.slice(0, 500),
       category: 'ticknal_take',
-      categoryLabel: 'The Ticknal Take',
-      tickers: ['EGX30', 'COMI', 'TMGH', 'SWDY'],
-      sentiment: snapshot.egx30.changePct >= 0 ? 'bullish' : 'bearish',
-      source: 'Ticknal Markets Pulse',
-      sourceUrl: 'https://ticknal.com/markets',
-      importance: 'high',
-      impactMetric: `EGX30: ${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}% | Adv: ${snapshot.egx30.advancers}`,
-      readTime: '1 min read',
-      imageUrl: egx30ChartSvg,
-      publishedAt,
-    },
-    {
-      id: `tt-flows-${date}`,
-      title: `Hot Money Barometer: 30D Rolling Foreign Net ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)}M EGP`,
-      summary: flowsInsight.text,
-      content: `${flowsInsight.text}\n\n<!-- ticknal_ai_status:${flowsInsight.source}|model:${flowsInsight.modelUsed || 'none'}|key:${flowsInsight.maskedKeyUsed || 'none'} -->`,
-      category: 'ticknal_take',
-      categoryLabel: 'The Ticknal Take',
-      tickers: ['EGX30', 'COMI'],
-      sentiment: snapshot.flows.rolling30dForeignNetMillion >= 0 ? 'bullish' : 'neutral',
-      source: 'Ticknal Flow Analytics',
-      sourceUrl: 'https://ticknal.com/markets',
-      importance: 'high',
-      impactMetric: `30D Foreign Net: ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)}M EGP (${snapshot.flows.inflowDaysCount}/${snapshot.flows.dailyBars30d.length} Inflow Days)`,
-      readTime: '1 min read',
-      imageUrl: flowsChartSvg,
-      publishedAt: new Date(publishedAt.getTime() - 60000), // 1 min prior
-    },
-    {
-      id: `tt-fx-${date}`,
-      title: `USD/EGP Arbitrage: CIB London GDR Implies ${snapshot.fx.gdrImpliedRate.toFixed(2)} EGP`,
-      summary: fxInsight.text,
-      content: `${fxInsight.text}\n\n<!-- ticknal_ai_status:${fxInsight.source}|model:${fxInsight.modelUsed || 'none'}|key:${fxInsight.maskedKeyUsed || 'none'} -->`,
-      category: 'ticknal_take',
-      categoryLabel: 'The Ticknal Take',
-      tickers: ['USDEGP', 'COMI', 'CIB_ADR'],
-      sentiment: snapshot.fx.riskScore < 30 ? 'bullish' : 'neutral',
-      source: 'Ticknal FX & Arbitrage Desk',
-      sourceUrl: 'https://ticknal.com/markets',
-      importance: 'high',
-      impactMetric: `Implied Rate: ${snapshot.fx.gdrImpliedRate.toFixed(2)} | Spread: ${snapshot.fx.gdrSpreadPct >= 0 ? '+' : ''}${snapshot.fx.gdrSpreadPct}%`,
-      readTime: '1 min read',
-      imageUrl: fxChartSvg,
-      publishedAt: new Date(publishedAt.getTime() - 120000), // 2 min prior
-    },
-  ];
-
-  let postsCreated = 0;
-
-  for (const post of posts) {
-    try {
-      const existing = await db
-        .select({ id: marketNews.id })
-        .from(marketNews)
-        .where(eq(marketNews.id, post.id))
-        .limit(1);
-
-      if (existing.length > 0) {
-        await db
-          .update(marketNews)
-          .set({
-            title: post.title,
-            summary: post.summary,
-            content: post.content,
-            category: post.category,
-            categoryLabel: post.categoryLabel,
-            tickers: post.tickers,
-            sentiment: post.sentiment,
-            source: post.source,
-            sourceUrl: post.sourceUrl,
-            importance: post.importance,
-            impactMetric: post.impactMetric,
-            readTime: post.readTime,
-            imageUrl: post.imageUrl,
-            publishedAt: post.publishedAt,
-            updatedAt: new Date(),
-          })
-          .where(eq(marketNews.id, post.id));
-      } else {
-        await db.insert(marketNews).values(post);
-      }
-      postsCreated++;
-    } catch (err: any) {
-      console.error(`[ticknal-take] Failed to upsert post ${post.id}:`, err?.message || err);
-    }
-  }
-
-  // Delete any obsolete or ungrounded gold take posts
-  try {
-    await db.execute(sql`DELETE FROM ${marketNews} WHERE id LIKE 'tt-gold-%'`);
-  } catch (err: any) {
-    console.warn('[ticknal-take] Could not cleanup obsolete gold posts:', err?.message || err);
-  }
-
-  const keyPool = getKeyPoolStatus();
-  const telemetry = {
-    egx30: {
-      source: egx30Insight.source,
-      model: egx30Insight.modelUsed,
-      key: egx30Insight.maskedKeyUsed,
-      error: egx30Insight.error,
-    },
-    flows: {
-      source: flowsInsight.source,
-      model: flowsInsight.modelUsed,
-      key: flowsInsight.maskedKeyUsed,
-      error: flowsInsight.error,
-    },
-    fx: {
-      source: fxInsight.source,
-      model: fxInsight.modelUsed,
-      key: fxInsight.maskedKeyUsed,
-      error: fxInsight.error,
-    },
-  };
-
-  try {
-    await db.insert(systemLogs).values({
-      source: 'cron-ticknal-take',
-      level: 'INFO',
-      message: `The Ticknal Take briefings created: ${postsCreated} posts. AI status: EGX30=${egx30Insight.source}, Flows=${flowsInsight.source}, FX=${fxInsight.source}`,
-      metadata: {
-        date,
-        postsCreated,
-        telemetry,
-        keyPool,
+      categoryLabel: 'Ticknal take',
+      tickers: ['FLOWS', 'EGX30'],
+      sentiment: isFlightRisk ? 'bearish' : rolling30dForeignNetM > 50 ? 'bullish' : 'neutral',
+      source: 'Ticknal take',
+      importance: isFlightRisk ? 'critical' : 'high',
+      imageUrl: hotMoneyChart,
+      publishedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: marketNews.id,
+      set: {
+        title: 'Hot Money Status: 30-Day Foreign & Arab Flow Trajectory',
+        summary: hotMoneyInsight.text.slice(0, 500),
+        categoryLabel: 'Ticknal take',
+        imageUrl: hotMoneyChart,
+        updatedAt: new Date(),
       },
     });
-  } catch (logErr) {
-    console.warn('[ticknal-take] Could not write system log:', logErr);
-  }
+  createdTakes.push('hot_money');
+
+  // ------------------------------------------
+  // TAKE 2: Daily Trade Summary ("ملخص جلسة التداول اليومية")
+  // ------------------------------------------
+  const tradeSummaryChart = generateLocalizedTakeBundle(generateTradeSummaryChartSvg, {
+    date: targetDate,
+    egx30Close: egx30.close,
+    egx30ChangePct: egx30.changePct,
+    egx70Close: egx70.close,
+    egx70ChangePct: egx70.changePct,
+    egx100Close: egx100.close,
+    egx100ChangePct: egx100.changePct,
+    turnoverBillion: totalTurnoverB,
+    sentiment: egx30.changePct >= 0 ? 'Bullish Expansion' : 'Consolidation / Pullback',
+  });
+
+  const tradeSummaryAi = await completeWithKeyPool({
+    systemPrompt: 'You are a quantitative index strategist at Ticknal.',
+    userPrompt: `Analyze EGX Session Benchmark Summary:
+- EGX 30: ${egx30.close.toFixed(1)} (${egx30.changePct >= 0 ? '+' : ''}${egx30.changePct}%)
+- EGX 70 EWI: ${egx70.close.toFixed(1)} (${egx70.changePct >= 0 ? '+' : ''}${egx70.changePct}%)
+- EGX 100 EWI: ${egx100.close.toFixed(1)} (${egx100.changePct >= 0 ? '+' : ''}${egx100.changePct}%)
+- Total Turnover: ${totalTurnoverB.toFixed(2)}B EGP
+Summarize the session trend, divergence between blue-chips and small-caps, and institutional volume in max 400 chars.`,
+    fallbackText: `EGX 30 closed at ${egx30.close.toFixed(1)} (${egx30.changePct >= 0 ? '+' : ''}${egx30.changePct}%) while mid-caps EGX 70 closed at ${egx70.close.toFixed(1)} (${egx70.changePct >= 0 ? '+' : ''}${egx70.changePct}%). Session liquidity reached ${totalTurnoverB.toFixed(2)}B EGP with focused rotation across leading banking and industrial names.`,
+    maxTokens: 200,
+  });
+
+  const tradeSummaryId = `take-${targetDate}-trade-summary`;
+  await db
+    .insert(marketNews)
+    .values({
+      id: tradeSummaryId,
+      title: 'Daily Trade Summary: EGX 30, 70 & 100 Index Performance',
+      summary: tradeSummaryAi.text.slice(0, 500),
+      category: 'ticknal_take',
+      categoryLabel: 'Ticknal take',
+      tickers: ['EGX30', 'EGX70', 'EGX100'],
+      sentiment: egx30.changePct >= 0 ? 'bullish' : 'bearish',
+      source: 'Ticknal take',
+      importance: 'high',
+      imageUrl: tradeSummaryChart,
+      publishedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: marketNews.id,
+      set: {
+        title: 'Daily Trade Summary: EGX 30, 70 & 100 Index Performance',
+        summary: tradeSummaryAi.text.slice(0, 500),
+        categoryLabel: 'Ticknal take',
+        imageUrl: tradeSummaryChart,
+        updatedAt: new Date(),
+      },
+    });
+  createdTakes.push('trade_summary');
+
+  // ------------------------------------------
+  // TAKE 3: Market Breadth ("اتساع السوق وسيولة الأسهم")
+  // ------------------------------------------
+  const marketBreadthChart = generateLocalizedTakeBundle(generateMarketBreadthChartSvg, {
+    date: targetDate,
+    advancers,
+    decliners,
+    flat,
+    totalStocks,
+    advancersPct,
+    declinersPct,
+    turnoverBillion: totalTurnoverB,
+  });
+
+  const breadthAi = await completeWithKeyPool({
+    systemPrompt: 'You are a quantitative market breadth analyst at Ticknal.',
+    userPrompt: `Assess today's market breadth:
+- Advancers: ${advancers} (${advancersPct}%)
+- Decliners: ${decliners} (${declinersPct}%)
+- Unchanged: ${flat}
+- Total Traded: ${totalStocks}
+Is this a healthy broad-based move or narrow index-propping? Explain in max 400 chars.`,
+    fallbackText: `Market participation saw ${advancers} advancers (${advancersPct}%) against ${decliners} decliners (${declinersPct}%). The advance-decline differential indicates ${advancers >= decliners ? 'healthy participation supporting index gains' : 'selective profit taking across broader equities'}.`,
+    maxTokens: 200,
+  });
+
+  const breadthId = `take-${targetDate}-market-breadth`;
+  await db
+    .insert(marketNews)
+    .values({
+      id: breadthId,
+      title: 'Market Breadth: Advance / Decline Participation Health',
+      summary: breadthAi.text.slice(0, 500),
+      category: 'ticknal_take',
+      categoryLabel: 'Ticknal take',
+      tickers: ['BREADTH', 'EGX30'],
+      sentiment: advancers >= decliners ? 'bullish' : 'bearish',
+      source: 'Ticknal take',
+      importance: 'normal',
+      imageUrl: marketBreadthChart,
+      publishedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: marketNews.id,
+      set: {
+        title: 'Market Breadth: Advance / Decline Participation Health',
+        summary: breadthAi.text.slice(0, 500),
+        categoryLabel: 'Ticknal take',
+        imageUrl: marketBreadthChart,
+        updatedAt: new Date(),
+      },
+    });
+  createdTakes.push('market_breadth');
+
+  // ------------------------------------------
+  // TAKE 4: Gainers and Losers ("الأسهم الأكثر صعوداً وهبوطاً")
+  // ------------------------------------------
+  const gainersLosersChart = generateLocalizedTakeBundle(generateGainersLosersChartSvg, {
+    date: targetDate,
+    topGainers,
+    topLosers,
+  });
+
+  const gainersListStr = topGainers.map((g) => `${g.ticker} (+${g.changePct}%)`).join(', ');
+  const losersListStr = topLosers.map((l) => `${l.ticker} (${l.changePct}%)`).join(', ');
+
+  const gainersLosersAi = await completeWithKeyPool({
+    systemPrompt: 'You are an equity momentum analyst at Ticknal.',
+    userPrompt: `Top Gainers: ${gainersListStr}
+Top Losers: ${losersListStr}
+Analyze where volume and momentum clustered today in max 400 chars.`,
+    fallbackText: `Top session advancers were led by ${gainersListStr || 'leading momentum equities'}, while selling pressure concentrated in ${losersListStr || 'lagging names'}. Liquidity favored high-beta plays with sustained institutional participation.`,
+    maxTokens: 200,
+  });
+
+  const gainersLosersId = `take-${targetDate}-gainers-losers`;
+  await db
+    .insert(marketNews)
+    .values({
+      id: gainersLosersId,
+      title: 'Gainers & Losers: Top Session Movers & Liquidity Focus',
+      summary: gainersLosersAi.text.slice(0, 500),
+      category: 'ticknal_take',
+      categoryLabel: 'Ticknal take',
+      tickers: topGainers.map((g) => g.ticker).slice(0, 3),
+      sentiment: 'neutral',
+      source: 'Ticknal take',
+      importance: 'normal',
+      imageUrl: gainersLosersChart,
+      publishedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: marketNews.id,
+      set: {
+        title: 'Gainers & Losers: Top Session Movers & Liquidity Focus',
+        summary: gainersLosersAi.text.slice(0, 500),
+        categoryLabel: 'Ticknal take',
+        imageUrl: gainersLosersChart,
+        updatedAt: new Date(),
+      },
+    });
+  createdTakes.push('gainers_losers');
+
+  // ------------------------------------------
+  // TAKE 5: USD/EGP Update ("تحديث سعر الصرف ومخاطر التعويم")
+  // ------------------------------------------
+  const usdEgpChart = generateLocalizedTakeBundle(generateUsdEgpUpdateChartSvg, {
+    date: targetDate,
+    officialUsd,
+    compositeFair,
+    saghaGoldUsd,
+    londonGdrUsd,
+    atr14,
+    atr90,
+    atrCompressionRatio,
+    devaluationRiskScore,
+    devaluationRiskLabel,
+  });
+
+  const fxAi = await completeWithKeyPool({
+    systemPrompt: 'You are a chief FX strategist and macro economist at Ticknal.',
+    userPrompt: `Evaluate Egypt FX Risk & Fair Value:
+- Official USD/EGP: ${officialUsd.toFixed(2)}
+- Triangulated Composite Fair: ${compositeFair.toFixed(2)}
+- Sagha Gold Proxy Dollar: ${saghaGoldUsd.toFixed(2)}
+- London CIB GDR Dollar: ${londonGdrUsd.toFixed(2)}
+- 14D ATR: ${atr14.toFixed(2)} EGP vs 90D ATR: ${atr90.toFixed(2)} EGP (Compression Ratio: ${(atrCompressionRatio * 100).toFixed(1)}%)
+- Devaluation Pressure Score: ${devaluationRiskScore}% (${devaluationRiskLabel})
+Provide a critical assessment of devaluation likelihood and expected price trajectory in max 400 chars.`,
+    fallbackText: `Official exchange rate stands at ${officialUsd.toFixed(2)} against triangulated shadow fair value of ${compositeFair.toFixed(2)} (Sagha Gold at ${saghaGoldUsd.toFixed(2)}, London CIB GDR at ${londonGdrUsd.toFixed(2)}). Devaluation pressure index is scored at ${devaluationRiskScore}% (${devaluationRiskLabel}) with orderly crawl dynamics intact.`,
+    maxTokens: 200,
+  });
+
+  const usdEgpId = `take-${targetDate}-usd-egp`;
+  await db
+    .insert(marketNews)
+    .values({
+      id: usdEgpId,
+      title: 'USD/EGP Update: Shadow Proxies & Devaluation Pressure',
+      summary: fxAi.text.slice(0, 500),
+      category: 'ticknal_take',
+      categoryLabel: 'Ticknal take',
+      tickers: ['USD/EGP', 'COMI', 'GOLD21K'],
+      sentiment: devaluationRiskScore > 40 ? 'bearish' : 'neutral',
+      source: 'Ticknal take',
+      importance: devaluationRiskScore > 40 ? 'critical' : 'high',
+      imageUrl: usdEgpChart,
+      publishedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: marketNews.id,
+      set: {
+        title: 'USD/EGP Update: Shadow Proxies & Devaluation Pressure',
+        summary: fxAi.text.slice(0, 500),
+        categoryLabel: 'Ticknal take',
+        imageUrl: usdEgpChart,
+        updatedAt: new Date(),
+      },
+    });
+  createdTakes.push('usd_egp_update');
+
+  // Record generation telemetry
+  try {
+    await db.insert(systemLogs).values({
+      level: 'info',
+      module: 'ticknal-take',
+      message: `Ticknal take briefings created: 5 posts. Date=${targetDate}. Takes=[${createdTakes.join(', ')}]`,
+      metadata: {
+        date: targetDate,
+        takes: createdTakes,
+        hotMoneyFlightRisk: isFlightRisk,
+        devalScore: devaluationRiskScore,
+      },
+      createdAt: new Date(),
+    });
+  } catch {}
 
   return {
     success: true,
-    postsCreated,
-    date,
-    telemetry,
-    keyPool,
-  };
-}
-
-export interface RetryPendingResult {
-  attempted: number;
-  upgraded: number;
-  date: string;
-  posts: {
-    id: string;
-    status: 'upgraded' | 'already_ai' | 'still_fallback';
-    model?: string;
-    error?: string;
-  }[];
-  keyPool: KeyPoolStatus;
-}
-
-/**
- * 4. Retry Queue: Check and re-enhance any Ticknal Take posts that are currently on data fallback templates
- */
-export async function retryPendingTicknalTakePosts(targetDate?: string): Promise<RetryPendingResult> {
-  const snapshot = await getMarketDataSnapshot();
-  const date = targetDate || snapshot.date;
-
-  const targetIds = [`tt-egx30-${date}`, `tt-flows-${date}`, `tt-fx-${date}`];
-  const existingPosts = await db
-    .select()
-    .from(marketNews)
-    .where(inArray(marketNews.id, targetIds));
-
-  let upgraded = 0;
-  const postResults: {
-    id: string;
-    status: 'upgraded' | 'already_ai' | 'still_fallback';
-    model?: string;
-    error?: string;
-  }[] = [];
-
-  for (const post of existingPosts) {
-    const isFallback =
-      post.content?.includes('<!-- ticknal_ai_status:fallback_template') ||
-      post.content?.includes('institutional positioning consolidated') ||
-      post.content?.includes('30-day cumulative net position');
-
-    if (!isFallback) {
-      postResults.push({ id: post.id, status: 'already_ai' });
-      continue;
-    }
-
-    let prompt = '';
-    let fallback = '';
-
-    if (post.id === `tt-egx30-${date}`) {
-      prompt = `EGX30 Closing Pulse for ${date}:
-- Close: ${snapshot.egx30.close.toFixed(2)} pts (${snapshot.egx30.changePct >= 0 ? '+' : ''}${snapshot.egx30.changePct}%)
-- Turnover: ${snapshot.egx30.turnoverBillion}B EGP
-- Breadth: ${snapshot.egx30.advancers} Advancers, ${snapshot.egx30.decliners} Decliners, ${snapshot.egx30.flat} Flat.
-Analyze the technical momentum and institutional positioning.`;
-      fallback = post.content?.replace(/\n\n<!-- ticknal_ai_status[\s\S]*$/, '') || '';
-    } else if (post.id === `tt-flows-${date}`) {
-      const isAccumulating = snapshot.flows.rolling30dForeignNetMillion >= 0;
-      prompt = `EGX Foreign Institutional Flows (30-Day Rolling Barometer) for ${date}:
-- Today: Foreign Net ${snapshot.flows.todayForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.todayForeignNetMillion.toFixed(1)}M EGP | Egyptian Net +${snapshot.flows.todayEgyptianNetMillion.toFixed(1)}M EGP
-- 30-Day Cumulative Foreign Net: ${snapshot.flows.rolling30dForeignNetMillion >= 0 ? '+' : ''}${snapshot.flows.rolling30dForeignNetMillion.toFixed(1)}M EGP (${isAccumulating ? 'Net Accumulation' : 'Net Capital Flight'})
-- Flow Sessions: ${snapshot.flows.inflowDaysCount} Inflow vs ${snapshot.flows.outflowDaysCount} Outflow sessions (${Math.round((snapshot.flows.inflowDaysCount / Math.max(1, snapshot.flows.dailyBars30d.length)) * 100)}% ratio).
-State whether hot money is accumulating or fleeing, and how domestic liquidity supports the market.`;
-      fallback = post.content?.replace(/\n\n<!-- ticknal_ai_status[\s\S]*$/, '') || '';
-    } else if (post.id === `tt-fx-${date}`) {
-      prompt = `Currency & CIB London GDR Arbitrage for ${date}:
-- Official Interbank USD: ${snapshot.fx.officialUsd.toFixed(2)} EGP
-- CIB London GDR: $${snapshot.fx.londonGdrUsd.toFixed(3)} | Cairo COMI: ${snapshot.fx.cairoComiEgp.toFixed(2)} EGP
-- Implied Rate: ${snapshot.fx.gdrImpliedRate.toFixed(2)} EGP | Spread: ${snapshot.fx.gdrSpreadPct >= 0 ? '+' : ''}${snapshot.fx.gdrSpreadPct}%
-- Devaluation Risk: ${snapshot.fx.riskScore}% (${snapshot.fx.riskLabel}).
-Interpret whether offshore markets signal FX pressure or stability.`;
-      fallback = post.content?.replace(/\n\n<!-- ticknal_ai_status[\s\S]*$/, '') || '';
-    }
-
-    if (!prompt) continue;
-
-    const aiRes = await generateBilingualInsight(prompt, fallback);
-    if (aiRes.source === 'ai_generated') {
-      const taggedContent = `${aiRes.text}\n\n<!-- ticknal_ai_status:${aiRes.source}|model:${aiRes.modelUsed || 'none'}|key:${aiRes.maskedKeyUsed || 'none'}|retried:${new Date().toISOString()} -->`;
-      await db
-        .update(marketNews)
-        .set({
-          summary: aiRes.text,
-          content: taggedContent,
-          updatedAt: new Date(),
-        })
-        .where(eq(marketNews.id, post.id));
-
-      upgraded++;
-      postResults.push({ id: post.id, status: 'upgraded', model: aiRes.modelUsed });
-    } else {
-      postResults.push({ id: post.id, status: 'still_fallback', error: aiRes.error });
-    }
-  }
-
-  const keyPool = getKeyPoolStatus();
-
-  return {
-    attempted: existingPosts.length,
-    upgraded,
-    date,
-    posts: postResults,
-    keyPool,
+    date: targetDate,
+    postsCreated: createdTakes.length,
+    durationMs: Date.now() - startTime,
+    takes: createdTakes,
   };
 }
