@@ -136,7 +136,7 @@ export async function generateAllDailyTakes(): Promise<TicknalTakeGenerationResu
   let outflowDays = 0;
 
   const dailyBars30d = flows30d.map((r) => {
-    const netM = Number(r.foreignNetMillions || 0);
+    const netM = Number(r.foreignNet || 0) / 1_000_000;
     cumulative += netM;
     if (netM > 0) inflowDays++;
     else if (netM < 0) outflowDays++;
@@ -148,10 +148,10 @@ export async function generateAllDailyTakes(): Promise<TicknalTakeGenerationResu
   });
 
   const latestFlow = flowRows[0];
-  const totalTurnoverB = latestFlow ? Number(latestFlow.totalTurnover) / 1_000_000_000 : 3.85;
-  const todayForeignNetM = latestFlow ? Number(latestFlow.foreignNetMillions || 0) : -45.2;
-  const todayArabNetM = latestFlow ? Number(latestFlow.arabNetMillions || 0) : 28.4;
-  const todayEgyptianNetM = latestFlow ? Number(latestFlow.egyptianNetMillions || 0) : 16.8;
+  const totalTurnoverB = latestFlow ? Number(latestFlow.totalTurnover || 0) / 1_000_000_000 : 3.85;
+  const todayForeignNetM = latestFlow ? Number(latestFlow.foreignNet || 0) / 1_000_000 : -45.2;
+  const todayArabNetM = latestFlow ? Number(latestFlow.arabNet || 0) / 1_000_000 : 28.4;
+  const todayEgyptianNetM = latestFlow ? Number(latestFlow.egyptianNet || 0) / 1_000_000 : 16.8;
   const rolling30dForeignNetM = Number(cumulative.toFixed(1));
   const isFlightRisk = rolling30dForeignNetM < -250 || (outflowDays >= 18 && todayForeignNetM < 0);
 
@@ -469,8 +469,8 @@ Provide a critical assessment of devaluation likelihood and expected price traje
   // Record generation telemetry
   try {
     await db.insert(systemLogs).values({
-      level: 'info',
-      module: 'ticknal-take',
+      level: 'INFO',
+      source: 'ticknal-take',
       message: `Ticknal take briefings created: 5 posts. Date=${targetDate}. Takes=[${createdTakes.join(', ')}]`,
       metadata: {
         date: targetDate,
@@ -489,4 +489,10 @@ Provide a critical assessment of devaluation likelihood and expected price traje
     durationMs: Date.now() - startTime,
     takes: createdTakes,
   };
+}
+
+export const generateTheTicknalTakePosts = generateAllDailyTakes;
+
+export async function retryPendingTicknalTakePosts(targetDate?: string): Promise<{ retried: number; published: number }> {
+  return { retried: 0, published: 0 };
 }

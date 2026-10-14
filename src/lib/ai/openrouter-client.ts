@@ -222,6 +222,11 @@ export function defaultValidateOutput(text: string): boolean {
     text.includes('Strict output rules') ||
     text.includes('Drafting -') ||
     text.includes('Key insight:') ||
+    lower.includes('the user wants') ||
+    lower.includes('the prompt asks') ||
+    lower.includes('analyze the content') ||
+    lower.includes('routine report') ||
+    lower.includes('procedural data release') ||
     lower.includes('my reasoning:') ||
     lower.includes('step 1:') ||
     lower.includes('output format:');

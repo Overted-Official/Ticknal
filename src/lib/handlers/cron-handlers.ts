@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply, egxInvestorFlows } from '@/db/schema';
+import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply, egxInvestorFlows, positions } from '@/db/schema';
 import { sql, inArray, notInArray, eq, and, lt, gt, gte, desc } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
@@ -19,8 +19,9 @@ import { ALL_SNDUK_FUNDS, type SndukFund } from '@/lib/funds/snduk-funds-list';
 import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 import { syncDailySmartMoney } from '@/lib/smart-money/sync-smart-money';
 import { syncOfficialMacroData } from '@/lib/macro/sync-official-macro';
-import { syncExternalTradingViewNews } from '@/lib/news/news-sync';
-import { generateTheTicknalTakePosts, retryPendingTicknalTakePosts } from '@/lib/news/ticknal-take-generator';
+import { screenAndIngestWires } from '@/lib/news/wire-screener';
+import { generateAllDailyTakes, retryPendingTicknalTakePosts } from '@/lib/news/ticknal-take-generator';
+import { syncEGXTickersFromExchange } from '@/lib/market/egx-ticker-sync';
 
 // ----------------------------------------------------
 // 1. UPDATE STOCKS
@@ -137,6 +138,24 @@ async function applyPriceAdjustment(
         gte(signalNotifications.signalDate, adjustment.effectiveDate),
       ));
 
+    // Retroactively scale open user positions entered before the effective date
+    // to preserve accurate cost basis and prevent false loss spikes (>40%) on splits.
+    await tx
+      .update(positions)
+      .set({
+        entryPrice: sql`ROUND((${positions.entryPrice})::numeric * ${factor}::numeric, 4)`,
+        quantity: sql`ROUND((${positions.quantity})::numeric / NULLIF(${factor}::numeric, 0), 4)`,
+        targetPrice: sql`CASE WHEN ${positions.targetPrice} IS NOT NULL THEN ROUND((${positions.targetPrice})::numeric * ${factor}::numeric, 4) ELSE NULL END`,
+        stopPrice: sql`CASE WHEN ${positions.stopPrice} IS NOT NULL THEN ROUND((${positions.stopPrice})::numeric * ${factor}::numeric, 4) ELSE NULL END`,
+        entrySignalPrice: sql`CASE WHEN ${positions.entrySignalPrice} IS NOT NULL THEN ROUND((${positions.entrySignalPrice})::numeric * ${factor}::numeric, 4) ELSE NULL END`,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(positions.tickerSymbol, adjustment.tickerSymbol),
+        eq(positions.status, 'OPEN'),
+        lt(positions.entryDate, adjustment.effectiveDate),
+      ));
+
     await tx
       .insert(priceAdjustments)
       .values({
@@ -174,8 +193,15 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
   const startTime = Date.now();
 
   try {
+    // 0. Auto-discover and enroll newly listed EGX tickers (e.g. IPOs like MNT-Halan)
+    if (!options?.specificSymbols || options.specificSymbols.length === 0) {
+      await syncEGXTickersFromExchange().catch((err) => {
+        console.error('handleUpdateStocks: EGX ticker discovery non-fatal error:', err);
+      });
+    }
+
     const allTickers = await db.select().from(tickers);
-    let stockTickers = allTickers.filter(t => t.sector !== 'Funds' && t.sector !== 'Macro');
+    let stockTickers = allTickers.filter(t => t.sector !== 'Funds' && t.sector !== 'Macro' && t.status !== 'DELISTED');
 
     if (options?.specificSymbols && options.specificSymbols.length > 0) {
       const specificSet = new Set(options.specificSymbols.map(s => s.toUpperCase()));
@@ -1238,14 +1264,14 @@ export async function handleUpdateInvestorFlows(req: Request) {
 }
 
 // ----------------------------------------------------
-// 10. UPDATE EXTERNAL NEWS
+// 10. UPDATE EXTERNAL NEWS (WIRE SCREENER & AI VALUE GATE)
 // ----------------------------------------------------
 export async function handleUpdateNews(req: Request) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    const result = await syncExternalTradingViewNews();
+    const result = await screenAndIngestWires();
 
     try {
       revalidatePath('/news');
@@ -1256,13 +1282,9 @@ export async function handleUpdateNews(req: Request) {
     await db.insert(systemLogs).values({
       source: 'cron-update-news',
       level: result.success ? 'INFO' : 'ERROR',
-      message: `External news sync completed: ${result.inserted} inserted, ${result.updated} updated (${result.totalPolled} polled)`,
+      message: `Wire screener and AI gate completed: ${result.inserted} inserted, ${result.droppedNoise} dropped noise (${result.screened} screened)`,
       metadata: result,
     });
-    // Background retry for any Ticknal Take posts that are on fallback templates
-    retryPendingTicknalTakePosts().catch((err) =>
-      console.warn('[cron-update-news] Background take retry skipped:', err?.message || err)
-    );
 
     return NextResponse.json(result, { status: result.success ? 200 : 500 });
   } catch (error) {
@@ -1270,7 +1292,7 @@ export async function handleUpdateNews(req: Request) {
     await db.insert(systemLogs).values({
       source: 'cron-update-news',
       level: 'ERROR',
-      message: `Failed to sync external news: ${(error as Error).message}`,
+      message: `Failed to screen external wires: ${(error as Error).message}`,
       metadata: { error: (error as Error).message },
     });
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
@@ -1278,14 +1300,14 @@ export async function handleUpdateNews(req: Request) {
 }
 
 // ----------------------------------------------------
-// 11. GENERATE THE TICKNAL TAKE (DAILY AI BRIEFINGS)
+// 11. GENERATE TICKNAL TAKE (5 CANONICAL BRIEFINGS)
 // ----------------------------------------------------
 export async function handleGenerateTicknalTake(req: Request) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    const result = await generateTheTicknalTakePosts();
+    const result = await generateAllDailyTakes();
 
     try {
       revalidatePath('/news');
@@ -1296,7 +1318,7 @@ export async function handleGenerateTicknalTake(req: Request) {
     await db.insert(systemLogs).values({
       source: 'cron-ticknal-take',
       level: result.success ? 'INFO' : 'ERROR',
-      message: `The Ticknal Take briefing generation completed: ${result.postsCreated} posts published for date ${result.date}.`,
+      message: `Ticknal take briefing generation completed: ${result.postsCreated} posts published for date ${result.date}.`,
       metadata: result,
     });
 
@@ -1306,9 +1328,56 @@ export async function handleGenerateTicknalTake(req: Request) {
     await db.insert(systemLogs).values({
       source: 'cron-ticknal-take',
       level: 'ERROR',
-      message: `Failed to generate The Ticknal Take: ${(error as Error).message}`,
+      message: `Failed to generate Ticknal take: ${(error as Error).message}`,
       metadata: { error: (error as Error).message },
     });
+    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------
+// 11b. PURGE LEGACY NOISY NEWS
+// ----------------------------------------------------
+export async function handlePurgeLegacyNews(req: Request) {
+  const authErr = verifyCronAuth(req);
+  if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
+
+  try {
+    const { purgeLegacyNews } = await import('@/lib/news/news-service');
+    const result = await purgeLegacyNews(false);
+
+    try {
+      revalidatePath('/news');
+      revalidatePath('/home');
+      revalidatePath('/markets');
+    } catch {}
+
+    await db.insert(systemLogs).values({
+      source: 'admin-purge-news',
+      level: 'INFO',
+      message: `Legacy news purge completed: ${result.deletedCount} rows removed.`,
+      metadata: result,
+    });
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.error('Error in handlePurgeLegacyNews:', error);
+    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------
+// 12. DISCOVER AND SYNC NEW EGX TICKERS (IPOS / LISTINGS)
+// ----------------------------------------------------
+export async function handleSyncTickers(req: Request) {
+  const authErr = verifyCronAuth(req);
+  if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
+
+  try {
+    const result = await syncEGXTickersFromExchange();
+    return NextResponse.json(result, { status: result.error ? 500 : 200 });
+  } catch (error) {
+    console.error('Error in handleSyncTickers:', error);
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
   }
 }

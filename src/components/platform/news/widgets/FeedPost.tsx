@@ -11,11 +11,14 @@ import {
   TrendingUp,
   Layers,
   Maximize2,
+  Share2,
+  Download,
 } from '@/components/ui/icon-library';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import SocialButton from '@/components/ui/social-button';
 import NewsImageLightbox from './NewsImageLightbox';
+import SocialShareModal from './SocialShareModal';
 import { resolveLocalizedChartSvg } from '@/lib/news/ticknal-take-charts';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 
@@ -58,10 +61,10 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
   const cat = item.category.toLowerCase();
   const firstTicker = item.tickers?.[0]?.toUpperCase().replace(/^[@$]/, '') || '';
 
-  // 1. The Ticknal Take (renders authentic Ticknal brand mark)
+  // 1. Ticknal take (renders authentic Ticknal brand mark)
   if (cat === 'ticknal_take' || cat === 'pulse' || src.includes('ticknal')) {
     return {
-      name: 'The Ticknal Take',
+      name: 'Ticknal take',
       handle: '@TICKNAL',
       avatarUrl: '/logo-white.svg',
       fallbackIcon: (
@@ -288,6 +291,7 @@ export default function FeedPost({
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [altLang, setAltLang] = useState(false);
 
   const meta = resolveSourceMeta(item);
@@ -386,7 +390,7 @@ export default function FeedPost({
               {/* Display Name & Verified Blue Badge */}
               <div className="flex items-center gap-1 min-w-0">
                 <span className="font-semibold text-white text-[13px] sm:text-[12.5px] truncate">
-                  {meta.name}
+                  {meta.isTicknalTake ? (locale === 'ar' ? 'نبض تكنال' : 'Ticknal take') : meta.name}
                 </span>
 
                 {meta.verified && (
@@ -429,8 +433,8 @@ export default function FeedPost({
                 </span>
               )}
 
-              {/* Category Pill: Completely removed for The Ticknal Take */}
-              {!meta.isTicknalTake && item.categoryLabel !== 'The Ticknal Take' && item.categoryLabel && (
+              {/* Category Pill: Completely removed for Ticknal take */}
+              {!meta.isTicknalTake && item.categoryLabel !== 'Ticknal take' && item.categoryLabel !== 'The Ticknal Take' && item.categoryLabel && (
                 <span className="text-[10px] text-zinc-400 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] font-normal shrink-0">
                   {item.categoryLabel}
                 </span>
@@ -511,10 +515,18 @@ export default function FeedPost({
               isOpen={isLightboxOpen}
               imageUrl={localizedImageUrl}
               title={item.title}
-              sourceName={meta.name}
+              sourceName={meta.isTicknalTake ? (locale === 'ar' ? 'نبض تكنال' : 'Ticknal take') : meta.name}
               onClose={() => setIsLightboxOpen(false)}
             />
           )}
+
+          {/* Social Share & Copy Modal */}
+          <SocialShareModal
+            isOpen={isSocialModalOpen}
+            item={item}
+            imageUrl={localizedImageUrl}
+            onClose={() => setIsSocialModalOpen(false)}
+          />
 
           {/* Action Buttons Row: Clean dark outline action buttons without fake reaction numbers */}
           <div className="mt-3.5 pt-2.5 border-t border-white/[0.04] flex items-center gap-1.5 sm:gap-2 flex-nowrap">
@@ -564,7 +576,21 @@ export default function FeedPost({
               title={item.title}
             />
 
-            {/* 4. Official Filing Button: Icon-only on mobile (28x28), full text on desktop */}
+            {/* 4. Social Share & Copy Modal Button (Formats for X, LinkedIn, Telegram + Graphic) */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSocialModalOpen(true);
+              }}
+              className="h-7 px-2 sm:px-2.5 rounded-[8px] border border-white/15 bg-black hover:bg-white/[0.06] hover:border-white/30 transition-all flex items-center gap-1.5 text-zinc-300 hover:text-white cursor-pointer select-none text-[11.5px] font-medium shrink-0"
+              title={locale === 'ar' ? 'نسخ لوسائل التواصل الاجتماعي' : 'Copy for Social Media'}
+            >
+              <Share2 size={13} className="text-zinc-300 shrink-0" />
+              <span className="hidden sm:inline">{locale === 'ar' ? 'نشر' : 'Social'}</span>
+            </button>
+
+            {/* 5. Official Filing Button: Icon-only on mobile (28x28), full text on desktop */}
             {item.sourceUrl && (
               <a
                 href={item.sourceUrl}

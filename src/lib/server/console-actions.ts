@@ -3,8 +3,9 @@
 import { eq, and, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { profiles, userSubscriptions, auditLogs, positions, tickers } from '@/db/schema';
+import { profiles, userSubscriptions, auditLogs, positions, tickers, proprietaryStrategyAccess } from '@/db/schema';
 import { assertAdminUser, logAdminAction } from '@/lib/server/admin-guard';
+import { isProprietaryOwner } from '@/lib/strategies/proprietary-access-policy';
 import {
   handleUpdateStocks,
   handleProcessSignals,
@@ -13,9 +14,34 @@ import {
   handleWatchdog,
   handleUpdateNews,
   handleGenerateTicknalTake,
+  handlePurgeLegacyNews,
 } from '@/lib/cron-handlers';
 
 const ALLOWED_ROLES = ['user', 'pro', 'analyst', 'admin', 'superadmin'] as const;
+
+export async function setProprietaryStrategyAccessAction(params: { targetUserId: string; enabled: boolean }) {
+  const { user, profile } = await assertAdminUser();
+  if (!isProprietaryOwner(user.email, profile.role)) return { success: false, error: 'Only the platform owner can manage proprietary strategies.' };
+  if (!/^[0-9a-f]{8}-[0-9a-f-]{27,36}$/i.test(params.targetUserId) || typeof params.enabled !== 'boolean') {
+    return { success: false, error: 'Invalid access request.' };
+  }
+  const [target] = await db.select({ id: profiles.id, email: profiles.email })
+    .from(profiles).where(eq(profiles.id, params.targetUserId)).limit(1);
+  if (!target) return { success: false, error: 'User not found.' };
+  await db.insert(proprietaryStrategyAccess).values({
+    userId: target.id, enabled: params.enabled, notificationsEnabled: false, grantedBy: user.id,
+  }).onConflictDoUpdate({
+    target: proprietaryStrategyAccess.userId,
+    set: { enabled: params.enabled, notificationsEnabled: false, grantedBy: user.id, updatedAt: new Date() },
+  });
+  await logAdminAction({
+    adminId: user.id, action: params.enabled ? 'strategy.proprietary_grant' : 'strategy.proprietary_revoke',
+    targetId: target.id, metadata: { targetEmail: target.email },
+  });
+  revalidatePath('/console/users');
+  revalidatePath('/strategies');
+  return { success: true, enabled: params.enabled };
+}
 
 /**
  * 1. Update User Role
@@ -201,6 +227,12 @@ export async function triggerCronAction(jobName: string) {
         resultSummary = JSON.stringify(data);
         break;
       }
+      case 'purge-legacy-news': {
+        const res = await handlePurgeLegacyNews(dummyReq);
+        const data = await res.json().catch(() => ({}));
+        resultSummary = JSON.stringify(data);
+        break;
+      }
       default:
         return { success: false, error: 'Unknown cron job name' };
     }
@@ -215,6 +247,8 @@ export async function triggerCronAction(jobName: string) {
     revalidatePath('/console/operations');
     revalidatePath('/console/signals');
     revalidatePath('/console/logs');
+    revalidatePath('/news');
+    revalidatePath('/home');
   
     return { success: true, summary: resultSummary };
   } catch (error) {
@@ -635,5 +669,4 @@ export async function getAcquisitionStatsAction(params: {
   const stats = await getConsoleAcquisitionStats(params.timeframe, params.customStart, params.customEnd);
   return { success: true, stats };
 }
-
 

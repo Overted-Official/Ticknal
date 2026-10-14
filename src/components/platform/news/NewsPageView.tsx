@@ -88,7 +88,7 @@ export default function NewsPageView() {
     },
     {
       id: 'ticknal_take',
-      label: locale === 'ar' ? 'نبض تكنال' : 'The Ticknal Take',
+      label: locale === 'ar' ? 'نبض تكنال' : 'Ticknal take',
       shortLabel: locale === 'ar' ? 'تكنال' : 'Ticknal',
       count: data?.categories?.find((c) => c.id === 'ticknal_take')?.count,
     },
@@ -126,7 +126,7 @@ export default function NewsPageView() {
     },
     {
       id: 'ticknal_take',
-      label: locale === 'ar' ? 'نبض تكنال' : 'The Ticknal Take',
+      label: locale === 'ar' ? 'نبض تكنال' : 'Ticknal take',
       count: data?.categories?.find((c) => c.id === 'ticknal_take')?.count,
     },
     {

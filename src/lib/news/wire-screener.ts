@@ -146,7 +146,27 @@ function getCategoryForAsset(assetKey: string, title: string): { category: strin
   return { category: 'listed_companies', categoryLabel: 'Listed Companies (EGX)' };
 }
 
+function isNoiseHeadline(title: string): boolean {
+  const lower = (title || '').toLowerCase();
+  const NOISE_PATTERNS = [
+    'delivery intentions breakdown',
+    'delivery intentions',
+    'comex gold delivery',
+    'settlement prices',
+    'daily settlement',
+    'routine notice',
+    'collateral intentions',
+    'margin requirements change',
+    'open interest changes',
+    'cftc commitments of traders',
+    'cot report summary',
+    'intentions breakdown',
+  ];
+  return NOISE_PATTERNS.some((p) => lower.includes(p));
+}
+
 function isHeadlineRelevantToAsset(title: string, assetKey: string): boolean {
+  if (isNoiseHeadline(title)) return false;
   const t = (title || '').toLowerCase();
   const keywords = ASSET_RELEVANCE_KEYWORDS[assetKey];
   if (!keywords || keywords.length === 0) return true;
@@ -310,7 +330,8 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
     const volStr = eod ? `${eod.volume.toLocaleString()} shares` : 'N/A';
 
     const systemPrompt = `You are a senior quantitative analyst and expert Egyptian equity trader at Ticknal.
-Your task is to analyze breaking market news wires and filter out noise.`;
+Your task is to analyze breaking market news wires and filter out noise.
+STRICT INSTRUCTION: Never output any thinking scratchpad, preamble, or commentary. Never say "The user wants..." or "Analyze the content". Respond ONLY with a 1-2 sentence quantitative summary (max 500 chars) if genuinely valuable, OR respond with ONLY the exact single word "irrelevant".`;
 
     const userPrompt = `Asset: ${wire.assetKey}
 Recent Market Context: Last Close: ${closeStr} | 1D Return: ${changeStr} | Volume: ${volStr}
@@ -332,20 +353,45 @@ CRITICAL FILTER INSTRUCTION:
         systemPrompt,
         userPrompt,
         fallbackText: 'irrelevant',
-        temperature: 0.2,
+        temperature: 0.1,
         maxTokens: 180,
         timeoutMs: 8000,
+        validateOutput: (text: string) => {
+          const lower = text.toLowerCase().trim();
+          if (
+            lower === 'irrelevant' ||
+            lower === 'useless' ||
+            lower.startsWith('irrelevant') ||
+            lower.startsWith('useless')
+          ) {
+            return true;
+          }
+          if (
+            lower.includes('the user wants') ||
+            lower.includes('analyze the content') ||
+            lower.includes('routine report') ||
+            lower.includes('procedural data')
+          ) {
+            return false;
+          }
+          return text.length >= 25;
+        },
       });
 
       const responseText = (completion.text || '').trim();
       const lower = responseText.toLowerCase();
 
       // STRICT NOISE DROP GATE:
-      // If AI responds with "irrelevant" or "useless" or empty, discard the wire immediately
+      // If AI responds with "irrelevant" or "useless" or scratchpad, discard the wire immediately
       if (
         lower.startsWith('irrelevant') ||
         lower.startsWith('useless') ||
         lower.includes('irrelevant') ||
+        lower.includes('useless') ||
+        lower.includes('the user wants') ||
+        lower.includes('analyze the content') ||
+        lower.includes('procedural') ||
+        lower.includes('routine report') ||
         responseText.length < 25
       ) {
         droppedNoise++;

@@ -15,7 +15,9 @@ import {
   pushSubscriptions,
   tickerAlerts,
   userTelemetryEvents,
+  proprietaryStrategyAccess,
 } from '@/db/schema';
+import { isProprietaryOwner } from '@/lib/strategies/proprietary-access-policy';
 import { ensureBaselineTelemetrySeeded } from '@/lib/server/telemetry-seed';
 import {
   getSubscriptionPlans,
@@ -597,6 +599,7 @@ export interface ConsoleUserRowItem {
   fullName: string | null;
   avatarUrl: string | null;
   role: string;
+  proprietaryStrategyAccess: boolean;
   createdAt: string;
   updatedAt: string;
   lastActiveAt: string;
@@ -698,6 +701,11 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
     }[] = [];
     let alertCounts: { userId: string; count: number }[] = [];
     let subs: (typeof userSubscriptions.$inferSelect)[] = [];
+    const proprietaryGrants = userIds.length > 0
+      ? await db.select({ userId: proprietaryStrategyAccess.userId, enabled: proprietaryStrategyAccess.enabled })
+          .from(proprietaryStrategyAccess)
+      : [];
+    const proprietaryGrantMap = new Map(proprietaryGrants.map((grant) => [grant.userId, grant.enabled]));
 
     if (userIds.length > 0) {
       try {
@@ -893,6 +901,7 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         fullName: u.fullName || (u.email ? u.email.split('@')[0] : 'Member'),
         avatarUrl: u.avatarUrl,
         role: u.role,
+        proprietaryStrategyAccess: isProprietaryOwner(u.email, u.role) || proprietaryGrantMap.get(u.id) === true,
         createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString(),
         updatedAt: u.updatedAt ? new Date(u.updatedAt).toISOString() : new Date().toISOString(),
         lastActiveAt,
@@ -1771,6 +1780,30 @@ const CONSOLE_CRON_JOBS: CronJobItem[] = [
     schedule: 'Every 30 Mins (Market Hours)',
     desc: 'Syncs Gold 24k/21k (EGP/g), Silver, and USD/EGP official and parallel FX benchmarks.',
     category: 'market_data',
+  },
+  {
+    id: 'update-news',
+    name: 'News Wire Screener & AI Gate',
+    source: 'cron:update-news',
+    schedule: 'Daily 17:00 Cairo',
+    desc: 'Screens TradingView wires for EGX tickers, Gold/Silver, and CBE within 24h. Uses AI analyst gate to drop routine noise.',
+    category: 'quant_engine',
+  },
+  {
+    id: 'ticknal-take',
+    name: 'Ticknal Take Briefings',
+    source: 'cron:ticknal-take',
+    schedule: 'Daily 17:00 Cairo',
+    desc: 'Generates the 5 canonical intelligence briefings (Hot Money, Trade Summary, Breadth, Gainers/Losers, USD/EGP) with 16:9 social cards.',
+    category: 'quant_engine',
+  },
+  {
+    id: 'purge-legacy-news',
+    name: 'Purge Legacy News Noise',
+    source: 'admin:purge-legacy-news',
+    schedule: 'On Demand (Admin)',
+    desc: 'Deletes noisy, outdated, or pre-screener news entries to keep the feed high-signal.',
+    category: 'watchdog',
   },
   {
     id: 'watchdog',
