@@ -36,11 +36,19 @@ export async function getCachedTickers(): Promise<any[]> {
   return tickersInFlight;
 }
 
+const onInvalidateCallbacks: Array<() => void> = [];
+export function registerTickersInvalidationCallback(cb: () => void): void {
+  onInvalidateCallbacks.push(cb);
+}
+
 export function invalidateTickersMemCache(): void {
   tickersMemCache = null;
   tickersInFlight = null;
   recentPricesMemCache = null;
   recentPricesInFlight = null;
+  for (const cb of onInvalidateCallbacks) {
+    try { cb(); } catch {}
+  }
 }
 
 /**

@@ -286,7 +286,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
         )
         SELECT ticker_symbol, date, open, high, low, close, volume
         FROM ranked_prices
-        WHERE row_number <= 30
+        WHERE row_number <= 35
         ORDER BY ticker_symbol, date
       `) as unknown as StoredWindowRow[];
       const storedWindows = new Map<string, ComparablePriceBar[]>();
@@ -355,7 +355,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
                 ? 'EGX:EGX100EWI'
                 : `EGX:${symbol}`;
             const chart = new client.Session.Chart();
-            chart.setMarket(tvSymbol, { timeframe: 'D', range: 15, adjustment: 'splits' });
+            chart.setMarket(tvSymbol, { timeframe: 'D', range: 35, adjustment: 'splits' });
 
             let done = false;
             const cleanup = () => {
@@ -428,17 +428,16 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
           ? bars.filter((bar) => bar.date >= latestAppliedDate)
           : bars;
         const providerAdjustment = detectProviderAdjustment(comparableStoredBars, comparableIncomingBars);
-        if (providerAdjustment && newBars.length > 0 && lastStored) {
-          const firstNewBar = newBars[0];
-          const replacementBars = latestAppliedDate
-            ? bars.filter((bar) => bar.date >= latestAppliedDate)
-            : bars;
+        if (providerAdjustment && lastStored) {
+          const effectiveDate = providerAdjustment.effectiveDate ?? newBars[0]?.date ?? lastStored.date;
+          const preSplitStored = storedBars.filter((bar) => bar.date < effectiveDate).pop() ?? lastStored;
+          const replacementBars = bars.filter((bar) => bar.date >= effectiveDate);
           const applied = await applyPriceAdjustment({
             tickerSymbol,
-            effectiveDate: firstNewBar.date,
+            effectiveDate,
             factor: providerAdjustment.factor,
-            referencePriceBefore: lastStored.close,
-            referencePriceAfter: lastStored.close * providerAdjustment.factor,
+            referencePriceBefore: preSplitStored.close,
+            referencePriceAfter: preSplitStored.close * providerAdjustment.factor,
             source: 'TRADINGVIEW_OVERLAP_REBASE',
             evidence: providerAdjustment,
           }, replacementBars);

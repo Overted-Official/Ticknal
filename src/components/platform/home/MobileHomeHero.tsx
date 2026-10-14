@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Search,
   Globe,
-  Bell,
+  Settings,
 } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
 import { BorderBeam } from 'border-beam';
@@ -83,7 +83,7 @@ export default function MobileHomeHero({
               {/* Profile Avatar on the left */}
               <Link
                 href="/settings"
-                className="shrink-0 relative rounded-full ring-2 ring-white/35 shadow-sm active:scale-95 transition-transform overflow-hidden w-10 h-10 flex items-center justify-center bg-white/15 backdrop-blur-md"
+                className="shrink-0 relative rounded-full ring-2 ring-white/35 shadow-sm active:scale-95 transition-transform overflow-hidden w-10 h-10 flex items-center justify-center bg-white/20"
                 title={isAr ? 'الملف الشخصي والإعدادات' : 'Profile & Settings'}
               >
                 {userProfile?.avatarUrl ? (
@@ -118,7 +118,7 @@ export default function MobileHomeHero({
             <button
               type="button"
               onClick={toggleLocale}
-              className="h-8 px-3 rounded-full bg-black/35 hover:bg-black/45 active:bg-black/55 border-0 outline-none text-white text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md transition-all shadow-none cursor-pointer shrink-0"
+              className="h-8 px-3 rounded-full bg-black/40 hover:bg-black/50 active:bg-black/60 border-0 outline-none text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-none cursor-pointer shrink-0"
               title={isAr ? 'التبديل إلى الإنجليزية' : 'Switch to Arabic'}
               aria-label={isAr ? 'تغيير اللغة' : 'Change Language'}
             >
@@ -129,7 +129,7 @@ export default function MobileHomeHero({
             </button>
           </div>
 
-          {/* Row 2: Search Bar + Notification Bell - Compact 10px gap from Row 1 */}
+          {/* Row 2: Search Bar + Settings Button - Compact 10px gap from Row 1 */}
           <div className="mt-2.5 flex items-center gap-2.5 h-10">
             {/* Search Bar Trigger with BorderBeam effect */}
             <div className="relative flex-1 min-w-0 h-10">
@@ -143,7 +143,7 @@ export default function MobileHomeHero({
                 <button
                   type="button"
                   onClick={() => setIsSearchOpen(true)}
-                  className="w-full h-10 px-3.5 rounded-full bg-black/35 hover:bg-black/45 active:bg-black/55 backdrop-blur-md border-0 outline-none transition-all flex items-center gap-2.5 cursor-pointer text-start shadow-none"
+                  className="w-full h-10 px-3.5 rounded-full bg-black/40 hover:bg-black/50 active:bg-black/60 border-0 outline-none transition-all flex items-center gap-2.5 cursor-pointer text-start shadow-none"
                   aria-label={isAr ? 'فتح البحث الشامل' : 'Open universal search'}
                 >
                   <Search size={15} className="text-white/45 shrink-0" />
@@ -154,17 +154,14 @@ export default function MobileHomeHero({
               </BorderBeam>
             </div>
 
-            {/* Quick Notification Bell */}
+            {/* Quick Settings Button */}
             <Link
               href="/settings"
-              className="w-10 h-10 rounded-full bg-black/35 hover:bg-black/45 active:bg-black/55 border-0 outline-none flex items-center justify-center text-white/90 relative transition-all active:scale-95 shrink-0 backdrop-blur-md shadow-none"
-              title={isAr ? 'التنبيهات' : 'Alerts & Notifications'}
-              aria-label={isAr ? 'التنبيهات' : 'Notifications'}
+              className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/50 active:bg-black/60 border-0 outline-none flex items-center justify-center text-white/90 relative transition-all active:scale-95 shrink-0 shadow-none"
+              title={isAr ? 'الإعدادات' : 'Settings'}
+              aria-label={isAr ? 'الإعدادات' : 'Settings'}
             >
-              <Bell size={16} />
-              {activeAlertCount > 0 && (
-                <span className="absolute top-2.5 end-2.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-black/50" />
-              )}
+              <Settings size={16} />
             </Link>
           </div>
         </div>

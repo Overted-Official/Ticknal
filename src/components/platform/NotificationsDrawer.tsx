@@ -26,6 +26,7 @@ export type SignalNotificationItem = {
   signalDate: string;
   signal: string;
   strategy?: string | null;
+  strategyName?: string | null;
   signalBarsAgo?: number | null;
   dataAsOf?: string | null;
   sentAt: string;
@@ -534,6 +535,7 @@ export default function NotificationsDrawer({
                                           {item.industryGroup}
                                         </span>
                                       )}
+                                      {item.strategy?.startsWith('custom-') && item.strategyName && <span className="text-[10px] text-white/60 truncate max-w-[130px]">· {item.strategyName}</span>}
                                       {item.rotationRegime && (
                                         <span className={`text-[10px] font-semibold ${regime.cls}`}>
                                           · {regime.label}
@@ -563,9 +565,11 @@ export default function NotificationsDrawer({
                                     type="button"
                                     onClick={() => {
                                       onClose();
-                                      router.push(`/charts?ticker=${cleanSymbol}&strategy=${item.strategy || 'psi'}`);
+                                      router.push(item.strategy?.startsWith('custom-')
+                                        ? `/strategies?strategy=${encodeURIComponent(item.strategy)}&ticker=${encodeURIComponent(item.tickerSymbol)}`
+                                        : `/charts?ticker=${cleanSymbol}&strategy=${item.strategy || 'psi'}`);
                                     }}
-                                    title={isAr ? 'فتح الرسم البياني' : 'Open Chart'}
+                                    title={item.strategy?.startsWith('custom-') ? (isAr ? 'فتح الاستراتيجية' : 'Open strategy') : (isAr ? 'فتح الرسم البياني' : 'Open Chart')}
                                     className="w-6.5 h-6.5 rounded flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer shrink-0"
                                   >
                                     <BarChart2 size={14} />

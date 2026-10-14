@@ -35,8 +35,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: payload.body || 'A trade signal is available on Ticknal.',
-    icon: payload.logoUrl || '/ticknal-notification-icon.png',
-    badge: '/badge.png',
+    icon: payload.logoUrl || '/ticknal-notification-icon.png?v=7',
+    badge: '/badge.png?v=7',
     ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
     tag: payload.tag || `ticknal-signal-${Date.now()}`,
     renotify: true,

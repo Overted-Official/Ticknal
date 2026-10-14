@@ -22,8 +22,10 @@ export const SPLASH_BOOT_SCRIPT = `(function(){try{
 var d=document.documentElement,w=window,C=w.Capacitor;
 var force=/[?&]splash=1(&|$)/.test(location.search);
 var isNative=!!(w.androidBridge||(w.webkit&&w.webkit.messageHandlers&&w.webkit.messageHandlers.bridge)||(C&&C.isNativePlatform&&C.isNativePlatform()));
+var isStandalone=!!((w.matchMedia&&w.matchMedia('(display-mode: standalone)').matches)||(w.navigator&&w.navigator.standalone));
+if(!force&&!isNative&&!isStandalone)return;
 var seen=false;try{seen=sessionStorage.getItem('${SPLASH_SESSION_KEY}')==='1';}catch(e){}
-if(!(force||!seen))return;
+if(!force&&seen)return;
 d.setAttribute('${SPLASH_ATTRIBUTE}','on');
 w.__ticknalSplashStart=w.performance?performance.now():0;
 if(isNative){requestAnimationFrame(function(){try{var opts={fadeOutDuration:250},p=null;

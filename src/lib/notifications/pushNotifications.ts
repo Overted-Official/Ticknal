@@ -1,7 +1,8 @@
 import webPush from 'web-push';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, profiles } from '@/db/schema';
+import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, proprietaryStrategyAccess, tickers, userStrategies } from '@/db/schema';
+import { customStrategyPushPayload } from '@/lib/strategies/server/custom-strategy-alerts';
 import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 import {
@@ -46,6 +47,77 @@ export function isPushConfigured(): boolean {
   return Boolean(getVapidPublicKey() && process.env.VAPID_PRIVATE_KEY);
 }
 
+export async function dispatchPendingCustomStrategyPush(limit = 12): Promise<{ processed: number; sent: number; retried: number }> {
+  if (isPushConfigured()) configureWebPush();
+  const claimed = await db.execute(sql`
+    UPDATE public.signal_notifications AS notification
+    SET push_delivery_status = 'sending', push_attempts = push_attempts + 1,
+        push_next_attempt_at = NOW() + INTERVAL '2 minutes'
+    WHERE notification.id IN (
+      SELECT id FROM public.signal_notifications
+      WHERE strategy LIKE 'custom-%'
+        AND push_delivery_status IN ('pending', 'retry', 'sending')
+        AND push_next_attempt_at <= NOW()
+      ORDER BY push_next_attempt_at, id
+      LIMIT ${Math.min(Math.max(limit, 1), 20)} FOR UPDATE SKIP LOCKED
+    )
+    RETURNING notification.id
+  `) as unknown as { id: number }[];
+  let sent = 0;
+  let retried = 0;
+  for (const claimedRow of claimed) {
+    const [row] = await db.select({
+      id: signalNotifications.id, userId: signalNotifications.userId,
+      strategy: signalNotifications.strategy, tickerSymbol: signalNotifications.tickerSymbol,
+      signalDate: signalNotifications.signalDate, signal: signalNotifications.signal,
+      signalPrice: signalNotifications.signalPrice, pushAttempts: signalNotifications.pushAttempts,
+      parameterVersion: signalNotifications.parameterVersion,
+      strategyName: userStrategies.name, notificationsEnabled: userStrategies.notificationsEnabled,
+      notificationGeneration: userStrategies.notificationGeneration,
+      companyName: tickers.companyName,
+    }).from(signalNotifications)
+      .leftJoin(userStrategies, and(eq(signalNotifications.userId, userStrategies.userId), eq(signalNotifications.strategy, userStrategies.id)))
+      .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
+      .where(eq(signalNotifications.id, claimedRow.id)).limit(1);
+    if (!row) continue;
+    const valid = row.notificationsEnabled === true && row.parameterVersion === `custom:${row.notificationGeneration}`;
+    let delivered = false;
+    let endpoints = 0;
+    if (valid && (row.signal === 'BUY' || row.signal === 'SELL')) {
+      const payload = customStrategyPushPayload({
+        strategyId: row.strategy, strategyName: row.strategyName || row.strategy,
+        symbol: row.tickerSymbol, companyName: row.companyName,
+        signal: row.signal, session: String(row.signalDate).slice(0, 10), price: Number(row.signalPrice),
+      });
+      const [subscriptions, tokens] = await Promise.all([
+        isPushConfigured() ? db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, row.userId)) : Promise.resolve([]),
+        db.select().from(devicePushTokens).where(and(eq(devicePushTokens.userId, row.userId), eq(devicePushTokens.isActive, true))),
+      ]);
+      endpoints = subscriptions.length + tokens.length;
+      for (const subscription of subscriptions) {
+        const outcome = await sendToSubscription(subscription, JSON.stringify(payload));
+        if (outcome === 'sent') delivered = true;
+        else if (outcome === 'expired') await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
+      }
+      for (const device of tokens) {
+        try {
+          const outcome = await sendFCMMessage(device.token, { ...payload, ticker: row.tickerSymbol });
+          if (outcome.sent) delivered = true;
+          else if (outcome.invalidToken) await db.update(devicePushTokens).set({ isActive: false, updatedAt: new Date() }).where(eq(devicePushTokens.id, device.id));
+        } catch (error) { console.error('[custom-strategy-push] Device delivery failed.', error); }
+      }
+    }
+    const status = !valid ? 'suppressed' : delivered ? 'sent' : endpoints === 0 ? 'no-endpoint' : row.pushAttempts >= 5 ? 'failed' : 'retry';
+    if (delivered) sent += 1;
+    if (status === 'retry') retried += 1;
+    await db.update(signalNotifications).set({
+      pushDeliveryStatus: status,
+      pushNextAttemptAt: status === 'retry' ? new Date(Date.now() + Math.min(60, 2 ** row.pushAttempts) * 60_000) : null,
+    }).where(and(eq(signalNotifications.id, row.id), eq(signalNotifications.pushDeliveryStatus, 'sending')));
+  }
+  return { processed: claimed.length, sent, retried };
+}
+
 export async function dispatchSignalNotifications(options: {
   symbols?: string[];
   lookbackBars?: number;
@@ -67,27 +139,23 @@ export async function dispatchSignalNotifications(options: {
 
   const symbolFilter = new Set((options.symbols ?? []).map(normalizeTickerSymbol));
   
-  // 1. Fetch user alerts and open positions
-  const [explicitAlertRows, openOrderRows, subscriptionRows, deviceTokenRows, profileRows] = await Promise.all([
-    db.select().from(tickerAlerts).where(eq(tickerAlerts.enabled, true)),
-    db.select({ tickerSymbol: positions.tickerSymbol, userId: positions.userId }).from(positions).where(eq(positions.status, 'OPEN')),
-    db.select().from(pushSubscriptions),
-    db.select().from(devicePushTokens).where(eq(devicePushTokens.isActive, true)),
-    db.select({ id: profiles.id }).from(profiles),
-  ]);
-
-  // Collect all distinct active user IDs
-  const userIds = new Set<string>();
-  profileRows.forEach(p => { if (p.id) userIds.add(p.id); });
-  subscriptionRows.forEach(s => { if (s.userId) userIds.add(s.userId); });
-  deviceTokenRows.forEach(d => { if (d.userId) userIds.add(d.userId); });
-  openOrderRows.forEach(o => { if (o.userId) userIds.add(o.userId); });
-  explicitAlertRows.forEach(a => { if (a.userId) userIds.add(a.userId); });
+  // Access and alert opt-in are independent. Only explicit recipients receive
+  // the champion model's in-app or push signals; owner access alone is not opt-in.
+  const grants = await db.select({ userId: proprietaryStrategyAccess.userId })
+    .from(proprietaryStrategyAccess)
+    .where(and(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)));
+  const userIds = new Set(grants.map((grant) => grant.userId));
 
   if (userIds.size === 0) {
-    result.messages.push('No active users found for notification dispatch.');
+    result.messages.push('No users have opted in to proprietary strategy alerts.');
     return result;
   }
+
+  const recipientIds = [...userIds];
+  const [subscriptionRows, deviceTokenRows] = await Promise.all([
+    db.select().from(pushSubscriptions).where(inArray(pushSubscriptions.userId, recipientIds)),
+    db.select().from(devicePushTokens).where(and(eq(devicePushTokens.isActive, true), inArray(devicePushTokens.userId, recipientIds))),
+  ]);
 
   const subscriptionsByUser = groupBy(subscriptionRows, (subscription) => subscription.userId);
   const deviceTokensByUser = groupBy(
@@ -138,10 +206,15 @@ export async function dispatchSignalNotifications(options: {
     parameterVersion: string;
   }> = [];
 
-  const pushTasks: Array<() => Promise<void>> = [];
+  const pushTasks: Array<{ userId: string; run: () => Promise<void> }> = [];
   const championCache = new Map<string, TickerChampionAnalysis | null>();
 
   for (const userId of userIds) {
+    const [stillOptedIn] = await db.select({ userId: proprietaryStrategyAccess.userId })
+      .from(proprietaryStrategyAccess)
+      .where(and(eq(proprietaryStrategyAccess.userId, userId), eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)))
+      .limit(1);
+    if (!stillOptedIn) continue;
     const [userOpenRows, userAlertRows, existingNotifs] = await Promise.all([
       db.select({ tickerSymbol: positions.tickerSymbol }).from(positions).where(and(eq(positions.userId, userId), eq(positions.status, 'OPEN'))),
       db.select({ tickerSymbol: tickerAlerts.tickerSymbol }).from(tickerAlerts).where(and(eq(tickerAlerts.userId, userId), eq(tickerAlerts.enabled, true))),
@@ -319,7 +392,7 @@ export async function dispatchSignalNotifications(options: {
           });
 
           for (const sub of subscriptions) {
-            pushTasks.push(async () => {
+            pushTasks.push({ userId, run: async () => {
               const sent = await sendToSubscription(sub, payload);
               if (sent === 'expired') {
                 result.expiredSubscriptions += 1;
@@ -327,13 +400,13 @@ export async function dispatchSignalNotifications(options: {
               } else if (sent === 'sent') {
                 result.sent += 1;
               }
-            });
+            } });
           }
         }
 
         if (nativeTokens.length > 0) {
           for (const device of nativeTokens) {
-            pushTasks.push(async () => {
+            pushTasks.push({ userId, run: async () => {
               const fcmResult = await sendFCMMessage(device.token, {
                 ...presentation,
                 url: `/charts?ticker=${ticker}&strategy=${strategyId}`,
@@ -349,17 +422,25 @@ export async function dispatchSignalNotifications(options: {
                   .set({ isActive: false, updatedAt: new Date() })
                   .where(eq(devicePushTokens.id, device.id));
               }
-            });
+            } });
           }
         }
       }
     }
   }
 
+  // Recheck after analysis, because access or opt-in may change during a run.
+  const activeGrants = await db.select({ userId: proprietaryStrategyAccess.userId })
+    .from(proprietaryStrategyAccess)
+    .where(and(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true), inArray(proprietaryStrategyAccess.userId, recipientIds)));
+  const activeRecipientIds = new Set(activeGrants.map((grant) => grant.userId));
+  const permittedNotifications = newNotificationsToInsert.filter((row) => activeRecipientIds.has(row.userId));
+  const permittedSnapshots = signalSnapshotsToUpsert.filter((row) => activeRecipientIds.has(row.userId));
+
   // 1. Batch insert in-app notifications
-  if (newNotificationsToInsert.length > 0) {
-    for (let i = 0; i < newNotificationsToInsert.length; i += 50) {
-      const slice = newNotificationsToInsert.slice(i, i + 50);
+  if (permittedNotifications.length > 0) {
+    for (let i = 0; i < permittedNotifications.length; i += 50) {
+      const slice = permittedNotifications.slice(i, i + 50);
       await db.insert(signalNotifications).values(slice).onConflictDoNothing();
     }
   }
@@ -367,10 +448,10 @@ export async function dispatchSignalNotifications(options: {
   // Migration 0007 adds the snapshot columns. Keep this processor compatible
   // while that migration is being applied: notifications still deliver and
   // the opportunities reader falls back to canonical request-time analysis.
-  if (signalSnapshotsToUpsert.length > 0) {
+  if (permittedSnapshots.length > 0) {
     try {
-      for (let i = 0; i < signalSnapshotsToUpsert.length; i += 50) {
-        const slice = signalSnapshotsToUpsert.slice(i, i + 50);
+      for (let i = 0; i < permittedSnapshots.length; i += 50) {
+        const slice = permittedSnapshots.slice(i, i + 50);
         await db.insert(signalNotifications).values(slice).onConflictDoUpdate({
           target: [
             signalNotifications.userId,
@@ -397,11 +478,12 @@ export async function dispatchSignalNotifications(options: {
   }
 
   // 2. Parallel dispatch of push messages
-  if (pushTasks.length > 0) {
+  const permittedPushTasks = pushTasks.filter((task) => activeRecipientIds.has(task.userId));
+  if (permittedPushTasks.length > 0) {
     const PUSH_CONCURRENCY = 15;
-    for (let i = 0; i < pushTasks.length; i += PUSH_CONCURRENCY) {
-      const batch = pushTasks.slice(i, i + PUSH_CONCURRENCY);
-      await Promise.allSettled(batch.map(fn => fn()));
+    for (let i = 0; i < permittedPushTasks.length; i += PUSH_CONCURRENCY) {
+      const batch = permittedPushTasks.slice(i, i + PUSH_CONCURRENCY);
+      await Promise.allSettled(batch.map((task) => task.run()));
     }
   }
 

@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import webpush from 'web-push';
 import { db } from '@/db';
-import { signalNotifications, tickers, pushSubscriptions, devicePushTokens, profiles } from '@/db/schema';
+import { signalNotifications, tickers, pushSubscriptions, devicePushTokens, profiles, userStrategies } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
+import { getCurrentProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
+import { filterAccessibleSignals } from '@/lib/strategies/proprietary-access-policy';
 
 const notificationsMemCache = new Map<string, { data: any[]; timestamp: number }>();
 const NOTIFS_CACHE_TTL = 30 * 1000; // 30s cache per user
@@ -30,6 +32,7 @@ export async function seedUserNotifications(userId: string): Promise<number> {
         sent_at
       FROM signal_notifications
       WHERE signal = 'BUY'
+        AND strategy IN ('psi', 'psi_v2', 'hydra')
         AND signal_date >= CURRENT_DATE - INTERVAL '14 days'
       ORDER BY ticker_symbol, strategy, signal_date, signal, sent_at DESC;
     `);
@@ -80,10 +83,12 @@ export async function handleNotificationsGet() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const access = await getCurrentProprietaryAccess();
+
   // Check in-memory debounce cache to eliminate redundant database egress
   const cached = notificationsMemCache.get(user.id);
   if (cached && Date.now() - cached.timestamp < NOTIFS_CACHE_TTL) {
-    return NextResponse.json({ notifications: cached.data });
+    return NextResponse.json({ notifications: filterAccessibleSignals(cached.data, access.canView) }, { headers: { 'Cache-Control': 'private, no-store' } });
   }
 
   try {
@@ -92,6 +97,7 @@ export async function handleNotificationsGet() {
         id: signalNotifications.id,
         tickerSymbol: signalNotifications.tickerSymbol,
         strategy: signalNotifications.strategy,
+        strategyName: userStrategies.name,
         signalDate: signalNotifications.signalDate,
         signal: signalNotifications.signal,
         signalBarsAgo: signalNotifications.signalBarsAgo,
@@ -103,48 +109,14 @@ export async function handleNotificationsGet() {
       })
       .from(signalNotifications)
       .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
+      .leftJoin(userStrategies, and(eq(signalNotifications.userId, userStrategies.userId), eq(signalNotifications.strategy, userStrategies.id)))
       .where(eq(signalNotifications.userId, user.id))
       .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
       .limit(50);
 
     if (rows.length === 0) {
-      const [profile] = await db
-        .select({
-          notificationsSeededAt: profiles.notificationsSeededAt,
-          notificationsClearedAt: profiles.notificationsClearedAt,
-        })
-        .from(profiles)
-        .where(eq(profiles.id, user.id))
-        .limit(1);
-
-      if (!profile?.notificationsSeededAt && !profile?.notificationsClearedAt) {
-        await seedUserNotifications(user.id);
-
-        rows = await db
-          .select({
-            id: signalNotifications.id,
-            tickerSymbol: signalNotifications.tickerSymbol,
-            strategy: signalNotifications.strategy,
-            signalDate: signalNotifications.signalDate,
-            signal: signalNotifications.signal,
-            signalBarsAgo: signalNotifications.signalBarsAgo,
-            dataAsOf: signalNotifications.dataAsOf,
-            sentAt: signalNotifications.sentAt,
-            companyName: tickers.companyName,
-            logoUrl: tickers.logoUrl,
-            sector: tickers.sector,
-          })
-          .from(signalNotifications)
-          .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
-          .where(eq(signalNotifications.userId, user.id))
-          .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
-          .limit(50);
-      }
-    }
-
-    if (rows.length === 0) {
       notificationsMemCache.set(user.id, { data: [], timestamp: Date.now() });
-      return NextResponse.json({ notifications: [] });
+      return NextResponse.json({ notifications: [] }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
 
     const { getCachedIndustryRotationMap } = await import('@/lib/industry-rotation');
@@ -161,7 +133,7 @@ export async function handleNotificationsGet() {
     });
 
     notificationsMemCache.set(user.id, { data: enhancedRows, timestamp: Date.now() });
-    return NextResponse.json({ notifications: enhancedRows });
+    return NextResponse.json({ notifications: filterAccessibleSignals(enhancedRows, access.canView) }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

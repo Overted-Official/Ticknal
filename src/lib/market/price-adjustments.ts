@@ -11,6 +11,8 @@ export type ProviderAdjustmentEvidence = {
   factor: number;
   sampleSize: number;
   maxRelativeDeviation: number;
+  effectiveDate?: string;
+  partitionType?: 'FULL_WINDOW' | 'MID_WINDOW_PARTITION';
 };
 
 export type ExtremeGapEvidence = {
@@ -19,9 +21,9 @@ export type ExtremeGapEvidence = {
 };
 
 const MIN_OVERLAP_SAMPLES = 3;
-const MATERIAL_FACTOR_THRESHOLD = 0.1;
+const MATERIAL_FACTOR_THRESHOLD = 0.08;
 const MAX_FACTOR_DEVIATION = 0.015;
-const EXTREME_GAP_THRESHOLD = 0.35;
+const EXTREME_GAP_THRESHOLD = 0.22;
 
 function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
@@ -32,34 +34,98 @@ function median(values: number[]): number {
 }
 
 /**
- * Detects a provider-side historical rebase (normally a split) by comparing
- * several dates that exist in both the database and the newly fetched window.
- * A real market move changes only the new bar; a corporate-action rebase
- * changes every overlapping historical close by the same factor.
+ * Detects a provider-side historical rebase (normally a split or bonus shares)
+ * by comparing dates that exist in both the database and the fetched window.
+ *
+ * Supports two distinct provider rebase patterns:
+ * 1. Full-Window Rebase: All overlapping bars have changed by the same factor
+ *    (the rebase occurred before any post-action bar was inserted).
+ * 2. Mid-Window Partition: A corporate action already inserted 1+ post-split bars
+ *    at the new price (ratio ~ 1.0), and the provider rebased all preceding bars
+ *    (ratio ~ factor). We find the partition date D where the step occurred.
  */
 export function detectProviderAdjustment(
   storedBars: ComparablePriceBar[],
   incomingBars: ComparablePriceBar[],
 ): ProviderAdjustmentEvidence | null {
   const storedByDate = new Map(storedBars.map((bar) => [bar.date, bar]));
-  const ratios = incomingBars.flatMap((incoming) => {
-    const stored = storedByDate.get(incoming.date);
-    if (!stored || stored.close <= 0 || incoming.close <= 0) return [];
-    const ratio = incoming.close / stored.close;
-    return Number.isFinite(ratio) && ratio > 0 ? [ratio] : [];
-  });
+  const sortedIncoming = [...incomingBars].sort((a, b) => a.date.localeCompare(b.date));
 
-  if (ratios.length < MIN_OVERLAP_SAMPLES) return null;
+  type OverlapPair = {
+    date: string;
+    storedClose: number;
+    incomingClose: number;
+    ratio: number;
+  };
 
-  const factor = median(ratios);
-  if (Math.abs(factor - 1) < MATERIAL_FACTOR_THRESHOLD) return null;
+  const overlapPairs: OverlapPair[] = [];
+  for (const inc of sortedIncoming) {
+    const stored = storedByDate.get(inc.date);
+    if (!stored || stored.close <= 0 || inc.close <= 0) continue;
+    const ratio = inc.close / stored.close;
+    if (Number.isFinite(ratio) && ratio > 0) {
+      overlapPairs.push({
+        date: inc.date,
+        storedClose: stored.close,
+        incomingClose: inc.close,
+        ratio,
+      });
+    }
+  }
 
-  const maxRelativeDeviation = Math.max(
-    ...ratios.map((ratio) => Math.abs(ratio - factor) / factor),
-  );
-  if (maxRelativeDeviation > MAX_FACTOR_DEVIATION) return null;
+  if (overlapPairs.length < MIN_OVERLAP_SAMPLES) return null;
 
-  return { factor, sampleSize: ratios.length, maxRelativeDeviation };
+  // 1. Check Full Window Rebase:
+  const allRatios = overlapPairs.map((p) => p.ratio);
+  const fullFactor = median(allRatios);
+  if (Math.abs(fullFactor - 1) >= MATERIAL_FACTOR_THRESHOLD) {
+    const fullMaxDev = Math.max(
+      ...allRatios.map((r) => Math.abs(r - fullFactor) / fullFactor),
+    );
+    if (fullMaxDev <= MAX_FACTOR_DEVIATION) {
+      return {
+        factor: fullFactor,
+        sampleSize: allRatios.length,
+        maxRelativeDeviation: fullMaxDev,
+        partitionType: 'FULL_WINDOW',
+      };
+    }
+  }
+
+  // 2. Check Mid-Window Partitioned Rebase (Corporate Action Step-Change):
+  for (let i = 1; i < overlapPairs.length; i++) {
+    const prePairs = overlapPairs.slice(0, i);
+    const postPairs = overlapPairs.slice(i);
+
+    if (prePairs.length < 2) continue;
+
+    const preRatios = prePairs.map((p) => p.ratio);
+    const preFactor = median(preRatios);
+
+    if (Math.abs(preFactor - 1) < MATERIAL_FACTOR_THRESHOLD) continue;
+
+    const preMaxDev = Math.max(
+      ...preRatios.map((r) => Math.abs(r - preFactor) / preFactor),
+    );
+    if (preMaxDev > MAX_FACTOR_DEVIATION) continue;
+
+    const postRatios = postPairs.map((p) => p.ratio);
+    const postMaxDevFromOne = Math.max(
+      ...postRatios.map((r) => Math.abs(r - 1)),
+    );
+    if (postMaxDevFromOne > MAX_FACTOR_DEVIATION) continue;
+
+    const effectiveDate = postPairs[0].date;
+    return {
+      factor: preFactor,
+      effectiveDate,
+      sampleSize: prePairs.length,
+      maxRelativeDeviation: preMaxDev,
+      partitionType: 'MID_WINDOW_PARTITION',
+    };
+  }
+
+  return null;
 }
 
 /**

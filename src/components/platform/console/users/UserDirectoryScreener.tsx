@@ -23,11 +23,14 @@ import {
   bulkUpdateUserStatusAction,
 } from '@/lib/server/console-actions';
 import type { ConsoleUserRowItem } from '@/lib/server/console-queries';
+import ProprietaryAccessToggle from './ProprietaryAccessToggle';
 
 interface UserDirectoryScreenerProps {
   users: ConsoleUserRowItem[];
   onSelectUser: (user: ConsoleUserRowItem) => void;
   onRefresh?: () => void;
+  canManageProprietaryAccess: boolean;
+  onAccessChanged: (userId: string, enabled: boolean) => void;
 }
 
 function formatDate(iso: string | null) {
@@ -115,6 +118,8 @@ export default function UserDirectoryScreener({
   users,
   onSelectUser,
   onRefresh,
+  canManageProprietaryAccess,
+  onAccessChanged,
 }: UserDirectoryScreenerProps) {
   const { locale } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -503,6 +508,9 @@ export default function UserDirectoryScreener({
                 </th>
 
                 {/* 7. Member Status */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[150px]">Strategies</th>
+
+                {/* 8. Member Status */}
                 <th className="py-2.5 px-3 text-center font-medium min-w-[100px]">
                   Status
                 </th>
@@ -526,7 +534,7 @@ export default function UserDirectoryScreener({
             <tbody className="divide-y divide-white/[0.06]">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-12 text-center text-zinc-400">
+                  <td colSpan={12} className="py-12 text-center text-zinc-400">
                     No members match your search or segment filter.
                   </td>
                 </tr>
@@ -632,6 +640,11 @@ export default function UserDirectoryScreener({
                       </td>
 
                       {/* 7. Member Status */}
+                      <td className="py-3 px-3" onClick={(event) => event.stopPropagation()}>
+                        <ProprietaryAccessToggle userId={u.id} enabled={u.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} onChanged={onAccessChanged} compact />
+                      </td>
+
+                      {/* 8. Member Status */}
                       <td className="py-3 px-3 text-center">
                         <span
                           title={

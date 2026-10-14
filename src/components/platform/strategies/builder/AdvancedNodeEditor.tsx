@@ -41,8 +41,11 @@ export default function AdvancedNodeEditor({
     const available = getAvailableUpstreamNodes(nodes, node.id);
     if (isBuyTerminal) return available.filter((candidate) => candidate.stage === 'entry' && candidate.parameters?.actionSide !== 'sell');
     if (isSellTerminal) return available.filter((candidate) => candidate.stage === 'exit' || (candidate.stage === 'entry' && candidate.parameters?.actionSide === 'sell'));
+    if (node.templateId === 'position-memory' || node.templateId === 'rolling-state') return available.filter((candidate) => candidate.kind === 'input' || candidate.kind === 'calculation');
+    if (node.templateId === 'dynamic-target') return available.filter((candidate) => candidate.kind === 'input' || candidate.kind === 'calculation' || candidate.kind === 'state');
+    if (node.templateId === 'trailing-exit') return available.filter((candidate) => candidate.templateId === 'rolling-state' && (candidate.parameters?.operation ?? 'maximum') === 'maximum');
     return available;
-  }, [isBuyTerminal, isSellTerminal, node.id, nodes]);
+  }, [isBuyTerminal, isSellTerminal, node.id, node.templateId, nodes]);
   const selectedIndicatorIds = useMemo(
     () => new Set(parameters.indicatorId ? [parameters.indicatorId] : []),
     [parameters.indicatorId],
@@ -245,7 +248,7 @@ export default function AdvancedNodeEditor({
             </label>
             <label>
               <span className={LABEL_CLASS}>{isAr ? 'التحديث' : 'Update'}</span>
-              <select value={parameters.update ?? 'eachBar'} onChange={(event) => updateParameter('update', event.target.value)} className={INPUT_CLASS}>
+              <select value={parameters.update ?? 'never'} onChange={(event) => updateParameter('update', event.target.value)} className={INPUT_CLASS}>
                 <option value="eachBar">{isAr ? 'كل فترة' : 'Each bar'}</option>
                 <option value="never">{isAr ? 'ثابت' : 'Keep fixed'}</option>
               </select>
@@ -265,7 +268,7 @@ export default function AdvancedNodeEditor({
       case 'dynamic-target':
         return (
           <label>
-            <span className={LABEL_CLASS}>{isAr ? 'المضاعف' : 'Multiplier'}</span>
+            <span className={LABEL_CLASS}>{isAr ? 'مضاعف مسافة السعر' : 'Price-distance multiplier'}</span>
             <input value={parameters.multiplier ?? '1'} onChange={(event) => updateParameter('multiplier', event.target.value)} inputMode="decimal" className={INPUT_CLASS} />
           </label>
         );
@@ -273,11 +276,11 @@ export default function AdvancedNodeEditor({
         return (
           <>
             <label>
-              <span className={LABEL_CLASS}>{isAr ? 'مسافة التتبع' : 'Trail distance'}</span>
+              <span className={LABEL_CLASS}>{isAr ? 'مضاعف ATR' : 'ATR multiplier'}</span>
               <input value={parameters.distance ?? '2'} onChange={(event) => updateParameter('distance', event.target.value)} inputMode="decimal" className={INPUT_CLASS} />
             </label>
             <label>
-              <span className={LABEL_CLASS}>{isAr ? 'فترة التذبذب' : 'Volatility period'}</span>
+              <span className={LABEL_CLASS}>{isAr ? 'فترة ATR' : 'ATR period'}</span>
               <input type="number" min="1" value={parameters.volatilityPeriod ?? '14'} onChange={(event) => updateParameter('volatilityPeriod', event.target.value)} className={INPUT_CLASS} />
             </label>
           </>

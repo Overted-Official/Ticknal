@@ -11,7 +11,8 @@ import {
 
 import { desc, eq, sql } from 'drizzle-orm';
 import { dailyPrices, macroMoneySupply } from '@/db/schema';
-import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
+import { getCachedTickers, getCachedRecentPrices, registerTickersInvalidationCallback } from '@/lib/data-cache';
+import { requireProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
 
 type TradingViewPeriod = {
   time: number;
@@ -269,10 +270,21 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
 let tickersResponseCache: { data: any[]; timestamp: number } | null = null;
 const TICKERS_RESPONSE_CACHE_TTL = 60 * 1000; // 60s in-memory cache
 
-export async function handleTickersGet() {
+export function invalidateTickersResponseCache(): void {
+  tickersResponseCache = null;
+}
+
+registerTickersInvalidationCallback(() => {
+  invalidateTickersResponseCache();
+});
+
+export async function handleTickersGet(request?: Request) {
   try {
+    const url = request?.url ? new URL(request.url) : null;
+    const includeDelisted = url?.searchParams.get('includeDelisted') === 'true';
+
     const now = Date.now();
-    if (tickersResponseCache && now - tickersResponseCache.timestamp < TICKERS_RESPONSE_CACHE_TTL) {
+    if (!includeDelisted && tickersResponseCache && now - tickersResponseCache.timestamp < TICKERS_RESPONSE_CACHE_TTL) {
       return NextResponse.json(tickersResponseCache.data, {
         headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
       });
@@ -282,6 +294,10 @@ export async function handleTickersGet() {
       getCachedTickers(),
       getCachedRecentPrices().catch(() => []),
     ]);
+
+    const activeOrAllTickers = includeDelisted
+      ? allTickers
+      : allTickers.filter((t) => t.status !== 'DELISTED');
 
     const priceMap: Record<string, { lastPrice: number; prevPrice: number }> = {};
     for (const row of (recentPricesRows || [])) {
@@ -293,7 +309,7 @@ export async function handleTickersGet() {
       if (rn === 2) priceMap[sym].prevPrice = close;
     }
 
-    const enrichedTickers = allTickers.map((t) => {
+    const enrichedTickers = activeOrAllTickers.map((t) => {
       const cleanSym = (t.symbol || '').replace('.CA', '').toUpperCase();
       const p = priceMap[cleanSym] || { lastPrice: 0, prevPrice: 0 };
       const price = p.lastPrice || 0;
@@ -307,7 +323,9 @@ export async function handleTickersGet() {
       };
     });
 
-    tickersResponseCache = { data: enrichedTickers, timestamp: Date.now() };
+    if (!includeDelisted) {
+      tickersResponseCache = { data: enrichedTickers, timestamp: Date.now() };
+    }
 
     return NextResponse.json(enrichedTickers, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
@@ -347,6 +365,8 @@ export async function handleInflationGet(request: Request) {
 
 export async function handleOpportunitiesGet(request: Request): Promise<Response> {
   try {
+    const denied = await requireProprietaryAccess();
+    if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const requestedBars = parseInt(searchParams.get('bars') || searchParams.get('limitBars') || '5', 10);
     const limitBars = Math.min(20, Math.max(1, Number.isFinite(requestedBars) ? requestedBars : 5));
@@ -357,7 +377,7 @@ export async function handleOpportunitiesGet(request: Request): Promise<Response
 
     return NextResponse.json({ opportunities }, {
       status: 200,
-      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400' },
+      headers: { 'Cache-Control': 'private, no-store' },
     });
   } catch (err: any) {
     console.error('API /api/opportunities error:', err);

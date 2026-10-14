@@ -69,6 +69,15 @@ const nextConfig = {
         ],
       },
       {
+        source: '/manifest.webmanifest',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
         // Landing-page device scenes use only these first-party routes in same-origin frames.
         source: '/charts',
         headers: [

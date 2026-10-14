@@ -7,10 +7,10 @@ import './app-splash.css';
 import { SPLASH_ATTRIBUTE, SPLASH_SESSION_KEY } from './splash-boot-script';
 
 /** Time (from first paint) until the logo is fully assembled and the wordmark has landed. */
-const INTRO_MS = 1900;
-const REDUCED_INTRO_MS = 450;
+const INTRO_MS = 850;
+const REDUCED_INTRO_MS = 250;
 /** Must match the .tks-root exit transition in app-splash.css. */
-const EXIT_MS = 380;
+const EXIT_MS = 240;
 
 declare global {
   interface Window {

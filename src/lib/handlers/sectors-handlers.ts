@@ -28,6 +28,7 @@ import {
   type PrecomputedModelCache,
 } from '@/lib/finance/champion-routing';
 import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
+import { requireProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
 
 export type {
   StockPerformanceItem,
@@ -586,17 +587,25 @@ export async function getOrInitPrecomputedCache(): Promise<PrecomputedModelCache
       timestamp: Date.now(),
     };
     precomputedCache = newCache;
-    precomputePromise = null;
     return newCache;
   })();
 
-  return precomputePromise;
+  const currentPromise = precomputePromise;
+  try {
+    return await currentPromise;
+  } finally {
+    if (precomputePromise === currentPromise) precomputePromise = null;
+  }
 }
 
 
 
 export async function handleSignalsGet(request?: Request) {
   try {
+    if (request) {
+      const denied = await requireProprietaryAccess();
+      if (denied) return denied;
+    }
     const url = request ? new URL(request.url) : null;
     const strategy = url?.searchParams.get('strategy') || 'psi';
     const timeframeParam = url?.searchParams.get('timeframe') || '';
@@ -993,13 +1002,16 @@ export async function handleSignalsGet(request?: Request) {
       };
 
       memSignalsCacheMap.set(cacheKey, { data: payload, timestamp: Date.now() });
-      inFlightSignalsMap.delete(cacheKey);
       return payload;
     })();
 
     inFlightSignalsMap.set(cacheKey, promise);
-    const result = await promise;
-    return NextResponse.json(result, { headers: EDGE_CACHE_HEADERS });
+    try {
+      const result = await promise;
+      return NextResponse.json(result, { headers: EDGE_CACHE_HEADERS });
+    } finally {
+      if (inFlightSignalsMap.get(cacheKey) === promise) inFlightSignalsMap.delete(cacheKey);
+    }
   } catch (error) {
     console.error('Error computing sector strategy signals:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

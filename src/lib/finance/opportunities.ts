@@ -193,7 +193,7 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
         metrics: signalNotifications.metrics,
       })
       .from(signalNotifications)
-      .where(and(eq(signalNotifications.signal, 'BUY'), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .where(and(eq(signalNotifications.signal, 'BUY'), inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
       .orderBy(desc(signalNotifications.signalDate))
       .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
   } catch {
@@ -206,7 +206,7 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
         signal: signalNotifications.signal,
       })
       .from(signalNotifications)
-      .where(and(eq(signalNotifications.signal, 'BUY'), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .where(and(eq(signalNotifications.signal, 'BUY'), inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
       .orderBy(desc(signalNotifications.signalDate))
       .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
   }

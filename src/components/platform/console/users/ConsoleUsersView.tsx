@@ -13,6 +13,7 @@ import type { ConsoleUsersPageData, ConsoleUserRowItem } from '@/lib/server/cons
 
 interface ConsoleUsersViewProps {
   data: ConsoleUsersPageData;
+  canManageProprietaryAccess: boolean;
 }
 
 const SECTIONS: ConsoleNavSection[] = [
@@ -21,9 +22,16 @@ const SECTIONS: ConsoleNavSection[] = [
   { id: 'section-acquisition-intelligence', label: 'Acquisition & Intelligence', shortLabel: 'Acquisition' },
 ];
 
-export default function ConsoleUsersView({ data }: ConsoleUsersViewProps) {
+export default function ConsoleUsersView({ data, canManageProprietaryAccess }: ConsoleUsersViewProps) {
   const router = useRouter();
-  const [activeUser, setActiveUser] = useState<ConsoleUserRowItem | null>(null);
+  const [activeUserId, setActiveUserId] = useState<string | null>(null);
+  const [accessOverrides, setAccessOverrides] = useState<Record<string, boolean>>({});
+  const users = data.users.map((user) => ({ ...user, proprietaryStrategyAccess: accessOverrides[user.id] ?? user.proprietaryStrategyAccess }));
+  const activeUser = users.find((user) => user.id === activeUserId) ?? null;
+  const handleAccessChanged = (userId: string, enabled: boolean) => {
+    setAccessOverrides((current) => ({ ...current, [userId]: enabled }));
+    router.refresh();
+  };
 
   const handleRefresh = () => {
     router.refresh();
@@ -71,8 +79,10 @@ export default function ConsoleUsersView({ data }: ConsoleUsersViewProps) {
           </div>
 
           <UserDirectoryScreener
-            users={data.users}
-            onSelectUser={setActiveUser}
+            users={users}
+            canManageProprietaryAccess={canManageProprietaryAccess}
+            onAccessChanged={handleAccessChanged}
+            onSelectUser={(user) => setActiveUserId(user.id)}
             onRefresh={handleRefresh}
           />
         </section>
@@ -89,7 +99,9 @@ export default function ConsoleUsersView({ data }: ConsoleUsersViewProps) {
       {activeUser && (
         <ConsoleUserDetailDrawer
           user={activeUser}
-          onClose={() => setActiveUser(null)}
+          canManageProprietaryAccess={canManageProprietaryAccess}
+          onAccessChanged={handleAccessChanged}
+          onClose={() => setActiveUserId(null)}
           onRefresh={handleRefresh}
         />
       )}

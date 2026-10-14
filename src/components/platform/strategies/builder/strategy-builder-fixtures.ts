@@ -78,6 +78,10 @@ export const STRATEGY_PROFILES: readonly StrategyProfile[] = [
   },
 ];
 
+export function getVisibleStrategyProfiles(canViewProprietary: boolean): readonly StrategyProfile[] {
+  return canViewProprietary ? STRATEGY_PROFILES : [];
+}
+
 export const STRATEGY_PROFILE_ARABIC: Readonly<Record<StrategyProfile['id'], Omit<StrategyProfile, 'id' | 'shortName'>>> = {
   psi: {
     name: 'استراتيجية تايفون',
@@ -293,4 +297,3 @@ export const BACKTEST_ROWS: Readonly<Record<BacktestGranularity, readonly Backte
   industry: INDUSTRIES,
   ticker: TICKERS,
 };
-

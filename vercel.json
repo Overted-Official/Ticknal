@@ -6,7 +6,11 @@
     },
     {
       "path": "/api/cron/process-signals",
-      "schedule": "15 12 * * 0-4"
+      "schedule": "0 15 * * 0-4"
+    },
+    {
+      "path": "/api/cron/process-custom-strategies",
+      "schedule": "0 16 * * 0-4"
     },
     {
       "path": "/api/cron/update-investor-flows",

@@ -11,15 +11,18 @@ import { runFullHydraBacktest } from '@/strategies/Hydra';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeStrategy, analyzeTickerChampion, type StrategyId } from '@/lib/strategy-analysis';
+import { requireProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
 
 const STRATEGY_CACHE_HEADERS = {
-  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
+  'Cache-Control': 'private, no-store',
 };
 
 let predictorInstance: any = null;
 
 export async function handleSignalsGet(request: Request) {
   try {
+    const denied = await requireProprietaryAccess();
+    if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategyParam = searchParams.get('strategy') || 'psi';
@@ -118,6 +121,8 @@ export async function handleSignalsGet(request: Request) {
  */
 export async function handleStrategyChampionGet(request: Request) {
   try {
+    const denied = await requireProprietaryAccess();
+    if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
@@ -170,6 +175,8 @@ export async function handleStrategyChampionGet(request: Request) {
 
 export async function handleMetricsGet(request: Request) {
   try {
+    const denied = await requireProprietaryAccess();
+    if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategy = searchParams.get('strategy') || 'psi';
@@ -247,6 +254,8 @@ export async function handleMetricsGet(request: Request) {
 }
 
 export async function handleLevelsGet(request: Request) {
+  const denied = await requireProprietaryAccess();
+  if (denied) return denied;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -330,6 +339,8 @@ function addCanonicalReportContext(report: any, analysis: Awaited<ReturnType<typ
 
 export async function handleReportGet(request: Request) {
   try {
+    const denied = await requireProprietaryAccess();
+    if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const strategy = searchParams.get('strategy') || 'psi';

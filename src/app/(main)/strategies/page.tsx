@@ -2,14 +2,19 @@ import StrategiesPageView from '@/components/platform/strategies/StrategiesPageV
 import { buildStrategyCompanyUniverse } from '@/components/platform/strategies/builder/strategy-universe-catalog';
 import { getStrategyIndicatorCatalog } from '@/components/platform/strategies/strategy-indicator-catalog';
 import { getCachedTickers } from '@/lib/utils/data-cache';
+import { getCurrentProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
 
 export const dynamic = 'force-dynamic';
 
 export default async function StrategiesPage() {
-  const universe = await getCachedTickers().then(buildStrategyCompanyUniverse).catch(() => []);
+  const [universe, access] = await Promise.all([
+    getCachedTickers().then(buildStrategyCompanyUniverse).catch(() => []),
+    getCurrentProprietaryAccess(),
+  ]);
   return (
     <div className="flex-1 h-full w-full flex flex-col bg-black text-white overflow-hidden pb-[calc(64px+max(var(--ticknal-safe-area-bottom),0.5rem))] md:pb-0">
-      <StrategiesPageView indicatorCatalog={getStrategyIndicatorCatalog()} universe={universe} />
+      <StrategiesPageView indicatorCatalog={getStrategyIndicatorCatalog()} universe={universe}
+        canViewProprietary={access.canView} proprietaryAlertsEnabled={access.canReceiveAlerts} />
     </div>
   );
 }

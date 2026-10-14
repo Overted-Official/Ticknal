@@ -33,6 +33,7 @@ import {
   handleUpdateInvestorFlows,
   handleUpdateNews,
   handleGenerateTicknalTake,
+  handleSyncTickers,
 } from '@/lib/cron-handlers';
 import {
   handleQuoteGet,
@@ -168,6 +169,8 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
         return handleUpdateNews(req);
       case 'ticknal-take':
         return handleGenerateTicknalTake(req);
+      case 'sync-tickers':
+        return handleSyncTickers(req);
       default:
         return NextResponse.json({ error: `Unknown cron job: ${sub}` }, { status: 404 });
     }
@@ -248,7 +251,7 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     return handleQuoteGet(req);
   }
   if (root === 'tickers' || (root === 'market' && sub === 'tickers')) {
-    return handleTickersGet();
+    return handleTickersGet(req);
   }
   if (
     (root === 'macro' && sub === 'inflation') ||

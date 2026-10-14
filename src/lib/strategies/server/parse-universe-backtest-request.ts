@@ -65,6 +65,8 @@ function validAdvancedProgram(value: unknown): value is AdvancedStrategyProgram 
   if (!record(value) || value.schemaVersion !== 2 || value.timeframe !== 'D'
     || !Array.isArray(value.inputs) || value.inputs.length < 1 || value.inputs.length > 32) return false;
   const ids = new Set<string>();
+  const statefulIds = new Set<string>();
+  const maximumStateIds = new Set<string>();
   for (const input of value.inputs) {
     if (!record(input) || !shortText(input.id) || ids.has(input.id)) return false;
     if (input.kind === 'market') {
@@ -76,10 +78,19 @@ function validAdvancedProgram(value: unknown): value is AdvancedStrategyProgram 
       const definition = getIndicatorDefinition(input.indicatorId);
       if (!definition || definition.formulaVersion !== input.formulaVersion || definition.metadata.repaintBehavior === 'confirmed-with-delay'
         || !definition.metadata.outputs.some((output) => output.key === input.outputKey && output.kind === 'number' && output.unit === input.unit)) return false;
+    } else if (input.kind === 'position-memory' || input.kind === 'rolling-state') {
+      if (typeof input.sourceId !== 'string' || !ids.has(input.sourceId) || statefulIds.has(input.sourceId)) return false;
+      if (input.kind === 'position-memory') {
+        if (!['entry', 'exit'].includes(String(input.capture)) || !['eachBar', 'never'].includes(String(input.update))) return false;
+      } else {
+        if (!['minimum', 'maximum'].includes(String(input.operation))) return false;
+        if (input.operation === 'maximum') maximumStateIds.add(input.id);
+      }
+      statefulIds.add(input.id);
     } else if (input.kind === 'calculation') {
       if (!['add', 'subtract', 'multiply', 'divide', 'weighted', 'ema', 'sma', 'wma', 'normalize', 'minimum', 'maximum', 'mean', 'median'].includes(String(input.operation))
         || !Array.isArray(input.sourceIds) || input.sourceIds.length < 1 || input.sourceIds.length > 8
-        || !input.sourceIds.every((id) => typeof id === 'string' && ids.has(id))) return false;
+        || !input.sourceIds.every((id) => typeof id === 'string' && ids.has(id) && !statefulIds.has(id))) return false;
       if (['add', 'subtract', 'multiply', 'divide', 'weighted'].includes(String(input.operation)) && input.sourceIds.length < 2) return false;
       if (input.period !== undefined && (!Number.isSafeInteger(input.period) || Number(input.period) < 1 || Number(input.period) > 1000)) return false;
       if (input.weights !== undefined && (!Array.isArray(input.weights) || input.weights.length !== input.sourceIds.length
@@ -94,7 +105,25 @@ function validAdvancedProgram(value: unknown): value is AdvancedStrategyProgram 
         && typeof predicate.inputId === 'string' && ids.has(predicate.inputId)
         && ['crossesAbove', 'crossesBelow', 'isAbove', 'isBelow'].includes(String(predicate.operator))
         && typeof predicate.threshold === 'number' && Number.isFinite(predicate.threshold)));
-  return sideValid(value.buy) && sideValid(value.sell);
+  const policies = value.exitPolicies === undefined ? [] : value.exitPolicies;
+  if (!Array.isArray(policies) || policies.length > 16) return false;
+  const policyIds = new Set<string>();
+  for (const policy of policies) {
+    if (!record(policy) || !shortText(policy.id) || policyIds.has(policy.id)) return false;
+    policyIds.add(policy.id);
+    if (policy.kind === 'profit-target') {
+      if (typeof policy.sourceId !== 'string' || !ids.has(policy.sourceId)
+        || typeof policy.multiplier !== 'number' || !Number.isFinite(policy.multiplier)
+        || policy.multiplier <= 0 || policy.multiplier > 1000) return false;
+    } else if (policy.kind === 'trailing-stop') {
+      if (typeof policy.anchorId !== 'string' || !maximumStateIds.has(policy.anchorId)
+        || typeof policy.distance !== 'number' || !Number.isFinite(policy.distance)
+        || policy.distance <= 0 || policy.distance > 1000
+        || !Number.isSafeInteger(policy.volatilityPeriod) || Number(policy.volatilityPeriod) < 1
+        || Number(policy.volatilityPeriod) > 1000) return false;
+    } else return false;
+  }
+  return sideValid(value.buy) && (sideValid(value.sell) || (Array.isArray(value.sell) && value.sell.length === 0 && policies.length > 0));
 }
 
 export function parseUniverseBacktestRequest(body: unknown): ParsedUniverseBacktestRequest {

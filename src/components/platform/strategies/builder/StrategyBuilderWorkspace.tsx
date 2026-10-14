@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, LineChart, Pencil, Plus, SlidersHorizontal, X } from '@/components/ui/icon-library';
+import { Bell, ChevronRight, LineChart, Pencil, Plus, SlidersHorizontal, X } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
 import StrategyFlowCanvas from './StrategyFlowCanvas';
 import StrategyResultsDeck, { type StrategyResultsMode } from './StrategyResultsDeck';
@@ -11,7 +11,7 @@ import { projectSimpleDraftIntoAdvancedNodes, reconcileSimpleDraftFromFlow } fro
 import { compileAdvancedStrategy } from './compile-advanced-strategy';
 import { compileSimpleStrategy, type CompileDiagnosticCode } from './compile-simple-strategy';
 import { createAdvancedDraftNodes, TYPHON_BLUEPRINT_NODES, type AdvancedStrategyNode } from './advanced-strategy-model';
-import { STRATEGY_PROFILE_ARABIC, STRATEGY_PROFILES, type StrategyProfile } from './strategy-builder-fixtures';
+import { STRATEGY_PROFILE_ARABIC, getVisibleStrategyProfiles, type StrategyProfile } from './strategy-builder-fixtures';
 import {
   addRuleToDraft,
   createEmptyStrategyDraft,
@@ -31,6 +31,8 @@ import { readSelectedUniverse } from './strategy-universe-selection';
 interface StrategyBuilderWorkspaceProps {
   readonly indicatorCatalog: readonly StrategyBuilderIndicatorCatalogItem[];
   readonly universe: readonly StrategyUniverseCompany[];
+  readonly canViewProprietary: boolean;
+  readonly proprietaryAlertsEnabled: boolean;
 }
 
 type SavedStrategy = SavedStrategyRecord;
@@ -72,15 +74,18 @@ function profileNodes(profile: StrategyProfile): readonly AdvancedStrategyNode[]
   ] as AdvancedStrategyNode[];
 }
 
-export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }: StrategyBuilderWorkspaceProps) {
+export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, canViewProprietary, proprietaryAlertsEnabled }: StrategyBuilderWorkspaceProps) {
   const { locale } = useTranslation();
   const builderLocale: 'en' | 'ar' = locale === 'ar' ? 'ar' : 'en';
   const isAr = builderLocale === 'ar';
-  const [selectedStrategyId, setSelectedStrategyId] = useState<string>('psi');
+  const [selectedStrategyId, setSelectedStrategyId] = useState<string>(canViewProprietary ? 'psi' : 'custom-draft');
   const [draft, setDraft] = useState<StrategyDraft>(createEmptyStrategyDraft);
   const [advancedNodes, setAdvancedNodes] = useState<readonly AdvancedStrategyNode[]>(createAdvancedDraftNodes);
   const [savedStrategies, setSavedStrategies] = useState<readonly SavedStrategy[]>([]);
   const [selectedSymbols, setSelectedSymbols] = useState<readonly string[] | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [protectedAlertsEnabled, setProtectedAlertsEnabled] = useState(proprietaryAlertsEnabled);
+  const [protectedAlertsPending, setProtectedAlertsPending] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [builderMode, setBuilderMode] = useState<'simple' | 'advanced'>('simple');
@@ -123,6 +128,20 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
         }
         if (cancelled) return;
         setSavedStrategies([...server, ...migrated]);
+        const deepLink = new URLSearchParams(window.location.search);
+        const linked = [...server, ...migrated].find((strategy) => strategy.id === deepLink.get('strategy'));
+        if (linked) {
+          setDraft(linked.draft);
+          setAdvancedNodes(linked.nodes.filter((node) => node.stage !== 'output'));
+          setBuilderMode(linked.mode);
+          setEnabledOptionalStages(linked.optionalStages ?? []);
+          setSelectedSymbols(linked.selectedSymbols ?? null);
+          setNotificationsEnabled(linked.notificationsEnabled === true);
+          setStorageError(linked.notificationError ?? null);
+          setSelectedStrategyId(linked.id);
+          const linkedTicker = deepLink.get('ticker');
+          if (linkedTicker && universe.some((company) => company.symbol === linkedTicker)) setTicker(linkedTicker);
+        }
         if (legacyRaw) localStorage.removeItem(STORAGE_KEY);
         setStorageError(null);
       } catch (error) { if (!cancelled) setStorageError(error instanceof Error ? error.message : 'Strategy storage is unavailable.'); }
@@ -134,7 +153,8 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
   const indicators = useMemo<readonly StrategyBuilderIndicatorOption[]>(() => localizeIndicatorCatalog(indicatorCatalog, builderLocale), [builderLocale, indicatorCatalog]);
   const simpleCompilation = useMemo(() => compileSimpleStrategy(draft, indicators), [draft, indicators]);
   const advancedCompilation = useMemo(() => compileAdvancedStrategy(advancedNodes, indicators), [advancedNodes, indicators]);
-  const selectedProfile = STRATEGY_PROFILES.find((profile) => profile.id === selectedStrategyId);
+  const visibleProfiles = getVisibleStrategyProfiles(canViewProprietary);
+  const selectedProfile = visibleProfiles.find((profile) => profile.id === selectedStrategyId);
   const isProtected = Boolean(selectedProfile);
   const strategyName = selectedProfile ? (isAr ? STRATEGY_PROFILE_ARABIC[selectedProfile.id].name : selectedProfile.name) : draft.name;
   const flowNodes = selectedProfile ? profileNodes(selectedProfile) : builderMode === 'simple' ? projectSimpleDraftIntoAdvancedNodes(draft, indicators, createAdvancedDraftNodes()) : advancedNodes;
@@ -153,7 +173,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
     endDate,
   });
 
-  const touchDraft = () => { setDraftRevision((value) => value + 1); setSavedNotice(false); };
+  const touchDraft = () => { setDraftRevision((value) => value + 1); setSavedNotice(false); setStorageError(null); };
 
   const selectStrategy = (id: string) => {
     const saved = savedStrategies.find((strategy) => strategy.id === id);
@@ -163,10 +183,13 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
       setBuilderMode(saved.mode);
       setEnabledOptionalStages((saved.optionalStages ?? []).filter((stage): stage is OptionalStrategyStageId => stage === 'calculations' || stage === 'position'));
       setSelectedSymbols(saved.selectedSymbols ?? null);
+      setNotificationsEnabled(saved.notificationsEnabled === true);
       touchDraft();
+      setStorageError(saved.notificationError ?? null);
     } else {
       setEnabledOptionalStages([]);
       setSelectedSymbols(null);
+      setNotificationsEnabled(false);
     }
     setSelectedStrategyId(id);
     setFocusedBlockId(null);
@@ -179,6 +202,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
     setAdvancedNodes(createAdvancedDraftNodes());
     setBuilderMode('simple');
     setSelectedSymbols(null);
+    setNotificationsEnabled(false);
     setEnabledOptionalStages([]);
     setSelectedStrategyId(id);
     setFocusedBlockId(null);
@@ -187,31 +211,40 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
   };
 
   const editProfile = () => {
-    if (!selectedProfile) { setRenaming(true); return; }
-    const nodes = profileNodes(selectedProfile);
-    const flow = buildStrategyFlow(nodes, true);
-    const id = `custom-${Date.now()}`;
-    setDraft({ ...createEmptyStrategyDraft(), id, name: `${selectedProfile.name} copy` });
-    setAdvancedNodes(nodes.map((node) => ({ ...node, protected: false, connections: flow.edges.filter((edge) => edge.target === node.id).map((edge) => edge.source) })));
-    setBuilderMode('advanced');
-    setSelectedSymbols(null);
-    setEnabledOptionalStages([]);
-    setSelectedStrategyId(id);
-    touchDraft();
+    if (!selectedProfile) setRenaming(true);
   };
 
-  const saveStrategy = async (symbolsOverride?: readonly string[]): Promise<boolean> => {
+  const toggleProtectedAlerts = async () => {
+    if (!selectedProfile || protectedAlertsPending) return;
+    setProtectedAlertsPending(true);
+    setStorageError(null);
+    try {
+      const response = await fetch('/api/strategies/proprietary/access', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationsEnabled: !protectedAlertsEnabled }), cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('Could not update proprietary alerts.');
+      setProtectedAlertsEnabled(!protectedAlertsEnabled);
+    } catch (error) { setStorageError(error instanceof Error ? error.message : 'Could not update alerts.'); }
+    finally { setProtectedAlertsPending(false); }
+  };
+
+  const saveStrategy = async (symbolsOverride?: readonly string[], notificationsOverride?: boolean): Promise<boolean> => {
     if (isProtected) return false;
     const name = draft.name.trim() || 'Untitled strategy';
-    const snapshot: SavedStrategy = { id: draft.id, name, draft: { ...draft, name }, nodes: advancedNodes.filter((node) => node.stage !== 'output'), mode: builderMode, optionalStages: enabledOptionalStages, selectedSymbols: symbolsOverride ?? selectedSymbols ?? universe.map((company) => company.symbol) };
+    const snapshot: SavedStrategy = { id: draft.id, name, draft: { ...draft, name }, nodes: advancedNodes.filter((node) => node.stage !== 'output'), mode: builderMode, optionalStages: enabledOptionalStages, selectedSymbols: symbolsOverride ?? selectedSymbols ?? universe.map((company) => company.symbol), notificationsEnabled: complete && (notificationsOverride ?? notificationsEnabled) };
     setSaving(true);
     setStorageError(null);
     try {
       const response = await fetch('/api/strategies/saved', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ strategy: snapshot }), cache: 'no-store' });
-      if (!response.ok) throw new Error(response.status === 401 ? 'Sign in to save strategies.' : 'Could not save strategy on the server.');
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(response.status === 401 ? 'Sign in to save strategies.' : body?.error ?? 'Could not save strategy on the server.');
+      }
       setSavedStrategies((current) => [...current.filter((strategy) => strategy.id !== snapshot.id), snapshot]);
       setDraft(snapshot.draft);
       setSelectedSymbols(snapshot.selectedSymbols ?? null);
+      setNotificationsEnabled(snapshot.notificationsEnabled === true);
       setSavedNotice(true);
       setRenaming(false);
       return true;
@@ -256,7 +289,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
           >
           {analyticsOpen && <button type="button" className="strategy-studio-dock-rail-trigger" aria-label={isAr ? 'عناصر تحكم الاستوديو' : 'Studio controls'} aria-controls="strategy-studio-dock" aria-expanded={dockRailOpen} onClick={() => setDockRailOpen(true)}><SlidersHorizontal size={18} /></button>}
           <div id="strategy-studio-dock" className={`strategy-studio-dock ${analyticsOpen ? `strategy-studio-dock--rail ${dockRailOpen ? 'is-open' : ''}` : ''}`} role="toolbar" aria-orientation={analyticsOpen ? 'vertical' : 'horizontal'} aria-label={isAr ? 'عناصر تحكم استوديو الاستراتيجيات' : 'Strategy studio controls'}>
-            <div className="strategy-studio-selector"><StrategySelectorDropdown selectedStrategyId={selectedStrategyId} draft={draft} profiles={STRATEGY_PROFILES} savedStrategies={savedStrategies} locale={builderLocale} onSelect={selectStrategy} openUp /></div>
+            <div className="strategy-studio-selector"><StrategySelectorDropdown selectedStrategyId={selectedStrategyId} draft={draft} profiles={visibleProfiles} savedStrategies={savedStrategies} locale={builderLocale} onSelect={selectStrategy} openUp /></div>
             <span className="strategy-studio-dock-divider" aria-hidden="true" />
             <div className="seg-control shrink-0" role="tablist" aria-label={isAr ? 'وضع الإنشاء' : 'Builder mode'}>
               <button type="button" role="tab" aria-selected={builderMode === 'simple'} onClick={() => setBuilderMode('simple')} className={`seg-control-btn ${builderMode === 'simple' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'بسيط' : 'Simple'}</button>
@@ -264,8 +297,10 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe }:
             </div>
             <span className="strategy-studio-dock-divider" aria-hidden="true" />
             <button type="button" className="strategy-studio-toolbar-button" onClick={createNew}><Plus size={13} />{isAr ? 'جديدة' : 'New'}</button>
-            <button type="button" className="strategy-studio-toolbar-button" onClick={editProfile}><Pencil size={13} />{isAr ? 'تعديل' : 'Edit'}</button>
+            {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={editProfile}><Pencil size={13} />{isAr ? 'تعديل' : 'Edit'}</button>}
             {!isProtected && <button type="button" className="strategy-studio-save-button" onClick={() => { void saveStrategy(); }} disabled={saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : savedNotice ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ' : 'Save')}</button>}
+            {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { void saveStrategy(undefined, !notificationsEnabled); }} disabled={saving || (!notificationsEnabled && !complete)} aria-pressed={notificationsEnabled} title={!complete && !notificationsEnabled ? (isAr ? 'أكمل قواعد الاستراتيجية لتفعيل التنبيهات' : 'Complete the strategy before enabling alerts') : undefined}><Bell size={13} />{notificationsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'تفعيل التنبيهات' : 'Alerts off')}</button>}
+            {isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { void toggleProtectedAlerts(); }} disabled={protectedAlertsPending} aria-pressed={protectedAlertsEnabled}><Bell size={13} />{protectedAlertsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'تفعيل التنبيهات' : 'Alerts off')}</button>}
             <span className="strategy-studio-dock-divider" aria-hidden="true" />
             <button type="button" className="strategy-studio-analytics-button" aria-controls="strategy-analytics-panel" aria-expanded={analyticsOpen} onClick={() => { setDockRailOpen(false); setAnalyticsOpen((value) => !value); }}><LineChart size={15} />{isAr ? 'التحليلات' : 'Analytics'}<ChevronRight size={14} className="rtl-mirror" /></button>
           </div>

@@ -43,12 +43,26 @@ export interface OpenBacktestPosition {
   readonly mfePct: number;
 }
 
+export interface BacktestBarContext {
+  readonly index: number;
+  readonly bar: TimeSeriesFrame['bars'][number];
+  readonly position: { readonly entryPrice: number; readonly high: number; readonly low: number } | null;
+  readonly entered: boolean;
+  readonly exited: boolean;
+}
+
+export interface BacktestRuntime {
+  readonly onBar?: (context: BacktestBarContext) => void;
+  readonly exitReason?: (context: BacktestBarContext) => string | null;
+}
+
 export type BacktestResult =
   | {
       readonly status: 'ok';
       readonly trades: readonly BacktestTrade[];
       readonly equity: readonly BacktestEquityPoint[];
       readonly openPosition: OpenBacktestPosition | null;
+      readonly latestSignal: { readonly signal: 'BUY' | 'SELL'; readonly date: ObservationTime; readonly price: number; readonly reason: string } | null;
       readonly metrics: {
         readonly totalReturnPct: number;
         readonly maxDrawdownPct: number;
@@ -149,6 +163,7 @@ export function runBacktestWithSeries(
   period: BacktestPeriod | undefined,
   series: ReadonlyMap<string, readonly (number | null)[]>,
   formulaVersions: Readonly<Record<string, string>>,
+  runtime?: BacktestRuntime,
 ): BacktestResult {
   if (!Number.isFinite(assumptions.initialCapital) || assumptions.initialCapital <= 0
     || !Number.isFinite(assumptions.feeBps) || assumptions.feeBps < 0 || assumptions.feeBps >= 10_000) {
@@ -182,15 +197,19 @@ export function runBacktestWithSeries(
   let pending: { readonly side: 'buy' | 'sell'; readonly signalTime: ObservationTime } | null = null;
   let peak = assumptions.initialCapital;
   let maxDrawdownPct = 0;
+  let latestSignal: Extract<BacktestResult, { status: 'ok' }>['latestSignal'] = null;
 
   for (let index = firstIndex; index <= lastIndex; index += 1) {
     const bar = frame.bars[index];
+    let entered = false;
+    let exited = false;
     if (pending?.side === 'buy' && position === null) {
       const units = cash / (bar.open * (1 + feeRate));
       const entryFee = units * bar.open * feeRate;
       position = { entrySignalTime: pending.signalTime, entryTime: bar.time, entryPrice: bar.open,
         entryCost: cash, entryFee, units, low: bar.low, high: bar.high };
       cash = 0;
+      entered = true;
     } else if (pending?.side === 'sell' && position !== null) {
       const exitFee = position.units * bar.open * feeRate;
       cash = position.units * bar.open - exitFee;
@@ -200,6 +219,7 @@ export function runBacktestWithSeries(
         maePct: (Math.min(position.low, bar.open) / position.entryPrice - 1) * 100,
         mfePct: (Math.max(position.high, bar.open) / position.entryPrice - 1) * 100 });
       position = null;
+      exited = true;
     }
     pending = null;
 
@@ -212,15 +232,23 @@ export function runBacktestWithSeries(
     maxDrawdownPct = Math.min(maxDrawdownPct, (value / peak - 1) * 100);
     equity.push({ time: bar.time, value, inPosition: position !== null });
 
-    if (index < lastIndex) {
-      if (position === null && sideMatches(program.buy, index, series)) pending = { side: 'buy', signalTime: bar.time };
-      else if (position !== null && sideMatches(program.sell, index, series)) pending = { side: 'sell', signalTime: bar.time };
+    const context: BacktestBarContext = { index, bar, position, entered, exited };
+    runtime?.onBar?.(context);
+    const policyReason: string | null = position === null ? null : runtime?.exitReason?.(context) ?? null;
+    const signal: Extract<BacktestResult, { status: 'ok' }>['latestSignal'] = position === null
+      ? (sideMatches(program.buy, index, series) ? { signal: 'BUY' as const, date: bar.time, price: bar.close, reason: 'Buy conditions met.' } : null)
+      : (policyReason || sideMatches(program.sell, index, series)
+        ? { signal: 'SELL' as const, date: bar.time, price: bar.close, reason: policyReason ?? 'Sell conditions met.' }
+        : null);
+    if (index === lastIndex) latestSignal = signal;
+    else if (signal) {
+      pending = { side: signal.signal === 'BUY' ? 'buy' : 'sell', signalTime: bar.time };
     }
   }
 
   const finalClose = frame.bars[lastIndex]?.close;
   return {
-    status: 'ok', trades, equity,
+    status: 'ok', trades, equity, latestSignal,
     openPosition: position !== null && finalClose !== undefined ? {
       entrySignalTime: position.entrySignalTime, entryTime: position.entryTime, entryPrice: position.entryPrice,
       unrealizedReturnPct: (position.units * finalClose * (1 - feeRate) / position.entryCost - 1) * 100,

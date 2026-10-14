@@ -490,15 +490,18 @@ export default function FeedPost({
                   setIsLightboxOpen(true);
                 }
               }}
-              className="mt-3.5 rounded-xl overflow-hidden border border-white/[0.08] hover:border-white/20 bg-black max-h-[360px] w-full flex items-center justify-center relative cursor-zoom-in group/img transition-all"
+              className="mt-3.5 rounded-xl overflow-hidden border border-white/[0.08] hover:border-white/20 bg-black w-full max-w-[540px] aspect-square flex items-center justify-center relative cursor-zoom-in group/img transition-all"
               title="Click to view chart in full screen"
             >
               <img
                 src={localizedImageUrl}
                 alt={item.title || 'Market Chart'}
-                className="w-full h-auto max-h-[360px] object-contain bg-black transition-transform duration-200 group-hover/img:scale-[1.01]"
+                className="w-full h-full object-contain bg-black transition-transform duration-200 group-hover/img:scale-[1.01]"
                 loading="lazy"
-                onError={() => setPostImageError(true)}
+                onError={(err) => {
+                  console.warn('[FeedPost] Failed to load chart image for:', item.id, err);
+                  setPostImageError(true);
+                }}
               />
 
               {/* Discreet view chart indicator */}

@@ -15,7 +15,7 @@ const period = { startDate: '2025-01-01', endDate: '2025-12-31' };
 
 function success(symbol: string): BacktestResult {
   return {
-    status: 'ok', trades: [], equity: [], openPosition: null,
+    status: 'ok', trades: [], equity: [], openPosition: null, latestSignal: null,
     metrics: { totalReturnPct: symbol === 'COMI' ? 12 : -4, maxDrawdownPct: -6, closedTrades: 3, winRatePct: 50 },
     provenance: {
       sourceRevision: `revision-${symbol}`, adjustmentMode: 'as-stored', adjustmentRevision: null,

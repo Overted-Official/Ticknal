@@ -14,7 +14,12 @@ export default async function LandingStrategyScenePage({
 
   return (
     <div className="flex-1 h-full w-full flex flex-col bg-black text-white overflow-hidden pb-[calc(64px+max(var(--ticknal-safe-area-bottom),0.5rem))] md:pb-0">
-      <StrategiesPageView indicatorCatalog={getStrategyIndicatorCatalog()} universe={[]} />
+      <StrategiesPageView
+        indicatorCatalog={getStrategyIndicatorCatalog()}
+        universe={[]}
+        canViewProprietary={false}
+        proprietaryAlertsEnabled={false}
+      />
     </div>
   );
 }

@@ -113,7 +113,7 @@ Explore the full algorithmic terminal: https://ticknal.com/news?item=${item.id}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-300">
-                {isAr ? 'بطاقة التحليل الرسومية (16:9 HD)' : 'Infographic Social Card (16:9 HD)'}
+                {isAr ? 'بطاقة التحليل الرسومية (1:1 HD)' : 'Infographic Social Card (1:1 Square HD)'}
               </span>
               <button
                 type="button"
@@ -124,7 +124,7 @@ Explore the full algorithmic terminal: https://ticknal.com/news?item=${item.id}
                 <span>{isAr ? 'تحميل الصورة' : 'Download Graphic'}</span>
               </button>
             </div>
-            <div className="w-full rounded-lg overflow-hidden border border-white/10 bg-black aspect-video flex items-center justify-center">
+            <div className="w-full max-w-[320px] mx-auto rounded-lg overflow-hidden border border-white/10 bg-black aspect-square flex items-center justify-center">
               <img src={imageUrl} alt="" className="w-full h-full object-contain" />
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { createClient } from '../../../../lib/supabase/server';
 import { parseSavedStrategy, parseSelectedSymbols } from '../../../../lib/strategies/server/parse-saved-strategy';
 import { listUserStrategies, saveUserStrategy, updateUserStrategySelection } from '../../../../lib/strategies/server/strategy-store';
+import { compileSavedStrategy } from '../../../../lib/strategies/server/compile-saved-strategy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +50,10 @@ export async function PUT(request: Request): Promise<Response> {
     const body = await readJson(request);
     const parsed = parseSavedStrategy(body && typeof body === 'object' && 'strategy' in body ? body.strategy : null);
     if (!parsed.success) return Response.json({ status: 'invalid', error: parsed.error }, { status: 400, headers });
+    if (parsed.value.notificationsEnabled) {
+      const compiled = compileSavedStrategy(parsed.value);
+      if (compiled.status !== 'ready') return Response.json({ status: 'invalid', error: `Alerts require an executable strategy: ${compiled.message}` }, { status: 400, headers });
+    }
     return Response.json({ status: 'ok', strategy: await saveUserStrategy(owner, parsed.value) }, { headers });
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof RangeError) return Response.json({ status: 'invalid', error: error.message }, { status: error instanceof RangeError ? 413 : 400, headers });

@@ -28,6 +28,12 @@ export const tickers = pgTable('tickers', {
   logoUrl: varchar('logo_url', { length: 255 }),
   // Prices are stored in this instrument's native quote currency.
   currency: varchar('currency', { length: 10 }).default('EGP').notNull(),
+  status: varchar('status', { length: 20 }).default('ACTIVE').notNull(),
+  delistedAt: timestamp('delisted_at', { withTimezone: true }),
+}, (table) => {
+  return {
+    statusIdx: index('tickers_status_idx').on(table.status),
+  };
 });
 
 export const dailyPrices = pgTable('daily_prices', {
@@ -123,7 +129,7 @@ export const signalNotifications = pgTable('signal_notifications', {
   tickerSymbol: varchar('ticker_symbol', { length: 20 })
     .notNull()
     .references(() => tickers.symbol, { onDelete: 'cascade' }),
-  strategy: varchar('strategy', { length: 50 }).default('psi').notNull(),
+  strategy: varchar('strategy', { length: 100 }).default('psi').notNull(),
   signalDate: date('signal_date').notNull(),
   signal: varchar('signal', { length: 20 }).notNull(),
   // Canonical analysis snapshot written by the scheduled signal processor.
@@ -135,6 +141,9 @@ export const signalNotifications = pgTable('signal_notifications', {
   dataAsOf: date('data_as_of'),
   metrics: jsonb('metrics'),
   parameterVersion: varchar('parameter_version', { length: 100 }),
+  pushDeliveryStatus: varchar('push_delivery_status', { length: 16 }).default('not-applicable').notNull(),
+  pushAttempts: integer('push_attempts').default(0).notNull(),
+  pushNextAttemptAt: timestamp('push_next_attempt_at', { withTimezone: true }),
   sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
   return {
@@ -159,7 +168,7 @@ export const positions = pgTable('positions', {
   stopPrice: numeric('stop_price', { precision: 12, scale: 4 }),
   exitDate: date('exit_date'),
   exitPrice: numeric('exit_price', { precision: 12, scale: 4 }),
-  entryStrategyId: varchar('entry_strategy_id', { length: 50 }),
+  entryStrategyId: varchar('entry_strategy_id', { length: 100 }),
   entrySignalDate: date('entry_signal_date'),
   entrySignalPrice: numeric('entry_signal_price', { precision: 12, scale: 4 }),
   entrySource: varchar('entry_source', { length: 30 }).default('IMPORT'),
@@ -196,12 +205,30 @@ export const userStrategies = pgTable('user_strategies', {
   mode: varchar('mode', { length: 12 }).notNull(),
   definition: jsonb('definition').notNull(),
   selectedSymbols: jsonb('selected_symbols').notNull(),
+  notificationsEnabled: boolean('notifications_enabled').default(false).notNull(),
+  notificationSession: date('notification_session'),
+  notificationCursor: integer('notification_cursor').default(0).notNull(),
+  notificationGeneration: integer('notification_generation').default(0).notNull(),
+  notificationLeaseToken: varchar('notification_lease_token', { length: 36 }),
+  notificationLeaseUntil: timestamp('notification_lease_until', { withTimezone: true }),
+  notificationLastScannedAt: timestamp('notification_last_scanned_at', { withTimezone: true }),
+  notificationError: text('notification_error'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.userId, table.id] }),
   userUpdatedIdx: index('user_strategies_user_updated_idx').on(table.userId, table.updatedAt),
+  notificationScanIdx: index('user_strategies_notification_scan_idx').on(table.notificationsEnabled, table.notificationLastScannedAt),
 }));
+
+export const proprietaryStrategyAccess = pgTable('proprietary_strategy_access', {
+  userId: uuid('user_id').primaryKey().references(() => profiles.id, { onDelete: 'cascade' }),
+  enabled: boolean('enabled').default(false).notNull(),
+  notificationsEnabled: boolean('notifications_enabled').default(false).notNull(),
+  grantedBy: uuid('granted_by').references(() => profiles.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const banks = pgTable('banks', {
   id: serial('id').primaryKey(),

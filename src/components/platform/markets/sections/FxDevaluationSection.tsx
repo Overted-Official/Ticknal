@@ -8,6 +8,8 @@ import {
   Globe,
   Coins,
   AlertTriangle,
+  TrendingUp,
+  Activity,
 } from '@/components/ui/icon-library';
 import KPICard, { type KPICardProps } from '@/components/platform/home/investments/performance/kpi-rails/KPICard';
 import MoneySupplySection from './MoneySupplySection';
@@ -30,113 +32,172 @@ export default function FxDevaluationSection({
 }: FxDevaluationSectionProps) {
   const { locale } = useTranslation();
   const isHeroScene = useHeroSceneMode();
+  const isAr = locale === 'ar';
+
   const { data: liveFxData } = useSWR<FxFairValueResponse>(
     isHeroScene ? null : '/api/macro/fx-fair-value',
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 120000 }
   );
-  const fxData = isHeroScene ? HERO_SCENE_FX.data as FxFairValueResponse : liveFxData;
+  const fxData = isHeroScene ? (HERO_SCENE_FX.data as unknown as FxFairValueResponse) : liveFxData;
 
-  const officialUsd = fxData?.officialUsd ?? 51.89;
-  const compositeFair = fxData?.compositeFairValue ?? 52.68;
-  const gapPct = fxData?.managedGapPct ?? 1.52;
-  const gapEgp = fxData?.managedGapEgp ?? 0.79;
-  const riskScore = fxData?.devaluationRisk?.score ?? 15;
-  const riskLabel = fxData?.devaluationRisk?.label ?? 'Low Risk (Managed Crawl)';
-  const gdrRate = fxData?.gdrImpliedRate ?? 53.40;
-  const gdrSpread = fxData?.gdrSpreadPct ?? 2.92;
+  // 1. Official Spot
+  const officialUsd = fxData?.officialUsd ?? 52.60;
+  const atr14 = fxData?.atr14 ?? 0.20;
+  const volatilityLabel = fxData?.volatilityLabel ?? (isAr ? 'تعويم مدار' : 'Controlled Crawl');
+
+  // 2. Real Composite Fair Value
+  const compositeFair = fxData?.compositeFairValue ?? 53.25;
+  const gapPct = fxData?.managedGapPct ?? 1.24;
+  const gapEgp = fxData?.managedGapEgp ?? 0.65;
+
+  // 3. Local Gold Proxy ("دولار الصاغة")
+  const goldRate = fxData?.goldImpliedRate ?? 52.83;
+  const goldSpread = fxData?.goldSpreadPct ?? 0.44;
+  const gold24k = fxData?.saghaGold24k ?? 7062.75;
+  const spotOunce = fxData?.comexGoldUsd ?? 4158.53;
+
+  // 4. Offshore CIB London GDR Proxy ("دولار CIB")
+  const gdrRate = fxData?.gdrImpliedRate ?? 53.78;
+  const gdrSpread = fxData?.gdrSpreadPct ?? 2.24;
+  const cairoComi = fxData?.cairoComi ?? 127.20;
   const gdrPrice = fxData?.londonGdrUsd ?? 2.365;
-  const nfaSurplus = fxData?.netForeignAssets?.latestSurplusUsd ?? '+$28.418 Billion';
+
+  // 5. Algorithmic Devaluation Risk Index
+  const riskScore = fxData?.devaluationRisk?.score ?? 24;
+  const riskLabel = fxData?.devaluationRisk?.label ?? (isAr ? 'مخاطر منخفضة (تعويم مدار)' : 'Low Risk (Controlled Crawl)');
+  const atrCompressionRatio = fxData?.atrCompressionRatio ?? 0.74;
+
+  // Sparklines
+  const sparklines = fxData?.sparklines;
+  const defaultSparkline = [52.1, 52.2, 52.25, 52.3, 52.35, 52.4, 52.45, 52.5, 52.55, 52.6];
 
   const kpiCards: KPICardProps[] = [
+    // CARD 1: Official USD / EGP
     {
-      id: 'real-egp-fair-value',
-      title: locale === 'ar' ? 'القيمة العادلة الحقيقية للجنيه' : 'Real EGP Fair Value',
+      id: 'official-usdegp-rate',
+      title: isAr ? 'سعر الدولار الرسمي' : 'Official USD / EGP',
+      shortTitle: isAr ? 'الرسمي' : 'Official',
       icon: DollarSign,
       iconBgClass: 'bg-brand-blue/20 text-brand-blue',
       iconColorClass: 'text-brand-blue',
-      value: compositeFair.toFixed(2),
-      unit: locale === 'ar' ? 'جنيه عادل' : 'EGP FAIR',
-      badgeText: `${gapPct >= 0 ? '+' : ''}${gapPct.toFixed(1)}% ${locale === 'ar' ? 'فجوة' : 'Gap'}`,
-      badgeClass: 'bg-brand-blue/15 text-brand-blue border-brand-blue/25',
-      changeText: `${locale === 'ar' ? 'الرسمي' : 'Official'} ${officialUsd.toFixed(2)} ${locale === 'ar' ? 'ج.م' : 'EGP'} (+${gapEgp.toFixed(2)})`,
+      value: officialUsd.toFixed(2),
+      unit: isAr ? 'ج.م رسمي' : 'EGP SPOT',
+      changeText: isAr ? volatilityLabel : (fxData?.volatilityLabel || 'Controlled Crawl'),
       changeColorClass: 'text-text-primary',
-      metaText: locale === 'ar' ? 'شهادات الإيداع + الذهب + المركزي' : 'Triangulated GDR + Gold + CBE',
+      metaText: isAr ? `ATR: ${atr14.toFixed(2)} ج.م` : `ATR: ${atr14.toFixed(2)} EGP`,
+      sparklinePoints: sparklines?.officialUsd && sparklines.officialUsd.length > 1 ? sparklines.officialUsd : defaultSparkline,
+      sparklineTrend: 'neutral',
+      showSparkline: true,
+      isLoading,
     },
+
+    // CARD 2: Real EGP Fair Value
     {
-      id: 'devaluation-barometer',
-      title: locale === 'ar' ? 'مخاطر خفض العملة' : 'Devaluation Risk',
-      icon: riskScore < 30 ? ShieldCheck : AlertTriangle,
-      iconBgClass: riskScore < 30 ? 'bg-profit-chart/20 text-profit-num' : 'bg-loss-chart/20 text-loss-num',
-      iconColorClass: riskScore < 30 ? 'text-profit-num' : 'text-loss-num',
-      value: `${riskScore}%`,
-      unit: locale === 'ar' ? 'درجة المخاطرة' : 'RISK SCORE',
-      badgeText: riskScore < 30
-        ? (locale === 'ar' ? 'مخاطر منخفضة (تعويم مدار)' : riskLabel)
-        : (locale === 'ar' ? 'مخاطر مرتفعة' : riskLabel),
-      badgeClass: riskScore < 30 ? 'bg-profit-chart/15 text-profit-num border-profit-num/25' : 'bg-loss-chart/15 text-loss-num border-loss-num/25',
-      changeText: locale === 'ar' ? 'نطاق تعويم مدار (48–52)' : 'Managed Float Corridor (48–52)',
+      id: 'real-egp-fair-value',
+      title: isAr ? 'القيمة العادلة الحقيقية' : 'Real EGP Fair Value',
+      shortTitle: isAr ? 'العادل' : 'Fair Value',
+      icon: TrendingUp,
+      iconBgClass: 'bg-profit-chart/20 text-profit-num',
+      iconColorClass: 'text-profit-num',
+      value: compositeFair.toFixed(2),
+      unit: isAr ? 'ج.م عادل' : 'EGP FAIR',
+      changeText: `${gapPct >= 0 ? '+' : ''}${gapPct.toFixed(1)}% (${gapEgp >= 0 ? '+' : ''}${gapEgp.toFixed(2)})`,
       changeColorClass: 'text-profit-num',
-      metaText: locale === 'ar' ? 'احتياطي أصول أجنبية مرتفع' : 'High Foreign Asset Cushion',
+      metaText: isAr ? 'الصاغة + CIB' : 'Triangulated',
+      sparklinePoints: sparklines?.compositeFair && sparklines.compositeFair.length > 1 ? sparklines.compositeFair : defaultSparkline.map((v) => v * 1.012),
+      sparklineTrend: 'up',
+      showSparkline: true,
+      isLoading,
     },
+
+    // CARD 3: Local Gold Proxy ("دولار الصاغة")
     {
-      id: 'cib-gdr-arbitrage',
-      title: locale === 'ar' ? 'مراجحة شهادات إيداع CIB لندن' : 'CIB London GDR Arbitrage',
+      id: 'local-gold-sagha-proxy',
+      title: isAr ? 'دولار الصاغة (الذهب المحلي)' : 'Sagha Gold Proxy ("دولار الصاغة")',
+      shortTitle: isAr ? 'الصاغة' : 'Sagha Gold',
+      icon: Coins,
+      iconBgClass: 'bg-accent-gold/20 text-accent-gold',
+      iconColorClass: 'text-accent-gold',
+      value: goldRate.toFixed(2),
+      unit: isAr ? 'ج.م صاغة' : 'EGP SAGHA',
+      changeText: `${goldSpread >= 0 ? '+' : ''}${goldSpread.toFixed(1)}% ${isAr ? 'فارق' : 'Spread'}`,
+      changeColorClass: 'text-text-primary',
+      metaText: isAr ? `عيار 24: ${gold24k.toLocaleString()} ج.م` : `24k: ${gold24k.toLocaleString()} EGP`,
+      sparklinePoints: sparklines?.goldImplied && sparklines.goldImplied.length > 1 ? sparklines.goldImplied : defaultSparkline.map((v) => v * 1.004),
+      sparklineTrend: 'up',
+      showSparkline: true,
+      isLoading,
+    },
+
+    // CARD 4: Offshore CIB London GDR Proxy ("دولار CIB")
+    {
+      id: 'cib-london-gdr-proxy',
+      title: isAr ? 'دولار CIB لندن (الأسهم)' : 'Offshore CIB Proxy ("دولار CIB")',
+      shortTitle: isAr ? 'CIB لندن' : 'CIB London',
       icon: Globe,
       iconBgClass: 'bg-accent-orange/20 text-accent-orange',
       iconColorClass: 'text-accent-orange',
       value: gdrRate.toFixed(2),
-      unit: locale === 'ar' ? 'جنيه ضمني' : 'EGP IMPLIED',
-      badgeText: `${gdrSpread >= 0 ? '+' : ''}${gdrSpread.toFixed(1)}% ${locale === 'ar' ? 'فارق' : 'Spread'}`,
-      badgeClass: 'bg-accent-orange/15 text-accent-orange border-accent-orange/25',
-      changeText: `${locale === 'ar' ? 'شهادة لندن' : 'LSE GDR'} $${gdrPrice.toFixed(3)} ${locale === 'ar' ? 'دولار' : 'USD'}`,
+      unit: isAr ? 'ج.م CIB' : 'EGP CIB',
+      changeText: `${gdrSpread >= 0 ? '+' : ''}${gdrSpread.toFixed(1)}% ${isAr ? 'فارق' : 'Spread'}`,
       changeColorClass: 'text-text-primary',
-      metaText: locale === 'ar' ? 'سعر تصفية المراجحة الخارجية' : 'Offshore Arbitrage Clearing Rate',
+      metaText: isAr ? 'مراجحة LSE' : 'LSE Arbitrage',
+      sparklinePoints: sparklines?.gdrImplied && sparklines.gdrImplied.length > 1 ? sparklines.gdrImplied : defaultSparkline.map((v) => v * 1.022),
+      sparklineTrend: 'up',
+      showSparkline: true,
+      isLoading,
     },
+
+    // CARD 5: Algorithmic Devaluation Risk Index
     {
-      id: 'banking-nfa-buffer',
-      title: locale === 'ar' ? 'صافي الأصول الأجنبية للقطاع المصرفي' : 'Banking Net Foreign Assets',
-      icon: Coins,
-      iconBgClass: 'bg-profit-chart/20 text-profit-num',
-      iconColorClass: 'text-profit-num',
-      value: locale === 'ar' ? '+28.4$ مليار' : '+$28.4B',
-      unit: locale === 'ar' ? 'فائض' : 'SURPLUS',
-      badgeText: locale === 'ar' ? 'رقم قياسي تاريخي' : 'All-Time Record',
-      badgeClass: 'bg-profit-chart/15 text-profit-num border-profit-num/25',
-      changeText: locale === 'ar' ? '+28.418$ مليار (يوليو 2026)' : `${nfaSurplus} (July 2026)`,
-      changeColorClass: 'text-profit-num',
-      metaText: locale === 'ar' ? 'سيولة البنوك التجارية والبنك المركزي' : 'Commercial + CBE Liquidity',
+      id: 'devaluation-risk-meter',
+      title: isAr ? 'مؤشر ضغط التعويم' : 'Devaluation Pressure Index',
+      shortTitle: isAr ? 'التعويم' : 'Deval Risk',
+      icon: riskScore < 35 ? ShieldCheck : AlertTriangle,
+      iconBgClass: riskScore < 35 ? 'bg-profit-chart/20 text-profit-num' : riskScore < 60 ? 'bg-accent-orange/20 text-accent-orange' : 'bg-loss-chart/20 text-loss-num',
+      iconColorClass: riskScore < 35 ? 'text-profit-num' : riskScore < 60 ? 'text-accent-orange' : 'text-loss-num',
+      value: `${riskScore}%`,
+      unit: isAr ? 'درجة الخطر' : 'RISK SCORE',
+      changeText: riskLabel,
+      changeColorClass: riskScore < 35 ? 'text-profit-num' : riskScore < 60 ? 'text-accent-orange' : 'text-loss-num',
+      metaText: atrCompressionRatio < 0.40 ? (isAr ? 'تثبيت مصطنع' : 'Compressed Peg') : (isAr ? 'تذبذب طبيعي' : 'Organic Float'),
+      sparklinePoints: sparklines?.devaluationRisk && sparklines.devaluationRisk.length > 1 ? sparklines.devaluationRisk : [18, 19, 21, 20, 22, 23, 24, 25, 24, riskScore],
+      sparklineTrend: riskScore < 35 ? 'neutral' : 'down',
+      showSparkline: true,
+      isLoading,
     },
   ];
 
   return (
     <section id="fx-devaluation" className="section-container space-y-4 pt-1 font-sans select-none scroll-mt-16">
       {/* 1. Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-white/[0.08]">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="section-title">
-              {locale === 'ar' ? 'مخاطر العملة وأسعار الصرف' : 'FX & Currency Risk'}
+            <h2 className="section-title text-white">
+              {isAr ? 'مخاطر العملة وأسعار الصرف' : 'FX & Currency Risk'}
             </h2>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/15 text-brand-blue border border-brand-blue/25">
-              {isHeroScene ? (locale === 'ar' ? 'لقطة ١٠ أكتوبر' : 'Oct 10 snapshot') : (locale === 'ar' ? 'مؤشرات كلية حية' : 'Live Macro')}
+              {isHeroScene ? (isAr ? 'لقطة ١٠ أكتوبر' : 'Oct 10 snapshot') : (isAr ? 'مؤشرات كلية حية' : 'Live Macro')}
             </span>
           </div>
-          <p className="section-subtitle">
-            {locale === 'ar'
-              ? 'القيمة العادلة المرجحة للجنيه المصري، مقياس مخاطر خفض العملة، مراجحة شهادات إيداع لندن CIB، وسيولة البنك المركزي الموسعة'
-              : 'Triangulated EGP shadow fair value, devaluation likelihood barometer, offshore London GDR arbitrage, and CBE broad liquidity'}
+          <p className="section-subtitle text-zinc-400">
+            {isAr
+              ? 'القيمة العادلة المرجحة، دولار الصاغة من الذهب المحلي، دولار CIB لندن، ومؤشر ضغط خفض العملة القائم على تذبذب ATR'
+              : 'Triangulated EGP shadow fair value, Sagha gold proxy, London CIB equity arbitrage, and ATR-weighted devaluation pressure index'}
           </p>
         </div>
       </div>
 
-      {/* 2. 4-Grid KPI Rails */}
-      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 pb-1 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
+      {/* 2. 5-Card Responsive Layout: 1 Grid on Desktop, Side-Scrollable Snap Rail on Phone (2 cards + half of 3rd) */}
+      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2 sm:gap-2.5 pb-1 lg:grid lg:grid-cols-5 lg:gap-2.5 lg:overflow-visible lg:pb-0">
         {kpiCards.map((card) => (
           <KPICard
             key={card.id}
             {...card}
-            className="shrink-0 w-[170px] xs:w-[180px] sm:w-[190px] lg:w-full snap-start"
+            isLoading={isLoading}
+            className="shrink-0 w-[132px] xs:w-[140px] sm:w-[170px] md:w-[185px] lg:w-full snap-start"
           />
         ))}
       </div>

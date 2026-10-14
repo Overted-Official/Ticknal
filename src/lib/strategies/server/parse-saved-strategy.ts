@@ -11,6 +11,8 @@ export interface SavedStrategyRecord {
   readonly nodes: readonly AdvancedStrategyNode[];
   readonly optionalStages?: readonly OptionalStrategyStageId[];
   readonly selectedSymbols?: readonly string[];
+  readonly notificationsEnabled?: boolean;
+  readonly notificationError?: string | null;
 }
 
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -56,6 +58,7 @@ export function parseSavedStrategy(value: unknown): { readonly success: true; re
   const optionalStages = value.optionalStages === undefined ? [] : value.optionalStages;
   if (!Array.isArray(optionalStages) || optionalStages.length > 2 || !optionalStages.every((stage) => stage === 'calculations' || stage === 'position')) return invalid;
   const selectedSymbols = value.selectedSymbols === undefined ? [] : parseSelectedSymbols(value.selectedSymbols);
-  if (selectedSymbols === null) return invalid;
-  return { success: true, value: { id: value.id, name: value.name.trim(), mode: value.mode as 'simple' | 'advanced', draft: value.draft as unknown as StrategyDraft, nodes: value.nodes as AdvancedStrategyNode[], optionalStages: optionalStages as OptionalStrategyStageId[], selectedSymbols } };
+  if (selectedSymbols === null || (value.notificationsEnabled !== undefined && typeof value.notificationsEnabled !== 'boolean')
+    || (value.notificationsEnabled === true && selectedSymbols.length === 0)) return invalid;
+  return { success: true, value: { id: value.id, name: value.name.trim(), mode: value.mode as 'simple' | 'advanced', draft: value.draft as unknown as StrategyDraft, nodes: value.nodes as AdvancedStrategyNode[], optionalStages: optionalStages as OptionalStrategyStageId[], selectedSymbols, notificationsEnabled: value.notificationsEnabled === true } };
 }

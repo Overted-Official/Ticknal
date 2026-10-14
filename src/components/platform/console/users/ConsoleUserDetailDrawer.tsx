@@ -24,11 +24,14 @@ import {
 } from '@/lib/server/console-actions';
 import type { ConsoleUserRowItem, UserOpenPositionItem } from '@/lib/server/console-queries';
 import InlineSpinner from '@/components/ui/InlineSpinner';
+import ProprietaryAccessToggle from './ProprietaryAccessToggle';
 
 interface UserDetailProps {
   user: ConsoleUserRowItem;
   onClose: () => void;
   onRefresh?: () => void;
+  canManageProprietaryAccess?: boolean;
+  onAccessChanged?: (userId: string, enabled: boolean) => void;
 }
 
 function formatDate(iso: string | null) {
@@ -120,6 +123,8 @@ export default function ConsoleUserDetailDrawer({
   user,
   onClose,
   onRefresh,
+  canManageProprietaryAccess = false,
+  onAccessChanged = () => {},
 }: UserDetailProps) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'system'>('overview');
@@ -757,6 +762,11 @@ export default function ConsoleUserDetailDrawer({
             {/* ========================================================= */}
             {activeTab === 'system' && (
               <div className="space-y-7">
+                <div className="space-y-2 border-b border-white/10 pb-5">
+                  <div className="text-xs font-semibold text-white">Proprietary strategies</div>
+                  <p className="text-[11px] text-plt-muted">Read-only Typhon, Cerberus and Hydra access. Notifications stay off until this member opts in.</p>
+                  <ProprietaryAccessToggle userId={user.id} enabled={user.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} onChanged={onAccessChanged} />
+                </div>
                 {/* Role-Based Access Control */}
                 <div className="space-y-3">
                   <div className="text-[10px] font-semibold tracking-wider uppercase text-text-muted">

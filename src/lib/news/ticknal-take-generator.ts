@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { dailyPrices, egxInvestorFlows, marketNews, systemLogs } from '@/db/schema';
+import { dailyPrices, egxInvestorFlows, marketNews, systemLogs, tickers } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import {
   generateHotMoneyChartSvg,
@@ -121,6 +121,30 @@ export async function generateAllDailyTakes(): Promise<TicknalTakeGenerationResu
 
   const topGainers = [...eligiblePool].sort((a, b) => b.changePct - a.changePct).slice(0, 5);
   const topLosers = [...eligiblePool].sort((a, b) => a.changePct - b.changePct).slice(0, 5);
+
+  // Look up full company names from tickers table
+  const allTickerSymbols = Array.from(new Set([...topGainers.map((s) => s.ticker), ...topLosers.map((s) => s.ticker)]));
+  const companyNameMap = new Map<string, string>();
+  try {
+    const metaRows = await db
+      .select({ symbol: tickers.symbol, companyName: tickers.companyName })
+      .from(tickers);
+    for (const m of metaRows) {
+      if (m.symbol) {
+        const cleanSym = m.symbol.replace('.CA', '').toUpperCase();
+        companyNameMap.set(cleanSym, m.companyName || cleanSym);
+      }
+    }
+  } catch {}
+
+  const topGainersWithNames = topGainers.map((s) => ({
+    ...s,
+    companyName: companyNameMap.get(s.ticker.toUpperCase()) || s.ticker,
+  }));
+  const topLosersWithNames = topLosers.map((s) => ({
+    ...s,
+    companyName: companyNameMap.get(s.ticker.toUpperCase()) || s.ticker,
+  }));
 
   // 3. 30-Day Rolling Investor Flows (Hot Money Barometer)
   const flowRows = await db
@@ -360,8 +384,8 @@ Is this a healthy broad-based move or narrow index-propping? Explain in max 400 
   // ------------------------------------------
   const gainersLosersChart = generateLocalizedTakeBundle(generateGainersLosersChartSvg, {
     date: targetDate,
-    topGainers,
-    topLosers,
+    topGainers: topGainersWithNames,
+    topLosers: topLosersWithNames,
   });
 
   const gainersListStr = topGainers.map((g) => `${g.ticker} (+${g.changePct}%)`).join(', ');

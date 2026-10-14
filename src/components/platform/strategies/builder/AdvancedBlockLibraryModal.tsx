@@ -15,7 +15,6 @@ import {
 
 import {
   ADVANCED_BLOCK_TEMPLATES,
-  NON_EXECUTABLE_ADVANCED_TEMPLATES,
   localize,
   type AdvancedBlockLibraryGroup,
   type AdvancedBlockTemplate,
@@ -124,15 +123,12 @@ export default function AdvancedBlockLibraryModal({
             {group.templates.map((template) => {
               const appearance = NODE_APPEARANCE[template.kind];
               const Icon = appearance.icon;
-              const executable = !NON_EXECUTABLE_ADVANCED_TEMPLATES.has(template.id);
               return (
                 <button
                   key={template.id}
                   type="button"
                   onClick={() => onAdd(template)}
-                  disabled={!executable}
-                  title={!executable ? (isAr ? 'هذه الكتلة غير قابلة للاختبار بعد' : 'This block is not executable yet') : undefined}
-                  className={`flex min-h-14 w-full items-center gap-3 border-b border-white/[0.06] px-3 py-2.5 text-start transition-colors last:border-b-0 ${executable ? 'hover:bg-plt-hover' : 'cursor-not-allowed opacity-45'}`}
+                  className="flex min-h-14 w-full items-center gap-3 border-b border-white/[0.06] px-3 py-2.5 text-start transition-colors last:border-b-0 hover:bg-plt-hover"
                 >
                   <span className="shrink-0" style={{ color: appearance.color }}>
                     <Icon size={14} />
@@ -140,7 +136,6 @@ export default function AdvancedBlockLibraryModal({
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-medium text-white">{localize(template.title, locale)}</span>
                     <span className="mt-0.5 block text-[10px] leading-4 text-plt-muted">{localize(template.description, locale)}</span>
-                    {!executable && <span className="mt-1 block text-[9px] font-medium text-plt-warning">{isAr ? 'غير قابل للتنفيذ بعد' : 'Not executable yet'}</span>}
                   </span>
                   <Plus size={14} className="shrink-0 text-white/45" />
                 </button>

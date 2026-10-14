@@ -188,6 +188,7 @@ export default function SubscriptionBillingLedger({
       fullName: sub.fullName,
       avatarUrl: sub.avatarUrl,
       role: sub.role || 'user',
+      proprietaryStrategyAccess: sub.tier === 'elite' || sub.tier === 'vip' || sub.role === 'admin',
       createdAt: sub.currentPeriodStart,
       updatedAt: sub.currentPeriodEnd,
       lastActiveAt: sub.currentPeriodStart || new Date().toISOString(),
