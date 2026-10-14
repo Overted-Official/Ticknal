@@ -207,7 +207,7 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
     updatedAt: new Date().toISOString(),
     categories: [
       { id: 'all', label: 'All Wire', count: allCategoriesCount.all },
-      { id: 'ticknal_take', label: 'The Ticknal Take', count: allCategoriesCount.ticknal_take },
+      { id: 'ticknal_take', label: 'Ticknal take', count: allCategoriesCount.ticknal_take },
       { id: 'macro_market', label: 'Macro Market', count: allCategoriesCount.macro_market },
       { id: 'listed_companies', label: 'Listed Companies (EGX)', count: allCategoriesCount.listed_companies },
       { id: 'funds', label: 'Investment Funds', count: allCategoriesCount.funds },
@@ -234,3 +234,14 @@ export async function createMarketNewsItem(item: Omit<typeof marketNews.$inferIn
 
   return inserted;
 }
+
+export async function purgeLegacyNews(dryRun = false): Promise<{ deletedCount: number }> {
+  await ensureMarketNewsTable();
+  if (dryRun) {
+    const countRes = await db.select({ count: sql<number>`count(*)` }).from(marketNews);
+    return { deletedCount: Number(countRes[0]?.count ?? 0) };
+  }
+  const deleted = await db.delete(marketNews).returning({ id: marketNews.id });
+  return { deletedCount: deleted.length };
+}
+
