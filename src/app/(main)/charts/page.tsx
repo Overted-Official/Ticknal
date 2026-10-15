@@ -9,6 +9,7 @@ import ChartsWorkspaceView from '@/components/platform/charts/ChartsWorkspaceVie
 import { type WatchlistItem } from '@/components/platform/RightSidebar';
 import { ensureUserVirtualAccount } from '@/lib/banks/virtual-account';
 import { HERO_SCENE_CHART } from '@/components/landing/hero-scenes/hero-scene-snapshot';
+import { getCurrentProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,6 +79,7 @@ async function ChartsPageContent({
   selectedSymbol: string;
   timeframe: string;
 }) {
+  const proprietaryAccess = await getCurrentProprietaryAccess();
   let userId: string | null = null;
   try {
     const supabase = await createClient();
@@ -366,6 +368,7 @@ async function ChartsPageContent({
   return (
     <div className="flex-1 h-full w-full flex flex-row bg-plt-base text-plt-text overflow-hidden pb-[calc(56px+var(--ticknal-safe-area-bottom))] md:pb-0">
       <ChartsWorkspaceView
+        canViewProprietary={proprietaryAccess.canView}
         symbol={selectedSymbol}
         timeframe={timeframe}
         chartData={chartData}

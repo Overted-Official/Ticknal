@@ -12,6 +12,7 @@ export interface StrategyTickerRecord {
   readonly industryGroup: string | null;
   readonly companyName: string | null;
   readonly logoUrl: string | null;
+  readonly status?: string | null;
 }
 
 export function buildStrategyCompanyUniverse(rows: readonly StrategyTickerRecord[]): StrategyUniverseCompany[] {
@@ -21,7 +22,8 @@ export function buildStrategyCompanyUniverse(rows: readonly StrategyTickerRecord
     const symbol = normalizeLiveTicker(row.symbol);
     const sector = row.sector?.trim().toLowerCase() ?? '';
     if (!symbol || row.exchange?.toUpperCase() !== 'EGX' || seen.has(symbol)
-      || sector === 'indices' || sector === 'macro' || sector.includes('fund')) continue;
+      || sector === 'indices' || sector === 'macro' || sector.includes('fund')
+      || row.status === 'DELISTED') continue;
     seen.add(symbol);
     companies.push({
       symbol,

@@ -14,6 +14,7 @@ import {
 } from '@/lib/strategy-analysis';
 import { getOrInitPrecomputedCache } from '@/lib/handlers/sectors-handlers';
 import { getLatestBarDate, isSignalEligibleEquity } from '@/lib/finance/signal-universe';
+import { cairoMarketDate, isClosedEgxSession } from '@/lib/notifications/market-session';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 type DispatchStrategyId = Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>;
@@ -48,7 +49,18 @@ export function isPushConfigured(): boolean {
 }
 
 export async function dispatchPendingCustomStrategyPush(limit = 12): Promise<{ processed: number; sent: number; retried: number }> {
+  const now = new Date();
+  const sessionDate = cairoMarketDate(now);
+  if (!isClosedEgxSession(now, sessionDate)) return { processed: 0, sent: 0, retried: 0 };
   if (isPushConfigured()) configureWebPush();
+  // A retry must never turn yesterday's trading signal into a new-day alert.
+  await db.execute(sql`
+    UPDATE public.signal_notifications
+    SET push_delivery_status = 'suppressed', push_next_attempt_at = NULL
+    WHERE strategy LIKE 'custom-%'
+      AND signal_date < ${sessionDate}::date
+      AND push_delivery_status IN ('pending', 'retry', 'sending')
+  `);
   const claimed = await db.execute(sql`
     UPDATE public.signal_notifications AS notification
     SET push_delivery_status = 'sending', push_attempts = push_attempts + 1,
@@ -56,6 +68,7 @@ export async function dispatchPendingCustomStrategyPush(limit = 12): Promise<{ p
     WHERE notification.id IN (
       SELECT id FROM public.signal_notifications
       WHERE strategy LIKE 'custom-%'
+        AND signal_date = ${sessionDate}::date
         AND push_delivery_status IN ('pending', 'retry', 'sending')
         AND push_next_attempt_at <= NOW()
       ORDER BY push_next_attempt_at, id
@@ -80,7 +93,9 @@ export async function dispatchPendingCustomStrategyPush(limit = 12): Promise<{ p
       .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
       .where(eq(signalNotifications.id, claimedRow.id)).limit(1);
     if (!row) continue;
-    const valid = row.notificationsEnabled === true && row.parameterVersion === `custom:${row.notificationGeneration}`;
+    const valid = row.notificationsEnabled === true
+      && row.parameterVersion === `custom:${row.notificationGeneration}`
+      && isClosedEgxSession(new Date(), String(row.signalDate).slice(0, 10));
     let delivered = false;
     let endpoints = 0;
     if (valid && (row.signal === 'BUY' || row.signal === 'SELL')) {
@@ -179,6 +194,10 @@ export async function dispatchSignalNotifications(options: {
 
   if (!latestEquitySession) {
     result.messages.push('No eligible equity market session found for notification dispatch.');
+    return result;
+  }
+  if (!isClosedEgxSession(new Date(), latestEquitySession)) {
+    result.messages.push('Signals are available only after the current EGX session closes and its prices are loaded.');
     return result;
   }
 

@@ -23,6 +23,7 @@ import type { CanonicalIndicatorSelectionPatch } from '@/components/platform/cha
 import { stableChartWidgetKey } from '@/components/platform/chart/canonical/chart-integration-model';
 
 interface ChartWorkspaceProps {
+  canViewProprietary?: boolean;
   data: ChartData[];
   symbol: string;
   watchlist?: WatchlistItem[];
@@ -35,6 +36,7 @@ interface ChartWorkspaceProps {
 }
 
 export default function ChartWorkspace({
+  canViewProprietary = false,
   data,
   symbol,
   watchlist = [],
@@ -155,7 +157,7 @@ export default function ChartWorkspace({
   // alpha so the chart opens on the same algorithm that can generate its
   // notification.
   useEffect(() => {
-    if (isHeroScene) return;
+    if (isHeroScene || !canViewProprietary) return;
     if (requestedStrategy && STRATEGIES[requestedStrategy]) return;
 
     let cancelled = false;
@@ -192,7 +194,7 @@ export default function ChartWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [isHeroScene, requestedStrategy, symbol, timeframe]);
+  }, [isHeroScene, canViewProprietary, requestedStrategy, symbol, timeframe]);
 
   // Client-side IndexedDB caching & delta sync
   const [activeChartData, setActiveChartData] = useState<ChartData[]>(data);
@@ -359,7 +361,8 @@ export default function ChartWorkspace({
         onReorderCanonicalIndicator={handleReorderCanonicalIndicator}
         onUpdateStrategyParam={updateStrategyParam}
         bulkUpdateStrategyParams={bulkUpdateStrategyParams}
-        showSignals={true}
+        showSignals={canViewProprietary}
+        canViewProprietary={canViewProprietary}
         onMetricsChange={setMetrics}
         metrics={metrics}
         companyName={companyName}

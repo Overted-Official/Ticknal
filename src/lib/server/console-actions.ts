@@ -25,9 +25,10 @@ export async function setProprietaryStrategyAccessAction(params: { targetUserId:
   if (!/^[0-9a-f]{8}-[0-9a-f-]{27,36}$/i.test(params.targetUserId) || typeof params.enabled !== 'boolean') {
     return { success: false, error: 'Invalid access request.' };
   }
-  const [target] = await db.select({ id: profiles.id, email: profiles.email })
+  const [target] = await db.select({ id: profiles.id, email: profiles.email, role: profiles.role })
     .from(profiles).where(eq(profiles.id, params.targetUserId)).limit(1);
   if (!target) return { success: false, error: 'User not found.' };
+  if (isProprietaryOwner(target.email, target.role)) return { success: false, error: 'Owner access cannot be changed.' };
   await db.insert(proprietaryStrategyAccess).values({
     userId: target.id, enabled: params.enabled, notificationsEnabled: false, grantedBy: user.id,
   }).onConflictDoUpdate({
@@ -180,7 +181,9 @@ export async function grantProAccessAction(params: {
 export async function triggerCronAction(jobName: string) {
   const { user: adminUser } = await assertAdminUser();
 
-  const dummyReq = new Request(`https://internal.ticknal.com/cron/${jobName}`);
+  const dummyReq = new Request(`https://internal.ticknal.com/cron/${jobName}`, {
+    headers: process.env.CRON_SECRET ? { authorization: `Bearer ${process.env.CRON_SECRET}` } : {},
+  });
 
   let resultSummary = '';
   try {
@@ -253,32 +256,6 @@ export async function triggerCronAction(jobName: string) {
     return { success: true, summary: resultSummary };
   } catch (error) {
     console.error(`[triggerCronAction] Error running ${jobName}:`, error);
-    return { success: false, error: String(error) };
-  }
-}
-
-/**
- * 4. Reseed / Sync Canonical Alerts for a User
- */
-export async function seedUserNotificationsAction(params: { targetUserId: string }) {
-  const { user: adminUser } = await assertAdminUser();
-  const { targetUserId } = params;
-
-  try {
-    const { seedUserNotifications } = await import('@/lib/handlers/notifications-handlers');
-    const seededCount = await seedUserNotifications(targetUserId);
-
-    await logAdminAction({
-      adminId: adminUser.id,
-      action: 'notifications.manual_seed',
-      targetId: targetUserId,
-      metadata: { seededCount },
-    });
-
-    revalidatePath('/console/users');
-    return { success: true, seededCount };
-  } catch (error) {
-    console.error('[seedUserNotificationsAction] Error:', error);
     return { success: false, error: String(error) };
   }
 }
@@ -669,4 +646,3 @@ export async function getAcquisitionStatsAction(params: {
   const stats = await getConsoleAcquisitionStats(params.timeframe, params.customStart, params.customEnd);
   return { success: true, stats };
 }
-

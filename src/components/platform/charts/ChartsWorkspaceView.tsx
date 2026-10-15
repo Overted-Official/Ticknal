@@ -10,6 +10,7 @@ import GuestConversionBanner from '@/components/platform/auth/GuestConversionBan
 import { useGuestGuard } from '@/context/GuestGuardContext';
 
 export interface ChartsWorkspaceViewProps {
+  canViewProprietary?: boolean;
   symbol: string;
   timeframe: string;
   chartData: Array<{ time: string; open: number; high: number; low: number; close: number; volume: number }>;
@@ -25,6 +26,7 @@ export interface ChartsWorkspaceViewProps {
 }
 
 export default function ChartsWorkspaceView({
+  canViewProprietary = false,
   symbol,
   timeframe,
   chartData,
@@ -45,6 +47,7 @@ export default function ChartsWorkspaceView({
       {/* Chart Canvas + Bottom Toolbar */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
         <ChartWorkspace
+          canViewProprietary={canViewProprietary}
           key={`${symbol}-${timeframe}`}
           data={chartData}
           symbol={symbol}
@@ -68,6 +71,7 @@ export default function ChartsWorkspaceView({
       {/* Right Sidebar */}
       <div className="hidden lg:flex h-full shrink-0">
         <RightSidebar
+          canViewProprietary={canViewProprietary}
           watchlist={watchlist}
           selectedSymbol={symbol}
           timeframe={timeframe}

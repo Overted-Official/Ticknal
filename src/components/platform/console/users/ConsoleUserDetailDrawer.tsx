@@ -10,7 +10,6 @@ import {
   AlertCircle,
   Ban,
   Trash2,
-  Zap,
   Check,
   Layers,
 } from '@/components/ui/icon-library';
@@ -20,11 +19,11 @@ import {
   updateSingleUserStatusAction,
   deleteSingleUserAction,
   getUserPositionsAction,
-  seedUserNotificationsAction,
 } from '@/lib/server/console-actions';
 import type { ConsoleUserRowItem, UserOpenPositionItem } from '@/lib/server/console-queries';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import ProprietaryAccessToggle from './ProprietaryAccessToggle';
+import { isProprietaryOwner } from '@/lib/strategies/proprietary-access-policy';
 
 interface UserDetailProps {
   user: ConsoleUserRowItem;
@@ -134,7 +133,6 @@ export default function ConsoleUserDetailDrawer({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isReseedingAlerts, setIsReseedingAlerts] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // Tier switcher state
@@ -268,26 +266,6 @@ export default function ConsoleUserDetailDrawer({
       setMessage({ text: String(err), type: 'error' });
     } finally {
       setIsSavingRole(false);
-    }
-  };
-
-  const handleReseedAlerts = async () => {
-    setIsReseedingAlerts(true);
-    setMessage(null);
-    try {
-      const res = await seedUserNotificationsAction({
-        targetUserId: user.id,
-      });
-      if (res.success) {
-        setMessage({ text: `Seeded ${res.seededCount} signals into user inbox`, type: 'success' });
-        onRefresh?.();
-      } else {
-        setMessage({ text: res.error || 'Failed to reseed alerts', type: 'error' });
-      }
-    } catch (err) {
-      setMessage({ text: String(err), type: 'error' });
-    } finally {
-      setIsReseedingAlerts(false);
     }
   };
 
@@ -764,8 +742,8 @@ export default function ConsoleUserDetailDrawer({
               <div className="space-y-7">
                 <div className="space-y-2 border-b border-white/10 pb-5">
                   <div className="text-xs font-semibold text-white">Proprietary strategies</div>
-                  <p className="text-[11px] text-plt-muted">Read-only Typhon, Cerberus and Hydra access. Notifications stay off until this member opts in.</p>
-                  <ProprietaryAccessToggle userId={user.id} enabled={user.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} onChanged={onAccessChanged} />
+                  <p className="text-[11px] text-plt-muted">Read-only Typhon, Cerberus and Hydra access. The member may opt in to one daily after-close signal per ticker from its champion strategy.</p>
+                  <ProprietaryAccessToggle userId={user.id} enabled={user.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} isOwner={isProprietaryOwner(user.email, user.role)} onChanged={onAccessChanged} />
                 </div>
                 {/* Role-Based Access Control */}
                 <div className="space-y-3">
@@ -835,26 +813,6 @@ export default function ConsoleUserDetailDrawer({
                   </div>
                 </div>
 
-                {/* Signal Inbox Re-sync */}
-                <div className="space-y-3 pt-2">
-                  <div className="text-[10px] font-semibold tracking-wider uppercase text-text-muted">
-                    Signal Diagnostics
-                  </div>
-                  <p className="text-text-muted text-[11px]">
-                    If a user reports an empty notification drawer, re-seed canonical strategy signals into their account inbox.
-                  </p>
-
-                  <button
-                    type="button"
-                    disabled={isReseedingAlerts}
-                    onClick={handleReseedAlerts}
-                    className="w-full py-2 px-3 border border-border-default hover:bg-surface-hover-subtle text-text-secondary hover:text-text-primary font-medium rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 text-xs font-sans"
-                  >
-                    {isReseedingAlerts && <InlineSpinner className="w-3.5 h-3.5" />}
-                    <Zap className="w-3.5 h-3.5 text-text-muted" />
-                    <span>Re-seed Canonical Signals Now</span>
-                  </button>
-                </div>
               </div>
             )}
           </div>

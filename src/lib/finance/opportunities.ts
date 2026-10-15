@@ -264,6 +264,9 @@ export async function _getRecentOpportunities(
 
       const candidateSymbols = Array.from(new Set(indexedSignals.map((signal) => signal.symbol)));
       const tickerRows = await db.select().from(tickers).where(inArray(tickers.symbol, candidateSymbols));
+      const delistedSet = new Set(
+        tickerRows.filter((t) => t.status === 'DELISTED').map((t) => normalizeTickerSymbol(t.symbol)),
+      );
       const championOnly = strategyScope === 'champion';
       const needsRequestAnalysis = championOnly || indexedSignals.some((signal) => !signal.snapshot?.metrics);
       const priceRows = needsRequestAnalysis
@@ -340,7 +343,7 @@ export async function _getRecentOpportunities(
 
             const analysis = champion.analyses.find((item) => item.strategyId === champion.strategyId);
             const latest = analysis?.latestActionableSignal;
-            if (!analysis || !latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date)) return null;
+            if (!analysis || !latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date) || delistedSet.has(symbol)) return null;
             if (!indexedSignalKeys.has(`${symbol}:${champion.strategyId}:${latest.date}`)) return null;
 
             const badge = getStrategyBadge(champion.strategyId);
@@ -376,7 +379,7 @@ export async function _getRecentOpportunities(
         for (const indexedSignal of indexedSignals) {
           const symbol = indexedSignal.symbol;
           const meta = metadata.get(symbol);
-          if (!isSignalEligibleEquity(symbol, meta)) continue;
+          if (!isSignalEligibleEquity(symbol, meta) || delistedSet.has(symbol)) continue;
           let analysis = null;
           let latest = null;
           const snapshot = indexedSignal.snapshot;

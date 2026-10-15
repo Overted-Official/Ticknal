@@ -10,8 +10,8 @@ import StrategyTimeRangeSelector from './StrategyTimeRangeSelector';
 import { projectSimpleDraftIntoAdvancedNodes, reconcileSimpleDraftFromFlow } from './advanced-builder-state';
 import { compileAdvancedStrategy } from './compile-advanced-strategy';
 import { compileSimpleStrategy, type CompileDiagnosticCode } from './compile-simple-strategy';
-import { createAdvancedDraftNodes, TYPHON_BLUEPRINT_NODES, type AdvancedStrategyNode } from './advanced-strategy-model';
-import { STRATEGY_PROFILE_ARABIC, getVisibleStrategyProfiles, type StrategyProfile } from './strategy-builder-fixtures';
+import { createAdvancedDraftNodes, type AdvancedStrategyNode } from './advanced-strategy-model';
+import type { ProprietaryStudioProfile } from '@/lib/server/proprietary-studio-presentation';
 import {
   addRuleToDraft,
   createEmptyStrategyDraft,
@@ -33,6 +33,8 @@ interface StrategyBuilderWorkspaceProps {
   readonly universe: readonly StrategyUniverseCompany[];
   readonly canViewProprietary: boolean;
   readonly proprietaryAlertsEnabled: boolean;
+  readonly profiles: readonly ProprietaryStudioProfile[];
+  readonly typhonNodes: readonly AdvancedStrategyNode[];
 }
 
 type SavedStrategy = SavedStrategyRecord;
@@ -52,8 +54,8 @@ const DIAGNOSTIC_TEXT: Record<CompileDiagnosticCode, { en: string; ar: string }>
   CONFIRMED_WITH_DELAY_UNSUPPORTED: { en: 'This indicator confirms after later bars', ar: 'تأكيد هذا المؤشر يعتمد على جلسات لاحقة' },
 };
 
-function profileNodes(profile: StrategyProfile): readonly AdvancedStrategyNode[] {
-  if (profile.id === 'psi') return TYPHON_BLUEPRINT_NODES;
+function profileNodes(profile: ProprietaryStudioProfile, typhonNodes: readonly AdvancedStrategyNode[]): readonly AdvancedStrategyNode[] {
+  if (profile.id === 'psi') return typhonNodes;
   const prefix = profile.id;
   const inputs = `${prefix}-market`;
   const signals = profile.coreSignals.map((signal, index): AdvancedStrategyNode => ({
@@ -74,7 +76,7 @@ function profileNodes(profile: StrategyProfile): readonly AdvancedStrategyNode[]
   ] as AdvancedStrategyNode[];
 }
 
-export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, canViewProprietary, proprietaryAlertsEnabled }: StrategyBuilderWorkspaceProps) {
+export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, canViewProprietary, proprietaryAlertsEnabled, profiles, typhonNodes }: StrategyBuilderWorkspaceProps) {
   const { locale } = useTranslation();
   const builderLocale: 'en' | 'ar' = locale === 'ar' ? 'ar' : 'en';
   const isAr = builderLocale === 'ar';
@@ -153,11 +155,11 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   const indicators = useMemo<readonly StrategyBuilderIndicatorOption[]>(() => localizeIndicatorCatalog(indicatorCatalog, builderLocale), [builderLocale, indicatorCatalog]);
   const simpleCompilation = useMemo(() => compileSimpleStrategy(draft, indicators), [draft, indicators]);
   const advancedCompilation = useMemo(() => compileAdvancedStrategy(advancedNodes, indicators), [advancedNodes, indicators]);
-  const visibleProfiles = getVisibleStrategyProfiles(canViewProprietary);
+  const visibleProfiles = canViewProprietary ? profiles : [];
   const selectedProfile = visibleProfiles.find((profile) => profile.id === selectedStrategyId);
   const isProtected = Boolean(selectedProfile);
-  const strategyName = selectedProfile ? (isAr ? STRATEGY_PROFILE_ARABIC[selectedProfile.id].name : selectedProfile.name) : draft.name;
-  const flowNodes = selectedProfile ? profileNodes(selectedProfile) : builderMode === 'simple' ? projectSimpleDraftIntoAdvancedNodes(draft, indicators, createAdvancedDraftNodes()) : advancedNodes;
+  const strategyName = selectedProfile ? (isAr ? selectedProfile.nameAr : selectedProfile.name) : draft.name;
+  const flowNodes = selectedProfile ? profileNodes(selectedProfile, typhonNodes) : builderMode === 'simple' ? projectSimpleDraftIntoAdvancedNodes(draft, indicators, createAdvancedDraftNodes()) : advancedNodes;
   const complete = isProtected || (builderMode === 'simple' ? simpleCompilation.status === 'ready' : advancedCompilation.status === 'ready');
   const liveProgram = isProtected ? null : builderMode === 'simple' ? (simpleCompilation.status === 'ready' ? simpleCompilation.program : null) : (advancedCompilation.status === 'ready' ? advancedCompilation.program : null);
 
@@ -167,7 +169,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
     draft: complete && !isProtected && !isStrategyDraftTestable(draft)
       ? { ...draft, buyRules: [{ id: 'advanced-buy', indicatorId: 'advanced', period: 1, operator: 'isAbove', value: 0, connector: 'and' }], sellRules: [{ id: 'advanced-sell', indicatorId: 'advanced', period: 1, operator: 'isBelow', value: 0, connector: 'and' }] }
       : draft,
-    advancedNodes: selectedProfile?.id === 'psi' ? TYPHON_BLUEPRINT_NODES : advancedNodes,
+    advancedNodes: selectedProfile?.id === 'psi' ? typhonNodes : advancedNodes,
     indicators,
     startDate,
     endDate,
@@ -300,7 +302,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
             {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={editProfile}><Pencil size={13} />{isAr ? 'تعديل' : 'Edit'}</button>}
             {!isProtected && <button type="button" className="strategy-studio-save-button" onClick={() => { void saveStrategy(); }} disabled={saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : savedNotice ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ' : 'Save')}</button>}
             {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { void saveStrategy(undefined, !notificationsEnabled); }} disabled={saving || (!notificationsEnabled && !complete)} aria-pressed={notificationsEnabled} title={!complete && !notificationsEnabled ? (isAr ? 'أكمل قواعد الاستراتيجية لتفعيل التنبيهات' : 'Complete the strategy before enabling alerts') : undefined}><Bell size={13} />{notificationsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'تفعيل التنبيهات' : 'Alerts off')}</button>}
-            {isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { void toggleProtectedAlerts(); }} disabled={protectedAlertsPending} aria-pressed={protectedAlertsEnabled}><Bell size={13} />{protectedAlertsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'تفعيل التنبيهات' : 'Alerts off')}</button>}
+            {isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { void toggleProtectedAlerts(); }} disabled={protectedAlertsPending} aria-pressed={protectedAlertsEnabled} title={isAr ? 'تنبيه واحد لكل شركة من أفضل استراتيجية بين تايفون وسيربيروس وهيدرا' : 'One alert per ticker from the champion of Typhon, Cerberus and Hydra'}><Bell size={13} />{protectedAlertsEnabled ? (isAr ? 'تنبيهات البطل مفعلة' : 'Champion alerts on') : (isAr ? 'تنبيهات البطل متوقفة' : 'Champion alerts off')}</button>}
             <span className="strategy-studio-dock-divider" aria-hidden="true" />
             <button type="button" className="strategy-studio-analytics-button" aria-controls="strategy-analytics-panel" aria-expanded={analyticsOpen} onClick={() => { setDockRailOpen(false); setAnalyticsOpen((value) => !value); }}><LineChart size={15} />{isAr ? 'التحليلات' : 'Analytics'}<ChevronRight size={14} className="rtl-mirror" /></button>
           </div>

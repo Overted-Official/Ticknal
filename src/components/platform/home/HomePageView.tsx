@@ -29,6 +29,7 @@ interface HomePageViewProps {
     avatarUrl?: string | null;
     email?: string;
   };
+  canViewProprietary?: boolean;
 }
 
 export default function HomePageView({
@@ -43,12 +44,13 @@ export default function HomePageView({
   initialNetWorthHistory = [],
   initialInflationSeries = [],
   userProfile,
+  canViewProprietary = false,
 }: HomePageViewProps) {
   const [liveBuyOpps, setLiveBuyOpps] = useState<Opportunity[]>([]);
-  const [isLoadingOpps, setIsLoadingOpps] = useState(!buyOpportunities || buyOpportunities.length === 0);
+  const [isLoadingOpps, setIsLoadingOpps] = useState(canViewProprietary && (!buyOpportunities || buyOpportunities.length === 0));
 
   useEffect(() => {
-    if (buyOpportunities && buyOpportunities.length > 0) {
+    if (!canViewProprietary || (buyOpportunities && buyOpportunities.length > 0)) {
       return;
     }
 
@@ -69,7 +71,7 @@ export default function HomePageView({
     return () => {
       isMounted = false;
     };
-  }, [buyOpportunities]);
+  }, [buyOpportunities, canViewProprietary]);
 
   const router = useRouter();
 
@@ -113,7 +115,7 @@ export default function HomePageView({
       </div>
 
       {/* 2. Sticky Floating Top Navigation Bar */}
-      <HomeFloatingNav />
+      <HomeFloatingNav canViewProprietary={canViewProprietary} />
 
       {/* 3. Main Sections Stack */}
       <div className="app-page page-sections-stack pb-28 md:pb-20 pt-1 space-y-8">
@@ -135,10 +137,10 @@ export default function HomePageView({
         />
 
         {/* SECTION 3: Buy Opportunities (Algorithmic Buy Opportunities with Strategy Switcher) */}
-        <MarketSignalsSection
+        {canViewProprietary && <MarketSignalsSection
           buyOpportunities={buyOpportunities.length > 0 ? buyOpportunities : liveBuyOpps}
           isLoading={buyOpportunities.length === 0 && isLoadingOpps}
-        />
+        />}
       </div>
     </div>
   );

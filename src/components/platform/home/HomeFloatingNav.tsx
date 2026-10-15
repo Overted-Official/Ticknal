@@ -9,7 +9,7 @@ export interface HomeNavSection {
   shortLabel: string;
 }
 
-export default function HomeFloatingNav() {
+export default function HomeFloatingNav({ canViewProprietary = false }: { canViewProprietary?: boolean }) {
   const { locale } = useTranslation();
 
   const sections: HomeNavSection[] = useMemo(
@@ -24,13 +24,13 @@ export default function HomeFloatingNav() {
         label: locale === 'ar' ? 'الصفقات' : 'Positions',
         shortLabel: locale === 'ar' ? 'الصفقات' : 'Positions',
       },
-      {
+      ...(canViewProprietary ? [{
         id: 'section-market-signals',
         label: locale === 'ar' ? 'فرص الشراء' : 'Buy Opportunities',
         shortLabel: locale === 'ar' ? 'الفرص' : 'Opportunities',
-      },
+      }] : []),
     ],
-    [locale]
+    [locale, canViewProprietary]
   );
 
   const [activeSection, setActiveSection] = useState<string>('section-performance-overview');

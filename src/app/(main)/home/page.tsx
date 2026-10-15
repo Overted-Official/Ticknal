@@ -20,6 +20,7 @@ import { getLatestInflationRate, getHistoricalInflationSeries } from '@/lib/cbe-
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { type FxRates, type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 import HomePageView from '@/components/platform/home/HomePageView';
+import { getProprietaryAccessForUser } from '@/lib/server/proprietary-strategy-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,8 @@ export default async function HomePage() {
       </div>
     );
   }
+  const [accessProfile] = await db.select({ role: profiles.role }).from(profiles).where(eq(profiles.id, user.id)).limit(1);
+  const proprietaryAccess = await getProprietaryAccessForUser(user.id, user.email ?? null, accessProfile?.role ?? null);
 
   let orderStats: Awaited<ReturnType<typeof getOrderStats>> = emptyOrderStats;
   let activeAlertCount = 0;
@@ -133,7 +136,7 @@ export default async function HomePage() {
 
   const openSymbols = orderStats.openOrders.map((o) => o.tickerSymbol);
   let exitSignals: Opportunity[] = [];
-  if (openSymbols.length > 0) {
+  if (proprietaryAccess.canView && openSymbols.length > 0) {
     try {
       const exitSignalsPromise = getExitSignalsForHoldings(openSymbols, 5).catch(() => []);
       const timeoutPromise = new Promise<Opportunity[]>((resolve) => setTimeout(() => resolve([]), 350));
@@ -143,7 +146,9 @@ export default async function HomePage() {
     }
   }
 
-  const cachedOpps = getCachedOpportunitiesSync(10, 'champion') || getCachedOpportunitiesSync(5, 'champion');
+  const cachedOpps = proprietaryAccess.canView
+    ? getCachedOpportunitiesSync(10, 'champion') || getCachedOpportunitiesSync(5, 'champion')
+    : null;
   const initialBuyOpportunities = cachedOpps
     ? (cachedOpps.filter((item) => item.signal.signal === 'BUY').slice(0, 50) as Opportunity[])
     : [];
@@ -167,6 +172,7 @@ export default async function HomePage() {
       initialNetWorthHistory={netWorthHistory}
       initialInflationSeries={inflationSeries}
       userProfile={userProfile}
+      canViewProprietary={proprietaryAccess.canView}
     />
   );
 }

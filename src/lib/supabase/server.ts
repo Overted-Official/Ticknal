@@ -35,7 +35,7 @@ export async function createClient() {
     }
   );
 
-  if (process.env.USE_LOCAL_DB === 'true') {
+  if (process.env.NODE_ENV !== 'production' && process.env.USE_LOCAL_DB === 'true') {
     const originalGetUser = client.auth.getUser.bind(client.auth);
     client.auth.getUser = async (jwt?: string) => {
       try {

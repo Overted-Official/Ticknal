@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { SectorPerformanceItem, SectorsPerformanceResponse, SectorStrategySignalsResponse } from '@/lib/sectors-math';
+import type { SectorPerformanceItem, SectorsPerformanceResponse } from '@/lib/sectors-math';
 import SectorTreemap from '../SectorTreemap';
 import SectorConstituentRowItem from './SectorConstituentRowItem';
 import { X } from '@/components/ui/icon-library';
@@ -15,7 +15,6 @@ import { localizeSectorName, localizeRegimeName } from '@/lib/finance/sector-tra
 interface MarketHeatmapSectionProps {
   sectors?: SectorPerformanceItem[];
   marketSummary?: SectorsPerformanceResponse['marketSummary'];
-  signalsData?: SectorStrategySignalsResponse;
   benchmarkReturn?: number;
   timeframePreset: '1D' | '5D' | '1W' | '1M' | '3M' | '6M' | 'YTD' | '1Y' | 'custom';
   setTimeframePreset: (preset: '1D' | '5D' | '1W' | '1M' | '3M' | '6M' | 'YTD' | '1Y' | 'custom') => void;
@@ -33,7 +32,6 @@ interface MarketHeatmapSectionProps {
 export default function MarketHeatmapSection({
   sectors = [],
   marketSummary,
-  signalsData,
   benchmarkReturn = 0,
   timeframePreset,
   setTimeframePreset,

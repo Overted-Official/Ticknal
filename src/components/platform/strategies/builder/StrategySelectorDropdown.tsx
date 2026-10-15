@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Lock } from '@/components/ui/icon-library';
-import { STRATEGY_PROFILE_ARABIC, type StrategyProfile } from './strategy-builder-fixtures';
+import type { ProprietaryStudioProfile } from '@/lib/server/proprietary-studio-presentation';
 import type { StrategyDraft } from './strategy-builder-model';
 
 interface StrategySelectorDropdownProps {
   readonly selectedStrategyId: string;
   readonly draft: StrategyDraft;
-  readonly profiles: readonly StrategyProfile[];
+  readonly profiles: readonly ProprietaryStudioProfile[];
   readonly savedStrategies?: readonly { readonly id: string; readonly name: string }[];
   readonly locale: 'en' | 'ar';
   readonly onSelect: (strategyId: string) => void;
@@ -57,7 +57,7 @@ export default function StrategySelectorDropdown({
   const currentLabel = selectedStrategyId === draft.id
     ? draft.name
     : selectedProfile
-      ? (isAr ? STRATEGY_PROFILE_ARABIC[selectedProfile.id]?.name ?? selectedProfile.name : selectedProfile.name)
+      ? (isAr ? selectedProfile.nameAr : selectedProfile.name)
       : savedStrategies.find((strategy) => strategy.id === selectedStrategyId)?.name ?? (isAr ? 'اختر استراتيجية' : 'Select strategy');
 
   return (
@@ -87,7 +87,7 @@ export default function StrategySelectorDropdown({
         >
           {profiles.map((profile) => {
             const isSelected = profile.id === selectedStrategyId;
-            const label = isAr ? STRATEGY_PROFILE_ARABIC[profile.id]?.name ?? profile.name : profile.name;
+            const label = isAr ? profile.nameAr : profile.name;
             return (
               <button
                 key={profile.id}

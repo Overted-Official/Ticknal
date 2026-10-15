@@ -4,7 +4,7 @@ import { processCustomStrategyAlertBatch } from '@/lib/strategies/server/process
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function GET(request: Request): Promise<Response> {
   const unauthorized = process.env.NODE_ENV === 'production'
@@ -15,13 +15,24 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const batches = [];
     const started = Date.now();
-    for (let index = 0; index < 4 && Date.now() - started < 40_000; index += 1) {
+    let strategiesDrained = false;
+    for (let index = 0; Date.now() - started < 270_000; index += 1) {
       const batch = await processCustomStrategyAlertBatch();
       batches.push(batch);
-      if (!batch.checked) break;
+      if (!batch.checked) {
+        strategiesDrained = Boolean(batch.session) && !batch.error;
+        break;
+      }
     }
-    const push = await dispatchPendingCustomStrategyPush();
-    return Response.json({ status: 'ok', batches, push });
+    const pushBatches = [];
+    let pushDrained = false;
+    while (Date.now() - started < 285_000) {
+      const push = await dispatchPendingCustomStrategyPush(20);
+      pushBatches.push(push);
+      if (!push.processed) { pushDrained = true; break; }
+    }
+    const complete = strategiesDrained && pushDrained;
+    return Response.json({ status: complete ? 'ok' : 'incomplete', complete, batches, pushBatches }, { status: complete ? 200 : 503 });
   } catch (error) {
     console.error('[process-custom-strategies] Failed.', error);
     return Response.json({ status: 'unavailable' }, { status: 503 });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, notInArray } from 'drizzle-orm';
 import webpush from 'web-push';
 import { db } from '@/db';
 import { signalNotifications, tickers, pushSubscriptions, devicePushTokens, profiles, userStrategies } from '@/db/schema';
@@ -7,73 +7,12 @@ import { createClient } from '@/lib/supabase/server';
 import { dispatchSignalNotifications } from '@/lib/pushNotifications';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
-import { getCurrentProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
+import { getCurrentProprietaryAccess, getProprietaryAccessForUser } from '@/lib/server/proprietary-strategy-access';
 import { filterAccessibleSignals } from '@/lib/strategies/proprietary-access-policy';
+import { PROPRIETARY_STRATEGY_IDS } from '@/lib/strategies/proprietary-access-policy';
 
-const notificationsMemCache = new Map<string, { data: any[]; timestamp: number }>();
+const notificationsMemCache = new Map<string, { data: any[]; timestamp: number; canView: boolean }>();
 const NOTIFS_CACHE_TTL = 30 * 1000; // 30s cache per user
-
-export async function seedUserNotifications(userId: string): Promise<number> {
-  try {
-    const canonicalSignals = await db.execute(sql`
-      SELECT DISTINCT ON (ticker_symbol, strategy, signal_date, signal)
-        ticker_symbol,
-        strategy,
-        signal_date,
-        signal,
-        signal_price,
-        signal_bars_ago,
-        signal_reason,
-        analysis_start,
-        analysis_end,
-        data_as_of,
-        metrics,
-        parameter_version,
-        sent_at
-      FROM signal_notifications
-      WHERE signal = 'BUY'
-        AND strategy IN ('psi', 'psi_v2', 'hydra')
-        AND signal_date >= CURRENT_DATE - INTERVAL '14 days'
-      ORDER BY ticker_symbol, strategy, signal_date, signal, sent_at DESC;
-    `);
-
-    const rawRows = Array.isArray(canonicalSignals) ? canonicalSignals : (canonicalSignals as any).rows ?? [];
-
-    if (rawRows.length > 0) {
-      const toInsert = rawRows.map((r: any) => ({
-        userId,
-        tickerSymbol: r.ticker_symbol,
-        strategy: r.strategy,
-        signalDate: typeof r.signal_date === 'string' ? r.signal_date : new Date(r.signal_date).toISOString().split('T')[0],
-        signal: r.signal,
-        signalPrice: r.signal_price ? String(r.signal_price) : null,
-        signalBarsAgo: r.signal_bars_ago !== null && r.signal_bars_ago !== undefined ? Number(r.signal_bars_ago) : null,
-        signalReason: r.signal_reason || null,
-        analysisStart: r.analysis_start ? (typeof r.analysis_start === 'string' ? r.analysis_start : new Date(r.analysis_start).toISOString().split('T')[0]) : null,
-        analysisEnd: r.analysis_end ? (typeof r.analysis_end === 'string' ? r.analysis_end : new Date(r.analysis_end).toISOString().split('T')[0]) : null,
-        dataAsOf: r.data_as_of ? (typeof r.data_as_of === 'string' ? r.data_as_of : new Date(r.data_as_of).toISOString().split('T')[0]) : null,
-        metrics: r.metrics || null,
-        parameterVersion: r.parameter_version || null,
-        sentAt: r.sent_at ? new Date(r.sent_at) : new Date(),
-      }));
-
-      for (let i = 0; i < toInsert.length; i += 50) {
-        const slice = toInsert.slice(i, i + 50);
-        await db.insert(signalNotifications).values(slice).onConflictDoNothing();
-      }
-    }
-
-    await db
-      .update(profiles)
-      .set({ notificationsSeededAt: new Date(), updatedAt: new Date() })
-      .where(eq(profiles.id, userId));
-
-    return rawRows.length;
-  } catch (error) {
-    console.error(`Failed to seed notifications for user ${userId}:`, error);
-    return 0;
-  }
-}
 
 export async function handleNotificationsGet() {
   const supabase = await createClient();
@@ -87,7 +26,7 @@ export async function handleNotificationsGet() {
 
   // Check in-memory debounce cache to eliminate redundant database egress
   const cached = notificationsMemCache.get(user.id);
-  if (cached && Date.now() - cached.timestamp < NOTIFS_CACHE_TTL) {
+  if (cached && cached.canView === access.canView && Date.now() - cached.timestamp < NOTIFS_CACHE_TTL) {
     return NextResponse.json({ notifications: filterAccessibleSignals(cached.data, access.canView) }, { headers: { 'Cache-Control': 'private, no-store' } });
   }
 
@@ -110,12 +49,14 @@ export async function handleNotificationsGet() {
       .from(signalNotifications)
       .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
       .leftJoin(userStrategies, and(eq(signalNotifications.userId, userStrategies.userId), eq(signalNotifications.strategy, userStrategies.id)))
-      .where(eq(signalNotifications.userId, user.id))
+      .where(access.canView
+        ? eq(signalNotifications.userId, user.id)
+        : and(eq(signalNotifications.userId, user.id), notInArray(signalNotifications.strategy, [...PROPRIETARY_STRATEGY_IDS])))
       .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
       .limit(50);
 
     if (rows.length === 0) {
-      notificationsMemCache.set(user.id, { data: [], timestamp: Date.now() });
+      notificationsMemCache.set(user.id, { data: [], timestamp: Date.now(), canView: access.canView });
       return NextResponse.json({ notifications: [] }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
 
@@ -132,7 +73,7 @@ export async function handleNotificationsGet() {
       };
     });
 
-    notificationsMemCache.set(user.id, { data: enhancedRows, timestamp: Date.now() });
+    notificationsMemCache.set(user.id, { data: enhancedRows, timestamp: Date.now(), canView: access.canView });
     return NextResponse.json({ notifications: filterAccessibleSignals(enhancedRows, access.canView) }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -205,7 +146,8 @@ export async function handleTestNotification(req?: Request) {
   let user: any = null;
   const authHeader = req?.headers.get('authorization');
 
-  if (authHeader?.startsWith('Bearer ')) {
+  if (authHeader) {
+    if (!authHeader.startsWith('Bearer ')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const token = authHeader.replace('Bearer ', '').trim();
     const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
     const supabase = createSupabaseClient(
@@ -214,9 +156,8 @@ export async function handleTestNotification(req?: Request) {
     );
     const { data } = await supabase.auth.getUser(token);
     user = data?.user;
-  }
-
-  if (!user) {
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } else {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     user = data?.user;
@@ -225,6 +166,11 @@ export async function handleTestNotification(req?: Request) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const [profile] = await db.select({ role: profiles.role })
+    .from(profiles).where(eq(profiles.id, user.id)).limit(1);
+  const access = await getProprietaryAccessForUser(user.id, user.email ?? null, profile?.role ?? null);
+  if (!access.canView) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const payloadData = {
     title: '(BUY) Commercial International Bank',
@@ -322,9 +268,9 @@ export async function handleTestNotification(req?: Request) {
   }
 
   return NextResponse.json({
-    success: true,
-    sent: sent || 1,
+    success: sent > 0,
+    sent,
     failed,
-    message: 'Test notification dispatched to your registered device.',
+    message: sent > 0 ? 'Test notification dispatched to your registered device.' : 'No test notification could be delivered.',
   });
 }

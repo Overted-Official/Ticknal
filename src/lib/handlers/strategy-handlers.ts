@@ -254,6 +254,7 @@ export async function handleMetricsGet(request: Request) {
 }
 
 export async function handleLevelsGet(request: Request) {
+  try {
   const denied = await requireProprietaryAccess();
   if (denied) return denied;
   const supabase = await createClient();
@@ -272,7 +273,6 @@ export async function handleLevelsGet(request: Request) {
     return NextResponse.json({ error: 'symbol, date, and entryPrice are required' }, { status: 400 });
   }
 
-  try {
     const ticker = normalizeTickerSymbol(symbol);
     const bars = await getDailyPriceBars(ticker);
     if (bars.length === 0) {

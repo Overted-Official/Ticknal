@@ -131,12 +131,13 @@ export default function AddOrderModal({
     avgBarsPerTrade: number;
     isLoading: boolean;
   }>({
-    winningAlgo: 'Typhon',
+    winningAlgo: '',
     avgReturnPerTrade: 0,
     maxAdverseExcursion: 0,
     avgBarsPerTrade: 0,
     isLoading: false,
   });
+  const [canViewProprietary, setCanViewProprietary] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tickers, setTickers] = useState<Ticker[]>([]);
@@ -286,7 +287,23 @@ export default function AddOrderModal({
     if (!cleanSymbol || !isOpen || previewOnly) return;
 
     let isCancelled = false;
-    setWinningMetrics((prev) => ({ ...prev, isLoading: true }));
+    setCanViewProprietary(false);
+    setWinningMetrics((prev) => ({ ...prev, winningAlgo: '', isLoading: true }));
+
+    const loadChampion = async () => {
+      try {
+        const accessResponse = await fetch('/api/strategies/proprietary/access', { cache: 'no-store' });
+        const access = accessResponse.ok ? await accessResponse.json() as { canView?: boolean } : null;
+        if (isCancelled) return;
+        if (!access?.canView) {
+          setWinningMetrics({ winningAlgo: '', avgReturnPerTrade: 0, maxAdverseExcursion: 0, avgBarsPerTrade: 0, isLoading: false });
+          return;
+        }
+        setCanViewProprietary(true);
+      } catch {
+        if (!isCancelled) setWinningMetrics((prev) => ({ ...prev, isLoading: false }));
+        return;
+      }
 
     const candidateStrategies: { id: 'psi' | 'psi_v2' | 'hydra'; name: string }[] = [
       { id: 'psi', name: 'Typhon' },
@@ -294,10 +311,13 @@ export default function AddOrderModal({
       { id: 'hydra', name: 'Hydra' },
     ];
 
-    Promise.all(
+    await Promise.all(
       candidateStrategies.map((strat) =>
         fetch(`/api/signals?symbol=${encodeURIComponent(cleanSymbol)}&strategy=${strat.id}`)
-          .then((r) => r.json())
+          .then((r) => {
+            if (!r.ok) throw new Error('Strategy data unavailable');
+            return r.json();
+          })
           .then((data) => {
             const sysRoi = Number(data?.metrics?.sysRoi) || 0;
             const bhRoi = Number(data?.metrics?.buyHoldRoi) || 0;
@@ -340,6 +360,8 @@ export default function AddOrderModal({
         setWinningMetrics((prev) => ({ ...prev, isLoading: false }));
       }
     });
+    };
+    void loadChampion();
 
     return () => {
       isCancelled = true;
@@ -555,7 +577,7 @@ export default function AddOrderModal({
               {/* SECTION 1: RISK / REWARD OVERVIEW                         */}
               {/* Derived from Winning Algo Historical Backtest Data        */}
               {/* ========================================================= */}
-              {!previewOnly && <div className="space-y-3">
+              {!previewOnly && canViewProprietary && <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-semibold text-white uppercase tracking-wider font-sans flex items-center gap-1.5">

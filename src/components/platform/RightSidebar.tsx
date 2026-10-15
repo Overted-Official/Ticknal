@@ -34,6 +34,7 @@ export interface WatchlistItem {
 export type TickerCategory = 'EGX' | 'Metals' | 'Funds';
 
 interface RightSidebarProps {
+  canViewProprietary?: boolean;
   watchlist: WatchlistItem[];
   selectedSymbol: string;
   timeframe?: string;
@@ -46,6 +47,7 @@ interface RightSidebarProps {
 }
 
 export default function RightSidebar({
+  canViewProprietary = false,
   watchlist,
   selectedSymbol,
   timeframe = 'D',
@@ -157,7 +159,7 @@ export default function RightSidebar({
 
   // Fetch opportunities/signals across all tickers (cached server-side)
   const { data: oppsData } = useSWR<{ opportunities: OpportunitySignal[] }>(
-    isHeroScene ? null : '/api/opportunities?bars=15',
+    isHeroScene || !canViewProprietary ? null : '/api/opportunities?bars=15',
     fetcher,
     {
       revalidateOnFocus: false,
@@ -180,7 +182,7 @@ export default function RightSidebar({
 
   // Compute matching signals based on active filter config
   const matchingSignalsBySymbol = useMemo(() => {
-    if (!signalFilter.isActive) return new Map<string, OpportunitySignal>();
+    if (!canViewProprietary || !signalFilter.isActive) return new Map<string, OpportunitySignal>();
 
     const result = new Map<string, OpportunitySignal>();
     const stratSet = new Set(signalFilter.strategies);
@@ -205,7 +207,7 @@ export default function RightSidebar({
       }
     }
     return result;
-  }, [signalFilter, signalsBySymbol]);
+  }, [signalFilter, signalsBySymbol, canViewProprietary]);
 
   const isItemMetal = useCallback((item: WatchlistItem) => {
     const sym = item.symbol.toUpperCase().replace('.CA', '');
@@ -266,7 +268,7 @@ export default function RightSidebar({
       }
 
       // 2. Signal Filter
-      if (signalFilter.isActive && !matchingSignalsBySymbol.has(sym)) {
+      if (canViewProprietary && signalFilter.isActive && !matchingSignalsBySymbol.has(sym)) {
         return false;
       }
 
@@ -282,7 +284,7 @@ export default function RightSidebar({
 
       return true;
     });
-  }, [watchlist, selectedCategory, signalFilter.isActive, matchingSignalsBySymbol, searchQuery, isItemMetal, isItemFund]);
+  }, [watchlist, selectedCategory, canViewProprietary, signalFilter.isActive, matchingSignalsBySymbol, searchQuery, isItemMetal, isItemFund]);
 
   const groupedWatchlist = useMemo(() => {
     const groups = new Map<string, WatchlistItem[]>();
@@ -366,7 +368,7 @@ export default function RightSidebar({
               </button>
             )}
           </div>
-          <div className="relative">
+          {canViewProprietary && <div className="relative">
             <button
               type="button"
               onClick={() => setIsFilterOpen((prev) => !prev)}
@@ -402,7 +404,7 @@ export default function RightSidebar({
               matchingCount={matchingCount}
               totalCount={watchlist.length}
             />
-          </div>
+          </div>}
         </div>
 
         {/* Category Switcher: EGX | Metals | Funds */}
@@ -424,7 +426,7 @@ export default function RightSidebar({
       </div>
 
       {/* Active Filter Banner */}
-      {signalFilter.isActive && (
+      {canViewProprietary && signalFilter.isActive && (
         <div className="px-3 py-1 bg-cold-gray-900/90 border-b border-white/[0.08] flex items-center justify-between text-[10px]">
           <div className="flex items-center gap-1.5 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-blue shrink-0 animate-pulse" />

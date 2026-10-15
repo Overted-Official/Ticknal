@@ -89,6 +89,7 @@ export default function ChartWidget({
   onUpdateStrategyParam,
   bulkUpdateStrategyParams,
   showSignals = true,
+  canViewProprietary = false,
   onMetricsChange,
   metrics,
   companyName,
@@ -211,6 +212,7 @@ export default function ChartWidget({
 
   // Global listener for ticknal:open-strategy-report
   useEffect(() => {
+    if (!canViewProprietary) return;
     const handleOpen = (e: Event) => {
       const customEvent = e as CustomEvent<{ tab?: string }>;
       const requested = customEvent.detail?.tab;
@@ -223,7 +225,7 @@ export default function ChartWidget({
     };
     window.addEventListener('ticknal:open-strategy-report', handleOpen);
     return () => window.removeEventListener('ticknal:open-strategy-report', handleOpen);
-  }, []);
+  }, [canViewProprietary]);
 
   const displaySymbol = symbol.replace('.CA', '');
   const instrumentCurrency = currency.toUpperCase();
@@ -1168,10 +1170,10 @@ export default function ChartWidget({
         activeIndicatorsCount={activeIndicators.length + activeCanonicalIndicators.length}
         isIndicatorsPopoverOpen={indicatorsPopoverOpen}
         onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
-        onOpenStrategyReport={() => {
+        onOpenStrategyReport={canViewProprietary ? () => {
           setStrategyReportTab('performance');
           setIsStrategyReportOpen(true);
-        }}
+        } : undefined}
         openPositionsCount={openPositionsCount}
         onOpenPositionsDrawer={() => setPositionsDrawerOpen(true)}
         onOpenAddOrder={() => {
@@ -1541,7 +1543,7 @@ export default function ChartWidget({
       )}
 
       {/* Strategy Report Slide-Over Drawer (75% desktop width, full screen mobile, pure black) */}
-      <StrategyReportDrawer
+      {canViewProprietary && <StrategyReportDrawer
         isOpen={isStrategyReportOpen}
         onClose={() => setIsStrategyReportOpen(false)}
         symbol={symbol}
@@ -1561,7 +1563,7 @@ export default function ChartWidget({
         logoUrl={logoUrl || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.logoUrl}
         currency={instrumentCurrency}
         initialTab={strategyReportTab}
-      />
+      />}
     </div>
   );
 }

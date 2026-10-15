@@ -108,6 +108,7 @@ export interface ChartWidgetProps {
   bulkUpdateStrategyParams?: (newParams: Record<string, any>) => void;
   watchlist?: WatchlistItem[];
   showSignals?: boolean;
+  canViewProprietary?: boolean;
   onMetricsChange?: (metrics: Record<string, string> | null) => void;
   metrics?: Record<string, string> | null;
   companyName?: string;

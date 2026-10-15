@@ -516,21 +516,8 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
 
     const elapsed = Date.now() - startTime;
 
-    // Direct Signal Pipeline: If new price data was inserted and budget permits (< 42s), immediately process signals and push notifications
-    let notificationResult: any = null;
-    if (!options?.skipNotifications && totalUpdated > 0 && Date.now() - startTime < 42000) {
-      try {
-        notificationResult = await dispatchSignalNotifications({ lookbackBars: 1 });
-        await db.insert(systemLogs).values({
-          source: 'cron-stocks-signals',
-          level: 'INFO',
-          message: `Post-update signals processed: ${notificationResult.sent} notifications sent, ${notificationResult.checkedSymbols} symbols analyzed.`,
-          metadata: { notificationResult },
-        });
-      } catch (sigErr: any) {
-        console.error('Post-update signal processing error:', sigErr);
-      }
-    }
+    // The dedicated after-close job is the only automatic signal dispatcher.
+    const notificationResult = null;
 
     // Automatically sync daily investor flows for the completed trading session
     let investorFlowResult: any = null;
@@ -1142,9 +1129,8 @@ export async function handleWatchdog(req: Request) {
     // Directly execute missing syncs in-process with zero network dependency
     if (stocksMissing && isEgxTradingDay) {
       try {
-        await handleUpdateStocks(req, { specificSymbols: missingStockSymbols });
-        await handleProcessSignals(req);
-        triggersTriggered.push(`update-stocks (${stocksMissingCount} missing)`, 'process-signals');
+        await handleUpdateStocks(req, { specificSymbols: missingStockSymbols, skipNotifications: true });
+        triggersTriggered.push(`update-stocks (${stocksMissingCount} missing)`);
       } catch (e) {
         console.error('Watchdog failed to run handleUpdateStocks:', e);
       }

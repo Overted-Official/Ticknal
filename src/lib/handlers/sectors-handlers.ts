@@ -529,6 +529,7 @@ export async function getOrInitPrecomputedCache(): Promise<PrecomputedModelCache
 
     const tickerMap = new Map<string, any>();
     for (const t of tickerRows) {
+      if (t.status === 'DELISTED') continue;
       tickerMap.set(normalizeTickerSymbol(t.symbol), {
         companyName: t.companyName ?? t.symbol,
         sector: t.sector ?? 'Unclassified',
@@ -653,13 +654,13 @@ export async function handleSignalsGet(request?: Request) {
     if (!refresh) {
       const cached = memSignalsCacheMap.get(cacheKey);
       if (cached && now - cached.timestamp < SIGNALS_CACHE_TTL) {
-        return NextResponse.json(cached.data, { headers: EDGE_CACHE_HEADERS });
+        return NextResponse.json(cached.data, { headers: { 'Cache-Control': 'private, no-store' } });
       }
 
       const existingPromise = inFlightSignalsMap.get(cacheKey);
       if (existingPromise) {
         const data = await existingPromise;
-        return NextResponse.json(data, { headers: EDGE_CACHE_HEADERS });
+        return NextResponse.json(data, { headers: { 'Cache-Control': 'private, no-store' } });
       }
     }
 
@@ -1008,7 +1009,7 @@ export async function handleSignalsGet(request?: Request) {
     inFlightSignalsMap.set(cacheKey, promise);
     try {
       const result = await promise;
-      return NextResponse.json(result, { headers: EDGE_CACHE_HEADERS });
+      return NextResponse.json(result, { headers: { 'Cache-Control': 'private, no-store' } });
     } finally {
       if (inFlightSignalsMap.get(cacheKey) === promise) inFlightSignalsMap.delete(cacheKey);
     }

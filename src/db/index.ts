@@ -169,6 +169,14 @@ function createDbInstance() {
                 created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                 updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
               );
+              CREATE TABLE IF NOT EXISTS public.proprietary_strategy_access (
+                user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+                enabled BOOLEAN DEFAULT false NOT NULL,
+                notifications_enabled BOOLEAN DEFAULT false NOT NULL,
+                granted_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+              );
             `)
             .catch(() => {});
         })

@@ -4,17 +4,19 @@ import { useState } from 'react';
 import { setProprietaryStrategyAccessAction } from '@/lib/server/console-actions';
 
 export default function ProprietaryAccessToggle({
-  userId, enabled, canManage, onChanged, compact = false,
+  userId, enabled, canManage, onChanged, compact = false, isOwner = false,
 }: {
   userId: string;
   enabled: boolean;
   canManage: boolean;
+  isOwner?: boolean;
   onChanged: (userId: string, enabled: boolean) => void;
   compact?: boolean;
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const label = enabled ? 'Access on' : 'Access off';
+  if (isOwner) return <span className="text-xs text-plt-muted">Owner access</span>;
   if (!canManage) return <span className="text-xs text-plt-muted">{label}</span>;
 
   return (

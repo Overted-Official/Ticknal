@@ -24,6 +24,7 @@ import {
 } from '@/lib/server/console-actions';
 import type { ConsoleUserRowItem } from '@/lib/server/console-queries';
 import ProprietaryAccessToggle from './ProprietaryAccessToggle';
+import { isProprietaryOwner } from '@/lib/strategies/proprietary-access-policy';
 
 interface UserDirectoryScreenerProps {
   users: ConsoleUserRowItem[];
@@ -641,7 +642,7 @@ export default function UserDirectoryScreener({
 
                       {/* 7. Member Status */}
                       <td className="py-3 px-3" onClick={(event) => event.stopPropagation()}>
-                        <ProprietaryAccessToggle userId={u.id} enabled={u.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} onChanged={onAccessChanged} compact />
+                        <ProprietaryAccessToggle userId={u.id} enabled={u.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} isOwner={isProprietaryOwner(u.email, u.role)} onChanged={onAccessChanged} compact />
                       </td>
 
                       {/* 8. Member Status */}

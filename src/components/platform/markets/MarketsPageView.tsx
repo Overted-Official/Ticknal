@@ -17,7 +17,6 @@ import GuestProLockModal from '@/components/platform/auth/GuestProLockModal';
 import { useGuestGuard } from '@/context/GuestGuardContext';
 import {
   type SectorsPerformanceResponse,
-  type SectorStrategySignalsResponse,
   aggregateSectorsFromStocks,
 } from '@/lib/sectors-math';
 import { useTranslation } from '@/lib/i18n';
@@ -41,9 +40,6 @@ export default function MarketsPageView() {
   // Sizing & Hierarchy Granularity
   const [sizingMetric, setSizingMetric] = useState<'turnover' | 'volume' | 'equal'>('turnover');
   const [granularity, setGranularity] = useState<'sector' | 'industryGroup' | 'industry' | 'ticker'>('sector');
-
-  // Strategy Model Selection
-  const [selectedStrategy, setSelectedStrategy] = useState<string>('psi');
 
   // Selection state
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
@@ -86,7 +82,7 @@ export default function MarketsPageView() {
 
   // 1. SWR Query for Market Macro Data (cached by date range)
   const { data: liveMacroData, isLoading: isLiveMacroLoading, mutate: mutateMacro } = useSWR<SectorsPerformanceResponse>(
-    isHeroScene ? null : `/api/sectors/performance?start=${start}&end=${end}&strategy=${selectedStrategy}&timeframe=${timeframePreset}`,
+    isHeroScene ? null : `/api/sectors/performance?start=${start}&end=${end}&timeframe=${timeframePreset}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -94,15 +90,6 @@ export default function MarketsPageView() {
     }
   );
 
-  // 2. SWR Query for Algorithmic Strategy Signals across EGX
-  const { data: signalsData } = useSWR<SectorStrategySignalsResponse>(
-    isHeroScene ? null : `/api/sectors/signals?strategy=${selectedStrategy}&start=${start}&end=${end}&timeframe=${timeframePreset}`,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 120000,
-    }
-  );
   const macroData = isHeroScene
     ? HERO_SCENE_MARKETS.data as unknown as SectorsPerformanceResponse
     : liveMacroData;
@@ -209,7 +196,6 @@ export default function MarketsPageView() {
         <MarketHeatmapSection
           sectors={sectors}
           marketSummary={marketSummary}
-          signalsData={signalsData}
           benchmarkReturn={macroData?.egx30Return ?? 0}
           timeframePreset={timeframePreset}
           setTimeframePreset={(preset) => setTimeframePreset(preset === '1W' ? '5D' : preset)}
