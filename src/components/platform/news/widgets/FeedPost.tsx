@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/icon-library';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
-import SocialButton from '@/components/ui/social-button';
 import NewsImageLightbox from './NewsImageLightbox';
 import SocialShareModal from './SocialShareModal';
 import { resolveLocalizedChartSvg } from '@/lib/news/ticknal-take-charts';
@@ -571,15 +570,7 @@ export default function FeedPost({
               />
             </button>
 
-            {/* 3. Share Button: Animated Framer Motion SocialButton */}
-            <SocialButton
-              variant="compact"
-              iconOnly
-              url={itemUrl}
-              title={item.title}
-            />
-
-            {/* 4. Social Share & Copy Modal Button (Formats for X, LinkedIn, Telegram + Graphic) */}
+            {/* 3. Share: opens the social modal (X / LinkedIn / Telegram copy, link, and card download) */}
             <button
               type="button"
               onClick={(e) => {

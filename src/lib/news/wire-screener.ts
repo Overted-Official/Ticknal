@@ -43,7 +43,7 @@ function fetchJson(url: string, timeoutMs = 6000): Promise<any> {
 }
 
 export const TARGET_WIRE_SYMBOLS = [
-  // EGX Key Equities & Indices
+  // EGX Key Equities & Blue Chips
   'EGX:COMI',
   'EGX:TMGH',
   'EGX:SWDY',
@@ -58,8 +58,26 @@ export const TARGET_WIRE_SYMBOLS = [
   'EGX:MFPC',
   'EGX:ISPH',
   'EGX:AMOC',
+  'EGX:CERA',
+  'EGX:HELI',
+  'EGX:MNHD',
+  'EGX:JUFO',
+  'EGX:SKPC',
+  'EGX:OCDI',
+  'EGX:PHDC',
+  'EGX:CIEB',
+  'EGX:ADIB',
+  'EGX:ALCN',
+  'EGX:EFID',
+  'EGX:BTFH',
+  'EGX:CLHO',
+  'EGX:ORWE',
+  'EGX:PRDC',
+  'EGX:POUL',
+  // EGX Benchmark Indices
   'EGX:EGX30',
   'EGX:EGX70',
+  'EGX:EGX100',
   // Bullion & Precious Metals (Local & Global)
   'TVC:GOLD',
   'OANDA:XAUUSD',
@@ -69,7 +87,7 @@ export const TARGET_WIRE_SYMBOLS = [
   'FX_IDC:USDEGP',
 ];
 
-const ASSET_RELEVANCE_KEYWORDS: Record<string, string[]> = {
+export const ASSET_RELEVANCE_KEYWORDS: Record<string, string[]> = {
   COMI: ['cib', 'comi', 'تجاري', 'التجاري الدولي', 'بنك تجاري', 'cib_adr'],
   TMGH: ['talaat', 'moustafa', 'طلعت مصطفى', 'tmgh', 'southmed', 'مدينتي'],
   SWDY: ['elsewedy', 'sewedy', 'السويدي', 'swdy', 'كابلات'],
@@ -84,8 +102,25 @@ const ASSET_RELEVANCE_KEYWORDS: Record<string, string[]> = {
   MFPC: ['mopco', 'موبكو', 'mfpc', 'مصر لإنتاج الأسمدة'],
   ISPH: ['ibnsina', 'ابن سينا', 'isph', 'أدوية'],
   AMOC: ['amoc', 'أموك', 'إسكندرية للزيوت', 'بترول'],
+  CERA: ['cleopatra', 'سيراميكا كليوباترا', 'cera'],
+  HELI: ['heliopolis', 'مصر الجديدة للإسكان', 'هليوبوليس', 'heli'],
+  MNHD: ['madinet masr', 'مدينة مصر', 'مدينة نصر', 'mnhd'],
+  JUFO: ['juhayna', 'جهينة', 'jufo', 'ألبان', 'عصائر'],
+  SKPC: ['sidi kerir', 'سيدى كرير', 'skpc', 'بتروكيماويات'],
+  OCDI: ['sodic', 'سوديك', 'ocdi'],
+  PHDC: ['palm hills', 'بالم هيلز', 'phdc'],
+  CIEB: ['crédit agricole', 'كريدي أجريكول', 'cieb'],
+  ADIB: ['adib', 'أبوظبي الإسلامي', 'مصرف أبوظبي'],
+  ALCN: ['alexandria containers', 'إسكندرية لتداول الحاويات', 'alcn'],
+  EFID: ['edita', 'إيديتا', 'efid'],
+  BTFH: ['beltone', 'بلتون', 'btfh'],
+  CLHO: ['cleopatra hospital', 'مستشفى كليوباترا', 'clho'],
+  ORWE: ['oriental weavers', 'النساجون الشرقيون', 'orwe'],
+  PRDC: ['pioneers', 'بايونيرز', 'prdc'],
+  POUL: ['cairo poultry', 'القاهرة للدواجن', 'poul'],
   EGX30: ['egx', 'egx30', 'بورصة مصر', 'البورصة المصرية', 'مؤشر', 'أسهم مصر'],
   EGX70: ['egx70', 'مؤشر الشركات الصغيرة', 'السبعيني', 'egx 70'],
+  EGX100: ['egx100', 'egx 100', 'المؤشر المئوي'],
   GOLD: ['gold', 'xau', 'ذهب', 'الذهب', 'سبائك', 'أونصة', 'صاغة', 'عيار 21', 'عيار 24'],
   SILVER: ['silver', 'xag', 'فضة', 'الفضة'],
   USDEGP: ['pound', 'جنيه', 'usd/egp', 'مركزي', 'تضخم', 'cbe', 'dollar', 'دولار', 'تعويم', 'فائدة', 'سعر الصرف', 'احتياطي'],
@@ -146,12 +181,13 @@ function getCategoryForAsset(assetKey: string, title: string): { category: strin
   return { category: 'listed_companies', categoryLabel: 'Listed Companies (EGX)' };
 }
 
-function isNoiseHeadline(title: string): boolean {
+export function isNoiseHeadline(title: string): boolean {
   const lower = (title || '').toLowerCase();
   const NOISE_PATTERNS = [
     'delivery intentions breakdown',
     'delivery intentions',
     'comex gold delivery',
+    'comex silver delivery',
     'settlement prices',
     'daily settlement',
     'routine notice',
@@ -161,11 +197,118 @@ function isNoiseHeadline(title: string): boolean {
     'cftc commitments of traders',
     'cot report summary',
     'intentions breakdown',
+    'notice of delivery',
+    'bulletin board',
+    'calendar notice',
+    'intraday targets/key levels',
   ];
   return NOISE_PATTERNS.some((p) => lower.includes(p));
 }
 
-function isHeadlineRelevantToAsset(title: string, assetKey: string): boolean {
+export interface FinancialCatalyst {
+  isCatalyst: boolean;
+  type: string;
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+  takeaway: string;
+}
+
+export function evaluateFinancialCatalyst(title: string, assetKey: string, lang: 'en' | 'ar'): FinancialCatalyst {
+  const t = (title || '').toLowerCase();
+
+  // 1. Contract / Deal / Project / Order Backlog
+  const contractKeywords = [
+    'contract', 'project', 'signs', 'jv', 'expansion', 'agreement', 'awarded', 'tender',
+    'عقد', 'مشروع', 'اتفاقية', 'توسع', 'شراكة', 'ترسية', 'تحالف', 'صفقة', 'توقيع'
+  ];
+  if (contractKeywords.some((k) => t.includes(k))) {
+    return {
+      isCatalyst: true,
+      type: lang === 'ar' ? 'عقد وتوسع تشغيلي' : 'Contract & Order Backlog',
+      sentiment: 'bullish',
+      takeaway: lang === 'ar'
+        ? 'توسع في العمليات التشغيلية والتعاقدات الرأسمالية يعزز التدفقات النقدية المستقبلية.'
+        : 'Material operational backlog expansion and corporate contract execution.'
+    };
+  }
+
+  // 2. Earnings / Financials / Dividends
+  const earningsKeywords = [
+    'earnings', 'profit', 'revenue', 'dividend', 'net income', 'q1', 'q2', 'q3', 'q4', 'results',
+    'أرباح', 'إيرادات', 'توزيعات', 'كوبون', 'نتائج أعمال', 'صافي ربح'
+  ];
+  if (earningsKeywords.some((k) => t.includes(k))) {
+    const isDecline = t.includes('declines') || t.includes('drops') || t.includes('falls') || t.includes('تراجع') || t.includes('انخفاض') || t.includes('خسائر');
+    return {
+      isCatalyst: true,
+      type: lang === 'ar' ? 'نتائج مالية وتوزيعات' : 'Earnings & Financial Results',
+      sentiment: isDecline ? 'bearish' : 'bullish',
+      takeaway: lang === 'ar'
+        ? (isDecline ? 'تراجع في الربحية قد يضغط على مضاعفات التقييم على المدى القريب.' : 'نمو في الأرباح التشغيلية يدعم هوامش الربحية والتوزيعات النقدية.')
+        : (isDecline ? 'Financial compression may pressure valuation multiples in the short term.' : 'Stronger operating margins and earnings accretion support fundamental valuation.')
+    };
+  }
+
+  // 3. Central Bank / Macro / Inflation / Currency
+  const macroKeywords = [
+    'cbe', 'central bank', 'interest rate', 'rate hike', 'rate cut', 'inflation', 'cpi', 'devaluation',
+    'المركزي', 'البنك المركزي', 'الفائدة', 'تثبيت الفائدة', 'رفع الفائدة', 'خفض الفائدة', 'التضخم', 'تعويم', 'سعر الصرف', 'احتياطي'
+  ];
+  if (macroKeywords.some((k) => t.includes(k)) || assetKey === 'USDEGP') {
+    const isInflationHigh = t.includes('hot') || t.includes('high') || t.includes('ارتفاع') || t.includes('تسارع');
+    return {
+      isCatalyst: true,
+      type: lang === 'ar' ? 'سياسة نقدية واقتصاد كلي' : 'Monetary Policy & Macro',
+      sentiment: isInflationHigh ? 'bearish' : 'neutral',
+      takeaway: lang === 'ar'
+        ? 'تحركات السياسة النقدية ومعدلات التضخم تنعكس مباشرة على تكلفة التمويل وتقييم الأصول.'
+        : 'Central bank monetary stance and inflation dynamics directly guide sovereign liquidity and asset yields.'
+    };
+  }
+
+  // 4. M&A / Acquisitions / Capital Structure
+  const maKeywords = [
+    'acquisition', 'merger', 'acquire', 'buyout', 'takeover', 'stake', 'rights issue',
+    'استحواذ', 'اندماج', 'زيادة رأس مال', 'حصة', 'شراء أسهم'
+  ];
+  if (maKeywords.some((k) => t.includes(k))) {
+    return {
+      isCatalyst: true,
+      type: lang === 'ar' ? 'صفقات واستحواذات' : 'M&A & Corporate Action',
+      sentiment: 'bullish',
+      takeaway: lang === 'ar'
+        ? 'إعادة هيكلة الملكية أو صفقات الاستحواذ تعيد تسعير السهم وفق القيمة العادلة.'
+        : 'Strategic ownership realignment and M&A pricing catalyst.'
+    };
+  }
+
+  // 5. Commodities (Gold & Silver) Price Action & Strategic Forecasts
+  if (assetKey === 'GOLD' || assetKey === 'SILVER') {
+    const metalCatalystKeywords = [
+      'slides', 'falls', 'drops', 'slumps', 'surges', 'jumps', 'rises', 'record', 'forecast', 'target',
+      'hits', 'cpi', 'inflation', 'fed', 'dollar', 'sees', 'reaching', 'يهبط', 'يتراجع', 'يقفز', 'يرتفع', 'مستوى قياسي', 'توقعات'
+    ];
+    if (metalCatalystKeywords.some((k) => t.includes(k))) {
+      const isUp = t.includes('surges') || t.includes('jumps') || t.includes('rises') || t.includes('reaches') || t.includes('reaching') || t.includes('ارتفاع') || t.includes('يقفز');
+      return {
+        isCatalyst: true,
+        type: lang === 'ar' ? 'تحركات المعادن الثمينة' : 'Precious Metals Catalyst',
+        sentiment: isUp ? 'bullish' : 'bearish',
+        takeaway: lang === 'ar'
+          ? (isUp ? 'طلب قوي على التحوط يدعم تسعير السبائك كملاذ آمن.' : 'ضغوط أسعار الفائدة وقوة العملة تدفع لتصحيح سعري مؤقت.')
+          : (isUp ? 'Safe-haven flight and hedging flows support bullion pricing momentum.' : 'Monetary yield pressures drive near-term bullion re-pricing and consolidation.')
+      };
+    }
+  }
+
+  return {
+    isCatalyst: false,
+    type: 'Market Wire',
+    sentiment: 'neutral',
+    takeaway: ''
+  };
+}
+
+export function isHeadlineRelevantToAsset(title: string, assetKey: string): boolean {
   if (isNoiseHeadline(title)) return false;
   const t = (title || '').toLowerCase();
   const keywords = ASSET_RELEVANCE_KEYWORDS[assetKey];
@@ -322,40 +465,58 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
     console.warn('[wire-screener] EOD context query warning:', eodErr);
   }
 
-  // 5. Screen each candidate through OpenRouter Quantitative Analyst Persona
+  // 5. Screen each candidate: OpenRouter Quantitative Analyst Gate with Resilient Fallback
+  // Story cluster deduplication: max 2 stories per asset per catalyst type within 24h
+  const storyClusterCount = new Map<string, number>();
+
   for (const wire of candidateWires) {
     const eod = eodMap.get(wire.assetKey);
-    const closeStr = eod ? `${eod.close} EGP` : 'N/A';
-    const changeStr = eod ? `${eod.changePct >= 0 ? '+' : ''}${eod.changePct}%` : 'N/A';
-    const volStr = eod ? `${eod.volume.toLocaleString()} shares` : 'N/A';
+    const closeStr = eod ? `${eod.close} EGP` : '';
+    const changeStr = eod ? `${eod.changePct >= 0 ? '+' : ''}${eod.changePct}%` : '';
+    const volStr = eod && eod.volume > 0 ? `${Math.round(eod.volume).toLocaleString()} shares` : '';
+    const marketCtx = eod ? `Last Close: ${closeStr} (${changeStr})${volStr ? ` | Vol: ${volStr}` : ''}` : '';
 
+    const isArabic = /[\u0600-\u06FF]/.test(wire.title);
+    const lang = isArabic ? 'ar' : 'en';
+    const catalyst = evaluateFinancialCatalyst(wire.title, wire.assetKey, lang);
+
+    // Filter out procedural noise or non-catalyst wires
+    if (isNoiseHeadline(wire.title)) {
+      droppedNoise++;
+      continue;
+    }
+
+    // Cluster key to prevent 5 identical syndicated inflation/gold headlines
+    const clusterKey = `${wire.assetKey}:${catalyst.type}`;
+    const countInCluster = storyClusterCount.get(clusterKey) || 0;
+    if (countInCluster >= 2) {
+      droppedNoise++;
+      continue;
+    }
+
+    let finalSummary = '';
+    let finalSentiment = catalyst.sentiment;
+
+    // OpenRouter Quantitative Analyst Persona Prompt
     const systemPrompt = `You are a senior quantitative analyst and expert Egyptian equity trader at Ticknal.
-Your task is to analyze breaking market news wires and filter out noise.
-STRICT INSTRUCTION: Never output any thinking scratchpad, preamble, or commentary. Never say "The user wants..." or "Analyze the content". Respond ONLY with a 1-2 sentence quantitative summary (max 500 chars) if genuinely valuable, OR respond with ONLY the exact single word "irrelevant".`;
+Analyze breaking market news wires and filter out noise. Respond ONLY with a 1-2 sentence quantitative summary (max 500 chars) highlighting the fundamental catalyst, financial impact, and strategic takeaway for traders, OR respond with ONLY the exact single word "irrelevant".`;
 
     const userPrompt = `Asset: ${wire.assetKey}
-Recent Market Context: Last Close: ${closeStr} | 1D Return: ${changeStr} | Volume: ${volStr}
-
-Wire Title: "${wire.title}"
+Context: ${marketCtx || 'N/A'}
+Headline: "${wire.title}"
 Source: ${wire.source}
 Published: ${wire.publishedAt.toISOString()}
 
-CRITICAL FILTER INSTRUCTION:
-1. Determine whether this wire delivers genuine, actionable fundamental, operational, regulatory, or pricing value that directly impacts an investor or trader (e.g. earnings, major corporate contracts, central bank monetary policy, currency devaluation, strategic mergers/acquisitions).
-2. If this wire is procedural noise, routine compliance delivery reports, generic market wrap headlines, or uninformative (e.g. "COMEX gold delivery intentions breakdown", routine collateral notices, boilerplate summaries):
-   YOU MUST RESPOND ONLY WITH THE EXACT SINGLE WORD: "irrelevant"
-3. ONLY IF this news provides clear, material fundamental value to an investor:
-   Provide a concise quantitative summary in MAXIMUM 500 CHARACTERS.
-   Focus strictly on: the key catalyst, financial impact, and strategic takeaway for traders.`;
+Respond ONLY with a 1-2 sentence quantitative summary (max 500 chars) if valuable, OR respond with ONLY "irrelevant".`;
 
     try {
       const completion = await completeWithKeyPool({
         systemPrompt,
         userPrompt,
-        fallbackText: 'irrelevant',
+        fallbackText: '__FALLBACK__',
         temperature: 0.1,
         maxTokens: 180,
-        timeoutMs: 8000,
+        timeoutMs: 6000,
         validateOutput: (text: string) => {
           const lower = text.toLowerCase().trim();
           if (
@@ -381,57 +542,93 @@ CRITICAL FILTER INSTRUCTION:
       const responseText = (completion.text || '').trim();
       const lower = responseText.toLowerCase();
 
-      // STRICT NOISE DROP GATE:
-      // If AI responds with "irrelevant" or "useless" or scratchpad, discard the wire immediately
+      // If AI successfully ran and explicitly deemed it irrelevant/noise:
       if (
-        lower.startsWith('irrelevant') ||
-        lower.startsWith('useless') ||
-        lower.includes('irrelevant') ||
-        lower.includes('useless') ||
-        lower.includes('the user wants') ||
-        lower.includes('analyze the content') ||
-        lower.includes('procedural') ||
-        lower.includes('routine report') ||
-        responseText.length < 25
+        completion.source === 'ai_generated' &&
+        (lower === 'irrelevant' ||
+          lower === 'useless' ||
+          lower.startsWith('irrelevant') ||
+          lower.startsWith('useless') ||
+          lower.includes('the user wants') ||
+          lower.includes('analyze the content'))
       ) {
         droppedNoise++;
         continue;
       }
 
-      // Valid informative wire: constrain to max 500 characters
-      const cleanSummary = responseText.slice(0, 500);
-
-      // Detect sentiment from the AI summary and title
-      const isBullish = lower.includes('bullish') || lower.includes('growth') || lower.includes('surge') || lower.includes('jump') || lower.includes('ارتفاع') || lower.includes('مكاسب');
-      const isBearish = lower.includes('bearish') || lower.includes('decline') || lower.includes('drop') || lower.includes('slump') || lower.includes('تراجع') || lower.includes('خسائر');
-      const sentiment = isBullish ? 'bullish' : isBearish ? 'bearish' : 'neutral';
-
-      await db
-        .insert(marketNews)
-        .values({
-          id: wire.id,
-          title: wire.title,
-          summary: cleanSummary,
-          content: null,
-          category: wire.category,
-          categoryLabel: wire.categoryLabel,
-          tickers: [wire.assetKey],
-          sentiment,
-          source: wire.source,
-          sourceUrl: wire.sourceUrl,
-          importance: 'normal',
-          readTime: '1 min read',
-          publishedAt: wire.publishedAt,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .onConflictDoNothing();
-
-      inserted++;
-    } catch (aiErr) {
-      console.warn(`[wire-screener] Error screening wire "${wire.title}":`, aiErr);
-      droppedNoise++;
+      // If AI produced a valid quantitative summary:
+      if (
+        completion.source === 'ai_generated' &&
+        responseText.length >= 25 &&
+        responseText !== '__FALLBACK__'
+      ) {
+        finalSummary = responseText.slice(0, 500);
+        if (
+          lower.includes('bullish') ||
+          lower.includes('growth') ||
+          lower.includes('surge') ||
+          lower.includes('jump') ||
+          lower.includes('ارتفاع') ||
+          lower.includes('مكاسب')
+        ) {
+          finalSentiment = 'bullish';
+        } else if (
+          lower.includes('bearish') ||
+          lower.includes('decline') ||
+          lower.includes('drop') ||
+          lower.includes('slump') ||
+          lower.includes('تراجع') ||
+          lower.includes('خسائر')
+        ) {
+          finalSentiment = 'bearish';
+        }
+      }
+    } catch {
+      // AI call timed out or failed; proceed to smart quantitative fallback
     }
+
+    // Smart Quantitative Fallback:
+    // If AI was offline or rate-limited, NEVER drop material catalysts!
+    if (!finalSummary) {
+      if (!catalyst.isCatalyst && wire.assetKey !== 'USDEGP' && wire.assetKey !== 'GOLD' && wire.assetKey !== 'SILVER') {
+        droppedNoise++;
+        continue;
+      }
+
+      const ctxPhrase = marketCtx
+        ? (isArabic ? ` السياق الفني: إغلاق ${closeStr} (${changeStr})${volStr ? `، حجم ${volStr}` : ''}. ` : ` Market Context: Close ${closeStr} (${changeStr})${volStr ? ` | Vol: ${volStr}` : ''}. `)
+        : ' ';
+
+      finalSummary = isArabic
+        ? `[${wire.assetKey}] ${catalyst.type}: ${wire.title}.${ctxPhrase}${catalyst.takeaway}`.slice(0, 500)
+        : `[${wire.assetKey}] ${catalyst.type}: ${wire.title}.${ctxPhrase}${catalyst.takeaway}`.slice(0, 500);
+    }
+
+    // Record cluster count
+    storyClusterCount.set(clusterKey, countInCluster + 1);
+
+    await db
+      .insert(marketNews)
+      .values({
+        id: wire.id,
+        title: wire.title,
+        summary: finalSummary,
+        content: null,
+        category: wire.category,
+        categoryLabel: wire.categoryLabel,
+        tickers: [wire.assetKey],
+        sentiment: finalSentiment,
+        source: wire.source,
+        sourceUrl: wire.sourceUrl,
+        importance: wire.assetKey === 'USDEGP' || wire.assetKey === 'GOLD' ? 'high' : 'normal',
+        readTime: '1 min read',
+        publishedAt: wire.publishedAt,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoNothing();
+
+    inserted++;
   }
 
   return {

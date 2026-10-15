@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import { Check, Landmark, Plus, Trash2, Wallet, X } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import { isBrokerageAccount } from '@/lib/portfolio-finance';
 import { type BankAccount, type BankMonthlySnapshot } from '@/types/bank';
 import Skeleton from '@/components/ui/Skeleton';
@@ -68,7 +68,6 @@ export default function AccountBalanceHistoryDrawer({
   onSaved,
 }: AccountBalanceHistoryDrawerProps) {
   const { isPrivacy } = usePrivacyMode();
-  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [snapshots, setSnapshots] = useState<SnapshotEntry[]>([]);

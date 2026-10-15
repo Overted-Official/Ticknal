@@ -1,12 +1,18 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { pageTransition } from '@/lib/motion';
+import { signalTicknalReady } from '@/components/platform/splash/splash-boot-script';
 
 export default function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    signalTicknalReady();
+  }, [pathname]);
 
   return (
     <motion.div

@@ -21,16 +21,38 @@ export const SPLASH_SESSION_KEY = 'ticknal:splash-shown';
 export const SPLASH_BOOT_SCRIPT = `(function(){try{
 var d=document.documentElement,w=window,C=w.Capacitor;
 var force=/[?&]splash=1(&|$)/.test(location.search);
-var isNative=!!(w.androidBridge||(w.webkit&&w.webkit.messageHandlers&&w.webkit.messageHandlers.bridge)||(C&&C.isNativePlatform&&C.isNativePlatform()));
-var isStandalone=!!((w.matchMedia&&w.matchMedia('(display-mode: standalone)').matches)||(w.navigator&&w.navigator.standalone));
-if(!force&&!isNative&&!isStandalone)return;
 var seen=false;try{seen=sessionStorage.getItem('${SPLASH_SESSION_KEY}')==='1';}catch(e){}
 if(!force&&seen)return;
 d.setAttribute('${SPLASH_ATTRIBUTE}','on');
 w.__ticknalSplashStart=w.performance?performance.now():0;
+w.__ticknalAppReady=false;
+w.__ticknalSignalReady=function(){
+  w.__ticknalAppReady=true;
+  try{w.dispatchEvent(new CustomEvent('ticknal:ready'));}catch(e){}
+};
+var isNative=!!(w.androidBridge||(w.webkit&&w.webkit.messageHandlers&&w.webkit.messageHandlers.bridge)||(C&&C.isNativePlatform&&C.isNativePlatform()));
 if(isNative){requestAnimationFrame(function(){try{var opts={fadeOutDuration:250},p=null;
 if(C&&C.Plugins&&C.Plugins.SplashScreen&&C.Plugins.SplashScreen.hide){p=C.Plugins.SplashScreen.hide(opts);}
 else if(C&&C.nativePromise){p=C.nativePromise('SplashScreen','hide',opts);}
 if(p&&p.catch){p.catch(function(){});}
 }catch(e){}});}
 }catch(e){}})();`;
+
+/**
+ * Signals to the splash screen that the app view has mounted and is ready to be revealed.
+ * Causes the splash progress bar to smoothly advance to 100% and crossfade into the page.
+ */
+export function signalTicknalReady() {
+  if (typeof window === 'undefined') return;
+  try {
+    (window as any).__ticknalAppReady = true;
+    if (typeof (window as any).__ticknalSignalReady === 'function') {
+      (window as any).__ticknalSignalReady();
+    } else {
+      window.dispatchEvent(new CustomEvent('ticknal:ready'));
+    }
+  } catch {
+    // ignore in environments without window/CustomEvent
+  }
+}
+

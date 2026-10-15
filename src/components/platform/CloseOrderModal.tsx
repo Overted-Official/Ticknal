@@ -7,7 +7,7 @@ import { useTranslation } from '@/lib/i18n';
 import { X, Building2, ChevronDown } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import { type BankAccount } from '@/types/bank';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 
@@ -39,7 +39,6 @@ export default function CloseOrderModal({
   onSuccess,
   order,
 }: CloseOrderModalProps) {
-  const { toast } = useToast();
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const [mounted, setMounted] = useState(false);

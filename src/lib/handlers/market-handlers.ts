@@ -369,11 +369,12 @@ export async function handleOpportunitiesGet(request: Request): Promise<Response
     if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const requestedBars = parseInt(searchParams.get('bars') || searchParams.get('limitBars') || '5', 10);
-    const limitBars = Math.min(20, Math.max(1, Number.isFinite(requestedBars) ? requestedBars : 5));
+    const limitBars = Math.min(60, Math.max(1, Number.isFinite(requestedBars) ? requestedBars : 5));
     const strategyScope = searchParams.get('strategy') || searchParams.get('scope') || 'all';
+    const signalScope = searchParams.get('signal') || 'all';
 
     const { getRecentOpportunities } = await import('@/lib/opportunities');
-    const opportunities = await getRecentOpportunities(limitBars, strategyScope);
+    const opportunities = await getRecentOpportunities(limitBars, strategyScope, signalScope);
 
     return NextResponse.json({ opportunities }, {
       status: 200,

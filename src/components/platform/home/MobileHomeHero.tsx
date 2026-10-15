@@ -23,6 +23,7 @@ export interface MobileHomeHeroProps {
     email?: string;
   };
   activeAlertCount?: number;
+  isLoading?: boolean;
 }
 
 function getFirstName(fullName?: string | null, isAr = false): string {
@@ -46,6 +47,7 @@ function getFirstName(fullName?: string | null, isAr = false): string {
 export default function MobileHomeHero({
   userProfile,
   activeAlertCount = 0,
+  isLoading = false,
 }: MobileHomeHeroProps) {
   const { locale, setLocale } = useTranslation();
   const isAr = locale === 'ar';
@@ -86,7 +88,9 @@ export default function MobileHomeHero({
                 className="shrink-0 relative rounded-full ring-2 ring-white/35 shadow-sm active:scale-95 transition-transform overflow-hidden w-10 h-10 flex items-center justify-center bg-white/20"
                 title={isAr ? 'الملف الشخصي والإعدادات' : 'Profile & Settings'}
               >
-                {userProfile?.avatarUrl ? (
+                {isLoading ? (
+                  <div className="w-full h-full rounded-full bg-white/20 animate-pulse" />
+                ) : userProfile?.avatarUrl ? (
                   <img
                     src={userProfile.avatarUrl}
                     alt={firstName}
@@ -104,9 +108,13 @@ export default function MobileHomeHero({
 
               {/* Greeting text with short, non-truncated subtitle */}
               <div className="min-w-0 flex-1 flex flex-col justify-center">
-                <h1 className="text-[15px] font-bold text-white tracking-tight leading-tight truncate font-sans">
-                  <span>{isAr ? 'مرحباً، ' : 'Hello, '}</span>
-                  <span className="truncate">{firstName}</span>
+                <h1 className="text-[15px] font-bold text-white tracking-tight leading-tight truncate font-sans flex items-center gap-1.5">
+                  <span>{isAr ? 'مرحباً،' : 'Hello,'}</span>
+                  {isLoading ? (
+                    <span className="inline-block w-20 h-3.5 bg-white/25 rounded-md animate-pulse" />
+                  ) : (
+                    <span className="truncate">{firstName}</span>
+                  )}
                 </h1>
                 <p className="text-[11px] text-white/75 truncate font-sans mt-0.5 leading-none">
                   {isAr ? 'نظرة عامة على السوق' : 'Market Overview'}

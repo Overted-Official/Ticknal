@@ -23,7 +23,7 @@ import TicknalBrand from '@/components/ui/TicknalBrand';
 import UserProfileWidget, { type SettingsUserProfile } from '@/components/platform/settings/UserProfileWidget';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { useTranslation } from '@/lib/i18n';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import { useGuestGuard } from '@/context/GuestGuardContext';
 import { createClient } from '@/lib/supabase/client';
 
@@ -40,7 +40,6 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
   const { locale, setLocale, isRTL, t } = useTranslation();
   const { isGuest, isLoading: isGuestLoading, requireAuth, openGuestModal } = useGuestGuard();
   const { isPrivacy, togglePrivacy } = usePrivacyMode();
-  const { toast } = useToast();
 
   const [mounted, setMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);

@@ -59,6 +59,15 @@
   --ticknal-safe-area-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
   --ticknal-safe-area-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
 
+  /* Shadcn / Sonner Theme Tokens */
+  --background: #000000;
+  --foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.12);
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: rgba(255, 255, 255, 0.6);
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+
   /* ========================================================================
      TradingView Cold Gray Palette & Core Scales
      ======================================================================== */
@@ -509,6 +518,15 @@
   --color-tv-blue-500: var(--color-tv-blue-500);
   --color-tv-blue-600: var(--color-tv-blue-600);
   --color-tv-blue-700: var(--color-tv-blue-700);
+
+  /* Core UI / Sonner Theme Tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
 
   /* Platform Backgrounds */
   --color-plt-base: var(--plt-bg-base);

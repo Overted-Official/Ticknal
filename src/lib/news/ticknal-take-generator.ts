@@ -122,29 +122,54 @@ export async function generateAllDailyTakes(): Promise<TicknalTakeGenerationResu
   const topGainers = [...eligiblePool].sort((a, b) => b.changePct - a.changePct).slice(0, 5);
   const topLosers = [...eligiblePool].sort((a, b) => a.changePct - b.changePct).slice(0, 5);
 
-  // Look up full company names from tickers table
-  const allTickerSymbols = Array.from(new Set([...topGainers.map((s) => s.ticker), ...topLosers.map((s) => s.ticker)]));
+  // Look up full company names + profile logos from the tickers table
   const companyNameMap = new Map<string, string>();
+  const logoUrlMap = new Map<string, string>();
   try {
     const metaRows = await db
-      .select({ symbol: tickers.symbol, companyName: tickers.companyName })
+      .select({ symbol: tickers.symbol, companyName: tickers.companyName, logoUrl: tickers.logoUrl })
       .from(tickers);
     for (const m of metaRows) {
       if (m.symbol) {
         const cleanSym = m.symbol.replace('.CA', '').toUpperCase();
         companyNameMap.set(cleanSym, m.companyName || cleanSym);
+        if (m.logoUrl) logoUrlMap.set(cleanSym, m.logoUrl);
       }
     }
   } catch {}
 
-  const topGainersWithNames = topGainers.map((s) => ({
-    ...s,
-    companyName: companyNameMap.get(s.ticker.toUpperCase()) || s.ticker,
-  }));
-  const topLosersWithNames = topLosers.map((s) => ({
-    ...s,
-    companyName: companyNameMap.get(s.ticker.toUpperCase()) || s.ticker,
-  }));
+  // SVGs rendered through <img> cannot load remote images, so embed each logo as a data URI.
+  const fetchLogoDataUri = async (url?: string): Promise<string | null> => {
+    if (!url) return null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0 Ticknal' } });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length === 0 || buf.length > 200_000) throw new Error(`bad size ${buf.length}`);
+        const type = (res.headers.get('content-type') || (url.endsWith('.svg') ? 'image/svg+xml' : 'image/png')).split(';')[0];
+        return `data:${type};base64,${buf.toString('base64')}`;
+      } catch (err: any) {
+        console.warn(`[ticknal-take] logo fetch attempt ${attempt} failed for ${url}: ${err?.message || err}`);
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+      }
+    }
+    return null;
+  };
+
+  const enrich = async <T extends { ticker: string }>(stocks: T[]) =>
+    Promise.all(
+      stocks.map(async (s) => ({
+        ...s,
+        companyName: companyNameMap.get(s.ticker.toUpperCase()) || s.ticker,
+        logoDataUri: await fetchLogoDataUri(logoUrlMap.get(s.ticker.toUpperCase())),
+      }))
+    );
+
+  const [topGainersWithNames, topLosersWithNames] = await Promise.all([enrich(topGainers), enrich(topLosers)]);
 
   // 3. 30-Day Rolling Investor Flows (Hot Money Barometer)
   const flowRows = await db

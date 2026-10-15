@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import SmoothScroll from '@/components/landing/SmoothScroll';
 import LandingNavbar from '@/components/landing/LandingNavbar';
 import LandingHero from '@/components/landing/LandingHero';
@@ -17,6 +17,7 @@ import type {
   LandingCoverageCard,
 } from '@/lib/server/landing-queries';
 import type { SerializedSubscriptionPlan } from '@/components/landing/LandingPricingSection';
+import { signalTicknalReady } from '@/components/platform/splash/splash-boot-script';
 
 interface LandingPageViewProps {
   initialTickers?: LandingMarqueeTicker[];
@@ -29,6 +30,9 @@ export default function LandingPageView({
   initialCoverageCards = [],
   initialPlans = [],
 }: LandingPageViewProps) {
+  useEffect(() => {
+    signalTicknalReady();
+  }, []);
   return (
     <SmoothScroll>
       <div className="relative min-h-screen w-full bg-black text-white flex flex-col justify-between selection:bg-white selection:text-black font-sans overflow-x-hidden">

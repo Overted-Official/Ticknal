@@ -16,7 +16,7 @@ import {
   Sparkles,
   Scale,
 } from '@/components/ui/icon-library';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import { useTranslation } from '@/lib/i18n';
@@ -100,7 +100,6 @@ export default function AddOrderModal({
   entrySource?: 'CHART' | 'COMMAND_CENTER';
   previewOnly?: boolean;
 }) {
-  const { toast } = useToast();
   const { t, locale, isRTL } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);

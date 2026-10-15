@@ -11,6 +11,7 @@ import { Browser } from '@capacitor/browser';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import BeamBorder from '@/components/ui/border-beam';
 import { useTranslation } from '@/lib/i18n';
+import { toast } from '@/components/ui/sonner';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -73,7 +74,6 @@ export default function LandingCtaSection() {
 
   const [oauthLoading, setOauthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [storeToast, setStoreToast] = useState<string | null>(null);
 
   const handleGoogleSignup = async () => {
     setError(null);
@@ -110,14 +110,12 @@ export default function LandingCtaSection() {
   };
 
   const handleStoreClick = (platform: 'App Store' | 'Google Play') => {
-    setStoreToast(
+    toast.info(
+      locale === 'ar' ? 'قريباً على الهواتف' : 'Mobile App Launching Soon',
       locale === 'ar'
-        ? `تطبيق ${platform} هينزل قريب جداً! تقدر تسجل دخول بجوجل فوق وتستخدم المنصة من المتصفح دلوقتي.`
+        ? `تطبيق ${platform} هينزل قريب جداً! تقدر تسجل دخول بجوجل وتستخدم المنصة من المتصفح دلوقتي.`
         : `${platform} app is launching soon! You can sign in with Google above to use the web terminal now.`
     );
-    setTimeout(() => {
-      setStoreToast(null);
-    }, 4500);
   };
 
   return (
@@ -257,12 +255,6 @@ export default function LandingCtaSection() {
                 </div>
               </button>
             </div>
-
-            {storeToast && (
-              <div className="mt-4 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/10 text-zinc-200 text-xs text-center leading-relaxed backdrop-blur-md animate-fade-in shadow-xl max-w-md">
-                {storeToast}
-              </div>
-            )}
 
             {/* ================================================================= */}
             {/* 5. Institutional Reassurance Status Rail                          */}

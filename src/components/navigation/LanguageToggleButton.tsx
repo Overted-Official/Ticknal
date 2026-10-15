@@ -3,7 +3,7 @@
 import React, { useRef } from 'react';
 import { Globe } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import type { Locale } from '@/lib/i18n';
 
 interface LanguageToggleButtonProps {
@@ -18,7 +18,6 @@ export default function LanguageToggleButton({
   onToggle,
 }: LanguageToggleButtonProps) {
   const { locale, setLocale } = useTranslation();
-  const { toast } = useToast();
   const iconRef = useRef<{ startAnimation: () => void; stopAnimation: () => void } | null>(null);
 
   const isArabic = locale === 'ar';

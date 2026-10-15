@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Trash2 } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import { useTranslation } from '@/lib/i18n';
 import { localizeSectorName } from '@/lib/finance/sector-translations';
 
@@ -36,7 +36,6 @@ export default function EditOrderModal({
 }: EditOrderModalProps) {
   const { locale } = useTranslation();
   const isAr = locale === 'ar';
-  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

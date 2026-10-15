@@ -70,6 +70,37 @@ html[data-ticknal-splash='on'] .tks-root {
   }
 }
 
+/* Subtle glowing hairline ring around logo during loading */
+.tks-logo-ring {
+  position: absolute;
+  inset: -14px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tks-root[data-phase='loading'] .tks-logo-ring,
+.tks-root[data-phase='exit'] .tks-logo-ring {
+  opacity: 1;
+  animation: tks-ring-pulse 2400ms ease-in-out infinite;
+}
+
+@keyframes tks-ring-pulse {
+  0%, 100% {
+    border-color: rgba(0, 188, 230, 0.28);
+    box-shadow: 0 0 16px rgba(0, 188, 230, 0.15), inset 0 0 12px rgba(41, 98, 255, 0.08);
+    transform: scale(1);
+  }
+  50% {
+    border-color: rgba(213, 0, 249, 0.35);
+    box-shadow: 0 0 22px rgba(213, 0, 249, 0.2), inset 0 0 16px rgba(0, 188, 230, 0.12);
+    transform: scale(1.03);
+  }
+}
+
+
 .tks-logo-svg {
   position: absolute;
   inset: 0;
@@ -220,6 +251,49 @@ html[data-ticknal-splash='on'] .tks-root {
   opacity: 0;
   animation: tks-rise 350ms 1250ms cubic-bezier(0.2, 0, 0, 1) forwards;
 }
+
+/* ---------- Loading Bar ---------- */
+
+.tks-loader {
+  margin-top: 26px;
+  width: 150px;
+  max-width: 55vw;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 350ms cubic-bezier(0.16, 1, 0.3, 1), transform 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tks-root[data-phase='loading'] .tks-loader,
+.tks-root[data-phase='exit'] .tks-loader {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tks-loader-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #00bce6 0%, #2962ff 50%, #d500f9 100%);
+  box-shadow: 0 0 12px rgba(0, 188, 230, 0.7), 0 0 6px rgba(213, 0, 249, 0.4);
+  transition: width 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+}
+
+.tks-loader-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85));
+  filter: blur(1px);
+}
+
 
 /* ---------- Keyframes ---------- */
 /*

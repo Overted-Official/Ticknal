@@ -12,6 +12,7 @@ import { type Opportunity } from '@/components/platform/OpportunityTable';
 import { type OrderStats } from './investments/homeInvestmentsTypes';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
+import { signalTicknalReady } from '@/components/platform/splash/splash-boot-script';
 
 interface HomePageViewProps {
   orderStats: OrderStats;
@@ -48,6 +49,11 @@ export default function HomePageView({
 }: HomePageViewProps) {
   const [liveBuyOpps, setLiveBuyOpps] = useState<Opportunity[]>([]);
   const [isLoadingOpps, setIsLoadingOpps] = useState(canViewProprietary && (!buyOpportunities || buyOpportunities.length === 0));
+
+  // Signal splash screen that home page view is mounted with initial data
+  useEffect(() => {
+    signalTicknalReady();
+  }, []);
 
   useEffect(() => {
     if (!canViewProprietary || (buyOpportunities && buyOpportunities.length > 0)) {

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Landmark, X, Plus, Star, ChevronDown } from '@/components/ui/icon-library';
 import { type BankItem } from '@/types/bank';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import BankSearchSelect from './BankSearchSelect';
 
 interface AddAccountDrawerProps {
@@ -21,7 +21,6 @@ export default function AddAccountDrawer({
   availableBanks,
   onAccountCreated,
 }: AddAccountDrawerProps) {
-  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 

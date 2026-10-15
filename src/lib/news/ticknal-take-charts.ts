@@ -1,10 +1,11 @@
 /**
- * Ticknal Take High-Fidelity 1:1 Vector SVG Chart Snapshot Generators
- * Generates pure-pitch-black (#000000) square vector cards (1080x1080) optimized for social media feeds (X/Twitter, LinkedIn, Instagram).
- * Features tabular-nums, modern sans-serif typography, verified Ticknal branding, and bulletproof XML escaping.
+ * Ticknal Take 1:1 vector SVG snapshot cards (1080x1080) for web feed + social media.
+ * Rules: every piece of text is passed through xmlEscape EXACTLY ONCE (never pre-escape strings),
+ * remote images (ticker logos) must be embedded as data URIs because SVGs rendered through <img>
+ * cannot load external resources.
  */
 
-export function xmlEscape(val: any): string {
+export function xmlEscape(val: unknown): string {
   if (val == null) return '';
   return String(val)
     .replace(/&/g, '&amp;')
@@ -14,9 +15,19 @@ export function xmlEscape(val: any): string {
     .replace(/'/g, '&apos;');
 }
 
+const esc = xmlEscape;
+
 function toBase64Svg(svg: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
 }
+
+const GREEN = '#10b981';
+const RED = '#f43f5e';
+const AMBER = '#f59e0b';
+const CYAN = '#00BCE6';
+const MUTED = '#71717a';
+const SOFT = '#a1a1aa';
+const LINE = '#222222';
 
 export interface HotMoneyChartData {
   date: string;
@@ -28,11 +39,7 @@ export interface HotMoneyChartData {
   inflowDaysCount: number;
   outflowDaysCount: number;
   isFlightRisk: boolean;
-  dailyBars30d: Array<{
-    date: string;
-    foreignNetMillion: number;
-    cumulativeMillion: number;
-  }>;
+  dailyBars30d: Array<{ date: string; foreignNetMillion: number; cumulativeMillion: number }>;
 }
 
 export interface TradeSummaryChartData {
@@ -58,10 +65,19 @@ export interface MarketBreadthChartData {
   turnoverBillion: number;
 }
 
+export interface MoverStock {
+  ticker: string;
+  companyName?: string;
+  logoDataUri?: string | null;
+  close: number;
+  changePct: number;
+  volume: number;
+}
+
 export interface GainersLosersChartData {
   date: string;
-  topGainers: Array<{ ticker: string; companyName?: string; close: number; changePct: number; volume: number }>;
-  topLosers: Array<{ ticker: string; companyName?: string; close: number; changePct: number; volume: number }>;
+  topGainers: MoverStock[];
+  topLosers: MoverStock[];
 }
 
 export interface UsdEgpUpdateChartData {
@@ -77,502 +93,389 @@ export interface UsdEgpUpdateChartData {
   devaluationRiskLabel: string;
 }
 
-function renderBrandHeader(title: string, subtitle: string, date: string, categoryPill: string): string {
+const SVG_OPEN = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080" style="background:#000000;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <rect width="1080" height="1080" fill="#000000" />
+  <rect x="24" y="24" width="1032" height="1032" rx="20" fill="#000000" stroke="${LINE}" stroke-width="1.5" />`;
+
+function header(title: string, subtitle: string, date: string, pill: string): string {
   return `
-  <!-- Brand and Verification Header -->
   <g transform="translate(60, 52)">
     <svg viewBox="5 6 54 54" width="28" height="28" fill="none">
       <path fill="#FFFFFF" d="M6 22H21C29 22 28 10 37 10H58V20H48.5A11 11 0 0 0 37.5 31V56H27.5V42A10 10 0 0 0 17.5 32H6Z" />
     </svg>
-    <text x="36" y="21" fill="#FFFFFF" font-family="EuclidCircularSemibold, system-ui, sans-serif" font-size="21" font-weight="600" letter-spacing="-0.04em">ticknal</text>
-    <!-- Verified Badge -->
-    <svg x="110" y="4" viewBox="0 0 22 22" width="18" height="18" fill="#1d9bf0">
-      <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.136 2.136 5.477-5.477 1.294 1.294-6.771 6.777z"/>
-    </svg>
-    <rect x="138" y="2" width="130" height="22" rx="6" fill="#18181b" stroke="#333333" stroke-width="1" />
-    <text x="203" y="17" fill="#a1a1aa" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="0.04em">Ticknal take</text>
+    <text x="38" y="22" fill="#FFFFFF" font-size="22" font-weight="600" letter-spacing="-0.04em">ticknal</text>
+    <rect x="118" y="2" width="118" height="24" rx="7" fill="#000000" stroke="#333333" stroke-width="1" />
+    <text x="177" y="18" fill="${SOFT}" font-size="12" font-weight="600" text-anchor="middle">Ticknal take</text>
   </g>
-
-  <!-- Date and Category Right Badge -->
-  <text x="1020" y="73" fill="#71717a" font-size="14" font-weight="500" text-anchor="end" font-variant-numeric="tabular-nums">${xmlEscape(date)}</text>
-
-  <!-- Title and Subtitle -->
+  <text x="1020" y="73" fill="${MUTED}" font-size="15" font-weight="500" text-anchor="end">${esc(date)}</text>
   <g transform="translate(60, 126)">
-    <text x="0" y="0" fill="#a1a1aa" font-size="13" font-weight="700" letter-spacing="0.1em">${xmlEscape(categoryPill.toUpperCase())}</text>
-    <text x="0" y="36" fill="#ffffff" font-size="32" font-weight="700" letter-spacing="-0.02em">${xmlEscape(title)}</text>
-    <text x="0" y="66" fill="#71717a" font-size="16" font-weight="400">${xmlEscape(subtitle)}</text>
-  </g>
-  `;
+    <text x="0" y="0" fill="${SOFT}" font-size="13" font-weight="700" letter-spacing="0.1em">${esc(pill.toUpperCase())}</text>
+    <text x="0" y="38" fill="#ffffff" font-size="32" font-weight="700" letter-spacing="-0.02em">${esc(title)}</text>
+    <text x="0" y="68" fill="${MUTED}" font-size="16">${esc(subtitle)}</text>
+  </g>`;
 }
 
-function renderFooter(disclaimer: string): string {
+function footer(note: string): string {
   return `
-  <!-- Footer Bar -->
-  <line x1="60" y1="1000" x2="1020" y2="1000" stroke="#222222" stroke-width="1" />
-  <text x="60" y="1034" fill="#52525b" font-size="13" font-weight="500">${xmlEscape(disclaimer)}</text>
-  <text x="1020" y="1034" fill="#a1a1aa" font-size="13" font-weight="600" text-anchor="end">ticknal.com</text>
-  `;
+  <line x1="60" y1="1000" x2="1020" y2="1000" stroke="${LINE}" stroke-width="1" />
+  <text x="60" y="1032" fill="#52525b" font-size="13" font-weight="500">${esc(note)}</text>
+  <text x="1020" y="1032" fill="${SOFT}" font-size="13" font-weight="600" text-anchor="end">ticknal.com</text>`;
 }
 
-/**
- * 1. HOT MONEY STATUS (1:1 Square Card)
- */
+const sign = (n: number) => (n >= 0 ? '+' : '');
+const fmt1 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/* ───────────────────────── 1. HOT MONEY ───────────────────────── */
 export function generateHotMoneyChartSvg(data: HotMoneyChartData, locale: 'en' | 'ar' = 'en'): string {
-  const isAr = locale === 'ar';
-  const categoryPill = isAr ? 'الأموال الساخنة والاستثمار الأجنبي' : 'HOT MONEY &amp; INSTITUTIONAL FLOWS';
-  const title = isAr ? 'حركة تدفقات الأجانب والعرب في البورصة' : 'Foreign &amp; Arab Institutional Flow Status';
-  const subtitle = isAr ? 'رصد حركة رؤوس الأموال ومؤشر خروج الأموال الساخنة (٣٠ يوم)' : 'Rolling 30-Day Capital Trajectory &amp; Hot Money Flight Risk Alert';
-  const disclaimer = isAr ? 'محرك تكنال للتحليل الكمي · بورصة مصر' : 'Ticknal Quantitative Flow Engine · EGX Institutional Tracking';
-
-  const riskFill = data.isFlightRisk ? '#4c0519' : '#022c22';
-  const riskStroke = data.isFlightRisk ? '#f43f5e' : '#10b981';
-  const riskTitle = data.isFlightRisk
-    ? (isAr ? '⚠ تحذير: خروج أموال ساخنة (بيع أجنبي مكثف)' : '⚠ WARNING: FOREIGN CAPITAL FLIGHT ACTIVE')
-    : (isAr ? '✓ تدفقات إيجابية: استقرار الشراء المؤسسي' : '✓ POSITIVE FLOW: INSTITUTIONAL ACCUMULATION');
-  const riskDesc = data.isFlightRisk
-    ? (isAr ? 'المؤسسات الأجنبية والعربية في اتجاه بيعي مستمر. تجنب إشارات الشراء حالياً.' : 'Foreign &amp; Arab institutions are aggressive net sellers. Avoid early buy signals.')
-    : (isAr ? 'دخول صافي سيولة يدعم الاتجاه الصاعد للأسهم القيادية.' : 'Net capital inflows confirm institutional demand for heavyweights.');
-
-  const foreignColor = data.todayForeignNetMillion >= 0 ? '#10b981' : '#f43f5e';
-  const arabColor = data.todayArabNetMillion >= 0 ? '#10b981' : '#f43f5e';
-  const egyptColor = data.todayEgyptianNetMillion >= 0 ? '#10b981' : '#f43f5e';
-
-  // Mini 30D Flow Bars
-  const bars = data.dailyBars30d || [];
-  const barWidth = 24;
-  const barGap = 6;
-  const chartStartX = 80;
-  const chartCenterY = 820;
-
-  const barElements = bars.slice(-26).map((b, idx) => {
-    const x = chartStartX + idx * (barWidth + barGap);
-    const val = b.foreignNetMillion;
-    const isPos = val >= 0;
-    const barHeight = Math.min(100, Math.max(6, Math.abs(val) * 0.8));
-    const y = isPos ? chartCenterY - barHeight : chartCenterY;
-    const color = isPos ? '#10b981' : '#f43f5e';
-    return `<rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="3" fill="${color}" opacity="0.85"/>`;
-  }).join('');
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080" style="background:#000000;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <rect width="1080" height="1080" fill="#000000" />
-  <rect x="24" y="24" width="1032" height="1032" rx="20" fill="#000000" stroke="#222222" stroke-width="1.5" />
-
-  ${renderBrandHeader(title, subtitle, data.date, categoryPill)}
-
-  <!-- 1. Regime Alert Banner -->
-  <g transform="translate(60, 220)">
-    <rect width="960" height="110" rx="14" fill="${riskFill}" stroke="${riskStroke}" stroke-width="1.5" />
-    <text x="32" y="44" fill="#ffffff" font-size="20" font-weight="700">${riskTitle}</text>
-    <text x="32" y="78" fill="#d4d4d8" font-size="15" font-weight="400">${riskDesc}</text>
-  </g>
-
-  <!-- 2. Today's Institutional Breakdown (3 Cards) -->
-  <g transform="translate(60, 360)">
-    <!-- Foreigners -->
-    <rect x="0" y="0" width="306" height="240" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="24" y="40" fill="#a1a1aa" font-size="14" font-weight="600">${isAr ? 'صافي تعاملات الأجانب' : 'Foreign Net Flow'}</text>
-    <text x="24" y="98" fill="${foreignColor}" font-size="34" font-weight="700" font-variant-numeric="tabular-nums">${data.todayForeignNetMillion >= 0 ? '+' : ''}${data.todayForeignNetMillion}M</text>
-    <text x="24" y="128" fill="#71717a" font-size="13">EGP ${isAr ? 'مليون جنيه' : 'million'}</text>
-    <rect x="24" y="160" width="120" height="28" rx="6" fill="${foreignColor}20" stroke="${foreignColor}40" stroke-width="1" />
-    <text x="84" y="179" fill="${foreignColor}" font-size="12" font-weight="700" text-anchor="middle">${data.todayForeignNetMillion >= 0 ? (isAr ? 'صافي شراء' : 'NET BUYER') : (isAr ? 'صافي بيع' : 'NET SELLER')}</text>
-
-    <!-- Arabs -->
-    <rect x="326" y="0" width="306" height="240" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="350" y="40" fill="#a1a1aa" font-size="14" font-weight="600">${isAr ? 'صافي تعاملات العرب' : 'Arab Net Flow'}</text>
-    <text x="350" y="98" fill="${arabColor}" font-size="34" font-weight="700" font-variant-numeric="tabular-nums">${data.todayArabNetMillion >= 0 ? '+' : ''}${data.todayArabNetMillion}M</text>
-    <text x="350" y="128" fill="#71717a" font-size="13">EGP ${isAr ? 'مليون جنيه' : 'million'}</text>
-    <rect x="350" y="160" width="120" height="28" rx="6" fill="${arabColor}20" stroke="${arabColor}40" stroke-width="1" />
-    <text x="410" y="179" fill="${arabColor}" font-size="12" font-weight="700" text-anchor="middle">${data.todayArabNetMillion >= 0 ? (isAr ? 'صافي شراء' : 'NET BUYER') : (isAr ? 'صافي بيع' : 'NET SELLER')}</text>
-
-    <!-- Egyptians -->
-    <rect x="654" y="0" width="306" height="240" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="678" y="40" fill="#a1a1aa" font-size="14" font-weight="600">${isAr ? 'صافي تعاملات المصريين' : 'Egyptian Net Flow'}</text>
-    <text x="678" y="98" fill="${egyptColor}" font-size="34" font-weight="700" font-variant-numeric="tabular-nums">${data.todayEgyptianNetMillion >= 0 ? '+' : ''}${data.todayEgyptianNetMillion}M</text>
-    <text x="678" y="128" fill="#71717a" font-size="13">EGP ${isAr ? 'مليون جنيه' : 'million'}</text>
-    <rect x="678" y="160" width="120" height="28" rx="6" fill="${egyptColor}20" stroke="${egyptColor}40" stroke-width="1" />
-    <text x="738" y="179" fill="${egyptColor}" font-size="12" font-weight="700" text-anchor="middle">${data.todayEgyptianNetMillion >= 0 ? (isAr ? 'صافي شراء' : 'NET BUYER') : (isAr ? 'صافي بيع' : 'NET SELLER')}</text>
-  </g>
-
-  <!-- 3. 30-Day Cumulative Trend and Histogram Card -->
-  <g transform="translate(60, 630)">
-    <rect width="960" height="340" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="32" y="44" fill="#ffffff" font-size="18" font-weight="700">${isAr ? 'حركة السيولة الأجنبية التراكمية (آخر ٣٠ جلسة)' : '30-Day Foreign Flow Trajectory &amp; Outflow Barometer'}</text>
-    
-    <!-- Left Stat Column -->
-    <text x="32" y="90" fill="#a1a1aa" font-size="13">${isAr ? 'صافي التدفق التراكمي (٣٠ يوم)' : 'Cumulative 30D Foreign Net'}</text>
-    <text x="32" y="130" fill="${data.rolling30dForeignNetMillion >= 0 ? '#10b981' : '#f43f5e'}" font-size="36" font-weight="700" font-variant-numeric="tabular-nums">${data.rolling30dForeignNetMillion >= 0 ? '+' : ''}${data.rolling30dForeignNetMillion}M EGP</text>
-
-    <!-- Right Stat Badges -->
-    <text x="560" y="90" fill="#a1a1aa" font-size="13">${isAr ? 'أيام الشراء مقابل أيام البيع' : 'Inflow Days vs Outflow Days'}</text>
-    <text x="560" y="128" fill="#ffffff" font-size="24" font-weight="700" font-variant-numeric="tabular-nums">${data.inflowDaysCount} <tspan fill="#10b981" font-size="18">Inflow</tspan> · ${data.outflowDaysCount} <tspan fill="#f43f5e" font-size="18">Outflow</tspan></text>
-
-    <!-- Zero line -->
-    <line x1="60" y1="190" x2="900" y2="190" stroke="#333333" stroke-dasharray="4 4" stroke-width="1" />
-
-    <!-- Histogram of Daily Flows -->
-    <g transform="translate(0, -630)">
-      ${barElements}
-    </g>
-  </g>
-
-  ${renderFooter(disclaimer)}
-</svg>`;
-
-  return toBase64Svg(svg);
-}
-
-/**
- * 2. DAILY TRADE SUMMARY (1:1 Square Card)
- */
-export function generateTradeSummaryChartSvg(data: TradeSummaryChartData, locale: 'en' | 'ar' = 'en'): string {
-  const isAr = locale === 'ar';
-  const categoryPill = isAr ? 'ملخص التداول اليومي' : 'DAILY TRADE SUMMARY';
-  const title = isAr ? 'أداء مؤشرات البورصة والسيولة' : 'EGX Indices &amp; Market Turnover';
-  const subtitle = isAr ? 'إغلاقات EGX 30 و 70 و 100 وإجمالي قيم التداول اليومية' : 'Benchmark Index Returns, Session Breadth &amp; Cash Flow';
-  const disclaimer = isAr ? 'تغطية يومية من محرك تكنال الذكي · بيانات رسمية' : 'Verified EOD Market Intelligence by Ticknal Terminal';
-
-  const egx30Color = data.egx30ChangePct >= 0 ? '#10b981' : '#f43f5e';
-  const egx70Color = data.egx70ChangePct >= 0 ? '#10b981' : '#f43f5e';
-  const egx100Color = data.egx100ChangePct >= 0 ? '#10b981' : '#f43f5e';
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080" style="background:#000000;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <rect width="1080" height="1080" fill="#000000" />
-  <rect x="24" y="24" width="1032" height="1032" rx="20" fill="#000000" stroke="#222222" stroke-width="1.5" />
-
-  ${renderBrandHeader(title, subtitle, data.date, categoryPill)}
-
-  <!-- 3 Index Cards Stacked Vertically -->
-  <!-- 1. EGX 30 -->
-  <g transform="translate(60, 220)">
-    <rect width="960" height="210" rx="16" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <rect x="24" y="24" width="70" height="30" rx="8" fill="#18181b" stroke="#333333" stroke-width="1" />
-    <text x="59" y="44" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">EGX 30</text>
-    <text x="108" y="44" fill="#71717a" font-size="14" font-weight="500">${isAr ? 'المؤشر الرئيسي للأسهم القيادية' : 'Blue Chips Benchmark Index'}</text>
-
-    <!-- Close Price -->
-    <text x="24" y="120" fill="#ffffff" font-size="48" font-weight="700" font-variant-numeric="tabular-nums">${data.egx30Close.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</text>
-    <text x="24" y="160" fill="#71717a" font-size="14">pts · ${isAr ? 'نقطة' : 'points'}</text>
-
-    <!-- 1D Change Pill -->
-    <rect x="760" y="60" width="170" height="60" rx="12" fill="${egx30Color}15" stroke="${egx30Color}" stroke-width="1.5" />
-    <text x="845" y="100" fill="${egx30Color}" font-size="28" font-weight="700" text-anchor="middle" font-variant-numeric="tabular-nums">${data.egx30ChangePct >= 0 ? '+' : ''}${data.egx30ChangePct}%</text>
-  </g>
-
-  <!-- 2. EGX 70 EWI -->
-  <g transform="translate(60, 460)">
-    <rect width="960" height="210" rx="16" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <rect x="24" y="24" width="80" height="30" rx="8" fill="#18181b" stroke="#333333" stroke-width="1" />
-    <text x="64" y="44" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">EGX 70</text>
-    <text x="118" y="44" fill="#71717a" font-size="14" font-weight="500">${isAr ? 'مؤشر الشركات الصغيرة والمتوسطة متساوي الأوزان' : 'Small &amp; Mid-Caps Equal-Weight'}</text>
-
-    <!-- Close Price -->
-    <text x="24" y="120" fill="#ffffff" font-size="48" font-weight="700" font-variant-numeric="tabular-nums">${data.egx70Close.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</text>
-    <text x="24" y="160" fill="#71717a" font-size="14">pts · ${isAr ? 'نقطة' : 'points'}</text>
-
-    <!-- 1D Change Pill -->
-    <rect x="760" y="60" width="170" height="60" rx="12" fill="${egx70Color}15" stroke="${egx70Color}" stroke-width="1.5" />
-    <text x="845" y="100" fill="${egx70Color}" font-size="28" font-weight="700" text-anchor="middle" font-variant-numeric="tabular-nums">${data.egx70ChangePct >= 0 ? '+' : ''}${data.egx70ChangePct}%</text>
-  </g>
-
-  <!-- 3. EGX 100 EWI and Turnover Summary -->
-  <g transform="translate(60, 700)">
-    <rect width="960" height="260" rx="16" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <rect x="24" y="24" width="90" height="30" rx="8" fill="#18181b" stroke="#333333" stroke-width="1" />
-    <text x="69" y="44" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">EGX 100</text>
-    <text x="128" y="44" fill="#71717a" font-size="14" font-weight="500">${isAr ? 'المؤشر الأوسع نطاقاً للبورصة المصرية' : 'Broad Market Multi-Cap Index'}</text>
-
-    <!-- Close Price -->
-    <text x="24" y="120" fill="#ffffff" font-size="44" font-weight="700" font-variant-numeric="tabular-nums">${data.egx100Close.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</text>
-    <text x="24" y="156" fill="#71717a" font-size="14">pts · ${isAr ? 'نقطة' : 'points'}</text>
-
-    <rect x="760" y="60" width="170" height="60" rx="12" fill="${egx100Color}15" stroke="${egx100Color}" stroke-width="1.5" />
-    <text x="845" y="100" fill="${egx100Color}" font-size="28" font-weight="700" text-anchor="middle" font-variant-numeric="tabular-nums">${data.egx100ChangePct >= 0 ? '+' : ''}${data.egx100ChangePct}%</text>
-
-    <!-- Turnover Strip inside card -->
-    <line x1="24" y1="184" x2="936" y2="184" stroke="#222222" stroke-width="1" />
-    <text x="24" y="222" fill="#a1a1aa" font-size="14">${isAr ? 'إجمالي قيم التداول في الجلسة:' : 'Total Market Session Turnover:'} <tspan fill="#ffffff" font-weight="700">${data.turnoverBillion.toFixed(2)} Billion EGP</tspan></text>
-    <text x="936" y="222" fill="#a1a1aa" font-size="14" text-anchor="end">${isAr ? 'معنويات السوق:' : 'Sentiment:'} <tspan fill="#10b981" font-weight="700">${xmlEscape(data.sentiment.toUpperCase())}</tspan></text>
-  </g>
-
-  ${renderFooter(disclaimer)}
-</svg>`;
-
-  return toBase64Svg(svg);
-}
-
-/**
- * 3. MARKET BREADTH (1:1 Square Card)
- */
-export function generateMarketBreadthChartSvg(data: MarketBreadthChartData, locale: 'en' | 'ar' = 'en'): string {
-  const isAr = locale === 'ar';
-  const categoryPill = isAr ? 'اتساع السوق والمشاركة' : 'MARKET BREADTH &amp; PARTICIPATION';
-  const title = isAr ? 'اتساع السوق: الأسهم الصاعدة والهابطة' : 'EGX Market Breadth &amp; Participation';
-  const subtitle = isAr ? 'مؤشر عمق السوق وتوزيع السيولة بين الأسهم الرابحة والخاسرة' : 'Advancers vs Decliners vs Unchanged Stock Participation Ratio';
-  const disclaimer = isAr ? 'تحليل كمي فوري · بورصة مصر' : 'Real-Time Quantitative Breadth Analytics · Ticknal Engine';
-
-  const advWidth = Math.max(20, (data.advancersPct / 100) * 960);
-  const decWidth = Math.max(20, (data.declinersPct / 100) * 960);
-  const flatWidth = Math.max(10, 960 - advWidth - decWidth);
-  const adRatio = (data.advancers / Math.max(1, data.decliners)).toFixed(2);
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080" style="background:#000000;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <rect width="1080" height="1080" fill="#000000" />
-  <rect x="24" y="24" width="1032" height="1032" rx="20" fill="#000000" stroke="#222222" stroke-width="1.5" />
-
-  ${renderBrandHeader(title, subtitle, data.date, categoryPill)}
-
-  <!-- 1. Visual Stacked Participation Bar -->
-  <g transform="translate(60, 220)">
-    <rect width="960" height="42" rx="10" fill="#18181b" />
-    <rect x="0" y="0" width="${advWidth}" height="42" rx="10" fill="#10b981" />
-    <rect x="${advWidth}" y="0" width="${decWidth}" height="42" fill="#f43f5e" />
-    <rect x="${advWidth + decWidth}" y="0" width="${flatWidth}" height="42" rx="10" fill="#52525b" />
-    <text x="12" y="26" fill="#ffffff" font-size="13" font-weight="700">${data.advancersPct}%</text>
-    <text x="${advWidth + 12}" y="26" fill="#ffffff" font-size="13" font-weight="700">${data.declinersPct}%</text>
-  </g>
-
-  <!-- 2. 3 Big Metric Columns -->
-  <g transform="translate(60, 300)">
-    <!-- Advancers -->
-    <rect x="0" y="0" width="306" height="320" rx="16" fill="#000000" stroke="#10b981" stroke-width="1.5" />
-    <text x="24" y="44" fill="#10b981" font-size="16" font-weight="700">▲ ${isAr ? 'الأسهم الصاعدة' : 'ADVANCERS'}</text>
-    <text x="24" y="130" fill="#10b981" font-size="64" font-weight="700" font-variant-numeric="tabular-nums">${data.advancers}</text>
-    <text x="24" y="170" fill="#ffffff" font-size="20" font-weight="600">${isAr ? 'سهم رابح' : 'Stocks Gained'}</text>
-    <line x1="24" y1="210" x2="282" y2="210" stroke="#222222" stroke-width="1" />
-    <text x="24" y="250" fill="#a1a1aa" font-size="14">${isAr ? 'نسبة المشاركة:' : 'Breadth Share:'}</text>
-    <text x="24" y="284" fill="#10b981" font-size="24" font-weight="700">${data.advancersPct}%</text>
-
-    <!-- Decliners -->
-    <rect x="326" y="0" width="306" height="320" rx="16" fill="#000000" stroke="#f43f5e" stroke-width="1.5" />
-    <text x="350" y="44" fill="#f43f5e" font-size="16" font-weight="700">▼ ${isAr ? 'الأسهم الهابطة' : 'DECLINERS'}</text>
-    <text x="350" y="130" fill="#f43f5e" font-size="64" font-weight="700" font-variant-numeric="tabular-nums">${data.decliners}</text>
-    <text x="350" y="170" fill="#ffffff" font-size="20" font-weight="600">${isAr ? 'سهم خاسر' : 'Stocks Declined'}</text>
-    <line x1="350" y1="210" x2="608" y2="210" stroke="#222222" stroke-width="1" />
-    <text x="350" y="250" fill="#a1a1aa" font-size="14">${isAr ? 'نسبة المشاركة:' : 'Breadth Share:'}</text>
-    <text x="350" y="284" fill="#f43f5e" font-size="24" font-weight="700">${data.declinersPct}%</text>
-
-    <!-- Flat -->
-    <rect x="654" y="0" width="306" height="320" rx="16" fill="#000000" stroke="#333333" stroke-width="1.5" />
-    <text x="678" y="44" fill="#a1a1aa" font-size="16" font-weight="700">● ${isAr ? 'دون تغيير' : 'UNCHANGED'}</text>
-    <text x="678" y="130" fill="#d4d4d8" font-size="64" font-weight="700" font-variant-numeric="tabular-nums">${data.flat}</text>
-    <text x="678" y="170" fill="#ffffff" font-size="20" font-weight="600">${isAr ? 'سهم مستقر' : 'Flat Stocks'}</text>
-    <line x1="678" y1="210" x2="936" y2="210" stroke="#222222" stroke-width="1" />
-    <text x="678" y="250" fill="#a1a1aa" font-size="14">${isAr ? 'نسبة الاستقرار:' : 'Stable Share:'}</text>
-    <text x="678" y="284" fill="#a1a1aa" font-size="24" font-weight="700">${(100 - data.advancersPct - data.declinersPct).toFixed(1)}%</text>
-  </g>
-
-  <!-- 3. Key Breadth Ratios and Session Participation -->
-  <g transform="translate(60, 660)">
-    <rect width="960" height="300" rx="16" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="32" y="44" fill="#ffffff" font-size="20" font-weight="700">${isAr ? 'مؤشرات اتساع السوق ونسبة الصعود للهبوط' : 'Advance / Decline Dynamics &amp; Participation Ratio'}</text>
-    
-    <!-- Left Column: A/D Ratio -->
-    <text x="32" y="100" fill="#a1a1aa" font-size="14">${isAr ? 'نسبة الصعود إلى الهبوط (A/D Ratio)' : 'Advance / Decline Ratio (A/D)'}</text>
-    <text x="32" y="150" fill="${data.advancers >= data.decliners ? '#10b981' : '#f43f5e'}" font-size="44" font-weight="700" font-variant-numeric="tabular-nums">${adRatio}x</text>
-    <text x="32" y="186" fill="#71717a" font-size="14">${data.advancers >= data.decliners ? (isAr ? 'مشاركة إيجابية تدعم اتساع الحركة' : 'Positive breadth confirms buyers control') : (isAr ? 'ضغط بيعي واسع يفوق عدد الرابحين' : 'Bearish distribution breadth dominates')}</text>
-
-    <!-- Right Column: Equities Traded and Turnover -->
-    <rect x="520" y="80" width="400" height="180" rx="12" fill="#18181b" stroke="#333333" stroke-width="1" />
-    <text x="548" y="120" fill="#a1a1aa" font-size="14">${isAr ? 'إجمالي الأسهم المتداولة:' : 'Total Active Traded Equities:'}</text>
-    <text x="548" y="156" fill="#ffffff" font-size="28" font-weight="700" font-variant-numeric="tabular-nums">${data.totalStocks} ${isAr ? 'شركة مقيدة' : 'Listed Stocks'}</text>
-    
-    <text x="548" y="200" fill="#a1a1aa" font-size="14">${isAr ? 'إجمالي قيمة التداول المنفذة:' : 'Session Market Turnover:'}</text>
-    <text x="548" y="234" fill="#00BCE6" font-size="22" font-weight="700" font-variant-numeric="tabular-nums">${data.turnoverBillion.toFixed(2)} Billion EGP</text>
-  </g>
-
-  ${renderFooter(disclaimer)}
-</svg>`;
-
-  return toBase64Svg(svg);
-}
-
-/**
- * 4. GAINERS & LOSERS (1:1 Square Card)
- * Two clear columns: Top 5 Gainers (left) & Top 5 Losers (right)
- * Features ticker profile badge, full company name, and change %
- */
-export function generateGainersLosersChartSvg(data: GainersLosersChartData, locale: 'en' | 'ar' = 'en'): string {
-  const isAr = locale === 'ar';
-  const categoryPill = isAr ? 'الأسهم الأكثر حركة بالبورصة' : 'TOP GAINERS &amp; LOSERS · SESSION MOVERS';
-  const title = isAr ? 'الأسهم الأكثر ارتفاعاً وانخفاضاً' : 'Session Gainers &amp; Losers';
-  const subtitle = isAr ? 'أكبر ٥ أسهم رابحة وخاسرة بالبورصة المصرية (سيولة أكثر من مليون جنيه)' : 'Top 5 Advancers &amp; Decliners by Daily Return (Turnover &gt; 1M EGP)';
-  const disclaimer = isAr ? 'تصفية السيولة: تنفيذات تزيد عن ١,٠٠٠,٠٠٠ جم لمنع الأسهم الخاملة' : 'Liquidity Filter: Min 1,000,000 EGP turnover to exclude illiquid micro-caps';
-
-  const renderStockRow = (
-    s: { ticker: string; companyName?: string; close: number; changePct: number; volume: number },
-    idx: number,
-    isGainer: boolean,
-    colX: number,
-    baseY: number
-  ) => {
-    const rowY = baseY + idx * 135;
-    const accentColor = isGainer ? '#10b981' : '#f43f5e';
-    const bgBadge = isGainer ? '#052e16' : '#4c0519';
-    const rawName = s.companyName || s.ticker;
-    const cleanName = rawName.length > 24 ? `${rawName.slice(0, 22)}…` : rawName;
-
+  const ar = locale === 'ar';
+  const risk = data.isFlightRisk;
+  const riskColor = risk ? RED : GREEN;
+  const flowCard = (x: number, label: string, v: number) => {
+    const c = v >= 0 ? GREEN : RED;
     return `
-    <!-- Row ${idx + 1} -->
-    <g transform="translate(${colX}, ${rowY})">
-      <rect width="460" height="120" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-      
-      <!-- Circular Ticker Badge -->
-      <circle cx="50" cy="60" r="28" fill="${bgBadge}" stroke="${accentColor}" stroke-width="1.5" />
-      <text x="50" y="65" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle" font-variant-numeric="tabular-nums">${xmlEscape(s.ticker.slice(0, 4))}</text>
-      
-      <!-- Company Name and Ticker Code -->
-      <text x="92" y="46" fill="#ffffff" font-size="16" font-weight="700">${xmlEscape(cleanName)}</text>
-      <text x="92" y="72" fill="#71717a" font-size="13" font-weight="600">${xmlEscape(s.ticker)} · <tspan fill="#a1a1aa" font-weight="500">${s.close.toFixed(2)} EGP</tspan></text>
-      <text x="92" y="96" fill="#52525b" font-size="12">${isAr ? 'حجم:' : 'Vol:'} ${s.volume >= 1_000_000 ? `${(s.volume / 1_000_000).toFixed(1)}M` : `${(s.volume / 1000).toFixed(0)}K`}</text>
-
-      <!-- Return Pill Badge -->
-      <rect x="320" y="38" width="120" height="44" rx="10" fill="${bgBadge}" stroke="${accentColor}" stroke-width="1.5" />
-      <text x="380" y="66" fill="${accentColor}" font-size="18" font-weight="700" text-anchor="middle" font-variant-numeric="tabular-nums">${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(2)}%</text>
-    </g>
-    `;
+    <g transform="translate(${x}, 335)">
+      <rect width="306" height="170" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+      <text x="24" y="38" fill="${SOFT}" font-size="14" font-weight="600">${esc(label)}</text>
+      <text x="24" y="92" fill="${c}" font-size="34" font-weight="700">${sign(v)}${fmt1(v)}M</text>
+      <text x="24" y="118" fill="${MUTED}" font-size="13">${ar ? 'مليون جنيه' : 'EGP million'}</text>
+      <rect x="24" y="130" width="116" height="26" rx="6" fill="${c}" fill-opacity="0.14" stroke="${c}" stroke-opacity="0.45" />
+      <text x="82" y="148" fill="${c}" font-size="12" font-weight="700" text-anchor="middle">${v >= 0 ? (ar ? 'صافي شراء' : 'NET BUYER') : (ar ? 'صافي بيع' : 'NET SELLER')}</text>
+    </g>`;
   };
 
-  const gainersRows = (data.topGainers || []).slice(0, 5).map((s, idx) => renderStockRow(s, idx, true, 60, 270)).join('');
-  const losersRows = (data.topLosers || []).slice(0, 5).map((s, idx) => renderStockRow(s, idx, false, 560, 270)).join('');
+  // Chart geometry (relative to chart card at translate(60, 525), 960 x 440)
+  const bars = (data.dailyBars30d || []).slice(-30);
+  const n = bars.length;
+  const plotX = 32;
+  const plotW = 896;
+  const zeroY = 270;
+  const half = 88;
+  const step = n > 0 ? plotW / n : plotW;
+  const barW = Math.max(6, step * 0.6);
+  const maxAbs = Math.max(1, ...bars.map((b) => Math.abs(b.foreignNetMillion)));
+  const maxCum = Math.max(1, ...bars.map((b) => Math.abs(b.cumulativeMillion)));
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080" style="background:#000000;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <rect width="1080" height="1080" fill="#000000" />
-  <rect x="24" y="24" width="1032" height="1032" rx="20" fill="#000000" stroke="#222222" stroke-width="1.5" />
+  const barEls = bars
+    .map((b, i) => {
+      const h = Math.max(2, (Math.abs(b.foreignNetMillion) / maxAbs) * half);
+      const x = plotX + i * step + (step - barW) / 2;
+      const up = b.foreignNetMillion >= 0;
+      const y = up ? zeroY - h : zeroY;
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${up ? GREEN : RED}" fill-opacity="0.55" />`;
+    })
+    .join('');
 
-  ${renderBrandHeader(title, subtitle, data.date, categoryPill)}
+  const linePts = bars
+    .map((b, i) => {
+      const x = plotX + i * step + step / 2;
+      const y = zeroY - (b.cumulativeMillion / maxCum) * half;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
 
-  <!-- Column Headers -->
-  <!-- Left Header: Gainers -->
-  <g transform="translate(60, 210)">
-    <rect width="460" height="46" rx="10" fill="#052e16" stroke="#10b981" stroke-width="1" />
-    <text x="24" y="30" fill="#10b981" font-size="16" font-weight="700">▲ ${isAr ? 'الأسهم الأكثر صعوداً (GAINERS)' : 'TOP 5 GAINERS'}</text>
+  const cum = data.rolling30dForeignNetMillion;
+  const cumColor = cum >= 0 ? GREEN : RED;
+  const midBar = bars[Math.floor(n / 2)];
+
+  return toBase64Svg(`${SVG_OPEN}
+  ${header(
+    ar ? 'تدفقات الأجانب والعرب في البورصة' : 'Foreign & Arab Institutional Flows',
+    ar ? 'رصد حركة الأموال الساخنة خلال آخر ٣٠ جلسة' : 'Hot money status over the last 30 sessions',
+    data.date,
+    ar ? 'الأموال الساخنة' : 'Hot Money Status'
+  )}
+
+  <g transform="translate(60, 215)">
+    <rect width="960" height="100" rx="14" fill="${riskColor}" fill-opacity="0.1" stroke="${riskColor}" stroke-width="1.5" />
+    <text x="30" y="42" fill="#ffffff" font-size="20" font-weight="700">${esc(
+      risk
+        ? ar ? 'تحذير: خروج أموال ساخنة من السوق' : 'WARNING: Foreign capital flight in progress'
+        : ar ? 'تدفقات إيجابية: تجميع مؤسسي' : 'POSITIVE: Institutional accumulation'
+    )}</text>
+    <text x="30" y="72" fill="#d4d4d8" font-size="15">${esc(
+      risk
+        ? ar ? 'الأجانب والعرب بائعون صافون. تجنب الاندفاع وراء إشارات الشراء الآن.' : 'Foreign and Arab investors are net sellers. Be cautious acting on buy signals.'
+        : ar ? 'صافي دخول سيولة مؤسسية يدعم الاتجاه الصاعد.' : 'Net institutional inflows support the uptrend.'
+    )}</text>
   </g>
 
-  <!-- Right Header: Losers -->
-  <g transform="translate(560, 210)">
-    <rect width="460" height="46" rx="10" fill="#4c0519" stroke="#f43f5e" stroke-width="1" />
-    <text x="24" y="30" fill="#f43f5e" font-size="16" font-weight="700">▼ ${isAr ? 'الأسهم الأكثر هبوطاً (LOSERS)' : 'TOP 5 LOSERS'}</text>
+  ${flowCard(60, ar ? 'صافي الأجانب' : 'Foreign Net', data.todayForeignNetMillion)}
+  ${flowCard(387, ar ? 'صافي العرب' : 'Arab Net', data.todayArabNetMillion)}
+  ${flowCard(714, ar ? 'صافي المصريين' : 'Egyptian Net', data.todayEgyptianNetMillion)}
+
+  <g transform="translate(60, 525)">
+    <rect width="960" height="440" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+    <text x="32" y="44" fill="#ffffff" font-size="18" font-weight="700">${esc(ar ? 'حركة الأجانب خلال ٣٠ جلسة' : '30-Session Foreign Flow')}</text>
+
+    <text x="32" y="86" fill="${SOFT}" font-size="13">${esc(ar ? 'صافي تراكمي' : 'Cumulative net')}</text>
+    <text x="32" y="124" fill="${cumColor}" font-size="34" font-weight="700">${sign(cum)}${fmt1(cum)}M EGP</text>
+
+    <text x="560" y="86" fill="${SOFT}" font-size="13">${esc(ar ? 'أيام الشراء / أيام البيع' : 'Inflow days / Outflow days')}</text>
+    <text x="560" y="124" fill="#ffffff" font-size="30" font-weight="700">
+      <tspan fill="${GREEN}">${data.inflowDaysCount}</tspan><tspan fill="${MUTED}" font-weight="400"> / </tspan><tspan fill="${RED}">${data.outflowDaysCount}</tspan>
+    </text>
+
+    <line x1="${plotX}" y1="${zeroY - half}" x2="${plotX + plotW}" y2="${zeroY - half}" stroke="#18181b" stroke-width="1" />
+    <line x1="${plotX}" y1="${zeroY + half}" x2="${plotX + plotW}" y2="${zeroY + half}" stroke="#18181b" stroke-width="1" />
+    <line x1="${plotX}" y1="${zeroY}" x2="${plotX + plotW}" y2="${zeroY}" stroke="#3f3f46" stroke-width="1" stroke-dasharray="4 4" />
+    ${barEls}
+    ${n > 1 ? `<polyline points="${linePts}" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />` : ''}
+
+    ${n > 0 ? `<text x="${plotX}" y="388" fill="${MUTED}" font-size="12">${esc(bars[0].date)}</text>
+    <text x="${plotX + plotW / 2}" y="388" fill="${MUTED}" font-size="12" text-anchor="middle">${esc(midBar.date)}</text>
+    <text x="${plotX + plotW}" y="388" fill="${MUTED}" font-size="12" text-anchor="end">${esc(bars[n - 1].date)}</text>` : ''}
+
+    <rect x="32" y="408" width="12" height="12" rx="3" fill="${GREEN}" fill-opacity="0.55" />
+    <text x="52" y="419" fill="${SOFT}" font-size="12">${esc(ar ? 'صافي يومي' : 'Daily net')}</text>
+    <line x1="170" y1="414" x2="196" y2="414" stroke="#ffffff" stroke-width="2.5" />
+    <text x="204" y="419" fill="${SOFT}" font-size="12">${esc(ar ? 'تراكمي' : 'Cumulative')}</text>
   </g>
 
-  <!-- Stock Rows -->
-  ${gainersRows}
-  ${losersRows}
-
-  ${renderFooter(disclaimer)}
-</svg>`;
-
-  return toBase64Svg(svg);
+  ${footer(ar ? 'محرك تكنال للتحليل الكمي · البورصة المصرية' : 'Ticknal flow engine · EGX investor flows')}
+</svg>`);
 }
 
-/**
- * 5. USD/EGP UPDATE & SHADOW PROXIES (1:1 Square Card)
- */
+/* ───────────────────────── 2. TRADE SUMMARY ───────────────────────── */
+export function generateTradeSummaryChartSvg(data: TradeSummaryChartData, locale: 'en' | 'ar' = 'en'): string {
+  const ar = locale === 'ar';
+  const indexCard = (y: number, h: number, tag: string, tagW: number, desc: string, close: number, chg: number) => {
+    const c = chg >= 0 ? GREEN : RED;
+    return `
+    <g transform="translate(60, ${y})">
+      <rect width="960" height="${h}" rx="16" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+      <rect x="24" y="24" width="${tagW}" height="30" rx="8" fill="#000000" stroke="#333333" />
+      <text x="${24 + tagW / 2}" y="44" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">${esc(tag)}</text>
+      <text x="${24 + tagW + 14}" y="44" fill="${MUTED}" font-size="14">${esc(desc)}</text>
+      <text x="24" y="124" fill="#ffffff" font-size="48" font-weight="700">${fmt1(close)}</text>
+      <text x="24" y="156" fill="${MUTED}" font-size="14">${ar ? 'نقطة' : 'points'}</text>
+      <rect x="750" y="62" width="180" height="62" rx="12" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5" />
+      <text x="840" y="103" fill="${c}" font-size="28" font-weight="700" text-anchor="middle">${sign(chg)}${chg}%</text>
+    </g>`;
+  };
+
+  return toBase64Svg(`${SVG_OPEN}
+  ${header(
+    ar ? 'أداء المؤشرات والسيولة' : 'EGX Indices & Turnover',
+    ar ? 'إغلاقات EGX 30 و 70 و 100 وقيمة التداول' : 'EGX 30, 70 and 100 closes with session turnover',
+    data.date,
+    ar ? 'ملخص التداول اليومي' : 'Daily Trade Summary'
+  )}
+  ${indexCard(215, 200, 'EGX 30', 76, ar ? 'الأسهم القيادية' : 'Blue-chip benchmark', data.egx30Close, data.egx30ChangePct)}
+  ${indexCard(435, 200, 'EGX 70', 76, ar ? 'الشركات الصغيرة والمتوسطة' : 'Small and mid caps (equal weight)', data.egx70Close, data.egx70ChangePct)}
+  ${indexCard(655, 200, 'EGX 100', 88, ar ? 'السوق الأوسع' : 'Broad market (equal weight)', data.egx100Close, data.egx100ChangePct)}
+
+  <g transform="translate(60, 875)">
+    <rect width="960" height="100" rx="16" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+    <text x="28" y="40" fill="${SOFT}" font-size="14">${esc(ar ? 'قيمة التداول' : 'Session turnover')}</text>
+    <text x="28" y="76" fill="#ffffff" font-size="28" font-weight="700">${data.turnoverBillion.toFixed(2)}B EGP</text>
+    <text x="932" y="40" fill="${SOFT}" font-size="14" text-anchor="end">${esc(ar ? 'معنويات السوق' : 'Sentiment')}</text>
+    <text x="932" y="76" fill="${GREEN}" font-size="24" font-weight="700" text-anchor="end">${esc(data.sentiment.toUpperCase())}</text>
+  </g>
+
+  ${footer(ar ? 'بيانات نهاية اليوم · محرك تكنال' : 'Verified end-of-day data · Ticknal')}
+</svg>`);
+}
+
+/* ───────────────────────── 3. MARKET BREADTH ───────────────────────── */
+export function generateMarketBreadthChartSvg(data: MarketBreadthChartData, locale: 'en' | 'ar' = 'en'): string {
+  const ar = locale === 'ar';
+  const flatPct = Math.max(0, Number((100 - data.advancersPct - data.declinersPct).toFixed(1)));
+  const total = 960;
+  const advW = (data.advancersPct / 100) * total;
+  const decW = (data.declinersPct / 100) * total;
+  const flatW = Math.max(0, total - advW - decW);
+  const ratio = (data.advancers / Math.max(1, data.decliners)).toFixed(2);
+  const bullish = data.advancers >= data.decliners;
+
+  const label = (x: number, w: number, text: string) =>
+    w >= 64 ? `<text x="${x + w / 2}" y="28" fill="#000000" font-size="14" font-weight="700" text-anchor="middle">${esc(text)}</text>` : '';
+
+  const statCard = (x: number, color: string, icon: string, name: string, count: number, pct: number, sub: string) => `
+    <g transform="translate(${x}, 330)">
+      <rect width="306" height="300" rx="16" fill="#000000" stroke="${color}" stroke-width="1.5" />
+      <text x="24" y="46" fill="${color}" font-size="16" font-weight="700">${esc(icon + ' ' + name)}</text>
+      <text x="24" y="136" fill="${color}" font-size="68" font-weight="700">${count}</text>
+      <text x="24" y="176" fill="#ffffff" font-size="18" font-weight="600">${esc(sub)}</text>
+      <line x1="24" y1="206" x2="282" y2="206" stroke="${LINE}" />
+      <text x="24" y="246" fill="${SOFT}" font-size="14">${esc(ar ? 'نسبة من السوق' : 'Share of market')}</text>
+      <text x="24" y="278" fill="${color}" font-size="26" font-weight="700">${pct}%</text>
+    </g>`;
+
+  return toBase64Svg(`${SVG_OPEN}
+  ${header(
+    ar ? 'اتساع السوق' : 'EGX Market Breadth',
+    ar ? 'الأسهم الصاعدة مقابل الهابطة مقابل دون تغيير' : 'Advancers vs decliners vs unchanged',
+    data.date,
+    ar ? 'اتساع السوق' : 'Market Breadth'
+  )}
+
+  <g transform="translate(60, 225)">
+    <rect width="960" height="42" rx="10" fill="#18181b" />
+    <clipPath id="barClip"><rect width="960" height="42" rx="10" /></clipPath>
+    <g clip-path="url(#barClip)">
+      <rect x="0" y="0" width="${advW.toFixed(1)}" height="42" fill="${GREEN}" />
+      <rect x="${advW.toFixed(1)}" y="0" width="${decW.toFixed(1)}" height="42" fill="${RED}" />
+      <rect x="${(advW + decW).toFixed(1)}" y="0" width="${flatW.toFixed(1)}" height="42" fill="#71717a" />
+    </g>
+    ${label(0, advW, `${data.advancersPct}%`)}
+    ${label(advW, decW, `${data.declinersPct}%`)}
+    ${label(advW + decW, flatW, `${flatPct}%`)}
+  </g>
+
+  ${statCard(60, GREEN, '▲', ar ? 'صاعدة' : 'ADVANCERS', data.advancers, data.advancersPct, ar ? 'سهم رابح' : 'stocks up')}
+  ${statCard(387, RED, '▼', ar ? 'هابطة' : 'DECLINERS', data.decliners, data.declinersPct, ar ? 'سهم خاسر' : 'stocks down')}
+  ${statCard(714, SOFT, '●', ar ? 'دون تغيير' : 'UNCHANGED', data.flat, flatPct, ar ? 'سهم مستقر' : 'stocks flat')}
+
+  <g transform="translate(60, 660)">
+    <rect width="960" height="305" rx="16" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+    <text x="32" y="46" fill="#ffffff" font-size="20" font-weight="700">${esc(ar ? 'نسبة الصعود إلى الهبوط' : 'Advance / Decline ratio')}</text>
+    <text x="32" y="124" fill="${bullish ? GREEN : RED}" font-size="52" font-weight="700">${ratio}x</text>
+    <text x="32" y="162" fill="${MUTED}" font-size="14">${esc(
+      bullish
+        ? ar ? 'اتساع إيجابي: المشترون يسيطرون' : 'Positive breadth: buyers are in control'
+        : ar ? 'اتساع سلبي: البائعون يسيطرون' : 'Negative breadth: sellers are in control'
+    )}</text>
+    <line x1="32" y1="196" x2="928" y2="196" stroke="${LINE}" />
+    <text x="32" y="236" fill="${SOFT}" font-size="14">${esc(ar ? 'أسهم متداولة' : 'Stocks traded')}</text>
+    <text x="32" y="274" fill="#ffffff" font-size="26" font-weight="700">${data.totalStocks}</text>
+    <text x="500" y="236" fill="${SOFT}" font-size="14">${esc(ar ? 'قيمة التداول' : 'Session turnover')}</text>
+    <text x="500" y="274" fill="${CYAN}" font-size="26" font-weight="700">${data.turnoverBillion.toFixed(2)}B EGP</text>
+  </g>
+
+  ${footer(ar ? 'تحليل كمي لحظي · محرك تكنال' : 'Quantitative breadth analytics · Ticknal')}
+</svg>`);
+}
+
+/* ───────────────────────── 4. GAINERS & LOSERS ───────────────────────── */
+export function generateGainersLosersChartSvg(data: GainersLosersChartData, locale: 'en' | 'ar' = 'en'): string {
+  const ar = locale === 'ar';
+  const volTxt = (v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : `${Math.round(v / 1000)}K`);
+
+  const row = (s: MoverStock, idx: number, gainer: boolean, colX: number) => {
+    const color = gainer ? GREEN : RED;
+    const y = 300 + idx * 134;
+    const name = s.companyName || s.ticker;
+    const shown = name.length > 22 ? `${name.slice(0, 21)}…` : name;
+    const cid = `logo-${gainer ? 'g' : 'l'}${idx}`;
+    const avatar = s.logoDataUri
+      ? `<circle cx="52" cy="60" r="30" fill="#ffffff" />
+         <clipPath id="${cid}"><circle cx="52" cy="60" r="26" /></clipPath>
+         <image href="${s.logoDataUri}" xlink:href="${s.logoDataUri}" x="26" y="34" width="52" height="52" preserveAspectRatio="xMidYMid meet" clip-path="url(#${cid})" />
+         <circle cx="52" cy="60" r="30" fill="none" stroke="${color}" stroke-width="2" />`
+      : `<circle cx="52" cy="60" r="30" fill="${color}" fill-opacity="0.15" stroke="${color}" stroke-width="2" />
+         <text x="52" y="66" fill="#ffffff" font-size="15" font-weight="700" text-anchor="middle">${esc(s.ticker.slice(0, 4))}</text>`;
+    return `
+    <g transform="translate(${colX}, ${y})">
+      <rect width="460" height="120" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+      ${avatar}
+      <text x="96" y="46" fill="#ffffff" font-size="16" font-weight="700">${esc(shown)}</text>
+      <text x="96" y="72" fill="${SOFT}" font-size="14" font-weight="600">${esc(s.ticker)} · ${s.close.toFixed(2)} EGP</text>
+      <text x="96" y="96" fill="#52525b" font-size="12">${esc(ar ? 'حجم' : 'Vol')} ${volTxt(s.volume)}</text>
+      <rect x="324" y="36" width="124" height="48" rx="10" fill="${color}" fill-opacity="0.14" stroke="${color}" stroke-width="1.5" />
+      <text x="386" y="68" fill="${color}" font-size="19" font-weight="700" text-anchor="middle">${sign(s.changePct)}${s.changePct.toFixed(2)}%</text>
+    </g>`;
+  };
+
+  const colHeader = (x: number, color: string, text: string) => `
+    <g transform="translate(${x}, 222)">
+      <rect width="460" height="52" rx="10" fill="${color}" fill-opacity="0.12" stroke="${color}" />
+      <text x="24" y="33" fill="${color}" font-size="17" font-weight="700">${esc(text)}</text>
+    </g>`;
+
+  return toBase64Svg(`${SVG_OPEN}
+  ${header(
+    ar ? 'الأكثر ارتفاعا وانخفاضا' : 'Session Gainers & Losers',
+    ar ? 'أكبر ٥ أسهم رابحة وخاسرة (سيولة أكثر من مليون جنيه)' : 'Top 5 movers of the session (turnover above 1M EGP)',
+    data.date,
+    ar ? 'أكثر الأسهم حركة' : 'Top Movers'
+  )}
+  ${colHeader(60, GREEN, `▲ ${ar ? 'الأكثر ارتفاعا' : 'TOP 5 GAINERS'}`)}
+  ${colHeader(560, RED, `▼ ${ar ? 'الأكثر انخفاضا' : 'TOP 5 LOSERS'}`)}
+  ${(data.topGainers || []).slice(0, 5).map((s, i) => row(s, i, true, 60)).join('')}
+  ${(data.topLosers || []).slice(0, 5).map((s, i) => row(s, i, false, 560)).join('')}
+  ${footer(ar ? 'فلتر السيولة: أكثر من مليون جنيه' : 'Liquidity filter: minimum 1M EGP turnover')}
+</svg>`);
+}
+
+/* ───────────────────────── 5. USD/EGP ───────────────────────── */
 export function generateUsdEgpUpdateChartSvg(data: UsdEgpUpdateChartData, locale: 'en' | 'ar' = 'en'): string {
-  const isAr = locale === 'ar';
-  const categoryPill = isAr ? 'متابعة سعر الصرف والتعويم' : 'USD/EGP UPDATE · SHADOW PROXIES';
-  const title = isAr ? 'متابعة الدولار وتوقعات التعويم' : 'USD/EGP Fair Value &amp; Shadow Proxies';
-  const subtitle = isAr ? 'مقارنة السعر الرسمي بسعر الذهب وشهادات CIB لندن ومؤشر الضغط' : 'Official Spot vs Sagha Gold, London GDR &amp; Devaluation Pressure Index';
-  const disclaimer = isAr ? 'نموذج تكنال الرياضي لمتابعة ضغوط العملة الأجنبية' : 'Ticknal Currency Triangulation &amp; Devaluation Risk Algorithm';
+  const ar = locale === 'ar';
+  const pct = (a: number) => Number((((a - data.officialUsd) / data.officialUsd) * 100).toFixed(1));
+  const spread = pct(data.compositeFair);
+  const goldGap = pct(data.saghaGoldUsd);
+  const gdrGap = pct(data.londonGdrUsd);
+  const score = Math.min(100, Math.max(0, data.devaluationRiskScore || 0));
+  const scoreColor = score > 60 ? RED : score > 35 ? AMBER : GREEN;
 
-  const spreadPct = Number((((data.compositeFair - data.officialUsd) / data.officialUsd) * 100).toFixed(1));
-  const goldGapPct = Number((((data.saghaGoldUsd - data.officialUsd) / data.officialUsd) * 100).toFixed(1));
-  const gdrGapPct = Number((((data.londonGdrUsd - data.officialUsd) / data.officialUsd) * 100).toFixed(1));
+  const proxy = (x: number, color: string, name: string, value: number, gap: number) => `
+    <g transform="translate(${x}, 435)">
+      <rect width="306" height="200" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+      <text x="24" y="40" fill="${color}" font-size="14" font-weight="700">${esc('● ' + name)}</text>
+      <text x="24" y="96" fill="#ffffff" font-size="38" font-weight="700">${value.toFixed(2)}</text>
+      <text x="24" y="124" fill="${MUTED}" font-size="13">EGP / USD</text>
+      <rect x="24" y="148" width="132" height="28" rx="7" fill="${color}" fill-opacity="0.14" />
+      <text x="90" y="167" fill="${color}" font-size="12" font-weight="700" text-anchor="middle">${sign(gap)}${gap}% ${esc(ar ? 'فجوة' : 'vs official')}</text>
+    </g>`;
 
-  const riskScore = Math.min(100, Math.max(0, data.devaluationRiskScore || 25));
-  const riskColor = riskScore > 60 ? '#f43f5e' : riskScore > 35 ? '#f59e0b' : '#10b981';
+  return toBase64Svg(`${SVG_OPEN}
+  ${header(
+    ar ? 'الدولار وضغوط التعويم' : 'USD/EGP Fair Value & Devaluation Risk',
+    ar ? 'السعر الرسمي مقابل المؤشرات الموازية' : 'Official rate vs. shadow-market proxies',
+    data.date,
+    ar ? 'تحديث سعر الصرف' : 'USD/EGP Update'
+  )}
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080" style="background:#000000;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <rect width="1080" height="1080" fill="#000000" />
-  <rect x="24" y="24" width="1032" height="1032" rx="20" fill="#000000" stroke="#222222" stroke-width="1.5" />
+  <g transform="translate(60, 225)">
+    <rect width="470" height="190" rx="16" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+    <text x="28" y="44" fill="${SOFT}" font-size="15" font-weight="600">${esc(ar ? 'السعر الرسمي (المركزي)' : 'Official rate (CBE)')}</text>
+    <text x="28" y="112" fill="#ffffff" font-size="54" font-weight="700">${data.officialUsd.toFixed(2)}</text>
+    <text x="28" y="150" fill="${MUTED}" font-size="15">EGP per 1 USD</text>
 
-  ${renderBrandHeader(title, subtitle, data.date, categoryPill)}
-
-  <!-- 1. Central Rate Comparison Banner -->
-  <g transform="translate(60, 220)">
-    <!-- Official Rate -->
-    <rect x="0" y="0" width="460" height="190" rx="16" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="28" y="44" fill="#a1a1aa" font-size="15" font-weight="600">${isAr ? 'السعر الرسمي (البنك المركزي)' : 'Official Bank Spot Rate (CBE)'}</text>
-    <text x="28" y="112" fill="#ffffff" font-size="52" font-weight="700" font-variant-numeric="tabular-nums">${data.officialUsd.toFixed(2)}</text>
-    <text x="28" y="152" fill="#71717a" font-size="15">EGP per 1 USD</text>
-
-    <!-- Composite Fair Value -->
-    <rect x="500" y="0" width="460" height="190" rx="16" fill="#000000" stroke="#00BCE6" stroke-width="1.5" />
-    <text x="528" y="44" fill="#00BCE6" font-size="15" font-weight="600">${isAr ? 'السعر العادل التوازني الحقيقي' : 'Real Composite Fair Value Implied'}</text>
-    <text x="528" y="112" fill="#00BCE6" font-size="52" font-weight="700" font-variant-numeric="tabular-nums">${data.compositeFair.toFixed(2)}</text>
-    <text x="528" y="152" fill="#71717a" font-size="15">EGP · <tspan fill="#00BCE6" font-weight="600">${spreadPct >= 0 ? '+' : ''}${spreadPct}% ${isAr ? 'فجوة تسعير' : 'Gap'}</tspan></text>
+    <g transform="translate(490, 0)">
+      <rect width="470" height="190" rx="16" fill="#000000" stroke="${CYAN}" stroke-width="1.5" />
+      <text x="28" y="44" fill="${CYAN}" font-size="15" font-weight="600">${esc(ar ? 'السعر العادل المقدر' : 'Composite fair value')}</text>
+      <text x="28" y="112" fill="${CYAN}" font-size="54" font-weight="700">${data.compositeFair.toFixed(2)}</text>
+      <text x="28" y="150" fill="${MUTED}" font-size="15">${sign(spread)}${spread}% ${esc(ar ? 'عن الرسمي' : 'vs official')}</text>
+    </g>
   </g>
 
-  <!-- 2. Parallel Shadow Proxies (3 Cards) -->
-  <g transform="translate(60, 440)">
-    <!-- Sagha Gold -->
-    <rect x="0" y="0" width="306" height="210" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="24" y="40" fill="#f59e0b" font-size="14" font-weight="700">● ${isAr ? 'دولار الصاغة (الذهب)' : 'Sagha Gold Implied'}</text>
-    <text x="24" y="96" fill="#ffffff" font-size="36" font-weight="700" font-variant-numeric="tabular-nums">${data.saghaGoldUsd.toFixed(2)}</text>
-    <text x="24" y="126" fill="#71717a" font-size="13">EGP per USD</text>
-    <rect x="24" y="154" width="130" height="26" rx="6" fill="#f59e0b20" />
-    <text x="89" y="172" fill="#f59e0b" font-size="12" font-weight="700" text-anchor="middle">${goldGapPct >= 0 ? '+' : ''}${goldGapPct}% ${isAr ? 'علاوة' : 'Spread'}</text>
+  ${proxy(60, AMBER, ar ? 'دولار الصاغة' : 'Sagha gold implied', data.saghaGoldUsd, goldGap)}
+  ${proxy(387, '#1d9bf0', ar ? 'شهادات لندن' : 'London CIB GDR', data.londonGdrUsd, gdrGap)}
 
-    <!-- London GDR -->
-    <rect x="326" y="0" width="306" height="210" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="350" y="40" fill="#1d9bf0" font-size="14" font-weight="700">● ${isAr ? 'دولار شهادات لندن (GDR)' : 'London CIB GDR Rate'}</text>
-    <text x="350" y="96" fill="#ffffff" font-size="36" font-weight="700" font-variant-numeric="tabular-nums">${data.londonGdrUsd.toFixed(2)}</text>
-    <text x="350" y="126" fill="#71717a" font-size="13">EGP per USD</text>
-    <rect x="350" y="154" width="130" height="26" rx="6" fill="#1d9bf020" />
-    <text x="415" y="172" fill="#1d9bf0" font-size="12" font-weight="700" text-anchor="middle">${gdrGapPct >= 0 ? '+' : ''}${gdrGapPct}% ${isAr ? 'علاوة' : 'Spread'}</text>
-
-    <!-- Peg Target -->
-    <rect x="654" y="0" width="306" height="210" rx="14" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="678" y="40" fill="#a1a1aa" font-size="14" font-weight="700">● ${isAr ? 'ثبات النطاق السعري' : 'FX Peg Stability'}</text>
-    <text x="678" y="96" fill="#ffffff" font-size="36" font-weight="700" font-variant-numeric="tabular-nums">${data.atrCompressionRatio.toFixed(2)}x</text>
-    <text x="678" y="126" fill="#71717a" font-size="13">ATR Compression</text>
-    <rect x="678" y="154" width="130" height="26" rx="6" fill="#10b98120" />
-    <text x="743" y="172" fill="#10b981" font-size="12" font-weight="700" text-anchor="middle">${isAr ? 'نطاق هادئ' : 'PEG STABLE'}</text>
+  <g transform="translate(714, 435)">
+    <rect width="306" height="200" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+    <text x="24" y="40" fill="${SOFT}" font-size="14" font-weight="700">${esc('● ' + (ar ? 'تذبذب العملة' : 'ATR compression'))}</text>
+    <text x="24" y="96" fill="#ffffff" font-size="38" font-weight="700">${data.atrCompressionRatio.toFixed(2)}x</text>
+    <text x="24" y="124" fill="${MUTED}" font-size="13">ATR14 / ATR90</text>
+    <rect x="24" y="148" width="132" height="28" rx="7" fill="${GREEN}" fill-opacity="0.14" />
+    <text x="90" y="167" fill="${GREEN}" font-size="12" font-weight="700" text-anchor="middle">${esc(data.atrCompressionRatio < 0.7 ? (ar ? 'نطاق مضغوط' : 'COMPRESSED') : (ar ? 'طبيعي' : 'NORMAL'))}</text>
   </g>
 
-  <!-- 3. Devaluation Pressure Gauge Card -->
-  <g transform="translate(60, 680)">
-    <rect width="960" height="280" rx="16" fill="#000000" stroke="#222222" stroke-width="1.5" />
-    <text x="32" y="44" fill="#ffffff" font-size="20" font-weight="700">${isAr ? 'مؤشر احتمالية وضغط التعويم (Devaluation Risk Index)' : 'Devaluation Pressure &amp; Currency Peg Health'}</text>
-    
-    <!-- Big Score Number -->
-    <text x="32" y="120" fill="${riskColor}" font-size="56" font-weight="700" font-variant-numeric="tabular-nums">${riskScore}<tspan font-size="28" fill="#71717a">/100</tspan></text>
-    <text x="32" y="160" fill="#ffffff" font-size="18" font-weight="600">${xmlEscape(data.devaluationRiskLabel)}</text>
-    <text x="32" y="196" fill="#71717a" font-size="14">${isAr ? 'الضغط الحالي على الجنيه منخفض، وفجوة السعر الموازي ضمن الحدود الآمنة (&lt; ٥٪).' : 'Current parallel proxy divergence is constrained below 5%, signaling mild pressure.'}</text>
-
-    <!-- Progress Meter -->
-    <rect x="32" y="226" width="896" height="16" rx="8" fill="#18181b" />
-    <rect x="32" y="226" width="${Math.max(16, (riskScore / 100) * 896)}" height="16" rx="8" fill="${riskColor}" />
+  <g transform="translate(60, 665)">
+    <rect width="960" height="300" rx="16" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+    <text x="32" y="46" fill="#ffffff" font-size="20" font-weight="700">${esc(ar ? 'مؤشر ضغط التعويم' : 'Devaluation pressure index')}</text>
+    <text x="32" y="130" fill="${scoreColor}" font-size="62" font-weight="700">${score}<tspan font-size="26" fill="${MUTED}" font-weight="400"> / 100</tspan></text>
+    <text x="32" y="172" fill="#ffffff" font-size="18" font-weight="600">${esc(data.devaluationRiskLabel)}</text>
+    <rect x="32" y="214" width="896" height="16" rx="8" fill="#18181b" />
+    <rect x="32" y="214" width="${Math.max(16, (score / 100) * 896).toFixed(0)}" height="16" rx="8" fill="${scoreColor}" />
+    <text x="32" y="262" fill="${MUTED}" font-size="13">${esc(ar ? 'منخفض' : 'Low')}</text>
+    <text x="928" y="262" fill="${MUTED}" font-size="13" text-anchor="end">${esc(ar ? 'مرتفع' : 'High')}</text>
   </g>
 
-  ${renderFooter(disclaimer)}
-</svg>`;
-
-  return toBase64Svg(svg);
+  ${footer(ar ? 'نموذج تكنال لمخاطر العملة' : 'Ticknal currency triangulation model')}
+</svg>`);
 }
 
-/**
- * Backward compatibility aliases
- */
 export const generateInvestorFlowsChartSvg = generateHotMoneyChartSvg;
 export const generateEgx30ChartSvg = generateTradeSummaryChartSvg;
 export const generateFxArbitrageChartSvg = generateUsdEgpUpdateChartSvg;
 
-/**
- * Helper to generate dual-locale bundle { en: dataUrl, ar: dataUrl }
- */
 export function generateLocalizedTakeBundle<T>(generator: (data: T, locale: 'en' | 'ar') => string, data: T): string {
-  const en = generator(data, 'en');
-  const ar = generator(data, 'ar');
-  return JSON.stringify({ en, ar });
+  return JSON.stringify({ en: generator(data, 'en'), ar: generator(data, 'ar') });
 }
 
-export function resolveLocalizedChartSvg(
-  rawImageUrl?: string | null,
-  targetLocale: string = 'en'
-): string | null {
+export function resolveLocalizedChartSvg(rawImageUrl?: string | null, targetLocale: string = 'en'): string | null {
   if (!rawImageUrl) return null;
-
   if (rawImageUrl.startsWith('{') && rawImageUrl.includes('"')) {
     try {
       const parsed = JSON.parse(rawImageUrl);
@@ -581,6 +484,5 @@ export function resolveLocalizedChartSvg(
       return Object.values(parsed)[0] as string;
     } catch {}
   }
-
   return rawImageUrl;
 }

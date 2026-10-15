@@ -72,10 +72,11 @@ function strategyScopeToIds(strategyScope: string): StrategyId[] {
   return ['psi', 'psi_v2', 'hydra'];
 }
 
-type IndexedBuySignal = {
+type IndexedSignal = {
   symbol: string;
   strategyId: StrategyId;
   signalDate: string;
+  signalType: 'BUY' | 'SELL';
   snapshot: {
     signalPrice: number | null;
     signalBarsAgo: number | null;
@@ -140,8 +141,12 @@ async function mapWithConcurrency<T, R>(
  * validates each candidate before it reaches the UI, so charts and tables
  * remain backed by the exact same signal event and metrics.
  */
-async function getIndexedBuySignals(limitBars: number, strategyScope: string): Promise<{
-  signals: IndexedBuySignal[];
+async function getIndexedSignals(
+  limitBars: number,
+  strategyScope: string,
+  signalScope: string = 'all',
+): Promise<{
+  signals: IndexedSignal[];
   recentMarketDates: Set<string>;
 }> {
   const rawRecentDateRows = await db.execute(sql`
@@ -163,6 +168,13 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
   if (!oldestRecentDate) return { signals: [], recentMarketDates };
 
   const allowedStrategies = new Set(strategyScopeToIds(strategyScope));
+  const signalCondition =
+    signalScope === 'BUY'
+      ? eq(signalNotifications.signal, 'BUY')
+      : signalScope === 'SELL'
+      ? eq(signalNotifications.signal, 'SELL')
+      : inArray(signalNotifications.signal, ['BUY', 'SELL']);
+
   let rows: Array<{
     tickerSymbol: unknown;
     strategy: unknown;
@@ -193,7 +205,7 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
         metrics: signalNotifications.metrics,
       })
       .from(signalNotifications)
-      .where(and(eq(signalNotifications.signal, 'BUY'), inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .where(and(signalCondition, inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
       .orderBy(desc(signalNotifications.signalDate))
       .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
   } catch {
@@ -206,24 +218,28 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
         signal: signalNotifications.signal,
       })
       .from(signalNotifications)
-      .where(and(eq(signalNotifications.signal, 'BUY'), inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .where(and(signalCondition, inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
       .orderBy(desc(signalNotifications.signalDate))
       .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
   }
 
-  const latestByStrategy = new Map<string, IndexedBuySignal>();
+  const latestByStrategy = new Map<string, IndexedSignal>();
   for (const row of rows) {
     const strategyId = String(row.strategy) as StrategyId;
     const signalDate = toSignalDate(row.signalDate);
     const symbol = normalizeTickerSymbol(String(row.tickerSymbol));
     if (!symbol || !allowedStrategies.has(strategyId) || !recentMarketDates.has(signalDate)) continue;
-    const key = `${symbol}:${strategyId}`;
+    const rawSig = String(row.signal || 'BUY').toUpperCase();
+    const signalType: 'BUY' | 'SELL' = rawSig === 'SELL' || rawSig.startsWith('SELL') ? 'SELL' : 'BUY';
+
+    const key = `${symbol}:${strategyId}:${signalType}`;
     const existing = latestByStrategy.get(key);
     if (!existing || signalDate > existing.signalDate) {
       latestByStrategy.set(key, {
         symbol,
         strategyId,
         signalDate,
+        signalType,
         snapshot: row.metrics && row.signalPrice != null ? {
           signalPrice: Number(row.signalPrice),
           signalBarsAgo: row.signalBarsAgo == null ? null : Number(row.signalBarsAgo),
@@ -240,7 +256,7 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
   return {
     signals: Array.from(latestByStrategy.values())
       .sort((a, b) => b.signalDate.localeCompare(a.signalDate))
-      .slice(0, MAX_INDEXED_CANDIDATES),
+      .slice(0, MAX_INDEXED_CANDIDATES * 2),
     recentMarketDates,
   };
 }
@@ -248,15 +264,16 @@ async function getIndexedBuySignals(limitBars: number, strategyScope: string): P
 export async function _getRecentOpportunities(
   limitBars: number = 5,
   strategyScope: string = 'all',
+  signalScope: string = 'all',
 ): Promise<OpportunitySignal[]> {
-  const cacheKey = `${SIGNAL_PIPELINE_VERSION}-${limitBars}-${strategyScope}`;
+  const cacheKey = `${SIGNAL_PIPELINE_VERSION}-${limitBars}-${strategyScope}-${signalScope}`;
   const cached = memCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < MEM_CACHE_TTL) return cached.data;
   if (inFlightPromises.has(cacheKey)) return inFlightPromises.get(cacheKey)!;
 
   const promise = (async () => {
     try {
-      const { signals: indexedSignals, recentMarketDates } = await getIndexedBuySignals(limitBars, strategyScope);
+      const { signals: indexedSignals, recentMarketDates } = await getIndexedSignals(limitBars, strategyScope, signalScope);
       if (indexedSignals.length === 0) {
         memCache.set(cacheKey, { data: [], timestamp: Date.now() });
         return [];
@@ -391,11 +408,13 @@ export async function _getRecentOpportunities(
               lookbackBars: limitBars,
             }).catch(() => null);
             latest = analysis?.latestActionableSignal ?? null;
-            if (!analysis || !latest || latest.signal !== 'BUY' || !recentMarketDates.has(latest.date)) continue;
+            if (!analysis || !latest) continue;
+            const matchesSig = latest.signal === indexedSignal.signalType || (indexedSignal.signalType === 'SELL' && String(latest.signal).startsWith('SELL'));
+            if (!matchesSig || !recentMarketDates.has(latest.date)) continue;
           } else {
             if (!recentMarketDates.has(indexedSignal.signalDate)) continue;
             latest = {
-              signal: 'BUY' as const,
+              signal: indexedSignal.signalType,
               date: indexedSignal.signalDate,
               price: snapshot.signalPrice ?? 0,
               barsAgo: snapshot.signalBarsAgo ?? 0,
@@ -428,7 +447,7 @@ export async function _getRecentOpportunities(
             signalAgeBars: analysis.signalAgeBars,
             metrics: analysis.metrics,
             signal: {
-              signal: 'BUY',
+              signal: indexedSignal.signalType,
               date: latest.date,
               price: latest.price,
               barsAgo: latest.barsAgo,
@@ -456,21 +475,22 @@ export async function _getRecentOpportunities(
 export const getRecentOpportunities = async (
   limitBars: number = 5,
   strategyScope: string = 'all',
+  signalScope: string = 'all',
 ): Promise<OpportunitySignal[]> => {
   try {
     const cachedFn = unstable_cache(
-      async () => _getRecentOpportunities(limitBars, strategyScope),
-      [`recent-opportunities-${SIGNAL_PIPELINE_VERSION}-${limitBars}-${strategyScope}`],
+      async () => _getRecentOpportunities(limitBars, strategyScope, signalScope),
+      [`recent-opportunities-${SIGNAL_PIPELINE_VERSION}-${limitBars}-${strategyScope}-${signalScope}`],
       { tags: ['opportunities'], revalidate: 3600 },
     );
     return await cachedFn();
   } catch {
-    return _getRecentOpportunities(limitBars, strategyScope);
+    return _getRecentOpportunities(limitBars, strategyScope, signalScope);
   }
 };
 
-export function getCachedOpportunitiesSync(limitBars = 5, strategyScope = 'all'): OpportunitySignal[] | null {
-  const cached = memCache.get(`${SIGNAL_PIPELINE_VERSION}-${limitBars}-${strategyScope}`);
+export function getCachedOpportunitiesSync(limitBars = 5, strategyScope = 'all', signalScope = 'all'): OpportunitySignal[] | null {
+  const cached = memCache.get(`${SIGNAL_PIPELINE_VERSION}-${limitBars}-${strategyScope}-${signalScope}`);
   return cached && Date.now() - cached.timestamp < MEM_CACHE_TTL ? cached.data : null;
 }
 

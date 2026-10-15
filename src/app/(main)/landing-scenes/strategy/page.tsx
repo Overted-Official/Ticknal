@@ -19,6 +19,8 @@ export default async function LandingStrategyScenePage({
         universe={[]}
         canViewProprietary={false}
         proprietaryAlertsEnabled={false}
+        profiles={[]}
+        typhonNodes={[]}
       />
     </div>
   );

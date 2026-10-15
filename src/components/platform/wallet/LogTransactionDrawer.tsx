@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRightLeft, X, Check, ChevronDown, Trash2 } from '@/components/ui/icon-library';
 import { type BankAccount, type BankTransaction } from '@/types/bank';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import useSWR from 'swr';
 import AccountSelectDropdown from './AccountSelectDropdown';
 import { useTranslation } from '@/lib/i18n';
@@ -32,7 +32,6 @@ export default function LogTransactionDrawer({
   onDeleteTransaction,
 }: LogTransactionDrawerProps) {
   const { locale, isRTL } = useTranslation();
-  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

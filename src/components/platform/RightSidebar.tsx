@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import type { OpportunitySignal } from '@/lib/opportunities';
 import WatchlistSignalFilterPopover, {
-  type SignalFilterConfig,
-  DEFAULT_SIGNAL_FILTER,
+  type WatchlistFilterConfig,
+  DEFAULT_WATCHLIST_FILTER,
 } from './sidebar/WatchlistSignalFilterPopover';
 import { useTranslation } from '@/lib/i18n';
-import { localizeSectorName } from '@/lib/finance/sector-translations';
+import { localizeSectorName, localizeRegimeName } from '@/lib/finance/sector-translations';
 import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -153,13 +153,13 @@ export default function RightSidebar({
     };
   }, [isResizing]);
 
-  // Signal Screener & Filter state
+  // Multi-Faceted Screener & Filter state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [signalFilter, setSignalFilter] = useState<SignalFilterConfig>(DEFAULT_SIGNAL_FILTER);
+  const [signalFilter, setSignalFilter] = useState<WatchlistFilterConfig>(DEFAULT_WATCHLIST_FILTER);
 
   // Fetch opportunities/signals across all tickers (cached server-side)
   const { data: oppsData } = useSWR<{ opportunities: OpportunitySignal[] }>(
-    isHeroScene || !canViewProprietary ? null : '/api/opportunities?bars=15',
+    isHeroScene || !canViewProprietary ? null : `/api/opportunities?bars=${Math.max(30, signalFilter.lookbackDays)}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -167,6 +167,43 @@ export default function RightSidebar({
     }
   );
   const opportunities = oppsData?.opportunities || [];
+
+  // Fetch 1D sector performance to derive rotation regimes and advancing/declining statuses
+  const { data: sectorsData } = useSWR<{ sectors: Array<{ sector: string; rotationRegime: string; turnoverWeightedReturn?: number; equalWeightedReturn?: number }> }>(
+    isHeroScene ? null : '/api/sectors/performance?timeframe=1D',
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 120000,
+    }
+  );
+
+  const sectorStatusMap = useMemo(() => {
+    const map = new Map<string, { rotationRegime: string; isAdvancing: boolean }>();
+    if (sectorsData?.sectors) {
+      for (const s of sectorsData.sectors) {
+        if (s.sector) {
+          const ret = s.turnoverWeightedReturn ?? s.equalWeightedReturn ?? 0;
+          map.set(s.sector.trim().toLowerCase(), {
+            rotationRegime: s.rotationRegime || 'Leading',
+            isAdvancing: ret >= 0,
+          });
+        }
+      }
+    }
+    return map;
+  }, [sectorsData]);
+
+  // Extract all distinct sectors available across current watchlist items
+  const availableSectors = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of watchlist) {
+      if (item.sector && !['Unclassified', 'Funds', 'Metals', 'EGX'].includes(item.sector)) {
+        set.add(item.sector.trim());
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [watchlist]);
 
   // Group opportunities by clean symbol
   const signalsBySymbol = useMemo(() => {
@@ -182,7 +219,9 @@ export default function RightSidebar({
 
   // Compute matching signals based on active filter config
   const matchingSignalsBySymbol = useMemo(() => {
-    if (!canViewProprietary || !signalFilter.isActive) return new Map<string, OpportunitySignal>();
+    if (!canViewProprietary || !signalFilter.isActive || !signalFilter.signalEnabled) {
+      return new Map<string, OpportunitySignal>();
+    }
 
     const result = new Map<string, OpportunitySignal>();
     const stratSet = new Set(signalFilter.strategies);
@@ -232,6 +271,59 @@ export default function RightSidebar({
     );
   }, [isItemMetal]);
 
+  // Evaluates whether a ticker matches active strategy signals, sector, and sector status
+  const isTickerMatchingFilter = useCallback((item: WatchlistItem) => {
+    if (!signalFilter.isActive) return true;
+    const sym = item.symbol.toUpperCase().replace('.CA', '');
+
+    // 1. Strategy Signals Check (when enabled)
+    if (canViewProprietary && signalFilter.signalEnabled) {
+      if (!matchingSignalsBySymbol.has(sym)) {
+        return false;
+      }
+    }
+
+    // 2. Specific Sector Filter
+    if (signalFilter.sector && signalFilter.sector !== 'ALL') {
+      const itemSec = (item.sector || '').trim().toLowerCase();
+      const targetSec = signalFilter.sector.trim().toLowerCase();
+      if (itemSec !== targetSec && !itemSec.includes(targetSec) && !targetSec.includes(itemSec)) {
+        return false;
+      }
+    }
+
+    // 3. Sector Status & Regime Filter
+    if (signalFilter.sectorStatus && signalFilter.sectorStatus !== 'ALL') {
+      const itemSec = (item.sector || '').trim().toLowerCase();
+      const secData = sectorStatusMap.get(itemSec);
+      const regime = (secData?.rotationRegime || '').toUpperCase();
+      const isAdvancing = secData ? secData.isAdvancing : (item.isUp ?? false);
+
+      switch (signalFilter.sectorStatus) {
+        case 'LEADING':
+          if (regime !== 'LEADING') return false;
+          break;
+        case 'IMPROVING':
+          if (regime !== 'IMPROVING') return false;
+          break;
+        case 'WEAKENING':
+          if (regime !== 'WEAKENING') return false;
+          break;
+        case 'LAGGING':
+          if (regime !== 'LAGGING') return false;
+          break;
+        case 'ADVANCING':
+          if (!isAdvancing) return false;
+          break;
+        case 'DECLINING':
+          if (isAdvancing) return false;
+          break;
+      }
+    }
+
+    return true;
+  }, [signalFilter, canViewProprietary, matchingSignalsBySymbol, sectorStatusMap]);
+
   // Matching tickers count in the watchlist for current category
   const matchingCount = useMemo(() => {
     return watchlist.filter((item) => {
@@ -241,9 +333,9 @@ export default function RightSidebar({
       if (selectedCategory === 'EGX' && (isItemMetal(item) || isItemFund(item) || ['USDEGP', 'EUREGP'].includes(sym))) {
         return false;
       }
-      return matchingSignalsBySymbol.has(sym);
+      return isTickerMatchingFilter(item);
     }).length;
-  }, [watchlist, matchingSignalsBySymbol, selectedCategory, isItemMetal, isItemFund]);
+  }, [watchlist, selectedCategory, isItemMetal, isItemFund, isTickerMatchingFilter]);
 
   const baseSelectedItem = watchlist.find(i => i.symbol === selectedSymbol) || watchlist[0];
   const displaySelectedSymbol = selectedSymbol.replace('.CA', '');
@@ -267,8 +359,8 @@ export default function RightSidebar({
         }
       }
 
-      // 2. Signal Filter
-      if (canViewProprietary && signalFilter.isActive && !matchingSignalsBySymbol.has(sym)) {
+      // 2. Multi-Faceted Signal & Sector Filter
+      if (signalFilter.isActive && !isTickerMatchingFilter(item)) {
         return false;
       }
 
@@ -284,7 +376,7 @@ export default function RightSidebar({
 
       return true;
     });
-  }, [watchlist, selectedCategory, canViewProprietary, signalFilter.isActive, matchingSignalsBySymbol, searchQuery, isItemMetal, isItemFund]);
+  }, [watchlist, selectedCategory, signalFilter.isActive, isTickerMatchingFilter, searchQuery, isItemMetal, isItemFund]);
 
   const groupedWatchlist = useMemo(() => {
     const groups = new Map<string, WatchlistItem[]>();
@@ -368,18 +460,18 @@ export default function RightSidebar({
               </button>
             )}
           </div>
-          {canViewProprietary && <div className="relative">
+          <div className="relative">
             <button
               type="button"
               onClick={() => setIsFilterOpen((prev) => !prev)}
               title={
                 locale === 'ar'
                   ? signalFilter.isActive
-                    ? `تصفية الإشارات نشطة (${matchingCount} أوراق مطابقة)`
-                    : 'تصفية الأوراق المالية حسب إشارات النماذج'
+                    ? `تصفية الأوراق المالية نشطة (${matchingCount} أوراق مطابقة)`
+                    : 'تصفية الأوراق المالية حسب الإشارات والقطاعات'
                   : signalFilter.isActive
-                  ? `Signal Filter Active (${matchingCount} tickers matched)`
-                  : 'Filter tickers by strategy signals'
+                  ? `Filter Active (${matchingCount} tickers matched)`
+                  : 'Filter tickers by signals and sectors'
               }
               aria-label={locale === 'ar' ? 'تصفية الأوراق المالية' : 'Filter tickers'}
               className={`h-7 w-7 rounded-md border flex items-center justify-center shrink-0 transition-all relative ${
@@ -403,8 +495,9 @@ export default function RightSidebar({
               onChange={setSignalFilter}
               matchingCount={matchingCount}
               totalCount={watchlist.length}
+              availableSectors={availableSectors}
             />
-          </div>}
+          </div>
         </div>
 
         {/* Category Switcher: EGX | Metals | Funds */}
@@ -426,28 +519,58 @@ export default function RightSidebar({
       </div>
 
       {/* Active Filter Banner */}
-      {canViewProprietary && signalFilter.isActive && (
-        <div className="px-3 py-1 bg-cold-gray-900/90 border-b border-white/[0.08] flex items-center justify-between text-[10px]">
+      {signalFilter.isActive && (
+        <div className="px-3 py-1.5 bg-black/90 border-b border-white/[0.08] flex items-center justify-between text-[10px] gap-2">
           <div className="flex items-center gap-1.5 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-blue shrink-0 animate-pulse" />
-            <span className="text-text-muted truncate">
-              {locale === 'ar' ? 'الإشارات: ' : 'Signals: '}
-              <span className="text-plt-text font-medium">
-                {signalFilter.signals.map((s) => (locale === 'ar' ? (s === 'BUY' ? 'شراء' : 'بيع') : s)).join('/')}
-              </span>{' '}
-              ·{' '}
-              <span className="text-plt-text font-medium">
-                {signalFilter.strategies
-                  .map((s) => (locale === 'ar' ? (s === 'hydra' ? 'هيدرا' : s === 'psi_v2' ? 'سيربيروس' : s === 'thoth_egx_macro' ? 'مؤرشف' : 'تايفون') : (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon')))
-                  .join(', ')}
-              </span>{' '}
-              ({signalFilter.lookbackDays}{locale === 'ar' ? ' يوم' : 'D'})
-            </span>
+            <div className="flex items-center gap-1.5 truncate text-text-muted">
+              {signalFilter.signalEnabled && canViewProprietary && (
+                <span className="truncate">
+                  {locale === 'ar' ? 'الإشارات: ' : 'Signals: '}
+                  <span className="text-white font-medium">
+                    {signalFilter.signals.map((s) => (locale === 'ar' ? (s === 'BUY' ? 'شراء' : 'بيع') : s)).join('/')}
+                  </span>{' '}
+                  ·{' '}
+                  <span className="text-white font-medium">
+                    {signalFilter.strategies
+                      .map((s) => (locale === 'ar' ? (s === 'hydra' ? 'هيدرا' : s === 'psi_v2' ? 'سيربيروس' : 'تايفون') : (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : 'Typhon')))
+                      .join(', ')}
+                  </span>{' '}
+                  ({signalFilter.lookbackDays}{locale === 'ar' ? 'ي' : 'D'})
+                </span>
+              )}
+              {signalFilter.sector !== 'ALL' && (
+                <span className="truncate">
+                  · {locale === 'ar' ? 'القطاع: ' : 'Sector: '}
+                  <span className="text-white font-medium">
+                    {localizeSectorName(signalFilter.sector, locale)}
+                  </span>
+                </span>
+              )}
+              {signalFilter.sectorStatus !== 'ALL' && (
+                <span className="truncate">
+                  · {locale === 'ar' ? 'الحالة: ' : 'Status: '}
+                  <span className="text-white font-medium">
+                    {signalFilter.sectorStatus === 'LEADING'
+                      ? (locale === 'ar' ? 'رائد ومتقدم' : 'Leading')
+                      : signalFilter.sectorStatus === 'IMPROVING'
+                      ? (locale === 'ar' ? 'في تحسن' : 'Improving')
+                      : signalFilter.sectorStatus === 'WEAKENING'
+                      ? (locale === 'ar' ? 'في ضعف' : 'Weakening')
+                      : signalFilter.sectorStatus === 'LAGGING'
+                      ? (locale === 'ar' ? 'متراجع ومتأخر' : 'Lagging')
+                      : signalFilter.sectorStatus === 'ADVANCING'
+                      ? (locale === 'ar' ? 'صاعد (أخضر)' : 'Advancing')
+                      : (locale === 'ar' ? 'هابط (أحمر)' : 'Declining')}
+                  </span>
+                </span>
+              )}
+            </div>
           </div>
           <button
             type="button"
             onClick={() => setSignalFilter((prev) => ({ ...prev, isActive: false }))}
-            className="btn-typography text-text-muted hover:text-loss-num px-1 py-0.5 rounded transition-colors shrink-0 ml-1 hover:bg-surface-hover-subtle"
+            className="text-text-muted hover:text-loss-num px-1.5 py-0.5 rounded transition-colors shrink-0 hover:bg-white/[0.06] text-[10px] font-sans"
             title={locale === 'ar' ? 'مسح التصفية' : 'Clear filter'}
           >
             {locale === 'ar' ? 'مسح' : 'Clear'}

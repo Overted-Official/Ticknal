@@ -7,6 +7,7 @@ import { SPLASH_BOOT_SCRIPT } from "@/components/platform/splash/splash-boot-scr
 import TelemetryTracker from "@/components/telemetry/TelemetryTracker";
 import { LocaleProvider } from "@/lib/i18n";
 import { getServerLocale, getServerDirection } from "@/lib/i18n/server";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -94,6 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ServiceWorkerRegistration />
           <NativeBridgeProvider />
         </LocaleProvider>
+        <Toaster />
       </body>
     </html>
   );

@@ -115,6 +115,36 @@ function isFundSymbol(symbol: string, sector?: string, industry?: string, compan
   );
 }
 
+function TickerSearchAvatar({
+  logoUrl,
+  symbol,
+}: {
+  logoUrl?: string | null;
+  symbol: string;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const initials = symbol.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase();
+
+  return (
+    <div className="w-10 h-10 min-w-10 min-h-10 rounded-full bg-white/[0.08] border border-white/10 overflow-hidden flex items-center justify-center shrink-0 aspect-square relative">
+      {logoUrl && !imgError ? (
+        <img
+          src={logoUrl}
+          alt={symbol}
+          className="w-full h-full rounded-full object-cover block"
+          onError={() => setImgError(true)}
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <span className="text-xs font-bold text-white/80 font-sans select-none">
+          {initials}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function MobileSearchScreen({
   isOpen,
   onClose,
@@ -463,22 +493,7 @@ export default function MobileSearchScreen({
                     {/* Column 1 & 2: Circular Logo + Name / Symbol */}
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       {/* Circular Logo */}
-                      <div className="w-10 h-10 rounded-full bg-white/[0.08] border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
-                        {item.logoUrl ? (
-                          <img
-                            src={item.logoUrl}
-                            alt={item.symbol}
-                            className="w-full h-full object-contain p-1"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <span className="text-xs font-bold text-white/80 font-sans">
-                            {item.symbol.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
+                      <TickerSearchAvatar logoUrl={item.logoUrl} symbol={item.symbol} />
 
                       {/* Middle: Full name (top) and Symbol (bottom) */}
                       <div className="min-w-0 flex-1">

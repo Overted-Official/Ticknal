@@ -17,7 +17,7 @@ import {
   ExternalLink,
   RefreshCw,
 } from '@/components/ui/icon-library';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import { type BankAccount } from '@/types/bank';
 import AccountSelectDropdown from './wallet/AccountSelectDropdown';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
@@ -110,7 +110,6 @@ export default function QuickAddDrawer({
   onSuccess,
   initialMode = 'transaction',
 }: QuickAddDrawerProps) {
-  const { toast } = useToast();
   const router = useRouter();
   const { t, locale, isRTL } = useTranslation();
   const [mounted, setMounted] = useState(false);

@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { CometSpinner } from '@/components/ui/CometSpinner';
 import TicknalBrand from '@/components/ui/TicknalBrand';
 
 interface LoadingScreenProps {
@@ -8,6 +7,12 @@ interface LoadingScreenProps {
   className?: string;
 }
 
+/**
+ * Unified fallback loading screen:
+ * Displays the Ticknal mark with a subtle breathing neon halo ring, the official wordmark,
+ * and an indeterminate glowing brand gradient progress bar on pure pitch black (#000000).
+ * Matches the AppSplash design language exactly with zero orbiting spinners or mismatched artifacts.
+ */
 export default function LoadingScreen({
   label = 'Loading Ticknal',
   className,
@@ -22,24 +27,37 @@ export default function LoadingScreen({
       aria-live="polite"
       aria-label={label}
     >
-      <div className="relative flex h-28 w-28 items-center justify-center text-white">
+      <div className="flex flex-col items-center">
+        {/* Logo Mark with subtle pulsing halo ring */}
+        <div className="relative flex h-20 w-20 md:h-24 md:w-24 items-center justify-center text-white">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-3.5 rounded-full border border-[rgba(0,188,230,0.3)] shadow-[0_0_18px_rgba(0,188,230,0.18)] animate-pulse"
+          />
+          <Image
+            src="/logo-white.svg"
+            alt=""
+            width={52}
+            height={52}
+            className="relative z-10 object-contain"
+            priority
+          />
+        </div>
+
+        {/* Wordmark */}
+        <div className="mt-5 flex flex-col items-center">
+          <TicknalBrand href={null} showIcon={false} showText size="lg" className="text-white" />
+        </div>
+
+        {/* Unified Loading Bar */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -inset-16 rounded-full blur-3xl opacity-25"
-          style={{ background: 'radial-gradient(circle, #2962FF 0%, #00BCE6 40%, #D500F9 80%, transparent 100%)' }}
-        />
-        <CometSpinner decorative className="absolute inset-0 h-full w-full" />
-        <Image
-          src="/logo-white.svg"
-          alt=""
-          width={48}
-          height={48}
-          className="relative z-10 object-contain"
-          priority
-        />
-      </div>
-      <div className="mt-5 flex flex-col items-center gap-1.5">
-        <TicknalBrand href={null} showIcon={false} showText={true} size="sm" className="text-white/80" />
+          className="mt-6 w-[150px] max-w-[55vw] h-[3px] bg-white/10 rounded-full overflow-hidden relative"
+        >
+          <div
+            className="h-full w-full rounded-full bg-gradient-to-r from-[#00bce6] via-[#2962ff] to-[#d500f9] shadow-[0_0_12px_rgba(0,188,230,0.6)] animate-pulse"
+          />
+        </div>
       </div>
       <span className="sr-only">{label}</span>
     </div>

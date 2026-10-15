@@ -11,7 +11,7 @@ export default function HomePageSkeleton() {
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-black text-white select-none font-sans">
       {/* 1. Mobile-Only Hero Banner (Instant shell) */}
       <div className="block md:hidden shrink-0 relative z-40">
-        <MobileHomeHero />
+        <MobileHomeHero isLoading={true} />
       </div>
 
       {/* Desktop/Tablet Header (Instant shell breadcrumbs) */}

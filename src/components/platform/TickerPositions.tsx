@@ -6,7 +6,7 @@ import InlineSpinner from '@/components/ui/InlineSpinner';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import { useTranslation } from '@/lib/i18n';
 
 export interface TickerOrder {
@@ -96,7 +96,6 @@ export default function TickerPositions({
   onDeletePosition,
   currency: instrumentCurrency,
 }: TickerPositionsProps) {
-  const { toast } = useToast();
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const [mounted, setMounted] = useState(false);

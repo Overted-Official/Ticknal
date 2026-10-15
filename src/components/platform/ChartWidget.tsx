@@ -30,7 +30,7 @@ import CloseOrderModal from '@/components/platform/CloseOrderModal';
 import TickerPositions, { type TickerOrder } from '@/components/platform/TickerPositions';
 import { INDICATORS, type IndicatorLine } from '@/indicators';
 import type { CanonicalIndicatorViewState } from '@/indicators/canonical/types';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import { useTranslation } from '@/lib/i18n';
 import { useGuestGuard } from '@/context/GuestGuardContext';
 import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
@@ -104,7 +104,6 @@ export default function ChartWidget({
   const { isGuest, isLoading: isGuestStatusLoading } = useGuestGuard();
   const isHeroScene = useHeroSceneMode();
   const router = useRouter();
-  const { toast } = useToast();
   const [canonicalIndicatorStates, setCanonicalIndicatorStates] = useState<
     Record<string, CanonicalIndicatorViewState>
   >({});

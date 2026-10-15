@@ -3,12 +3,11 @@
 import React from 'react';
 import { Globe, Check } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
-import { useToast } from '@/context/ToastContext';
+import { toast } from '@/components/ui/sonner';
 import type { Locale } from '@/lib/i18n';
 
 export default function LanguagePreferencesCard() {
   const { locale, setLocale, t } = useTranslation();
-  const { toast } = useToast();
 
   const handleLanguageChange = async (newLocale: Locale) => {
     if (newLocale === locale) return;
