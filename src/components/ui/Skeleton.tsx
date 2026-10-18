@@ -23,7 +23,7 @@ export function Skeleton({
     <div
       aria-hidden="true"
       className={cn(
-        'bg-white/[0.06] animate-pulse motion-reduce:animate-none',
+        'bg-plt-hover animate-pulse motion-reduce:animate-none',
         variant === 'circular' && 'rounded-full',
         variant === 'rounded' && 'rounded-md',
         variant === 'rectangular' && 'rounded-none',

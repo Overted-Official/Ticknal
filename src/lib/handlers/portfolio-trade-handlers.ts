@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { bankTransactions, positions, tickers, userBankAccounts } from '@/db/schema';
-import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol, type PriceBar } from '@/strategies/Typhon/typhonStrategy';
 import { createClient } from '@/lib/supabase/server';
 import { getCachedDailyPrices } from '@/lib/data-cache';
 import { evaluateHoldingConsensus, type HoldingConsensus } from '@/lib/multi-strategy-consensus';

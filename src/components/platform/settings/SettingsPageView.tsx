@@ -9,8 +9,11 @@ import PinSecurityCard from './PinSecurityCard';
 import PushNotificationCard from './PushNotificationCard';
 import PushDevicesWidget, { type DeviceInfo } from './PushDevicesWidget';
 import LanguagePreferencesCard from './LanguagePreferencesCard';
+import ThemePreferencesCard from './ThemePreferencesCard';
 import { useTranslation } from '@/lib/i18n';
 import { containerStagger, itemFadeInUp } from '@/lib/motion';
+import { Tour, useTour } from '@/components/ui/tour';
+import { getSettingsTourSteps, SETTINGS_TOUR_STORAGE_KEY } from '@/lib/tours/settings-tour-config';
 
 export type { SettingsUserProfile, DeviceInfo };
 
@@ -23,16 +26,38 @@ export default function SettingsPageView({
   userProfile,
   initialDevices = [],
 }: SettingsPageViewProps) {
-  const { t } = useTranslation();
+  const { t, isRTL } = useTranslation();
+
+  const tour = useTour(SETTINGS_TOUR_STORAGE_KEY);
+  const tourSteps = React.useMemo(() => getSettingsTourSteps(isRTL), [isRTL]);
+  const hasAutoStartedRef = React.useRef(false);
+
+  // Auto-start Settings page walkthrough for first-time visitors (strictly once on mount)
+  React.useEffect(() => {
+    if (hasAutoStartedRef.current) return;
+    hasAutoStartedRef.current = true;
+
+    if (!tour.seen()) {
+      const timer = setTimeout(() => {
+        tour.start();
+        tour.markSeen();
+      }, 1200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [tour]);
+
   return (
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
       {/* 1. Header (Breadcrumbs & Actions) */}
       <div className="px-4 sm:px-6 pt-3 pb-1 shrink-0 bg-plt-base">
-        <SettingsHeader />
+        <SettingsHeader onStartTour={tour.start} />
       </div>
 
       {/* 2. Sticky Floating Navigation Bar */}
-      <SettingsFloatingNav devicesCount={initialDevices.length} />
+      <div data-tour="settings-floating-nav" className="w-full">
+        <SettingsFloatingNav devicesCount={initialDevices.length} />
+      </div>
 
       {/* 3. Main Sections Stack (Single Continuous Long Page) */}
       <motion.div
@@ -44,6 +69,7 @@ export default function SettingsPageView({
         {/* SECTION 1: ACCOUNT PROFILE */}
         <motion.section
           id="section-profile"
+          data-tour="settings-profile-section"
           variants={itemFadeInUp}
           className="section-container scroll-mt-20 space-y-4"
         >
@@ -62,9 +88,10 @@ export default function SettingsPageView({
           </div>
         </motion.section>
 
-        {/* SECTION 2: PREFERENCES & LANGUAGE */}
+        {/* SECTION 2: PREFERENCES, THEME & LANGUAGE */}
         <motion.section
           id="section-preferences"
+          data-tour="settings-preferences-section"
           variants={itemFadeInUp}
           className="section-container scroll-mt-20 space-y-4"
         >
@@ -76,12 +103,16 @@ export default function SettingsPageView({
               </p>
             </div>
           </div>
-          <LanguagePreferencesCard />
+          <ThemePreferencesCard />
+          <div className="border-t border-border-subtle pt-4">
+            <LanguagePreferencesCard />
+          </div>
         </motion.section>
 
         {/* SECTION 3: SECURITY & PASSCODE PIN */}
         <motion.section
           id="section-security"
+          data-tour="settings-security-section"
           variants={itemFadeInUp}
           className="section-container scroll-mt-20 space-y-4"
         >
@@ -99,6 +130,7 @@ export default function SettingsPageView({
         {/* SECTION 4: CONNECTED DEVICES & NOTIFICATIONS */}
         <motion.section
           id="section-devices"
+          data-tour="settings-devices-section"
           variants={itemFadeInUp}
           className="section-container scroll-mt-20 space-y-4"
         >
@@ -118,6 +150,18 @@ export default function SettingsPageView({
           <PushDevicesWidget initialDevices={initialDevices} />
         </motion.section>
       </motion.div>
+
+      {/* In-App Tour Walkthrough Portal */}
+      <Tour
+        steps={tourSteps}
+        open={tour.open}
+        onOpenChange={tour.setOpen}
+        index={tour.index}
+        onIndexChange={tour.setIndex}
+        onFinish={tour.markSeen}
+        onSkip={tour.markSeen}
+        dark
+      />
     </div>
   );
 }

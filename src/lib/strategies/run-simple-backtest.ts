@@ -2,7 +2,7 @@ import {
   evaluateRuleSeries, getIndicatorDefinition, validateMarketFrame,
   type Diagnostic, type ObservationTime, type TimeSeriesFrame,
 } from '@ticknal/quant-engine/canonical';
-import type { SimpleStrategyProgram, StrategyProgramPredicate } from './strategy-program';
+import { validExecutionPolicy, type StrategyExecutionPolicy, type SimpleStrategyProgram, type StrategyProgramPredicate } from './strategy-program';
 
 export interface BacktestAssumptions {
   readonly initialCapital: number;
@@ -75,8 +75,9 @@ export type BacktestResult =
         readonly adjustmentRevision: string | null;
         readonly asOf: string;
         readonly formulaVersions: Readonly<Record<string, string>>;
-        readonly assumptions: BacktestAssumptions;
-        readonly fillPolicy: 'next-session-open';
+        readonly assumptions: BacktestAssumptions & { readonly slippageBps?: number };
+        readonly fillPolicy: 'next-session-open' | 'signal-close';
+        readonly shareSizing?: 'fractional' | 'wholeShares';
       };
     }
   | { readonly status: 'invalid' | 'unavailable'; readonly code: string; readonly inputId?: string; readonly diagnostics?: readonly Diagnostic[] };
@@ -96,21 +97,29 @@ function validPredicates(program: SimpleStrategyProgram): boolean {
   const ids = new Set(program.inputs.map((input) => input.id));
   if (ids.size !== program.inputs.length || program.buy.length === 0 || program.sell.length === 0) return false;
   const validSide = (side: SimpleStrategyProgram['buy']) => side.every((branch) => branch.length > 0 && branch.every((predicate) =>
-    ids.has(predicate.inputId) && Number.isFinite(predicate.threshold)
+    ids.has(predicate.inputId) && (predicate.compareInputId === undefined || ids.has(predicate.compareInputId)) && Number.isFinite(predicate.threshold)
     && ['crossesAbove', 'crossesBelow', 'isAbove', 'isBelow'].includes(predicate.operator)));
   return validSide(program.buy) && validSide(program.sell);
 }
 
-function predicateMatches(predicate: StrategyProgramPredicate, index: number, series: ReadonlyMap<string, readonly (number | null)[]>): boolean {
+export function predicateMatches(predicate: StrategyProgramPredicate, index: number, series: ReadonlyMap<string, readonly (number | null)[]>): boolean {
   const values = series.get(predicate.inputId);
   const current = values?.[index];
   if (current === null || current === undefined || !Number.isFinite(current)) return false;
-  if (predicate.operator === 'isAbove') return current > predicate.threshold;
-  if (predicate.operator === 'isBelow') return current < predicate.threshold;
+  const comparison = predicate.compareInputId === undefined ? 0 : series.get(predicate.compareInputId)?.[index];
+  if (comparison === null || comparison === undefined || !Number.isFinite(comparison)) return false;
+  const difference = current - comparison;
+  if (!Number.isFinite(difference)) return false;
+  if (predicate.operator === 'isAbove') return difference > predicate.threshold;
+  if (predicate.operator === 'isBelow') return difference < predicate.threshold;
   const previous = values?.[index - 1];
   if (previous === null || previous === undefined || !Number.isFinite(previous)) return false;
-  if (predicate.operator === 'crossesAbove') return previous <= predicate.threshold && current > predicate.threshold;
-  return previous >= predicate.threshold && current < predicate.threshold;
+  const priorComparison = predicate.compareInputId === undefined ? 0 : series.get(predicate.compareInputId)?.[index - 1];
+  if (priorComparison === null || priorComparison === undefined || !Number.isFinite(priorComparison)) return false;
+  const previousDifference = previous - priorComparison;
+  if (!Number.isFinite(previousDifference)) return false;
+  if (predicate.operator === 'crossesAbove') return previousDifference <= predicate.threshold && difference > predicate.threshold;
+  return previousDifference >= predicate.threshold && difference < predicate.threshold;
 }
 
 function sideMatches(side: SimpleStrategyProgram['buy'], index: number, series: ReadonlyMap<string, readonly (number | null)[]>): boolean {
@@ -164,6 +173,7 @@ export function runBacktestWithSeries(
   series: ReadonlyMap<string, readonly (number | null)[]>,
   formulaVersions: Readonly<Record<string, string>>,
   runtime?: BacktestRuntime,
+  execution?: StrategyExecutionPolicy,
 ): BacktestResult {
   if (!Number.isFinite(assumptions.initialCapital) || assumptions.initialCapital <= 0
     || !Number.isFinite(assumptions.feeBps) || assumptions.feeBps < 0 || assumptions.feeBps >= 10_000) {
@@ -189,7 +199,14 @@ export function runBacktestWithSeries(
     return { status: 'unavailable', code: 'PERIOD_NO_DATA' };
   }
 
-  const feeRate = assumptions.feeBps / 10_000;
+  if (execution && !validExecutionPolicy(execution)) return { status: 'invalid', code: 'EXECUTION_INVALID' };
+  const effectiveAssumptions = { ...assumptions, feeBps: execution?.feeBps ?? assumptions.feeBps, slippageBps: execution?.slippageBps ?? 0 };
+  const feeRate = effectiveAssumptions.feeBps / 10_000;
+  const slippageRate = effectiveAssumptions.slippageBps / 10_000;
+  const liquidationFactor = execution?.valuation === 'net-liquidation-linear-costs' ? 1-feeRate-slippageRate : (1-feeRate)*(1-slippageRate);
+  const fillPolicy = execution?.fillPolicy ?? 'next-session-open';
+  const shareSizing = execution?.shareSizing ?? 'fractional';
+  if (!['next-session-open', 'signal-close'].includes(fillPolicy) || !['fractional', 'wholeShares'].includes(shareSizing)) return { status: 'invalid', code: 'EXECUTION_INVALID' };
   const trades: BacktestTrade[] = [];
   const equity: BacktestEquityPoint[] = [];
   let cash = assumptions.initialCapital;
@@ -199,25 +216,40 @@ export function runBacktestWithSeries(
   let maxDrawdownPct = 0;
   let latestSignal: Extract<BacktestResult, { status: 'ok' }>['latestSignal'] = null;
 
+  const enter = (bar: TimeSeriesFrame['bars'][number], signalTime: ObservationTime, fillPrice: number): ActivePosition | null => {
+    fillPrice *= 1 + slippageRate;
+    const affordable = cash / (fillPrice * (1 + feeRate));
+    const units = shareSizing === 'wholeShares' ? Math.floor(affordable) : affordable;
+    if (units <= 0) return null;
+    const entryFee = units * fillPrice * feeRate;
+    const entryCost = units * fillPrice + entryFee;
+    const opened: ActivePosition = { entrySignalTime: signalTime, entryTime: bar.time, entryPrice: fillPrice,
+      entryCost, entryFee, units, low: fillPolicy === 'signal-close' ? fillPrice : bar.low,
+      high: fillPolicy === 'signal-close' ? fillPrice : bar.high };
+    cash = shareSizing === 'fractional' ? 0 : Math.max(0, cash - entryCost);
+    return opened;
+  };
+  const exit = (current: ActivePosition, bar: TimeSeriesFrame['bars'][number], signalTime: ObservationTime, fillPrice: number): void => {
+    fillPrice *= 1 - slippageRate;
+    const exitFee = current.units * fillPrice * feeRate;
+    const proceeds = current.units * fillPrice - exitFee;
+    cash += proceeds;
+    trades.push({ entrySignalTime: current.entrySignalTime, entryTime: current.entryTime, entryPrice: current.entryPrice,
+      exitSignalTime: signalTime, exitTime: bar.time, exitPrice: fillPrice,
+      entryFee: current.entryFee, exitFee, returnPct: (proceeds / current.entryCost - 1) * 100,
+      maePct: (Math.min(current.low, bar.open) / current.entryPrice - 1) * 100,
+      mfePct: (Math.max(current.high, bar.open) / current.entryPrice - 1) * 100 });
+  };
+
   for (let index = firstIndex; index <= lastIndex; index += 1) {
     const bar = frame.bars[index];
     let entered = false;
     let exited = false;
-    if (pending?.side === 'buy' && position === null) {
-      const units = cash / (bar.open * (1 + feeRate));
-      const entryFee = units * bar.open * feeRate;
-      position = { entrySignalTime: pending.signalTime, entryTime: bar.time, entryPrice: bar.open,
-        entryCost: cash, entryFee, units, low: bar.low, high: bar.high };
-      cash = 0;
-      entered = true;
-    } else if (pending?.side === 'sell' && position !== null) {
-      const exitFee = position.units * bar.open * feeRate;
-      cash = position.units * bar.open - exitFee;
-      trades.push({ entrySignalTime: position.entrySignalTime, entryTime: position.entryTime, entryPrice: position.entryPrice,
-        exitSignalTime: pending.signalTime, exitTime: bar.time, exitPrice: bar.open,
-        entryFee: position.entryFee, exitFee, returnPct: (cash / position.entryCost - 1) * 100,
-        maePct: (Math.min(position.low, bar.open) / position.entryPrice - 1) * 100,
-        mfePct: (Math.max(position.high, bar.open) / position.entryPrice - 1) * 100 });
+    if (fillPolicy === 'next-session-open' && pending?.side === 'buy' && position === null) {
+      position = enter(bar, pending.signalTime, bar.open);
+      entered = position !== null;
+    } else if (fillPolicy === 'next-session-open' && pending?.side === 'sell' && position !== null) {
+      exit(position, bar, pending.signalTime, bar.open);
       position = null;
       exited = true;
     }
@@ -227,11 +259,6 @@ export function runBacktestWithSeries(
       position.low = Math.min(position.low, bar.low);
       position.high = Math.max(position.high, bar.high);
     }
-    const value = cash + (position === null ? 0 : position.units * bar.close * (1 - feeRate));
-    peak = Math.max(peak, value);
-    maxDrawdownPct = Math.min(maxDrawdownPct, (value / peak - 1) * 100);
-    equity.push({ time: bar.time, value, inPosition: position !== null });
-
     const context: BacktestBarContext = { index, bar, position, entered, exited };
     runtime?.onBar?.(context);
     const policyReason: string | null = position === null ? null : runtime?.exitReason?.(context) ?? null;
@@ -241,9 +268,24 @@ export function runBacktestWithSeries(
         ? { signal: 'SELL' as const, date: bar.time, price: bar.close, reason: policyReason ?? 'Sell conditions met.' }
         : null);
     if (index === lastIndex) latestSignal = signal;
-    else if (signal) {
+    if (signal && fillPolicy === 'signal-close') {
+      if (signal.signal === 'BUY' && position === null) {
+        position = enter(bar, bar.time, bar.close);
+        entered = position !== null;
+        if (entered) runtime?.onBar?.({ index, bar, position, entered: true, exited: false });
+      } else if (signal.signal === 'SELL' && position !== null) {
+        exit(position, bar, bar.time, bar.close);
+        position = null;
+        exited = true;
+        runtime?.onBar?.({ index, bar, position: null, entered: false, exited: true });
+      }
+    } else if (signal && index < lastIndex) {
       pending = { side: signal.signal === 'BUY' ? 'buy' : 'sell', signalTime: bar.time };
     }
+    const value = cash + (position === null ? 0 : position.units * bar.close * liquidationFactor);
+    peak = Math.max(peak, value);
+    maxDrawdownPct = Math.min(maxDrawdownPct, (value / peak - 1) * 100);
+    equity.push({ time: bar.time, value, inPosition: position !== null });
   }
 
   const finalClose = frame.bars[lastIndex]?.close;
@@ -251,7 +293,7 @@ export function runBacktestWithSeries(
     status: 'ok', trades, equity, latestSignal,
     openPosition: position !== null && finalClose !== undefined ? {
       entrySignalTime: position.entrySignalTime, entryTime: position.entryTime, entryPrice: position.entryPrice,
-      unrealizedReturnPct: (position.units * finalClose * (1 - feeRate) / position.entryCost - 1) * 100,
+      unrealizedReturnPct: (position.units * finalClose * liquidationFactor / position.entryCost - 1) * 100,
       maePct: (position.low / position.entryPrice - 1) * 100, mfePct: (position.high / position.entryPrice - 1) * 100,
     } : null,
     metrics: {
@@ -261,6 +303,6 @@ export function runBacktestWithSeries(
     },
     provenance: { sourceRevision: frame.meta.sourceRevision, adjustmentMode: frame.meta.adjustmentMode,
       adjustmentRevision: frame.meta.adjustmentRevision, asOf: frame.meta.asOf, formulaVersions,
-      assumptions, fillPolicy: 'next-session-open' },
+      assumptions: effectiveAssumptions, fillPolicy, shareSizing },
   };
 }

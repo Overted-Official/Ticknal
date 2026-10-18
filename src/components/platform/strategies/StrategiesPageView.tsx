@@ -15,7 +15,7 @@ interface StrategiesPageViewProps {
 
 export default function StrategiesPageView({ indicatorCatalog, universe, canViewProprietary, proprietaryAlertsEnabled, profiles, typhonNodes }: StrategiesPageViewProps) {
   return (
-    <div className="flex h-full w-full min-w-0 flex-1 flex-row overflow-hidden bg-black font-sans text-white">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-row overflow-hidden bg-plt-base font-sans text-plt-text">
       <StrategyBuilderWorkspace indicatorCatalog={indicatorCatalog} universe={universe}
         canViewProprietary={canViewProprietary} proprietaryAlertsEnabled={proprietaryAlertsEnabled}
         profiles={profiles} typhonNodes={typhonNodes} />

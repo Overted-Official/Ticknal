@@ -2,7 +2,7 @@ import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
 import { getCachedTickers } from '@/lib/data-cache';
-import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { aggregateSectorsFromStocks, type StockPerformanceItem } from './sectors-math';
 
 export type RotationRegime = 'Leading' | 'Improving' | 'Weakening' | 'Lagging';

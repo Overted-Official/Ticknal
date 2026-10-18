@@ -90,6 +90,7 @@ export default function StrategyResultsDeck({
             locale={locale}
             liveBacktest={companyBacktest}
             liveEligible={simpleProgram !== null}
+            program={simpleProgram}
             universe={universe}
             savedSelectedSymbols={selectedSymbols}
             onSaveSelection={onSaveSelection}

@@ -28,7 +28,7 @@ describe('strategy output context adapter', () => {
     const snapshots = extractStrategyOutputSnapshots({
       observationTime: FIVE_BAR_FRAME.bars.at(-1)!.time,
       receivedAt: '2026-01-08T12:01:00.000Z',
-      champion: { strategyId: 'psi', alpha: 0, analyses: [] },
+      champion: { strategyId: 'typhon', alpha: 0, analyses: [] },
       psi40: { latestMasterIndex: null },
     });
 
@@ -43,7 +43,7 @@ describe('strategy output context adapter', () => {
     const snapshots = extractStrategyOutputSnapshots({
       observationTime: FIVE_BAR_FRAME.bars.at(-1)!.time,
       receivedAt: '2026-01-08T12:01:00.000Z',
-      champion: { strategyId: 'psi', alpha: 0, analyses: [] },
+      champion: { strategyId: 'typhon', alpha: 0, analyses: [] },
       psi40: { latestMasterIndex: 72.5 },
     });
 
@@ -59,10 +59,10 @@ describe('strategy output context adapter', () => {
       observationTime: FIVE_BAR_FRAME.bars.at(-1)!.time,
       receivedAt: '2026-01-08T12:01:00.000Z',
       champion: {
-        strategyId: 'psi',
+        strategyId: 'typhon',
         alpha: 5,
         analyses: [{
-          strategyId: 'psi',
+          strategyId: 'typhon',
           parameterVersion: 'psi-v9',
           rawResult: { latestMasterIndex: 70, latestMasterIndexAdjusted: 72, signals: [] },
           metrics: { alpha: 5 },

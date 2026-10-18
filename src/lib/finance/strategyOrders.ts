@@ -1,8 +1,8 @@
 import { asc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { dailyPrices } from '@/db/schema';
-import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
-import { computePsiSeries, normalizeTickerSymbol, type PriceBar, type PsiStrategyParams } from '@/strategies/PSI/psiStrategy';
+import { resolvePsiParamsFromStore } from '@/strategies/Typhon/typhonParameterStore';
+import { computePsiSeries, normalizeTickerSymbol, type PriceBar, type PsiStrategyParams } from '@/strategies/Typhon/typhonStrategy';
 
 export type PositionLevels = {
   targetPrice: number | null;

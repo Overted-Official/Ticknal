@@ -171,7 +171,7 @@ export default function EditOrderModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 bg-plt-overlay backdrop-blur-sm cursor-pointer"
             onClick={onClose}
             aria-label={isAr ? 'إغلاق النافذة' : 'Close modal overlay'}
           />
@@ -182,15 +182,15 @@ export default function EditOrderModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className="relative w-full max-w-lg bg-black text-text-primary rounded-xl border border-border-subtle shadow-2xl flex flex-col z-10 max-h-[90vh] overflow-hidden"
+            className="relative w-full max-w-lg bg-plt-base text-plt-text rounded-xl border border-plt-border shadow-2xl flex flex-col z-10 max-h-[90vh] overflow-hidden"
           >
             {/* Header: Clean Black Surface */}
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between shrink-0 bg-black">
+            <div className="px-5 py-4 border-b border-plt-border flex items-center justify-between shrink-0 bg-plt-base">
               <div className="flex flex-col min-w-0">
-                <h2 className="font-semibold text-base text-text-primary tracking-tight truncate font-sans">
+                <h2 className="font-semibold text-base text-plt-text tracking-tight truncate font-sans">
                   {isAr ? `تعديل مركز ${cleanSymbol}` : `Edit ${cleanSymbol} Position`}
                 </h2>
-                <p className="text-xs text-text-muted font-normal mt-0.5 font-sans">
+                <p className="text-xs text-plt-muted font-normal mt-0.5 font-sans">
                   {isAr
                     ? `تعديل بيانات الدخول للصفقة رقم #${order.id}`
                     : `Modify entry parameters for lot #${order.id}`}
@@ -200,7 +200,7 @@ export default function EditOrderModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-surface-raised transition cursor-pointer"
+                className="p-1.5 rounded-lg text-plt-muted hover:text-plt-text hover:bg-plt-hover transition cursor-pointer"
                 title={isAr ? 'إغلاق (Esc)' : 'Close (Esc)'}
                 aria-label={isAr ? 'إغلاق النافذة' : 'Close Modal'}
               >
@@ -320,7 +320,7 @@ export default function EditOrderModal({
             </div>
 
             {/* Footer Buttons */}
-            <div className="px-5 py-3.5 border-t border-border-subtle bg-black flex items-center justify-between gap-3 shrink-0">
+            <div className="px-5 py-3.5 border-t border-plt-border bg-plt-base flex items-center justify-between gap-3 shrink-0">
               {/* Delete Lot Button / Confirmation */}
               <div>
                 {showDeleteConfirm ? (
@@ -340,7 +340,7 @@ export default function EditOrderModal({
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="px-2 py-1.5 rounded-lg text-xs text-white/50 hover:text-white transition-colors cursor-pointer"
+                      className="px-2 py-1.5 rounded-lg text-xs text-plt-muted hover:text-plt-text transition-colors cursor-pointer"
                     >
                       {isAr ? 'إلغاء' : 'Cancel'}
                     </button>
@@ -363,7 +363,7 @@ export default function EditOrderModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-text-muted hover:text-white hover:bg-surface-raised transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors cursor-pointer"
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </button>

@@ -118,4 +118,5 @@ export interface ChartWidgetProps {
   currentPrice?: number;
   brokerageAccounts?: BrokerageAccountOption[];
   onLoadMoreHistory?: () => Promise<number | void>;
+  onStartTour?: () => void;
 }

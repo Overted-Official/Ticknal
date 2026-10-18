@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
+import { normalizeStrategyId } from '@/strategies/registry';
 
 interface BottomToolbarProps {
   symbol?: string;
@@ -42,7 +43,7 @@ export default function BottomToolbar({
     timeframe === 'W' ? '1W' : timeframe === 'M' ? '1M' : timeframe === '1Y' ? '1Y' : '1D'
   );
   const searchParams = useSearchParams();
-  const activeStrategy = strategy || searchParams?.get('strategy') || 'psi';
+  const activeStrategy = normalizeStrategyId(strategy || searchParams?.get('strategy'));
 
   useEffect(() => {
     if (timeframe === 'W') setSelectedRange('1W');
@@ -77,7 +78,7 @@ export default function BottomToolbar({
 
   return (
     <>
-      <div className="h-[28px] shrink-0 w-full bg-black border-t border-border-subtle flex items-center justify-between px-3 select-none text-[11px] font-medium overflow-x-auto no-scrollbar font-sans">
+      <div className="h-[28px] shrink-0 w-full bg-plt-base border-t border-plt-border flex items-center justify-between px-3 select-none text-[11px] font-medium overflow-x-auto no-scrollbar font-sans">
         <div className="flex items-center gap-1 shrink-0">
           {/* Timeframe Range Switcher */}
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 bg-transparent">
@@ -90,8 +91,8 @@ export default function BottomToolbar({
                   onClick={() => handleRangeClick(range)}
                   className={`text-[11px] px-2 sm:px-2.5 py-0.5 rounded leading-none transition-colors ${
                     isActive
-                      ? 'text-white font-semibold bg-white/10'
-                      : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                      ? 'text-plt-text font-semibold bg-plt-active'
+                      : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                   }`}
                 >
                   {locale === 'ar' ? (range.label === '1D' ? t('charts.tf1D') : range.label === '1W' ? t('charts.tf1W') : range.label === '1M' ? t('charts.tf1M') : t('charts.tf1Y')) : range.label}

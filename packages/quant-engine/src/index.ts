@@ -18,17 +18,17 @@ export {
   runPsiStrategy,
   type PsiSignal,
   type PsiSignalType,
-} from './strategies/PSI/psiStrategy';
+} from './strategies/Typhon/typhonStrategy';
 export {
   runFullStrategyBacktest as runFullPsiBacktest,
-} from './strategies/PSI/psiBacktestEngine';
+} from './strategies/Typhon/typhonBacktestEngine';
 export {
   runPsiV2Strategy,
   type PsiV2StrategyOverrides,
-} from './strategies/PSI_V2/psiV2Strategy';
+} from './strategies/Cerberus/cerberusStrategy';
 export {
   runFullPsiV2Backtest,
-} from './strategies/PSI_V2/psiV2BacktestEngine';
+} from './strategies/Cerberus/cerberusBacktestEngine';
 export {
   STRATEGY_REGISTRY as INTRADAY_STRATEGY_REGISTRY,
   type StrategyDefinition as IntradayStrategyDefinition,

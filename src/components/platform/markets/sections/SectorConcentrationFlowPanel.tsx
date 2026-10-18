@@ -19,7 +19,7 @@ function StockLogoAvatar({ logoUrl, symbol }: { logoUrl?: string | null; symbol:
 
   if (logoUrl && !imgError) {
     return (
-      <div className="w-6 h-6 rounded-full border border-white/10 bg-white/[0.04] overflow-hidden shrink-0">
+      <div className="w-6 h-6 rounded-full border border-plt-border bg-plt-hover overflow-hidden shrink-0">
         <img
           src={logoUrl}
           alt={symbol}
@@ -32,7 +32,7 @@ function StockLogoAvatar({ logoUrl, symbol }: { logoUrl?: string | null; symbol:
   }
 
   return (
-    <div className="w-6 h-6 rounded-full border border-white/10 bg-white/[0.04] flex items-center justify-center text-[9px] font-bold text-neutral-300 shrink-0 select-none">
+    <div className="w-6 h-6 rounded-full border border-plt-border bg-plt-hover flex items-center justify-center text-[9px] font-bold text-plt-subtle shrink-0 select-none">
       {initial}
     </div>
   );
@@ -155,7 +155,7 @@ export default function SectorConcentrationFlowPanel({
 
   if (!sector) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-neutral-500 text-xs font-sans">
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-plt-faint text-xs font-sans">
         <p>
           {locale === 'ar'
             ? 'اختر أي قطاع من مصفوفة الدوران لعرض تدفق السيولة ومخاطر التركز'
@@ -175,19 +175,19 @@ export default function SectorConcentrationFlowPanel({
       : 'bg-rose-500/15 text-rose-400 border-rose-500/20';
 
   return (
-    <div className="flex flex-col h-full font-sans select-none divide-y divide-white/[0.08] px-1 overflow-hidden">
+    <div className="flex flex-col h-full font-sans select-none divide-y divide-plt-border-soft px-1 overflow-hidden">
       {/* 1. Panel Header */}
       <div className="pb-3 flex items-center justify-between shrink-0 bg-transparent">
         <div className="min-w-0 pr-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold text-white truncate max-w-[190px]" title={sector.sector}>
+            <h3 className="text-sm font-semibold text-plt-text truncate max-w-[190px]" title={sector.sector}>
               {localizeSectorName(sector.sector, locale)}
             </h3>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${regimeBadgeStyle}`}>
               {localizeRegimeName(sector.rotationRegime, locale)}
             </span>
           </div>
-          <p className="text-[11px] text-neutral-400 mt-0.5">
+          <p className="text-[11px] text-plt-muted mt-0.5">
             {locale === 'ar'
               ? `${sector.stockCount} سهم · التدفق والتركز`
               : `${sector.stockCount} ${sector.stockCount === 1 ? 'constituent' : 'constituents'} · Flow & Concentration`}
@@ -217,27 +217,27 @@ export default function SectorConcentrationFlowPanel({
       {/* 2. Market Liquidity Share (Clean Monochrome Bar, No Extraneous Blues) */}
       <div className="py-2.5 flex flex-col gap-1.5 shrink-0">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-[11px] font-medium text-text-muted">
+          <span className="text-[11px] font-medium text-plt-muted">
             {locale === 'ar' ? 'حصة السيولة من السوق' : 'Market Liquidity Share'}
           </span>
-          <span className="font-semibold tabular-nums text-white">
+          <span className="font-semibold tabular-nums text-plt-text">
             {marketSharePct.toFixed(1)}% {locale === 'ar' ? 'من البورصة المصرية' : 'of EGX'}
           </span>
         </div>
 
         <div className="flex items-baseline justify-between">
-          <span className="text-base font-bold tabular-nums text-white">
+          <span className="text-base font-bold tabular-nums text-plt-text">
             {formatTurnoverDisplay(sectorTurnover, locale)}
           </span>
-          <span className="text-[10px] text-text-muted">
+          <span className="text-[10px] text-plt-muted">
             {locale === 'ar' ? 'قيمة التداول' : 'Traded Turnover'}
           </span>
         </div>
 
         {/* Clean Monochrome Progress Bar */}
-        <div className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+        <div className="w-full h-1.5 rounded-full bg-plt-active overflow-hidden">
           <div
-            className="h-full rounded-full bg-white/70 transition-all duration-300"
+            className="h-full rounded-full bg-plt-text/70 transition-all duration-300"
             style={{ width: `${Math.min(100, Math.max(2, marketSharePct))}%` }}
           />
         </div>
@@ -246,10 +246,10 @@ export default function SectorConcentrationFlowPanel({
       {/* 3. Rally Participation & Breadth */}
       <div className="py-2.5 flex flex-col gap-1.5 shrink-0">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-[11px] font-medium text-text-muted">
+          <span className="text-[11px] font-medium text-plt-muted">
             {locale === 'ar' ? 'مشاركة الصعود (الاتساع)' : 'Rally Participation (Breadth)'}
           </span>
-          <span className="font-semibold tabular-nums text-white">
+          <span className="font-semibold tabular-nums text-plt-text">
             {breadth.advancerPct}% {locale === 'ar' ? 'صاعد' : 'Advancing'}
           </span>
         </div>
@@ -258,7 +258,7 @@ export default function SectorConcentrationFlowPanel({
           <span className="text-profit-num font-semibold">
             {breadth.gainers} {locale === 'ar' ? 'صاعد (ربح)' : 'Advancing (W)'}
           </span>
-          <span className="text-text-muted text-[11px]">
+          <span className="text-plt-muted text-[11px]">
             {breadth.unchanged} {locale === 'ar' ? 'مستقر' : 'Flat'}
           </span>
           <span className="text-loss-num font-semibold">
@@ -266,7 +266,7 @@ export default function SectorConcentrationFlowPanel({
           </span>
         </div>
 
-        <div className="w-full h-1.5 rounded-full bg-white/[0.08] flex overflow-hidden gap-0.5">
+        <div className="w-full h-1.5 rounded-full bg-plt-active flex overflow-hidden gap-0.5">
           {breadth.advancerPct > 0 && (
             <div
               className="h-full bg-profit-chart transition-all duration-300"
@@ -276,7 +276,7 @@ export default function SectorConcentrationFlowPanel({
           )}
           {breadth.unchangedPct > 0 && (
             <div
-              className="h-full bg-white/15 transition-all duration-300"
+              className="h-full bg-plt-active transition-all duration-300"
               style={{ width: `${breadth.unchangedPct}%` }}
               title={locale === 'ar' ? `مستقر: ${breadth.unchangedPct}%` : `Flat: ${breadth.unchangedPct}%`}
             />
@@ -294,10 +294,10 @@ export default function SectorConcentrationFlowPanel({
       {/* 4. Pareto Concentration Risk (Calm Monochrome Tones, No Neon Rainbows) */}
       <div className="py-2.5 flex flex-col gap-1.5 shrink-0">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-[11px] font-medium text-text-muted">
+          <span className="text-[11px] font-medium text-plt-muted">
             {locale === 'ar' ? 'مخاطر تركز السيولة' : 'Concentration Risk'}
           </span>
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded border border-white/10 bg-white/[0.06] text-neutral-300">
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded border border-plt-border bg-plt-hover text-plt-subtle">
             {locale === 'ar'
               ? concentration.riskLevel === 'high'
                 ? 'تركز مرتفع'
@@ -313,29 +313,29 @@ export default function SectorConcentrationFlowPanel({
         </div>
 
         <div className="flex items-baseline justify-between text-xs">
-          <span className="font-semibold text-white">
+          <span className="font-semibold text-plt-text">
             {locale === 'ar' ? (
               <>
-                أعلى 3 أسهم تستحوذ على <span className="tabular-nums font-bold text-white">{concentration.top3Share.toFixed(1)}%</span>
+                أعلى 3 أسهم تستحوذ على <span className="tabular-nums font-bold text-plt-text">{concentration.top3Share.toFixed(1)}%</span>
               </>
             ) : (
               <>
-                Top 3 Stocks Drive <span className="tabular-nums font-bold text-white">{concentration.top3Share.toFixed(1)}%</span>
+                Top 3 Stocks Drive <span className="tabular-nums font-bold text-plt-text">{concentration.top3Share.toFixed(1)}%</span>
               </>
             )}
           </span>
-          <span className="text-[10px] text-text-muted">
+          <span className="text-[10px] text-plt-muted">
             {locale === 'ar' ? 'من تداولات القطاع' : 'of Sector Volume'}
           </span>
         </div>
 
         {/* Tonal Monochrome Segmented Bar */}
-        <div className="w-full h-1.5 rounded-full bg-white/[0.08] flex overflow-hidden gap-0.5">
+        <div className="w-full h-1.5 rounded-full bg-plt-active flex overflow-hidden gap-0.5">
           {concentration.topStocks.map((st, i) => (
             <div
               key={st.symbol}
               className={`h-full transition-all duration-300 ${
-                i === 0 ? 'bg-white/80' : i === 1 ? 'bg-white/50' : 'bg-white/30'
+                i === 0 ? 'bg-plt-text/80' : i === 1 ? 'bg-plt-text/50' : 'bg-plt-text/30'
               }`}
               style={{ width: `${Math.max(2, st.sharePct)}%` }}
               title={`${st.symbol}: ${st.sharePct.toFixed(1)}%`}
@@ -343,7 +343,7 @@ export default function SectorConcentrationFlowPanel({
           ))}
           {concentration.otherShare > 0 && (
             <div
-              className="h-full bg-white/10 transition-all duration-300"
+              className="h-full bg-plt-active transition-all duration-300"
               style={{ width: `${concentration.otherShare}%` }}
               title={locale === 'ar' ? `أخرى: ${concentration.otherShare.toFixed(1)}%` : `Others: ${concentration.otherShare.toFixed(1)}%`}
             />
@@ -353,14 +353,14 @@ export default function SectorConcentrationFlowPanel({
 
       {/* 5. Key Catalysts: Pushers & Draggers (Transparent Background, Circular Logo, Full Name + Ticker Below) */}
       <div className="pt-2.5 flex flex-col gap-2 shrink-0">
-        <span className="text-[11px] font-medium text-text-muted">
+        <span className="text-[11px] font-medium text-plt-muted">
           {locale === 'ar' ? 'المحركات الرئيسية (ألفا مقابل EGX30)' : 'Key Catalysts (Alpha vs EGX30)'}
         </span>
 
         <div className="grid grid-cols-2 gap-3.5">
           {/* Left Column: Pushers */}
           <div className="space-y-2">
-            <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
+            <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">
               {locale === 'ar' ? 'الداعمون للصعود' : 'Pushers'}
             </span>
             <div className="space-y-1.5">
@@ -368,19 +368,19 @@ export default function SectorConcentrationFlowPanel({
                 catalysts.drivers.map((drv) => (
                   <div
                     key={drv.symbol}
-                    className="py-1 flex items-center justify-between group bg-transparent hover:bg-white/[0.03] rounded transition-colors"
+                    className="py-1 flex items-center justify-between group bg-transparent hover:bg-plt-hover rounded transition-colors"
                   >
                     {/* Small Circular Logo + Full Name & Ticker Below */}
                     <div className="flex items-center gap-2 min-w-0 pr-1">
                       <StockLogoAvatar logoUrl={drv.logoUrl} symbol={drv.symbol} />
                       <div className="flex flex-col min-w-0 leading-tight">
                         <span
-                          className="text-xs font-medium text-white truncate max-w-[75px] sm:max-w-[95px]"
+                          className="text-xs font-medium text-plt-text truncate max-w-[75px] sm:max-w-[95px]"
                           title={drv.companyName}
                         >
                           {drv.companyName || drv.symbol}
                         </span>
-                        <span className="text-[10px] text-text-muted">
+                        <span className="text-[10px] text-plt-muted">
                           {drv.symbol}
                         </span>
                       </div>
@@ -393,7 +393,7 @@ export default function SectorConcentrationFlowPanel({
                       </span>
                       <Link
                         href={`/charts?symbol=${drv.symbol}`}
-                        className="w-4 h-4 rounded flex items-center justify-center text-neutral-500 hover:text-white transition-colors"
+                        className="w-4 h-4 rounded flex items-center justify-center text-plt-faint hover:text-plt-text transition-colors"
                         title={locale === 'ar' ? `فتح رسم ${drv.symbol}` : `Open ${drv.symbol} Chart`}
                       >
                         <LineChart size={11} />
@@ -402,14 +402,14 @@ export default function SectorConcentrationFlowPanel({
                   </div>
                 ))
               ) : (
-                <span className="text-[11px] text-text-muted italic">{locale === 'ar' ? 'لا يوجد' : 'None'}</span>
+                <span className="text-[11px] text-plt-muted italic">{locale === 'ar' ? 'لا يوجد' : 'None'}</span>
               )}
             </div>
           </div>
 
           {/* Right Column: Draggers */}
           <div className="space-y-2">
-            <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
+            <span className="text-[10px] uppercase tracking-wider text-plt-muted font-semibold">
               {locale === 'ar' ? 'المسبّبون للهبوط' : 'Draggers'}
             </span>
             <div className="space-y-1.5">
@@ -417,19 +417,19 @@ export default function SectorConcentrationFlowPanel({
                 catalysts.drags.map((drg) => (
                   <div
                     key={drg.symbol}
-                    className="py-1 flex items-center justify-between group bg-transparent hover:bg-white/[0.03] rounded transition-colors"
+                    className="py-1 flex items-center justify-between group bg-transparent hover:bg-plt-hover rounded transition-colors"
                   >
                     {/* Small Circular Logo + Full Name & Ticker Below */}
                     <div className="flex items-center gap-2 min-w-0 pr-1">
                       <StockLogoAvatar logoUrl={drg.logoUrl} symbol={drg.symbol} />
                       <div className="flex flex-col min-w-0 leading-tight">
                         <span
-                          className="text-xs font-medium text-white truncate max-w-[75px] sm:max-w-[95px]"
+                          className="text-xs font-medium text-plt-text truncate max-w-[75px] sm:max-w-[95px]"
                           title={drg.companyName}
                         >
                           {drg.companyName || drg.symbol}
                         </span>
-                        <span className="text-[10px] text-text-muted">
+                        <span className="text-[10px] text-plt-muted">
                           {drg.symbol}
                         </span>
                       </div>
@@ -442,7 +442,7 @@ export default function SectorConcentrationFlowPanel({
                       </span>
                       <Link
                         href={`/charts?symbol=${drg.symbol}`}
-                        className="w-4 h-4 rounded flex items-center justify-center text-neutral-500 hover:text-white transition-colors"
+                        className="w-4 h-4 rounded flex items-center justify-center text-plt-faint hover:text-plt-text transition-colors"
                         title={locale === 'ar' ? `فتح رسم ${drg.symbol}` : `Open ${drg.symbol} Chart`}
                       >
                         <LineChart size={11} />
@@ -451,7 +451,7 @@ export default function SectorConcentrationFlowPanel({
                   </div>
                 ))
               ) : (
-                <span className="text-[11px] text-text-muted italic">{locale === 'ar' ? 'لا يوجد' : 'None'}</span>
+                <span className="text-[11px] text-plt-muted italic">{locale === 'ar' ? 'لا يوجد' : 'None'}</span>
               )}
             </div>
           </div>

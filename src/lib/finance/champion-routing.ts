@@ -1,8 +1,9 @@
-import type { PriceBar } from '@/strategies/PSI/psiStrategy';
-import { runPsiStrategy } from '@/strategies/PSI/psiStrategy';
-import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
-import { runPsiV2Strategy } from '@/strategies/PSI_V2/psiV2Strategy';
+import type { PriceBar } from '@/strategies/Typhon/typhonStrategy';
+import { runPsiStrategy } from '@/strategies/Typhon/typhonStrategy';
+import { resolvePsiParamsFromStore } from '@/strategies/Typhon/typhonParameterStore';
+import { runPsiV2Strategy } from '@/strategies/Cerberus/cerberusStrategy';
 import { runHydraStrategy } from '@/strategies/Hydra/hydraStrategy';
+import { normalizeStrategyId } from '@/strategies/registry';
 import type {
   StrategyModelComparisonMetrics,
   WinningUniverseComparisonMetrics,
@@ -36,9 +37,11 @@ export interface MultiModelEvaluationResult {
 }
 
 const STRATEGY_NAMES: Record<string, string> = {
+  typhon: 'Typhon',
+  cerberus: 'Cerberus',
+  hydra: 'Hydra',
   psi: 'Typhon',
   psi_v2: 'Cerberus',
-  hydra: 'Hydra',
 };
 
 /**
@@ -98,7 +101,7 @@ function aggregateMetricsFromTickerResults(
       grossLoss += Math.abs(r.sysRoi);
     }
 
-    if (r.sysRoi > r.buyHoldRoi) {
+    if (r.tradesCount > 0 && r.sysRoi > 0 && r.sysRoi > r.buyHoldRoi) {
       beatingCount++;
     }
 
@@ -182,41 +185,84 @@ function aggregateMetricsFromTickerResults(
 }
 
 /**
- * Computes the Alpha Velocity Score: Total Alpha / (safeMae * safeBars).
- * Penalizes large adverse excursions and prolonged holding periods while preserving alpha edge.
+ * Computes the Alpha Velocity Score: (Total Alpha * (winRate / 100)) / (safeMae * sqrt(safeBars)).
+ * Scales duration via square-root (square-root of time principle) and weights by win rate,
+ * eliminating low-win-rate high-frequency turnover while penalizing adverse excursions and prolonged holding periods.
  */
 export function computeAlphaVelocityScore(
   alpha: number,
   trades: number,
   avgMae: number,
-  avgBars: number
+  avgBars: number,
+  winRate: number = 100
 ): number {
   if (trades <= 0) return -9999;
   const safeMae = Math.max(Math.abs(avgMae), 0.1);
-  const safeBars = Math.max(avgBars, 1);
-  return alpha / (safeMae * safeBars);
+  const safeBars = Math.max(Math.sqrt(avgBars), 1);
+  const winRateFactor = Math.max(winRate, 0) / 100;
+  return (alpha * winRateFactor) / (safeMae * safeBars);
+}
+
+export const MIN_CHAMPION_WIN_RATE = 90;
+
+/**
+ * A strategy is only eligible to be an active Positive-Alpha Champion if it:
+ * 1. Executed at least 1 trade (trades > 0)
+ * 2. Beat Buy & Hold (alpha > 0)
+ * 3. Generated a positive absolute return (roi > 0)
+ * 4. Achieved at least a 90% win rate (winRate >= 90)
+ */
+export function isQualifiedChampionCandidate(candidate: {
+  alpha: number;
+  roi?: number;
+  trades: number;
+  winRate?: number;
+}): boolean {
+  const winRate = candidate.winRate ?? 0;
+  const roi = candidate.roi ?? candidate.alpha;
+  return (
+    candidate.trades > 0 &&
+    candidate.alpha > 0 &&
+    roi > 0 &&
+    winRate >= MIN_CHAMPION_WIN_RATE
+  );
 }
 
 /**
  * Institutional comparator for ranking champion candidate models for a ticker:
- * 1. Models with positive alpha always beat models with negative/zero alpha.
- * 2. Among positive alpha models, ranks by Alpha Velocity Score (Alpha / (MAE * Duration)).
- * 3. Fallback to raw Alpha.
+ * 1. Qualified candidates (alpha > 0, roi > 0, trades > 0, winRate >= 90%) always beat unqualified models.
+ * 2. Among qualified models, ranks by Alpha Velocity Score ((Alpha * (winRate/100)) / (MAE * sqrt(Duration))).
+ * 3. Among unqualified models, prefers active positive-alpha models with higher win rate, then raw Alpha.
  */
 export function compareChampionCandidates(
-  a: { alpha: number; trades: number; avgMae: number; avgBars: number },
-  b: { alpha: number; trades: number; avgMae: number; avgBars: number }
+  a: { alpha: number; roi?: number; trades: number; avgMae: number; avgBars: number; winRate?: number },
+  b: { alpha: number; roi?: number; trades: number; avgMae: number; avgBars: number; winRate?: number }
 ): number {
-  if (a.alpha > 0 && b.alpha <= 0) return -1;
-  if (b.alpha > 0 && a.alpha <= 0) return 1;
+  const qualA = isQualifiedChampionCandidate(a);
+  const qualB = isQualifiedChampionCandidate(b);
 
-  if (a.alpha > 0 && b.alpha > 0) {
-    const scoreA = computeAlphaVelocityScore(a.alpha, a.trades, a.avgMae, a.avgBars);
-    const scoreB = computeAlphaVelocityScore(b.alpha, b.trades, b.avgMae, b.avgBars);
+  if (qualA && !qualB) return -1;
+  if (qualB && !qualA) return 1;
+
+  if (qualA && qualB) {
+    const scoreA = computeAlphaVelocityScore(a.alpha, a.trades, a.avgMae, a.avgBars, a.winRate ?? 100);
+    const scoreB = computeAlphaVelocityScore(b.alpha, b.trades, b.avgMae, b.avgBars, b.winRate ?? 100);
     if (scoreA !== scoreB) {
       return scoreB - scoreA;
     }
+    return b.alpha - a.alpha;
   }
+
+  // Neither candidate meets full qualification; prefer active positive-ROI/alpha models over 0-trade or negative-ROI models
+  const activePosA = a.trades > 0 && a.alpha > 0 && (a.roi ?? a.alpha) > 0;
+  const activePosB = b.trades > 0 && b.alpha > 0 && (b.roi ?? b.alpha) > 0;
+  if (activePosA && !activePosB) return -1;
+  if (activePosB && !activePosA) return 1;
+
+  const hasTradesA = a.trades > 0;
+  const hasTradesB = b.trades > 0;
+  if (hasTradesA && !hasTradesB) return -1;
+  if (hasTradesB && !hasTradesA) return 1;
 
   return b.alpha - a.alpha;
 }
@@ -234,9 +280,9 @@ export function evaluateModelsAndChampions(
   egx30Return: number,
   tradingDays: number
 ): MultiModelEvaluationResult {
-  const modelTickerResults: Record<'psi' | 'psi_v2' | 'hydra', ModelTickerResult[]> = {
-    psi: [],
-    psi_v2: [],
+  const modelTickerResults: Record<'typhon' | 'cerberus' | 'hydra', ModelTickerResult[]> = {
+    typhon: [],
+    cerberus: [],
     hydra: [],
   };
 
@@ -261,7 +307,7 @@ export function evaluateModelsAndChampions(
       }
     }
 
-    // 1. Typhon (PSI)
+    // 1. Typhon (powered by PSI Core Index)
     const psiSeries = cache.psiCache.get(symbol);
     const psiRes = runPsiStrategy(bars, resolvePsiParamsFromStore(symbol, { startDate, endDate }), psiSeries);
     const psiRoi = psiRes.metrics?.sysRoi || 0;
@@ -276,9 +322,9 @@ export function evaluateModelsAndChampions(
       avgBars: psiRes.metrics?.avgBarsPerTrade || 0,
       adverse: psiRes.metrics?.avgAdverseExcursion || psiRes.metrics?.maxAdverseExcursion || 0,
     };
-    modelTickerResults.psi.push(psiResult);
+    modelTickerResults.typhon.push(psiResult);
 
-    // 2. Cerberus (PSI V2)
+    // 2. Cerberus (powered by PSI V2 Core Index)
     const psiV2Series = cache.psiV2Cache.get(symbol);
     const psiV2Res = runPsiV2Strategy(bars, { ticker: symbol, startDate, endDate }, psiV2Series);
     const psiV2Roi = psiV2Res.metrics?.sysRoi || 0;
@@ -293,7 +339,7 @@ export function evaluateModelsAndChampions(
       avgBars: psiV2Res.metrics?.avgBarsPerTrade || 0,
       adverse: psiV2Res.metrics?.avgAdverseExcursion || psiV2Res.metrics?.maxAdverseExcursion || 0,
     };
-    modelTickerResults.psi_v2.push(psiV2Result);
+    modelTickerResults.cerberus.push(psiV2Result);
 
     // 3. Hydra
     const hydraPoints = cache.hydraCache.get(symbol);
@@ -311,10 +357,11 @@ export function evaluateModelsAndChampions(
       adverse: hydraRes.metrics?.avgAdverseExcursion || hydraRes.metrics?.maxAdverseExcursion || 0,
     };
     modelTickerResults.hydra.push(hydraResult);
+
     // Determine Champion Model for this ticker using Alpha Velocity
     const candidates = [
       {
-        id: 'psi' as const,
+        id: 'typhon' as const,
         name: 'Typhon',
         alpha: psiAlpha,
         roi: psiRoi,
@@ -322,9 +369,10 @@ export function evaluateModelsAndChampions(
         trades: psiResult.tradesCount,
         avgMae: Math.abs(psiResult.adverse),
         avgBars: psiResult.avgBars,
+        winRate: psiResult.winRate,
       },
       {
-        id: 'psi_v2' as const,
+        id: 'cerberus' as const,
         name: 'Cerberus',
         alpha: psiV2Alpha,
         roi: psiV2Roi,
@@ -332,6 +380,7 @@ export function evaluateModelsAndChampions(
         trades: psiV2Result.tradesCount,
         avgMae: Math.abs(psiV2Result.adverse),
         avgBars: psiV2Result.avgBars,
+        winRate: psiV2Result.winRate,
       },
       {
         id: 'hydra' as const,
@@ -342,6 +391,7 @@ export function evaluateModelsAndChampions(
         trades: hydraResult.tradesCount,
         avgMae: Math.abs(hydraResult.adverse),
         avgBars: hydraResult.avgBars,
+        winRate: hydraResult.winRate,
       },
     ];
     candidates.sort(compareChampionCandidates);
@@ -353,41 +403,53 @@ export function evaluateModelsAndChampions(
       alpha: top.alpha,
       roi: top.roi,
       buyHoldRoi: top.bhRoi,
-      hasPositiveAlpha: top.alpha > 0,
+      hasPositiveAlpha: isQualifiedChampionCandidate(top),
     };
   }
 
   // 1. Compute Full Universe Metrics for all 3 models
+  const typhonFullMetrics = aggregateMetricsFromTickerResults(modelTickerResults.typhon, totalScanned, egx30Return, tradingDays, false);
+  const cerberusFullMetrics = aggregateMetricsFromTickerResults(modelTickerResults.cerberus, totalScanned, egx30Return, tradingDays, false);
+  const hydraFullMetrics = aggregateMetricsFromTickerResults(modelTickerResults.hydra, totalScanned, egx30Return, tradingDays, false);
+
   const modelsComparison: Record<string, StrategyModelComparisonMetrics> = {
-    psi: aggregateMetricsFromTickerResults(modelTickerResults.psi, totalScanned, egx30Return, tradingDays, false),
-    psi_v2: aggregateMetricsFromTickerResults(modelTickerResults.psi_v2, totalScanned, egx30Return, tradingDays, false),
-    hydra: aggregateMetricsFromTickerResults(modelTickerResults.hydra, totalScanned, egx30Return, tradingDays, false),
+    typhon: typhonFullMetrics,
+    cerberus: cerberusFullMetrics,
+    hydra: hydraFullMetrics,
+    psi: typhonFullMetrics,
+    psi_v2: cerberusFullMetrics,
   };
 
   // 2. Compute Winning Universe Metrics for all 3 models (Option A)
-  const winningPsi = modelTickerResults.psi.filter((r) => r.alphaVsBh > 0);
-  const winningPsiV2 = modelTickerResults.psi_v2.filter((r) => r.alphaVsBh > 0);
-  const winningHydra = modelTickerResults.hydra.filter((r) => r.alphaVsBh > 0);
+  const winningTyphon = modelTickerResults.typhon.filter((r) => r.tradesCount > 0 && r.sysRoi > 0 && r.alphaVsBh > 0);
+  const winningCerberus = modelTickerResults.cerberus.filter((r) => r.tradesCount > 0 && r.sysRoi > 0 && r.alphaVsBh > 0);
+  const winningHydra = modelTickerResults.hydra.filter((r) => r.tradesCount > 0 && r.sysRoi > 0 && r.alphaVsBh > 0);
+
+  const typhonWinningMetrics: WinningUniverseComparisonMetrics = {
+    ...aggregateMetricsFromTickerResults(winningTyphon, totalScanned, egx30Return, tradingDays, true),
+    winningTickersCount: winningTyphon.length,
+    totalScanned,
+    winningBreadthPct: totalScanned > 0 ? (winningTyphon.length / totalScanned) * 100 : 0,
+  };
+  const cerberusWinningMetrics: WinningUniverseComparisonMetrics = {
+    ...aggregateMetricsFromTickerResults(winningCerberus, totalScanned, egx30Return, tradingDays, true),
+    winningTickersCount: winningCerberus.length,
+    totalScanned,
+    winningBreadthPct: totalScanned > 0 ? (winningCerberus.length / totalScanned) * 100 : 0,
+  };
+  const hydraWinningMetrics: WinningUniverseComparisonMetrics = {
+    ...aggregateMetricsFromTickerResults(winningHydra, totalScanned, egx30Return, tradingDays, true),
+    winningTickersCount: winningHydra.length,
+    totalScanned,
+    winningBreadthPct: totalScanned > 0 ? (winningHydra.length / totalScanned) * 100 : 0,
+  };
 
   const winningUniverseComparison: Record<string, WinningUniverseComparisonMetrics> = {
-    psi: {
-      ...aggregateMetricsFromTickerResults(winningPsi, totalScanned, egx30Return, tradingDays, true),
-      winningTickersCount: winningPsi.length,
-      totalScanned,
-      winningBreadthPct: totalScanned > 0 ? (winningPsi.length / totalScanned) * 100 : 0,
-    },
-    psi_v2: {
-      ...aggregateMetricsFromTickerResults(winningPsiV2, totalScanned, egx30Return, tradingDays, true),
-      winningTickersCount: winningPsiV2.length,
-      totalScanned,
-      winningBreadthPct: totalScanned > 0 ? (winningPsiV2.length / totalScanned) * 100 : 0,
-    },
-    hydra: {
-      ...aggregateMetricsFromTickerResults(winningHydra, totalScanned, egx30Return, tradingDays, true),
-      winningTickersCount: winningHydra.length,
-      totalScanned,
-      winningBreadthPct: totalScanned > 0 ? (winningHydra.length / totalScanned) * 100 : 0,
-    },
+    typhon: typhonWinningMetrics,
+    cerberus: cerberusWinningMetrics,
+    hydra: hydraWinningMetrics,
+    psi: typhonWinningMetrics,
+    psi_v2: cerberusWinningMetrics,
   };
 
   return {
@@ -423,13 +485,13 @@ export function isChampionSignal(
     };
   }
 
-  const normalizedStrategyId =
-    strategyId === 'psiv2' || strategyId === 'cerberus' ? 'psi_v2' : strategyId;
+  const normalizedStrategyId = normalizeStrategyId(strategyId);
+  const normalizedChampion = normalizeStrategyId(info.champion);
 
-  if (normalizedStrategyId !== info.champion) {
+  if (normalizedStrategyId !== normalizedChampion) {
     return {
       allowed: false,
-      reason: `Signal strategy (${normalizedStrategyId}) is not the champion model (${info.champion}) for ${symbol}`,
+      reason: `Signal strategy (${normalizedStrategyId}) is not the champion model (${normalizedChampion}) for ${symbol}`,
       championInfo: info,
     };
   }

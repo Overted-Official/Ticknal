@@ -1,7 +1,7 @@
 import { db } from '@/db';
 import { positions, userBankAccounts } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { TickerOrder } from '@/components/platform/TickerPositions';
 import { getCachedTickers, getCachedRecentPrices, getCachedDailyPrices, getCachedHourlyPrices } from '@/lib/data-cache';
 import { createClient } from '@/lib/supabase/server';

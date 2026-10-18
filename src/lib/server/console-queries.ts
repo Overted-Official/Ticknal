@@ -701,10 +701,16 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
     }[] = [];
     let alertCounts: { userId: string; count: number }[] = [];
     let subs: (typeof userSubscriptions.$inferSelect)[] = [];
-    const proprietaryGrants = userIds.length > 0
-      ? await db.select({ userId: proprietaryStrategyAccess.userId, enabled: proprietaryStrategyAccess.enabled })
-          .from(proprietaryStrategyAccess)
-      : [];
+    let proprietaryGrants: { userId: string; enabled: boolean }[] = [];
+    if (userIds.length > 0) {
+      try {
+        proprietaryGrants = await db
+          .select({ userId: proprietaryStrategyAccess.userId, enabled: proprietaryStrategyAccess.enabled })
+          .from(proprietaryStrategyAccess);
+      } catch (e) {
+        console.error('[getConsoleUsersPageData] Failed proprietary grants:', e);
+      }
+    }
     const proprietaryGrantMap = new Map(proprietaryGrants.map((grant) => [grant.userId, grant.enabled]));
 
     if (userIds.length > 0) {

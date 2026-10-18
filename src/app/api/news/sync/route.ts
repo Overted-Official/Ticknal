@@ -1,8 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { db } from '@/db';
+import { dailyPrices, marketNews } from '@/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
 import { screenAndIngestWires } from '@/lib/news/wire-screener';
 import { generateAllDailyTakes } from '@/lib/news/ticknal-take-generator';
-import { purgeLegacyNews } from '@/lib/news/news-service';
+import { generateDailyTickerSummaries, seedHistoricalTickerSummaries } from '@/lib/news/ticker-summary-service';
+import { purgeLegacyNews, ensureMarketNewsTable } from '@/lib/news/news-service';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
@@ -25,17 +29,48 @@ async function handleNewsSync(request: NextRequest) {
         result = { action: 'takes', ...takesResult };
         break;
       }
+      case 'ticker_summaries': {
+        const targetDate = url.searchParams.get('date') || undefined;
+        const tickerResult = await generateDailyTickerSummaries({ targetDate });
+        result = { action: 'ticker_summaries', ...tickerResult };
+        break;
+      }
+      case 'reseed_historical_tickers': {
+        const count = await seedHistoricalTickerSummaries();
+        result = { action: 'reseed_historical_tickers', count };
+        break;
+      }
       case 'full':
       case 'full_pipeline': {
-        const wireResult = await screenAndIngestWires();
+        const tickerResult = await generateDailyTickerSummaries();
         const takesResult = await generateAllDailyTakes();
-        result = { action: 'full_pipeline', wire: wireResult, takes: takesResult };
+        result = { action: 'full_pipeline', tickers: tickerResult, takes: takesResult };
         break;
       }
       case 'wire':
       default: {
-        const wireResult = await screenAndIngestWires();
-        result = { action: 'wire', ...wireResult };
+        const tickerResult = await generateDailyTickerSummaries();
+        let takesResult: unknown = undefined;
+        try {
+          await ensureMarketNewsTable();
+          const latestEgxRow = await db
+            .select({ date: dailyPrices.date })
+            .from(dailyPrices)
+            .where(eq(dailyPrices.tickerSymbol, 'EGX30'))
+            .orderBy(desc(dailyPrices.date))
+            .limit(1);
+          const latestDate = latestEgxRow[0]?.date ? String(latestEgxRow[0].date).slice(0, 10) : null;
+          if (latestDate) {
+            const existingTakes = await db
+              .select({ count: sql<number>`count(*)` })
+              .from(marketNews)
+              .where(sql`${marketNews.id} LIKE ${`take-${latestDate}-%`}`);
+            if (Number(existingTakes[0]?.count || 0) < 5) {
+              takesResult = await generateAllDailyTakes();
+            }
+          }
+        } catch {}
+        result = { action: 'wire', tickers: tickerResult, ...(takesResult ? { takes: takesResult } : {}) };
         break;
       }
     }
@@ -63,3 +98,4 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return handleNewsSync(request);
 }
+

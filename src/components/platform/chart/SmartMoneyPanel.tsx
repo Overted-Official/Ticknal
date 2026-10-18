@@ -21,6 +21,7 @@ import {
   type SmartMoneyPoint,
 } from '@/indicators/smart-money';
 import { useTranslation } from '@/lib/i18n';
+import { useTheme } from 'next-themes';
 
 interface SmartMoneyPanelProps {
   data: ChartData[];
@@ -38,6 +39,7 @@ export default function SmartMoneyPanel({
   activeTime,
 }: SmartMoneyPanelProps) {
   const { locale } = useTranslation();
+  const { resolvedTheme } = useTheme();
   const isAr = locale === 'ar';
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -228,6 +230,30 @@ export default function SmartMoneyPanel({
     };
   }, []);
 
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const isLight = resolvedTheme === 'light';
+    chartRef.current.applyOptions({
+      layout: {
+        background: {
+          type: ColorType.Solid,
+          color: isLight ? '#ffffff' : cssTokenColor('--plt-bg-base', 'rgb(0, 0, 0)'),
+        },
+        textColor: isLight ? '#52525b' : cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
+      },
+      grid: {
+        vertLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.05)') },
+        horzLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.05)') },
+      },
+      rightPriceScale: {
+        borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
+      },
+      timeScale: {
+        borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
+      },
+    });
+  }, [resolvedTheme]);
+
   // Update Data Series
   useEffect(() => {
     if (
@@ -338,7 +364,7 @@ export default function SmartMoneyPanel({
       ? 'text-rose-400 bg-rose-500/10 border-rose-500/30'
       : displayPoint?.state === 'DISTRIBUTION_MODERATE'
       ? 'text-rose-300 bg-rose-500/10 border-rose-500/20'
-      : 'text-white/60 bg-white/[0.04] border-white/10';
+      : 'text-plt-muted bg-plt-hover border-plt-border-soft';
 
   const getStateLabel = (state?: SmartMoneyPoint['state'], defaultLabel?: string) => {
     if (!state) return defaultLabel ?? '';
@@ -361,13 +387,13 @@ export default function SmartMoneyPanel({
   };
 
   return (
-    <div className="w-full flex flex-col bg-black border-t border-white/[0.06] select-none font-sans">
+    <div className="w-full flex flex-col bg-plt-base border-t border-plt-border-soft select-none font-sans">
       {/* Sub-Panel Header */}
-      <div className="h-7 px-3 flex items-center justify-between border-b border-white/[0.05] bg-white/[0.01]">
+      <div className="h-7 px-3 flex items-center justify-between border-b border-plt-border-soft bg-transparent">
         {/* Left: Indicator Title & Metrics */}
         <div className="flex items-center gap-2 sm:gap-3 text-[11px] min-w-0">
-          <div className="flex items-center gap-1.5 font-semibold text-white/90 shrink-0">
-            <Layers size={13} className="text-white/70" />
+          <div className="flex items-center gap-1.5 font-semibold text-plt-text shrink-0">
+            <Layers size={13} className="text-plt-subtle" />
             <span className="tracking-wide">
               {isAr ? 'تدفق الأموال الذكية' : 'SMART MONEY FLOW'}
             </span>
@@ -375,16 +401,16 @@ export default function SmartMoneyPanel({
 
           {/* ATS Metric */}
           <div className="hidden sm:flex items-center gap-1 tabular-nums">
-            <span className="text-white/40 text-[10px]">
+            <span className="text-plt-muted text-[10px]">
               {isAr ? 'متوسط الصفقة:' : 'ATS:'}
             </span>
             {hasRealTrades && atsDisplay > 0 ? (
               <>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-plt-text">
                   {atsDisplay >= 1e6
                     ? `${(atsDisplay / 1e6).toFixed(2)}M`
                     : `${Math.round(atsDisplay / 1e3)}k`}{' '}
-                  <span className="text-[9px] text-white/40 font-normal">
+                  <span className="text-[9px] text-plt-muted font-normal">
                     {isAr ? 'ج.م' : 'EGP'}
                   </span>
                 </span>
@@ -400,24 +426,24 @@ export default function SmartMoneyPanel({
                 )}
               </>
             ) : (
-              <span className="text-white/40 text-[11px] font-normal">—</span>
+              <span className="text-plt-muted text-[11px] font-normal">—</span>
             )}
           </div>
 
           {/* Trade Count Metric */}
           <div className="hidden md:flex items-center gap-1 tabular-nums">
-            <span className="text-white/40 text-[10px]">
+            <span className="text-plt-muted text-[10px]">
               {isAr ? 'الصفقات:' : 'Trades:'}
             </span>
             {hasRealTrades && tradesDisplay > 0 ? (
               <span className="font-semibold text-sky-400">
                 {tradesDisplay.toLocaleString()}{' '}
-                <span className="text-[9px] text-white/40 font-normal">
+                <span className="text-[9px] text-plt-muted font-normal">
                   {isAr ? 'صفقة' : 'tx'}
                 </span>
               </span>
             ) : (
-              <span className="text-white/40 text-[11px] font-normal">—</span>
+              <span className="text-plt-muted text-[11px] font-normal">—</span>
             )}
           </div>
 
@@ -433,7 +459,7 @@ export default function SmartMoneyPanel({
 
         {/* Right: Legend & Close Button */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden lg:flex items-center gap-2 text-[9px] text-white/40 tabular-nums">
+          <div className="hidden lg:flex items-center gap-2 text-[9px] text-plt-muted tabular-nums">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" />
               {isAr ? 'تجميع' : 'Accumulation'}
@@ -447,7 +473,7 @@ export default function SmartMoneyPanel({
               {isAr ? 'الصفقات' : 'Trades'}
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2.5 h-0.5 border-b border-dashed border-white/60 inline-block" />
+              <span className="w-2.5 h-0.5 border-b border-dashed border-plt-border inline-block" />
               {isAr ? 'متوسط 20 يوم' : '20d Avg'}
             </span>
           </div>
@@ -455,7 +481,7 @@ export default function SmartMoneyPanel({
           <button
             type="button"
             onClick={onClose}
-            className="w-5 h-5 rounded flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+            className="w-5 h-5 rounded flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-active transition-colors cursor-pointer"
             title={isAr ? 'إغلاق تدفق الأموال الذكية' : 'Close Smart Money Flow'}
           >
             <X size={12} />
@@ -470,10 +496,10 @@ export default function SmartMoneyPanel({
       >
         {!smartMoneyResult.hasAnyRealTrades && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4 z-10">
-            <div className="text-[11px] text-white/50 font-medium">
+            <div className="text-[11px] text-plt-muted font-medium">
               {isAr ? 'إحصاءات التداول الفورية الموثقة' : 'Verified Real-Time Trade Statistics'}
             </div>
-            <div className="text-[10px] text-white/30 max-w-sm mt-0.5">
+            <div className="text-[10px] text-plt-faint max-w-sm mt-0.5">
               {isAr
                 ? 'يتم استبعاد عدد الصفقات التاريخية بواسطة المزودين الخارجيين. يتم رسم خطوط متوسط حجم الصفقة وعدد الصفقات تلقائياً للجلسات المباشرة المتزامنة.'
                 : 'Historical trade counts omitted by external feeds. ATS and trade count lines plot automatically for live synced market sessions.'}

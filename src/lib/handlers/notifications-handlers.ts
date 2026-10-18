@@ -66,8 +66,15 @@ export async function handleNotificationsGet() {
     const enhancedRows = rows.filter((r) => isSignalEligibleEquity(r.tickerSymbol, r)).map((r) => {
       const cleanSym = r.tickerSymbol.replace('.CA', '').toUpperCase();
       const meta = tickerMap.get(cleanSym) || tickerMap.get(r.tickerSymbol);
+      const canonicalStrategy =
+        r.strategy === 'psi'
+          ? 'typhon'
+          : r.strategy === 'psi_v2' || r.strategy === 'psiv2'
+            ? 'cerberus'
+            : r.strategy;
       return {
         ...r,
+        strategy: canonicalStrategy,
         industryGroup: meta?.industryGroup ?? r.sector ?? 'Unclassified',
         rotationRegime: meta?.rotationRegime ?? 'Leading',
       };
@@ -175,12 +182,12 @@ export async function handleTestNotification(req?: Request) {
   const payloadData = {
     title: '(BUY) Commercial International Bank',
     body: 'COMI · α +16.4% · MAE 4.2% · Return/MAE 150%',
-    url: '/charts?ticker=COMI.CA&strategy=psi_v2',
+    url: '/charts?ticker=COMI.CA&strategy=typhon',
     tag: `signal-test-${Date.now()}`,
     symbol: 'COMI.CA',
     signal: 'BUY',
     price: '139.50',
-    strategy: 'psi_v2',
+    strategy: 'typhon',
     companyName: 'Commercial International Bank',
     logoUrl: 'https://kshqrzzohabbsjipkunh.supabase.co/storage/v1/object/public/ticker-logos/COMI.png',
     alpha: '+16.4%',

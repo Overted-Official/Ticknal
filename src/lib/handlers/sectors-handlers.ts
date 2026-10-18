@@ -3,10 +3,10 @@ import { db } from '@/db';
 import { dailyPrices, tickers } from '@/db/schema';
 import { sql } from 'drizzle-orm';
 import { getCachedTickers, invalidateTickersMemCache } from '@/lib/data-cache';
-import { normalizeTickerSymbol, runPsiStrategy, computePsiSeries, type PriceBar } from '@/strategies/PSI/psiStrategy';
-import { resolvePsiParamsFromStore } from '@/strategies/PSI/psiParameterStore';
-import { runPsiV2Strategy } from '@/strategies/PSI_V2/psiV2Strategy';
-import { computePsiV2Indices } from '@/strategies/PSI_V2/psiV2Engine';
+import { normalizeTickerSymbol, runPsiStrategy, computePsiSeries, type PriceBar } from '@/strategies/Typhon/typhonStrategy';
+import { resolvePsiParamsFromStore } from '@/strategies/Typhon/typhonParameterStore';
+import { runPsiV2Strategy } from '@/strategies/Cerberus/cerberusStrategy';
+import { computePsiV2Indices } from '@/strategies/Cerberus/psiV2Engine';
 import { runHydraStrategy } from '@/strategies/Hydra/hydraStrategy';
 import { computeHydraIndex } from '@/indicators/hydra-index';
 import type { ChartData } from '@/components/platform/ChartWidget';
@@ -28,6 +28,7 @@ import {
   type PrecomputedModelCache,
 } from '@/lib/finance/champion-routing';
 import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
+import { normalizeStrategyId } from '@/strategies/registry';
 import { requireProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
 
 export type {
@@ -61,7 +62,7 @@ export async function handlePerformanceGet(request: Request) {
     const timeframeParam = searchParams.get('timeframe') || '';
     let startDate = searchParams.get('start') || `${new Date().getFullYear()}-01-01`;
     let endDate = searchParams.get('end') || new Date().toISOString().split('T')[0];
-    const strategy = searchParams.get('strategy') || 'psi';
+    const strategy = normalizeStrategyId(searchParams.get('strategy'));
     const strategyModel = searchParams.get('model') || 'psi8';
     const granularity = (searchParams.get('granularity') || 'sector') as 'sector' | 'industryGroup' | 'industry' | 'ticker';
 
@@ -522,7 +523,7 @@ export async function getOrInitPrecomputedCache(): Promise<PrecomputedModelCache
         )
         SELECT ticker_symbol, date, open, high, low, close, volume
         FROM ranked_prices
-        WHERE rn <= 500
+        WHERE rn <= 1200
         ORDER BY ticker_symbol, date ASC
       `),
     ]);
@@ -608,7 +609,7 @@ export async function handleSignalsGet(request?: Request) {
       if (denied) return denied;
     }
     const url = request ? new URL(request.url) : null;
-    const strategy = url?.searchParams.get('strategy') || 'psi';
+    const strategy = normalizeStrategyId(url?.searchParams.get('strategy'));
     const timeframeParam = url?.searchParams.get('timeframe') || '';
     let startDate = url?.searchParams.get('start') || '2025-01-01';
     let endDate = url?.searchParams.get('end') || new Date().toISOString().split('T')[0];
@@ -702,12 +703,7 @@ export async function handleSignalsGet(request?: Request) {
       } = evaluateModelsAndChampions(cache, startDate, endDate, egx30Return, tradingDaysCount);
 
       // 3. Compute detailed ticker-level signals for the requested strategy
-      const strategyNormalized =
-        strategy === 'psi_v2' || strategy === 'psiv2' || strategy === 'cerberus' || strategy === 'cerbrus'
-          ? 'psi_v2'
-          : strategy === 'hydra'
-          ? 'hydra'
-          : 'psi';
+      const strategyNormalized = strategy;
 
       const signalsByTicker: Record<string, any> = {};
       const sectorSummary: Record<string, any> = {};
@@ -815,7 +811,7 @@ export async function handleSignalsGet(request?: Request) {
           } catch (e) {
             signals = [];
           }
-        } else if (strategyNormalized === 'psi_v2') {
+        } else if (strategyNormalized === 'cerberus') {
           try {
             const indices = psiV2Cache.get(symbol);
             const psiV2Result = runPsiV2Strategy(bars, { ticker: symbol, startDate, endDate }, indices);

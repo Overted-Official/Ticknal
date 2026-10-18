@@ -32,44 +32,34 @@ export default function IndexPillRail({
 
   if (items.length === 0 && emptyMessage) {
     return (
-      <div className="p-4 rounded-xl border border-dashed border-border-subtle bg-surface-raised/40 text-center text-xs text-text-muted font-sans">
+      <div className="p-4 rounded-xl border border-dashed border-plt-border bg-plt-base/40 text-center text-xs text-plt-muted font-sans">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className={`flex items-center justify-between gap-2 relative w-full ${className}`}>
+    <div className={`flex items-center justify-between gap-3 relative w-full ${className}`}>
       {/* Scrollable pills rail */}
       <div
         ref={scrollContainerRef}
-        className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 pt-0.5 no-scrollbar select-none flex-1"
+        className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-2 pt-1 no-scrollbar select-none flex-1"
       >
         {items.map((item) => (
           <IndexPill key={item.id} {...item} />
         ))}
       </div>
 
-      {/* Right scroll button (visible on desktop when multiple items exist) */}
+      {/* Right Carousel Scroll Arrow Button (1-to-1 with Major Indices) */}
       {items.length > 3 && (
-        <div className="hidden sm:flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            onClick={() => scroll('left')}
-            className="w-7 h-7 rounded-full bg-black hover:bg-surface-raised border border-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
-            title={locale === 'ar' ? 'السابق' : 'Previous'}
-          >
-            <ChevronLeft size={14} className={isRtl ? 'rotate-180' : ''} />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll('right')}
-            className="w-7 h-7 rounded-full bg-black hover:bg-surface-raised border border-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
-            title={locale === 'ar' ? 'التالي' : 'Next'}
-          >
-            <ChevronRight size={14} className={isRtl ? 'rotate-180' : ''} />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => scroll('right')}
+          className="w-8 h-8 rounded-full bg-black hover:bg-surface-raised border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition-colors shrink-0 cursor-pointer mb-1"
+          title={locale === 'ar' ? 'التالي' : 'Next'}
+        >
+          <ChevronRight size={16} className={isRtl ? 'rotate-180' : ''} />
+        </button>
       )}
     </div>
   );

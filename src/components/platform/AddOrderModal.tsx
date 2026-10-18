@@ -304,9 +304,9 @@ export default function AddOrderModal({
         return;
       }
 
-    const candidateStrategies: { id: 'psi' | 'psi_v2' | 'hydra'; name: string }[] = [
-      { id: 'psi', name: 'Typhon' },
-      { id: 'psi_v2', name: 'Cerberus' },
+    const candidateStrategies: { id: 'typhon' | 'cerberus' | 'hydra'; name: string }[] = [
+      { id: 'typhon', name: 'Typhon' },
+      { id: 'cerberus', name: 'Cerberus' },
       { id: 'hydra', name: 'Hydra' },
     ];
 
@@ -508,7 +508,7 @@ export default function AddOrderModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer z-0"
+            className="fixed inset-0 bg-plt-overlay backdrop-blur-sm cursor-pointer z-0"
             onClick={onClose}
             aria-label="Close drawer overlay"
           />
@@ -521,12 +521,12 @@ export default function AddOrderModal({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: '100%' } : { x: isRTL ? '-100%' : '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className={`fixed z-10 flex flex-col bg-black text-text-primary rounded-none shadow-2xl overflow-hidden font-sans drawer-sheet-viewport-safe-fixed ${
+            className={`fixed z-10 flex flex-col bg-plt-base text-plt-text rounded-none shadow-2xl overflow-hidden font-sans drawer-sheet-viewport-safe-fixed ${
               isMobile
                 ? 'left-0 right-0 w-full'
                 : isRTL
-                ? 'left-0 w-full md:w-1/2 lg:w-1/2 border-r border-white/10'
-                : 'right-0 w-full md:w-1/2 lg:w-1/2 border-l border-white/10'
+                ? 'left-0 w-full md:w-1/2 lg:w-1/2 border-r border-plt-border'
+                : 'right-0 w-full md:w-1/2 lg:w-1/2 border-l border-plt-border'
             }`}
           >
             {/* Mobile Drag Indicator */}
@@ -539,12 +539,12 @@ export default function AddOrderModal({
             </div>
 
             {/* Header: Pure Black Surface, Clean Title, Subtitle & Close Button */}
-            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-black">
+            <div className="px-5 py-4 border-b border-plt-border flex items-center justify-between shrink-0 bg-plt-base">
               <div className="flex flex-col min-w-0">
-                <h2 className="font-semibold text-base text-white tracking-tight truncate font-sans leading-tight">
+                <h2 className="font-semibold text-base text-plt-text tracking-tight truncate font-sans leading-tight">
                   {locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
                 </h2>
-                <p className="text-xs text-white/50 font-normal mt-0.5 font-sans">
+                <p className="text-xs text-plt-muted font-normal mt-0.5 font-sans">
                   {previewOnly ? (locale === 'ar' ? 'عرض توضيحي — لن يتم تنفيذ أمر' : 'Illustrative preview — no order will be placed') : locale === 'ar'
                     ? selectedAccount && isVirtualAccount(selectedAccount)
                       ? 'صفقة تداول افتراضي مع تنبيهات خروج آلية'
@@ -562,7 +562,7 @@ export default function AddOrderModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0"
+                className="w-8 h-8 rounded-full bg-plt-active hover:bg-plt-hover text-plt-muted hover:text-plt-text transition-colors cursor-pointer flex items-center justify-center shrink-0"
                 title="Close (Esc)"
                 aria-label="Close Add Position Drawer"
               >
@@ -571,7 +571,7 @@ export default function AddOrderModal({
             </div>
 
             {/* Scrollable Content Body */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6 bg-black">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6 bg-plt-base">
               {/* ========================================================= */}
               {/* SECTION 1: RISK / REWARD OVERVIEW                         */}
               {/* Derived from Winning Algo Historical Backtest Data        */}
@@ -579,18 +579,18 @@ export default function AddOrderModal({
               {!previewOnly && canViewProprietary && <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-semibold text-white uppercase tracking-wider font-sans flex items-center gap-1.5">
-                      <Sparkles size={13} className="text-white/70" />
+                    <h3 className="text-xs font-semibold text-plt-text uppercase tracking-wider font-sans flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-plt-muted" />
                       {locale === 'ar' ? 'القسم 1: نظرة عامة على المخاطر والعوائد' : 'Section 1: Risk/Reward Overview'}
                     </h3>
-                    <p className="text-[11px] text-white/50 font-sans mt-0.5">
+                    <p className="text-[11px] text-plt-muted font-sans mt-0.5">
                       {locale === 'ar'
                         ? `إحصائيات تاريخية من النموذج الأفضل (${winningMetrics.winningAlgo})`
                         : `Historical statistics from champion model (${winningMetrics.winningAlgo})`}
                     </p>
                   </div>
                   {winningMetrics.isLoading && (
-                    <span className="text-[10px] text-white/40 flex items-center gap-1">
+                    <span className="text-[10px] text-plt-faint flex items-center gap-1">
                       <InlineSpinner className="h-3 w-3" label="Calculating metrics" /> {locale === 'ar' ? 'جاري الحساب...' : 'Calculating...'}
                     </span>
                   )}
@@ -598,108 +598,108 @@ export default function AddOrderModal({
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                   {/* KPI Card 1: Est. Profit */}
-                  <div className="bg-transparent border border-white/10 rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-white/20 transition-colors">
+                  <div className="bg-transparent border border-plt-border rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-semibold text-white/50 font-sans">
+                      <span className="text-[10px] uppercase font-semibold text-plt-muted font-sans">
                         {locale === 'ar' ? 'العائد المتوقع' : 'Est. Profit'}
                       </span>
-                      <TrendingUp size={12} className="text-emerald-400" />
+                      <TrendingUp size={12} className="text-plt-profit" />
                     </div>
                     <div className="mt-2">
-                      <div className="text-sm sm:text-base font-bold text-emerald-400 tabular-nums font-sans leading-tight">
+                      <div className="text-sm sm:text-base font-bold text-plt-profit tabular-nums font-sans leading-tight">
                         {winningMetrics.avgReturnPerTrade > 0 ? '+' : ''}{winningMetrics.avgReturnPerTrade.toFixed(1)}%
                       </div>
-                      <div className="text-[11px] font-semibold text-white/80 tabular-nums font-sans mt-0.5">
+                      <div className="text-[11px] font-semibold text-plt-subtle tabular-nums font-sans mt-0.5">
                         {totalValue > 0
                           ? `${estProfitCash >= 0 ? '+' : ''}${estProfitCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${newOrderForm.currency === 'EGP' && locale === 'ar' ? 'ج.م' : newOrderForm.currency}`
                           : '—'}
                       </div>
                     </div>
-                    <span className="text-[10px] text-white/40 font-sans mt-1">
+                    <span className="text-[10px] text-plt-faint font-sans mt-1">
                       {locale === 'ar' ? 'متوسط العائد / صفقة' : 'Avg return / trade'}
                     </span>
                   </div>
 
                   {/* KPI Card 2: Max Risk */}
-                  <div className="bg-transparent border border-white/10 rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-white/20 transition-colors">
+                  <div className="bg-transparent border border-plt-border rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-semibold text-white/50 font-sans">
+                      <span className="text-[10px] uppercase font-semibold text-plt-muted font-sans">
                         {locale === 'ar' ? 'أقصى مخاطرة' : 'Max Risk'}
                       </span>
-                      <ShieldAlert size={12} className="text-rose-400" />
+                      <ShieldAlert size={12} className="text-plt-risk" />
                     </div>
                     <div className="mt-2">
-                      <div className="text-sm sm:text-base font-bold text-rose-400 tabular-nums font-sans leading-tight">
+                      <div className="text-sm sm:text-base font-bold text-plt-risk tabular-nums font-sans leading-tight">
                         {winningMetrics.maxAdverseExcursion !== 0
                           ? `-${Math.abs(winningMetrics.maxAdverseExcursion).toFixed(1)}%`
                           : '0.0%'}
                       </div>
-                      <div className="text-[11px] font-semibold text-white/80 tabular-nums font-sans mt-0.5">
+                      <div className="text-[11px] font-semibold text-plt-subtle tabular-nums font-sans mt-0.5">
                         {totalValue > 0 && winningMetrics.maxAdverseExcursion !== 0
                           ? `-${maxRiskCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${newOrderForm.currency === 'EGP' && locale === 'ar' ? 'ج.م' : newOrderForm.currency}`
                           : '—'}
                       </div>
                     </div>
-                    <span className="text-[10px] text-white/40 font-sans mt-1">
+                    <span className="text-[10px] text-plt-faint font-sans mt-1">
                       {locale === 'ar' ? 'أقصى تراجع محتمل' : 'Max adverse excursion'}
                     </span>
                   </div>
 
                   {/* KPI Card 3: Risk / Reward Profile */}
-                  <div className="bg-transparent border border-white/10 rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-white/20 transition-colors">
+                  <div className="bg-transparent border border-plt-border rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-semibold text-white/50 font-sans">
+                      <span className="text-[10px] uppercase font-semibold text-plt-muted font-sans">
                         {locale === 'ar' ? 'نسبة العائد/المخاطرة' : 'Risk / Reward'}
                       </span>
                       <Scale
                         size={12}
                         className={
                           rrRatio >= 2
-                            ? 'text-emerald-400'
+                            ? 'text-plt-profit'
                             : rrRatio >= 1.2
-                            ? 'text-amber-400'
-                            : 'text-rose-400'
+                            ? 'text-plt-warning'
+                            : 'text-plt-risk'
                         }
                       />
                     </div>
                     <div className="mt-2">
-                      <div className="text-sm sm:text-base font-bold text-white tabular-nums font-sans leading-tight">
+                      <div className="text-sm sm:text-base font-bold text-plt-text tabular-nums font-sans leading-tight">
                         1 : {rrRatio > 0 ? rrRatio.toFixed(1) : '—'}
                       </div>
                       <div className="text-[11px] font-semibold tabular-nums font-sans mt-0.5">
                         {rrRatio >= 2 ? (
-                          <span className="text-emerald-400">{locale === 'ar' ? 'مخاطرة منخفضة' : 'Low Risk'}</span>
+                          <span className="text-plt-profit">{locale === 'ar' ? 'مخاطرة منخفضة' : 'Low Risk'}</span>
                         ) : rrRatio >= 1.2 ? (
-                          <span className="text-amber-400">{locale === 'ar' ? 'مخاطرة معتدلة' : 'Moderate Risk'}</span>
+                          <span className="text-plt-warning">{locale === 'ar' ? 'مخاطرة معتدلة' : 'Moderate Risk'}</span>
                         ) : (
-                          <span className="text-rose-400">{locale === 'ar' ? 'مخاطرة مرتفعة' : 'High Risk'}</span>
+                          <span className="text-plt-risk">{locale === 'ar' ? 'مخاطرة مرتفعة' : 'High Risk'}</span>
                         )}
                       </div>
                     </div>
-                    <span className="text-[10px] text-white/40 font-sans mt-1">
+                    <span className="text-[10px] text-plt-faint font-sans mt-1">
                       {locale === 'ar' ? 'معامل التباين' : 'Asymmetry ratio'}
                     </span>
                   </div>
 
                   {/* KPI Card 4: Est. Holding Period */}
-                  <div className="bg-transparent border border-white/10 rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-white/20 transition-colors">
+                  <div className="bg-transparent border border-plt-border rounded-lg p-2.5 sm:p-3 flex flex-col justify-between hover:border-plt-border-strong transition-colors">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-semibold text-white/50 font-sans">
+                      <span className="text-[10px] uppercase font-semibold text-plt-muted font-sans">
                         {locale === 'ar' ? 'مدة الاحتفاظ المتوقعة' : 'Est. Holding Period'}
                       </span>
-                      <Clock size={12} className="text-white/60" />
+                      <Clock size={12} className="text-plt-muted" />
                     </div>
                     <div className="mt-2">
-                      <div className="text-sm sm:text-base font-bold text-white tabular-nums font-sans leading-tight">
+                      <div className="text-sm sm:text-base font-bold text-plt-text tabular-nums font-sans leading-tight">
                         {winningMetrics.avgBarsPerTrade > 0 ? (locale === 'ar' ? `~${winningMetrics.avgBarsPerTrade.toFixed(0)} شمعة` : `~${winningMetrics.avgBarsPerTrade.toFixed(0)} Bars`) : '—'}
                       </div>
-                      <div className="text-[11px] font-semibold text-white/60 tabular-nums font-sans mt-0.5">
+                      <div className="text-[11px] font-semibold text-plt-muted tabular-nums font-sans mt-0.5">
                         {winningMetrics.avgBarsPerTrade > 0
                           ? locale === 'ar' ? `~${Math.round(winningMetrics.avgBarsPerTrade)} يوم تداول` : `~${Math.round(winningMetrics.avgBarsPerTrade)} trading days`
                           : locale === 'ar' ? 'مدة متغيرة' : 'Variable duration'}
                       </div>
                     </div>
-                    <span className="text-[10px] text-white/40 font-sans mt-1">
+                    <span className="text-[10px] text-plt-faint font-sans mt-1">
                       {locale === 'ar' ? 'متوسط الشموع تاريخياً' : 'Historical avg bars'}
                     </span>
                   </div>
@@ -712,10 +712,10 @@ export default function AddOrderModal({
               {/* ========================================================= */}
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider font-sans">
+                  <h3 className="text-xs font-semibold text-plt-text uppercase tracking-wider font-sans">
                     {locale === 'ar' ? 'القسم 2: تفاصيل الأمر والتنفيذ' : 'Section 2: Order Execution'}
                   </h3>
-                  <p className="text-[11px] text-white/50 font-sans mt-0.5">
+                  <p className="text-[11px] text-plt-muted font-sans mt-0.5">
                     {locale === 'ar'
                       ? 'اختر السهم، وحدد السعر والكمية، واختر حساب الوساطة'
                       : 'Select target equity, set coordinates, and choose brokerage account'}
@@ -727,8 +727,8 @@ export default function AddOrderModal({
                   {!isSearchOpen && cleanSymbol ? (
                     <div className="flex items-center justify-between gap-3 py-1">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-xs font-medium text-white/50 font-sans shrink-0">{locale === 'ar' ? 'شراء' : 'Buying'}</span>
-                        <div className="w-6 h-6 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                        <span className="text-xs font-medium text-plt-muted font-sans shrink-0">{locale === 'ar' ? 'شراء' : 'Buying'}</span>
+                        <div className="w-6 h-6 rounded-full bg-plt-active border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
                           {newOrderForm.logoUrl && !imgError ? (
                             <img
                               src={newOrderForm.logoUrl}
@@ -737,13 +737,13 @@ export default function AddOrderModal({
                               onError={() => setImgError(true)}
                             />
                           ) : (
-                            <span className="text-[10px] font-bold text-white font-sans">{cleanSymbol.slice(0, 2)}</span>
+                            <span className="text-[10px] font-bold text-plt-text font-sans">{cleanSymbol.slice(0, 2)}</span>
                           )}
                         </div>
-                        <span className="text-xs font-bold text-white tabular-nums font-sans shrink-0">
+                        <span className="text-xs font-bold text-plt-text tabular-nums font-sans shrink-0">
                           {cleanSymbol}
                         </span>
-                        <span className="text-xs text-white/60 truncate font-sans max-w-[160px] sm:max-w-xs" title={newOrderForm.companyName}>
+                        <span className="text-xs text-plt-muted truncate font-sans max-w-[160px] sm:max-w-xs" title={newOrderForm.companyName}>
                           {newOrderForm.companyName}
                         </span>
                       </div>
@@ -764,20 +764,20 @@ export default function AddOrderModal({
                     <div className="relative space-y-2">
                       <div className="relative flex items-center gap-2">
                         <div className="relative flex-1 flex items-center">
-                          <Search size={14} className="absolute start-3 text-white/40 pointer-events-none z-10" />
+                          <Search size={14} className="absolute start-3 text-plt-faint pointer-events-none z-10" />
                           <input
                             type="text"
                             placeholder={locale === 'ar' ? 'ابحث عن سهم بالرمز أو الاسم (مثل COMI، ABUK)...' : 'Search equity ticker (e.g. COMI, MPCI, ABUK)...'}
                             value={searchQuery}
                             onChange={(e) => handleSearchChange(e.target.value)}
                             autoFocus
-                            className="input-token h-9 ps-9 pe-8 bg-black text-white border-white/10 focus:border-white/40 font-sans text-xs"
+                            className="input-token h-9 ps-9 pe-8 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-sans text-xs"
                           />
                           {searchQuery && (
                             <button
                               type="button"
                               onClick={() => handleSearchChange('')}
-                              className="absolute end-2.5 text-white/40 hover:text-white p-0.5 transition-colors cursor-pointer"
+                              className="absolute end-2.5 text-plt-faint hover:text-plt-text p-0.5 transition-colors cursor-pointer"
                               title={locale === 'ar' ? 'مسح البحث' : 'Clear search'}
                             >
                               <X size={13} />
@@ -800,9 +800,9 @@ export default function AddOrderModal({
                       </div>
 
                       {/* Autocomplete Dropdown: Compacted with Logo, Full Name, and Symbol */}
-                      <div className="max-h-56 overflow-y-auto bg-black border border-white/10 rounded-lg shadow-2xl p-1 divide-y divide-white/[0.04] custom-scrollbar">
+                      <div className="max-h-56 overflow-y-auto bg-plt-base border border-plt-border rounded-lg shadow-2xl p-1 divide-y divide-plt-border-soft custom-scrollbar">
                         {filteredTickers.length === 0 ? (
-                          <div className="p-3 text-xs text-white/40 text-center font-sans">{locale === 'ar' ? 'لم يتم العثور على أسهم مطابقة' : 'No matching tickers found'}</div>
+                          <div className="p-3 text-xs text-plt-faint text-center font-sans">{locale === 'ar' ? 'لم يتم العثور على أسهم مطابقة' : 'No matching tickers found'}</div>
                         ) : (
                           filteredTickers.map((t) => {
                             const clean = t.symbol.replace('.CA', '').toUpperCase();
@@ -810,11 +810,11 @@ export default function AddOrderModal({
                               <div
                                 key={t.symbol}
                                 onClick={() => handleSelectTicker(t)}
-                                className="px-2.5 py-2 hover:bg-white/[0.08] active:bg-white/[0.12] cursor-pointer flex items-center justify-between transition-colors gap-2.5 rounded-lg"
+                                className="px-2.5 py-2 hover:bg-plt-hover active:bg-plt-active cursor-pointer flex items-center justify-between transition-colors gap-2.5 rounded-lg"
                               >
                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                   {/* 1. Circular Logo */}
-                                  <div className="w-7 h-7 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                  <div className="w-7 h-7 rounded-full bg-plt-active border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
                                     {t.logoUrl ? (
                                       <img
                                         src={t.logoUrl}
@@ -825,23 +825,23 @@ export default function AddOrderModal({
                                         }}
                                       />
                                     ) : (
-                                      <span className="text-[10px] font-bold text-white/80 font-sans">{clean.slice(0, 2)}</span>
+                                      <span className="text-[10px] font-bold text-plt-text font-sans">{clean.slice(0, 2)}</span>
                                     )}
                                   </div>
 
                                   {/* 2. Text Column: Full Company Name & Symbol Tag • Sector */}
                                   <div className="min-w-0 flex flex-col flex-1">
-                                    <span className="text-xs text-white/90 truncate font-sans font-medium leading-tight" title={t.companyName}>
+                                    <span className="text-xs text-plt-text truncate font-sans font-medium leading-tight" title={t.companyName}>
                                       {t.companyName || clean}
                                     </span>
                                     <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-white bg-white/10 border border-white/15 tabular-nums font-sans shrink-0 leading-tight">
+                                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-plt-text bg-plt-active border border-plt-border tabular-nums font-sans shrink-0 leading-tight">
                                         {clean}
                                       </span>
                                       {t.sector && (
                                         <>
-                                          <span className="text-[10px] text-white/30 shrink-0">•</span>
-                                          <span className="text-[10px] text-white/50 truncate font-sans">
+                                          <span className="text-[10px] text-plt-faint shrink-0">•</span>
+                                          <span className="text-[10px] text-plt-muted truncate font-sans">
                                             {t.sector}
                                           </span>
                                         </>
@@ -854,9 +854,9 @@ export default function AddOrderModal({
                                 <div className="flex flex-col items-end shrink-0 pl-2 font-sans tabular-nums text-right">
                                   {t.price && t.price > 0 ? (
                                     <>
-                                      <span className="text-xs font-semibold text-white">
+                                      <span className="text-xs font-semibold text-plt-text">
                                         {Number(t.price).toFixed(2)}{' '}
-                                        <span className="text-[10px] text-white/40 font-normal">{t.currency || 'EGP'}</span>
+                                        <span className="text-[10px] text-plt-faint font-normal">{t.currency || 'EGP'}</span>
                                       </span>
                                       {t.changePct !== undefined && t.changePct !== 0 && (
                                         <span className={`text-[10px] font-medium ${t.changePct > 0 ? 'text-profit-num' : 'text-loss-num'}`}>
@@ -865,7 +865,7 @@ export default function AddOrderModal({
                                       )}
                                     </>
                                   ) : (
-                                    <span className="text-xs text-white/30 font-medium">—</span>
+                                    <span className="text-xs text-plt-faint font-medium">—</span>
                                   )}
                                 </div>
                               </div>
@@ -880,19 +880,19 @@ export default function AddOrderModal({
                   {mode === 'live' && (
                     <div className="space-y-2">
                       {isAccountsLoading && eligibleAccounts.length === 0 ? (
-                        <div className="h-9 rounded-lg bg-black border border-white/10 px-3 flex items-center text-xs text-white/50 font-sans">
+                        <div className="h-9 rounded-lg bg-plt-base border border-plt-border px-3 flex items-center text-xs text-plt-muted font-sans">
                           <InlineSpinner className="me-2 h-3.5 w-3.5" label="Loading accounts" /> {locale === 'ar' ? 'جاري تحميل الحسابات...' : 'Loading accounts...'}
                         </div>
                       ) : eligibleAccounts.length > 0 ? (
                         <>
                           <div className="flex items-center gap-2.5">
-                            <span className="text-xs font-medium text-white/60 font-sans shrink-0">{locale === 'ar' ? 'الوسيط:' : 'Broker:'}</span>
+                            <span className="text-xs font-medium text-plt-muted font-sans shrink-0">{locale === 'ar' ? 'الوسيط:' : 'Broker:'}</span>
                             {selectedAccount && (
                               <div
                                 className={`w-6 h-6 rounded-full ${
                                   isVirtualAccount(selectedAccount)
                                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                    : 'bg-white/10 text-white border-white/15'
+                                    : 'bg-plt-active text-plt-text border-plt-border'
                                 } border flex items-center justify-center text-[10px] font-bold shrink-0 font-sans`}
                               >
                                 {getBrokerInitials(selectedAccount)}
@@ -903,10 +903,10 @@ export default function AddOrderModal({
                                 required
                                 value={newOrderForm.accountId}
                                 onChange={(e) => setNewOrderForm((prev) => ({ ...prev, accountId: e.target.value }))}
-                                className="select-token h-9 bg-black text-white text-xs border-white/10 focus:border-white/40 pe-8"
+                                className="select-token h-9 bg-plt-base text-plt-text text-xs border-plt-border focus:border-plt-border-active pe-8"
                               >
                                 {eligibleAccounts.map((account) => (
-                                  <option key={account.id} value={account.id} className="bg-black text-white font-sans">
+                                  <option key={account.id} value={account.id} className="bg-plt-base text-plt-text font-sans">
                                     {accountLabel(account)} · {Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {account.currency === 'EGP' && locale === 'ar' ? 'ج.م' : account.currency || 'EGP'} {isVirtualAccount(account) ? (locale === 'ar' ? 'رصيد تجريبي' : 'paper cash') : (locale === 'ar' ? 'متاح' : 'available')}
                                   </option>
                                 ))}
@@ -915,14 +915,14 @@ export default function AddOrderModal({
                           </div>
 
                           {selectedAccount && isVirtualAccount(selectedAccount) && (
-                            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/10 text-[11px] text-white/70 font-sans leading-relaxed">
+                            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-plt-hover border border-plt-border text-[11px] text-plt-muted font-sans leading-relaxed">
                               <span className="text-amber-400 font-bold shrink-0">{locale === 'ar' ? '💡 حساب افتراضي:' : '💡 Virtual Account:'}</span>
                               <span>{locale === 'ar' ? 'لا يتطلب أي بيانات بنكية. يتتبع الصفقة على الرسم البياني مع الأرباح والخسائر اللحظية وتنبيهات الخروج الآلية.' : 'Zero personal bank credentials required. Tracks on charts with live P&L and automated strategy sell notifications.'}</span>
                             </div>
                           )}
                         </>
                       ) : previewOnly ? (
-                        <div data-landing-broker-handoff="true" className="border border-white/10 bg-black px-3 py-2 text-xs text-white/65 font-sans leading-relaxed">
+                        <div data-landing-broker-handoff="true" className="border border-plt-border bg-plt-base px-3 py-2 text-xs text-plt-muted font-sans leading-relaxed">
                           {locale === 'ar'
                             ? 'بعد مراجعة تفاصيل الصفقة، اختر وسيطك المرخّص ونفّذ الأمر بنفسك. أموالك تظل لدى وسيطك دائماً.'
                             : 'Review the order, then choose your licensed broker to place it yourself. Your funds remain with your broker.'}
@@ -943,18 +943,18 @@ export default function AddOrderModal({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     {/* Entry Date */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-white/60 font-sans">{locale === 'ar' ? 'تاريخ الدخول' : 'Entry Date'}</label>
+                      <label className="text-[11px] font-medium text-plt-muted font-sans">{locale === 'ar' ? 'تاريخ الدخول' : 'Entry Date'}</label>
                       <input
                         type="date"
                         value={newOrderForm.entryDate}
                         onChange={(e) => setNewOrderForm((prev) => ({ ...prev, entryDate: e.target.value }))}
-                        className="date-token h-9 bg-black text-white border-white/10 focus:border-white/40 font-sans text-xs"
+                        className="date-token h-9 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-sans text-xs"
                       />
                     </div>
 
                     {/* Units (Shares) */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-white/60 font-sans">{locale === 'ar' ? 'الكمية (أسهم)' : 'Units (Shares)'}</label>
+                      <label className="text-[11px] font-medium text-plt-muted font-sans">{locale === 'ar' ? 'الكمية (أسهم)' : 'Units (Shares)'}</label>
                       <div className="relative flex items-center">
                         <input
                           type="number"
@@ -963,18 +963,18 @@ export default function AddOrderModal({
                           placeholder="100"
                           value={newOrderForm.quantity}
                           onChange={(e) => setNewOrderForm((prev) => ({ ...prev, quantity: e.target.value }))}
-                          className="input-token h-9 pe-12 bg-black text-white border-white/10 focus:border-white/40 font-bold tabular-nums text-xs"
+                          className="input-token h-9 pe-12 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-bold tabular-nums text-xs"
                         />
-                        <span className="absolute end-2.5 text-[10px] text-white/40 font-medium pointer-events-none">{locale === 'ar' ? 'سهم' : 'Units'}</span>
+                        <span className="absolute end-2.5 text-[10px] text-plt-faint font-medium pointer-events-none">{locale === 'ar' ? 'سهم' : 'Units'}</span>
                       </div>
                     </div>
 
                     {/* Entry Price */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-medium text-white/60 font-sans">{locale === 'ar' ? 'سعر الدخول' : 'Entry Price'}</label>
+                        <label className="text-[11px] font-medium text-plt-muted font-sans">{locale === 'ar' ? 'سعر الدخول' : 'Entry Price'}</label>
                         {initialData?.price ? (
-                          <span className="text-[10px] text-white/40 font-sans tabular-nums">
+                          <span className="text-[10px] text-plt-faint font-sans tabular-nums">
                             {Number(initialData.price).toFixed(2)}
                           </span>
                         ) : null}
@@ -986,9 +986,9 @@ export default function AddOrderModal({
                           placeholder="0.00"
                           value={newOrderForm.entryPrice}
                           onChange={(e) => setNewOrderForm((prev) => ({ ...prev, entryPrice: e.target.value }))}
-                          className="input-token h-9 pe-10 bg-black text-white border-white/10 focus:border-white/40 font-bold tabular-nums text-xs"
+                          className="input-token h-9 pe-10 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-bold tabular-nums text-xs"
                         />
-                        <span className="absolute end-2.5 text-[10px] text-white/40 font-medium pointer-events-none">{newOrderForm.currency === 'EGP' && locale === 'ar' ? 'ج.م' : newOrderForm.currency}</span>
+                        <span className="absolute end-2.5 text-[10px] text-plt-faint font-medium pointer-events-none">{newOrderForm.currency === 'EGP' && locale === 'ar' ? 'ج.م' : newOrderForm.currency}</span>
                       </div>
                     </div>
                   </div>
@@ -997,14 +997,14 @@ export default function AddOrderModal({
             </div>
 
             {/* Sticky Action Footer */}
-            <div className="px-5 py-4 border-t border-white/10 bg-black flex items-center justify-between gap-3 shrink-0">
+            <div className="px-5 py-4 border-t border-plt-border bg-plt-base flex items-center justify-between gap-3 shrink-0">
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] uppercase tracking-wider text-white/50 font-medium font-sans">
+                <span className="text-[10px] uppercase tracking-wider text-plt-muted font-medium font-sans">
                   {locale === 'ar' ? 'إجمالي رأس المال المطلوب' : 'Total Capital Required'}
                 </span>
-                <span className="text-base sm:text-lg font-bold text-white tabular-nums font-sans leading-tight">
+                <span className="text-base sm:text-lg font-bold text-plt-text tabular-nums font-sans leading-tight">
                   {totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-                  <span className="text-xs font-normal text-white/60">{newOrderForm.currency === 'EGP' && locale === 'ar' ? 'ج.م' : newOrderForm.currency}</span>
+                  <span className="text-xs font-normal text-plt-muted">{newOrderForm.currency === 'EGP' && locale === 'ar' ? 'ج.م' : newOrderForm.currency}</span>
                 </span>
               </div>
 

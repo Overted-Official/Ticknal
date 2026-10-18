@@ -1,4 +1,4 @@
-import type { PriceBar } from '@/strategies/PSI/psiStrategy';
+import type { PriceBar } from '@/strategies/Typhon/typhonStrategy';
 
 const EXCLUDED_SIGNAL_SYMBOLS = new Set([
   'EGX30',

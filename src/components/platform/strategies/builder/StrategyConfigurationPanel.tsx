@@ -140,7 +140,7 @@ export default function StrategyConfigurationPanel({
         </div>
       ) : selectedProfileCopy ? (
         <div className="space-y-4">
-          {selectedProfileCopy.id === 'psi' ? (
+          {selectedProfileCopy.id === 'typhon' ? (
             <AdvancedStrategyBuilder
               locale={locale}
               variant="typhon"

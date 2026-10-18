@@ -62,7 +62,7 @@ export default function ChartTickerHeader({
     <div className="absolute top-2.5 start-3 z-20 pointer-events-none select-none flex flex-col gap-0.5">
       {/* Top Row: Logo + Company Name / Symbol · Timeframe · Currency */}
       <div className="flex items-center gap-1.5 text-start">
-        <div className="w-4 h-4 rounded-full flex items-center justify-center overflow-hidden shrink-0 text-white">
+        <div className="w-4 h-4 rounded-full flex items-center justify-center overflow-hidden shrink-0 text-plt-text">
           {currentTickerItem.logoUrl ? (
             <img
               src={currentTickerItem.logoUrl}
@@ -70,15 +70,15 @@ export default function ChartTickerHeader({
               className="ticker-logo-image ticker-logo-fill"
             />
           ) : (
-            <Globe size={14} className="text-text-muted" />
+            <Globe size={14} className="text-plt-muted" />
           )}
         </div>
 
-        <span className="text-[13px] font-semibold text-text-primary tracking-tight flex items-center gap-1">
+        <span className="text-[13px] font-semibold text-plt-text tracking-tight flex items-center gap-1">
           <span className="truncate max-w-[240px] sm:max-w-none">
             {currentTickerItem.companyName || displaySymbol}
           </span>
-          <span className="text-text-muted font-normal text-xs shrink-0 flex items-center gap-1.5">
+          <span className="text-plt-muted font-normal text-xs shrink-0 flex items-center gap-1.5">
             <span>· {timeframe} · {currencyDisplay}</span>
             {isLiveIntraday && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tabular-nums">
@@ -94,43 +94,43 @@ export default function ChartTickerHeader({
       {activeCandle && (
         <div className="flex items-center gap-2 font-sans text-[10px] sm:text-[11px] leading-tight tabular-nums overflow-x-auto no-scrollbar max-w-[calc(100vw-24px)]">
           {activeCandle.time && (
-            <span className="text-white/70 font-medium bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded text-[9px] shrink-0">
+            <span className="text-plt-subtle font-medium bg-plt-hover border border-plt-border-soft px-1.5 py-0.5 rounded text-[9px] shrink-0">
               {String(activeCandle.time)}
             </span>
           )}
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">
               {locale === 'ar' ? 'اف:' : 'O'}
             </span>
-            <span className="text-text-primary font-medium">{open.toFixed(2)}</span>
+            <span className="text-plt-text font-medium">{open.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">
               {locale === 'ar' ? 'أع:' : 'H'}
             </span>
-            <span className="text-text-primary font-medium">{high.toFixed(2)}</span>
+            <span className="text-plt-text font-medium">{high.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">
               {locale === 'ar' ? 'أد:' : 'L'}
             </span>
-            <span className="text-text-primary font-medium">{low.toFixed(2)}</span>
+            <span className="text-plt-text font-medium">{low.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[10px] sm:text-[11px]">
+            <span className="text-plt-muted font-sans text-[10px] sm:text-[11px]">
               {locale === 'ar' ? 'إغ:' : 'C'}
             </span>
-            <span className="text-text-primary font-medium">{close.toFixed(2)}</span>
+            <span className="text-plt-text font-medium">{close.toFixed(2)}</span>
           </div>
 
           <div className="hidden sm:flex items-center gap-1">
-            <span className="text-text-muted font-sans text-[11px]">
+            <span className="text-plt-muted font-sans text-[11px]">
               {locale === 'ar' ? 'حجم:' : 'Vol'}
             </span>
-            <span className="text-text-primary font-medium">{formatVolume(volume)}</span>
+            <span className="text-plt-text font-medium">{formatVolume(volume)}</span>
           </div>
 
           <div className={`font-semibold shrink-0 ${isUp ? 'text-profit-num' : 'text-loss-num'}`}>

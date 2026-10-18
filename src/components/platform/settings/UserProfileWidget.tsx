@@ -139,32 +139,32 @@ export default function UserProfileWidget({
                 alt={userProfile.name}
                 referrerPolicy="no-referrer"
                 onError={() => setImageError(true)}
-                className="w-16 h-16 shrink-0 aspect-square rounded-full object-cover bg-black group-hover:opacity-75 transition-opacity"
+                className="w-16 h-16 shrink-0 aspect-square rounded-full object-cover bg-plt-base group-hover:opacity-75 transition-opacity"
               />
             ) : (
-              <div className="w-16 h-16 shrink-0 aspect-square rounded-full bg-white/[0.08] flex items-center justify-center text-lg font-bold text-white font-sans shadow-inner group-hover:opacity-75 transition-opacity">
+              <div className="w-16 h-16 shrink-0 aspect-square rounded-full bg-plt-hover flex items-center justify-center text-lg font-bold text-plt-text font-sans shadow-inner group-hover:opacity-75 transition-opacity">
                 {initials}
               </div>
             )}
 
             {/* Camera hover overlay */}
-            <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <div className="absolute inset-0 rounded-full bg-plt-base/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
               {isUploadingAvatar ? (
                 <InlineSpinner className="h-[18px] w-[18px]" label="Uploading profile photo" />
               ) : (
-                <Camera size={18} className="text-white/90" />
+                <Camera size={18} className="text-plt-text" />
               )}
             </div>
 
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-profit-num border-2 border-black" />
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-profit-num border-2 border-plt-base" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+            <h2 className="text-base sm:text-lg font-bold text-plt-text tracking-tight truncate">
               {userProfile.name}
             </h2>
-            <p className="text-xs text-text-muted mt-0.5 truncate">{userProfile.email}</p>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-text-muted">
+            <p className="text-xs text-plt-muted mt-0.5 truncate">{userProfile.email}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-plt-muted">
               <span className="flex items-center gap-1">
                 <Calendar size={12} />
                 {locale === 'ar' ? `عضو منذ ${memberSince}` : `Member since ${memberSince}`}

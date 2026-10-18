@@ -84,7 +84,7 @@ export default function FxDevaluationSection({
       value: officialUsd.toFixed(2),
       unit: isAr ? 'ج.م رسمي' : 'EGP SPOT',
       changeText: isAr ? volatilityLabel : (fxData?.volatilityLabel || 'Controlled Crawl'),
-      changeColorClass: 'text-text-primary',
+      changeColorClass: 'text-plt-text',
       metaText: isAr ? `ATR: ${atr14.toFixed(2)} ج.م` : `ATR: ${atr14.toFixed(2)} EGP`,
       sparklinePoints: sparklines?.officialUsd && sparklines.officialUsd.length > 1 ? sparklines.officialUsd : defaultSparkline,
       sparklineTrend: 'neutral',
@@ -122,7 +122,7 @@ export default function FxDevaluationSection({
       value: goldRate.toFixed(2),
       unit: isAr ? 'ج.م صاغة' : 'EGP SAGHA',
       changeText: `${goldSpread >= 0 ? '+' : ''}${goldSpread.toFixed(1)}% ${isAr ? 'فارق' : 'Spread'}`,
-      changeColorClass: 'text-text-primary',
+      changeColorClass: 'text-plt-text',
       metaText: isAr ? `عيار 24: ${gold24k.toLocaleString()} ج.م` : `24k: ${gold24k.toLocaleString()} EGP`,
       sparklinePoints: sparklines?.goldImplied && sparklines.goldImplied.length > 1 ? sparklines.goldImplied : defaultSparkline.map((v) => v * 1.004),
       sparklineTrend: 'up',
@@ -141,7 +141,7 @@ export default function FxDevaluationSection({
       value: gdrRate.toFixed(2),
       unit: isAr ? 'ج.م CIB' : 'EGP CIB',
       changeText: `${gdrSpread >= 0 ? '+' : ''}${gdrSpread.toFixed(1)}% ${isAr ? 'فارق' : 'Spread'}`,
-      changeColorClass: 'text-text-primary',
+      changeColorClass: 'text-plt-text',
       metaText: isAr ? 'مراجحة LSE' : 'LSE Arbitrage',
       sparklinePoints: sparklines?.gdrImplied && sparklines.gdrImplied.length > 1 ? sparklines.gdrImplied : defaultSparkline.map((v) => v * 1.022),
       sparklineTrend: 'up',
@@ -172,17 +172,17 @@ export default function FxDevaluationSection({
   return (
     <section id="fx-devaluation" className="section-container space-y-4 pt-1 font-sans select-none scroll-mt-16">
       {/* 1. Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-white/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-plt-border-soft">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="section-title text-white">
+            <h2 className="section-title text-plt-text">
               {isAr ? 'مخاطر العملة وأسعار الصرف' : 'FX & Currency Risk'}
             </h2>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/15 text-brand-blue border border-brand-blue/25">
               {isHeroScene ? (isAr ? 'لقطة ١٠ أكتوبر' : 'Oct 10 snapshot') : (isAr ? 'مؤشرات كلية حية' : 'Live Macro')}
             </span>
           </div>
-          <p className="section-subtitle text-zinc-400">
+          <p className="section-subtitle text-plt-muted">
             {isAr
               ? 'القيمة العادلة المرجحة، دولار الصاغة من الذهب المحلي، دولار CIB لندن، ومؤشر ضغط خفض العملة القائم على تذبذب ATR'
               : 'Triangulated EGP shadow fair value, Sagha gold proxy, London CIB equity arbitrage, and ATR-weighted devaluation pressure index'}

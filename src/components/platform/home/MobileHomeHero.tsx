@@ -10,6 +10,7 @@ import {
 import { useTranslation } from '@/lib/i18n';
 import { BorderBeam } from 'border-beam';
 import dynamic from 'next/dynamic';
+import { TourTriggerButton } from '@/components/ui/tour';
 
 const MobileSearchScreen = dynamic(
   () => import('./MobileSearchScreen'),
@@ -24,6 +25,7 @@ export interface MobileHomeHeroProps {
   };
   activeAlertCount?: number;
   isLoading?: boolean;
+  onStartTour?: () => void;
 }
 
 function getFirstName(fullName?: string | null, isAr = false): string {
@@ -48,6 +50,7 @@ export default function MobileHomeHero({
   userProfile,
   activeAlertCount = 0,
   isLoading = false,
+  onStartTour,
 }: MobileHomeHeroProps) {
   const { locale, setLocale } = useTranslation();
   const isAr = locale === 'ar';
@@ -67,6 +70,7 @@ export default function MobileHomeHero({
   return (
     <>
       <div
+        data-dark-hero="true"
         className="relative w-full h-[144px] min-h-[144px] max-h-[144px] select-none text-white transition-all z-30 flex flex-col justify-between overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #0099ff 0%, #2962ff 45%, #7928ca 80%, #a822ff 100%)',
@@ -122,19 +126,28 @@ export default function MobileHomeHero({
               </div>
             </div>
 
-            {/* Quick Language Toggle Pill on the right */}
-            <button
-              type="button"
-              onClick={toggleLocale}
-              className="h-8 px-3 rounded-full bg-black/40 hover:bg-black/50 active:bg-black/60 border-0 outline-none text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-none cursor-pointer shrink-0"
-              title={isAr ? 'التبديل إلى الإنجليزية' : 'Switch to Arabic'}
-              aria-label={isAr ? 'تغيير اللغة' : 'Change Language'}
-            >
-              <span className={!isAr ? 'font-cairo font-semibold leading-none' : 'font-sans font-semibold leading-none'}>
-                {isAr ? 'EN' : 'عربي'}
-              </span>
-              <Globe size={13} className="text-white/80 shrink-0" />
-            </button>
+            {/* Quick Actions: Tour + Language Toggle on the right */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {onStartTour && (
+                <TourTriggerButton
+                  onClick={onStartTour}
+                  variant="icon"
+                  className="h-8 w-8 p-0 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/50 active:bg-black/60 border-0 text-white shadow-none"
+                />
+              )}
+              <button
+                type="button"
+                onClick={toggleLocale}
+                className="h-8 px-3 rounded-full bg-black/40 hover:bg-black/50 active:bg-black/60 border-0 outline-none text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-none cursor-pointer shrink-0"
+                title={isAr ? 'التبديل إلى الإنجليزية' : 'Switch to Arabic'}
+                aria-label={isAr ? 'تغيير اللغة' : 'Change Language'}
+              >
+                <span className={!isAr ? 'font-cairo font-semibold leading-none' : 'font-sans font-semibold leading-none'}>
+                  {isAr ? 'EN' : 'عربي'}
+                </span>
+                <Globe size={13} className="text-white/80 shrink-0" />
+              </button>
+            </div>
           </div>
 
           {/* Row 2: Search Bar + Settings Button - Compact 10px gap from Row 1 */}
@@ -180,7 +193,7 @@ export default function MobileHomeHero({
             viewBox="0 0 1440 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-3 sm:h-3.5 block text-black fill-current"
+            className="w-full h-3 sm:h-3.5 block text-plt-base fill-current"
             preserveAspectRatio="none"
             aria-hidden="true"
           >

@@ -20,13 +20,13 @@ function MarketSignalsSkeleton() {
     <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2" role="status" aria-live="polite" aria-label="Scanning strategy models for fresh market entry signals">
       <span className="sr-only">Scanning strategy models for fresh market entry signals…</span>
       {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="flex items-center gap-3 border-b border-white/[0.08] py-3.5 animate-pulse">
-          <div className="h-9 w-9 shrink-0 rounded-full bg-white/[0.08]" />
+        <div key={index} className="flex items-center gap-3 border-b border-plt-border-soft py-3.5 animate-pulse">
+          <div className="h-9 w-9 shrink-0 rounded-full bg-plt-active" />
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-3 w-3/5 bg-white/[0.10]" />
-            <div className="h-2.5 w-2/5 bg-white/[0.06]" />
+            <div className="h-3 w-3/5 bg-plt-active" />
+            <div className="h-2.5 w-2/5 bg-plt-hover" />
           </div>
-          <div className="h-3 w-12 shrink-0 bg-white/[0.10]" />
+          <div className="h-3 w-12 shrink-0 bg-plt-active" />
         </div>
       ))}
     </div>
@@ -144,7 +144,7 @@ export default function MarketSignalsSection({
   return (
     <section id="section-market-signals" className="section-container section-viewport-fit space-y-4">
       {/* 1. Section Header: Title on left, Quick Switch + Timeframe Selector on right on desktop */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2 border-b border-plt-border-soft">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
             <h2 className="section-title">
@@ -195,7 +195,7 @@ export default function MarketSignalsSection({
               }}
               className="w-[110px] cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
             />
-            <span className="text-zinc-600 text-xs shrink-0 select-none">•</span>
+            <span className="text-plt-faint text-xs shrink-0 select-none">•</span>
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
               {isArabic ? 'إلى' : 'To'}
             </span>
@@ -232,7 +232,7 @@ export default function MarketSignalsSection({
               className="w-full min-w-0 cursor-pointer bg-transparent font-sans text-xs tabular-nums text-text-primary outline-none [color-scheme:dark]"
             />
           </div>
-          <span className="text-zinc-600 text-xs shrink-0 select-none px-1.5">•</span>
+          <span className="text-plt-faint text-xs shrink-0 select-none px-1.5">•</span>
           <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 font-sans">
               {isArabic ? 'إلى' : 'To'}
@@ -275,8 +275,8 @@ export default function MarketSignalsSection({
         {isLoading ? (
           <MarketSignalsSkeleton />
         ) : filteredSignals.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs">
-            <Sparkles className="w-6 h-6 text-text-muted/50 mb-2" />
+          <div className="py-12 flex flex-col items-center justify-center text-center text-plt-muted text-xs">
+            <Sparkles className="w-6 h-6 text-plt-muted/50 mb-2" />
             <span>
               {isArabic
                 ? 'لا توجد إشارات شراء جديدة من الاستراتيجيات النشطة في الوقت الحالي.'
@@ -316,7 +316,7 @@ export default function MarketSignalsSection({
 
       {/* 4. Footer: View Full Screener on bottom left & Signal Count */}
       {filteredSignals.length > 0 && (
-        <div className="pt-3 mt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-border-subtle/60">
+        <div className="pt-3 mt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-plt-border-soft">
           <Link
             href="/invest"
             className="text-xs font-semibold text-brand-blue hover:text-brand-blue-light inline-flex items-center gap-1 transition-colors"
@@ -324,7 +324,7 @@ export default function MarketSignalsSection({
             {isArabic ? 'عرض الماسح بالكامل' : 'View full screener'}
             <ChevronRight className={`w-3.5 h-3.5 ${isArabic ? 'rotate-180' : ''}`} />
           </Link>
-          <span className="text-[11px] text-text-muted">
+          <span className="text-[11px] text-plt-muted">
             {isArabic
               ? `عرض ${visibleSignals.length} من إجمالي ${filteredSignals.length} إشارة شراء محتملة`
               : `Showing ${visibleSignals.length} of ${filteredSignals.length} potential buy signals`}

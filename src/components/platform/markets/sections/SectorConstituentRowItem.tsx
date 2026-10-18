@@ -41,7 +41,7 @@ export default function SectorConstituentRowItem({
   return (
     <div
       onClick={() => onSelectTicker?.(stock.symbol)}
-      className="py-2.5 px-1.5 flex items-center justify-between hover:bg-white/[0.04] transition-colors group border-b border-white/[0.06] last:border-b-0 outline-none select-none cursor-pointer"
+      className="py-2.5 px-1.5 flex items-center justify-between hover:bg-plt-hover transition-colors group border-b border-plt-border-soft last:border-b-0 outline-none select-none cursor-pointer"
     >
       {/* Left: Circular Avatar + Stacked Name & Ticker */}
       <div className="flex items-center gap-2.5 min-w-0 pr-2">
@@ -49,7 +49,7 @@ export default function SectorConstituentRowItem({
           className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-xs ${
             isAlphaPositive
               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-              : 'bg-white/[0.04] text-neutral-300 border-white/10'
+              : 'bg-plt-hover text-plt-subtle border-plt-border'
           }`}
         >
           {stock.logoUrl && !imgError ? (
@@ -67,14 +67,14 @@ export default function SectorConstituentRowItem({
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-text-primary truncate max-w-[120px] sm:max-w-[160px] group-hover:text-brand-blue transition-colors">
+            <span className="text-[13px] font-medium text-plt-text truncate max-w-[120px] sm:max-w-[160px] group-hover:text-brand-blue transition-colors">
               {stock.companyName || cleanSymbol}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="badge-symbol">{cleanSymbol}</span>
-            <span className="text-[11px] text-text-muted font-normal truncate">
+            <span className="text-[11px] text-plt-muted font-normal truncate">
               · {stock.endPrice.toFixed(2)} {locale === 'ar' ? 'ج.م' : 'EGP'}
             </span>
           </div>
@@ -95,8 +95,8 @@ export default function SectorConstituentRowItem({
             <span className={isReturnPositive ? 'text-profit-chart' : 'text-loss-chart'}>
               {stock.returnPct > 0 ? '+' : ''}{stock.returnPct.toFixed(1)}%
             </span>
-            <span className="text-text-faint">·</span>
-            <span className="text-text-muted">{turnoverDisplay}</span>
+            <span className="text-plt-faint">·</span>
+            <span className="text-plt-muted">{turnoverDisplay}</span>
           </div>
         </div>
 
@@ -104,7 +104,7 @@ export default function SectorConstituentRowItem({
         <Link
           href={`/charts?symbol=${cleanSymbol}`}
           onClick={(e) => e.stopPropagation()}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition-colors cursor-pointer shrink-0"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-active active:bg-plt-active transition-colors cursor-pointer shrink-0"
           title={locale === 'ar' ? `فتح رسم ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
         >
           <LineChart size={14} />

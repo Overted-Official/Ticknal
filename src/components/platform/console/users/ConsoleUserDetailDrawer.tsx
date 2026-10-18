@@ -285,7 +285,7 @@ export default function ConsoleUserDetailDrawer({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-black/75 backdrop-blur-xs cursor-pointer"
+          className="fixed inset-0 bg-plt-base/80 backdrop-blur-xs cursor-pointer"
           aria-label="Close drawer"
         />
 
@@ -340,7 +340,7 @@ export default function ConsoleUserDetailDrawer({
               onClick={() => setActiveTab('overview')}
               className={`py-3 font-medium transition-colors cursor-pointer border-b-2 font-sans ${
                 activeTab === 'overview'
-                  ? 'border-white text-text-primary'
+                  ? 'border-plt-text text-text-primary'
                   : 'border-transparent text-text-muted hover:text-text-secondary'
               }`}
             >
@@ -351,7 +351,7 @@ export default function ConsoleUserDetailDrawer({
               onClick={() => setActiveTab('positions')}
               className={`py-3 font-medium transition-colors cursor-pointer border-b-2 font-sans flex items-center gap-1.5 ${
                 activeTab === 'positions'
-                  ? 'border-white text-text-primary'
+                  ? 'border-plt-text text-text-primary'
                   : 'border-transparent text-text-muted hover:text-text-secondary'
               }`}
             >
@@ -365,7 +365,7 @@ export default function ConsoleUserDetailDrawer({
               onClick={() => setActiveTab('system')}
               className={`py-3 font-medium transition-colors cursor-pointer border-b-2 font-sans ${
                 activeTab === 'system'
-                  ? 'border-white text-text-primary'
+                  ? 'border-plt-text text-text-primary'
                   : 'border-transparent text-text-muted hover:text-text-secondary'
               }`}
             >
@@ -740,8 +740,8 @@ export default function ConsoleUserDetailDrawer({
             {/* ========================================================= */}
             {activeTab === 'system' && (
               <div className="space-y-7">
-                <div className="space-y-2 border-b border-white/10 pb-5">
-                  <div className="text-xs font-semibold text-white">Proprietary strategies</div>
+                <div className="space-y-2 border-b border-plt-border pb-5">
+                  <div className="text-xs font-semibold text-plt-text">Proprietary strategies</div>
                   <p className="text-[11px] text-plt-muted">Read-only Typhon, Cerberus and Hydra access. The member may opt in to one daily after-close signal per ticker from its champion strategy.</p>
                   <ProprietaryAccessToggle userId={user.id} enabled={user.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} isOwner={isProprietaryOwner(user.email, user.role)} onChanged={onAccessChanged} />
                 </div>

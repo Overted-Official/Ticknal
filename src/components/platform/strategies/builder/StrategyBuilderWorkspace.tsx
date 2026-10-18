@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ChevronRight, LineChart, Pencil, Plus, SlidersHorizontal, X } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
 import StrategyFlowCanvas from './StrategyFlowCanvas';
@@ -55,7 +55,7 @@ const DIAGNOSTIC_TEXT: Record<CompileDiagnosticCode, { en: string; ar: string }>
 };
 
 function profileNodes(profile: ProprietaryStudioProfile, typhonNodes: readonly AdvancedStrategyNode[]): readonly AdvancedStrategyNode[] {
-  if (profile.id === 'psi') return typhonNodes;
+  if (profile.id === 'typhon') return typhonNodes;
   const prefix = profile.id;
   const inputs = `${prefix}-market`;
   const signals = profile.coreSignals.map((signal, index): AdvancedStrategyNode => ({
@@ -80,7 +80,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   const { locale } = useTranslation();
   const builderLocale: 'en' | 'ar' = locale === 'ar' ? 'ar' : 'en';
   const isAr = builderLocale === 'ar';
-  const [selectedStrategyId, setSelectedStrategyId] = useState<string>(canViewProprietary ? 'psi' : 'custom-draft');
+  const [selectedStrategyId, setSelectedStrategyId] = useState<string>(canViewProprietary ? 'typhon' : 'custom-draft');
   const [draft, setDraft] = useState<StrategyDraft>(createEmptyStrategyDraft);
   const [advancedNodes, setAdvancedNodes] = useState<readonly AdvancedStrategyNode[]>(createAdvancedDraftNodes);
   const [savedStrategies, setSavedStrategies] = useState<readonly SavedStrategy[]>([]);
@@ -97,12 +97,33 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [dockRailOpen, setDockRailOpen] = useState(false);
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+  const mobileActionsRef = useRef<HTMLDivElement>(null);
+  const mobileActionsTriggerRef = useRef<HTMLButtonElement>(null);
   const [analyticsWidth, setAnalyticsWidth] = useState(530);
   const [resultsMode, setResultsMode] = useState<StrategyResultsMode>('market');
   const [startDate, setStartDate] = useState('2025-01-05');
   const [endDate, setEndDate] = useState('2025-12-28');
   const [savedNotice, setSavedNotice] = useState(false);
   const [renaming, setRenaming] = useState(false);
+
+  useEffect(() => {
+    if (!mobileActionsOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!mobileActionsRef.current?.contains(event.target as Node)) setMobileActionsOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMobileActionsOpen(false);
+      mobileActionsTriggerRef.current?.focus();
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [mobileActionsOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -169,7 +190,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
     draft: complete && !isProtected && !isStrategyDraftTestable(draft)
       ? { ...draft, buyRules: [{ id: 'advanced-buy', indicatorId: 'advanced', period: 1, operator: 'isAbove', value: 0, connector: 'and' }], sellRules: [{ id: 'advanced-sell', indicatorId: 'advanced', period: 1, operator: 'isBelow', value: 0, connector: 'and' }] }
       : draft,
-    advancedNodes: selectedProfile?.id === 'psi' ? typhonNodes : advancedNodes,
+    advancedNodes: selectedProfile?.id === 'typhon' ? typhonNodes : advancedNodes,
     indicators,
     startDate,
     endDate,
@@ -292,19 +313,34 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
           {analyticsOpen && <button type="button" className="strategy-studio-dock-rail-trigger" aria-label={isAr ? 'عناصر تحكم الاستوديو' : 'Studio controls'} aria-controls="strategy-studio-dock" aria-expanded={dockRailOpen} onClick={() => setDockRailOpen(true)}><SlidersHorizontal size={18} /></button>}
           <div id="strategy-studio-dock" className={`strategy-studio-dock ${analyticsOpen ? `strategy-studio-dock--rail ${dockRailOpen ? 'is-open' : ''}` : ''}`} role="toolbar" aria-orientation={analyticsOpen ? 'vertical' : 'horizontal'} aria-label={isAr ? 'عناصر تحكم استوديو الاستراتيجيات' : 'Strategy studio controls'}>
             <div className="strategy-studio-selector"><StrategySelectorDropdown selectedStrategyId={selectedStrategyId} draft={draft} profiles={visibleProfiles} savedStrategies={savedStrategies} locale={builderLocale} onSelect={selectStrategy} openUp /></div>
-            <span className="strategy-studio-dock-divider" aria-hidden="true" />
-            <div className="seg-control shrink-0" role="tablist" aria-label={isAr ? 'وضع الإنشاء' : 'Builder mode'}>
+            <span className="strategy-studio-dock-divider strategy-studio-dock-desktop-only" aria-hidden="true" />
+            <div className="seg-control shrink-0 strategy-studio-dock-desktop-only" role="tablist" aria-label={isAr ? 'وضع الإنشاء' : 'Builder mode'}>
               <button type="button" role="tab" aria-selected={builderMode === 'simple'} onClick={() => setBuilderMode('simple')} className={`seg-control-btn ${builderMode === 'simple' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'بسيط' : 'Simple'}</button>
               <button type="button" role="tab" aria-selected={builderMode === 'advanced'} onClick={() => { if (!isProtected) setAdvancedNodes(projectSimpleDraftIntoAdvancedNodes(draft, indicators, advancedNodes)); setBuilderMode('advanced'); }} className={`seg-control-btn ${builderMode === 'advanced' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'متقدم' : 'Advanced'}</button>
             </div>
-            <span className="strategy-studio-dock-divider" aria-hidden="true" />
-            <button type="button" className="strategy-studio-toolbar-button" onClick={createNew}><Plus size={13} />{isAr ? 'جديدة' : 'New'}</button>
-            {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={editProfile}><Pencil size={13} />{isAr ? 'تعديل' : 'Edit'}</button>}
-            {!isProtected && <button type="button" className="strategy-studio-save-button" onClick={() => { void saveStrategy(); }} disabled={saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : savedNotice ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ' : 'Save')}</button>}
-            {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { void saveStrategy(undefined, !notificationsEnabled); }} disabled={saving || (!notificationsEnabled && !complete)} aria-pressed={notificationsEnabled} title={!complete && !notificationsEnabled ? (isAr ? 'أكمل قواعد الاستراتيجية لتفعيل التنبيهات' : 'Complete the strategy before enabling alerts') : undefined}><Bell size={13} />{notificationsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'تفعيل التنبيهات' : 'Alerts off')}</button>}
-            {isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { void toggleProtectedAlerts(); }} disabled={protectedAlertsPending} aria-pressed={protectedAlertsEnabled} title={isAr ? 'تنبيه واحد لكل شركة من أفضل استراتيجية بين تايفون وسيربيروس وهيدرا' : 'One alert per ticker from the champion of Typhon, Cerberus and Hydra'}><Bell size={13} />{protectedAlertsEnabled ? (isAr ? 'تنبيهات البطل مفعلة' : 'Champion alerts on') : (isAr ? 'تنبيهات البطل متوقفة' : 'Champion alerts off')}</button>}
-            <span className="strategy-studio-dock-divider" aria-hidden="true" />
-            <button type="button" className="strategy-studio-analytics-button" aria-controls="strategy-analytics-panel" aria-expanded={analyticsOpen} onClick={() => { setDockRailOpen(false); setAnalyticsOpen((value) => !value); }}><LineChart size={15} />{isAr ? 'التحليلات' : 'Analytics'}<ChevronRight size={14} className="rtl-mirror" /></button>
+            <span className="strategy-studio-dock-divider strategy-studio-dock-desktop-only" aria-hidden="true" />
+            <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={createNew}><Plus size={13} />{isAr ? 'جديدة' : 'New'}</button>
+            {!isProtected && <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={editProfile}><Pencil size={13} />{isAr ? 'تعديل' : 'Edit'}</button>}
+            {!isProtected && <button type="button" className="strategy-studio-save-button strategy-studio-dock-desktop-only" onClick={() => { void saveStrategy(); }} disabled={saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : savedNotice ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ' : 'Save')}</button>}
+            {!isProtected && <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={() => { void saveStrategy(undefined, !notificationsEnabled); }} disabled={saving || (!notificationsEnabled && !complete)} aria-pressed={notificationsEnabled} title={!complete && !notificationsEnabled ? (isAr ? 'أكمل قواعد الاستراتيجية لتفعيل التنبيهات' : 'Complete the strategy before enabling alerts') : undefined}><Bell size={13} />{notificationsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'تفعيل التنبيهات' : 'Alerts off')}</button>}
+            {isProtected && <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={() => { void toggleProtectedAlerts(); }} disabled={protectedAlertsPending} aria-pressed={protectedAlertsEnabled} title={isAr ? 'تنبيه واحد لكل شركة من أفضل استراتيجية بين تايفون وسيربيروس وهيدرا' : 'One alert per ticker from the champion of Typhon, Cerberus and Hydra'}><Bell size={13} />{protectedAlertsEnabled ? (isAr ? 'تنبيهات البطل مفعلة' : 'Champion alerts on') : (isAr ? 'تنبيهات البطل متوقفة' : 'Champion alerts off')}</button>}
+            <span className="strategy-studio-dock-divider strategy-studio-dock-desktop-only" aria-hidden="true" />
+            <button type="button" className="strategy-studio-analytics-button" aria-label={isAr ? 'التحليلات' : 'Analytics'} aria-controls="strategy-analytics-panel" aria-expanded={analyticsOpen} onClick={() => { setMobileActionsOpen(false); setDockRailOpen(false); setAnalyticsOpen((value) => !value); }}><LineChart size={15} /><span className="strategy-studio-analytics-label">{isAr ? 'التحليلات' : 'Analytics'}</span><ChevronRight size={14} className="strategy-studio-analytics-arrow rtl-mirror" /></button>
+            {!analyticsOpen && <div ref={mobileActionsRef} className="strategy-studio-mobile-actions">
+              <button ref={mobileActionsTriggerRef} type="button" className="strategy-studio-mobile-actions-trigger" aria-label={isAr ? 'المزيد من إجراءات الاستراتيجية' : 'More strategy actions'} aria-controls="strategy-studio-mobile-menu" aria-expanded={mobileActionsOpen} onClick={() => setMobileActionsOpen((open) => !open)}><SlidersHorizontal size={18} /></button>
+              {mobileActionsOpen && <div id="strategy-studio-mobile-menu" className="strategy-studio-mobile-menu" role="group" aria-label={isAr ? 'إجراءات الاستراتيجية' : 'Strategy actions'}>
+                <div className="seg-control strategy-studio-mobile-mode" role="tablist" aria-label={isAr ? 'وضع الإنشاء' : 'Builder mode'}>
+                  <button type="button" role="tab" aria-selected={builderMode === 'simple'} onClick={() => { setBuilderMode('simple'); setMobileActionsOpen(false); }} className={`seg-control-btn ${builderMode === 'simple' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'بسيط' : 'Simple'}</button>
+                  <button type="button" role="tab" aria-selected={builderMode === 'advanced'} onClick={() => { if (!isProtected) setAdvancedNodes(projectSimpleDraftIntoAdvancedNodes(draft, indicators, advancedNodes)); setBuilderMode('advanced'); setMobileActionsOpen(false); }} className={`seg-control-btn ${builderMode === 'advanced' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'متقدم' : 'Advanced'}</button>
+                </div>
+                <div className="strategy-studio-mobile-menu-divider" />
+                <button type="button" className="strategy-studio-toolbar-button" onClick={() => { createNew(); setMobileActionsOpen(false); }}><Plus size={15} />{isAr ? 'استراتيجية جديدة' : 'New strategy'}</button>
+                {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { editProfile(); setMobileActionsOpen(false); }}><Pencil size={15} />{isAr ? 'تعديل الاسم' : 'Edit name'}</button>}
+                {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { setMobileActionsOpen(false); void saveStrategy(); }} disabled={saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : savedNotice ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ الاستراتيجية' : 'Save strategy')}</button>}
+                {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { setMobileActionsOpen(false); void saveStrategy(undefined, !notificationsEnabled); }} disabled={saving || (!notificationsEnabled && !complete)} aria-pressed={notificationsEnabled} title={!complete && !notificationsEnabled ? (isAr ? 'أكمل قواعد الاستراتيجية لتفعيل التنبيهات' : 'Complete the strategy before enabling alerts') : undefined}><Bell size={15} />{notificationsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'التنبيهات متوقفة' : 'Alerts off')}</button>}
+                {isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { setMobileActionsOpen(false); void toggleProtectedAlerts(); }} disabled={protectedAlertsPending} aria-pressed={protectedAlertsEnabled} title={isAr ? 'تنبيه واحد لكل شركة من أفضل استراتيجية بين تايفون وسيربيروس وهيدرا' : 'One alert per ticker from the champion of Typhon, Cerberus and Hydra'}><Bell size={15} />{protectedAlertsEnabled ? (isAr ? 'تنبيهات البطل مفعلة' : 'Champion alerts on') : (isAr ? 'تنبيهات البطل متوقفة' : 'Champion alerts off')}</button>}
+              </div>}
+            </div>}
           </div>
           </div>
         </div>

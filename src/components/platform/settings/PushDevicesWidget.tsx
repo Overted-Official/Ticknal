@@ -201,17 +201,17 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
     <div className="w-full min-w-0 py-2 space-y-8">
       {/* 1. CURRENT ACTIVE SESSION */}
       <div className="space-y-3">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl bg-white/[0.03]">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl bg-plt-hover">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-11 h-11 rounded-full bg-white/[0.06] flex items-center justify-center text-white shrink-0">
+            <div className="w-11 h-11 rounded-full bg-plt-hover flex items-center justify-center text-plt-text shrink-0">
               <CurrentDeviceIcon size={20} />
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-white truncate" suppressHydrationWarning>
+                <span className="text-sm font-semibold text-plt-text truncate" suppressHydrationWarning>
                   {currentClient.browser} on {currentClient.os}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-white/70" suppressHydrationWarning>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-plt-hover text-plt-subtle" suppressHydrationWarning>
                   {currentClient.deviceType}
                 </span>
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-profit-num/10 text-profit-num">
@@ -219,14 +219,14 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
                   {locale === 'ar' ? 'نشط الآن' : 'Active Now'}
                 </span>
               </div>
-              <div className="text-xs text-text-muted mt-1 truncate">
+              <div className="text-xs text-plt-muted mt-1 truncate">
                 {isCurrentDeviceSubscribed ? (
                   <span className="text-profit-num flex items-center gap-1.5 font-medium">
                     <CheckCircle2 size={13} />
                     {locale === 'ar' ? 'مشترك في إشارات التداول وتنبيهات الأسعار اللحظية' : 'Subscribed to real-time trade signals & alert triggers'}
                   </span>
                 ) : (
-                  <span className="text-text-muted flex items-center gap-1.5">
+                  <span className="text-plt-muted flex items-center gap-1.5">
                     <BellOff size={13} />
                     {locale === 'ar' ? 'الإشعارات غير نشطة في جلسة المتصفح الحالية' : 'Push alerts inactive on this browser session'}
                   </span>
@@ -242,7 +242,7 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
               disabled={isEnablingPush}
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all w-full md:w-auto cursor-pointer active:scale-98 ${
                 isCurrentDeviceSubscribed
-                  ? 'text-white bg-white/[0.06] hover:bg-white/[0.12]'
+                  ? 'text-plt-text bg-plt-hover hover:bg-plt-active'
                   : 'text-white bg-brand-blue hover:opacity-90 shadow-xs'
               }`}
             >
@@ -259,7 +259,7 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
         </div>
 
         {pushStatus && (
-          <div className="px-4 py-2.5 rounded-xl bg-white/[0.03] text-xs text-text-secondary flex items-center gap-2">
+          <div className="px-4 py-2.5 rounded-xl bg-plt-hover text-xs text-plt-subtle flex items-center gap-2">
             <CheckCircle2 size={14} className="text-profit-num shrink-0" />
             <span>{pushStatus}</span>
           </div>
@@ -269,18 +269,18 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
       {/* 2. REGISTERED PUSH & MOBILE DEVICES */}
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-1">
-          <h3 className="text-xs sm:text-sm font-semibold text-white tracking-tight">
+          <h3 className="text-xs sm:text-sm font-semibold text-plt-text tracking-tight">
             {locale === 'ar' ? `الأجهزة المسجلة للإشعارات (${devices.length})` : `Linked Notification Endpoints (${devices.length})`}
           </h3>
         </div>
 
         {devices.length === 0 ? (
-          <div className="py-8 px-4 text-center rounded-xl bg-white/[0.02]">
-            <Smartphone size={28} className="mx-auto mb-2 text-white/30" />
-            <p className="text-xs text-white/80 font-medium">
+          <div className="py-8 px-4 text-center rounded-xl bg-plt-hover">
+            <Smartphone size={28} className="mx-auto mb-2 text-plt-faint" />
+            <p className="text-xs text-plt-subtle font-medium">
               {locale === 'ar' ? 'لا توجد أجهزة إضافية مسجلة' : 'No additional background devices registered'}
             </p>
-            <p className="text-[11px] text-text-muted mt-1 max-w-sm mx-auto">
+            <p className="text-[11px] text-plt-muted mt-1 max-w-sm mx-auto">
               {locale === 'ar'
                 ? 'اضغط على "تفعيل الإشعارات على هذا الجهاز" لربط هذا المتصفح، أو سجل الدخول من تطبيق تكنال للهاتف لاستلام تنبيهات التداول الفورية.'
                 : 'Click "Enable Push on This Device" to link this browser, or log in from the Ticknal mobile app to receive instant trade notifications.'}
@@ -305,15 +305,15 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
               return (
                 <div
                   key={device.id}
-                  className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center justify-between gap-3 min-w-0"
+                  className="p-3.5 sm:p-4 rounded-xl bg-plt-hover hover:bg-plt-active/30 transition-colors flex items-center justify-between gap-3 min-w-0"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center text-white/80 shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-plt-hover flex items-center justify-center text-plt-subtle shrink-0">
                       <DeviceIcon size={18} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-semibold text-white truncate">
+                        <span className="text-xs sm:text-sm font-semibold text-plt-text truncate">
                           {device.userAgent?.startsWith('Native App')
                             ? device.userAgent
                             : `${browser} on ${os}`}
@@ -324,7 +324,7 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-text-muted mt-0.5 tabular-nums">
+                      <div className="text-[11px] text-plt-muted mt-0.5 tabular-nums">
                         {locale === 'ar'
                           ? `تم التسجيل في ${new Date(device.createdAt).toLocaleDateString('ar-EG', {
                               month: 'short',
@@ -344,7 +344,7 @@ export default function PushDevicesWidget({ initialDevices }: PushDevicesWidgetP
                     type="button"
                     onClick={() => handleDeleteDevice(device)}
                     disabled={deletingDeviceId === device.id}
-                    className="p-2 rounded-lg text-white/40 hover:text-loss-num hover:bg-loss-num/10 transition-colors shrink-0 cursor-pointer"
+                    className="p-2 rounded-lg text-plt-faint hover:text-loss-num hover:bg-loss-num/10 transition-colors shrink-0 cursor-pointer"
                     title={locale === 'ar' ? 'فصل الجهاز' : 'Disconnect Device'}
                   >
                     <Trash2 size={15} />

@@ -17,6 +17,7 @@ import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import { useTranslation } from '@/lib/i18n';
 import { localizeSectorName } from '@/lib/finance/sector-translations';
+import { TourTriggerButton } from '@/components/ui/tour';
 
 export interface ChartTopBarProps {
   symbol: string;
@@ -36,6 +37,8 @@ export interface ChartTopBarProps {
   openPositionsCount?: number;
   onOpenPositionsDrawer?: () => void;
   onOpenAddOrder?: () => void;
+  // Tour action
+  onStartTour?: () => void;
 }
 
 export default function ChartTopBar({
@@ -52,6 +55,7 @@ export default function ChartTopBar({
   openPositionsCount = 0,
   onOpenPositionsDrawer,
   onOpenAddOrder,
+  onStartTour,
 }: ChartTopBarProps) {
   const { locale } = useTranslation();
   const router = useRouter();
@@ -217,40 +221,51 @@ export default function ChartTopBar({
   }, [isSearchOpen]);
 
   return (
-    <div className="w-full shrink-0 bg-cold-gray-900 border-b border-white/[0.08] select-none text-xs font-sans relative z-30">
+    <div className="w-full shrink-0 bg-plt-base border-b border-plt-border-soft select-none text-xs font-sans relative z-30">
       {/* ─── Mobile 2-Bar Layout (sm:hidden) ─── */}
-      <div className="sm:hidden flex flex-col w-full divide-y divide-white/[0.06]">
+      <div className="sm:hidden flex flex-col w-full divide-y divide-plt-border-soft">
         {/* Bar 1: Search Bar (with search input look) + Positions + Add */}
         <div className="h-10 px-2 flex items-center justify-between gap-1.5 w-full">
           {/* Mobile Search Bar Trigger */}
           <div
+            data-tour="chart-ticker-search"
             data-testid="mobile-search-trigger"
             onClick={() => setIsSearchOpen(true)}
-            className="flex-1 min-w-0 h-8 px-2.5 rounded-md bg-white/[0.04] active:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+            className="flex-1 min-w-0 h-8 px-2.5 rounded-md bg-plt-hover active:bg-plt-active border border-plt-border-soft flex items-center gap-2 cursor-pointer transition-colors"
             role="button"
             tabIndex={0}
             aria-label={locale === 'ar' ? 'بحث عن الأسهم والأصول' : 'Search tickers'}
           >
-            <Search size={13} className="text-text-muted shrink-0" />
-            <span className="text-[11px] text-text-muted truncate select-none">
+            <Search size={13} className="text-plt-muted shrink-0" />
+            <span className="text-[11px] text-plt-muted truncate select-none">
               {searchQuery || (locale === 'ar' ? 'بحث عن سهم أو أصل...' : 'Search tickers...')}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Quick Tour Button */}
+            {onStartTour && (
+              <TourTriggerButton
+                onClick={onStartTour}
+                variant="icon"
+                className="h-8 w-8 p-0 flex items-center justify-center rounded-md shrink-0"
+              />
+            )}
+
             {/* My Positions */}
             {onOpenPositionsDrawer && (
               <button
                 type="button"
+                data-tour="chart-positions-btn"
                 title={locale === 'ar' ? 'صفقاتي وأوامري' : 'My Positions & Orders'}
                 aria-label={locale === 'ar' ? 'صفقاتي' : 'My Positions'}
                 onClick={onOpenPositionsDrawer}
-                className="h-8 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white active:bg-white/[0.08] bg-white/[0.03] border border-white/[0.08] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="h-8 px-2.5 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text active:bg-plt-active bg-plt-hover border border-plt-border-soft transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Briefcase size={12} className="shrink-0" />
                 <span>{locale === 'ar' ? 'صفقاتي' : 'Positions'}</span>
                 {openPositionsCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none shrink-0">
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-plt-active text-plt-text font-bold leading-none shrink-0">
                     {openPositionsCount}
                   </span>
                 )}
@@ -261,6 +276,7 @@ export default function ChartTopBar({
             {onOpenAddOrder && (
               <button
                 type="button"
+                data-tour="chart-add-order-btn"
                 title={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
                 aria-label={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
                 onClick={onOpenAddOrder}
@@ -280,20 +296,21 @@ export default function ChartTopBar({
             {onTogglePredict && (
               <button
                 type="button"
+                data-tour="chart-predict-btn"
                 title={locale === 'ar' ? 'توقعات الأسعار بالذكاء الاصطناعي' : 'AI Price Forecast'}
                 aria-label={locale === 'ar' ? 'توقع السعر' : 'Predict Price'}
                 disabled={isPredicting}
                 onClick={onTogglePredict}
                 className={`h-7 px-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed w-full border ${
                   isPredictPopoverOpen || isPredicting
-                    ? 'bg-white/15 text-white border-white/20 font-semibold'
-                    : 'text-text-muted hover:text-white bg-white/[0.03] border-white/[0.08] active:bg-white/[0.08]'
+                    ? 'bg-plt-active text-plt-text border-plt-border-active font-semibold'
+                    : 'text-plt-muted hover:text-plt-text bg-plt-hover border-plt-border-soft active:bg-plt-active'
                 }`}
               >
                 {isPredicting ? (
                   <InlineSpinner className="h-[13px] w-[13px]" label={locale === 'ar' ? 'جاري إنشاء التوقع' : 'Generating forecast'} />
                 ) : (
-                  <Sparkles size={12} className="text-text-muted shrink-0" />
+                  <Sparkles size={12} className="text-plt-muted shrink-0" />
                 )}
                 <span className="truncate">{locale === 'ar' ? 'توقع' : 'Predict'}</span>
               </button>
@@ -303,19 +320,20 @@ export default function ChartTopBar({
             {onToggleIndicators && (
               <button
                 type="button"
+                data-tour="chart-indicators-btn"
                 title={locale === 'ar' ? 'المؤشرات الفنية' : 'Technical Indicators'}
                 aria-label={locale === 'ar' ? 'المؤشرات' : 'Indicators'}
                 onClick={onToggleIndicators}
                 className={`h-7 px-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full border ${
                   isIndicatorsPopoverOpen || activeIndicatorsCount > 0
-                    ? 'bg-white/15 text-white border-white/20 font-semibold'
-                    : 'text-text-muted hover:text-white bg-white/[0.03] border-white/[0.08] active:bg-white/[0.08]'
+                    ? 'bg-plt-active text-plt-text border-plt-border-active font-semibold'
+                    : 'text-plt-muted hover:text-plt-text bg-plt-hover border-plt-border-soft active:bg-plt-active'
                 }`}
               >
                 <BarChart2 size={12} className="shrink-0" />
                 <span className="truncate">{locale === 'ar' ? 'المؤشرات' : 'Indicators'}</span>
                 {activeIndicatorsCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none shrink-0">
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-plt-active text-plt-text font-bold leading-none shrink-0">
                     {activeIndicatorsCount}
                   </span>
                 )}
@@ -326,10 +344,11 @@ export default function ChartTopBar({
             {onOpenStrategyReport && (
               <button
                 type="button"
+                data-tour="chart-strategy-report-btn"
                 title={locale === 'ar' ? 'تقرير الاستراتيجية واختبار الأداء' : 'Strategy Report & Performance Backtest'}
                 aria-label={locale === 'ar' ? 'تقرير الاستراتيجية' : 'Strategy Report'}
                 onClick={onOpenStrategyReport}
-                className="h-7 px-1 rounded-md text-[11px] font-medium text-text-muted hover:text-white bg-white/[0.03] border border-white/[0.08] active:bg-white/[0.08] transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full"
+                className="h-7 px-1 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text bg-plt-hover border border-plt-border-soft active:bg-plt-active transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full"
               >
                 <FileText size={12} className="shrink-0" />
                 <span className="truncate">{locale === 'ar' ? 'التقرير' : 'Report'}</span>
@@ -345,67 +364,70 @@ export default function ChartTopBar({
         <div className="flex items-center gap-1.5 shrink-0 min-w-0">
           {/* Desktop Search Trigger Input */}
           <div
+            data-tour="chart-ticker-search"
             onClick={() => setIsSearchOpen(true)}
             className="flex relative items-center cursor-pointer group"
           >
             <Search
               size={13}
-              className="absolute left-2.5 text-text-muted group-hover:text-white transition-colors pointer-events-none"
+              className="absolute left-2.5 text-plt-muted group-hover:text-plt-text transition-colors pointer-events-none"
             />
-            <div className="h-7 w-36 sm:w-44 md:w-52 rounded-md bg-white/[0.04] group-hover:bg-white/[0.07] border border-white/[0.08] group-hover:border-white/20 pl-7 pr-6 text-[11px] text-text-muted group-hover:text-white flex items-center transition-all leading-none font-sans select-none">
+            <div className="h-7 w-36 sm:w-44 md:w-52 rounded-md bg-plt-hover group-hover:bg-plt-active border border-plt-border-soft group-hover:border-plt-border pl-7 pr-6 text-[11px] text-plt-muted group-hover:text-plt-text flex items-center transition-all leading-none font-sans select-none">
               {searchQuery || (locale === 'ar' ? 'بحث عن سهم أو أصل...' : 'Search tickers...')}
             </div>
-            <kbd className="hidden md:flex absolute right-1.5 px-1 py-0.5 rounded border border-white/10 text-[9px] text-text-muted font-sans pointer-events-none leading-none">
+            <kbd className="hidden md:flex absolute right-1.5 px-1 py-0.5 rounded border border-plt-border text-[9px] text-plt-muted font-sans pointer-events-none leading-none">
               ⌘K
             </kbd>
           </div>
 
           {/* Splitting Line between Search bar and Predict Price */}
-          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-1" />
+          <div className="h-3.5 w-px bg-plt-border-soft shrink-0 mx-1" />
 
           {/* Predict Price */}
           {onTogglePredict && (
             <button
               type="button"
+              data-tour="chart-predict-btn"
               title={locale === 'ar' ? 'توقعات الأسعار بالذكاء الاصطناعي' : 'AI Price Forecast'}
               aria-label={locale === 'ar' ? 'توقع السعر' : 'Predict Price'}
               disabled={isPredicting}
               onClick={onTogglePredict}
               className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${
                 isPredictPopoverOpen || isPredicting
-                  ? 'bg-white/15 text-white font-semibold'
-                  : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
+                  ? 'bg-plt-active text-plt-text font-semibold'
+                  : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
               }`}
             >
               {isPredicting ? (
                 <InlineSpinner className="h-[13px] w-[13px]" label={locale === 'ar' ? 'جاري إنشاء توقع السعر' : 'Generating price forecast'} />
               ) : (
-                <Sparkles size={13} className="text-text-muted" />
+                <Sparkles size={13} className="text-plt-muted" />
               )}
               <span>{locale === 'ar' ? 'توقع السعر' : 'Predict Price'}</span>
             </button>
           )}
 
           {/* Splitting Line between Predict Price and Indicators */}
-          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-1" />
+          <div className="h-3.5 w-px bg-plt-border-soft shrink-0 mx-1" />
 
           {/* Indicators */}
           {onToggleIndicators && (
             <button
               type="button"
+              data-tour="chart-indicators-btn"
               title={locale === 'ar' ? 'المؤشرات الفنية' : 'Technical Indicators'}
               aria-label={locale === 'ar' ? 'المؤشرات' : 'Indicators'}
               onClick={onToggleIndicators}
               className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 ${
                 isIndicatorsPopoverOpen || activeIndicatorsCount > 0
-                  ? 'bg-white/15 text-white font-semibold'
-                  : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
+                  ? 'bg-plt-active text-plt-text font-semibold'
+                  : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
               }`}
             >
               <BarChart2 size={13} />
               <span>{locale === 'ar' ? 'المؤشرات الفنية' : 'Indicators'}</span>
               {activeIndicatorsCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-plt-active text-plt-text font-bold leading-none">
                   {activeIndicatorsCount}
                 </span>
               )}
@@ -413,16 +435,17 @@ export default function ChartTopBar({
           )}
 
           {/* Splitting Line between Indicators and Strategy Report */}
-          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-1" />
+          <div className="h-3.5 w-px bg-plt-border-soft shrink-0 mx-1" />
 
           {/* Strategy Report */}
           {onOpenStrategyReport && (
             <button
               type="button"
+              data-tour="chart-strategy-report-btn"
               title={locale === 'ar' ? 'تقرير الاستراتيجية واختبار الأداء' : 'Strategy Report & Performance Backtest'}
               aria-label={locale === 'ar' ? 'تقرير الاستراتيجية' : 'Strategy Report'}
               onClick={onOpenStrategyReport}
-              className="h-7 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="h-7 px-2.5 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <FileText size={13} />
               <span>{locale === 'ar' ? 'تقرير الاستراتيجية' : 'Strategy Report'}</span>
@@ -432,19 +455,31 @@ export default function ChartTopBar({
 
         {/* Right Section: Portfolio & Execution Actions */}
         <div className="flex items-center gap-2 shrink-0 ml-auto pl-2">
+          {/* Quick Tour Trigger */}
+          {onStartTour && (
+            <TourTriggerButton
+              onClick={onStartTour}
+              className="h-7 px-2.5 rounded-md text-[11px] border-plt-border-soft"
+            />
+          )}
+
+          {/* Splitting Line */}
+          {onStartTour && <div className="h-3.5 w-px bg-plt-border-soft shrink-0 mx-0.5" />}
+
           {/* My Positions */}
           {onOpenPositionsDrawer && (
             <button
               type="button"
+              data-tour="chart-positions-btn"
               title={locale === 'ar' ? 'صفقاتي وأوامري' : 'My Positions & Orders'}
               aria-label={locale === 'ar' ? 'صفقاتي' : 'My Positions'}
               onClick={onOpenPositionsDrawer}
-              className="h-7 px-2.5 rounded-md text-[11px] font-medium text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="h-7 px-2.5 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <Briefcase size={13} />
               <span>{locale === 'ar' ? 'صفقاتي' : 'My Positions'}</span>
               {openPositionsCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-white/20 text-white font-bold leading-none">
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-sans tabular-nums bg-plt-active text-plt-text font-bold leading-none">
                   {openPositionsCount}
                 </span>
               )}
@@ -452,12 +487,13 @@ export default function ChartTopBar({
           )}
 
           {/* Splitting Line */}
-          <div className="h-3.5 w-px bg-white/10 shrink-0 mx-0.5" />
+          <div className="h-3.5 w-px bg-plt-border-soft shrink-0 mx-0.5" />
 
           {/* Add Position Primary CTA */}
           {onOpenAddOrder && (
             <button
               type="button"
+              data-tour="chart-add-order-btn"
               title={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
               aria-label={locale === 'ar' ? 'إضافة صفقة' : 'Add Position'}
               onClick={onOpenAddOrder}
@@ -485,7 +521,7 @@ export default function ChartTopBar({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18 }}
-                className="fixed inset-0 bg-black/80 backdrop-blur-md cursor-pointer"
+                className="fixed inset-0 bg-plt-base/80 backdrop-blur-md cursor-pointer"
                 onClick={() => setIsSearchOpen(false)}
                 aria-label={locale === 'ar' ? 'إغلاق البحث' : 'Close search'}
               />
@@ -501,7 +537,7 @@ export default function ChartTopBar({
                     ? { type: 'spring', damping: 28, stiffness: 280 }
                     : { duration: 0.15, ease: 'easeOut' }
                 }
-                className="relative z-10 w-full sm:max-w-xl md:max-w-2xl h-[88dvh] sm:h-auto sm:max-h-[85vh] bg-black border-t sm:border border-white/[0.12] rounded-none sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.9),0_32px_96px_-12px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col font-sans"
+                className="relative z-10 w-full sm:max-w-xl md:max-w-2xl h-[88dvh] sm:h-auto sm:max-h-[85vh] bg-plt-base border-t sm:border border-plt-border rounded-none sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.9),0_32px_96px_-12px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col font-sans"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Mobile Drag Indicator Handle */}
@@ -510,13 +546,13 @@ export default function ChartTopBar({
                   onClick={() => setIsSearchOpen(false)}
                   aria-label={locale === 'ar' ? 'سحب للإغلاق' : 'Drag handle to close'}
                 >
-                  <div className="w-10 h-1 rounded-full bg-white/20 active:bg-white/40 transition-colors" />
+                  <div className="w-10 h-1 rounded-full bg-plt-faint active:bg-plt-subtle transition-colors" />
                 </div>
 
                 {/* Search Input Bar */}
-                <div className="px-4 sm:px-5 pb-3 pt-1 sm:py-3.5 flex items-center gap-3 border-b border-white/[0.08] bg-black shrink-0">
-                  <div className="flex-1 flex items-center gap-2.5 h-10 px-3.5 rounded-xl bg-white/[0.05] border border-white/[0.08] focus-within:border-white/25 focus-within:bg-white/[0.08] transition-all">
-                    <Search size={16} className="text-white/40 shrink-0" />
+                <div className="px-4 sm:px-5 pb-3 pt-1 sm:py-3.5 flex items-center gap-3 border-b border-plt-border-soft bg-plt-base shrink-0">
+                  <div className="flex-1 flex items-center gap-2.5 h-10 px-3.5 rounded-xl bg-plt-hover border border-plt-border-soft focus-within:border-plt-border focus-within:bg-plt-active transition-all">
+                    <Search size={16} className="text-plt-muted shrink-0" />
                     <input
                       ref={searchInputRef}
                       type="text"
@@ -535,7 +571,7 @@ export default function ChartTopBar({
                         setFocusedIndex(0);
                       }}
                       style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
-                      className="flex-1 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm sm:text-[14px] text-white placeholder:text-white/35 font-sans tracking-tight p-0"
+                      className="flex-1 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm sm:text-[14px] text-plt-text placeholder:text-plt-faint font-sans tracking-tight p-0"
                     />
                     {searchQuery && (
                       <button
@@ -545,7 +581,7 @@ export default function ChartTopBar({
                           setFocusedIndex(0);
                           searchInputRef.current?.focus();
                         }}
-                        className="w-6 h-6 flex items-center justify-center text-white/40 hover:text-white active:bg-white/10 rounded-full transition-colors cursor-pointer shrink-0"
+                        className="w-6 h-6 flex items-center justify-center text-plt-muted hover:text-plt-text active:bg-plt-active rounded-full transition-colors cursor-pointer shrink-0"
                         title={locale === 'ar' ? 'مسح البحث' : 'Clear search'}
                       >
                         <X size={14} />
@@ -556,17 +592,17 @@ export default function ChartTopBar({
                   <button
                     type="button"
                     onClick={() => setIsSearchOpen(false)}
-                    className="h-10 px-3 rounded-xl text-xs font-semibold text-white/70 hover:text-white active:bg-white/10 hover:bg-white/[0.06] transition-colors cursor-pointer font-sans flex items-center gap-1.5 shrink-0"
+                    className="h-10 px-3 rounded-xl text-xs font-semibold text-plt-subtle hover:text-plt-text active:bg-plt-active hover:bg-plt-hover transition-colors cursor-pointer font-sans flex items-center gap-1.5 shrink-0"
                   >
                     <span>{locale === 'ar' ? 'إلغاء' : 'Cancel'}</span>
-                    <kbd className="hidden sm:inline px-1.5 py-0.5 rounded border border-white/10 text-[9px] text-white/40 bg-white/[0.04]">ESC</kbd>
+                    <kbd className="hidden sm:inline px-1.5 py-0.5 rounded border border-plt-border text-[9px] text-plt-muted bg-plt-hover">ESC</kbd>
                   </button>
                 </div>
 
                 {/* Filter Tabs & Header Bar */}
-                <div className="px-4 sm:px-5 py-2.5 border-b border-white/[0.08] bg-black flex items-center justify-between gap-3 shrink-0 overflow-x-auto no-scrollbar">
+                <div className="px-4 sm:px-5 py-2.5 border-b border-plt-border-soft bg-plt-base flex items-center justify-between gap-3 shrink-0 overflow-x-auto no-scrollbar">
                   {/* Tabs */}
-                  <div className="flex items-center gap-1.5 sm:gap-1 bg-white/[0.03] p-1 sm:p-0.5 rounded-xl sm:rounded-lg border border-white/[0.08] shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-1 bg-plt-hover p-1 sm:p-0.5 rounded-xl sm:rounded-lg border border-plt-border-soft shrink-0">
                     {(
                       [
                         { id: 'all', label: locale === 'ar' ? 'الكل' : 'All', count: tabCounts.all },
@@ -587,7 +623,7 @@ export default function ChartTopBar({
                           className={`px-3.5 sm:px-3 py-1.5 sm:py-1 rounded-lg sm:rounded-md text-xs transition-all cursor-pointer flex items-center gap-1.5 select-none shrink-0 ${
                             isActive
                               ? 'bg-white text-black font-semibold shadow-xs'
-                              : 'text-white/50 hover:text-white hover:bg-white/[0.04] font-medium'
+                              : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover font-medium'
                           }`}
                         >
                           <span>{tab.label}</span>
@@ -595,7 +631,7 @@ export default function ChartTopBar({
                             className={`text-[10px] px-1.5 py-0.5 rounded-full tabular-nums leading-none ${
                               isActive
                                 ? 'bg-black/15 text-black font-bold'
-                                : 'bg-white/[0.06] text-white/40'
+                                : 'bg-plt-active text-plt-muted'
                             }`}
                           >
                             {tab.count}
@@ -606,7 +642,7 @@ export default function ChartTopBar({
                   </div>
 
                   {/* Status info */}
-                  <div className="text-[11px] text-white/40 font-medium tabular-nums hidden sm:block shrink-0">
+                  <div className="text-[11px] text-plt-muted font-medium tabular-nums hidden sm:block shrink-0">
                     <span>
                       {activeTab === 'funds'
                         ? (locale === 'ar' ? `${searchResults.length} صندوق` : `${searchResults.length} funds`)
@@ -620,18 +656,18 @@ export default function ChartTopBar({
                 </div>
 
                 {/* Results List */}
-                <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar py-1 divide-y divide-white/[0.03]">
+                <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar py-1 divide-y divide-plt-border-soft">
                   {searchResults.length === 0 ? (
                     <div className="py-16 px-4 text-center flex flex-col items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3 text-white/40">
+                      <div className="w-12 h-12 rounded-full bg-plt-hover border border-plt-border-soft flex items-center justify-center mb-3 text-plt-muted">
                         <Search size={20} />
                       </div>
-                      <p className="text-white/80 text-sm font-semibold">
+                      <p className="text-plt-text text-sm font-semibold">
                         {locale === 'ar'
                           ? `لم يتم العثور على أي ${activeTab === 'funds' ? 'صناديق' : activeTab === 'metals' ? 'معادن' : activeTab === 'stocks' ? 'أسهم' : 'أدوات مالية'}`
                           : `No matching ${activeTab === 'funds' ? 'funds' : activeTab === 'metals' ? 'metals' : activeTab === 'stocks' ? 'stocks' : 'instruments'} found`}
                       </p>
-                      <p className="text-white/40 text-xs mt-1.5 max-w-xs leading-relaxed">
+                      <p className="text-plt-muted text-xs mt-1.5 max-w-xs leading-relaxed">
                         {locale === 'ar'
                           ? 'جرب البحث برمز أو اسم شركة مختلف، أو قم باختيار تبويب آخر.'
                           : 'Try searching with a different ticker, name, or change the filter tab.'}
@@ -650,17 +686,17 @@ export default function ChartTopBar({
                           key={item.symbol}
                           onClick={() => handleSelectTicker(item.symbol)}
                           onMouseEnter={() => setFocusedIndex(index)}
-                          className={`flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-3 cursor-pointer transition-colors active:bg-white/[0.08] min-h-[58px] sm:min-h-[52px] ${
+                          className={`flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-3 cursor-pointer transition-colors active:bg-plt-active min-h-[58px] sm:min-h-[52px] ${
                             isSelected
-                              ? 'bg-white/[0.08] text-white font-medium'
+                              ? 'bg-plt-active text-plt-text font-medium'
                               : isFocused
-                              ? 'bg-white/[0.04] text-white'
-                              : 'hover:bg-white/[0.03] text-text-primary'
+                              ? 'bg-plt-hover text-plt-text'
+                              : 'hover:bg-plt-hover text-plt-text'
                           }`}
                         >
                           {/* Left: Avatar/Logo + Symbol + Type Badge + Sector + Company Name */}
                           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 pr-3">
-                            <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-plt-hover border border-plt-border-soft flex items-center justify-center overflow-hidden shrink-0">
                               {item.logoUrl ? (
                                 <img
                                   src={item.logoUrl}
@@ -668,7 +704,7 @@ export default function ChartTopBar({
                                   className="ticker-logo-image ticker-logo-fill"
                                 />
                               ) : (
-                                <span className="text-[11px] sm:text-[10px] font-bold text-white/75 font-sans">
+                                <span className="text-[11px] sm:text-[10px] font-bold text-plt-text font-sans">
                                   {itemDisplay.substring(0, 2)}
                                 </span>
                               )}
@@ -677,9 +713,7 @@ export default function ChartTopBar({
                             <div className="min-w-0 flex flex-col gap-0.5">
                               <div className="flex items-center gap-2">
                                 <span
-                                  className={`text-sm sm:text-[13px] font-bold font-sans tracking-tight ${
-                                    isSelected ? 'text-white' : 'text-white/95'
-                                  }`}
+                                  className="text-sm sm:text-[13px] font-bold font-sans tracking-tight text-plt-text"
                                 >
                                   {itemDisplay}
                                 </span>
@@ -693,19 +727,19 @@ export default function ChartTopBar({
                                     {locale === 'ar' ? 'صندوق' : 'Fund'}
                                   </span>
                                 ) : (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wider uppercase bg-white/[0.05] text-white/50 border border-white/[0.08] shrink-0 font-sans">
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wider uppercase bg-plt-hover text-plt-muted border border-plt-border-soft shrink-0 font-sans">
                                     {locale === 'ar' ? 'سهم' : 'Stock'}
                                   </span>
                                 )}
 
                                 {item.sector && (
-                                  <span className="hidden sm:inline text-[11px] text-white/40 truncate font-sans">
+                                  <span className="hidden sm:inline text-[11px] text-plt-muted truncate font-sans">
                                     · {localizeSectorName(item.sector, locale)}
                                   </span>
                                 )}
                               </div>
 
-                              <div className="text-xs sm:text-[11px] text-white/50 truncate max-w-[200px] sm:max-w-[340px] font-sans">
+                              <div className="text-xs sm:text-[11px] text-plt-muted truncate max-w-[200px] sm:max-w-[340px] font-sans">
                                 {item.companyName}
                               </div>
                             </div>
@@ -714,9 +748,9 @@ export default function ChartTopBar({
                           {/* Right: Price + Change % */}
                           <div className="flex items-center gap-2.5 shrink-0 font-sans tabular-nums text-right">
                             <div className="flex flex-col items-end">
-                              <span className="text-sm sm:text-[13px] font-bold text-white">
+                              <span className="text-sm sm:text-[13px] font-bold text-plt-text">
                                 {item.price}{' '}
-                                <span className="text-[10px] text-white/40 font-normal">
+                                <span className="text-[10px] text-plt-muted font-normal">
                                   {item.currency ? (item.currency === 'EGP' && locale === 'ar' ? 'ج.م' : item.currency) : (locale === 'ar' ? 'ج.م' : 'EGP')}
                                 </span>
                               </span>
@@ -738,29 +772,29 @@ export default function ChartTopBar({
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 sm:px-5 py-3 sm:py-2.5 border-t border-white/[0.08] bg-black flex items-center justify-between text-[11px] text-white/40 font-sans shrink-0 pb-[max(1rem,calc(var(--ticknal-safe-area-bottom)+0.75rem))]">
+                <div className="px-4 sm:px-5 py-3 sm:py-2.5 border-t border-plt-border-soft bg-plt-base flex items-center justify-between text-[11px] text-plt-muted font-sans shrink-0 pb-[max(1rem,calc(var(--ticknal-safe-area-bottom)+0.75rem))]">
                   <div className="hidden sm:flex items-center gap-3">
                     <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↑↓</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-plt-hover border border-plt-border text-[10px] text-plt-muted leading-none">↑↓</kbd>
                       <span>{locale === 'ar' ? 'تنقل' : 'navigate'}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">↵</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-plt-hover border border-plt-border text-[10px] text-plt-muted leading-none">↵</kbd>
                       <span>{locale === 'ar' ? 'اختيار' : 'select'}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Tab</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-plt-hover border border-plt-border text-[10px] text-plt-muted leading-none">Tab</kbd>
                       <span>{locale === 'ar' ? 'تصفية' : 'filter'}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[10px] text-white/50 leading-none">Esc</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-plt-hover border border-plt-border text-[10px] text-plt-muted leading-none">Esc</kbd>
                       <span>{locale === 'ar' ? 'إغلاق' : 'close'}</span>
                     </span>
                   </div>
-                  <span className="sm:hidden text-xs text-white/50 font-medium">
+                  <span className="sm:hidden text-xs text-plt-muted font-medium">
                     {locale === 'ar' ? 'اضغط على أي أصل لعرض الرسم البياني' : 'Tap any ticker to open chart'}
                   </span>
-                  <span className="text-[11px] text-white/30 hidden sm:inline">
+                  <span className="text-[11px] text-plt-faint hidden sm:inline">
                     {activeTab === 'funds'
                       ? (locale === 'ar' ? 'صناديق الاستثمار' : 'Mutual Funds')
                       : activeTab === 'metals'

@@ -17,6 +17,8 @@ import { useTranslation } from '@/lib/i18n';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 import { HERO_SCENE_NEWS } from '@/components/landing/hero-scenes/hero-scene-snapshot';
+import { Tour, useTour, TourTriggerButton } from '@/components/ui/tour';
+import { getNewsTourSteps, NEWS_TOUR_STORAGE_KEY } from '@/lib/tours/news-tour-config';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -29,13 +31,33 @@ interface NewsApiResponse {
 }
 
 export default function NewsPageView() {
-  const { locale } = useTranslation();
+  const { locale, isRTL } = useTranslation();
   const { isGuest } = useGuestGuard();
   const { isNavVisible } = useMobileNavScroll();
 
   const searchParams = useSearchParams();
   const isHeroScene = useHeroSceneMode();
   const targetItemId = searchParams?.get('item') || searchParams?.get('id') || null;
+
+  const tour = useTour(NEWS_TOUR_STORAGE_KEY);
+  const tourSteps = React.useMemo(() => getNewsTourSteps(isRTL), [isRTL]);
+  const hasAutoStartedRef = React.useRef(false);
+
+  // Auto-start News page walkthrough for first-time visitors (strictly once on mount)
+  React.useEffect(() => {
+    if (isHeroScene) return;
+    if (hasAutoStartedRef.current) return;
+    hasAutoStartedRef.current = true;
+
+    if (!tour.seen()) {
+      const timer = setTimeout(() => {
+        tour.start();
+        tour.markSeen();
+      }, 1200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [tour, isHeroScene]);
 
   // Filter State
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -66,6 +88,24 @@ export default function NewsPageView() {
   const isLoading = !isHeroScene && liveIsLoading;
 
   const items = data?.items || [];
+  const hasAutoSyncedRef = React.useRef(false);
+
+  // Automatically check and sync today's wires & Ticknal takes once per session on mount
+  useEffect(() => {
+    if (isHeroScene || hasAutoSyncedRef.current || !liveData) return;
+    hasAutoSyncedRef.current = true;
+    try {
+      const lastSync = Number(sessionStorage.getItem('ticknal_news_last_autosync') || '0');
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const hasTodayTake = (liveData.items || []).some((i) => i.id.startsWith(`take-${todayIso}-`));
+      if (Date.now() - lastSync > 10 * 60 * 1000 || !hasTodayTake) {
+        sessionStorage.setItem('ticknal_news_last_autosync', String(Date.now()));
+        fetch('/api/news/sync', { method: 'POST' })
+          .then(() => mutate())
+          .catch(() => {});
+      }
+    } catch {}
+  }, [isHeroScene, liveData, mutate]);
 
   // Smooth-scroll and highlight target post when arriving from shared link (?item=...)
   useEffect(() => {
@@ -183,28 +223,30 @@ export default function NewsPageView() {
   const hasActiveFilters = activeCategory !== 'all' || Boolean(selectedTicker) || Boolean(searchQuery.trim());
 
   return (
-    <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden overflow-x-hidden custom-scrollbar bg-black text-white select-none font-sans">
+    <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
       {/* 1. Header (Breadcrumbs + Refresh) — Aligned with Markets page header */}
-      <header className="px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-4 shrink-0 bg-black">
+      <header className="px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-4 shrink-0 bg-plt-base">
         <div className="flex items-center gap-1.5 text-xs sm:text-sm">
           <Link
             href="/home"
-            className="text-zinc-400 font-normal hover:text-white transition-colors cursor-pointer"
+            className="text-plt-muted font-normal hover:text-plt-text transition-colors cursor-pointer"
           >
             {locale === 'ar' ? 'الرئيسية' : 'Home'}
           </Link>
-          <span className="text-zinc-600">/</span>
-          <h1 className="font-semibold text-white">
+          <span className="text-plt-faint">/</span>
+          <h1 className="font-semibold text-plt-text">
             {locale === 'ar' ? 'الأخبار' : 'News'}
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <TourTriggerButton onClick={tour.start} />
           {!isHeroScene && <button
             type="button"
+            data-tour="news-refresh-btn"
             onClick={handleRefreshWire}
             disabled={isLoading || isSyncing}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
+            className="p-1.5 rounded-lg text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors cursor-pointer disabled:opacity-50"
             title={locale === 'ar' ? 'تحديث الأخبار' : 'Refresh news'}
           >
             {isLoading || isSyncing ? (
@@ -217,20 +259,22 @@ export default function NewsPageView() {
       </header>
 
       {/* 2. Sticky Floating Top Navigation Bar — Centered pill on BOTH desktop and mobile */}
-      <NewsFloatingNav
-        categories={floatingCategories}
-        activeCategory={activeCategory}
-        onSelectCategory={(id) => setActiveCategory(id)}
-      />
+      <div data-tour="news-categories-nav" className="w-full">
+        <NewsFloatingNav
+          categories={floatingCategories}
+          activeCategory={activeCategory}
+          onSelectCategory={(id) => setActiveCategory(id)}
+        />
+      </div>
 
       {/* 3. Page Title & Subtitle Hero — Aligned with Markets page layout */}
       <div className="px-[var(--space-page-x)] pt-2 pb-3 w-full shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-plt-text">
               {locale === 'ar' ? 'الأخبار' : 'News'}
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+            <p className="text-xs sm:text-sm text-plt-muted mt-1">
               {locale === 'ar'
                 ? isHeroScene
                   ? 'لقطة أخبار السوق · ١٠ أكتوبر ٢٠٢٦'
@@ -243,19 +287,19 @@ export default function NewsPageView() {
 
           {/* Search bar on mobile/tablet (where desktop sidebar is hidden) */}
           <div className="lg:hidden relative flex items-center w-full sm:w-64">
-            <Search size={13} className="absolute left-3 text-zinc-500 pointer-events-none" />
+            <Search size={13} className="absolute left-3 text-plt-faint pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={locale === 'ar' ? 'بحث في الأخبار أو الأسهم...' : 'Search news or ticker...'}
-              className="w-full pl-8 pr-7 py-1.5 text-xs rounded-full bg-white/[0.05] border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 transition-all"
+              className="w-full pl-8 pr-7 py-1.5 text-xs rounded-full bg-plt-hover border border-plt-border text-plt-text placeholder:text-plt-faint focus:outline-none focus:border-plt-border transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 text-zinc-400 hover:text-white text-xs cursor-pointer"
+                className="absolute right-2.5 text-plt-muted hover:text-plt-text text-xs cursor-pointer"
               >
                 ✕
               </button>
@@ -265,9 +309,12 @@ export default function NewsPageView() {
       </div>
 
       {/* 4. Social Stream Feed Workspace: Full-width matching Markets & Home */}
-      <div className="flex-1 min-h-0 flex w-full px-[var(--space-page-x)] bg-black lg:overflow-hidden gap-6 xl:gap-8">
+      <div className="flex-1 min-h-0 flex w-full px-[var(--space-page-x)] bg-plt-base lg:overflow-hidden gap-6 xl:gap-8">
         {/* Left Column: Feeds & Markets Sidebar (Desktop lg+, docked with its own subtle scroll) */}
-        <div className="hidden lg:block shrink-0 w-64 xl:w-72 2xl:w-80 h-full overflow-y-auto custom-scrollbar pb-6 self-stretch">
+        <div
+          data-tour="news-sidebar-filters"
+          className="hidden lg:block shrink-0 w-64 xl:w-72 2xl:w-80 h-full overflow-y-auto custom-scrollbar pb-6 self-stretch"
+        >
           <NewsFilterSidebar
             categories={sidebarCategories}
             activeCategory={activeCategory}
@@ -284,8 +331,9 @@ export default function NewsPageView() {
 
         {/* Center Stream: Expanded, airy feed timeline with internal desktop scroll */}
         <main
+          data-tour="news-feed-timeline"
           aria-label="Market Social Feed"
-          className={`flex-1 min-h-0 h-full lg:overflow-y-auto custom-scrollbar w-full flex flex-col bg-black lg:border-x border-white/[0.06] ${
+          className={`flex-1 min-h-0 h-full lg:overflow-y-auto custom-scrollbar w-full flex flex-col bg-plt-base lg:border-x border-plt-border-soft ${
             isGuest
               ? isNavVisible
                 ? 'pb-[calc(112px+var(--ticknal-safe-area-bottom)+2rem)] md:pb-48 lg:pb-36'
@@ -297,15 +345,15 @@ export default function NewsPageView() {
         >
           {/* Active Ticker Filter Banner */}
           {selectedTicker && (
-            <div className="px-4 py-2 bg-blue-950/20 border-b border-white/[0.08] flex items-center justify-between text-xs shrink-0">
+            <div className="px-4 py-2 bg-blue-950/20 border-b border-plt-border-soft flex items-center justify-between text-xs shrink-0">
               <div className="flex items-center gap-2">
-                <span className="text-zinc-400">Filtering posts for:</span>
+                <span className="text-plt-muted">Filtering posts for:</span>
                 <span className="font-bold text-[#1d9bf0]">@{selectedTicker}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedTicker(null)}
-                className="text-xs text-zinc-400 hover:text-white cursor-pointer px-2 py-0.5 rounded-full hover:bg-white/10 transition-colors"
+                className="text-xs text-plt-muted hover:text-plt-text cursor-pointer px-2 py-0.5 rounded-full hover:bg-plt-hover transition-colors"
               >
                 Clear filter ✕
               </button>
@@ -314,15 +362,15 @@ export default function NewsPageView() {
 
           {/* Active Search Query Filter Banner */}
           {searchQuery.trim() && (
-            <div className="px-4 py-2 bg-white/[0.03] border-b border-white/[0.08] flex items-center justify-between text-xs shrink-0">
+            <div className="px-4 py-2 bg-plt-hover border-b border-plt-border-soft flex items-center justify-between text-xs shrink-0">
               <div className="flex items-center gap-2">
-                <span className="text-zinc-400">Search results for:</span>
-                <span className="font-semibold text-white">"{searchQuery.trim()}"</span>
+                <span className="text-plt-muted">Search results for:</span>
+                <span className="font-semibold text-plt-text">"{searchQuery.trim()}"</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="text-xs text-zinc-400 hover:text-white cursor-pointer px-2 py-0.5 rounded-full hover:bg-white/10 transition-colors"
+                className="text-xs text-plt-muted hover:text-plt-text cursor-pointer px-2 py-0.5 rounded-full hover:bg-plt-hover transition-colors"
               >
                 Clear ✕
               </button>
@@ -352,6 +400,18 @@ export default function NewsPageView() {
         featureName={proModalFeature}
         title={`Unlock ${proModalFeature}`}
         description="Sign up for free to save high-impact disclosures, configure instant Telegram notifications, and sync your Egyptian portfolio."
+      />
+
+      {/* In-App Tour Walkthrough Portal */}
+      <Tour
+        steps={tourSteps}
+        open={tour.open}
+        onOpenChange={tour.setOpen}
+        index={tour.index}
+        onIndexChange={tour.setIndex}
+        onFinish={tour.markSeen}
+        onSkip={tour.markSeen}
+        dark
       />
     </div>
   );

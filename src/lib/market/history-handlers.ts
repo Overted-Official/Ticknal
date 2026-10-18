@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { dailyPrices, intradayCandles, priceAdjustments } from '@/db/schema';
 import { eq, and, gt, lt, asc, desc } from 'drizzle-orm';
-import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 
 export async function handleHistoryGet(req: Request) {
   try {

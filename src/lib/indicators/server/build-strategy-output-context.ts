@@ -85,8 +85,8 @@ export function extractStrategyOutputSnapshots(
   input: StrategySnapshotExtractionInput,
 ): StrategyOutputSnapshotSet {
   const byId = new Map(input.champion.analyses.map((analysis) => [analysis.strategyId, analysis]));
-  const typhonAnalysis = byId.get('psi');
-  const cerberusAnalysis = byId.get('psi_v2');
+  const typhonAnalysis = byId.get('typhon') ?? byId.get('psi');
+  const cerberusAnalysis = byId.get('cerberus') ?? byId.get('psi_v2');
   const hydraAnalysis = byId.get('hydra');
   const typhonRaw = asRecord(typhonAnalysis?.rawResult);
   const typhonSignals = Array.isArray(typhonRaw.signals) ? typhonRaw.signals : [];

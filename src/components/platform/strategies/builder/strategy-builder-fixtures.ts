@@ -3,7 +3,7 @@ export type BacktestViewMode = 'heatmap' | 'table';
 export type BacktestTimeframe = '1M' | '3M' | '6M' | 'YTD' | '1Y';
 
 export interface StrategyProfile {
-  readonly id: 'psi' | 'psi_v2' | 'hydra';
+  readonly id: 'typhon' | 'cerberus' | 'hydra';
   readonly name: string;
   readonly shortName: string;
   readonly description: string;
@@ -50,7 +50,7 @@ export const ARABIC_ROW_NAMES: Readonly<Record<string, string>> = {
 
 export const STRATEGY_PROFILES: readonly StrategyProfile[] = [
   {
-    id: 'psi',
+    id: 'typhon',
     name: 'Typhon Strategy',
     shortName: 'TYPHON',
     description: 'Cyclical and mean-reversion model built around the Master Index and median daily movement.',
@@ -59,7 +59,7 @@ export const STRATEGY_PROFILES: readonly StrategyProfile[] = [
     sellRule: 'Exits at the AYM target or when the ATR profit-protection trail is reached.',
   },
   {
-    id: 'psi_v2',
+    id: 'cerberus',
     name: 'Cerberus Strategy',
     shortName: 'CERBERUS',
     description: 'A stateful swing model that combines zone, upward momentum, and downward pressure.',
@@ -83,14 +83,14 @@ export function getVisibleStrategyProfiles(canViewProprietary: boolean): readonl
 }
 
 export const STRATEGY_PROFILE_ARABIC: Readonly<Record<StrategyProfile['id'], Omit<StrategyProfile, 'id' | 'shortName'>>> = {
-  psi: {
+  typhon: {
     name: 'استراتيجية تايفون',
     description: 'نموذج دوري وارتداد إلى المتوسط يعتمد على المؤشر الرئيسي ومتوسط الحركة اليومية.',
     coreSignals: ['المؤشر الرئيسي', 'متوسط الحركة اليومية', 'نطاق ATR المتحرك'],
     buyRule: 'يدخل عندما يعبر المؤشر الرئيسي أحد مستويات التعافي المحددة.',
     sellRule: 'يخرج عند هدف AYM أو عند الوصول إلى مسار حماية الأرباح باستخدام ATR.',
   },
-  psi_v2: {
+  cerberus: {
     name: 'استراتيجية سيربيروس',
     description: 'نموذج تأرجح حالتي يجمع بين المنطقة والزخم الصاعد والضغط الهابط.',
     coreSignals: ['منطقة PSI', 'PSI الصاعد', 'PSI الهابط', 'اتجاه النظام'],

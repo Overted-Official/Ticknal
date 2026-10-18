@@ -6,6 +6,7 @@ import {
   Activity,
   Database,
   GitBranch,
+  Info,
   Plus,
   Radio,
   Search,
@@ -21,6 +22,8 @@ import {
   type AdvancedNodeKind,
   type LocalizedAdvancedCopy,
 } from './advanced-strategy-model';
+import StrategyLibraryEducationDrawer from './StrategyLibraryEducationDrawer';
+import { getBlockEducation, type StrategyLibraryEducation } from './strategy-library-education';
 
 export interface AdvancedBlockLibraryModalProps {
   readonly templateIds: readonly string[];
@@ -67,89 +70,82 @@ export default function AdvancedBlockLibraryModal({
 }: AdvancedBlockLibraryModalProps) {
   const isAr = locale === 'ar';
   const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<AdvancedBlockLibraryGroup | null>(null);
+  const [education, setEducation] = useState<StrategyLibraryEducation | null>(null);
 
-  const templates = useMemo(() => {
+  const availableTemplates = useMemo(() => ADVANCED_BLOCK_TEMPLATES.filter((template) => templateIds.includes(template.id)), [templateIds]);
+  const groups = useMemo(() => BLOCK_LIBRARY_GROUPS
+    .map((group) => ({ ...group, templates: availableTemplates.filter((template) => template.libraryGroup === group.id) }))
+    .filter((group) => group.templates.length > 0), [availableTemplates]);
+  const searchResults = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
-    const areaTemplates = ADVANCED_BLOCK_TEMPLATES.filter((template) => templateIds.includes(template.id));
-    if (!normalized) return areaTemplates;
-    return areaTemplates.filter((template) => [
+    if (!normalized) return [];
+    return availableTemplates.filter((template) => [
       localize(template.title, locale),
       localize(template.description, locale),
-      template.libraryGroup,
+      localize(BLOCK_LIBRARY_GROUPS.find((group) => group.id === template.libraryGroup)!.title, locale),
     ].join(' ').toLocaleLowerCase().includes(normalized));
-  }, [locale, query, templateIds]);
+  }, [availableTemplates, locale, query]);
+  const selectedGroup = groups.find((group) => group.id === activeCategory) ?? groups[0];
+  const isSearching = query.trim().length > 0;
 
-  const groupedTemplates = useMemo(() => BLOCK_LIBRARY_GROUPS
-    .map((group) => ({
-      ...group,
-      templates: templates.filter((template) => template.libraryGroup === group.id),
-    }))
-    .filter((group) => group.templates.length > 0), [templates]);
+  const renderOption = (template: AdvancedBlockTemplate) => {
+    const appearance = NODE_APPEARANCE[template.kind];
+    const Icon = appearance.icon;
+    return <div key={template.id} className="strategy-library-result-row">
+      <button type="button" onClick={() => onAdd(template)} aria-label={`${isAr ? 'إضافة' : 'Add'} ${localize(template.title, locale)}`} className="strategy-library-result strategy-library-result--add">
+        <span className="shrink-0" style={{ color: appearance.color }}><Icon size={14} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-medium text-plt-text">{localize(template.title, locale)}</span>
+          <span className="strategy-library-result-description">{localize(template.description, locale)}</span>
+        </span>
+        <span className="strategy-library-result-add"><Plus size={14} /></span>
+      </button>
+      <button type="button" className="strategy-library-result-learn" onClick={() => setEducation(getBlockEducation(template, locale))} aria-label={`${isAr ? 'تعرف على' : 'Learn about'} ${localize(template.title, locale)}`} title={isAr ? 'تعرف على الكتلة' : 'Learn about this block'}><Info size={15} /></button>
+    </div>;
+  };
 
   return (
-    <section
-      className="rounded-xl border border-white/15 bg-black overflow-hidden shadow-2xl"
+    <><section
+      className="strategy-library-panel"
       aria-label={`${isAr ? 'خيارات الإضافة إلى' : 'Add options for'} ${localize(title, locale)}`}
     >
-      <div className="flex min-h-11 items-center border-b border-plt-border px-3 focus-within:border-white/30">
-        <Search size={14} className="shrink-0 text-white/40" />
+      <header className="strategy-library-header">
+        <div className="min-w-0">
+          <p className="strategy-library-eyebrow">{isAr ? 'مكتبة الكتل' : 'Block library'}</p>
+          <h2 className="strategy-library-title">{isAr ? `إضافة إلى ${localize(title, locale)}` : `Add to ${localize(title, locale)}`}</h2>
+          <p className="strategy-library-description">{isAr ? 'اختر كتلة، ثم اضبطها على اللوحة.' : 'Choose a block, then configure it on the canvas.'}</p>
+        </div>
+        <button type="button" onClick={onClose} className="strategy-library-close" aria-label={isAr ? 'إغلاق المكتبة' : 'Close block library'}><X size={16} /></button>
+      </header>
+
+      <label className="strategy-library-search">
+        <Search size={16} className="shrink-0 text-plt-muted" aria-hidden="true" />
         <input
           autoFocus
+          type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={localize(search, locale)}
           aria-label={localize(search, locale)}
-          className="min-w-0 flex-1 bg-transparent px-2.5 font-sans text-xs text-white outline-none placeholder:text-plt-muted"
+          className="min-w-0 flex-1 bg-transparent font-sans text-xs text-plt-text outline-none placeholder:text-plt-muted"
         />
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex min-h-9 min-w-9 items-center justify-center rounded-lg text-plt-muted transition-colors hover:bg-white/[0.06] hover:text-white"
-          aria-label={isAr ? 'إغلاق المكتبة' : 'Close block library'}
-        >
-          <X size={14} />
-        </button>
-      </div>
+      </label>
 
-      <div className="no-scrollbar max-h-64 overflow-y-auto">
-        {groupedTemplates.map((group) => (
-          <section key={group.id} aria-labelledby={`block-library-${group.id}`} className="border-b border-plt-border last:border-b-0">
-            <header className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-3 py-2">
-              <h5 id={`block-library-${group.id}`} className="text-[9px] font-semibold uppercase tracking-[0.1em] text-white/60">
-                {localize(group.title, locale)}
-              </h5>
-              <span className="tabular-nums font-sans text-[9px] text-white/30">{group.templates.length}</span>
-            </header>
-            {group.templates.map((template) => {
-              const appearance = NODE_APPEARANCE[template.kind];
-              const Icon = appearance.icon;
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => onAdd(template)}
-                  className="flex min-h-14 w-full items-center gap-3 border-b border-white/[0.06] px-3 py-2.5 text-start transition-colors last:border-b-0 hover:bg-plt-hover"
-                >
-                  <span className="shrink-0" style={{ color: appearance.color }}>
-                    <Icon size={14} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-medium text-white">{localize(template.title, locale)}</span>
-                    <span className="mt-0.5 block text-[10px] leading-4 text-plt-muted">{localize(template.description, locale)}</span>
-                  </span>
-                  <Plus size={14} className="shrink-0 text-white/45" />
-                </button>
-              );
-            })}
-          </section>
-        ))}
-
-        {templates.length === 0 && (
-          <p className="px-3 py-8 text-center text-xs text-plt-muted">
-            {isAr ? 'لا توجد خيارات مطابقة.' : 'No matching options.'}
-          </p>
-        )}
-      </div>
-    </section>
+      {isSearching ? <div className="strategy-library-results custom-scrollbar border-t border-plt-border-soft" role="region" aria-label={isAr ? 'نتائج البحث' : 'Search results'}>
+        <div className="strategy-library-results-label"><span>{isAr ? 'نتائج البحث' : 'Search results'}</span><span className="tabular-nums">{searchResults.length}</span></div>
+        {searchResults.length ? searchResults.map(renderOption) : <p className="strategy-library-empty">{isAr ? 'لا توجد خيارات مطابقة.' : 'No matching options.'}</p>}
+      </div> : selectedGroup ? <div className="strategy-library-browser">
+        <nav className="strategy-library-categories custom-scrollbar" aria-label={isAr ? 'فئات الكتل' : 'Block categories'}>
+          {groups.map((group) => <button key={group.id} type="button" aria-pressed={group.id === selectedGroup.id} onClick={() => setActiveCategory(group.id)} className={`strategy-library-category ${group.id === selectedGroup.id ? 'is-active' : ''}`}>
+            <span className="min-w-0">{localize(group.title, locale)}</span><span className="shrink-0 tabular-nums">{group.templates.length}</span>
+          </button>)}
+        </nav>
+        <div className="strategy-library-results custom-scrollbar" role="region" aria-label={localize(selectedGroup.title, locale)}>
+          <div className="strategy-library-results-label"><span>{localize(selectedGroup.title, locale)}</span><span className="tabular-nums">{selectedGroup.templates.length}</span></div>
+          {selectedGroup.templates.map(renderOption)}
+        </div>
+      </div> : <p className="strategy-library-empty">{isAr ? 'لا توجد كتل متاحة.' : 'No blocks are available.'}</p>}
+    </section>{education && <StrategyLibraryEducationDrawer guide={education} locale={locale} onClose={() => setEducation(null)} />}</>
   );
 }

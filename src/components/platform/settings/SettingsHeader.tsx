@@ -13,8 +13,13 @@ import {
   Globe,
 } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
+import { TourTriggerButton } from '@/components/ui/tour';
 
-export default function SettingsHeader() {
+interface SettingsHeaderProps {
+  onStartTour?: () => void;
+}
+
+export default function SettingsHeader({ onStartTour }: SettingsHeaderProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -86,31 +91,31 @@ export default function SettingsHeader() {
       <div className="flex items-center gap-2">
         <Link
           href="/home"
-          className="text-xs md:text-sm text-text-muted font-normal hover:text-white transition-colors"
+          className="text-xs md:text-sm text-plt-muted font-normal hover:text-plt-text transition-colors"
         >
           {t('nav.home')}
         </Link>
-        <span className="text-xs md:text-sm text-text-muted">/</span>
+        <span className="text-xs md:text-sm text-plt-muted">/</span>
 
         <div className="relative" ref={menuRef}>
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
             aria-expanded={isOpen}
-            className="group inline-flex items-center gap-1.5 text-2xl md:text-3xl font-bold text-white tracking-tight hover:opacity-90 transition-opacity focus:outline-hidden cursor-pointer"
+            className="group inline-flex items-center gap-1.5 text-2xl md:text-3xl font-bold text-plt-text tracking-tight hover:opacity-90 transition-opacity focus:outline-hidden cursor-pointer"
           >
             <span>{t('nav.settings')}</span>
             <ChevronDown
-              className={`w-5 h-5 text-text-muted group-hover:text-white transition-transform duration-200 ${
-                isOpen ? 'transform rotate-180 text-white' : ''
+              className={`w-5 h-5 text-plt-muted group-hover:text-plt-text transition-transform duration-200 ${
+                isOpen ? 'transform rotate-180 text-plt-text' : ''
               }`}
             />
           </button>
 
           {/* Dropdown Menu for Settings & Platform Views */}
           {isOpen && (
-            <div className="absolute start-0 top-full mt-2 w-64 rounded-xl bg-black border border-border-subtle shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+            <div className="absolute start-0 top-full mt-2 w-64 rounded-xl bg-plt-elevated border border-plt-border shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="px-3 py-1.5 text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
                 {t('settings.title')}
               </div>
               {SETTINGS_SECTIONS.map((section) => {
@@ -120,19 +125,19 @@ export default function SettingsHeader() {
                     key={section.id}
                     type="button"
                     onClick={() => scrollToSection(section.id)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-white hover:bg-white/[0.04] border border-transparent transition-colors text-start cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-plt-subtle hover:text-plt-text hover:bg-plt-hover border border-transparent transition-colors text-start cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 text-text-muted" />
+                      <Icon className="w-4 h-4 text-plt-muted" />
                       <span>{section.label}</span>
                     </div>
                   </button>
                 );
               })}
 
-              <div className="my-1.5 border-t border-border-subtle" />
+              <div className="my-1.5 border-t border-plt-border" />
 
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+              <div className="px-3 py-1.5 text-[11px] font-semibold text-plt-muted uppercase tracking-wider">
                 {t('nav.home')} / {t('nav.markets')}
               </div>
               {PLATFORM_VIEWS.map((page) => {
@@ -145,13 +150,13 @@ export default function SettingsHeader() {
                       setIsOpen(false);
                       router.push(page.href);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-start text-text-secondary hover:text-white hover:bg-white/[0.04] border border-transparent cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-start text-plt-subtle hover:text-plt-text hover:bg-plt-hover border border-transparent cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 text-text-muted" />
+                      <Icon className="w-4 h-4 text-plt-muted" />
                       <span>{page.label}</span>
                     </div>
-                    <span className="text-text-muted text-xs">↗</span>
+                    <span className="text-plt-muted text-xs">↗</span>
                   </button>
                 );
               })}
@@ -159,6 +164,13 @@ export default function SettingsHeader() {
           )}
         </div>
       </div>
+
+      {/* Right: Quick Tour Trigger */}
+      {onStartTour && (
+        <div className="flex items-center">
+          <TourTriggerButton onClick={onStartTour} />
+        </div>
+      )}
     </header>
   );
 }

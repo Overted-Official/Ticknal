@@ -48,8 +48,8 @@ export default function BacktestScopeControls({
   }[item]);
 
   return (
-    <div className="mt-4 border-b border-white/10 pb-4">
-      <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/10 bg-black p-1" role="group" aria-label={isAr ? 'نطاق الاختبار' : 'Backtest scope'}>
+    <div className="mt-4 border-b border-plt-border pb-4">
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-plt-border bg-plt-base p-1" role="group" aria-label={isAr ? 'نطاق الاختبار' : 'Backtest scope'}>
         {MODES.map((item) => (
           <button
             key={item}
@@ -57,7 +57,7 @@ export default function BacktestScopeControls({
             onClick={() => onModeChange(item)}
             aria-pressed={mode === item}
             className={`min-h-10 rounded-lg px-2 text-[10px] font-semibold transition-colors sm:text-[11px] ${
-              mode === item ? 'bg-white/[0.08] text-white shadow-xs' : 'text-plt-muted hover:bg-white/[0.03] hover:text-white'
+              mode === item ? 'bg-plt-active text-plt-text shadow-xs' : 'text-plt-muted hover:bg-plt-hover hover:text-plt-text'
             }`}
           >
             {label(item)}
@@ -68,7 +68,7 @@ export default function BacktestScopeControls({
       <p className="mt-2 text-[11px] leading-5 text-plt-muted">{description(mode)}</p>
 
       {mode === 'all' && (
-        <div className="mt-3 flex items-center gap-2 border-l-2 border-white/20 py-1 ps-3 text-[11px] text-white/70 rtl:border-l-0 rtl:border-r-2">
+        <div className="mt-3 flex items-center gap-2 border-l-2 border-plt-border py-1 ps-3 text-[11px] text-plt-subtle rtl:border-l-0 rtl:border-r-2">
           <Calendar size={13} className="shrink-0 text-plt-muted" />
           {isAr ? 'من أول جلسة متاحة حتى أحدث جلسة.' : 'Earliest available session through the latest session.'}
         </div>
@@ -83,7 +83,7 @@ export default function BacktestScopeControls({
               value={customStart}
               max={customEnd}
               onChange={(event) => onCustomStartChange(event.target.value)}
-              className="min-h-11 w-full rounded-xl border border-white/10 bg-black px-3 font-sans text-[11px] tabular-nums text-white [color-scheme:dark] outline-none focus:border-white/30"
+              className="min-h-11 w-full rounded-xl border border-plt-border bg-plt-base px-3 font-sans text-[11px] tabular-nums text-plt-text outline-none focus:border-plt-border"
             />
           </label>
           <label>
@@ -93,7 +93,7 @@ export default function BacktestScopeControls({
               value={customEnd}
               min={customStart}
               onChange={(event) => onCustomEndChange(event.target.value)}
-              className="min-h-11 w-full rounded-xl border border-white/10 bg-black px-3 font-sans text-[11px] tabular-nums text-white [color-scheme:dark] outline-none focus:border-white/30"
+              className="min-h-11 w-full rounded-xl border border-plt-border bg-plt-base px-3 font-sans text-[11px] tabular-nums text-plt-text outline-none focus:border-plt-border"
             />
           </label>
         </div>
@@ -102,8 +102,8 @@ export default function BacktestScopeControls({
       {mode === 'holdout' && (
         <div className="mt-3 animate-in fade-in duration-150">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2">
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-white">
+            <div className="rounded-xl border border-plt-border bg-plt-hover p-3.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-plt-text">
                 <Lock size={12} className="text-plt-profit" />
                 {isAr ? 'فترة البناء' : 'Build period'}
               </div>
@@ -114,15 +114,15 @@ export default function BacktestScopeControls({
                   type="date"
                   value={buildEnd}
                   onChange={(event) => onBuildEndChange(event.target.value)}
-                  className="min-h-11 w-full rounded-xl border border-white/10 bg-black px-3 font-sans text-[10px] tabular-nums text-white [color-scheme:dark] outline-none focus:border-white/30"
+                  className="min-h-11 w-full rounded-xl border border-plt-border bg-plt-base px-3 font-sans text-[10px] tabular-nums text-plt-text outline-none focus:border-plt-border"
                 />
               </label>
             </div>
 
             <div className="flex items-center text-plt-muted rtl:rotate-180"><ArrowRight size={14} /></div>
 
-            <div className={`rounded-xl border p-3.5 bg-white/[0.02] ${unseenRevealed ? 'border-brand-blue/50' : 'border-white/10'}`}>
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-white">
+            <div className={`rounded-xl border p-3.5 bg-plt-hover ${unseenRevealed ? 'border-brand-blue/50' : 'border-plt-border'}`}>
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-plt-text">
                 {unseenRevealed ? <ShieldCheck size={12} className="text-brand-blue" /> : <Eye size={12} className="text-plt-muted" />}
                 {isAr ? 'الفترة غير المرئية' : 'Unseen period'}
               </div>
@@ -131,7 +131,7 @@ export default function BacktestScopeControls({
                   ? (isAr ? 'النتائج معروضة الآن للمقارنة.' : 'Results are now revealed for comparison.')
                   : (isAr ? 'تبقى النتائج مخفية حتى تثبيت القواعد.' : 'Results stay hidden until the rules are locked.')}
               </p>
-              <p className="mt-4 text-[10px] tabular-nums text-white/70">{isAr ? 'بعد تاريخ البناء ← الأحدث' : 'After build date → latest'}</p>
+              <p className="mt-4 text-[10px] tabular-nums text-plt-subtle">{isAr ? 'بعد تاريخ البناء ← الأحدث' : 'After build date → latest'}</p>
             </div>
           </div>
 
@@ -143,8 +143,8 @@ export default function BacktestScopeControls({
               unseenRevealed
                 ? 'border-brand-blue/40 text-brand-blue'
                 : canRun
-                  ? 'border-white/20 text-white hover:bg-white/[0.04]'
-                  : 'cursor-not-allowed border-white/10 text-plt-muted'
+                  ? 'border-plt-border text-plt-text hover:bg-plt-hover'
+                  : 'cursor-not-allowed border-plt-border-soft text-plt-muted'
             }`}
           >
             {unseenRevealed ? <ShieldCheck size={14} /> : <Eye size={14} />}

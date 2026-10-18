@@ -41,6 +41,9 @@ export interface AdvancedStrategyNode {
   readonly customName?: string;
   readonly outputName?: string;
   readonly connections?: readonly string[];
+  /** Presentation-only grouping; execution still uses the original card and its connections. */
+  readonly moduleId?: string;
+  readonly moduleName?: string;
   readonly parameters?: Readonly<Record<string, string>>;
   readonly details?: readonly AdvancedNodeDetail[];
   readonly metrics?: readonly AdvancedNodeMetric[];
@@ -54,6 +57,25 @@ export interface AdvancedStrategyStage {
   readonly title: LocalizedAdvancedCopy;
   readonly description: LocalizedAdvancedCopy;
   readonly branchLabel?: LocalizedAdvancedCopy;
+}
+
+/** Compact overview only; complete formulas, weights and overrides remain editable in settings. */
+export function getStrategyNodeParameterRows(node: AdvancedStrategyNode, locale: 'en' | 'ar', showOutput = true): readonly (readonly [string, string])[] {
+  const isAr = locale === 'ar';
+  const parameters = node.parameters ?? {};
+  const json = (key: string): unknown => { try { return JSON.parse(parameters[key] ?? 'null'); } catch { return null; } };
+  if (node.templateId === 'formula') {
+    const rows = json('registers');
+    return [[isAr ? 'المدخلات' : 'Inputs', String(node.connections?.length ?? 0)], [isAr ? 'النتائج' : 'Results', String(Array.isArray(rows) ? rows.length : 0)], [isAr ? 'المخرج' : 'Output', parameters.outputKey || '—']];
+  }
+  if (node.templateId === 'rbf-model') {
+    const raw = json('model'); const model = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+    return [[isAr ? 'الميزات' : 'Features', String(node.connections?.length ?? 0)], [isAr ? 'متجهات الدعم' : 'Support vectors', Array.isArray(model.vectors) ? String(model.vectors.length) : '—'], [isAr ? 'جلسات التهيئة' : 'Warm-up bars', typeof model.warmupBars === 'number' ? String(model.warmupBars) : '—']];
+  }
+  return Object.entries(parameters).filter(([key]) => !['sourceRuleId', 'indicatorId', 'indicatorBacklogId', 'indicatorName'].includes(key) && (key !== 'outputKey' || showOutput)).slice(0,3).map(([key, value]) => {
+    if (key === 'symbolOverrides') { const rows = json(key); return [isAr ? 'تخصيص الشركات' : 'Company overrides', String(Array.isArray(rows) ? rows.length : 0)]; }
+    return [key.replace(/([A-Z])/gu, ' $1'), value];
+  });
 }
 
 export interface AdvancedBlockTemplate {
@@ -230,17 +252,21 @@ export const TYPHON_BLUEPRINT_NODES: readonly AdvancedStrategyNode[] = [
 export const ADVANCED_BLOCK_TEMPLATES: readonly AdvancedBlockTemplate[] = [
   { id: 'market-input', stage: 'inputs', kind: 'input', libraryGroup: 'marketData', title: { en: 'Market data', ar: 'بيانات السوق' }, description: { en: 'OHLCV, benchmark or another available series.', ar: 'OHLCV أو مؤشر مرجعي أو سلسلة أخرى متاحة.' } },
   { id: 'parameter', stage: 'inputs', kind: 'input', libraryGroup: 'marketData', title: { en: 'Reusable value', ar: 'قيمة قابلة لإعادة الاستخدام' }, description: { en: 'A named value reused across several blocks.', ar: 'قيمة مسماة يعاد استخدامها في عدة كتل.' } },
+  { id: 'execution-policy', stage: 'inputs', kind: 'input', libraryGroup: 'marketData', title: { en: 'Backtest execution', ar: 'تنفيذ الاختبار التاريخي' }, description: { en: 'Choose when signals are filled and whether positions use whole shares.', ar: 'حدد موعد تنفيذ الإشارات وما إذا كانت المراكز تستخدم أسهماً كاملة.' } },
   { id: 'indicator', stage: 'inputs', kind: 'input', libraryGroup: 'indicators', title: { en: 'Indicator', ar: 'مؤشر' }, description: { en: 'Add one indicator from the Ticknal library.', ar: 'أضف مؤشراً من مكتبة Ticknal.' } },
   { id: 'weighted-composite', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Weighted calculation', ar: 'حساب موزون' }, description: { en: 'Normalize and combine several values by weight.', ar: 'وحّد وادمج عدة قيم حسب الأوزان.' } },
-  { id: 'transform', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Transform or smooth', ar: 'تحويل أو تنعيم' }, description: { en: 'Apply EMA, SMA, normalization or another transformation.', ar: 'طبق EMA أو SMA أو التوحيد أو تحويلاً آخر.' } },
-  { id: 'rolling-statistic', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Rolling statistic', ar: 'إحصاء متحرك' }, description: { en: 'Calculate a moving minimum, maximum, mean or median.', ar: 'احسب الحد الأدنى أو الأقصى أو المتوسط أو الوسيط المتحرك.' } },
-  { id: 'math-operation', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Math operation', ar: 'عملية حسابية' }, description: { en: 'Add, subtract, multiply or divide available values.', ar: 'اجمع أو اطرح أو اضرب أو اقسم القيم المتاحة.' } },
+  { id: 'formula', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Custom calculation', ar: 'حساب مخصص' }, description: { en: 'Combine formulas, conditional logic, rolling windows, and memory of prior values.', ar: 'ادمج المعادلات والشروط والنوافذ المتحركة وذاكرة القيم السابقة.' } },
+  { id: 'formula-output', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Calculation output', ar: 'مخرج حساب' }, description: { en: 'Reuse another named result from a custom calculation.', ar: 'أعد استخدام نتيجة مسماة أخرى من حساب مخصص.' } },
+  { id: 'rbf-model', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'RBF probability model', ar: 'نموذج احتمالات RBF' }, description: { en: 'Evaluate your trained radial-basis model using connected features and supplied weights.', ar: 'قيّم نموذجك المدرب باستخدام المدخلات المتصلة والأوزان المحددة.' } },
+  { id: 'transform', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Transform or smooth', ar: 'تحويل أو تنعيم' }, description: { en: 'Smooth, lag, bound, or reshape a series.', ar: 'نعّم السلسلة أو أرجعها للخلف أو احصرها بين حدين أو غيّر شكلها.' } },
+  { id: 'rolling-statistic', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Rolling statistic', ar: 'إحصاء متحرك' }, description: { en: 'Calculate a rolling extreme, average, deviation, median, or percentile rank.', ar: 'احسب قيمة قصوى أو متوسطاً أو انحرافاً معيارياً أو وسيطاً أو ترتيباً مئوياً متحركاً.' } },
+  { id: 'math-operation', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Math operation', ar: 'عملية حسابية' }, description: { en: 'Combine values, select extrema, or use the first available value.', ar: 'ادمج القيم أو اختر قيمة قصوى أو أول قيمة متاحة.' } },
   { id: 'condition', stage: 'entry', kind: 'decision', libraryGroup: 'rules', title: { en: 'Create a rule', ar: 'إنشاء قاعدة' }, description: { en: 'Compare one value with a fixed level or detect a crossover.', ar: 'قارن قيمة بمستوى ثابت أو اكتشف اختراقاً.' } },
   { id: 'sell-condition', stage: 'exit', kind: 'exit', libraryGroup: 'rules', title: { en: 'Create a sell rule', ar: 'إنشاء قاعدة بيع' }, description: { en: 'Compare values or detect a crossover that closes a position.', ar: 'قارن القيم أو اكتشف اختراقاً يغلق الصفقة.' } },
   { id: 'priority-trigger', stage: 'entry', kind: 'decision', libraryGroup: 'combine', title: { en: 'Priority levels', ar: 'مستويات الأولوية' }, description: { en: 'Buy when a connected value crosses any listed level.', ar: 'اشترِ عند تجاوز القيمة المتصلة لأي مستوى مدرج.' } },
   { id: 'position-memory', stage: 'state', kind: 'state', libraryGroup: 'holding', title: { en: 'Remember a value', ar: 'تذكر قيمة' }, description: { en: 'Capture a connected value at entry or exit; optionally refresh each bar.', ar: 'احفظ قيمة متصلة عند الدخول أو الخروج مع خيار تحديثها كل جلسة.' } },
   { id: 'rolling-state', stage: 'state', kind: 'state', libraryGroup: 'holding', title: { en: 'Track high or low', ar: 'تتبع أعلى أو أدنى قيمة' }, description: { en: 'Track an extreme since the position opened.', ar: 'تتبع قيمة قصوى منذ فتح الصفقة.' } },
-  { id: 'dynamic-target', stage: 'exit', kind: 'exit', libraryGroup: 'protect', title: { en: 'Profit target', ar: 'هدف ربح' }, description: { en: 'Exit after close reaches entry price plus a multiple of the connected price distance.', ar: 'اخرج عندما يصل الإغلاق إلى سعر الدخول مضافاً إليه مضاعف مسافة السعر المتصلة.' } },
+  { id: 'dynamic-target', stage: 'exit', kind: 'exit', libraryGroup: 'protect', title: { en: 'Profit target', ar: 'هدف ربح' }, description: { en: 'Exit when the close reaches a price-distance or percentage target. Lock the source at the buy signal or recalculate each session.', ar: 'اخرج عند بلوغ هدف سعري أو نسبة من سعر الدخول. ثبّت المصدر عند إشارة الشراء أو أعد حسابه كل جلسة.' } },
   { id: 'trailing-exit', stage: 'exit', kind: 'exit', libraryGroup: 'protect', title: { en: 'Trailing stop', ar: 'وقف متحرك' }, description: { en: 'Exit after close falls below tracked high minus an ATR multiple.', ar: 'اخرج عندما ينخفض الإغلاق دون أعلى سعر متتبع ناقص مضاعف ATR.' } },
 ];
 

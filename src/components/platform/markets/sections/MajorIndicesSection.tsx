@@ -114,12 +114,12 @@ export default function MajorIndicesSection({
       <div className="w-full bg-transparent p-0 border-0">
         {/* 1. Header: 'Major indices›' (Clean, smaller title) */}
         <div className="flex items-center gap-1 mb-3 cursor-pointer group w-fit">
-          <h3 className="text-sm sm:text-base font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
+          <h3 className="text-sm sm:text-base font-semibold tracking-tight text-plt-text transition-colors">
             {locale === 'ar' ? 'المؤشرات الرئيسية' : 'Major indices'}
           </h3>
           <ChevronRight
             size={16}
-            className="text-neutral-400 group-hover:text-white transition-colors translate-y-[0.5px]"
+            className="text-plt-muted group-hover:text-plt-text transition-colors translate-y-[0.5px]"
           />
         </div>
 
@@ -208,7 +208,7 @@ export default function MajorIndicesSection({
         </div>
 
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
-        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black overflow-hidden pt-2">
+        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-plt-base overflow-hidden pt-2">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-between p-6 select-none" role="status" aria-label={locale === 'ar' ? 'جاري تحميل بيانات المؤشرات…' : 'Loading market index data…'}>
               <div className="flex items-center justify-between">
@@ -217,10 +217,10 @@ export default function MajorIndicesSection({
               </div>
               <div className="flex-1 flex items-end gap-2 py-6 opacity-30">
                 {[30, 45, 52, 48, 62, 58, 72, 68, 80, 76, 88, 92].map((h, i) => (
-                  <div key={i} className="flex-1 bg-white/[0.20] rounded-xs animate-pulse" style={{ height: `${h}%` }} />
+                  <div key={i} className="flex-1 bg-plt-active rounded-xs animate-pulse" style={{ height: `${h}%` }} />
                 ))}
               </div>
-              <div className="flex justify-between border-t border-white/[0.06] pt-3">
+              <div className="flex justify-between border-t border-plt-border-soft pt-3">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Skeleton key={i} className="h-2.5 w-10" />
                 ))}
@@ -336,7 +336,7 @@ export default function MajorIndicesSection({
                           </span>
                         </div>
                         {data.open && (
-                          <div className="flex items-center justify-between gap-4 text-neutral-500 text-[11px] pt-1 border-t border-white/5">
+                          <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1 border-t border-plt-border-soft">
                             <span>{locale === 'ar' ? 'الافتتاح: ' : 'O: '}{Number(data.open).toFixed(1)}</span>
                             <span>{locale === 'ar' ? 'الأعلى: ' : 'H: '}{Number(data.high).toFixed(1)}</span>
                             <span>{locale === 'ar' ? 'الأدنى: ' : 'L: '}{Number(data.low).toFixed(1)}</span>

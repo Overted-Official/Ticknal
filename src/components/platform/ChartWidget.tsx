@@ -34,6 +34,7 @@ import { toast } from '@/components/ui/sonner';
 import { useTranslation } from '@/lib/i18n';
 import { useGuestGuard } from '@/context/GuestGuardContext';
 import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
+import { useTheme } from 'next-themes';
 
 // Modular Chart Imports
 import type {
@@ -72,7 +73,7 @@ export default function ChartWidget({
   timeframe = 'D',
   canonicalTimeframe = timeframe,
   watchlist = [],
-  selectedStrategy = 'psi',
+  selectedStrategy = 'typhon',
   setSelectedStrategy,
   strategyParams = {},
   strategyStartDate,
@@ -99,8 +100,10 @@ export default function ChartWidget({
   currentPrice,
   brokerageAccounts = [],
   onLoadMoreHistory,
+  onStartTour,
 }: ChartWidgetProps) {
   const { locale } = useTranslation();
+  const { resolvedTheme } = useTheme();
   const { isGuest, isLoading: isGuestStatusLoading } = useGuestGuard();
   const isHeroScene = useHeroSceneMode();
   const router = useRouter();
@@ -644,6 +647,35 @@ export default function ChartWidget({
     });
   }, [mobileChartMode]);
 
+  // Dynamically sync chart canvas colors when user switches between Dark and Light Mode
+  useEffect(() => {
+    if (!chartRef.current || isHeroScene) return;
+    const isLight = resolvedTheme === 'light';
+    chartRef.current.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: isLight ? '#ffffff' : cssTokenColor('--plt-bg-chart', '#000000') },
+        textColor: isLight ? '#52525b' : cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
+      },
+      grid: {
+        vertLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--palette-chart-grid', '#202020') },
+        horzLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--palette-chart-grid', '#202020') },
+      },
+      rightPriceScale: {
+        borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
+      },
+      timeScale: {
+        borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
+      },
+    });
+    if (isFund && candlestickSeriesRef.current) {
+      candlestickSeriesRef.current.applyOptions({
+        topColor: isLight ? 'rgba(9, 9, 11, 0.12)' : 'rgba(255, 255, 255, 0.14)',
+        bottomColor: isLight ? 'rgba(9, 9, 11, 0.01)' : 'rgba(255, 255, 255, 0.02)',
+        lineColor: isLight ? '#09090b' : cssTokenColor('--plt-text-primary', 'rgb(255, 255, 255)'),
+      } as any);
+    }
+  }, [resolvedTheme, isFund, isHeroScene]);
+
   // Coordinate-to-candle inspection engine for mobile scrubbing
   const inspectCoordinate = useCallback(
     (clientX: number, _clientY?: number) => {
@@ -1183,10 +1215,14 @@ export default function ChartWidget({
           });
           setIsAddOrderOpen(true);
         }}
+        onStartTour={onStartTour}
       />
 
       {/* 1. Main Candlestick Price Stage */}
-      <div className="relative w-full flex-1 min-h-0 bg-plt-chart overflow-hidden">
+      <div
+        data-tour="chart-main-canvas"
+        className="relative w-full flex-1 min-h-0 bg-plt-chart overflow-hidden"
+      >
         {/* Top-Left Live Ticker Name & OHLCV Legend directly on chart canvas */}
         <ChartTickerHeader
           symbol={symbol}
@@ -1222,10 +1258,10 @@ export default function ChartWidget({
         {contextMenu && typeof document !== 'undefined' && createPortal(
           <div
             style={{ left: contextMenu.x, top: contextMenu.y }}
-            className="fixed z-[120] py-1.5 px-1 rounded-xl bg-black border border-border-subtle shadow-2xl text-xs text-text-secondary select-none animate-in fade-in zoom-in-95 duration-100 min-w-56"
+            className="fixed z-[120] py-1.5 px-1 rounded-xl bg-plt-base border border-plt-border shadow-2xl text-xs text-plt-muted select-none animate-in fade-in zoom-in-95 duration-100 min-w-56"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-2.5 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider border-b border-border-subtle mb-1">
+            <div className="px-2.5 py-1 text-[10px] font-semibold text-plt-muted uppercase tracking-wider border-b border-plt-border-soft mb-1">
               {locale === 'ar' ? 'إجراءات الرسم البياني • ' : 'Chart Actions • '}{symbol.replace('.CA', '')}
             </div>
             <button
@@ -1286,7 +1322,7 @@ export default function ChartWidget({
         <ChartLoadingSkeleton isLoading={isChartLoading} displaySymbol={displaySymbol} />
 
         {/* Mobile & Touch Inspection / Pan Controller Pill */}
-        <div className="absolute bottom-3 right-3 rtl:right-auto rtl:left-3 z-20 flex items-center gap-1 bg-black/90 border border-white/10 p-0.5 rounded-full shadow-2xl backdrop-blur-md select-none font-sans text-[11px]">
+        <div className="absolute bottom-3 right-3 rtl:right-auto rtl:left-3 z-20 flex items-center gap-1 bg-plt-base/90 border border-plt-border p-0.5 rounded-full shadow-2xl backdrop-blur-md select-none font-sans text-[11px]">
           <button
             type="button"
             onClick={() => {
@@ -1296,8 +1332,8 @@ export default function ChartWidget({
             }}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors cursor-pointer ${
               mobileChartMode === 'pan'
-                ? 'bg-white/15 text-white font-medium shadow-sm'
-                : 'text-white/50 hover:text-white/80'
+                ? 'bg-plt-active text-plt-text font-medium shadow-sm'
+                : 'text-plt-muted hover:text-plt-text'
             }`}
             title={locale === 'ar' ? 'وضع التحريك: اسحب للتنقل في الخط الزمني' : 'Pan Mode: Drag to scroll timeline'}
           >
@@ -1326,7 +1362,7 @@ export default function ChartWidget({
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors cursor-pointer ${
               mobileChartMode === 'inspect'
                 ? 'bg-brand-blue/20 text-brand-blue border border-brand-blue/30 font-medium shadow-sm'
-                : 'text-white/50 hover:text-white/80'
+                : 'text-plt-muted hover:text-plt-text'
             }`}
             title={locale === 'ar' ? 'وضع الفحص: مرر إصبعك على الشموع لرؤية الأسعار' : 'Inspect Mode: Glide finger across candles to see prices'}
           >
@@ -1341,7 +1377,7 @@ export default function ChartWidget({
                 setHoveredCandle(null);
                 chartRef.current?.clearCrosshairPosition();
               }}
-              className="w-5 h-5 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors ml-0.5 rtl:ml-0 rtl:mr-0.5 cursor-pointer"
+              className="w-5 h-5 rounded-full flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-active transition-colors ml-0.5 rtl:ml-0 rtl:mr-0.5 cursor-pointer"
               title={locale === 'ar' ? 'إعادة ضبط المؤشر' : 'Reset Crosshair'}
             >
               <X size={11} />
@@ -1399,7 +1435,7 @@ export default function ChartWidget({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
-                className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer z-0"
+                className="fixed inset-0 bg-plt-base/80 backdrop-blur-sm cursor-pointer z-0"
                 onClick={() => setPositionsDrawerOpen(false)}
                 aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close drawer overlay'}
               />
@@ -1416,12 +1452,12 @@ export default function ChartWidget({
                   stiffness: 340,
                   mass: 0.8,
                 }}
-                className="relative drawer-sheet-viewport-safe w-full md:w-1/2 lg:w-1/2 max-w-full bg-black text-text-primary rounded-none border-l rtl:border-l-0 rtl:border-r border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
+                className="relative drawer-sheet-viewport-safe w-full md:w-1/2 lg:w-1/2 max-w-full bg-plt-base text-plt-text rounded-none border-l rtl:border-l-0 rtl:border-r border-plt-border flex flex-col shadow-2xl z-10 overflow-hidden"
               >
                 {/* Replicated Strategy Report Header */}
-                <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 sm:py-0 flex items-center justify-between border-b border-white/10 shrink-0 bg-black">
+                <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 sm:py-0 flex items-center justify-between border-b border-plt-border shrink-0 bg-plt-base">
                   <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
-                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-plt-active border border-plt-border overflow-hidden flex items-center justify-center shrink-0">
                       {logoUrl && !positionsImgError ? (
                         <img
                           src={logoUrl}
@@ -1430,24 +1466,24 @@ export default function ChartWidget({
                           onError={() => setPositionsImgError(true)}
                         />
                       ) : (
-                        <span className="text-xs font-bold text-white uppercase font-sans">
+                        <span className="text-xs font-bold text-plt-text uppercase font-sans">
                           {displaySymbol.slice(0, 2)}
                         </span>
                       )}
                     </div>
                     <div className="flex flex-col min-w-0 flex-1 overflow-hidden leading-tight">
                       <span
-                        className="text-sm font-semibold text-white truncate max-w-[200px] sm:max-w-[340px]"
+                        className="text-sm font-semibold text-plt-text truncate max-w-[200px] sm:max-w-[340px]"
                         title={companyName || displaySymbol}
                       >
                         {companyName || displaySymbol}
                       </span>
-                      <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <span className="font-semibold text-white/90 tabular-nums">
+                      <div className="flex items-center gap-1.5 text-xs text-plt-muted">
+                        <span className="font-semibold text-plt-text tabular-nums">
                           {displaySymbol}
                         </span>
                         <span>•</span>
-                        <span className="text-[11px] text-white/50">
+                        <span className="text-[11px] text-plt-muted">
                           {locale === 'ar' ? 'الصفقات والأوامر' : 'Positions & Orders'}
                         </span>
                       </div>
@@ -1458,7 +1494,7 @@ export default function ChartWidget({
                   <button
                     type="button"
                     onClick={() => setPositionsDrawerOpen(false)}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0 ml-3 rtl:ml-0 rtl:mr-3"
+                    className="w-8 h-8 rounded-full bg-plt-active hover:bg-plt-active/80 active:bg-plt-active text-plt-muted hover:text-plt-text transition-colors cursor-pointer flex items-center justify-center shrink-0 ml-3 rtl:ml-0 rtl:mr-3"
                     title={locale === 'ar' ? 'إغلاق (Esc)' : 'Close (Esc)'}
                     aria-label={locale === 'ar' ? 'إغلاق قائمة الصفقات' : 'Close Positions Drawer'}
                   >
@@ -1466,7 +1502,7 @@ export default function ChartWidget({
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-black">
+                <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-plt-base">
                   <TickerPositions
                     symbol={symbol}
                     companyName={companyName}

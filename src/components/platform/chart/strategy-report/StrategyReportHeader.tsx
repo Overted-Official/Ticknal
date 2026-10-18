@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/icon-library';
 import type { ComputedReportMetrics, BacktestPreset } from './types';
 import { useTranslation } from '@/lib/i18n';
+import { normalizeStrategyId } from '@/strategies/registry';
 
 interface StrategyReportHeaderProps {
   symbol: string;
@@ -27,8 +28,8 @@ interface StrategyReportHeaderProps {
 }
 
 const STRATEGY_SWITCHERS = [
-  { id: 'psi', name: 'Typhon' },
-  { id: 'psi_v2', name: 'Cerberus' },
+  { id: 'typhon', name: 'Typhon' },
+  { id: 'cerberus', name: 'Cerberus' },
   { id: 'hydra', name: 'Hydra' },
 ];
 
@@ -71,7 +72,7 @@ export default function StrategyReportHeader({
     <button
       type="button"
       onClick={onClose}
-      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0"
+      className="w-8 h-8 rounded-full bg-plt-hover hover:bg-plt-active active:bg-plt-active text-plt-subtle hover:text-plt-text transition-colors cursor-pointer flex items-center justify-center shrink-0"
       title={locale === 'ar' ? 'إغلاق التقرير (Esc)' : 'Close Report (Esc)'}
       aria-label={locale === 'ar' ? 'إغلاق تقرير الاستراتيجية' : 'Close Strategy Report Drawer'}
     >
@@ -80,11 +81,11 @@ export default function StrategyReportHeader({
   );
 
   return (
-    <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 xl:py-0 flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 xl:gap-4 border-b border-white/10 shrink-0 bg-black font-sans">
+    <div className="min-h-14 sm:min-h-16 px-4 sm:px-6 py-2.5 xl:py-0 flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 xl:gap-4 border-b border-plt-border shrink-0 bg-plt-base font-sans">
       {/* Top row on smaller screens / Left side on desktop: Company Info Lockup + Mobile Close */}
       <div className="flex items-center justify-between xl:justify-start gap-3 min-w-0 flex-1 overflow-hidden">
         <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
-          <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-plt-hover border border-plt-border overflow-hidden flex items-center justify-center shrink-0">
             {logoUrl && !imgError ? (
               <img
                 src={logoUrl}
@@ -93,19 +94,19 @@ export default function StrategyReportHeader({
                 onError={() => setImgError(true)}
               />
             ) : (
-              <span className="text-xs font-bold text-white uppercase font-sans">
+              <span className="text-xs font-bold text-plt-text uppercase font-sans">
                 {symbol.slice(0, 2)}
               </span>
             )}
           </div>
           <div className="flex flex-col min-w-0 flex-1 overflow-hidden leading-tight text-start">
             <span
-              className="font-semibold text-xs sm:text-sm text-white tracking-tight truncate block"
+              className="font-semibold text-xs sm:text-sm text-plt-text tracking-tight truncate block"
               title={companyName || symbol}
             >
               {companyName || symbol}
             </span>
-            <span className="text-[10px] sm:text-[11px] text-white/50 font-medium tabular-nums tracking-wide mt-0.5 truncate block">
+            <span className="text-[10px] sm:text-[11px] text-plt-muted font-medium tabular-nums tracking-wide mt-0.5 truncate block">
               {symbol}
             </span>
           </div>
@@ -123,11 +124,11 @@ export default function StrategyReportHeader({
         {setSelectedStrategy && (
           <div className="seg-control shrink-0">
             {STRATEGY_SWITCHERS.map((strat) => {
-              const isSelected = selectedStrategy === strat.id;
+              const isSelected = normalizeStrategyId(selectedStrategy) === strat.id;
               const name =
-                strat.id === 'psi'
+                strat.id === 'typhon'
                   ? locale === 'ar' ? 'تايفون' : 'Typhon'
-                  : strat.id === 'psi_v2'
+                  : strat.id === 'cerberus'
                   ? locale === 'ar' ? 'سيربيروس' : 'Cerberus'
                   : locale === 'ar' ? 'هيدرا' : 'Hydra';
 
@@ -145,7 +146,7 @@ export default function StrategyReportHeader({
           </div>
         )}
 
-        <div className="h-4 w-px bg-white/10 shrink-0 hidden md:block" />
+        <div className="h-4 w-px bg-plt-border shrink-0 hidden md:block" />
 
         {/* Timeframe Presets & Custom Trigger */}
         <div className="seg-control shrink-0">
@@ -188,26 +189,26 @@ export default function StrategyReportHeader({
         {/* Inline Custom Date Inputs */}
         {activePreset === 'custom' && (
           <div className="input-control-compact text-xs shrink-0 animate-in fade-in duration-150 font-sans">
-            <Calendar className="w-3.5 h-3.5 text-text-muted shrink-0" />
+            <Calendar className="w-3.5 h-3.5 text-plt-muted shrink-0" />
             <input
               type="date"
               value={strategyStartDate || '2025-01-01'}
               onChange={(e) => onSetCustomStartDate?.(e.target.value)}
-              className="bg-transparent text-text-primary focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
+              className="bg-transparent text-plt-text focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
             />
-            <span className="text-text-muted select-none text-[11px] leading-none">{isRTL ? '←' : '→'}</span>
+            <span className="text-plt-muted select-none text-[11px] leading-none">{isRTL ? '←' : '→'}</span>
             <input
               type="date"
               value={strategyEndDate || ''}
               onChange={(e) => onSetCustomEndDate?.(e.target.value)}
-              className="bg-transparent text-text-primary focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
+              className="bg-transparent text-plt-text focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
             />
           </div>
         )}
 
         {/* Desktop Close Button grouped tightly with the header controls */}
         <div className="hidden xl:flex items-center gap-2 sm:gap-2.5 shrink-0 ml-1">
-          <div className="h-4 w-px bg-white/10 shrink-0" />
+          <div className="h-4 w-px bg-plt-border shrink-0" />
           {closeButton}
         </div>
       </div>

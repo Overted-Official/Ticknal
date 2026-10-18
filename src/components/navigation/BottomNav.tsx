@@ -174,8 +174,8 @@ function BottomNavItem({
           strokeWidth={isActive ? 2.2 : 1.7}
           className={`transition-colors duration-150 ${
             isActive
-              ? 'text-white'
-              : 'text-zinc-500 group-hover:text-zinc-300'
+              ? 'text-plt-text'
+              : 'text-plt-muted group-hover:text-plt-subtle'
           }`}
         />
       </div>
@@ -184,8 +184,8 @@ function BottomNavItem({
       <span
         className={`text-[10px] font-sans tracking-tight leading-tight mt-0.5 truncate max-w-[62px] text-center transition-colors duration-150 ${
           isActive
-            ? 'font-semibold text-white'
-            : 'font-medium text-zinc-500 group-hover:text-zinc-300'
+            ? 'font-semibold text-plt-text'
+            : 'font-medium text-plt-muted group-hover:text-plt-subtle'
         }`}
       >
         {item.label}
@@ -363,6 +363,7 @@ export default function BottomNav() {
           <motion.button
             type="button"
             data-hero-action="alerts"
+            data-tour="home-mobile-notifications-btn"
             data-hero-scene-ready={isHeroScene ? 'true' : undefined}
             onClick={(e) => {
               if (isGuest && !isHeroScene) {
@@ -373,12 +374,12 @@ export default function BottomNav() {
             }}
             whileHover={controlHover}
             whileTap={controlTap}
-            className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
+            className="w-11 h-11 rounded-full bg-plt-base/90 backdrop-blur-xl border border-plt-border text-plt-text shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
             title="Trade Notifications & Alerts"
           >
-            <Bell size={20} strokeWidth={1.8} className="text-white" />
+            <Bell size={20} strokeWidth={1.8} className="text-plt-text" />
             {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-black">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base">
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>
             )}
@@ -387,6 +388,7 @@ export default function BottomNav() {
           {/* 2. Quick Add Position / Transaction Button (44x44) */}
           <motion.button
             type="button"
+            data-tour="home-mobile-quick-add-btn"
             onClick={(e) => {
               if (isGuest) {
                 requireAuth(
@@ -401,10 +403,10 @@ export default function BottomNav() {
             }}
             whileHover={controlHover}
             whileTap={controlTap}
-            className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 text-white shadow-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all group"
+            className="w-11 h-11 rounded-full bg-plt-base/90 backdrop-blur-xl border border-plt-border text-plt-text shadow-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all group"
             title="Quick Add Position or Transaction"
           >
-            <Plus size={22} strokeWidth={2.2} className="text-white group-hover:scale-110 transition-transform" />
+            <Plus size={22} strokeWidth={2.2} className="text-plt-text group-hover:scale-110 transition-transform" />
           </motion.button>
         </div>
       )}
@@ -418,7 +420,7 @@ export default function BottomNav() {
         }`}
         aria-label="Mobile Navigation"
       >
-        <nav className="relative bg-black border-t border-white/[0.08] shadow-[0_-4px_24px_rgba(0,0,0,0.85)] pb-[var(--ticknal-safe-area-bottom)]">
+        <nav className="relative bg-plt-base border-t border-plt-border shadow-[0_-4px_24px_rgba(0,0,0,0.85)] pb-[var(--ticknal-safe-area-bottom)]">
           <div className="h-[56px] grid grid-cols-5 w-full items-center px-1">
             {navItems.map((item) => (
               <BottomNavItem

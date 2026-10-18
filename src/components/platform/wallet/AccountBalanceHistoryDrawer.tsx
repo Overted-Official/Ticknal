@@ -345,7 +345,7 @@ export default function AccountBalanceHistoryDrawer({
                           />
                         </svg>
                       </div>
-                      <div className="flex justify-between items-center pt-1 border-t border-white/[0.06]">
+                      <div className="flex justify-between items-center pt-1 border-t border-plt-border-soft">
                         {[...Array(4)].map((_, i) => (
                           <Skeleton key={i} className="h-2 w-10 rounded-none" />
                         ))}

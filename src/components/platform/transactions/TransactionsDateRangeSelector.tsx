@@ -250,7 +250,7 @@ export default function TransactionsDateRangeSelector({
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="h-full px-2.5 flex items-center justify-center hover:bg-white/[0.06] text-text-muted hover:text-text-primary transition-colors border-r border-border-subtle rtl:border-r-0 rtl:border-l cursor-pointer"
+          className="h-full px-2.5 flex items-center justify-center hover:bg-plt-hover text-text-muted hover:text-text-primary transition-colors border-r border-plt-border rtl:border-r-0 rtl:border-l cursor-pointer"
           title={isAr ? 'الشهر السابق' : 'Previous Month'}
           aria-label={isAr ? 'الشهر السابق' : 'Previous Month'}
         >
@@ -261,8 +261,8 @@ export default function TransactionsDateRangeSelector({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`h-full px-3 flex items-center gap-2 hover:bg-white/[0.06] transition-colors cursor-pointer ${
-            isOpen ? 'bg-white/[0.04] text-text-primary' : 'text-text-primary'
+          className={`h-full px-3 flex items-center gap-2 hover:bg-plt-hover transition-colors cursor-pointer ${
+            isOpen ? 'bg-plt-hover text-text-primary' : 'text-text-primary'
           }`}
           aria-expanded={isOpen}
           aria-haspopup="dialog"
@@ -283,7 +283,7 @@ export default function TransactionsDateRangeSelector({
         <button
           type="button"
           onClick={handleNextMonth}
-          className="h-full px-2.5 flex items-center justify-center hover:bg-white/[0.06] text-text-muted hover:text-text-primary transition-colors border-l border-border-subtle rtl:border-l-0 rtl:border-r cursor-pointer"
+          className="h-full px-2.5 flex items-center justify-center hover:bg-plt-hover text-text-muted hover:text-text-primary transition-colors border-l border-plt-border rtl:border-l-0 rtl:border-r cursor-pointer"
           title={isAr ? 'الشهر التالي' : 'Next Month'}
           aria-label={isAr ? 'الشهر التالي' : 'Next Month'}
         >
@@ -296,10 +296,10 @@ export default function TransactionsDateRangeSelector({
         <div
           role="dialog"
           aria-label={isAr ? 'محدد الفترة الزمنية' : 'Time Period Selector'}
-          className="absolute right-0 rtl:right-auto rtl:left-0 mt-1.5 w-76 sm:w-80 rounded-xl bg-black/95 backdrop-blur-xl border border-border-subtle shadow-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left rtl:text-right"
+          className="absolute right-0 rtl:right-auto rtl:left-0 mt-1.5 w-76 sm:w-80 rounded-xl bg-plt-base/95 backdrop-blur-xl border border-plt-border shadow-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left rtl:text-right"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle">
+          <div className="flex items-center justify-between pb-2.5 border-b border-plt-border">
             <div className="flex items-center gap-2">
               <Calendar className="w-3.5 h-3.5 text-brand-blue" />
               <span className="text-xs font-semibold text-text-primary">
@@ -309,7 +309,7 @@ export default function TransactionsDateRangeSelector({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-text-muted hover:text-text-primary p-1 rounded-md hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="text-text-muted hover:text-text-primary p-1 rounded-md hover:bg-plt-hover transition-colors cursor-pointer"
               title={isAr ? 'إغلاق' : 'Close'}
             >
               <X className="w-3.5 h-3.5" />
@@ -317,7 +317,7 @@ export default function TransactionsDateRangeSelector({
           </div>
 
           {/* Quick Presets Grid */}
-          <div className="py-2.5 border-b border-border-subtle">
+          <div className="py-2.5 border-b border-plt-border">
             <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">
               {isAr ? 'الفترات السريعة' : 'Quick Presets'}
             </div>
@@ -350,7 +350,7 @@ export default function TransactionsDateRangeSelector({
           </div>
 
           {/* Month & Year Matrix */}
-          <div className="py-2.5 border-b border-border-subtle">
+          <div className="py-2.5 border-b border-plt-border">
             {/* Year Selector Navigation */}
             <div className="flex items-center justify-between mb-2 px-1">
               <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
@@ -360,7 +360,7 @@ export default function TransactionsDateRangeSelector({
                 <button
                   type="button"
                   onClick={() => setCalendarYear((prev) => prev - 1)}
-                  className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-white/[0.06] text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-plt-hover text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                   title={isAr ? 'السنة السابقة' : 'Previous Year'}
                 >
                   <ChevronLeft className="w-3 h-3 rtl:rotate-180" />
@@ -371,7 +371,7 @@ export default function TransactionsDateRangeSelector({
                 <button
                   type="button"
                   onClick={() => setCalendarYear((prev) => prev + 1)}
-                  className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-white/[0.06] text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-plt-hover text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                   title={isAr ? 'السنة التالية' : 'Next Year'}
                 >
                   <ChevronRight className="w-3 h-3 rtl:rotate-180" />
@@ -400,7 +400,7 @@ export default function TransactionsDateRangeSelector({
                       isSelected
                         ? 'bg-brand-blue text-white border-brand-blue font-semibold shadow-sm'
                         : isCurrentMonth
-                        ? 'border-brand-blue/50 bg-white/[0.04] text-text-primary font-medium hover:border-brand-blue'
+                        ? 'border-brand-blue/50 bg-plt-hover text-text-primary font-medium hover:border-brand-blue'
                         : 'border-border-subtle bg-surface-raised hover:bg-white/[0.06] text-text-primary hover:border-border-default'
                     }`}
                   >
@@ -410,7 +410,7 @@ export default function TransactionsDateRangeSelector({
                     {entriesCount > 0 && (
                       <span
                         className={`text-[9px] tabular-nums leading-none mt-0.5 ${
-                          isSelected ? 'text-white/80' : 'text-text-muted'
+                          isSelected ? 'text-plt-subtle' : 'text-text-muted'
                         }`}
                       >
                         {entriesCount}
@@ -438,7 +438,7 @@ export default function TransactionsDateRangeSelector({
             </button>
 
             {showCustomRangeInputs && (
-              <form onSubmit={handleApplyCustomRange} className="mt-2 space-y-2 pt-1 border-t border-border-subtle/50">
+              <form onSubmit={handleApplyCustomRange} className="mt-2 space-y-2 pt-1 border-t border-plt-border-soft">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <label className="text-[10px] text-text-muted block">

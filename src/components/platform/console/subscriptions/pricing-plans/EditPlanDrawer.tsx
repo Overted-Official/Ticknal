@@ -108,20 +108,20 @@ export default function EditPlanDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm select-none font-sans">
-      <div className="w-full max-w-xl h-full bg-black border-l border-white/10 rounded-none flex flex-col justify-between overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 z-50 flex justify-end bg-plt-base/80 backdrop-blur-sm select-none font-sans">
+      <div className="w-full max-w-xl h-full bg-plt-base border-l border-plt-border rounded-none flex flex-col justify-between overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black shrink-0">
+        <div className="px-6 py-4 border-b border-plt-border flex items-center justify-between bg-plt-base shrink-0">
           <div className="flex items-center gap-2.5">
             <span
               className="w-3 h-3 rounded-full shrink-0"
               style={{ backgroundColor: plan.color }}
             />
             <div>
-              <h3 className="text-sm font-semibold text-white tracking-tight">
+              <h3 className="text-sm font-semibold text-plt-text tracking-tight">
                 Edit {plan.name}
               </h3>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-plt-muted">
                 Tier configuration, commercial rates, quotas & feature gates
               </p>
             </div>
@@ -129,7 +129,7 @@ export default function EditPlanDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -153,12 +153,12 @@ export default function EditPlanDrawer({
 
           {/* Section 1: Commercial Pricing & Packaging */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider text-zinc-400">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-plt-muted">
               1. Commercial Pricing (EGP)
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Monthly Rate (EGP)
                 </label>
                 <input
@@ -167,12 +167,12 @@ export default function EditPlanDrawer({
                   step="1"
                   value={monthlyPrice}
                   onChange={(e) => setMonthlyPrice(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Annual Pass Total (EGP)
                 </label>
                 <input
@@ -181,14 +181,14 @@ export default function EditPlanDrawer({
                   step="1"
                   value={annualPrice}
                   onChange={(e) => setAnnualPrice(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Annual Discount (%)
                 </label>
                 <input
@@ -197,12 +197,12 @@ export default function EditPlanDrawer({
                   max="100"
                   value={annualDiscount}
                   onChange={(e) => setAnnualDiscount(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Card Badge Label
                 </label>
                 <input
@@ -210,21 +210,21 @@ export default function EditPlanDrawer({
                   value={badge}
                   onChange={(e) => setBadge(e.target.value)}
                   placeholder="e.g. Most Popular"
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs focus:outline-none focus:border-brand-blue"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 2: Hardware & Usage Limits */}
-          <div className="space-y-3 pt-4 border-t border-white/10">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider text-zinc-400">
+          <div className="space-y-3 pt-4 border-t border-plt-border">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-plt-muted">
               2. Hardware & Usage Limits
             </h4>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Charts per Layout
                 </label>
                 <input
@@ -233,12 +233,12 @@ export default function EditPlanDrawer({
                   max="16"
                   value={chartsPerTab}
                   onChange={(e) => setChartsPerTab(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Indicators per Chart
                 </label>
                 <input
@@ -247,12 +247,12 @@ export default function EditPlanDrawer({
                   max="50"
                   value={indicatorsPerChart}
                   onChange={(e) => setIndicatorsPerChart(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Historical Bars
                 </label>
                 <input
@@ -261,12 +261,12 @@ export default function EditPlanDrawer({
                   step="1000"
                   value={historicalBars}
                   onChange={(e) => setHistoricalBars(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Price Alerts (-1 = Unlim.)
                 </label>
                 <input
@@ -274,12 +274,12 @@ export default function EditPlanDrawer({
                   min="-1"
                   value={priceAlerts}
                   onChange={(e) => setPriceAlerts(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                <label className="block text-[11px] font-medium text-plt-muted mb-1">
                   Push Alerts (-1 = Unlim.)
                 </label>
                 <input
@@ -287,67 +287,67 @@ export default function EditPlanDrawer({
                   min="-1"
                   value={pushAlerts}
                   onChange={(e) => setPushAlerts(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-md bg-white/[0.04] border border-white/10 text-white text-xs tabular-nums focus:outline-none focus:border-blue-500"
+                  className="w-full h-9 px-3 rounded-md bg-plt-hover border border-plt-border text-plt-text text-xs tabular-nums focus:outline-none focus:border-brand-blue"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 3: Feature Entitlements */}
-          <div className="space-y-3 pt-4 border-t border-white/10">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider text-zinc-400">
+          <div className="space-y-3 pt-4 border-t border-plt-border">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-plt-muted">
               3. Feature Entitlements & Quantitative Engines
             </h4>
 
             <div className="space-y-2">
-              <label className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] cursor-pointer hover:bg-white/[0.04] transition-colors">
+              <label className="flex items-center justify-between p-2.5 rounded-lg bg-plt-hover border border-plt-border cursor-pointer hover:bg-plt-active/30 transition-colors">
                 <div>
-                  <span className="text-xs font-medium text-white block">Hydra Adaptive Momentum Indicator</span>
-                  <span className="text-[10px] text-zinc-400">Proprietary dynamic momentum engine</span>
+                  <span className="text-xs font-medium text-plt-text block">Hydra Adaptive Momentum Indicator</span>
+                  <span className="text-[10px] text-plt-muted">Proprietary dynamic momentum engine</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={hydra}
                   onChange={(e) => setHydra(e.target.checked)}
-                  className="w-4 h-4 rounded border-zinc-700 text-blue-600 focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 rounded border-zinc-700 text-brand-blue focus:ring-0 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] cursor-pointer hover:bg-white/[0.04] transition-colors">
+              <label className="flex items-center justify-between p-2.5 rounded-lg bg-plt-hover border border-plt-border cursor-pointer hover:bg-plt-active/30 transition-colors">
                 <div>
-                  <span className="text-xs font-medium text-white block">Typhoon Volume Imbalance Engine</span>
-                  <span className="text-[10px] text-zinc-400">Institutional liquidity and order block detector</span>
+                  <span className="text-xs font-medium text-plt-text block">Typhoon Volume Imbalance Engine</span>
+                  <span className="text-[10px] text-plt-muted">Institutional liquidity and order block detector</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={typhoon}
                   onChange={(e) => setTyphoon(e.target.checked)}
-                  className="w-4 h-4 rounded border-zinc-700 text-blue-600 focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 rounded border-zinc-700 text-brand-blue focus:ring-0 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] cursor-pointer hover:bg-white/[0.04] transition-colors">
+              <label className="flex items-center justify-between p-2.5 rounded-lg bg-plt-hover border border-plt-border cursor-pointer hover:bg-plt-active/30 transition-colors">
                 <div>
-                  <span className="text-xs font-medium text-white block">Cerberus Multi-Factor Confluence</span>
-                  <span className="text-[10px] text-zinc-400">Triple-filter quant confirmation model</span>
+                  <span className="text-xs font-medium text-plt-text block">Cerberus Multi-Factor Confluence</span>
+                  <span className="text-[10px] text-plt-muted">Triple-filter quant confirmation model</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={cerberus}
                   onChange={(e) => setCerberus(e.target.checked)}
-                  className="w-4 h-4 rounded border-zinc-700 text-blue-600 focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 rounded border-zinc-700 text-brand-blue focus:ring-0 cursor-pointer"
                 />
               </label>
 
-              <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+              <div className="p-2.5 rounded-lg bg-plt-hover border border-plt-border flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-medium text-white block">Breakout Detection Engine</span>
-                  <span className="text-[10px] text-zinc-400">Timeframe scope for volume spikes</span>
+                  <span className="text-xs font-medium text-plt-text block">Breakout Detection Engine</span>
+                  <span className="text-[10px] text-plt-muted">Timeframe scope for volume spikes</span>
                 </div>
                 <select
                   value={breakout}
                   onChange={(e) => setBreakout(e.target.value as any)}
-                  className="h-8 px-2 rounded bg-black border border-white/20 text-xs text-white focus:outline-none"
+                  className="h-8 px-2 rounded bg-plt-base border border-plt-border text-xs text-plt-text focus:outline-none"
                 >
                   <option value="none">None</option>
                   <option value="intraday">Intraday Only</option>
@@ -359,12 +359,12 @@ export default function EditPlanDrawer({
         </form>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black shrink-0">
+        <div className="px-6 py-4 border-t border-plt-border flex items-center justify-end gap-3 bg-plt-base shrink-0">
           <button
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="px-4 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-lg text-xs font-medium text-plt-muted hover:text-plt-text transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -372,7 +372,7 @@ export default function EditPlanDrawer({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-5 py-2 rounded-lg text-xs font-semibold bg-brand-blue hover:opacity-90 text-white transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+            className="px-5 py-2 rounded-lg text-xs font-semibold bg-brand-blue hover:opacity-90 text-white transition-colors flex items-center gap-2 cursor-pointer shadow-xs"
           >
             {isSaving ? (
               <InlineSpinner className="w-3.5 h-3.5" label="Saving plan..." />

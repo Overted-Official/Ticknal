@@ -2,11 +2,12 @@ import { createClient } from '../../../../lib/supabase/server';
 import { parseSavedStrategy, parseSelectedSymbols } from '../../../../lib/strategies/server/parse-saved-strategy';
 import { listUserStrategies, saveUserStrategy, updateUserStrategySelection } from '../../../../lib/strategies/server/strategy-store';
 import { compileSavedStrategy } from '../../../../lib/strategies/server/compile-saved-strategy';
+import { MAX_STRATEGY_REQUEST_BYTES } from '../../../../lib/strategies/strategy-program';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store' } as const;
-const MAX_BODY_BYTES = 131_072;
+const MAX_BODY_BYTES = MAX_STRATEGY_REQUEST_BYTES;
 
 async function userId(): Promise<string | null> {
   const client = await createClient();

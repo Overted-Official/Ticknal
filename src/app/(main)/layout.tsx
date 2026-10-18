@@ -7,6 +7,7 @@ import { PinLockProvider } from '@/components/platform/PinLockProvider';
 import { MobileNavScrollProvider } from '@/context/MobileNavScrollContext';
 import { GuestGuardProvider } from '@/context/GuestGuardContext';
 import PageTransition from '@/components/ui/PageTransition';
+import SignalPushPromptModal from '@/components/platform/notifications/SignalPushPromptModal';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <AlertProvider>
           <PinLockProvider>
             <MobileNavScrollProvider>
+              <SignalPushPromptModal />
               <div className="app-shell flex h-dvh w-full max-w-full overflow-hidden md:flex-row">
                 <div className="flex-1 h-full min-h-0 overflow-hidden relative z-10 flex flex-col pt-[var(--ticknal-safe-area-top)] md:pt-0">
                   <PageTransition>{children}</PageTransition>

@@ -19,6 +19,7 @@ import type { ChartData } from './types';
 import { cssTokenColor, parseChartTime, sanitizeChartSeriesData } from './utils';
 import { computeHydraIndex, type HydraPoint } from '@/indicators/hydra-index';
 import { useTranslation } from '@/lib/i18n';
+import { useTheme } from 'next-themes';
 
 interface HydraIndexPanelProps {
   data: ChartData[];
@@ -36,6 +37,7 @@ export default function HydraIndexPanel({
   activeTime,
 }: HydraIndexPanelProps) {
   const { locale } = useTranslation();
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -167,6 +169,27 @@ export default function HydraIndexPanel({
       seriesRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const isLight = resolvedTheme === 'light';
+    chartRef.current.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: isLight ? '#ffffff' : cssTokenColor('--plt-bg-base', 'rgb(0, 0, 0)') },
+        textColor: isLight ? '#52525b' : cssTokenColor('--plt-text-muted', 'rgba(255, 255, 255, 0.45)'),
+      },
+      grid: {
+        vertLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)') },
+        horzLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)') },
+      },
+      rightPriceScale: {
+        borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
+      },
+      timeScale: {
+        borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255, 255, 255, 0.06)'),
+      },
+    });
+  }, [resolvedTheme]);
 
   // Update Data and Binary vs Continuous Display
   useEffect(() => {
@@ -396,7 +419,7 @@ export default function HydraIndexPanel({
             className={`px-1.5 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1 ${
               isInvested
                 ? 'bg-profit-num/20 text-profit-num border border-profit-num/40'
-                : 'bg-white/[0.06] text-plt-muted border border-white/[0.1]'
+                : 'bg-plt-hover text-plt-muted border border-plt-border-soft'
             }`}
           >
             <span
@@ -452,7 +475,7 @@ export default function HydraIndexPanel({
           <button
             type="button"
             onClick={onClose}
-            className="h-5 w-5 rounded flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-white/[0.08] transition-colors cursor-pointer"
+            className="h-5 w-5 rounded flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-active transition-colors cursor-pointer"
             title={locale === 'ar' ? 'إغلاق لوحة هيدرا' : 'Close HYDRA Panel'}
             aria-label={locale === 'ar' ? 'إغلاق لوحة هيدرا' : 'Close HYDRA Panel'}
           >

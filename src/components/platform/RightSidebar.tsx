@@ -428,7 +428,7 @@ export default function RightSidebar({
 
   return (
     <div
-      className="bg-cold-gray-900 ltr:border-l rtl:border-r border-border-subtle flex flex-col select-none relative shrink-0 text-plt-text font-sans"
+      className="bg-plt-base ltr:border-l rtl:border-r border-border-subtle flex flex-col select-none relative shrink-0 text-plt-text font-sans"
       style={{ width: `${sidebarWidth}px` }}
     >
       <div
@@ -437,7 +437,7 @@ export default function RightSidebar({
       />
 
       {/* Search bar + filter + category switcher */}
-      <div className="p-2 border-b border-white/[0.08] bg-black/60 shrink-0 flex flex-col gap-2">
+      <div className="p-2 border-b border-plt-border bg-plt-base/60 shrink-0 flex flex-col gap-2">
         <div className="flex items-center gap-1.5">
           <div className="relative flex items-center flex-1 min-w-0">
             <div className="absolute inset-y-0 start-0 ps-2.5 flex items-center pointer-events-none text-text-muted">
@@ -454,7 +454,7 @@ export default function RightSidebar({
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 end-0 pe-2 flex items-center text-text-muted hover:text-white transition-colors"
+                className="absolute inset-y-0 end-0 pe-2 flex items-center text-plt-muted hover:text-plt-text transition-colors"
               >
                 <X size={13} />
               </button>
@@ -478,13 +478,13 @@ export default function RightSidebar({
                 signalFilter.isActive
                   ? 'bg-brand-blue/15 border-brand-blue text-brand-blue shadow-xs'
                   : isFilterOpen
-                  ? 'bg-surface-active border-border-subtle text-white'
-                  : 'border-border-subtle bg-surface-raised text-text-muted hover:text-white hover:bg-surface-hover-raised'
+                  ? 'bg-surface-active border-border-subtle text-plt-text'
+                  : 'border-border-subtle bg-surface-raised text-plt-muted hover:text-plt-text hover:bg-surface-hover-raised'
               }`}
             >
               <SlidersHorizontal size={13} />
               {signalFilter.isActive && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand-blue border-2 border-cold-gray-900 animate-pulse" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand-blue border-2 border-plt-base animate-pulse" />
               )}
             </button>
 
@@ -520,20 +520,20 @@ export default function RightSidebar({
 
       {/* Active Filter Banner */}
       {signalFilter.isActive && (
-        <div className="px-3 py-1.5 bg-black/90 border-b border-white/[0.08] flex items-center justify-between text-[10px] gap-2">
+        <div className="px-3 py-1.5 bg-plt-base/90 border-b border-plt-border flex items-center justify-between text-[10px] gap-2">
           <div className="flex items-center gap-1.5 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-blue shrink-0 animate-pulse" />
-            <div className="flex items-center gap-1.5 truncate text-text-muted">
+            <div className="flex items-center gap-1.5 truncate text-plt-muted">
               {signalFilter.signalEnabled && canViewProprietary && (
                 <span className="truncate">
                   {locale === 'ar' ? 'الإشارات: ' : 'Signals: '}
-                  <span className="text-white font-medium">
+                  <span className="text-plt-text font-medium">
                     {signalFilter.signals.map((s) => (locale === 'ar' ? (s === 'BUY' ? 'شراء' : 'بيع') : s)).join('/')}
                   </span>{' '}
                   ·{' '}
-                  <span className="text-white font-medium">
+                  <span className="text-plt-text font-medium">
                     {signalFilter.strategies
-                      .map((s) => (locale === 'ar' ? (s === 'hydra' ? 'هيدرا' : s === 'psi_v2' ? 'سيربيروس' : 'تايفون') : (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : 'Typhon')))
+                      .map((s) => (locale === 'ar' ? (s === 'hydra' ? 'هيدرا' : s === 'cerberus' || s === 'psi_v2' ? 'سيربيروس' : 'تايفون') : (s === 'hydra' ? 'Hydra' : s === 'cerberus' || s === 'psi_v2' ? 'Cerberus' : 'Typhon')))
                       .join(', ')}
                   </span>{' '}
                   ({signalFilter.lookbackDays}{locale === 'ar' ? 'ي' : 'D'})
@@ -542,7 +542,7 @@ export default function RightSidebar({
               {signalFilter.sector !== 'ALL' && (
                 <span className="truncate">
                   · {locale === 'ar' ? 'القطاع: ' : 'Sector: '}
-                  <span className="text-white font-medium">
+                  <span className="text-plt-text font-medium">
                     {localizeSectorName(signalFilter.sector, locale)}
                   </span>
                 </span>
@@ -550,7 +550,7 @@ export default function RightSidebar({
               {signalFilter.sectorStatus !== 'ALL' && (
                 <span className="truncate">
                   · {locale === 'ar' ? 'الحالة: ' : 'Status: '}
-                  <span className="text-white font-medium">
+                  <span className="text-plt-text font-medium">
                     {signalFilter.sectorStatus === 'LEADING'
                       ? (locale === 'ar' ? 'رائد ومتقدم' : 'Leading')
                       : signalFilter.sectorStatus === 'IMPROVING'
@@ -598,8 +598,8 @@ export default function RightSidebar({
             <p className="text-[10px] text-text-muted max-w-[200px] leading-relaxed">
               {signalFilter.isActive
                 ? locale === 'ar'
-                  ? `لم تظهر إشارات ${signalFilter.signals.map((s) => (s === 'BUY' ? 'شراء' : 'بيع')).join(' أو ')} من ${signalFilter.strategies.map((s) => (s === 'hydra' ? 'هيدرا' : s === 'psi_v2' ? 'سيربيروس' : s === 'thoth_egx_macro' ? 'مؤرشف' : 'تايفون')).join('، ')} خلال آخر ${signalFilter.lookbackDays} أيام.`
-                  : `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map((s) => (s === 'hydra' ? 'Hydra' : s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon')).join(', ')} in the last ${signalFilter.lookbackDays} days.`
+                  ? `لم تظهر إشارات ${signalFilter.signals.map((s) => (s === 'BUY' ? 'شراء' : 'بيع')).join(' أو ')} من ${signalFilter.strategies.map((s) => (s === 'hydra' ? 'هيدرا' : s === 'cerberus' || s === 'psi_v2' ? 'سيربيروس' : s === 'thoth_egx_macro' ? 'مؤرشف' : 'تايفون')).join('، ')} خلال آخر ${signalFilter.lookbackDays} أيام.`
+                  : `No tickers had a ${signalFilter.signals.join(' or ')} signal from ${signalFilter.strategies.map((s) => (s === 'hydra' ? 'Hydra' : s === 'cerberus' || s === 'psi_v2' ? 'Cerberus' : s === 'thoth_egx_macro' ? 'Archived' : 'Typhon')).join(', ')} in the last ${signalFilter.lookbackDays} days.`
                 : locale === 'ar'
                 ? 'جرب البحث بكلمات أخرى.'
                 : 'Try a different search query.'}
@@ -623,11 +623,11 @@ export default function RightSidebar({
                 <button
                   type="button"
                   onClick={() => toggleSector(sector)}
-                  className="flex w-full items-center gap-1.5 px-2.5 h-[25px] text-left text-[10.5px] tracking-wider text-text-muted transition-colors hover:text-plt-text group border-b border-white/[0.08] bg-cold-gray-900 sticky top-0 z-10"
+                  className="flex w-full items-center gap-1.5 px-2.5 h-[25px] text-left text-[10.5px] tracking-wider text-plt-muted transition-colors hover:text-plt-text group border-b border-plt-border bg-plt-base sticky top-0 z-10"
                 >
-                  {collapsed ? <ChevronRight size={13} className="text-text-muted/60 group-hover:text-plt-text shrink-0" /> : <ChevronDown size={13} className="text-text-muted/60 group-hover:text-plt-text shrink-0" />}
+                  {collapsed ? <ChevronRight size={13} className="text-plt-muted/60 group-hover:text-plt-text shrink-0" /> : <ChevronDown size={13} className="text-plt-muted/60 group-hover:text-plt-text shrink-0" />}
                   <span className="min-w-0 flex-1 truncate font-medium">{localizeSectorName(sector, locale)}</span>
-                  <span className="text-[9.5px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-surface-raised text-text-muted shrink-0">{items.length}</span>
+                  <span className="text-[9.5px] tabular-nums px-1.5 leading-none h-4 inline-flex items-center rounded bg-surface-raised text-plt-muted shrink-0">{items.length}</span>
                 </button>
 
                 {!collapsed && items.map((item) => {
@@ -644,11 +644,11 @@ export default function RightSidebar({
                       role="button"
                       tabIndex={0}
                       onClick={() => openTicker(item.symbol, matchingSignal?.strategyId)}
-                      className={`watchlist-row cursor-pointer group border-b border-white/[0.06] ${
+                      className={`watchlist-row cursor-pointer group border-b border-plt-border-soft ${
                         isPendingThis
-                          ? 'bg-white/[0.04] animate-pulse'
+                          ? 'bg-plt-hover animate-pulse'
                           : isSelected
-                            ? 'watchlist-row-active bg-white/[0.08]'
+                            ? 'watchlist-row-active bg-plt-active'
                             : ''
                       }`}
                     >
@@ -702,7 +702,7 @@ export default function RightSidebar({
 
       {selectedItem && (
         <div
-          className="border-t border-white/[0.08] bg-cold-gray-900 flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
+          className="border-t border-plt-border bg-plt-base flex flex-col shrink-0 relative overflow-hidden transition-all duration-200"
           style={{ height: isDetailsCollapsed ? 'auto' : `${panelHeight}px` }}
         >
           {!isDetailsCollapsed && (

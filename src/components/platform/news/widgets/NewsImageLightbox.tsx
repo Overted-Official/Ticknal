@@ -117,23 +117,23 @@ export default function NewsImageLightbox({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-md flex flex-col select-none font-sans"
+          className="fixed inset-0 z-[300] bg-plt-base/95 backdrop-blur-md flex flex-col select-none font-sans"
           onClick={onClose}
         >
           {/* Top Bar Header */}
           <div
-            className="w-full shrink-0 h-14 px-4 sm:px-6 bg-black/90 border-b border-white/[0.08] flex items-center justify-between gap-3 z-10"
+            className="w-full shrink-0 h-14 px-4 sm:px-6 bg-plt-base/90 border-b border-plt-border-soft flex items-center justify-between gap-3 z-10"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left: Source & Title */}
             <div className="flex items-center gap-2.5 min-w-0">
-              <span className="text-white text-xs sm:text-sm font-semibold truncate">
+              <span className="text-plt-text text-xs sm:text-sm font-semibold truncate">
                 {sourceName || 'Ticknal Market Intelligence'}
               </span>
               {title && (
                 <>
-                  <span className="text-white/30 hidden sm:inline text-xs">/</span>
-                  <span className="text-white/60 hidden sm:inline text-xs truncate max-w-sm">
+                  <span className="text-plt-faint hidden sm:inline text-xs">/</span>
+                  <span className="text-plt-muted hidden sm:inline text-xs truncate max-w-sm">
                     {title}
                   </span>
                 </>
@@ -143,12 +143,12 @@ export default function NewsImageLightbox({
             {/* Right: Actions & Close */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {/* Zoom Controls */}
-              <div className="flex items-center bg-white/[0.06] border border-white/[0.08] rounded-lg p-0.5">
+              <div className="flex items-center bg-plt-hover border border-plt-border-soft rounded-lg p-0.5">
                 <button
                   type="button"
                   onClick={handleZoomOut}
                   disabled={zoom <= 1}
-                  className="w-7 h-7 flex items-center justify-center rounded text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded text-plt-subtle hover:text-plt-text hover:bg-plt-active disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
                   title="Zoom Out (-)"
                 >
                   <ZoomOut size={14} />
@@ -156,7 +156,7 @@ export default function NewsImageLightbox({
                 <button
                   type="button"
                   onClick={handleResetZoom}
-                  className="px-2 h-7 text-[11px] font-medium text-white/80 hover:text-white hover:bg-white/10 rounded tabular-nums cursor-pointer transition-colors"
+                  className="px-2 h-7 text-[11px] font-medium text-plt-subtle hover:text-plt-text hover:bg-plt-active rounded tabular-nums cursor-pointer transition-colors"
                   title="Reset Zoom (0)"
                 >
                   {Math.round(zoom * 100)}%
@@ -165,7 +165,7 @@ export default function NewsImageLightbox({
                   type="button"
                   onClick={handleZoomIn}
                   disabled={zoom >= 2.5}
-                  className="w-7 h-7 flex items-center justify-center rounded text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded text-plt-subtle hover:text-plt-text hover:bg-plt-active disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
                   title="Zoom In (+)"
                 >
                   <ZoomIn size={14} />
@@ -176,7 +176,7 @@ export default function NewsImageLightbox({
               <button
                 type="button"
                 onClick={handleDownload}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-plt-hover border border-plt-border-soft text-plt-subtle hover:text-plt-text hover:bg-plt-active transition-colors cursor-pointer"
                 title="Download Chart"
               >
                 <Download size={14} />
@@ -185,7 +185,7 @@ export default function NewsImageLightbox({
               <button
                 type="button"
                 onClick={handleOpenNewTab}
-                className="hidden sm:flex w-8 h-8 items-center justify-center rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                className="hidden sm:flex w-8 h-8 items-center justify-center rounded-lg bg-plt-hover border border-plt-border-soft text-plt-subtle hover:text-plt-text hover:bg-plt-active transition-colors cursor-pointer"
                 title="Open in new tab"
               >
                 <ExternalLink size={14} />
@@ -195,7 +195,7 @@ export default function NewsImageLightbox({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 text-white transition-colors cursor-pointer ml-1"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-plt-active hover:bg-plt-hover border border-plt-border text-plt-text transition-colors cursor-pointer ml-1"
                 title="Close (Esc)"
               >
                 <X size={16} />
@@ -227,7 +227,7 @@ export default function NewsImageLightbox({
                 <img
                   src={imageUrl}
                   alt={title || 'Market Chart'}
-                  className="max-w-full max-h-[82vh] w-auto h-auto object-contain rounded-xl border border-white/[0.12] bg-black shadow-[0_24px_64px_rgba(0,0,0,0.9)]"
+                  className="max-w-full max-h-[82vh] w-auto h-auto object-contain rounded-xl border border-plt-border bg-plt-base shadow-[0_24px_64px_rgba(0,0,0,0.9)]"
                   loading="eager"
                   onClick={() => {
                     // Tap/click image to toggle zoom
@@ -242,7 +242,7 @@ export default function NewsImageLightbox({
           </div>
 
           {/* Bottom Footnote Hint */}
-          <div className="shrink-0 py-2.5 px-4 text-center text-[11px] text-white/40 border-t border-white/[0.04] bg-black/60">
+          <div className="shrink-0 py-2.5 px-4 text-center text-[11px] text-plt-faint border-t border-plt-border-soft bg-plt-base/80">
             <span>Esc or tap anywhere to close • Tap chart or use +/- to zoom</span>
           </div>
         </motion.div>

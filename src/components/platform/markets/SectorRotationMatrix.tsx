@@ -330,7 +330,7 @@ export default function SectorRotationMatrix({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative w-full h-full min-h-[500px] sm:min-h-[580px] bg-black overflow-hidden flex flex-col justify-between select-none font-sans touch-pan-y border-0"
+      className="relative w-full h-full min-h-[500px] sm:min-h-[580px] bg-plt-base overflow-hidden flex flex-col justify-between select-none font-sans touch-pan-y border-0"
     >
       {/* 1. Main Matrix Canvas Area (Flex-1 Separated from Footer) */}
       <div className="flex-1 min-h-0 relative w-full h-full overflow-hidden">
@@ -450,17 +450,17 @@ export default function SectorRotationMatrix({
         {/* Soft Feathered Axis Crosshairs (Dynamic origin based on sector density) */}
         <div
           style={{ top: `${originY}%` }}
-          className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.14] to-transparent pointer-events-none z-10 transition-all duration-300"
+          className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-plt-border to-transparent pointer-events-none z-10 transition-all duration-300"
         />
         <div
           style={{ left: `${originX}%` }}
-          className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.14] to-transparent pointer-events-none z-10 transition-all duration-300"
+          className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-plt-border to-transparent pointer-events-none z-10 transition-all duration-300"
         />
 
         {/* Dynamic Benchmark Equilibrium Point */}
         <div
           style={{ left: `${originX}%`, top: `${originY}%` }}
-          className="absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30 bg-black/60 pointer-events-none z-10 transition-all duration-300"
+          className="absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-plt-border-active bg-plt-base/60 pointer-events-none z-10 transition-all duration-300"
         />
 
         {/* Interactive Sector Nodes with Dynamic Positioning & Anti-Overlap Relaxation */}
@@ -493,7 +493,7 @@ export default function SectorRotationMatrix({
                   !isRegimeMatch
                     ? 'opacity-15 scale-90 pointer-events-none'
                     : isSelected
-                    ? 'ring-2 ring-white ring-offset-2 ring-offset-black z-35 scale-110 shadow-2xl'
+                    ? 'ring-2 ring-white ring-offset-2 ring-offset-plt-base z-35 scale-110 shadow-2xl'
                     : isHovered
                     ? 'scale-115 z-40 ring-1 ring-white/90 shadow-2xl brightness-110'
                     : activeRegimeFilter && isRegimeMatch
@@ -623,7 +623,7 @@ export default function SectorRotationMatrix({
       </div>
 
       {/* 2. Dedicated Bottom Footer Bar (Shrink-0 in Normal Flex Flow) */}
-      <div className="h-8 px-4 flex items-center justify-between text-[11px] text-neutral-400 bg-black/90 border-t border-white/[0.06] shrink-0 z-20">
+      <div className="h-8 px-4 flex items-center justify-between text-[11px] text-plt-muted bg-plt-base/90 border-t border-plt-border-soft shrink-0 z-20">
         <div className="flex items-center gap-2">
           <Info size={13} className="text-neutral-500" />
           <span>
@@ -640,7 +640,7 @@ export default function SectorRotationMatrix({
           <button
             type="button"
             onClick={() => setActiveRegimeFilter(null)}
-            className="text-white hover:text-neutral-300 transition flex items-center gap-1 font-medium cursor-pointer"
+            className="text-plt-text hover:text-plt-subtle transition flex items-center gap-1 font-medium cursor-pointer"
           >
             <span>
               {locale === 'ar'

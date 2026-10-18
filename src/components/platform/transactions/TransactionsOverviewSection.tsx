@@ -143,16 +143,18 @@ export default function TransactionsOverviewSection({
       </div>
 
       {/* 2. Zone 2: Cashflow & Velocity KPI Rail */}
-      <TransactionsKPIRail
-        transactions={viewFilteredTransactions}
-        closedTrades={viewClosedTrades}
-        usdRate={usdRate}
-        timeframe={timeframe}
-        overviewView={overviewView}
-      />
+      <div data-tour="transactions-kpi-rail" className="w-full">
+        <TransactionsKPIRail
+          transactions={viewFilteredTransactions}
+          closedTrades={viewClosedTrades}
+          usdRate={usdRate}
+          timeframe={timeframe}
+          overviewView={overviewView}
+        />
+      </div>
 
       {/* 3. Zone 3: Visual Analytics (Progression Chart + Breakdown Donut) */}
-      <div id="section-cashflow-analytics" className="w-full">
+      <div id="section-cashflow-analytics" data-tour="transactions-analytics-section" className="w-full">
         <TransactionsAnalyticsSection
           transactions={viewAllTransactions}
           filteredTransactions={viewFilteredTransactions}

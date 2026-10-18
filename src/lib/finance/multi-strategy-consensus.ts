@@ -1,4 +1,4 @@
-import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol, type PriceBar } from '@/strategies/Typhon/typhonStrategy';
 import { DEFAULT_SIGNAL_LOOKBACK_BARS, signalWindowLabel } from '@/lib/strategy-signal-state';
 import { analyzeStrategy, type StrategyId, type StrategyMetrics } from '@/lib/strategy-analysis';
 
@@ -70,14 +70,14 @@ export async function evaluateHoldingConsensus(
   const cleanSym = normalizeTickerSymbol(symbol);
 
   let psiOpinion: StrategyOpinion = {
-    strategyId: 'psi',
+    strategyId: 'typhon',
     strategyName: 'Typhon',
     verdict: 'HOLD',
     reason: 'In consolidation or standard trend following',
   };
 
   let psiV2Opinion: StrategyOpinion = {
-    strategyId: 'psi_v2',
+    strategyId: 'cerberus',
     strategyName: 'Cerberus',
     verdict: 'HOLD',
     reason: 'Multi-timeframe indices inside healthy range',
@@ -103,8 +103,8 @@ export async function evaluateHoldingConsensus(
 
   if (bars && bars.length >= 80) {
     const analyses = await Promise.allSettled([
-      analyzeStrategy(cleanSym, bars, 'psi', { lookbackBars }),
-      analyzeStrategy(cleanSym, bars, 'psi_v2', { lookbackBars }),
+      analyzeStrategy(cleanSym, bars, 'typhon', { lookbackBars }),
+      analyzeStrategy(cleanSym, bars, 'cerberus', { lookbackBars }),
       analyzeStrategy(cleanSym, bars, 'hydra', { lookbackBars }),
     ]);
 

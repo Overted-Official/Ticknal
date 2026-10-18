@@ -65,15 +65,15 @@ export default function AccountSelectDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className={`h-10 w-full flex items-center justify-between px-3 rounded-xl border text-left btn-typography transition-all cursor-pointer ${
           isOpen
-            ? 'bg-white/[0.06] border-white/40 ring-1 ring-white/10 text-plt-text'
-            : 'bg-white/[0.04] border-plt-border-soft hover:border-plt-border-strong text-plt-text'
+            ? 'bg-plt-active border-plt-border-strong ring-1 ring-plt-border text-plt-text'
+            : 'bg-plt-hover border-plt-border-soft hover:border-plt-border-strong text-plt-text'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {selectedAccount && selectedMeta ? (
             <>
               {/* Bank Logo */}
-              <div className="w-6 h-6 rounded-full bg-white/[0.08] border border-white/[0.12] flex items-center justify-center shrink-0 overflow-hidden relative">
+              <div className="w-6 h-6 rounded-full bg-plt-hover border border-plt-border flex items-center justify-center shrink-0 overflow-hidden relative">
                 {selectedAccount.bankLogoUrl ? (
                   <Image
                     src={selectedAccount.bankLogoUrl}
@@ -147,7 +147,7 @@ export default function AccountSelectDropdown({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-[70] bg-plt-elevated border border-white/[0.14] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-2xl max-h-64 overflow-y-auto custom-scrollbar">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-[70] bg-plt-elevated border border-plt-border rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-2xl max-h-64 overflow-y-auto custom-scrollbar">
           {filteredAccounts.length === 0 ? (
             <div className="py-4 text-center text-xs text-plt-muted font-sans">
               {locale === 'ar' ? 'لا توجد حسابات متاحة' : 'No accounts available'}
@@ -168,13 +168,13 @@ export default function AccountSelectDropdown({
                   }}
                   className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-sans transition-colors cursor-pointer group ${
                     isSelected
-                      ? 'bg-white/[0.08] text-white'
-                      : 'hover:bg-white/[0.05] text-plt-text'
+                      ? 'bg-plt-active text-plt-text'
+                      : 'hover:bg-plt-hover text-plt-text'
                   }`}
                 >
                   {/* Left: Logo + Short Name + Sub-name + Currency Tag */}
                   <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
-                    <div className="w-6 h-6 rounded-full bg-white/[0.06] border border-white/[0.10] flex items-center justify-center shrink-0 overflow-hidden relative">
+                    <div className="w-6 h-6 rounded-full bg-plt-hover border border-plt-border flex items-center justify-center shrink-0 overflow-hidden relative">
                       {acc.bankLogoUrl ? (
                         <Image
                           src={acc.bankLogoUrl}
@@ -190,7 +190,7 @@ export default function AccountSelectDropdown({
                     </div>
 
                     <div className="flex items-center gap-1.5 min-w-0 truncate">
-                      <span className="font-bold text-xs text-white tracking-tight shrink-0">
+                      <span className="font-bold text-xs text-plt-text tracking-tight shrink-0">
                         {meta.bankShort}
                       </span>
                       <span className="text-[11px] text-plt-muted truncate group-hover:text-plt-text transition-colors">

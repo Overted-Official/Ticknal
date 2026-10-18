@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldCheck,
   TrendingUp,
@@ -36,6 +36,7 @@ export default function NetWorthKPIRail({
 }: NetWorthKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
   const { locale } = useTranslation();
+  const [selectedPillId, setSelectedPillId] = useState<string>('brokerage-dry-powder');
   const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
 
   // Split cash and brokerage accounts (excluding virtual paper trading accounts)
@@ -218,7 +219,11 @@ export default function NetWorthKPIRail({
         : `0.0 ${currencySymbol}`,
       change: isPrivacy ? '•••' : `${brokeragePct}%`,
       changeColorClass: 'text-accent-cyan',
-      onClick: () => scrollTo('section-my-positions'),
+      isSelected: selectedPillId === 'brokerage-dry-powder',
+      onClick: () => {
+        setSelectedPillId('brokerage-dry-powder');
+        scrollTo('section-my-positions');
+      },
     },
     {
       id: 'real-purchasing-power',
@@ -230,7 +235,11 @@ export default function NetWorthKPIRail({
       value: isPrivacy ? '••••••••' : formatMoney(realPurchasingPower),
       change: isPrivacy ? '•••' : `${realPct}%`,
       changeColorClass: 'text-emerald-400',
-      onClick: () => scrollTo('section-my-positions'),
+      isSelected: selectedPillId === 'real-purchasing-power',
+      onClick: () => {
+        setSelectedPillId('real-purchasing-power');
+        scrollTo('section-my-positions');
+      },
     },
     {
       id: 'inflation-drag-loss',
@@ -242,7 +251,11 @@ export default function NetWorthKPIRail({
       value: isPrivacy ? '••••••••' : `-${formatMoney(inflationLoss)}`,
       change: isPrivacy ? '•••' : `-${effectiveInflation.toFixed(1)}%`,
       changeColorClass: 'text-loss-num',
-      onClick: () => scrollTo('section-my-positions'),
+      isSelected: selectedPillId === 'inflation-drag-loss',
+      onClick: () => {
+        setSelectedPillId('inflation-drag-loss');
+        scrollTo('section-my-positions');
+      },
     },
   ];
 

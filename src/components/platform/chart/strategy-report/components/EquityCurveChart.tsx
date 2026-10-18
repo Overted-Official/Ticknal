@@ -103,14 +103,14 @@ export default function EquityCurveChart({
   }, [chartData]);
 
   return (
-    <section id="section-strategy-equity-curve" className="space-y-3.5 pt-6 border-t border-border-subtle font-sans">
+    <section id="section-strategy-equity-curve" className="space-y-3.5 pt-6 border-t border-plt-border-soft font-sans">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-plt-border-soft">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
+          <h3 className="text-sm sm:text-[15px] font-bold text-plt-text tracking-tight leading-snug">
             {locale === 'ar' ? 'منحنى النمو التراكمي' : 'Cumulative Growth Curve'}
           </h3>
-          <p className="text-xs text-white/50 leading-relaxed">
+          <p className="text-xs text-plt-muted leading-relaxed">
             {locale === 'ar'
               ? `أداء الاستراتيجية التراكمي مقارنة بمؤشر الشراء والاحتفاظ برأس مال أولي قدره ${initialCapital.toLocaleString()} ${displayCurrency}`
               : `Cumulative strategy performance compared against Buy & Hold benchmark starting at ${initialCapital.toLocaleString()} ${currencySymbol}`}
@@ -123,7 +123,7 @@ export default function EquityCurveChart({
             type="button"
             onClick={() => setShowCumulativePnl(!showCumulativePnl)}
             className={`flex items-center gap-1.5 transition-opacity cursor-pointer ${
-              showCumulativePnl ? 'text-white font-medium' : 'text-white/40 opacity-60'
+              showCumulativePnl ? 'text-plt-text font-medium' : 'text-plt-faint opacity-60'
             }`}
           >
             <span className="w-2.5 h-2.5 rounded-full bg-profit-num" />
@@ -133,7 +133,7 @@ export default function EquityCurveChart({
             type="button"
             onClick={() => setShowBuyHold(!showBuyHold)}
             className={`flex items-center gap-1.5 transition-opacity cursor-pointer ${
-              showBuyHold ? 'text-white font-medium' : 'text-white/40 opacity-60'
+              showBuyHold ? 'text-plt-text font-medium' : 'text-plt-faint opacity-60'
             }`}
           >
             <span className="w-2.5 h-2.5 rounded-full bg-[#2962ff]" />
@@ -145,7 +145,7 @@ export default function EquityCurveChart({
       {/* Seamless Chart Canvas */}
       <div className="w-full h-[260px] sm:h-[300px] relative select-none">
         {chartData.length < 2 ? (
-          <div className="flex h-full items-center justify-center text-xs text-text-muted">
+          <div className="flex h-full items-center justify-center text-xs text-plt-muted">
             {locale === 'ar' ? 'لا تتوفر نقاط كافية للاختبار التاريخي في هذه الفترة.' : 'Not enough historical backtest points in period.'}
           </div>
         ) : (
@@ -171,13 +171,13 @@ export default function EquityCurveChart({
               {/* 0% Baseline */}
               <ReferenceLine
                 y={0}
-                stroke="rgba(255, 255, 255, 0.15)"
+                stroke="var(--border-subtle)"
                 strokeDasharray="3 3"
               />
 
               <XAxis
                 dataKey="date"
-                stroke="var(--text-muted)"
+                stroke="var(--plt-text-muted)"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -189,7 +189,7 @@ export default function EquityCurveChart({
               <YAxis
                 orientation="right"
                 width={56}
-                stroke="var(--text-muted)"
+                stroke="var(--plt-text-muted)"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -236,7 +236,7 @@ export default function EquityCurveChart({
 
               <RechartsTooltip
                 content={<StrategyChartTooltip currencySymbol={displayCurrency} isArabic={locale === 'ar'} />}
-                cursor={{ stroke: 'rgba(255, 255, 255, 0.18)', strokeWidth: 1, strokeDasharray: '3 3' }}
+                cursor={{ stroke: 'var(--border-subtle)', strokeWidth: 1, strokeDasharray: '3 3' }}
               />
 
               {showCumulativePnl && (
@@ -281,7 +281,7 @@ function StrategyChartTooltip({
     const dateFormatted = formatTooltipDate(d.date, isArabic);
 
     return (
-      <div className="p-3 rounded-xl bg-[#3D3D3D] shadow-2xl text-xs tabular-nums select-none font-sans min-w-[220px] space-y-2 border border-white/10">
+      <div className="p-3 rounded-xl bg-plt-hovercard shadow-2xl text-xs tabular-nums select-none font-sans min-w-[220px] space-y-2 border border-plt-border">
         <div className="font-semibold text-white/90 text-xs border-b border-white/15 pb-1.5 flex items-center justify-between">
           <span>{dateFormatted}</span>
           <span className="text-[10px] text-white/50 font-normal uppercase tracking-wider">

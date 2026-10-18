@@ -22,15 +22,15 @@ export default function StrategyReportTabBar({
   const { locale } = useTranslation();
 
   return (
-    <div className="h-11 px-4 sm:px-6 flex items-center justify-between border-b border-white/10 shrink-0 bg-black font-sans">
+    <div className="h-11 px-4 sm:px-6 flex items-center justify-between border-b border-plt-border shrink-0 bg-plt-base font-sans">
       <div className="flex items-center gap-6 h-full">
         <button
           type="button"
           onClick={() => onSelectTab('performance')}
           className={`h-full text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer relative ${
             activeTab === 'performance'
-              ? 'text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white'
-              : 'text-white/60 hover:text-white'
+              ? 'text-plt-text after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-plt-text'
+              : 'text-plt-muted hover:text-plt-text'
           }`}
         >
           <TrendingUp size={13} />
@@ -42,13 +42,13 @@ export default function StrategyReportTabBar({
           onClick={() => onSelectTab('trades')}
           className={`h-full text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer relative ${
             activeTab === 'trades'
-              ? 'text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white'
-              : 'text-white/60 hover:text-white'
+              ? 'text-plt-text after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-plt-text'
+              : 'text-plt-muted hover:text-plt-text'
           }`}
         >
           <BarChart2 size={13} />
           <span>{locale === 'ar' ? 'سجل الصفقات' : 'List of Trades'}</span>
-          <span className="text-[10px] tabular-nums text-white/50 px-1.5 py-0.2 rounded-full bg-white/10">
+          <span className="text-[10px] tabular-nums text-plt-muted px-1.5 py-0.2 rounded-full bg-plt-hover">
             {tradesCount}
           </span>
         </button>
@@ -56,7 +56,7 @@ export default function StrategyReportTabBar({
 
       {/* Loading indicator */}
       {reportLoading && (
-        <div className="flex items-center gap-1.5 text-[11px] text-white/50">
+        <div className="flex items-center gap-1.5 text-[11px] text-plt-muted">
           <InlineSpinner className="h-3 w-3" label="Updating backtest" />
           <span>{locale === 'ar' ? 'جاري تحديث الاختبار التاريخي...' : 'Updating backtest…'}</span>
         </div>

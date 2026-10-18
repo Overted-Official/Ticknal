@@ -101,7 +101,7 @@ export default function MarketHeatmapSection({
   return (
     <section id="market-heatmap" className="section-container space-y-4 pt-1 font-sans select-none scroll-mt-16">
       {/* 1. Section Header Title */}
-      <div className="flex flex-col gap-0.5 min-w-0 pb-2 border-b border-border-subtle">
+      <div className="flex flex-col gap-0.5 min-w-0 pb-2 border-b border-plt-border-soft">
         <h2 className="section-title">
           {locale === 'ar' ? 'خريطة أداء السوق' : 'Market Heatmap'}
         </h2>
@@ -174,29 +174,29 @@ export default function MarketHeatmapSection({
       {/* 3. Main Workspace: Squarified Treemap (Left) + Constituent Tickers List (Right) */}
       <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch">
         {/* Left Canvas: Treemap without outer border */}
-        <div className="w-full lg:flex-1 min-w-0 bg-black overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] min-h-[500px] sm:min-h-[580px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
+        <div className="w-full lg:flex-1 min-w-0 bg-plt-base overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] min-h-[500px] sm:min-h-[580px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
           {isLoading ? (
             <div className="h-full w-full grid grid-cols-3 sm:grid-cols-4 grid-rows-3 gap-2 p-3 select-none" role="status" aria-label={locale === 'ar' ? 'جاري تجميع أداء سوق البورصة المصرية…' : 'Aggregating EGX market performance…'}>
-              <div className="col-span-2 row-span-2 border border-white/[0.08] p-4 flex flex-col justify-between">
+              <div className="col-span-2 row-span-2 border border-plt-border-soft p-4 flex flex-col justify-between">
                 <Skeleton className="h-4 w-28" />
                 <div className="space-y-1.5">
                   <Skeleton className="h-7 w-20" />
                   <Skeleton className="h-3 w-14" />
                 </div>
               </div>
-              <div className="col-span-1 row-span-1 border border-white/[0.08] p-3 flex flex-col justify-between">
+              <div className="col-span-1 row-span-1 border border-plt-border-soft p-3 flex flex-col justify-between">
                 <Skeleton className="h-3.5 w-16" />
                 <Skeleton className="h-4 w-12" />
               </div>
-              <div className="col-span-1 row-span-2 border border-white/[0.08] p-3 flex flex-col justify-between">
+              <div className="col-span-1 row-span-2 border border-plt-border-soft p-3 flex flex-col justify-between">
                 <Skeleton className="h-3.5 w-16" />
                 <Skeleton className="h-5 w-14" />
               </div>
-              <div className="col-span-1 row-span-1 border border-white/[0.08] p-3 flex flex-col justify-between">
+              <div className="col-span-1 row-span-1 border border-plt-border-soft p-3 flex flex-col justify-between">
                 <Skeleton className="h-3.5 w-14" />
                 <Skeleton className="h-4 w-10" />
               </div>
-              <div className="col-span-2 row-span-1 border border-white/[0.08] p-3 flex items-center justify-between">
+              <div className="col-span-2 row-span-1 border border-plt-border-soft p-3 flex items-center justify-between">
                 <Skeleton className="h-3.5 w-24" />
                 <Skeleton className="h-4 w-16" />
               </div>
@@ -216,10 +216,10 @@ export default function MarketHeatmapSection({
         {/* Right Panel: Desktop Constituent Tickers List (Hidden on mobile < lg, side-by-side on desktop >= lg) */}
         <div className="hidden lg:flex w-[370px] xl:w-[410px] shrink-0 bg-transparent border-0 overflow-hidden flex-col h-[calc(100vh-210px)] min-h-[640px] max-h-[860px]">
           {/* Panel Header */}
-          <div className="px-1.5 py-3 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-transparent">
+          <div className="px-1.5 py-3 border-b border-plt-border-soft flex items-center justify-between shrink-0 bg-transparent">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-white truncate max-w-[200px]" title={activeSectorData?.sector}>
+                <h3 className="text-sm font-semibold text-plt-text truncate max-w-[200px]" title={activeSectorData?.sector}>
                   {(activeSectorData && localizeSectorName(activeSectorData.sector, locale)) ||
                     (locale === 'ar' ? 'الأسهم' : 'Constituents')}
                 </h3>
@@ -239,7 +239,7 @@ export default function MarketHeatmapSection({
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-neutral-400 mt-0.5">
+              <p className="text-[11px] text-plt-muted mt-0.5">
                 {sortedConstituents.length} {locale === 'ar' ? 'سهم' : sortedConstituents.length === 1 ? 'ticker' : 'tickers'}
               </p>
             </div>
@@ -299,7 +299,7 @@ export default function MarketHeatmapSection({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+                  className="fixed inset-0 bg-plt-overlay backdrop-blur-sm cursor-pointer"
                   onClick={() => setIsDrawerOpen(false)}
                   aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close drawer'}
                 />
@@ -319,7 +319,7 @@ export default function MarketHeatmapSection({
                       setIsDrawerOpen(false);
                     }
                   }}
-                  className="drawer-gradient-top relative w-full max-h-[82vh] bg-black text-white rounded-none border-t border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden touch-pan-y"
+                  className="drawer-gradient-top relative w-full max-h-[82vh] bg-plt-base text-plt-text rounded-none border-t border-plt-border flex flex-col shadow-2xl z-10 overflow-hidden touch-pan-y"
                 >
                   {/* Drag Handle */}
                   <div
@@ -327,14 +327,14 @@ export default function MarketHeatmapSection({
                     onClick={() => setIsDrawerOpen(false)}
                     aria-label={locale === 'ar' ? 'اسحب لأسفل للإغلاق' : 'Drag down to close'}
                   >
-                    <div className="w-10 h-1 bg-white/25 rounded-full hover:bg-white/40 transition-colors" />
+                    <div className="w-10 h-1 bg-plt-active rounded-full hover:bg-plt-active transition-colors" />
                   </div>
 
                   {/* Drawer Header */}
-                  <div className="px-4 py-2.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-transparent">
+                  <div className="px-4 py-2.5 border-b border-plt-border-soft flex items-center justify-between shrink-0 bg-transparent">
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base font-bold text-white truncate max-w-[180px] sm:max-w-[260px]">
+                        <h3 className="text-base font-bold text-plt-text truncate max-w-[180px] sm:max-w-[260px]">
                           {localizeSectorName(activeSectorData.sector, locale)}
                         </h3>
                         <span
@@ -351,7 +351,7 @@ export default function MarketHeatmapSection({
                           {localizeRegimeName(activeSectorData.rotationRegime, locale)}
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-400 mt-0.5">
+                      <p className="text-xs text-plt-muted mt-0.5">
                         {sortedConstituents.length} {locale === 'ar' ? 'سهم' : sortedConstituents.length === 1 ? 'ticker' : 'tickers'}
                       </p>
                     </div>
@@ -377,7 +377,7 @@ export default function MarketHeatmapSection({
                       <button
                         type="button"
                         onClick={() => setIsDrawerOpen(false)}
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-hover active:bg-plt-active transition-colors cursor-pointer"
                         aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
                       >
                         <X size={16} />

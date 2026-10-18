@@ -97,14 +97,14 @@ export default function InvestorFlowSection({
         {/* 1. Header: 'EGX Investor Flow ›' + Mode & Horizon Switchers */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-1 cursor-pointer group w-fit">
-            <h3 className="text-sm sm:text-base font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
+            <h3 className="text-sm sm:text-base font-semibold tracking-tight text-plt-text group-hover:text-plt-text transition-colors">
               {locale === 'ar'
                 ? 'تدفقات المستثمرين (الأموال المحلية مقابل الساخنة)'
                 : 'Investor flow (Domestic vs. Foreign Hot Money)'}
             </h3>
             <ChevronRight
               size={16}
-              className="text-neutral-400 group-hover:text-white transition-colors translate-y-[0.5px]"
+              className="text-plt-muted group-hover:text-plt-text transition-colors translate-y-[0.5px]"
             />
           </div>
 
@@ -202,21 +202,21 @@ export default function InvestorFlowSection({
 
         {/* 2. Executive Quick Stats Bar / Dynamic Contextual Legend */}
         {isLoading ? (
-          <div className="flex items-center gap-3 sm:gap-5 text-xs pb-2 border-b border-white/5">
+          <div className="flex items-center gap-3 sm:gap-5 text-xs pb-2 border-b border-plt-border-soft">
             <Skeleton className="h-4 w-32 rounded-none" />
             <Skeleton className="h-4 w-28 rounded-none" />
             <Skeleton className="h-4 w-28 rounded-none" />
             <Skeleton className="h-4 w-24 rounded-none ml-auto hidden md:block" />
           </div>
         ) : summary && (
-          <div className="flex items-center gap-3 sm:gap-5 text-xs pb-2 border-b border-white/5 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-3 sm:gap-5 text-xs pb-2 border-b border-plt-border-soft overflow-x-auto no-scrollbar">
             {chartMode === 'stacked_share' ? (
               /* Mode A Legend: 100% Turnover Share (Category Colors Match Stacked Bars) */
               <>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#2962ff]"></span>
-                  <span className="text-neutral-400">{locale === 'ar' ? 'المصريون (محلي):' : 'Egyptians (Domestic):'}</span>
-                  <span className="font-bold text-white tabular-nums">{summary.egyptianShareToday}%</span>
+                  <span className="text-plt-muted">{locale === 'ar' ? 'المصريون (محلي):' : 'Egyptians (Domestic):'}</span>
+                  <span className="font-bold text-plt-text tabular-nums">{summary.egyptianShareToday}%</span>
                   <span className={`text-[11px] font-semibold tabular-nums ml-1 ${summary.egyptianNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
                     ({summary.egyptianNetToday >= 0 ? '+' : ''}{(summary.egyptianNetToday / 1e6).toFixed(1)}{locale === 'ar' ? 'م' : 'M'})
                   </span>
@@ -224,8 +224,8 @@ export default function InvestorFlowSection({
 
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
-                  <span className="text-neutral-400">{locale === 'ar' ? 'الأجانب (أموال ساخنة):' : 'Foreigners (Hot Money):'}</span>
-                  <span className="font-bold text-white tabular-nums">{summary.foreignShareToday}%</span>
+                  <span className="text-plt-muted">{locale === 'ar' ? 'الأجانب (أموال ساخنة):' : 'Foreigners (Hot Money):'}</span>
+                  <span className="font-bold text-plt-text tabular-nums">{summary.foreignShareToday}%</span>
                   <span className={`text-[11px] font-semibold tabular-nums ml-1 ${summary.foreignNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
                     ({summary.foreignNetToday >= 0 ? '+' : ''}{(summary.foreignNetToday / 1e6).toFixed(1)}{locale === 'ar' ? 'م' : 'M'})
                   </span>
@@ -233,8 +233,8 @@ export default function InvestorFlowSection({
 
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#089981]"></span>
-                  <span className="text-neutral-400">{locale === 'ar' ? 'العرب (أموال ساخنة):' : 'Arabs (Hot Money):'}</span>
-                  <span className="font-bold text-white tabular-nums">{summary.arabShareToday}%</span>
+                  <span className="text-plt-muted">{locale === 'ar' ? 'العرب (أموال ساخنة):' : 'Arabs (Hot Money):'}</span>
+                  <span className="font-bold text-plt-text tabular-nums">{summary.arabShareToday}%</span>
                   <span className={`text-[11px] font-semibold tabular-nums ml-1 ${summary.arabNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
                     ({summary.arabNetToday >= 0 ? '+' : ''}{(summary.arabNetToday / 1e6).toFixed(1)}{locale === 'ar' ? 'م' : 'M'})
                   </span>
@@ -244,16 +244,16 @@ export default function InvestorFlowSection({
               /* Mode B Legend: Hot Money Net Flow (Matches Green/Red Bar Semantics) */
               <>
                 {/* Visual Bar Colors Legend */}
-                <div className="flex items-center gap-2.5 shrink-0 pr-3 border-r border-white/10">
+                <div className="flex items-center gap-2.5 shrink-0 pr-3 border-r border-plt-border-soft">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-xs bg-[#089981]"></span>
-                    <span className="text-neutral-300 font-medium text-[11px]">
+                    <span className="text-plt-subtle font-medium text-[11px]">
                       {locale === 'ar' ? 'صافي دخول (شراء)' : 'Net Inflow (+)'}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-xs bg-[#f23645]"></span>
-                    <span className="text-neutral-300 font-medium text-[11px]">
+                    <span className="text-plt-subtle font-medium text-[11px]">
                       {locale === 'ar' ? 'صافي خروج (بيع)' : 'Net Outflow (-)'}
                     </span>
                   </div>
@@ -261,7 +261,7 @@ export default function InvestorFlowSection({
 
                 {/* Combined Hot Money Net */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-neutral-400 font-medium">
+                  <span className="text-plt-muted font-medium">
                     {locale === 'ar' ? 'إجمالي الساخنة:' : 'Hot Money Net:'}
                   </span>
                   <span className={`font-bold tabular-nums ${hotMoneyNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
@@ -272,7 +272,7 @@ export default function InvestorFlowSection({
                 {/* Foreigners component */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span>
-                  <span className="text-neutral-400">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
+                  <span className="text-plt-muted">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
                   <span className={`font-semibold tabular-nums text-[11px] ${summary.foreignNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
                     {summary.foreignNetToday >= 0 ? '+' : ''}{(summary.foreignNetToday / 1e6).toFixed(1)}{locale === 'ar' ? 'م' : 'M'}
                   </span>
@@ -281,7 +281,7 @@ export default function InvestorFlowSection({
                 {/* Arabs component */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#089981]"></span>
-                  <span className="text-neutral-400">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
+                  <span className="text-plt-muted">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
                   <span className={`font-semibold tabular-nums text-[11px] ${summary.arabNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
                     {summary.arabNetToday >= 0 ? '+' : ''}{(summary.arabNetToday / 1e6).toFixed(1)}{locale === 'ar' ? 'م' : 'M'}
                   </span>
@@ -290,7 +290,7 @@ export default function InvestorFlowSection({
                 {/* Domestic counterpart */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff]"></span>
-                  <span className="text-neutral-400">{locale === 'ar' ? 'المحلي:' : 'Domestic:'}</span>
+                  <span className="text-plt-muted">{locale === 'ar' ? 'المحلي:' : 'Domestic:'}</span>
                   <span className={`font-semibold tabular-nums text-[11px] ${summary.egyptianNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
                     {summary.egyptianNetToday >= 0 ? '+' : ''}{(summary.egyptianNetToday / 1e6).toFixed(1)}{locale === 'ar' ? 'م' : 'M'}
                   </span>
@@ -299,14 +299,14 @@ export default function InvestorFlowSection({
             )}
 
             <div className="ml-auto hidden md:flex items-center gap-2 shrink-0">
-              <span className="text-neutral-500 text-[11px]">{locale === 'ar' ? 'آخر جلسة:' : 'Latest Session:'}</span>
-              <span className="text-neutral-300 font-medium tabular-nums">{summary.latestDate}</span>
+              <span className="text-plt-muted text-[11px]">{locale === 'ar' ? 'آخر جلسة:' : 'Latest Session:'}</span>
+              <span className="text-plt-text font-medium tabular-nums">{summary.latestDate}</span>
             </div>
           </div>
         )}
 
         {/* 3. TradingView Dark Surface Canvas */}
-        <div className="relative mt-2 w-full min-w-0 h-[360px] sm:h-[400px] bg-black overflow-hidden pt-2">
+        <div className="relative mt-2 w-full min-w-0 h-[360px] sm:h-[400px] bg-plt-base overflow-hidden pt-2">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-end p-4 pb-8 space-y-4">
               <div className="flex items-end justify-between gap-1 sm:gap-2 h-full w-full pt-8">
@@ -316,7 +316,7 @@ export default function InvestorFlowSection({
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-white/[0.06]">
+              <div className="flex justify-between items-center pt-2 border-t border-plt-border-soft">
                 {[...Array(6)].map((_, i) => (
                   <Skeleton key={i} className="h-2.5 w-10 sm:w-12 rounded-none" />
                 ))}

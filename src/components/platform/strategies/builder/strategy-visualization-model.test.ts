@@ -19,7 +19,7 @@ describe('strategy visualization model', () => {
   it('produces valid OHLC points and legend mappings for protected Typhon strategy', () => {
     const draft = createEmptyStrategyDraft();
     const result = getStrategyVisualizationModel({
-      strategyId: 'psi',
+      strategyId: 'typhon',
       ticker: 'COMI',
       draft,
       advancedNodes: [],
@@ -78,7 +78,7 @@ describe('strategy visualization model', () => {
 
     for (const ticker of tickers) {
       const result = getStrategyVisualizationModel({
-        strategyId: 'psi',
+        strategyId: 'typhon',
         ticker,
         draft,
         advancedNodes: [],

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { tickerAlerts, userStrategySettings, tickers } from '@/db/schema';
-import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { createClient } from '@/lib/supabase/server';
 
 export async function handleAlertsGet() {

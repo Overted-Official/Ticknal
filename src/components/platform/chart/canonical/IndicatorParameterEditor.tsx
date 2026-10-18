@@ -27,22 +27,22 @@ export default function IndicatorParameterEditor({ schema, value, locale, onChan
       onChange(parsed);
     };
     return (
-      <label className="block text-[10px] text-white/55">
+      <label className="block text-[10px] text-plt-muted">
         <span>{label}</span>
         <input type="number" min={schema.min} max={schema.max} step={schema.step} value={draft}
           onChange={(event) => setDraft(event.target.value)} onBlur={commit}
-          className="mt-1 h-7 w-full rounded-none border border-white/10 bg-black px-2 font-sans tabular-nums text-white outline-none focus:border-white/30" />
-        {error && <span className="mt-1 block text-[#f23645]">{error}</span>}
+          className="mt-1 h-7 w-full rounded-none border border-plt-border bg-plt-base px-2 font-sans tabular-nums text-plt-text outline-none focus:border-plt-border-active" />
+        {error && <span className="mt-1 block text-plt-risk">{error}</span>}
       </label>
     );
   }
 
   if (schema.kind === 'select') {
     return (
-      <label className="block text-[10px] text-white/55">
+      <label className="block text-[10px] text-plt-muted">
         <span>{label}</span>
         <select value={String(value ?? schema.defaultValue)} onChange={(event) => onChange(event.target.value)}
-          className="mt-1 h-7 w-full rounded-none border border-white/10 bg-black px-2 font-sans text-white outline-none focus:border-white/30">
+          className="mt-1 h-7 w-full rounded-none border border-plt-border bg-plt-base px-2 font-sans text-plt-text outline-none focus:border-plt-border-active">
           {schema.options.map((option) => <option key={option.value} value={option.value}>{option.label[locale]}</option>)}
         </select>
       </label>
@@ -60,32 +60,32 @@ export default function IndicatorParameterEditor({ schema, value, locale, onChan
       onChange(schema.kind === 'symbol' ? next.toUpperCase() : next);
     };
     return (
-      <label className="block text-[10px] text-white/55">
+      <label className="block text-[10px] text-plt-muted">
         <span>{label}</span>
         <input type="text" value={draft}
           placeholder={schema.placeholder?.[locale]}
           onChange={(event) => setDraft(event.target.value)} onBlur={commit}
           onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
-          className="mt-1 h-7 w-full rounded-none border border-white/10 bg-black px-2 font-sans text-white outline-none focus:border-white/30" />
-        {error && <span className="mt-1 block text-[#f23645]">{error}</span>}
+          className="mt-1 h-7 w-full rounded-none border border-plt-border bg-plt-base px-2 font-sans text-plt-text outline-none focus:border-plt-border-active" />
+        {error && <span className="mt-1 block text-plt-risk">{error}</span>}
       </label>
     );
   }
 
   const current = String(value ?? schema.defaultValue);
   return (
-    <label className="block text-[10px] text-white/55">
+    <label className="block text-[10px] text-plt-muted">
       <span>{label}</span>
       <div className="mt-1 grid grid-cols-[auto_1fr] gap-1">
         <button type="button" onClick={() => { setDraft('first-observation'); setError(null); onChange('first-observation'); }}
-          className={`h-7 rounded-none border px-2 ${current === 'first-observation' ? 'border-white bg-white text-black' : 'border-white/10 bg-black text-white/60'}`}>
+          className={`h-7 rounded-none border px-2 ${current === 'first-observation' ? 'border-white bg-white text-black' : 'border-plt-border bg-plt-base text-plt-muted'}`}>
           {locale === 'ar' ? 'أول مشاهدة' : 'First observation'}
         </button>
         <input type="date" value={draft === 'first-observation' ? '' : draft.slice(0, 10)}
           onChange={(event) => { setDraft(event.target.value); setError(null); if (event.target.value) onChange(event.target.value); }}
-          className="h-7 rounded-none border border-white/10 bg-black px-2 font-sans tabular-nums text-white outline-none focus:border-white/30" />
+          className="h-7 rounded-none border border-plt-border bg-plt-base px-2 font-sans tabular-nums text-plt-text outline-none focus:border-plt-border-active" />
       </div>
-      {error && <span className="mt-1 block text-[#f23645]">{error}</span>}
+      {error && <span className="mt-1 block text-plt-risk">{error}</span>}
     </label>
   );
 }

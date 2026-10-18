@@ -3,7 +3,7 @@ import type {
   StrategyTrade,
   EquityPoint,
 } from '../registry';
-import type { PriceBar } from '../PSI/psiStrategy';
+import type { PriceBar } from '../Typhon/typhonStrategy';
 import { computeHydraIndex, type HydraPoint, HYDRA_INDEX_VERSION } from '../../indicators/hydra-index';
 import type { ChartData } from '@ticknal/types';
 
@@ -220,9 +220,12 @@ export function runHydraStrategy(
   const buyHoldShares = Math.floor(initialCapital / firstBarClose);
   const buyHoldCash = initialCapital - buyHoldShares * firstBarClose;
 
+  let lastEvaluatedBar = bars[startIdx] || bars[bars.length - 1];
+
   for (let i = startIdx; i < bars.length; i++) {
     const bar = bars[i];
     if (endDate && bar.date > endDate) break;
+    lastEvaluatedBar = bar;
 
     const currPoint = points[i] || { value: 0, state: 0, continuousVal: 50 };
     const prevPoint = i > 0 ? (points[i - 1] || currPoint) : currPoint;
@@ -355,7 +358,7 @@ export function runHydraStrategy(
 
   // If position is still open at the end (no exit signal occurred yet), include it in trades with no exit date
   if (isLong && activeShares > 0) {
-    const lastBar = bars[bars.length - 1];
+    const lastBar = lastEvaluatedBar;
     const effectiveExitPrice = lastBar.close * (1.0 - slippageRate);
     const grossProceeds = activeShares * effectiveExitPrice;
     const netProceeds = grossProceeds * (1.0 - commissionRate);
@@ -387,7 +390,7 @@ export function runHydraStrategy(
   }
 
   // If position is still open at the end, close it virtually for final stats accounting
-  const lastBar = bars[bars.length - 1];
+  const lastBar = lastEvaluatedBar;
   let finalEquity = currentBalance;
   if (isLong && activeShares > 0) {
     const effectiveExitPrice = lastBar.close * (1.0 - slippageRate);
@@ -405,9 +408,11 @@ export function runHydraStrategy(
   const alphaMargin = netProfitPct - buyHoldReturnPct;
 
   const totalTrades = trades.length;
-  const winningTrades = trades.filter((t) => t.netPnl > 0).length;
-  const losingTrades = trades.filter((t) => t.netPnl <= 0).length;
-  const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100.0 : 0.0;
+  const closedTradesList = trades.filter((t) => !t.isOpen);
+  const evalTradesForWinRate = closedTradesList.length > 0 ? closedTradesList : trades;
+  const winningTrades = evalTradesForWinRate.filter((t) => t.netPnl > 0).length;
+  const losingTrades = evalTradesForWinRate.filter((t) => t.netPnl <= 0).length;
+  const winRate = evalTradesForWinRate.length > 0 ? (winningTrades / evalTradesForWinRate.length) * 100.0 : 0.0;
 
   const grossProfit = trades.filter((t) => t.netPnl > 0).reduce((sum, t) => sum + t.netPnl, 0);
   const grossLoss = Math.abs(trades.filter((t) => t.netPnl < 0).reduce((sum, t) => sum + t.netPnl, 0));

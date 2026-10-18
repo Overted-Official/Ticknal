@@ -164,7 +164,7 @@ export default function TickerPositionsDrawer({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 bg-black/75 backdrop-blur-sm cursor-pointer"
+                className="fixed inset-0 bg-plt-overlay backdrop-blur-sm cursor-pointer"
                 onClick={onClose}
                 aria-label="Close drawer overlay"
               />
@@ -217,7 +217,7 @@ export default function TickerPositionsDrawer({
                         <Link
                           href={chartUrl}
                           onClick={handleGoToChart}
-                          className="font-semibold text-sm sm:text-base text-text-primary hover:text-white tracking-tight truncate font-sans leading-tight transition-colors cursor-pointer"
+                          className="font-semibold text-sm sm:text-base text-plt-text hover:text-brand-blue tracking-tight truncate font-sans leading-tight transition-colors cursor-pointer"
                           title={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
                         >
                           {order.companyName || cleanSymbol}
@@ -233,13 +233,13 @@ export default function TickerPositionsDrawer({
                           </Link>
                           {order.sector && (
                             <>
-                              <span className="text-zinc-600 text-[10px] shrink-0">•</span>
-                              <span className="text-xs text-zinc-400 font-normal truncate max-w-[130px] sm:max-w-xs font-sans">
+                              <span className="text-plt-faint text-[10px] shrink-0">•</span>
+                              <span className="text-xs text-plt-muted font-normal truncate max-w-[130px] sm:max-w-xs font-sans">
                                 {order.sector}
                               </span>
                             </>
                           )}
-                          <span className="text-zinc-600 text-[10px] shrink-0">•</span>
+                          <span className="text-plt-faint text-[10px] shrink-0">•</span>
                           <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-400 font-sans shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                             EGX
@@ -252,12 +252,12 @@ export default function TickerPositionsDrawer({
                     <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                       {currentPrice > 0 && (
                         <div className="hidden sm:flex flex-col items-end rtl:items-start text-right rtl:text-left">
-                          <div className="text-sm sm:text-base font-bold text-text-primary tabular-nums tracking-tight font-sans">
+                          <div className="text-sm sm:text-base font-bold text-plt-text tabular-nums tracking-tight font-sans">
                             {currentPrice.toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}{' '}
-                            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-sans">
+                            <span className="text-[10px] font-semibold text-plt-muted uppercase tracking-wider font-sans">
                               {isArabic ? 'ج.م' : 'EGP'}
                             </span>
                           </div>
@@ -269,18 +269,18 @@ export default function TickerPositionsDrawer({
                       )}
 
                       {currentPrice > 0 && (
-                        <div className="h-6 w-px bg-border-default hidden sm:block shrink-0" />
+                        <div className="h-6 w-px bg-plt-border hidden sm:block shrink-0" />
                       )}
 
                       {/* Go to Ticker Chart Button (next to Close button) */}
                       <Link
                         href={chartUrl}
                         onClick={handleGoToChart}
-                        className="h-8 px-2 sm:px-2.5 rounded-lg border border-white/10 hover:border-white/25 bg-white/[0.04] hover:bg-white/[0.08] text-white flex items-center gap-1.5 transition-all cursor-pointer font-sans select-none shrink-0"
+                        className="h-8 px-2 sm:px-2.5 rounded-lg border border-plt-border hover:border-plt-border-active bg-plt-hover hover:bg-plt-active text-plt-text flex items-center gap-1.5 transition-all cursor-pointer font-sans select-none shrink-0"
                         title={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
                         aria-label={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
                       >
-                        <LineChart size={15} strokeWidth={1.8} className="text-zinc-300" />
+                        <LineChart size={15} strokeWidth={1.8} className="text-plt-subtle" />
                         <span className="hidden sm:inline font-medium text-xs whitespace-nowrap">
                           {isArabic ? 'الرسم البياني' : 'Chart'}
                         </span>
@@ -300,13 +300,13 @@ export default function TickerPositionsDrawer({
                 </div>
 
                 {/* Content Body */}
-                <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-black">
+                <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-plt-base">
                   {isLoading && orders.length === 0 ? (
                     <div className="p-4 sm:p-6 space-y-4">
                       {/* Summary Metric cards skeleton */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {[...Array(3)].map((_, i) => (
-                          <div key={i} className="p-3 border border-white/[0.06] bg-white/[0.02] space-y-2">
+                          <div key={i} className="p-3 border border-plt-border-soft bg-plt-hover/50 space-y-2">
                             <Skeleton className="h-3 w-16 rounded-none" />
                             <Skeleton className="h-5 w-24 rounded-none" />
                           </div>
@@ -315,7 +315,7 @@ export default function TickerPositionsDrawer({
                       {/* Position items skeleton */}
                       <div className="space-y-2 pt-2">
                         {[...Array(3)].map((_, i) => (
-                          <div key={i} className="p-3.5 border border-white/[0.06] bg-white/[0.02] flex items-center justify-between">
+                          <div key={i} className="p-3.5 border border-plt-border-soft bg-plt-hover/50 flex items-center justify-between">
                             <div className="space-y-1.5">
                               <Skeleton className="h-4 w-28 rounded-none" />
                               <Skeleton className="h-3 w-20 rounded-none" />

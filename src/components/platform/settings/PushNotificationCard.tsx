@@ -146,12 +146,12 @@ export default function PushNotificationCard() {
       {/* Header row — same layout as PinSecurityCard */}
       <div className="flex items-start justify-between gap-4 pb-2">
         <div className="flex items-start gap-4 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center text-white shrink-0 mt-0.5">
+          <div className="w-10 h-10 rounded-full bg-plt-hover flex items-center justify-center text-plt-text shrink-0 mt-0.5">
             {isSubscribed ? <Bell size={18} /> : <BellOff size={18} />}
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+              <h2 className="text-sm sm:text-base font-bold text-plt-text tracking-tight">
                 {locale === 'ar' ? 'الإشعارات الفورية' : 'Push Notifications'}
               </h2>
               {isSubscribed ? (
@@ -159,12 +159,12 @@ export default function PushNotificationCard() {
                   {locale === 'ar' ? 'مفعّل' : 'ENABLED'}
                 </span>
               ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-text-muted">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-plt-hover text-plt-muted">
                   {locale === 'ar' ? 'معطل' : 'OFF'}
                 </span>
               )}
             </div>
-            <p className="text-xs text-text-muted mt-1 leading-relaxed">
+            <p className="text-xs text-plt-muted mt-1 leading-relaxed">
               {locale === 'ar'
                 ? 'استلم إشارات التداول اللحظية، وتنبيهات الشراء، وتحديثات المحفظة على هذا الجهاز.'
                 : 'Receive real-time trade signals, buy alerts, and portfolio updates on this device.'}
@@ -185,7 +185,7 @@ export default function PushNotificationCard() {
               />
               <div
                 className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
-                  isSubscribed ? 'bg-profit-num' : 'bg-white/20'
+                  isSubscribed ? 'bg-profit-num' : 'bg-plt-active'
                 }`}
               >
                 {isLoading ? (
@@ -214,17 +214,17 @@ export default function PushNotificationCard() {
               type="button"
               onClick={handleTestNotification}
               disabled={pushState === 'sending_test'}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] active:scale-98 text-white transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-plt-hover hover:bg-plt-active active:scale-98 text-plt-text transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
             >
               {pushState === 'sending_test' ? (
                 <InlineSpinner className="h-3.5 w-3.5" label="Sending test notification" />
               ) : (
-                <Send size={13} className={`text-text-muted ${isRTL ? 'rotate-180' : ''}`} />
+                <Send size={13} className={`text-plt-muted ${isRTL ? 'rotate-180' : ''}`} />
               )}
               <span>{pushState === 'sending_test' ? (locale === 'ar' ? 'جاري الإرسال...' : 'Sending...') : (locale === 'ar' ? 'إرسال إشعار تجريبي' : 'Send Test Notification')}</span>
             </button>
 
-            <div className="text-xs text-text-muted flex items-center gap-2">
+            <div className="text-xs text-plt-muted flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-profit-num animate-pulse" />
               <span>{locale === 'ar' ? 'نشط على هذا الجهاز' : 'Live on this device'}</span>
             </div>
@@ -232,24 +232,24 @@ export default function PushNotificationCard() {
 
           {/* Sub-info card */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-            <div className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center gap-3 min-w-0">
-              <Bell size={16} className="text-text-muted shrink-0" />
+            <div className="p-3.5 sm:p-4 rounded-xl bg-plt-hover hover:bg-plt-active/30 transition-colors flex items-center gap-3 min-w-0">
+              <Bell size={16} className="text-plt-muted shrink-0" />
               <div className="min-w-0">
-                <h3 className="text-xs font-semibold text-white">
+                <h3 className="text-xs font-semibold text-plt-text">
                   {locale === 'ar' ? 'تنبيهات إشارات التداول' : 'Trade Signal Alerts'}
                 </h3>
-                <p className="text-[11px] text-text-muted mt-0.5">
+                <p className="text-[11px] text-plt-muted mt-0.5">
                   {locale === 'ar' ? 'إشارات البيع والشراء فور إطلاقها من الخوارزميات' : 'Buy/sell signals delivered the moment they trigger'}
                 </p>
               </div>
             </div>
-            <div className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center gap-3 min-w-0">
-              <CheckCircle2 size={16} className="text-text-muted shrink-0" />
+            <div className="p-3.5 sm:p-4 rounded-xl bg-plt-hover hover:bg-plt-active/30 transition-colors flex items-center gap-3 min-w-0">
+              <CheckCircle2 size={16} className="text-plt-muted shrink-0" />
               <div className="min-w-0">
-                <h3 className="text-xs font-semibold text-white">
+                <h3 className="text-xs font-semibold text-plt-text">
                   {locale === 'ar' ? 'تحديثات المحفظة' : 'Portfolio Updates'}
                 </h3>
-                <p className="text-[11px] text-text-muted mt-0.5">
+                <p className="text-[11px] text-plt-muted mt-0.5">
                   {locale === 'ar' ? 'تغييرات المراكز، وتفعيل وقف الخسارة، وتحقيق الأهداف' : 'Position changes, stop-loss hits, and target reaches'}
                 </p>
               </div>
@@ -270,9 +270,8 @@ export default function PushNotificationCard() {
         </div>
       )}
 
-      {/* Status message */}
       {statusMsg && (
-        <div className="px-4 py-2.5 rounded-xl bg-white/[0.03] text-xs text-text-secondary flex items-center gap-2">
+        <div className="px-4 py-2.5 rounded-xl bg-plt-hover text-xs text-plt-subtle flex items-center gap-2">
           <CheckCircle2 size={14} className="text-profit-num shrink-0" />
           <span>{statusMsg}</span>
         </div>

@@ -146,12 +146,12 @@ export default function AdvancedStrategyBuilder({
             {/* Split boxes: Data and Indicators */}
             <div className="grid grid-cols-1 gap-2.5 p-2.5 md:grid-cols-2 sm:p-3">
               {/* Left Box: Data */}
-              <div className="space-y-2 rounded-lg border border-white/[0.08] bg-white/[0.02] p-2.5">
-                <header className="flex items-center justify-between border-b border-white/[0.06] pb-1.5 mb-2">
-                  <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/70">
+              <div className="space-y-2 rounded-lg border border-plt-border-soft bg-plt-hover p-2.5">
+                <header className="flex items-center justify-between border-b border-plt-border-soft pb-1.5 mb-2">
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-plt-subtle">
                     {isAr ? 'البيانات' : 'Data'}
                   </span>
-                  <span className="tabular-nums font-sans text-[10px] text-white/40">{dataNodes.length}</span>
+                  <span className="tabular-nums font-sans text-[10px] text-plt-faint">{dataNodes.length}</span>
                 </header>
 
                 <div className="space-y-1.5">
@@ -178,7 +178,7 @@ export default function AdvancedStrategyBuilder({
                         search: { en: 'Search data and indicators', ar: 'ابحث في البيانات والمؤشرات' },
                       })}
                       aria-label={isAr ? 'إضافة بيانات أو مؤشر' : 'Add data or indicator'}
-                      className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                      className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
                     >
                       <Plus size={11} className="me-1" />
                       <span>{isAr ? 'إضافة بيانات أو مؤشر' : 'Add data or indicator'}</span>
@@ -188,12 +188,12 @@ export default function AdvancedStrategyBuilder({
               </div>
 
               {/* Right Box: Indicators */}
-              <div className="space-y-2 rounded-lg border border-white/[0.08] bg-white/[0.02] p-2.5">
-                <header className="flex items-center justify-between border-b border-white/[0.06] pb-1.5 mb-2">
-                  <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/70">
+              <div className="space-y-2 rounded-lg border border-plt-border-soft bg-plt-hover p-2.5">
+                <header className="flex items-center justify-between border-b border-plt-border-soft pb-1.5 mb-2">
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-plt-subtle">
                     {isAr ? 'المؤشرات' : 'Indicators'}
                   </span>
-                  <span className="tabular-nums font-sans text-[10px] text-white/40">{indicatorNodes.length}</span>
+                  <span className="tabular-nums font-sans text-[10px] text-plt-faint">{indicatorNodes.length}</span>
                 </header>
 
                 <div className="space-y-1.5">
@@ -220,7 +220,7 @@ export default function AdvancedStrategyBuilder({
                         search: { en: 'Search indicators', ar: 'ابحث في المؤشرات' },
                       })}
                       aria-label={isAr ? 'إضافة مؤشر' : 'Add indicator'}
-                      className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                      className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
                     >
                       <Plus size={11} className="me-1" />
                       <span>{isAr ? 'إضافة مؤشر' : 'Add indicator'}</span>
@@ -271,7 +271,7 @@ export default function AdvancedStrategyBuilder({
                     search: { en: 'Search calculations', ar: 'ابحث في الحسابات' },
                   })}
                   aria-label={isAr ? 'إضافة حساب' : 'Add calculation'}
-                  className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                  className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
                 >
                   <Plus size={11} className="me-1" />
                   <span>{isAr ? 'إضافة حساب' : 'Add calculation'}</span>
@@ -322,7 +322,7 @@ export default function AdvancedStrategyBuilder({
                     search: { en: 'Search buy conditions', ar: 'ابحث في شروط الشراء' },
                   })}
                   aria-label={isAr ? 'إضافة شرط شراء' : 'Add buy condition'}
-                  className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                  className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
                 >
                   <Plus size={11} className="me-1" />
                   <span>{isAr ? 'إضافة شرط شراء' : 'Add buy condition'}</span>
@@ -347,9 +347,9 @@ export default function AdvancedStrategyBuilder({
                 <div key={node.id}>
                   {index > 0 && (
                     <div className="flex items-center gap-2 py-0.5">
-                      <span className="h-px flex-1 bg-white/10" />
+                      <span className="h-px flex-1 bg-plt-border-soft" />
                       <span className="font-sans text-[8px] font-semibold text-plt-risk px-1.5 py-0.5 rounded border border-plt-risk/20 bg-plt-risk/10">{isAr ? 'أو' : 'OR'}</span>
-                      <span className="h-px flex-1 bg-white/10" />
+                      <span className="h-px flex-1 bg-plt-border-soft" />
                     </div>
                   )}
                   <CompactAdvancedNodeCard
@@ -374,7 +374,7 @@ export default function AdvancedStrategyBuilder({
                     search: { en: 'Search sell rules', ar: 'ابحث في قواعد البيع' },
                   })}
                   aria-label={isAr ? 'إضافة قاعدة بيع' : 'Add sell rule'}
-                  className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                  className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
                 >
                   <Plus size={11} className="me-1" />
                   <span>{isAr ? 'إضافة قاعدة بيع' : 'Add sell rule'}</span>
@@ -390,7 +390,7 @@ export default function AdvancedStrategyBuilder({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-plt-base/80 p-4 backdrop-blur-sm"
           onClick={() => setLibraryConfig(null)}
         >
           <div

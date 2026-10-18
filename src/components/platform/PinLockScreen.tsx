@@ -206,25 +206,25 @@ export default function PinLockScreen({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-between pt-[max(var(--ticknal-safe-area-top),2.5rem)] pb-[max(var(--ticknal-safe-area-bottom),1.5rem)] px-6 text-white select-none overflow-hidden"
+      className="fixed inset-0 z-[99999] bg-plt-base/95 backdrop-blur-2xl flex flex-col items-center justify-between pt-[max(var(--ticknal-safe-area-top),2.5rem)] pb-[max(var(--ticknal-safe-area-bottom),1.5rem)] px-6 text-plt-text select-none overflow-hidden"
     >
       {/* Top Header */}
       <div className="flex flex-col items-center text-center space-y-3">
         <div className="relative">
           {/* Ambient brand gradient glow */}
           <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-[#00BCE6]/30 via-[#2962FF]/30 to-[#D500F9]/30 blur-xl opacity-75 animate-pulse" />
-          <div className="relative w-16 h-16 rounded-full bg-black/90 border border-white/15 flex items-center justify-center shadow-[0_0_30px_rgba(41,98,255,0.25)]">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#00BCE6]/15 via-[#2962FF]/15 to-[#D500F9]/15 flex items-center justify-center border border-white/10">
-              <Lock size={22} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+          <div className="relative w-16 h-16 rounded-full bg-plt-base/90 border border-plt-border flex items-center justify-center shadow-[0_0_30px_rgba(41,98,255,0.25)]">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#00BCE6]/15 via-[#2962FF]/15 to-[#D500F9]/15 flex items-center justify-center border border-plt-border">
+              <Lock size={22} className="text-plt-text drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
             </div>
           </div>
         </div>
 
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('settings.securityTitle')}</h2>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-1.5 rounded-full bg-white/[0.04] border border-white/[0.08]">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-plt-text">{t('settings.securityTitle')}</h2>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-1.5 rounded-full bg-plt-hover border border-plt-border-soft">
             <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] animate-pulse" />
-            <p className="text-[11px] sm:text-xs text-white/60 font-medium">{t('auth.enterPin')}</p>
+            <p className="text-[11px] sm:text-xs text-plt-muted font-medium">{t('auth.enterPin')}</p>
           </div>
         </div>
       </div>
@@ -245,8 +245,8 @@ export default function PinLockScreen({
                   isFilled
                     ? isError
                       ? 'bg-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.7)] scale-115 border border-rose-400'
-                      : 'bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] shadow-[0_0_16px_rgba(41,98,255,0.75)] scale-115 border border-white/40'
-                    : 'bg-white/10 border border-white/20'
+                      : 'bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] shadow-[0_0_16px_rgba(41,98,255,0.75)] scale-115 border border-plt-border-active'
+                    : 'bg-plt-hover border border-plt-border'
                 }`}
               />
             );
@@ -287,8 +287,8 @@ export default function PinLockScreen({
                 disabled={isVerifying}
                 className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
               >
-                <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
-                  <span className="text-[20px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+                <div className="w-full h-full rounded-full bg-plt-base/90 group-hover:bg-plt-hover group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
+                  <span className="text-[20px] sm:text-[32px] font-semibold leading-none text-plt-text tracking-tight group-active:scale-105 transition-transform duration-100">
                     {digit}
                   </span>
                 </div>
@@ -307,8 +307,8 @@ export default function PinLockScreen({
             disabled={isVerifying}
             className="group relative w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square p-[1px] bg-gradient-to-b from-white/[0.16] via-white/[0.06] to-white/[0.02] hover:from-[#00BCE6]/60 hover:via-[#2962FF]/60 hover:to-[#D500F9]/60 active:from-[#00BCE6] active:via-[#2962FF] active:to-[#D500F9] active:scale-95 transition-all duration-150 focus:outline-none cursor-pointer select-none disabled:opacity-40 shadow-sm active:shadow-[0_0_24px_rgba(41,98,255,0.4)]"
           >
-            <div className="w-full h-full rounded-full bg-black/90 group-hover:bg-white/[0.06] group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
-              <span className="text-[20px] sm:text-[32px] font-semibold leading-none text-white tracking-tight group-active:scale-105 transition-transform duration-100">
+            <div className="w-full h-full rounded-full bg-plt-base/90 group-hover:bg-plt-hover group-active:bg-gradient-to-tr group-active:from-[#00BCE6]/20 group-active:via-[#2962FF]/20 group-active:to-[#D500F9]/20 flex items-center justify-center transition-colors duration-150">
+              <span className="text-[20px] sm:text-[32px] font-semibold leading-none text-plt-text tracking-tight group-active:scale-105 transition-transform duration-100">
                 0
               </span>
             </div>
@@ -318,7 +318,7 @@ export default function PinLockScreen({
             type="button"
             onClick={handleBackspace}
             disabled={pin.length === 0 || isVerifying}
-            className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square flex items-center justify-center text-white/50 hover:text-white active:scale-95 active:text-rose-400 hover:bg-white/[0.06] transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
+            className="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full aspect-square flex items-center justify-center text-plt-muted hover:text-plt-text active:scale-95 active:text-rose-400 hover:bg-plt-hover transition-all focus:outline-none disabled:opacity-20 cursor-pointer"
             title="Delete"
           >
             <Delete size={28} className="sm:w-8 sm:h-8" />
@@ -334,17 +334,17 @@ export default function PinLockScreen({
             setRecoveryError(null);
             setShowRecoveryModal(true);
           }}
-          className="text-white/40 hover:text-white transition-colors flex items-center gap-1 btn-typography cursor-pointer"
+          className="text-plt-faint hover:text-plt-text transition-colors flex items-center gap-1 btn-typography cursor-pointer"
         >
           <span>{t('auth.forgotPin')}</span>
         </button>
 
-        <span className="text-white/20">•</span>
+        <span className="text-plt-faint">•</span>
 
         <button
           type="button"
           onClick={handleSignOut}
-          className="text-white/40 hover:text-white/80 transition-colors flex items-center gap-1 btn-typography cursor-pointer"
+          className="text-plt-faint hover:text-plt-text transition-colors flex items-center gap-1 btn-typography cursor-pointer"
         >
           <LogOut size={12} />
           <span>{t('settings.signOut')}</span>
@@ -358,13 +358,13 @@ export default function PinLockScreen({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100000] bg-plt-overlay backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-black border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left"
+              className="bg-plt-base border border-plt-border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left"
             >
               {recoverySuccess ? (
                 <motion.div
@@ -375,24 +375,24 @@ export default function PinLockScreen({
                   <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                     <CheckCircle2 size={28} />
                   </div>
-                  <h3 className="text-base font-semibold text-white">Identity Verified!</h3>
-                  <p className="text-xs text-white/50">PIN lock reset. Unlocking your session...</p>
+                  <h3 className="text-base font-semibold text-plt-text">Identity Verified!</h3>
+                  <p className="text-xs text-plt-muted">PIN lock reset. Unlocking your session...</p>
                 </motion.div>
               ) : (
                 <>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.12] flex items-center justify-center text-white shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-plt-hover border border-plt-border flex items-center justify-center text-plt-text shrink-0">
                       <ShieldCheck size={20} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-white">Passcode Recovery</h3>
-                      <p className="text-xs text-white/40 mt-0.5">Verify your identity to reset PIN</p>
+                      <h3 className="text-sm font-semibold text-plt-text">Passcode Recovery</h3>
+                      <p className="text-xs text-plt-muted mt-0.5">Verify your identity to reset PIN</p>
                     </div>
                   </div>
 
                   {/* Recovery Method Switcher (if security question exists) */}
                   {securityQuestion && (
-                    <div className="flex items-center rounded-lg bg-white/[0.04] p-0.5 border border-white/[0.06]">
+                    <div className="flex items-center rounded-lg bg-plt-hover p-0.5 border border-plt-border-soft">
                       <button
                         type="button"
                         onClick={() => {
@@ -401,8 +401,8 @@ export default function PinLockScreen({
                         }}
                         className={`flex-1 py-1.5 btn-typography rounded-md transition-all ${
                           recoveryMethod === 'question'
-                            ? 'bg-white/10 text-white shadow-sm'
-                            : 'text-white/40 hover:text-white/70'
+                            ? 'bg-plt-active text-plt-text shadow-sm'
+                            : 'text-plt-muted hover:text-plt-text'
                         }`}
                       >
                         Security Question
@@ -415,8 +415,8 @@ export default function PinLockScreen({
                         }}
                         className={`flex-1 py-1.5 btn-typography rounded-md transition-all ${
                           recoveryMethod === 'password'
-                            ? 'bg-white/10 text-white shadow-sm'
-                            : 'text-white/40 hover:text-white/70'
+                            ? 'bg-plt-active text-plt-text shadow-sm'
+                            : 'text-plt-muted hover:text-plt-text'
                         }`}
                       >
                         Account Password
@@ -428,14 +428,14 @@ export default function PinLockScreen({
                     /* Method 1: Answer Security Question */
                     <form onSubmit={handleVerifyQuestion} className="space-y-3.5 pt-1">
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-medium text-white/50">Your Security Question</label>
-                        <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.08] text-xs font-medium text-white/90">
+                        <label className="text-[11px] font-medium text-plt-muted">Your Security Question</label>
+                        <div className="p-3 rounded-xl bg-plt-hover border border-plt-border-soft text-xs font-medium text-plt-text">
                           {securityQuestion}
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-medium text-white/50">Secret Answer</label>
+                        <label className="text-[11px] font-medium text-plt-muted">Secret Answer</label>
                         <input
                           type="text"
                           value={recoveryAnswer}
@@ -444,7 +444,7 @@ export default function PinLockScreen({
                             setRecoveryError(null);
                           }}
                           placeholder="Enter your secret answer"
-                          className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+                          className="w-full bg-plt-base border border-plt-border rounded-xl px-3 py-2.5 text-xs text-plt-text placeholder-plt-faint focus:outline-none focus:border-plt-border-active"
                           required
                           autoFocus
                         />
@@ -461,7 +461,7 @@ export default function PinLockScreen({
                         <button
                           type="button"
                           onClick={() => setShowRecoveryModal(false)}
-                          className="px-3.5 py-2 rounded-xl btn-typography text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                          className="px-3.5 py-2 rounded-xl btn-typography text-plt-muted hover:text-plt-text bg-plt-hover hover:bg-plt-active transition-colors"
                         >
                           Cancel
                         </button>
@@ -479,22 +479,22 @@ export default function PinLockScreen({
                     /* Method 2: Account Password Re-Auth */
                     <form onSubmit={handleVerifyPassword} className="space-y-3.5 pt-1">
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-medium text-white/50">Account Email</label>
+                        <label className="text-[11px] font-medium text-plt-muted">Account Email</label>
                         <div className="relative">
                           <input
                             type="email"
                             value={authEmail}
                             onChange={(e) => setAuthEmail(e.target.value)}
                             placeholder="your@email.com"
-                            className="w-full bg-black/60 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+                            className="w-full bg-plt-base border border-plt-border rounded-xl pl-9 pr-3 py-2.5 text-xs text-plt-text placeholder-plt-faint focus:outline-none focus:border-plt-border-active"
                             required
                           />
-                          <Mail size={14} className="absolute left-3 top-3 text-white/30" />
+                          <Mail size={14} className="absolute left-3 top-3 text-plt-faint" />
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-medium text-white/50">Account Password</label>
+                        <label className="text-[11px] font-medium text-plt-muted">Account Password</label>
                         <div className="relative">
                           <input
                             type="password"
@@ -504,11 +504,11 @@ export default function PinLockScreen({
                               setRecoveryError(null);
                             }}
                             placeholder="••••••••••••"
-                            className="w-full bg-black/60 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+                            className="w-full bg-plt-base border border-plt-border rounded-xl pl-9 pr-3 py-2.5 text-xs text-plt-text placeholder-plt-faint focus:outline-none focus:border-plt-border-active"
                             required
                             autoFocus
                           />
-                          <KeyRound size={14} className="absolute left-3 top-3 text-white/30" />
+                          <KeyRound size={14} className="absolute left-3 top-3 text-plt-faint" />
                         </div>
                       </div>
 
@@ -523,7 +523,7 @@ export default function PinLockScreen({
                         <button
                           type="button"
                           onClick={() => setShowRecoveryModal(false)}
-                          className="px-3.5 py-2 rounded-xl btn-typography text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                          className="px-3.5 py-2 rounded-xl btn-typography text-plt-muted hover:text-plt-text bg-plt-hover hover:bg-plt-active transition-colors"
                         >
                           Cancel
                         </button>

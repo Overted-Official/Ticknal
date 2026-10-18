@@ -3,8 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
+import { TourTriggerButton } from '@/components/ui/tour';
 
-export default function TransactionsHeader() {
+interface TransactionsHeaderProps {
+  onStartTour?: () => void;
+}
+
+export default function TransactionsHeader({ onStartTour }: TransactionsHeaderProps) {
   const { t, locale } = useTranslation();
 
   return (
@@ -22,6 +27,13 @@ export default function TransactionsHeader() {
           {locale === 'ar' ? 'المعاملات' : 'Transactions'}
         </h1>
       </div>
+
+      {/* Right: Quick Tour Trigger */}
+      {onStartTour && (
+        <div className="flex items-center">
+          <TourTriggerButton onClick={onStartTour} />
+        </div>
+      )}
     </header>
   );
 }

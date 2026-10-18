@@ -27,11 +27,23 @@ export interface MockBacktestPreview {
 type StaticSnapshotKey = 'all' | 'custom' | 'holdoutBuild' | 'holdoutUnseen';
 
 const STATIC_KPI_SNAPSHOTS: Readonly<Record<string, Readonly<Record<StaticSnapshotKey, MockBacktestKpis>>>> = {
+  typhon: {
+    all: { strategyReturn: 18.4, alpha: 7.1, benchmarkReturn: 11.3, winRate: 61.8, maxDrawdown: -8.6, totalTrades: 144 },
+    custom: { strategyReturn: 14, alpha: 5.4, benchmarkReturn: 8.6, winRate: 61.8, maxDrawdown: -7.5, totalTrades: 109 },
+    holdoutBuild: { strategyReturn: 10.5, alpha: 4, benchmarkReturn: 6.5, winRate: 61.8, maxDrawdown: -6.5, totalTrades: 82 },
+    holdoutUnseen: { strategyReturn: 5.7, alpha: 2.2, benchmarkReturn: 3.5, winRate: 61.8, maxDrawdown: -4.8, totalTrades: 45 },
+  },
   psi: {
     all: { strategyReturn: 18.4, alpha: 7.1, benchmarkReturn: 11.3, winRate: 61.8, maxDrawdown: -8.6, totalTrades: 144 },
     custom: { strategyReturn: 14, alpha: 5.4, benchmarkReturn: 8.6, winRate: 61.8, maxDrawdown: -7.5, totalTrades: 109 },
     holdoutBuild: { strategyReturn: 10.5, alpha: 4, benchmarkReturn: 6.5, winRate: 61.8, maxDrawdown: -6.5, totalTrades: 82 },
     holdoutUnseen: { strategyReturn: 5.7, alpha: 2.2, benchmarkReturn: 3.5, winRate: 61.8, maxDrawdown: -4.8, totalTrades: 45 },
+  },
+  cerberus: {
+    all: { strategyReturn: 21.7, alpha: 10.4, benchmarkReturn: 11.3, winRate: 64.2, maxDrawdown: -10.1, totalTrades: 131 },
+    custom: { strategyReturn: 16.5, alpha: 7.9, benchmarkReturn: 8.6, winRate: 64.2, maxDrawdown: -8.8, totalTrades: 100 },
+    holdoutBuild: { strategyReturn: 12.4, alpha: 5.9, benchmarkReturn: 6.5, winRate: 64.2, maxDrawdown: -7.6, totalTrades: 75 },
+    holdoutUnseen: { strategyReturn: 6.7, alpha: 3.2, benchmarkReturn: 3.5, winRate: 64.2, maxDrawdown: -5.6, totalTrades: 41 },
   },
   psi_v2: {
     all: { strategyReturn: 21.7, alpha: 10.4, benchmarkReturn: 11.3, winRate: 64.2, maxDrawdown: -10.1, totalTrades: 131 },

@@ -100,7 +100,7 @@ export default function TransactionsFloatingNav() {
         {/* TradingView Floating Pill Container */}
         <div
           data-name="round-tabs-anchors"
-          className="relative pointer-events-auto rounded-full border border-white/15 bg-black/90 backdrop-blur-xl p-1 sm:p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.8)] flex items-center justify-center max-w-[calc(100vw-24px)] sm:max-w-full"
+          className="relative pointer-events-auto rounded-full border border-plt-border bg-plt-base/90 backdrop-blur-xl p-1 sm:p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.8)] flex items-center justify-center max-w-[calc(100vw-24px)] sm:max-w-full"
         >
           <div
             id="sticky-navigation-tabs"
@@ -122,8 +122,8 @@ export default function TransactionsFloatingNav() {
                   onClick={() => scrollToSection(sec.id)}
                   className={`relative inline-flex items-center justify-center px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-[13px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap outline-none ${
                     isSelected
-                      ? 'bg-white/15 text-white font-semibold shadow-xs'
-                      : 'bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.06] active:bg-white/10'
+                      ? 'bg-plt-active text-plt-text font-semibold shadow-xs'
+                      : 'bg-transparent text-plt-muted hover:text-plt-text hover:bg-plt-hover active:bg-plt-active'
                   }`}
                 >
                   <span className="leading-none sm:hidden">{sec.shortLabel}</span>

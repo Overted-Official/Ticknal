@@ -204,7 +204,7 @@ export default function StrategyBacktestTreemap({
       {/* 2. Interactive Canvas Box */}
       <div className="flex-1 min-h-0 relative w-full h-full overflow-hidden">
         {layout.length === 0 && (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-neutral-500 text-xs">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-plt-faint text-xs">
             <span>
               {isAr ? 'لا تتوفر بيانات لخريطة أداء الاستراتيجية' : 'No strategy heatmap data available'}
             </span>
@@ -231,8 +231,8 @@ export default function StrategyBacktestTreemap({
                 isSelected
                   ? 'border-white ring-2 ring-white/90 shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-20 scale-[1.012]'
                   : selectedGroupId
-                  ? 'border-white/10 bg-black opacity-70 hover:opacity-100'
-                  : 'border-white/10 bg-black'
+                  ? 'border-plt-border bg-plt-base opacity-70 hover:opacity-100'
+                  : 'border-plt-border bg-plt-base'
               }`}
               onClick={() => setSelectedGroupId(isSelected ? null : groupData.id)}
             >
@@ -240,8 +240,8 @@ export default function StrategyBacktestTreemap({
               {groupData.tickers.length > 1 && ribbonH > 0 && (
                 <div
                   style={{ height: ribbonH }}
-                  className={`px-2 flex items-center justify-between backdrop-blur-sm border-b border-white/10 text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors ${
-                    isSelected ? 'bg-white/15 text-white font-bold' : 'bg-black/90 text-neutral-400'
+                  className={`px-2 flex items-center justify-between backdrop-blur-sm border-b border-plt-border-soft text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors ${
+                    isSelected ? 'bg-plt-active text-plt-text font-bold' : 'bg-plt-base/90 text-plt-muted'
                   }`}
                 >
                   <span className="truncate max-w-[65%]">{groupName}</span>
@@ -320,7 +320,7 @@ export default function StrategyBacktestTreemap({
       {hoveredStock && (
         <div
           style={tooltipStyle}
-          className="hover-card absolute z-50 pointer-events-none bg-[#3D3D3D] rounded-xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-xs flex flex-col gap-2 min-w-60 max-w-72 animate-in fade-in duration-100 font-sans select-none border-0"
+          className="hover-card absolute z-50 pointer-events-none bg-plt-hovercard rounded-xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-xs flex flex-col gap-2 min-w-60 max-w-72 animate-in fade-in duration-100 font-sans select-none border-0"
         >
           <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-2">
             <div className="flex items-center gap-1.5 min-w-0">

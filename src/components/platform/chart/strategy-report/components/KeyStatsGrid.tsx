@@ -157,7 +157,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
       value: `${effectiveAvgBars}`,
       unit: locale === 'ar' ? 'شمعة' : 'BARS',
       changeText: locale === 'ar' ? `~${Math.round(Number(effectiveAvgBars) || 0)} يوم` : `~${Math.round(Number(effectiveAvgBars) || 0)} Days`,
-      changeColorClass: 'text-white',
+      changeColorClass: 'text-plt-text',
       metaText: locale === 'ar' ? 'المدة في السوق' : 'time in market',
       showSparkline: false,
     },
@@ -205,13 +205,13 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
         stats.sharpeRatio !== undefined && !isNaN(stats.sharpeRatio)
           ? stats.sharpeRatio.toFixed(2)
           : '—',
-      colorClass: 'text-white',
+      colorClass: 'text-plt-text',
     },
     {
       id: 'sortino-ratio',
       title: locale === 'ar' ? 'نسبة سورتينو' : 'Sortino Ratio',
       value: sortinoRatio,
-      colorClass: 'text-white',
+      colorClass: 'text-plt-text',
     },
     {
       id: 'profit-factor',
@@ -220,7 +220,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
         stats.profitFactor !== undefined && !isNaN(stats.profitFactor)
           ? stats.profitFactor.toFixed(2)
           : '—',
-      colorClass: 'text-white',
+      colorClass: 'text-plt-text',
     },
     {
       id: 'annual-cagr',
@@ -238,7 +238,7 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
         stats.winLossRatio !== undefined && !isNaN(stats.winLossRatio)
           ? `${stats.winLossRatio.toFixed(2)}x`
           : '—',
-      colorClass: 'text-white',
+      colorClass: 'text-plt-text',
     },
     {
       id: 'gross-profit',
@@ -271,18 +271,18 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
         stats.maxConsecutiveWins !== undefined
           ? locale === 'ar' ? `${stats.maxConsecutiveWins} صفقات` : `${stats.maxConsecutiveWins} trades`
           : '—',
-      colorClass: 'text-white',
+      colorClass: 'text-plt-text',
     },
   ];
 
   return (
-    <section id="section-strategy-key-metrics" className="space-y-4 pt-6 border-t border-border-subtle select-none font-sans">
+    <section id="section-strategy-key-metrics" className="space-y-4 pt-6 border-t border-plt-border-soft select-none font-sans">
       {/* Section Header */}
-      <div className="flex flex-col gap-0.5 pb-2.5 border-b border-border-subtle">
-        <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
+      <div className="flex flex-col gap-0.5 pb-2.5 border-b border-plt-border-soft">
+        <h3 className="text-sm sm:text-[15px] font-bold text-plt-text tracking-tight leading-snug">
           {locale === 'ar' ? 'مؤشرات الأداء الرئيسية' : 'Key Performance Metrics'}
         </h3>
-        <p className="text-xs text-white/50 leading-relaxed">
+        <p className="text-xs text-plt-muted leading-relaxed">
           {locale === 'ar'
             ? 'ألفا التداول الخوارزمي، العائد المعياري، نسبة النجاح، ومخاطر الهبوط'
             : 'Core algorithmic trading alpha, benchmark return, win rate, and drawdown risk'}
@@ -301,8 +301,8 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
       </div>
 
       {/* Secondary Detailed Metrics: Rail on Phone / 8-column Grid on Desktop */}
-      <div className="pt-3 border-t border-white/[0.06] space-y-2.5">
-        <h4 className="text-xs font-semibold text-white/70 tracking-tight">
+      <div className="pt-3 border-t border-plt-border-soft space-y-2.5">
+        <h4 className="text-xs font-semibold text-plt-subtle tracking-tight">
           {locale === 'ar' ? 'التحليلات التفصيلية' : 'Detailed Analytics'}
         </h4>
         <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-5 pb-1 sm:grid sm:grid-cols-4 lg:grid-cols-8 sm:gap-4 sm:overflow-visible sm:pb-0 w-full">
@@ -311,11 +311,11 @@ export default function KeyStatsGrid({ report, metrics }: KeyStatsGridProps) {
               key={m.id}
               className="shrink-0 snap-start flex flex-col gap-1 min-w-[105px] xs:min-w-[115px] sm:min-w-0"
             >
-              <span className="text-[11px] sm:text-xs text-white/50 font-medium tracking-tight truncate">
+              <span className="text-[11px] sm:text-xs text-plt-muted font-medium tracking-tight truncate">
                 {m.title}
               </span>
               <span
-                className={`text-sm sm:text-[15px] font-bold tabular-nums tracking-tight truncate ${m.colorClass || 'text-white'}`}
+                className={`text-sm sm:text-[15px] font-bold tabular-nums tracking-tight truncate ${m.colorClass || 'text-plt-text'}`}
               >
                 {m.value}
               </span>

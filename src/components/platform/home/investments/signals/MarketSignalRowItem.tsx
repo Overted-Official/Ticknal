@@ -106,7 +106,7 @@ export default function MarketSignalRowItem({
   return (
     <Link
       href={`/charts?ticker=${encodeURIComponent(signalData.symbol)}&timeframe=D${strategyId ? `&strategy=${encodeURIComponent(strategyId)}` : ''}`}
-      className="group flex min-w-0 items-center gap-3 border-b border-border-subtle px-2 py-3 transition-colors hover:bg-surface-active/30"
+      className="group flex min-w-0 items-center gap-3 border-b border-plt-border-soft px-2 py-3 transition-colors hover:bg-plt-hover"
     >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-surface-active text-xs font-bold text-text-primary">
         {signalData.logoUrl && !imgError ? (
@@ -124,12 +124,12 @@ export default function MarketSignalRowItem({
 
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-baseline justify-between gap-3">
-          <span className="min-w-0 truncate text-[13px] font-semibold text-text-primary transition-colors group-hover:text-brand-blue">
+          <span className="min-w-0 truncate text-[13px] font-semibold text-plt-text transition-colors group-hover:text-brand-blue">
             {signalData.companyName || cleanSymbol}
           </span>
           {signalAgeText && (
             <span
-              className="shrink-0 text-[10px] font-medium tabular-nums text-text-muted"
+              className="shrink-0 text-[10px] font-medium tabular-nums text-plt-muted"
               title={rawSignalDate ? (isArabic ? `تاريخ الإشارة: ${rawSignalDate}` : `Signal date: ${rawSignalDate}`) : undefined}
             >
               {signalAgeText}
@@ -138,8 +138,8 @@ export default function MarketSignalRowItem({
         </div>
 
         <div className="mt-0.5 flex min-w-0 items-baseline justify-between gap-3 text-[11px]">
-          <span className="min-w-0 truncate text-text-muted">
-            <span className="font-semibold text-text-primary">{cleanSymbol}</span>
+          <span className="min-w-0 truncate text-plt-muted">
+            <span className="font-semibold text-plt-text">{cleanSymbol}</span>
             <span className="px-1">•</span>
             <span>{displaySector}</span>
             {rotationRegime && (
@@ -149,7 +149,7 @@ export default function MarketSignalRowItem({
             )}
           </span>
 
-          <span className={`shrink-0 tabular-nums font-semibold ${hasAlpha && alpha! >= 0 ? 'text-profit-chart' : hasAlpha ? 'text-loss-chart' : 'text-text-muted'}`}>
+          <span className={`shrink-0 tabular-nums font-semibold ${hasAlpha && alpha! >= 0 ? 'text-profit-chart' : hasAlpha ? 'text-loss-chart' : 'text-plt-muted'}`}>
             {hasAlpha ? `${alpha! >= 0 ? '+' : ''}${alpha!.toFixed(1)}% α` : '— α'}
           </span>
         </div>

@@ -1,4 +1,4 @@
-export const PROPRIETARY_STRATEGY_IDS = ['psi', 'psi_v2', 'hydra'] as const;
+export const PROPRIETARY_STRATEGY_IDS = ['typhon', 'cerberus', 'hydra', 'psi', 'psi_v2'] as const;
 export type ProprietaryStrategyId = typeof PROPRIETARY_STRATEGY_IDS[number];
 
 const OWNER_EMAIL = 'abdelrahman.m.abualola@gmail.com';

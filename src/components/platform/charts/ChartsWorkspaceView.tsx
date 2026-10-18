@@ -8,6 +8,10 @@ import { TickerOrder } from '@/components/platform/TickerPositions';
 import type { BrokerageAccountOption } from '@/components/platform/AddOrderModal';
 import GuestConversionBanner from '@/components/platform/auth/GuestConversionBanner';
 import { useGuestGuard } from '@/context/GuestGuardContext';
+import { Tour, useTour } from '@/components/ui/tour';
+import { getChartsTourSteps, CHARTS_TOUR_STORAGE_KEY } from '@/lib/tours/charts-tour-config';
+import { useTranslation } from '@/lib/i18n';
+import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 
 export interface ChartsWorkspaceViewProps {
   canViewProprietary?: boolean;
@@ -41,6 +45,31 @@ export default function ChartsWorkspaceView({
   brokerageAccounts = [],
 }: ChartsWorkspaceViewProps) {
   const { isGuest } = useGuestGuard();
+  const { isRTL } = useTranslation();
+  const isHeroScene = useHeroSceneMode();
+
+  const tour = useTour(CHARTS_TOUR_STORAGE_KEY);
+  const tourSteps = React.useMemo(
+    () => getChartsTourSteps(isRTL, canViewProprietary),
+    [isRTL, canViewProprietary]
+  );
+  const hasAutoStartedRef = React.useRef(false);
+
+  // Auto-start Charts page walkthrough for first-time visitors (strictly once on mount)
+  React.useEffect(() => {
+    if (isHeroScene) return;
+    if (hasAutoStartedRef.current) return;
+    hasAutoStartedRef.current = true;
+
+    if (!tour.seen()) {
+      const timer = setTimeout(() => {
+        tour.start();
+        tour.markSeen();
+      }, 1200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [tour, isHeroScene]);
 
   return (
     <div className="flex-1 h-full w-full min-w-0 flex flex-row overflow-hidden select-none relative">
@@ -58,18 +87,21 @@ export default function ChartsWorkspaceView({
           companyName={companyName}
           logoUrl={logoUrl}
           currency={currency}
+          onStartTour={tour.start}
         />
-        <BottomToolbar
-          symbol={symbol}
-          timeframe={timeframe}
-          chartData={dailyChartData || chartData}
-          companyName={companyName}
-          logoUrl={logoUrl}
-        />
+        <div data-tour="chart-bottom-toolbar" className="shrink-0 w-full">
+          <BottomToolbar
+            symbol={symbol}
+            timeframe={timeframe}
+            chartData={dailyChartData || chartData}
+            companyName={companyName}
+            logoUrl={logoUrl}
+          />
+        </div>
       </div>
 
       {/* Right Sidebar */}
-      <div className="hidden lg:flex h-full shrink-0">
+      <div className="hidden lg:flex h-full shrink-0" data-tour="chart-watchlist-sidebar">
         <RightSidebar
           canViewProprietary={canViewProprietary}
           watchlist={watchlist}
@@ -81,6 +113,18 @@ export default function ChartsWorkspaceView({
 
       {/* Guest Mode Conversion Banner */}
       <GuestConversionBanner currentFeature="SuperCharts" />
+
+      {/* In-App Tour Walkthrough Portal */}
+      <Tour
+        steps={tourSteps}
+        open={tour.open}
+        onOpenChange={tour.setOpen}
+        index={tour.index}
+        onIndexChange={tour.setIndex}
+        onFinish={tour.markSeen}
+        onSkip={tour.markSeen}
+        dark
+      />
     </div>
   );
 }

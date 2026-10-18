@@ -1,23 +1,27 @@
-import type { PriceBar } from '@/strategies/PSI/psiStrategy';
+import type { PriceBar } from '@/strategies/Typhon/typhonStrategy';
 import {
   formatMetricsForApi,
   normalizeTickerSymbol,
   runPsiStrategy,
-} from '@/strategies/PSI/psiStrategy';
-import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
+} from '@/strategies/Typhon/typhonStrategy';
+import { resolvePsiParamsAsync } from '@/strategies/Typhon/typhonParameterStore';
 import {
   formatPsiV2MetricsForApi,
   runPsiV2Strategy,
-} from '@/strategies/PSI_V2';
+} from '@/strategies/Cerberus';
 import {
   formatHydraMetricsForApi,
   runHydraStrategy,
 } from '@/strategies/Hydra';
-import type { EquityPoint, StrategyTrade } from '@/strategies/registry';
+import {
+  normalizeStrategyId,
+  type EquityPoint,
+  type StrategyTrade,
+} from '@/strategies/registry';
 import { getLatestActionableSignal } from '@/lib/strategy-signal-state';
-import { compareChampionCandidates } from '@/lib/finance/champion-routing';
+import { compareChampionCandidates, isQualifiedChampionCandidate } from '@/lib/finance/champion-routing';
 
-export type StrategyId = 'psi' | 'psi_v2' | 'hydra' | 'thoth_egx_macro';
+export type StrategyId = 'typhon' | 'cerberus' | 'hydra' | 'thoth_egx_macro';
 
 export type SignalEvent = {
   symbol: string;
@@ -61,7 +65,7 @@ export type StrategyAnalysis = {
 };
 
 export type TickerStrategyChampion = {
-  strategyId: Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>;
+  strategyId: Extract<StrategyId, 'typhon' | 'cerberus' | 'hydra'>;
   strategyName: 'Typhon' | 'Cerberus' | 'Hydra';
   alpha: number;
   hasPositiveAlpha: boolean;
@@ -157,9 +161,13 @@ function latestActionable(events: SignalEvent[], bars: PriceBar[], lookbackBars:
 export async function analyzeStrategy(
   symbol: string,
   inputBars: PriceBar[],
-  strategyId: StrategyId,
+  rawStrategyId: StrategyId | string,
   options: StrategyAnalysisOptions = {},
 ): Promise<StrategyAnalysis> {
+  const strategyId: StrategyId =
+    rawStrategyId === 'thoth_egx_macro'
+      ? 'thoth_egx_macro'
+      : normalizeStrategyId(rawStrategyId);
   const cleanSymbol = normalizeTickerSymbol(symbol);
   const bars = normalizedBars(inputBars);
   const analysisStart = options.startDate || DEFAULT_ANALYSIS_START;
@@ -211,14 +219,14 @@ export async function analyzeStrategy(
   let parameterVersion = 'unavailable';
   let formattedMetrics: Record<string, string> = {};
 
-  if (strategyId === 'psi') {
+  if (strategyId === 'typhon') {
     const parameterResolution = await resolvePsiParamsAsync(cleanSymbol, commonParams as any, options.timeframe || 'D');
     rawResult = runPsiStrategy(bars, parameterResolution.params);
     signals = rawResult.signals;
     metrics = rawResult.metrics;
     parameterVersion = parameterResolution.parameterSource;
     formattedMetrics = formatMetricsForApi(rawResult.metrics);
-  } else if (strategyId === 'psi_v2') {
+  } else if (strategyId === 'cerberus') {
     rawResult = runPsiV2Strategy(bars, { ticker: cleanSymbol, ...commonParams });
     signals = rawResult.signals;
     metrics = rawResult.metrics;
@@ -263,14 +271,14 @@ export async function analyzeStrategy(
   };
 }
 
-const CHAMPION_STRATEGIES: Array<Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>> = [
-  'psi',
-  'psi_v2',
+const CHAMPION_STRATEGIES: Array<Extract<StrategyId, 'typhon' | 'cerberus' | 'hydra'>> = [
+  'typhon',
+  'cerberus',
   'hydra',
 ];
 
 function strategyNameForChampion(strategyId: TickerStrategyChampion['strategyId']): TickerStrategyChampion['strategyName'] {
-  if (strategyId === 'psi_v2') return 'Cerberus';
+  if (strategyId === 'cerberus') return 'Cerberus';
   if (strategyId === 'hydra') return 'Hydra';
   return 'Typhon';
 }
@@ -295,35 +303,39 @@ export async function analyzeTickerChampion(
     )
     .map((analysis) => {
       const alpha = analysis.metrics.alpha ?? Number.NEGATIVE_INFINITY;
+      const roi = analysis.metrics.totalReturn ?? Number.NEGATIVE_INFINITY;
       const trades = analysis.metrics.trades ?? 0;
       const avgMae = Math.abs(analysis.metrics.avgAdverseExcursion ?? analysis.metrics.maxAdverseExcursion ?? 0);
       const avgBars = analysis.metrics.avgBarsPerTrade ?? 0;
+      const winRate = analysis.metrics.winRate ?? 0;
       return {
         analysis,
         alpha,
+        roi,
         trades,
         avgMae,
         avgBars,
+        winRate,
       };
     })
     .sort(compareChampionCandidates);
 
   const winner = ranking[0];
-  const strategyId = winner?.analysis.strategyId ?? 'psi';
+  const strategyId = winner?.analysis.strategyId ?? 'typhon';
   const alpha = Number.isFinite(winner?.alpha) ? winner.alpha : 0;
 
   return {
     strategyId,
     strategyName: strategyNameForChampion(strategyId),
     alpha,
-    hasPositiveAlpha: alpha > 0,
+    hasPositiveAlpha: Boolean(winner && isQualifiedChampionCandidate(winner)),
     analyses,
   };
 }
 
-export function strategyLabel(strategyId: StrategyId): string {
+export function strategyLabel(strategyId: StrategyId | string): string {
   if (strategyId === 'hydra') return 'Hydra';
-  if (strategyId === 'psi_v2') return 'Cerberus';
+  if (strategyId === 'cerberus' || strategyId === 'psi_v2' || strategyId === 'psiv2') return 'Cerberus';
   if (strategyId === 'thoth_egx_macro') return 'Archived';
   return 'Typhon';
 }

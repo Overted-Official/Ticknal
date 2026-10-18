@@ -157,7 +157,7 @@ export interface WinningUniverseComparisonMetrics extends StrategyModelCompariso
 }
 
 export interface TickerChampionInfo {
-  champion: 'psi' | 'psi_v2' | 'hydra';
+  champion: 'typhon' | 'cerberus' | 'hydra';
   championName: string;
   alpha: number;
   roi: number;

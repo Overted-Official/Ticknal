@@ -44,8 +44,8 @@ export default function StrategyBacktestPanel({ strategyId, hasRules, locale, si
 
   if (simpleProgram) return <StrategyLiveUniversePanel strategyId={strategyId} program={simpleProgram} selectedSymbols={selectedSymbols} universe={universe} locale={locale} startDate={startDate} endDate={endDate} onChooseCompanies={onChooseCompanies} onSelectTicker={(symbol) => onSelectTicker?.(symbol)} />;
 
-  if (!preview) return <section className="flex min-h-[360px] flex-col items-center justify-center border border-dashed border-white/10 px-6 text-center" aria-label={isAr ? 'نظرة عامة على السوق' : 'Market overview'}>
-    <LayoutGrid size={24} className="text-white/25" />
+  if (!preview) return <section className="flex min-h-[360px] flex-col items-center justify-center border border-dashed border-plt-border px-6 text-center" aria-label={isAr ? 'نظرة عامة على السوق' : 'Market overview'}>
+    <LayoutGrid size={24} className="text-plt-faint" />
     <h2 className="mt-4 text-sm font-semibold">{hasRules ? (isAr ? 'لا توجد نتائج اختبار بعد' : 'No backtest results yet') : (isAr ? 'أكمل قواعد الاستراتيجية' : 'Complete the strategy rules')}</h2>
     <p className="mt-2 max-w-sm text-xs leading-5 text-plt-muted">{hasRules ? (isAr ? 'سير العمل المخصص غير متصل بعد بمحرك اختبار خلفي. لن نعرض عوائد نموذجية على أنها نتائجه.' : 'This custom workflow is not connected to a backtest engine yet. Example returns are not shown as its results.') : (isAr ? 'أضف قاعدة شراء وقاعدة بيع لعرض معاينة الأداء.' : 'Add a buy and a sell rule to open the performance preview.')}</p>
   </section>;
@@ -57,14 +57,14 @@ export default function StrategyBacktestPanel({ strategyId, hasRules, locale, si
     { id: 'drawdown', label: isAr ? 'أقصى تراجع' : 'Max drawdown', value: percent(preview.kpis.maxDrawdown), context: isAr ? 'من القمة إلى القاع' : 'peak to trough', tone: 'negative' },
   ] as const;
 
-  return <section className="min-w-0 bg-black" aria-label={isAr ? 'نظرة عامة على السوق' : 'Market overview'}>
-    <div className="border-b border-white/10 pb-4">
+  return <section className="min-w-0 bg-plt-base" aria-label={isAr ? 'نظرة عامة على السوق' : 'Market overview'}>
+    <div className="border-b border-plt-border pb-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div><h2 className="text-sm font-semibold text-white">{isAr ? 'نظرة عامة على السوق' : 'Market overview'}</h2><p className="mt-1 text-[11px] text-plt-muted">{isAr ? 'مقارنة إجمالية ونتائج حسب مجموعة الصناعة' : 'Aggregate comparison and industry-group results'}</p></div>
+        <div><h2 className="text-sm font-semibold text-plt-text">{isAr ? 'نظرة عامة على السوق' : 'Market overview'}</h2><p className="mt-1 text-[11px] text-plt-muted">{isAr ? 'مقارنة إجمالية ونتائج حسب مجموعة الصناعة' : 'Aggregate comparison and industry-group results'}</p></div>
         <span className="badge badge-warning">{isAr ? 'معاينة توضيحية' : 'Illustrative preview'}</span>
       </div>
-      <p className="mt-3 text-[11px] leading-4 text-white/55">{isAr ? 'نتائج نموذجية، لم تُحسب من سير العمل هذا. تواريخ الرسم البياني لا تغير هذه الأرقام.' : 'Sample results, not calculated from this workflow. Chart dates do not recalculate these figures.'}</p>
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-white/45 tabular-nums">
+      <p className="mt-3 text-[11px] leading-4 text-plt-muted">{isAr ? 'نتائج نموذجية، لم تُحسب من سير العمل هذا. تواريخ الرسم البياني لا تغير هذه الأرقام.' : 'Sample results, not calculated from this workflow. Chart dates do not recalculate these figures.'}</p>
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-plt-faint tabular-nums">
         <span>{isAr ? 'الفترة النموذجية: ٥ يناير – ٢٨ ديسمبر ٢٠٢٥' : 'Sample period: 5 Jan – 28 Dec 2025'}</span>
         <span>{isAr ? `${groups.length} مجموعات صناعية` : `${groups.length} industry groups`}</span>
       </div>
@@ -73,13 +73,13 @@ export default function StrategyBacktestPanel({ strategyId, hasRules, locale, si
     <div className="strategy-analytics-kpis mt-4" aria-label={isAr ? 'مؤشرات الأداء النموذجية' : 'Sample performance metrics'}>
       {kpis.map((kpi) => <div key={kpi.id} className="strategy-analytics-kpi">
         <span className="text-[11px] text-plt-muted">{kpi.label}</span>
-        <strong className={`mt-2 block text-xl font-semibold tabular-nums ${kpi.tone === 'positive' ? 'text-plt-profit' : kpi.tone === 'negative' ? 'text-plt-risk' : 'text-white'}`}>{kpi.value}</strong>
-        <span className="mt-1 block text-[10px] text-white/45 tabular-nums">{kpi.context}</span>
+        <strong className={`mt-2 block text-xl font-semibold tabular-nums ${kpi.tone === 'positive' ? 'text-plt-profit' : kpi.tone === 'negative' ? 'text-plt-risk' : 'text-plt-text'}`}>{kpi.value}</strong>
+        <span className="mt-1 block text-[10px] text-plt-faint tabular-nums">{kpi.context}</span>
       </div>)}
     </div>
 
-    <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-      <div><h3 className="text-xs font-semibold text-white">{isAr ? 'الأداء حسب مجموعة الصناعة' : 'Industry-group performance'}</h3><p className="mt-1 text-[10px] text-plt-muted">{isAr ? 'حدد مجموعة لعرض شركاتها' : 'Open a group to inspect its companies'}</p></div>
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-b border-plt-border pb-3">
+      <div><h3 className="text-xs font-semibold text-plt-text">{isAr ? 'الأداء حسب مجموعة الصناعة' : 'Industry-group performance'}</h3><p className="mt-1 text-[10px] text-plt-muted">{isAr ? 'حدد مجموعة لعرض شركاتها' : 'Open a group to inspect its companies'}</p></div>
       <div className="seg-control" role="tablist" aria-label={isAr ? 'نوع العرض' : 'View mode'}>
         <button type="button" role="tab" aria-selected={viewMode === 'table'} onClick={() => setViewMode('table')} className={`seg-control-btn inline-flex items-center gap-1 ${viewMode === 'table' ? 'active' : ''}`} aria-label={isAr ? 'عرض الجدول' : 'Table view'}><Table2 size={13} />{isAr ? 'جدول' : 'Table'}</button>
         <button type="button" role="tab" aria-selected={viewMode === 'heatmap'} onClick={() => setViewMode('heatmap')} className={`seg-control-btn inline-flex items-center gap-1 ${viewMode === 'heatmap' ? 'active' : ''}`} aria-label={isAr ? 'عرض الخريطة' : 'Treemap view'}><LayoutGrid size={13} />{isAr ? 'خريطة' : 'Treemap'}</button>
@@ -114,7 +114,7 @@ function FragmentGroup({ group, isAr, expanded, percent, count, onToggle, onSele
 }) {
   return <>
     <tr data-testid="industry-group-row" aria-expanded={expanded}>
-      <td><button type="button" className="flex min-w-0 items-center gap-1.5 text-start font-semibold text-white" onClick={onToggle} aria-expanded={expanded}><ChevronDown size={13} className={`shrink-0 text-plt-muted transition-transform ${expanded ? '' : '-rotate-90'}`} /><span className="truncate">{isAr ? group.nameAr : group.name}</span></button></td>
+      <td><button type="button" className="flex min-w-0 items-center gap-1.5 text-start font-semibold text-plt-text" onClick={onToggle} aria-expanded={expanded}><ChevronDown size={13} className={`shrink-0 text-plt-muted transition-transform ${expanded ? '' : '-rotate-90'}`} /><span className="truncate">{isAr ? group.nameAr : group.name}</span></button></td>
       <td className={`text-end font-semibold tabular-nums ${group.returnPct >= 0 ? 'text-plt-profit' : 'text-plt-risk'}`}>{percent(group.returnPct)}</td>
       <td className="text-end tabular-nums">{percent(group.alphaPct)}</td>
       <td className="text-end tabular-nums">{count(group.trades)}</td>

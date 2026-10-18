@@ -138,12 +138,12 @@ export default function MoneySupplySection({
         {/* 1. Header: 'Money supply (M2) ›' + Horizon Switcher */}
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-1 cursor-pointer group w-fit">
-            <h3 className="text-sm sm:text-base font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
+            <h3 className="text-sm sm:text-base font-semibold tracking-tight text-plt-text transition-colors">
               {locale === 'ar' ? 'المعروض النقدي والسيولة' : 'Money supply'}
             </h3>
             <ChevronRight
               size={16}
-              className="text-neutral-400 group-hover:text-white transition-colors translate-y-[0.5px]"
+              className="text-plt-muted group-hover:text-plt-text transition-colors translate-y-[0.5px]"
             />
           </div>
 
@@ -256,7 +256,7 @@ export default function MoneySupplySection({
         </div>
 
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
-        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black overflow-hidden pt-2">
+        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-plt-base overflow-hidden pt-2">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-between p-4 pb-8 space-y-4">
               <div className="flex justify-between items-center">
@@ -279,14 +279,14 @@ export default function MoneySupplySection({
                   />
                 </svg>
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-white/[0.06]">
+              <div className="flex justify-between items-center pt-2 border-t border-plt-border-soft">
                 {[...Array(6)].map((_, i) => (
                   <Skeleton key={i} className="h-2.5 w-10 sm:w-12 rounded-none" />
                 ))}
               </div>
             </div>
           ) : chartData.length < 2 ? (
-            <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
+            <div className="w-full h-full flex items-center justify-center text-xs text-plt-faint">
               {locale === 'ar' ? 'لا توجد بيانات تاريخية متاحة لهذا الإطار الزمني.' : 'No historical data available for this timeframe.'}
             </div>
           ) : (
@@ -309,10 +309,10 @@ export default function MoneySupplySection({
                   domain={[yMin, yMax]}
                   ticks={yTicks.length > 0 ? yTicks : undefined}
                   width={64}
-                  stroke="#262626"
+                  stroke="var(--plt-border)"
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: '#888888', fontSize: 10, fontFamily: 'sans-serif' }}
+                  tick={{ fill: 'var(--plt-text-muted)', fontSize: 10, fontFamily: 'sans-serif' }}
                   tickFormatter={(val: number) => {
                     const inT = val / 1e12;
                     return Number.isInteger(inT) ? `${inT} T` : `${inT.toFixed(2)} T`;
@@ -323,10 +323,10 @@ export default function MoneySupplySection({
                 {/* Bottom X-Axis (TradingView Clean Dates) */}
                 <XAxis
                   dataKey="date"
-                  stroke="#262626"
+                  stroke="var(--plt-border)"
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: '#737373', fontSize: 10, fontFamily: 'sans-serif' }}
+                  tick={{ fill: 'var(--plt-text-muted)', fontSize: 10, fontFamily: 'sans-serif' }}
                   dy={10}
                   tickFormatter={(dateStr: string) => {
                     if (!dateStr) return '';
@@ -375,26 +375,26 @@ export default function MoneySupplySection({
                     });
 
                     return (
-                      <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50">
-                        <div className="text-neutral-400 font-medium pb-1 border-b border-white/10 flex items-center justify-between gap-4">
+                      <div className="bg-plt-hovercard border border-plt-border rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50">
+                        <div className="text-plt-muted font-medium pb-1 border-b border-plt-border flex items-center justify-between gap-4">
                           <span>{data.date}</span>
-                          <span className="font-semibold text-neutral-200">{getSupplyName(activeItem)}</span>
+                          <span className="font-semibold text-plt-subtle">{getSupplyName(activeItem)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4 pt-0.5">
-                          <span className="text-neutral-400">{locale === 'ar' ? 'إجمالي المعروض:' : 'Total Supply:'}</span>
-                          <span className="font-bold text-white tabular-nums text-sm">
+                          <span className="text-plt-muted">{locale === 'ar' ? 'إجمالي المعروض:' : 'Total Supply:'}</span>
+                          <span className="font-bold text-plt-text tabular-nums text-sm">
                             {inTrillions}{' '}
-                            <span className="text-[10px] text-neutral-400">
+                            <span className="text-[10px] text-plt-muted">
                               {locale === 'ar' ? 'تريليون ج.م' : 'TRILLION EGP'}
                             </span>
                           </span>
                         </div>
-                        <div className="text-[11px] text-neutral-400 tabular-nums flex items-center justify-between gap-4">
+                        <div className="text-[11px] text-plt-muted tabular-nums flex items-center justify-between gap-4">
                           <span>{locale === 'ar' ? 'القيمة الدقيقة:' : 'Exact Value:'}</span>
-                          <span className="text-neutral-200">{formattedTotal} {locale === 'ar' ? 'ج.م' : 'EGP'}</span>
+                          <span className="text-plt-subtle">{formattedTotal} {locale === 'ar' ? 'ج.م' : 'EGP'}</span>
                         </div>
-                        <div className="flex items-center justify-between gap-4 pt-1 border-t border-white/5">
-                          <span className="text-neutral-400">{locale === 'ar' ? 'التغير الشهري:' : 'Monthly Change:'}</span>
+                        <div className="flex items-center justify-between gap-4 pt-1 border-t border-plt-border-soft">
+                          <span className="text-plt-muted">{locale === 'ar' ? 'التغير الشهري:' : 'Monthly Change:'}</span>
                           <span
                             className={`font-semibold tabular-nums ${
                               isValPos ? 'text-profit-num' : 'text-loss-num'

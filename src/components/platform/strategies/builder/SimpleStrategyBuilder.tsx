@@ -173,7 +173,7 @@ export default function SimpleStrategyBuilder({
                 type="button"
                 onClick={() => onPickerSideChange('buy')}
                 aria-label={isAr ? 'إضافة مؤشر' : 'Add indicator'}
-                className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
               >
                 <Plus size={11} className="me-1" />
                 <span>{isAr ? 'إضافة مؤشر' : 'Add indicator'}</span>
@@ -208,7 +208,7 @@ export default function SimpleStrategyBuilder({
                   <div key={rule.id}>
                     {index > 0 && (
                       <div className="flex items-center gap-2 py-0.5">
-                        <span className="h-px flex-1 bg-white/10" />
+                        <span className="h-px flex-1 bg-plt-border-soft" />
                         <div className="pill-switch text-[8px]" aria-label={isAr ? 'رابط القاعدة' : 'Rule connector'}>
                           {(['and', 'or'] as const).map((connector: StrategyRuleConnector) => (
                             <button
@@ -222,7 +222,7 @@ export default function SimpleStrategyBuilder({
                             </button>
                           ))}
                         </div>
-                        <span className="h-px flex-1 bg-white/10" />
+                        <span className="h-px flex-1 bg-plt-border-soft" />
                       </div>
                     )}
                     <CompactStrategyBlockRow
@@ -251,7 +251,7 @@ export default function SimpleStrategyBuilder({
                 type="button"
                 onClick={() => onPickerSideChange('buy')}
                 aria-label={isAr ? 'إضافة شرط شراء' : 'Add buy rule'}
-                className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
               >
                 <Plus size={11} className="me-1" />
                 <span>{isAr ? 'إضافة شرط شراء' : 'Add buy rule'}</span>
@@ -280,7 +280,7 @@ export default function SimpleStrategyBuilder({
                   <div key={rule.id}>
                     {index > 0 && (
                       <div className="flex items-center gap-2 py-0.5">
-                        <span className="h-px flex-1 bg-white/10" />
+                        <span className="h-px flex-1 bg-plt-border-soft" />
                         <div className="pill-switch text-[8px]" aria-label={isAr ? 'رابط القاعدة' : 'Rule connector'}>
                           {(['and', 'or'] as const).map((connector: StrategyRuleConnector) => (
                             <button
@@ -294,7 +294,7 @@ export default function SimpleStrategyBuilder({
                             </button>
                           ))}
                         </div>
-                        <span className="h-px flex-1 bg-white/10" />
+                        <span className="h-px flex-1 bg-plt-border-soft" />
                       </div>
                     )}
                     <CompactStrategyBlockRow
@@ -323,7 +323,7 @@ export default function SimpleStrategyBuilder({
                 type="button"
                 onClick={() => onPickerSideChange('sell')}
                 aria-label={isAr ? 'إضافة قاعدة بيع' : 'Add sell rule'}
-                className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] font-sans text-[10px] font-medium text-white/50 transition-all hover:border-white/30 hover:bg-white/[0.05] hover:text-white"
+                className="flex min-h-7.5 w-full items-center justify-center rounded-lg border border-dashed border-plt-border bg-plt-hover font-sans text-[10px] font-medium text-plt-muted transition-all hover:border-plt-border-strong hover:bg-plt-active hover:text-plt-text"
               >
                 <Plus size={11} className="me-1" />
                 <span>{isAr ? 'إضافة قاعدة بيع' : 'Add sell rule'}</span>
@@ -338,7 +338,7 @@ export default function SimpleStrategyBuilder({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-plt-base/80 p-4 backdrop-blur-sm"
           onClick={() => onPickerSideChange(null)}
         >
           <div

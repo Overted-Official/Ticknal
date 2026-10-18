@@ -19,16 +19,16 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Info, Plus, Settings, Trash2, X } from '@/components/ui/icon-library';
+import { ChevronDown, ChevronLeft, Info, Layers, Plus, Settings, Trash2, X } from '@/components/ui/icon-library';
 import AdvancedBlockLibraryModal from './AdvancedBlockLibraryModal';
 import AdvancedNodeEditor from './AdvancedNodeEditor';
 import IndicatorPicker from './IndicatorPicker';
-import StrategyBlockInspector from './StrategyBlockInspector';
-import { ADVANCED_BLOCK_TEMPLATES, localize, type AdvancedStrategyNode } from './advanced-strategy-model';
-import { getAvailableUpstreamNodes, createAdvancedNodeFromTemplate } from './advanced-builder-state';
-import { buildStrategyFlow, canRemoveOptionalStage, getEdgeAttachment, getStageTemplateIds, type OptionalStrategyStageId, type StrategyCanvasStage, type StrategyCanvasStageId } from './strategy-flow-model';
+import StrategyLibraryEducationDrawer from './StrategyLibraryEducationDrawer';
+import { ADVANCED_BLOCK_TEMPLATES, getStrategyNodeParameterRows, localize, type AdvancedStrategyNode } from './advanced-strategy-model';
+import { getAvailableUpstreamNodes, createAdvancedIndicatorNode, createAdvancedNodeFromTemplate } from './advanced-builder-state';
+import { buildStrategyFlow, canGroupStrategyNodes, canRemoveOptionalStage, getConnectableModulePairs, getEdgeAttachment, getFocusedModuleViewport, getReadableStrategyViewport, getStageTemplateIds, resolveModuleNameDraft, toggleGroupCardSelection, type OptionalStrategyStageId, type StrategyCanvasModule, type StrategyCanvasStage, type StrategyCanvasStageId } from './strategy-flow-model';
 import { isSimpleRuleIndicatorSupported, type StrategyBuilderIndicatorOption, type StrategyRuleSide } from './strategy-builder-model';
-import type { StrategyInspectorTab } from './strategy-inspector-model';
+import { getNodeEducation } from './strategy-library-education';
 
 type NodeChange = Partial<Pick<AdvancedStrategyNode, 'customName' | 'outputName' | 'connections' | 'parameters'>>;
 
@@ -39,8 +39,15 @@ interface CardData extends Record<string, unknown> {
   locale: 'en' | 'ar';
   editable: boolean;
   expanded: boolean;
+  previewExpanded: boolean;
+  canGroupSelect: boolean;
+  selectedForGroup: boolean;
+  module?: StrategyCanvasModule;
   activeHandles: ReadonlySet<string>;
   onToggleSettings: (id: string) => void;
+  onTogglePreview: (id: string) => void;
+  onToggleGroupSelection: (id: string) => void;
+  onOpenModule: (id: string) => void;
   onInfo: (node: AdvancedStrategyNode) => void;
   onChange: (id: string, changes: NodeChange) => void;
   onRemove: (id: string) => void;
@@ -70,12 +77,12 @@ const StageRegion = memo(function StageRegion({ data }: NodeProps<StageNode>) {
         <div className="flex min-w-0 items-start gap-2.5">
           <span className="strategy-flow-stage-number tabular-nums">{String(data.number).padStart(2, '0')}</span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[12px] font-semibold leading-4 text-white">{title}</h2>
-            <p className="mt-1 text-[10px] leading-4 text-white/45">{localize(stage.description, locale)}</p>
+            <h2 className="text-[13px] font-semibold leading-5 text-plt-text">{title}</h2>
+            <p className="mt-1 text-[11px] leading-4 text-plt-faint">{localize(stage.description, locale)}</p>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="text-[9px] tabular-nums text-white/40">{stage.count} {isAr ? 'كتل' : stage.count === 1 ? 'card' : 'cards'}</span>
+          <span className="text-[10px] tabular-nums text-plt-faint">{stage.count} {isAr ? 'كتل' : stage.count === 1 ? 'card' : 'cards'}</span>
           <div className="flex items-center gap-1">
             {editable && stage.optional && <button type="button" className="nodrag strategy-flow-stage-action" disabled={!canRemove} title={!canRemove ? (isAr ? 'احذف البطاقات أولاً' : 'Remove cards from this stage first') : undefined} aria-label={`${isAr ? 'إزالة مرحلة' : 'Remove'} ${title} ${isAr ? '' : 'stage'}`} onClick={() => data.onRemove(stage.id as OptionalStrategyStageId)}><Trash2 size={12} /></button>}
             {editable && <button type="button" className="nodrag strategy-flow-stage-action strategy-flow-stage-add" aria-label={`${isAr ? 'إضافة بطاقة إلى' : 'Add card to'} ${title}`} onClick={() => data.onAdd(stage.id)}><Plus size={13} /><span>{isAr ? 'إضافة' : 'Add'}</span></button>}
@@ -108,40 +115,70 @@ const CARD_HANDLES: readonly { type: 'source' | 'target'; position: Position; id
 ];
 
 const StrategyCard = memo(function StrategyCard({ data, selected }: NodeProps<CardNode>) {
-  const { strategyNode: node, locale, editable, expanded } = data;
+  const { strategyNode: node, locale, editable, expanded, previewExpanded, module } = data;
   const isAr = locale === 'ar';
   const accent = NODE_ACCENTS[node.kind];
   const name = node.customName || localize(node.title, locale);
-  const summary = localize(node.summary, locale);
-  const parameterRows = Object.entries(node.parameters ?? {}).filter(([key]) => !['sourceRuleId', 'indicatorId', 'indicatorBacklogId', 'indicatorName'].includes(key)).slice(0, 3);
-
-  return (
-    <article className={`strategy-flow-card ${selected ? 'strategy-flow-card-selected' : ''}`} style={{ '--node-accent': accent } as React.CSSProperties} aria-label={name}>
+  if (module) {
+    return <article className={`strategy-flow-card strategy-flow-module-card ${selected ? 'strategy-flow-card-selected' : ''}`} style={{ '--node-accent': accent } as React.CSSProperties} aria-label={name}>
       {CARD_HANDLES.map((handle) => <Handle key={handle.id} id={handle.id} type={handle.type} position={handle.position} className={`strategy-flow-handle ${data.activeHandles.has(handle.id) ? '' : 'strategy-flow-handle-idle'}`} isConnectable={editable} />)}
       <div className="strategy-flow-card-heading">
         <span className="strategy-flow-card-dot" />
-        <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-white">{name}</span>
+        <div className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold text-plt-text">{name}</span><span className="text-[10px] text-plt-faint">{module.memberIds.length} {isAr ? 'خطوات' : module.memberIds.length === 1 ? 'step' : 'steps'} · {module.inputIds.length} {isAr ? 'مدخلات' : module.inputIds.length === 1 ? 'input' : 'inputs'} · {module.outputIds.length} {isAr ? 'مخرجات' : module.outputIds.length === 1 ? 'output' : 'outputs'}</span></div>
+        <button type="button" className="nodrag strategy-flow-icon" aria-label={`${isAr ? 'افتح مجموعة' : 'Open module'} ${name}`} onClick={() => data.onOpenModule(module.id)}><ChevronLeft className={isAr ? '' : 'rotate-180'} size={15} /></button>
+      </div>
+      <div className="strategy-flow-card-content"><div className="strategy-flow-card-inset strategy-flow-module-inset">
+        <span className="text-[10px] text-plt-muted">{isAr ? 'المخرج' : 'Output'}</span>
+        <span className="min-w-0 truncate text-xs font-medium text-plt-text">{module.outputIds.map((id) => data.nodes.find((candidate) => candidate.id === id)?.customName || id).join(', ')}</span>
+      </div></div>
+    </article>;
+  }
+  const selectedIndicator = node.templateId === 'indicator' ? data.indicators.find((indicator) => indicator.id === node.parameters?.indicatorId) : undefined;
+  const summary = selectedIndicator?.description || localize(node.summary, locale);
+  const parameterRows = getStrategyNodeParameterRows(node, locale, !selectedIndicator || selectedIndicator.outputs.filter((output) => output.kind === 'number').length > 1);
+
+  return (
+    <article className={`strategy-flow-card ${selected || data.selectedForGroup ? 'strategy-flow-card-selected' : ''}`} style={{ '--node-accent': accent } as React.CSSProperties} aria-label={name}>
+      {CARD_HANDLES.map((handle) => <Handle key={handle.id} id={handle.id} type={handle.type} position={handle.position} className={`strategy-flow-handle ${data.activeHandles.has(handle.id) ? '' : 'strategy-flow-handle-idle'}`} isConnectable={editable} />)}
+      <div className="strategy-flow-card-heading">
+        <span className="strategy-flow-card-dot" />
+        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-plt-text">{name}</span>
+        {data.canGroupSelect && <button type="button" className={`nodrag strategy-flow-icon strategy-flow-group-select ${data.selectedForGroup ? 'strategy-flow-group-select-active' : ''}`} aria-label={`${data.selectedForGroup ? (isAr ? 'إلغاء تحديد' : 'Deselect') : (isAr ? 'تحديد للتجميع' : 'Select for grouping')} ${name}`} aria-pressed={data.selectedForGroup} title={isAr ? 'تجميع البطاقات' : 'Group with other cards'} onClick={() => data.onToggleGroupSelection(node.id)}><Layers size={12} /></button>}
+        <button type="button" className="nodrag strategy-flow-icon" aria-label={`${previewExpanded ? (isAr ? 'إخفاء التفاصيل' : 'Hide details for') : (isAr ? 'عرض التفاصيل' : 'Show details for')} ${name}`} aria-expanded={previewExpanded || expanded} onClick={() => data.onTogglePreview(node.id)}><ChevronDown size={13} className={`transition-transform ${(previewExpanded || expanded) ? 'rotate-180' : ''}`} /></button>
         <button type="button" className="nodrag strategy-flow-icon" aria-label={`${isAr ? 'معلومات عن' : 'Learn about'} ${name}`} title={isAr ? 'معلومات' : 'Learn'} onClick={() => data.onInfo(node)}><Info size={13} /></button>
-        <button type="button" className={`nodrag strategy-flow-icon ${expanded ? 'text-white' : ''}`} aria-label={`${isAr ? 'إعدادات' : 'Settings for'} ${name}`} aria-expanded={expanded} title={isAr ? 'الإعدادات' : 'Settings'} onClick={() => data.onToggleSettings(node.id)}><Settings size={13} /></button>
+        <button type="button" className={`nodrag strategy-flow-icon ${expanded ? 'text-plt-text' : ''}`} aria-label={`${isAr ? 'إعدادات' : 'Settings for'} ${name}`} aria-expanded={expanded} title={isAr ? 'الإعدادات' : 'Settings'} onClick={() => data.onToggleSettings(node.id)}><Settings size={13} /></button>
         {editable && !node.protected && <button type="button" className="nodrag strategy-flow-icon hover:text-plt-risk" aria-label={`${isAr ? 'حذف' : 'Remove'} ${name}`} onClick={() => data.onRemove(node.id)}><Trash2 size={12} /></button>}
       </div>
-      <div className="strategy-flow-card-content">
+      {(previewExpanded || expanded) && <div className="strategy-flow-card-content">
         <div className="strategy-flow-card-inset">
         <p className="strategy-flow-card-summary">{summary}</p>
-        {node.tags && node.tags.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{node.tags.slice(0, 4).map((tag) => <span key={tag} className="strategy-flow-chip">{tag}</span>)}</div>}
-        {parameterRows.length > 0 && <div className="mt-3 space-y-1 border-t border-white/[0.07] pt-2.5">{parameterRows.map(([key, value]) => <div key={key} className="flex items-center justify-between gap-3 text-[10px]"><span className="capitalize text-white/40">{key.replace(/([A-Z])/gu, ' $1')}</span><span className="truncate text-white/75 tabular-nums">{value}</span></div>)}</div>}
-        {node.metrics && <div className="mt-3 space-y-1 border-t border-white/[0.07] pt-2.5">{node.metrics.slice(0, 4).map((metric) => <div key={metric.label.en} className="flex justify-between gap-3 text-[10px]"><span className="truncate text-white/45">{localize(metric.label, locale)}</span><span className="text-white/80 tabular-nums">{metric.value}</span></div>)}</div>}
+        {!expanded && node.tags && node.tags.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{node.tags.slice(0, 4).map((tag) => <span key={tag} className="strategy-flow-chip">{tag}</span>)}</div>}
+        {!expanded && parameterRows.length > 0 && <div className="mt-3 space-y-1 border-t border-plt-border-soft pt-2.5">{parameterRows.map(([key, value]) => <div key={key} className="flex items-center justify-between gap-3 text-xs"><span className="capitalize text-plt-faint">{key.replace(/([A-Z])/gu, ' $1')}</span><span className="truncate text-plt-subtle tabular-nums">{value}</span></div>)}</div>}
+        {!expanded && node.metrics && <div className="mt-3 space-y-1 border-t border-plt-border-soft pt-2.5">{node.metrics.slice(0, 4).map((metric) => <div key={metric.label.en} className="flex justify-between gap-3 text-xs"><span className="truncate text-plt-faint">{localize(metric.label, locale)}</span><span className="text-plt-subtle tabular-nums">{metric.value}</span></div>)}</div>}
         {expanded && <div className="nodrag nowheel strategy-flow-settings">
-          <div className="mb-3 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.1em] text-white/50"><span>{isAr ? 'إعدادات العقدة' : 'Node settings'}</span><button type="button" aria-label={isAr ? 'إغلاق الإعدادات' : 'Close settings'} onClick={() => data.onToggleSettings(node.id)}><X size={12} /></button></div>
-          {editable && !node.protected ? <AdvancedNodeEditor node={node} nodes={data.nodes} indicators={data.indicators} locale={locale} onChange={(changes) => data.onChange(node.id, changes)} /> : <div className="space-y-2">{(node.details ?? []).map((detail) => <div key={detail.label.en} className="flex justify-between gap-3 text-[10px]"><span className="text-white/45">{localize(detail.label, locale)}</span><span className="text-right text-white/80">{localize(detail.value, locale)}</span></div>)}{!node.details?.length && <p className="text-[10px] leading-4 text-white/50">{isAr ? 'هذه الاستراتيجية محمية للعرض فقط.' : 'This strategy is read-only. Create a new strategy to edit its logic.'}</p>}</div>}
+          <div className="mb-3 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.1em] text-plt-muted"><span>{isAr ? 'إعدادات العقدة' : 'Node settings'}</span><button type="button" aria-label={isAr ? 'إغلاق الإعدادات' : 'Close settings'} onClick={() => data.onToggleSettings(node.id)}><X size={12} /></button></div>
+          {editable && !node.protected ? <AdvancedNodeEditor node={node} nodes={data.nodes} indicators={data.indicators} locale={locale} onChange={(changes) => data.onChange(node.id, changes)} /> : <div className="space-y-2">{(node.details ?? []).map((detail) => <div key={detail.label.en} className="flex justify-between gap-3 text-[11px]"><span className="text-plt-faint">{localize(detail.label, locale)}</span><span className="text-right text-plt-subtle">{localize(detail.value, locale)}</span></div>)}{!node.details?.length && <p className="text-[11px] leading-4 text-plt-muted">{isAr ? 'هذه الاستراتيجية محمية للعرض فقط.' : 'This strategy is read-only. Create a new strategy to edit its logic.'}</p>}</div>}
         </div>}
         </div>
-      </div>
+      </div>}
     </article>
   );
 });
 
 const NODE_TYPES = { stage: StageRegion, strategy: StrategyCard };
+
+function ModuleNameEditor({ name, isAr, onCommit }: { readonly name: string; readonly isAr: boolean; readonly onCommit: (name: string) => void }) {
+  const [draft, setDraft] = useState(name);
+  const commit = () => {
+    const resolved = resolveModuleNameDraft(draft, name);
+    setDraft(resolved);
+    if (resolved !== name) onCommit(resolved);
+  };
+  return <input className="input-token min-w-0 flex-1 text-xs" aria-label={isAr ? 'اسم المجموعة' : 'Module name'} maxLength={100} value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={commit} onKeyDown={(event) => {
+    if (event.key === 'Enter') event.currentTarget.blur();
+    if (event.key === 'Escape') setDraft(name);
+  }} />;
+}
 
 function StrategyConnection({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, data }: EdgeProps) {
   const [path] = getSmoothStepPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, borderRadius: 12 });
@@ -153,22 +190,26 @@ function StrategyConnection({ id, sourceX, sourceY, targetX, targetY, sourcePosi
 
 const EDGE_TYPES = { strategyConnection: StrategyConnection };
 
-function FitFlowToPane({ resizeSignal, topologySignal, stages }: { readonly resizeSignal: number; readonly topologySignal: string; readonly stages: readonly StrategyCanvasStage[] }) {
+function FitFlowToPane({ resizeSignal, topologySignal, stages, focused, expandedCardTop }: { readonly resizeSignal: number; readonly topologySignal: string; readonly stages: readonly StrategyCanvasStage[]; readonly focused: boolean; readonly expandedCardTop?: number }) {
   const { setViewport } = useReactFlow();
   const paneWidth = useStore((state) => state.width);
   const paneHeight = useStore((state) => state.height);
+  const minX = Math.min(...stages.map((stage) => stage.position.x));
+  const minY = Math.min(...stages.map((stage) => stage.position.y));
+  const maxX = Math.max(...stages.map((stage) => stage.position.x + stage.width));
+  const maxY = Math.max(...stages.map((stage) => stage.position.y + stage.height));
+  const stageCount = stages.length;
   useEffect(() => {
-    if (!paneWidth || !paneHeight || stages.length === 0) return;
-    const minX = Math.min(...stages.map((stage) => stage.position.x));
-    const minY = Math.min(...stages.map((stage) => stage.position.y));
-    const maxX = Math.max(...stages.map((stage) => stage.position.x + stage.width));
-    const maxY = Math.max(...stages.map((stage) => stage.position.y + stage.height));
+    if (!paneWidth || !paneHeight || stageCount === 0) return;
     const timer = window.setTimeout(() => {
-      const viewport = getViewportForBounds({ x: minX, y: minY, width: maxX - minX, height: maxY - minY }, paneWidth, paneHeight, 0.35, 0.95, 0.075);
+      const bounds = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+      const overview = getViewportForBounds(bounds, paneWidth, paneHeight, 0.35, 0.95, 0.075);
+      const readable = getReadableStrategyViewport(overview, bounds, stageCount);
+      const viewport = focused ? getFocusedModuleViewport(bounds, expandedCardTop) : readable;
       void setViewport(viewport, { duration: 180 });
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [resizeSignal, topologySignal, stages, paneWidth, paneHeight, setViewport]);
+  }, [resizeSignal, topologySignal, stageCount, minX, minY, maxX, maxY, paneWidth, paneHeight, setViewport, focused, expandedCardTop]);
   return null;
 }
 
@@ -189,9 +230,15 @@ interface StrategyFlowCanvasProps {
 export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, protectedBlueprint, editable, mode, resizeSignal, enabledOptionalStages, onOptionalStagesChange, onNodesChange, onAddSimpleRule }: StrategyFlowCanvasProps) {
   const isAr = locale === 'ar';
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [inspected, setInspected] = useState<{ node: AdvancedStrategyNode; tab: StrategyInspectorTab } | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [learningNode, setLearningNode] = useState<AdvancedStrategyNode | null>(null);
   const [addPanel, setAddPanel] = useState<StrategyCanvasStageId | null>(null);
-  const flow = useMemo(() => buildStrategyFlow(strategyNodes, protectedBlueprint, mode, enabledOptionalStages), [strategyNodes, protectedBlueprint, mode, enabledOptionalStages]);
+  const [pendingModuleConnection, setPendingModuleConnection] = useState<{ choices: readonly { sourceId: string; targetId: string }[]; contextName: string; showSource: boolean; showTarget: boolean } | null>(null);
+  const flow = useMemo(() => buildStrategyFlow(strategyNodes, protectedBlueprint, mode, enabledOptionalStages,
+    { focusModuleId: focusedModuleId, expandedCardId: expandedId, previewCardId: previewId }),
+  [strategyNodes, protectedBlueprint, mode, enabledOptionalStages, focusedModuleId, expandedId, previewId]);
   const [nodeLayout, setNodeLayout] = useState<Node[]>(() => flow.nodes.map((node) => ({ ...node })));
   const manuallyMovedIds = useRef(new Set<string>());
 
@@ -201,6 +248,10 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
       return previous ? { ...previous, position: manuallyMovedIds.current.has(node.id) ? previous.position : node.position, data: node.data } : { ...node };
     }));
   }, [flow]);
+
+  useEffect(() => {
+    if (focusedModuleId && !strategyNodes.some((node) => node.moduleId === focusedModuleId)) setFocusedModuleId(null);
+  }, [focusedModuleId, strategyNodes]);
 
   const changeNode = (id: string, changes: NodeChange) => onNodesChange(strategyNodes.map((node) => node.id === id ? { ...node, ...changes } : node));
   const removeNode = (id: string) => onNodesChange(strategyNodes.filter((node) => node.id !== id).map((node) => ({ ...node, connections: node.connections?.filter((source) => source !== id) })));
@@ -214,7 +265,7 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
     return {
       x: parent.x + layout.position.x,
       y: parent.y + layout.position.y,
-      width: layout.measured?.width ?? layout.width ?? 248,
+      width: layout.measured?.width ?? layout.width ?? 308,
       height: layout.measured?.height ?? layout.height ?? 140,
     };
   };
@@ -230,23 +281,34 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
     return { ...edge, ...attachment, type: 'strategyConnection', data: { active: !editable, delay: `${-(index % 3) * 1.8}s` }, style: { ...edge.style, strokeWidth: editable ? 1.15 : 1.5, opacity: editable ? 0.45 : 0.75 } };
   });
 
-  const cardNodes: CardNode[] = nodeLayout.filter((layout) => strategyNodes.some((node) => node.id === layout.id)).map((layout) => ({
+  const cardNodes: CardNode[] = nodeLayout.filter((layout) => layout.type === 'strategy').map((layout) => {
+    const strategyNode = layout.data.strategyNode as AdvancedStrategyNode;
+    return ({
     ...layout,
     type: 'strategy' as const,
+    draggable: !flow.externalIds.includes(layout.id) && strategyNode.templateId !== 'module-overview',
     data: {
-      strategyNode: strategyNodes.find((node) => node.id === layout.id)!,
+      strategyNode,
       nodes: strategyNodes,
       indicators,
       locale,
-      editable: editable && (mode === 'advanced' || Boolean(strategyNodes.find((node) => node.id === layout.id)?.parameters?.sourceRuleId)),
+      editable: editable && !flow.externalIds.includes(layout.id) && (mode === 'advanced' || Boolean(strategyNode.parameters?.sourceRuleId)),
       expanded: expandedId === layout.id,
+      previewExpanded: previewId === layout.id,
+      canGroupSelect: editable && mode === 'advanced' && !focusedModuleId && !flow.externalIds.includes(layout.id) && !strategyNode.moduleId && !strategyNode.protected,
+      selectedForGroup: selectedGroupIds.includes(layout.id),
+      module: flow.modules.find((module) => `module:${module.id}` === layout.id),
       activeHandles: activeHandles.get(layout.id) ?? new Set(),
       onToggleSettings: (id) => setExpandedId((current) => current === id ? null : id),
-      onInfo: (node) => setInspected({ node, tab: 'learn' }),
+      onTogglePreview: (id) => { if (expandedId === id) setExpandedId(null); setPreviewId((current) => current === id ? null : id); },
+      onToggleGroupSelection: (id) => setSelectedGroupIds((current) => toggleGroupCardSelection(strategyNodes, current, id)),
+      onOpenModule: setFocusedModuleId,
+      onInfo: setLearningNode,
       onChange: changeNode,
       onRemove: removeNode,
     },
-  }));
+  });
+  });
   const stageNodes: StageNode[] = flow.stages.map((stage, index) => ({
     id: `stage-${stage.id}`,
     type: 'stage',
@@ -269,21 +331,65 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
     },
   }));
   const nodes = [...stageNodes, ...cardNodes];
+  const expandedNode = flow.nodes.find((node) => node.id === expandedId);
+  const expandedStage = flow.stages.find((stage) => `stage-${stage.id}` === expandedNode?.parentId);
+  const expandedCardTop = expandedNode && expandedStage ? expandedStage.position.y + expandedNode.position.y : undefined;
 
-  const connect = (connection: Connection) => {
-    if (!editable || mode !== 'advanced' || !connection.source || !connection.target) return;
-    if (!getAvailableUpstreamNodes(strategyNodes, connection.target).some((node) => node.id === connection.source)) return;
-    const target = strategyNodes.find((node) => node.id === connection.target);
+  const connectSource = (sourceId: string, targetId: string) => {
+    if (!getAvailableUpstreamNodes(strategyNodes, targetId).some((node) => node.id === sourceId)) return;
+    const target = strategyNodes.find((node) => node.id === targetId);
     if (!target) return;
     const prior = target.connections ?? [];
-    if (!prior.includes(connection.source)) changeNode(target.id, { connections: [...prior, connection.source] });
+    if (!prior.includes(sourceId)) changeNode(target.id, { connections: [...prior, sourceId] });
+  };
+  const connect = (connection: Connection) => {
+    if (!editable || mode !== 'advanced' || !connection.source || !connection.target || connection.source === connection.target) return;
+    const sourceModule = flow.modules.find((candidate) => `module:${candidate.id}` === connection.source);
+    const targetModule = flow.modules.find((candidate) => `module:${candidate.id}` === connection.target);
+    const sourceIds = sourceModule?.memberIds ?? [connection.source];
+    const targetIds = targetModule?.memberIds ?? [connection.target];
+    const availableByTarget = new Map(targetIds.map((targetId) => [targetId, getAvailableUpstreamNodes(strategyNodes, targetId).map((node) => node.id)] as const));
+    const choices = getConnectableModulePairs(sourceIds, targetIds, availableByTarget);
+    if (choices.length === 1) return connectSource(choices[0].sourceId, choices[0].targetId);
+    if (choices.length > 1) setPendingModuleConnection({ choices, contextName: [sourceModule?.name, targetModule?.name].filter(Boolean).join(' → '), showSource: Boolean(sourceModule), showTarget: Boolean(targetModule) });
+  };
+
+  const groupedIds = new Set(flow.modules.flatMap((module) => module.memberIds));
+  const selectedCardIds = selectedGroupIds.filter((id) => strategyNodes.some((candidate) => candidate.id === id && !candidate.moduleId && !candidate.protected && !groupedIds.has(id)));
+  const focusedModule = flow.modules.find((module) => module.id === focusedModuleId);
+  const groupSelection = () => {
+    if (!canGroupStrategyNodes(strategyNodes, selectedCardIds)) return;
+    const id = `group-${Date.now().toString(36)}`;
+    const name = isAr ? 'مجموعة جديدة' : 'New module';
+    const selected = new Set(selectedCardIds);
+    onNodesChange(strategyNodes.map((node) => selected.has(node.id) ? { ...node, moduleId: id, moduleName: name } : node));
+    setSelectedGroupIds([]);
+    setFocusedModuleId(id);
+  };
+  const updateModuleName = (name: string) => {
+    if (!focusedModuleId) return;
+    onNodesChange(strategyNodes.map((node) => node.moduleId === focusedModuleId ? { ...node, moduleName: name } : node));
+  };
+  const ungroupModule = () => {
+    if (!focusedModuleId) return;
+    onNodesChange(strategyNodes.map((node) => {
+      if (node.moduleId !== focusedModuleId) return node;
+      return { ...node, moduleId: undefined, moduleName: undefined };
+    }));
+    setFocusedModuleId(null);
   };
 
   const addAdvanced = (templateId: string) => {
     const template = ADVANCED_BLOCK_TEMPLATES.find((candidate) => candidate.id === templateId);
     if (!template) return;
     const node = createAdvancedNodeFromTemplate(template, `custom-${template.id}-${Date.now()}`);
-    onNodesChange([...strategyNodes, node]);
+    onNodesChange([...strategyNodes, focusedModule ? { ...node, moduleId: focusedModule.id, moduleName: focusedModule.name } : node]);
+    setExpandedId(node.id);
+    setAddPanel(null);
+  };
+  const addAdvancedIndicator = (indicator: StrategyBuilderIndicatorOption) => {
+    const node = createAdvancedIndicatorNode(indicator, `custom-indicator-${Date.now()}`);
+    onNodesChange([...strategyNodes, focusedModule ? { ...node, moduleId: focusedModule.id, moduleName: focusedModule.name } : node]);
     setExpandedId(node.id);
     setAddPanel(null);
   };
@@ -308,20 +414,57 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
         maxZoom={1.5}
         nodesDraggable
         nodesConnectable={editable && mode === 'advanced'}
+        multiSelectionKeyCode="Shift"
         elementsSelectable
         panOnScroll
         zoomOnScroll={false}
         zoomOnPinch
       >
-        <FitFlowToPane resizeSignal={resizeSignal} topologySignal={[...flow.stages.map((stage) => stage.id), ...flow.nodes.map((node) => node.id)].join('|')} stages={flow.stages} />
+        <FitFlowToPane resizeSignal={resizeSignal} topologySignal={[...flow.stages.map((stage) => stage.id), ...flow.nodes.map((node) => node.id)].join('|')} stages={flow.stages} focused={Boolean(focusedModule)} expandedCardTop={focusedModule ? expandedCardTop : undefined} />
         <Controls showInteractive={false} position="bottom-left" />
       </ReactFlow>
       </div>
-      {editable && mode === 'advanced' && (['calculations', 'position'] as const).some((id) => !flow.stages.some((stage) => stage.id === id)) && <div className="strategy-flow-floating-toolbar">
+      {focusedModule && <div className="strategy-flow-module-nav" role="navigation" aria-label={isAr ? 'التنقل داخل المجموعة' : 'Module navigation'}>
+        <button type="button" className="btn-token btn-secondary btn-compact" onClick={() => { setFocusedModuleId(null); setExpandedId(null); setPreviewId(null); }}><ChevronLeft size={14} className={isAr ? 'rotate-180' : ''} />{isAr ? 'العودة إلى الاستراتيجية' : 'Strategy overview'}</button>
+        {editable ? <ModuleNameEditor key={focusedModule.id} name={focusedModule.name} isAr={isAr} onCommit={updateModuleName} /> : <span className="truncate text-xs font-semibold text-plt-text">{focusedModule.name}</span>}
+        <span className="hidden text-[11px] text-plt-muted sm:inline">{focusedModule.memberIds.length} {isAr ? 'خطوات' : focusedModule.memberIds.length === 1 ? 'step' : 'steps'}</span>
+        {editable && <button type="button" className="btn-token btn-secondary btn-compact" onClick={ungroupModule}>{isAr ? 'إلغاء التجميع' : 'Ungroup'}</button>}
+      </div>}
+      {pendingModuleConnection && <div className="strategy-flow-output-picker" role="dialog" aria-label={isAr ? 'اختر اتصال المجموعة' : 'Choose module connection'}>
+        <div className="flex items-center justify-between gap-3 border-b border-plt-border-soft px-3 py-2.5"><div className="min-w-0"><p className="truncate text-xs font-semibold text-plt-text">{isAr ? 'اختر القيمة والبطاقة' : 'Choose a connection'}</p><p className="truncate text-[11px] text-plt-muted">{pendingModuleConnection.contextName}</p></div><button type="button" className="strategy-flow-icon" aria-label={isAr ? 'إغلاق' : 'Close'} onClick={() => setPendingModuleConnection(null)}><X size={14} /></button></div>
+        <div className="max-h-72 overflow-y-auto p-1.5">{pendingModuleConnection.choices.map(({ sourceId, targetId }) => { const source = strategyNodes.find((node) => node.id === sourceId); const target = strategyNodes.find((node) => node.id === targetId); const sourceLabel = source?.customName || (source ? localize(source.title, locale) : sourceId); const targetLabel = target?.customName || (target ? localize(target.title, locale) : targetId); return <button type="button" key={`${sourceId}:${targetId}`} className="block w-full rounded px-2 py-2 text-start text-xs text-plt-text hover:bg-white/[0.04]" onClick={() => { connectSource(sourceId, targetId); setPendingModuleConnection(null); }}>{pendingModuleConnection.showSource ? sourceLabel : ''}{pendingModuleConnection.showSource && pendingModuleConnection.showTarget ? ' → ' : ''}{pendingModuleConnection.showTarget ? targetLabel : ''}</button>; })}</div>
+      </div>}
+      {editable && mode === 'advanced' && !focusedModule && selectedCardIds.length > 0 && <div className="strategy-flow-selection-toolbar" role="toolbar" aria-label={isAr ? 'أدوات تجميع البطاقات' : 'Card grouping controls'}><span className="px-2 text-[11px] text-plt-muted">{selectedCardIds.length === 1 ? (isAr ? 'حدد بطاقة أخرى من نفس المرحلة' : 'Select another card in this stage') : (isAr ? `${selectedCardIds.length} بطاقات محددة` : `${selectedCardIds.length} cards selected`)}</span><button type="button" className="btn-token btn-secondary btn-compact" disabled={!canGroupStrategyNodes(strategyNodes, selectedCardIds)} onClick={groupSelection}>{isAr ? 'إنشاء مجموعة' : 'Create module'}</button><button type="button" className="nodrag strategy-flow-icon" aria-label={isAr ? 'إلغاء التحديد' : 'Clear grouping selection'} onClick={() => setSelectedGroupIds([])}><X size={13} /></button></div>}
+      {editable && mode === 'advanced' && !focusedModule && (['calculations', 'position'] as const).some((id) => !flow.stages.some((stage) => stage.id === id)) && <div className="strategy-flow-floating-toolbar">
         {(['calculations', 'position'] as const).filter((id) => !flow.stages.some((stage) => stage.id === id)).map((id) => <button key={id} type="button" className="strategy-flow-add" aria-label={`${isAr ? 'إضافة مرحلة' : 'Add'} ${id === 'calculations' ? (isAr ? 'الحسابات' : 'Calculations') : (isAr ? 'أثناء الصفقة' : 'During trade')} ${isAr ? '' : 'stage'}`} onClick={() => onOptionalStagesChange([...enabledOptionalStages, id])}><Plus size={13} />{id === 'calculations' ? (isAr ? 'الحسابات' : 'Calculations') : (isAr ? 'أثناء الصفقة' : 'During trade')}</button>)}
       </div>}
-      {addPanel && <div className="strategy-flow-picker-layer"><div className="strategy-flow-picker" role="region" aria-label={isAr ? 'مكتبة كتل الاستراتيجية' : 'Strategy block library'}>{mode === 'advanced' ? <AdvancedBlockLibraryModal templateIds={getStageTemplateIds(addPanel)} title={flow.stages.find((stage) => stage.id === addPanel)?.title ?? { en: 'Stage', ar: 'المرحلة' }} search={{ en: 'Search cards', ar: 'ابحث عن بطاقة' }} locale={locale} onAdd={(template) => addAdvanced(template.id)} onClose={() => setAddPanel(null)} /> : <IndicatorPicker indicators={indicators.filter(isSimpleRuleIndicatorSupported)} selectedIds={new Set(strategyNodes.filter((node) => node.parameters?.actionSide === addPanel).map((node) => node.parameters?.indicatorId).filter((id): id is string => Boolean(id)))} locale={locale} onAdd={(indicator) => { onAddSimpleRule(addPanel as StrategyRuleSide, indicator); setAddPanel(null); }} onClose={() => setAddPanel(null)} />}</div></div>}
-      {inspected && <StrategyBlockInspector target={{ kind: 'advanced-node', node: strategyNodes.find((node) => node.id === inspected.node.id) ?? inspected.node }} tab={inspected.tab} nodes={strategyNodes} indicators={indicators} locale={locale} onTabChange={(tab) => setInspected((current) => current ? { ...current, tab } : null)} onChange={(change) => { if (change.kind === 'advanced-node') changeNode(inspected.node.id, change.changes); }} onClose={() => setInspected(null)} />}
+      {addPanel && <div className="strategy-flow-picker-layer"><div className="strategy-flow-picker" role="region" aria-label={isAr ? 'مكتبة كتل الاستراتيجية' : 'Strategy block library'}>
+        {mode === 'advanced' && addPanel === 'indicators' ? <IndicatorPicker
+          indicators={indicators.filter((indicator) => indicator.available && indicator.requiredCapabilities.length === 0 && indicator.repaintBehavior !== 'confirmed-with-delay' && indicator.outputs.some((output) => output.kind === 'number'))}
+          selectedIds={new Set<string>()}
+          locale={locale}
+          presentation="canvas"
+          canvasPurpose="indicator"
+          onAdd={addAdvancedIndicator}
+          onClose={() => setAddPanel(null)}
+        /> : mode === 'advanced' ? <AdvancedBlockLibraryModal
+          templateIds={getStageTemplateIds(addPanel)}
+          title={flow.stages.find((stage) => stage.id === addPanel)?.title ?? { en: 'Stage', ar: 'المرحلة' }}
+          search={{ en: 'Search cards', ar: 'ابحث عن بطاقة' }}
+          locale={locale}
+          onAdd={(template) => addAdvanced(template.id)}
+          onClose={() => setAddPanel(null)}
+        /> : <IndicatorPicker
+          indicators={indicators.filter(isSimpleRuleIndicatorSupported)}
+          selectedIds={new Set(strategyNodes.filter((node) => node.parameters?.actionSide === addPanel).map((node) => node.parameters?.indicatorId).filter((id): id is string => Boolean(id)))}
+          locale={locale}
+          presentation="canvas"
+          ruleSide={addPanel as StrategyRuleSide}
+          onAdd={(indicator) => { onAddSimpleRule(addPanel as StrategyRuleSide, indicator); setAddPanel(null); }}
+          onClose={() => setAddPanel(null)}
+        />}
+      </div></div>}
+      {learningNode && <StrategyLibraryEducationDrawer guide={getNodeEducation(strategyNodes.find((node) => node.id === learningNode.id) ?? learningNode, indicators, locale)} locale={locale} origin="canvas" onClose={() => setLearningNode(null)} />}
     </div>
   );
 }

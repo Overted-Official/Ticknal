@@ -95,6 +95,7 @@ export default function BanksKPIRail({
   const currencySymbol = locale === 'ar' ? 'ج.م' : '£';
   const [showAllAccounts, setShowAllAccounts] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [activePillId, setActivePillId] = useState<string | null>(null);
   const INITIAL_ACCOUNTS_LIMIT = 4;
 
   const selectedAccount = useMemo(
@@ -177,7 +178,7 @@ export default function BanksKPIRail({
       iconBgClass: 'bg-brand-blue text-white',
       value: isPrivacy ? '••••••••' : formatMoney(totalCombinedEgp),
       badgeText: locale === 'ar' ? `${accounts.length} حسابات` : `${accounts.length} Accounts`,
-      badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
+      badgeClass: 'text-plt-muted font-medium text-[9px] bg-plt-hover border border-plt-border',
       metaText: locale === 'ar' ? 'البنوك والوساطة مجتمعة' : 'Bank + Brokerage combined',
       sparklinePoints: totalCashPoints.length > 1 ? totalCashPoints : undefined,
       sparklineTrend: getSparklineTrend(totalCashPoints),
@@ -191,7 +192,7 @@ export default function BanksKPIRail({
       iconBgClass: 'bg-profit-num text-white',
       value: isPrivacy ? '••••••••' : formatMoney(totalEgpLiquid),
       badgeText: locale === 'ar' ? `${egpPct}% من الإجمالي` : `${egpPct}% of Total`,
-      badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
+      badgeClass: 'text-plt-muted font-medium text-[9px] bg-plt-hover border border-plt-border',
       metaText:
         locale === 'ar'
           ? `${cashAccounts.filter((a) => a.currency === 'EGP').length} حسابات تجارية`
@@ -234,7 +235,7 @@ export default function BanksKPIRail({
         brokerageAccounts.length > 0
           ? (locale === 'ar' ? `${brokeragePct}% من الإجمالي` : `${brokeragePct}% of Total`)
           : (locale === 'ar' ? 'لا يوجد' : 'None'),
-      badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/[0.04] border border-white/10',
+      badgeClass: 'text-plt-muted font-medium text-[9px] bg-plt-hover border border-plt-border',
       metaText:
         brokerageAccounts.length > 0
           ? (locale === 'ar' ? `${brokerageAccounts.length} حسابات تداول` : `${brokerageAccounts.length} trading accounts`)
@@ -323,6 +324,9 @@ export default function BanksKPIRail({
       };
 
       const bankRaw = account.bankName || account.customBankName || cleanMeta.bankShort;
+      const isSelected = activePillId
+        ? activePillId === `account-${account.id}`
+        : sortedAccounts[0]?.id === account.id;
 
       return {
         id: `account-${account.id}`,
@@ -337,10 +341,14 @@ export default function BanksKPIRail({
         unit,
         change,
         changeColorClass: sparkline.changeColorClass,
-        onClick: () => setSelectedAccountId(account.id),
+        isSelected,
+        onClick: () => {
+          setActivePillId(`account-${account.id}`);
+          setSelectedAccountId(account.id);
+        },
       };
     });
-  }, [sortedAccounts, transactions, isPrivacy, locale, currencySymbol]);
+  }, [sortedAccounts, transactions, isPrivacy, locale, currencySymbol, activePillId]);
 
   return (
     <div className="w-full space-y-3 sm:space-y-4 select-none">
@@ -358,7 +366,7 @@ export default function BanksKPIRail({
       {/* 2. Individual Bank & Brokerage Accounts Section Header */}
       <div className="flex items-center justify-between pt-1 pb-0.5 px-0.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text-primary font-sans">
+          <span className="text-xs font-semibold text-plt-text font-sans">
             {locale === 'ar' ? 'المؤسسات والأرصدة المتصلة' : 'Connected Institutions & Balances'}
           </span>
           <span className="badge-count">

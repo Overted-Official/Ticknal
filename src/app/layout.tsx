@@ -8,6 +8,8 @@ import TelemetryTracker from "@/components/telemetry/TelemetryTracker";
 import { LocaleProvider } from "@/lib/i18n";
 import { getServerLocale, getServerDirection } from "@/lib/i18n/server";
 import { Toaster } from "@/components/ui/sonner";
+import PwaInstallPrompt from "@/components/platform/pwa/PwaInstallPrompt";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -88,14 +90,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className="min-h-full flex flex-col font-sans bg-plt-base text-plt-text overflow-x-hidden max-w-full"
         suppressHydrationWarning
       >
-        <AppSplash />
-        <LocaleProvider initialLocale={locale}>
-          <TelemetryTracker />
-          {children}
-          <ServiceWorkerRegistration />
-          <NativeBridgeProvider />
-        </LocaleProvider>
-        <Toaster />
+        <ThemeProvider>
+          <AppSplash />
+          <LocaleProvider initialLocale={locale}>
+            <TelemetryTracker />
+            {children}
+            <ServiceWorkerRegistration />
+            <NativeBridgeProvider />
+            <PwaInstallPrompt />
+          </LocaleProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

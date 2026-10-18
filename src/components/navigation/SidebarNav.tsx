@@ -24,6 +24,7 @@ import {
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import LanguageToggleButton from './LanguageToggleButton';
+import ThemeToggleButton from './ThemeToggleButton';
 import { useTranslation } from '@/lib/i18n';
 import { useGuestGuard } from '@/context/GuestGuardContext';
 import { HERO_SCENE_NOTIFICATIONS } from '@/components/landing/hero-scenes/hero-scene-notifications';
@@ -318,6 +319,9 @@ export default function SidebarNav() {
           title={t('nav.notifications')}
           isHeroScene={isHeroScene}
         />
+
+        {/* Theme Mode Shortcut (Dark / Light) */}
+        <ThemeToggleButton variant="sidebar" />
 
         {/* Display Language Shortcut (above Settings) */}
         <LanguageToggleButton variant="sidebar" />

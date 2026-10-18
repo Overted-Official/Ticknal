@@ -164,7 +164,7 @@ export default function CloseOrderModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 bg-plt-overlay backdrop-blur-sm cursor-pointer"
             onClick={onClose}
             aria-label="Close modal overlay"
           />
@@ -175,15 +175,15 @@ export default function CloseOrderModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className="relative w-full max-w-lg bg-black text-text-primary rounded-xl border border-border-subtle shadow-2xl flex flex-col z-10 max-h-[90vh] overflow-hidden"
+            className="relative w-full max-w-lg bg-plt-base text-plt-text rounded-xl border border-plt-border shadow-2xl flex flex-col z-10 max-h-[90vh] overflow-hidden"
           >
             {/* Header: Clean Black Surface */}
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between shrink-0 bg-black">
+            <div className="px-5 py-4 border-b border-plt-border flex items-center justify-between shrink-0 bg-plt-base">
               <div className="flex flex-col min-w-0">
-                <h2 className="font-semibold text-base text-text-primary tracking-tight truncate font-sans">
+                <h2 className="font-semibold text-base text-plt-text tracking-tight truncate font-sans">
                   {isArabic ? `إغلاق صفقة ${cleanSymbol}` : `Close ${cleanSymbol} Position`}
                 </h2>
-                <p className="text-xs text-text-muted font-normal mt-0.5 font-sans">
+                <p className="text-xs text-plt-muted font-normal mt-0.5 font-sans">
                   {isArabic ? `تحقيق الأرباح أو الخسائر لدفعة #${order.id}` : `Realize gains or losses for lot #${order.id}`}
                 </p>
               </div>
@@ -191,7 +191,7 @@ export default function CloseOrderModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-surface-raised transition cursor-pointer"
+                className="p-1.5 rounded-lg text-plt-muted hover:text-plt-text hover:bg-plt-hover transition cursor-pointer"
                 title={isArabic ? 'إغلاق (Esc)' : 'Close (Esc)'}
                 aria-label={isArabic ? 'إغلاق النافذة' : 'Close Modal'}
               >
@@ -352,24 +352,24 @@ export default function CloseOrderModal({
                       className="field-input w-full appearance-none pr-8 cursor-pointer font-sans"
                     >
                       {brokerageAccounts.map((acc) => (
-                        <option key={acc.id} value={acc.id} className="bg-black text-text-primary">
+                        <option key={acc.id} value={acc.id} className="bg-plt-base text-plt-text">
                           {acc.customBankName || acc.accountName} ({acc.currency || 'EGP'})
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="w-4 h-4 text-text-muted absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChevronDown className="w-4 h-4 text-plt-muted absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 ) : (
                   <div className="field-card flex items-center justify-between py-2.5 px-3">
                     <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-text-muted shrink-0" />
-                      <span className="text-xs font-semibold text-text-primary font-sans">
+                      <Building2 className="w-4 h-4 text-plt-muted shrink-0" />
+                      <span className="text-xs font-semibold text-plt-text font-sans">
                         {brokerageAccounts[0]?.customBankName ||
                           brokerageAccounts[0]?.accountName ||
                           (isArabic ? 'حساب الوساطة' : 'Brokerage Account')}
                       </span>
                     </div>
-                    <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold font-sans">
+                    <span className="text-[10px] text-plt-muted uppercase tracking-wider font-semibold font-sans">
                       {brokerageAccounts[0]?.currency || rawCurrency}
                     </span>
                   </div>
@@ -378,11 +378,11 @@ export default function CloseOrderModal({
             </div>
 
             {/* Footer Buttons */}
-            <div className="px-5 py-3.5 border-t border-border-subtle bg-black flex items-center justify-end gap-3 shrink-0">
+            <div className="px-5 py-3.5 border-t border-plt-border bg-plt-base flex items-center justify-end gap-3 shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-text-muted hover:text-white hover:bg-surface-raised transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors cursor-pointer"
               >
                 {isArabic ? 'إلغاء' : 'Cancel'}
               </button>

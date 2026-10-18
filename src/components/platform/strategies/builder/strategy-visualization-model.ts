@@ -127,7 +127,7 @@ export function getStrategyVisualizationModel(input: {
   let priceBlockId = 'market-data';
 
   let panes: readonly StrategyVisualizationPane[];
-  if (input.strategyId === 'psi') {
+  if (input.strategyId === 'typhon' || input.strategyId === 'psi') {
     priceBlockId = 'typhon-input-comi';
     buyBlockId = 'typhon-entry';
     buyBlockTitle = 'Priority level crossover';
@@ -188,7 +188,7 @@ export function getStrategyVisualizationModel(input: {
     {
       id: priceBlockId,
       name: `${input.ticker} Price`,
-      sourceBlockTitle: input.strategyId === 'psi' ? 'OHLC Price Feed' : 'Market Data',
+      sourceBlockTitle: (input.strategyId === 'typhon' || input.strategyId === 'psi') ? 'OHLC Price Feed' : 'Market Data',
       color: 'var(--color-tv-blue-500)',
       kind: 'price',
     },

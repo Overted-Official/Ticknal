@@ -30,11 +30,11 @@ export default function ListOfTradesTab({
   return (
     <section id="section-strategy-trades-history" className="space-y-3.5 select-none font-sans">
       {/* Section Header */}
-      <div className="flex flex-col gap-0.5 pb-2.5 border-b border-border-subtle">
-        <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
+      <div className="flex flex-col gap-0.5 pb-2.5 border-b border-plt-border-soft">
+        <h3 className="text-sm sm:text-[15px] font-bold text-plt-text tracking-tight leading-snug">
           {locale === 'ar' ? 'سجل الصفقات والتنفيذات' : 'Trade History & Executions'}
         </h3>
-        <p className="text-xs text-white/50 leading-relaxed">
+        <p className="text-xs text-plt-muted leading-relaxed">
           {locale === 'ar'
             ? 'سجل تدقيق كامل لجميع إشارات الاختبار التاريخي، ومستويات التنفيذ، وصافي العوائد، وأسباب الخروج'
             : 'Audited execution log of all backtested signals, fill levels, net returns, and exit rationale'}
@@ -81,7 +81,7 @@ export default function ListOfTradesTab({
       <div className="overflow-x-auto w-full">
         <table className="w-full text-xs border-collapse">
           <thead>
-            <tr className="border-b border-white/10 text-white/50 text-[11px]">
+            <tr className="border-b border-plt-border text-plt-muted text-[11px]">
               <th className="py-2.5 px-3 text-start font-medium">#</th>
               <th className="py-2.5 px-3 text-start font-medium">{locale === 'ar' ? 'تاريخ الدخول' : 'Entry Date'}</th>
               <th className="py-2.5 px-3 text-end font-medium">{locale === 'ar' ? 'سعر الدخول' : 'Entry Price'}</th>
@@ -93,10 +93,10 @@ export default function ListOfTradesTab({
               <th className="py-2.5 px-3 text-start font-medium">{locale === 'ar' ? 'سبب الخروج' : 'Exit Reason'}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.06]">
+          <tbody className="divide-y divide-plt-border-soft">
             {filteredTrades.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-white/40">
+                <td colSpan={9} className="py-8 text-center text-plt-faint">
                   {locale === 'ar' ? 'لا توجد صفقات مطابقة للتصفية المحددة.' : 'No trades found matching current filter.'}
                 </td>
               </tr>
@@ -108,27 +108,27 @@ export default function ListOfTradesTab({
                   const isWin = t.netPnl > 0;
                   const isOpen = !t.exitDate || t.isOpen || t.exitDate === '' || t.exitReason === 'Backtest End' || t.exitReason === 'Open Position';
                   return (
-                    <tr key={t.id} className="tabular-nums hover:bg-white/[0.02] transition-colors">
-                      <td className="py-2.5 px-3 font-semibold text-white/70 text-start">{t.tradeNumber}</td>
-                      <td className="py-2.5 px-3 text-white/70 text-start">{t.entryDate}</td>
-                      <td className="py-2.5 px-3 text-end text-white font-medium">
+                    <tr key={t.id} className="tabular-nums hover:bg-plt-hover transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-plt-subtle text-start">{t.tradeNumber}</td>
+                      <td className="py-2.5 px-3 text-plt-subtle text-start">{t.entryDate}</td>
+                      <td className="py-2.5 px-3 text-end text-plt-text font-medium">
                         {t.entryPrice.toFixed(2)}
                       </td>
                       <td className="py-2.5 px-3 text-start">
                         {isOpen ? (
-                          <span className="text-white/35 font-normal select-none">—</span>
+                          <span className="text-plt-faint font-normal select-none">—</span>
                         ) : (
-                          <span className="text-white/70">{t.exitDate}</span>
+                          <span className="text-plt-subtle">{t.exitDate}</span>
                         )}
                       </td>
                       <td className="py-2.5 px-3 text-end font-medium">
                         {isOpen ? (
-                          <span className="text-white/35 font-normal select-none">—</span>
+                          <span className="text-plt-faint font-normal select-none">—</span>
                         ) : (
-                          <span className="text-white">{t.exitPrice ? t.exitPrice.toFixed(2) : '—'}</span>
+                          <span className="text-plt-text">{t.exitPrice ? t.exitPrice.toFixed(2) : '—'}</span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 text-end text-white/60">
+                      <td className="py-2.5 px-3 text-end text-plt-muted">
                         {t.shares.toLocaleString()}
                       </td>
                       <td
@@ -154,7 +154,7 @@ export default function ListOfTradesTab({
                             <span>{locale === 'ar' ? 'صفقة مفتوحة' : 'Open Position'}</span>
                           </span>
                         ) : (
-                          <span className="text-white/50">{t.exitReason}</span>
+                          <span className="text-plt-muted">{t.exitReason}</span>
                         )}
                       </td>
                     </tr>

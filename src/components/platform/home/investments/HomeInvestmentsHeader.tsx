@@ -3,9 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
+import { TourTriggerButton } from '@/components/ui/tour';
 
-export default function HomeInvestmentsHeader() {
-  const { t, locale } = useTranslation();
+interface HomeInvestmentsHeaderProps {
+  onStartTour?: () => void;
+}
+
+export default function HomeInvestmentsHeader({ onStartTour }: HomeInvestmentsHeaderProps) {
+  const { locale } = useTranslation();
   return (
     <header className="flex items-center justify-between gap-4 select-none pb-1">
       {/* Left: Breadcrumb & Title */}
@@ -21,6 +26,13 @@ export default function HomeInvestmentsHeader() {
           {locale === 'ar' ? 'الاستثمارات' : 'Investments'}
         </h1>
       </div>
+
+      {/* Right: Quick Tour Trigger */}
+      {onStartTour && (
+        <div className="flex items-center gap-2">
+          <TourTriggerButton onClick={onStartTour} />
+        </div>
+      )}
     </header>
   );
 }

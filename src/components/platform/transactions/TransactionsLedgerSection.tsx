@@ -426,6 +426,7 @@ export default function TransactionsLedgerSection({
 
           <button
             type="button"
+            data-tour="transactions-add-btn"
             onClick={() => {
               setEditingTransaction(null);
               setIsLogDrawerOpen(true);
@@ -458,6 +459,7 @@ export default function TransactionsLedgerSection({
 
         <button
           type="button"
+          data-tour="transactions-add-btn"
           onClick={() => {
             setEditingTransaction(null);
             setIsLogDrawerOpen(true);
@@ -504,16 +506,16 @@ export default function TransactionsLedgerSection({
               <button
                 type="button"
                 onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
-                className={`h-9 px-3 rounded-xl border border-border-subtle bg-surface-raised hover:bg-surface-raised/80 hover:border-border-default text-text-primary text-xs font-medium flex items-center gap-1.5 transition-colors select-none ${
+                className={`h-9 px-3 rounded-xl border border-border-subtle bg-surface-raised hover:bg-surface-hover-raised hover:border-border-default text-text-primary text-xs font-medium flex items-center gap-1.5 transition-colors select-none ${
                   selectedAccountId !== 'ALL' ? 'text-brand-blue border-brand-blue/40' : ''
                 }`}
               >
                 <span className="truncate max-w-[120px] sm:max-w-[150px]">{activeAccountLabel}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                <ChevronDown className="w-3.5 h-3.5 text-plt-muted shrink-0" />
               </button>
 
               {isAccountDropdownOpen && (
-                <div className="absolute left-0 rtl:left-auto rtl:right-0 mt-1.5 w-48 sm:w-56 py-1 rounded-xl bg-black/95 backdrop-blur-md border border-border-subtle shadow-2xl z-50 overflow-hidden text-left rtl:text-right">
+                <div className="absolute left-0 rtl:left-auto rtl:right-0 mt-1.5 w-48 sm:w-56 py-1 rounded-xl bg-plt-base/95 backdrop-blur-md border border-plt-border shadow-2xl z-50 overflow-hidden text-left rtl:text-right">
                   {accountOptions.map((opt) => (
                     <button
                       key={opt.id}
@@ -522,8 +524,8 @@ export default function TransactionsLedgerSection({
                         setSelectedAccountId(opt.id);
                         setIsAccountDropdownOpen(false);
                       }}
-                      className={`w-full px-3 py-2 text-left rtl:text-right text-xs flex items-center justify-between hover:bg-white/[0.04] transition-colors ${
-                        selectedAccountId === opt.id ? 'text-brand-blue font-semibold bg-white/[0.02]' : 'text-text-primary'
+                      className={`w-full px-3 py-2 text-left rtl:text-right text-xs flex items-center justify-between hover:bg-plt-hover transition-colors ${
+                        selectedAccountId === opt.id ? 'text-brand-blue font-semibold bg-plt-hover' : 'text-plt-text'
                       }`}
                     >
                       <span className="truncate">{opt.label}</span>
@@ -622,7 +624,7 @@ export default function TransactionsLedgerSection({
       </div>
 
       {/* 3. Main 2-Column Content (Matching MyPositionsSection layout) */}
-      <div className="flex-1 min-h-0 w-full">
+      <div data-tour="transactions-ledger-table" className="flex-1 min-h-0 w-full">
         {filteredItems.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center text-text-muted text-xs">
             <span>

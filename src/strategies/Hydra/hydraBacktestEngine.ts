@@ -1,5 +1,5 @@
 import type { FullBacktestReport } from '@/strategies/registry';
-import type { PriceBar } from '@/strategies/PSI/psiStrategy';
+import type { PriceBar } from '@/strategies/Typhon/typhonStrategy';
 import { runHydraStrategy, type HydraStrategyOverrides } from './hydraStrategy';
 
 /**

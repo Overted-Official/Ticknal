@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { dailyPrices, marketNews } from '@/db/schema';
+import { dailyPrices, marketNews, tickers } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import https from 'https';
 import crypto from 'crypto';
@@ -7,39 +7,33 @@ import { completeWithKeyPool } from '@/lib/ai/openrouter-client';
 import { ensureMarketNewsTable } from './news-service';
 
 /**
- * Standard HTTPS GET with timeout
+ * Standard HTTPS GET with hard wall-clock timeout (including body read)
  */
-function fetchJson(url: string, timeoutMs = 6000): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const req = https.get(
-      url,
-      {
+async function fetchJson(url: string, timeoutMs = 5000): Promise<any> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new Error(`Request timeout after ${timeoutMs}ms`));
+      }, timeoutMs);
+    });
+    const reqPromise = (async () => {
+      const res = await fetch(url, {
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           Accept: 'application/json',
         },
-        timeout: timeoutMs,
-      },
-      (res) => {
-        let data = '';
-        res.on('data', (c) => (data += c));
-        res.on('end', () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e: any) {
-            reject(new Error(`Failed to parse JSON response: ${e.message}`));
-          }
-        });
-      }
-    );
-
-    req.on('error', (err) => reject(err));
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error(`Request timeout after ${timeoutMs}ms`));
-    });
-  });
+        signal: controller.signal,
+      });
+      return await res.json();
+    })();
+    return await Promise.race([reqPromise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 export const TARGET_WIRE_SYMBOLS = [
@@ -118,7 +112,20 @@ export const ASSET_RELEVANCE_KEYWORDS: Record<string, string[]> = {
   ORWE: ['oriental weavers', 'النساجون الشرقيون', 'orwe'],
   PRDC: ['pioneers', 'بايونيرز', 'prdc'],
   POUL: ['cairo poultry', 'القاهرة للدواجن', 'poul'],
-  EGX30: ['egx', 'egx30', 'بورصة مصر', 'البورصة المصرية', 'مؤشر', 'أسهم مصر'],
+  EGX30: [
+    'egx',
+    'egx30',
+    'egx 30',
+    'egypt',
+    'cairo',
+    'بورصة مصر',
+    'البورصة المصرية',
+    'مؤشر البورصة المصرية',
+    'المؤشر الرئيسي للبورصة المصرية',
+    'المؤشر المصري',
+    'أسهم مصر',
+    'مصر',
+  ],
   EGX70: ['egx70', 'مؤشر الشركات الصغيرة', 'السبعيني', 'egx 70'],
   EGX100: ['egx100', 'egx 100', 'المؤشر المئوي'],
   GOLD: ['gold', 'xau', 'ذهب', 'الذهب', 'سبائك', 'أونصة', 'صاغة', 'عيار 21', 'عيار 24'],
@@ -172,10 +179,22 @@ function cleanSourceName(rawSource?: string, rawProvider?: string): string {
 
 function getCategoryForAsset(assetKey: string, title: string): { category: string; categoryLabel: string } {
   const t = (title || '').toLowerCase();
+  if (t.includes('صندوق') || t.includes('صناديق') || t.includes('وثائق') || t.includes('أزيموت') || t.includes('azimut') || t.includes('fund') || t.includes('etf')) {
+    return { category: 'funds', categoryLabel: 'Investment Funds' };
+  }
   if (assetKey === 'GOLD' || assetKey === 'SILVER') {
     return { category: 'gold_silver', categoryLabel: 'Gold & Silver' };
   }
-  if (assetKey === 'USDEGP' || t.includes('cbe') || t.includes('مركزي') || t.includes('تضخم') || t.includes('احتياطي')) {
+  if (
+    assetKey === 'USDEGP' ||
+    assetKey === 'EGX30' ||
+    assetKey === 'EGX70' ||
+    assetKey === 'EGX100' ||
+    t.includes('cbe') ||
+    t.includes('مركزي') ||
+    t.includes('تضخم') ||
+    t.includes('احتياطي')
+  ) {
     return { category: 'macro_market', categoryLabel: 'Macro Market' };
   }
   return { category: 'listed_companies', categoryLabel: 'Listed Companies (EGX)' };
@@ -188,19 +207,26 @@ export function isNoiseHeadline(title: string): boolean {
     'delivery intentions',
     'comex gold delivery',
     'comex silver delivery',
+    'comex gold futures',
+    'comex gold futs',
+    'cftc commitments',
+    'disaggregated commitments',
     'settlement prices',
     'daily settlement',
     'routine notice',
     'collateral intentions',
     'margin requirements change',
     'open interest changes',
-    'cftc commitments of traders',
     'cot report summary',
     'intentions breakdown',
     'notice of delivery',
     'bulletin board',
     'calendar notice',
     'intraday targets/key levels',
+    'gold etf fofs',
+    'indian households',
+    'bengaluru',
+    'urban company',
   ];
   return NOISE_PATTERNS.some((p) => lower.includes(p));
 }
@@ -308,12 +334,88 @@ export function evaluateFinancialCatalyst(title: string, assetKey: string, lang:
   };
 }
 
-export function isHeadlineRelevantToAsset(title: string, assetKey: string): boolean {
+function extractTextFromAst(node: any): string {
+  if (!node) return '';
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node)) return node.map(extractTextFromAst).join(' ');
+  if (node.params?.text) return String(node.params.text);
+  if (node.children) return extractTextFromAst(node.children);
+  return '';
+}
+
+async function fetchTradingViewStoryBody(rawId: string, lang: 'en' | 'ar'): Promise<string> {
+  if (!rawId) return '';
+  try {
+    const url = `https://news-headlines.tradingview.com/v2/story?id=${encodeURIComponent(rawId)}&lang=${lang}`;
+    const story = await fetchJson(url, 3500);
+    const astText = extractTextFromAst(story?.astDescription)
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (astText.length >= 25) {
+      return astText.slice(0, 1200);
+    }
+    const shortDesc = String(story?.shortDescription || '').replace(/\s+/g, ' ').trim();
+    return shortDesc.slice(0, 600);
+  } catch {
+    return '';
+  }
+}
+
+export function isHeadlineRelevantToAsset(
+  title: string,
+  assetKey: string,
+  companyName?: string,
+  relatedSymbols?: Array<{ symbol?: string }>
+): boolean {
   if (isNoiseHeadline(title)) return false;
   const t = (title || '').toLowerCase();
+
+  // Reject headlines whose relatedSymbols point ONLY to non-Egyptian regional exchanges
+  const relSyms = (relatedSymbols || [])
+    .map((r) => String(r?.symbol || '').toUpperCase())
+    .filter(Boolean);
+  if (relSyms.length > 0) {
+    const hasEgxSym = relSyms.some((s) => s.startsWith('EGX:'));
+    const hasForeignGulfSym = relSyms.some((s) =>
+      /^(TADAWUL|DFM|ADX|KSE|BIST|QSE|MSX|BHSE):/.test(s)
+    );
+    const mentionsEgypt =
+      t.includes('egypt') ||
+      t.includes('egx') ||
+      t.includes('مصر') ||
+      t.includes('المؤشر المصري') ||
+      t.includes('البورصة المصرية') ||
+      t.includes('المركزي المصري');
+    if (hasForeignGulfSym && !hasEgxSym && !mentionsEgypt) {
+      return false;
+    }
+    // If TradingView tagged a specific EGX stock (other than the generic EGX30 Gulf roundup tag), it is relevant
+    if (assetKey !== 'EGX30' && relSyms.includes(`EGX:${assetKey}`)) {
+      return true;
+    }
+  }
+
   const keywords = ASSET_RELEVANCE_KEYWORDS[assetKey];
-  if (!keywords || keywords.length === 0) return true;
-  return keywords.some((kw) => t.includes(kw.toLowerCase()));
+  if (keywords && keywords.some((kw) => t.includes(kw.toLowerCase()))) {
+    return true;
+  }
+
+  // Dynamic match against DB ticker symbol or company name
+  if (assetKey.length >= 3 && t.includes(assetKey.toLowerCase())) {
+    return true;
+  }
+  if (companyName) {
+    const cleanName = companyName
+      .toLowerCase()
+      .replace(/\b(company|corp|inc|ltd|s\.a\.e|sae|group|holding|for|and|the|egypt)\b/g, '')
+      .trim();
+    const firstTwoWords = cleanName.split(/\s+/).filter((w) => w.length >= 3).slice(0, 2).join(' ');
+    if (firstTwoWords.length >= 4 && t.includes(firstTwoWords)) {
+      return true;
+    }
+  }
+
+  return !keywords || keywords.length === 0;
 }
 
 export interface WireScreenResult {
@@ -325,9 +427,9 @@ export interface WireScreenResult {
 }
 
 /**
- * Phase 1: Screen & Ingest Wires from the Last 24 Hours with Quantitative AI Gate
+ * Phase 1: Dynamically Discover Active Universe -> Extract Headline & Story Body -> Quantitative AI Gate -> Post
  */
-export async function screenAndIngestWires(): Promise<WireScreenResult> {
+export async function screenAndIngestWires(options?: { targetDateOnly?: string }): Promise<WireScreenResult> {
   const startTime = Date.now();
   await ensureMarketNewsTable();
 
@@ -348,10 +450,46 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
   const seenIds = new Set<string>(existingRows.map((r) => r.id));
   const seenTitles = new Set<string>(existingRows.map((r) => normalizeHeadline(r.title)));
 
-  // 2. Concurrently poll TradingView wire feeds across English and Arabic
-  const fetchTasks: Array<{ lang: string; sym: string }> = [];
-  for (const lang of ['ar', 'en']) {
-    for (const sym of TARGET_WIRE_SYMBOLS) {
+  // 2. Dynamically load DB EGX tickers & latest session's top volume/mover equities
+  const companyNameBySymbol = new Map<string, string>();
+  const dynamicPollSymbols = new Set<string>(TARGET_WIRE_SYMBOLS);
+
+  try {
+    const allDbTickers = await db
+      .select({ symbol: tickers.symbol, companyName: tickers.companyName, exchange: tickers.exchange })
+      .from(tickers);
+    for (const row of allDbTickers) {
+      if (row.symbol) {
+        companyNameBySymbol.set(row.symbol.toUpperCase(), row.companyName || row.symbol);
+      }
+    }
+
+    // Add top 12 volume leaders and top 8 absolute price movers from the latest EGX session
+    const activeMovers = await db.execute(sql`
+      WITH latest_session AS (
+        SELECT MAX(date) AS max_date FROM daily_prices WHERE ticker_symbol = 'COMI'
+      )
+      SELECT dp.ticker_symbol
+      FROM daily_prices dp
+      JOIN latest_session ls ON dp.date = ls.max_date
+      WHERE dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'GC1!', 'SI1!', 'USDEGP')
+      ORDER BY (COALESCE(dp.volume, 0) * COALESCE(dp.close, 0)) DESC
+      LIMIT 15
+    `);
+    for (const row of activeMovers as any[]) {
+      const sym = String(row?.ticker_symbol || '').trim().toUpperCase();
+      if (sym && companyNameBySymbol.has(sym)) {
+        dynamicPollSymbols.add(`EGX:${sym}`);
+      }
+    }
+  } catch (dynErr) {
+    console.warn('[wire-screener] Dynamic ticker discovery warning:', dynErr);
+  }
+
+  // 3. Concurrently poll TradingView wire feeds across English and Arabic
+  const fetchTasks: Array<{ lang: 'en' | 'ar'; sym: string }> = [];
+  for (const lang of ['en', 'ar'] as const) {
+    for (const sym of dynamicPollSymbols) {
       fetchTasks.push({ lang, sym });
     }
   }
@@ -360,15 +498,18 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
     fetchTasks.map(async ({ lang, sym }) => {
       const url = `https://news-headlines.tradingview.com/v2/headlines?client=web&lang=${lang}&symbol=${encodeURIComponent(sym)}`;
       const resp = await fetchJson(url, 5000);
-      return { sym, items: resp?.items || [] };
+      return { lang, sym, items: resp?.items || [] };
     })
   );
 
-  // 3. Collect candidates strictly published within the last 24 hours
+  // 4. Collect candidates strictly published within the last 24 hours (or targetDateOnly if specified)
   interface WireItem {
     id: string;
+    rawId: string;
+    lang: 'ar' | 'en';
     sym: string;
     assetKey: string;
+    relatedEgxTickers: string[];
     title: string;
     publishedAt: Date;
     source: string;
@@ -381,29 +522,56 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
 
   for (const res of fetchResults) {
     if (res.status !== 'fulfilled') continue;
-    const { sym, items } = res.value;
-    const assetKey = getTargetAssetKey(sym);
+    const { lang, sym, items } = res.value;
+    const polledAssetKey = getTargetAssetKey(sym);
 
     for (const item of items) {
       if (!item.id || !item.title) continue;
 
       const pubTime = item.published ? item.published * 1000 : 0;
-      // STRICT 24-HOUR FILTER
       if (pubTime < cutoffTimestamp) {
         continue;
+      }
+      if (options?.targetDateOnly) {
+        const pubDateIso = new Date(pubTime).toISOString().slice(0, 10);
+        if (pubDateIso !== options.targetDateOnly) {
+          continue;
+        }
       }
 
       const newsId = generateNewsId(item.id);
       if (seenIds.has(newsId)) continue;
-      seenIds.add(newsId);
 
       const norm = normalizeHeadline(item.title);
       if (seenTitles.has(norm)) continue;
-      seenTitles.add(norm);
 
-      if (!isHeadlineRelevantToAsset(item.title, assetKey)) {
+      // Dynamically extract any EGX:<SYM> tags from TradingView's relatedSymbols metadata
+      const relEgxTickers: string[] = [];
+      for (const rel of item.relatedSymbols || []) {
+        const s = String(rel?.symbol || '').toUpperCase();
+        if (s.startsWith('EGX:')) {
+          const cleanSym = s.replace(/^EGX:/, '');
+          if (cleanSym && !relEgxTickers.includes(cleanSym)) {
+            relEgxTickers.push(cleanSym);
+          }
+        }
+      }
+
+      // If polled via an index (e.g. EGX30) but relatedSymbols identifies a specific EGX company, promote it
+      const assetKey =
+        (polledAssetKey === 'EGX30' || polledAssetKey === 'EGX70' || polledAssetKey === 'EGX100') &&
+        relEgxTickers.length === 1 &&
+        !['EGX30', 'EGX70', 'EGX100'].includes(relEgxTickers[0])
+          ? relEgxTickers[0]
+          : polledAssetKey;
+
+      const companyName = companyNameBySymbol.get(assetKey);
+      if (!isHeadlineRelevantToAsset(item.title, assetKey, companyName, item.relatedSymbols)) {
         continue;
       }
+
+      seenIds.add(newsId);
+      seenTitles.add(norm);
 
       const publishedAt = new Date(pubTime);
       const source = cleanSourceName(item.source, item.provider);
@@ -414,8 +582,11 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
 
       candidateWires.push({
         id: newsId,
+        rawId: String(item.id),
+        lang,
         sym,
         assetKey,
+        relatedEgxTickers: relEgxTickers,
         title: item.title.trim(),
         publishedAt,
         source,
@@ -438,16 +609,29 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
     };
   }
 
-  // 4. Batch query latest EOD price rows for candidates
+  // 5. Concurrently extract full wire story bodies (/v2/story) for candidates so AI digests real article text
+  const storyBodyMap = new Map<string, string>();
+  await Promise.allSettled(
+    candidateWires.slice(0, 15).map(async (wire) => {
+      const body = await fetchTradingViewStoryBody(wire.rawId, wire.lang);
+      if (body) {
+        storyBodyMap.set(wire.id, body);
+      }
+    })
+  );
+
+  // 6. Batch query latest EOD price rows for candidates (mapping GOLD -> GC1! and SILVER -> SI1!)
   const distinctAssets = Array.from(new Set(candidateWires.map((w) => w.assetKey)));
-  const eodMap = new Map<string, { close: number; changePct: number; volume: number }>();
+  const eodMap = new Map<string, { close: number; changePct: number; volume: number; unit: string }>();
 
   try {
     for (const asset of distinctAssets) {
+      const dbSymbol = asset === 'GOLD' ? 'GC1!' : asset === 'SILVER' ? 'SI1!' : asset;
+      const unit = asset === 'GOLD' || asset === 'SILVER' ? 'USD/oz' : 'EGP';
       const rows = await db
         .select()
         .from(dailyPrices)
-        .where(eq(dailyPrices.tickerSymbol, asset))
+        .where(eq(dailyPrices.tickerSymbol, dbSymbol))
         .orderBy(desc(dailyPrices.date))
         .limit(2);
 
@@ -458,169 +642,231 @@ export async function screenAndIngestWires(): Promise<WireScreenResult> {
         const prevClose = prev ? Number(prev.close) : close;
         const changePct = prevClose > 0 ? Number((((close - prevClose) / prevClose) * 100).toFixed(2)) : 0;
         const volume = Number(latest.volume || 0);
-        eodMap.set(asset, { close, changePct, volume });
+        eodMap.set(asset, { close, changePct, volume, unit });
       }
     }
   } catch (eodErr) {
     console.warn('[wire-screener] EOD context query warning:', eodErr);
   }
 
-  // 5. Screen each candidate: OpenRouter Quantitative Analyst Gate with Resilient Fallback
-  // Story cluster deduplication: max 2 stories per asset per catalyst type within 24h
+  // 7. Screen each candidate: OpenRouter Quantitative Analyst Gate over Full Story Body + EOD Context
   const storyClusterCount = new Map<string, number>();
 
   for (const wire of candidateWires) {
     const eod = eodMap.get(wire.assetKey);
-    const closeStr = eod ? `${eod.close} EGP` : '';
+    const closeStr = eod ? `${eod.close} ${eod.unit}` : '';
     const changeStr = eod ? `${eod.changePct >= 0 ? '+' : ''}${eod.changePct}%` : '';
-    const volStr = eod && eod.volume > 0 ? `${Math.round(eod.volume).toLocaleString()} shares` : '';
+    const volStr = eod && eod.volume > 0 && eod.unit === 'EGP' ? `${Math.round(eod.volume).toLocaleString()} shares` : '';
     const marketCtx = eod ? `Last Close: ${closeStr} (${changeStr})${volStr ? ` | Vol: ${volStr}` : ''}` : '';
 
     const isArabic = /[\u0600-\u06FF]/.test(wire.title);
-    const lang = isArabic ? 'ar' : 'en';
-    const catalyst = evaluateFinancialCatalyst(wire.title, wire.assetKey, lang);
+    const storyBody = storyBodyMap.get(wire.id) || '';
+    const catalystEn = evaluateFinancialCatalyst(`${wire.title} ${storyBody}`, wire.assetKey, 'en');
+    const catalystAr = evaluateFinancialCatalyst(`${wire.title} ${storyBody}`, wire.assetKey, 'ar');
+    const isListedEgxCompany = wire.category === 'listed_companies' || wire.category === 'funds';
 
-    // Filter out procedural noise or non-catalyst wires
-    if (isNoiseHeadline(wire.title)) {
+    // Filter out procedural noise; for commodities/FX require a recognized catalyst unless storyBody has substance
+    if (isNoiseHeadline(wire.title) || (!catalystEn.isCatalyst && !isListedEgxCompany && storyBody.length < 60)) {
       droppedNoise++;
       continue;
     }
 
-    // Cluster key to prevent 5 identical syndicated inflation/gold headlines
-    const clusterKey = `${wire.assetKey}:${catalyst.type}`;
+    // Cluster key: cap precious metals and EGX30 market roundups to 1 per day/catalyst so EN+AR duplicates merge
+    const dateBucket = wire.publishedAt.toISOString().slice(0, 10);
+    const clusterKey = `${wire.assetKey}:${dateBucket}:${catalystEn.type}`;
+    const maxPerCluster =
+      wire.assetKey === 'GOLD' || wire.assetKey === 'SILVER' || wire.assetKey === 'EGX30' ? 1 : 2;
     const countInCluster = storyClusterCount.get(clusterKey) || 0;
-    if (countInCluster >= 2) {
+    if (countInCluster >= maxPerCluster) {
       droppedNoise++;
       continue;
     }
 
-    let finalSummary = '';
-    let finalSentiment = catalyst.sentiment;
+    let enTitle = isArabic ? '' : wire.title;
+    let arTitle = isArabic ? wire.title : '';
+    let enSummary = '';
+    let arSummary = '';
+    let finalSentiment = catalystEn.sentiment;
 
-    // OpenRouter Quantitative Analyst Persona Prompt
-    const systemPrompt = `You are a senior quantitative analyst and expert Egyptian equity trader at Ticknal.
-Analyze breaking market news wires and filter out noise. Respond ONLY with a 1-2 sentence quantitative summary (max 500 chars) highlighting the fundamental catalyst, financial impact, and strategic takeaway for traders, OR respond with ONLY the exact single word "irrelevant".`;
+    // Enforce a strict 25-second wall-clock budget for AI calls so the route never hits serverless timeouts
+    const aiBudgetRemaining = Date.now() - startTime < 25000;
 
-    const userPrompt = `Asset: ${wire.assetKey}
-Context: ${marketCtx || 'N/A'}
+    if (aiBudgetRemaining) {
+      const companyLabel = companyNameBySymbol.get(wire.assetKey)
+        ? `${wire.assetKey} (${companyNameBySymbol.get(wire.assetKey)})`
+        : wire.assetKey;
+
+      const systemPrompt = `You are a senior bilingual (English/Arabic) quantitative analyst and Egyptian equity strategist at Ticknal.
+Digest the breaking market wire headline, full wire body, and latest EOD price context.
+Rules:
+1. If the story is routine procedural noise, unrelated to Egypt/EGX/Gold/Silver/USD-EGP, or has no actionable takeaway for investors, reply with ONLY the single word "irrelevant".
+2. Otherwise, output exactly 4 labeled lines (no markdown asterisks **):
+EN_TITLE: <concise institutional headline in English>
+AR_TITLE: <concise institutional headline in Arabic>
+EN_SUMMARY: <1-2 sentence quantitative summary in English citing exact figures from the wire body and EOD context>
+AR_SUMMARY: <1-2 sentence quantitative summary in Arabic citing exact figures from the wire body and EOD context>`;
+
+      const userPrompt = `Asset: ${companyLabel}
+Market Context: ${marketCtx || 'N/A'}
 Headline: "${wire.title}"
-Source: ${wire.source}
-Published: ${wire.publishedAt.toISOString()}
+${storyBody ? `Wire Body: "${storyBody}"\n` : ''}Source: ${wire.source}
 
-Respond ONLY with a 1-2 sentence quantitative summary (max 500 chars) if valuable, OR respond with ONLY "irrelevant".`;
+Reply with the 4 labeled lines (EN_TITLE, AR_TITLE, EN_SUMMARY, AR_SUMMARY) OR reply with ONLY "irrelevant".`;
 
-    try {
-      const completion = await completeWithKeyPool({
-        systemPrompt,
-        userPrompt,
-        fallbackText: '__FALLBACK__',
-        temperature: 0.1,
-        maxTokens: 180,
-        timeoutMs: 6000,
-        validateOutput: (text: string) => {
-          const lower = text.toLowerCase().trim();
-          if (
-            lower === 'irrelevant' ||
+      try {
+        const completion = await completeWithKeyPool({
+          systemPrompt,
+          userPrompt,
+          fallbackText: '__FALLBACK__',
+          temperature: 0.1,
+          maxTokens: 900,
+          timeoutMs: 6500,
+          maxAttempts: 2,
+          validateOutput: (text: string) => {
+            const lower = text.toLowerCase().trim();
+            if (
+              lower === 'irrelevant' ||
+              lower === 'useless' ||
+              lower.startsWith('irrelevant') ||
+              lower.startsWith('useless')
+            ) {
+              return true;
+            }
+            if (
+              lower.includes('the user wants') ||
+              lower.includes('analyze the content') ||
+              lower.includes('routine report') ||
+              lower.includes('procedural data')
+            ) {
+              return false;
+            }
+            return text.length >= 30 && /[.!?؟%)"»\]]$/.test(text.trim());
+          },
+        });
+
+        const responseText = (completion.text || '').trim();
+        const lower = responseText.toLowerCase();
+
+        // If AI explicitly deemed it irrelevant/noise:
+        if (
+          completion.source === 'ai_generated' &&
+          (lower === 'irrelevant' ||
             lower === 'useless' ||
             lower.startsWith('irrelevant') ||
-            lower.startsWith('useless')
-          ) {
-            return true;
-          }
-          if (
+            lower.startsWith('useless') ||
             lower.includes('the user wants') ||
-            lower.includes('analyze the content') ||
-            lower.includes('routine report') ||
-            lower.includes('procedural data')
-          ) {
-            return false;
-          }
-          return text.length >= 25;
-        },
-      });
-
-      const responseText = (completion.text || '').trim();
-      const lower = responseText.toLowerCase();
-
-      // If AI successfully ran and explicitly deemed it irrelevant/noise:
-      if (
-        completion.source === 'ai_generated' &&
-        (lower === 'irrelevant' ||
-          lower === 'useless' ||
-          lower.startsWith('irrelevant') ||
-          lower.startsWith('useless') ||
-          lower.includes('the user wants') ||
-          lower.includes('analyze the content'))
-      ) {
-        droppedNoise++;
-        continue;
-      }
-
-      // If AI produced a valid quantitative summary:
-      if (
-        completion.source === 'ai_generated' &&
-        responseText.length >= 25 &&
-        responseText !== '__FALLBACK__'
-      ) {
-        finalSummary = responseText.slice(0, 500);
-        if (
-          lower.includes('bullish') ||
-          lower.includes('growth') ||
-          lower.includes('surge') ||
-          lower.includes('jump') ||
-          lower.includes('ارتفاع') ||
-          lower.includes('مكاسب')
+            lower.includes('analyze the content'))
         ) {
-          finalSentiment = 'bullish';
-        } else if (
-          lower.includes('bearish') ||
-          lower.includes('decline') ||
-          lower.includes('drop') ||
-          lower.includes('slump') ||
-          lower.includes('تراجع') ||
-          lower.includes('خسائر')
-        ) {
-          finalSentiment = 'bearish';
+          droppedNoise++;
+          continue;
         }
+
+        // Parse 4-line bilingual output if present, or single-language summary
+        if (
+          completion.source === 'ai_generated' &&
+          responseText.length >= 30 &&
+          responseText !== '__FALLBACK__'
+        ) {
+          const enTitleMatch = responseText.match(/EN_TITLE:\s*(.+)/i);
+          const arTitleMatch = responseText.match(/AR_TITLE:\s*(.+)/i);
+          const enSumMatch = responseText.match(/EN_SUMMARY:\s*([\s\S]+?)(?=\nAR_SUMMARY:|$)/i);
+          const arSumMatch = responseText.match(/AR_SUMMARY:\s*([\s\S]+)$/i);
+
+          if (enSumMatch && arSumMatch) {
+            if (enTitleMatch?.[1]) enTitle = enTitleMatch[1].trim().replace(/^["']|["']$/g, '');
+            if (arTitleMatch?.[1]) arTitle = arTitleMatch[1].trim().replace(/^["']|["']$/g, '');
+            enSummary = enSumMatch[1].trim().slice(0, 460);
+            arSummary = arSumMatch[1].trim().slice(0, 460);
+          } else if (/[\u0600-\u06FF]/.test(responseText)) {
+            arSummary = responseText.slice(0, 460);
+          } else {
+            enSummary = responseText.slice(0, 460);
+          }
+
+          if (
+            lower.includes('bullish') ||
+            lower.includes('growth') ||
+            lower.includes('surge') ||
+            lower.includes('jump') ||
+            lower.includes('secured') ||
+            lower.includes('signed') ||
+            lower.includes('ارتفاع') ||
+            lower.includes('مكاسب') ||
+            lower.includes('توقيع') ||
+            lower.includes('نمو')
+          ) {
+            finalSentiment = 'bullish';
+          } else if (
+            lower.includes('bearish') ||
+            lower.includes('decline') ||
+            lower.includes('drop') ||
+            lower.includes('slump') ||
+            lower.includes('tumbles') ||
+            lower.includes('تراجع') ||
+            lower.includes('خسائر') ||
+            lower.includes('انخفاض')
+          ) {
+            finalSentiment = 'bearish';
+          }
+        }
+      } catch {
+        // AI call timed out or failed; proceed to smart quantitative fallback
       }
-    } catch {
-      // AI call timed out or failed; proceed to smart quantitative fallback
     }
 
-    // Smart Quantitative Fallback:
-    // If AI was offline or rate-limited, NEVER drop material catalysts!
-    if (!finalSummary) {
-      if (!catalyst.isCatalyst && wire.assetKey !== 'USDEGP' && wire.assetKey !== 'GOLD' && wire.assetKey !== 'SILVER') {
-        droppedNoise++;
-        continue;
-      }
-
-      const ctxPhrase = marketCtx
-        ? (isArabic ? ` السياق الفني: إغلاق ${closeStr} (${changeStr})${volStr ? `، حجم ${volStr}` : ''}. ` : ` Market Context: Close ${closeStr} (${changeStr})${volStr ? ` | Vol: ${volStr}` : ''}. `)
-        : ' ';
-
-      finalSummary = isArabic
-        ? `[${wire.assetKey}] ${catalyst.type}: ${wire.title}.${ctxPhrase}${catalyst.takeaway}`.slice(0, 500)
-        : `[${wire.assetKey}] ${catalyst.type}: ${wire.title}.${ctxPhrase}${catalyst.takeaway}`.slice(0, 500);
+    // If AI didn't generate and the item had no recognized catalyst, drop rather than posting generic filler
+    if (!enSummary && !arSummary && !catalystEn.isCatalyst) {
+      droppedNoise++;
+      continue;
     }
+
+    // Ensure both EN and AR summaries & titles are populated so every post is 100% bilingual
+    const enCtxPhrase = marketCtx
+      ? ` Reference close: ${closeStr} (${changeStr})${volStr ? ` on volume of ${volStr}` : ''}.`
+      : '';
+    const arCtxPhrase = marketCtx
+      ? ` الإغلاق المرجعي: ${closeStr} (${changeStr})${volStr ? ` بحجم تداول ${volStr}` : ''}.`
+      : '';
+
+    if (!enSummary) {
+      enSummary = `${catalystEn.takeaway}${enCtxPhrase}`.trim().slice(0, 460);
+    }
+    if (!arSummary) {
+      arSummary = `${catalystAr.takeaway}${arCtxPhrase}`.trim().slice(0, 460);
+    }
+    if (!enTitle) {
+      enTitle = `${wire.assetKey}: ${catalystEn.type}`;
+    }
+    if (!arTitle) {
+      arTitle = `${wire.assetKey}: ${catalystAr.type}`;
+    }
+
+    const bilingualSummary = `${enSummary}\n\n${arSummary}`;
 
     // Record cluster count
     storyClusterCount.set(clusterKey, countInCluster + 1);
+
+    const tickersList =
+      wire.assetKey === 'GOLD'
+        ? ['GOLD21K', 'GOLD']
+        : wire.assetKey === 'USDEGP'
+        ? ['USD/EGP', 'USDEGP']
+        : Array.from(new Set([wire.assetKey, ...wire.relatedEgxTickers])).slice(0, 4);
 
     await db
       .insert(marketNews)
       .values({
         id: wire.id,
-        title: wire.title,
-        summary: finalSummary,
-        content: null,
+        title: enTitle,
+        content: arTitle,
+        summary: bilingualSummary,
         category: wire.category,
         categoryLabel: wire.categoryLabel,
-        tickers: [wire.assetKey],
+        tickers: tickersList,
         sentiment: finalSentiment,
         source: wire.source,
         sourceUrl: wire.sourceUrl,
-        importance: wire.assetKey === 'USDEGP' || wire.assetKey === 'GOLD' ? 'high' : 'normal',
+        importance: wire.assetKey === 'USDEGP' || wire.assetKey === 'GOLD' || wire.assetKey === 'EGX30' ? 'high' : 'normal',
         readTime: '1 min read',
         publishedAt: wire.publishedAt,
         createdAt: new Date(),
@@ -639,3 +885,4 @@ Respond ONLY with a 1-2 sentence quantitative summary (max 500 chars) if valuabl
     durationMs: Date.now() - startTime,
   };
 }
+

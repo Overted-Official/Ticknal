@@ -262,7 +262,7 @@ export async function triggerNativeTestNotification(title?: string, body?: strin
           schedule: { at: new Date(Date.now() + 300) },
           iconColor: '#00C896',
           extra: {
-            url: '/charts?ticker=COMI.CA&strategy=psi_v2',
+            url: '/charts?ticker=COMI.CA&strategy=typhon',
           },
         },
       ],

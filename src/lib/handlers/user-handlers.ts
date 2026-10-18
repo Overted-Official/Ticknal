@@ -3,7 +3,7 @@ import { desc, eq, and, or, sql, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { positions, profiles, systemLogs, userBankAccounts, bankTransactions, tickers } from '@/db/schema';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
-import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';

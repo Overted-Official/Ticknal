@@ -21,6 +21,7 @@ import { type BankAccount, type BankTransaction } from '@/types/bank';
 import { type FxRates, type NetWorthHistoryPoint } from '@/lib/portfolio-finance';
 import HomePageView from '@/components/platform/home/HomePageView';
 import { getProprietaryAccessForUser } from '@/lib/server/proprietary-strategy-access';
+import { resolveProprietaryAccess } from '@/lib/strategies/proprietary-access-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,8 +49,13 @@ export default async function HomePage() {
       </div>
     );
   }
-  const [accessProfile] = await db.select({ role: profiles.role }).from(profiles).where(eq(profiles.id, user.id)).limit(1);
-  const proprietaryAccess = await getProprietaryAccessForUser(user.id, user.email ?? null, accessProfile?.role ?? null);
+  let proprietaryAccess = resolveProprietaryAccess(user.email ?? null, null, null);
+  try {
+    const [accessProfile] = await db.select({ role: profiles.role }).from(profiles).where(eq(profiles.id, user.id)).limit(1);
+    proprietaryAccess = await getProprietaryAccessForUser(user.id, user.email ?? null, accessProfile?.role ?? null);
+  } catch (err) {
+    console.warn('[HomePage] Failed to resolve proprietary strategy access:', err);
+  }
 
   let orderStats: Awaited<ReturnType<typeof getOrderStats>> = emptyOrderStats;
   let activeAlertCount = 0;

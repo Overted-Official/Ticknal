@@ -348,9 +348,9 @@ export default function TransactionsKPIRail({
               : isAr
               ? `${metrics.closedTradeCount} صفقة`
               : `${metrics.closedTradeCount} trades`,
-          badgeClass: 'text-zinc-400 font-medium text-[9px] bg-white/5 px-1.5 py-0.5 rounded',
+          badgeClass: 'text-plt-muted font-medium text-[9px] bg-plt-hover px-1.5 py-0.5 rounded',
           changeText: isAr ? `${metrics.closedTradeCount} مغلقة` : `${metrics.closedTradeCount} closed`,
-          changeColorClass: 'text-zinc-400',
+          changeColorClass: 'text-plt-muted',
           metaText: isAr ? 'محقق' : 'realized',
           sparklinePoints: metrics.tradeSpark,
           sparklineTrend: metrics.totalRealizedPnl >= 0 ? 'up' : 'down',

@@ -70,17 +70,17 @@ export default function ExecutionLevelsCard({
       ? 'text-emerald-400'
       : miStatus === 'Overbought'
       ? 'text-rose-400'
-      : 'text-white';
+      : 'text-plt-text';
 
   return (
     <section id="section-strategy-execution-setup" className="space-y-3.5 select-none font-sans">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 pb-2.5 border-b border-border-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 pb-2.5 border-b border-plt-border-soft">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
+          <h3 className="text-sm sm:text-[15px] font-bold text-plt-text tracking-tight leading-snug">
             {locale === 'ar' ? 'حالة السوق وإشارات التنفيذ' : 'Market State'}
           </h3>
-          <p className="text-xs text-white/50 leading-relaxed">
+          <p className="text-xs text-plt-muted leading-relaxed">
             {locale === 'ar'
               ? 'إشارة التنفيذ الخوارزمية الحالية، حدود وقف الخسارة والأهداف، وزخم السوق الدوري'
               : 'Current algorithmic execution trigger, bracket boundaries, and cyclical momentum sentiment'}
@@ -91,7 +91,7 @@ export default function ExecutionLevelsCard({
       {/* 2-Card KPI Layout */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
         {/* Card 1: Algorithm Decision */}
-        <div className="w-full bg-black border border-white/10 hover:border-white/20 transition-all rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[155px] sm:min-h-[170px]">
+        <div className="w-full bg-plt-base border border-plt-border hover:border-plt-border-strong transition-all rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[155px] sm:min-h-[170px]">
           {/* Header */}
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <div
@@ -105,7 +105,7 @@ export default function ExecutionLevelsCard({
             >
               <Radio size={11} className="w-[11px] h-[11px]" strokeWidth={2.2} />
             </div>
-            <span className="text-xs sm:text-[13px] font-semibold text-white tracking-tight truncate">
+            <span className="text-xs sm:text-[13px] font-semibold text-plt-text tracking-tight truncate">
               {locale === 'ar' ? 'قرار النموذج' : 'Algorithm Decision'}
             </span>
           </div>
@@ -117,12 +117,12 @@ export default function ExecutionLevelsCard({
                 {decisionText}
               </span>
               {triggerPrice !== null && (
-                <span className="text-xs sm:text-[13px] font-semibold text-white/50 tabular-nums">
+                <span className="text-xs sm:text-[13px] font-semibold text-plt-muted tabular-nums">
                   @ {triggerPrice.toFixed(2)} {displayCurrency}
                 </span>
               )}
             </div>
-            <span className="text-[10px] sm:text-[12px] text-white/50 truncate mt-1">
+            <span className="text-[10px] sm:text-[12px] text-plt-muted truncate mt-1">
               {reason ||
                 (isBuy
                   ? locale === 'ar' ? 'إشارة دخول شراء نشطة قيد التفعيل' : 'Active long entry setup triggered'
@@ -134,13 +134,13 @@ export default function ExecutionLevelsCard({
 
           {/* Bottom Visual: Custom execution visual matching card content */}
           {hasRR ? (
-            <div className="pt-2 border-t border-white/10 space-y-1 sm:space-y-1.5 tabular-nums">
+            <div className="pt-2 border-t border-plt-border-soft space-y-1 sm:space-y-1.5 tabular-nums">
               <div className="flex justify-between text-[9px] sm:text-[11px] font-semibold truncate">
                 <span className="text-loss-num">{locale === 'ar' ? 'وقف' : 'SL'} {stopLossPrice!.toFixed(1)}</span>
-                <span className="text-white/60">{locale === 'ar' ? 'دخول' : 'Entry'} {triggerPrice!.toFixed(1)}</span>
+                <span className="text-plt-muted">{locale === 'ar' ? 'دخول' : 'Entry'} {triggerPrice!.toFixed(1)}</span>
                 <span className="text-profit-num">{locale === 'ar' ? 'هدف' : 'TP'} {targetPrice!.toFixed(1)}</span>
               </div>
-              <div className="h-1.5 w-full rounded-full overflow-hidden flex bg-white/10">
+              <div className="h-1.5 w-full rounded-full overflow-hidden flex bg-plt-hover">
                 <div
                   className="bg-loss-num h-full rounded-l-full"
                   style={{ width: `${riskBarPct}%` }}
@@ -148,40 +148,40 @@ export default function ExecutionLevelsCard({
                 <div className="w-0.5 bg-white shrink-0" />
                 <div className="bg-profit-num h-full flex-1 rounded-r-full" />
               </div>
-              <div className="flex justify-between text-[8px] sm:text-[10px] text-white/50">
+              <div className="flex justify-between text-[8px] sm:text-[10px] text-plt-muted">
                 <span>{locale === 'ar' ? 'المخاطرة' : 'Risk'}: {riskAmt.toFixed(1)}</span>
                 {rrRatio !== null && (
-                  <span className="text-white font-medium">{locale === 'ar' ? 'المكافأة:المخاطرة' : 'R:R'} {rrRatio.toFixed(1)}x</span>
+                  <span className="text-plt-text font-medium">{locale === 'ar' ? 'المكافأة:المخاطرة' : 'R:R'} {rrRatio.toFixed(1)}x</span>
                 )}
                 <span>{locale === 'ar' ? 'العائد' : 'Reward'}: {rewardAmt.toFixed(1)}</span>
               </div>
             </div>
           ) : (
-            <div className="pt-2 border-t border-white/10 space-y-1 sm:space-y-1.5">
+            <div className="pt-2 border-t border-plt-border-soft space-y-1 sm:space-y-1.5">
               <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
                 <div
                   className={`h-1.5 sm:h-2 rounded-full transition-all ${
                     isSell
                       ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
-                      : 'bg-white/10'
+                      : 'bg-plt-hover'
                   }`}
                 />
                 <div
                   className={`h-1.5 sm:h-2 rounded-full transition-all ${
                     signalAction === 'HOLD'
                       ? 'bg-brand-blue shadow-[0_0_8px_rgba(41,98,255,0.6)]'
-                      : 'bg-white/10'
+                      : 'bg-plt-hover'
                   }`}
                 />
                 <div
                   className={`h-1.5 sm:h-2 rounded-full transition-all ${
                     isBuy
                       ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
-                      : 'bg-white/10'
+                      : 'bg-plt-hover'
                   }`}
                 />
               </div>
-              <div className="flex justify-between text-[8px] sm:text-[10px] tabular-nums font-medium text-white/40">
+              <div className="flex justify-between text-[8px] sm:text-[10px] tabular-nums font-medium text-plt-faint">
                 <span className={`truncate ${isSell ? 'text-rose-400 font-semibold' : ''}`}>
                   <span className="sm:hidden">{locale === 'ar' ? 'خروج' : 'Exit'}</span>
                   <span className="hidden sm:inline">{locale === 'ar' ? 'خروج / سيولة' : 'Exit / Flat'}</span>
@@ -200,13 +200,13 @@ export default function ExecutionLevelsCard({
         </div>
 
         {/* Card 2: Master Index (MI) */}
-        <div className="w-full bg-black border border-white/10 hover:border-white/20 transition-all rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[155px] sm:min-h-[170px]">
+        <div className="w-full bg-plt-base border border-plt-border hover:border-plt-border-strong transition-all rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[155px] sm:min-h-[170px]">
           {/* Header */}
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-brand-blue/20 text-brand-blue overflow-hidden">
               <Activity size={11} className="w-[11px] h-[11px]" strokeWidth={2.2} />
             </div>
-            <span className="text-xs sm:text-[13px] font-semibold text-white tracking-tight truncate">
+            <span className="text-xs sm:text-[13px] font-semibold text-plt-text tracking-tight truncate">
               {locale === 'ar' ? 'مؤشر الزخم الرئيسي (MI)' : 'Master Index (MI)'}
             </span>
           </div>
@@ -217,11 +217,11 @@ export default function ExecutionLevelsCard({
               <span className={`text-base sm:text-[22px] font-bold tracking-tight ${miColor}`}>
                 {miStatusDisplay}
               </span>
-              <span className="text-xs sm:text-[13px] font-semibold text-white/50 tabular-nums">
+              <span className="text-xs sm:text-[13px] font-semibold text-plt-muted tabular-nums">
                 ({masterIndex !== null ? masterIndex.toFixed(1) : '—'} / 100)
               </span>
             </div>
-            <span className="text-[10px] sm:text-[12px] text-white/50 truncate mt-1">
+            <span className="text-[10px] sm:text-[12px] text-plt-muted truncate mt-1">
               {mdm !== null
                 ? `MDM: ${mdm.toFixed(2)}%`
                 : locale === 'ar' ? 'محرك الزخم الدوري' : 'Cyclical Momentum Engine'}
@@ -229,8 +229,8 @@ export default function ExecutionLevelsCard({
           </div>
 
           {/* Bottom Visual: Precision spectrum gauge matching MI range */}
-          <div className="pt-2 border-t border-white/10 space-y-1 sm:space-y-1.5">
-            <div className="relative w-full h-1.5 sm:h-2 rounded-full overflow-hidden bg-white/10">
+          <div className="pt-2 border-t border-plt-border-soft space-y-1 sm:space-y-1.5">
+            <div className="relative w-full h-1.5 sm:h-2 rounded-full overflow-hidden bg-plt-hover">
               <div className="w-full h-full bg-gradient-to-r from-emerald-500 via-amber-400/50 to-rose-500 opacity-80" />
               {masterIndex !== null && (
                 <div
@@ -239,7 +239,7 @@ export default function ExecutionLevelsCard({
                 />
               )}
             </div>
-            <div className="flex justify-between text-[8px] sm:text-[10px] tabular-nums text-white/40 font-medium">
+            <div className="flex justify-between text-[8px] sm:text-[10px] tabular-nums text-plt-faint font-medium">
               <span className="text-emerald-400/80">
                 <span className="sm:hidden">{locale === 'ar' ? 'تشبع بيعي' : 'Oversold'}</span>
                 <span className="hidden sm:inline">{locale === 'ar' ? '0 تشبع بيعي' : '0 Oversold'}</span>

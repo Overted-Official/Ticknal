@@ -2,11 +2,12 @@ import { createClient } from '../../../../lib/supabase/server';
 import { parseUniverseBacktestRequest } from '../../../../lib/strategies/server/parse-universe-backtest-request';
 import { runSimpleBacktestForSymbol } from '../../../../lib/strategies/server/run-simple-backtest-for-symbol';
 import { runSimpleUniverseBacktest } from '../../../../lib/strategies/server/run-simple-universe-backtest';
+import { MAX_STRATEGY_REQUEST_BYTES } from '../../../../lib/strategies/strategy-program';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const MAX_BODY_BYTES = 32_768;
+const MAX_BODY_BYTES = MAX_STRATEGY_REQUEST_BYTES;
 const NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store' } as const;
 
 async function readBoundedJson(request: Request): Promise<

@@ -16,6 +16,24 @@ export const KNOWN_STRATEGIES: Record<string, StrategyMeta> = {
     shortName: 'ALL',
     color: 'var(--text-primary)',
   },
+  typhon: {
+    name: 'Typhon',
+    shortName: 'Typhon',
+    color: 'var(--color-brand-blue)',
+    badgeBg: 'bg-brand-blue/15 text-brand-blue border-brand-blue/30',
+  },
+  cerberus: {
+    name: 'Cerberus',
+    shortName: 'Cerberus',
+    color: 'var(--color-profit-num)',
+    badgeBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  },
+  hydra: {
+    name: 'Hydra',
+    shortName: 'Hydra',
+    color: 'var(--color-accent-cyan)',
+    badgeBg: 'bg-accent-cyan/15 text-accent-cyan border-accent-cyan/30',
+  },
   psi: {
     name: 'Typhon',
     shortName: 'Typhon',
@@ -28,29 +46,26 @@ export const KNOWN_STRATEGIES: Record<string, StrategyMeta> = {
     color: 'var(--color-profit-num)',
     badgeBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   },
-  hydra: {
-    name: 'Hydra',
-    shortName: 'Hydra',
-    color: 'var(--color-accent-cyan)',
-    badgeBg: 'bg-accent-cyan/15 text-accent-cyan border-accent-cyan/30',
-  },
 };
 
 export function resolveStrategyMeta(
   strategyId?: string,
   rawShortName?: string
 ): StrategyMeta & { id: string } {
-  const normalizedId = (strategyId || 'psi').toLowerCase();
+  const normalizedId = (strategyId || 'typhon').toLowerCase();
   const normalizedRaw = (rawShortName || '').toUpperCase();
 
   if (
+    normalizedId === 'cerberus' ||
+    normalizedId === 'cerbrus' ||
     normalizedId === 'psi_v2' ||
+    normalizedId === 'psiv2' ||
     normalizedRaw.includes('CERBERUS') ||
     normalizedRaw.includes('PSI V2') ||
     normalizedRaw.includes('PSI_V2')
   ) {
     return {
-      id: 'psi_v2',
+      id: 'cerberus',
       name: 'Cerberus',
       shortName: 'Cerberus',
       color: 'var(--color-profit-num)',
@@ -68,9 +83,9 @@ export function resolveStrategyMeta(
     };
   }
 
-  // Default: Typhon (formerly psi)
+  // Default: Typhon
   return {
-    id: 'psi',
+    id: 'typhon',
     name: 'Typhon',
     shortName: 'Typhon',
     color: 'var(--color-brand-blue)',
@@ -95,8 +110,11 @@ export default function StrategySwitcher({
   const isArabic = i18n.language === 'ar';
 
   // Always include all active system strategies in the switcher
-  const systemStrategies = ['ALL', 'psi', 'psi_v2', 'hydra'];
-  const strategyList = Array.from(new Set([...systemStrategies, ...(availableStrategies || []).filter((s) => s !== 'thoth_egx_macro')]));
+  const systemStrategies = ['ALL', 'typhon', 'cerberus', 'hydra'];
+  const normalizedAvailable = (availableStrategies || [])
+    .filter((s) => s !== 'thoth_egx_macro')
+    .map((s) => (s === 'psi' ? 'typhon' : s === 'psi_v2' ? 'cerberus' : s));
+  const strategyList = Array.from(new Set([...systemStrategies, ...normalizedAvailable]));
 
   return (
     <div className="seg-control max-w-full overflow-x-auto no-scrollbar">
@@ -105,7 +123,7 @@ export default function StrategySwitcher({
           name: id.toUpperCase(),
           shortName: id.toUpperCase(),
         };
-        const isSelected = selectedStrategy === id;
+        const isSelected = selectedStrategy === id || (id === 'typhon' && selectedStrategy === 'psi') || (id === 'cerberus' && selectedStrategy === 'psi_v2');
         const displayName = id === 'ALL' && isArabic ? 'جميع الاستراتيجيات' : meta.name;
 
         return (

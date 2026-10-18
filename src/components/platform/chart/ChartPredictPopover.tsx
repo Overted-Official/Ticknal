@@ -53,18 +53,18 @@ export default function ChartPredictPopover({
   return (
     <div
       ref={popoverRef}
-      className="absolute top-2 left-2 sm:left-48 md:left-52 rtl:left-auto rtl:right-2 sm:rtl:right-48 md:rtl:right-52 z-50 w-[270px] sm:w-[280px] max-w-[calc(100vw-16px)] bg-cold-gray-900 border border-white/[0.08] rounded-lg shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none overflow-hidden text-xs font-sans"
+      className="absolute top-2 left-2 sm:left-48 md:left-52 rtl:left-auto rtl:right-2 sm:rtl:right-48 md:rtl:right-52 z-50 w-[270px] sm:w-[280px] max-w-[calc(100vw-16px)] bg-plt-hovercard border border-plt-border rounded-lg shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none overflow-hidden text-xs font-sans"
     >
       {/* Compact Header */}
-      <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between bg-white/[0.02]">
-        <div className="flex items-center gap-1.5 font-semibold text-xs text-white">
-          <Sparkles size={13} className="text-white" />
+      <div className="px-3 py-2 border-b border-plt-border-soft flex items-center justify-between bg-transparent">
+        <div className="flex items-center gap-1.5 font-semibold text-xs text-plt-text">
+          <Sparkles size={13} className="text-plt-text" />
           <span>{locale === 'ar' ? 'توقعات الأسعار بالذكاء الاصطناعي' : 'AI Price Forecast'}</span>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="h-5 w-5 rounded flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="h-5 w-5 rounded flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors cursor-pointer"
           aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
         >
           <X size={12} />
@@ -74,7 +74,7 @@ export default function ChartPredictPopover({
       {/* Popover Content */}
       <div className="p-3 space-y-2.5">
         <div>
-          <div className="flex items-center justify-between mb-1.5 text-[10px] text-text-muted font-medium uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-1.5 text-[10px] text-plt-muted font-medium uppercase tracking-wider">
             <span>{locale === 'ar' ? 'أفق التوقع' : 'Forecast Horizon'}</span>
             <span className="tabular-nums font-sans">
               {predictDaysInput || 10} {locale === 'ar' ? 'أيام' : 'Days'}
@@ -93,7 +93,7 @@ export default function ChartPredictPopover({
                   className={`h-6 rounded text-[10.5px] font-sans font-medium transition-colors cursor-pointer flex items-center justify-center ${
                     isSelected
                       ? 'bg-white text-black font-semibold'
-                      : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08] border border-white/[0.04]'
+                      : 'bg-plt-hover text-plt-muted hover:text-plt-text hover:bg-plt-active border border-plt-border-soft'
                   }`}
                 >
                   {days}{locale === 'ar' ? 'يوم' : 'D'}
@@ -111,11 +111,11 @@ export default function ChartPredictPopover({
                 max={60}
                 value={predictDaysInput}
                 onChange={(e) => onChangePredictDays(e.target.value)}
-                className="h-7 w-full rounded-md border border-white/[0.08] bg-white/[0.03] focus:bg-white/[0.06] px-2 text-xs font-sans tabular-nums text-white outline-none focus:border-white/20 transition-colors"
+                className="h-7 w-full rounded-md border border-plt-border-soft bg-plt-hover focus:bg-plt-active px-2 text-xs font-sans tabular-nums text-plt-text outline-none focus:border-plt-border transition-colors"
                 placeholder={locale === 'ar' ? 'أيام مخصصة...' : 'Custom days...'}
               />
             </div>
-            <span className="text-[11px] text-text-muted font-sans shrink-0">
+            <span className="text-[11px] text-plt-muted font-sans shrink-0">
               {locale === 'ar' ? 'يوم' : 'Days'}
             </span>
           </div>

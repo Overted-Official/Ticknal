@@ -17,15 +17,21 @@ export async function getCurrentUserAndProfile() {
     return null;
   }
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
+  let profile: typeof profiles.$inferSelect | null = null;
+  try {
+    const [row] = await db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.id, user.id))
+      .limit(1);
+    profile = row ?? null;
+  } catch (dbErr) {
+    console.warn('[getCurrentUserAndProfile] Failed to query profiles table:', dbErr);
+  }
 
   return {
     user,
-    profile: profile ?? null,
+    profile,
   };
 }
 

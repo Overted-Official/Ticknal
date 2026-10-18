@@ -22,6 +22,8 @@ import {
 import { useTranslation } from '@/lib/i18n';
 import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 import { HERO_SCENE_MARKETS } from '@/components/landing/hero-scenes/hero-scene-snapshot';
+import { Tour, useTour, TourTriggerButton } from '@/components/ui/tour';
+import { getMarketsTourSteps, MARKETS_TOUR_STORAGE_KEY } from '@/lib/tours/markets-tour-config';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -31,6 +33,26 @@ export default function MarketsPageView() {
   const { isNavVisible } = useMobileNavScroll();
   const { isGuest } = useGuestGuard();
   const isHeroScene = useHeroSceneMode();
+
+  const tour = useTour(MARKETS_TOUR_STORAGE_KEY);
+  const tourSteps = useMemo(() => getMarketsTourSteps(isRTL), [isRTL]);
+  const hasAutoStartedRef = React.useRef(false);
+
+  // Auto-start Markets page walkthrough for first-time visitors (strictly once on mount)
+  React.useEffect(() => {
+    if (isHeroScene) return;
+    if (hasAutoStartedRef.current) return;
+    hasAutoStartedRef.current = true;
+
+    if (!tour.seen()) {
+      const timer = setTimeout(() => {
+        tour.start();
+        tour.markSeen();
+      }, 1200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [tour, isHeroScene]);
 
   // Timeframe & Sizing State (default to 1M for responsive overview)
   const [timeframePreset, setTimeframePreset] = useState<MarketTimeframe | 'custom'>('1M');
@@ -135,7 +157,10 @@ export default function MarketsPageView() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {!isHeroScene && (
+            <TourTriggerButton onClick={tour.start} />
+          )}
           {!isHeroScene && <button
             type="button"
             onClick={() => mutateMacro()}
@@ -152,7 +177,9 @@ export default function MarketsPageView() {
       </header>
 
       {/* 2. Sticky Floating Top Navigation Bar */}
-      <MarketsFloatingNav />
+      <div data-tour="markets-floating-nav">
+        <MarketsFloatingNav />
+      </div>
 
       {/* 3. Main 4-Section Executive Scroll */}
       <main
@@ -167,48 +194,56 @@ export default function MarketsPageView() {
         }`}
       >
         {/* Section 1: Executive Market Overview (includes KPIs & Major Indices Area Chart) */}
-        <MarketOverviewSection
-          macroData={macroData}
-          sectors={sectors}
-          timeframe={timeframePreset === 'custom' ? '1M' : timeframePreset}
-          onTimeframeChange={(tf) => setTimeframePreset(tf)}
-          onSelectSector={handleSelectSector}
-          isLoading={isMacroLoading}
-        />
+        <div data-tour="markets-overview">
+          <MarketOverviewSection
+            macroData={macroData}
+            sectors={sectors}
+            timeframe={timeframePreset === 'custom' ? '1M' : timeframePreset}
+            onTimeframeChange={(tf) => setTimeframePreset(tf)}
+            onSelectSector={handleSelectSector}
+            isLoading={isMacroLoading}
+          />
+        </div>
 
         {/* Section 2: FX & Devaluation Risk (Fair Value, Barometer, CIB GDR, and Money Supply M2 Chart) */}
-        <FxDevaluationSection
-          macroData={macroData}
-          isLoading={isMacroLoading}
-        />
+        <div data-tour="markets-fx">
+          <FxDevaluationSection
+            macroData={macroData}
+            isLoading={isMacroLoading}
+          />
+        </div>
 
         {/* Section 3: Sector Rotation & Cycle Map */}
-        <SectorRotationSection
-          macroData={macroData}
-          sectors={sectors}
-          selectedSector={selectedSector}
-          onSelectSector={handleSelectSector}
-          timeframe={timeframePreset === 'custom' ? '1M' : timeframePreset}
-          onTimeframeChange={(tf) => setTimeframePreset(tf)}
-        />
+        <div data-tour="markets-sector-rotation">
+          <SectorRotationSection
+            macroData={macroData}
+            sectors={sectors}
+            selectedSector={selectedSector}
+            onSelectSector={handleSelectSector}
+            timeframe={timeframePreset === 'custom' ? '1M' : timeframePreset}
+            onTimeframeChange={(tf) => setTimeframePreset(tf)}
+          />
+        </div>
 
-        {/* Section 3: Market Performance Heatmap */}
-        <MarketHeatmapSection
-          sectors={sectors}
-          marketSummary={marketSummary}
-          benchmarkReturn={macroData?.egx30Return ?? 0}
-          timeframePreset={timeframePreset}
-          setTimeframePreset={(preset) => setTimeframePreset(preset === '1W' ? '5D' : preset)}
-          granularity={granularity}
-          setGranularity={setGranularity}
-          sizingMetric={sizingMetric}
-          setSizingMetric={setSizingMetric}
-          selectedSector={selectedSector}
-          onSelectSector={setSelectedSector}
-          selectedTicker={selectedTicker}
-          onSelectTicker={handleSelectTicker}
-          isLoading={isMacroLoading}
-        />
+        {/* Section 4: Market Performance Heatmap */}
+        <div data-tour="markets-heatmap">
+          <MarketHeatmapSection
+            sectors={sectors}
+            marketSummary={marketSummary}
+            benchmarkReturn={macroData?.egx30Return ?? 0}
+            timeframePreset={timeframePreset}
+            setTimeframePreset={(preset) => setTimeframePreset(preset === '1W' ? '5D' : preset)}
+            granularity={granularity}
+            setGranularity={setGranularity}
+            sizingMetric={sizingMetric}
+            setSizingMetric={setSizingMetric}
+            selectedSector={selectedSector}
+            onSelectSector={setSelectedSector}
+            selectedTicker={selectedTicker}
+            onSelectTicker={handleSelectTicker}
+            isLoading={isMacroLoading}
+          />
+        </div>
       </main>
 
       {/* Floating Guest Conversion Pill */}
@@ -221,6 +256,18 @@ export default function MarketsPageView() {
         featureName={proFeature}
         title="Access Ticknal's Full Power"
         description="Sign in to monitor your Egyptian market portfolio, automate your trading alerts, and test custom strategies."
+      />
+
+      {/* Walkthrough Product Tour */}
+      <Tour
+        steps={tourSteps}
+        open={tour.open}
+        onOpenChange={tour.setOpen}
+        index={tour.index}
+        onIndexChange={tour.setIndex}
+        onFinish={tour.markSeen}
+        onSkip={tour.markSeen}
+        dark
       />
     </div>
   );

@@ -25,7 +25,7 @@ export interface WatchlistFilterConfig {
   isActive: boolean;
   // Strategy signals filter
   signalEnabled: boolean;
-  strategies: string[]; // ['psi', 'psi_v2', 'hydra']
+  strategies: string[]; // ['typhon', 'cerberus', 'hydra']
   signals: ('BUY' | 'SELL')[];
   lookbackDays: number; // 1, 3, 5, 7, 14, 30, or custom N
   // Sector filter
@@ -39,7 +39,7 @@ export type SignalFilterConfig = WatchlistFilterConfig;
 export const DEFAULT_WATCHLIST_FILTER: WatchlistFilterConfig = {
   isActive: false,
   signalEnabled: true,
-  strategies: ['psi', 'psi_v2', 'hydra'],
+  strategies: ['typhon', 'cerberus', 'hydra'],
   signals: ['BUY'],
   lookbackDays: 5,
   sector: 'ALL',
@@ -60,7 +60,7 @@ interface WatchlistSignalFilterPopoverProps {
 
 const STRATEGY_OPTIONS = [
   {
-    id: 'psi',
+    id: 'typhon',
     labelEn: 'Typhon Strategy',
     labelAr: 'استراتيجية تايفون',
     subEn: 'Consensus & Inflection',
@@ -69,7 +69,7 @@ const STRATEGY_OPTIONS = [
     color: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
   },
   {
-    id: 'psi_v2',
+    id: 'cerberus',
     labelEn: 'Cerberus Strategy',
     labelAr: 'استراتيجية سيربيروس',
     subEn: '3-Vector Momentum Architecture',
@@ -275,10 +275,7 @@ export default function WatchlistSignalFilterPopover({
   return (
     <div
       ref={popoverRef}
-      className="absolute top-11 ltr:right-0 rtl:left-0 z-50 w-80 max-w-[92vw] max-h-[85vh] overflow-y-auto custom-scrollbar rounded-lg border border-white/10 bg-[#18181b]/95 backdrop-blur-md shadow-2xl p-3 text-plt-text text-[11px] select-none animate-in fade-in zoom-in-95 duration-150 font-sans"
-      style={{
-        boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.7), 0 8px 12px -6px rgba(0, 0, 0, 0.5)',
-      }}
+      className="absolute top-11 ltr:right-0 rtl:left-0 z-50 w-80 max-w-[92vw] max-h-[85vh] overflow-y-auto custom-scrollbar rounded-lg border border-plt-border bg-plt-base/95 backdrop-blur-md shadow-popover p-3 text-plt-text text-[11px] select-none animate-in fade-in zoom-in-95 duration-150 font-sans"
     >
       {/* Header */}
       <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/[0.08]">

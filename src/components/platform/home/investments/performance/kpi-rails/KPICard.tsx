@@ -45,11 +45,11 @@ export default function KPICard({
   value,
   unit,
   badgeText,
-  badgeClass = 'text-zinc-500 font-medium text-[9px]',
+  badgeClass = 'text-plt-muted font-medium text-[9px]',
   changeText,
   changeColorClass = 'text-profit-num',
   metaText,
-  metaClass = 'text-zinc-500',
+  metaClass = 'text-plt-muted',
   sparklinePoints,
   sparklineTrend = 'up',
   showSparkline = true,
@@ -150,7 +150,7 @@ export default function KPICard({
             )}
           </div>
           <span
-            className="text-[11px] xs:text-[12px] sm:text-[13px] font-semibold text-white tracking-tight truncate"
+            className="text-[11px] xs:text-[12px] sm:text-[13px] font-semibold text-plt-text tracking-tight truncate"
             title={title}
           >
             {shortTitle ? (
@@ -177,17 +177,17 @@ export default function KPICard({
       <div className="flex flex-col mt-1.5 sm:mt-2.5 z-10">
         {isLoading ? (
           <div className="space-y-1.5 py-0.5">
-            <div className="h-4 sm:h-5 w-16 sm:w-20 bg-white/[0.08] rounded-xs animate-pulse" />
-            <div className="h-2.5 sm:h-3 w-12 sm:w-16 bg-white/[0.04] rounded-xs animate-pulse" />
+            <div className="h-4 sm:h-5 w-16 sm:w-20 bg-plt-active rounded-xs animate-pulse" />
+            <div className="h-2.5 sm:h-3 w-12 sm:w-16 bg-plt-hover rounded-xs animate-pulse" />
           </div>
         ) : (
           <>
             <div className="flex items-baseline gap-1 leading-none">
-              <span className="text-[15px] xs:text-[16px] sm:text-[20px] font-bold text-white tabular-nums tracking-tight">
+              <span className="text-[15px] xs:text-[16px] sm:text-[20px] font-bold text-plt-text tabular-nums tracking-tight">
                 {value}
               </span>
               {unit && (
-                <span className="text-[9px] sm:text-[10px] font-semibold text-white/50 uppercase tracking-wider ml-0.5">
+                <span className="text-[9px] sm:text-[10px] font-semibold text-plt-muted uppercase tracking-wider ml-0.5">
                   {unit}
                 </span>
               )}
@@ -201,7 +201,7 @@ export default function KPICard({
                 </span>
               )}
               {metaText && (
-                <span className={`text-[9px] sm:text-[10px] truncate text-white/50 font-normal ${metaClass}`}>
+                <span className={`text-[9px] sm:text-[10px] truncate text-plt-muted font-normal ${metaClass}`}>
                   {metaText}
                 </span>
               )}

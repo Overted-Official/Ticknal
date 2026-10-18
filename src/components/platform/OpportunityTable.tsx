@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import AddOrderModal, { InitialOrderData } from '@/components/platform/AddOrderModal';
+import { normalizeStrategyId } from '@/strategies/registry';
 
 export type Opportunity = {
   symbol: string;
@@ -98,7 +99,9 @@ export default function OpportunityTable({
   const availableStrategies = useMemo(() => {
     const set = new Set<string>();
     opportunities.forEach((o) => {
-      if (o.strategyId) set.add(o.strategyId);
+      if (o.strategyId) {
+        set.add(o.strategyId === 'thoth_egx_macro' ? 'thoth_egx_macro' : normalizeStrategyId(o.strategyId));
+      }
     });
     return Array.from(set);
   }, [opportunities]);
@@ -111,8 +114,9 @@ export default function OpportunityTable({
 
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter((o) => {
+      const stratId = o.strategyId === 'thoth_egx_macro' ? 'thoth_egx_macro' : normalizeStrategyId(o.strategyId);
       // 1. Strategy filter
-      if (strategyFilter !== 'ALL' && (o.strategyId || 'psi') !== strategyFilter) {
+      if (strategyFilter !== 'ALL' && stratId !== strategyFilter) {
         return false;
       }
       // 2. Regime filter
@@ -149,30 +153,30 @@ export default function OpportunityTable({
             >
               All ({opportunities.length})
             </button>
-            {availableStrategies.includes('psi') && (
+            {availableStrategies.includes('typhon') && (
               <button
                 type="button"
-                onClick={() => setStrategyFilter('psi')}
+                onClick={() => setStrategyFilter('typhon')}
                 className={`px-2 py-1 rounded-lg btn-typography transition-all ${
-                  strategyFilter === 'psi'
+                  strategyFilter === 'typhon'
                     ? 'bg-plt-info/20 text-plt-info border border-plt-info/30 font-semibold shadow-xs'
                     : 'text-plt-muted hover:text-plt-info'
                 }`}
               >
-                Typhon ({opportunities.filter((o) => (o.strategyId || 'psi') === 'psi').length})
+                Typhon ({opportunities.filter((o) => normalizeStrategyId(o.strategyId) === 'typhon').length})
               </button>
             )}
-            {availableStrategies.includes('psi_v2') && (
+            {availableStrategies.includes('cerberus') && (
               <button
                 type="button"
-                onClick={() => setStrategyFilter('psi_v2')}
+                onClick={() => setStrategyFilter('cerberus')}
                 className={`px-2 py-1 rounded-lg btn-typography transition-all ${
-                  strategyFilter === 'psi_v2'
+                  strategyFilter === 'cerberus'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold shadow-xs'
                     : 'text-plt-muted hover:text-emerald-400'
                 }`}
               >
-                Cerberus ({opportunities.filter((o) => o.strategyId === 'psi_v2').length})
+                Cerberus ({opportunities.filter((o) => normalizeStrategyId(o.strategyId) === 'cerberus').length})
               </button>
             )}
             {availableStrategies.includes('hydra') && (
@@ -226,7 +230,7 @@ export default function OpportunityTable({
           <div className="empty-state text-xs font-normal">{emptyText}</div>
         ) : (
           filteredOpportunities.map((item) => (
-            <div key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="surface-widget-soft">
+            <div key={`${item.symbol}-${item.strategyId ?? 'typhon'}-${item.signal.date}`} className="surface-widget-soft">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 rounded-full bg-plt-hover flex items-center justify-center overflow-hidden shrink-0 border border-plt-border">
@@ -313,7 +317,7 @@ export default function OpportunityTable({
               </tr>
             ) : (
               filteredOpportunities.map((item) => (
-                <tr key={`${item.symbol}-${item.strategyId ?? 'psi'}-${item.signal.date}`} className="hover:bg-plt-hover/50 transition-colors group">
+                <tr key={`${item.symbol}-${item.strategyId ?? 'typhon'}-${item.signal.date}`} className="hover:bg-plt-hover/50 transition-colors group">
                   <td className="px-3 py-2 whitespace-nowrap rounded-l-xl">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-7 h-7 rounded-lg bg-plt-card/90 border border-plt-border-soft flex items-center justify-center p-0.5 shrink-0 overflow-hidden shadow-xs">
@@ -337,7 +341,7 @@ export default function OpportunityTable({
                     <span className={`text-[10px] tabular-nums font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ${
                       item.strategyBadgeClassName || 'bg-plt-info/10 text-plt-info'
                     }`}>
-                      {item.strategyShortName || (item.strategyId === 'hydra' ? 'HYDRA' : item.strategyId === 'psi_v2' ? 'Cerberus' : item.strategyId === 'thoth_egx_macro' ? 'Thoth' : 'Typhon')}
+                      {item.strategyShortName || (item.strategyId === 'hydra' ? 'HYDRA' : item.strategyId === 'cerberus' || item.strategyId === 'psi_v2' ? 'Cerberus' : item.strategyId === 'thoth_egx_macro' ? 'Thoth' : 'Typhon')}
                     </span>
                   </td>
                   {!compact && (

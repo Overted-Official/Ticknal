@@ -40,11 +40,11 @@ export default function NewsFilterSidebar({
   return (
     <aside
       aria-label="Feed Filters"
-      className="w-full flex flex-col bg-black select-none font-sans py-1"
+      className="w-full flex flex-col bg-plt-base select-none font-sans py-1"
     >
       {/* Header (No icons) */}
-      <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.06]">
-        <span className="font-semibold text-[10.5px] tracking-wider uppercase text-zinc-400">
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-plt-border-soft">
+        <span className="font-semibold text-[10.5px] tracking-wider uppercase text-plt-muted">
           {locale === 'ar' ? 'التصنيفات والأسواق' : 'Feeds & Markets'}
         </span>
 
@@ -52,7 +52,7 @@ export default function NewsFilterSidebar({
           <button
             type="button"
             onClick={onResetFilters}
-            className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-[10px] text-plt-muted hover:text-plt-text flex items-center gap-1 cursor-pointer transition-colors"
           >
             <span>{locale === 'ar' ? 'إعادة ضبط' : 'Reset'}</span>
             <X size={10} />
@@ -72,8 +72,8 @@ export default function NewsFilterSidebar({
               onClick={() => onSelectCategory(cat.id)}
               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[12px] transition-colors cursor-pointer group text-left ${
                 isSelected
-                  ? 'bg-white/10 text-white font-medium'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-plt-active text-plt-text font-medium'
+                  : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
               }`}
             >
               <span className="truncate">{cat.label}</span>
@@ -82,8 +82,8 @@ export default function NewsFilterSidebar({
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded font-normal tabular-nums shrink-0 ${
                     isSelected
-                      ? 'bg-white/20 text-white font-medium'
-                      : 'text-zinc-500 group-hover:text-zinc-400'
+                      ? 'bg-plt-active text-plt-text font-medium'
+                      : 'text-plt-faint group-hover:text-plt-muted'
                   }`}
                 >
                   {cat.count}
@@ -95,21 +95,21 @@ export default function NewsFilterSidebar({
       </nav>
 
       {/* Search Input (Directly above Watchlist Tickers) */}
-      <div className="pt-3 border-t border-white/[0.06] mb-3">
+      <div className="pt-3 border-t border-plt-border-soft mb-3">
         <div className="relative flex items-center">
-          <Search size={12} className="absolute left-2.5 text-zinc-500 pointer-events-none" />
+          <Search size={12} className="absolute left-2.5 text-plt-faint pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={locale === 'ar' ? 'بحث في الأخبار...' : 'Search news or ticker...'}
-            className="w-full pl-7 pr-6 py-1.5 text-[11px] rounded-lg bg-white/[0.04] border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#1d9bf0] transition-colors"
+            className="w-full pl-7 pr-6 py-1.5 text-[11px] rounded-lg bg-plt-hover border border-plt-border text-plt-text placeholder:text-plt-faint focus:outline-none focus:border-[#1d9bf0] transition-colors"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => onSearchChange('')}
-              className="absolute right-2 text-zinc-400 hover:text-white text-xs cursor-pointer p-0.5"
+              className="absolute right-2 text-plt-muted hover:text-plt-text text-xs cursor-pointer p-0.5"
             >
               ✕
             </button>
@@ -120,7 +120,7 @@ export default function NewsFilterSidebar({
       {/* Watchlist Tickers List Section */}
       <div className="pt-1">
         <div className="flex items-center justify-between mb-2 px-1">
-          <span className="font-semibold text-[10px] tracking-wider uppercase text-zinc-500">
+          <span className="font-semibold text-[10px] tracking-wider uppercase text-plt-faint">
             {locale === 'ar' ? 'الأسهم المتابعة' : 'Watchlist Tickers'}
           </span>
           {selectedTicker && (
@@ -147,7 +147,7 @@ export default function NewsFilterSidebar({
                 className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-normal transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-[#1d9bf0] text-black font-semibold shadow-xs'
-                    : 'bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/20 hover:bg-white/[0.08]'
+                    : 'bg-plt-hover border border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border hover:bg-plt-active'
                 }`}
               >
                 <span>@{cleanSym}</span>

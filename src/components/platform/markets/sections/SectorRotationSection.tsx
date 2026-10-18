@@ -105,7 +105,7 @@ export default function SectorRotationSection({
   return (
     <section id="sector-rotation" className="section-container space-y-4 pt-1 font-sans select-none scroll-mt-16">
       {/* 1. Section Header Title */}
-      <div className="flex flex-col gap-0.5 min-w-0 pb-2 border-b border-border-subtle">
+      <div className="flex flex-col gap-0.5 min-w-0 pb-2 border-b border-plt-border-soft">
         <h2 className="section-title">
           {locale === 'ar' ? 'دوران القطاعات (RRG)' : 'Sector Rotation (RRG)'}
         </h2>
@@ -160,7 +160,7 @@ export default function SectorRotationSection({
       {/* 2. Main RRG Canvas (Left) + Sector Concentration & Capital Flow Analysis (Right) */}
       <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch">
         {/* Left: Matrix Canvas */}
-        <div className="flex-1 min-w-0 bg-black overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
+        <div className="flex-1 min-w-0 bg-plt-base overflow-hidden flex flex-col border-0 h-[520px] sm:h-[620px] lg:h-[calc(100vh-210px)] lg:min-h-[640px] lg:max-h-[860px]">
           <SectorRotationMatrix
             sectors={displaySectors}
             selectedSector={activeCategoryItem?.sector || null}
@@ -191,7 +191,7 @@ export default function SectorRotationSection({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+                  className="fixed inset-0 bg-plt-base/80 backdrop-blur-sm cursor-pointer"
                   onClick={() => setIsDrawerOpen(false)}
                   aria-label="Close drawer"
                 />
@@ -211,7 +211,7 @@ export default function SectorRotationSection({
                       setIsDrawerOpen(false);
                     }
                   }}
-                  className="drawer-gradient-top relative w-full max-h-[85vh] bg-black text-white rounded-none border-t border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden touch-pan-y"
+                  className="drawer-gradient-top relative w-full max-h-[85vh] bg-plt-base text-plt-text rounded-none border-t border-plt-border flex flex-col shadow-2xl z-10 overflow-hidden touch-pan-y"
                 >
                   {/* Drag Handle */}
                   <div
@@ -219,18 +219,18 @@ export default function SectorRotationSection({
                     onClick={() => setIsDrawerOpen(false)}
                     aria-label="Drag down to close"
                   >
-                    <div className="w-10 h-1 bg-white/25 rounded-full hover:bg-white/40 transition-colors" />
+                    <div className="w-10 h-1 bg-plt-faint rounded-full hover:bg-plt-subtle transition-colors" />
                   </div>
 
                   {/* Drawer Header Close Button Bar */}
-                  <div className="px-4 py-2 flex items-center justify-between border-b border-white/[0.08] shrink-0">
-                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                  <div className="px-4 py-2 flex items-center justify-between border-b border-plt-border-soft shrink-0">
+                    <span className="text-xs font-semibold text-plt-muted uppercase tracking-wider">
                       {locale === 'ar' ? 'تحليل القطاع' : 'Sector Analysis'}
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsDrawerOpen(false)}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-active active:bg-plt-active transition-colors cursor-pointer"
                       aria-label="Close"
                     >
                       <X size={16} />

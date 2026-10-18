@@ -83,7 +83,7 @@ export default function StrategySelectorDropdown({
         <div
           role="listbox"
           aria-label={isAr ? 'قائمة الاستراتيجيات' : 'Strategies list'}
-          className={`absolute start-0 z-50 min-w-[200px] w-full rounded-xl border border-white/15 bg-black p-1 shadow-2xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-100 ${openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
+          className={`absolute start-0 z-50 min-w-[200px] w-full rounded-xl border border-white/15 bg-[#3D3D3D] p-1 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-100 ${openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
         >
           {profiles.map((profile) => {
             const isSelected = profile.id === selectedStrategyId;
@@ -98,7 +98,7 @@ export default function StrategySelectorDropdown({
                   onSelect(profile.id);
                   setOpen(false);
                 }}
-                className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-sans text-[11px] font-medium transition-colors ${
+                className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-sans text-xs font-medium transition-colors ${
                   isSelected
                     ? 'bg-white/10 font-semibold text-white'
                     : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
@@ -115,7 +115,7 @@ export default function StrategySelectorDropdown({
 
           <div className="my-1 border-t border-white/[0.08]" />
 
-          {savedStrategies.map((strategy) => <button key={strategy.id} role="option" type="button" aria-selected={strategy.id === selectedStrategyId} onClick={() => { onSelect(strategy.id); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-start text-[11px] transition-colors ${strategy.id === selectedStrategyId ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/[0.06]'}`}><span className="truncate">{strategy.name}</span>{strategy.id === selectedStrategyId && <Check size={12} />}</button>)}
+          {savedStrategies.map((strategy) => <button key={strategy.id} role="option" type="button" aria-selected={strategy.id === selectedStrategyId} onClick={() => { onSelect(strategy.id); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-start text-xs ${strategy.id === selectedStrategyId ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/[0.06]'}`}><span className="truncate">{strategy.name}</span>{strategy.id === selectedStrategyId && <Check size={12} />}</button>)}
 
           {/* Custom Draft Option */}
           {!savedStrategies.some((strategy) => strategy.id === draft.id) && <button
@@ -126,7 +126,7 @@ export default function StrategySelectorDropdown({
               onSelect(draft.id);
               setOpen(false);
             }}
-            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-sans text-[11px] font-medium transition-colors ${
+            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-sans text-xs font-medium transition-colors ${
               draft.id === selectedStrategyId
                 ? 'bg-white/10 font-semibold text-white'
                 : 'text-white/70 hover:bg-white/[0.06] hover:text-white'

@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getCachedDailyPrices, getCachedHourlyPrices } from '@/lib/data-cache';
-import { resolvePsiParamsAsync } from '@/strategies/PSI/psiParameterStore';
+import { resolvePsiParamsAsync } from '@/strategies/Typhon/typhonParameterStore';
 import {
   normalizeTickerSymbol,
   type PriceBar,
-} from '@/strategies/PSI/psiStrategy';
-import { runFullStrategyBacktest } from '@/strategies/PSI/psiBacktestEngine';
-import { runFullPsiV2Backtest } from '@/strategies/PSI_V2';
+} from '@/strategies/Typhon/typhonStrategy';
+import { runFullStrategyBacktest } from '@/strategies/Typhon/typhonBacktestEngine';
+import { runFullPsiV2Backtest } from '@/strategies/Cerberus';
 import { runFullHydraBacktest } from '@/strategies/Hydra';
 import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeStrategy, analyzeTickerChampion, type StrategyId } from '@/lib/strategy-analysis';
+import { normalizeStrategyId } from '@/strategies/registry';
 import { requireProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
 
 const STRATEGY_CACHE_HEADERS = {
@@ -25,12 +26,7 @@ export async function handleSignalsGet(request: Request) {
     if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
-    const strategyParam = searchParams.get('strategy') || 'psi';
-    const strategy: StrategyId = strategyParam === 'hydra'
-      ? 'hydra'
-      : strategyParam === 'psi_v2'
-        ? 'psi_v2'
-        : 'psi';
+    const strategy: StrategyId = normalizeStrategyId(searchParams.get('strategy'));
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
 
@@ -179,7 +175,7 @@ export async function handleMetricsGet(request: Request) {
     if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
-    const strategy = searchParams.get('strategy') || 'psi';
+    const strategyId: StrategyId = normalizeStrategyId(searchParams.get('strategy'));
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
 
@@ -212,11 +208,6 @@ export async function handleMetricsGet(request: Request) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
 
-    const strategyId: StrategyId = strategy === 'hydra'
-      ? 'hydra'
-      : strategy === 'psi_v2'
-        ? 'psi_v2'
-        : 'psi';
     const effectiveStartDate = startDate ?? (is1H ? (bars[0]?.date || '2020-01-01') : '2025-01-01');
     const strategyParams: Record<string, unknown> = {};
     if (searchParams.has('model')) strategyParams.model = searchParams.get('model');
@@ -343,11 +334,11 @@ export async function handleReportGet(request: Request) {
     if (denied) return denied;
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
-    const strategy = searchParams.get('strategy') || 'psi';
+    const strategy = normalizeStrategyId(searchParams.get('strategy'));
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
     const requestedModel = searchParams.get('model');
-    const model = requestedModel || (strategy === 'hydra' ? 'hydra' : strategy === 'psi_v2' ? 'psi_v2' : 'canonical');
+    const model = requestedModel || (strategy === 'hydra' ? 'hydra' : strategy === 'cerberus' ? 'cerberus' : 'canonical');
     const startDate = searchParams.get('start') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? undefined;
     const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 1000;
@@ -379,7 +370,7 @@ export async function handleReportGet(request: Request) {
     }
 
     let report: any;
-    let strategyId: StrategyId = 'psi';
+    let strategyId: StrategyId = 'typhon';
     let strategyParams: Record<string, unknown> = {};
 
     if (strategy === 'hydra' || model === 'hydra') {
@@ -391,8 +382,8 @@ export async function handleReportGet(request: Request) {
         initialCapital,
         timeframe,
       });
-    } else if (strategy === 'psi_v2' || model === 'psi_v2') {
-      strategyId = 'psi_v2';
+    } else if (strategy === 'cerberus' || model === 'cerberus' || model === 'psi_v2') {
+      strategyId = 'cerberus';
       const psiV2Overrides: Record<string, any> = {
         ticker,
         startDate,
@@ -410,7 +401,7 @@ export async function handleReportGet(request: Request) {
         startDate,
         endDate,
       }, timeframe);
-      strategyId = 'psi';
+      strategyId = 'typhon';
       strategyParams = { ...(psiModel ? { model: psiModel } : {}), ...parameterResolution.params };
       report = runFullStrategyBacktest(bars, parameterResolution.params);
     }

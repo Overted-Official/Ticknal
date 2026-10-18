@@ -27,12 +27,12 @@ export default function PinSecurityCard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 pb-2">
         <div className="flex items-start gap-4 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center text-white shrink-0 mt-0.5">
+          <div className="w-10 h-10 rounded-full bg-plt-hover flex items-center justify-center text-plt-text shrink-0 mt-0.5">
             <Lock size={18} />
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+              <h2 className="text-sm sm:text-base font-bold text-plt-text tracking-tight">
                 {locale === 'ar' ? 'رمز المرور المكون من 4 أرقام وقفل التطبيق' : '4-Digit Passcode & App Lock'}
               </h2>
               {isConfigured ? (
@@ -40,12 +40,12 @@ export default function PinSecurityCard() {
                   {locale === 'ar' ? 'مفعّل' : 'PROTECTED'}
                 </span>
               ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-text-muted">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-plt-hover text-plt-muted">
                   {locale === 'ar' ? 'غير محدد' : 'NOT SET'}
                 </span>
               )}
             </div>
-            <p className="text-xs text-text-muted mt-1 leading-relaxed">
+            <p className="text-xs text-plt-muted mt-1 leading-relaxed">
               {locale === 'ar'
                 ? 'قفل تكنال برمز PIN مكون من 4 أرقام لحماية محفظتك على الهاتف والأجهزة المشتركة.'
                 : 'Lock Ticknal behind a 4-digit PIN to secure your portfolio on mobile and shared devices.'}
@@ -63,7 +63,7 @@ export default function PinSecurityCard() {
             />
             <div
               className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
-                isConfigured ? 'bg-profit-num' : 'bg-white/20'
+                isConfigured ? 'bg-profit-num' : 'bg-plt-active'
               }`}
             >
               <div
@@ -85,23 +85,23 @@ export default function PinSecurityCard() {
               <button
                 type="button"
                 onClick={lockApp}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] active:scale-98 text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-plt-hover hover:bg-plt-active active:scale-98 text-plt-text transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <Lock size={14} className="text-text-muted" />
+                <Lock size={14} className="text-plt-muted" />
                 <span>{locale === 'ar' ? 'قفل الآن' : 'Lock Now'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsSetupModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] active:scale-98 text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-plt-hover hover:bg-plt-active active:scale-98 text-plt-subtle hover:text-plt-text transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <KeyRound size={14} className="text-text-muted" />
+                <KeyRound size={14} className="text-plt-muted" />
                 <span>{locale === 'ar' ? 'تغيير الرمز والاسترداد' : 'Change PIN & Recovery'}</span>
               </button>
             </div>
 
-            <div className="text-xs text-text-muted flex items-center gap-2">
+            <div className="text-xs text-plt-muted flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${hasSecurityQuestion ? 'bg-profit-num' : 'bg-[#ff9800]'}`} />
               <span>
                 {locale === 'ar'
@@ -113,14 +113,14 @@ export default function PinSecurityCard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
             {/* Setting 1: Auto-Lock on App Switch */}
-            <div className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center justify-between gap-4">
+            <div className="p-3.5 sm:p-4 rounded-xl bg-plt-hover hover:bg-plt-active/30 transition-colors flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
-                <Smartphone size={16} className="text-text-muted shrink-0" />
+                <Smartphone size={16} className="text-plt-muted shrink-0" />
                 <div className="min-w-0">
-                  <h3 className="text-xs font-semibold text-white truncate">
+                  <h3 className="text-xs font-semibold text-plt-text truncate">
                     {locale === 'ar' ? 'القفل التلقائي عند التبديل' : 'Auto-Lock on App Switch'}
                   </h3>
-                  <p className="text-[11px] text-text-muted truncate">
+                  <p className="text-[11px] text-plt-muted truncate">
                     {locale === 'ar' ? 'القفل عند مغادرة التطبيق أو تصغيره' : 'Lock when leaving app or minimizing'}
                   </p>
                 </div>
@@ -135,7 +135,7 @@ export default function PinSecurityCard() {
                 />
                 <div
                   className={`w-10 h-5.5 rounded-full transition-colors relative flex items-center px-0.5 ${
-                    pinSettings.autoLockOnBlur ? 'bg-profit-num' : 'bg-white/20'
+                    pinSettings.autoLockOnBlur ? 'bg-profit-num' : 'bg-plt-active'
                   }`}
                 >
                   <div
@@ -148,14 +148,14 @@ export default function PinSecurityCard() {
             </div>
 
             {/* Setting 2: Inactivity Timeout */}
-            <div className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex items-center justify-between gap-4">
+            <div className="p-3.5 sm:p-4 rounded-xl bg-plt-hover hover:bg-plt-active/30 transition-colors flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
-                <Timer size={16} className="text-text-muted shrink-0" />
+                <Timer size={16} className="text-plt-muted shrink-0" />
                 <div className="min-w-0">
-                  <h3 className="text-xs font-semibold text-white truncate">
+                  <h3 className="text-xs font-semibold text-plt-text truncate">
                     {locale === 'ar' ? 'قفل عدم النشاط' : 'Inactivity Lock'}
                   </h3>
-                  <p className="text-[11px] text-text-muted truncate">
+                  <p className="text-[11px] text-plt-muted truncate">
                     {locale === 'ar' ? 'قفل تلقائي بعد فترة من السكون' : 'Auto-lock after idle period'}
                   </p>
                 </div>
@@ -165,7 +165,7 @@ export default function PinSecurityCard() {
                 <select
                   value={pinSettings.idleTimeoutMinutes}
                   onChange={(e) => updateSettings({ ...pinSettings, idleTimeoutMinutes: Number(e.target.value) })}
-                  className="w-full bg-black border border-white/10 hover:border-white/20 focus:border-brand-blue text-xs text-white rounded-lg px-2.5 py-1.5 outline-none transition-colors cursor-pointer"
+                  className="w-full bg-plt-base border border-plt-border hover:border-plt-border-strong focus:border-brand-blue text-xs text-plt-text rounded-lg px-2.5 py-1.5 outline-none transition-colors cursor-pointer"
                 >
                   <option value={0}>{locale === 'ar' ? 'فوراً' : 'Immediately'}</option>
                   <option value={1}>{locale === 'ar' ? 'دقيقة واحدة' : '1 Min'}</option>

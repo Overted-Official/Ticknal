@@ -395,16 +395,34 @@ const GUIDES_BY_ID: Readonly<Record<string, IndicatorGuideData>> = {
   ohlc: OHLC_GUIDE,
 };
 
-export function getIndicatorGuide(idOrKey: string): IndicatorGuideData {
+export function getIndicatorGuide(idOrKey: string, fallback?: { readonly name: string; readonly description: string; readonly category: string }): IndicatorGuideData {
   const normalized = idOrKey.toLowerCase().trim();
   if (GUIDES_BY_ID[normalized]) {
     return GUIDES_BY_ID[normalized];
   }
-  for (const [key, guide] of Object.entries(GUIDES_BY_ID)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
-      return guide;
-    }
-  }
-  // Default fallback is the master-class RSI guide for maximum educational value
-  return RSI_GUIDE;
+  const name = fallback?.name || idOrKey;
+  const description = fallback?.description || 'Review this block’s inputs, settings and outputs in the strategy canvas.';
+  const category = fallback?.category || 'Strategy block';
+  return {
+    id: normalized,
+    name: { en: name, ar: name },
+    abbreviation: '',
+    category: { en: category, ar: category },
+    author: '',
+    year: '',
+    scale: '',
+    standardPeriod: 0,
+    summary: { en: description, ar: description },
+    coreConcept: {
+      en: 'Use the connected inputs and displayed settings to understand how this item contributes to later rules. Compare the strategy result before relying on it.',
+      ar: 'راجع المدخلات المتصلة والإعدادات المعروضة لفهم مساهمة هذا العنصر في القواعد التالية، وقارن نتائج الاستراتيجية قبل الاعتماد عليه.',
+    },
+    keyZones: [],
+    formulas: [],
+    setups: [],
+    divergences: [],
+    parameters: [],
+    egxBestPractices: [],
+    commonPitfalls: [],
+  };
 }

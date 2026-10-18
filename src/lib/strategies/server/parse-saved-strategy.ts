@@ -2,6 +2,7 @@ import type { AdvancedStrategyNode } from '../../../components/platform/strategi
 import type { StrategyDraft } from '../../../components/platform/strategies/builder/strategy-builder-model';
 import type { OptionalStrategyStageId } from '../../../components/platform/strategies/builder/strategy-flow-model';
 import { normalizeLiveTicker } from '../../indicators/server/types';
+import { MAX_ADVANCED_WORKFLOW_NODES } from '../strategy-program';
 
 export interface SavedStrategyRecord {
   readonly id: string;
@@ -32,7 +33,7 @@ export function parseSavedStrategy(value: unknown): { readonly success: true; re
     || !record(value.draft) || value.draft.id !== value.id || !short(value.draft.name, 100)
     || !Array.isArray(value.draft.buyRules) || !Array.isArray(value.draft.sellRules)
     || value.draft.buyRules.length > 16 || value.draft.sellRules.length > 16
-    || !Array.isArray(value.nodes) || value.nodes.length > 48) return invalid;
+    || !Array.isArray(value.nodes) || value.nodes.length > MAX_ADVANCED_WORKFLOW_NODES) return invalid;
   const validRule = (rule: unknown) => record(rule) && short(rule.id) && short(rule.indicatorId)
     && Number.isSafeInteger(rule.period) && Number(rule.period) > 0 && Number(rule.period) <= 1000
     && ['crossesAbove', 'crossesBelow', 'isAbove', 'isBelow'].includes(String(rule.operator))
@@ -49,12 +50,21 @@ export function parseSavedStrategy(value: unknown): { readonly success: true; re
       || (node.templateId !== undefined && !short(node.templateId))
       || (node.customName !== undefined && (typeof node.customName !== 'string' || node.customName.length > 100))
       || (node.outputName !== undefined && (typeof node.outputName !== 'string' || node.outputName.length > 100))
+      || ((node.moduleId === undefined) !== (node.moduleName === undefined))
+      || (node.moduleId !== undefined && (typeof node.moduleId !== 'string' || !/^[A-Za-z0-9-]{1,80}$/.test(node.moduleId)))
+      || (node.moduleName !== undefined && (typeof node.moduleName !== 'string' || !node.moduleName.trim() || node.moduleName.length > 100))
       || (node.parameters !== undefined && (!record(node.parameters) || Object.entries(node.parameters).length > 32
-        || !Object.entries(node.parameters).every(([key, entry]) => key.length <= 100 && typeof entry === 'string' && entry.length <= 200)))
+        || !Object.entries(node.parameters).every(([key, entry]) => key.length <= 100 && typeof entry === 'string' && entry.length <= (key === 'registers' ? 52_000 : key === 'model' ? 40_000 : key === 'symbolOverrides' ? 16_000 : key === 'aliases' ? 1024 : 200))))
       || (node.connections !== undefined && (!Array.isArray(node.connections) || node.connections.length > 16 || !node.connections.every((id: unknown) => short(id))))) return invalid;
     ids.add(node.id);
   }
   if (value.nodes.some((node: { connections?: string[] }) => node.connections?.some((id) => !ids.has(id)))) return invalid;
+  const moduleNames = new Map<string, string>();
+  for (const node of value.nodes as AdvancedStrategyNode[]) {
+    if (!node.moduleId) continue;
+    if (moduleNames.has(node.moduleId) && moduleNames.get(node.moduleId) !== node.moduleName) return invalid;
+    moduleNames.set(node.moduleId, node.moduleName!);
+  }
   const optionalStages = value.optionalStages === undefined ? [] : value.optionalStages;
   if (!Array.isArray(optionalStages) || optionalStages.length > 2 || !optionalStages.every((stage) => stage === 'calculations' || stage === 'position')) return invalid;
   const selectedSymbols = value.selectedSymbols === undefined ? [] : parseSelectedSymbols(value.selectedSymbols);

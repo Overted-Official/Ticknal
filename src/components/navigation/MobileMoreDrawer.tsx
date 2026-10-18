@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import {
   X,
   Zap,
@@ -12,6 +13,8 @@ import {
   Shield,
   Settings,
   Globe,
+  Sun,
+  Moon,
   Eye,
   EyeOff,
   LogOut,
@@ -37,6 +40,7 @@ interface MobileMoreDrawerProps {
 export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { resolvedTheme, setTheme } = useTheme();
   const { locale, setLocale, isRTL, t } = useTranslation();
   const { isGuest, isLoading: isGuestLoading, requireAuth, openGuestModal } = useGuestGuard();
   const { isPrivacy, togglePrivacy } = usePrivacyMode();
@@ -173,6 +177,24 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
     );
   };
 
+  // Theme switch handler
+  const isLightTheme = mounted && resolvedTheme === 'light';
+  const handleToggleTheme = () => {
+    const nextTheme = isLightTheme ? 'dark' : 'light';
+    setTheme(nextTheme);
+    if (nextTheme === 'light') {
+      toast.success(
+        locale === 'ar' ? 'تم تفعيل الوضع الفاتح' : 'Light Mode Activated',
+        locale === 'ar' ? 'تم تحديث ألوان الواجهة والرسوم البيانية' : 'Interface surfaces switched to high-contrast light theme'
+      );
+    } else {
+      toast.success(
+        locale === 'ar' ? 'تم تفعيل الوضع الداكن' : 'Dark Mode Activated',
+        locale === 'ar' ? 'تمت استعادة واجهة Ticknal السوداء بالكامل' : 'Pure black institutional terminal restored'
+      );
+    }
+  };
+
   // Sign out handler
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -200,7 +222,7 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-xs"
+            className="fixed inset-0 bg-plt-overlay backdrop-blur-xs"
           />
 
           {/* Drawer Sheet — Strictly Pure Black, Sharp Edges, Mobile Optimized */}
@@ -209,7 +231,7 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="relative z-modal-content w-full bg-black text-white border-t border-white/[0.12] shadow-2xl flex flex-col max-h-[88vh] rounded-none overflow-hidden select-none"
+            className="relative z-modal-content w-full bg-plt-base text-plt-text border-t border-plt-border shadow-2xl flex flex-col max-h-[88vh] rounded-none overflow-hidden select-none"
           >
             {/* Ticknal signature gradient top hairline */}
             <div className="h-[2px] w-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] shrink-0" />
@@ -220,18 +242,18 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
               onClick={onClose}
               aria-label="Drag handle to close"
             >
-              <div className="w-10 h-1 rounded-full bg-white/20 hover:bg-white/40 transition-colors" />
+              <div className="w-10 h-1 rounded-full bg-plt-hover hover:bg-plt-active transition-colors" />
             </div>
 
             {/* Header Row */}
-            <div className="px-4 py-2.5 flex items-center justify-between border-b border-white/[0.08] shrink-0">
+            <div className="px-4 py-2.5 flex items-center justify-between border-b border-plt-border-soft shrink-0">
               <div className="flex items-center gap-2">
                 <TicknalBrand iconSize={18} showText={true} />
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors cursor-pointer"
                 aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
               >
                 <X size={18} />
@@ -241,17 +263,17 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
             {/* Main Scrollable Body */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 custom-scrollbar">
               {/* SECTION 1: ACCOUNT PROFILE FROM SETTINGS */}
-              <div className="border-b border-white/[0.08] pb-4">
+              <div className="border-b border-plt-border-soft pb-4">
                 {userProfile ? (
                   <UserProfileWidget userProfile={userProfile} hideSignOutButton={true} />
                 ) : isGuest ? (
                   <div className="w-full min-w-0 py-2">
                     <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-14 h-14 shrink-0 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-zinc-400 shadow-inner">
+                      <div className="w-14 h-14 shrink-0 rounded-full bg-plt-hover border border-plt-border flex items-center justify-center text-plt-muted shadow-inner">
                         <User size={22} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h2 className="text-base font-bold text-white tracking-tight truncate">
+                        <h2 className="text-base font-bold text-plt-text tracking-tight truncate">
                           {locale === 'ar' ? 'مستخدم ضيف' : 'Guest Trader'}
                         </h2>
                         <p className="text-xs text-text-muted mt-0.5 truncate">
@@ -289,23 +311,23 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
                         onClick={(e) => handleNavigate(e, page)}
                         className={`w-full flex items-center justify-between p-2.5 rounded-lg transition-all text-left rtl:text-right cursor-pointer group ${
                           isActive
-                            ? 'bg-white/[0.08] border border-white/20 text-white'
-                            : 'bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-zinc-300 hover:text-white'
+                            ? 'bg-plt-active border border-plt-border-strong text-plt-text'
+                            : 'bg-plt-hover/50 hover:bg-plt-hover border border-plt-border-soft text-plt-subtle hover:text-plt-text'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div
                             className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                               isActive
-                                ? 'bg-white/10 text-white border border-white/20'
-                                : 'bg-white/[0.04] text-zinc-400 group-hover:text-white border border-white/[0.08]'
+                                ? 'bg-plt-active text-plt-text border border-plt-border-strong'
+                                : 'bg-plt-hover text-plt-muted group-hover:text-plt-text border border-plt-border-soft'
                             }`}
                           >
                             <Icon size={18} strokeWidth={1.8} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-white tracking-tight truncate">
+                              <span className="text-xs font-semibold text-plt-text tracking-tight truncate">
                                 {page.title}
                               </span>
                               {page.badge && (
@@ -314,15 +336,15 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
                                 </span>
                               )}
                             </div>
-                            <p className="text-[10px] text-zinc-400 truncate mt-0.5">
+                            <p className="text-[10px] text-plt-muted truncate mt-0.5">
                               {page.subtitle}
                             </p>
                           </div>
                         </div>
                         <ChevronRight
                           size={15}
-                          className={`text-zinc-500 group-hover:text-zinc-300 rtl:rotate-180 transition-transform ${
-                            isActive ? 'text-white' : ''
+                          className={`text-plt-muted group-hover:text-plt-subtle rtl:rotate-180 transition-transform ${
+                            isActive ? 'text-plt-text' : ''
                           }`}
                         />
                       </button>
@@ -332,22 +354,22 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
               </div>
 
               {/* SECTION 3: BOTTOM UTILITIES & ACTIONS */}
-              <div className="border-t border-white/[0.08] pt-3 pb-[calc(1rem+var(--ticknal-safe-area-bottom,0px))] space-y-2.5">
+              <div className="border-t border-plt-border-soft pt-3 pb-[calc(1rem+var(--ticknal-safe-area-bottom,0px))] space-y-2.5">
                 {/* Utility Controls: Language Switch + Balance Masking (View/Hide) */}
                 <div className="grid grid-cols-2 gap-2">
                   {/* Language Switch */}
                   <button
                     type="button"
                     onClick={handleToggleLanguage}
-                    className="py-2.5 px-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-white flex items-center justify-between transition-colors cursor-pointer group"
+                    className="py-2.5 px-3 rounded-lg bg-plt-hover/50 hover:bg-plt-hover border border-plt-border text-plt-text flex items-center justify-between transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-2">
-                      <Globe size={16} className="text-zinc-400 group-hover:text-white transition-colors" />
-                      <span className="text-xs font-medium text-white">
+                      <Globe size={16} className="text-plt-muted group-hover:text-plt-text transition-colors" />
+                      <span className="text-xs font-medium text-plt-text">
                         {locale === 'ar' ? 'اللغة' : 'Language'}
                       </span>
                     </div>
-                    <span className="text-[11px] font-semibold text-zinc-300 bg-white/[0.08] px-2 py-0.5 rounded">
+                    <span className="text-[11px] font-semibold text-plt-subtle bg-plt-active px-2 py-0.5 rounded">
                       {locale === 'ar' ? 'العربية' : 'English'}
                     </span>
                   </button>
@@ -356,24 +378,47 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
                   <button
                     type="button"
                     onClick={togglePrivacy}
-                    className="py-2.5 px-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-white flex items-center justify-between transition-colors cursor-pointer group"
+                    className="py-2.5 px-3 rounded-lg bg-plt-hover/50 hover:bg-plt-hover border border-plt-border text-plt-text flex items-center justify-between transition-colors cursor-pointer group"
                     title={isPrivacy ? 'Privacy Mode Active (Masked) - Click to Reveal' : 'Values Visible - Click to Mask'}
                   >
                     <div className="flex items-center gap-2">
                       {isPrivacy ? (
-                        <EyeOff size={16} className="text-zinc-400 group-hover:text-white transition-colors" />
+                        <EyeOff size={16} className="text-plt-muted group-hover:text-plt-text transition-colors" />
                       ) : (
-                        <Eye size={16} className="text-zinc-400 group-hover:text-white transition-colors" />
+                        <Eye size={16} className="text-plt-muted group-hover:text-plt-text transition-colors" />
                       )}
-                      <span className="text-xs font-medium text-white">
+                      <span className="text-xs font-medium text-plt-text">
                         {locale === 'ar' ? 'الأرصدة' : 'Balances'}
                       </span>
                     </div>
-                    <span className="text-[11px] font-semibold text-zinc-300 bg-white/[0.08] px-2 py-0.5 rounded tabular-nums">
+                    <span className="text-[11px] font-semibold text-plt-subtle bg-plt-active px-2 py-0.5 rounded tabular-nums">
                       {isPrivacy ? '******' : (locale === 'ar' ? 'مرئي' : 'Visible')}
                     </span>
                   </button>
                 </div>
+
+                {/* Theme / Appearance Quick Switch */}
+                <button
+                  type="button"
+                  onClick={handleToggleTheme}
+                  className="w-full py-2.5 px-3 rounded-lg bg-plt-hover/50 hover:bg-plt-hover border border-plt-border text-plt-text flex items-center justify-between transition-colors cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2">
+                    {isLightTheme ? (
+                      <Sun size={16} className="text-plt-muted group-hover:text-plt-text transition-colors" />
+                    ) : (
+                      <Moon size={16} className="text-plt-muted group-hover:text-plt-text transition-colors" />
+                    )}
+                    <span className="text-xs font-medium text-plt-text">
+                      {locale === 'ar' ? 'مظهر الواجهة' : 'Appearance'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-plt-subtle bg-plt-active px-2 py-0.5 rounded">
+                    {isLightTheme
+                      ? (locale === 'ar' ? 'الوضع الفاتح' : 'Light Mode')
+                      : (locale === 'ar' ? 'الوضع الداكن' : 'Dark Mode')}
+                  </span>
+                </button>
 
                 {/* Sign Out / Sign In Action Button */}
                 {userProfile ? (

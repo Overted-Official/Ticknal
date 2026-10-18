@@ -28,6 +28,7 @@ export interface MarketNewsItemDTO {
   source: string;
   sourceUrl?: string | null;
   importance: 'critical' | 'high' | 'normal';
+  urgencyScore: number;
   impactMetric?: string | null;
   readTime: string;
   imageUrl?: string | null;
@@ -39,6 +40,7 @@ export interface NewsQueryFilters {
   ticker?: string;
   query?: string;
   itemId?: string;
+  minUrgency?: number;
   limit?: number;
   offset?: number;
 }
@@ -72,6 +74,7 @@ export async function ensureMarketNewsTable(): Promise<void> {
         source VARCHAR(100) NOT NULL,
         source_url TEXT,
         importance VARCHAR(20) DEFAULT 'normal' NOT NULL,
+        urgency_score INTEGER DEFAULT 5 NOT NULL,
         impact_metric VARCHAR(100),
         read_time VARCHAR(30) DEFAULT '2 min read' NOT NULL,
         image_url TEXT,
@@ -80,9 +83,11 @@ export async function ensureMarketNewsTable(): Promise<void> {
         updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
       );
       ALTER TABLE public.market_news ADD COLUMN IF NOT EXISTS image_url TEXT;
+      ALTER TABLE public.market_news ADD COLUMN IF NOT EXISTS urgency_score INTEGER DEFAULT 5;
       CREATE INDEX IF NOT EXISTS market_news_category_idx ON public.market_news(category);
       CREATE INDEX IF NOT EXISTS market_news_published_at_idx ON public.market_news(published_at);
       CREATE INDEX IF NOT EXISTS market_news_sentiment_idx ON public.market_news(sentiment);
+      CREATE INDEX IF NOT EXISTS market_news_urgency_score_idx ON public.market_news(urgency_score);
     `);
 
     isTableInitialized = true;
@@ -102,13 +107,19 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
     .from(marketNews)
     .orderBy(desc(marketNews.publishedAt));
 
-  // Deduplicate any identical normalized headlines to guarantee a 100% clean feed without duplicates
+  // Deduplicate identical normalized wire headlines while preserving distinct daily Ticknal take briefings
   const seenNormHeadlines = new Set<string>();
   const rows: typeof rawRows = [];
   for (const row of rawRows) {
-    const norm = row.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').slice(0, 60);
-    if (seenNormHeadlines.has(norm)) continue;
-    seenNormHeadlines.add(norm);
+    const isTicknalTake =
+      row.id.startsWith('take-') ||
+      row.category === 'ticknal_take' ||
+      row.category === 'pulse';
+    const dedupKey = isTicknalTake
+      ? `take:${row.id}`
+      : row.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').slice(0, 60);
+    if (seenNormHeadlines.has(dedupKey)) continue;
+    seenNormHeadlines.add(dedupKey);
     rows.push(row);
   }
 
@@ -120,6 +131,14 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
     listed_companies: 0,
     funds: 0,
     gold_silver: 0,
+  };
+
+  const INTERNAL_PSEUDO_TICKERS = new Set(['FLOWS', 'BREADTH']);
+  const normalizeDisplayTicker = (rawSym: string): string => {
+    const up = String(rawSym).toUpperCase().replace(/^[@$]/, '').trim();
+    if (up === 'GOLD' || up === 'GC1!' || up === 'XAUUSD') return 'GOLD21K';
+    if (up === 'USDEGP') return 'USD/EGP';
+    return up;
   };
 
   const tickerMentions: Record<string, number> = {};
@@ -135,7 +154,9 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
 
     const tickersArr = Array.isArray(row.tickers) ? row.tickers : [];
     for (const t of tickersArr) {
-      tickerMentions[t] = (tickerMentions[t] || 0) + 1;
+      const disp = normalizeDisplayTicker(t);
+      if (!disp || INTERNAL_PSEUDO_TICKERS.has(disp)) continue;
+      tickerMentions[disp] = (tickerMentions[disp] || 0) + 1;
     }
   }
 
@@ -148,11 +169,32 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   }
 
   if (ticker) {
-    const cleanTicker = ticker.toUpperCase().replace(/^[@$]/, '');
-    filtered = filtered.filter((r) => {
-      const tickersArr = Array.isArray(r.tickers) ? r.tickers : [];
-      return tickersArr.some((t) => String(t).toUpperCase().replace(/^[@$]/, '').includes(cleanTicker));
-    });
+    const cleanTicker = ticker.toUpperCase().replace(/^[@$]/, '').trim();
+    if (cleanTicker === 'TICKNAL') {
+      filtered = filtered.filter(
+        (r) =>
+          r.category === 'ticknal_take' ||
+          r.category === 'pulse' ||
+          r.source.toLowerCase().includes('ticknal')
+      );
+    } else {
+      const aliasGroup = new Set<string>([cleanTicker]);
+      if (['GOLD', 'GOLD21K', 'GC1!', 'XAUUSD'].includes(cleanTicker)) {
+        ['GOLD', 'GOLD21K', 'GC1!', 'XAUUSD'].forEach((a) => aliasGroup.add(a));
+      } else if (['SILVER', 'SI1!', 'XAGUSD'].includes(cleanTicker)) {
+        ['SILVER', 'SI1!', 'XAGUSD'].forEach((a) => aliasGroup.add(a));
+      } else if (['USD/EGP', 'USDEGP'].includes(cleanTicker)) {
+        ['USD/EGP', 'USDEGP'].forEach((a) => aliasGroup.add(a));
+      }
+
+      filtered = filtered.filter((r) => {
+        const tickersArr = Array.isArray(r.tickers) ? r.tickers : [];
+        return tickersArr.some((t) => {
+          const normT = String(t).toUpperCase().replace(/^[@$]/, '').trim();
+          return aliasGroup.has(normT) || normT.includes(cleanTicker);
+        });
+      });
+    }
   }
 
   if (query) {
@@ -175,26 +217,38 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
     }
   }
 
+  if (typeof filters.minUrgency === 'number') {
+    filtered = filtered.filter((r) => (r.urgencyScore ?? 5) >= filters.minUrgency!);
+  }
+
   const paginated = filtered.slice(offset, offset + limit);
 
-  // Map to client DTO
-  const items: MarketNewsItemDTO[] = paginated.map((r) => ({
-    id: r.id,
-    title: r.title,
-    summary: r.summary,
-    content: r.content,
-    category: r.category as MarketNewsItemDTO['category'],
-    categoryLabel: r.categoryLabel,
-    tickers: Array.isArray(r.tickers) ? r.tickers : [],
-    sentiment: r.sentiment as MarketNewsItemDTO['sentiment'],
-    source: r.source,
-    sourceUrl: r.sourceUrl,
-    importance: r.importance as MarketNewsItemDTO['importance'],
-    impactMetric: r.impactMetric,
-    readTime: r.readTime,
-    imageUrl: r.imageUrl ?? null,
-    publishedAt: r.publishedAt instanceof Date ? r.publishedAt.toISOString() : String(r.publishedAt),
-  }));
+  // Map to client DTO (guarantee title never contains raw ---AR--- separator)
+  const items: MarketNewsItemDTO[] = paginated.map((r) => {
+    const rawTitle = r.title || '';
+    const titleParts = rawTitle.split(/\s*---AR---\s*|\s*\|\|\|\s*/);
+    const cleanEnTitle = (titleParts[0] || rawTitle).trim();
+    const cleanArTitle = (titleParts[1] || r.content || '').trim() || null;
+
+    return {
+      id: r.id,
+      title: cleanEnTitle,
+      summary: (r.summary || '').replace(/\s*---AR---\s*/g, '\n\n'),
+      content: cleanArTitle,
+      category: r.category as MarketNewsItemDTO['category'],
+      categoryLabel: r.categoryLabel,
+      tickers: Array.isArray(r.tickers) ? r.tickers : [],
+      sentiment: r.sentiment as MarketNewsItemDTO['sentiment'],
+      source: r.source,
+      sourceUrl: r.sourceUrl,
+      importance: r.importance as MarketNewsItemDTO['importance'],
+      urgencyScore: r.urgencyScore ?? (r.importance === 'critical' ? 9 : r.importance === 'high' ? 8 : 5),
+      impactMetric: r.impactMetric,
+      readTime: r.readTime,
+      imageUrl: r.imageUrl ?? null,
+      publishedAt: r.publishedAt instanceof Date ? r.publishedAt.toISOString() : String(r.publishedAt),
+    };
+  });
 
   const trendingTickers = Object.entries(tickerMentions)
     .sort((a, b) => b[1] - a[1])

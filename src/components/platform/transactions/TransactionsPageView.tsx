@@ -8,6 +8,9 @@ import TransactionsHeader from './TransactionsHeader';
 import TransactionsFloatingNav from './TransactionsFloatingNav';
 import TransactionsOverviewSection from './TransactionsOverviewSection';
 import TransactionsLedgerSection from './TransactionsLedgerSection';
+import { Tour, useTour } from '@/components/ui/tour';
+import { getTransactionsTourSteps, TRANSACTIONS_TOUR_STORAGE_KEY } from '@/lib/tours/transactions-tour-config';
+import { useTranslation } from '@/lib/i18n';
 
 interface TransactionsPageViewProps {
   initialAccounts?: BankAccount[];
@@ -47,9 +50,29 @@ export default function TransactionsPageView({
   usdRate = 50.20,
 }: TransactionsPageViewProps) {
   const router = useRouter();
+  const { isRTL } = useTranslation();
   const [accounts, setAccounts] = useState<BankAccount[]>(initialAccounts);
   const [transactions, setTransactions] = useState<BankTransaction[]>(initialTransactions);
   const [timeframe, setTimeframe] = useState<TransactionsTimeframe>('All');
+
+  const tour = useTour(TRANSACTIONS_TOUR_STORAGE_KEY);
+  const tourSteps = useMemo(() => getTransactionsTourSteps(isRTL), [isRTL]);
+  const hasAutoStartedRef = React.useRef(false);
+
+  // Auto-start Transactions page walkthrough for first-time visitors (strictly once on mount)
+  React.useEffect(() => {
+    if (hasAutoStartedRef.current) return;
+    hasAutoStartedRef.current = true;
+
+    if (!tour.seen()) {
+      const timer = setTimeout(() => {
+        tour.start();
+        tour.markSeen();
+      }, 1200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [tour]);
 
   const refreshData = async () => {
     try {
@@ -96,11 +119,13 @@ export default function TransactionsPageView({
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none">
       {/* 1. Header & Breadcrumb */}
       <div className="px-4 sm:px-6 pt-3 pb-1 shrink-0 bg-plt-base">
-        <TransactionsHeader />
+        <TransactionsHeader onStartTour={tour.start} />
       </div>
 
       {/* 2. Sticky Floating Top Navigation Bar */}
-      <TransactionsFloatingNav />
+      <div data-tour="transactions-floating-nav" className="w-full">
+        <TransactionsFloatingNav />
+      </div>
 
       {/* 3. Main Sections Stack */}
       <div className="app-page page-sections-stack pb-28 md:pb-20 pt-1 space-y-8">
@@ -124,6 +149,18 @@ export default function TransactionsPageView({
           onTransactionsChanged={refreshData}
         />
       </div>
+
+      {/* In-App Tour Walkthrough Portal */}
+      <Tour
+        steps={tourSteps}
+        open={tour.open}
+        onOpenChange={tour.setOpen}
+        index={tour.index}
+        onIndexChange={tour.setIndex}
+        onFinish={tour.markSeen}
+        onSkip={tour.markSeen}
+        dark
+      />
     </div>
   );
 }

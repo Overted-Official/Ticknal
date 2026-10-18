@@ -42,6 +42,7 @@ export interface CompleteWithKeyPoolOptions {
   temperature?: number;
   maxTokens?: number;
   timeoutMs?: number;
+  maxAttempts?: number;
   validateOutput?: (text: string) => boolean;
 }
 
@@ -60,14 +61,17 @@ export interface AICompletionResult {
 // (OpenRouter enforces max 3 items in 'models' array)
 const MODEL_TIERS: string[][] = [
   [
-    'google/gemma-4-31b-it:free',
-    'google/gemma-4-26b-a4b-it:free',
-    'nvidia/nemotron-3.5-lightning:free',
+    'liquid/lfm-2.5-2.6b:free',
+    'cohere/north-mini-code:free',
   ],
   [
-    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-    'nvidia/nemotron-3-ultra-550b-a55b:free',
+    'cohere/north-mini-code:free',
     'liquid/lfm-2.5-2.6b:free',
+  ],
+  [
+    'dots-studio/dots-3-note-preview:free',
+    'google/gemma-4-31b-it:free',
+    'google/gemma-4-26b-a4b-it:free',
   ],
 ];
 
@@ -195,15 +199,25 @@ function getOrderedCandidates(keys: string[]): KeyState[] {
 export function sanitizeInsightText(rawText: string): string {
   let text = rawText || '';
 
-  // 1. Remove XML/HTML thinking tags: <think>...</think>
+  // 1. Remove XML/HTML thinking tags: <think>...</think> and unclosed <think>...
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  text = text.replace(/<think>[\s\S]*$/gi, '').trim();
 
   // 2. Remove common thinking preambles
   text = text.replace(/^Here('s| is) a thinking process:[\s\S]*?\n\n/i, '').trim();
   text = text.replace(/^(here is|briefing|summary|market update:)[\s\S]*?\n/i, '').trim();
 
-  // 3. Strip markdown bold wrapping if surrounding entire paragraphs
+  // 3. Strip markdown code fences and raw bold/heading markers
   text = text.replace(/^```[a-z]*\n([\s\S]*?)\n```$/i, '$1').trim();
+  text = text.replace(/\*\*/g, '').replace(/__/g, '').replace(/^#+\s+/gm, '').trim();
+
+  // 4. If output was cut off mid-sentence at the end, trim back to the last complete sentence if available
+  if (text.length > 80 && !/[.!?؟%)"»\]0-9]$/.test(text)) {
+    const lastPeriod = Math.max(text.lastIndexOf('. '), text.lastIndexOf('! '), text.lastIndexOf('? '), text.lastIndexOf('.\n'));
+    if (lastPeriod >= 45) {
+      text = text.slice(0, lastPeriod + 1).trim();
+    }
+  }
 
   return text;
 }
@@ -213,6 +227,9 @@ export function sanitizeInsightText(rawText: string): string {
  */
 export function defaultValidateOutput(text: string): boolean {
   if (!text || text.length < 35) return false;
+
+  // Reject mid-word / mid-sentence cutoffs that lack terminal punctuation
+  if (!/[.!?؟%)"»\]]$/.test(text.trim())) return false;
 
   const lower = text.toLowerCase();
   const isScratchpad =
@@ -255,15 +272,16 @@ export async function completeWithKeyPool(
 
   const orderedCandidates = getOrderedCandidates(keys);
   const validator = options.validateOutput || defaultValidateOutput;
-  const timeoutMs = options.timeoutMs || 25000;
+  const timeoutMs = options.timeoutMs || 8000;
+  const maxAttempts = options.maxAttempts ?? 2;
   const temperature = options.temperature ?? 0.2;
-  const maxTokens = options.maxTokens ?? 500;
+  const maxTokens = Math.max(options.maxTokens ?? 400, 900);
 
   let totalAttempts = 0;
   let lastFailureReason = '';
 
-  // Try across available keys
-  for (let keyIdx = 0; keyIdx < orderedCandidates.length; keyIdx++) {
+  // Try across available keys (strictly bounded by maxAttempts to prevent serverless timeouts)
+  outerLoop: for (let keyIdx = 0; keyIdx < orderedCandidates.length; keyIdx++) {
     const candidate = orderedCandidates[keyIdx];
     const now = Date.now();
 
@@ -274,61 +292,84 @@ export async function completeWithKeyPool(
 
     // Try model tiers for this key
     for (let tierIdx = 0; tierIdx < MODEL_TIERS.length; tierIdx++) {
+      if (totalAttempts >= maxAttempts) {
+        break outerLoop;
+      }
       const models = MODEL_TIERS[tierIdx];
       totalAttempts++;
       candidate.lastUsedAt = Date.now();
 
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const controller = new AbortController();
+      let timer: ReturnType<typeof setTimeout> | undefined;
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${candidate.key}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://ticknal.com',
-            'X-Title': 'Ticknal Terminal',
-          },
-          body: JSON.stringify({
-            models,
-            messages: [
-              { role: 'system', content: options.systemPrompt },
-              { role: 'user', content: options.userPrompt },
-            ],
-            temperature,
-            max_tokens: maxTokens,
-          }),
-          signal: controller.signal,
+      try {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            controller.abort();
+            reject(new Error('Request timeout'));
+          }, timeoutMs);
         });
 
-        clearTimeout(timer);
+        const requestPromise = (async () => {
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${candidate.key}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://ticknal.com',
+              'X-Title': 'Ticknal Terminal',
+            },
+            body: JSON.stringify({
+              models,
+              messages: [
+                { role: 'system', content: options.systemPrompt },
+                { role: 'user', content: options.userPrompt },
+              ],
+              temperature,
+              max_tokens: maxTokens,
+            }),
+            signal: controller.signal,
+          });
+          const bodyText = await response.text();
+          return { status: response.status, ok: response.ok, bodyText };
+        })();
+
+        const { status, ok, bodyText } = await Promise.race([requestPromise, timeoutPromise]);
 
         // Check for Rate Limit (429) or Payment/Quota Limit (402)
-        if (response.status === 429 || response.status === 402) {
-          const errText = await response.text();
-          // Set 10-minute cooldown for this specific key
-          const cooldownMinutes = response.status === 402 ? 30 : 10;
+        if (status === 429 || status === 402) {
+          const isUpstreamModelLimit =
+            status === 429 &&
+            (bodyText.includes('Provider returned error') ||
+              bodyText.includes('temporarily rate-limited upstream'));
+
+          if (isUpstreamModelLimit) {
+            lastFailureReason = `Upstream model tier ${tierIdx} rate-limited. Trying next model tier.`;
+            console.warn(`[openrouter-client] ${lastFailureReason}`);
+            continue;
+          }
+
+          // Set cooldown for this specific API key
+          const cooldownMinutes = status === 402 ? 30 : 10;
           candidate.cooldownUntil = Date.now() + cooldownMinutes * 60 * 1000;
           candidate.failureCount++;
-          candidate.lastError = `HTTP ${response.status}: ${errText.slice(0, 100)}`;
-          lastFailureReason = `Key ${candidate.maskedKey} rate limited (${response.status}). Rotating to next key.`;
+          candidate.lastError = `HTTP ${status}: ${bodyText.slice(0, 100)}`;
+          lastFailureReason = `Key ${candidate.maskedKey} rate limited (${status}). Rotating to next key.`;
           console.warn(`[openrouter-client] ${lastFailureReason}`);
           // Break model tier loop immediately to switch to the NEXT key in the pool!
           break;
         }
 
-        if (!response.ok) {
-          const errText = await response.text();
+        if (!ok) {
           candidate.failureCount++;
-          candidate.lastError = `HTTP ${response.status}: ${errText.slice(0, 100)}`;
-          lastFailureReason = `HTTP ${response.status}: ${errText.slice(0, 80)}`;
+          candidate.lastError = `HTTP ${status}: ${bodyText.slice(0, 100)}`;
+          lastFailureReason = `HTTP ${status}: ${bodyText.slice(0, 80)}`;
           console.warn(`[openrouter-client] Key ${candidate.maskedKey} tier ${tierIdx} failed:`, lastFailureReason);
           // Try next model tier on same key if not rate limited
           continue;
         }
 
-        const data = await response.json();
+        const data = JSON.parse(bodyText);
         const rawContent = data?.choices?.[0]?.message?.content?.trim() || '';
         const modelUsed = data?.model || models[0];
 
@@ -355,10 +396,15 @@ export async function completeWithKeyPool(
         }
       } catch (err: any) {
         candidate.failureCount++;
-        const isTimeout = err?.name === 'AbortError' || err?.message?.includes('aborted');
+        const isTimeout =
+          err?.name === 'AbortError' ||
+          err?.message?.includes('aborted') ||
+          err?.message === 'Request timeout';
         candidate.lastError = isTimeout ? 'Request timeout' : (err?.message || String(err));
         lastFailureReason = `Key ${candidate.maskedKey}: ${candidate.lastError}`;
         console.warn(`[openrouter-client] ${lastFailureReason}`);
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     }
   }

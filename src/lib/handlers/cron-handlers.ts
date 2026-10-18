@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply, egxInvestorFlows, positions } from '@/db/schema';
+import { tickers, dailyPrices, systemLogs, priceAdjustments, signalNotifications, macroMoneySupply, egxInvestorFlows, positions, marketNews } from '@/db/schema';
 import { sql, inArray, notInArray, eq, and, lt, gt, gte, desc } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import type { TradingViewClient, TradingViewPeriod } from '@mathieuc/tradingview';
@@ -1187,9 +1187,28 @@ export async function handleWatchdog(req: Request) {
               triggersTriggered.push(`update-investor-flows (${expectedEgxDate})`);
             }
           }
+
+          // Ensure all 5 canonical Ticknal take posts exist for expectedEgxDate (and refresh if investor flows were just repaired)
+          const existingTakes = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(marketNews)
+            .where(sql`${marketNews.id} LIKE ${`take-${expectedEgxDate}-%`}`);
+          const takesCount = Number(existingTakes[0]?.count || 0);
+          if (takesCount < 5 || investorFlowsMissing) {
+            const takeRes = await generateAllDailyTakes();
+            if (takeRes.success) {
+              triggersTriggered.push(`ticknal-take (${expectedEgxDate})`);
+            }
+          }
+
+          // Also keep live external wires fresh via watchdog
+          const wireRes = await screenAndIngestWires();
+          if (wireRes.inserted > 0) {
+            triggersTriggered.push(`update-news (+${wireRes.inserted})`);
+          }
         }
       } catch (e) {
-        console.error('Watchdog failed to verify/sync investor flows:', e);
+        console.error('Watchdog failed to verify/sync investor flows or takes:', e);
       }
     }
 
@@ -1235,6 +1254,11 @@ export async function handleUpdateInvestorFlows(req: Request) {
     }
 
     const result = await syncDailyInvestorFlows({ targetDate, manualData });
+    if (result.success) {
+      await generateAllDailyTakes().catch((e) =>
+        console.warn('[cron-investor-flows] Non-fatal error refreshing Ticknal takes:', e)
+      );
+    }
     return NextResponse.json(result, { status: result.success ? 200 : 400 });
   } catch (error) {
     console.error('Error in handleUpdateInvestorFlows:', error);

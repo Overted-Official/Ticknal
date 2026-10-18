@@ -238,13 +238,13 @@ export default function SectorTreemap({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="w-full h-full min-h-[500px] sm:min-h-[580px] relative select-none overflow-hidden bg-black flex flex-col font-sans touch-pan-y border-0 rounded-none"
+      className="w-full h-full min-h-[500px] sm:min-h-[580px] relative select-none overflow-hidden bg-plt-base flex flex-col font-sans touch-pan-y border-0 rounded-none"
     >
       {selectedSector && (
         <button
           type="button"
           onClick={() => onSelectSector('')}
-          className="absolute top-2 right-2 z-30 bg-black/80 hover:bg-black text-xs text-neutral-300 hover:text-white px-2.5 py-1 rounded-md border border-white/10 backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer shadow-lg"
+          className="absolute top-2 right-2 z-30 bg-plt-base/80 hover:bg-plt-base text-xs text-plt-muted hover:text-plt-text px-2.5 py-1 rounded-md border border-plt-border backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer shadow-lg"
         >
           <span>
             {locale === 'ar'
@@ -282,8 +282,8 @@ export default function SectorTreemap({
                 isSelected
                   ? 'border-white ring-2 ring-white/90 shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-20 scale-[1.012]'
                   : selectedSector
-                  ? 'border-white/10 bg-black opacity-70 hover:opacity-100'
-                  : 'border-white/10 bg-black'
+                  ? 'border-plt-border bg-plt-base opacity-70 hover:opacity-100'
+                  : 'border-plt-border bg-plt-base'
               }`}
               onClick={() => onSelectSector(sectorData.sector)}
             >
@@ -309,8 +309,8 @@ export default function SectorTreemap({
                 return (
                   <div
                     style={{ height: ribbonH }}
-                    className={`px-2 flex items-center justify-between backdrop-blur-sm border-b border-white/10 text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors ${
-                      isSelected ? 'bg-white/15 text-white font-bold' : 'bg-black/90 text-neutral-400'
+                    className={`px-2 flex items-center justify-between backdrop-blur-sm border-b border-plt-border-soft text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors ${
+                      isSelected ? 'bg-plt-active text-plt-text font-bold' : 'bg-plt-base/90 text-plt-muted'
                     }`}
                   >
                     <span className="truncate max-w-[65%]">
@@ -325,7 +325,7 @@ export default function SectorTreemap({
                           {sectorStratRoi.toFixed(1)}%
                         </span>
                         {(activeW > 0 || activeL > 0) && (
-                          <span className="text-white/50 font-normal">
+                          <span className="text-plt-muted font-normal">
                             ({activeW}{locale === 'ar' ? ' ربح' : 'W'}/{activeL}{locale === 'ar' ? ' خسارة' : 'L'})
                           </span>
                         )}
@@ -448,7 +448,7 @@ export default function SectorTreemap({
                           </span>
                         )}
                         {stockRect.height > 52 && stockRect.width > 56 && (
-                          <span className="text-[10px] text-white/60 tabular-nums font-normal mt-0.5">
+                          <span className="text-[10px] text-plt-muted tabular-nums font-normal mt-0.5">
                             {analysisMode === 'strategy'
                               ? isBuy
                                 ? (locale === 'ar' ? 'شراء فوري' : 'Fresh Buy')

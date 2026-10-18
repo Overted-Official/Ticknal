@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Trophy,
   Clock,
@@ -21,6 +21,7 @@ interface TradingMetricsKPIRailProps {
 export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
   const { locale } = useTranslation();
+  const [selectedId, setSelectedId] = useState<string>('win-rate');
 
   const formatNumber = (value: number, showSign: boolean = false): string => {
     if (isPrivacy) return '••••••';
@@ -67,7 +68,11 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       title: locale === 'ar' ? 'نسبة النجاح' : 'Win Rate',
       value: displayWinRate,
       unit: winRate !== null ? '%' : '',
-      onClick: () => scrollTo('section-my-positions'),
+      isSelected: selectedId === 'win-rate',
+      onClick: () => {
+        setSelectedId('win-rate');
+        scrollTo('section-my-positions');
+      },
     },
     {
       id: 'avg-days',
@@ -76,7 +81,11 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       title: locale === 'ar' ? 'متوسط الأيام لكل صفقة' : 'Avg. Days per Trade',
       value: displayAvgDays,
       unit: avgDays !== null ? (locale === 'ar' ? 'يوم' : 'DAYS') : '',
-      onClick: () => scrollTo('section-my-positions'),
+      isSelected: selectedId === 'avg-days',
+      onClick: () => {
+        setSelectedId('avg-days');
+        scrollTo('section-my-positions');
+      },
     },
     {
       id: 'avg-gain',
@@ -85,7 +94,11 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       title: locale === 'ar' ? 'متوسط الربح' : 'Avg. Gain',
       value: isPrivacy && avgGain !== null ? '••••••' : displayAvgGain,
       unit: locale === 'ar' ? 'ج.م' : '£',
-      onClick: () => scrollTo('section-my-positions'),
+      isSelected: selectedId === 'avg-gain',
+      onClick: () => {
+        setSelectedId('avg-gain');
+        scrollTo('section-my-positions');
+      },
     },
     {
       id: 'max-adverse-excursion',
@@ -94,7 +107,11 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       title: locale === 'ar' ? 'مخاطر MAE' : 'MAE Risk',
       value: displayMae,
       unit: mae !== null ? '%' : '',
-      onClick: () => scrollTo('section-my-positions'),
+      isSelected: selectedId === 'max-adverse-excursion',
+      onClick: () => {
+        setSelectedId('max-adverse-excursion');
+        scrollTo('section-my-positions');
+      },
     },
     {
       id: 'max-drawdown',
@@ -103,7 +120,11 @@ export default function TradingMetricsKPIRail({ orderStats }: TradingMetricsKPIR
       title: locale === 'ar' ? 'أقصى تراجع' : 'Max Drawdown',
       value: displayMdd,
       unit: mdd !== null ? '%' : '',
-      onClick: () => scrollTo('section-monthly-progression'),
+      isSelected: selectedId === 'max-drawdown',
+      onClick: () => {
+        setSelectedId('max-drawdown');
+        scrollTo('section-monthly-progression');
+      },
     },
   ];
 

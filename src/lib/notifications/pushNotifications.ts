@@ -3,7 +3,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, proprietaryStrategyAccess, tickers, userStrategies } from '@/db/schema';
 import { customStrategyPushPayload } from '@/lib/strategies/server/custom-strategy-alerts';
-import { normalizeTickerSymbol } from '@/strategies/PSI/psiStrategy';
+import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
 import {
   analyzeTickerChampion,
@@ -17,7 +17,7 @@ import { getLatestBarDate, isSignalEligibleEquity } from '@/lib/finance/signal-u
 import { cairoMarketDate, isClosedEgxSession } from '@/lib/notifications/market-session';
 
 type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
-type DispatchStrategyId = Extract<StrategyId, 'psi' | 'psi_v2' | 'hydra'>;
+type DispatchStrategyId = Extract<StrategyId, 'typhon' | 'cerberus' | 'hydra'>;
 type NotificationSignal = Pick<SignalEvent, 'barsAgo' | 'date' | 'price' | 'reason' | 'signal'>;
 
 type SignalNotificationPresentation = {
@@ -247,7 +247,7 @@ export async function dispatchSignalNotifications(options: {
 
     const userOpenSymbols = new Set(userOpenRows.map(o => normalizeTickerSymbol(o.tickerSymbol)));
     const userAlertedSymbols = new Set(userAlertRows.map(a => normalizeTickerSymbol(a.tickerSymbol)));
-    const sentSet = new Set(existingNotifs.map(n => `${n.tickerSymbol}-${n.strategy}-${n.signalDate}-${n.signal}`));
+    const sentSet = new Set(existingNotifs.map(n => `${n.tickerSymbol}-${n.strategy === 'psi' ? 'typhon' : n.strategy === 'psi_v2' ? 'cerberus' : n.strategy}-${n.signalDate}-${n.signal}`));
 
     const subscriptions = subscriptionsByUser[userId] ?? [];
     const nativeTokens = deviceTokensByUser[userId] ?? [];
@@ -277,8 +277,8 @@ export async function dispatchSignalNotifications(options: {
       }> = [];
 
       const strategies: Array<{ id: DispatchStrategyId }> = [
-        { id: 'psi' },
-        { id: 'psi_v2' },
+        { id: 'typhon' },
+        { id: 'cerberus' },
         { id: 'hydra' },
       ];
 

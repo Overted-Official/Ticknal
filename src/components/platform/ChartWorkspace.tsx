@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, usePathname } from 'next/navigation';
 import ChartWidget, { type ChartData } from '@/components/platform/ChartWidget';
-import { STRATEGIES } from '@/strategies/registry';
+import { STRATEGIES, isKnownStrategyParam, normalizeStrategyId } from '@/strategies/registry';
 import { tickerDataStore } from '@/lib/storage/tickerDataStore';
 
 import { WatchlistItem } from '@/components/platform/RightSidebar';
@@ -33,6 +33,7 @@ interface ChartWorkspaceProps {
   companyName?: string;
   logoUrl?: string | null;
   currency?: string;
+  onStartTour?: () => void;
 }
 
 export default function ChartWorkspace({
@@ -46,6 +47,7 @@ export default function ChartWorkspace({
   companyName,
   logoUrl,
   currency,
+  onStartTour,
 }: ChartWorkspaceProps) {
 
   const searchParams = useSearchParams();
@@ -123,10 +125,22 @@ export default function ChartWorkspace({
   }, [activeIndicators, persistIndicators]);
 
   const requestedStrategy = searchParams?.get('strategy');
-  const initialStrategy = requestedStrategy && STRATEGIES[requestedStrategy]
-    ? requestedStrategy
-    : 'psi';
-  const [selectedStrategy, setSelectedStrategy] = useState(initialStrategy);
+  const hasExplicitStrategy = isKnownStrategyParam(requestedStrategy);
+  const initialStrategy = hasExplicitStrategy
+    ? normalizeStrategyId(requestedStrategy)
+    : 'typhon';
+  const [selectedStrategy, setSelectedStrategy] = useState<string>(initialStrategy);
+
+  // Rewrite legacy URL params (e.g. strategy=psi, strategy=psi_v2, strategy=typhoon) to canonical IDs
+  useEffect(() => {
+    if (!requestedStrategy || !hasExplicitStrategy) return;
+    const canonical = normalizeStrategyId(requestedStrategy);
+    if (requestedStrategy !== canonical) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('strategy', canonical);
+      window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+    }
+  }, [requestedStrategy, hasExplicitStrategy, pathname]);
 
   const [strategyParams, setStrategyParams] = useState<Record<string, any>>(() => {
     const initialParams: Record<string, any> = {};
@@ -158,7 +172,7 @@ export default function ChartWorkspace({
   // notification.
   useEffect(() => {
     if (isHeroScene || !canViewProprietary) return;
-    if (requestedStrategy && STRATEGIES[requestedStrategy]) return;
+    if (hasExplicitStrategy) return;
 
     let cancelled = false;
 
@@ -173,8 +187,9 @@ export default function ChartWorkspace({
         if (!response.ok) return;
 
         const champion = (await response.json()) as { strategy?: string };
-        const strategy = champion.strategy;
-        if (cancelled || !strategy || !STRATEGIES[strategy]) return;
+        if (cancelled || !champion.strategy) return;
+        const strategy = normalizeStrategyId(champion.strategy);
+        if (!STRATEGIES[strategy]) return;
 
         setSelectedStrategy(strategy);
         const definition = STRATEGIES[strategy];
@@ -194,7 +209,7 @@ export default function ChartWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [isHeroScene, canViewProprietary, requestedStrategy, symbol, timeframe]);
+  }, [isHeroScene, canViewProprietary, hasExplicitStrategy, symbol, timeframe]);
 
   // Client-side IndexedDB caching & delta sync
   const [activeChartData, setActiveChartData] = useState<ChartData[]>(data);
@@ -269,22 +284,26 @@ export default function ChartWorkspace({
 
   // Sync strategy if URL query param changes
   useEffect(() => {
-    const urlStrat = searchParams?.get('strategy');
-    if (urlStrat && urlStrat !== selectedStrategy && STRATEGIES[urlStrat]) {
-      setSelectedStrategy(urlStrat);
-      const stratDef = STRATEGIES[urlStrat];
-      const newParams: Record<string, any> = {};
-      if (stratDef) {
-        stratDef.settings.forEach(s => {
-          const urlVal = searchParams?.get(`s_${s.key}`);
-          newParams[s.key] = urlVal !== null ? (s.type === 'number' || s.type === 'range' ? Number(urlVal) : urlVal) : s.default;
-        });
+    const rawUrlStrat = searchParams?.get('strategy');
+    if (isKnownStrategyParam(rawUrlStrat)) {
+      const urlStrat = normalizeStrategyId(rawUrlStrat);
+      if (urlStrat !== selectedStrategy && STRATEGIES[urlStrat]) {
+        setSelectedStrategy(urlStrat);
+        const stratDef = STRATEGIES[urlStrat];
+        const newParams: Record<string, any> = {};
+        if (stratDef) {
+          stratDef.settings.forEach(s => {
+            const urlVal = searchParams?.get(`s_${s.key}`);
+            newParams[s.key] = urlVal !== null ? (s.type === 'number' || s.type === 'range' ? Number(urlVal) : urlVal) : s.default;
+          });
+        }
+        setStrategyParams(newParams);
       }
-      setStrategyParams(newParams);
     }
   }, [searchParams, selectedStrategy]);
 
-  const handleStrategyChange = useCallback((newStrategy: string) => {
+  const handleStrategyChange = useCallback((rawStrategy: string) => {
+    const newStrategy = normalizeStrategyId(rawStrategy);
     setSelectedStrategy(newStrategy);
     const stratDef = STRATEGIES[newStrategy];
     const newParams: Record<string, any> = {};
@@ -372,6 +391,7 @@ export default function ChartWorkspace({
         currentPrice={currentPrice}
         brokerageAccounts={brokerageAccounts}
         onLoadMoreHistory={handleLoadMoreHistory}
+        onStartTour={onStartTour}
       />
     </div>
   );

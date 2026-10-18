@@ -32,11 +32,52 @@ export interface StrategyFlowEdge {
   readonly style: { readonly stroke: string; readonly strokeWidth: number };
 }
 
+export interface StrategyCanvasModule {
+  readonly id: string;
+  readonly name: string;
+  readonly memberIds: readonly string[];
+  readonly inputIds: readonly string[];
+  readonly outputIds: readonly string[];
+}
+
+export function getConnectableModuleOutputs(module: StrategyCanvasModule, availableIds: readonly string[]): readonly string[] {
+  const available = new Set(availableIds);
+  return module.memberIds.filter((id) => available.has(id));
+}
+
+export function getConnectableModulePairs(
+  sourceIds: readonly string[],
+  targetIds: readonly string[],
+  availableByTarget: ReadonlyMap<string, readonly string[]>,
+): readonly { readonly sourceId: string; readonly targetId: string }[] {
+  return targetIds.flatMap((targetId) => {
+    const available = new Set(availableByTarget.get(targetId) ?? []);
+    return sourceIds.filter((sourceId) => sourceId !== targetId && available.has(sourceId)).map((sourceId) => ({ sourceId, targetId }));
+  });
+}
+
 interface CardBounds {
   readonly x: number;
   readonly y: number;
   readonly width: number;
   readonly height: number;
+}
+
+interface StrategyViewport {
+  readonly x: number;
+  readonly y: number;
+  readonly zoom: number;
+}
+
+export function getReadableStrategyViewport(overview: StrategyViewport, bounds: CardBounds, stageCount: number): StrategyViewport {
+  if (stageCount < 4 || overview.zoom >= 0.8) return overview;
+  const zoom = 0.8;
+  return { x: 24 - bounds.x * zoom, y: 16 - bounds.y * zoom, zoom };
+}
+
+export function getFocusedModuleViewport(bounds: CardBounds, expandedCardTop?: number): StrategyViewport {
+  const zoom = 0.85;
+  return { x: 40 - bounds.x * zoom, y: expandedCardTop === undefined ? 134 - bounds.y * zoom : 60 - expandedCardTop * zoom, zoom };
 }
 
 export function getEdgeAttachment(source: CardBounds, target: CardBounds): { sourceHandle: string; targetHandle: string } {
@@ -118,12 +159,37 @@ export function getCanvasStage(node: AdvancedStrategyNode, mode: 'simple' | 'adv
     return node.parameters.actionSide === 'sell' ? 'sell' : 'buy';
   }
   if (node.stage === 'output') return null;
+  if (node.templateId === 'module-overview' && node.parameters?.moduleStage === 'indicators') return 'indicators';
   if (node.templateId === 'indicator') return 'indicators';
   if (node.stage === 'inputs') return 'data';
   if (node.stage === 'signal') return 'calculations';
   if (node.stage === 'state') return 'position';
   if (node.stage === 'exit' || node.parameters?.actionSide === 'sell') return 'sell';
   return 'buy';
+}
+
+export function canGroupStrategyNodes(nodes: readonly AdvancedStrategyNode[], selectedIds: readonly string[]): boolean {
+  if (selectedIds.length < 2) return false;
+  const selected = nodes.filter((node) => selectedIds.includes(node.id));
+  const stages = new Set(selected.map((node) => getCanvasStage(node, 'advanced')));
+  return selected.length === selectedIds.length && stages.size === 1 && !stages.has(null);
+}
+
+export function toggleGroupCardSelection(nodes: readonly AdvancedStrategyNode[], selectedIds: readonly string[], targetId: string): string[] {
+  const target = nodes.find((node) => node.id === targetId);
+  if (!target || target.moduleId || target.protected) return [...selectedIds];
+  if (selectedIds.includes(targetId)) return selectedIds.filter((id) => id !== targetId);
+  const targetStage = getCanvasStage(target, 'advanced');
+  if (!targetStage) return [...selectedIds];
+  const sameStage = selectedIds.filter((id) => {
+    const selected = nodes.find((node) => node.id === id);
+    return selected && !selected.moduleId && getCanvasStage(selected, 'advanced') === targetStage;
+  });
+  return [...sameStage, targetId];
+}
+
+export function resolveModuleNameDraft(draft: string, currentName: string): string {
+  return draft.trim() || currentName;
 }
 
 export function canRemoveOptionalStage(nodes: readonly AdvancedStrategyNode[], stageId: OptionalStrategyStageId): boolean {
@@ -141,33 +207,73 @@ export function buildStrategyFlow(
   protectedBlueprint: boolean,
   mode: 'simple' | 'advanced' = 'advanced',
   enabledOptionalStages: readonly OptionalStrategyStageId[] = [],
-): { readonly stages: readonly StrategyCanvasStage[]; readonly nodes: readonly StrategyFlowNode[]; readonly edges: readonly StrategyFlowEdge[] } {
-  const visibleNodes = strategyNodes.filter((node) => getCanvasStage(node, mode) !== null);
+  options: { readonly focusModuleId?: string | null; readonly expandedCardId?: string | null; readonly previewCardId?: string | null } = {},
+): { readonly stages: readonly StrategyCanvasStage[]; readonly nodes: readonly StrategyFlowNode[]; readonly edges: readonly StrategyFlowEdge[]; readonly modules: readonly StrategyCanvasModule[]; readonly externalIds: readonly string[] } {
+  const sourceNodes = strategyNodes.filter((node) => getCanvasStage(node, mode) !== null);
+  const moduleIds = [...new Set(sourceNodes.map((node) => node.moduleId).filter((id): id is string => Boolean(id)))]
+    .filter((id) => new Set(sourceNodes.filter((node) => node.moduleId === id).map((node) => getCanvasStage(node, mode))).size === 1);
+  const modules = mode === 'advanced' ? moduleIds.map((id): StrategyCanvasModule => {
+    const members = sourceNodes.filter((node) => node.moduleId === id);
+    const memberIds = members.map((node) => node.id);
+    const memberSet = new Set(memberIds);
+    const inputIds = [...new Set(members.flatMap((node) => node.connections ?? []).filter((source) => !memberSet.has(source)))];
+    const outputIds = members.filter((node) => sourceNodes.some((other) => !memberSet.has(other.id) && other.connections?.includes(node.id))).map((node) => node.id);
+    return { id, name: members[0].moduleName ?? id, memberIds, inputIds, outputIds: outputIds.length ? outputIds : memberIds.slice(-1) };
+  }) : [];
+  const moduleByMember = new Map(modules.flatMap((module) => module.memberIds.map((id) => [id, module] as const)));
+  const displayId = (id: string) => moduleByMember.has(id) ? `module:${moduleByMember.get(id)!.id}` : id;
+  let externalIds: string[] = [];
+  let visibleNodes: AdvancedStrategyNode[];
+  if (options.focusModuleId && mode === 'advanced') {
+    const focused = modules.find((module) => module.id === options.focusModuleId);
+    const memberSet = new Set(focused?.memberIds ?? []);
+    externalIds = focused?.inputIds.filter((id) => sourceNodes.some((node) => node.id === id)) ?? [];
+    const externalSet = new Set(externalIds);
+    visibleNodes = sourceNodes.filter((node) => memberSet.has(node.id) || externalSet.has(node.id));
+  } else if (mode === 'advanced' && modules.length) {
+    const emitted = new Set<string>();
+    visibleNodes = sourceNodes.flatMap((node): AdvancedStrategyNode[] => {
+      const module = moduleByMember.get(node.id);
+      if (!module) return [{ ...node, connections: [...new Set((node.connections ?? []).map(displayId).filter((source) => source !== node.id))] }];
+      if (emitted.has(module.id)) return [];
+      emitted.add(module.id);
+      const outputNode = sourceNodes.find((candidate) => candidate.id === module.outputIds.at(-1)) ?? node;
+      const id = `module:${module.id}`;
+      return [{
+        id, stage: outputNode.stage, kind: 'calculation', templateId: 'module-overview',
+        title: { en: module.name, ar: module.name },
+        summary: { en: `${module.memberIds.length} steps`, ar: `${module.memberIds.length} خطوات` },
+        moduleId: module.id, moduleName: module.name,
+        parameters: { moduleStage: getCanvasStage(outputNode, mode) ?? 'calculations' },
+        connections: [...new Set(module.inputIds.map(displayId).filter((source) => source !== id))],
+      }];
+    });
+  } else visibleNodes = sourceNodes;
   const counts = new Map<StrategyCanvasStageId, number>();
   for (const node of visibleNodes) {
     const stage = getCanvasStage(node, mode)!;
     counts.set(stage, (counts.get(stage) ?? 0) + 1);
   }
   const order = (mode === 'simple' ? SIMPLE_ORDER : ADVANCED_ORDER).filter((id) =>
-    !STAGE_CONTENT[id].optional || counts.has(id) || enabledOptionalStages.includes(id as OptionalStrategyStageId));
-  const stageHeight = mode === 'simple'
-    ? Math.max(640, 150 + Math.max(...order.map((id) => counts.get(id) ?? 0)) * 240)
-    : Math.max(700, 150 + Math.max(...order.map((id) => counts.get(id) ?? 0)) * 250);
+    options.focusModuleId ? counts.has(id) : !STAGE_CONTENT[id].optional || counts.has(id) || enabledOptionalStages.includes(id as OptionalStrategyStageId));
+  const pitch = (id: string) => id === options.expandedCardId ? 540 : id === options.previewCardId ? 320 : 92;
+  const stageHeight = Math.max(mode === 'simple' ? 640 : 700,
+    ...order.map((stage) => 160 + visibleNodes.filter((node) => getCanvasStage(node, mode) === stage).reduce((sum, node) => sum + pitch(node.id), 0)));
   const stages = order.map((id, index): StrategyCanvasStage => {
     return {
       id,
       ...STAGE_CONTENT[id],
       count: counts.get(id) ?? 0,
-      position: { x: 32 + index * 320, y: 24 },
-      width: 292,
+      position: { x: 32 + index * 380, y: 24 },
+      width: 352,
       height: stageHeight,
     };
   });
-  const stageCounts = new Map<StrategyCanvasStageId, number>();
+  const stageOffsets = new Map<StrategyCanvasStageId, number>();
   const nodes = visibleNodes.map((node): StrategyFlowNode => {
     const stage = getCanvasStage(node, mode)!;
-    const indexWithinStage = stageCounts.get(stage) ?? 0;
-    stageCounts.set(stage, indexWithinStage + 1);
+    const offset = stageOffsets.get(stage) ?? 0;
+    stageOffsets.set(stage, offset + pitch(node.id));
     return {
       id: node.id,
       type: 'strategy',
@@ -176,8 +282,8 @@ export function buildStrategyFlow(
       position: {
         x: 22,
         y: protectedBlueprint && mode === 'advanced'
-          ? (BLUEPRINT_Y[node.id] ?? 135 + indexWithinStage * 250)
-          : 135 + indexWithinStage * 240,
+          ? (BLUEPRINT_Y[node.id] ?? 135 + offset)
+          : 135 + offset,
       },
       data: { strategyNode: node },
     };
@@ -185,7 +291,7 @@ export function buildStrategyFlow(
   const ids = new Set(nodes.map((node) => node.id));
   const edges = mode === 'simple' ? [] : visibleNodes.flatMap((node): StrategyFlowEdge[] => {
     const sources = protectedBlueprint ? (BLUEPRINT_CONNECTIONS[node.id] ?? node.connections ?? []) : (node.connections ?? []);
-    return sources.filter((source) => ids.has(source)).map((source) => ({
+    return [...new Set(sources)].filter((source) => ids.has(source) && source !== node.id).map((source) => ({
       id: `${source}->${node.id}`,
       source,
       target: node.id,
@@ -197,5 +303,5 @@ export function buildStrategyFlow(
       },
     }));
   });
-  return { stages, nodes, edges };
+  return { stages, nodes, edges, modules, externalIds };
 }

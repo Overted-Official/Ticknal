@@ -129,7 +129,7 @@ export const signalNotifications = pgTable('signal_notifications', {
   tickerSymbol: varchar('ticker_symbol', { length: 20 })
     .notNull()
     .references(() => tickers.symbol, { onDelete: 'cascade' }),
-  strategy: varchar('strategy', { length: 100 }).default('psi').notNull(),
+  strategy: varchar('strategy', { length: 100 }).default('typhon').notNull(),
   signalDate: date('signal_date').notNull(),
   signal: varchar('signal', { length: 20 }).notNull(),
   // Canonical analysis snapshot written by the scheduled signal processor.
@@ -570,6 +570,7 @@ export const marketNews = pgTable('market_news', {
   source: varchar('source', { length: 100 }).notNull(),
   sourceUrl: text('source_url'),
   importance: varchar('importance', { length: 20 }).default('normal').notNull(), // 'critical' | 'high' | 'normal'
+  urgencyScore: integer('urgency_score').default(5).notNull(), // 1 to 10 score assigned by AI
   impactMetric: varchar('impact_metric', { length: 100 }),
   readTime: varchar('read_time', { length: 30 }).default('2 min read').notNull(),
   imageUrl: text('image_url'),
@@ -581,6 +582,7 @@ export const marketNews = pgTable('market_news', {
     categoryIdx: index('market_news_category_idx').on(table.category),
     publishedAtIdx: index('market_news_published_at_idx').on(table.publishedAt),
     sentimentIdx: index('market_news_sentiment_idx').on(table.sentiment),
+    urgencyScoreIdx: index('market_news_urgency_score_idx').on(table.urgencyScore),
   };
 });
 

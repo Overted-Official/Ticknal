@@ -158,18 +158,18 @@ export default function CanonicalIndicatorWorkspace({
   return (
     <>
       {visibleDiagnostics.length > 0 && (
-        <div data-testid="canonical-indicator-diagnostics" className="border-t border-white/10 bg-black px-3 py-2 font-sans text-[10px] text-[#ffb74d]">
+        <div data-testid="canonical-indicator-diagnostics" className="border-t border-plt-border-soft bg-plt-base px-3 py-2 font-sans text-[10px] text-[#ffb74d]">
           {visibleDiagnostics.map((diagnostic) => (
             <div key={diagnostic.instanceId} className="leading-5">
-              <span className="font-semibold text-white/75">{diagnostic.name}</span>
-              <span className="px-1 text-white/25">·</span>
+              <span className="font-semibold text-plt-text">{diagnostic.name}</span>
+              <span className="px-1 text-plt-faint">·</span>
               <span>{diagnostic.message}</span>
             </div>
           ))}
         </div>
       )}
       {surfaces.overlays.length > 0 && (
-        <div data-testid="canonical-overlay-legend" className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 bg-black px-3 py-1 font-sans text-[10px] text-white/55">
+        <div data-testid="canonical-overlay-legend" className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1 border-t border-plt-border-soft bg-plt-base px-3 py-1 font-sans text-[10px] text-plt-muted">
           {surfaces.overlays.map((visual) => (
             <span key={visual.id} className="tabular-nums">
               {visual.indicatorName[locale]} · {visual.outputLabel}: {visual.latestValue === null ? '—' : String(visual.latestValue)}

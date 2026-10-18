@@ -12,8 +12,9 @@ import {
 } from 'lightweight-charts';
 
 import { ChevronDown, ChevronUp, RotateCcw, X } from '@/components/ui/icon-library';
+import { useTheme } from 'next-themes';
 import type { CanonicalIndicatorViewState } from '@/indicators/canonical/types';
-import { parseChartTime } from '../utils';
+import { cssTokenColor, parseChartTime } from '../utils';
 import { synchronizeChartSurface } from './chart-sync';
 import type { CanonicalPaneModel } from './surface-model';
 import { formatIndicatorDiagnostic } from './indicator-diagnostic-message';
@@ -44,6 +45,7 @@ export default function CanonicalIndicatorPane({
   pane, state, locale, mainChart, mainSeries, mainValueAtTime, collapsed, height,
   onToggleCollapse, onHeightChange, onMoveUp, onMoveDown, onResetParameters, onClose,
 }: CanonicalIndicatorPaneProps) {
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const diagnosticMessage = state?.diagnostics?.[0]
     ? formatIndicatorDiagnostic(state.diagnostics[0], locale)
@@ -52,19 +54,20 @@ export default function CanonicalIndicatorPane({
   useEffect(() => {
     if (collapsed || !containerRef.current || state?.status !== 'ok') return;
     const container = containerRef.current;
+    const isLight = resolvedTheme === 'light';
     const chart = createChart(container, {
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: ColorType.Solid, color: '#000000' },
-        textColor: 'rgba(255,255,255,0.55)', fontSize: 10, attributionLogo: false,
+        background: { type: ColorType.Solid, color: isLight ? '#ffffff' : cssTokenColor('--plt-bg-base', '#000000') },
+        textColor: isLight ? '#52525b' : cssTokenColor('--plt-text-muted', 'rgba(255,255,255,0.55)'), fontSize: 10, attributionLogo: false,
       },
       grid: {
-        vertLines: { color: 'rgba(255,255,255,0.06)' },
-        horzLines: { color: 'rgba(255,255,255,0.06)' },
+        vertLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--border-subtle', 'rgba(255,255,255,0.06)') },
+        horzLines: { color: isLight ? '#f0f0f2' : cssTokenColor('--border-subtle', 'rgba(255,255,255,0.06)') },
       },
-      rightPriceScale: { borderColor: 'rgba(255,255,255,0.10)', minimumWidth: 55 },
-      timeScale: { visible: false, borderColor: 'rgba(255,255,255,0.10)' },
+      rightPriceScale: { borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255,255,255,0.10)'), minimumWidth: 55 },
+      timeScale: { visible: false, borderColor: isLight ? '#e4e4e7' : cssTokenColor('--border-subtle', 'rgba(255,255,255,0.10)') },
     });
 
     let firstSeries: ISeriesApi<any> | null = null;
@@ -125,7 +128,7 @@ export default function CanonicalIndicatorPane({
       observer.disconnect();
       chart.remove();
     };
-  }, [collapsed, height, locale, mainChart, mainSeries, mainValueAtTime, pane, state?.status]);
+  }, [collapsed, height, locale, mainChart, mainSeries, mainValueAtTime, pane, resolvedTheme, state?.status]);
 
   const beginResize = (event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -143,35 +146,35 @@ export default function CanonicalIndicatorPane({
   };
 
   return (
-    <section data-testid="canonical-indicator-pane" data-instance-id={pane.instanceId} className="relative flex w-full flex-col border-t border-white/10 bg-black font-sans" style={{ height: collapsed ? 32 : height }}>
-      <header className="flex h-8 shrink-0 items-center justify-between border-b border-white/[0.06] px-3 text-[11px]">
+    <section data-testid="canonical-indicator-pane" data-instance-id={pane.instanceId} className="relative flex w-full flex-col border-t border-plt-border bg-plt-base font-sans" style={{ height: collapsed ? 32 : height }}>
+      <header className="flex h-8 shrink-0 items-center justify-between border-b border-plt-border-soft px-3 text-[11px]">
         <div className="flex min-w-0 items-center gap-2">
-          <button type="button" onClick={onToggleCollapse} className="text-white/60 hover:text-white" aria-label="Collapse indicator pane">
+          <button type="button" onClick={onToggleCollapse} className="text-plt-muted hover:text-plt-text" aria-label="Collapse indicator pane">
             {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
           </button>
-          <span className="truncate font-semibold text-white">{pane.name[locale]}</span>
+          <span className="truncate font-semibold text-plt-text">{pane.name[locale]}</span>
           {[...pane.visuals, ...pane.legends].map((visual) => (
-            <span key={visual.id} className="tabular-nums text-white/55">
+            <span key={visual.id} className="tabular-nums text-plt-muted">
               {visual.outputLabel}: {visual.latestValue === null ? '—' : String(visual.latestValue)}
             </span>
           ))}
           {state?.status && state.status !== 'ok' && <span className="text-amber-400">{state.status}</span>}
         </div>
-        <div className="flex items-center gap-1 text-white/50">
-          <button type="button" onClick={onMoveUp} className="p-1 hover:text-white" aria-label="Move pane up"><ChevronUp size={13} /></button>
-          <button type="button" onClick={onMoveDown} className="p-1 hover:text-white" aria-label="Move pane down"><ChevronDown size={13} /></button>
-          <button type="button" onClick={onResetParameters} className="p-1 hover:text-white" aria-label="Reset indicator parameters"><RotateCcw size={13} /></button>
-          <button type="button" onClick={onClose} className="p-1 hover:text-white" aria-label="Remove indicator"><X size={13} /></button>
+        <div className="flex items-center gap-1 text-plt-muted">
+          <button type="button" onClick={onMoveUp} className="p-1 hover:text-plt-text" aria-label="Move pane up"><ChevronUp size={13} /></button>
+          <button type="button" onClick={onMoveDown} className="p-1 hover:text-plt-text" aria-label="Move pane down"><ChevronDown size={13} /></button>
+          <button type="button" onClick={onResetParameters} className="p-1 hover:text-plt-text" aria-label="Reset indicator parameters"><RotateCcw size={13} /></button>
+          <button type="button" onClick={onClose} className="p-1 hover:text-plt-text" aria-label="Remove indicator"><X size={13} /></button>
         </div>
       </header>
       {!collapsed && (
         <>
           {state?.status === 'ok' ? <div ref={containerRef} className="min-h-0 flex-1" /> : (
-            <div className="flex flex-1 items-center justify-center text-xs text-white/45">
+            <div className="flex flex-1 items-center justify-center text-xs text-plt-muted">
               {state?.message ?? diagnosticMessage ?? (state?.status === 'unavailable' ? 'Required market data is unavailable.' : 'Loading indicator…')}
             </div>
           )}
-          <div onPointerDown={beginResize} className="absolute inset-x-0 bottom-0 h-1 cursor-row-resize bg-transparent hover:bg-white/10" />
+          <div onPointerDown={beginResize} className="absolute inset-x-0 bottom-0 h-1 cursor-row-resize bg-transparent hover:bg-plt-active" />
         </>
       )}
     </section>

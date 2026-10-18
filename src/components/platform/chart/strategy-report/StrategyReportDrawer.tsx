@@ -8,7 +8,7 @@ import {
   STRATEGIES,
   type FullBacktestReport,
 } from '@/strategies/registry';
-import { runPsiStrategy } from '@/strategies/PSI/psiStrategy';
+import { runPsiStrategy } from '@/strategies/Typhon/typhonStrategy';
 
 import type {
   StrategyReportDrawerProps,
@@ -319,7 +319,7 @@ export default function StrategyReportDrawer({
   };
 
   // Risk / Reward
-  const hasRR = selectedStrategy !== 'psi_v2' && selectedStrategy !== 'thoth_egx_macro' && selectedStrategy !== 'hydra'
+  const hasRR = selectedStrategy !== 'cerberus' && selectedStrategy !== 'psi_v2' && selectedStrategy !== 'thoth_egx_macro' && selectedStrategy !== 'hydra'
     && triggerPrice !== null && stopLossPrice !== null && targetPrice !== null;
   const riskAmt   = hasRR ? Math.abs(triggerPrice! - stopLossPrice!) : 0;
   const rewardAmt = hasRR ? Math.abs(targetPrice!  - triggerPrice!)  : 0;
@@ -409,7 +409,7 @@ export default function StrategyReportDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer z-0"
+            className="fixed inset-0 bg-plt-base/80 backdrop-blur-sm cursor-pointer z-0"
             onClick={onClose}
             aria-label="Close strategy report overlay"
           />
@@ -426,7 +426,7 @@ export default function StrategyReportDrawer({
               stiffness: 340,
               mass: 0.8,
             }}
-            className="relative drawer-sheet-viewport-safe w-full md:w-[75vw] md:max-w-[1300px] bg-black text-text-primary rounded-none border-l border-white/10 flex flex-col shadow-2xl z-10 overflow-hidden"
+            className="relative drawer-sheet-viewport-safe w-full md:w-[75vw] md:max-w-[1300px] bg-plt-base text-plt-text rounded-none border-l border-plt-border flex flex-col shadow-2xl z-10 overflow-hidden"
           >
             {/* 1. Sticky Header */}
             <StrategyReportHeader
@@ -462,7 +462,7 @@ export default function StrategyReportDrawer({
             />
 
             {/* 3. Tab Body Container */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8 space-y-8 bg-black">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8 space-y-8 bg-plt-base">
               {activeTab === 'performance' && (
                 <PerformanceOverviewTab
                   report={report}

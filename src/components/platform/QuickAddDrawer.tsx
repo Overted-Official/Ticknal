@@ -509,15 +509,15 @@ export default function QuickAddDrawer({
             </div>
 
             {/* 2-Way Tab Switcher */}
-            <div className="px-4 sm:px-6 py-2 border-b border-white/10 shrink-0 bg-black">
-              <div className="w-full grid grid-cols-2 p-0.5 bg-white/[0.04] border border-white/10 rounded-lg gap-1">
+            <div className="px-4 sm:px-6 py-2 border-b border-plt-border shrink-0 bg-plt-base">
+              <div className="w-full grid grid-cols-2 p-0.5 bg-plt-hover border border-plt-border rounded-lg gap-1">
                 <button
                   type="button"
                   onClick={() => setActiveSwitch('transaction')}
                   className={`h-7.5 px-3 rounded-md text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeSwitch === 'transaction'
-                      ? 'bg-white/15 text-white font-semibold shadow-sm'
-                      : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-plt-active text-plt-text font-semibold shadow-sm'
+                      : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                   }`}
                 >
                   <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -528,8 +528,8 @@ export default function QuickAddDrawer({
                   onClick={() => setActiveSwitch('position')}
                   className={`h-7.5 px-3 rounded-md text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeSwitch === 'position'
-                      ? 'bg-white/15 text-white font-semibold shadow-sm'
-                      : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-plt-active text-plt-text font-semibold shadow-sm'
+                      : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                   }`}
                 >
                   <TrendingUp className="w-3.5 h-3.5" />
@@ -551,14 +551,14 @@ export default function QuickAddDrawer({
                   {/* Transaction Type Segmented Control */}
                   <div className="drawer-form-field">
                     <label className="field-label">{locale === 'ar' ? 'نوع المعاملة' : 'Transaction Type'}</label>
-                    <div className="w-full grid grid-cols-4 p-0.5 bg-white/[0.04] border border-white/10 rounded-lg gap-0.5">
+                    <div className="w-full grid grid-cols-4 p-0.5 bg-plt-hover border border-plt-border rounded-lg gap-0.5">
                       <button
                         type="button"
                         onClick={() => setTxMode('EXPENSE')}
                         className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
                           txMode === 'EXPENSE'
-                            ? 'bg-white/15 text-white font-semibold shadow-sm'
-                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                            ? 'bg-plt-active text-plt-text font-semibold shadow-sm'
+                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover font-medium'
                         }`}
                       >
                         {locale === 'ar' ? 'مصروف' : 'Expense'}
@@ -568,8 +568,8 @@ export default function QuickAddDrawer({
                         onClick={() => setTxMode('INCOME')}
                         className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
                           txMode === 'INCOME'
-                            ? 'bg-white/15 text-white font-semibold shadow-sm'
-                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                            ? 'bg-plt-active text-plt-text font-semibold shadow-sm'
+                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover font-medium'
                         }`}
                       >
                         {locale === 'ar' ? 'دخل' : 'Income'}
@@ -579,8 +579,8 @@ export default function QuickAddDrawer({
                         onClick={() => setTxMode('TRANSFER')}
                         className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
                           txMode === 'TRANSFER'
-                            ? 'bg-white/15 text-white font-semibold shadow-sm'
-                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                            ? 'bg-plt-active text-plt-text font-semibold shadow-sm'
+                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover font-medium'
                         }`}
                       >
                         {locale === 'ar' ? 'تحويل' : 'Transfer'}
@@ -590,8 +590,8 @@ export default function QuickAddDrawer({
                         onClick={() => setTxMode('BROKER_INJECTION')}
                         className={`h-7 px-1.5 rounded-md text-[11px] transition-all cursor-pointer text-center flex items-center justify-center ${
                           txMode === 'BROKER_INJECTION'
-                            ? 'bg-white/15 text-white font-semibold shadow-sm'
-                            : 'text-text-muted hover:text-white hover:bg-white/[0.04] font-medium'
+                            ? 'bg-plt-active text-plt-text font-semibold shadow-sm'
+                            : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover font-medium'
                         }`}
                       >
                         {locale === 'ar' ? 'إلى الأسهم' : 'To Stocks'}
@@ -734,10 +734,10 @@ export default function QuickAddDrawer({
 
                     {isTickerSelected && (selectedTicker || positionSymbol) ? (
                       /* Rich Selected Ticker View: Logo, Full Name, Symbol, Price & Change Action */
-                      <div className="p-3 bg-white/[0.04] border border-white/10 rounded-xl flex items-center justify-between gap-3">
+                      <div className="p-3 bg-plt-hover border border-plt-border rounded-xl flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           {/* Profile Image / Avatar */}
-                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-plt-active border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
                             {selectedTicker?.logoUrl ? (
                               <img
                                 src={selectedTicker.logoUrl}
@@ -748,7 +748,7 @@ export default function QuickAddDrawer({
                                 }}
                               />
                             ) : (
-                              <span className="text-[11px] font-bold text-white font-sans tabular-nums">
+                              <span className="text-[11px] font-bold text-plt-text font-sans tabular-nums">
                                 {positionSymbol.slice(0, 2)}
                               </span>
                             )}
@@ -758,26 +758,26 @@ export default function QuickAddDrawer({
                           <div className="min-w-0 flex-1 flex flex-col">
                             <div className="flex items-center gap-2 min-w-0">
                               <span
-                                className="font-semibold text-white text-xs sm:text-sm truncate font-sans leading-tight"
+                                className="font-semibold text-plt-text text-xs sm:text-sm truncate font-sans leading-tight"
                                 title={selectedTicker?.companyName || positionSymbol}
                               >
                                 {selectedTicker?.companyName || positionSymbol}
                               </span>
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-white/10 border border-white/15 tabular-nums font-sans shrink-0 leading-tight">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-plt-text bg-plt-active border border-plt-border tabular-nums font-sans shrink-0 leading-tight">
                                 {positionSymbol}
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 mt-1 min-w-0 text-[11px] text-text-muted font-sans">
+                            <div className="flex items-center gap-1.5 mt-1 min-w-0 text-[11px] text-plt-muted font-sans">
                               {selectedTicker?.sector && (
                                 <span className="truncate">{selectedTicker.sector}</span>
                               )}
                               {selectedTicker?.price !== undefined && selectedTicker.price > 0 && (
                                 <>
-                                  {selectedTicker?.sector && <span className="text-white/30">•</span>}
-                                  <span className="tabular-nums font-medium text-white/80">
+                                  {selectedTicker?.sector && <span className="text-plt-faint">•</span>}
+                                  <span className="tabular-nums font-medium text-plt-subtle">
                                     {Number(selectedTicker.price).toFixed(2)}{' '}
-                                    <span className="text-[10px] text-white/40">
+                                    <span className="text-[10px] text-plt-faint">
                                       {selectedTicker.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedTicker.currency || 'EGP'}
                                     </span>
                                   </span>
@@ -804,10 +804,10 @@ export default function QuickAddDrawer({
                             setIsTickerSelected(false);
                             setIsTickerDropdownOpen(true);
                           }}
-                          className="h-7 px-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-[11px] font-medium transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                          className="h-7 px-2.5 rounded-lg border border-plt-border bg-plt-hover hover:bg-plt-active text-plt-muted hover:text-plt-text text-[11px] font-medium transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
                           title={locale === 'ar' ? 'تغيير السهم' : 'Change ticker'}
                         >
-                          <RefreshCw className="w-3 h-3 text-white/60" />
+                          <RefreshCw className="w-3 h-3 text-plt-muted" />
                           <span>{locale === 'ar' ? 'تغيير' : 'Change'}</span>
                         </button>
                       </div>
@@ -815,7 +815,7 @@ export default function QuickAddDrawer({
                       /* Search Input + Dropdown */
                       <>
                         <div className="field-group relative">
-                          <Search className="w-3.5 h-3.5 text-text-muted shrink-0 me-2" />
+                          <Search className="w-3.5 h-3.5 text-plt-muted shrink-0 me-2" />
                           <input
                             type="text"
                             required
@@ -853,7 +853,7 @@ export default function QuickAddDrawer({
                                 setPositionSymbol('');
                                 setIsTickerDropdownOpen(false);
                               }}
-                              className="p-1 text-white/40 hover:text-white transition-colors"
+                              className="p-1 text-plt-faint hover:text-plt-text transition-colors"
                               title={locale === 'ar' ? 'مسح' : 'Clear'}
                             >
                               <X className="w-3.5 h-3.5" />
@@ -863,7 +863,7 @@ export default function QuickAddDrawer({
 
                         {/* Auto-suggest Dropdown */}
                         {isTickerDropdownOpen && filteredTickers.length > 0 && (
-                          <div className="absolute top-[calc(100%+4px)] left-0 right-0 max-h-60 overflow-y-auto bg-black border border-white/10 rounded-xl shadow-2xl z-50 divide-y divide-white/[0.04] custom-scrollbar p-1">
+                          <div className="absolute top-[calc(100%+4px)] left-0 right-0 max-h-60 overflow-y-auto bg-plt-base border border-plt-border rounded-xl shadow-2xl z-50 divide-y divide-plt-border-soft custom-scrollbar p-1">
                             {filteredTickers.map((t) => {
                               const clean = t.symbol.replace('.CA', '').toUpperCase();
                               const priceNum = t.price || 0;
@@ -879,11 +879,11 @@ export default function QuickAddDrawer({
                                     setIsTickerSelected(true);
                                     setIsTickerDropdownOpen(false);
                                   }}
-                                  className="w-full px-2.5 py-2 hover:bg-white/[0.08] active:bg-white/[0.12] rounded-lg flex items-center justify-between transition-colors text-left rtl:text-right cursor-pointer gap-2.5"
+                                  className="w-full px-2.5 py-2 hover:bg-plt-hover active:bg-plt-active rounded-lg flex items-center justify-between transition-colors text-left rtl:text-right cursor-pointer gap-2.5"
                                 >
                                   {/* Left: small logo + 2-row text info */}
                                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                    <div className="w-7 h-7 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                    <div className="w-7 h-7 rounded-full bg-plt-active border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
                                       {t.logoUrl ? (
                                         <img
                                           src={t.logoUrl}
@@ -894,24 +894,24 @@ export default function QuickAddDrawer({
                                           }}
                                         />
                                       ) : (
-                                        <span className="text-[10px] font-bold text-white/80 font-sans">
+                                        <span className="text-[10px] font-bold text-plt-text font-sans">
                                           {clean.slice(0, 2)}
                                         </span>
                                       )}
                                     </div>
 
                                     <div className="min-w-0 flex flex-col flex-1">
-                                      <span className="font-medium text-white text-xs truncate font-sans leading-tight" title={t.companyName}>
+                                      <span className="font-medium text-plt-text text-xs truncate font-sans leading-tight" title={t.companyName}>
                                         {t.companyName || clean}
                                       </span>
                                       <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-white bg-white/10 border border-white/15 tabular-nums font-sans shrink-0 leading-tight">
+                                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-plt-text bg-plt-active border border-plt-border tabular-nums font-sans shrink-0 leading-tight">
                                           {clean}
                                         </span>
                                         {t.sector && (
                                           <>
-                                            <span className="text-[10px] text-white/30 shrink-0">•</span>
-                                            <span className="text-[10px] text-white/50 truncate font-sans">
+                                            <span className="text-[10px] text-plt-faint shrink-0">•</span>
+                                            <span className="text-[10px] text-plt-muted truncate font-sans">
                                               {t.sector}
                                             </span>
                                           </>
@@ -924,9 +924,9 @@ export default function QuickAddDrawer({
                                   <div className="flex flex-col items-end shrink-0 pl-2 rtl:pl-0 rtl:pr-2 font-sans tabular-nums text-right rtl:text-left">
                                     {priceNum > 0 ? (
                                       <>
-                                        <span className="text-xs font-semibold text-white">
+                                        <span className="text-xs font-semibold text-plt-text">
                                           {priceNum.toFixed(2)}{' '}
-                                          <span className="text-[10px] text-white/40 font-normal">
+                                          <span className="text-[10px] text-plt-faint font-normal">
                                             {t.currency === 'EGP' && locale === 'ar' ? 'ج.م' : t.currency || 'EGP'}
                                           </span>
                                         </span>
@@ -941,7 +941,7 @@ export default function QuickAddDrawer({
                                         )}
                                       </>
                                     ) : (
-                                      <span className="text-xs text-white/30 font-medium">—</span>
+                                      <span className="text-xs text-plt-faint font-medium">—</span>
                                     )}
                                   </div>
                                 </button>
@@ -1022,11 +1022,11 @@ export default function QuickAddDrawer({
                           {locale === 'ar' ? 'خطوة: 0.10' : 'Step: 0.10'}
                         </span>
                       </div>
-                      <div className="flex items-center rounded-lg border border-white/10 bg-black overflow-hidden focus-within:border-white/25 transition-colors">
+                      <div className="flex items-center rounded-lg border border-plt-border bg-plt-base overflow-hidden focus-within:border-plt-border-active transition-colors">
                         <button
                           type="button"
                           onClick={() => adjustPrice(-0.1)}
-                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-r border-white/10 rtl:border-r-0 rtl:border-l"
+                          className="w-9 h-9 flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-hover active:bg-plt-active transition-colors shrink-0 cursor-pointer border-r border-plt-border rtl:border-r-0 rtl:border-l"
                           title={locale === 'ar' ? 'إنقاص السعر 0.10' : 'Decrease price by 0.10'}
                           aria-label="Decrease price"
                         >
@@ -1040,15 +1040,15 @@ export default function QuickAddDrawer({
                           placeholder="0.00"
                           value={positionPrice}
                           onChange={(e) => setPositionPrice(e.target.value)}
-                          className="flex-1 min-w-0 bg-transparent text-center font-sans font-semibold text-sm text-white px-2 py-2 focus:outline-none tabular-nums"
+                          className="flex-1 min-w-0 bg-transparent text-center font-sans font-semibold text-sm text-plt-text px-2 py-2 focus:outline-none tabular-nums"
                         />
-                        <span className="text-[11px] font-medium text-text-muted px-1 shrink-0 font-sans select-none">
+                        <span className="text-[11px] font-medium text-plt-muted px-1 shrink-0 font-sans select-none">
                           {locale === 'ar' ? 'ج.م' : 'EGP'}
                         </span>
                         <button
                           type="button"
                           onClick={() => adjustPrice(0.1)}
-                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-l border-white/10 rtl:border-l-0 rtl:border-r"
+                          className="w-9 h-9 flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-hover active:bg-plt-active transition-colors shrink-0 cursor-pointer border-l border-plt-border rtl:border-l-0 rtl:border-r"
                           title={locale === 'ar' ? 'زيادة السعر 0.10' : 'Increase price by 0.10'}
                           aria-label="Increase price"
                         >
@@ -1061,15 +1061,15 @@ export default function QuickAddDrawer({
                     <div className="drawer-form-field">
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="field-label mb-0">{locale === 'ar' ? 'الكمية (أسهم) *' : 'Quantity (Shares) *'}</label>
-                        <span className="text-[10px] text-text-muted font-sans tabular-nums">
+                        <span className="text-[10px] text-plt-muted font-sans tabular-nums">
                           {locale === 'ar' ? 'خطوة: 10' : 'Step: 10'}
                         </span>
                       </div>
-                      <div className="flex items-center rounded-lg border border-white/10 bg-black overflow-hidden focus-within:border-white/25 transition-colors">
+                      <div className="flex items-center rounded-lg border border-plt-border bg-plt-base overflow-hidden focus-within:border-plt-border-active transition-colors">
                         <button
                           type="button"
                           onClick={() => adjustQty(-10)}
-                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-r border-white/10 rtl:border-r-0 rtl:border-l"
+                          className="w-9 h-9 flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-hover active:bg-plt-active transition-colors shrink-0 cursor-pointer border-r border-plt-border rtl:border-r-0 rtl:border-l"
                           title={locale === 'ar' ? 'إنقاص الكمية 10' : 'Decrease shares by 10'}
                           aria-label="Decrease shares"
                         >
@@ -1083,15 +1083,15 @@ export default function QuickAddDrawer({
                           placeholder="100"
                           value={positionQty}
                           onChange={(e) => setPositionQty(e.target.value)}
-                          className="flex-1 min-w-0 bg-transparent text-center font-sans font-semibold text-sm text-white px-2 py-2 focus:outline-none tabular-nums"
+                          className="flex-1 min-w-0 bg-transparent text-center font-sans font-semibold text-sm text-plt-text px-2 py-2 focus:outline-none tabular-nums"
                         />
-                        <span className="text-[11px] font-medium text-text-muted px-1 shrink-0 font-sans select-none">
+                        <span className="text-[11px] font-medium text-plt-muted px-1 shrink-0 font-sans select-none">
                           {locale === 'ar' ? 'سهم' : 'Shares'}
                         </span>
                         <button
                           type="button"
                           onClick={() => adjustQty(10)}
-                          className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] transition-colors shrink-0 cursor-pointer border-l border-white/10 rtl:border-l-0 rtl:border-r"
+                          className="w-9 h-9 flex items-center justify-center text-plt-muted hover:text-plt-text hover:bg-plt-hover active:bg-plt-active transition-colors shrink-0 cursor-pointer border-l border-plt-border rtl:border-l-0 rtl:border-r"
                           title={locale === 'ar' ? 'زيادة الكمية 10' : 'Increase shares by 10'}
                           aria-label="Increase shares"
                         >
@@ -1105,7 +1105,7 @@ export default function QuickAddDrawer({
                             key={lot}
                             type="button"
                             onClick={() => addQtyPreset(lot)}
-                            className="flex-1 py-1 px-1.5 text-[10px] font-semibold text-text-muted hover:text-white bg-white/[0.03] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/[0.08] rounded transition-all tabular-nums font-sans cursor-pointer text-center"
+                            className="flex-1 py-1 px-1.5 text-[10px] font-semibold text-plt-muted hover:text-plt-text bg-plt-hover hover:bg-plt-active active:bg-plt-active border border-plt-border-soft rounded transition-all tabular-nums font-sans cursor-pointer text-center"
                           >
                             +{lot}
                           </button>
@@ -1165,7 +1165,7 @@ export default function QuickAddDrawer({
       {showSuccessModal && addedPosition && (
         <div
           key="thndr-position-success-overlay"
-          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-plt-overlay backdrop-blur-md"
           onClick={() => {
             setShowSuccessModal(false);
             onClose();
@@ -1177,7 +1177,7 @@ export default function QuickAddDrawer({
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm bg-black border border-white/15 rounded-2xl p-6 text-center shadow-2xl overflow-hidden"
+            className="relative w-full max-w-sm bg-plt-base border border-plt-border rounded-2xl p-6 text-center shadow-2xl overflow-hidden"
           >
             {/* Subtle Thndr yellow top accent */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-1 bg-[#FFE500]/60 blur-sm rounded-full" />
@@ -1189,7 +1189,7 @@ export default function QuickAddDrawer({
                 setShowSuccessModal(false);
                 onClose();
               }}
-              className="absolute top-4 right-4 rtl:right-auto rtl:left-4 p-1.5 text-text-muted hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+              className="absolute top-4 right-4 rtl:right-auto rtl:left-4 p-1.5 text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-lg transition-colors cursor-pointer"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
@@ -1201,50 +1201,50 @@ export default function QuickAddDrawer({
             </div>
 
             {/* Title & Subtitle */}
-            <h3 className="text-base font-bold text-white mb-1 font-sans">
+            <h3 className="text-base font-bold text-plt-text mb-1 font-sans">
               {locale === 'ar' ? 'تمت إضافة الصفقة بنجاح' : 'Position Added'}
             </h3>
-            <p className="text-xs text-text-muted leading-relaxed mb-5 font-sans">
+            <p className="text-xs text-plt-muted leading-relaxed mb-5 font-sans">
               {locale === 'ar'
                 ? `تم تسجيل صفقة ${addedPosition.symbol} في محفظتك. يمكنك الآن الانتقال لتنفيذ الأمر عبر ثاندر.`
                 : `Your position for ${addedPosition.symbol} has been recorded in your portfolio. You can now place the order on Thndr.`}
             </p>
 
             {/* Position Details Card */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3.5 mb-5 text-start font-sans">
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.06]">
+            <div className="bg-plt-hover border border-plt-border rounded-xl p-3.5 mb-5 text-start font-sans">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-plt-border-soft">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-xs font-bold text-white bg-white/10 border border-white/15 tabular-nums">
+                  <span className="px-2 py-0.5 rounded text-xs font-bold text-plt-text bg-plt-active border border-plt-border tabular-nums">
                     {addedPosition.symbol}
                   </span>
-                  <span className="text-xs text-text-muted truncate max-w-[140px]">
+                  <span className="text-xs text-plt-muted truncate max-w-[140px]">
                     {addedPosition.accountName}
                   </span>
                 </div>
-                <span className="text-[10px] text-text-muted tabular-nums">
+                <span className="text-[10px] text-plt-muted tabular-nums">
                   {addedPosition.date}
                 </span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <span className="block text-[10px] text-text-muted mb-0.5">
+                  <span className="block text-[10px] text-plt-muted mb-0.5">
                     {locale === 'ar' ? 'السعر' : 'Price'}
                   </span>
-                  <span className="text-xs font-semibold text-white tabular-nums">
+                  <span className="text-xs font-semibold text-plt-text tabular-nums">
                     {addedPosition.price.toFixed(2)}
                   </span>
                 </div>
                 <div>
-                  <span className="block text-[10px] text-text-muted mb-0.5">
+                  <span className="block text-[10px] text-plt-muted mb-0.5">
                     {locale === 'ar' ? 'الكمية' : 'Shares'}
                   </span>
-                  <span className="text-xs font-semibold text-white tabular-nums">
+                  <span className="text-xs font-semibold text-plt-text tabular-nums">
                     {addedPosition.quantity.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="block text-[10px] text-text-muted mb-0.5">
+                  <span className="block text-[10px] text-plt-muted mb-0.5">
                     {locale === 'ar' ? 'الإجمالي' : 'Total'}
                   </span>
                   <span className="text-xs font-bold text-emerald-400 tabular-nums">
@@ -1287,7 +1287,7 @@ export default function QuickAddDrawer({
                   setShowSuccessModal(false);
                   onClose();
                 }}
-                className="w-full py-2.5 px-4 text-xs font-medium text-text-muted hover:text-white hover:bg-white/[0.04] rounded-xl transition-colors cursor-pointer border border-transparent hover:border-white/10"
+                className="w-full py-2.5 px-4 text-xs font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover rounded-xl transition-colors cursor-pointer border border-transparent hover:border-plt-border"
               >
                 {locale === 'ar' ? 'البقاء في تكنال' : 'Stay in Ticknal'}
               </button>

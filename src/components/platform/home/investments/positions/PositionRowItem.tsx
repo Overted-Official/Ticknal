@@ -53,7 +53,7 @@ export default function PositionRowItem({
           onTickerClick(order);
         }
       }}
-      className={`py-2.5 px-1.5 flex items-center justify-between hover:bg-surface-active/30 transition-colors group cursor-pointer border-b border-border-subtle/80 outline-none select-none ${
+      className={`py-2.5 px-1.5 flex items-center justify-between hover:bg-plt-hover transition-colors group cursor-pointer border-b border-plt-border-soft outline-none select-none ${
         isSell ? 'bg-rose-500/[0.03]' : isBuy ? 'bg-emerald-500/[0.02]' : ''
       }`}
     >
@@ -85,7 +85,7 @@ export default function PositionRowItem({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="text-[13px] font-medium text-text-primary truncate group-hover:text-brand-blue transition-colors">
+            <span className="text-[13px] font-medium text-plt-text truncate group-hover:text-brand-blue transition-colors">
               {order.companyName || cleanSymbol}
             </span>
           </div>
@@ -94,7 +94,7 @@ export default function PositionRowItem({
             <span className="badge-symbol">
               {cleanSymbol}
             </span>
-            <span className="text-[11px] text-text-muted font-normal truncate">
+            <span className="text-[11px] text-plt-muted font-normal truncate">
               · {order.quantity.toLocaleString(isArabic ? 'ar-EG' : 'en-US')} {isArabic ? 'سهم' : 'shares'}
               {showDetails ? ` @ ${order.entryPrice.toFixed(2)} ${order.currency === '£' && isArabic ? 'ج.م' : order.currency}` : ''}
             </span>
@@ -105,12 +105,12 @@ export default function PositionRowItem({
       {/* Right: Value + P/L Metrics + Dynamic Action Status Button */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 pl-1.5 sm:pl-2 rtl:pl-0 rtl:pr-1.5 sm:rtl:pr-2">
         <div className="text-right rtl:text-left flex flex-col items-end rtl:items-start">
-          <div className="text-[13px] font-semibold text-text-primary tabular-nums">
+          <div className="text-[13px] font-semibold text-plt-text tabular-nums">
             {formatMoney(positionVal, false, order.currency)}
           </div>
           <div className="text-[11px] font-medium tabular-nums text-right rtl:text-left mt-0.5 flex items-center justify-end rtl:justify-start gap-1.5 whitespace-nowrap">
-            <span className="text-text-muted">{weightPct.toFixed(1)}%</span>
-            <span className="text-text-faint">·</span>
+            <span className="text-plt-muted">{weightPct.toFixed(1)}%</span>
+            <span className="text-plt-faint">·</span>
             <span
               className={`font-semibold ${
                 isPositive ? 'text-profit-chart' : 'text-loss-chart'
@@ -159,7 +159,7 @@ export default function PositionRowItem({
                 e.stopPropagation();
                 onTickerClick(order);
               }}
-              className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-medium transition-all cursor-pointer shadow-xs bg-white/[0.04] text-zinc-300 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+              className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-medium transition-all cursor-pointer shadow-xs bg-plt-hover text-plt-subtle border border-plt-border hover:border-plt-border-active hover:bg-plt-active hover:text-plt-text"
               title={isArabic ? 'مركز نشط - عرض التفاصيل' : 'Active position - View details'}
             >
               {isArabic ? 'احتفاظ' : 'Hold'}

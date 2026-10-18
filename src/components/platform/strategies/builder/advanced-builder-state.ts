@@ -16,9 +16,13 @@ export type AdvancedNodeMoveDirection = 'up' | 'down';
 const DEFAULT_PARAMETERS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   'market-input': { series: 'ohlcv' },
   parameter: { value: '1' },
-  indicator: { period: '14' },
+  'execution-policy': { fillPolicy: 'next-session-open', shareSizing: 'fractional' },
+  indicator: {},
   'weighted-composite': { normalization: 'zeroToHundred' },
   transform: { method: 'ema', period: '3' },
+  formula: { aliases: '[]', registers: '[{"key":"value","expression":"0"}]', outputKey: 'value' },
+  'formula-output': { outputKey: 'value' },
+  'rbf-model': { model: '' },
   'rolling-statistic': { operation: 'mean', period: '20' },
   'math-operation': { operation: 'add' },
   condition: { operator: 'crossesAbove', compareMode: 'value', compareValue: '0' },
@@ -52,6 +56,27 @@ export function createAdvancedNodeFromTemplate(
     outputName: toOutputName(id),
     connections: [],
     parameters: { ...(DEFAULT_PARAMETERS[template.id] ?? {}) },
+  };
+}
+
+export function createAdvancedIndicatorNode(
+  indicator: StrategyBuilderIndicatorOption,
+  id: string,
+): AdvancedStrategyNode {
+  const template = ADVANCED_BLOCK_TEMPLATES.find((candidate) => candidate.id === 'indicator');
+  if (!template) throw new Error('Advanced indicator template is unavailable');
+  const node = createAdvancedNodeFromTemplate(template, id);
+  const numericOutputs = indicator.outputs.filter((output) => output.kind === 'number');
+  return {
+    ...node,
+    customName: indicator.name,
+    parameters: {
+      indicatorId: indicator.id,
+      indicatorName: indicator.name,
+      indicatorBacklogId: indicator.backlogId,
+      ...Object.fromEntries(Object.entries(indicator.defaultParameters).filter(([, value]) => ['string', 'number', 'boolean'].includes(typeof value)).map(([key, value]) => [key, String(value)])),
+      ...(numericOutputs.length === 1 ? { outputKey: numericOutputs[0].key } : {}),
+    },
   };
 }
 

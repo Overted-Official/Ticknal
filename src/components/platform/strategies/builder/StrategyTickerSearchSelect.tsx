@@ -136,7 +136,7 @@ function TickerLogoAvatar({
   if (logoUrl && !imgError) {
     return (
       <div
-        className="rounded-full bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center shrink-0 p-0.5"
+        className="rounded-full bg-plt-active border border-plt-border overflow-hidden flex items-center justify-center shrink-0 p-0.5"
         style={{ width: size, height: size }}
       >
         <img
@@ -152,7 +152,7 @@ function TickerLogoAvatar({
 
   return (
     <div
-      className="rounded-full bg-white/10 border border-white/15 flex items-center justify-center shrink-0 text-white/80 font-sans font-bold"
+      className="rounded-full bg-plt-active border border-plt-border flex items-center justify-center shrink-0 text-plt-subtle font-sans font-bold"
       style={{ width: size, height: size, fontSize: Math.max(9, Math.round(size * 0.38)) }}
     >
       {symbol.slice(0, 2).toUpperCase()}
@@ -288,10 +288,10 @@ export default function StrategyTickerSearchSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={isAr ? 'اختر السهم' : 'Select ticker'}
-        className={`flex h-10 w-56 sm:w-64 cursor-pointer items-center justify-between gap-2.5 rounded-xl border bg-black px-3 font-sans transition-all outline-none ${
+        className={`flex h-10 w-56 sm:w-64 cursor-pointer items-center justify-between gap-2.5 rounded-xl border bg-plt-base px-3 font-sans transition-all outline-none ${
           isOpen
-            ? 'border-white/30 ring-1 ring-white/10'
-            : 'border-plt-border hover:border-white/20'
+            ? 'border-plt-border ring-1 ring-plt-border'
+            : 'border-plt-border hover:border-plt-border-soft'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1 text-left rtl:text-right">
@@ -301,10 +301,10 @@ export default function StrategyTickerSearchSelect({
             size={24}
           />
           <div className="flex flex-col min-w-0 flex-1 leading-tight">
-            <span className="text-xs font-semibold text-white truncate font-sans">
+            <span className="text-xs font-semibold text-plt-text truncate font-sans">
               {selectedDisplayName}
             </span>
-            <span className="text-[10px] font-medium text-white/50 font-sans tabular-nums mt-0.5">
+            <span className="text-[10px] font-medium text-plt-muted font-sans tabular-nums mt-0.5">
               {selectedTicker.symbol}
             </span>
           </div>
@@ -312,8 +312,8 @@ export default function StrategyTickerSearchSelect({
 
         <ChevronDown
           size={14}
-          className={`shrink-0 text-white/40 transition-transform duration-150 ml-1 rtl:mr-1 ${
-            isOpen ? 'rotate-180 text-white' : ''
+          className={`shrink-0 text-plt-faint transition-transform duration-150 ml-1 rtl:mr-1 ${
+            isOpen ? 'rotate-180 text-plt-text' : ''
           }`}
         />
       </button>
@@ -323,13 +323,13 @@ export default function StrategyTickerSearchSelect({
         <div
           role="listbox"
           aria-label={isAr ? 'قائمة الأسهم' : 'Tickers list'}
-          className="absolute end-0 top-full z-50 mt-1.5 w-72 sm:w-80 rounded-xl border border-white/15 bg-black p-2 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-100 space-y-1.5"
+          className="absolute end-0 top-full z-50 mt-1.5 w-72 sm:w-80 rounded-xl border border-plt-border bg-plt-base p-2 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-100 space-y-1.5"
         >
           {/* Search field */}
           <div className="relative flex items-center">
             <Search
               size={13}
-              className="absolute start-2.5 text-white/40 pointer-events-none"
+              className="absolute start-2.5 text-plt-faint pointer-events-none"
             />
             <input
               ref={searchInputRef}
@@ -337,13 +337,13 @@ export default function StrategyTickerSearchSelect({
               placeholder={isAr ? 'ابحث عن سهم أو اسم شركة...' : 'Search ticker or company name...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-8 w-full bg-white/[0.05] border border-white/10 rounded-lg ps-8 pe-7 text-xs font-sans text-white placeholder:text-white/40 focus:outline-none focus:border-white/30"
+              className="h-8 w-full bg-plt-hover border border-plt-border rounded-lg ps-8 pe-7 text-xs font-sans text-plt-text placeholder:text-plt-faint focus:outline-none focus:border-plt-border"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute end-2 p-1 text-white/40 hover:text-white cursor-pointer"
+                className="absolute end-2 p-1 text-plt-faint hover:text-plt-text cursor-pointer"
                 aria-label={isAr ? 'مسح البحث' : 'Clear search'}
               >
                 <X size={12} />
@@ -354,7 +354,7 @@ export default function StrategyTickerSearchSelect({
           {/* List of Tickers */}
           <div className="max-h-60 overflow-y-auto space-y-0.5 custom-scrollbar pr-0.5">
             {filteredTickers.length === 0 ? (
-              <div className="py-6 text-center text-xs text-white/40 font-sans">
+              <div className="py-6 text-center text-xs text-plt-faint font-sans">
                 {isAr ? `لا توجد أسهم مطابقة لـ "${searchTerm}"` : `No stocks matching "${searchTerm}"`}
               </div>
             ) : (
@@ -374,8 +374,8 @@ export default function StrategyTickerSearchSelect({
                     }}
                     className={`w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left rtl:text-right transition-colors cursor-pointer ${
                       isSelected
-                        ? 'bg-white/10 border border-white/15'
-                        : 'hover:bg-white/[0.06] text-white/80 hover:text-white'
+                        ? 'bg-plt-active border border-plt-border'
+                        : 'hover:bg-plt-hover text-plt-subtle hover:text-plt-text'
                     }`}
                   >
                     {/* circular Logo   Full name
@@ -388,10 +388,10 @@ export default function StrategyTickerSearchSelect({
                       />
 
                       <div className="flex flex-col min-w-0 flex-1 leading-tight">
-                        <span className="text-xs font-semibold text-white truncate font-sans">
+                        <span className="text-xs font-semibold text-plt-text truncate font-sans">
                           {displayName}
                         </span>
-                        <span className="text-[10px] font-medium text-white/50 font-sans tabular-nums mt-0.5">
+                        <span className="text-[10px] font-medium text-plt-muted font-sans tabular-nums mt-0.5">
                           {item.symbol}
                         </span>
                       </div>
@@ -407,7 +407,7 @@ export default function StrategyTickerSearchSelect({
           </div>
 
           {/* Footer count */}
-          <div className="pt-1.5 px-1 border-t border-white/[0.08] flex items-center justify-between text-[10px] text-white/40 font-sans">
+          <div className="pt-1.5 px-1 border-t border-plt-border-soft flex items-center justify-between text-[10px] text-plt-faint font-sans">
             <span>
               {filteredTickers.length} {isAr ? 'سهم متاح' : `stock${filteredTickers.length !== 1 ? 's' : ''}`}
             </span>

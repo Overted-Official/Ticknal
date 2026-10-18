@@ -46,19 +46,19 @@ export default function LanguagePreferencesCard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 pb-2">
         <div className="flex items-start gap-4 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center text-white shrink-0 mt-0.5">
+          <div className="w-10 h-10 rounded-full bg-plt-hover flex items-center justify-center text-plt-text shrink-0 mt-0.5">
             <Globe size={18} />
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+              <h2 className="text-sm sm:text-base font-bold text-plt-text tracking-tight">
                 {t('settings.languageTitle')}
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-brand-blue/15 text-brand-blue">
                 {locale === 'ar' ? 'العربية نشطة' : 'ENGLISH ACTIVE'}
               </span>
             </div>
-            <p className="text-xs text-text-muted mt-1 leading-relaxed">
+            <p className="text-xs text-plt-muted mt-1 leading-relaxed">
               {t('settings.languageSubtitle')}
             </p>
           </div>
@@ -75,19 +75,19 @@ export default function LanguagePreferencesCard() {
               key={lang.id}
               type="button"
               onClick={() => handleLanguageChange(lang.id)}
-              className={`group relative text-start p-4 rounded-xl border transition-all duration-150 cursor-pointer select-none bg-black ${
+              className={`group relative text-start p-4 rounded-xl border transition-all duration-150 cursor-pointer select-none bg-plt-base ${
                 isSelected
                   ? 'border-brand-blue/60 shadow-[0_0_20px_rgba(59,130,246,0.12)]'
-                  : 'border-white/10 hover:border-white/20 hover:bg-white/[0.02]'
+                  : 'border-plt-border hover:border-plt-border-strong hover:bg-plt-hover'
               }`}
             >
               {/* Top Row: Native Name & Active Indicator */}
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-base font-bold text-white tracking-tight">
+                  <span className="text-base font-bold text-plt-text tracking-tight">
                     {lang.nativeName}
                   </span>
-                  <span className="text-[11px] text-text-muted">
+                  <span className="text-[11px] text-plt-muted">
                     ({lang.name})
                   </span>
                 </div>
@@ -96,7 +96,7 @@ export default function LanguagePreferencesCard() {
                   className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-colors ${
                     isSelected
                       ? 'bg-brand-blue border-brand-blue text-white'
-                      : 'border-white/20 bg-transparent text-transparent'
+                      : 'border-plt-border bg-transparent text-transparent'
                   }`}
                 >
                   <Check size={12} strokeWidth={2.5} />
@@ -104,16 +104,16 @@ export default function LanguagePreferencesCard() {
               </div>
 
               {/* Description */}
-              <p className="text-xs text-text-muted leading-relaxed mb-3">
+              <p className="text-xs text-plt-muted leading-relaxed mb-3">
                 {lang.description}
               </p>
 
               {/* Badges footer */}
-              <div className="flex items-center gap-2 pt-1 border-t border-white/[0.06]">
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-white/[0.05] text-zinc-300">
+              <div className="flex items-center gap-2 pt-1 border-t border-plt-border">
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-plt-hover text-plt-subtle">
                   {lang.fontBadge}
                 </span>
-                <span className="text-[10px] text-text-muted">
+                <span className="text-[10px] text-plt-muted">
                   {lang.id === 'ar' ? 'RTL Layout (من اليمين لليسار)' : 'LTR Layout (Left-to-Right)'}
                 </span>
               </div>

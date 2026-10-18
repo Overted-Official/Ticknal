@@ -1,8 +1,8 @@
 import { db } from '@/db';
 import { dailyPrices, signalNotifications, tickers } from '@/db/schema';
 import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
-import { normalizeTickerSymbol, type PriceBar } from '@/strategies/PSI/psiStrategy';
-import { STRATEGIES, getStrategyBadge } from '@/strategies/registry';
+import { normalizeTickerSymbol, type PriceBar } from '@/strategies/Typhon/typhonStrategy';
+import { STRATEGIES, getStrategyBadge, normalizeStrategyId } from '@/strategies/registry';
 import {
   analyzeStrategy,
   analyzeTickerChampion,
@@ -13,7 +13,7 @@ import {
 import { isSignalEligibleEquity } from '@/lib/finance/signal-universe';
 import { unstable_cache } from 'next/cache';
 
-const SIGNAL_PIPELINE_VERSION = 'canonical-champion-concurrent-2026-09-28';
+const SIGNAL_PIPELINE_VERSION = 'canonical-champion-typhon-cerberus-hydra-2026-10-17';
 const DEFAULT_START_DATE = '2025-01-01';
 const MAX_INDEXED_CANDIDATES = 120;
 const CHAMPION_ANALYSIS_CONCURRENCY = 8;
@@ -66,10 +66,10 @@ const inFlightPromises = new Map<string, Promise<OpportunitySignal[]>>();
 const MEM_CACHE_TTL = 30 * 60 * 1000;
 
 function strategyScopeToIds(strategyScope: string): StrategyId[] {
-  if (strategyScope === 'psi') return ['psi'];
-  if (strategyScope === 'psi_v2') return ['psi_v2'];
+  if (strategyScope === 'typhon' || strategyScope === 'typhoon' || strategyScope === 'psi') return ['typhon'];
+  if (strategyScope === 'cerberus' || strategyScope === 'cerbrus' || strategyScope === 'psi_v2' || strategyScope === 'psiv2') return ['cerberus'];
   if (strategyScope === 'hydra') return ['hydra'];
-  return ['psi', 'psi_v2', 'hydra'];
+  return ['typhon', 'cerberus', 'hydra'];
 }
 
 type IndexedSignal = {
@@ -205,7 +205,7 @@ async function getIndexedSignals(
         metrics: signalNotifications.metrics,
       })
       .from(signalNotifications)
-      .where(and(signalCondition, inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .where(and(signalCondition, inArray(signalNotifications.strategy, ['typhon', 'cerberus', 'hydra', 'psi', 'psi_v2']), gte(signalNotifications.signalDate, oldestRecentDate)))
       .orderBy(desc(signalNotifications.signalDate))
       .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
   } catch {
@@ -218,14 +218,14 @@ async function getIndexedSignals(
         signal: signalNotifications.signal,
       })
       .from(signalNotifications)
-      .where(and(signalCondition, inArray(signalNotifications.strategy, ['psi', 'psi_v2', 'hydra']), gte(signalNotifications.signalDate, oldestRecentDate)))
+      .where(and(signalCondition, inArray(signalNotifications.strategy, ['typhon', 'cerberus', 'hydra', 'psi', 'psi_v2']), gte(signalNotifications.signalDate, oldestRecentDate)))
       .orderBy(desc(signalNotifications.signalDate))
       .limit(MAX_INDEXED_CANDIDATES * 4) as typeof rows;
   }
 
   const latestByStrategy = new Map<string, IndexedSignal>();
   for (const row of rows) {
-    const strategyId = String(row.strategy) as StrategyId;
+    const strategyId = normalizeStrategyId(String(row.strategy)) as StrategyId;
     const signalDate = toSignalDate(row.signalDate);
     const symbol = normalizeTickerSymbol(String(row.tickerSymbol));
     if (!symbol || !allowedStrategies.has(strategyId) || !recentMarketDates.has(signalDate)) continue;
@@ -298,9 +298,7 @@ export async function _getRecentOpportunities(
             volume: dailyPrices.volume,
           })
           .from(dailyPrices)
-          .where(championOnly
-            ? and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, '2024-01-01'))
-            : and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, DEFAULT_START_DATE)))
+          .where(and(inArray(dailyPrices.tickerSymbol, candidateSymbols), gte(dailyPrices.date, '2023-01-01')))
           .orderBy(dailyPrices.tickerSymbol, dailyPrices.date)
         : [];
 

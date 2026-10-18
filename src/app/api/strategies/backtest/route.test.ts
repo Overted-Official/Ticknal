@@ -52,7 +52,7 @@ describe('POST /api/strategies/backtest', () => {
 
   it('rejects invalid and oversized input before any backtest starts', async () => {
     const invalid = await POST(request(JSON.stringify({ ...payload, symbols: [] })));
-    const oversized = await POST(request(JSON.stringify({ ...payload, extra: 'x'.repeat(40_000) })));
+    const oversized = await POST(request(JSON.stringify({ ...payload, extra: 'x'.repeat(300_000) })));
     expect(invalid.status).toBe(400);
     expect(oversized.status).toBe(413);
     expect(runUniverse).not.toHaveBeenCalled();
