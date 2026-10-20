@@ -71,7 +71,16 @@ export default function InvestorFlowSection({
       const hmNet = typeof h.hotMoneyNet === 'number' ? h.hotMoneyNet : fNet + aNet;
       const hmBuy = typeof h.hotMoneyBuy === 'number' ? h.hotMoneyBuy : Number(h.foreignBuy || 0) + Number(h.arabBuy || 0);
       const hmSell = typeof h.hotMoneySell === 'number' ? h.hotMoneySell : Number(h.foreignSell || 0) + Number(h.arabSell || 0);
-      const hmShare = typeof h.hotMoneySharePct === 'number' ? h.hotMoneySharePct : Math.round((Number(h.foreignSharePct || 0) + Number(h.arabSharePct || 0)) * 10) / 10;
+
+      // Defense-in-depth: clamp shares strictly >= 0 and normalize to exactly 100%
+      let rawE = Math.max(0, Number(h.egyptianSharePct || 0));
+      let rawA = Math.max(0, Number(h.arabSharePct || 0));
+      let rawF = Math.max(0, Number(h.foreignSharePct || 0));
+      const totalSum = rawE + rawA + rawF || 100;
+      const eShare = Math.round((rawE / totalSum) * 1000) / 10;
+      const aShare = Math.round((rawA / totalSum) * 1000) / 10;
+      const fShare = Math.max(0, Math.round((100 - eShare - aShare) * 10) / 10);
+      const hmShare = Math.round((fShare + aShare) * 10) / 10;
 
       return {
         ...h,
@@ -82,6 +91,9 @@ export default function InvestorFlowSection({
         hotMoneyBuy: hmBuy,
         hotMoneySell: hmSell,
         hotMoneySharePct: hmShare,
+        egyptianSharePct: eShare,
+        arabSharePct: aShare,
+        foreignSharePct: fShare,
       };
     });
   }, [data?.history]);
@@ -436,6 +448,7 @@ export default function InvestorFlowSection({
                   orientation="right"
                   domain={[0, 100]}
                   ticks={[0, 25, 50, 75, 100]}
+                  allowDataOverflow={false}
                   width={56}
                   stroke="#262626"
                   tickLine={false}

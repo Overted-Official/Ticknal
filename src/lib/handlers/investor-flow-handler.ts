@@ -210,16 +210,16 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       runningForeignNet += fNet;
       runningHotMoneyNet += hmNet;
 
-      // Participation volume shares
-      const eTotal = eBuy + eSell;
-      const aTotal = aBuy + aSell;
-      const fTotal = fBuy + fSell;
-      const grandTotal = eTotal + aTotal + fTotal || 1;
+      // Participation volume shares (strictly non-negative and normalized to 100%)
+      const safeE = Math.max(0, eBuy) + Math.max(0, eSell);
+      const safeA = Math.max(0, aBuy) + Math.max(0, aSell);
+      const safeF = Math.max(0, fBuy) + Math.max(0, fSell);
+      const grandTotal = safeE + safeA + safeF || 1;
 
-      const eShare = Math.round((eTotal / grandTotal) * 1000) / 10;
-      const aShare = Math.round((aTotal / grandTotal) * 1000) / 10;
-      const fShare = Math.max(0, Math.round((100 - eShare - aShare) * 10) / 10);
-      const hmShare = Math.round((fShare + aShare) * 10) / 10;
+      const eShare = Math.min(100, Math.max(0, Math.round((safeE / grandTotal) * 1000) / 10));
+      const aShare = Math.min(100 - eShare, Math.max(0, Math.round((safeA / grandTotal) * 1000) / 10));
+      const fShare = Math.min(100, Math.max(0, Math.round((100 - eShare - aShare) * 10) / 10));
+      const hmShare = Math.min(100, Math.max(0, Math.round((fShare + aShare) * 10) / 10));
 
       const dateStr = typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().split('T')[0];
 
