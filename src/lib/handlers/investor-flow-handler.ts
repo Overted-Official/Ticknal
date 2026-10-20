@@ -86,8 +86,9 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     else if (horizon === '1Y') limit = 250;
     else if (horizon === 'ALL') limit = 1000;
 
+    const turnoverThreshold = segment === 'BONDS' ? 0 : 10000000;
     const validFlowFilter = and(
-      sql`total_turnover::numeric >= 10000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`,
+      sql`total_turnover::numeric >= ${turnoverThreshold} AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`,
       eq(egxInvestorFlows.marketSegment, segment)
     );
 

@@ -432,7 +432,7 @@ export default function InvestorFlowSection({
                 ))}
               </div>
             </div>
-          ) : normalizedHistory.length < 2 ? (
+          ) : normalizedHistory.length === 0 ? (
             <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
               {locale === 'ar' ? 'لا توجد بيانات متاحة لتدفقات هذا السوق في الإطار الزمني المحدد.' : 'No investor flow history available for this market segment.'}
             </div>
