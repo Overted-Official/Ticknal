@@ -142,40 +142,46 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
     }
 
     // 3. Fetch live CBKD (London GDR) and spot gold from TradingView
-    let londonGdrUsd = 2.255;
+    let londonGdrUsd = 2.30;
     let comexGoldUsd = saghaQuote.globalOunceUsd || 4140.84;
+    let cbkdPeriods: any[] = [];
 
     try {
       const client = new TradingView.Client();
-      const getTvPrice = (sym: string): Promise<number> =>
+      const getTvData = (sym: string, range = 2): Promise<any[]> =>
         new Promise((resolve) => {
           const chart = new client.Session.Chart();
-          chart.setMarket(sym, { timeframe: 'D', range: 2 });
+          chart.setMarket(sym, { timeframe: 'D', range });
           const timeout = setTimeout(() => {
             chart.delete();
-            resolve(0);
-          }, 3500);
+            resolve([]);
+          }, 4500);
           chart.onUpdate(() => {
             clearTimeout(timeout);
             const p = chart.periods;
             chart.delete();
-            resolve(p && p.length > 0 ? Number(p[p.length - 1].close) : 0);
+            resolve(p && p.length > 0 ? p : []);
           });
           chart.onError(() => {
             clearTimeout(timeout);
             chart.delete();
-            resolve(0);
+            resolve([]);
           });
         });
 
-      const [liveGdr, liveGold] = await Promise.all([
-        getTvPrice('CBKD'),
-        getTvPrice('COMEX:GC1!'),
+      const [cbkdResult, goldResult] = await Promise.all([
+        getTvData('CBKD', 250),
+        getTvData('COMEX:GC1!', 2),
       ]);
       client.end();
 
-      if (liveGdr > 0) londonGdrUsd = liveGdr;
-      if (liveGold > 0) comexGoldUsd = liveGold;
+      if (cbkdResult.length > 0) {
+        cbkdPeriods = cbkdResult;
+        londonGdrUsd = Number(cbkdResult[0].close);
+      }
+      if (!saghaQuote.globalOunceUsd && goldResult.length > 0) {
+        comexGoldUsd = Number(goldResult[0].close);
+      }
     } catch (tvErr) {
       console.warn('TradingView fetch fallback in fx-fair-value:', tvErr);
     }
@@ -271,23 +277,46 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
       comiMap.set(String(c.date).slice(0, 10), Number(c.close));
     }
 
+    const cbkdMap = new Map<string, number>();
+    for (const p of cbkdPeriods) {
+      const d = new Date(p.time * 1000).toISOString().slice(0, 10);
+      cbkdMap.set(d, Number(p.close));
+    }
+
     // Base multipliers between current official USD and proxies
     const usdtRatio = usdtRate / officialUsd;
-    const gdrRatio = gdrImpliedRate / officialUsd;
     const goldRatio = goldImpliedRate / officialUsd;
+    const gdrRatio = gdrImpliedRate / officialUsd;
 
     const sortedUsdFull = [...usdRows].reverse();
+    let lastComiClose = cairoComi;
+    let lastCbkdClose = londonGdrUsd;
+
     const history: FxHistoryItem[] = sortedUsdFull.map((r, i, arr) => {
       const isLatest = i === arr.length - 1;
       const date = String(r.date).slice(0, 10);
       const u = Number(r.close);
-      const cClose = comiMap.get(date);
 
-      const gdr = isLatest
-        ? gdrImpliedRate
-        : (cClose && londonGdrUsd > 0
-            ? Number((cClose / londonGdrUsd).toFixed(2))
-            : Number((u * gdrRatio).toFixed(2)));
+      // Forward fill on non-trading days/holidays to prevent needle drops
+      if (comiMap.has(date)) {
+        lastComiClose = comiMap.get(date)!;
+      }
+      if (cbkdMap.has(date)) {
+        lastCbkdClose = cbkdMap.get(date)!;
+      }
+
+      let gdr: number;
+      if (isLatest) {
+        gdr = gdrImpliedRate;
+      } else if (lastComiClose > 0 && lastCbkdClose > 0) {
+        gdr = Number((lastComiClose / lastCbkdClose).toFixed(2));
+        // Sanity guard against unadjusted stock splits or outlier quotes
+        if (gdr < u * 0.85 || gdr > u * 1.25) {
+          gdr = Number((u * gdrRatio).toFixed(2));
+        }
+      } else {
+        gdr = Number((u * gdrRatio).toFixed(2));
+      }
 
       const usdt = isLatest ? usdtRate : Number((u * usdtRatio).toFixed(2));
       const gold = isLatest ? goldImpliedRate : Number((u * goldRatio).toFixed(2));
