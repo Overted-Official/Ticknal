@@ -9,6 +9,7 @@ import {
   TrendingDown,
   Coins,
   Sparkles,
+  Flame,
   Globe,
   ArrowUpRight,
   ArrowDownRight,
@@ -198,12 +199,30 @@ export default function MarketOverviewSection({
   const forPct = Math.max(0, 100 - egyPct - arabPct);
 
   const isDaily = timeframe === '1D';
-  const netForeignValue = isDaily
-    ? (flowsData?.summary?.foreignNetToday ?? 0)
-    : (flowsData?.summary?.cumulativeForeignNet ?? flowsData?.summary?.foreignNetToday ?? 0);
 
-  const foreignNetFormatted = useMemo(() => {
-    const val = netForeignValue;
+  const hotMoneyNetToday = typeof flowsData?.summary?.hotMoneyNetToday === 'number'
+    ? flowsData.summary.hotMoneyNetToday
+    : (flowsData?.summary?.foreignNetToday ?? 0) + (flowsData?.summary?.arabNetToday ?? 0);
+
+  const cumulativeHotMoneyNet = useMemo(() => {
+    if (typeof flowsData?.summary?.cumulativeHotMoneyNet === 'number') {
+      return flowsData.summary.cumulativeHotMoneyNet;
+    }
+    if (flowsData?.history && flowsData.history.length > 0) {
+      return flowsData.history.reduce((sum, h) => {
+        const hm = typeof h.hotMoneyNet === 'number'
+          ? h.hotMoneyNet
+          : (Number(h.foreignNet || 0) + Number(h.arabNet || 0));
+        return sum + hm;
+      }, 0);
+    }
+    return hotMoneyNetToday;
+  }, [flowsData, hotMoneyNetToday]);
+
+  const netHotMoneyValue = isDaily ? hotMoneyNetToday : cumulativeHotMoneyNet;
+
+  const hotMoneyNetFormatted = useMemo(() => {
+    const val = netHotMoneyValue;
     const sign = val >= 0 ? '+' : '-';
     const absVal = Math.abs(val);
     if (absVal >= 1_000_000_000) {
@@ -212,7 +231,22 @@ export default function MarketOverviewSection({
     }
     const num = (absVal / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     return `${sign}${num} ${locale === 'ar' ? 'م' : 'M'}`;
-  }, [netForeignValue, locale]);
+  }, [netHotMoneyValue, locale]);
+
+  const hotMoneySparklinePoints = useMemo(() => {
+    if (!flowsData?.history || flowsData.history.length < 2) return undefined;
+    let running = 0;
+    return flowsData.history.map((h) => {
+      if (typeof h.cumulativeHotMoneyNet === 'number') {
+        return h.cumulativeHotMoneyNet;
+      }
+      const hm = typeof h.hotMoneyNet === 'number'
+        ? h.hotMoneyNet
+        : (Number(h.foreignNet || 0) + Number(h.arabNet || 0));
+      running += hm;
+      return running;
+    });
+  }, [flowsData?.history]);
 
   // 7. 5 Canonical KPI Card Specifications
   const kpiCards: KPICardProps[] = [
@@ -294,27 +328,25 @@ export default function MarketOverviewSection({
       targetId: 'major-indices',
     },
     {
-      id: 'net-foreign-inflow',
-      title: locale === 'ar' ? 'صافي تدفقات الأجانب' : 'Net Foreign Inflow',
-      shortTitle: locale === 'ar' ? 'صافي الأجانب' : 'Foreign Net',
-      icon: Globe,
-      iconBgClass: netForeignValue >= 0 ? 'bg-profit-chart/20 text-profit-num' : 'bg-loss-chart/20 text-loss-num',
-      iconColorClass: netForeignValue >= 0 ? 'text-profit-num' : 'text-loss-num',
-      value: foreignNetFormatted,
+      id: 'net-hot-money-inflow',
+      title: locale === 'ar' ? 'صافي الأموال الساخنة' : 'Hot Money Net Flow',
+      shortTitle: locale === 'ar' ? 'الأموال الساخنة' : 'Hot Money',
+      icon: Flame,
+      iconBgClass: netHotMoneyValue >= 0 ? 'bg-profit-chart/20 text-profit-num' : 'bg-loss-chart/20 text-loss-num',
+      iconColorClass: netHotMoneyValue >= 0 ? 'text-profit-num' : 'text-loss-num',
+      value: hotMoneyNetFormatted,
       unit: locale === 'ar' ? 'صافي ج.م' : 'EGP NET',
       changeText: isDaily
-        ? (netForeignValue >= 0
-            ? (locale === 'ar' ? 'تدفقات أجنبية واردة' : 'Foreign Inflow')
-            : (locale === 'ar' ? 'تدفقات أجنبية خارجة' : 'Foreign Outflow'))
-        : (netForeignValue >= 0
+        ? (netHotMoneyValue >= 0
+            ? (locale === 'ar' ? 'تدفقات ساخنة واردة' : 'Hot Money Inflow')
+            : (locale === 'ar' ? 'تدفقات ساخنة خارجة' : 'Hot Money Outflow'))
+        : (netHotMoneyValue >= 0
             ? (locale === 'ar' ? 'صافي تدفق وارد' : 'Net Cumulative Inflow')
             : (locale === 'ar' ? 'صافي تدفق خارج' : 'Net Cumulative Outflow')),
-      changeColorClass: netForeignValue >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: locale === 'ar' ? `إطار ${timeframe}` : `${timeframe} Horizon`,
-      sparklinePoints: flowsData?.history && flowsData.history.length >= 2
-        ? flowsData.history.map((h) => h.cumulativeForeignNet)
-        : undefined,
-      sparklineTrend: netForeignValue >= 0 ? 'up' : 'down',
+      changeColorClass: netHotMoneyValue >= 0 ? 'text-profit-num' : 'text-loss-num',
+      metaText: locale === 'ar' ? `أجانب + عرب • إطار ${timeframe}` : `Foreigners + Arabs • ${timeframe}`,
+      sparklinePoints: hotMoneySparklinePoints,
+      sparklineTrend: netHotMoneyValue >= 0 ? 'up' : 'down',
       showSparkline: true,
       targetId: 'investor-flows',
     },
