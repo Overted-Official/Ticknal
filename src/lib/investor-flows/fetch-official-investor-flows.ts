@@ -34,6 +34,14 @@ export interface VerifiedSessionFlow {
   foreignSharePct: number;
   parseMethod: ParsedOfficialInvestorFlow['parseMethod'];
   sourceUrl: string;
+  retailSharePct?: number | null;
+  instSharePct?: number | null;
+  egyptianRetailNet?: number | null;
+  arabRetailNet?: number | null;
+  foreignRetailNet?: number | null;
+  egyptianInstNet?: number | null;
+  arabInstNet?: number | null;
+  foreignInstNet?: number | null;
 }
 
 export interface InvestorFlowRowValues {
@@ -77,6 +85,14 @@ export function selectVerifiedSession(candidates: OfficialFlowCandidate[]): Veri
     foreignSharePct: p.foreignSharePct!,
     parseMethod: p.parseMethod,
     sourceUrl: best.sourceUrl,
+    retailSharePct: p.retailSharePct ?? null,
+    instSharePct: p.instSharePct ?? null,
+    egyptianRetailNet: p.egyptianRetailNet ?? null,
+    arabRetailNet: p.arabRetailNet ?? null,
+    foreignRetailNet: p.foreignRetailNet ?? null,
+    egyptianInstNet: p.egyptianInstNet ?? null,
+    arabInstNet: p.arabInstNet ?? null,
+    foreignInstNet: p.foreignInstNet ?? null,
   };
 }
 

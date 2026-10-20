@@ -1,4 +1,5 @@
 export interface ParsedOfficialInvestorFlow {
+  marketSegment: 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS';
   /** Reported nationality turnover shares (null when the article doesn't publish them). */
   egyptianSharePct: number | null;
   arabSharePct: number | null;
@@ -9,6 +10,20 @@ export interface ParsedOfficialInvestorFlow {
   reportedTurnover?: number;
   isClosingReport: boolean;
   parseMethod: 'DIRECT_TOTALS' | 'DIRECT_TOTALS_INFERRED' | 'RETAIL_PLUS_INST' | 'RETAIL_PLUS_INST_INFERRED';
+
+  // Category volume shares
+  retailSharePct?: number | null;
+  instSharePct?: number | null;
+
+  // Retail breakdown
+  egyptianRetailNet?: number | null;
+  arabRetailNet?: number | null;
+  foreignRetailNet?: number | null;
+
+  // Institutional breakdown
+  egyptianInstNet?: number | null;
+  arabInstNet?: number | null;
+  foreignInstNet?: number | null;
 }
 
 type Nat = 'EG' | 'AR' | 'FR';
@@ -316,6 +331,33 @@ function parseReportedTurnover(norm: string, rawTitle: string): number | undefin
 }
 
 /**
+ * Extracts retail (individuals) vs institutional trading percentage shares.
+ */
+export function extractCategoryShares(norm: string): { retailSharePct: number; instSharePct: number } | null {
+  // Pattern 1: الأفراد على 75.9% ... مقابل 24.1% للمؤسسات
+  let m = norm.match(/(?:استحوذ\s+)?(?:المستثمرون\s+)?الافراد\s+علي\s+(\d+(?:\.\d+)?)\s*%\s*(?:من\s+اجمالي\s+التداولات)?[\s،,]*مقابل\s+(\d+(?:\.\d+)?)\s*%\s*للمؤسسات/);
+  if (m) {
+    const r = parseFloat(m[1]);
+    const i = parseFloat(m[2]);
+    if (r + i >= 98 && r + i <= 102) {
+      return { retailSharePct: r, instSharePct: i };
+    }
+  }
+
+  // Pattern 2: المؤسسات على 24.1% ... مقابل 75.9% للأفراد
+  m = norm.match(/(?:استحوذت\s+)?المؤسسات\s+علي\s+(\d+(?:\.\d+)?)\s*%\s*(?:من\s+اجمالي\s+التداولات)?[\s،,]*مقابل\s+(\d+(?:\.\d+)?)\s*%\s*(?:للمستثمرين\s+)?الافراد/);
+  if (m) {
+    const i = parseFloat(m[1]);
+    const r = parseFloat(m[2]);
+    if (r + i >= 98 && r + i <= 102) {
+      return { retailSharePct: r, instSharePct: i };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Main parser for an official EGX market report article.
  */
 export function parseOfficialInvestorFlowArticle(
@@ -333,6 +375,9 @@ export function parseOfficialInvestorFlowArticle(
   const isClosingReport = !isIntradayTitle && publishHour >= 14;
 
   const shares = parseNationalityShares(norm);
+  const categoryShares = extractCategoryShares(norm);
+  const retailSharePct = categoryShares?.retailSharePct ?? null;
+  const instSharePct = categoryShares?.instSharePct ?? null;
   const reportedTurnover = parseReportedTurnover(norm, rawTitle);
 
   // Locate where Retail ("الافراد") and Institutions ("المؤسسات") nationality sections start
@@ -355,6 +400,16 @@ export function parseOfficialInvestorFlowArticle(
       /(?:سجلت المؤسسات|اتجهت المؤسسات|وبلغت نسبه تداول المؤسسات|فيما سجلت المؤسسات|حققت المؤسسات)/
     );
     instIdx = instMatch?.index ?? -1;
+  }
+
+  // Pre-parse retail and institutional directional flows if sections are identified
+  let parsedRetailFlows: Partial<Record<Nat, number>> = {};
+  let parsedInstFlows: Partial<Record<Nat, number>> = {};
+  if (retailIdx >= 0 && instIdx >= 0) {
+    const retailEnd = instIdx > retailIdx ? instIdx : Math.min(norm.length, retailIdx + 450);
+    const instEnd = Math.min(norm.length, instIdx + 450);
+    parsedRetailFlows = parseDirectionalNatFlows(norm.slice(retailIdx, retailEnd));
+    parsedInstFlows = parseDirectionalNatFlows(norm.slice(instIdx, instEnd));
   }
 
   // Strategy 1: Direct total nationality flows (before retail/inst section, or entire flow paragraph)
@@ -382,12 +437,21 @@ export function parseOfficialInvestorFlowArticle(
         const arabNet = direct.AR!;
         const foreignNet = direct.FR!;
         return {
+          marketSegment: 'STOCKS',
           egyptianSharePct: shares?.egyptianSharePct ?? null,
           arabSharePct: shares?.arabSharePct ?? null,
           foreignSharePct: shares?.foreignSharePct ?? null,
           egyptianNet: -(arabNet + foreignNet),
           arabNet,
           foreignNet,
+          retailSharePct,
+          instSharePct,
+          egyptianRetailNet: parsedRetailFlows.EG ?? null,
+          arabRetailNet: parsedRetailFlows.AR ?? null,
+          foreignRetailNet: parsedRetailFlows.FR ?? null,
+          egyptianInstNet: parsedInstFlows.EG ?? null,
+          arabInstNet: parsedInstFlows.AR ?? null,
+          foreignInstNet: parsedInstFlows.FR ?? null,
           reportedTurnover,
           isClosingReport,
           parseMethod: 'DIRECT_TOTALS',
@@ -402,12 +466,21 @@ export function parseOfficialInvestorFlowArticle(
         const vals = { ...direct } as Record<Nat, number>;
         vals[missing] = -known.reduce((acc, n) => acc + direct[n]!, 0);
         return {
+          marketSegment: 'STOCKS',
           egyptianSharePct: shares?.egyptianSharePct ?? null,
           arabSharePct: shares?.arabSharePct ?? null,
           foreignSharePct: shares?.foreignSharePct ?? null,
           egyptianNet: vals.EG,
           arabNet: vals.AR,
           foreignNet: vals.FR,
+          retailSharePct,
+          instSharePct,
+          egyptianRetailNet: parsedRetailFlows.EG ?? null,
+          arabRetailNet: parsedRetailFlows.AR ?? null,
+          foreignRetailNet: parsedRetailFlows.FR ?? null,
+          egyptianInstNet: parsedInstFlows.EG ?? null,
+          arabInstNet: parsedInstFlows.AR ?? null,
+          foreignInstNet: parsedInstFlows.FR ?? null,
           reportedTurnover,
           isClosingReport,
           parseMethod: 'DIRECT_TOTALS_INFERRED',
@@ -439,12 +512,21 @@ export function parseOfficialInvestorFlowArticle(
 
       if (Math.abs(sum) <= Math.max(75_000_000, maxAbs * 0.1)) {
         return {
+          marketSegment: 'STOCKS',
           egyptianSharePct: shares.egyptianSharePct,
           arabSharePct: shares.arabSharePct,
           foreignSharePct: shares.foreignSharePct,
           egyptianNet: -(rawAr + rawFr),
           arabNet: rawAr,
           foreignNet: rawFr,
+          retailSharePct,
+          instSharePct,
+          egyptianRetailNet: retailFlows.EG,
+          arabRetailNet: retailFlows.AR,
+          foreignRetailNet: retailFlows.FR,
+          egyptianInstNet: instFlows.EG,
+          arabInstNet: instFlows.AR,
+          foreignInstNet: instFlows.FR,
           reportedTurnover,
           isClosingReport,
           parseMethod: 'RETAIL_PLUS_INST',
@@ -461,12 +543,21 @@ export function parseOfficialInvestorFlowArticle(
         const arabNet = filled[1] + filled[4];
         const foreignNet = filled[2] + filled[5];
         return {
+          marketSegment: 'STOCKS',
           egyptianSharePct: shares.egyptianSharePct,
           arabSharePct: shares.arabSharePct,
           foreignSharePct: shares.foreignSharePct,
           egyptianNet: -(arabNet + foreignNet),
           arabNet,
           foreignNet,
+          retailSharePct,
+          instSharePct,
+          egyptianRetailNet: filled[0],
+          arabRetailNet: filled[1],
+          foreignRetailNet: filled[2],
+          egyptianInstNet: filled[3],
+          arabInstNet: filled[4],
+          foreignInstNet: filled[5],
           reportedTurnover,
           isClosingReport,
           parseMethod: 'RETAIL_PLUS_INST_INFERRED',

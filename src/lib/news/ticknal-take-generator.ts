@@ -312,7 +312,7 @@ export async function generateAllDailyTakes(
     .select()
     .from(egxInvestorFlows)
     .where(
-      sql`total_turnover::numeric >= 50000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6) AND date <= ${targetDate}`
+      sql`total_turnover::numeric >= 50000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6) AND date <= ${targetDate} AND market_segment = 'TOTAL'`
     )
     .orderBy(desc(egxInvestorFlows.date))
     .limit(30);

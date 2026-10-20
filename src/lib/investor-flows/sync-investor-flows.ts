@@ -51,6 +51,7 @@ export async function syncDailyInvestorFlows(options?: {
       .insert(egxInvestorFlows)
       .values({
         date: dateStr,
+        marketSegment: 'TOTAL',
         egyptianBuy: String(m.egyptianBuy),
         egyptianSell: String(m.egyptianSell),
         egyptianNet: String(m.egyptianNet),
@@ -63,7 +64,7 @@ export async function syncDailyInvestorFlows(options?: {
         totalTurnover: String(totalTurnover),
       })
       .onConflictDoUpdate({
-        target: egxInvestorFlows.date,
+        target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
         set: {
           egyptianBuy: String(m.egyptianBuy),
           egyptianSell: String(m.egyptianSell),
@@ -274,34 +275,62 @@ export async function syncDailyInvestorFlows(options?: {
     };
   }
 
+  const commonValues = {
+    egyptianBuy: String(row.egyptianBuy),
+    egyptianSell: String(row.egyptianSell),
+    egyptianNet: String(row.egyptianNet),
+    arabBuy: String(row.arabBuy),
+    arabSell: String(row.arabSell),
+    arabNet: String(row.arabNet),
+    foreignBuy: String(row.foreignBuy),
+    foreignSell: String(row.foreignSell),
+    foreignNet: String(row.foreignNet),
+    totalTurnover: String(realTurnover),
+    retailSharePct: verifiedSession.retailSharePct ? String(verifiedSession.retailSharePct) : null,
+    instSharePct: verifiedSession.instSharePct ? String(verifiedSession.instSharePct) : null,
+    egyptianRetailNet: verifiedSession.egyptianRetailNet ? String(verifiedSession.egyptianRetailNet) : null,
+    arabRetailNet: verifiedSession.arabRetailNet ? String(verifiedSession.arabRetailNet) : null,
+    foreignRetailNet: verifiedSession.foreignRetailNet ? String(verifiedSession.foreignRetailNet) : null,
+    egyptianInstNet: verifiedSession.egyptianInstNet ? String(verifiedSession.egyptianInstNet) : null,
+    arabInstNet: verifiedSession.arabInstNet ? String(verifiedSession.arabInstNet) : null,
+    foreignInstNet: verifiedSession.foreignInstNet ? String(verifiedSession.foreignInstNet) : null,
+  };
+
+  // Upsert STOCKS row
   await db
     .insert(egxInvestorFlows)
     .values({
       date: dateStr,
-      egyptianBuy: String(row.egyptianBuy),
-      egyptianSell: String(row.egyptianSell),
-      egyptianNet: String(row.egyptianNet),
-      arabBuy: String(row.arabBuy),
-      arabSell: String(row.arabSell),
-      arabNet: String(row.arabNet),
-      foreignBuy: String(row.foreignBuy),
-      foreignSell: String(row.foreignSell),
-      foreignNet: String(row.foreignNet),
-      totalTurnover: String(realTurnover),
+      marketSegment: 'STOCKS',
+      ...commonValues,
     })
     .onConflictDoUpdate({
-      target: egxInvestorFlows.date,
+      target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
       set: {
-        egyptianBuy: String(row.egyptianBuy),
-        egyptianSell: String(row.egyptianSell),
-        egyptianNet: String(row.egyptianNet),
-        arabBuy: String(row.arabBuy),
-        arabSell: String(row.arabSell),
-        arabNet: String(row.arabNet),
-        foreignBuy: String(row.foreignBuy),
-        foreignSell: String(row.foreignSell),
-        foreignNet: String(row.foreignNet),
-        totalTurnover: String(realTurnover),
+        ...commonValues,
+        updatedAt: new Date(),
+      },
+    });
+
+  // Also upsert TOTAL row (unless already populated with comprehensive debt bulletin)
+  await db
+    .insert(egxInvestorFlows)
+    .values({
+      date: dateStr,
+      marketSegment: 'TOTAL',
+      ...commonValues,
+    })
+    .onConflictDoUpdate({
+      target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
+      set: {
+        retailSharePct: commonValues.retailSharePct,
+        instSharePct: commonValues.instSharePct,
+        egyptianRetailNet: commonValues.egyptianRetailNet,
+        arabRetailNet: commonValues.arabRetailNet,
+        foreignRetailNet: commonValues.foreignRetailNet,
+        egyptianInstNet: commonValues.egyptianInstNet,
+        arabInstNet: commonValues.arabInstNet,
+        foreignInstNet: commonValues.foreignInstNet,
         updatedAt: new Date(),
       },
     });

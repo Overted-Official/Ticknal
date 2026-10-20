@@ -368,7 +368,15 @@ export const macroObservations = pgTable('macro_observations', {
 
 export const egxInvestorFlows = pgTable('egx_investor_flows', {
   id: serial('id').primaryKey(),
-  date: date('date').notNull().unique(), // stored as YYYY-MM-DD
+  date: date('date').notNull(), // stored as YYYY-MM-DD
+  marketSegment: varchar('market_segment', { length: 20 }).default('TOTAL').notNull(), // 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS'
+
+  // Category volume shares
+  retailSharePct: numeric('retail_share_pct', { precision: 5, scale: 2 }),
+  instSharePct: numeric('inst_share_pct', { precision: 5, scale: 2 }),
+  totalTurnover: numeric('total_turnover', { precision: 16, scale: 2 }).default('0').notNull(),
+
+  // Totals by Nationality
   egyptianBuy: numeric('egyptian_buy', { precision: 16, scale: 2 }).default('0').notNull(),
   egyptianSell: numeric('egyptian_sell', { precision: 16, scale: 2 }).default('0').notNull(),
   egyptianNet: numeric('egyptian_net', { precision: 16, scale: 2 }).default('0').notNull(),
@@ -378,12 +386,36 @@ export const egxInvestorFlows = pgTable('egx_investor_flows', {
   foreignBuy: numeric('foreign_buy', { precision: 16, scale: 2 }).default('0').notNull(),
   foreignSell: numeric('foreign_sell', { precision: 16, scale: 2 }).default('0').notNull(),
   foreignNet: numeric('foreign_net', { precision: 16, scale: 2 }).default('0').notNull(),
-  totalTurnover: numeric('total_turnover', { precision: 16, scale: 2 }).default('0').notNull(),
+
+  // Retail (Individuals) Breakdown
+  egyptianRetailBuy: numeric('egyptian_retail_buy', { precision: 16, scale: 2 }),
+  egyptianRetailSell: numeric('egyptian_retail_sell', { precision: 16, scale: 2 }),
+  egyptianRetailNet: numeric('egyptian_retail_net', { precision: 16, scale: 2 }),
+  arabRetailBuy: numeric('arab_retail_buy', { precision: 16, scale: 2 }),
+  arabRetailSell: numeric('arab_retail_sell', { precision: 16, scale: 2 }),
+  arabRetailNet: numeric('arab_retail_net', { precision: 16, scale: 2 }),
+  foreignRetailBuy: numeric('foreign_retail_buy', { precision: 16, scale: 2 }),
+  foreignRetailSell: numeric('foreign_retail_sell', { precision: 16, scale: 2 }),
+  foreignRetailNet: numeric('foreign_retail_net', { precision: 16, scale: 2 }),
+
+  // Institutional Breakdown
+  egyptianInstBuy: numeric('egyptian_inst_buy', { precision: 16, scale: 2 }),
+  egyptianInstSell: numeric('egyptian_inst_sell', { precision: 16, scale: 2 }),
+  egyptianInstNet: numeric('egyptian_inst_net', { precision: 16, scale: 2 }),
+  arabInstBuy: numeric('arab_inst_buy', { precision: 16, scale: 2 }),
+  arabInstSell: numeric('arab_inst_sell', { precision: 16, scale: 2 }),
+  arabInstNet: numeric('arab_inst_net', { precision: 16, scale: 2 }),
+  foreignInstBuy: numeric('foreign_inst_buy', { precision: 16, scale: 2 }),
+  foreignInstSell: numeric('foreign_inst_sell', { precision: 16, scale: 2 }),
+  foreignInstNet: numeric('foreign_inst_net', { precision: 16, scale: 2 }),
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {
   return {
+    dateSegmentUnique: unique('egx_investor_flows_date_segment_unique').on(table.date, table.marketSegment),
     dateIdx: index('egx_investor_flows_date_idx').on(table.date),
+    segmentIdx: index('egx_investor_flows_segment_idx').on(table.marketSegment),
   };
 });
 

@@ -6,6 +6,9 @@ import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows
 
 export interface InvestorFlowDailyItem {
   date: string;
+  marketSegment: 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS';
+  retailSharePct: number | null;
+  instSharePct: number | null;
   egyptianBuy: number;
   egyptianSell: number;
   egyptianNet: number;
@@ -25,11 +28,23 @@ export interface InvestorFlowDailyItem {
   foreignSharePct: number;
   cumulativeForeignNet: number;
   cumulativeHotMoneyNet: number;
+  retailLegs?: {
+    egyptianNet: number | null;
+    arabNet: number | null;
+    foreignNet: number | null;
+  };
+  instLegs?: {
+    egyptianNet: number | null;
+    arabNet: number | null;
+    foreignNet: number | null;
+  };
 }
 
 export interface InvestorFlowsResponse {
   summary: {
     latestDate: string;
+    marketSegment: 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS';
+    activeCategory: 'TOTAL' | 'INSTITUTIONS' | 'RETAIL';
     foreignNetToday: number;
     egyptianNetToday: number;
     arabNetToday: number;
@@ -39,6 +54,8 @@ export interface InvestorFlowsResponse {
     arabShareToday: number;
     hotMoneyShareToday: number;
     totalTurnoverToday: number;
+    retailShareToday: number | null;
+    instShareToday: number | null;
     cumulativeForeignNet: number;
     cumulativeHotMoneyNet: number;
     foreignTrend: 'BUYING' | 'SELLING' | 'NEUTRAL';
@@ -50,6 +67,17 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
   try {
     const { searchParams } = new URL(request.url);
     const horizon = searchParams.get('horizon') || '1M'; // 1M, 3M, 6M, YTD, 1Y, ALL
+    const rawSegment = (searchParams.get('segment') || 'TOTAL').toUpperCase();
+    const segment = (['TOTAL', 'STOCKS', 'BONDS', 'BILLS'].includes(rawSegment) ? rawSegment : 'TOTAL') as
+      | 'TOTAL'
+      | 'STOCKS'
+      | 'BONDS'
+      | 'BILLS';
+    const rawCategory = (searchParams.get('category') || 'TOTAL').toUpperCase();
+    const category = (['TOTAL', 'INSTITUTIONS', 'RETAIL'].includes(rawCategory) ? rawCategory : 'TOTAL') as
+      | 'TOTAL'
+      | 'INSTITUTIONS'
+      | 'RETAIL';
 
     let limit = 22;
     if (horizon === '3M') limit = 66;
@@ -58,7 +86,10 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     else if (horizon === '1Y') limit = 250;
     else if (horizon === 'ALL') limit = 1000;
 
-    const validFlowFilter = sql`total_turnover::numeric >= 50000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`;
+    const validFlowFilter = and(
+      sql`total_turnover::numeric >= 10000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`,
+      eq(egxInvestorFlows.marketSegment, segment)
+    );
 
     let rows = await db
       .select()
@@ -104,6 +135,8 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       return NextResponse.json({
         summary: {
           latestDate: new Date().toISOString().split('T')[0],
+          marketSegment: segment,
+          activeCategory: category,
           foreignNetToday: 0,
           egyptianNetToday: 0,
           arabNetToday: 0,
@@ -113,6 +146,8 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
           arabShareToday: 0,
           hotMoneyShareToday: 0,
           totalTurnoverToday: 0,
+          retailShareToday: null,
+          instShareToday: null,
           cumulativeForeignNet: 0,
           cumulativeHotMoneyNet: 0,
           foreignTrend: 'NEUTRAL',
@@ -129,17 +164,43 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     const history: InvestorFlowDailyItem[] = [];
 
     for (const r of rows) {
-      const eBuy = Number(r.egyptianBuy);
-      const eSell = Number(r.egyptianSell);
-      const eNet = Number(r.egyptianNet);
+      // Pick values according to requested category (TOTAL, INSTITUTIONS, or RETAIL)
+      let eNet = Number(r.egyptianNet);
+      let aNet = Number(r.arabNet);
+      let fNet = Number(r.foreignNet);
 
-      const aBuy = Number(r.arabBuy);
-      const aSell = Number(r.arabSell);
-      const aNet = Number(r.arabNet);
+      let eBuy = Number(r.egyptianBuy);
+      let eSell = Number(r.egyptianSell);
+      let aBuy = Number(r.arabBuy);
+      let aSell = Number(r.arabSell);
+      let fBuy = Number(r.foreignBuy);
+      let fSell = Number(r.foreignSell);
 
-      const fBuy = Number(r.foreignBuy);
-      const fSell = Number(r.foreignSell);
-      const fNet = Number(r.foreignNet);
+      if (category === 'INSTITUTIONS') {
+        if (r.egyptianInstNet !== null && r.egyptianInstNet !== undefined) {
+          eNet = Number(r.egyptianInstNet);
+          aNet = Number(r.arabInstNet ?? 0);
+          fNet = Number(r.foreignInstNet ?? 0);
+          eBuy = Number(r.egyptianInstBuy ?? Math.max(0, -eNet));
+          eSell = Number(r.egyptianInstSell ?? Math.max(0, eNet));
+          aBuy = Number(r.arabInstBuy ?? Math.max(0, aNet));
+          aSell = Number(r.arabInstSell ?? Math.max(0, -aNet));
+          fBuy = Number(r.foreignInstBuy ?? Math.max(0, fNet));
+          fSell = Number(r.foreignInstSell ?? Math.max(0, -fNet));
+        }
+      } else if (category === 'RETAIL') {
+        if (r.egyptianRetailNet !== null && r.egyptianRetailNet !== undefined) {
+          eNet = Number(r.egyptianRetailNet);
+          aNet = Number(r.arabRetailNet ?? 0);
+          fNet = Number(r.foreignRetailNet ?? 0);
+          eBuy = Number(r.egyptianRetailBuy ?? Math.max(0, -eNet));
+          eSell = Number(r.egyptianRetailSell ?? Math.max(0, eNet));
+          aBuy = Number(r.arabRetailBuy ?? Math.max(0, aNet));
+          aSell = Number(r.arabRetailSell ?? Math.max(0, -aNet));
+          fBuy = Number(r.foreignRetailBuy ?? Math.max(0, fNet));
+          fSell = Number(r.foreignRetailSell ?? Math.max(0, -fNet));
+        }
+      }
 
       const hmNet = fNet + aNet;
       const hmBuy = fBuy + aBuy;
@@ -149,7 +210,7 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       runningForeignNet += fNet;
       runningHotMoneyNet += hmNet;
 
-      // 100% Volume shares (Buy + Sell volume for each group divided by 2 * Turnover)
+      // Participation volume shares
       const eTotal = eBuy + eSell;
       const aTotal = aBuy + aSell;
       const fTotal = fBuy + fSell;
@@ -164,6 +225,9 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
 
       history.push({
         date: dateStr,
+        marketSegment: r.marketSegment as any,
+        retailSharePct: r.retailSharePct ? Number(r.retailSharePct) : null,
+        instSharePct: r.instSharePct ? Number(r.instSharePct) : null,
         egyptianBuy: eBuy,
         egyptianSell: eSell,
         egyptianNet: eNet,
@@ -183,6 +247,16 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
         foreignSharePct: fShare,
         cumulativeForeignNet: runningForeignNet,
         cumulativeHotMoneyNet: runningHotMoneyNet,
+        retailLegs: {
+          egyptianNet: r.egyptianRetailNet ? Number(r.egyptianRetailNet) : null,
+          arabNet: r.arabRetailNet ? Number(r.arabRetailNet) : null,
+          foreignNet: r.foreignRetailNet ? Number(r.foreignRetailNet) : null,
+        },
+        instLegs: {
+          egyptianNet: r.egyptianInstNet ? Number(r.egyptianInstNet) : null,
+          arabNet: r.arabInstNet ? Number(r.arabInstNet) : null,
+          foreignNet: r.foreignInstNet ? Number(r.foreignInstNet) : null,
+        },
       });
     }
 
@@ -192,6 +266,8 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     const payload: InvestorFlowsResponse = {
       summary: {
         latestDate: latest.date,
+        marketSegment: segment,
+        activeCategory: category,
         foreignNetToday: latest.foreignNet,
         egyptianNetToday: latest.egyptianNet,
         arabNetToday: latest.arabNet,
@@ -201,6 +277,8 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
         arabShareToday: latest.arabSharePct,
         hotMoneyShareToday: latest.hotMoneySharePct,
         totalTurnoverToday: latest.totalTurnover,
+        retailShareToday: latest.retailSharePct,
+        instShareToday: latest.instSharePct,
         cumulativeForeignNet: runningForeignNet,
         cumulativeHotMoneyNet: runningHotMoneyNet,
         foreignTrend: recentForeignSum > 50_000_000 ? 'BUYING' : recentForeignSum < -50_000_000 ? 'SELLING' : 'NEUTRAL',
@@ -209,7 +287,7 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     };
 
     return NextResponse.json(payload, {
-      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' },
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' },
     });
   } catch (error: any) {
     console.error('Error in handleInvestorFlowsGet:', error);
