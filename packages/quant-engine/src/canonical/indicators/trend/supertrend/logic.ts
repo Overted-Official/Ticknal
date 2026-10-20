@@ -1,9 +1,11 @@
 import type { CategoryIndicatorSpec } from "../../shared/category-definition";
-import { n, supertrend } from "../shared";
+import { n, supertrend, upperSeededSupertrend } from "../shared";
 
 type Parameters = Record<string, unknown>;
 
 const compute: CategoryIndicatorSpec<Parameters>["compute"] = (frame, p) =>
-  supertrend(frame, n(p, "period"), n(p, "multiplier"));
+  p.seedMode === 'upper-band-first'
+    ? upperSeededSupertrend(frame, n(p, 'period'), n(p, 'multiplier'))
+    : supertrend(frame, n(p, 'period'), n(p, 'multiplier'));
 
 export default compute;

@@ -34,7 +34,7 @@ interface UserDirectoryScreenerProps {
   onAccessChanged: (userId: string, enabled: boolean) => void;
 }
 
-function formatDate(iso: string | null) {
+function formatDate(iso: string | null | undefined) {
   if (!iso) return '—';
   try {
     const d = new Date(iso);
@@ -43,6 +43,39 @@ function formatDate(iso: string | null) {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+function formatTime(iso: string | null | undefined) {
+  if (!iso) return null;
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return null;
+  }
+}
+
+function formatDateTime(iso: string | null | undefined) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
     });
   } catch {
     return '—';
@@ -503,30 +536,35 @@ export default function UserDirectoryScreener({
                   Sign Up Date
                 </th>
 
-                {/* 6. Last Login / Usage */}
+                {/* 6. Last Active (App Opened) */}
                 <th className="py-2.5 px-3 text-left font-medium min-w-[130px]">
-                  Last Login/Usage
+                  Last Active
                 </th>
 
-                {/* 7. Member Status */}
-                <th className="py-2.5 px-3 text-left font-medium min-w-[150px]">Strategies</th>
+                {/* 7. Last Login (Auth) */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[130px]">
+                  Last Login
+                </th>
 
-                {/* 8. Member Status */}
+                {/* 8. Member Strategy Signals */}
+                <th className="py-2.5 px-3 text-left font-medium min-w-[140px]">Signals</th>
+
+                {/* 9. Member Status */}
                 <th className="py-2.5 px-3 text-center font-medium min-w-[100px]">
                   Status
                 </th>
 
-                {/* 8. Open Positions (Count) */}
+                {/* 10. Open Positions (Count) */}
                 <th className="py-2.5 px-3 text-center font-medium min-w-[110px]">
                   Open Positions
                 </th>
 
-                {/* 9. Open Exposure (Value) */}
+                {/* 11. Open Exposure (Value) */}
                 <th className="py-2.5 px-3 text-right font-medium min-w-[120px]">
                   Open Exposure
                 </th>
 
-                {/* 10. Actions */}
+                {/* 12. Actions */}
                 <th className="py-2.5 pr-4 pl-2 text-right font-medium w-20">
                   Action
                 </th>
@@ -535,7 +573,7 @@ export default function UserDirectoryScreener({
             <tbody className="divide-y divide-white/[0.06]">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-12 text-center text-zinc-400">
+                  <td colSpan={13} className="py-12 text-center text-zinc-400">
                     No members match your search or segment filter.
                   </td>
                 </tr>
@@ -633,14 +671,31 @@ export default function UserDirectoryScreener({
                         {formatDate(u.createdAt)}
                       </td>
 
-                      {/* 6. Last Login / Usage */}
+                      {/* 6. Last Active (App Opened) */}
                       <td className="py-3 px-3 text-zinc-300 tabular-nums">
-                        <div className="text-white text-[11px] font-medium">
+                        <div className="text-white text-[11px] font-medium" title={formatDateTime(u.lastActiveAt)}>
                           {formatDate(u.lastActiveAt)}
                         </div>
+                        {formatTime(u.lastActiveAt) && (
+                          <div className="text-zinc-400 text-[10px]">
+                            {formatTime(u.lastActiveAt)}
+                          </div>
+                        )}
                       </td>
 
-                      {/* 7. Member Status */}
+                      {/* 7. Last Login (Auth) */}
+                      <td className="py-3 px-3 text-zinc-300 tabular-nums">
+                        <div className="text-white text-[11px] font-medium" title={formatDateTime(u.lastSignInAt)}>
+                          {formatDate(u.lastSignInAt)}
+                        </div>
+                        {formatTime(u.lastSignInAt) && (
+                          <div className="text-zinc-400 text-[10px]">
+                            {formatTime(u.lastSignInAt)}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* 8. Signals Toggle */}
                       <td className="py-3 px-3" onClick={(event) => event.stopPropagation()}>
                         <ProprietaryAccessToggle userId={u.id} enabled={u.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} isOwner={isProprietaryOwner(u.email, u.role)} onChanged={onAccessChanged} compact />
                       </td>

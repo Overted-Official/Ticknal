@@ -179,6 +179,50 @@ export interface UsdEgpUpdateChartData {
   history20d?: FxHistoryPoint[];
 }
 
+export interface SnapshotIndexPoint {
+  close: number;
+  changePct: number;
+}
+
+export interface SnapshotFlowSplit {
+  /** Net across all segments (stocks + T-bills + others), EGP millions */
+  totalM: number;
+  /** Listed equities only, EGP millions */
+  stocksM: number;
+  /** Treasury bills only, EGP millions */
+  billsM: number;
+}
+
+export interface MarketSnapshotChartData {
+  date: string;
+  egx30: SnapshotIndexPoint;
+  egx70: SnapshotIndexPoint;
+  egx100: SnapshotIndexPoint;
+  /** Ascending EGX 30 closes (up to 20 sessions, ending at `date`) */
+  egx30History: Array<{ date: string; close: number }>;
+  /** Listed-equity turnover, EGP billions */
+  equityTurnoverBillion: number;
+  foreign: SnapshotFlowSplit;
+  arab: SnapshotFlowSplit;
+  egyptian: SnapshotFlowSplit;
+  /** Foreign + Arab cumulative net over the last 30 sessions, EGP millions */
+  hotMoney30dNetMillion: number;
+  hotMoney30dInflowDays: number;
+  hotMoney30dOutflowDays: number;
+  /** Official CBE USD/EGP close and 1-session change */
+  usdClose: number;
+  usdChangePct: number;
+  /** Ascending official USD/EGP closes (up to 15 sessions, ending at `date`) */
+  usdHistory: Array<{ date: string; close: number }>;
+  /** Ticknal composite fair value — only pass when it is genuinely as-of `date` */
+  usdFairValue?: number;
+  advancers: number;
+  decliners: number;
+  flat: number;
+  topGainer?: { ticker: string; changePct: number };
+  topLoser?: { ticker: string; changePct: number };
+}
+
 function svgShell(w: number, h: number, defs: string, body: string, ar: boolean = false): string {
   const fontFaceStyle = ar
     ? `<style>
@@ -197,7 +241,7 @@ function svgShell(w: number, h: number, defs: string, body: string, ar: boolean 
   const rootFont = ar
     ? "'Cairo',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
     : "system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="background:#000000;font-family:${rootFont};font-variant-numeric:tabular-nums;">
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"${ar ? ' dir="rtl"' : ''} style="background:#000000;font-family:${rootFont};font-variant-numeric:tabular-nums;">
   <defs>${fontFaceStyle}${defs}</defs>
   <rect width="${w}" height="${h}" fill="#000000" />
   ${body}
@@ -2143,6 +2187,368 @@ export function generateUsdEgpUpdateChartSvg(
   `;
 
   return toBase64Svg(svgShell(W, H, defs, body, ar));
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 6. DAILY MARKET SNAPSHOT — Wide (1200x675 16:9) & Square (1080x1080 1:1)
+ *    KPI strip (EGX 30 · USD/EGP · Foreign net · Breadth) + EGX trend,
+ *    investor flows, USD/EGP trend and breadth panels.
+ * ─────────────────────────────────────────────────────────────────────────── */
+export function generateMarketSnapshotChartSvg(
+  data: MarketSnapshotChartData,
+  locale: 'en' | 'ar' = 'en',
+  variant: ChartVariant = 'wide'
+): string {
+  const ar = locale === 'ar';
+  const isSquare = variant === 'square';
+  const W = isSquare ? 1080 : 1200;
+  const H = isSquare ? 1080 : 675;
+
+  type Box = { x: number; y: number; w: number; h: number };
+  type TextOpts = { size?: number; weight?: number; fill?: string; anchor?: 'start' | 'end' | 'middle'; raw?: boolean };
+
+  const defs: string[] = [];
+
+  // ── Formatting ────────────────────────────────────────────────────────────
+  const fmtNum = (n: number, d = 1) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtPct = (n: number) => `\u200E${n > 0 ? '+' : n < 0 ? '-' : ''}${Math.abs(n).toFixed(2)}%\u200E`;
+  const fmtMoney = (m: number, signed = true) => {
+    const s = signed ? (m > 0 ? '+' : m < 0 ? '-' : '') : '';
+    const abs = Math.abs(m);
+    if (abs >= 1000) return ar ? `\u200F${s}${(abs / 1000).toFixed(2)} مليار` : `${s}${(abs / 1000).toFixed(2)}B`;
+    return ar ? `\u200F${s}${abs.toFixed(1)} مليون` : `${s}${abs.toFixed(1)}M`;
+  };
+  const tone = (n: number) => (n > 0 ? GREEN : n < 0 ? RED : SOFT);
+  // USD/EGP rising means the pound is weakening → warning tone
+  const fxTone = (n: number) => (n > 0 ? AMBER : n < 0 ? GREEN : SOFT);
+
+  // ── RTL-aware primitives (charts stay left→right in both locales) ────────
+  const mirror = (b: Box): Box => (ar ? { ...b, x: W - b.x - b.w } : b);
+  const flipAnchor = (a: 'start' | 'end' | 'middle') => (ar ? (a === 'start' ? 'end' : a === 'end' ? 'start' : 'middle') : a);
+  const text = (x: number, y: number, s: string, o: TextOpts = {}) =>
+    `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" fill="${o.fill ?? '#ffffff'}" font-size="${o.size ?? 13}" font-weight="${o.weight ?? 600}" text-anchor="${o.anchor ?? 'start'}">${o.raw ? s : esc(s)}</text>`;
+  /** Text positioned from the panel's logical start edge (left in EN, right in AR). */
+  const lt = (b: Box, lx: number, ly: number, s: string, o: TextOpts = {}) =>
+    text(ar ? b.x + b.w - lx : b.x + lx, b.y + ly, s, { ...o, anchor: flipAnchor(o.anchor ?? 'start') });
+  const frame = (b: Box) =>
+    `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.2" />`;
+  const hline = (b: Box, ly: number, inset = 20) =>
+    `<line x1="${b.x + inset}" y1="${b.y + ly}" x2="${b.x + b.w - inset}" y2="${b.y + ly}" stroke="${LINE}" stroke-width="1" />`;
+  const panelTitle = (b: Box, title: string, aside?: string, asideFill: string = MUTED) =>
+    lt(b, 20, 32, title, { size: isSquare ? 16 : 15, weight: 700 }) +
+    (aside ? lt(b, b.w - 20, 32, aside, { size: 12.5, weight: 700, fill: asideFill, anchor: 'end' }) : '');
+
+  // ── Line chart (area + high/low markers + last point) ─────────────────────
+  const lineChart = (
+    gx: number,
+    gy: number,
+    w: number,
+    h: number,
+    series: Array<{ date: string; close: number }>,
+    color: string,
+    id: string,
+    decimals: number
+  ) => {
+    if (series.length < 2) {
+      return text(gx + w / 2, gy + h / 2, ar ? 'لا تتوفر بيانات كافية' : 'Not enough history', { size: 12, fill: MUTED, anchor: 'middle' });
+    }
+    const vals = series.map((p) => p.close);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const pad = (max - min) * 0.18 || max * 0.01 || 1;
+    const lo = min - pad;
+    const hi = max + pad;
+    const X = (i: number) => gx + (i * w) / (vals.length - 1);
+    const Y = (v: number) => gy + h - ((v - lo) / (hi - lo)) * h;
+    const pts = vals.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`);
+    defs.push(`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.22" /><stop offset="100%" stop-color="${color}" stop-opacity="0" /></linearGradient>`);
+    const area = `M ${X(0).toFixed(1)} ${(gy + h).toFixed(1)} L ${pts.join(' L ')} L ${X(vals.length - 1).toFixed(1)} ${(gy + h).toFixed(1)} Z`;
+    const iMax = vals.indexOf(max);
+    const iMin = vals.indexOf(min);
+    const edgeAnchor = (i: number): 'start' | 'end' | 'middle' => (X(i) < gx + 36 ? 'start' : X(i) > gx + w - 36 ? 'end' : 'middle');
+    const last = vals.length - 1;
+    const grid = [0, 0.5, 1]
+      .map((f) => `<line x1="${gx}" y1="${(gy + h * f).toFixed(1)}" x2="${gx + w}" y2="${(gy + h * f).toFixed(1)}" stroke="${GRID}" stroke-width="1" ${f === 0.5 ? 'stroke-dasharray="3 4"' : ''} />`)
+      .join('');
+    return `
+      ${grid}
+      <path d="${area}" fill="url(#${id})" />
+      <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="${X(iMax).toFixed(1)}" cy="${Y(max).toFixed(1)}" r="3" fill="#000000" stroke="${SOFT}" stroke-width="1.5" />
+      ${text(X(iMax), Y(max) - 9, fmtNum(max, decimals), { size: 11, fill: SOFT, anchor: edgeAnchor(iMax) })}
+      <circle cx="${X(iMin).toFixed(1)}" cy="${Y(min).toFixed(1)}" r="3" fill="#000000" stroke="${SOFT}" stroke-width="1.5" />
+      ${text(X(iMin), Y(min) + 18, fmtNum(min, decimals), { size: 11, fill: SOFT, anchor: edgeAnchor(iMin) })}
+      <circle cx="${X(last).toFixed(1)}" cy="${Y(vals[last]).toFixed(1)}" r="7" fill="${color}" fill-opacity="0.2" />
+      <circle cx="${X(last).toFixed(1)}" cy="${Y(vals[last]).toFixed(1)}" r="3.6" fill="${color}" />
+      ${text(gx, gy + h + 18, series[0].date.slice(5), { size: 11, fill: MUTED })}
+      ${text(gx + w, gy + h + 18, series[last].date.slice(5), { size: 11, fill: MUTED, anchor: 'end' })}`;
+  };
+
+  // ── Copy ──────────────────────────────────────────────────────────────────
+  const L = ar
+    ? {
+        pill: 'ملخص السوق',
+        title: 'الملخص اليومي للسوق',
+        subtitle: 'المؤشرات · تدفقات المستثمرين · الدولار · حركة الأسهم',
+        egx30: 'EGX 30',
+        usd: 'الدولار الرسمي · البنك المركزي',
+        hotMoney: 'صافي الأموال الساخنة',
+        breadth: 'حركة الأسهم',
+        turnover: (b: number) => `قيمة تداول الأسهم ${b.toFixed(2)} مليار جنيه`,
+        overPeriod: (p: string, n: number) => `${p} خلال ${n} جلسة`,
+        split: (s: string, bl: string) => `أسهم ${s} · أذون ${bl}`,
+        hotSplit: (f: string, a: string) => `أجانب ${f} · عرب ${a}`,
+        rose: (pct: number, total: number) => `صعود ${pct.toFixed(0)}% من ${total} سهماً`,
+        egxPanel: (n: number) => `EGX 30 · آخر ${n} جلسة`,
+        fromHigh: (p: string) => `${p} من القمة`,
+        flowsPanel: 'صافي التعاملات حسب الجنسية',
+        flowsAside: 'اليوم · جنيه',
+        foreign: 'الأجانب',
+        arab: 'العرب',
+        egyptian: 'المصريون',
+        hot30: 'الأموال الساخنة (أجانب + عرب) · 30 جلسة',
+        hotDays: (i: number, o: number) => `${i} جلسة دخول · ${o} جلسة خروج`,
+        usdPanel: (n: number) => `الدولار / الجنيه · آخر ${n} جلسة`,
+        fair: (v: number, sp: string) => `القيمة العادلة (تكنال) ${v.toFixed(2)} · فارق ${sp}`,
+        official: 'سعر الإغلاق الرسمي للبنك المركزي',
+        breadthPanel: 'حركة الأسهم',
+        ad: (r: string) => `${r}x صعود`,
+        up: 'صاعد',
+        flat: 'ثابت',
+        down: 'هابط',
+        topG: 'الأعلى ارتفاعاً',
+        topL: 'الأكثر تراجعاً',
+        footer: 'المصادر: البورصة المصرية والبنك المركزي · صافي التدفقات يشمل الأسهم وأذون الخزانة',
+      }
+    : {
+        pill: 'Market Snapshot',
+        title: 'Daily Market Snapshot',
+        subtitle: 'Indices · investor flows · USD/EGP · breadth',
+        egx30: 'EGX 30',
+        usd: 'USD/EGP · CBE official',
+        hotMoney: 'Hot money net · all markets',
+        breadth: 'Advancers / decliners',
+        turnover: (b: number) => `Equity turnover ${b.toFixed(2)}B EGP`,
+        overPeriod: (p: string, n: number) => `${p} over ${n} sessions`,
+        split: (s: string, bl: string) => `Stocks ${s} · T-bills ${bl}`,
+        hotSplit: (f: string, a: string) => `Foreign ${f} · Arab ${a}`,
+        rose: (pct: number, total: number) => `${pct.toFixed(0)}% of ${total} stocks rose`,
+        egxPanel: (n: number) => `EGX 30 · last ${n} sessions`,
+        fromHigh: (p: string) => `${p} from high`,
+        flowsPanel: 'Net flow by investor',
+        flowsAside: 'Today · EGP',
+        foreign: 'Foreigners',
+        arab: 'Arabs',
+        egyptian: 'Egyptians',
+        hot30: 'Hot money (foreign + Arab) · 30 sessions',
+        hotDays: (i: number, o: number) => `${i} inflow · ${o} outflow sessions`,
+        usdPanel: (n: number) => `USD/EGP · last ${n} sessions`,
+        fair: (v: number, sp: string) => `Ticknal fair value ${v.toFixed(2)} · spread ${sp}`,
+        official: 'Official CBE closing rate',
+        breadthPanel: 'Market breadth',
+        ad: (r: string) => `A/D ${r}x`,
+        up: 'up',
+        flat: 'flat',
+        down: 'down',
+        topG: 'Top gainer',
+        topL: 'Top decliner',
+        footer: 'Sources: EGX, CBE · Net flows include listed stocks and T-bills',
+      };
+
+  // ── Derived metrics ───────────────────────────────────────────────────────
+  const totalStocks = Math.max(1, data.advancers + data.decliners + data.flat);
+  const advPct = (data.advancers / totalStocks) * 100;
+  const adRatio = (data.advancers / Math.max(1, data.decliners)).toFixed(2);
+  const egxHist = data.egx30History;
+  const egxHigh = egxHist.length ? Math.max(...egxHist.map((p) => p.close)) : data.egx30.close;
+  const fromHighPct = egxHigh > 0 ? ((data.egx30.close - egxHigh) / egxHigh) * 100 : 0;
+  const usdHist = data.usdHistory;
+  const usdPeriodPct = usdHist.length >= 2 && usdHist[0].close > 0 ? ((data.usdClose - usdHist[0].close) / usdHist[0].close) * 100 : 0;
+
+  // ── KPI tile ──────────────────────────────────────────────────────────────
+  const kpi = (b: Box, label: string, value: string, valueFill: string, delta: string | undefined, deltaFill: string, sub: string, rawValue = false) => {
+    const vSize = isSquare ? 34 : 29;
+    return `
+      ${frame(b)}
+      ${lt(b, 20, 30, label, { size: 13, weight: 600, fill: SOFT })}
+      ${delta ? lt(b, b.w - 20, 30, delta, { size: 14, weight: 700, fill: deltaFill, anchor: 'end' }) : ''}
+      ${lt(b, 20, isSquare ? 72 : 68, value, { size: vSize, weight: 700, fill: valueFill, raw: rawValue })}
+      ${lt(b, 20, b.h - 16, sub, { size: 12, weight: 500, fill: MUTED })}`;
+  };
+
+  const breadthValue = `<tspan fill="${GREEN}">${data.advancers}</tspan><tspan fill="${MUTED}"> / </tspan><tspan fill="${RED}">${data.decliners}</tspan>`;
+
+  const todayHotMoneyM = Number((data.foreign.totalM + data.arab.totalM).toFixed(1));
+
+  const kpiTiles = (boxes: Box[]) =>
+    kpi(boxes[0], L.egx30, fmtNum(data.egx30.close), '#ffffff', fmtPct(data.egx30.changePct), tone(data.egx30.changePct), L.turnover(data.equityTurnoverBillion)) +
+    kpi(boxes[1], L.usd, data.usdClose.toFixed(2), '#ffffff', fmtPct(data.usdChangePct), fxTone(data.usdChangePct), L.overPeriod(fmtPct(usdPeriodPct), usdHist.length)) +
+    kpi(boxes[2], L.hotMoney, fmtMoney(todayHotMoneyM), tone(todayHotMoneyM), undefined, MUTED, L.hotSplit(fmtMoney(data.foreign.totalM), fmtMoney(data.arab.totalM))) +
+    kpi(boxes[3], L.breadth, breadthValue, '#ffffff', L.ad(adRatio), Number(adRatio) >= 1 ? GREEN : RED, L.rose(advPct, totalStocks), true);
+
+  // ── EGX panel ─────────────────────────────────────────────────────────────
+  const egxPanel = (b: Box) => {
+    const rowsH = 96;
+    const chartTop = 58;
+    const chartH = b.h - chartTop - rowsH - 26;
+    const row = (ly: number, name: string, p: SnapshotIndexPoint) =>
+      lt(b, 20, ly, name, { size: 13.5, weight: 600, fill: SOFT }) +
+      lt(b, b.w - 96, ly, fmtNum(p.close), { size: 14, weight: 700, anchor: 'end' }) +
+      lt(b, b.w - 20, ly, fmtPct(p.changePct), { size: 13.5, weight: 700, fill: tone(p.changePct), anchor: 'end' });
+    return `
+      ${frame(b)}
+      ${panelTitle(b, L.egxPanel(egxHist.length), L.fromHigh(fmtPct(fromHighPct)), fromHighPct < -0.005 ? RED : SOFT)}
+      ${lineChart(b.x + 20, b.y + chartTop, b.w - 40, chartH, egxHist, data.egx30.changePct >= 0 ? GREEN : RED, `snapEgx${isSquare ? 'Sq' : 'W'}${ar ? 'Ar' : 'En'}`, 0)}
+      ${hline(b, b.h - rowsH)}
+      ${row(b.h - rowsH + 36, 'EGX 70 EWI', data.egx70)}
+      ${row(b.h - rowsH + 72, 'EGX 100 EWI', data.egx100)}`;
+  };
+
+  // ── Investor flows panel ──────────────────────────────────────────────────
+  const flowsPanel = (b: Box) => {
+    const top = 56;
+    const bottomH = 84;
+    const rowH = (b.h - top - bottomH) / 3;
+    const rows: Array<[string, SnapshotFlowSplit]> = [
+      [L.foreign, data.foreign],
+      [L.arab, data.arab],
+      [L.egyptian, data.egyptian],
+    ];
+    const maxAbs = Math.max(1, ...rows.map(([, f]) => Math.abs(f.totalM)));
+    const barX = b.x + 20;
+    const barW = b.w - 40;
+    const cx = barX + barW / 2;
+    const body = rows
+      .map(([name, f], i) => {
+        const y0 = top + i * rowH;
+        const len = Math.max(3, (Math.abs(f.totalM) / maxAbs) * (barW / 2));
+        // Negative extends left, positive extends right (both locales)
+        const bx = f.totalM >= 0 ? cx : cx - len;
+        const by = b.y + y0 + 26;
+        return `
+          ${lt(b, 20, y0 + 16, name, { size: 13.5, weight: 600, fill: SOFT })}
+          ${lt(b, b.w - 20, y0 + 16, fmtMoney(f.totalM), { size: 15, weight: 700, fill: tone(f.totalM), anchor: 'end' })}
+          <line x1="${barX}" y1="${by + 4}" x2="${barX + barW}" y2="${by + 4}" stroke="${LINE}" stroke-width="1" />
+          <rect x="${bx.toFixed(1)}" y="${by}" width="${len.toFixed(1)}" height="8" rx="4" fill="${tone(f.totalM)}" />
+          <line x1="${cx}" y1="${by - 4}" x2="${cx}" y2="${by + 12}" stroke="#3f3f46" stroke-width="1" />
+          ${lt(b, 20, y0 + 52, L.split(fmtMoney(f.stocksM), fmtMoney(f.billsM)), { size: 11.5, weight: 500, fill: MUTED })}`;
+      })
+      .join('');
+    return `
+      ${frame(b)}
+      ${panelTitle(b, L.flowsPanel, L.flowsAside)}
+      ${body}
+      ${hline(b, b.h - bottomH + 6)}
+      ${lt(b, 20, b.h - bottomH + 34, L.hot30, { size: 12, weight: 600, fill: SOFT })}
+      ${lt(b, b.w - 20, b.h - 24, fmtMoney(data.hotMoney30dNetMillion), { size: 17, weight: 700, fill: tone(data.hotMoney30dNetMillion), anchor: 'end' })}
+      ${lt(b, 20, b.h - 24, L.hotDays(data.hotMoney30dInflowDays, data.hotMoney30dOutflowDays), { size: 11.5, weight: 500, fill: MUTED })}`;
+  };
+
+  // ── USD/EGP section ───────────────────────────────────────────────────────
+  const usdSection = (b: Box, framed: boolean) => {
+    const chartTop = 56;
+    const chartH = b.h - chartTop - 56;
+    const foot =
+      typeof data.usdFairValue === 'number' && data.usdFairValue > 0
+        ? L.fair(data.usdFairValue, fmtPct(((data.usdFairValue - data.usdClose) / data.usdClose) * 100))
+        : L.official;
+    return `
+      ${framed ? frame(b) : ''}
+      ${panelTitle(b, L.usdPanel(usdHist.length), fmtPct(usdPeriodPct), fxTone(usdPeriodPct))}
+      ${lineChart(b.x + 20, b.y + chartTop, b.w - 40, chartH, usdHist, AMBER, `snapUsd${isSquare ? 'Sq' : 'W'}${ar ? 'Ar' : 'En'}`, 2)}
+      ${lt(b, 20, b.h - 12, foot, { size: 11.5, weight: 500, fill: MUTED })}`;
+  };
+
+  // ── Breadth section ───────────────────────────────────────────────────────
+  const breadthSection = (b: Box, framed: boolean) => {
+    const barX = b.x + 20;
+    const barW = b.w - 40;
+    const gap = 3;
+    const usable = barW - gap * 2;
+    const wa = (data.advancers / totalStocks) * usable;
+    const wf = (data.flat / totalStocks) * usable;
+    const wd = (data.decliners / totalStocks) * usable;
+    // Advancers sit on the logical start edge
+    const segs = ar
+      ? [{ w: wd, c: RED }, { w: wf, c: '#52525b' }, { w: wa, c: GREEN }]
+      : [{ w: wa, c: GREEN }, { w: wf, c: '#52525b' }, { w: wd, c: RED }];
+    let cursor = barX;
+    const bars = segs
+      .map((s) => {
+        const r = s.w > 0.5 ? `<rect x="${cursor.toFixed(1)}" y="${b.y + 50}" width="${Math.max(0, s.w).toFixed(1)}" height="12" rx="3" fill="${s.c}" />` : '';
+        cursor += s.w + gap;
+        return r;
+      })
+      .join('');
+    const pct = (n: number) => `${((n / totalStocks) * 100).toFixed(0)}%`;
+    const movers =
+      data.topGainer && data.topLoser
+        ? `
+          ${lt(b, 20, b.h - 38, L.topG, { size: 11.5, weight: 500, fill: MUTED })}
+          ${lt(b, 20, b.h - 16, `${data.topGainer.ticker}  ${fmtPct(data.topGainer.changePct)}`, { size: 14, weight: 700, fill: GREEN })}
+          ${lt(b, b.w - 20, b.h - 38, L.topL, { size: 11.5, weight: 500, fill: MUTED, anchor: 'end' })}
+          ${lt(b, b.w - 20, b.h - 16, `${data.topLoser.ticker}  ${fmtPct(data.topLoser.changePct)}`, { size: 14, weight: 700, fill: RED, anchor: 'end' })}`
+        : '';
+    return `
+      ${framed ? frame(b) : ''}
+      ${panelTitle(b, L.breadthPanel, L.ad(adRatio), Number(adRatio) >= 1 ? GREEN : RED)}
+      ${bars}
+      ${lt(b, 20, 86, ar ? `${data.advancers} صاعد (\u200E${pct(data.advancers)}\u200E)` : `${data.advancers} ${L.up} · ${pct(data.advancers)}`, { size: 12.5, weight: 700, fill: GREEN })}
+      ${lt(b, b.w / 2, 86, `${data.flat} ${L.flat}`, { size: 12.5, weight: 600, fill: SOFT, anchor: 'middle' })}
+      ${lt(b, b.w - 20, 86, ar ? `${data.decliners} هابط (\u200E${pct(data.decliners)}\u200E)` : `${data.decliners} ${L.down} · ${pct(data.decliners)}`, { size: 12.5, weight: 700, fill: RED, anchor: 'end' })}
+      ${movers}`;
+  };
+
+  const header = headerBlock(W, L.title, L.subtitle, data.date, L.pill, undefined, undefined, ar);
+  const footer = footerBlock(W, H, L.footer, ar);
+
+  let body: string;
+  if (!isSquare) {
+    const kpiW = (1116 - 3 * 16) / 4;
+    const kpiBoxes = [0, 1, 2, 3].map((i) => mirror({ x: 42 + i * (kpiW + 16), y: 152, w: kpiW, h: 100 }));
+    const colW = (1116 - 2 * 16) / 3;
+    const top = 268;
+    const h = 348;
+    const egxBox = mirror({ x: 42, y: top, w: colW, h });
+    const flowsBox = mirror({ x: 42 + colW + 16, y: top, w: colW, h });
+    const rightBox = mirror({ x: 42 + 2 * (colW + 16), y: top, w: colW, h });
+    const usdH = 196;
+    const usdBox = { ...rightBox, h: usdH };
+    const brBox = { ...rightBox, y: rightBox.y + usdH, h: h - usdH };
+    body = `
+      ${header}
+      ${kpiTiles(kpiBoxes)}
+      ${egxPanel(egxBox)}
+      ${flowsPanel(flowsBox)}
+      ${frame(rightBox)}
+      ${usdSection(usdBox, false)}
+      ${hline(rightBox, usdH)}
+      ${breadthSection(brBox, false)}
+      ${footer}`;
+  } else {
+    const kpiW = (996 - 16) / 2;
+    const kpiBoxes = [
+      { x: 42, y: 152, w: kpiW, h: 104 },
+      { x: 42 + kpiW + 16, y: 152, w: kpiW, h: 104 },
+      { x: 42, y: 272, w: kpiW, h: 104 },
+      { x: 42 + kpiW + 16, y: 272, w: kpiW, h: 104 },
+    ].map(mirror);
+    const colW = kpiW;
+    const egxBox = mirror({ x: 42, y: 392, w: colW, h: 318 });
+    const flowsBox = mirror({ x: 42 + colW + 16, y: 392, w: colW, h: 318 });
+    const usdBox = mirror({ x: 42, y: 726, w: colW, h: 290 });
+    const brBox = mirror({ x: 42 + colW + 16, y: 726, w: colW, h: 290 });
+    body = `
+      ${header}
+      ${kpiTiles(kpiBoxes)}
+      ${egxPanel(egxBox)}
+      ${flowsPanel(flowsBox)}
+      ${usdSection(usdBox, true)}
+      ${breadthSection(brBox, true)}
+      ${footer}`;
+  }
+
+  return toBase64Svg(svgShell(W, H, defs.join(''), body, ar));
 }
 
 export const generateInvestorFlowsChartSvg = generateHotMoneyChartSvg;

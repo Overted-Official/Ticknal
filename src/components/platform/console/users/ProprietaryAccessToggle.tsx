@@ -15,7 +15,7 @@ export default function ProprietaryAccessToggle({
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const label = enabled ? 'Access on' : 'Access off';
+  const label = enabled ? 'Signals on' : 'Signals off';
   if (isOwner) return <span className="text-xs text-plt-muted">Owner access</span>;
   if (!canManage) return <span className="text-xs text-plt-muted">{label}</span>;
 
@@ -25,7 +25,7 @@ export default function ProprietaryAccessToggle({
         type="button"
         role="switch"
         aria-checked={enabled}
-        aria-label={enabled ? 'Revoke Typhon, Cerberus and Hydra access' : 'Grant Typhon, Cerberus and Hydra access'}
+        aria-label={enabled ? 'Revoke Typhon, Cerberus, Hydra and Champion notifications' : 'Grant Typhon, Cerberus, Hydra and Champion notifications'}
         disabled={pending}
         onClick={async () => {
           setPending(true);

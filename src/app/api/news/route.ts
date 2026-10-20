@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
     const minUrgency = minUrgencyParam ? parseInt(minUrgencyParam, 10) : undefined;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 50;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
+    const startDate = searchParams.get('startDate') || searchParams.get('from') || undefined;
+    const endDate = searchParams.get('endDate') || searchParams.get('to') || undefined;
 
     const data = await getMarketNewsItems({
       category,
@@ -25,6 +27,8 @@ export async function GET(request: NextRequest) {
       minUrgency,
       limit,
       offset,
+      startDate,
+      endDate,
     });
 
     return NextResponse.json(data);

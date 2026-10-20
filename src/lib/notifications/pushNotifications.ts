@@ -1,10 +1,11 @@
 import webPush from 'web-push';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, proprietaryStrategyAccess, tickers, userStrategies } from '@/db/schema';
+import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, proprietaryStrategyAccess, tickers, userStrategies, profiles } from '@/db/schema';
 import { customStrategyPushPayload } from '@/lib/strategies/server/custom-strategy-alerts';
 import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
+import { OWNER_EMAIL } from '@/lib/strategies/proprietary-access-policy';
 import {
   analyzeTickerChampion,
   type SignalEvent,
@@ -158,8 +159,14 @@ export async function dispatchSignalNotifications(options: {
   // the champion model's in-app or push signals; owner access alone is not opt-in.
   const grants = await db.select({ userId: proprietaryStrategyAccess.userId })
     .from(proprietaryStrategyAccess)
-    .where(and(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)));
+    .where(or(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)));
   const userIds = new Set(grants.map((grant) => grant.userId));
+  try {
+    const [ownerProfile] = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.email, OWNER_EMAIL)).limit(1);
+    if (ownerProfile) userIds.add(ownerProfile.id);
+  } catch (err) {
+    console.warn('[pushNotifications] Failed to lookup owner profile:', err);
+  }
 
   if (userIds.size === 0) {
     result.messages.push('No users have opted in to proprietary strategy alerts.');
@@ -451,8 +458,16 @@ export async function dispatchSignalNotifications(options: {
   // Recheck after analysis, because access or opt-in may change during a run.
   const activeGrants = await db.select({ userId: proprietaryStrategyAccess.userId })
     .from(proprietaryStrategyAccess)
-    .where(and(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true), inArray(proprietaryStrategyAccess.userId, recipientIds)));
+    .where(and(or(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)), inArray(proprietaryStrategyAccess.userId, recipientIds)));
   const activeRecipientIds = new Set(activeGrants.map((grant) => grant.userId));
+  try {
+    const [ownerProfile] = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.email, OWNER_EMAIL)).limit(1);
+    if (ownerProfile && recipientIds.includes(ownerProfile.id)) {
+      activeRecipientIds.add(ownerProfile.id);
+    }
+  } catch {
+    /* Ignore lookup errors on owner recheck */
+  }
   const permittedNotifications = newNotificationsToInsert.filter((row) => activeRecipientIds.has(row.userId));
   const permittedSnapshots = signalSnapshotsToUpsert.filter((row) => activeRecipientIds.has(row.userId));
 

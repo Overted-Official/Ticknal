@@ -45,6 +45,10 @@ const TV_TO_TICKNAL_SECTOR_MAP: Record<string, string> = {
   'Real Estate': 'Real Estate',
 };
 
+export const KNOWN_CUSTOM_LOGOS: Record<string, string> = {
+  HALN: 'https://ltcqzrwosdnqlosvgtve.supabase.co/storage/v1/object/public/QuantEGX%20Public/logos/haln.svg',
+};
+
 /**
  * Maps TradingView sector taxonomy to Ticknal canonical GICS sectors.
  */
@@ -87,7 +91,7 @@ export function parseTradingViewScannerItem(item: any): ScannedEGXTicker | null 
   const logoid = item.d?.[5];
   const logoUrl = typeof logoid === 'string' && logoid.trim()
     ? `https://s3-symbol-logo.tradingview.com/${logoid.trim()}.svg`
-    : null;
+    : (KNOWN_CUSTOM_LOGOS[cleanSymbol] || null);
 
   return {
     symbol: cleanSymbol,
@@ -166,6 +170,49 @@ export function computeReactivatedTickers(
 }
 
 /**
+ * Secondary verification: queries TradingView directly for candidate delisted tickers.
+ * Prevents false-positive delistings when symbols are temporarily omitted or unindexed from
+ * TradingView's general batch scanner endpoint.
+ */
+export async function filterTrulyDelistedTickers(candidateSymbols: string[]): Promise<string[]> {
+  if (candidateSymbols.length === 0) return [];
+  try {
+    const res = await fetch('https://scanner.tradingview.com/egypt/scan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Ticknal-Scanner/1.0',
+      },
+      body: JSON.stringify({
+        symbols: { tickers: candidateSymbols.map((s) => `EGX:${s.replace(/\.CA$/, '')}`) },
+        columns: ['name', 'active_symbol', 'is_delisted'],
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn('TradingView direct delisting verification returned status', res.status);
+      return []; // Fail-safe: do not delist anything if verification endpoint errors
+    }
+
+    const json = await res.json();
+    const activeSymbols = new Set<string>();
+    for (const item of json?.data || []) {
+      const sym = (item.d?.[0] || item.s?.replace(/^EGX:/, ''))?.toUpperCase();
+      const isActive = item.d?.[1] === true;
+      const isDelisted = item.d?.[2] === true;
+      if (sym && isActive && !isDelisted) {
+        activeSymbols.add(sym);
+      }
+    }
+
+    return candidateSymbols.filter((s) => !activeSymbols.has(s.toUpperCase().replace(/\.CA$/, '')));
+  } catch (err) {
+    console.error('filterTrulyDelistedTickers verification error:', err);
+    return []; // Fail-safe: avoid marking tickers delisted on network/parsing errors
+  }
+}
+
+/**
  * Queries the official TradingView Egypt scanner API for all listed stocks.
  */
 export async function fetchEGXScannerData(): Promise<ScannedEGXTicker[]> {
@@ -229,7 +276,8 @@ export async function syncEGXTickersFromExchange(options?: {
     const activeRows = currentRows.filter(r => r.status === 'ACTIVE');
     const delistedRows = currentRows.filter(r => r.status === 'DELISTED');
 
-    const delisted = computeDelistedTickers(scannedSymbols, activeRows);
+    const candidateDelisted = computeDelistedTickers(scannedSymbols, activeRows);
+    const delisted = await filterTrulyDelistedTickers(candidateDelisted);
     const reactivated = computeReactivatedTickers(scannedSymbols, delistedRows);
 
     if (missing.length === 0 && delisted.length === 0 && reactivated.length === 0) {

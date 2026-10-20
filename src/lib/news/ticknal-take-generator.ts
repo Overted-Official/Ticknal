@@ -838,6 +838,12 @@ Assess the tight corridor between the official rate and proxy clearing markets (
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         await db.delete(marketNews).where(eq(marketNews.id, take.id));
+        const urgencyScore =
+          take.key === 'hot_money' || take.key === 'usd_egp_update'
+            ? 9
+            : take.importance === 'critical'
+              ? 9
+              : 8;
         await db.insert(marketNews).values({
           id: take.id,
           title: take.title,
@@ -849,6 +855,7 @@ Assess the tight corridor between the official rate and proxy clearing markets (
           sentiment: take.sentiment,
           source: 'Ticknal take',
           importance: take.importance,
+          urgencyScore,
           imageUrl: take.imageUrl,
           publishedAt: take.publishedAt,
           createdAt: new Date(),

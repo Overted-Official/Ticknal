@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { RefreshCw, Search } from '@/components/ui/icon-library';
+import { RefreshCw, Search, Calendar } from '@/components/ui/icon-library';
 import InlineSpinner from '@/components/ui/InlineSpinner';
 import NewsFloatingNav, { type NewsFloatingCategory } from './NewsFloatingNav';
 import NewsFilterSidebar from './widgets/NewsFilterSidebar';
+import NewsTimeframeFilter, { type TimeframePreset } from './widgets/NewsTimeframeFilter';
 import NewsFeedTimeline from './widgets/NewsFeedTimeline';
 import GuestProLockModal from '@/components/platform/auth/GuestProLockModal';
 import GuestConversionBanner from '@/components/platform/auth/GuestConversionBanner';
@@ -46,6 +47,10 @@ export default function NewsPageView() {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [activePreset, setActivePreset] = useState<TimeframePreset | null>(null);
+  const [isMobileTimeframeOpen, setIsMobileTimeframeOpen] = useState(false);
 
   // Pro Lock Modal State
   const [isProModalOpen, setIsProModalOpen] = useState(false);
@@ -57,6 +62,8 @@ export default function NewsPageView() {
   if (activeCategory && activeCategory !== 'all') queryParams.set('category', activeCategory);
   if (selectedTicker) queryParams.set('ticker', selectedTicker);
   if (searchQuery.trim()) queryParams.set('q', searchQuery.trim());
+  if (startDate) queryParams.set('startDate', startDate);
+  if (endDate) queryParams.set('endDate', endDate);
   if (targetItemId) queryParams.set('item', targetItemId);
 
   const { data: liveData, isLoading: liveIsLoading, mutate } = useSWR<NewsApiResponse>(
@@ -70,7 +77,16 @@ export default function NewsPageView() {
   const data = isHeroScene ? HERO_SCENE_NEWS.data as unknown as NewsApiResponse : liveData;
   const isLoading = !isHeroScene && liveIsLoading;
 
-  const items = data?.items || [];
+  const rawItems = data?.items || [];
+  const items = React.useMemo(() => {
+    if (!startDate && !endDate) return rawItems;
+    return rawItems.filter((i) => {
+      const pub = (i.publishedAt || '').slice(0, 10);
+      if (startDate && pub < startDate) return false;
+      if (endDate && pub > endDate) return false;
+      return true;
+    });
+  }, [rawItems, startDate, endDate]);
   const hasAutoSyncedRef = React.useRef(false);
 
   // Automatically check and sync today's wires & Ticknal takes once per session on mount
@@ -184,10 +200,21 @@ export default function NewsPageView() {
     setSelectedTicker((prev) => (prev === cleanSym ? null : cleanSym));
   };
 
+  const handleResetTimeframe = () => {
+    setStartDate('');
+    setEndDate('');
+    setActivePreset(null);
+  };
+
+  const handleSelectPreset = (preset: TimeframePreset | null) => {
+    setActivePreset(preset);
+  };
+
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedTicker(null);
     setActiveCategory('all');
+    handleResetTimeframe();
   };
 
   const handleRefreshWire = async () => {
@@ -203,7 +230,12 @@ export default function NewsPageView() {
     }
   };
 
-  const hasActiveFilters = activeCategory !== 'all' || Boolean(selectedTicker) || Boolean(searchQuery.trim());
+  const hasActiveFilters =
+    activeCategory !== 'all' ||
+    Boolean(selectedTicker) ||
+    Boolean(searchQuery.trim()) ||
+    Boolean(startDate) ||
+    Boolean(endDate);
 
   return (
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
@@ -266,24 +298,64 @@ export default function NewsPageView() {
             </p>
           </div>
 
-          {/* Search bar on mobile/tablet (where desktop sidebar is hidden) */}
-          <div className="lg:hidden relative flex items-center w-full sm:w-64">
-            <Search size={13} className="absolute left-3 text-plt-faint pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={locale === 'ar' ? 'بحث في الأخبار أو الأسهم...' : 'Search news or ticker...'}
-              className="w-full pl-8 pr-7 py-1.5 text-xs rounded-full bg-plt-hover border border-plt-border text-plt-text placeholder:text-plt-faint focus:outline-none focus:border-plt-border transition-all"
-            />
-            {searchQuery && (
+          {/* Search bar & Timeframe button on mobile/tablet (where desktop sidebar is hidden) */}
+          <div className="lg:hidden flex flex-col gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-64 flex items-center">
+                <Search size={13} className="absolute left-3 text-plt-faint pointer-events-none rtl:left-auto rtl:right-3" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={locale === 'ar' ? 'بحث في الأخبار أو الأسهم...' : 'Search news or ticker...'}
+                  className="w-full pl-8 pr-7 rtl:pr-8 rtl:pl-7 py-1.5 text-xs rounded-full bg-plt-hover border border-plt-border text-plt-text placeholder:text-plt-faint focus:outline-none focus:border-plt-border transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 rtl:right-auto rtl:left-2.5 text-plt-muted hover:text-plt-text text-xs cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 text-plt-muted hover:text-plt-text text-xs cursor-pointer"
+                onClick={() => setIsMobileTimeframeOpen((prev) => !prev)}
+                className={`h-8 px-3 rounded-full border text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ${
+                  startDate || endDate || activePreset
+                    ? 'bg-[#1d9bf0]/15 border-[#1d9bf0]/40 text-[#1d9bf0] font-medium'
+                    : 'bg-plt-hover border-plt-border text-plt-muted hover:text-plt-text'
+                }`}
+                title={locale === 'ar' ? 'تصفية حسب الفترة الزمنية' : 'Timeframe filter'}
               >
-                ✕
+                <Calendar size={13} />
+                <span className="text-[11px] font-medium">
+                  {activePreset
+                    ? activePreset === 'today'
+                      ? locale === 'ar' ? 'اليوم' : 'Today'
+                      : activePreset
+                    : startDate || endDate
+                    ? locale === 'ar' ? 'مخصص' : 'Custom'
+                    : locale === 'ar' ? 'الفترة' : 'Dates'}
+                </span>
               </button>
+            </div>
+
+            {isMobileTimeframeOpen && (
+              <div className="p-3 rounded-xl bg-plt-hover/80 border border-plt-border-soft animate-in fade-in duration-150">
+                <NewsTimeframeFilter
+                  startDate={startDate}
+                  endDate={endDate}
+                  onStartDateChange={setStartDate}
+                  onEndDateChange={setEndDate}
+                  activePreset={activePreset}
+                  onSelectPreset={handleSelectPreset}
+                  onResetTimeframe={handleResetTimeframe}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -305,6 +377,13 @@ export default function NewsPageView() {
             selectedTicker={selectedTicker}
             onSelectTicker={handleSelectTicker}
             trendingTickers={data?.trendingTickers || ['COMI', 'TMGH', 'SWDY', 'FWRY', 'EAST', 'EGX30', 'GOLD21K', 'USD/EGP', 'CIB_ADR', 'AZG']}
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            activePreset={activePreset}
+            onSelectPreset={handleSelectPreset}
+            onResetTimeframe={handleResetTimeframe}
             onResetFilters={handleResetFilters}
             hasActiveFilters={hasActiveFilters}
           />
@@ -324,6 +403,29 @@ export default function NewsPageView() {
               : 'pb-[max(var(--ticknal-safe-area-bottom),1.5rem)] md:pb-24 lg:pb-16'
           }`}
         >
+          {/* Active Timeframe Filter Banner */}
+          {(startDate || endDate) && (
+            <div className="px-4 py-2 bg-emerald-950/20 border-b border-plt-border-soft flex items-center justify-between text-xs shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Calendar size={12} className="text-emerald-400 shrink-0" />
+                <span className="text-plt-muted truncate">
+                  {locale === 'ar' ? 'تصفية حسب الفترة الزمنية:' : 'Filtering timeframe:'}
+                </span>
+                <span className="font-semibold text-emerald-400 tabular-nums truncate">
+                  {startDate && endDate ? `${startDate} → ${endDate}` : startDate ? `From ${startDate}` : `Until ${endDate}`}
+                  {activePreset && ` (${activePreset === 'today' ? (locale === 'ar' ? 'اليوم' : 'Today') : activePreset})`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleResetTimeframe}
+                className="text-xs text-plt-muted hover:text-plt-text cursor-pointer px-2 py-0.5 rounded-full hover:bg-plt-hover transition-colors shrink-0"
+              >
+                {locale === 'ar' ? 'إلغاء التصفية ✕' : 'Clear filter ✕'}
+              </button>
+            </div>
+          )}
+
           {/* Active Ticker Filter Banner */}
           {selectedTicker && (
             <div className="px-4 py-2 bg-blue-950/20 border-b border-plt-border-soft flex items-center justify-between text-xs shrink-0">

@@ -1,9 +1,20 @@
 import type { CategoryIndicatorSpec } from "../../shared/category-definition";
+import { MFI } from 'technicalindicators';
 import { map2, n, rollingSum, typical, volumes } from "../shared";
 
 type Parameters = Record<string, unknown>;
 
 const compute: CategoryIndicatorSpec<Parameters>["compute"] = (frame, p) => {
+  if (p.mode === 'legacy-technicalindicators') {
+    const values = MFI.calculate({
+      high: frame.bars.map((bar) => bar.high),
+      low: frame.bars.map((bar) => bar.low),
+      close: frame.bars.map((bar) => bar.close),
+      volume: frame.bars.map((bar) => bar.volume ?? 0),
+      period: n(p, 'period'),
+    });
+    return { mfi_0_100: [...Array(frame.bars.length - values.length).fill(null), ...values] };
+  }
   const price = typical(frame),
     volume = volumes(frame);
   const positive = price.map((value, i) =>

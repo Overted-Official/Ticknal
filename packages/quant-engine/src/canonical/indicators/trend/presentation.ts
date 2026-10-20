@@ -27,6 +27,20 @@ function text(en: string, ar = en): LocalizedText {
 }
 
 function parameter(key: string, defaultValue: unknown): IndicatorParameterDefinition {
+  if (key === 'mode' && defaultValue === 'canonical') {
+    return Object.freeze({ kind: 'select', key, label: text('Calculation method', 'طريقة الحساب'), defaultValue,
+      options: Object.freeze([
+        { value: 'canonical', label: text('Standard', 'القياسية') },
+        { value: 'legacy-technicalindicators', label: text('Classic — historical strategy compatible', 'الكلاسيكية — متوافقة مع الاستراتيجيات التاريخية') },
+      ]) });
+  }
+  if (key === 'seedMode' && defaultValue === 'bullish') {
+    return Object.freeze({ kind: 'select', key, label: text('Trend initialization', 'تهيئة الاتجاه'), defaultValue,
+      options: Object.freeze([
+        { value: 'bullish', label: text('Standard — lower band first', 'قياسية — تبدأ من الحد السفلي') },
+        { value: 'upper-band-first', label: text('Upper band first', 'تبدأ من الحد العلوي') },
+      ]) });
+  }
   if (typeof defaultValue !== 'number') {
     throw new TypeError(`Unsupported Trend parameter ${key}`);
   }

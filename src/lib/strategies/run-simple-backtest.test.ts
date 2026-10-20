@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { MarketBar, TimeSeriesFrame } from '@ticknal/quant-engine/canonical';
+import { ADX, ATR, BollingerBands, MFI, OBV, RSI, SMA, Stochastic, WilliamsR } from 'technicalindicators';
+import { evaluateRuleSeries, getIndicatorDefinition, type MarketBar, type TimeSeriesFrame } from '@ticknal/quant-engine/canonical';
+import { computeAtr, computeSupertrend } from '../../../packages/quant-engine/src/strategies/Typhon/psi8Indicators';
 
 import type { SimpleStrategyProgram } from './strategy-program';
 import type { AdvancedStrategyProgram } from './strategy-program';
@@ -22,7 +24,7 @@ const prices = [
 
 function frame(rows: readonly { open: number; high: number; low: number; close: number }[]): TimeSeriesFrame {
   const bars: MarketBar[] = rows.map((row, index) => ({
-    time: `2025-01-${String(index + 1).padStart(2, '0')}`,
+    time: new Date(Date.UTC(2025, 0, index + 1)).toISOString().slice(0, 10),
     ...row,
     volume: 1000,
     trades: 10,
@@ -34,7 +36,7 @@ function frame(rows: readonly { open: number; high: number; low: number; close: 
     meta: {
       instrumentId: 'TEST', symbol: 'TEST', exchange: 'EGX', assetClass: 'equity', quoteCurrency: 'EGP',
       requestedTimeframe: 'D', effectiveTimeframe: 'D', sourceId: 'test-snapshot', sourceType: 'fixture',
-      sourceRevision: 'revision-1', asOf: String(bars.at(-1)?.time), receivedAt: '2025-01-07T00:00:00Z',
+      sourceRevision: 'revision-1', asOf: String(bars.at(-1)?.time), receivedAt: new Date(Date.UTC(2025, 0, bars.length + 1)).toISOString(),
       timezone: 'Africa/Cairo', exchangeCalendar: 'EGX_SUN_THU', sessionDefinition: 'completed-bars',
       adjustmentMode: 'as-stored', adjustmentRevision: null, sessionCompleteness: 'complete',
       continuityStatus: 'unknown', fields: { open: observed, high: observed, low: observed, close: observed, volume: observed, trades: observed },
@@ -55,6 +57,91 @@ const program: SimpleStrategyProgram = {
 const assumptions = { initialCapital: 1000, feeBps: 0 } as const;
 
 describe('runSimpleBacktest', () => {
+  it('reproduces the protected PSI40 indicator series through opt-in settings', () => {
+    const rows = Array.from({ length: 90 }, (_, index) => {
+      const close = 100 + Math.sin(index / 2.8) * 9 + index * 0.07;
+      return { open: close - 0.4, high: close + 1.4, low: close - 1.2, close };
+    });
+    const history = frame(rows);
+    const high = rows.map((row) => row.high);
+    const low = rows.map((row) => row.low);
+    const close = rows.map((row) => row.close);
+    const pad = <T,>(values: T[]): (T | null)[] => [...Array(rows.length - values.length).fill(null), ...values];
+    const adx = pad(ADX.calculate({ high, low, close, period: 14 }));
+    const stochastic = pad(Stochastic.calculate({ high, low, close, period: 14, signalPeriod: 3 }));
+    const rawStochastic = Stochastic.calculate({ high, low, close, period: 14, signalPeriod: 3 }).map((value) => value.k);
+    const smoothedK = SMA.calculate({ values: rawStochastic, period: 3 });
+    const smoothedD = SMA.calculate({ values: smoothedK, period: 3 });
+    const bands = pad(BollingerBands.calculate({ values: close, period: 20, stdDev: 2 }));
+    const cases = [
+      { id: 'relative-strength-index', outputKey: 'rsi', parameters: { period: 14 }, expected: pad(RSI.calculate({ values: close, period: 14 })) },
+      { id: 'average-true-range', outputKey: 'atr', parameters: { period: 14 }, expected: pad(ATR.calculate({ high, low, close, period: 14 })) },
+      { id: 'average-directional-index', outputKey: 'plus_di', parameters: { period: 14 }, expected: adx.map((value) => value?.pdi ?? null) },
+      { id: 'average-directional-index', outputKey: 'minus_di', parameters: { period: 14 }, expected: adx.map((value) => value?.mdi ?? null) },
+      { id: 'on-balance-volume', outputKey: 'obv', parameters: { smoothing: 1 }, expected: pad(OBV.calculate({ close, volume: rows.map(() => 1000) })) },
+      { id: 'stochastic-oscillator', outputKey: 'percent_k', parameters: { period: 14, smoothK: 1, smoothD: 3 }, expected: stochastic.map((value) => value?.k ?? null) },
+      { id: 'stochastic-oscillator', outputKey: 'percent_d', parameters: { period: 14, smoothK: 1, smoothD: 3 }, expected: stochastic.map((value) => value?.d ?? null) },
+      { id: 'stochastic-oscillator', outputKey: 'percent_k', parameters: { period: 14, smoothK: 3, smoothD: 3 }, expected: pad(smoothedK) },
+      { id: 'stochastic-oscillator', outputKey: 'percent_d', parameters: { period: 14, smoothK: 3, smoothD: 3 }, expected: pad(smoothedD) },
+      { id: 'williams-percent-r', outputKey: 'williams_r', parameters: { period: 14 }, expected: pad(WilliamsR.calculate({ high, low, close, period: 14 })) },
+      { id: 'simple-moving-average', outputKey: 'sma', parameters: { period: 20 }, expected: pad(SMA.calculate({ values: close, period: 20 })) },
+      { id: 'bollinger-bands', outputKey: 'middle', parameters: { period: 20, deviation: 2 }, expected: bands.map((value) => value?.middle ?? null) },
+    ];
+    for (const item of cases) {
+      const definition = getIndicatorDefinition(item.id);
+      expect(definition).toBeDefined();
+      if (!definition) continue;
+      const actual = evaluateRuleSeries({ definitionId: item.id, formulaVersion: definition.formulaVersion,
+        outputKey: item.outputKey, frame: history, parameters: { ...item.parameters, mode: 'legacy-technicalindicators' },
+        context: { calculatedAt: history.meta.receivedAt } });
+      expect(actual.status, `${item.id}/${item.outputKey}`).toBe('ok');
+      if (actual.status === 'ok') expect(actual.points.map((point) => point.value), `${item.id}/${item.outputKey}`).toEqual(item.expected);
+    }
+  });
+  it('offers PSI40-compatible MFI without changing the canonical default', () => {
+    const rows = Array.from({ length: 80 }, (_, index) => {
+      const close = 100 + Math.sin(index / 2.8) * 9 + index * 0.07;
+      return { open: close - 0.4, high: close + 1.4, low: close - 1.2, close, volume: 1000 + index * 37 };
+    });
+    const history = frame(rows).bars.map((bar, index) => ({ ...bar, volume: rows[index].volume }));
+    const series = { ...frame(rows), bars: history };
+    const definition = getIndicatorDefinition('money-flow-index');
+    expect(definition).toBeDefined();
+    if (!definition) return;
+    const evaluate = (parameters: Record<string, unknown>) => evaluateRuleSeries({
+      definitionId: definition.id, formulaVersion: definition.formulaVersion,
+      outputKey: 'mfi_0_100', frame: series, parameters, context: { calculatedAt: series.meta.receivedAt },
+    });
+    const legacy = evaluate({ period: 14, mode: 'legacy-technicalindicators' });
+    const canonical = evaluate({ period: 14 });
+    expect(legacy.status).toBe('ok');
+    expect(canonical.status).toBe('ok');
+    if (legacy.status !== 'ok' || canonical.status !== 'ok') return;
+    const reference = MFI.calculate({ high: rows.map((row) => row.high), low: rows.map((row) => row.low),
+      close: rows.map((row) => row.close), volume: rows.map((row) => row.volume), period: 14 });
+    const padded = [...Array(rows.length - reference.length).fill(null), ...reference];
+    expect(legacy.points.map((point) => point.value)).toEqual(padded);
+    expect(canonical.points.map((point) => point.value)).not.toEqual(padded);
+  });
+  it('exposes an upper-seeded Supertrend indicator that matches the established strategy math', () => {
+    const rows = Array.from({ length: 90 }, (_, index) => {
+      const close = 100 + Math.sin(index / 3) * 8 + Math.cos(index / 11) * 3;
+      return { open: close - 0.4, high: close + 1.2, low: close - 1.4, close };
+    });
+    const history = frame(rows);
+    const definition = getIndicatorDefinition('supertrend');
+    expect(definition).toBeDefined();
+    if (!definition) return;
+    const calculated = evaluateRuleSeries({ definitionId: definition.id, formulaVersion: definition.formulaVersion,
+      outputKey: 'line', frame: history, parameters: { period: 14, multiplier: 3, seedMode: 'upper-band-first' }, context: { calculatedAt: history.meta.receivedAt } });
+    expect(calculated.status).toBe('ok');
+    if (calculated.status !== 'ok') return;
+    const highs = rows.map((row) => row.high);
+    const lows = rows.map((row) => row.low);
+    const closes = rows.map((row) => row.close);
+    const expected = computeSupertrend(highs, lows, closes, computeAtr(highs, lows, closes, 14), 3).value;
+    expect(calculated.points.map((point) => point.value)).toEqual(expected);
+  });
   it('builds, saves, reloads, edits, and retests a scored per-company strategy from a blank canvas', () => {
     const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
     const close = { ...createAdvancedNodeFromTemplate(template('market-input'), 'close'), parameters: { series: 'ohlcv', field: 'close' } };

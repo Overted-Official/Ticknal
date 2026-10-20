@@ -30,10 +30,10 @@ export async function setProprietaryStrategyAccessAction(params: { targetUserId:
   if (!target) return { success: false, error: 'User not found.' };
   if (isProprietaryOwner(target.email, target.role)) return { success: false, error: 'Owner access cannot be changed.' };
   await db.insert(proprietaryStrategyAccess).values({
-    userId: target.id, enabled: params.enabled, notificationsEnabled: false, grantedBy: user.id,
+    userId: target.id, enabled: params.enabled, notificationsEnabled: params.enabled, grantedBy: user.id,
   }).onConflictDoUpdate({
     target: proprietaryStrategyAccess.userId,
-    set: { enabled: params.enabled, notificationsEnabled: false, grantedBy: user.id, updatedAt: new Date() },
+    set: { enabled: params.enabled, notificationsEnabled: params.enabled, grantedBy: user.id, updatedAt: new Date() },
   });
   await logAdminAction({
     adminId: user.id, action: params.enabled ? 'strategy.proprietary_grant' : 'strategy.proprietary_revoke',

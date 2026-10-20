@@ -3,6 +3,7 @@
 import React from 'react';
 import { X, Search } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
+import NewsTimeframeFilter, { type TimeframePreset } from './NewsTimeframeFilter';
 
 export interface CategoryOption {
   id: string;
@@ -19,6 +20,13 @@ interface NewsFilterSidebarProps {
   selectedTicker: string | null;
   onSelectTicker: (ticker: string) => void;
   trendingTickers?: string[];
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (val: string) => void;
+  onEndDateChange: (val: string) => void;
+  activePreset: TimeframePreset | null;
+  onSelectPreset: (preset: TimeframePreset | null) => void;
+  onResetTimeframe: () => void;
   onResetFilters: () => void;
   hasActiveFilters: boolean;
 }
@@ -32,6 +40,13 @@ export default function NewsFilterSidebar({
   selectedTicker,
   onSelectTicker,
   trendingTickers = ['COMI', 'TMGH', 'SWDY', 'FWRY', 'EAST', 'EGX30', 'GOLD21K', 'USD/EGP', 'CIB_ADR', 'AZG'],
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  activePreset,
+  onSelectPreset,
+  onResetTimeframe,
   onResetFilters,
   hasActiveFilters,
 }: NewsFilterSidebarProps) {
@@ -94,6 +109,19 @@ export default function NewsFilterSidebar({
         })}
       </nav>
 
+      {/* Timeframe Filter Section (Line 1: From/To, Line 2: Today, 1M, 3M, 6M, YTD) */}
+      <div className="pt-3 border-t border-plt-border-soft mb-3">
+        <NewsTimeframeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={onStartDateChange}
+          onEndDateChange={onEndDateChange}
+          activePreset={activePreset}
+          onSelectPreset={onSelectPreset}
+          onResetTimeframe={onResetTimeframe}
+        />
+      </div>
+
       {/* Search Input (Directly above Watchlist Tickers) */}
       <div className="pt-3 border-t border-plt-border-soft mb-3">
         <div className="relative flex items-center">
@@ -150,7 +178,7 @@ export default function NewsFilterSidebar({
                     : 'bg-plt-hover border border-plt-border-soft text-plt-muted hover:text-plt-text hover:border-plt-border hover:bg-plt-active'
                 }`}
               >
-                <span>@{cleanSym}</span>
+                @{cleanSym}
               </button>
             );
           })}

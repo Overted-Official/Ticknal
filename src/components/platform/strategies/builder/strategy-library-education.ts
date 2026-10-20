@@ -69,6 +69,40 @@ export function getIndicatorEducation(indicator: StrategyBuilderIndicatorOption,
     };
   }
 
+  if (indicator.id === 'supertrend') {
+    return {
+      title: indicator.name,
+      category: indicator.category,
+      summary: isAr ? 'خط اتجاه متحرك يعتمد على متوسط المدى الحقيقي (ATR) وسعر السوق.' : 'An ATR-based trailing trend line that follows price.',
+      howItWorks: isAr ? 'يرسم حدين أعلى وأسفل منتصف الشمعة بمسافة تساوي ATR مضروباً في المعامل. ينتقل الخط بين الحدين عندما يعبر السعر مستوى الاتجاه.' : 'It places upper and lower bands around each bar’s midpoint by ATR × multiplier. The line switches bands when price breaks the current trend boundary.',
+      howToUse: isAr ? 'اضبط الفترة والمعامل أولاً، ثم اختر التهيئة القياسية أو البدء من الحد العلوي. استخدم «الحد العلوي أولاً» فقط إذا كنت تريد مطابقة استراتيجية بُنيت بهذه الطريقة؛ فهذا الاختيار قد يغير القيم والإشارات.' : 'Set the ATR period and multiplier, then choose standard or upper-band-first initialization. Use upper-band-first to reproduce strategies built with that convention; it can change values and signals.',
+      example: isAr ? 'مثال: قارن الإغلاق بخط Supertrend؛ الانتقال فوق الخط قد يدعم شرط شراء. اختبر الفترة والمعامل والتهيئة على نفس البيانات قبل مقارنة النتائج.' : 'Example: compare close with the Supertrend line; moving above it can support a buy condition. Keep the period, multiplier, and initialization identical when comparing backtests.',
+      caution: isAr ? 'الخط ليس ضماناً لاتجاه مستقبلي. قد تنتج إشارات متكررة في السوق العرضية، وقد تختلف النتائج إذا تغيرت طريقة التهيئة أو بيانات ATR.' : 'The line does not guarantee a future trend. Sideways markets can produce repeated switches, and changing initialization or ATR data can alter the backtest.',
+      parameters,
+      outputs,
+      levels: [],
+      visualization: null,
+    };
+  }
+
+  if (indicator.id === 'money-flow-index') {
+    return {
+      title: indicator.name,
+      category: indicator.category,
+      summary: isAr ? 'مذبذب يقارن تدفق الأموال إلى السهم وخروجها باستخدام السعر وحجم التداول.' : 'A price-and-volume oscillator comparing money flowing into and out of a stock.',
+      howItWorks: isAr ? 'يضرب السعر المعتاد في حجم التداول، ثم يقارن التدفقات الموجبة والسالبة خلال الفترة المحددة. الطريقة الكلاسيكية تتبع الحساب التاريخي المستخدم في PSI40 وقد تختلف عن القياسية.' : 'It weights each bar’s typical price by traded volume, then compares positive and negative flows over the chosen period. Classic mode reproduces the historical PSI40 calculation and can differ from Standard.',
+      howToUse: isAr ? 'اختر الفترة وطريقة الحساب قبل إضافة المؤشر إلى شرط. ثبّت نفس الطريقة عند مقارنة الاختبارات التاريخية.' : 'Choose the period and calculation method before connecting MFI to a condition. Keep the method fixed when comparing backtests.',
+      example: isAr ? 'تجاوز مستوى 20 صعوداً قد يشير إلى تحسن التدفق بعد ضعف؛ اختبره مع اتجاه السعر قبل اعتماده.' : 'Crossing back above 20 may indicate improving flow after weakness; test it alongside price trend before using it.',
+      caution: isAr ? 'بلوغ مستوى 20 أو 80 ليس إشارة تداول مستقلة. اختلاف طريقة الحساب قد يغيّر توقيت الاختراقات.' : 'A 20 or 80 reading is not a trade signal by itself. Changing calculation method may shift crossing dates.',
+      parameters,
+      outputs,
+      levels: isAr
+        ? [{ value: 80, label: 'تدفق مرتفع', meaning: 'قوة شراء محتملة وليست انعكاساً مؤكداً.' }, { value: 20, label: 'تدفق منخفض', meaning: 'ضعف محتمل ولا يعني شراءً تلقائياً.' }]
+        : [{ value: 80, label: 'High flow', meaning: 'Potential buying strength, not a confirmed reversal.' }, { value: 20, label: 'Low flow', meaning: 'Potential weakness, not an automatic buy.' }],
+      visualization: null,
+    };
+  }
+
   const firstOutput = indicator.outputs[0]?.key;
   return {
     title: indicator.name,

@@ -11,7 +11,7 @@ import { getCurrentProprietaryAccess, getProprietaryAccessForUser } from '@/lib/
 import { filterAccessibleSignals } from '@/lib/strategies/proprietary-access-policy';
 import { PROPRIETARY_STRATEGY_IDS } from '@/lib/strategies/proprietary-access-policy';
 
-const notificationsMemCache = new Map<string, { data: any[]; timestamp: number; canView: boolean }>();
+const notificationsMemCache = new Map<string, { data: any[]; timestamp: number; canReceiveAlerts: boolean }>();
 const NOTIFS_CACHE_TTL = 30 * 1000; // 30s cache per user
 
 export async function handleNotificationsGet() {
@@ -26,8 +26,8 @@ export async function handleNotificationsGet() {
 
   // Check in-memory debounce cache to eliminate redundant database egress
   const cached = notificationsMemCache.get(user.id);
-  if (cached && cached.canView === access.canView && Date.now() - cached.timestamp < NOTIFS_CACHE_TTL) {
-    return NextResponse.json({ notifications: filterAccessibleSignals(cached.data, access.canView) }, { headers: { 'Cache-Control': 'private, no-store' } });
+  if (cached && cached.canReceiveAlerts === access.canReceiveAlerts && Date.now() - cached.timestamp < NOTIFS_CACHE_TTL) {
+    return NextResponse.json({ notifications: filterAccessibleSignals(cached.data, access.canReceiveAlerts) }, { headers: { 'Cache-Control': 'private, no-store' } });
   }
 
   try {
@@ -49,14 +49,14 @@ export async function handleNotificationsGet() {
       .from(signalNotifications)
       .leftJoin(tickers, eq(signalNotifications.tickerSymbol, tickers.symbol))
       .leftJoin(userStrategies, and(eq(signalNotifications.userId, userStrategies.userId), eq(signalNotifications.strategy, userStrategies.id)))
-      .where(access.canView
+      .where(access.canReceiveAlerts
         ? eq(signalNotifications.userId, user.id)
         : and(eq(signalNotifications.userId, user.id), notInArray(signalNotifications.strategy, [...PROPRIETARY_STRATEGY_IDS])))
       .orderBy(desc(signalNotifications.signalDate), desc(signalNotifications.sentAt))
       .limit(50);
 
     if (rows.length === 0) {
-      notificationsMemCache.set(user.id, { data: [], timestamp: Date.now(), canView: access.canView });
+      notificationsMemCache.set(user.id, { data: [], timestamp: Date.now(), canReceiveAlerts: access.canReceiveAlerts });
       return NextResponse.json({ notifications: [] }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
 
@@ -80,8 +80,8 @@ export async function handleNotificationsGet() {
       };
     });
 
-    notificationsMemCache.set(user.id, { data: enhancedRows, timestamp: Date.now(), canView: access.canView });
-    return NextResponse.json({ notifications: filterAccessibleSignals(enhancedRows, access.canView) }, { headers: { 'Cache-Control': 'private, no-store' } });
+    notificationsMemCache.set(user.id, { data: enhancedRows, timestamp: Date.now(), canReceiveAlerts: access.canReceiveAlerts });
+    return NextResponse.json({ notifications: filterAccessibleSignals(enhancedRows, access.canReceiveAlerts) }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

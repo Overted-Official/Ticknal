@@ -223,6 +223,44 @@ export function supertrend(
   return { line, direction };
 }
 
+/** Upper-band-first variant used by the historical Typhon oscillator. Kept separate from canonical Supertrend. */
+export function upperSeededSupertrend(frame: TimeSeriesFrame, period: number, multiplier: number): IndicatorOutputs {
+  const high = values(frame, 'high');
+  const low = values(frame, 'low');
+  const close = values(frame, 'close');
+  const averageRange = atr(high, low, close, period);
+  const line: (number | null)[] = Array(close.length).fill(null);
+  const direction: (string | null)[] = Array(close.length).fill(null);
+  const upper: (number | null)[] = Array(close.length).fill(null);
+  const lower: (number | null)[] = Array(close.length).fill(null);
+
+  for (let index = 0; index < close.length; index += 1) {
+    const range = averageRange[index];
+    if (range === null) continue;
+    const middle = (high[index] + low[index]) / 2;
+    const basicUpper = middle + multiplier * range;
+    const basicLower = middle - multiplier * range;
+    const previousUpper = upper[index - 1];
+    const previousLower = lower[index - 1];
+    const previousLine = line[index - 1];
+    if (previousUpper === null || previousUpper === undefined || previousLower === null || previousLower === undefined || previousLine === null || previousLine === undefined) {
+      upper[index] = basicUpper;
+      lower[index] = basicLower;
+      line[index] = basicUpper;
+      direction[index] = 'bearish';
+      continue;
+    }
+    upper[index] = basicUpper < previousUpper || close[index - 1] > previousUpper ? basicUpper : previousUpper;
+    lower[index] = basicLower > previousLower || close[index - 1] < previousLower ? basicLower : previousLower;
+    const bearish = previousLine === previousUpper
+      ? close[index] <= upper[index]!
+      : close[index] < lower[index]!;
+    line[index] = bearish ? upper[index] : lower[index];
+    direction[index] = bearish ? 'bearish' : 'bullish';
+  }
+  return { line, direction };
+}
+
 export function parabolicSar(
   frame: TimeSeriesFrame,
   step: number,

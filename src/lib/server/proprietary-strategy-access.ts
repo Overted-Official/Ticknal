@@ -38,6 +38,6 @@ export async function getCurrentProprietaryAccess() {
 export async function requireProprietaryAccess(): Promise<Response | null> {
   const access = await getCurrentProprietaryAccess();
   if (!access.authenticated) return Response.json({ error: 'Unauthorized' }, { status: 401, headers: { 'Cache-Control': 'private, no-store' } });
-  if (!access.canView) return Response.json({ error: 'Forbidden' }, { status: 403, headers: { 'Cache-Control': 'private, no-store' } });
+  if (!access.canView && !access.canReceiveAlerts) return Response.json({ error: 'Forbidden' }, { status: 403, headers: { 'Cache-Control': 'private, no-store' } });
   return null;
 }

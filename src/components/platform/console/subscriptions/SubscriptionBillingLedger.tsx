@@ -192,6 +192,7 @@ export default function SubscriptionBillingLedger({
       createdAt: sub.currentPeriodStart,
       updatedAt: sub.currentPeriodEnd,
       lastActiveAt: sub.currentPeriodStart || new Date().toISOString(),
+      lastSignInAt: sub.currentPeriodStart || null,
       memberStatus: sub.status === 'active' ? 'active' : 'inactive',
       authProvider: 'Google/OAuth',
       openPositionsCount: sub.positionsCount || 0,

@@ -176,4 +176,15 @@ describe('egx-ticker-sync', () => {
       expect(reactivated).toEqual(['RELCO']);
     });
   });
+
+  describe('custom logo fallbacks and verification', () => {
+    it('applies KNOWN_CUSTOM_LOGOS for HALN when TradingView returns null logoid', () => {
+      const item = {
+        s: 'EGX:HALN',
+        d: ['HALN', 'MNT-Halan', 'Technology Services', 'Packaged Software', 'EGP', null],
+      };
+      const parsed = parseTradingViewScannerItem(item);
+      expect(parsed?.logoUrl).toContain('haln.svg');
+    });
+  });
 });

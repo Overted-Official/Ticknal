@@ -45,6 +45,8 @@ export interface NewsQueryFilters {
   minUrgency?: number;
   limit?: number;
   offset?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const CATEGORY_MAP: Record<string, string[]> = {
@@ -165,7 +167,7 @@ export const MACRO_ASSET_LOGOS: Record<string, { logoUrl: string; companyName: s
 export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   await ensureMarketNewsTable();
 
-  const { category, ticker, query, itemId, limit = 50, offset = 0 } = filters;
+  const { category, ticker, query, itemId, limit = 50, offset = 0, startDate, endDate } = filters;
 
   // Query all news items ordered by publication timestamp descending
   const rawRows = await db
@@ -189,9 +191,26 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
     rows.push(row);
   }
 
-  // Compute category statistics from all records in database
+  // Pre-filter rows by date range if provided
+  let timeFilteredRows = rows;
+  if (startDate) {
+    const startIso = `${startDate}T00:00:00.000Z`;
+    timeFilteredRows = timeFilteredRows.filter((r) => {
+      const pub = r.publishedAt instanceof Date ? r.publishedAt.toISOString() : String(r.publishedAt || '');
+      return pub >= startIso || pub.slice(0, 10) >= startDate;
+    });
+  }
+  if (endDate) {
+    const endIso = `${endDate}T23:59:59.999Z`;
+    timeFilteredRows = timeFilteredRows.filter((r) => {
+      const pub = r.publishedAt instanceof Date ? r.publishedAt.toISOString() : String(r.publishedAt || '');
+      return pub <= endIso || pub.slice(0, 10) <= endDate;
+    });
+  }
+
+  // Compute category statistics from records matching the timeframe
   const allCategoriesCount: Record<string, number> = {
-    all: rows.length,
+    all: timeFilteredRows.length,
     ticknal_take: 0,
     macro_market: 0,
     listed_companies: 0,
@@ -209,7 +228,7 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
 
   const tickerMentions: Record<string, number> = {};
 
-  for (const row of rows) {
+  for (const row of timeFilteredRows) {
     const rowCat = row.category;
     for (const [key, aliases] of Object.entries(CATEGORY_MAP)) {
       if (aliases.includes(rowCat)) {
@@ -227,7 +246,7 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   }
 
   // Filter based on criteria
-  let filtered = rows;
+  let filtered = timeFilteredRows;
 
   if (category && category !== 'all') {
     const allowed = CATEGORY_MAP[category] || [category];
@@ -284,7 +303,13 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   }
 
   if (typeof filters.minUrgency === 'number') {
-    filtered = filtered.filter((r) => (r.urgencyScore ?? 5) >= filters.minUrgency!);
+    filtered = filtered.filter((r) => {
+      const isTake = r.category === 'ticknal_take' || r.id.startsWith('take-');
+      const score = isTake
+        ? Math.max(r.urgencyScore ?? 0, r.id.includes('market-snapshot') ? 10 : r.id.includes('hot-money') || r.id.includes('usd-egp') ? 9 : 8)
+        : (r.urgencyScore ?? 5);
+      return score >= filters.minUrgency!;
+    });
   }
 
   const paginated = filtered.slice(offset, offset + limit);
@@ -342,7 +367,10 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
       source: r.source,
       sourceUrl: r.sourceUrl,
       importance: r.importance as MarketNewsItemDTO['importance'],
-      urgencyScore: r.urgencyScore ?? (r.importance === 'critical' ? 9 : r.importance === 'high' ? 8 : 5),
+      urgencyScore:
+        r.category === 'ticknal_take' || r.id.startsWith('take-')
+          ? Math.max(r.urgencyScore ?? 0, r.id.includes('market-snapshot') ? 10 : r.id.includes('hot-money') || r.id.includes('usd-egp') ? 9 : 8)
+          : (r.urgencyScore ?? (r.importance === 'critical' ? 9 : r.importance === 'high' ? 8 : 5)),
       impactMetric: r.impactMetric,
       readTime: r.readTime,
       imageUrl: r.imageUrl ?? null,

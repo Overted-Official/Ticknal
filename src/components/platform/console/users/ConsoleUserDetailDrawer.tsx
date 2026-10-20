@@ -33,7 +33,7 @@ interface UserDetailProps {
   onAccessChanged?: (userId: string, enabled: boolean) => void;
 }
 
-function formatDate(iso: string | null) {
+function formatDate(iso: string | null | undefined) {
   if (!iso) return '—';
   try {
     const d = new Date(iso);
@@ -42,6 +42,39 @@ function formatDate(iso: string | null) {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+function formatTime(iso: string | null | undefined) {
+  if (!iso) return null;
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return null;
+  }
+}
+
+function formatDateTime(iso: string | null | undefined) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
     });
   } catch {
     return '—';
@@ -741,8 +774,8 @@ export default function ConsoleUserDetailDrawer({
             {activeTab === 'system' && (
               <div className="space-y-7">
                 <div className="space-y-2 border-b border-plt-border pb-5">
-                  <div className="text-xs font-semibold text-plt-text">Proprietary strategies</div>
-                  <p className="text-[11px] text-plt-muted">Read-only Typhon, Cerberus and Hydra access. The member may opt in to one daily after-close signal per ticker from its champion strategy.</p>
+                  <div className="text-xs font-semibold text-plt-text">Proprietary strategy signals</div>
+                  <p className="text-[11px] text-plt-muted">Enable notifications and alerts from Typhon, Cerberus, Hydra, and Champion strategies for this member. Strategy builder flow models remain private to the platform owner.</p>
                   <ProprietaryAccessToggle userId={user.id} enabled={user.proprietaryStrategyAccess} canManage={canManageProprietaryAccess} isOwner={isProprietaryOwner(user.email, user.role)} onChanged={onAccessChanged} />
                 </div>
                 {/* Role-Based Access Control */}
@@ -797,8 +830,23 @@ export default function ConsoleUserDetailDrawer({
                     </div>
 
                     <div className="flex items-center justify-between py-2.5">
-                      <span className="text-text-muted text-xs">Last Login / Active</span>
-                      <span className="text-text-primary text-xs font-medium tabular-nums">{formatDate(user.lastActiveAt)}</span>
+                      <span className="text-text-muted text-xs">Last Active (App Opened)</span>
+                      <div className="text-right">
+                        <div className="text-text-primary text-xs font-medium tabular-nums">{formatDate(user.lastActiveAt)}</div>
+                        {formatTime(user.lastActiveAt) && (
+                          <div className="text-text-muted text-[10px] tabular-nums">{formatTime(user.lastActiveAt)}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between py-2.5">
+                      <span className="text-text-muted text-xs">Last Login (Auth/OAuth)</span>
+                      <div className="text-right">
+                        <div className="text-text-primary text-xs font-medium tabular-nums">{formatDate(user.lastSignInAt)}</div>
+                        {formatTime(user.lastSignInAt) && (
+                          <div className="text-text-muted text-[10px] tabular-nums">{formatTime(user.lastSignInAt)}</div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between py-2.5">

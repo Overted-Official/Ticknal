@@ -603,6 +603,7 @@ export interface ConsoleUserRowItem {
   createdAt: string;
   updatedAt: string;
   lastActiveAt: string;
+  lastSignInAt: string | null;
   memberStatus: 'active' | 'inactive' | 'suspended';
   authProvider: string;
   openPositionsCount: number;
@@ -701,17 +702,49 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
     }[] = [];
     let alertCounts: { userId: string; count: number }[] = [];
     let subs: (typeof userSubscriptions.$inferSelect)[] = [];
-    let proprietaryGrants: { userId: string; enabled: boolean }[] = [];
+    let proprietaryGrants: { userId: string; enabled: boolean; notificationsEnabled: boolean }[] = [];
     if (userIds.length > 0) {
       try {
         proprietaryGrants = await db
-          .select({ userId: proprietaryStrategyAccess.userId, enabled: proprietaryStrategyAccess.enabled })
+          .select({
+            userId: proprietaryStrategyAccess.userId,
+            enabled: proprietaryStrategyAccess.enabled,
+            notificationsEnabled: proprietaryStrategyAccess.notificationsEnabled,
+          })
           .from(proprietaryStrategyAccess);
       } catch (e) {
         console.error('[getConsoleUsersPageData] Failed proprietary grants:', e);
       }
     }
-    const proprietaryGrantMap = new Map(proprietaryGrants.map((grant) => [grant.userId, grant.enabled]));
+    const proprietaryGrantMap = new Map(
+      proprietaryGrants.map((grant) => [grant.userId, grant.enabled || grant.notificationsEnabled])
+    );
+
+    const authMap = new Map<string, { lastSignInAt: string | null; lastSessionActiveAt: string | null }>();
+    if (userIds.length > 0) {
+      try {
+        const authData = await db.execute(sql`
+          SELECT
+            u.id::text as user_id,
+            u.last_sign_in_at,
+            u.updated_at as auth_updated_at,
+            MAX(s.updated_at) as session_active_at
+          FROM auth.users u
+          LEFT JOIN auth.sessions s ON u.id = s.user_id
+          WHERE u.id::text IN ${userIds}
+          GROUP BY u.id, u.last_sign_in_at, u.updated_at
+        `);
+        for (const row of authData as any[]) {
+          const lastSignInAt = row.last_sign_in_at ? new Date(row.last_sign_in_at).toISOString() : null;
+          const sessionActive = row.session_active_at ? new Date(row.session_active_at).toISOString() : null;
+          const authUpdated = row.auth_updated_at ? new Date(row.auth_updated_at).toISOString() : null;
+          const lastSessionActiveAt = sessionActive || authUpdated || lastSignInAt;
+          authMap.set(row.user_id, { lastSignInAt, lastSessionActiveAt });
+        }
+      } catch (e) {
+        console.warn('[getConsoleUsersPageData] auth.users/sessions query skipped:', e);
+      }
+    }
 
     if (userIds.length > 0) {
       try {
@@ -887,10 +920,15 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
       }
       tierCounts[tier] = (tierCounts[tier] || 0) + 1;
 
+      const authInfo = authMap.get(u.id);
       const createdTime = u.createdAt ? new Date(u.createdAt).getTime() : 0;
       const updatedTime = u.updatedAt ? new Date(u.updatedAt).getTime() : 0;
-      const lastActiveTime = Math.max(createdTime, updatedTime);
+      const sessionActiveTime = authInfo?.lastSessionActiveAt ? new Date(authInfo.lastSessionActiveAt).getTime() : 0;
+      const lastSignInTime = authInfo?.lastSignInAt ? new Date(authInfo.lastSignInAt).getTime() : 0;
+
+      const lastActiveTime = Math.max(createdTime, updatedTime, sessionActiveTime, lastSignInTime);
       const lastActiveAt = new Date(lastActiveTime).toISOString();
+      const lastSignInAt = authInfo?.lastSignInAt ?? (u.createdAt ? new Date(u.createdAt).toISOString() : null);
       const daysSinceActive = (now.getTime() - lastActiveTime) / (1000 * 60 * 60 * 24);
       let memberStatus: 'active' | 'inactive' | 'suspended' = 'active';
       if (s?.status === 'canceled' || s?.status === 'suspended') {
@@ -911,6 +949,7 @@ export async function getConsoleUsersPageData(): Promise<ConsoleUsersPageData> {
         createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString(),
         updatedAt: u.updatedAt ? new Date(u.updatedAt).toISOString() : new Date().toISOString(),
         lastActiveAt,
+        lastSignInAt,
         memberStatus,
         authProvider: isGoogle ? 'Google OAuth' : 'Email/SSO',
         openPositionsCount,

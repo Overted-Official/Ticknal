@@ -22,6 +22,13 @@ function makeParameter(
   decimalKeys: ReadonlySet<string>,
 ): IndicatorParameterDefinition {
   if (typeof defaultValue === 'string') {
+    if (key === 'mode' && defaultValue === 'canonical') {
+      return Object.freeze({ kind: 'select', key, label: text('Calculation method', 'طريقة الحساب'), defaultValue,
+        options: Object.freeze([
+          { value: 'canonical', label: text('Standard', 'القياسية') },
+          { value: 'legacy-technicalindicators', label: text('Classic — historical strategy compatible', 'الكلاسيكية — متوافقة مع الاستراتيجيات التاريخية') },
+        ]) });
+    }
     if (/symbol$/i.test(key)) {
       return Object.freeze({
         kind: 'symbol', key, label: text(key), defaultValue,
