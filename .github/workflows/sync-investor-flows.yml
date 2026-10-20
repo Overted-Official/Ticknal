@@ -1,0 +1,34 @@
+name: Sync EGX Investor Flows & Market Take
+
+on:
+  schedule:
+    # Runs every 30 minutes between 13:00 UTC and 17:30 UTC (16:00 to 20:30 Cairo time) on Sun-Thu
+    - cron: '*/30 13-17 * * 0-4'
+  workflow_dispatch:
+
+jobs:
+  sync-flows:
+    name: Sync Flows & Takes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger Investor Flows Ingestion
+        run: |
+          echo "Triggering /api/cron/update-investor-flows..."
+          FLOW_RESP=$(curl -s -w "\n%{http_code}" -X POST "https://ticknal.com/api/cron/update-investor-flows" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          HTTP_STATUS=$(echo "$FLOW_RESP" | tail -n1)
+          BODY=$(echo "$FLOW_RESP" | head -n -1)
+          echo "Status: $HTTP_STATUS"
+          echo "Body: $BODY"
+
+          # Now trigger ticknal-take generation
+          echo "Triggering /api/cron/ticknal-take..."
+          TAKE_RESP=$(curl -s -w "\n%{http_code}" -X POST "https://ticknal.com/api/cron/ticknal-take" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          TAKE_STATUS=$(echo "$TAKE_RESP" | tail -n1)
+          TAKE_BODY=$(echo "$TAKE_RESP" | head -n -1)
+          echo "Take Status: $TAKE_STATUS"
+          echo "Take Body: $TAKE_BODY"
