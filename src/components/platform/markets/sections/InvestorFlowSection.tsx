@@ -128,14 +128,12 @@ export default function InvestorFlowSection({
             <span className="text-[11px] text-plt-muted hidden sm:inline">
               {locale === 'ar' ? 'السوق:' : 'Market:'}
             </span>
-            <div className="seg-control h-7 py-0.5 px-1 rounded-sm border border-white/10 bg-black">
+            <div className="seg-control h-7.5 p-0.5">
               <button
                 type="button"
                 onClick={() => setSegment('TOTAL')}
-                className={`px-2.5 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  segment === 'TOTAL'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  segment === 'TOTAL' ? 'seg-control-btn-active' : ''
                 }`}
                 title={locale === 'ar' ? 'الأسهم والسندات والأذون (مقياس الأموال الساخنة الكلي)' : 'All Securities, Bonds & Bills (Total Macro Hot Money)'}
               >
@@ -144,10 +142,8 @@ export default function InvestorFlowSection({
               <button
                 type="button"
                 onClick={() => setSegment('STOCKS')}
-                className={`px-2.5 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  segment === 'STOCKS'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  segment === 'STOCKS' ? 'seg-control-btn-active' : ''
                 }`}
                 title={locale === 'ar' ? 'تداولات الأسهم المقيدة داخل المقصورة فقط' : 'Listed Equities Only'}
               >
@@ -156,10 +152,8 @@ export default function InvestorFlowSection({
               <button
                 type="button"
                 onClick={() => setSegment('BONDS')}
-                className={`px-2.5 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  segment === 'BONDS'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  segment === 'BONDS' ? 'seg-control-btn-active' : ''
                 }`}
                 title={locale === 'ar' ? 'السندات الحكومية وسندات الشركات' : 'Bonds Only'}
               >
@@ -168,10 +162,8 @@ export default function InvestorFlowSection({
               <button
                 type="button"
                 onClick={() => setSegment('BILLS')}
-                className={`px-2.5 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  segment === 'BILLS'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  segment === 'BILLS' ? 'seg-control-btn-active' : ''
                 }`}
                 title={locale === 'ar' ? 'أذون الخزانة الحكومية' : 'Treasury Bills Only'}
               >
@@ -188,14 +180,12 @@ export default function InvestorFlowSection({
             <span className="text-[11px] text-plt-muted hidden sm:inline">
               {locale === 'ar' ? 'الفئة:' : 'Category:'}
             </span>
-            <div className="seg-control h-7 py-0.5 px-1 rounded-sm border border-white/10 bg-black">
+            <div className="seg-control h-7.5 p-0.5">
               <button
                 type="button"
                 onClick={() => setCategory('TOTAL')}
-                className={`px-2.5 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  category === 'TOTAL'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  category === 'TOTAL' ? 'seg-control-btn-active' : ''
                 }`}
               >
                 {locale === 'ar' ? 'الإجمالي' : 'Total'}
@@ -203,10 +193,8 @@ export default function InvestorFlowSection({
               <button
                 type="button"
                 onClick={() => setCategory('INSTITUTIONS')}
-                className={`px-2.5 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  category === 'INSTITUTIONS'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  category === 'INSTITUTIONS' ? 'seg-control-btn-active' : ''
                 }`}
               >
                 {locale === 'ar' ? 'المؤسسات' : 'Institutions'}
@@ -214,10 +202,8 @@ export default function InvestorFlowSection({
               <button
                 type="button"
                 onClick={() => setCategory('RETAIL')}
-                className={`px-2.5 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  category === 'RETAIL'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  category === 'RETAIL' ? 'seg-control-btn-active' : ''
                 }`}
               >
                 {locale === 'ar' ? 'الأفراد' : 'Individuals'}
@@ -228,14 +214,12 @@ export default function InvestorFlowSection({
           {/* Chart Mode & Horizon Switchers */}
           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             {/* Primary Mode Switcher: 100% Stacked Share vs Hot Money Net Flow */}
-            <div className="seg-control h-7 py-0.5 px-1 rounded-sm border border-white/10 bg-black">
+            <div className="seg-control h-7.5 p-0.5">
               <button
                 type="button"
                 onClick={() => setChartMode('stacked_share')}
-                className={`px-2 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  chartMode === 'stacked_share'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                  chartMode === 'stacked_share' ? 'seg-control-btn-active' : ''
                 }`}
               >
                 {locale === 'ar' ? 'حصة السيولة 100%' : '100% Share'}
@@ -243,10 +227,8 @@ export default function InvestorFlowSection({
               <button
                 type="button"
                 onClick={() => setChartMode('net_flow')}
-                className={`px-2 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                  chartMode === 'net_flow'
-                    ? 'bg-white/15 text-white font-semibold shadow-xs'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                  chartMode === 'net_flow' ? 'seg-control-btn-active' : ''
                 }`}
               >
                 {locale === 'ar' ? 'صافي التدفقات' : 'Net Flow'}
@@ -255,14 +237,12 @@ export default function InvestorFlowSection({
 
             {/* Sub-Filter: Foreigners vs Arabs vs Combined (Only in Net Flow mode) */}
             {chartMode === 'net_flow' && (
-              <div className="seg-control h-7 py-0.5 px-1 rounded-sm border border-white/10 bg-black">
+              <div className="seg-control h-7.5 p-0.5">
                 <button
                   type="button"
                   onClick={() => setNetFilter('all_hot_money')}
-                  className={`px-2 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                    netFilter === 'all_hot_money'
-                      ? 'bg-white/15 text-white font-semibold shadow-xs'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                  className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                    netFilter === 'all_hot_money' ? 'seg-control-btn-active' : ''
                   }`}
                   title={locale === 'ar' ? 'إجمالي صافي غير المصريين (أجانب + عرب)' : 'Total Non-Domestic Net (Foreigners + Arabs)'}
                 >
@@ -271,10 +251,8 @@ export default function InvestorFlowSection({
                 <button
                   type="button"
                   onClick={() => setNetFilter('foreign')}
-                  className={`px-2 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                    netFilter === 'foreign'
-                      ? 'bg-white/15 text-white font-semibold shadow-xs'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                  className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                    netFilter === 'foreign' ? 'seg-control-btn-active' : ''
                   }`}
                   title={locale === 'ar' ? 'صافي تدفق المستثمرين الأجانب الدوليين' : 'International Foreign Investors Net'}
                 >
@@ -283,10 +261,8 @@ export default function InvestorFlowSection({
                 <button
                   type="button"
                   onClick={() => setNetFilter('arab')}
-                  className={`px-2 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                    netFilter === 'arab'
-                      ? 'bg-white/15 text-white font-semibold shadow-xs'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                  className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                    netFilter === 'arab' ? 'seg-control-btn-active' : ''
                   }`}
                   title={locale === 'ar' ? 'صافي تدفق المستثمرين العرب الإقليميين' : 'Regional Arab Investors Net'}
                 >
@@ -296,7 +272,7 @@ export default function InvestorFlowSection({
             )}
 
             {/* Horizon Pills */}
-            <div className="seg-control h-7 py-0.5 px-1 rounded-sm border border-white/10 bg-black">
+            <div className="seg-control h-7.5 p-0.5">
               {HORIZONS.map((h) => {
                 const isSelected = horizon === h;
                 return (
@@ -304,10 +280,8 @@ export default function InvestorFlowSection({
                     key={h}
                     type="button"
                     onClick={() => setHorizon(h)}
-                    className={`px-2 py-0.5 text-[11px] rounded-xs transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-white/15 text-white font-semibold shadow-xs'
-                        : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                    className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                      isSelected ? 'seg-control-btn-active' : ''
                     }`}
                   >
                     {h}
