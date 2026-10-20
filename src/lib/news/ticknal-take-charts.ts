@@ -288,8 +288,31 @@ function footerBlock(w: number, h: number, note: string, ar: boolean = false): s
 }
 
 const sign = (n: number) => (n >= 0 ? '+' : '');
+const signedSymbol = (n: number) => (n > 0 ? '+' : n < 0 ? '-' : '');
 const fmt1 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const fmt2 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+export function fmtFlowMoney(valMillion: number, ar: boolean, signed = true): string {
+  const abs = Math.abs(valMillion);
+  const s = signed ? signedSymbol(valMillion) : '';
+  if (abs >= 1000) {
+    const bn = (abs / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return ar ? `${s}${bn} مليار جنيه` : `${s}${bn}B EGP`;
+  }
+  const m = abs.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return ar ? `${s}${m} مليون جنيه` : `${s}${m}M EGP`;
+}
+
+export function fmtFlowCompact(valMillion: number, ar: boolean, signed = false): string {
+  const abs = Math.abs(valMillion);
+  const s = signed ? signedSymbol(valMillion) : '';
+  if (abs >= 1000) {
+    const bn = (abs / 1000).toFixed(2);
+    return ar ? `${s}${bn} مليار` : `${s}${bn}B`;
+  }
+  const m = abs.toFixed(1);
+  return ar ? `${s}${m} م` : `${s}${m}M`;
+}
 
 /* ───────────────────────────────────────────────────────────────────────────
  * 1. HOT MONEY STATUS — Wide (1200x675 16:9) & Square (1080x1080 1:1)
@@ -323,6 +346,7 @@ export function generateHotMoneyChartSvg(
   const maxCatAbs = Math.max(10, ...cats.map((c) => Math.abs(c.val)));
 
   const cum = data.rolling30dForeignNetMillion;
+  const hotMoneyColor = hotMoneyNet >= 0 ? GREEN : RED;
   const cumColor = cum >= 0 ? GREEN : RED;
   const totalDays = Math.max(1, data.inflowDaysCount + data.outflowDaysCount);
 
@@ -347,13 +371,13 @@ export function generateHotMoneyChartSvg(
           <text x="970" y="${y + 18}" fill="${SOFT}" font-size="15.5" font-weight="700" text-anchor="end">${esc(c.label)}</text>
           <line x1="${zeroBarX - maxHalfBarW}" y1="${y + 12}" x2="${zeroBarX + maxHalfBarW}" y2="${y + 12}" stroke="#18181b" stroke-width="14" stroke-linecap="round" />
           <rect x="${bx.toFixed(1)}" y="${y + 4}" width="${bw.toFixed(1)}" height="16" rx="4" fill="${col}" />
-          <text x="26" y="${y + 18}" fill="${col}" font-size="16" font-weight="700" text-anchor="start">${sign(c.val)}${fmt1(c.val)}M EGP</text>`;
+          <text x="26" y="${y + 18}" fill="${col}" font-size="16" font-weight="700" text-anchor="start">${fmtFlowMoney(c.val, ar)}</text>`;
         }
         return `
         <text x="26" y="${y + 18}" fill="${SOFT}" font-size="15" font-weight="600">${esc(c.label)}</text>
         <line x1="${zeroBarX - maxHalfBarW}" y1="${y + 12}" x2="${zeroBarX + maxHalfBarW}" y2="${y + 12}" stroke="#18181b" stroke-width="14" stroke-linecap="round" />
         <rect x="${bx.toFixed(1)}" y="${y + 4}" width="${bw.toFixed(1)}" height="16" rx="4" fill="${col}" />
-        <text x="968" y="${y + 18}" fill="${col}" font-size="16" font-weight="700" text-anchor="end">${sign(c.val)}${fmt1(c.val)}M EGP</text>`;
+        <text x="968" y="${y + 18}" fill="${col}" font-size="16" font-weight="700" text-anchor="end">${fmtFlowMoney(c.val, ar)}</text>`;
       })
       .join('');
 
@@ -438,9 +462,9 @@ export function generateHotMoneyChartSvg(
         <rect width="996" height="216" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
         ${
           ar
-            ? `<text x="970" y="34" fill="#ffffff" font-size="16.5" font-weight="700" text-anchor="end">صافي تعاملات فئات المستثمرين اليوم (مليون جنيه)</text>
+            ? `<text x="970" y="34" fill="#ffffff" font-size="16.5" font-weight="700" text-anchor="end">صافي تعاملات فئات المستثمرين اليوم</text>
                <text x="26" y="34" fill="${CYAN}" font-size="15" font-weight="700" text-anchor="start">السيولة: ${data.totalTurnoverBillion.toFixed(2)} مليار جنيه</text>`
-            : `<text x="26" y="34" fill="#ffffff" font-size="16.5" font-weight="700">Session Net Flow by Investor Category (M EGP)</text>
+            : `<text x="26" y="34" fill="#ffffff" font-size="16.5" font-weight="700">Session Net Flow by Investor Category</text>
                <text x="968" y="34" fill="${CYAN}" font-size="15" font-weight="700" text-anchor="end">Turnover: ${data.totalTurnoverBillion.toFixed(2)}B EGP</text>`
         }
         <line x1="${zeroBarX}" y1="54" x2="${zeroBarX}" y2="198" stroke="#3f3f46" stroke-width="1.2" stroke-dasharray="4 4" />
@@ -452,31 +476,35 @@ export function generateHotMoneyChartSvg(
         <rect width="996" height="162" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
         ${
           ar
-            ? `<text x="970" y="34" fill="${SOFT}" font-size="14" font-weight="700" text-anchor="end">صافي الأموال الساخنة التراكمي (أجانب + عرب · ٣٠ جلسة)</text>
-               <text x="970" y="82" fill="${cumColor}" font-size="34" font-weight="700" text-anchor="end">${sign(cum)}${fmt1(cum)}M EGP</text>
-               <text x="26" y="34" fill="${SOFT}" font-size="14" font-weight="700" text-anchor="start">جلسات الشراء مقابل البيع</text>
-               <text x="26" y="82" fill="#ffffff" font-size="32" font-weight="700" text-anchor="start">
+            ? `<text x="970" y="30" fill="${SOFT}" font-size="13" font-weight="700" text-anchor="end">صافي الأموال الساخنة اليوم</text>
+               <text x="970" y="66" fill="${hotMoneyColor}" font-size="28" font-weight="700" text-anchor="end">${fmtFlowMoney(hotMoneyNet, ar)}</text>
+               <text x="560" y="30" fill="${SOFT}" font-size="13" font-weight="700" text-anchor="end">التراكمي (٣٠ جلسة)</text>
+               <text x="560" y="66" fill="${cumColor}" font-size="28" font-weight="700" text-anchor="end">${fmtFlowMoney(cum, ar)}</text>
+               <text x="26" y="30" fill="${SOFT}" font-size="13" font-weight="700" text-anchor="start">جلسات الشراء مقابل البيع</text>
+               <text x="26" y="66" fill="#ffffff" font-size="26" font-weight="700" text-anchor="start">
                  <tspan fill="${GREEN}">${data.inflowDaysCount}D</tspan>
-                 <tspan fill="${MUTED}" font-size="22"> / </tspan>
+                 <tspan fill="${MUTED}" font-size="18"> / </tspan>
                  <tspan fill="${RED}">${data.outflowDaysCount}D</tspan>
                </text>`
-            : `<text x="26" y="34" fill="${SOFT}" font-size="14" font-weight="600">30-Session Rolling Hot Money Net (Foreign + Arab)</text>
-               <text x="26" y="82" fill="${cumColor}" font-size="34" font-weight="700">${sign(cum)}${fmt1(cum)}M EGP</text>
-               <text x="440" y="34" fill="${SOFT}" font-size="14" font-weight="600">Inflow vs. Outflow Days</text>
-               <text x="440" y="82" fill="#ffffff" font-size="32" font-weight="700">
+            : `<text x="26" y="30" fill="${SOFT}" font-size="13" font-weight="600">Today's Hot Money Net</text>
+               <text x="26" y="66" fill="${hotMoneyColor}" font-size="28" font-weight="700">${fmtFlowMoney(hotMoneyNet, ar)}</text>
+               <text x="440" y="30" fill="${SOFT}" font-size="13" font-weight="600">30-Session Cumulative</text>
+               <text x="440" y="66" fill="${cumColor}" font-size="28" font-weight="700">${fmtFlowMoney(cum, ar)}</text>
+               <text x="970" y="30" fill="${SOFT}" font-size="13" font-weight="600" text-anchor="end">Inflow vs. Outflow Days</text>
+               <text x="970" y="66" fill="#ffffff" font-size="26" font-weight="700" text-anchor="end">
                  <tspan fill="${GREEN}">${data.inflowDaysCount}D</tspan>
-                 <tspan fill="${MUTED}" font-size="22"> / </tspan>
+                 <tspan fill="${MUTED}" font-size="18"> / </tspan>
                  <tspan fill="${RED}">${data.outflowDaysCount}D</tspan>
                </text>`
         }
 
-        <g transform="translate(26, 104)">
-          <rect width="944" height="18" rx="6" fill="#18181b" />
-          <rect x="0" y="0" width="${((data.inflowDaysCount / totalDays) * 944).toFixed(1)}" height="18" rx="6" fill="${GREEN}" />
-          <rect x="${((data.inflowDaysCount / totalDays) * 944).toFixed(1)}" y="0" width="${((data.outflowDaysCount / totalDays) * 944).toFixed(1)}" height="18" rx="6" fill="${RED}" />
+        <g transform="translate(26, 94)">
+          <rect width="944" height="16" rx="5" fill="#18181b" />
+          <rect x="0" y="0" width="${((data.inflowDaysCount / totalDays) * 944).toFixed(1)}" height="16" rx="5" fill="${GREEN}" />
+          <rect x="${((data.inflowDaysCount / totalDays) * 944).toFixed(1)}" y="0" width="${((data.outflowDaysCount / totalDays) * 944).toFixed(1)}" height="16" rx="5" fill="${RED}" />
         </g>
-        <text x="26" y="144" fill="${GREEN}" font-size="13" font-weight="700">▲ ${Math.round((data.inflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'جلسات شراء' : 'Inflow Sessions')} (${data.inflowDaysCount})</text>
-        <text x="970" y="144" fill="${RED}" font-size="13" font-weight="700" text-anchor="end">▼ ${Math.round((data.outflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'جلسات بيع' : 'Outflow Sessions')} (${data.outflowDaysCount})</text>
+        <text x="26" y="136" fill="${GREEN}" font-size="12.5" font-weight="700">▲ ${Math.round((data.inflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'جلسات شراء' : 'Inflow Sessions')} (${data.inflowDaysCount})</text>
+        <text x="970" y="136" fill="${RED}" font-size="12.5" font-weight="700" text-anchor="end">▼ ${Math.round((data.outflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'جلسات بيع' : 'Outflow Sessions')} (${data.outflowDaysCount})</text>
       </g>
 
       <!-- Bottom Large 30-Session Combo Chart (996 x 440) -->
@@ -504,9 +532,9 @@ export function generateHotMoneyChartSvg(
         <line x1="${plotX}" y1="${zeroY}" x2="${plotX + plotW}" y2="${zeroY}" stroke="#333338" stroke-width="1" stroke-dasharray="4 4" />
         <line x1="${plotX}" y1="${plotTop + plotH}" x2="${plotX + plotW}" y2="${plotTop + plotH}" stroke="${GRID}" stroke-width="1" />
 
-        <text x="${plotX - 10}" y="${plotTop + 22}" fill="${MUTED}" font-size="11.5" text-anchor="end">+${fmt1(maxDailyAbs)}M</text>
-        <text x="${plotX - 10}" y="${zeroY + 4}" fill="${SOFT}" font-size="11.5" text-anchor="end">0M</text>
-        <text x="${plotX - 10}" y="${plotTop + plotH}" fill="${MUTED}" font-size="11.5" text-anchor="end">-${fmt1(maxDailyAbs)}M</text>
+        <text x="${plotX - 10}" y="${plotTop + 22}" fill="${MUTED}" font-size="11.5" text-anchor="end">+${fmtFlowCompact(maxDailyAbs, ar, false)}</text>
+        <text x="${plotX - 10}" y="${zeroY + 4}" fill="${SOFT}" font-size="11.5" text-anchor="end">0</text>
+        <text x="${plotX - 10}" y="${plotTop + plotH}" fill="${MUTED}" font-size="11.5" text-anchor="end">-${fmtFlowCompact(maxDailyAbs, ar, false)}</text>
 
         ${areaPathStr ? `<path d="${areaPathStr}" fill="url(#hmCumGrad)" />` : ''}
         ${barRects}
@@ -514,8 +542,8 @@ export function generateHotMoneyChartSvg(
         ${
           lastPt
             ? `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="5" fill="${CYAN}" stroke="#000000" stroke-width="2" />
-               <rect x="${(plotX + plotW + 8).toFixed(1)}" y="${(lastPt.y - 13).toFixed(1)}" width="68" height="24" rx="6" fill="${CYAN}" fill-opacity="0.16" stroke="${CYAN}" stroke-width="1" />
-               <text x="${(plotX + plotW + 42).toFixed(1)}" y="${(lastPt.y + 3).toFixed(1)}" fill="${CYAN}" font-size="11.5" font-weight="700" text-anchor="middle">${sign(cum)}${Math.round(cum)}M</text>`
+               <rect x="${(plotX + plotW + 8).toFixed(1)}" y="${(lastPt.y - 13).toFixed(1)}" width="76" height="24" rx="6" fill="${CYAN}" fill-opacity="0.16" stroke="${CYAN}" stroke-width="1" />
+               <text x="${(plotX + plotW + 46).toFixed(1)}" y="${(lastPt.y + 3).toFixed(1)}" fill="${CYAN}" font-size="11" font-weight="700" text-anchor="middle">${fmtFlowCompact(cum, ar, true)}</text>`
             : ''
         }
         ${xLabels}
@@ -540,13 +568,13 @@ export function generateHotMoneyChartSvg(
         <text x="526" y="${y + 15}" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="end">${esc(c.label)}</text>
         <line x1="${zeroBarX - maxHalfBarW}" y1="${y + 10}" x2="${zeroBarX + maxHalfBarW}" y2="${y + 10}" stroke="#18181b" stroke-width="10" stroke-linecap="round" />
         <rect x="${bx.toFixed(1)}" y="${y + 3}" width="${bw.toFixed(1)}" height="14" rx="4" fill="${col}" />
-        <text x="20" y="${y + 15}" fill="${col}" font-size="13" font-weight="700" text-anchor="start">${sign(c.val)}${fmt1(c.val)}M</text>`;
+        <text x="20" y="${y + 15}" fill="${col}" font-size="13" font-weight="700" text-anchor="start">${fmtFlowMoney(c.val, ar)}</text>`;
       }
       return `
       <text x="20" y="${y + 15}" fill="${SOFT}" font-size="12" font-weight="600">${esc(c.label)}</text>
       <line x1="${zeroBarX - maxHalfBarW}" y1="${y + 10}" x2="${zeroBarX + maxHalfBarW}" y2="${y + 10}" stroke="#18181b" stroke-width="10" stroke-linecap="round" />
       <rect x="${bx.toFixed(1)}" y="${y + 3}" width="${bw.toFixed(1)}" height="14" rx="4" fill="${col}" />
-      <text x="526" y="${y + 15}" fill="${col}" font-size="13" font-weight="700" text-anchor="end">${sign(c.val)}${fmt1(c.val)}M</text>`;
+      <text x="526" y="${y + 15}" fill="${col}" font-size="13" font-weight="700" text-anchor="end">${fmtFlowMoney(c.val, ar)}</text>`;
     })
     .join('');
 
@@ -633,9 +661,9 @@ export function generateHotMoneyChartSvg(
       <rect width="546" height="178" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
       ${
         ar
-          ? `<text x="526" y="28" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">صافي تعاملات المستثمرين اليوم (مليون جنيه)</text>
+          ? `<text x="526" y="28" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">صافي تعاملات المستثمرين اليوم</text>
              <text x="20" y="28" fill="${CYAN}" font-size="12" font-weight="700" text-anchor="start">السيولة: ${data.totalTurnoverBillion.toFixed(2)} مليار</text>`
-          : `<text x="20" y="28" fill="#ffffff" font-size="14" font-weight="700">Session Net Flow by Category (M EGP)</text>
+          : `<text x="20" y="28" fill="#ffffff" font-size="14" font-weight="700">Session Net Flow by Category</text>
              <text x="526" y="28" fill="${CYAN}" font-size="12" font-weight="700" text-anchor="end">Turnover: ${data.totalTurnoverBillion.toFixed(2)}B EGP</text>`
       }
       <line x1="${zeroBarX}" y1="44" x2="${zeroBarX}" y2="166" stroke="#3f3f46" stroke-width="1" stroke-dasharray="3 3" />
@@ -646,32 +674,36 @@ export function generateHotMoneyChartSvg(
       <rect width="546" height="178" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
       ${
         ar
-          ? `<text x="522" y="28" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="end">صافي الأموال الساخنة التراكمي (أجانب + عرب · ٣٠ جلسة)</text>
-             <text x="522" y="68" fill="${cumColor}" font-size="28" font-weight="700" text-anchor="end">${sign(cum)}${fmt1(cum)}M EGP</text>
-             <text x="24" y="28" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="start">جلسات الشراء مقابل البيع</text>
-             <text x="24" y="68" fill="#ffffff" font-size="28" font-weight="700" text-anchor="start">
+          ? `<text x="522" y="24" fill="${SOFT}" font-size="11.5" font-weight="700" text-anchor="end">صافي الأموال الساخنة اليوم</text>
+             <text x="522" y="55" fill="${hotMoneyColor}" font-size="22" font-weight="700" text-anchor="end">${fmtFlowMoney(hotMoneyNet, ar)}</text>
+             <text x="24" y="24" fill="${SOFT}" font-size="11.5" font-weight="700" text-anchor="start">التراكمي (٣٠ جلسة)</text>
+             <text x="24" y="55" fill="${cumColor}" font-size="22" font-weight="700" text-anchor="start">${fmtFlowMoney(cum, ar)}</text>
+             <line x1="24" y1="69" x2="522" y2="69" stroke="${LINE}" stroke-width="1" />
+             <text x="522" y="90" fill="${MUTED}" font-size="11" font-weight="600" text-anchor="end">توزيع جلسات الشراء والبيع (٣٠ جلسة)</text>
+             <text x="24" y="90" fill="#ffffff" font-size="12" font-weight="700" text-anchor="start">
                <tspan fill="${GREEN}">${data.inflowDaysCount}D</tspan>
-               <tspan fill="${MUTED}" font-size="18"> / </tspan>
+               <tspan fill="${MUTED}"> / </tspan>
                <tspan fill="${RED}">${data.outflowDaysCount}D</tspan>
-             </text>
-             <text x="522" y="104" fill="${MUTED}" font-size="11.5" font-weight="600" text-anchor="end">توزيع جلسات الشراء والبيع خلال ٣٠ جلسة</text>`
-          : `<text x="24" y="28" fill="${SOFT}" font-size="12.5" font-weight="600">30-Session Rolling Hot Money Net (Foreign + Arab)</text>
-             <text x="24" y="68" fill="${cumColor}" font-size="28" font-weight="700">${sign(cum)}${fmt1(cum)}M EGP</text>
-             <text x="330" y="28" fill="${SOFT}" font-size="12.5" font-weight="600">Inflow vs. Outflow Days</text>
-             <text x="330" y="68" fill="#ffffff" font-size="28" font-weight="700">
+             </text>`
+          : `<text x="24" y="24" fill="${SOFT}" font-size="11.5" font-weight="600">Today's Hot Money Net</text>
+             <text x="24" y="55" fill="${hotMoneyColor}" font-size="22" font-weight="700">${fmtFlowMoney(hotMoneyNet, ar)}</text>
+             <text x="522" y="24" fill="${SOFT}" font-size="11.5" font-weight="600" text-anchor="end">30-Session Cumulative</text>
+             <text x="522" y="55" fill="${cumColor}" font-size="22" font-weight="700" text-anchor="end">${fmtFlowMoney(cum, ar)}</text>
+             <line x1="24" y1="69" x2="522" y2="69" stroke="${LINE}" stroke-width="1" />
+             <text x="24" y="90" fill="${MUTED}" font-size="11" font-weight="600">30-Session Inflow vs. Outflow Days</text>
+             <text x="522" y="90" fill="#ffffff" font-size="12" font-weight="700" text-anchor="end">
                <tspan fill="${GREEN}">${data.inflowDaysCount}D</tspan>
-               <tspan fill="${MUTED}" font-size="18"> / </tspan>
+               <tspan fill="${MUTED}"> / </tspan>
                <tspan fill="${RED}">${data.outflowDaysCount}D</tspan>
-             </text>
-             <text x="24" y="104" fill="${MUTED}" font-size="11.5" font-weight="600">30-Session Institutional Accumulation / Distribution Split</text>`
+             </text>`
       }
-      <g transform="translate(24, 114)">
-        <rect width="498" height="16" rx="5" fill="#18181b" />
-        <rect x="0" y="0" width="${((data.inflowDaysCount / totalDays) * 498).toFixed(1)}" height="16" rx="5" fill="${GREEN}" />
-        <rect x="${((data.inflowDaysCount / totalDays) * 498).toFixed(1)}" y="0" width="${((data.outflowDaysCount / totalDays) * 498).toFixed(1)}" height="16" rx="5" fill="${RED}" />
+      <g transform="translate(24, 101)">
+        <rect width="498" height="12" rx="4" fill="#18181b" />
+        <rect x="0" y="0" width="${((data.inflowDaysCount / totalDays) * 498).toFixed(1)}" height="12" rx="4" fill="${GREEN}" />
+        <rect x="${((data.inflowDaysCount / totalDays) * 498).toFixed(1)}" y="0" width="${((data.outflowDaysCount / totalDays) * 498).toFixed(1)}" height="12" rx="4" fill="${RED}" />
       </g>
-      <text x="24" y="154" fill="${GREEN}" font-size="11.5" font-weight="700">▲ ${Math.round((data.inflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'جلسات شراء' : 'Inflow Sessions')} (${data.inflowDaysCount})</text>
-      <text x="522" y="154" fill="${RED}" font-size="11.5" font-weight="700" text-anchor="end">▼ ${Math.round((data.outflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'جلسات بيع' : 'Outflow Sessions')} (${data.outflowDaysCount})</text>
+      <text x="24" y="132" fill="${GREEN}" font-size="11" font-weight="700">▲ ${Math.round((data.inflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'شراء' : 'Inflow')} (${data.inflowDaysCount}D)</text>
+      <text x="522" y="132" fill="${RED}" font-size="11" font-weight="700" text-anchor="end">▼ ${Math.round((data.outflowDaysCount / totalDays) * 100)}% ${esc(ar ? 'بيع' : 'Outflow')} (${data.outflowDaysCount}D)</text>
     </g>
 
     <g transform="translate(42, 348)">
@@ -700,9 +732,9 @@ export function generateHotMoneyChartSvg(
       <line x1="${plotX}" y1="${zeroY}" x2="${plotX + plotW}" y2="${zeroY}" stroke="#333338" stroke-width="1" stroke-dasharray="4 4" />
       <line x1="${plotX}" y1="${plotTop + plotH}" x2="${plotX + plotW}" y2="${plotTop + plotH}" stroke="${GRID}" stroke-width="1" />
 
-      <text x="${plotX - 10}" y="${plotTop + 18}" fill="${MUTED}" font-size="10.5" text-anchor="end">+${fmt1(maxDailyAbs)}M</text>
-      <text x="${plotX - 10}" y="${zeroY + 4}" fill="${SOFT}" font-size="10.5" text-anchor="end">0M</text>
-      <text x="${plotX - 10}" y="${plotTop + plotH}" fill="${MUTED}" font-size="10.5" text-anchor="end">-${fmt1(maxDailyAbs)}M</text>
+      <text x="${plotX - 10}" y="${plotTop + 18}" fill="${MUTED}" font-size="10.5" text-anchor="end">+${fmtFlowCompact(maxDailyAbs, ar, false)}</text>
+      <text x="${plotX - 10}" y="${zeroY + 4}" fill="${SOFT}" font-size="10.5" text-anchor="end">0</text>
+      <text x="${plotX - 10}" y="${plotTop + plotH}" fill="${MUTED}" font-size="10.5" text-anchor="end">-${fmtFlowCompact(maxDailyAbs, ar, false)}</text>
 
       ${areaPathStr ? `<path d="${areaPathStr}" fill="url(#hmCumGrad)" />` : ''}
       ${barRects}
@@ -710,10 +742,12 @@ export function generateHotMoneyChartSvg(
       ${
         lastPt
           ? `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="4.5" fill="${CYAN}" stroke="#000000" stroke-width="2" />
-             <rect x="${(plotX + plotW + 8).toFixed(1)}" y="${(lastPt.y - 11).toFixed(1)}" width="66" height="20" rx="5" fill="${CYAN}" fill-opacity="0.16" stroke="${CYAN}" stroke-width="1" />
-             <text x="${(plotX + plotW + 41).toFixed(1)}" y="${(lastPt.y + 3).toFixed(1)}" fill="${CYAN}" font-size="10.5" font-weight="700" text-anchor="middle">${sign(cum)}${Math.round(cum)}M</text>`
+             <rect x="${(plotX + plotW + 8).toFixed(1)}" y="${(lastPt.y - 11).toFixed(1)}" width="76" height="20" rx="5" fill="${CYAN}" fill-opacity="0.16" stroke="${CYAN}" stroke-width="1" />
+             <text x="${(plotX + plotW + 46).toFixed(1)}" y="${(lastPt.y + 3).toFixed(1)}" fill="${CYAN}" font-size="10" font-weight="700" text-anchor="middle">${fmtFlowCompact(cum, ar, true)}</text>`
           : ''
       }
+      ${xLabels}
+    </g>
       ${xLabels}
     </g>
 

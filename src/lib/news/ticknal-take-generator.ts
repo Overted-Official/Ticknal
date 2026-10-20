@@ -493,7 +493,16 @@ export async function generateAllDailyTakes(
   // ==========================================
   const createdTakes: string[] = [];
 
-  const fmtSignedM = (val: number) => `${val >= 0 ? '+' : ''}${val.toFixed(1)}M EGP`;
+  const fmtMoneyBnOrM = (valMillion: number, isAr = false) => {
+    const abs = Math.abs(valMillion);
+    const s = valMillion >= 0 ? '+' : '-';
+    if (abs >= 1000) {
+      const bn = (abs / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return isAr ? `${bn} مليار جنيه` : `${s}${bn}B EGP`;
+    }
+    const m = abs.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return isAr ? `${m} مليون جنيه` : `${s}${m}M EGP`;
+  };
   const fmtSignedPct = (val: number) => `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`;
 
   // 1. Pre-render all 5 localized dynamic-aspect-ratio SVG chart bundles
@@ -570,25 +579,32 @@ export async function generateAllDailyTakes(
   const losersListStr = topLosers.map((l) => `${l.ticker} (${fmtSignedPct(l.changePct)})`).join(', ');
 
   // 2. Deterministic English + Arabic institutional briefings grounded in exact numbers and approved critical analysis
+  const todayHmStr = fmtMoneyBnOrM(todayHotMoneyNetM);
+  const foreignStr = fmtMoneyBnOrM(todayForeignNetM);
+  const arabStr = fmtMoneyBnOrM(todayArabNetM);
+  const rollingHmStr = fmtMoneyBnOrM(rolling30dHotMoneyNetM);
+  const egyStr = fmtMoneyBnOrM(todayEgyptianNetM);
+
   const hotMoneyEnFallback = isFlightRisk
-    ? `Non-domestic hot money recorded net outflows of ${fmtSignedM(todayHotMoneyNetM)} in the ${targetDate} session (Foreign institutional net ${fmtSignedM(todayForeignNetM)} offset by Arab net ${fmtSignedM(todayArabNetM)}) across ${totalTurnoverB.toFixed(2)}B EGP in turnover. This brings the 30-session cumulative hot money balance to ${fmtSignedM(rolling30dHotMoneyNetM)} (${outflowDays} outflow vs ${inflowDays} inflow sessions). Domestic institutions absorbed ${fmtSignedM(todayEgyptianNetM)}, counseling disciplined risk sizing until foreign outflows stabilize.`
+    ? `Non-domestic hot money recorded net outflows of ${todayHmStr} in the ${targetDate} session (Foreign institutional net ${foreignStr} offset by Arab net ${arabStr}) across ${totalTurnoverB.toFixed(2)}B EGP in turnover. This brings the 30-session cumulative hot money balance to ${rollingHmStr} across ${outflowDays} outflow vs ${inflowDays} inflow sessions (with today's single session representing ${Math.round((Math.abs(todayHotMoneyNetM) / Math.max(1, Math.abs(rolling30dHotMoneyNetM))) * 100)}% of the net 30-day outflow). Domestic institutions absorbed ${egyStr}, counseling disciplined risk sizing until foreign outflows stabilize.`
     : todayHotMoneyNetM >= 0 && rolling30dHotMoneyNetM < -250
-    ? `Non-domestic hot money recorded net inflows of ${fmtSignedM(todayHotMoneyNetM)} in the ${targetDate} session (Foreign net ${fmtSignedM(todayForeignNetM)}, Arab net ${fmtSignedM(todayArabNetM)}) on ${totalTurnoverB.toFixed(2)}B EGP turnover, offering tactical support even as the 30-session balance stands at ${fmtSignedM(rolling30dHotMoneyNetM)} (${inflowDays} inflow vs ${outflowDays} outflow sessions). Selective accumulation in liquid blue-chip leaders is favored while monitoring follow-through.`
-    : `Institutional positioning recorded non-domestic hot money net flow of ${fmtSignedM(todayHotMoneyNetM)} in the ${targetDate} session with Foreign net flow at ${fmtSignedM(todayForeignNetM)} and Arab net flow at ${fmtSignedM(todayArabNetM)} across ${totalTurnoverB.toFixed(2)}B EGP in turnover, bringing the 30-session hot money balance to ${fmtSignedM(rolling30dHotMoneyNetM)}. Domestic Egyptian capital absorbed ${fmtSignedM(todayEgyptianNetM)}.`;
+    ? `Non-domestic hot money recorded net inflows of ${todayHmStr} in the ${targetDate} session (Foreign net ${foreignStr}, Arab net ${arabStr}) on ${totalTurnoverB.toFixed(2)}B EGP turnover, offering tactical support even as the 30-session balance stands at ${rollingHmStr} (${inflowDays} inflow vs ${outflowDays} outflow sessions). Selective accumulation in liquid blue-chip leaders is favored while monitoring follow-through.`
+    : `Institutional positioning recorded non-domestic hot money net flow of ${todayHmStr} in the ${targetDate} session with Foreign net flow at ${foreignStr} and Arab net flow at ${arabStr} across ${totalTurnoverB.toFixed(2)}B EGP in turnover, bringing the 30-session hot money balance to ${rollingHmStr}. Domestic Egyptian capital absorbed ${egyStr}.`;
 
   const foreignDirAr = todayForeignNetM < 0
-    ? `اتجه الأجانب للبيع بصافي ${Math.abs(todayForeignNetM).toFixed(1)} مليون جنيه`
-    : `اتجه الأجانب للشراء بصافي ${todayForeignNetM.toFixed(1)} مليون جنيه`;
+    ? `اتجه الأجانب للبيع بصافي ${fmtMoneyBnOrM(todayForeignNetM, true)}`
+    : `اتجه الأجانب للشراء بصافي ${fmtMoneyBnOrM(todayForeignNetM, true)}`;
 
   const arabDirAr = todayArabNetM >= 0
-    ? `بينما واصل العرب الشراء بصافي ${todayArabNetM.toFixed(1)} مليون جنيه`
-    : `وسجل العرب مبيعات بصافي ${Math.abs(todayArabNetM).toFixed(1)} مليون جنيه`;
+    ? `بينما واصل العرب الشراء بصافي ${fmtMoneyBnOrM(todayArabNetM, true)}`
+    : `وسجل العرب مبيعات بصافي ${fmtMoneyBnOrM(todayArabNetM, true)}`;
 
+  const sharePctOf30d = Math.round((Math.abs(todayHotMoneyNetM) / Math.max(1, Math.abs(rolling30dHotMoneyNetM))) * 100);
   const monthlyTrendAr = rolling30dHotMoneyNetM < 0
-    ? `وعلى المدى الشهري (٣٠ جلسة)، بلغ صافي تخارج الأموال الساخنة التراكمي ${Math.abs(rolling30dHotMoneyNetM).toFixed(1)} مليون جنيه عبر ${outflowDays} جلسة بيع مقابل ${inflowDays} جلسة شراء، في حين وفرت المؤسسات المصرية دعماً بامتصاصها صافي ${todayEgyptianNetM.toFixed(1)} مليون جنيه.`
-    : `وعلى المدى الشهري، تُظهر الأموال الساخنة ميلاً لضخ السيولة بتسجيل صافي شراء تراكمي ${rolling30dHotMoneyNetM.toFixed(1)} مليون جنيه عبر ${inflowDays} جلسة شراء، مما يمنح دعماً مستمراً للمؤشر الرئيسي.`;
+    ? `وعلى المدى الشهري (٣٠ جلسة)، بلغ صافي تخارج الأموال الساخنة التراكمي ${fmtMoneyBnOrM(rolling30dHotMoneyNetM, true)} عبر ${outflowDays} جلسة بيع مقابل ${inflowDays} جلسة شراء (حيث تشكل جلسة اليوم وحدها نحو ${sharePctOf30d}% من إجمالي التخارج الشهري)، في حين وفرت المؤسسات المصرية دعماً بامتصاصها صافي ${fmtMoneyBnOrM(todayEgyptianNetM, true)}.`
+    : `وعلى المدى الشهري، تُظهر الأموال الساخنة ميلاً لضخ السيولة بتسجيل صافي شراء تراكمي ${fmtMoneyBnOrM(rolling30dHotMoneyNetM, true)} عبر ${inflowDays} جلسة شراء، مما يمنح دعماً مستمراً للمؤشر الرئيسي.`;
 
-  const hotMoneyArSummary = `سجلت تعاملات الأموال الساخنة (غير المصريين: أجانب وعرب) ${todayHotMoneyNetM >= 0 ? 'دخولاً إيجابياً للسيولة' : 'تخارجاً صافياً'} بقيمة ${Math.abs(todayHotMoneyNetM).toFixed(1)} مليون جنيه في جلسة اليوم؛ حيث ${foreignDirAr} ${arabDirAr} وسط تداولات إجمالية بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. ${monthlyTrendAr}`;
+  const hotMoneyArSummary = `سجلت تعاملات الأموال الساخنة (غير المصريين: أجانب وعرب) ${todayHotMoneyNetM >= 0 ? 'دخولاً إيجابياً للسيولة' : 'تخارجاً صافياً'} بقيمة ${fmtMoneyBnOrM(todayHotMoneyNetM, true)} في جلسة اليوم؛ حيث ${foreignDirAr} ${arabDirAr} وسط تداولات إجمالية بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. ${monthlyTrendAr}`;
 
   const tradeSummaryEnFallback = `EGX 30 settled at ${egx30.close.toFixed(1)} (${fmtSignedPct(egx30.changePct)}) in the ${targetDate} session while mid-cap EGX 70 EWI closed at ${egx70.close.toFixed(1)} (${fmtSignedPct(egx70.changePct)}) and broad-market EGX 100 EWI at ${egx100.close.toFixed(1)} (${fmtSignedPct(egx100.changePct)}). Total exchange turnover reached ${totalTurnoverB.toFixed(2)}B EGP as institutional and retail liquidity rotated across banking, real estate, and industrial leaders.`;
 
@@ -663,13 +679,13 @@ CRITICAL ARABIC RULES:
           completeWithKeyPool({
             systemPrompt: systemPromptCommon,
             userPrompt: `Analyze 30-Day Egyptian Hot Money & Institutional Liquidity (${targetDate}):
-- Today Combined Hot Money Net (Foreigners + Arabs): ${todayHotMoneyNetM}M EGP
-  - Foreign Institutional Net: ${todayForeignNetM}M EGP
-  - Arab Net: ${todayArabNetM}M EGP
-  - Egyptian Domestic Net: ${todayEgyptianNetM}M EGP
-- 30D Rolling Hot Money Net: ${rolling30dHotMoneyNetM}M EGP (${inflowDays} inflow vs ${outflowDays} outflow sessions)
+- Today Combined Hot Money Net (Foreigners + Arabs): ${todayHmStr}
+  - Foreign Institutional Net: ${foreignStr}
+  - Arab Net: ${arabStr}
+  - Egyptian Domestic Net: ${egyStr}
+- 30D Rolling Hot Money Net: ${rollingHmStr} (${inflowDays} inflow vs ${outflowDays} outflow sessions; today represents ${sharePctOf30d}% of 30D cumulative net)
 - Total Market Turnover: ${totalTurnoverB.toFixed(2)}B EGP
-Directly evaluate: Are non-domestic funds (foreigners & Arabs) entering or exiting today, how much did domestic capital absorb, and what does the 30-day cumulative trajectory signal?`,
+CRITICAL: Format any amounts >= 1,000M in Billions (e.g. ${todayHmStr} in English and ${fmtMoneyBnOrM(todayHotMoneyNetM, true)} in Arabic). Never use raw 5-digit numbers like 16,348M or 13,405M. Explicitly note that today's single session accounted for ${sharePctOf30d}% of the 30-session cumulative total.`,
             fallbackText: JSON.stringify({ en: hotMoneyEnFallback, ar: hotMoneyArSummary }),
             maxTokens: 400,
             timeoutMs: 8000,
