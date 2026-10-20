@@ -1,4 +1,4 @@
-import { estimateAdvancedWorkPerBar, MAX_ADVANCED_PROGRAM_BYTES, MAX_ADVANCED_PROGRAM_INPUTS, MAX_ADVANCED_WORKFLOW_NODES, MAX_ADVANCED_WORK_UNITS_PER_BAR, type AdvancedExitPolicy, type AdvancedProgramInput, type AdvancedStrategyProgram, type StrategyProgramPredicate } from '../../../../lib/strategies/strategy-program';
+import { estimateAdvancedWorkPerBar, MAX_ADVANCED_PROGRAM_BYTES, MAX_ADVANCED_PROGRAM_INPUTS, MAX_ADVANCED_WORKFLOW_NODES, MAX_ADVANCED_WORK_UNITS_PER_BAR, validScoreConditions, validTickerSelection, type AdvancedExitPolicy, type AdvancedProgramInput, type AdvancedStrategyProgram, type StrategyProgramPredicate } from '../../../../lib/strategies/strategy-program';
 import type { AdvancedStrategyNode } from './advanced-strategy-model';
 import type { IndicatorExecutionMetadata } from './compile-simple-strategy';
 import { normalizeLiveTicker } from '../../../../lib/indicators/server/types';
@@ -80,6 +80,29 @@ export function compileAdvancedStrategy(nodes: readonly AdvancedStrategyNode[], 
         compileFormula(input);
         inputs.push(input);
       } catch (error) { issue(node, error instanceof Error ? error.message : 'Check the custom calculation.'); }
+    } else if (template === 'condition-score') {
+      try {
+        const raw: unknown = JSON.parse(node.parameters?.conditions ?? '[]');
+        const conditions: unknown = Array.isArray(raw) ? raw.map((row) => row && typeof row === 'object' ? {
+          ...row, threshold: typeof row.threshold === 'string' && row.threshold.trim() !== '' ? Number(row.threshold) : row.threshold,
+          weight: typeof row.weight === 'string' && row.weight.trim() !== '' ? Number(row.weight) : row.weight,
+        } : row) : raw;
+        const hasSource = (sourceId: string) => dependencies.includes(sourceId) && inputs.some((input) => input.id === sourceId && input.kind !== 'position-memory' && input.kind !== 'rolling-state');
+        if (!validScoreConditions(conditions, hasSource)) { issue(node, 'Add 1–12 valid comparisons connected to earlier numeric values.'); return; }
+        inputs.push({ id, kind: 'condition-score', conditions });
+      } catch { issue(node, 'Set valid scored comparisons.'); }
+    } else if (template === 'ticker-select') {
+      const defaultSourceId = node.parameters?.defaultSourceId;
+      const alternateSourceId = node.parameters?.alternateSourceId;
+      let alternateSymbols: unknown;
+      try { alternateSymbols = JSON.parse(node.parameters?.alternateSymbols ?? '[]'); }
+      catch { issue(node, 'Set valid company symbols for the alternate profile.'); return; }
+      if (!defaultSourceId || !alternateSourceId || defaultSourceId === alternateSourceId || !dependencies.includes(defaultSourceId) || !dependencies.includes(alternateSourceId)
+        || ![defaultSourceId, alternateSourceId].every((sourceId) => inputs.some((input) => input.id === sourceId && input.kind !== 'position-memory' && input.kind !== 'rolling-state'))
+        || !validTickerSelection(alternateSymbols) || !alternateSymbols.every((symbol) => normalizeLiveTicker(symbol) === symbol)) {
+        issue(node, 'Choose two connected calculations and valid unique company symbols.'); return;
+      }
+      inputs.push({ id, kind: 'ticker-select', defaultSourceId, alternateSourceId, alternateSymbols });
     } else if (template === 'formula-output') {
       const parent = inputs.find((input) => input.id === dependencies[0]);
       const outputKey = node.parameters?.outputKey ?? '';
@@ -171,7 +194,9 @@ export function compileAdvancedStrategy(nodes: readonly AdvancedStrategyNode[], 
       if (weights?.some((weight) => weight === null) || (weights && weights.every((weight) => weight === 0))) { issue(node, 'Weights must be valid and not all zero.'); return; }
       const normalization = node.parameters?.normalization ?? 'zeroToHundred';
       if (template === 'weighted-composite' && !['zeroToHundred', 'zScore', 'minMax', 'none'].includes(normalization)) { issue(node, 'Choose a supported normalization.'); return; }
-      inputs.push({ id, kind: 'calculation', operation: operation as Extract<AdvancedProgramInput, { kind: 'calculation' }>['operation'], sourceIds: dependencies, ...(period !== undefined ? { period } : {}), ...(minPeriod !== undefined ? { minPeriod } : {}), ...(weights ? { weights: weights as number[] } : {}), ...(template === 'weighted-composite' ? { normalization: normalization as 'zeroToHundred' | 'zScore' | 'minMax' | 'none' } : {}), ...(operation === 'clamp' ? { lowerBound: lowerBound as number, upperBound: upperBound as number } : {}) });
+      const seedMode = ['ema', 'rma'].includes(operation) ? node.parameters?.seedMode : undefined;
+      if (seedMode !== undefined && !['periodMean', 'first'].includes(seedMode)) { issue(node, 'Choose a supported smoothing seed.'); return; }
+      inputs.push({ id, kind: 'calculation', operation: operation as Extract<AdvancedProgramInput, { kind: 'calculation' }>['operation'], sourceIds: dependencies, ...(period !== undefined ? { period } : {}), ...(seedMode ? { seedMode: seedMode as 'periodMean' | 'first' } : {}), ...(minPeriod !== undefined ? { minPeriod } : {}), ...(weights ? { weights: weights as number[] } : {}), ...(template === 'weighted-composite' ? { normalization: normalization as 'zeroToHundred' | 'zScore' | 'minMax' | 'none' } : {}), ...(operation === 'clamp' ? { lowerBound: lowerBound as number, upperBound: upperBound as number } : {}) });
     } else if (template === 'position-memory' || template === 'rolling-state') {
       const upstream = inputs.find((input) => input.id === dependencies[0]);
       if (dependencies.length !== 1 || !upstream || upstream.kind === 'position-memory' || upstream.kind === 'rolling-state') {

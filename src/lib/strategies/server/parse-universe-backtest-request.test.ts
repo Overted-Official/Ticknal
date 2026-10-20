@@ -15,6 +15,20 @@ const valid = {
 };
 
 describe('parseUniverseBacktestRequest', () => {
+  it('accepts scored conditions and ticker profiles but rejects future or malformed references', () => {
+    const inputs = [
+      { id: 'close', kind: 'market', field: 'close' },
+      { id: 'score', kind: 'condition-score', conditions: [{ inputId: 'close', operator: 'gt', threshold: 12, weight: 1 }] },
+      { id: 'profile', kind: 'ticker-select', defaultSourceId: 'close', alternateSourceId: 'score', alternateSymbols: ['TMGH'] },
+    ];
+    const program = { schemaVersion: 2, timeframe: 'D', inputs,
+      buy: [[{ id: 'buy', inputId: 'profile', operator: 'crossesAbove', threshold: 50 }]],
+      sell: [[{ id: 'sell', inputId: 'profile', operator: 'crossesBelow', threshold: 50 }]],
+    };
+    expect(parseUniverseBacktestRequest({ ...valid, program }).success).toBe(true);
+    expect(parseUniverseBacktestRequest({ ...valid, program: { ...program, inputs: [inputs[0], { ...inputs[1], conditions: [{ inputId: 'future', operator: 'gt', threshold: 12, weight: 1 }] }, inputs[2]] } }).success).toBe(false);
+    expect(parseUniverseBacktestRequest({ ...valid, program: { ...program, inputs: [inputs[0], inputs[1], { ...inputs[2], alternateSymbols: ['tmgh'] }] } }).success).toBe(false);
+  });
   it('validates the advanced execution model', () => {
     const program = { schemaVersion: 2, timeframe: 'D',
       execution: { fillPolicy: 'signal-close', shareSizing: 'wholeShares' },
@@ -37,6 +51,15 @@ describe('parseUniverseBacktestRequest', () => {
     };
     expect(parseUniverseBacktestRequest({ ...valid, program }).success).toBe(true);
     expect(parseUniverseBacktestRequest({ ...valid, program: { ...program, inputs: [...program.inputs.slice(0, 2), { ...program.inputs[2], sourceIds: ['close'] }] } }).success).toBe(false);
+  });
+  it('accepts first-bar EMA seeding but rejects it on unrelated calculations', () => {
+    const inputs = [{ id: 'close', kind: 'market', field: 'close' }, { id: 'smooth', kind: 'calculation', operation: 'ema', sourceIds: ['close'], period: 3, seedMode: 'first' }];
+    const program = { schemaVersion: 2, timeframe: 'D', inputs,
+      buy: [[{ id: 'buy', inputId: 'smooth', operator: 'crossesAbove', threshold: 12 }]],
+      sell: [[{ id: 'sell', inputId: 'smooth', operator: 'crossesBelow', threshold: 8 }]],
+    };
+    expect(parseUniverseBacktestRequest({ ...valid, program }).success).toBe(true);
+    expect(parseUniverseBacktestRequest({ ...valid, program: { ...program, inputs: [inputs[0], { ...inputs[1], operation: 'mean' }] } }).success).toBe(false);
   });
   it('accepts bounded ticker overrides and rejects malformed values', () => {
     const program = { schemaVersion: 2, timeframe: 'D',

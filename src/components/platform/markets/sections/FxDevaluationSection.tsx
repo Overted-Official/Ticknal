@@ -9,7 +9,7 @@ import {
   Coins,
   AlertTriangle,
   TrendingUp,
-  Activity,
+  ArrowRightLeft,
 } from '@/components/ui/icon-library';
 import KPICard, { type KPICardProps } from '@/components/platform/home/investments/performance/kpi-rails/KPICard';
 import MoneySupplySection from './MoneySupplySection';
@@ -42,31 +42,32 @@ export default function FxDevaluationSection({
   const fxData = isHeroScene ? (HERO_SCENE_FX.data as unknown as FxFairValueResponse) : liveFxData;
 
   // 1. Official Spot
-  const officialUsd = fxData?.officialUsd ?? 52.60;
-  const atr14 = fxData?.atr14 ?? 0.20;
-  const volatilityLabel = fxData?.volatilityLabel ?? (isAr ? 'تعويم مدار' : 'Controlled Crawl');
+  const officialUsd = fxData?.officialUsd ?? 53.92;
+  const atr14 = fxData?.atr14 ?? 0.25;
+  const volatilityLabel = fxData?.volatilityLabel ?? (isAr ? 'تذبذب طبيعي' : 'Active Two-Way Float');
 
-  // 2. Real Composite Fair Value
-  const compositeFair = fxData?.compositeFairValue ?? 53.25;
-  const gapPct = fxData?.managedGapPct ?? 1.24;
-  const gapEgp = fxData?.managedGapEgp ?? 0.65;
+  // 2. Real Composite Fair Value (Triangulated across USDT, GDR, Sagha Gold, CBE)
+  const compositeFair = fxData?.compositeFairValue ?? 54.41;
+  const gapPct = fxData?.managedGapPct ?? 0.91;
+  const gapEgp = fxData?.managedGapEgp ?? 0.49;
 
-  // 3. Local Gold Proxy ("دولار الصاغة")
-  const goldRate = fxData?.goldImpliedRate ?? 52.83;
-  const goldSpread = fxData?.goldSpreadPct ?? 0.44;
-  const gold24k = fxData?.saghaGold24k ?? 7062.75;
-  const spotOunce = fxData?.comexGoldUsd ?? 4158.53;
+  // 3. Real-Time USDT / EGP P2P Proxy
+  const usdtRate = fxData?.usdtRate ?? 54.45;
+  const usdtSpread = fxData?.usdtSpreadPct ?? 0.98;
 
-  // 4. Offshore CIB London GDR Proxy ("دولار CIB")
-  const gdrRate = fxData?.gdrImpliedRate ?? 53.78;
-  const gdrSpread = fxData?.gdrSpreadPct ?? 2.24;
-  const cairoComi = fxData?.cairoComi ?? 127.20;
-  const gdrPrice = fxData?.londonGdrUsd ?? 2.365;
+  // 4. Local Sagha Gold Bullion Proxy
+  const goldRate = fxData?.goldImpliedRate ?? 53.35;
+  const goldSpread = fxData?.goldSpreadPct ?? -1.06;
+  const gold24k = fxData?.saghaGold24k ?? 7171.5;
 
-  // 5. Algorithmic Devaluation Risk Index
-  const riskScore = fxData?.devaluationRisk?.score ?? 24;
-  const riskLabel = fxData?.devaluationRisk?.label ?? (isAr ? 'مخاطر منخفضة (تعويم مدار)' : 'Low Risk (Controlled Crawl)');
-  const atrCompressionRatio = fxData?.atrCompressionRatio ?? 0.74;
+  // 5. Offshore CIB London GDR Proxy
+  const gdrRate = fxData?.gdrImpliedRate ?? 55.42;
+  const gdrSpread = fxData?.gdrSpreadPct ?? 2.78;
+
+  // 6. Algorithmic Devaluation Risk Index
+  const riskScore = fxData?.devaluationRisk?.score ?? 16;
+  const riskLabel = fxData?.devaluationRisk?.label ?? (isAr ? 'مخاطر منخفضة (تذبذب طبيعي)' : 'Low Risk (Organic Float)');
+  const atrCompressionRatio = fxData?.atrCompressionRatio ?? 0.96;
 
   // Sparklines
   const sparklines = fxData?.sparklines;
@@ -83,7 +84,7 @@ export default function FxDevaluationSection({
       iconColorClass: 'text-brand-blue',
       value: officialUsd.toFixed(2),
       unit: isAr ? 'ج.م رسمي' : 'EGP SPOT',
-      changeText: isAr ? volatilityLabel : (fxData?.volatilityLabel || 'Controlled Crawl'),
+      changeText: isAr ? volatilityLabel : (fxData?.volatilityLabel || 'Active Two-Way Float'),
       changeColorClass: 'text-plt-text',
       metaText: isAr ? `ATR: ${atr14.toFixed(2)} ج.م` : `ATR: ${atr14.toFixed(2)} EGP`,
       sparklinePoints: sparklines?.officialUsd && sparklines.officialUsd.length > 1 ? sparklines.officialUsd : defaultSparkline,
@@ -104,17 +105,36 @@ export default function FxDevaluationSection({
       unit: isAr ? 'ج.م عادل' : 'EGP FAIR',
       changeText: `${gapPct >= 0 ? '+' : ''}${gapPct.toFixed(1)}% (${gapEgp >= 0 ? '+' : ''}${gapEgp.toFixed(2)})`,
       changeColorClass: 'text-profit-num',
-      metaText: isAr ? 'الصاغة + CIB' : 'Triangulated',
+      metaText: isAr ? 'تثليث رباعي (P2P+LSE+ذهب)' : '4-Way Triangulated',
       sparklinePoints: sparklines?.compositeFair && sparklines.compositeFair.length > 1 ? sparklines.compositeFair : defaultSparkline.map((v) => v * 1.012),
       sparklineTrend: 'up',
       showSparkline: true,
       isLoading,
     },
 
-    // CARD 3: Local Gold Proxy ("دولار الصاغة")
+    // CARD 3: Real-Time USDT / EGP P2P
+    {
+      id: 'usdt-egp-p2p-proxy',
+      title: isAr ? 'دولار التيذر (تداولات P2P)' : 'P2P USDT Proxy',
+      shortTitle: isAr ? 'تيذر P2P' : 'USDT P2P',
+      icon: ArrowRightLeft,
+      iconBgClass: 'bg-emerald-500/20 text-emerald-400',
+      iconColorClass: 'text-emerald-400',
+      value: usdtRate.toFixed(2),
+      unit: isAr ? 'ج.م تيذر' : 'EGP USDT',
+      changeText: `${usdtSpread >= 0 ? '+' : ''}${usdtSpread.toFixed(1)}% ${isAr ? 'فارق' : 'Spread'}`,
+      changeColorClass: 'text-plt-text',
+      metaText: isAr ? 'بينانس + باي بيت' : 'Binance + Bybit',
+      sparklinePoints: sparklines?.usdtRate && sparklines.usdtRate.length > 1 ? sparklines.usdtRate : defaultSparkline.map((v) => v * 1.01),
+      sparklineTrend: 'up',
+      showSparkline: true,
+      isLoading,
+    },
+
+    // CARD 4: Local Gold Proxy
     {
       id: 'local-gold-sagha-proxy',
-      title: isAr ? 'دولار الصاغة (الذهب المحلي)' : 'Sagha Gold Proxy ("دولار الصاغة")',
+      title: isAr ? 'دولار الصاغة (الذهب المحلي)' : 'Sagha Gold Proxy',
       shortTitle: isAr ? 'الصاغة' : 'Sagha Gold',
       icon: Coins,
       iconBgClass: 'bg-accent-gold/20 text-accent-gold',
@@ -125,15 +145,15 @@ export default function FxDevaluationSection({
       changeColorClass: 'text-plt-text',
       metaText: isAr ? `عيار 24: ${gold24k.toLocaleString()} ج.م` : `24k: ${gold24k.toLocaleString()} EGP`,
       sparklinePoints: sparklines?.goldImplied && sparklines.goldImplied.length > 1 ? sparklines.goldImplied : defaultSparkline.map((v) => v * 1.004),
-      sparklineTrend: 'up',
+      sparklineTrend: goldSpread >= 0 ? 'up' : 'down',
       showSparkline: true,
       isLoading,
     },
 
-    // CARD 4: Offshore CIB London GDR Proxy ("دولار CIB")
+    // CARD 5: Offshore CIB London GDR Proxy
     {
       id: 'cib-london-gdr-proxy',
-      title: isAr ? 'دولار CIB لندن (الأسهم)' : 'Offshore CIB Proxy ("دولار CIB")',
+      title: isAr ? 'دولار CIB لندن (الأسهم)' : 'Offshore CIB Proxy',
       shortTitle: isAr ? 'CIB لندن' : 'CIB London',
       icon: Globe,
       iconBgClass: 'bg-accent-orange/20 text-accent-orange',
@@ -149,7 +169,7 @@ export default function FxDevaluationSection({
       isLoading,
     },
 
-    // CARD 5: Algorithmic Devaluation Risk Index
+    // CARD 6: Algorithmic Devaluation Risk Index
     {
       id: 'devaluation-risk-meter',
       title: isAr ? 'مؤشر ضغط التعويم' : 'Devaluation Pressure Index',
@@ -184,14 +204,14 @@ export default function FxDevaluationSection({
           </div>
           <p className="section-subtitle text-plt-muted">
             {isAr
-              ? 'القيمة العادلة المرجحة، دولار الصاغة من الذهب المحلي، دولار CIB لندن، ومؤشر ضغط خفض العملة القائم على تذبذب ATR'
-              : 'Triangulated EGP shadow fair value, Sagha gold proxy, London CIB equity arbitrage, and ATR-weighted devaluation pressure index'}
+              ? 'القيمة العادلة المرجحة من واقع تداولات P2P للتيذر، ودولار الصاغة من الذهب، ودولار CIB لندن، ومؤشر ضغط خفض العملة القائم على تذبذب ATR'
+              : 'Triangulated EGP shadow fair value across P2P USDT, Sagha gold, and London CIB equity arbitrage, with ATR-weighted devaluation pressure index'}
           </p>
         </div>
       </div>
 
-      {/* 2. 5-Card Responsive Layout: 1 Grid on Desktop, Side-Scrollable Snap Rail on Phone (2 cards + half of 3rd) */}
-      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2 sm:gap-2.5 pb-1 lg:grid lg:grid-cols-5 lg:gap-2.5 lg:overflow-visible lg:pb-0">
+      {/* 2. 6-Card Responsive Layout: 1 Grid on Desktop (6 cols), Side-Scrollable Snap Rail on Mobile/Tablet */}
+      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2 sm:gap-2.5 pb-1 lg:grid lg:grid-cols-6 lg:gap-2.5 lg:overflow-visible lg:pb-0">
         {kpiCards.map((card) => (
           <KPICard
             key={card.id}

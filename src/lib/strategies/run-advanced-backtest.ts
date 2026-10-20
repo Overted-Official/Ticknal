@@ -1,5 +1,5 @@
 import { evaluateRuleSeries, getIndicatorDefinition, type TimeSeriesFrame } from '@ticknal/quant-engine/canonical';
-import { estimateAdvancedWorkPerBar, MAX_ADVANCED_PROGRAM_INPUTS, MAX_ADVANCED_WORK_UNITS_PER_BAR, type AdvancedStrategyProgram } from './strategy-program';
+import { estimateAdvancedWorkPerBar, MAX_ADVANCED_PROGRAM_INPUTS, MAX_ADVANCED_WORK_UNITS_PER_BAR, validScoreConditions, validTickerSelection, type AdvancedStrategyProgram } from './strategy-program';
 import { predicateMatches, runBacktestWithSeries, type BacktestAssumptions, type BacktestPeriod, type BacktestResult, type BacktestRuntime } from './run-simple-backtest';
 import { compileFormula, evaluateFormula } from './formula-engine';
 import { evaluateRbfModel, validRbfModel } from './rbf-model';
@@ -31,11 +31,17 @@ function normalizeSeries(values: Values, mode: 'zeroToHundred' | 'zScore' | 'min
   });
 }
 
-function smoothedSeries(values: Values, period: number, alpha: number): (number | null)[] {
+function smoothedSeries(values: Values, period: number, alpha: number, seedMode: 'periodMean' | 'first' = 'periodMean'): (number | null)[] {
   const result: (number | null)[] = [];
   let seed: number[] = [];
   let previous: number | null = null;
   for (const value of values) {
+    if (seedMode === 'first') {
+      if (value === null || !Number.isFinite(value)) { result.push(null); continue; }
+      previous = previous === null ? value : alpha * value + (1 - alpha) * previous;
+      result.push(finite(previous));
+      continue;
+    }
     if (value === null || !Number.isFinite(value)) { seed = []; previous = null; result.push(null); continue; }
     if (previous === null) {
       seed.push(value);
@@ -132,6 +138,27 @@ export function runAdvancedBacktest(program: AdvancedStrategyProgram, frame: Tim
         !/^[A-Z0-9][A-Z0-9.!-]{0,19}$/.test(symbol) || !Number.isFinite(override) || Math.abs(override) > 1_000_000_000))) return { status: 'invalid', code: 'CONSTANT_INVALID', inputId: input.id };
       const value = input.overrides?.[frame.meta.symbol] ?? input.value;
       series.set(input.id, frame.bars.map(() => value));
+    } else if (input.kind === 'condition-score') {
+      const usable = (id: string) => series.has(id) && !stateful.some((candidate) => candidate.id === id);
+      if (!validScoreConditions(input.conditions, usable)) return { status: 'invalid', code: 'CALCULATION_SOURCE_INVALID', inputId: input.id };
+      const total = input.conditions.reduce((sum, condition) => sum + condition.weight, 0);
+      series.set(input.id, frame.bars.map((_, index) => {
+        const earned = input.conditions.reduce((sum, condition) => {
+          const left = series.get(condition.inputId)?.[index];
+          const compare = condition.compareInputId ? series.get(condition.compareInputId)?.[index] : 0;
+          if (left === null || left === undefined || compare === null || compare === undefined) return sum;
+          const right = compare + condition.threshold;
+          const matched = condition.operator === 'gt' ? left > right : condition.operator === 'gte' ? left >= right
+            : condition.operator === 'lt' ? left < right : condition.operator === 'lte' ? left <= right : left === right;
+          return sum + (matched ? condition.weight : 0);
+        }, 0);
+        return earned / total * 100;
+      }));
+    } else if (input.kind === 'ticker-select') {
+      const usable = (id: string) => series.has(id) && !stateful.some((candidate) => candidate.id === id);
+      if (!usable(input.defaultSourceId) || !usable(input.alternateSourceId) || !validTickerSelection(input.alternateSymbols)) return { status: 'invalid', code: 'CALCULATION_SOURCE_INVALID', inputId: input.id };
+      const chosen = input.alternateSymbols.includes(frame.meta.symbol) ? input.alternateSourceId : input.defaultSourceId;
+      series.set(input.id, [...series.get(chosen)!]);
     } else if (input.kind === 'indicator') {
       const definition = getIndicatorDefinition(input.indicatorId);
       if (!definition || definition.formulaVersion !== input.formulaVersion || definition.metadata.repaintBehavior === 'confirmed-with-delay'
@@ -158,6 +185,7 @@ export function runAdvancedBacktest(program: AdvancedStrategyProgram, frame: Tim
       const periodLength = input.period ?? 1;
       if (!Number.isSafeInteger(periodLength) || periodLength < 1 || periodLength > 1000) return { status: 'invalid', code: 'CALCULATION_PERIOD_INVALID', inputId: input.id };
       if (input.minPeriod !== undefined && (input.operation !== 'median' || !Number.isSafeInteger(input.minPeriod) || input.minPeriod < 1 || input.minPeriod > periodLength)) return { status: 'invalid', code: 'CALCULATION_PERIOD_INVALID', inputId: input.id };
+      if (input.seedMode !== undefined && (!['ema', 'rma'].includes(input.operation) || !['periodMean', 'first'].includes(input.seedMode))) return { status: 'invalid', code: 'CALCULATION_PERIOD_INVALID', inputId: input.id };
       const weights = input.weights ?? input.sourceIds.map(() => 1);
       if (weights.length !== sources.length || weights.some((weight) => !Number.isFinite(weight))) return { status: 'invalid', code: 'CALCULATION_WEIGHTS_INVALID', inputId: input.id };
       if (input.operation === 'regimeStart' || input.operation === 'regimeMaximum' || input.operation === 'regimeMinimum') {
@@ -180,7 +208,7 @@ export function runAdvancedBacktest(program: AdvancedStrategyProgram, frame: Tim
       } else if (input.operation === 'normalize') {
         series.set(input.id, normalizeSeries(sources[0]!, 'zeroToHundred'));
       } else if (input.operation === 'ema' || input.operation === 'rma') {
-        series.set(input.id, smoothedSeries(sources[0]!, periodLength, input.operation === 'rma' ? 1 / periodLength : 2 / (periodLength + 1)));
+        series.set(input.id, smoothedSeries(sources[0]!, periodLength, input.operation === 'rma' ? 1 / periodLength : 2 / (periodLength + 1), input.seedMode));
       } else if (input.operation === 'weighted') {
         const normalized = (sources as Values[]).map((values) => normalizeSeries(values, input.normalization ?? 'none'));
         const divisor = weights.reduce((total, weight) => total + Math.abs(weight), 0);

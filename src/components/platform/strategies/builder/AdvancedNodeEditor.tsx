@@ -4,7 +4,7 @@ import { useId, useMemo, useState } from 'react';
 
 import { AlertTriangle, Plus } from '@/components/ui/icon-library';
 
-import { getAvailableUpstreamNodes } from './advanced-builder-state';
+import { getAvailableUpstreamNodes, makeConditionScoreChanges, readConditionScoreRows, type ConditionScoreDraftRow } from './advanced-builder-state';
 import type { AdvancedStrategyNode } from './advanced-strategy-model';
 import IndicatorPicker from './IndicatorPicker';
 import StudioSelect from './StudioSelect';
@@ -70,12 +70,14 @@ export default function AdvancedNodeEditor({
   const isAr = locale === 'ar';
   const [pickerOpen, setPickerOpen] = useState(false);
   const [identityOpen, setIdentityOpen] = useState(false);
+  const [tickerDraft, setTickerDraft] = useState('');
   const parameters = node.parameters ?? {};
   const isBuyTerminal = node.templateId === 'buy-terminal';
   const isSellTerminal = node.templateId === 'sell-terminal';
   const isTerminal = isBuyTerminal || isSellTerminal;
   const numericUpstreamNodes = useMemo(() => getAvailableUpstreamNodes(nodes, node.id)
     .filter((candidate) => ['input', 'calculation', 'state'].includes(candidate.kind)), [node.id, nodes]);
+  const scoreSourceNodes = useMemo(() => numericUpstreamNodes.filter((candidate) => candidate.kind !== 'state' && candidate.templateId !== 'execution-policy'), [numericUpstreamNodes]);
   const upstreamNodes = useMemo(() => {
     const available = getAvailableUpstreamNodes(nodes, node.id);
     if (isBuyTerminal) return available.filter((candidate) => candidate.stage === 'entry' && candidate.parameters?.actionSide !== 'sell');
@@ -95,7 +97,21 @@ export default function AdvancedNodeEditor({
   const showsConnectionWeights = node.templateId === 'weighted-composite';
   const isMultiConnection = showsConnectionWeights || ['math-operation', 'formula', 'rbf-model'].includes(node.templateId ?? '') || isTerminal;
   const isRegimeCalculation = node.templateId === 'math-operation' && (parameters.operation ?? '').startsWith('regime');
-  const supportsConnections = !parameters.sourceRuleId && !['market-input', 'parameter', 'execution-policy'].includes(node.templateId ?? '') && !isRegimeCalculation;
+  const supportsConnections = !parameters.sourceRuleId && !['market-input', 'parameter', 'execution-policy', 'condition-score', 'ticker-select'].includes(node.templateId ?? '') && !isRegimeCalculation;
+  const scoreRows = readConditionScoreRows(parameters.conditions);
+  const updateScoreRows = (rows: readonly ConditionScoreDraftRow[]) => onChange(makeConditionScoreChanges(parameters, rows));
+  const updateScoreRow = (index: number, changes: Partial<ConditionScoreDraftRow>) => updateScoreRows(scoreRows.map((row, position) => position === index ? { ...row, ...changes } : row));
+  const alternateSymbols: string[] = (() => { try { const value: unknown = JSON.parse(parameters.alternateSymbols ?? '[]'); return Array.isArray(value) ? value.filter((symbol): symbol is string => typeof symbol === 'string') : []; } catch { return []; } })();
+  const updateProfileSource = (key: 'defaultSourceId' | 'alternateSourceId', value: string) => {
+    const next = { ...parameters, [key]: value };
+    onChange({ parameters: next, connections: [...new Set([next.defaultSourceId, next.alternateSourceId].filter(Boolean))] });
+  };
+  const addAlternateSymbol = () => {
+    const symbol = tickerDraft.trim().toUpperCase();
+    if (!/^[A-Z0-9][A-Z0-9.!-]{0,19}$/.test(symbol) || alternateSymbols.includes(symbol) || alternateSymbols.length >= 400) return;
+    updateParameter('alternateSymbols', JSON.stringify([...alternateSymbols, symbol]));
+    setTickerDraft('');
+  };
 
   const updateParameter = (key: string, value: string) => {
     onChange({ parameters: { ...parameters, [key]: value } });
@@ -174,6 +190,29 @@ export default function AdvancedNodeEditor({
 
   const renderTemplateFields = () => {
     switch (node.templateId) {
+      case 'condition-score':
+        return <div className="space-y-3">
+          <p className="font-sans text-xs leading-5 text-plt-muted">{isAr ? 'كل مقارنة صحيحة تكسب وزنها. القيم المفقودة لا تكسب نقاطاً. الناتج من 0 إلى 100.' : 'Each passing comparison earns its weight. Missing values earn zero. The result is 0–100.'}</p>
+          {scoreRows.map((row, index) => <fieldset key={index} className="space-y-3 border-t border-white/10 pt-3">
+            <legend className="font-sans text-xs font-semibold text-white">{isAr ? `شرط ${index + 1}` : `Condition ${index + 1}`}</legend>
+            <label><span className={LABEL_CLASS}>{isAr ? 'القيمة المراد فحصها' : 'Value to test'}</span><StudioSelect value={row.inputId} onValueChange={(value) => updateScoreRow(index, { inputId: value })} ariaLabel={`${isAr ? 'القيمة' : 'Value'} ${index + 1}`}><option value="">{isAr ? 'اختر قيمة' : 'Choose value'}</option>{scoreSourceNodes.map((candidate) => <option key={candidate.id} value={candidate.id}>{nodeName(candidate, locale)}</option>)}</StudioSelect></label>
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+              <label><span className={LABEL_CLASS}>{isAr ? 'المقارنة' : 'Comparison'}</span><StudioSelect value={row.operator} onValueChange={(value) => updateScoreRow(index, { operator: value as ConditionScoreDraftRow['operator'] })} ariaLabel={`${isAr ? 'مقارنة' : 'Comparison'} ${index + 1}`}><option value="gt">{isAr ? 'أكبر من' : 'Greater than'}</option><option value="gte">{isAr ? 'أكبر أو يساوي' : 'At least'}</option><option value="lt">{isAr ? 'أقل من' : 'Less than'}</option><option value="lte">{isAr ? 'أقل أو يساوي' : 'At most'}</option><option value="eq">{isAr ? 'يساوي' : 'Equals'}</option></StudioSelect></label>
+              <label><span className={LABEL_CLASS}>{isAr ? 'مقارنة مع' : 'Compare with'}</span><StudioSelect value={row.compareMode ?? 'fixed'} onValueChange={(value) => updateScoreRow(index, value === 'series' ? { compareMode: 'series', compareInputId: '' } : { compareMode: 'fixed', compareInputId: undefined })} ariaLabel={`${isAr ? 'نوع المرجع' : 'Reference type'} ${index + 1}`}><option value="fixed">{isAr ? 'مستوى ثابت' : 'Fixed level'}</option><option value="series">{isAr ? 'قيمة أخرى' : 'Another value'}</option></StudioSelect></label>
+            </div>
+            {row.compareMode === 'series' && <label><span className={LABEL_CLASS}>{isAr ? 'القيمة المرجعية' : 'Reference value'}</span><StudioSelect value={row.compareInputId ?? ''} onValueChange={(value) => updateScoreRow(index, { compareInputId: value })} ariaLabel={`${isAr ? 'مرجع' : 'Reference'} ${index + 1}`}><option value="">{isAr ? 'اختر قيمة' : 'Choose value'}</option>{scoreSourceNodes.map((candidate) => <option key={candidate.id} value={candidate.id}>{nodeName(candidate, locale)}</option>)}</StudioSelect></label>}
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2"><NumberField label={row.compareMode === 'series' ? (isAr ? 'الإزاحة' : 'Offset') : (isAr ? 'المستوى' : 'Level')} value={row.threshold} onValueChange={(value) => updateScoreRow(index, { threshold: value })} step={0.1} /><NumberField label={isAr ? 'الوزن' : 'Weight'} value={row.weight} onValueChange={(value) => updateScoreRow(index, { weight: value })} min={0.01} max={1000} step={0.1} /></div>
+            <button type="button" onClick={() => updateScoreRows(scoreRows.filter((_, position) => position !== index))} className="btn-token btn-secondary btn-micro">{isAr ? 'حذف الشرط' : 'Remove condition'}</button>
+          </fieldset>)}
+          {scoreRows.length < 12 && <button type="button" onClick={() => updateScoreRows([...scoreRows, { inputId: scoreSourceNodes[0]?.id ?? '', operator: 'gt', compareMode: 'fixed', threshold: '0', weight: '1' }])} className="btn-token btn-secondary btn-compact w-full">+ {isAr ? 'إضافة شرط' : 'Add condition'}</button>}
+        </div>;
+      case 'ticker-select':
+        return <div className="space-y-3">
+          <p className="font-sans text-xs leading-5 text-plt-muted">{isAr ? 'استخدم الحساب الافتراضي لمعظم الشركات، والحساب البديل للرموز المدرجة فقط.' : 'Use the default calculation for most companies and the alternate only for listed tickers.'}</p>
+          {(['defaultSourceId', 'alternateSourceId'] as const).map((key) => <label key={key}><span className={LABEL_CLASS}>{key === 'defaultSourceId' ? (isAr ? 'الحساب الافتراضي' : 'Default calculation') : (isAr ? 'الحساب البديل' : 'Alternate calculation')}</span><StudioSelect value={parameters[key] ?? ''} onValueChange={(value) => updateProfileSource(key, value)} ariaLabel={key === 'defaultSourceId' ? 'Default calculation' : 'Alternate calculation'}><option value="">{isAr ? 'اختر حساباً' : 'Choose calculation'}</option>{scoreSourceNodes.map((candidate) => <option key={candidate.id} value={candidate.id}>{nodeName(candidate, locale)}</option>)}</StudioSelect></label>)}
+          <div><span className={LABEL_CLASS}>{isAr ? 'شركات تستخدم البديل' : 'Companies using alternate'}</span><div className="flex flex-wrap gap-1.5">{alternateSymbols.map((symbol) => <button key={symbol} type="button" aria-label={`${isAr ? 'حذف' : 'Remove'} ${symbol}`} onClick={() => updateParameter('alternateSymbols', JSON.stringify(alternateSymbols.filter((item) => item !== symbol)))} className="badge badge-symbol border border-white/15 px-2 py-1 font-sans text-xs">{symbol} ×</button>)}</div></div>
+          <div className="flex min-w-0 gap-2"><input type="text" aria-label={isAr ? 'أضف رمز شركة' : 'Add company ticker'} value={tickerDraft} maxLength={20} onChange={(event) => setTickerDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addAlternateSymbol(); } }} placeholder="TMGH" className={INPUT_CLASS} /><button type="button" onClick={addAlternateSymbol} className="btn-token btn-secondary btn-compact shrink-0">{isAr ? 'إضافة' : 'Add'}</button></div>
+        </div>;
       case 'formula':
       case 'formula-output':
       case 'rbf-model':
@@ -293,6 +332,7 @@ export default function AdvancedNodeEditor({
               </StudioSelect>
             </label>
             {!['normalize', 'absolute', 'atan', 'clamp'].includes(parameters.method ?? 'ema') && <NumberField label={parameters.method === 'lag' ? (isAr ? 'عدد الفترات السابقة' : 'Bars back') : (isAr ? 'الفترة' : 'Period')} value={parameters.period ?? '3'} onValueChange={(value) => updateParameter('period', value)} min={1} max={1000} />}
+            {['ema', 'rma'].includes(parameters.method ?? 'ema') && <label><span className={LABEL_CLASS}>{isAr ? 'بداية التنعيم' : 'Smoothing start'}</span><StudioSelect value={parameters.seedMode ?? 'periodMean'} onValueChange={(value) => updateParameter('seedMode', value)} ariaLabel={isAr ? 'بداية التنعيم' : 'Smoothing start'}><option value="periodMean">{isAr ? 'بعد اكتمال الفترة' : 'After full period'}</option><option value="first">{isAr ? 'من أول قيمة متاحة' : 'First available value'}</option></StudioSelect></label>}
             {parameters.method === 'clamp' && <><NumberField label={isAr ? 'الحد الأدنى' : 'Lower bound'} value={parameters.lowerBound ?? '0'} onValueChange={(value) => updateParameter('lowerBound', value)} step={0.1} /><NumberField label={isAr ? 'الحد الأعلى' : 'Upper bound'} value={parameters.upperBound ?? '100'} onValueChange={(value) => updateParameter('upperBound', value)} step={0.1} /></>}
           </>
         );
@@ -364,7 +404,7 @@ export default function AdvancedNodeEditor({
             </label>}
             {nodes.filter((candidate) => candidate.templateId === node.templateId).findIndex((candidate) => candidate.id === node.id) > 0 && <label>
               <span className={LABEL_CLASS}>{isAr ? 'اربط بالقاعدة السابقة' : 'Join with previous rule'}</span>
-              <StudioSelect value={parameters.connector ?? 'and'} onValueChange={(value) => updateParameter('connector', value)} ariaLabel={isAr ? 'اربط بالقاعدة السابقة' : 'Join with previous rule'}>
+              <StudioSelect value={parameters.connector ?? 'or'} onValueChange={(value) => updateParameter('connector', value)} ariaLabel={isAr ? 'اربط بالقاعدة السابقة' : 'Join with previous rule'}>
                 <option value="and">{isAr ? 'و — يجب تحقق القاعدتين' : 'AND — both rules must match'}</option>
                 <option value="or">{isAr ? 'أو — تكفي إحدى القاعدتين' : 'OR — either rule can match'}</option>
               </StudioSelect>

@@ -330,7 +330,7 @@ export function Tour({
           aria-modal="true"
           aria-label={typeof step.title === "string" ? step.title : "Product tour"}
         >
-          <div className="absolute inset-0" onClick={() => clickToNext && next()} />
+          <div className="absolute inset-0" onClick={() => (clickToNext ? next() : skip())} />
 
           {spot ? (
             <motion.div
@@ -448,9 +448,10 @@ export function useTour(storageKey?: string) {
   const [index, setIndex] = React.useState(0);
 
   const seen = React.useCallback(() => {
-    if (!storageKey) return false;
     try {
-      return localStorage.getItem(storageKey) === "1";
+      if (storageKey && localStorage.getItem(storageKey) === "1") return true;
+      if (localStorage.getItem("ticknal_tour_completed_global") === "1") return true;
+      return false;
     } catch {
       return false;
     }
@@ -462,9 +463,11 @@ export function useTour(storageKey?: string) {
   }, []);
 
   const markSeen = React.useCallback(() => {
-    if (!storageKey) return;
     try {
-      localStorage.setItem(storageKey, "1");
+      if (storageKey) {
+        localStorage.setItem(storageKey, "1");
+      }
+      localStorage.setItem("ticknal_tour_completed_global", "1");
     } catch {
       return;
     }

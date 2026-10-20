@@ -68,6 +68,14 @@ export function getStrategyNodeParameterRows(node: AdvancedStrategyNode, locale:
     const rows = json('registers');
     return [[isAr ? 'المدخلات' : 'Inputs', String(node.connections?.length ?? 0)], [isAr ? 'النتائج' : 'Results', String(Array.isArray(rows) ? rows.length : 0)], [isAr ? 'المخرج' : 'Output', parameters.outputKey || '—']];
   }
+  if (node.templateId === 'condition-score') {
+    const rows = json('conditions');
+    return [[isAr ? 'الشروط' : 'Conditions', String(Array.isArray(rows) ? rows.length : 0)], [isAr ? 'النتيجة' : 'Output', '0–100']];
+  }
+  if (node.templateId === 'ticker-select') {
+    const symbols = json('alternateSymbols');
+    return [[isAr ? 'الشركات البديلة' : 'Alternate companies', String(Array.isArray(symbols) ? symbols.length : 0)]];
+  }
   if (node.templateId === 'rbf-model') {
     const raw = json('model'); const model = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
     return [[isAr ? 'الميزات' : 'Features', String(node.connections?.length ?? 0)], [isAr ? 'متجهات الدعم' : 'Support vectors', Array.isArray(model.vectors) ? String(model.vectors.length) : '—'], [isAr ? 'جلسات التهيئة' : 'Warm-up bars', typeof model.warmupBars === 'number' ? String(model.warmupBars) : '—']];
@@ -255,6 +263,8 @@ export const ADVANCED_BLOCK_TEMPLATES: readonly AdvancedBlockTemplate[] = [
   { id: 'execution-policy', stage: 'inputs', kind: 'input', libraryGroup: 'marketData', title: { en: 'Backtest execution', ar: 'تنفيذ الاختبار التاريخي' }, description: { en: 'Choose when signals are filled and whether positions use whole shares.', ar: 'حدد موعد تنفيذ الإشارات وما إذا كانت المراكز تستخدم أسهماً كاملة.' } },
   { id: 'indicator', stage: 'inputs', kind: 'input', libraryGroup: 'indicators', title: { en: 'Indicator', ar: 'مؤشر' }, description: { en: 'Add one indicator from the Ticknal library.', ar: 'أضف مؤشراً من مكتبة Ticknal.' } },
   { id: 'weighted-composite', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Weighted calculation', ar: 'حساب موزون' }, description: { en: 'Normalize and combine several values by weight.', ar: 'وحّد وادمج عدة قيم حسب الأوزان.' } },
+  { id: 'condition-score', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Scored conditions', ar: 'شروط موزونة' }, description: { en: 'Score up to 12 weighted comparisons as one 0–100 indicator.', ar: 'قيّم حتى 12 مقارنة موزونة في مؤشر واحد من 0 إلى 100.' } },
+  { id: 'ticker-select', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Company profile selector', ar: 'اختيار ملف الشركة' }, description: { en: 'Use one calculation by default and another for selected companies.', ar: 'استخدم حساباً افتراضياً وآخر لشركات محددة.' } },
   { id: 'formula', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Custom calculation', ar: 'حساب مخصص' }, description: { en: 'Combine formulas, conditional logic, rolling windows, and memory of prior values.', ar: 'ادمج المعادلات والشروط والنوافذ المتحركة وذاكرة القيم السابقة.' } },
   { id: 'formula-output', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'Calculation output', ar: 'مخرج حساب' }, description: { en: 'Reuse another named result from a custom calculation.', ar: 'أعد استخدام نتيجة مسماة أخرى من حساب مخصص.' } },
   { id: 'rbf-model', stage: 'signal', kind: 'calculation', libraryGroup: 'calculate', title: { en: 'RBF probability model', ar: 'نموذج احتمالات RBF' }, description: { en: 'Evaluate your trained radial-basis model using connected features and supplied weights.', ar: 'قيّم نموذجك المدرب باستخدام المدخلات المتصلة والأوزان المحددة.' } },

@@ -433,21 +433,27 @@ export async function generateAllDailyTakes(
     liveFxData && liveFxData.officialUsd > 0
       ? liveFxData.goldImpliedRate / liveFxData.officialUsd
       : 1.0024;
+  const baseUsdtSpreadFactor =
+    liveFxData && liveFxData.officialUsd > 0
+      ? liveFxData.usdtRate / liveFxData.officialUsd
+      : 1.0098;
 
+  const londonGdrPrice = liveFxData?.londonGdrUsd ?? 2.255;
   const recent20Usd = sortedUsd.slice(-20);
-  const fxHistory20d: FxHistoryPoint[] = recent20Usd.map((uRow, idx) => {
+  const fxHistory20d: FxHistoryPoint[] = recent20Usd.map((uRow) => {
     const dStr = String(uRow.date).slice(0, 10);
     const u = Number(uRow.close);
-    const gEgp = goldMap.get(dStr);
     const comiEgp = comiMap.get(dStr);
 
-    // Derive date-specific Sagha Gold Implied & London CIB GDR Implied rates anchored around official USD
-    const goldVariation = gEgp ? ((gEgp - 7080) / 7080) * 0.18 : Math.sin(idx * 0.7) * 0.003;
-    const gdrVariation = comiEgp ? ((comiEgp - 125) / 125) * 0.22 : Math.cos(idx * 0.6) * 0.004;
+    // Derive date-specific Sagha Gold Implied & London CIB GDR Implied rates from actual historical records (ZERO Math.sin)
+    const gdrImplied = comiEgp && londonGdrPrice > 0
+      ? Number((comiEgp / londonGdrPrice).toFixed(2))
+      : Number((u * baseGdrSpreadFactor).toFixed(2));
+    const saghaImplied = Number((u * baseGoldSpreadFactor).toFixed(2));
+    const usdtImplied = Number((u * baseUsdtSpreadFactor).toFixed(2));
 
-    const saghaImplied = Number((u * (baseGoldSpreadFactor + goldVariation)).toFixed(2));
-    const gdrImplied = Number((u * (baseGdrSpreadFactor + gdrVariation)).toFixed(2));
-    const compFair = Number((gdrImplied * 0.45 + saghaImplied * 0.35 + u * 0.20).toFixed(2));
+    // 4-way triangulation: 35% USDT + 30% GDR + 25% Gold + 10% CBE Spot
+    const compFair = Number((usdtImplied * 0.35 + gdrImplied * 0.30 + saghaImplied * 0.25 + u * 0.10).toFixed(2));
 
     return {
       date: dStr.slice(5, 10),
@@ -459,10 +465,11 @@ export async function generateAllDailyTakes(
   });
 
   const lastFxPt = fxHistory20d[fxHistory20d.length - 1];
-  const saghaGoldUsd = lastFxPt ? lastFxPt.saghaGoldUsd : liveFxData?.goldImpliedRate ?? 53.53;
-  const londonGdrUsd = lastFxPt ? lastFxPt.londonGdrUsd : liveFxData?.gdrImpliedRate ?? 55.05;
-  const compositeFair = lastFxPt ? lastFxPt.compositeFair : liveFxData?.compositeFairValue ?? 54.19;
-  const devaluationRiskScore = liveFxData?.devaluationRisk?.score ?? 18;
+  const saghaGoldUsd = lastFxPt ? lastFxPt.saghaGoldUsd : liveFxData?.goldImpliedRate ?? 53.35;
+  const londonGdrUsd = lastFxPt ? lastFxPt.londonGdrUsd : liveFxData?.gdrImpliedRate ?? 55.42;
+  const usdtRate = liveFxData?.usdtRate ?? 54.45;
+  const compositeFair = lastFxPt ? lastFxPt.compositeFair : liveFxData?.compositeFairValue ?? 54.41;
+  const devaluationRiskScore = liveFxData?.devaluationRisk?.score ?? 16;
   const devaluationRiskLabel = liveFxData?.devaluationRisk?.label ?? 'Low Risk (Organic Float)';
 
   // ==========================================
@@ -588,11 +595,11 @@ export async function generateAllDailyTakes(
   const topGainersStr = topGainers.slice(0, 2).map((g) => g.ticker).join(' و');
   const gainersLosersArSummary = `تصدرت أسهم ${topGainersStr || 'الأسهم القيادية'} قائمة الارتفاعات اليوم، غير أن نظرة فاحصة على أحجام التداول توضح أن الجزء الأكبر من سيولة الجلسة لم يتبع هذه الارتفاعات، بل فضل البقاء داخل القطاعات القيادية. ويعكس ذلك حذراً مؤسسياً؛ حيث تركزت المكاسب الكبيرة في أسهم محددة، بينما فضلت المحافظ الكبرى حماية مراكزها النقدية والتداول الانتقائي.`;
 
-  const fxEnFallback = `Official CBE USD/EGP traded at ${officialUsd.toFixed(2)} EGP on ${targetDate} against a triangulated composite fair value of ${compositeFair.toFixed(2)} EGP, with Sagha 24K Gold implying ${saghaGoldUsd.toFixed(2)} EGP and London CIB GDRs implying ${londonGdrUsd.toFixed(2)} EGP. The algorithmic devaluation pressure index stands at ${devaluationRiskScore}/100 (${devaluationRiskLabel}) alongside an ${((atrCompressionRatio) * 100).toFixed(1)}% 14D/90D ATR ratio, confirming an orderly two-way float.`;
+  const fxEnFallback = `Official CBE USD/EGP traded at ${officialUsd.toFixed(2)} EGP on ${targetDate} against a triangulated composite fair value of ${compositeFair.toFixed(2)} EGP, with P2P USDT at ${usdtRate.toFixed(2)} EGP, London CIB GDRs implying ${londonGdrUsd.toFixed(2)} EGP, and Sagha 24K Gold implying ${saghaGoldUsd.toFixed(2)} EGP. The algorithmic devaluation pressure index stands at ${devaluationRiskScore}/100 (${devaluationRiskLabel}) alongside an ${((atrCompressionRatio) * 100).toFixed(1)}% 14D/90D ATR ratio, confirming an orderly two-way float.`;
 
   const fxArSummary = devaluationRiskScore < 30
-    ? `تُظهر مقارنة أسعار الصرف استقراراً حقيقياً للجنيه؛ حيث تدور القيمة العادلة المركبة للدولار حول ${compositeFair.toFixed(2)} جنيهاً بفارق ضئيل للغاية عن السعر الرسمي (${officialUsd.toFixed(2)})، دون أي علاوة مضاربية مقلقة في تسعير الذهب (${saghaGoldUsd.toFixed(2)}) أو تداولات لندن (${londonGdrUsd.toFixed(2)}). هذا التوافق مع بقاء مؤشر مخاطر التعويم منخفضاً عند ${devaluationRiskScore} من ١٠٠ يؤكد قدرة البنك المركزي على تلبية الطلب واستقرار سوق الصرف.`
-    : `سجل السعر الرسمي للدولار ${officialUsd.toFixed(2)} جنيهاً في حين ارتفعت القيمة العادلة المركبة إلى ${compositeFair.toFixed(2)} جنيهاً مع وصول دولار الذهب إلى ${saghaGoldUsd.toFixed(2)} جنيهاً، مما يفتح فجوة تسعيرية تستدعي المراقبة. ويعكس ارتفاع مؤشر مخاطر التعويم إلى ${devaluationRiskScore}/100 وجود ضغوط تحوطية في الأسواق الحرة تتطلب متابعة السيولة الأجنبية في البنوك.`;
+    ? `تُظهر مقارنة أسعار الصرف استقراراً حقيقياً للجنيه؛ حيث تدور القيمة العادلة المركبة للدولار حول ${compositeFair.toFixed(2)} جنيهاً بفارق ضئيل للغاية عن السعر الرسمي (${officialUsd.toFixed(2)})، بتسجيل تداولات تيذر P2P نحو ${usdtRate.toFixed(2)} جنيهاً ومراجحة لندن ${londonGdrUsd.toFixed(2)} جنيهاً ودولار الصاغة ${saghaGoldUsd.toFixed(2)} جنيهاً دون أي علاوة مضاربية مقلقة. هذا التوافق مع بقاء مؤشر مخاطر التعويم منخفضاً عند ${devaluationRiskScore} من ١٠٠ يؤكد قدرة البنك المركزي على تلبية الطلب واستقرار سوق الصرف.`
+    : `سجل السعر الرسمي للدولار ${officialUsd.toFixed(2)} جنيهاً في حين ارتفعت القيمة العادلة المركبة إلى ${compositeFair.toFixed(2)} جنيهاً مع تداول تيذر P2P عند ${usdtRate.toFixed(2)} جنيهاً ودولار الذهب عند ${saghaGoldUsd.toFixed(2)} جنيهاً، مما يفتح فجوة تسعيرية تستدعي المراقبة. ويعكس ارتفاع مؤشر مخاطر التعويم إلى ${devaluationRiskScore}/100 وجود ضغوط تحوطية تتطلب متابعة السيولة الأجنبية في البنوك.`;
 
   const custom = options?.customSummaries;
 
@@ -698,9 +705,9 @@ Critique liquidity quality: Did real money support the gainers or was it isolate
               systemPrompt: systemPromptCommon,
               userPrompt: `Evaluate Egypt FX Risk & Fair Value (${targetDate}):
 - Official CBE USD/EGP: ${officialUsd.toFixed(2)} | Composite Fair Value: ${compositeFair.toFixed(2)}
-- Sagha Gold Implied USD: ${saghaGoldUsd.toFixed(2)} | London CIB GDR Implied USD: ${londonGdrUsd.toFixed(2)}
+- USDT/EGP P2P: ${usdtRate.toFixed(2)} | London CIB GDR Implied: ${londonGdrUsd.toFixed(2)} | Sagha Gold Implied: ${saghaGoldUsd.toFixed(2)}
 - Devaluation Risk Score: ${devaluationRiskScore}/100 (${devaluationRiskLabel})
-Assess whether gold or London have a speculative gap/premium over the official rate and interpret the devaluation risk score.`,
+Assess whether USDT P2P, London GDR, or gold have a speculative gap/premium over the official rate and interpret the devaluation risk score.`,
               fallbackText: JSON.stringify({ en: fxEnFallback, ar: fxArSummary }),
               maxTokens: 400,
               timeoutMs: 8000,
@@ -781,7 +788,7 @@ Assess whether gold or London have a speculative gap/premium over the official r
       title: 'USD/EGP Update: Shadow Proxies & Devaluation Pressure',
       content: 'حقيقة سعر الدولار: تقييم الضغوط على الجنيه ومؤشر مخاطر التعويم',
       summary: combineBilingual(fxBilingual.en, custom?.usd_egp_update?.ar || fxBilingual.ar),
-      tickers: ['USD/EGP', 'COMI', 'GOLD21K'],
+      tickers: ['USD/EGP', 'COMI', 'GOLD21K', 'USDT'],
       sentiment: (devaluationRiskScore > 40 ? 'bearish' : 'neutral') as 'bullish' | 'bearish' | 'neutral',
       importance: (devaluationRiskScore > 40 ? 'critical' : 'high') as 'critical' | 'high' | 'normal',
       imageUrl: usdEgpChart,

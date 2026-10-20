@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ADVANCED_BLOCK_TEMPLATES, createAdvancedDraftNodes } from './advanced-strategy-model';
-import { createAdvancedIndicatorNode, createAdvancedNodeFromTemplate, moveAdvancedNode, projectSimpleDraftIntoAdvancedNodes, reconcileSimpleDraftFromFlow } from './advanced-builder-state';
+import { createAdvancedIndicatorNode, createAdvancedNodeFromTemplate, createMarketInputBundle, duplicateAdvancedModule, makeConditionScoreChanges, moveAdvancedNode, projectSimpleDraftIntoAdvancedNodes, reconcileSimpleDraftFromFlow, updateMarketInputBundle } from './advanced-builder-state';
 import { compileAdvancedStrategy } from './compile-advanced-strategy';
 import { addRuleToDraft, createEmptyStrategyDraft } from './strategy-builder-model';
 import { parseSavedStrategy } from '../../../../lib/strategies/server/parse-saved-strategy';
@@ -10,6 +10,13 @@ import { parseUniverseBacktestRequest } from '../../../../lib/strategies/server/
 const indicator = { id: 'rsi', formulaVersion: '1.0.0', backlogId: 'MOM-001', name: 'RSI', description: 'Momentum', category: 'Momentum', available: true, defaultParameters: { period: 14 }, outputs: [{ key: 'rsi', kind: 'number' as const, unit: 'percent' as const }], requiredCapabilities: [] };
 
 describe('simple strategy flow editing', () => {
+  it('adds the shared market source only when a blank draft gains a rule', () => {
+    const blank = createEmptyStrategyDraft();
+    expect(projectSimpleDraftIntoAdvancedNodes(blank, [indicator], [])).toEqual([]);
+    const withRule = projectSimpleDraftIntoAdvancedNodes(addRuleToDraft(blank, 'buy', indicator), [indicator], []);
+    expect(withRule.map((node) => node.id)).toContain('custom-market-data');
+    expect(withRule.find((node) => node.parameters?.sourceRuleId)?.connections).toEqual(['custom-market-data']);
+  });
   it('saves the connector and comparison edited on a rule card', () => {
     const draft = addRuleToDraft(createEmptyStrategyDraft(), 'buy', indicator);
     const nodes = projectSimpleDraftIntoAdvancedNodes(draft, [indicator], createAdvancedDraftNodes());
@@ -37,6 +44,62 @@ describe('simple strategy flow editing', () => {
       : node);
 
     expect(reconcileSimpleDraftFromFlow(draft, edited).buyRules[0].outputKey).toBe('signal');
+  });
+});
+
+describe('advanced draft editing', () => {
+  const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+
+  it('joins a newly created second buy rule with AND as shown in its settings', () => {
+    const close = { ...createAdvancedNodeFromTemplate(template('market-input'), 'close'), parameters: { series: 'ohlcv', field: 'close' } };
+    const first = { ...createAdvancedNodeFromTemplate(template('condition'), 'first'), connections: ['close'] };
+    const second = { ...createAdvancedNodeFromTemplate(template('condition'), 'second'), connections: ['close'] };
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['close'] };
+    const result = compileAdvancedStrategy([close, first, second, sell], []);
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') expect(result.program.buy.map((branch) => branch.map((rule) => rule.id))).toEqual([['first', 'second']]);
+  });
+
+  it('retains OR semantics for older saved rules with no connector', () => {
+    const close = createAdvancedNodeFromTemplate(template('market-input'), 'close');
+    const old = (id: string) => ({ ...createAdvancedNodeFromTemplate(template('condition'), id), connections: ['close'], parameters: { operator: 'crossesAbove', compareMode: 'value', compareValue: '0' } });
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['close'] };
+    const result = compileAdvancedStrategy([close, old('first'), old('second'), sell], []);
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') expect(result.program.buy.map((branch) => branch.map((rule) => rule.id))).toEqual([['first'], ['second']]);
+  });
+
+  it('adds and removes OHLCV fields without changing retained connections', () => {
+    const bundle = createMarketInputBundle(['high', 'low', 'close'], 'bundle');
+    const consumer = { ...createAdvancedNodeFromTemplate(template('condition'), 'buy'), connections: ['bundle-high'] };
+    const changed = updateMarketInputBundle([...bundle, consumer], 'bundle', ['open', 'high', 'close']);
+    expect(changed?.filter((node) => node.moduleId === 'bundle').map((node) => node.parameters?.field).sort()).toEqual(['close', 'high', 'open']);
+    expect(changed?.find((node) => node.id === 'buy')?.connections).toEqual(['bundle-high']);
+    expect(updateMarketInputBundle([...bundle, consumer], 'bundle', ['low', 'close'])).toBeNull();
+  });
+
+  it('duplicates a module with fresh IDs and remapped internal links', () => {
+    const source = createMarketInputBundle(['high', 'low'], 'market');
+    const first = { ...createAdvancedNodeFromTemplate(template('math-operation'), 'calc-a'), moduleId: 'module', moduleName: 'Spread', connections: ['market-high'] };
+    const second = { ...createAdvancedNodeFromTemplate(template('transform'), 'calc-b'), moduleId: 'module', moduleName: 'Spread', connections: ['calc-a'] };
+    const cloned = duplicateAdvancedModule([...source, first, second], 'module', 'module-copy');
+    expect(cloned).not.toBeNull();
+    const copies = cloned!.filter((node) => node.moduleId === 'module-copy');
+    expect(copies).toHaveLength(2);
+    expect(copies[0].connections).toEqual(['market-high']);
+    expect(copies[1].connections).toEqual([copies[0].id]);
+    expect(copies[1].moduleName).toBe('Spread copy');
+  });
+
+  it('starts a copied rule module as a separate branch and keeps its internal AND', () => {
+    const close = createAdvancedNodeFromTemplate(template('market-input'), 'close');
+    const first = { ...createAdvancedNodeFromTemplate(template('condition'), 'level-1'), moduleId: 'levels', moduleName: 'Levels', connections: ['close'], parameters: { operator: 'crossesAbove', compareMode: 'value', compareValue: '30', connector: 'and' } };
+    const second = { ...createAdvancedNodeFromTemplate(template('condition'), 'level-2'), moduleId: 'levels', moduleName: 'Levels', connections: ['close'], parameters: { operator: 'crossesAbove', compareMode: 'value', compareValue: '50', connector: 'and' } };
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['close'] };
+    const copied = duplicateAdvancedModule([close, first, second, sell], 'levels', 'levels-copy');
+    const result = compileAdvancedStrategy(copied!, []);
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') expect(result.program.buy.map((branch) => branch.length)).toEqual([2, 2]);
   });
 });
 
@@ -103,6 +166,81 @@ describe('advanced indicator selection', () => {
 });
 
 describe('advanced causal calculations', () => {
+  it('compiles a reusable weighted condition score from ordinary market inputs', () => {
+    const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+    const close = createAdvancedNodeFromTemplate(template('market-input'), 'close');
+    const score = { ...createAdvancedNodeFromTemplate(template('condition-score'), 'score'), connections: ['close'], parameters: { conditions: JSON.stringify([
+      { inputId: 'close', operator: 'gt', threshold: 10, weight: 1 },
+      { inputId: 'close', operator: 'gte', threshold: 12, weight: 3 },
+    ]) } };
+    const buy = { ...createAdvancedNodeFromTemplate(template('condition'), 'buy'), connections: ['score'], parameters: { operator: 'crossesAbove', compareMode: 'value', compareValue: '50' } };
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['score'], parameters: { operator: 'crossesBelow', compareMode: 'value', compareValue: '50' } };
+    const result = compileAdvancedStrategy([close, score, buy, sell], []);
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') expect(result.program.inputs.find((input) => input.id === 'score')).toMatchObject({ kind: 'condition-score', conditions: [
+      { inputId: 'close', operator: 'gt', threshold: 10, weight: 1 },
+      { inputId: 'close', operator: 'gte', threshold: 12, weight: 3 },
+    ] });
+  });
+  it('saves a score with twelve independent series comparisons', () => {
+    const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+    const sources = Array.from({ length: 24 }, (_, index) => createAdvancedNodeFromTemplate(template('market-input'), `source-${index}`));
+    const conditions = Array.from({ length: 12 }, (_, index) => ({ inputId: `source-${index}`, compareInputId: `source-${index + 12}`, operator: 'gt', threshold: 0, weight: 1 }));
+    const score = { ...createAdvancedNodeFromTemplate(template('condition-score'), 'score'), connections: sources.map((source) => source.id), parameters: { conditions: JSON.stringify(conditions) } };
+    const draft = { ...createEmptyStrategyDraft(), id: 'custom-score', name: 'Score' };
+    expect(parseSavedStrategy({ id: draft.id, name: draft.name, mode: 'advanced', draft, nodes: [...sources, score] }).success).toBe(true);
+  });
+  it('keeps visual connections aligned with comparisons edited inside a score card', () => {
+    const changes = makeConditionScoreChanges({}, [
+      { inputId: 'close', operator: 'gt', threshold: '10', weight: '2' },
+      { inputId: 'rsi', compareInputId: 'close', operator: 'lte', threshold: '0', weight: '1' },
+    ]);
+    expect(changes.connections).toEqual(['close', 'rsi']);
+    expect(JSON.parse(changes.parameters.conditions)).toHaveLength(2);
+  });
+  it('remaps score comparisons when their source and score card are duplicated together', () => {
+    const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+    const market = createAdvancedNodeFromTemplate(template('market-input'), 'close');
+    const source = { ...createAdvancedNodeFromTemplate(template('transform'), 'smooth'), moduleId: 'module', moduleName: 'Signal', connections: ['close'] };
+    const score = { ...createAdvancedNodeFromTemplate(template('condition-score'), 'score'), moduleId: 'module', moduleName: 'Signal', connections: ['smooth'], parameters: { conditions: '[{"inputId":"smooth","operator":"gt","threshold":10,"weight":1}]' } };
+    const copied = duplicateAdvancedModule([market, source, score], 'module', 'module-copy');
+    expect(copied).not.toBeNull();
+    const copiedSource = copied!.find((node) => node.moduleId === 'module-copy' && node.templateId === 'transform')!;
+    const copiedScore = copied!.find((node) => node.moduleId === 'module-copy' && node.templateId === 'condition-score')!;
+    expect(copiedScore.connections).toEqual([copiedSource.id]);
+    expect(JSON.parse(copiedScore.parameters!.conditions)[0].inputId).toBe(copiedSource.id);
+  });
+  it('compiles a per-company choice between two calculated profiles', () => {
+    const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+    const close = createAdvancedNodeFromTemplate(template('market-input'), 'close');
+    const alternate = { ...createAdvancedNodeFromTemplate(template('transform'), 'alternate'), connections: ['close'], parameters: { method: 'ema', period: '3' } };
+    const profile = { ...createAdvancedNodeFromTemplate(template('ticker-select'), 'profile'), connections: ['close', 'alternate'], parameters: { defaultSourceId: 'close', alternateSourceId: 'alternate', alternateSymbols: '["TMGH"]' } };
+    const buy = { ...createAdvancedNodeFromTemplate(template('condition'), 'buy'), connections: ['profile'] };
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['profile'] };
+    const result = compileAdvancedStrategy([close, alternate, profile, buy, sell], []);
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') expect(result.program.inputs.find((input) => input.id === 'profile')).toMatchObject({ kind: 'ticker-select', defaultSourceId: 'close', alternateSourceId: 'alternate', alternateSymbols: ['TMGH'] });
+  });
+  it('compiles a first-bar EMA seed selected in Studio', () => {
+    const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+    const close = createAdvancedNodeFromTemplate(template('market-input'), 'close');
+    const ema = { ...createAdvancedNodeFromTemplate(template('transform'), 'ema'), connections: ['close'], parameters: { method: 'ema', period: '3', seedMode: 'first' } };
+    const buy = { ...createAdvancedNodeFromTemplate(template('condition'), 'buy'), connections: ['ema'] };
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['ema'] };
+    const result = compileAdvancedStrategy([close, ema, buy, sell], []);
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') expect(result.program.inputs.find((input) => input.id === 'ema')).toMatchObject({ seedMode: 'first' });
+  });
+  it('does not send an EMA-only seed after changing the card to SMA', () => {
+    const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+    const close = createAdvancedNodeFromTemplate(template('market-input'), 'close');
+    const smoothing = { ...createAdvancedNodeFromTemplate(template('transform'), 'smoothing'), connections: ['close'], parameters: { method: 'sma', period: '3', seedMode: 'first' } };
+    const buy = { ...createAdvancedNodeFromTemplate(template('condition'), 'buy'), connections: ['smoothing'] };
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['smoothing'] };
+    const result = compileAdvancedStrategy([close, smoothing, buy, sell], []);
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') expect(result.program.inputs.find((input) => input.id === 'smoothing')).not.toHaveProperty('seedMode');
+  });
   it('compiles lag, Wilder smoothing, and rolling percentile from calculation cards', () => {
     const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
     const market = createAdvancedNodeFromTemplate(template('market-input'), 'market');

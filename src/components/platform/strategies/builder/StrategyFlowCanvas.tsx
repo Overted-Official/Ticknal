@@ -25,8 +25,8 @@ import AdvancedNodeEditor from './AdvancedNodeEditor';
 import IndicatorPicker from './IndicatorPicker';
 import StrategyLibraryEducationDrawer from './StrategyLibraryEducationDrawer';
 import { ADVANCED_BLOCK_TEMPLATES, getStrategyNodeParameterRows, localize, type AdvancedStrategyNode } from './advanced-strategy-model';
-import { getAvailableUpstreamNodes, createAdvancedIndicatorNode, createAdvancedNodeFromTemplate } from './advanced-builder-state';
-import { buildStrategyFlow, canGroupStrategyNodes, canRemoveOptionalStage, getConnectableModulePairs, getEdgeAttachment, getFocusedModuleViewport, getReadableStrategyViewport, getStageTemplateIds, resolveModuleNameDraft, toggleGroupCardSelection, type OptionalStrategyStageId, type StrategyCanvasModule, type StrategyCanvasStage, type StrategyCanvasStageId } from './strategy-flow-model';
+import { getAvailableUpstreamNodes, createAdvancedIndicatorNode, createAdvancedNodeFromTemplate, createMarketInputBundle, duplicateAdvancedModule, getMarketInputBundle, isAdvancedNodeReferenced, updateMarketInputBundle, type MarketInputField } from './advanced-builder-state';
+import { buildStrategyFlow, canGroupStrategyNodes, canRemoveOptionalStage, getConnectableModulePairs, getEdgeAttachment, getFocusedModuleViewport, getModuleRuleSummary, getReadableStrategyViewport, getStageTemplateIds, reconcileStrategyFlowLayout, resolveModuleNameDraft, toggleGroupCardSelection, type OptionalStrategyStageId, type StrategyCanvasModule, type StrategyCanvasStage, type StrategyCanvasStageId } from './strategy-flow-model';
 import { isSimpleRuleIndicatorSupported, type StrategyBuilderIndicatorOption, type StrategyRuleSide } from './strategy-builder-model';
 import { getNodeEducation } from './strategy-library-education';
 
@@ -120,6 +120,7 @@ const StrategyCard = memo(function StrategyCard({ data, selected }: NodeProps<Ca
   const accent = NODE_ACCENTS[node.kind];
   const name = node.customName || localize(node.title, locale);
   if (module) {
+    const ruleSummary = getModuleRuleSummary(module, data.nodes, locale);
     return <article className={`strategy-flow-card strategy-flow-module-card ${selected ? 'strategy-flow-card-selected' : ''}`} style={{ '--node-accent': accent } as React.CSSProperties} aria-label={name}>
       {CARD_HANDLES.map((handle) => <Handle key={handle.id} id={handle.id} type={handle.type} position={handle.position} className={`strategy-flow-handle ${data.activeHandles.has(handle.id) ? '' : 'strategy-flow-handle-idle'}`} isConnectable={editable} />)}
       <div className="strategy-flow-card-heading">
@@ -128,8 +129,8 @@ const StrategyCard = memo(function StrategyCard({ data, selected }: NodeProps<Ca
         <button type="button" className="nodrag strategy-flow-icon" aria-label={`${isAr ? 'افتح مجموعة' : 'Open module'} ${name}`} onClick={() => data.onOpenModule(module.id)}><ChevronLeft className={isAr ? '' : 'rotate-180'} size={15} /></button>
       </div>
       <div className="strategy-flow-card-content"><div className="strategy-flow-card-inset strategy-flow-module-inset">
-        <span className="text-[10px] text-plt-muted">{isAr ? 'المخرج' : 'Output'}</span>
-        <span className="min-w-0 truncate text-xs font-medium text-plt-text">{module.outputIds.map((id) => data.nodes.find((candidate) => candidate.id === id)?.customName || id).join(', ')}</span>
+        <span className="text-[10px] text-plt-muted">{ruleSummary ? (isAr ? 'الشروط' : 'Checks') : (isAr ? 'المخرج' : 'Output')}</span>
+        <span className={`min-w-0 text-xs font-medium text-plt-text ${ruleSummary ? 'text-right leading-4' : 'truncate'}`}>{ruleSummary ?? module.outputIds.map((id) => data.nodes.find((candidate) => candidate.id === id)?.customName || id).join(', ')}</span>
       </div></div>
     </article>;
   }
@@ -232,21 +233,21 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
+  const [showExternalInputs, setShowExternalInputs] = useState(false);
+  const [showModuleFields, setShowModuleFields] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [learningNode, setLearningNode] = useState<AdvancedStrategyNode | null>(null);
   const [addPanel, setAddPanel] = useState<StrategyCanvasStageId | null>(null);
   const [pendingModuleConnection, setPendingModuleConnection] = useState<{ choices: readonly { sourceId: string; targetId: string }[]; contextName: string; showSource: boolean; showTarget: boolean } | null>(null);
   const flow = useMemo(() => buildStrategyFlow(strategyNodes, protectedBlueprint, mode, enabledOptionalStages,
-    { focusModuleId: focusedModuleId, expandedCardId: expandedId, previewCardId: previewId }),
-  [strategyNodes, protectedBlueprint, mode, enabledOptionalStages, focusedModuleId, expandedId, previewId]);
+    { focusModuleId: focusedModuleId, showExternalInputs, expandedCardId: expandedId, previewCardId: previewId }),
+  [strategyNodes, protectedBlueprint, mode, enabledOptionalStages, focusedModuleId, showExternalInputs, expandedId, previewId]);
   const [nodeLayout, setNodeLayout] = useState<Node[]>(() => flow.nodes.map((node) => ({ ...node })));
   const manuallyMovedIds = useRef(new Set<string>());
+  const renderLayout = reconcileStrategyFlowLayout(nodeLayout, flow.nodes.map((node) => ({ ...node })), manuallyMovedIds.current);
 
   useEffect(() => {
-    setNodeLayout((current) => flow.nodes.map((node) => {
-      const previous = current.find((candidate) => candidate.id === node.id);
-      return previous ? { ...previous, position: manuallyMovedIds.current.has(node.id) ? previous.position : node.position, data: node.data } : { ...node };
-    }));
+    setNodeLayout((current) => reconcileStrategyFlowLayout(current, flow.nodes.map((node) => ({ ...node })), manuallyMovedIds.current));
   }, [flow]);
 
   useEffect(() => {
@@ -257,7 +258,7 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
   const removeNode = (id: string) => onNodesChange(strategyNodes.filter((node) => node.id !== id).map((node) => ({ ...node, connections: node.connections?.filter((source) => source !== id) })));
 
   const stagePositions = new Map(flow.stages.map((stage) => [`stage-${stage.id}`, stage.position]));
-  const layoutsById = new Map(nodeLayout.map((layout) => [layout.id, layout]));
+  const layoutsById = new Map(renderLayout.map((layout) => [layout.id, layout]));
   const cardBounds = (id: string) => {
     const layout = layoutsById.get(id);
     if (!layout) return null;
@@ -281,7 +282,7 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
     return { ...edge, ...attachment, type: 'strategyConnection', data: { active: !editable, delay: `${-(index % 3) * 1.8}s` }, style: { ...edge.style, strokeWidth: editable ? 1.15 : 1.5, opacity: editable ? 0.45 : 0.75 } };
   });
 
-  const cardNodes: CardNode[] = nodeLayout.filter((layout) => layout.type === 'strategy').map((layout) => {
+  const cardNodes: CardNode[] = renderLayout.filter((layout) => layout.type === 'strategy').map((layout) => {
     const strategyNode = layout.data.strategyNode as AdvancedStrategyNode;
     return ({
     ...layout,
@@ -302,7 +303,7 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
       onToggleSettings: (id) => setExpandedId((current) => current === id ? null : id),
       onTogglePreview: (id) => { if (expandedId === id) setExpandedId(null); setPreviewId((current) => current === id ? null : id); },
       onToggleGroupSelection: (id) => setSelectedGroupIds((current) => toggleGroupCardSelection(strategyNodes, current, id)),
-      onOpenModule: setFocusedModuleId,
+      onOpenModule: (id) => { setShowExternalInputs(false); setFocusedModuleId(id); },
       onInfo: setLearningNode,
       onChange: changeNode,
       onRemove: removeNode,
@@ -357,6 +358,7 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
   const groupedIds = new Set(flow.modules.flatMap((module) => module.memberIds));
   const selectedCardIds = selectedGroupIds.filter((id) => strategyNodes.some((candidate) => candidate.id === id && !candidate.moduleId && !candidate.protected && !groupedIds.has(id)));
   const focusedModule = flow.modules.find((module) => module.id === focusedModuleId);
+  const marketBundle = focusedModule ? getMarketInputBundle(strategyNodes, focusedModule.id) : null;
   const groupSelection = () => {
     if (!canGroupStrategyNodes(strategyNodes, selectedCardIds)) return;
     const id = `group-${Date.now().toString(36)}`;
@@ -364,6 +366,7 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
     const selected = new Set(selectedCardIds);
     onNodesChange(strategyNodes.map((node) => selected.has(node.id) ? { ...node, moduleId: id, moduleName: name } : node));
     setSelectedGroupIds([]);
+    setShowExternalInputs(false);
     setFocusedModuleId(id);
   };
   const updateModuleName = (name: string) => {
@@ -377,6 +380,22 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
       return { ...node, moduleId: undefined, moduleName: undefined };
     }));
     setFocusedModuleId(null);
+  };
+  const duplicateModule = () => {
+    if (!focusedModuleId) return;
+    const id = `module-${crypto.randomUUID()}`;
+    const updated = duplicateAdvancedModule(strategyNodes, focusedModuleId, id);
+    if (!updated) return;
+    onNodesChange(updated);
+    setFocusedModuleId(id);
+    setShowModuleFields(false);
+  };
+  const toggleMarketField = (field: MarketInputField, enabled: boolean) => {
+    if (!focusedModuleId || !marketBundle) return;
+    const current = marketBundle.map((node) => node.parameters!.field as MarketInputField);
+    const fields = enabled ? [...current, field] : current.filter((candidate) => candidate !== field);
+    const updated = updateMarketInputBundle(strategyNodes, focusedModuleId, fields);
+    if (updated) onNodesChange(updated);
   };
 
   const addAdvanced = (templateId: string) => {
@@ -393,6 +412,11 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
     setExpandedId(node.id);
     setAddPanel(null);
   };
+  const addMarketBundle = (fields: readonly MarketInputField[]) => {
+    if (fields.length < 2) return;
+    onNodesChange([...strategyNodes, ...createMarketInputBundle(fields, `market-${crypto.randomUUID()}`)]);
+    setAddPanel(null);
+  };
 
   return (
     <div className="strategy-flow-canvas h-full w-full" aria-label={isAr ? 'مخطط الاستراتيجية' : 'Strategy graph'}>
@@ -406,10 +430,9 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
         onNodesChange={(changes) => {
           setNodeLayout((current) => applyNodeChanges(changes, current));
         }}
+        onNodeDragStart={(_, node) => { manuallyMovedIds.current.add(node.id); }}
         onNodeDragStop={(_, node) => { manuallyMovedIds.current.add(node.id); }}
         onConnect={connect}
-        fitView
-        fitViewOptions={{ padding: 0.13, minZoom: 0.35, maxZoom: 0.95 }}
         minZoom={0.35}
         maxZoom={1.5}
         nodesDraggable
@@ -425,10 +448,23 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
       </ReactFlow>
       </div>
       {focusedModule && <div className="strategy-flow-module-nav" role="navigation" aria-label={isAr ? 'التنقل داخل المجموعة' : 'Module navigation'}>
-        <button type="button" className="btn-token btn-secondary btn-compact" onClick={() => { setFocusedModuleId(null); setExpandedId(null); setPreviewId(null); }}><ChevronLeft size={14} className={isAr ? 'rotate-180' : ''} />{isAr ? 'العودة إلى الاستراتيجية' : 'Strategy overview'}</button>
+        <button type="button" className="btn-token btn-secondary btn-compact" onClick={() => { setFocusedModuleId(null); setShowExternalInputs(false); setShowModuleFields(false); setExpandedId(null); setPreviewId(null); }}><ChevronLeft size={14} className={isAr ? 'rotate-180' : ''} />{isAr ? 'العودة إلى الاستراتيجية' : 'Strategy overview'}</button>
         {editable ? <ModuleNameEditor key={focusedModule.id} name={focusedModule.name} isAr={isAr} onCommit={updateModuleName} /> : <span className="truncate text-xs font-semibold text-plt-text">{focusedModule.name}</span>}
         <span className="hidden text-[11px] text-plt-muted sm:inline">{focusedModule.memberIds.length} {isAr ? 'خطوات' : focusedModule.memberIds.length === 1 ? 'step' : 'steps'}</span>
+        {focusedModule.inputIds.length > 0 && <button type="button" className="btn-token btn-secondary btn-compact" aria-pressed={showExternalInputs} onClick={() => setShowExternalInputs((current) => !current)}>{isAr ? (showExternalInputs ? 'إخفاء المدخلات' : `عرض المدخلات (${focusedModule.inputIds.length})`) : (showExternalInputs ? 'Hide inputs' : `Show inputs (${focusedModule.inputIds.length})`)}</button>}
+        {editable && marketBundle && <button type="button" className="btn-token btn-secondary btn-compact" aria-expanded={showModuleFields} aria-controls="strategy-module-fields" onClick={() => setShowModuleFields((current) => !current)}>{isAr ? 'الحقول' : 'Fields'}</button>}
+        {editable && <button type="button" className="btn-token btn-secondary btn-compact" onClick={duplicateModule}>{isAr ? 'نسخ المجموعة' : 'Duplicate module'}</button>}
         {editable && <button type="button" className="btn-token btn-secondary btn-compact" onClick={ungroupModule}>{isAr ? 'إلغاء التجميع' : 'Ungroup'}</button>}
+        {editable && marketBundle && showModuleFields && <div id="strategy-module-fields" className="strategy-flow-module-fields" role="group" aria-label={isAr ? 'حقول بيانات السوق' : 'Market data fields'}>
+        <p className="text-xs font-semibold text-plt-text">{isAr ? 'حقول OHLCV' : 'OHLCV fields'}</p>
+        <p className="mt-1 text-[11px] text-plt-muted">{isAr ? 'يمكنك إزالة الحقول غير المستخدمة فقط.' : 'Used fields stay connected and cannot be removed.'}</p>
+        <div className="strategy-library-bundle-options">{(['open', 'high', 'low', 'close', 'volume'] as const).map((field) => {
+          const node = marketBundle.find((member) => member.parameters?.field === field);
+          const used = Boolean(node && isAdvancedNodeReferenced(strategyNodes, node.id));
+          const disabled = Boolean(node && (used || marketBundle.length <= 2));
+          return <label key={field} className="strategy-library-bundle-field" title={used ? (isAr ? 'الحقل متصل ببطاقة أخرى' : 'Connected to another card') : undefined}><input type="checkbox" checked={Boolean(node)} disabled={disabled} onChange={(event) => toggleMarketField(field, event.target.checked)} /><span>{field.charAt(0).toUpperCase() + field.slice(1)}</span>{used && <span className="text-[10px] text-plt-faint">{isAr ? 'مستخدم' : 'Used'}</span>}</label>;
+        })}</div>
+        </div>}
       </div>}
       {pendingModuleConnection && <div className="strategy-flow-output-picker" role="dialog" aria-label={isAr ? 'اختر اتصال المجموعة' : 'Choose module connection'}>
         <div className="flex items-center justify-between gap-3 border-b border-plt-border-soft px-3 py-2.5"><div className="min-w-0"><p className="truncate text-xs font-semibold text-plt-text">{isAr ? 'اختر القيمة والبطاقة' : 'Choose a connection'}</p><p className="truncate text-[11px] text-plt-muted">{pendingModuleConnection.contextName}</p></div><button type="button" className="strategy-flow-icon" aria-label={isAr ? 'إغلاق' : 'Close'} onClick={() => setPendingModuleConnection(null)}><X size={14} /></button></div>
@@ -453,6 +489,7 @@ export default function StrategyFlowCanvas({ strategyNodes, indicators, locale, 
           search={{ en: 'Search cards', ar: 'ابحث عن بطاقة' }}
           locale={locale}
           onAdd={(template) => addAdvanced(template.id)}
+          onAddMarketBundle={addPanel === 'data' && !focusedModule ? addMarketBundle : undefined}
           onClose={() => setAddPanel(null)}
         /> : <IndicatorPicker
           indicators={indicators.filter(isSimpleRuleIndicatorSupported)}

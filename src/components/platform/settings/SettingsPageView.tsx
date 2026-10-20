@@ -30,22 +30,6 @@ export default function SettingsPageView({
 
   const tour = useTour(SETTINGS_TOUR_STORAGE_KEY);
   const tourSteps = React.useMemo(() => getSettingsTourSteps(isRTL), [isRTL]);
-  const hasAutoStartedRef = React.useRef(false);
-
-  // Auto-start Settings page walkthrough for first-time visitors (strictly once on mount)
-  React.useEffect(() => {
-    if (hasAutoStartedRef.current) return;
-    hasAutoStartedRef.current = true;
-
-    if (!tour.seen()) {
-      const timer = setTimeout(() => {
-        tour.start();
-        tour.markSeen();
-      }, 1200);
-
-      return () => clearTimeout(timer);
-    }
-  }, [tour]);
 
   return (
     <div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none font-sans">

@@ -24,6 +24,7 @@ import {
 } from './advanced-strategy-model';
 import StrategyLibraryEducationDrawer from './StrategyLibraryEducationDrawer';
 import { getBlockEducation, type StrategyLibraryEducation } from './strategy-library-education';
+import type { MarketInputField } from './advanced-builder-state';
 
 export interface AdvancedBlockLibraryModalProps {
   readonly templateIds: readonly string[];
@@ -31,7 +32,14 @@ export interface AdvancedBlockLibraryModalProps {
   readonly search: LocalizedAdvancedCopy;
   readonly locale: 'en' | 'ar';
   readonly onAdd: (template: AdvancedBlockTemplate) => void;
+  readonly onAddMarketBundle?: (fields: readonly MarketInputField[]) => void;
   readonly onClose: () => void;
+}
+
+export function matchesMarketBundleSearch(query: string, locale: 'en' | 'ar'): boolean {
+  const term = query.trim().toLocaleLowerCase();
+  return Boolean(term) && [locale === 'ar' ? 'مجموعة OHLCV بيانات السوق فتح أعلى أدنى إغلاق حجم' : 'OHLCV bundle market data open high low close volume']
+    .some((label) => label.toLocaleLowerCase().includes(term));
 }
 
 export const NODE_APPEARANCE: Readonly<Record<AdvancedNodeKind, {
@@ -66,12 +74,15 @@ export default function AdvancedBlockLibraryModal({
   search,
   locale,
   onAdd,
+  onAddMarketBundle,
   onClose,
 }: AdvancedBlockLibraryModalProps) {
   const isAr = locale === 'ar';
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<AdvancedBlockLibraryGroup | null>(null);
   const [education, setEducation] = useState<StrategyLibraryEducation | null>(null);
+  const [selectedMarketFields, setSelectedMarketFields] = useState<MarketInputField[]>(['open', 'high', 'low', 'close', 'volume']);
+  const marketFields: readonly MarketInputField[] = ['open', 'high', 'low', 'close', 'volume'];
 
   const availableTemplates = useMemo(() => ADVANCED_BLOCK_TEMPLATES.filter((template) => templateIds.includes(template.id)), [templateIds]);
   const groups = useMemo(() => BLOCK_LIBRARY_GROUPS
@@ -88,6 +99,17 @@ export default function AdvancedBlockLibraryModal({
   }, [availableTemplates, locale, query]);
   const selectedGroup = groups.find((group) => group.id === activeCategory) ?? groups[0];
   const isSearching = query.trim().length > 0;
+  const hasMarketBundle = Boolean(onAddMarketBundle && availableTemplates.some((template) => template.id === 'market-input'));
+  const showSearchBundle = hasMarketBundle && matchesMarketBundleSearch(query, locale);
+
+  const marketBundlePicker = <div className="strategy-library-bundle">
+    <p className="text-xs font-semibold text-plt-text">{isAr ? 'مجموعة OHLCV' : 'OHLCV bundle'}</p>
+    <p className="mt-1 text-[11px] leading-4 text-plt-muted">{isAr ? 'اختر الحقول مرة واحدة؛ يظل لكل حقل مخرج مستقل قابل للتوصيل.' : 'Choose fields once. Each remains a separate connectable output.'}</p>
+    <div className="strategy-library-bundle-options">
+      {marketFields.map((field) => { const label = field.charAt(0).toUpperCase() + field.slice(1); return <label key={field} className="strategy-library-bundle-field"><input type="checkbox" checked={selectedMarketFields.includes(field)} aria-label={`${isAr ? 'تضمين' : 'Include'} ${label}`} onChange={() => setSelectedMarketFields((current) => current.includes(field) ? current.filter((item) => item !== field) : marketFields.filter((item) => current.includes(item) || item === field))} /><span>{label}</span></label>; })}
+    </div>
+    <button type="button" className="btn-token btn-secondary btn-compact mt-3 w-full" disabled={selectedMarketFields.length < 2} onClick={() => onAddMarketBundle?.(selectedMarketFields)}>{isAr ? `إضافة ${selectedMarketFields.length} حقول كبطاقة واحدة` : `Add ${selectedMarketFields.length} fields as one card`}</button>
+  </div>;
 
   const renderOption = (template: AdvancedBlockTemplate) => {
     const appearance = NODE_APPEARANCE[template.kind];
@@ -133,8 +155,9 @@ export default function AdvancedBlockLibraryModal({
       </label>
 
       {isSearching ? <div className="strategy-library-results custom-scrollbar border-t border-plt-border-soft" role="region" aria-label={isAr ? 'نتائج البحث' : 'Search results'}>
-        <div className="strategy-library-results-label"><span>{isAr ? 'نتائج البحث' : 'Search results'}</span><span className="tabular-nums">{searchResults.length}</span></div>
-        {searchResults.length ? searchResults.map(renderOption) : <p className="strategy-library-empty">{isAr ? 'لا توجد خيارات مطابقة.' : 'No matching options.'}</p>}
+        <div className="strategy-library-results-label"><span>{isAr ? 'نتائج البحث' : 'Search results'}</span><span className="tabular-nums">{searchResults.length + Number(showSearchBundle)}</span></div>
+        {showSearchBundle && marketBundlePicker}
+        {searchResults.length ? searchResults.map(renderOption) : !showSearchBundle && <p className="strategy-library-empty">{isAr ? 'لا توجد خيارات مطابقة.' : 'No matching options.'}</p>}
       </div> : selectedGroup ? <div className="strategy-library-browser">
         <nav className="strategy-library-categories custom-scrollbar" aria-label={isAr ? 'فئات الكتل' : 'Block categories'}>
           {groups.map((group) => <button key={group.id} type="button" aria-pressed={group.id === selectedGroup.id} onClick={() => setActiveCategory(group.id)} className={`strategy-library-category ${group.id === selectedGroup.id ? 'is-active' : ''}`}>
@@ -143,6 +166,7 @@ export default function AdvancedBlockLibraryModal({
         </nav>
         <div className="strategy-library-results custom-scrollbar" role="region" aria-label={localize(selectedGroup.title, locale)}>
           <div className="strategy-library-results-label"><span>{localize(selectedGroup.title, locale)}</span><span className="tabular-nums">{selectedGroup.templates.length}</span></div>
+          {selectedGroup.id === 'marketData' && hasMarketBundle && marketBundlePicker}
           {selectedGroup.templates.map(renderOption)}
         </div>
       </div> : <p className="strategy-library-empty">{isAr ? 'لا توجد كتل متاحة.' : 'No blocks are available.'}</p>}

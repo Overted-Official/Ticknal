@@ -54,8 +54,8 @@ export function parseSavedStrategy(value: unknown): { readonly success: true; re
       || (node.moduleId !== undefined && (typeof node.moduleId !== 'string' || !/^[A-Za-z0-9-]{1,80}$/.test(node.moduleId)))
       || (node.moduleName !== undefined && (typeof node.moduleName !== 'string' || !node.moduleName.trim() || node.moduleName.length > 100))
       || (node.parameters !== undefined && (!record(node.parameters) || Object.entries(node.parameters).length > 32
-        || !Object.entries(node.parameters).every(([key, entry]) => key.length <= 100 && typeof entry === 'string' && entry.length <= (key === 'registers' ? 52_000 : key === 'model' ? 40_000 : key === 'symbolOverrides' ? 16_000 : key === 'aliases' ? 1024 : 200))))
-      || (node.connections !== undefined && (!Array.isArray(node.connections) || node.connections.length > 16 || !node.connections.every((id: unknown) => short(id))))) return invalid;
+        || !Object.entries(node.parameters).every(([key, entry]) => key.length <= 100 && typeof entry === 'string' && entry.length <= (key === 'registers' ? 52_000 : key === 'model' ? 40_000 : ['symbolOverrides', 'conditions', 'alternateSymbols'].includes(key) ? 16_000 : key === 'aliases' ? 1024 : 200))))
+      || (node.connections !== undefined && (!Array.isArray(node.connections) || node.connections.length > (node.templateId === 'condition-score' ? 24 : 16) || !node.connections.every((id: unknown) => short(id))))) return invalid;
     ids.add(node.id);
   }
   if (value.nodes.some((node: { connections?: string[] }) => node.connections?.some((id) => !ids.has(id)))) return invalid;

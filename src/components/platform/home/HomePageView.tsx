@@ -73,23 +73,6 @@ export default function HomePageView({
     signalTicknalReady();
   }, []);
 
-  const hasAutoStartedRef = React.useRef(false);
-
-  // Auto-start Home page walkthrough for first-time visitors (strictly once on mount)
-  useEffect(() => {
-    if (hasAutoStartedRef.current) return;
-    hasAutoStartedRef.current = true;
-
-    if (!tour.seen()) {
-      const timer = setTimeout(() => {
-        tour.start();
-        tour.markSeen();
-      }, 1200);
-
-      return () => clearTimeout(timer);
-    }
-  }, [tour]);
-
   useEffect(() => {
     if (!canViewProprietary || (buyOpportunities && buyOpportunities.length > 0)) {
       return;

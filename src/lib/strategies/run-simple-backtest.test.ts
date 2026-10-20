@@ -5,6 +5,11 @@ import type { SimpleStrategyProgram } from './strategy-program';
 import type { AdvancedStrategyProgram } from './strategy-program';
 import { runAdvancedBacktest } from './run-advanced-backtest';
 import { runSimpleBacktest } from './run-simple-backtest';
+import { ADVANCED_BLOCK_TEMPLATES } from '../../components/platform/strategies/builder/advanced-strategy-model';
+import { createAdvancedNodeFromTemplate, makeConditionScoreChanges } from '../../components/platform/strategies/builder/advanced-builder-state';
+import { compileAdvancedStrategy } from '../../components/platform/strategies/builder/compile-advanced-strategy';
+import { createEmptyStrategyDraft } from '../../components/platform/strategies/builder/strategy-builder-model';
+import { parseSavedStrategy } from './server/parse-saved-strategy';
 
 const prices = [
   { open: 10, high: 10, low: 10, close: 10 },
@@ -50,6 +55,93 @@ const program: SimpleStrategyProgram = {
 const assumptions = { initialCapital: 1000, feeBps: 0 } as const;
 
 describe('runSimpleBacktest', () => {
+  it('builds, saves, reloads, edits, and retests a scored per-company strategy from a blank canvas', () => {
+    const template = (id: string) => ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === id)!;
+    const close = { ...createAdvancedNodeFromTemplate(template('market-input'), 'close'), parameters: { series: 'ohlcv', field: 'close' } };
+    const zero = { ...createAdvancedNodeFromTemplate(template('parameter'), 'zero'), parameters: { value: '0' } };
+    const score = { ...createAdvancedNodeFromTemplate(template('condition-score'), 'score'), ...makeConditionScoreChanges({}, [
+      { inputId: 'close', operator: 'gt' as const, compareMode: 'fixed' as const, threshold: '10.5', weight: '1' },
+      { inputId: 'close', operator: 'gte' as const, compareMode: 'fixed' as const, threshold: '12', weight: '3' },
+    ]) };
+    const profile = { ...createAdvancedNodeFromTemplate(template('ticker-select'), 'profile'), connections: ['zero', 'score'], parameters: { defaultSourceId: 'zero', alternateSourceId: 'score', alternateSymbols: '["TEST"]' } };
+    const buy = { ...createAdvancedNodeFromTemplate(template('condition'), 'buy'), connections: ['profile'], parameters: { operator: 'crossesAbove', compareMode: 'value', compareValue: '50' } };
+    const sell = { ...createAdvancedNodeFromTemplate(template('sell-condition'), 'sell'), connections: ['profile'], parameters: { operator: 'crossesBelow', compareMode: 'value', compareValue: '50' } };
+    const draft = { ...createEmptyStrategyDraft(), id: 'custom-score-proof', name: 'Score proof' };
+    const saved = parseSavedStrategy(JSON.parse(JSON.stringify({ id: draft.id, name: draft.name, mode: 'advanced', draft, nodes: [close, zero, score, profile, buy, sell] })));
+    expect(saved.success).toBe(true);
+    if (!saved.success) return;
+    const compiled = compileAdvancedStrategy(saved.value.nodes, []);
+    expect(compiled.status).toBe('ready');
+    if (compiled.status !== 'ready') return;
+    const selected = runAdvancedBacktest(compiled.program, frame(prices), assumptions);
+    const other = frame(prices);
+    const unselected = runAdvancedBacktest(compiled.program, { ...other, meta: { ...other.meta, symbol: 'OTHER' } }, assumptions);
+    expect(selected.status).toBe('ok');
+    expect(unselected.status).toBe('ok');
+    if (selected.status !== 'ok' || unselected.status !== 'ok') return;
+    expect(selected.trades).toHaveLength(1);
+    expect(unselected.trades).toHaveLength(0);
+    const editedNodes = saved.value.nodes.map((node) => node.id === 'score' ? { ...node, ...makeConditionScoreChanges(node.parameters ?? {}, [
+      { inputId: 'close', operator: 'gt', compareMode: 'fixed', threshold: '13', weight: '1' },
+      { inputId: 'close', operator: 'gte', compareMode: 'fixed', threshold: '13', weight: '3' },
+    ]) } : node);
+    const edited = compileAdvancedStrategy(editedNodes, []);
+    expect(edited.status).toBe('ready');
+    if (edited.status === 'ready') {
+      const retested = runAdvancedBacktest(edited.program, frame(prices), assumptions);
+      expect(retested.status).toBe('ok');
+      if (retested.status === 'ok') expect(retested.trades).toHaveLength(0);
+    }
+    const shortHistory = runAdvancedBacktest(compiled.program, frame(prices.slice(0, 2)), assumptions);
+    expect(shortHistory.status).toBe('ok');
+    if (shortHistory.status === 'ok') expect(shortHistory.trades).toHaveLength(0);
+  });
+  it('scores weighted comparisons and enters only after the score crosses its level', () => {
+    const scoreProgram: AdvancedStrategyProgram = {
+      schemaVersion: 2, timeframe: 'D',
+      inputs: [
+        { id: 'close', kind: 'market', field: 'close' },
+        { id: 'score', kind: 'condition-score', conditions: [
+          { inputId: 'close', operator: 'gt', threshold: 10.5, weight: 1 },
+          { inputId: 'close', operator: 'gte', threshold: 12, weight: 3 },
+        ] },
+      ],
+      buy: [[{ id: 'buy', inputId: 'score', operator: 'crossesAbove', threshold: 50 }]],
+      sell: [[{ id: 'sell', inputId: 'score', operator: 'crossesBelow', threshold: 50 }]],
+    };
+    const result = runAdvancedBacktest(scoreProgram, frame(prices), assumptions);
+    expect(result.status).toBe('ok');
+    if (result.status === 'ok') expect(result.trades[0]).toMatchObject({ entrySignalTime: '2025-01-03', entryTime: '2025-01-04', exitSignalTime: '2025-01-05', exitTime: '2025-01-06' });
+  });
+  it('chooses the alternate calculation only for its selected ticker', () => {
+    const profileProgram: AdvancedStrategyProgram = {
+      schemaVersion: 2, timeframe: 'D',
+      inputs: [
+        { id: 'zero', kind: 'constant', value: 0 },
+        { id: 'close', kind: 'market', field: 'close' },
+        { id: 'profile', kind: 'ticker-select', defaultSourceId: 'zero', alternateSourceId: 'close', alternateSymbols: ['TEST'] },
+      ],
+      buy: [[{ id: 'buy', inputId: 'profile', operator: 'crossesAbove', threshold: 11 }]],
+      sell: [[{ id: 'sell', inputId: 'profile', operator: 'crossesBelow', threshold: 11 }]],
+    };
+    const selected = runAdvancedBacktest(profileProgram, frame(prices), assumptions);
+    const otherFrame = frame(prices);
+    const unselected = runAdvancedBacktest(profileProgram, { ...otherFrame, meta: { ...otherFrame.meta, symbol: 'OTHER' } }, assumptions);
+    expect(selected.status).toBe('ok');
+    expect(unselected.status).toBe('ok');
+    if (selected.status === 'ok' && unselected.status === 'ok') {
+      expect(selected.trades).toHaveLength(1);
+      expect(unselected.trades).toHaveLength(0);
+    }
+  });
+  it('rejects a malformed score without throwing during work estimation', () => {
+    const broken = { schemaVersion: 2, timeframe: 'D', inputs: [{ id: 'bad-score', kind: 'condition-score' }],
+      buy: [[{ id: 'buy', inputId: 'bad-score', operator: 'isAbove', threshold: 50 }]],
+      sell: [[{ id: 'sell', inputId: 'bad-score', operator: 'isBelow', threshold: 50 }]],
+    } as unknown as AdvancedStrategyProgram;
+    expect(() => runAdvancedBacktest(broken, frame(prices), assumptions)).not.toThrow();
+    expect(runAdvancedBacktest(broken, frame(prices), assumptions).status).toBe('invalid');
+  });
   it('fills close-bar signals at the next open without looking ahead', () => {
     const result = runSimpleBacktest(program, frame(prices), assumptions);
 
@@ -166,6 +258,20 @@ describe('advanced causal calculation execution', () => {
     expect(result.status).toBe('ok');
     if (result.status !== 'ok') return;
     expect(result.openPosition).toMatchObject({ entrySignalTime: '2025-01-05', entryTime: '2025-01-06', entryPrice: 6 });
+  });
+
+  it('can seed EMA from the first valid bar for short-history strategies', () => {
+    const base = advanced('ema', 3, 12);
+    const seeded: AdvancedStrategyProgram = { ...base, inputs: [base.inputs[0], { id: 'calculated', kind: 'calculation', operation: 'ema', sourceIds: ['close'], period: 3, seedMode: 'first' }] };
+    const bars = priceFrame([10, 20, 30, 40]);
+    const first = runAdvancedBacktest(seeded, bars, assumptions);
+    const standard = runAdvancedBacktest(base, bars, assumptions);
+    expect(first.status).toBe('ok');
+    expect(standard.status).toBe('ok');
+    if (first.status === 'ok' && standard.status === 'ok') {
+      expect(first.openPosition).toMatchObject({ entrySignalTime: '2025-01-02', entryTime: '2025-01-03' });
+      expect(standard.openPosition).toBeNull();
+    }
   });
 
   it('ranks the current value causally with midpoint ties', () => {

@@ -41,23 +41,6 @@ export default function NewsPageView() {
 
   const tour = useTour(NEWS_TOUR_STORAGE_KEY);
   const tourSteps = React.useMemo(() => getNewsTourSteps(isRTL), [isRTL]);
-  const hasAutoStartedRef = React.useRef(false);
-
-  // Auto-start News page walkthrough for first-time visitors (strictly once on mount)
-  React.useEffect(() => {
-    if (isHeroScene) return;
-    if (hasAutoStartedRef.current) return;
-    hasAutoStartedRef.current = true;
-
-    if (!tour.seen()) {
-      const timer = setTimeout(() => {
-        tour.start();
-        tour.markSeen();
-      }, 1200);
-
-      return () => clearTimeout(timer);
-    }
-  }, [tour, isHeroScene]);
 
   // Filter State
   const [activeCategory, setActiveCategory] = useState<string>('all');

@@ -3,7 +3,54 @@ import { dailyPrices, marketNews, tickers } from '@/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { completeWithKeyPool } from '@/lib/ai/openrouter-client';
 import { ensureMarketNewsTable } from './news-service';
-import { TARGET_WIRE_SYMBOLS, isHeadlineRelevantToAsset } from './wire-screener';
+import { TARGET_WIRE_SYMBOLS, isHeadlineRelevantToAsset, getTargetAssetKey } from './wire-screener';
+
+export const CANONICAL_ASSET_METADATA: Record<
+  string,
+  {
+    en: string;
+    ar: string;
+    category: 'gold_silver' | 'macro_market' | 'listed_companies';
+    categoryLabel: string;
+  }
+> = {
+  GOLD: {
+    en: 'Gold Markets',
+    ar: 'أسواق الذهب',
+    category: 'gold_silver',
+    categoryLabel: 'Gold & Silver',
+  },
+  SILVER: {
+    en: 'Silver Markets',
+    ar: 'أسواق الفضة',
+    category: 'gold_silver',
+    categoryLabel: 'Gold & Silver',
+  },
+  EGX30: {
+    en: 'EGX 30 Index',
+    ar: 'المؤشر الرئيسي EGX 30',
+    category: 'macro_market',
+    categoryLabel: 'Macro Market',
+  },
+  EGX70: {
+    en: 'EGX 70 EWI',
+    ar: 'مؤشر الشركات الصغيرة والمتوسطة EGX 70',
+    category: 'macro_market',
+    categoryLabel: 'Macro Market',
+  },
+  EGX100: {
+    en: 'EGX 100 EWI',
+    ar: 'مؤشر EGX 100 الأوسع نطاقاً',
+    category: 'macro_market',
+    categoryLabel: 'Macro Market',
+  },
+  USDEGP: {
+    en: 'USD/EGP Currency',
+    ar: 'سعر صرف الجنيه والدولار',
+    category: 'macro_market',
+    categoryLabel: 'Macro Market',
+  },
+};
 
 export interface DailyTickerSummaryResult {
   success: boolean;
@@ -299,7 +346,7 @@ export async function generateDailyTickerSummaries(options?: {
   const polledWiresByTicker = new Map<string, RawHeadlineItem[]>();
 
   for (const sym of TARGET_WIRE_SYMBOLS) {
-    const rawTicker = sym.replace(/^(EGX|TVC|FX_IDC|OANDA):/, '').toUpperCase();
+    const rawTicker = getTargetAssetKey(sym);
     for (const lang of ['en', 'ar']) {
       try {
         const url = `https://news-headlines.tradingview.com/v2/headlines?client=web&lang=${lang}&symbol=${encodeURIComponent(sym)}`;
@@ -315,7 +362,8 @@ export async function generateDailyTickerSummaries(options?: {
           const pubMs = it.published * 1000;
           if (pubMs >= targetDateStartMs && pubMs <= targetDateEndMs) {
             // Check relevance
-            const compName = companyNameByTicker.get(rawTicker);
+            const canonMeta = CANONICAL_ASSET_METADATA[rawTicker];
+            const compName = canonMeta?.en || companyNameByTicker.get(rawTicker);
             if (!isHeadlineRelevantToAsset(it.title, rawTicker, compName, it.relatedSymbols)) {
               continue;
             }
@@ -323,7 +371,7 @@ export async function generateDailyTickerSummaries(options?: {
               polledWiresByTicker.set(rawTicker, []);
             }
             const existing = polledWiresByTicker.get(rawTicker)!;
-            if (!existing.some((e) => e.title.toLowerCase() === it.title.toLowerCase())) {
+            if (!existing.some((e) => e.title.toLowerCase().trim() === it.title.toLowerCase().trim())) {
               existing.push(it);
             }
           }
@@ -387,11 +435,13 @@ export async function generateDailyTickerSummaries(options?: {
       console.warn(`[ticker-summary] EOD lookup warning for ${ticker}:`, eodErr);
     }
 
-    const companyName = companyNameByTicker.get(ticker) || ticker;
+    const canonMeta = CANONICAL_ASSET_METADATA[ticker];
+    const companyName = canonMeta?.en || companyNameByTicker.get(ticker) || ticker;
+    const companyNameAr = canonMeta?.ar || companyName;
     const isGoldOrSilver = ticker === 'GOLD' || ticker === 'SILVER';
-    const isMacro = ticker === 'EGX30' || ticker === 'USDEGP';
-    const category = isGoldOrSilver ? 'gold_silver' : isMacro ? 'macro_market' : 'listed_companies';
-    const categoryLabel = isGoldOrSilver ? 'Gold & Silver' : isMacro ? 'Macro Market' : 'Listed Companies (EGX)';
+    const isMacro = ticker === 'EGX30' || ticker === 'USDEGP' || ticker === 'EGX70' || ticker === 'EGX100';
+    const category = canonMeta?.category || (isGoldOrSilver ? 'gold_silver' : isMacro ? 'macro_market' : 'listed_companies');
+    const categoryLabel = canonMeta?.categoryLabel || (isGoldOrSilver ? 'Gold & Silver' : isMacro ? 'Macro Market' : 'Listed Companies (EGX)');
 
     const headlinesSummary = wires.map((w) => `- ${w.title} (${w.source || w.provider || 'Disclosure'})`).join('\n');
     const priceContext =
@@ -445,9 +495,9 @@ Write the single 24-hour bilingual digest JSON.`;
       fallbackArSummary = `تراجع المؤشر الرئيسي للبورصة المصرية EGX 30 بنسبة 3.18% ليغلق عند ${eodClose > 0 ? eodClose.toFixed(2) : '63163.60'} نقطة وسط تباين أداء الأسواق الإقليمية وتصاعد التوترات الجيوسياسية التي دفعت المؤسسات لتقليص المخاطر. وشهدت الجلسة تداولات نشطة عكست امتصاص السيولة المحلية لمبيعات الأجانب في ظل إعادة ترتيب المراكز المالية للأسهم القيادية.`;
     } else if (isGoldOrSilver) {
       enTitle = `${companyName} (${ticker}): 24-Hour Bullion & Sagha Price Action`;
-      arTitle = `أسواق ${companyName} (${ticker}): تطورات الأسعار والطلب في ٢٤ ساعة`;
+      arTitle = `${companyNameAr} (${ticker}): تطورات الأسعار والطلب في ٢٤ ساعة`;
       fallbackEnSummary = `${companyName} (${ticker}) recorded active news flow in the ${targetDate} session. Spot bullion traded near ${eodClose > 0 ? `${eodClose.toFixed(2)} USD/oz` : 'prevailing levels'}${eodChangePct !== 0 ? ` (${eodChangePct >= 0 ? '+' : ''}${eodChangePct.toFixed(2)}%)` : ''} as participants weighed safe-haven demand against currency fluctuations.`;
-      fallbackArSummary = `سجلت أسواق ${companyName} (${ticker}) تفاعلاً ملحوظاً مع الأخبار المعلنة خلال جلسة ${targetDate}. واستقرت الأوقية قرب مستوى ${eodClose > 0 ? `${eodClose.toFixed(2)} دولار` : 'المستويات السائدة'}${eodChangePct !== 0 ? ` (${eodChangePct >= 0 ? '+' : ''}${eodChangePct.toFixed(2)}%)` : ''} وسط تقييم المتعاملين لطلبات التحوط وتغيرات أسواق الصرف.`;
+      fallbackArSummary = `سجلت ${companyNameAr} (${ticker}) تفاعلاً ملحوظاً مع الأخبار المعلنة خلال جلسة ${targetDate}. واستقرت الأوقية قرب مستوى ${eodClose > 0 ? `${eodClose.toFixed(2)} دولار` : 'المستويات السائدة'}${eodChangePct !== 0 ? ` (${eodChangePct >= 0 ? '+' : ''}${eodChangePct.toFixed(2)}%)` : ''} وسط تقييم المتعاملين لطلبات التحوط وتغيرات أسواق الصرف.`;
     } else if (isMacro) {
       fallbackEnSummary = `${companyName} (${ticker}) recorded active news flow in the ${targetDate} session. The benchmark index closed at ${eodClose > 0 ? eodClose.toFixed(2) : 'unadjusted levels'}${eodChangePct !== 0 ? ` (${eodChangePct >= 0 ? '+' : ''}${eodChangePct.toFixed(2)}%)` : ''} as participants weighed incoming macroeconomic catalysts against broad market liquidity.`;
       fallbackArSummary = `سجلت تعاملات ${companyName} (${ticker}) تفاعلاً ملحوظاً مع الأخبار المعلنة خلال جلسة ${targetDate}. وأغلق المؤشر عند مستوى ${eodClose > 0 ? eodClose.toFixed(2) : 'مستويات مستقرة'}${eodChangePct !== 0 ? ` (${eodChangePct >= 0 ? '+' : ''}${eodChangePct.toFixed(2)}%)` : ''} وسط تقييم المتعاملين لحجم السيولة وتأثير المستجدات على أداء السوق.`;

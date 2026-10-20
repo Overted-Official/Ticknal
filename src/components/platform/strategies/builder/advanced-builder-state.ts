@@ -1,6 +1,7 @@
 import {
   ADVANCED_STAGES,
   ADVANCED_BLOCK_TEMPLATES,
+  createAdvancedDraftNodes,
   type AdvancedBlockTemplate,
   type AdvancedStrategyNode,
 } from './advanced-strategy-model';
@@ -10,6 +11,7 @@ import type {
   StrategyRule,
   StrategyRuleSide,
 } from './strategy-builder-model';
+import { MAX_ADVANCED_WORKFLOW_NODES } from '../../../../lib/strategies/strategy-program';
 
 export type AdvancedNodeMoveDirection = 'up' | 'down';
 
@@ -19,14 +21,16 @@ const DEFAULT_PARAMETERS: Readonly<Record<string, Readonly<Record<string, string
   'execution-policy': { fillPolicy: 'next-session-open', shareSizing: 'fractional' },
   indicator: {},
   'weighted-composite': { normalization: 'zeroToHundred' },
+  'condition-score': { conditions: '[]' },
+  'ticker-select': { alternateSymbols: '[]' },
   transform: { method: 'ema', period: '3' },
   formula: { aliases: '[]', registers: '[{"key":"value","expression":"0"}]', outputKey: 'value' },
   'formula-output': { outputKey: 'value' },
   'rbf-model': { model: '' },
   'rolling-statistic': { operation: 'mean', period: '20' },
   'math-operation': { operation: 'add' },
-  condition: { operator: 'crossesAbove', compareMode: 'value', compareValue: '0' },
-  'sell-condition': { operator: 'crossesBelow', compareMode: 'value', compareValue: '0' },
+  condition: { operator: 'crossesAbove', compareMode: 'value', compareValue: '0', connector: 'and' },
+  'sell-condition': { operator: 'crossesBelow', compareMode: 'value', compareValue: '0', connector: 'and' },
   'priority-trigger': { thresholds: '23.6, 14.6, 38.2, 50, 61.8' },
   'position-memory': { capture: 'entry', update: 'eachBar' },
   'rolling-state': { operation: 'maximum' },
@@ -57,6 +61,117 @@ export function createAdvancedNodeFromTemplate(
     connections: [],
     parameters: { ...(DEFAULT_PARAMETERS[template.id] ?? {}) },
   };
+}
+
+export type MarketInputField = 'open' | 'high' | 'low' | 'close' | 'volume';
+
+export interface ConditionScoreDraftRow {
+  readonly inputId: string;
+  readonly operator: 'gt' | 'gte' | 'lt' | 'lte' | 'eq';
+  readonly compareMode?: 'fixed' | 'series';
+  readonly compareInputId?: string;
+  readonly threshold: string;
+  readonly weight: string;
+}
+
+export function readConditionScoreRows(value: string | undefined): ConditionScoreDraftRow[] {
+  try {
+    const rows: unknown = JSON.parse(value ?? '[]');
+    if (!Array.isArray(rows)) return [];
+    return rows.slice(0, 12).filter((row) => row && typeof row === 'object').map((row) => ({
+      inputId: typeof row.inputId === 'string' ? row.inputId : '',
+      operator: ['gt', 'gte', 'lt', 'lte', 'eq'].includes(row.operator) ? row.operator : 'gt',
+      compareMode: row.compareMode === 'series' || row.compareInputId ? 'series' : 'fixed',
+      ...(typeof row.compareInputId === 'string' ? { compareInputId: row.compareInputId } : {}),
+      threshold: String(row.threshold ?? '0'),
+      weight: String(row.weight ?? '1'),
+    }));
+  } catch { return []; }
+}
+
+export function makeConditionScoreChanges(parameters: Readonly<Record<string, string>>, rows: readonly ConditionScoreDraftRow[]) {
+  return {
+    connections: [...new Set(rows.flatMap((row) => [row.inputId, row.compareInputId].filter((id): id is string => Boolean(id))))],
+    parameters: { ...parameters, conditions: JSON.stringify(rows) },
+  };
+}
+
+/** A compact visual bundle; each selected field remains an ordinary executable market input. */
+export function createMarketInputBundle(fields: readonly MarketInputField[], moduleId: string): AdvancedStrategyNode[] {
+  const template = ADVANCED_BLOCK_TEMPLATES.find((candidate) => candidate.id === 'market-input');
+  if (!template) return [];
+  return [...new Set(fields)].map((field) => ({
+    ...createAdvancedNodeFromTemplate(template, `${moduleId}-${field}`),
+    customName: field.charAt(0).toUpperCase() + field.slice(1),
+    moduleId,
+    moduleName: 'OHLCV',
+    parameters: { series: 'ohlcv', field },
+  }));
+}
+
+const MARKET_INPUT_FIELDS: readonly MarketInputField[] = ['open', 'high', 'low', 'close', 'volume'];
+
+/** Returns null for a regular module; only field-specific market inputs are editable as a bundle. */
+export function getMarketInputBundle(nodes: readonly AdvancedStrategyNode[], moduleId: string): readonly AdvancedStrategyNode[] | null {
+  const members = nodes.filter((node) => node.moduleId === moduleId);
+  return members.length > 0 && members.every((node) => node.templateId === 'market-input' && MARKET_INPUT_FIELDS.includes(node.parameters?.field as MarketInputField))
+    ? members : null;
+}
+
+export function isAdvancedNodeReferenced(nodes: readonly AdvancedStrategyNode[], nodeId: string): boolean {
+  return nodes.some((node) => node.id !== nodeId && ((node.connections ?? []).includes(nodeId) || Object.values(node.parameters ?? {}).includes(nodeId)));
+}
+
+/** Changes the visible OHLCV fields while preserving all used source IDs and downstream wiring. */
+export function updateMarketInputBundle(
+  nodes: readonly AdvancedStrategyNode[], moduleId: string, fields: readonly MarketInputField[],
+): readonly AdvancedStrategyNode[] | null {
+  const members = getMarketInputBundle(nodes, moduleId);
+  const selected = new Set(fields);
+  if (!members || selected.size < 2 || [...selected].some((field) => !MARKET_INPUT_FIELDS.includes(field))) return null;
+  const removed = members.filter((node) => !selected.has(node.parameters!.field as MarketInputField));
+  if (removed.some((node) => isAdvancedNodeReferenced(nodes, node.id))) return null;
+  const currentFields = new Set(members.map((node) => node.parameters!.field));
+  const added = MARKET_INPUT_FIELDS.filter((field) => selected.has(field) && !currentFields.has(field));
+  const additions = createMarketInputBundle(added, moduleId).map((node) => ({ ...node, moduleName: members[0].moduleName }));
+  if (additions.some((node) => nodes.some((existing) => existing.id === node.id))) return null;
+  const removedIds = new Set(removed.map((node) => node.id));
+  return [...nodes.filter((node) => !removedIds.has(node.id)), ...additions];
+}
+
+/** Copies editable module steps; internal references point to copies, external inputs stay connected. */
+export function duplicateAdvancedModule(
+  nodes: readonly AdvancedStrategyNode[], moduleId: string, newModuleId: string,
+): readonly AdvancedStrategyNode[] | null {
+  const members = nodes.filter((node) => node.moduleId === moduleId);
+  if (!members.length || nodes.length + members.length > MAX_ADVANCED_WORKFLOW_NODES
+    || members.some((node) => node.protected || node.parameters?.sourceRuleId)
+    || nodes.some((node) => node.moduleId === newModuleId)) return null;
+  const idMap = new Map(members.map((node, index) => [node.id, `${newModuleId}-${index + 1}`]));
+  if ([...idMap.values()].some((id) => nodes.some((node) => node.id === id))) return null;
+  const copiedName = `${members[0].moduleName ?? 'Module'} copy`.slice(0, 100);
+  const firstRuleBySide = new Set<string>();
+  const copied = members.map((node) => {
+    const firstRule = (node.templateId === 'condition' || node.templateId === 'sell-condition') && !firstRuleBySide.has(node.templateId);
+    if (firstRule) firstRuleBySide.add(node.templateId!);
+    const parameters: Record<string, string> | undefined = node.parameters ? { ...Object.fromEntries(Object.entries(node.parameters).map(([key, value]) => [key, idMap.get(value) ?? value])), ...(firstRule ? { connector: 'or' } : {}) } : undefined;
+    if (node.templateId === 'condition-score' && parameters?.conditions) {
+      const rows = readConditionScoreRows(parameters.conditions);
+      parameters.conditions = JSON.stringify(rows.map((row) => ({ ...row, inputId: idMap.get(row.inputId) ?? row.inputId,
+        ...(row.compareInputId ? { compareInputId: idMap.get(row.compareInputId) ?? row.compareInputId } : {}) })));
+    }
+    return {
+      ...node,
+      id: idMap.get(node.id)!,
+      outputName: toOutputName(idMap.get(node.id)!),
+      moduleId: newModuleId,
+      moduleName: copiedName,
+      connections: node.connections?.map((id) => idMap.get(id) ?? id),
+      parameters,
+    };
+  });
+  const lastMemberIndex = nodes.findLastIndex((node) => node.moduleId === moduleId);
+  return [...nodes.slice(0, lastMemberIndex + 1), ...copied, ...nodes.slice(lastMemberIndex + 1)];
 }
 
 export function createAdvancedIndicatorNode(
@@ -215,6 +330,7 @@ export function projectSimpleDraftIntoAdvancedNodes(
     .map((node) => projectedById.get(node.id) ?? node);
   const existingIds = new Set(updated.map((node) => node.id));
   const withNewProjected = [
+    ...(projected.length && !updated.some((node) => node.id === 'custom-market-data') ? createAdvancedDraftNodes() : []),
     ...updated,
     ...projected.filter((node) => !existingIds.has(node.id)),
   ];

@@ -102,7 +102,7 @@ describe('strategy flow stages', () => {
   it('offers only cards that belong to the selected advanced stage', () => {
     expect(getStageTemplateIds('data')).toEqual(['market-input', 'parameter', 'execution-policy']);
     expect(getStageTemplateIds('indicators')).toEqual(['indicator']);
-    expect(getStageTemplateIds('calculations')).toEqual(['weighted-composite', 'formula', 'formula-output', 'rbf-model', 'transform', 'rolling-statistic', 'math-operation']);
+    expect(getStageTemplateIds('calculations')).toEqual(['weighted-composite', 'condition-score', 'ticker-select', 'formula', 'formula-output', 'rbf-model', 'transform', 'rolling-statistic', 'math-operation']);
     expect(getStageTemplateIds('buy')).toEqual(['condition', 'priority-trigger']);
     expect(getStageTemplateIds('position')).toEqual(['position-memory', 'rolling-state']);
     expect(getStageTemplateIds('sell')).toEqual(['sell-condition', 'dynamic-target', 'trailing-exit']);

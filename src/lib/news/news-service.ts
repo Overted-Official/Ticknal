@@ -1,5 +1,5 @@
 import { db, schema } from '@/db';
-import { marketNews } from '@/db/schema';
+import { marketNews, tickers } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 
 export type NewsCategory =
@@ -32,6 +32,8 @@ export interface MarketNewsItemDTO {
   impactMetric?: string | null;
   readTime: string;
   imageUrl?: string | null;
+  logoUrl?: string | null;
+  companyName?: string | null;
   publishedAt: string;
 }
 
@@ -95,6 +97,70 @@ export async function ensureMarketNewsTable(): Promise<void> {
     console.error('[news-service] Failed to ensure market_news table:', err);
   }
 }
+
+export interface TickerMeta {
+  logoUrl: string | null;
+  companyName: string | null;
+}
+
+let tickerMetaCache: {
+  expiresAt: number;
+  map: Map<string, TickerMeta>;
+} | null = null;
+
+export async function getTickerMetaMap(): Promise<Map<string, TickerMeta>> {
+  const now = Date.now();
+  if (tickerMetaCache && tickerMetaCache.expiresAt > now) {
+    return tickerMetaCache.map;
+  }
+
+  try {
+    const rows = await db
+      .select({
+        symbol: tickers.symbol,
+        companyName: tickers.companyName,
+        logoUrl: tickers.logoUrl,
+      })
+      .from(tickers);
+
+    const map = new Map<string, TickerMeta>();
+    for (const r of rows) {
+      if (r.symbol) {
+        map.set(r.symbol.toUpperCase().trim(), {
+          logoUrl: r.logoUrl ?? null,
+          companyName: r.companyName ?? null,
+        });
+      }
+    }
+
+    tickerMetaCache = {
+      expiresAt: now + 5 * 60 * 1000,
+      map,
+    };
+    return map;
+  } catch (err) {
+    console.error('[news-service] Failed to fetch ticker meta map:', err);
+    return tickerMetaCache?.map || new Map();
+  }
+}
+
+export const MACRO_ASSET_LOGOS: Record<string, { logoUrl: string; companyName: string }> = {
+  GOLD: { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg', companyName: 'Gold Markets' },
+  GOLD21K: { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg', companyName: 'Sagha Gold 21K' },
+  GOLD24K: { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg', companyName: 'Sagha Gold 24K' },
+  'GC1!': { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg', companyName: 'Gold Comex Futures' },
+  XAUUSD: { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg', companyName: 'Gold Spot' },
+  SILVER: { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg', companyName: 'Silver Markets' },
+  SILV999: { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg', companyName: 'Sagha Silver 999' },
+  'SI1!': { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg', companyName: 'Silver Comex Futures' },
+  XAGUSD: { logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg', companyName: 'Silver Spot' },
+  'USD/EGP': { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/US.svg', companyName: 'USD / EGP' },
+  USDEGP: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/US.svg', companyName: 'USD / EGP' },
+  EGX30: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'EGX 30 Index' },
+  EGX70: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'EGX 70 EWI' },
+  EGX100: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'EGX 100 EWI' },
+  CBE: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'Central Bank of Egypt' },
+};
 
 export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   await ensureMarketNewsTable();
@@ -222,6 +288,7 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
   }
 
   const paginated = filtered.slice(offset, offset + limit);
+  const tickerMap = await getTickerMetaMap();
 
   // Map to client DTO (guarantee title never contains raw ---AR--- separator)
   const items: MarketNewsItemDTO[] = paginated.map((r) => {
@@ -229,6 +296,39 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
     const titleParts = rawTitle.split(/\s*---AR---\s*|\s*\|\|\|\s*/);
     const cleanEnTitle = (titleParts[0] || rawTitle).trim();
     const cleanArTitle = (titleParts[1] || r.content || '').trim() || null;
+
+    const rawTickers = Array.isArray(r.tickers) ? r.tickers : [];
+    const firstTicker = rawTickers[0] ? String(rawTickers[0]).toUpperCase().replace(/^[@$]/, '').trim() : '';
+    const sourceUpper = (r.source || '').toUpperCase().trim();
+
+    // Determine target symbol to resolve brand logo and name
+    let symbolToLookup = firstTicker;
+    if (
+      !symbolToLookup &&
+      sourceUpper &&
+      !['REUTERS', 'DOW JONES', 'DOW JONES NEWSWIRES', 'ZAWYA', 'ARABICTRADER', 'TRADING ECONOMICS', 'TICKNAL', 'TICKNAL TAKE'].includes(sourceUpper)
+    ) {
+      symbolToLookup = sourceUpper;
+    }
+
+    let resolvedLogoUrl: string | null = null;
+    let resolvedCompanyName: string | null = null;
+
+    if (r.category === 'ticknal_take' || r.category === 'pulse' || r.source.toLowerCase().includes('ticknal')) {
+      resolvedLogoUrl = '/logo-white.svg';
+      resolvedCompanyName = 'Ticknal take';
+    } else if (symbolToLookup && MACRO_ASSET_LOGOS[symbolToLookup]) {
+      resolvedLogoUrl = MACRO_ASSET_LOGOS[symbolToLookup].logoUrl;
+      resolvedCompanyName = MACRO_ASSET_LOGOS[symbolToLookup].companyName;
+    } else if (symbolToLookup && tickerMap.has(symbolToLookup)) {
+      const meta = tickerMap.get(symbolToLookup)!;
+      resolvedLogoUrl = meta.logoUrl;
+      resolvedCompanyName = meta.companyName;
+    } else if (sourceUpper && tickerMap.has(sourceUpper)) {
+      const meta = tickerMap.get(sourceUpper)!;
+      resolvedLogoUrl = meta.logoUrl;
+      resolvedCompanyName = meta.companyName;
+    }
 
     return {
       id: r.id,
@@ -246,6 +346,8 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
       impactMetric: r.impactMetric,
       readTime: r.readTime,
       imageUrl: r.imageUrl ?? null,
+      logoUrl: resolvedLogoUrl,
+      companyName: resolvedCompanyName,
       publishedAt: r.publishedAt instanceof Date ? r.publishedAt.toISOString() : String(r.publishedAt),
     };
   });

@@ -53,23 +53,6 @@ export default function ChartsWorkspaceView({
     () => getChartsTourSteps(isRTL, canViewProprietary),
     [isRTL, canViewProprietary]
   );
-  const hasAutoStartedRef = React.useRef(false);
-
-  // Auto-start Charts page walkthrough for first-time visitors (strictly once on mount)
-  React.useEffect(() => {
-    if (isHeroScene) return;
-    if (hasAutoStartedRef.current) return;
-    hasAutoStartedRef.current = true;
-
-    if (!tour.seen()) {
-      const timer = setTimeout(() => {
-        tour.start();
-        tour.markSeen();
-      }, 1200);
-
-      return () => clearTimeout(timer);
-    }
-  }, [tour, isHeroScene]);
 
   return (
     <div className="flex-1 h-full w-full min-w-0 flex flex-row overflow-hidden select-none relative">

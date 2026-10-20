@@ -48,17 +48,37 @@ const TRADINGVIEW_LOGOS: Record<string, string> = {
   ETEL: 'https://s3-symbol-logo.tradingview.com/telecom-egypt.svg',
   ORAS: 'https://s3-symbol-logo.tradingview.com/orascom-construction-plc.svg',
   AMOC: 'https://s3-symbol-logo.tradingview.com/alexandria-mineral-oils-company.svg',
+  MFPC: 'https://s3-symbol-logo.tradingview.com/misr-fretilizers-production-company-mopco.svg',
+  HELI: 'https://s3-symbol-logo.tradingview.com/heliopolis-housing.svg',
+  SKPC: 'https://s3-symbol-logo.tradingview.com/sidi-kerir-petrochemicals-sidpec.svg',
+  POUL: 'https://s3-symbol-logo.tradingview.com/cairo-poultry.svg',
+  ABUK: 'https://s3-symbol-logo.tradingview.com/abou-kir-fertilizers.svg',
+  GPPL: 'https://s3-symbol-logo.tradingview.com/golden-pyramids-plaza.svg',
+  CERA: 'https://s3-symbol-logo.tradingview.com/the-arab-ceramic-co-ceramica-remas.svg',
+  JUFO: 'https://s3-symbol-logo.tradingview.com/juhayna-food-industries.svg',
+  ISPH: 'https://s3-symbol-logo.tradingview.com/ibnsina-pharma.svg',
+  ALCN: 'https://s3-symbol-logo.tradingview.com/alexandria-containers-and-goods.svg',
   'GC1!': 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+  GOLD: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
   GOLD21K: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+  GOLD24K: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+  XAUUSD: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+  'SI1!': 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
+  SILVER: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
+  SILV999: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
+  XAGUSD: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
   'USD/EGP': 'https://s3-symbol-logo.tradingview.com/country/US.svg',
+  USDEGP: 'https://s3-symbol-logo.tradingview.com/country/US.svg',
   EGX30: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
   EGX70: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
+  EGX100: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
 };
 
 function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
   const src = item.source.toLowerCase();
   const cat = item.category.toLowerCase();
   const firstTicker = item.tickers?.[0]?.toUpperCase().replace(/^[@$]/, '') || '';
+  const resolvedLogo = item.logoUrl || (firstTicker ? TRADINGVIEW_LOGOS[firstTicker] : undefined);
 
   // 1. Ticknal take (renders authentic Ticknal brand mark)
   if (cat === 'ticknal_take' || cat === 'pulse' || src.includes('ticknal')) {
@@ -86,8 +106,8 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
     return {
       name: 'Reuters',
       handle: firstTicker ? `@${firstTicker}` : '@REUTERS',
-      avatarUrl: firstTicker ? TRADINGVIEW_LOGOS[firstTicker] : undefined,
-      fallbackIcon: <span className="text-[11px] font-bold text-amber-400">R</span>,
+      avatarUrl: resolvedLogo,
+      fallbackIcon: <span className="text-[11px] font-bold text-amber-400 tabular-nums">R</span>,
       verified: true,
     };
   }
@@ -96,8 +116,8 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
     return {
       name: 'Dow Jones Newswires',
       handle: firstTicker ? `@${firstTicker}` : '@DOWJONES',
-      avatarUrl: firstTicker ? TRADINGVIEW_LOGOS[firstTicker] : undefined,
-      fallbackIcon: <span className="text-[11px] font-bold text-blue-400">DJ</span>,
+      avatarUrl: resolvedLogo,
+      fallbackIcon: <span className="text-[11px] font-bold text-blue-400 tabular-nums">DJ</span>,
       verified: true,
     };
   }
@@ -106,8 +126,8 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
     return {
       name: 'Zawya',
       handle: firstTicker ? `@${firstTicker}` : '@ZAWYA',
-      avatarUrl: firstTicker ? TRADINGVIEW_LOGOS[firstTicker] : undefined,
-      fallbackIcon: <span className="text-[11px] font-bold text-emerald-400">Z</span>,
+      avatarUrl: resolvedLogo,
+      fallbackIcon: <span className="text-[11px] font-bold text-emerald-400 tabular-nums">Z</span>,
       verified: true,
     };
   }
@@ -116,8 +136,8 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
     return {
       name: 'ArabicTrader',
       handle: firstTicker ? `@${firstTicker}` : '@ARABIC_TRADER',
-      avatarUrl: firstTicker ? TRADINGVIEW_LOGOS[firstTicker] : undefined,
-      fallbackIcon: <span className="text-[11px] font-bold text-emerald-400">AT</span>,
+      avatarUrl: resolvedLogo,
+      fallbackIcon: <span className="text-[11px] font-bold text-emerald-400 tabular-nums">AT</span>,
       verified: true,
     };
   }
@@ -126,74 +146,70 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
     return {
       name: 'Trading Economics',
       handle: firstTicker ? `@${firstTicker}` : '@TE',
-      avatarUrl: firstTicker ? TRADINGVIEW_LOGOS[firstTicker] : undefined,
-      fallbackIcon: <span className="text-[11px] font-bold text-cyan-400">TE</span>,
+      avatarUrl: resolvedLogo,
+      fallbackIcon: <span className="text-[11px] font-bold text-cyan-400 tabular-nums">TE</span>,
       verified: true,
     };
   }
 
   // 3. Central Bank of Egypt
-  if (src.includes('central bank') || src.includes('cbe')) {
+  if (src.includes('central bank') || src.includes('cbe') || firstTicker === 'CBE') {
     return {
       name: 'Central Bank of Egypt',
       handle: '@CBE',
-      avatarUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
+      avatarUrl: TRADINGVIEW_LOGOS.EGX30,
       fallbackIcon: <Landmark className="w-3.5 h-3.5 text-white" />,
       verified: true,
     };
   }
 
-  // 3. Commercial International Bank
-  if (firstTicker === 'COMI' || firstTicker === 'CIB_ADR' || src.includes('commercial international bank') || src.includes('cib')) {
+  // 4. Gold Markets
+  if (
+    cat === 'gold_silver' &&
+    (firstTicker.includes('GOLD') || firstTicker === 'GC1!' || firstTicker === 'XAUUSD' || src.includes('gold') || src.includes('xauusd'))
+  ) {
     return {
-      name: 'CIB Egypt',
-      handle: '@COMI',
-      avatarUrl: TRADINGVIEW_LOGOS.COMI,
-      fallbackIcon: <Building2 className="w-3.5 h-3.5 text-white" />,
+      name: item.companyName || 'Gold Markets',
+      handle: '@GOLD',
+      avatarUrl: TRADINGVIEW_LOGOS.GOLD,
+      fallbackIcon: <Coins className="w-3.5 h-3.5 text-amber-300" />,
       verified: true,
     };
   }
 
-  // 4. Talaat Moustafa Group
-  if (firstTicker === 'TMGH' || src.includes('talaat moustafa')) {
+  // 5. Silver Markets
+  if (
+    cat === 'gold_silver' &&
+    (firstTicker.includes('SILV') || firstTicker === 'SI1!' || firstTicker === 'XAGUSD' || src.includes('silver') || src.includes('xagusd'))
+  ) {
     return {
-      name: 'TMG Holding',
-      handle: '@TMGH',
-      avatarUrl: TRADINGVIEW_LOGOS.TMGH,
-      fallbackIcon: <Building2 className="w-3.5 h-3.5 text-white" />,
+      name: item.companyName || 'Silver Markets',
+      handle: '@SILVER',
+      avatarUrl: TRADINGVIEW_LOGOS.SILVER,
+      fallbackIcon: <Coins className="w-3.5 h-3.5 text-zinc-300" />,
       verified: true,
     };
   }
 
-  // 5. Elsewedy Electric
-  if (firstTicker === 'SWDY' || src.includes('elsewedy')) {
+  // 6. EGX Indices
+  if (firstTicker.startsWith('EGX') || src.startsWith('egx')) {
+    const idxKey = firstTicker || item.source.toUpperCase();
     return {
-      name: 'Elsewedy Electric',
-      handle: '@SWDY',
-      avatarUrl: TRADINGVIEW_LOGOS.SWDY,
-      fallbackIcon: <Building2 className="w-3.5 h-3.5 text-white" />,
+      name: item.companyName || `${idxKey} Index`,
+      handle: `@${idxKey}`,
+      avatarUrl: TRADINGVIEW_LOGOS[idxKey] || TRADINGVIEW_LOGOS.EGX30,
+      fallbackIcon: <TrendingUp className="w-3.5 h-3.5 text-white" />,
       verified: true,
     };
   }
 
-  // 6. Eastern Company
-  if (firstTicker === 'EAST' || src.includes('eastern')) {
+  // 7. USD / EGP Currency
+  if (firstTicker === 'USD/EGP' || firstTicker === 'USDEGP' || src.includes('usd/egp') || src.includes('usdegp')) {
     return {
-      name: 'Eastern Company',
-      handle: '@EAST',
-      avatarUrl: TRADINGVIEW_LOGOS.EAST,
-      fallbackIcon: <Building2 className="w-3.5 h-3.5 text-white" />,
-      verified: true,
-    };
-  }
-
-  // 7. Fawry
-  if (firstTicker === 'FWRY' || src.includes('fawry')) {
-    return {
-      name: 'Fawry Payments',
-      handle: '@FWRY',
-      avatarUrl: TRADINGVIEW_LOGOS.FWRY,
-      fallbackIcon: <Building2 className="w-3.5 h-3.5 text-white" />,
+      name: item.companyName || 'USD / EGP',
+      handle: '@USD/EGP',
+      avatarUrl: TRADINGVIEW_LOGOS['USD/EGP'],
+      fallbackIcon: <Coins className="w-3.5 h-3.5 text-white" />,
       verified: true,
     };
   }
@@ -201,77 +217,30 @@ function resolveSourceMeta(item: MarketNewsItemDTO): SourceMeta {
   // 8. Investment Funds
   if (cat === 'funds' || firstTicker === 'AZG' || src.includes('azimut')) {
     return {
-      name: src.includes('ci') ? 'CI Capital Asset Management' : 'Azimut Egypt',
+      name: item.companyName || (src.includes('ci') ? 'CI Capital Asset Management' : 'Azimut Egypt'),
       handle: firstTicker ? `@${firstTicker}` : '@FUNDS',
-      avatarUrl: undefined,
+      avatarUrl: resolvedLogo,
       fallbackIcon: <TrendingUp className="w-3.5 h-3.5 text-[#00BCE6]" />,
       verified: true,
     };
   }
 
-  // 9. MOPCO (MFPC)
-  if (firstTicker === 'MFPC' || src.includes('mfpc') || src.includes('mopco')) {
-    return {
-      name: 'MOPCO',
-      handle: '@MFPC',
-      avatarUrl: TRADINGVIEW_LOGOS.ESRS,
-      fallbackIcon: <Building2 className="w-3.5 h-3.5 text-white" />,
-      verified: true,
-    };
-  }
-
-  // 10. Golden Pyramids Plaza (GPPL)
-  if (firstTicker === 'GPPL' || src.includes('gppl') || src.includes('golden pyramids')) {
-    return {
-      name: 'Golden Pyramids Plaza',
-      handle: '@GPPL',
-      avatarUrl: undefined,
-      fallbackIcon: <Building2 className="w-3.5 h-3.5 text-white" />,
-      verified: true,
-    };
-  }
-
-  // 11. EGX 30 Index
-  if (firstTicker === 'EGX30' || src === 'egx30') {
-    return {
-      name: 'EGX 30 Index',
-      handle: '@EGX30',
-      avatarUrl: TRADINGVIEW_LOGOS.EGX30,
-      fallbackIcon: <TrendingUp className="w-3.5 h-3.5 text-white" />,
-      verified: true,
-    };
-  }
-
-  // 12. Silver Wire & Markets
-  if (firstTicker === 'SILVER' || firstTicker === 'SILV999' || src === 'silver') {
-    return {
-      name: 'Silver Markets',
-      handle: '@SILVER',
-      avatarUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
-      fallbackIcon: <Coins className="w-3.5 h-3.5 text-zinc-300" />,
-      verified: true,
-    };
-  }
-
-  // 13. Gold Wire & Markets
-  if (cat === 'gold_silver' || cat.includes('bullion') || firstTicker.includes('GOLD') || firstTicker === 'GC1!' || src === 'gold') {
-    return {
-      name: 'Gold Markets',
-      handle: '@GOLD',
-      avatarUrl: TRADINGVIEW_LOGOS['GC1!'],
-      fallbackIcon: <Coins className="w-3.5 h-3.5 text-amber-300" />,
-      verified: true,
-    };
-  }
-
-  const genericLogo = firstTicker ? TRADINGVIEW_LOGOS[firstTicker] : undefined;
+  // 9. Any Listed Egyptian Company (HELI, SKPC, POUL, ABUK, SWDY, TMGH, COMI, MFPC, GPPL, etc.)
+  const companyName = item.companyName || (firstTicker && item.source !== firstTicker ? item.source : undefined);
+  const displayName = companyName || item.source || firstTicker || 'Egyptian Equities';
+  const displayHandle = firstTicker ? `@${firstTicker}` : (item.source ? `@${item.source.replace(/^@/, '')}` : '@MARKET');
+  const initial = (displayName || firstTicker || 'C').trim().charAt(0).toUpperCase();
 
   return {
-    name: item.source,
-    handle: firstTicker ? `@${firstTicker}` : '@MARKET',
-    avatarUrl: genericLogo,
-    fallbackIcon: <Layers className="w-3.5 h-3.5 text-zinc-300" />,
-    verified: false,
+    name: displayName,
+    handle: displayHandle,
+    avatarUrl: resolvedLogo,
+    fallbackIcon: (
+      <span className="text-[11px] font-bold text-white tabular-nums">
+        {initial}
+      </span>
+    ),
+    verified: Boolean(firstTicker || resolvedLogo),
   };
 }
 

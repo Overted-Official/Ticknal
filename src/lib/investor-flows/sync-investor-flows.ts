@@ -2,6 +2,10 @@ import { db } from '@/db';
 import { dailyPrices, egxInvestorFlows, systemLogs, tickers } from '@/db/schema';
 import { sql, eq, and, notInArray, desc } from 'drizzle-orm';
 import { revalidateTag, revalidatePath } from 'next/cache';
+import {
+  fetchOfficialInvestorFlowForDate,
+  buildInvestorFlowRow,
+} from '@/lib/investor-flows/fetch-official-investor-flows';
 
 export interface ManualInvestorFlowInput {
   date: string;
@@ -25,7 +29,7 @@ export interface SyncInvestorFlowResult {
   egyptianNet: number;
   arabNet: number;
   foreignSharePct: number;
-  source: 'MANUAL_PAYLOAD' | 'OFFICIAL_FEED' | 'DECOMPOSED_SESSION';
+  source: 'MANUAL_PAYLOAD' | 'OFFICIAL_FEED';
   message: string;
 }
 
@@ -150,7 +154,7 @@ export async function syncDailyInvestorFlows(options?: {
       egyptianNet: 0,
       arabNet: 0,
       foreignSharePct: 0,
-      source: 'DECOMPOSED_SESSION',
+      source: 'OFFICIAL_FEED',
       message: `Session ${dateStr} falls on an EGX weekend (market closed).`,
     };
   }
@@ -190,7 +194,7 @@ export async function syncDailyInvestorFlows(options?: {
       egyptianNet: 0,
       arabNet: 0,
       foreignSharePct: 0,
-      source: 'DECOMPOSED_SESSION',
+      source: 'OFFICIAL_FEED',
       message: `No active market trading volume recorded for session ${dateStr} (${activeTickers} active equities, ${(realTurnover / 1e6).toFixed(2)}M turnover).`,
     };
   }
@@ -225,78 +229,78 @@ export async function syncDailyInvestorFlows(options?: {
     };
   }
 
-  // 5. Institutional Volume Decomposition
-  // Analyze session movement of blue-chip institutional proxies (COMI, HRHO, ETEL, TMGH)
-  const institutionalProxies: any = await db.execute(sql`
-    SELECT dp.ticker_symbol, dp.close, dp.open, dp.volume
-    FROM ${dailyPrices} dp
-    WHERE dp.date = ${dateStr}
-      AND dp.ticker_symbol IN ('COMI', 'HRHO', 'ETEL', 'TMGH', 'SWDY')
-      AND dp.volume::numeric > 0
-  `);
-  const proxyRows = Array.isArray(institutionalProxies) ? institutionalProxies : institutionalProxies?.rows ?? [];
+  // 5. Fetch and verify official EGX investor flow report
+  const verifiedSession = await fetchOfficialInvestorFlowForDate(dateStr);
+  if (!verifiedSession) {
+    await db.insert(systemLogs).values({
+      source: 'cron-investor-flows',
+      level: 'WARN',
+      message: `No verified official EGX investor flow report published yet for session ${dateStr}. Skipping synthetic generation to preserve data integrity.`,
+      metadata: { date: dateStr, realTurnover },
+    });
 
-  let positiveBlueChips = 0;
-  let totalBlueChips = 0;
-  for (const p of proxyRows) {
-    totalBlueChips++;
-    if (Number(p.close) >= Number(p.open)) {
-      positiveBlueChips++;
-    }
+    return {
+      success: false,
+      date: dateStr,
+      totalTurnover: realTurnover,
+      foreignNet: 0,
+      egyptianNet: 0,
+      arabNet: 0,
+      foreignSharePct: 0,
+      source: 'OFFICIAL_FEED',
+      message: `No verified official investor flow report published yet for session ${dateStr}.`,
+    };
   }
 
-  // Determine foreign net bias based on institutional proxy direction
-  const blueChipRatio = totalBlueChips > 0 ? positiveBlueChips / totalBlueChips : 0.5;
-  const foreignBias = (blueChipRatio - 0.5) * 0.3; // -15% to +15% net bias
+  const row = buildInvestorFlowRow(verifiedSession, realTurnover);
+  if (!row) {
+    await db.insert(systemLogs).values({
+      source: 'cron-investor-flows',
+      level: 'WARN',
+      message: `Official investor flow report for ${dateStr} was internally inconsistent (net exceeds participation volume). Row not persisted.`,
+      metadata: { date: dateStr, verifiedSession },
+    });
 
-  // Structural EGX participation shares
-  const foreignShare = 0.082; // 8.2% baseline
-  const arabShare = 0.051;    // 5.1% baseline
-  const egyptianShare = 1 - foreignShare - arabShare; // 86.7%
-
-  const foreignVol = realTurnover * foreignShare;
-  const arabVol = realTurnover * arabShare;
-  const egyptianVol = realTurnover * egyptianShare;
-
-  const foreignNet = Math.round(foreignVol * foreignBias);
-  const foreignBuy = Math.round((foreignVol + foreignNet) / 2);
-  const foreignSell = Math.round((foreignVol - foreignNet) / 2);
-
-  const arabNet = Math.round(arabVol * (foreignBias * 0.5));
-  const arabBuy = Math.round((arabVol + arabNet) / 2);
-  const arabSell = Math.round((arabVol - arabNet) / 2);
-
-  const egyptianNet = -(foreignNet + arabNet);
-  const egyptianBuy = Math.round((egyptianVol + egyptianNet) / 2);
-  const egyptianSell = Math.round((egyptianVol - egyptianNet) / 2);
+    return {
+      success: false,
+      date: dateStr,
+      totalTurnover: realTurnover,
+      foreignNet: 0,
+      egyptianNet: 0,
+      arabNet: 0,
+      foreignSharePct: 0,
+      source: 'OFFICIAL_FEED',
+      message: `Official investor flow report for ${dateStr} was internally inconsistent.`,
+    };
+  }
 
   await db
     .insert(egxInvestorFlows)
     .values({
       date: dateStr,
-      egyptianBuy: String(egyptianBuy),
-      egyptianSell: String(egyptianSell),
-      egyptianNet: String(egyptianNet),
-      arabBuy: String(arabBuy),
-      arabSell: String(arabSell),
-      arabNet: String(arabNet),
-      foreignBuy: String(foreignBuy),
-      foreignSell: String(foreignSell),
-      foreignNet: String(foreignNet),
+      egyptianBuy: String(row.egyptianBuy),
+      egyptianSell: String(row.egyptianSell),
+      egyptianNet: String(row.egyptianNet),
+      arabBuy: String(row.arabBuy),
+      arabSell: String(row.arabSell),
+      arabNet: String(row.arabNet),
+      foreignBuy: String(row.foreignBuy),
+      foreignSell: String(row.foreignSell),
+      foreignNet: String(row.foreignNet),
       totalTurnover: String(realTurnover),
     })
     .onConflictDoUpdate({
       target: egxInvestorFlows.date,
       set: {
-        egyptianBuy: String(egyptianBuy),
-        egyptianSell: String(egyptianSell),
-        egyptianNet: String(egyptianNet),
-        arabBuy: String(arabBuy),
-        arabSell: String(arabSell),
-        arabNet: String(arabNet),
-        foreignBuy: String(foreignBuy),
-        foreignSell: String(foreignSell),
-        foreignNet: String(foreignNet),
+        egyptianBuy: String(row.egyptianBuy),
+        egyptianSell: String(row.egyptianSell),
+        egyptianNet: String(row.egyptianNet),
+        arabBuy: String(row.arabBuy),
+        arabSell: String(row.arabSell),
+        arabNet: String(row.arabNet),
+        foreignBuy: String(row.foreignBuy),
+        foreignSell: String(row.foreignSell),
+        foreignNet: String(row.foreignNet),
         totalTurnover: String(realTurnover),
         updatedAt: new Date(),
       },
@@ -307,25 +311,32 @@ export async function syncDailyInvestorFlows(options?: {
     revalidatePath('/markets');
   } catch {}
 
-  const grandVol = (foreignBuy + foreignSell) + (egyptianBuy + egyptianSell) + (arabBuy + arabSell);
-  const foreignSharePct = Math.round(((foreignBuy + foreignSell) / grandVol) * 1000) / 10;
+  const foreignSharePct = verifiedSession.foreignSharePct;
 
   await db.insert(systemLogs).values({
     source: 'cron-investor-flows',
     level: 'INFO',
-    message: `Updated daily EGX investor flow for session ${dateStr}. Turnover: ${(realTurnover / 1e9).toFixed(2)}B EGP. Foreign Net: ${foreignNet >= 0 ? '+' : ''}${(foreignNet / 1e6).toFixed(1)}M EGP.`,
-    metadata: { date: dateStr, totalTurnover: realTurnover, foreignNet, egyptianNet, arabNet, foreignSharePct },
+    message: `Synced official EGX investor flow for session ${dateStr} [${verifiedSession.parseMethod}]. Foreign Net: ${row.foreignNet >= 0 ? '+' : ''}${(row.foreignNet / 1e6).toFixed(1)}M EGP (${foreignSharePct}% share).`,
+    metadata: {
+      date: dateStr,
+      totalTurnover: realTurnover,
+      foreignNet: row.foreignNet,
+      egyptianNet: row.egyptianNet,
+      arabNet: row.arabNet,
+      foreignSharePct,
+      sourceUrl: verifiedSession.sourceUrl,
+    },
   });
 
   return {
     success: true,
     date: dateStr,
     totalTurnover: realTurnover,
-    foreignNet,
-    egyptianNet,
-    arabNet,
+    foreignNet: row.foreignNet,
+    egyptianNet: row.egyptianNet,
+    arabNet: row.arabNet,
     foreignSharePct,
-    source: 'DECOMPOSED_SESSION',
-    message: `Synchronized investor flow for session ${dateStr}`,
+    source: 'OFFICIAL_FEED',
+    message: `Successfully synchronized official investor flow for session ${dateStr}`,
   };
 }

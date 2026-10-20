@@ -3,7 +3,7 @@ import { compileFormula, type FormulaDefinition } from '../formula-engine';
 import { validRbfModel } from '../rbf-model';
 
 import { normalizeLiveTicker } from '../../indicators/server/types';
-import { estimateAdvancedWorkPerBar, MAX_ADVANCED_PROGRAM_BYTES, MAX_ADVANCED_PROGRAM_INPUTS, MAX_ADVANCED_WORK_UNITS_PER_BAR, type AdvancedStrategyProgram, type ExecutableStrategyProgram, type SimpleStrategyProgram } from '../strategy-program';
+import { estimateAdvancedWorkPerBar, MAX_ADVANCED_PROGRAM_BYTES, MAX_ADVANCED_PROGRAM_INPUTS, MAX_ADVANCED_WORK_UNITS_PER_BAR, validScoreConditions, validTickerSelection, type AdvancedStrategyProgram, type ExecutableStrategyProgram, type SimpleStrategyProgram } from '../strategy-program';
 import { MAX_UNIVERSE_SYMBOLS } from './run-simple-universe-backtest';
 import type { UniverseBacktestRequest } from './run-simple-universe-backtest';
 
@@ -94,6 +94,12 @@ function validAdvancedProgram(value: unknown): value is AdvancedStrategyProgram 
       if (input.overrides !== undefined && (!record(input.overrides) || Object.keys(input.overrides).length > 400
         || !Object.entries(input.overrides).every(([symbol, override]) => normalizeLiveTicker(symbol) === symbol
           && typeof override === 'number' && Number.isFinite(override) && Math.abs(override) <= 1_000_000_000))) return false;
+    } else if (input.kind === 'condition-score') {
+      if (!validScoreConditions(input.conditions, (id) => ids.has(id) && !statefulIds.has(id))) return false;
+    } else if (input.kind === 'ticker-select') {
+      if (typeof input.defaultSourceId !== 'string' || typeof input.alternateSourceId !== 'string' || input.defaultSourceId === input.alternateSourceId
+        || !ids.has(input.defaultSourceId) || !ids.has(input.alternateSourceId) || statefulIds.has(input.defaultSourceId) || statefulIds.has(input.alternateSourceId)
+        || !validTickerSelection(input.alternateSymbols) || !input.alternateSymbols.every((symbol) => normalizeLiveTicker(symbol) === symbol)) return false;
     } else if (input.kind === 'indicator') {
       if (!shortText(input.indicatorId) || !shortText(input.formulaVersion) || !shortText(input.outputKey) || !validParameters(input.parameters)) return false;
       const definition = getIndicatorDefinition(input.indicatorId);
@@ -119,6 +125,7 @@ function validAdvancedProgram(value: unknown): value is AdvancedStrategyProgram 
       if (input.period !== undefined && (!Number.isSafeInteger(input.period) || Number(input.period) < 1 || Number(input.period) > 1000)) return false;
       if (input.minPeriod !== undefined && (input.operation !== 'median' || !Number.isSafeInteger(input.minPeriod)
         || Number(input.minPeriod) < 1 || Number(input.minPeriod) > Number(input.period))) return false;
+      if (input.seedMode !== undefined && (!['ema', 'rma'].includes(String(input.operation)) || !['periodMean', 'first'].includes(String(input.seedMode)))) return false;
       if (input.operation === 'clamp' && (typeof input.lowerBound !== 'number' || !Number.isFinite(input.lowerBound) || Math.abs(input.lowerBound) > 1_000_000_000 || typeof input.upperBound !== 'number' || !Number.isFinite(input.upperBound) || Math.abs(input.upperBound) > 1_000_000_000 || input.lowerBound > input.upperBound)) return false;
       if (input.weights !== undefined && (!Array.isArray(input.weights) || input.weights.length !== input.sourceIds.length
         || !input.weights.every((weight) => typeof weight === 'number' && Number.isFinite(weight) && Math.abs(weight) <= 1_000_000))) return false;

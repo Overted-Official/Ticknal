@@ -1,4 +1,4 @@
-import { ADVANCED_BLOCK_TEMPLATES, type AdvancedStrategyNode, type LocalizedAdvancedCopy } from './advanced-strategy-model';
+import { ADVANCED_BLOCK_TEMPLATES, localize, type AdvancedStrategyNode, type LocalizedAdvancedCopy } from './advanced-strategy-model';
 
 export type StrategyCanvasStageId = 'data' | 'indicators' | 'calculations' | 'buy' | 'position' | 'sell';
 export type OptionalStrategyStageId = 'calculations' | 'position';
@@ -38,6 +38,33 @@ export interface StrategyCanvasModule {
   readonly memberIds: readonly string[];
   readonly inputIds: readonly string[];
   readonly outputIds: readonly string[];
+}
+
+/** Describe a grouped rule by its actual conditions, not by the last node's output name. */
+export function getModuleRuleSummary(module: StrategyCanvasModule, nodes: readonly AdvancedStrategyNode[], locale: 'en' | 'ar'): string | null {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const members = module.memberIds.map((id) => byId.get(id));
+  if (members.length < 2 || members.some((node) => !node || node.templateId !== 'condition')) return null;
+  return members.map((node, index) => {
+    const name = node!.customName || localize(node!.title, locale);
+    const operator = node!.parameters?.operator ?? 'crossesAbove';
+    const fixedValue = node!.parameters?.compareValue ?? '0';
+    const reference = node!.parameters?.compareMode === 'series' ? byId.get(node!.parameters?.compareInputId ?? '') : undefined;
+    const value = reference ? `${reference.customName || localize(reference.title, locale)}${fixedValue === '0' ? '' : ` + ${fixedValue}`}` : fixedValue;
+    const verb = ({
+      crossesAbove: locale === 'ar' ? 'يعبر لأعلى' : 'crosses above',
+      crossesBelow: locale === 'ar' ? 'يعبر لأسفل' : 'crosses below',
+      isAbove: locale === 'ar' ? 'أعلى من' : 'is above',
+      isBelow: locale === 'ar' ? 'أقل من' : 'is below',
+    } as Record<string, string>)[operator] ?? operator;
+    const namedCondition = /^(.*?)\s+(?:crosses above|crosses below|is above|is below)\s+-?\d+(?:\.\d+)?$/iu.exec(name);
+    const label = namedCondition ? `${namedCondition[1]} ${verb} ${value}`
+      : /level enabled for ticker$/iu.test(name) && operator === 'isAbove' && !reference && value === '0' ? name
+      : `${name} (${verb} ${value})`;
+    if (index === 0) return label;
+    const connector = node!.parameters?.connector === 'and' ? (locale === 'ar' ? 'و' : 'AND') : (locale === 'ar' ? 'أو' : 'OR');
+    return `${connector} ${label}`;
+  }).join(' ');
 }
 
 export function getConnectableModuleOutputs(module: StrategyCanvasModule, availableIds: readonly string[]): readonly string[] {
@@ -188,6 +215,17 @@ export function toggleGroupCardSelection(nodes: readonly AdvancedStrategyNode[],
   return [...sameStage, targetId];
 }
 
+export function reconcileStrategyFlowLayout<T extends { readonly id: string; readonly parentId?: string; readonly position: { readonly x: number; readonly y: number } }>(
+  current: readonly T[], next: readonly T[], manuallyMovedIds: ReadonlySet<string>,
+): T[] {
+  const previousById = new Map(current.map((node) => [node.id, node]));
+  return next.map((node) => {
+    const previous = previousById.get(node.id);
+    if (!previous) return node;
+    return { ...previous, ...node, position: manuallyMovedIds.has(node.id) && previous.parentId === node.parentId ? previous.position : node.position };
+  });
+}
+
 export function resolveModuleNameDraft(draft: string, currentName: string): string {
   return draft.trim() || currentName;
 }
@@ -207,7 +245,7 @@ export function buildStrategyFlow(
   protectedBlueprint: boolean,
   mode: 'simple' | 'advanced' = 'advanced',
   enabledOptionalStages: readonly OptionalStrategyStageId[] = [],
-  options: { readonly focusModuleId?: string | null; readonly expandedCardId?: string | null; readonly previewCardId?: string | null } = {},
+  options: { readonly focusModuleId?: string | null; readonly showExternalInputs?: boolean; readonly expandedCardId?: string | null; readonly previewCardId?: string | null } = {},
 ): { readonly stages: readonly StrategyCanvasStage[]; readonly nodes: readonly StrategyFlowNode[]; readonly edges: readonly StrategyFlowEdge[]; readonly modules: readonly StrategyCanvasModule[]; readonly externalIds: readonly string[] } {
   const sourceNodes = strategyNodes.filter((node) => getCanvasStage(node, mode) !== null);
   const moduleIds = [...new Set(sourceNodes.map((node) => node.moduleId).filter((id): id is string => Boolean(id)))]
@@ -218,7 +256,8 @@ export function buildStrategyFlow(
     const memberSet = new Set(memberIds);
     const inputIds = [...new Set(members.flatMap((node) => node.connections ?? []).filter((source) => !memberSet.has(source)))];
     const outputIds = members.filter((node) => sourceNodes.some((other) => !memberSet.has(other.id) && other.connections?.includes(node.id))).map((node) => node.id);
-    return { id, name: members[0].moduleName ?? id, memberIds, inputIds, outputIds: outputIds.length ? outputIds : memberIds.slice(-1) };
+    const independentMarketOutputs = members.length > 1 && members.every((node) => node.templateId === 'market-input');
+    return { id, name: members[0].moduleName ?? id, memberIds, inputIds, outputIds: independentMarketOutputs ? memberIds : outputIds.length ? outputIds : memberIds.slice(-1) };
   }) : [];
   const moduleByMember = new Map(modules.flatMap((module) => module.memberIds.map((id) => [id, module] as const)));
   const displayId = (id: string) => moduleByMember.has(id) ? `module:${moduleByMember.get(id)!.id}` : id;
@@ -227,7 +266,7 @@ export function buildStrategyFlow(
   if (options.focusModuleId && mode === 'advanced') {
     const focused = modules.find((module) => module.id === options.focusModuleId);
     const memberSet = new Set(focused?.memberIds ?? []);
-    externalIds = focused?.inputIds.filter((id) => sourceNodes.some((node) => node.id === id)) ?? [];
+    externalIds = options.showExternalInputs ? focused?.inputIds.filter((id) => sourceNodes.some((node) => node.id === id)) ?? [] : [];
     const externalSet = new Set(externalIds);
     visibleNodes = sourceNodes.filter((node) => memberSet.has(node.id) || externalSet.has(node.id));
   } else if (mode === 'advanced' && modules.length) {
@@ -256,7 +295,8 @@ export function buildStrategyFlow(
   }
   const order = (mode === 'simple' ? SIMPLE_ORDER : ADVANCED_ORDER).filter((id) =>
     options.focusModuleId ? counts.has(id) : !STAGE_CONTENT[id].optional || counts.has(id) || enabledOptionalStages.includes(id as OptionalStrategyStageId));
-  const pitch = (id: string) => id === options.expandedCardId ? 540 : id === options.previewCardId ? 320 : 92;
+  const ruleModuleIds = new Set(modules.filter((module) => getModuleRuleSummary(module, sourceNodes, 'en')).map((module) => `module:${module.id}`));
+  const pitch = (id: string) => id === options.expandedCardId ? 540 : id === options.previewCardId ? 320 : ruleModuleIds.has(id) ? 112 : 92;
   const stageHeight = Math.max(mode === 'simple' ? 640 : 700,
     ...order.map((stage) => 160 + visibleNodes.filter((node) => getCanvasStage(node, mode) === stage).reduce((sum, node) => sum + pitch(node.id), 0)));
   const stages = order.map((id, index): StrategyCanvasStage => {

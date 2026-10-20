@@ -82,7 +82,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   const isAr = builderLocale === 'ar';
   const [selectedStrategyId, setSelectedStrategyId] = useState<string>(canViewProprietary ? 'typhon' : 'custom-draft');
   const [draft, setDraft] = useState<StrategyDraft>(createEmptyStrategyDraft);
-  const [advancedNodes, setAdvancedNodes] = useState<readonly AdvancedStrategyNode[]>(createAdvancedDraftNodes);
+  const [advancedNodes, setAdvancedNodes] = useState<readonly AdvancedStrategyNode[]>([]);
   const [savedStrategies, setSavedStrategies] = useState<readonly SavedStrategy[]>([]);
   const [selectedSymbols, setSelectedSymbols] = useState<readonly string[] | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -222,7 +222,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   const createNew = () => {
     const id = `custom-${Date.now()}`;
     setDraft({ ...createEmptyStrategyDraft(), id });
-    setAdvancedNodes(createAdvancedDraftNodes());
+    setAdvancedNodes([]);
     setBuilderMode('simple');
     setSelectedSymbols(null);
     setNotificationsEnabled(false);

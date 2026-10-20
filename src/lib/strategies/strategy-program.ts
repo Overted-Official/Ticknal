@@ -31,16 +31,42 @@ export interface SimpleStrategyProgram {
   readonly sell: readonly (readonly StrategyProgramPredicate[])[];
 }
 
+export interface StrategyScoreCondition {
+  readonly inputId: string;
+  readonly compareInputId?: string;
+  readonly operator: 'gt' | 'gte' | 'lt' | 'lte' | 'eq';
+  /** Applied to the right-hand series, or used as the fixed right-hand value. */
+  readonly threshold: number;
+  readonly weight: number;
+}
+
+export function validScoreConditions(value: unknown, hasSource: (id: string) => boolean): value is readonly StrategyScoreCondition[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 12) return false;
+  return value.every((row) => row && typeof row === 'object'
+    && typeof row.inputId === 'string' && hasSource(row.inputId)
+    && (row.compareInputId === undefined || typeof row.compareInputId === 'string' && hasSource(row.compareInputId))
+    && ['gt', 'gte', 'lt', 'lte', 'eq'].includes(row.operator)
+    && typeof row.threshold === 'number' && Number.isFinite(row.threshold) && Math.abs(row.threshold) <= 1_000_000_000
+    && typeof row.weight === 'number' && Number.isFinite(row.weight) && row.weight > 0 && row.weight <= 1000);
+}
+
+export function validTickerSelection(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.length <= 400 && new Set(value).size === value.length
+    && value.every((symbol) => typeof symbol === 'string' && /^[A-Z0-9][A-Z0-9.!-]{0,19}$/.test(symbol));
+}
+
 export type AdvancedProgramInput =
   | ({ readonly id: string; readonly kind: 'formula' } & FormulaDefinition)
   | { readonly id: string; readonly kind: 'formula-output'; readonly sourceId: string; readonly outputKey: string }
   | { readonly id: string; readonly kind: 'rbf-model'; readonly sourceIds: readonly string[]; readonly model: RbfModel }
   | { readonly id: string; readonly kind: 'market'; readonly field: 'open' | 'high' | 'low' | 'close' | 'volume' }
   | { readonly id: string; readonly kind: 'constant'; readonly value: number; readonly overrides?: Readonly<Record<string, number>> }
+  | { readonly id: string; readonly kind: 'condition-score'; readonly conditions: readonly StrategyScoreCondition[] }
+  | { readonly id: string; readonly kind: 'ticker-select'; readonly defaultSourceId: string; readonly alternateSourceId: string; readonly alternateSymbols: readonly string[] }
   | StrategyProgramInput
   | { readonly id: string; readonly kind: 'position-memory'; readonly sourceId: string; readonly capture: 'entry' | 'exit'; readonly update: 'eachBar' | 'never' }
   | { readonly id: string; readonly kind: 'rolling-state'; readonly sourceId: string; readonly operation: 'minimum' | 'maximum' }
-  | { readonly id: string; readonly kind: 'calculation'; readonly operation: 'add' | 'subtract' | 'multiply' | 'divide' | 'min' | 'max' | 'coalesce' | 'weighted' | 'ema' | 'rma' | 'lag' | 'absolute' | 'atan' | 'clamp' | 'sma' | 'wma' | 'normalize' | 'minimum' | 'maximum' | 'mean' | 'median' | 'stdDev' | 'percentileRank' | 'regimeStart' | 'regimeMaximum' | 'regimeMinimum'; readonly sourceIds: readonly string[]; readonly period?: number; readonly minPeriod?: number; readonly weights?: readonly number[]; readonly normalization?: 'zeroToHundred' | 'zScore' | 'minMax' | 'none'; readonly lowerBound?: number; readonly upperBound?: number };
+  | { readonly id: string; readonly kind: 'calculation'; readonly operation: 'add' | 'subtract' | 'multiply' | 'divide' | 'min' | 'max' | 'coalesce' | 'weighted' | 'ema' | 'rma' | 'lag' | 'absolute' | 'atan' | 'clamp' | 'sma' | 'wma' | 'normalize' | 'minimum' | 'maximum' | 'mean' | 'median' | 'stdDev' | 'percentileRank' | 'regimeStart' | 'regimeMaximum' | 'regimeMinimum'; readonly sourceIds: readonly string[]; readonly period?: number; readonly seedMode?: 'periodMean' | 'first'; readonly minPeriod?: number; readonly weights?: readonly number[]; readonly normalization?: 'zeroToHundred' | 'zScore' | 'minMax' | 'none'; readonly lowerBound?: number; readonly upperBound?: number };
 
 export const MAX_ADVANCED_PROGRAM_INPUTS = 96;
 export const MAX_ADVANCED_WORKFLOW_NODES = 128;
@@ -50,6 +76,8 @@ export const MAX_STRATEGY_REQUEST_BYTES = 262_144;
 
 export function estimateAdvancedWorkPerBar(inputs: readonly AdvancedProgramInput[]): number {
   return inputs.reduce((total, input) => {
+    if (input.kind === 'condition-score') return Array.isArray(input.conditions) ? total + input.conditions.length * 4 : MAX_ADVANCED_WORK_UNITS_PER_BAR + 1;
+    if (input.kind === 'ticker-select') return total + 1;
     if (input.kind === 'formula') { try { return total + compileFormula(input).cost; } catch { return MAX_ADVANCED_WORK_UNITS_PER_BAR + 1; } }
     if (input.kind === 'rbf-model') return validRbfModel(input.model, input.sourceIds.length)
       ? total + input.sourceIds.length * input.model.vectors.length * 3 : MAX_ADVANCED_WORK_UNITS_PER_BAR + 1;

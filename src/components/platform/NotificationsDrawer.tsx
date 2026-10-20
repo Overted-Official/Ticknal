@@ -35,13 +35,30 @@ const TRADINGVIEW_LOGOS: Record<string, string> = {
   ETEL: 'https://s3-symbol-logo.tradingview.com/telecom-egypt.svg',
   ORAS: 'https://s3-symbol-logo.tradingview.com/orascom-construction-plc.svg',
   AMOC: 'https://s3-symbol-logo.tradingview.com/alexandria-mineral-oils-company.svg',
+  MFPC: 'https://s3-symbol-logo.tradingview.com/misr-fretilizers-production-company-mopco.svg',
+  HELI: 'https://s3-symbol-logo.tradingview.com/heliopolis-housing.svg',
+  SKPC: 'https://s3-symbol-logo.tradingview.com/sidi-kerir-petrochemicals-sidpec.svg',
+  POUL: 'https://s3-symbol-logo.tradingview.com/cairo-poultry.svg',
+  ABUK: 'https://s3-symbol-logo.tradingview.com/abou-kir-fertilizers.svg',
+  GPPL: 'https://s3-symbol-logo.tradingview.com/golden-pyramids-plaza.svg',
+  CERA: 'https://s3-symbol-logo.tradingview.com/the-arab-ceramic-co-ceramica-remas.svg',
+  JUFO: 'https://s3-symbol-logo.tradingview.com/juhayna-food-industries.svg',
+  ISPH: 'https://s3-symbol-logo.tradingview.com/ibnsina-pharma.svg',
+  ALCN: 'https://s3-symbol-logo.tradingview.com/alexandria-containers-and-goods.svg',
   'GC1!': 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
   GOLD: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
   GOLD21K: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
-  SILVER: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+  GOLD24K: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+  XAUUSD: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+  'SI1!': 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
+  SILVER: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
+  SILV999: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
+  XAGUSD: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
   'USD/EGP': 'https://s3-symbol-logo.tradingview.com/country/US.svg',
+  USDEGP: 'https://s3-symbol-logo.tradingview.com/country/US.svg',
   EGX30: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
   EGX70: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
+  EGX100: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
 };
 
 function getLocalizedNewsText(item: MarketNewsItemDTO, isAr: boolean): { title: string; summary: string } {
@@ -793,8 +810,8 @@ export default function NotificationsDrawer({
                                 <div className="flex items-start gap-2.5 min-w-0 flex-1">
                                   <TickerLogo
                                     symbol={firstTicker}
-                                    companyName={item.source}
-                                    logoUrl={TRADINGVIEW_LOGOS[firstTicker]}
+                                    companyName={item.companyName || item.source}
+                                    logoUrl={item.logoUrl || TRADINGVIEW_LOGOS[firstTicker]}
                                   />
 
                                   <div className="min-w-0 flex-1">

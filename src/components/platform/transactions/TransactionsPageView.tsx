@@ -57,22 +57,6 @@ export default function TransactionsPageView({
 
   const tour = useTour(TRANSACTIONS_TOUR_STORAGE_KEY);
   const tourSteps = useMemo(() => getTransactionsTourSteps(isRTL), [isRTL]);
-  const hasAutoStartedRef = React.useRef(false);
-
-  // Auto-start Transactions page walkthrough for first-time visitors (strictly once on mount)
-  React.useEffect(() => {
-    if (hasAutoStartedRef.current) return;
-    hasAutoStartedRef.current = true;
-
-    if (!tour.seen()) {
-      const timer = setTimeout(() => {
-        tour.start();
-        tour.markSeen();
-      }, 1200);
-
-      return () => clearTimeout(timer);
-    }
-  }, [tour]);
 
   const refreshData = async () => {
     try {

@@ -133,15 +133,15 @@ export const ASSET_RELEVANCE_KEYWORDS: Record<string, string[]> = {
   USDEGP: ['pound', 'جنيه', 'usd/egp', 'مركزي', 'تضخم', 'cbe', 'dollar', 'دولار', 'تعويم', 'فائدة', 'سعر الصرف', 'احتياطي'],
 };
 
-function cleanTicker(sym: string): string {
+export function cleanTicker(sym: string): string {
   if (!sym) return '';
   return sym.replace(/^(EGX|TVC|FX_IDC|NASDAQ|NYSE|LSE|OANDA|COMEX|MCX|BIST|ADX|DFM|TADAWUL):/, '').toUpperCase();
 }
 
-function getTargetAssetKey(sym: string): string {
+export function getTargetAssetKey(sym: string): string {
   const clean = cleanTicker(sym);
-  if (clean === 'GOLD' || clean === 'XAUUSD') return 'GOLD';
-  if (clean === 'SILVER' || clean === 'XAGUSD') return 'SILVER';
+  if (clean === 'GOLD' || clean === 'XAUUSD' || clean === 'GOLD24K' || clean === 'GOLD21K' || clean === 'GC1!') return 'GOLD';
+  if (clean === 'SILVER' || clean === 'XAGUSD' || clean === 'SILV999' || clean === 'SI1!') return 'SILVER';
   if (clean === 'USDEGP') return 'USDEGP';
   return clean;
 }
