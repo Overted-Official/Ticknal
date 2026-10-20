@@ -362,7 +362,7 @@ export function generateHotMoneyChartSvg(
     const zeroY = plotTop + plotH * 0.48;
     const halfH = plotH * 0.42;
     const step = n > 0 ? plotW / n : plotW;
-    const barW = Math.max(8, step * 0.58);
+    const barW = Math.max(8, step * 0.60);
     const maxDailyAbs = Math.max(10, ...bars.map((b) => Math.abs(b.foreignNetMillion)));
     const cumVals = bars.map((b) => b.cumulativeMillion);
     const minCum = Math.min(0, ...cumVals);
@@ -370,13 +370,34 @@ export function generateHotMoneyChartSvg(
     const cumSpan = Math.max(1, maxCum - minCum);
     const cumToY = (v: number) => plotTop + 18 + ((maxCum - v) / cumSpan) * (plotH - 36);
 
+    // Dynamic power curve scaling: prevents single extreme outlier sessions (e.g. sovereign block trades)
+    // from visually collapsing standard daily institutional inflows and outflows
+    const nonZeroAbs = bars.map((b) => Math.abs(b.foreignNetMillion)).filter((v) => v > 0).sort((a, b) => a - b);
+    const p90Abs = nonZeroAbs[Math.min(nonZeroAbs.length - 1, Math.floor(nonZeroAbs.length * 0.90))] || 450;
+    const visualCap = Math.max(200, p90Abs);
+    const minBarH = 10;
+
     const barRects = bars
       .map((b, i) => {
-        const h = Math.max(4, (Math.abs(b.foreignNetMillion) / maxDailyAbs) * halfH);
+        const absVal = Math.abs(b.foreignNetMillion);
+        const up = b.foreignNetMillion > 0;
+        const down = b.foreignNetMillion < 0;
+        const col = up ? GREEN : down ? RED : '#71717a';
+        const strokeCol = up ? '#34d399' : down ? '#fb7185' : '#a1a1aa';
         const x = plotX + i * step + (step - barW) / 2;
-        const up = b.foreignNetMillion >= 0;
+
+        if (absVal === 0) {
+          return `<line x1="${x.toFixed(1)}" y1="${zeroY.toFixed(1)}" x2="${(x + barW).toFixed(1)}" y2="${zeroY.toFixed(1)}" stroke="#71717a" stroke-width="2" />`;
+        }
+
+        const ratio = Math.min(1.0, Math.pow(absVal / visualCap, 0.58));
+        const h = Math.max(minBarH, ratio * halfH);
         const y = up ? zeroY - h : zeroY;
-        return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${up ? GREEN : RED}" fill-opacity="0.75" />`;
+        const markerY = up ? zeroY - h : zeroY + h;
+
+        return `
+          <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${col}" stroke="${strokeCol}" stroke-width="1" />
+          <circle cx="${(x + barW / 2).toFixed(1)}" cy="${markerY.toFixed(1)}" r="2.5" fill="${strokeCol}" />`;
       })
       .join('');
 
@@ -534,7 +555,7 @@ export function generateHotMoneyChartSvg(
   const zeroY = plotTop + plotH * 0.48;
   const halfH = plotH * 0.42;
   const step = n > 0 ? plotW / n : plotW;
-  const barW = Math.max(8, step * 0.56);
+  const barW = Math.max(8, step * 0.58);
   const maxDailyAbs = Math.max(10, ...bars.map((b) => Math.abs(b.foreignNetMillion)));
   const cumVals = bars.map((b) => b.cumulativeMillion);
   const minCum = Math.min(0, ...cumVals);
@@ -542,13 +563,34 @@ export function generateHotMoneyChartSvg(
   const cumSpan = Math.max(1, maxCum - minCum);
   const cumToY = (v: number) => plotTop + 14 + ((maxCum - v) / cumSpan) * (plotH - 28);
 
+  // Dynamic power curve scaling: prevents single extreme outlier sessions (e.g. sovereign block trades)
+  // from visually collapsing standard daily institutional inflows and outflows
+  const nonZeroAbs = bars.map((b) => Math.abs(b.foreignNetMillion)).filter((v) => v > 0).sort((a, b) => a - b);
+  const p90Abs = nonZeroAbs[Math.min(nonZeroAbs.length - 1, Math.floor(nonZeroAbs.length * 0.90))] || 450;
+  const visualCap = Math.max(200, p90Abs);
+  const minBarH = 8;
+
   const barRects = bars
     .map((b, i) => {
-      const h = Math.max(3, (Math.abs(b.foreignNetMillion) / maxDailyAbs) * halfH);
+      const absVal = Math.abs(b.foreignNetMillion);
+      const up = b.foreignNetMillion > 0;
+      const down = b.foreignNetMillion < 0;
+      const col = up ? GREEN : down ? RED : '#71717a';
+      const strokeCol = up ? '#34d399' : down ? '#fb7185' : '#a1a1aa';
       const x = plotX + i * step + (step - barW) / 2;
-      const up = b.foreignNetMillion >= 0;
+
+      if (absVal === 0) {
+        return `<line x1="${x.toFixed(1)}" y1="${zeroY.toFixed(1)}" x2="${(x + barW).toFixed(1)}" y2="${zeroY.toFixed(1)}" stroke="#71717a" stroke-width="2" />`;
+      }
+
+      const ratio = Math.min(1.0, Math.pow(absVal / visualCap, 0.58));
+      const h = Math.max(minBarH, ratio * halfH);
       const y = up ? zeroY - h : zeroY;
-      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${up ? GREEN : RED}" fill-opacity="0.72" />`;
+      const markerY = up ? zeroY - h : zeroY + h;
+
+      return `
+        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${col}" stroke="${strokeCol}" stroke-width="1" />
+        <circle cx="${(x + barW / 2).toFixed(1)}" cy="${markerY.toFixed(1)}" r="2" fill="${strokeCol}" />`;
     })
     .join('');
 
@@ -1058,18 +1100,7 @@ export function generateMarketBreadthChartSvg(
   const decLen = (data.declinersPct / 100) * C;
   const flatLen = Math.max(0, C - advLen - decLen);
 
-  const sectors = (
-    data.sectorBreakdown && data.sectorBreakdown.length > 0
-      ? data.sectorBreakdown
-      : [
-          { sector: 'Financials', advancers: Math.round(data.advancers * 0.22), decliners: Math.round(data.decliners * 0.22), flat: 2, total: Math.max(1, Math.round(data.totalStocks * 0.22)) },
-          { sector: 'Real Estate', advancers: Math.round(data.advancers * 0.18), decliners: Math.round(data.decliners * 0.18), flat: 2, total: Math.max(1, Math.round(data.totalStocks * 0.18)) },
-          { sector: 'Materials', advancers: Math.round(data.advancers * 0.16), decliners: Math.round(data.decliners * 0.16), flat: 1, total: Math.max(1, Math.round(data.totalStocks * 0.16)) },
-          { sector: 'Industrials', advancers: Math.round(data.advancers * 0.14), decliners: Math.round(data.decliners * 0.14), flat: 1, total: Math.max(1, Math.round(data.totalStocks * 0.14)) },
-          { sector: 'Consumer Staples', advancers: Math.round(data.advancers * 0.13), decliners: Math.round(data.decliners * 0.13), flat: 1, total: Math.max(1, Math.round(data.totalStocks * 0.13)) },
-          { sector: 'Consumer Disc.', advancers: Math.round(data.advancers * 0.11), decliners: Math.round(data.decliners * 0.11), flat: 1, total: Math.max(1, Math.round(data.totalStocks * 0.11)) },
-        ]
-  ).slice(0, 6);
+  const sectors = (data.sectorBreakdown || []).slice(0, 6);
 
   const hist =
     data.history10d && data.history10d.length >= 2
@@ -1082,44 +1113,47 @@ export function generateMarketBreadthChartSvg(
 
   if (isSquare) {
     // 1:1 SQUARE MOBILE LAYOUT (1080 x 1080)
-    const sqSectorRows = sectors
-      .map((s, idx) => {
-        const y = 52 + idx * 34;
-        const tot = Math.max(1, s.total);
-        const barFullW = 212;
-        const aw = (s.advancers / tot) * barFullW;
-        const dw = (s.decliners / tot) * barFullW;
-        const fw = Math.max(0, barFullW - aw - dw);
-        const scid = `sq-sec-${idx}`;
-        const secLabel = localizeSectorName(s.sector, ar);
-        if (ar) {
-          return `
-          <clipPath id="${scid}"><rect x="352" y="${y - 4}" width="142" height="24" /></clipPath>
-          <text x="490" y="${y + 13}" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="end" clip-path="url(#${scid})">${esc(secLabel.length > 18 ? secLabel.slice(0, 17) + '…' : secLabel)}</text>
-          <g transform="translate(132, ${y})">
-            <rect width="${barFullW}" height="15" rx="4" fill="#18181b" />
-            <rect x="0" y="0" width="${aw.toFixed(1)}" height="15" rx="3" fill="${GREEN}" />
-            <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="15" fill="#52525b" />
-            <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="15" rx="3" fill="${RED}" />
-          </g>
-          <text x="20" y="${y + 13}" fill="${MUTED}" font-size="11">(${s.total})</text>
-          <text x="56" y="${y + 13}" fill="${RED}" font-size="11.5" font-weight="700">${s.decliners}▼</text>
-          <text x="96" y="${y + 13}" fill="${GREEN}" font-size="11.5" font-weight="700">${s.advancers}▲</text>`;
-        }
-        return `
-        <clipPath id="${scid}"><rect x="18" y="${y - 4}" width="132" height="24" /></clipPath>
-        <text x="20" y="${y + 13}" fill="${SOFT}" font-size="12" font-weight="600" clip-path="url(#${scid})">${esc(secLabel.length > 15 ? secLabel.slice(0, 14) + '…' : secLabel)}</text>
-        <g transform="translate(156, ${y})">
-          <rect width="${barFullW}" height="15" rx="4" fill="#18181b" />
-          <rect x="0" y="0" width="${aw.toFixed(1)}" height="15" rx="3" fill="${GREEN}" />
-          <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="15" fill="#52525b" />
-          <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="15" rx="3" fill="${RED}" />
-        </g>
-        <text x="382" y="${y + 13}" fill="${GREEN}" font-size="11.5" font-weight="700">${s.advancers}▲</text>
-        <text x="428" y="${y + 13}" fill="${RED}" font-size="11.5" font-weight="700">${s.decliners}▼</text>
-        <text x="492" y="${y + 13}" fill="${MUTED}" font-size="11" text-anchor="end">(${s.total})</text>`;
-      })
-      .join('');
+    const sqSectorRows =
+      sectors.length > 0
+        ? sectors
+            .map((s, idx) => {
+              const y = 52 + idx * 34;
+              const tot = Math.max(1, s.total);
+              const barFullW = 212;
+              const aw = (s.advancers / tot) * barFullW;
+              const dw = (s.decliners / tot) * barFullW;
+              const fw = Math.max(0, barFullW - aw - dw);
+              const scid = `sq-sec-${idx}`;
+              const secLabel = localizeSectorName(s.sector, ar);
+              if (ar) {
+                return `
+                <clipPath id="${scid}"><rect x="352" y="${y - 4}" width="142" height="24" /></clipPath>
+                <text x="490" y="${y + 13}" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="end" clip-path="url(#${scid})">${esc(secLabel.length > 18 ? secLabel.slice(0, 17) + '…' : secLabel)}</text>
+                <g transform="translate(132, ${y})">
+                  <rect width="${barFullW}" height="15" rx="4" fill="#18181b" />
+                  <rect x="0" y="0" width="${aw.toFixed(1)}" height="15" rx="3" fill="${GREEN}" />
+                  <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="15" fill="#52525b" />
+                  <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="15" rx="3" fill="${RED}" />
+                </g>
+                <text x="20" y="${y + 13}" fill="${MUTED}" font-size="11">(${s.total})</text>
+                <text x="56" y="${y + 13}" fill="${RED}" font-size="11.5" font-weight="700">${s.decliners}▼</text>
+                <text x="96" y="${y + 13}" fill="${GREEN}" font-size="11.5" font-weight="700">${s.advancers}▲</text>`;
+              }
+              return `
+              <clipPath id="${scid}"><rect x="18" y="${y - 4}" width="132" height="24" /></clipPath>
+              <text x="20" y="${y + 13}" fill="${SOFT}" font-size="12" font-weight="600" clip-path="url(#${scid})">${esc(secLabel.length > 15 ? secLabel.slice(0, 14) + '…' : secLabel)}</text>
+              <g transform="translate(156, ${y})">
+                <rect width="${barFullW}" height="15" rx="4" fill="#18181b" />
+                <rect x="0" y="0" width="${aw.toFixed(1)}" height="15" rx="3" fill="${GREEN}" />
+                <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="15" fill="#52525b" />
+                <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="15" rx="3" fill="${RED}" />
+              </g>
+              <text x="382" y="${y + 13}" fill="${GREEN}" font-size="11.5" font-weight="700">${s.advancers}▲</text>
+              <text x="428" y="${y + 13}" fill="${RED}" font-size="11.5" font-weight="700">${s.decliners}▼</text>
+              <text x="492" y="${y + 13}" fill="${MUTED}" font-size="11" text-anchor="end">(${s.total})</text>`;
+            })
+            .join('')
+        : `<text x="255" y="140" fill="${MUTED}" font-size="13" font-weight="600" text-anchor="middle">${esc(ar ? 'لا تتوفر تفاصيل للقطاعات لهذه الجلسة' : 'Sector breakdown unavailable for this session')}</text>`;
 
     const hPlotX = 68;
     const hPlotW = 868;
@@ -1258,44 +1292,47 @@ export function generateMarketBreadthChartSvg(
   }
 
   // 16:9 WIDE DESKTOP LAYOUT (1200 x 675)
-  const sectorRows = sectors
-    .map((s, idx) => {
-      const y = 46 + idx * 28;
-      const tot = Math.max(1, s.total);
-      const barFullW = 312;
-      const aw = (s.advancers / tot) * barFullW;
-      const dw = (s.decliners / tot) * barFullW;
-      const fw = Math.max(0, barFullW - aw - dw);
-      const scid = `w-sec-${idx}`;
-      const secLabel = localizeSectorName(s.sector, ar);
-      if (ar) {
-        return `
-        <clipPath id="${scid}"><rect x="464" y="${y - 4}" width="146" height="22" /></clipPath>
-        <text x="608" y="${y + 12}" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="end" clip-path="url(#${scid})">${esc(secLabel.length > 20 ? secLabel.slice(0, 19) + '…' : secLabel)}</text>
-        <g transform="translate(144, ${y})">
-          <rect width="${barFullW}" height="13" rx="3.5" fill="#18181b" />
-          <rect x="0" y="0" width="${aw.toFixed(1)}" height="13" rx="3" fill="${GREEN}" />
-          <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="13" fill="#52525b" />
-          <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="13" rx="3" fill="${RED}" />
-        </g>
-        <text x="22" y="${y + 12}" fill="${MUTED}" font-size="10.5">(${s.total})</text>
-        <text x="58" y="${y + 12}" fill="${RED}" font-size="11" font-weight="700">${s.decliners}▼</text>
-        <text x="100" y="${y + 12}" fill="${GREEN}" font-size="11" font-weight="700">${s.advancers}▲</text>`;
-      }
-      return `
-      <clipPath id="${scid}"><rect x="20" y="${y - 4}" width="142" height="22" /></clipPath>
-      <text x="22" y="${y + 12}" fill="${SOFT}" font-size="11.5" font-weight="600" clip-path="url(#${scid})">${esc(secLabel.length > 17 ? secLabel.slice(0, 16) + '…' : secLabel)}</text>
-      <g transform="translate(168, ${y})">
-        <rect width="${barFullW}" height="13" rx="3.5" fill="#18181b" />
-        <rect x="0" y="0" width="${aw.toFixed(1)}" height="13" rx="3" fill="${GREEN}" />
-        <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="13" fill="#52525b" />
-        <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="13" rx="3" fill="${RED}" />
-      </g>
-      <text x="496" y="${y + 12}" fill="${GREEN}" font-size="11" font-weight="700">${s.advancers}▲</text>
-      <text x="544" y="${y + 12}" fill="${RED}" font-size="11" font-weight="700">${s.decliners}▼</text>
-      <text x="606" y="${y + 12}" fill="${MUTED}" font-size="10.5" text-anchor="end">(${s.total})</text>`;
-    })
-    .join('');
+  const sectorRows =
+    sectors.length > 0
+      ? sectors
+          .map((s, idx) => {
+            const y = 46 + idx * 28;
+            const tot = Math.max(1, s.total);
+            const barFullW = 312;
+            const aw = (s.advancers / tot) * barFullW;
+            const dw = (s.decliners / tot) * barFullW;
+            const fw = Math.max(0, barFullW - aw - dw);
+            const scid = `w-sec-${idx}`;
+            const secLabel = localizeSectorName(s.sector, ar);
+            if (ar) {
+              return `
+              <clipPath id="${scid}"><rect x="464" y="${y - 4}" width="146" height="22" /></clipPath>
+              <text x="608" y="${y + 12}" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="end" clip-path="url(#${scid})">${esc(secLabel.length > 20 ? secLabel.slice(0, 19) + '…' : secLabel)}</text>
+              <g transform="translate(144, ${y})">
+                <rect width="${barFullW}" height="13" rx="3.5" fill="#18181b" />
+                <rect x="0" y="0" width="${aw.toFixed(1)}" height="13" rx="3" fill="${GREEN}" />
+                <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="13" fill="#52525b" />
+                <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="13" rx="3" fill="${RED}" />
+              </g>
+              <text x="22" y="${y + 12}" fill="${MUTED}" font-size="10.5">(${s.total})</text>
+              <text x="58" y="${y + 12}" fill="${RED}" font-size="11" font-weight="700">${s.decliners}▼</text>
+              <text x="100" y="${y + 12}" fill="${GREEN}" font-size="11" font-weight="700">${s.advancers}▲</text>`;
+            }
+            return `
+            <clipPath id="${scid}"><rect x="20" y="${y - 4}" width="142" height="22" /></clipPath>
+            <text x="22" y="${y + 12}" fill="${SOFT}" font-size="11.5" font-weight="600" clip-path="url(#${scid})">${esc(secLabel.length > 17 ? secLabel.slice(0, 16) + '…' : secLabel)}</text>
+            <g transform="translate(168, ${y})">
+              <rect width="${barFullW}" height="13" rx="3.5" fill="#18181b" />
+              <rect x="0" y="0" width="${aw.toFixed(1)}" height="13" rx="3" fill="${GREEN}" />
+              <rect x="${aw.toFixed(1)}" y="0" width="${fw.toFixed(1)}" height="13" fill="#52525b" />
+              <rect x="${(aw + fw).toFixed(1)}" y="0" width="${dw.toFixed(1)}" height="13" rx="3" fill="${RED}" />
+            </g>
+            <text x="496" y="${y + 12}" fill="${GREEN}" font-size="11" font-weight="700">${s.advancers}▲</text>
+            <text x="544" y="${y + 12}" fill="${RED}" font-size="11" font-weight="700">${s.decliners}▼</text>
+            <text x="606" y="${y + 12}" fill="${MUTED}" font-size="10.5" text-anchor="end">(${s.total})</text>`;
+          })
+          .join('')
+      : `<text x="290" y="110" fill="${MUTED}" font-size="12" font-weight="600" text-anchor="middle">${esc(ar ? 'لا تتوفر تفاصيل للقطاعات لهذه الجلسة' : 'Sector breakdown unavailable for this session')}</text>`;
 
   const hPlotX = 64;
   const hPlotW = 984;

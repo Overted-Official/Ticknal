@@ -33,6 +33,7 @@ export interface GenerateDailyTakesOptions {
       { en: string; ar: string }
     >
   >;
+  fastDeterministic?: boolean;
 }
 
 /**
@@ -624,13 +625,13 @@ export async function generateAllDailyTakes(
   };
 
   // 3. Execute all 5 AI completions in parallel if customSummaries are not provided
-  const [hotMoneyBilingual, tradeSummaryBilingual, breadthBilingual, gainersLosersBilingual, fxBilingual] = custom
+  const [hotMoneyBilingual, tradeSummaryBilingual, breadthBilingual, gainersLosersBilingual, fxBilingual] = (custom || options?.fastDeterministic)
     ? [
-        { en: custom.hot_money?.en || hotMoneyEnFallback, ar: custom.hot_money?.ar || hotMoneyArSummary },
-        { en: custom.trade_summary?.en || tradeSummaryEnFallback, ar: custom.trade_summary?.ar || tradeSummaryArSummary },
-        { en: custom.market_breadth?.en || breadthEnFallback, ar: custom.market_breadth?.ar || breadthArSummary },
-        { en: custom.gainers_losers?.en || gainersLosersEnFallback, ar: custom.gainers_losers?.ar || gainersLosersArSummary },
-        { en: custom.usd_egp_update?.en || fxEnFallback, ar: custom.usd_egp_update?.ar || fxArSummary },
+        { en: custom?.hot_money?.en || hotMoneyEnFallback, ar: custom?.hot_money?.ar || hotMoneyArSummary },
+        { en: custom?.trade_summary?.en || tradeSummaryEnFallback, ar: custom?.trade_summary?.ar || tradeSummaryArSummary },
+        { en: custom?.market_breadth?.en || breadthEnFallback, ar: custom?.market_breadth?.ar || breadthArSummary },
+        { en: custom?.gainers_losers?.en || gainersLosersEnFallback, ar: custom?.gainers_losers?.ar || gainersLosersArSummary },
+        { en: custom?.usd_egp_update?.en || fxEnFallback, ar: custom?.usd_egp_update?.ar || fxArSummary },
       ]
     : await (async () => {
         const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
