@@ -61,7 +61,7 @@ export default function NewsFilterSidebar({
       </div>
 
       {/* Category Navigation Items (No icons) */}
-      <nav className="space-y-0.5 mb-3">
+      <nav data-tour="news-categories-nav" className="space-y-0.5 mb-3">
         {categories.map((cat) => {
           const isSelected = activeCategory === cat.id;
 

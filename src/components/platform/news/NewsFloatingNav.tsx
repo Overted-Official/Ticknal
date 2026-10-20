@@ -14,23 +14,28 @@ interface NewsFloatingNavProps {
   categories: NewsFloatingCategory[];
   activeCategory: string;
   onSelectCategory: (id: string) => void;
+  dataTour?: string;
+  className?: string;
 }
 
 export default function NewsFloatingNav({
   categories,
   activeCategory,
   onSelectCategory,
+  dataTour = 'news-categories-nav',
+  className = '',
 }: NewsFloatingNavProps) {
   const { locale } = useTranslation();
 
   return (
     <nav
       aria-label="News Categories"
-      className="lg:hidden sticky top-0 z-30 w-full py-2 px-3 pointer-events-none select-none font-sans flex items-center justify-center"
+      className={`lg:hidden sticky top-0 z-30 w-full py-2 px-3 pointer-events-none select-none font-sans flex items-center justify-center ${className}`.trim()}
     >
       <div className="w-full max-w-md min-w-0 flex items-center justify-center">
         {/* TradingView-Inspired Mobile Floating Segmented Pill */}
         <div
+          data-tour={dataTour}
           data-name="round-tabs-anchors"
           className="w-full pointer-events-auto rounded-full border border-white/15 bg-black/95 backdrop-blur-xl p-1 shadow-[0_6px_24px_rgba(0,0,0,0.8)]"
         >

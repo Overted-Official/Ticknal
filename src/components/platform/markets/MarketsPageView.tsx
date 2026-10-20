@@ -160,9 +160,7 @@ export default function MarketsPageView() {
       </header>
 
       {/* 2. Sticky Floating Top Navigation Bar */}
-      <div data-tour="markets-floating-nav">
-        <MarketsFloatingNav />
-      </div>
+      <MarketsFloatingNav />
 
       {/* 3. Main 4-Section Executive Scroll */}
       <main

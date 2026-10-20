@@ -143,9 +143,7 @@ export default function HomePageView({
       </div>
 
       {/* 2. Sticky Floating Top Navigation Bar */}
-      <div data-tour="home-floating-nav">
-        <HomeFloatingNav canViewProprietary={canViewProprietary} />
-      </div>
+      <HomeFloatingNav canViewProprietary={canViewProprietary} />
 
       {/* 3. Main Sections Stack */}
       <div className="app-page page-sections-stack pb-28 md:pb-20 pt-1 space-y-8">

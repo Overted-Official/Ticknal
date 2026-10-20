@@ -9,7 +9,15 @@ export interface MarketNavSection {
   shortLabel: string;
 }
 
-export default function MarketsFloatingNav() {
+interface MarketsFloatingNavProps {
+  dataTour?: string;
+  className?: string;
+}
+
+export default function MarketsFloatingNav({
+  dataTour = 'markets-floating-nav',
+  className = '',
+}: MarketsFloatingNavProps = {}) {
   const { t, locale } = useTranslation();
 
   const sections: MarketNavSection[] = useMemo(
@@ -81,11 +89,12 @@ export default function MarketsFloatingNav() {
   return (
     <nav
       aria-label="Markets Page Sections"
-      className="sticky top-0 z-30 w-full py-2.5 sm:py-3 px-3 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center"
+      className={`sticky top-0 z-30 w-full py-2.5 sm:py-3 px-3 sm:px-6 pointer-events-none select-none font-sans flex items-center justify-center ${className}`.trim()}
     >
       <div className="w-full max-w-full min-w-0 flex items-center justify-center">
         {/* TradingView Floating Pill Container */}
         <div
+          data-tour={dataTour}
           data-name="round-tabs-anchors"
           className="relative pointer-events-auto rounded-full border border-plt-border bg-plt-base/90 backdrop-blur-xl p-1 sm:p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.8)] flex items-center justify-center max-w-[calc(100vw-24px)] sm:max-w-full"
         >

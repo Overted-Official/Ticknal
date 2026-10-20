@@ -39,9 +39,7 @@ export default function SettingsPageView({
       </div>
 
       {/* 2. Sticky Floating Navigation Bar */}
-      <div data-tour="settings-floating-nav" className="w-full">
-        <SettingsFloatingNav devicesCount={initialDevices.length} />
-      </div>
+      <SettingsFloatingNav devicesCount={initialDevices.length} />
 
       {/* 3. Main Sections Stack (Single Continuous Long Page) */}
       <motion.div

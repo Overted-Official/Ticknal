@@ -107,9 +107,7 @@ export default function TransactionsPageView({
       </div>
 
       {/* 2. Sticky Floating Top Navigation Bar */}
-      <div data-tour="transactions-floating-nav" className="w-full">
-        <TransactionsFloatingNav />
-      </div>
+      <TransactionsFloatingNav />
 
       {/* 3. Main Sections Stack */}
       <div className="app-page page-sections-stack pb-28 md:pb-20 pt-1 space-y-8">

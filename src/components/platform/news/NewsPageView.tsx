@@ -241,14 +241,12 @@ export default function NewsPageView() {
         </div>
       </header>
 
-      {/* 2. Sticky Floating Top Navigation Bar — Centered pill on BOTH desktop and mobile */}
-      <div data-tour="news-categories-nav" className="w-full">
-        <NewsFloatingNav
-          categories={floatingCategories}
-          activeCategory={activeCategory}
-          onSelectCategory={(id) => setActiveCategory(id)}
-        />
-      </div>
+      {/* 2. Sticky Floating Top Navigation Bar — Centered pill on mobile */}
+      <NewsFloatingNav
+        categories={floatingCategories}
+        activeCategory={activeCategory}
+        onSelectCategory={(id) => setActiveCategory(id)}
+      />
 
       {/* 3. Page Title & Subtitle Hero — Aligned with Markets page layout */}
       <div className="px-[var(--space-page-x)] pt-2 pb-3 w-full shrink-0">
