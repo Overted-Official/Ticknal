@@ -453,10 +453,10 @@ export default function InvestorFlowSection({
                 <>
                   {/* Combined Hot Money Net */}
                   <div className="flex items-center gap-1.5 shrink-0 pr-3 border-r border-white/10">
-                    <span className="text-plt-muted font-medium">
+                    <span className="text-plt-muted">
                       {locale === 'ar' ? 'صافي الساخنة:' : 'Hot Money Net:'}
                     </span>
-                    <span className={`font-bold tabular-nums text-sm ${hotMoneyNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                    <span className={`font-semibold tabular-nums text-[11px] ${hotMoneyNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
                       {formatEgpVal(hotMoneyNetToday, locale)}
                     </span>
                   </div>
@@ -491,31 +491,12 @@ export default function InvestorFlowSection({
               )}
             </div>
 
-            {/* Participation Split Badge (Retail vs. Institutions) */}
-            <div className="flex items-center gap-3 shrink-0">
-              {summary.retailShareToday !== null && summary.instShareToday !== null && (
-                <div className="flex items-center gap-2 py-1 px-2.5 bg-white/[0.04] border border-white/10 rounded-none text-[11px]">
-                  <span className="text-plt-muted font-medium">
-                    {locale === 'ar' ? 'هيكل التداول:' : 'Split:'}
-                  </span>
-                  <div className="flex items-center gap-1.5 tabular-nums">
-                    <span className="text-amber-400 font-semibold">{locale === 'ar' ? 'مؤسسات' : 'Inst'} {summary.instShareToday}%</span>
-                    <span className="text-white/20">|</span>
-                    <span className="text-sky-400 font-semibold">{locale === 'ar' ? 'أفراد' : 'Retail'} {summary.retailShareToday}%</span>
-                  </div>
-                  <div className="w-12 h-1.5 bg-sky-500/30 rounded-none overflow-hidden flex ml-1">
-                    <div className="bg-amber-400 h-full" style={{ width: `${summary.instShareToday}%` }} />
-                    <div className="bg-sky-400 h-full" style={{ width: `${summary.retailShareToday}%` }} />
-                  </div>
-                </div>
-              )}
-
-              <div className="hidden lg:flex items-center gap-1.5 shrink-0">
-                <span className="text-plt-muted text-[11px]">{locale === 'ar' ? 'التداول:' : 'Turnover:'}</span>
-                <span className="text-plt-text font-bold tabular-nums">
-                  {formatEgpVal(summary.totalTurnoverToday, locale, false)}
-                </span>
-              </div>
+            {/* Session Turnover */}
+            <div className="hidden lg:flex items-center gap-1.5 shrink-0">
+              <span className="text-plt-muted text-[11px]">{locale === 'ar' ? 'التداول:' : 'Turnover:'}</span>
+              <span className="text-plt-text font-semibold text-[11px] tabular-nums">
+                {formatEgpVal(summary.totalTurnoverToday, locale, false)}
+              </span>
             </div>
           </div>
         )}
@@ -586,42 +567,57 @@ export default function InvestorFlowSection({
                     if (!active || !payload || payload.length === 0) return null;
                     const d = payload[0].payload;
                     return (
-                      <div className="bg-[#3D3D3D] border border-white/15 rounded-none p-3.5 shadow-2xl text-xs space-y-2 z-50 min-w-[270px]">
-                        <div className="text-neutral-300 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
-                          <span className="tabular-nums font-semibold">{d.date}</span>
+                      <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[250px]">
+                        <div className="text-neutral-400 font-medium pb-1 border-b border-white/10 flex items-center justify-between gap-4">
+                          <span className="tabular-nums">{d.date}</span>
+                          <span className="font-semibold text-neutral-200">
+                            {locale === 'ar' ? 'الحصص السوقية' : 'Market Share'}
+                          </span>
+                        </div>
+                        <div className="space-y-1 pt-0.5">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff]"></span>
+                              <span className="text-neutral-400">{locale === 'ar' ? 'المصريون:' : 'Egyptians:'}</span>
+                            </div>
+                            <span className="font-bold text-white tabular-nums">
+                              {d.egyptianSharePct}%{' '}
+                              <span className={`text-[11px] font-semibold ml-1 ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                ({formatEgpVal(d.egyptianNet, locale)})
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span>
+                              <span className="text-neutral-400">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
+                            </div>
+                            <span className="font-bold text-white tabular-nums">
+                              {d.foreignSharePct}%{' '}
+                              <span className={`text-[11px] font-semibold ml-1 ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                ({formatEgpVal(d.foreignNet, locale)})
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#089981]"></span>
+                              <span className="text-neutral-400">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
+                            </div>
+                            <span className="font-bold text-white tabular-nums">
+                              {d.arabSharePct}%{' '}
+                              <span className={`text-[11px] font-semibold ml-1 ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                ({formatEgpVal(d.arabNet, locale)})
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1 border-t border-plt-border-soft">
+                          <span>{locale === 'ar' ? 'إجمالي التداول: ' : 'Turnover: '}</span>
                           <span className="font-semibold text-neutral-200 tabular-nums">
-                            {locale === 'ar' ? 'التداول: ' : 'Turnover: '}
                             {formatEgpVal(d.totalTurnover, locale, false)}
                           </span>
                         </div>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="text-[#2962ff] font-medium">{locale === 'ar' ? 'المصريون:' : 'Egyptians:'}</span>
-                            <span className="font-bold text-white tabular-nums">
-                              {d.egyptianSharePct}% <span className={`text-[11px] ml-1 ${d.egyptianNet >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>({formatEgpVal(d.egyptianNet, locale)})</span>
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="text-[#f59e0b] font-medium">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
-                            <span className="font-bold text-white tabular-nums">
-                              {d.foreignSharePct}% <span className={`text-[11px] ml-1 ${d.foreignNet >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>({formatEgpVal(d.foreignNet, locale)})</span>
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="text-[#089981] font-medium">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
-                            <span className="font-bold text-white tabular-nums">
-                              {d.arabSharePct}% <span className={`text-[11px] ml-1 ${d.arabNet >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>({formatEgpVal(d.arabNet, locale)})</span>
-                            </span>
-                          </div>
-                        </div>
-                        {d.retailSharePct !== null && d.instSharePct !== null && (
-                          <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-neutral-300">
-                            <span>{locale === 'ar' ? 'مؤسسات / أفراد' : 'Inst / Retail Split'}</span>
-                            <span className="tabular-nums font-medium">
-                              <span className="text-amber-400 font-semibold">{d.instSharePct}%</span> / <span className="text-sky-400 font-semibold">{d.retailSharePct}%</span>
-                            </span>
-                          </div>
-                        )}
                       </div>
                     );
                   }}
@@ -688,15 +684,13 @@ export default function InvestorFlowSection({
                     const isHmPos = hmTotal >= 0;
 
                     return (
-                      <div className="bg-[#3D3D3D] border border-white/15 rounded-none p-3.5 shadow-2xl text-xs space-y-2.5 z-50 min-w-[280px] max-w-[350px]">
-                        {/* Header: Date + Inflow/Outflow Badge */}
-                        <div className="flex items-center justify-between gap-3 pb-2 border-b border-white/10">
-                          <span className="text-neutral-300 font-medium tabular-nums">{d.date}</span>
+                      <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[260px]">
+                        {/* Header: Date + Inflow/Outflow Status */}
+                        <div className="text-neutral-400 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
+                          <span className="tabular-nums">{d.date}</span>
                           <span
-                            className={`px-2 py-0.5 rounded-none text-[10px] font-bold tracking-wide uppercase tabular-nums ${
-                              isHmPos
-                                ? 'bg-[#089981]/20 text-[#089981] border border-[#089981]/40'
-                                : 'bg-[#f23645]/20 text-[#f23645] border border-[#f23645]/40'
+                            className={`font-semibold tabular-nums ${
+                              isHmPos ? 'text-profit-num' : 'text-loss-num'
                             }`}
                           >
                             {isHmPos
@@ -710,106 +704,64 @@ export default function InvestorFlowSection({
                         </div>
 
                         {/* Selected Metric Net Headline */}
-                        <div className="space-y-0.5">
-                          <div className="text-[11px] text-neutral-400">
+                        <div className="flex items-center justify-between gap-4 pt-0.5">
+                          <span className="text-neutral-400">
                             {netFilter === 'foreign'
                               ? locale === 'ar'
-                                ? 'صافي تدفق الأجانب'
-                                : 'Foreign Net Flow'
+                                ? 'صافي تدفق الأجانب:'
+                                : 'Foreign Net:'
                               : netFilter === 'arab'
                               ? locale === 'ar'
-                                ? 'صافي تدفق العرب'
-                                : 'Arab Net Flow'
+                                ? 'صافي تدفق العرب:'
+                                : 'Arab Net:'
                               : locale === 'ar'
-                              ? 'إجمالي صافي الأموال الساخنة (أجانب + عرب)'
-                              : 'Total Hot Money Net Flow'}
-                          </div>
-                          <div className={`text-base font-bold tabular-nums ${isPos ? 'text-[#089981]' : 'text-[#f23645]'}`}>
+                              ? 'صافي الساخنة:'
+                              : 'Hot Money Net:'}
+                          </span>
+                          <span className={`font-bold tabular-nums text-sm ${isPos ? 'text-profit-num' : 'text-loss-num'}`}>
                             {formatEgpVal(activeVal, locale)}
-                          </div>
+                          </span>
                         </div>
 
-                        {/* Hot Money Components: Foreigners vs Arabs */}
-                        <div className="pt-2 border-t border-white/10 space-y-2">
-                          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
-                            <span>{locale === 'ar' ? 'مكونات الأموال الساخنة (غير المحلي)' : 'Hot Money Breakdown'}</span>
-                            <span>{locale === 'ar' ? 'الصافي' : 'Net'}</span>
-                          </div>
-
+                        {/* Breakdown Rows */}
+                        <div className="space-y-1 pt-1 border-t border-plt-border-soft">
                           {/* Foreigners */}
-                          <div className="space-y-0.5">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-none bg-[#f59e0b]"></span>
-                                <span className="text-neutral-200 font-medium">
-                                  {locale === 'ar' ? 'الأجانب (دولي):' : 'Foreigners:'}
-                                </span>
-                              </div>
-                              <span className={`font-bold tabular-nums ${d.foreignNet >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
-                                {formatEgpVal(d.foreignNet, locale)}
-                              </span>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span>
+                              <span className="text-neutral-400">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
                             </div>
-                            <div className="flex items-center justify-between text-[10px] text-neutral-400 tabular-nums pl-3">
-                              <span>{locale === 'ar' ? 'شراء: ' : 'Buy: '}{formatEgpVal(d.foreignBuy, locale, false)}</span>
-                              <span>{locale === 'ar' ? 'بيع: ' : 'Sell: '}{formatEgpVal(d.foreignSell, locale, false)}</span>
-                              <span>{locale === 'ar' ? 'الحصة: ' : 'Share: '}{d.foreignSharePct}%</span>
-                            </div>
+                            <span className={`font-semibold tabular-nums ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                              {formatEgpVal(d.foreignNet, locale)}
+                            </span>
                           </div>
 
                           {/* Arabs */}
-                          <div className="space-y-0.5 pt-1.5 border-t border-white/5">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-none bg-[#089981]"></span>
-                                <span className="text-neutral-200 font-medium">
-                                  {locale === 'ar' ? 'العرب (إقليمي):' : 'Arabs:'}
-                                </span>
-                              </div>
-                              <span className={`font-bold tabular-nums ${d.arabNet >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
-                                {formatEgpVal(d.arabNet, locale)}
-                              </span>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#089981]"></span>
+                              <span className="text-neutral-400">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
                             </div>
-                            <div className="flex items-center justify-between text-[10px] text-neutral-400 tabular-nums pl-3">
-                              <span>{locale === 'ar' ? 'شراء: ' : 'Buy: '}{formatEgpVal(d.arabBuy, locale, false)}</span>
-                              <span>{locale === 'ar' ? 'بيع: ' : 'Sell: '}{formatEgpVal(d.arabSell, locale, false)}</span>
-                              <span>{locale === 'ar' ? 'الحصة: ' : 'Share: '}{d.arabSharePct}%</span>
-                            </div>
+                            <span className={`font-semibold tabular-nums ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                              {formatEgpVal(d.arabNet, locale)}
+                            </span>
                           </div>
 
-                          {/* Domestic (Egyptians) absorption */}
-                          <div className="space-y-0.5 pt-1.5 border-t border-white/10">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-none bg-[#2962ff]"></span>
-                                <span className="text-neutral-300 font-medium">
-                                  {locale === 'ar' ? 'المصريون (المحلي):' : 'Egyptians (Domestic):'}
-                                </span>
-                              </div>
-                              <span className={`font-semibold tabular-nums ${d.egyptianNet >= 0 ? 'text-[#089981]' : 'text-[#f23645]'}`}>
-                                {formatEgpVal(d.egyptianNet, locale)}
-                              </span>
+                          {/* Domestic (Egyptians) */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff]"></span>
+                              <span className="text-neutral-400">{locale === 'ar' ? 'المصريون:' : 'Egyptians:'}</span>
                             </div>
-                            <div className="flex items-center justify-between text-[10px] text-neutral-400 tabular-nums pl-3">
-                              <span>{locale === 'ar' ? 'شراء: ' : 'Buy: '}{formatEgpVal(d.egyptianBuy, locale, false)}</span>
-                              <span>{locale === 'ar' ? 'بيع: ' : 'Sell: '}{formatEgpVal(d.egyptianSell, locale, false)}</span>
-                              <span>{locale === 'ar' ? 'الحصة: ' : 'Share: '}{d.egyptianSharePct}%</span>
-                            </div>
+                            <span className={`font-semibold tabular-nums ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                              {formatEgpVal(d.egyptianNet, locale)}
+                            </span>
                           </div>
-
-                          {/* Retail vs Inst split if available */}
-                          {d.retailSharePct !== null && d.instSharePct !== null && (
-                            <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400">
-                              <span>{locale === 'ar' ? 'المؤسسات / الأفراد' : 'Inst / Retail'}</span>
-                              <span className="tabular-nums font-semibold text-neutral-200">
-                                <span className="text-amber-400">{d.instSharePct}%</span> / <span className="text-sky-400">{d.retailSharePct}%</span>
-                              </span>
-                            </div>
-                          )}
                         </div>
 
                         {/* Footer: Session Turnover */}
-                        <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400">
-                          <span>{locale === 'ar' ? 'إجمالي تداول الجلسة' : 'Session Turnover'}</span>
+                        <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1.5 border-t border-plt-border-soft">
+                          <span>{locale === 'ar' ? 'إجمالي التداول: ' : 'Turnover: '}</span>
                           <span className="font-semibold text-neutral-200 tabular-nums">
                             {formatEgpVal(d.totalTurnover, locale, false)}
                           </span>
