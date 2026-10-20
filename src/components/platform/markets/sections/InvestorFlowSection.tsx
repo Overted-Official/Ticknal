@@ -24,6 +24,7 @@ export type FlowSegment = 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS';
 export type FlowCategory = 'TOTAL' | 'INSTITUTIONS' | 'RETAIL';
 export type FlowChartMode = 'stacked_share' | 'net_flow';
 export type NetFlowFilter = 'all_hot_money' | 'foreign' | 'arab';
+export type FlowScaleMode = 'balanced' | 'linear';
 
 const HORIZONS: FlowHorizon[] = ['1M', '3M', '6M', 'YTD', '1Y'];
 
@@ -33,13 +34,33 @@ interface InvestorFlowSectionProps {
   id?: string;
 }
 
+const SYMLOG_C = 100_000_000; // 100M EGP linear baseline
+
+function toSymLog(v: number): number {
+  if (!v) return 0;
+  const sign = v > 0 ? 1 : -1;
+  return sign * Math.log1p(Math.abs(v) / SYMLOG_C);
+}
+
+function fromSymLog(v: number): number {
+  if (!v) return 0;
+  const sign = v > 0 ? 1 : -1;
+  return sign * SYMLOG_C * Math.expm1(Math.abs(v));
+}
+
 function formatEgpVal(val: number, locale: string, showSign = true): string {
   const abs = Math.abs(val);
   const sign = showSign && val > 0 ? '+' : '';
   if (abs >= 1e9) {
     return `${sign}${(val / 1e9).toFixed(2)}${locale === 'ar' ? ' مليار' : 'B'}`;
   }
-  return `${sign}${(val / 1e6).toFixed(1)}${locale === 'ar' ? 'م' : 'M'}`;
+  if (abs >= 1e6) {
+    return `${sign}${(val / 1e6).toFixed(1)}${locale === 'ar' ? 'م' : 'M'}`;
+  }
+  if (abs >= 1e3) {
+    return `${sign}${(val / 1e3).toFixed(0)}${locale === 'ar' ? ' ألف' : 'K'}`;
+  }
+  return `${sign}${val.toFixed(0)}`;
 }
 
 export default function InvestorFlowSection({
@@ -52,6 +73,7 @@ export default function InvestorFlowSection({
   const [category, setCategory] = useState<FlowCategory>('TOTAL');
   const [chartMode, setChartMode] = useState<FlowChartMode>('net_flow');
   const [netFilter, setNetFilter] = useState<NetFlowFilter>('all_hot_money');
+  const [scaleMode, setScaleMode] = useState<FlowScaleMode>('balanced');
 
   const { data: liveData, isLoading: liveIsLoading } = useSWR<InvestorFlowsResponse>(
     isHeroScene
@@ -94,6 +116,9 @@ export default function InvestorFlowSection({
         egyptianSharePct: eShare,
         arabSharePct: aShare,
         foreignSharePct: fShare,
+        foreignNetBalanced: toSymLog(fNet),
+        arabNetBalanced: toSymLog(aNet),
+        hotMoneyNetBalanced: toSymLog(hmNet),
       };
     });
   }, [data?.history]);
@@ -113,10 +138,56 @@ export default function InvestorFlowSection({
   };
 
   const getBarDataKey = () => {
+    if (scaleMode === 'balanced') {
+      if (netFilter === 'foreign') return 'foreignNetBalanced';
+      if (netFilter === 'arab') return 'arabNetBalanced';
+      return 'hotMoneyNetBalanced';
+    }
     if (netFilter === 'foreign') return 'foreignNet';
     if (netFilter === 'arab') return 'arabNet';
     return 'hotMoneyNet';
   };
+
+  const balancedTicks = useMemo(() => {
+    if (scaleMode !== 'balanced' || normalizedHistory.length === 0) return undefined;
+    const key = scaleMode === 'balanced'
+      ? (netFilter === 'foreign' ? 'foreignNetBalanced' : netFilter === 'arab' ? 'arabNetBalanced' : 'hotMoneyNetBalanced')
+      : (netFilter === 'foreign' ? 'foreignNet' : netFilter === 'arab' ? 'arabNet' : 'hotMoneyNet');
+
+    let minVal = 0;
+    let maxVal = 0;
+    for (const d of normalizedHistory) {
+      const v = Number((d as any)[key] || 0);
+      if (v < minVal) minVal = v;
+      if (v > maxVal) maxVal = v;
+    }
+
+    const candidateMoneyTicks = [
+      -30e9, -20e9, -15e9, -10e9, -5e9, -2e9, -1e9, -500e6, -250e6, -100e6,
+      0,
+      100e6, 250e6, 500e6, 1e9, 2e9, 5e9, 10e9, 15e9, 20e9, 30e9
+    ];
+
+    const activeMoneyTicks = candidateMoneyTicks.filter((m) => {
+      const sym = toSymLog(m);
+      return sym >= minVal * 1.05 && sym <= maxVal * 1.05;
+    });
+
+    if (!activeMoneyTicks.includes(0)) activeMoneyTicks.push(0);
+    activeMoneyTicks.sort((a, b) => a - b);
+
+    let finalMoneyTicks = activeMoneyTicks;
+    if (finalMoneyTicks.length > 7) {
+      const zeroIdx = finalMoneyTicks.indexOf(0);
+      const neg = finalMoneyTicks.slice(0, zeroIdx);
+      const pos = finalMoneyTicks.slice(zeroIdx + 1);
+      const sampledNeg = neg.filter((_, i) => i === 0 || i === neg.length - 1 || i % 2 === 0);
+      const sampledPos = pos.filter((_, i) => i === 0 || i === pos.length - 1 || i % 2 === 0);
+      finalMoneyTicks = [...sampledNeg, 0, ...sampledPos];
+    }
+
+    return finalMoneyTicks.map((m) => toSymLog(m));
+  }, [scaleMode, normalizedHistory, netFilter]);
 
   return (
     <div id={id} className="w-full pt-3 select-none font-sans">
@@ -283,6 +354,40 @@ export default function InvestorFlowSection({
               </div>
             )}
 
+            {/* Scale Mode Switcher: Balanced (SymLog) vs Linear */}
+            {chartMode === 'net_flow' && (
+              <div className="seg-control h-7.5 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setScaleMode('balanced')}
+                  className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                    scaleMode === 'balanced' ? 'seg-control-btn-active' : ''
+                  }`}
+                  title={
+                    locale === 'ar'
+                      ? 'مقياس متوازن (SymLog): يُظهر تفاصيل الأيام العادية بوضوح ويبرز القمم الكبيرة'
+                      : 'Balanced (SymLog) Scale: Keeps normal days visible while highlighting major outliers'
+                  }
+                >
+                  {locale === 'ar' ? 'متوازن' : 'Balanced'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScaleMode('linear')}
+                  className={`seg-control-btn h-full px-2 text-[11px] rounded-md ${
+                    scaleMode === 'linear' ? 'seg-control-btn-active' : ''
+                  }`}
+                  title={
+                    locale === 'ar'
+                      ? 'المقياس الخطي الرياضي المباشر'
+                      : 'Direct Mathematical Linear Scale'
+                  }
+                >
+                  {locale === 'ar' ? 'خطي' : 'Linear'}
+                </button>
+              </div>
+            )}
+
             {/* Horizon Pills */}
             <div className="seg-control h-7.5 p-0.5">
               {HORIZONS.map((h) => {
@@ -415,8 +520,8 @@ export default function InvestorFlowSection({
           </div>
         )}
 
-        {/* 4. Pitch Black Surface Canvas */}
-        <div className="relative mt-2 w-full min-w-0 h-[360px] sm:h-[400px] bg-black border border-white/[0.06] rounded-none overflow-hidden pt-2">
+        {/* 4. Pitch Black Surface Canvas (No borders) */}
+        <div className="relative mt-2 w-full min-w-0 h-[360px] sm:h-[400px] bg-black border-0 rounded-none overflow-hidden pt-2">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-end p-4 pb-8 space-y-4">
               <div className="flex items-end justify-between gap-1 sm:gap-2 h-full w-full pt-8">
@@ -540,11 +645,18 @@ export default function InvestorFlowSection({
                   stroke="#262626"
                   tickLine={false}
                   axisLine={false}
+                  ticks={scaleMode === 'balanced' ? balancedTicks : undefined}
+                  domain={scaleMode === 'balanced' ? ['auto', 'auto'] : undefined}
                   tick={{ fill: '#888888', fontSize: 10, fontFamily: 'sans-serif' }}
                   tickFormatter={(val: number) => {
-                    const abs = Math.abs(val);
-                    if (abs >= 1e9) return `${(val / 1e9).toFixed(1)}${locale === 'ar' ? 'م' : 'B'}`;
-                    return `${(val / 1e6).toFixed(0)}${locale === 'ar' ? 'م' : 'M'}`;
+                    const realMoney = scaleMode === 'balanced' ? fromSymLog(val) : val;
+                    const abs = Math.abs(realMoney);
+                    if (abs < 1e6) return '0';
+                    const sign = realMoney > 0 ? '+' : '-';
+                    if (abs >= 1e9) {
+                      return `${sign}${(abs / 1e9).toFixed(abs >= 10e9 ? 0 : 1)}${locale === 'ar' ? ' مليار' : 'B'}`;
+                    }
+                    return `${sign}${(abs / 1e6).toFixed(0)}${locale === 'ar' ? 'م' : 'M'}`;
                   }}
                   dx={2}
                 />
