@@ -395,12 +395,10 @@ export async function generateAllDailyTakes(
   ]);
 
   let liveFxData: FxFairValueResponse | null = null;
-  if (!requestedDate || requestedDate >= todayStr) {
-    try {
-      const fxRes = await handleFxFairValueGet();
-      liveFxData = (await fxRes.json()) as FxFairValueResponse;
-    } catch {}
-  }
+  try {
+    const fxRes = await handleFxFairValueGet();
+    liveFxData = (await fxRes.json()) as FxFairValueResponse;
+  } catch {}
 
   const sortedUsd = [...usdRows].reverse();
   const trueRanges: number[] = [];
@@ -419,8 +417,11 @@ export async function generateAllDailyTakes(
   const atr90 = liveFxData?.atr90 ?? (tr90.length > 0 ? Number((tr90.reduce((a, b) => a + b, 0) / tr90.length).toFixed(4)) : 0.2680);
   const atrCompressionRatio = Number((atr14 / Math.max(0.05, atr90)).toFixed(3));
 
+  const historyUpToTarget = (liveFxData?.history || []).filter((h) => h.date <= targetDate);
+  const targetFxPoint = historyUpToTarget[historyUpToTarget.length - 1];
+
   const latestUsdRow = usdRows[0];
-  const officialUsd = liveFxData?.officialUsd ?? (latestUsdRow ? Number(latestUsdRow.close) : 54.50);
+  const officialUsd = targetFxPoint?.officialUsd ?? liveFxData?.officialUsd ?? (latestUsdRow ? Number(latestUsdRow.close) : 54.50);
 
   // Map historical gold EGP/g and COMI Cairo price by date to build 20-session FX Triangulation series
   const goldMap = new Map<string, number>();
@@ -446,8 +447,8 @@ export async function generateAllDailyTakes(
 
   // Use audited date-matched multi-proxy series from handleFxFairValueGet() if available
   const fxHistory20d: FxHistoryPoint[] =
-    liveFxData?.history && liveFxData.history.length >= 2
-      ? liveFxData.history.slice(-20).map((h) => ({
+    historyUpToTarget.length >= 2
+      ? historyUpToTarget.slice(-20).map((h) => ({
           date: String(h.date).slice(5, 10),
           officialUsd: Number(h.officialUsd),
           compositeFair: Number(h.compositeFair),
@@ -480,10 +481,10 @@ export async function generateAllDailyTakes(
         });
 
   const lastFxPt = fxHistory20d[fxHistory20d.length - 1];
-  const saghaGoldUsd = liveFxData?.goldImpliedRate ?? (lastFxPt ? lastFxPt.saghaGoldUsd : 54.29);
-  const londonGdrUsd = liveFxData?.gdrImpliedRate ?? (lastFxPt ? lastFxPt.londonGdrUsd : 54.74);
-  const usdtRate = liveFxData?.usdtRate ?? 55.05;
-  const compositeFair = liveFxData?.compositeFairValue ?? (lastFxPt ? lastFxPt.compositeFair : 54.71);
+  const saghaGoldUsd = targetFxPoint?.goldRate ?? liveFxData?.goldImpliedRate ?? (lastFxPt ? lastFxPt.saghaGoldUsd : 54.29);
+  const londonGdrUsd = targetFxPoint?.gdrRate ?? liveFxData?.gdrImpliedRate ?? (lastFxPt ? lastFxPt.londonGdrUsd : 54.74);
+  const usdtRate = targetFxPoint?.usdtRate ?? liveFxData?.usdtRate ?? 55.05;
+  const compositeFair = targetFxPoint?.compositeFair ?? liveFxData?.compositeFairValue ?? (lastFxPt ? lastFxPt.compositeFair : 54.71);
   const devaluationRiskScore = liveFxData?.devaluationRisk?.score ?? 15;
   const devaluationRiskLabel = liveFxData?.devaluationRisk?.label ?? 'Low Risk (Organic Float)';
 
