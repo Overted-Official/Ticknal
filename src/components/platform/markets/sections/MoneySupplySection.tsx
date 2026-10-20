@@ -149,7 +149,7 @@ export default function MoneySupplySection({
 
           {/* Time Horizon Pills */}
           <div className="flex items-center gap-1">
-            <div className="seg-control h-7 py-0.5 px-1 rounded-lg">
+            <div className="seg-control h-7.5 p-0.5">
               {HORIZONS.map((h) => {
                 const isSelected = horizon === h.key;
                 return (
@@ -157,10 +157,8 @@ export default function MoneySupplySection({
                     key={h.key}
                     type="button"
                     onClick={() => setHorizon(h.key)}
-                    className={`px-2 py-0.5 text-[11px] rounded-md transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-surface-active text-white font-semibold shadow-xs'
-                        : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                    className={`seg-control-btn h-full px-2.5 text-[11px] ${
+                      isSelected ? 'seg-control-btn-active' : ''
                     }`}
                   >
                     {locale === 'ar' ? h.labelAr : h.label}

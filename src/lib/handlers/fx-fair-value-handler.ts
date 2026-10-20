@@ -6,6 +6,21 @@ import TradingView from '@mathieuc/tradingview';
 import { fetchLiveSaghaGold } from '@/lib/server/isagha-scraper';
 import { fetchLiveUsdtEgp } from '@/lib/server/p2p-usdt-scraper';
 
+export interface FxHistoryItem {
+  date: string;
+  officialUsd: number;
+  compositeFair: number;
+  usdtRate: number;
+  goldRate: number;
+  gdrRate: number;
+  fairSpread: number;
+  usdtSpread: number;
+  goldSpread: number;
+  gdrSpread: number;
+  maxSpread: number;
+  maxSpreadPct: number;
+}
+
 export interface FxFairValueResponse {
   timestamp: string;
   officialUsd: number;
@@ -58,12 +73,13 @@ export interface FxFairValueResponse {
     gdrImplied: number[];
     devaluationRisk: number[];
   };
+  history?: FxHistoryItem[];
 }
 
 let memCache: { data: FxFairValueResponse; timestamp: number } | null = null;
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
-export async function handleFxFairValueGet(): Promise<Response> {
+export async function handleFxFairValueGet(request?: Request): Promise<Response> {
   const now = Date.now();
   if (memCache && now - memCache.timestamp < CACHE_TTL) {
     return NextResponse.json(memCache.data, {
@@ -77,12 +93,12 @@ export async function handleFxFairValueGet(): Promise<Response> {
       db.query.dailyPrices.findMany({
         where: eq(dailyPrices.tickerSymbol, 'USDEGP'),
         orderBy: [desc(dailyPrices.date)],
-        limit: 95,
+        limit: 250,
       }),
       db.query.dailyPrices.findMany({
         where: eq(dailyPrices.tickerSymbol, 'COMI'),
         orderBy: [desc(dailyPrices.date)],
-        limit: 30,
+        limit: 250,
       }),
       fetchLiveSaghaGold(),
       fetchLiveUsdtEgp(),
@@ -248,55 +264,71 @@ export async function handleFxFairValueGet(): Promise<Response> {
       description = 'Orderly managed crawl by CBE. Local Sagha, P2P USDT, and offshore GDR spreads remain within narrow operational bands.';
     }
 
-    // 7. Generate Historical Sparkline Arrays (Chronological old -> new)
+    // 7. Generate Historical Series and Sparkline Arrays (Chronological old -> new)
     // STRICT RULE: ZERO synthetic Math.sin/Math.cos data. Everything is derived from actual historical records.
     const comiMap = new Map<string, number>();
     for (const c of comiRows) {
       comiMap.set(String(c.date).slice(0, 10), Number(c.close));
     }
 
-    const recent14Usd = sortedUsd.slice(-14);
-    const officialUsdSparkline = recent14Usd.map((r) => Number(r.close));
-    const gdrSparkline: number[] = [];
-    const usdtSparkline: number[] = [];
-    const goldSparkline: number[] = [];
-    const fairSparkline: number[] = [];
-    const riskSparkline: number[] = [];
-
     // Base multipliers between current official USD and proxies
     const usdtRatio = usdtRate / officialUsd;
     const gdrRatio = gdrImpliedRate / officialUsd;
     const goldRatio = goldImpliedRate / officialUsd;
 
-    for (let i = 0; i < recent14Usd.length; i++) {
-      const u = Number(recent14Usd[i].close);
-      const dStr = String(recent14Usd[i].date).slice(0, 10);
-      const cClose = comiMap.get(dStr);
+    const sortedUsdFull = [...usdRows].reverse();
+    const history: FxHistoryItem[] = sortedUsdFull.map((r, i, arr) => {
+      const isLatest = i === arr.length - 1;
+      const date = String(r.date).slice(0, 10);
+      const u = Number(r.close);
+      const cClose = comiMap.get(date);
 
-      // If we have actual historical COMI close for that day, compute true historical GDR implied rate
-      const gdrVal = cClose && londonGdrUsd > 0
-        ? Number((cClose / londonGdrUsd).toFixed(2))
-        : Number((u * gdrRatio).toFixed(2));
+      const gdr = isLatest
+        ? gdrImpliedRate
+        : (cClose && londonGdrUsd > 0
+            ? Number((cClose / londonGdrUsd).toFixed(2))
+            : Number((u * gdrRatio).toFixed(2)));
 
-      const usdtVal = Number((u * usdtRatio).toFixed(2));
-      const goldVal = Number((u * goldRatio).toFixed(2));
-      const fairVal = Number((usdtVal * 0.35 + gdrVal * 0.30 + goldVal * 0.25 + u * 0.10).toFixed(2));
+      const usdt = isLatest ? usdtRate : Number((u * usdtRatio).toFixed(2));
+      const gold = isLatest ? goldImpliedRate : Number((u * goldRatio).toFixed(2));
+      const fair = Number((usdt * 0.35 + gdr * 0.30 + gold * 0.25 + u * 0.10).toFixed(2));
 
-      // Calculate historical daily spread without synthetic math
-      const daySpread = (Math.max(0, ((usdtVal - u) / u) * 100) +
-        Math.max(0, ((gdrVal - u) / u) * 100) +
-        Math.max(0, ((goldVal - u) / u) * 100)) / 3;
+      const fairSpread = Number((((fair - u) / u) * 100).toFixed(2));
+      const usdtSpread = Number((((usdt - u) / u) * 100).toFixed(2));
+      const goldSpread = Number((((gold - u) / u) * 100).toFixed(2));
+      const gdrSpread = Number((((gdr - u) / u) * 100).toFixed(2));
+      const maxSpread = Number((Math.max(usdt, gold, gdr, fair) - u).toFixed(2));
+      const maxSpreadPct = Number(((maxSpread / u) * 100).toFixed(2));
 
-      const dayRisk = Math.round(
+      return {
+        date,
+        officialUsd: u,
+        compositeFair: fair,
+        usdtRate: usdt,
+        goldRate: gold,
+        gdrRate: gdr,
+        fairSpread,
+        usdtSpread,
+        goldSpread,
+        gdrSpread,
+        maxSpread,
+        maxSpreadPct,
+      };
+    });
+
+    const recent14History = history.slice(-14);
+    const officialUsdSparkline = recent14History.map((h) => h.officialUsd);
+    const fairSparkline = recent14History.map((h) => h.compositeFair);
+    const usdtSparkline = recent14History.map((h) => h.usdtRate);
+    const goldSparkline = recent14History.map((h) => h.goldRate);
+    const gdrSparkline = recent14History.map((h) => h.gdrRate);
+
+    const riskSparkline = recent14History.map((h) => {
+      const daySpread = (Math.max(0, h.usdtSpread) + Math.max(0, h.gdrSpread) + Math.max(0, h.goldSpread)) / 3;
+      return Math.round(
         Math.min(95, Math.max(8, (daySpread <= 1.0 ? 10 : 10 + (daySpread - 1.0) * 7.5) * 0.4 + atrScore * 0.35 + liquidityScore * 0.25))
       );
-
-      gdrSparkline.push(gdrVal);
-      usdtSparkline.push(usdtVal);
-      goldSparkline.push(goldVal);
-      fairSparkline.push(fairVal);
-      riskSparkline.push(dayRisk);
-    }
+    });
 
     const payload: FxFairValueResponse = {
       timestamp: new Date().toISOString(),
@@ -369,6 +401,7 @@ export async function handleFxFairValueGet(): Promise<Response> {
         gdrImplied: gdrSparkline,
         devaluationRisk: riskSparkline,
       },
+      history,
     };
 
     memCache = { data: payload, timestamp: now };

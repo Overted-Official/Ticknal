@@ -272,7 +272,7 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     (root === 'market' && (sub === 'fx-fair-value' || sub === 'fair-value' || sub === 'devaluation')) ||
     root === 'fx-fair-value'
   ) {
-    return handleFxFairValueGet();
+    return handleFxFairValueGet(req);
   }
   if (
     (root === 'macro' && (sub === 'investor-flows' || sub === 'flows')) ||

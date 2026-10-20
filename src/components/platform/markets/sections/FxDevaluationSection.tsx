@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/icon-library';
 import KPICard, { type KPICardProps } from '@/components/platform/home/investments/performance/kpi-rails/KPICard';
 import MoneySupplySection from './MoneySupplySection';
+import FxComparisonChartSection from './FxComparisonChartSection';
 import type { SectorsPerformanceResponse } from '@/lib/finance/sectors-math';
 import type { FxFairValueResponse } from '@/lib/handlers/fx-fair-value-handler';
 import { useTranslation } from '@/lib/i18n';
@@ -198,9 +199,6 @@ export default function FxDevaluationSection({
             <h2 className="section-title text-plt-text">
               {isAr ? 'مخاطر العملة وأسعار الصرف' : 'FX & Currency Risk'}
             </h2>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/15 text-brand-blue border border-brand-blue/25">
-              {isHeroScene ? (isAr ? 'لقطة ١٠ أكتوبر' : 'Oct 10 snapshot') : (isAr ? 'مؤشرات كلية حية' : 'Live Macro')}
-            </span>
           </div>
           <p className="section-subtitle text-plt-muted">
             {isAr
@@ -222,7 +220,13 @@ export default function FxDevaluationSection({
         ))}
       </div>
 
-      {/* 3. Integrated Money Supply (M2 / M1 / M0) Chart */}
+      {/* 3. Official USD vs. Shadow Proxies Historical Comparison Chart */}
+      <FxComparisonChartSection
+        fxData={fxData}
+        isLoading={isLoading}
+      />
+
+      {/* 4. Integrated Money Supply (M2 / M1 / M0) Chart */}
       <MoneySupplySection
         macroData={macroData}
         isLoading={isLoading}
