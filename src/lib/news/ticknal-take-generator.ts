@@ -327,13 +327,14 @@ export async function generateAllDailyTakes(
     const dStr = String(r.date).slice(0, 10);
     const turnB = Number(r.totalTurnover || 0) / 1_000_000_000;
     flowTurnoverByDate.set(dStr, turnB);
-    const netM = Number(r.foreignNet || 0) / 1_000_000;
-    cumulative += netM;
-    if (netM > 0) inflowDays++;
-    else if (netM < 0) outflowDays++;
+    // Non-domestic Hot Money Flow combines Foreigners and Arabs
+    const hmNetM = (Number(r.foreignNet || 0) + Number(r.arabNet || 0)) / 1_000_000;
+    cumulative += hmNetM;
+    if (hmNetM > 0) inflowDays++;
+    else if (hmNetM < 0) outflowDays++;
     return {
       date: dStr.slice(5, 10),
-      foreignNetMillion: Number(netM.toFixed(1)),
+      foreignNetMillion: Number(hmNetM.toFixed(1)),
       cumulativeMillion: Number(cumulative.toFixed(1)),
     };
   });
@@ -346,11 +347,12 @@ export async function generateAllDailyTakes(
       ? calcSessionTurnoverEgp / 1_000_000_000
       : 6.85;
   const totalTurnoverB = Number(rawTurnoverB.toFixed(2));
-  const todayForeignNetM = latestFlow ? Number((Number(latestFlow.foreignNet || 0) / 1_000_000).toFixed(1)) : -45.2;
-  const todayArabNetM = latestFlow ? Number((Number(latestFlow.arabNet || 0) / 1_000_000).toFixed(1)) : 28.4;
-  const todayEgyptianNetM = latestFlow ? Number((Number(latestFlow.egyptianNet || 0) / 1_000_000).toFixed(1)) : 16.8;
-  const rolling30dForeignNetM = Number(cumulative.toFixed(1));
-  const isFlightRisk = todayForeignNetM < 0 && (rolling30dForeignNetM < -250 || outflowDays >= 18);
+  const todayForeignNetM = latestFlow ? Number((Number(latestFlow.foreignNet || 0) / 1_000_000).toFixed(1)) : -26071.3;
+  const todayArabNetM = latestFlow ? Number((Number(latestFlow.arabNet || 0) / 1_000_000).toFixed(1)) : 12666.3;
+  const todayEgyptianNetM = latestFlow ? Number((Number(latestFlow.egyptianNet || 0) / 1_000_000).toFixed(1)) : 13405.0;
+  const todayHotMoneyNetM = Number((todayForeignNetM + todayArabNetM).toFixed(1));
+  const rolling30dHotMoneyNetM = Number(cumulative.toFixed(1));
+  const isFlightRisk = todayHotMoneyNetM < 0 && (rolling30dHotMoneyNetM < -500 || outflowDays >= 18);
 
   // Build 20-Session Multi-Index History for Trade Summary Card
   const egx70Map = new Map<string, number>();
@@ -413,12 +415,12 @@ export async function generateAllDailyTakes(
 
   const tr14 = trueRanges.slice(-14);
   const tr90 = trueRanges.slice(-90);
-  const atr14 = tr14.length > 0 ? Number((tr14.reduce((a, b) => a + b, 0) / tr14.length).toFixed(4)) : liveFxData?.atr14 ?? 0.22;
-  const atr90 = tr90.length > 0 ? Number((tr90.reduce((a, b) => a + b, 0) / tr90.length).toFixed(4)) : liveFxData?.atr90 ?? 0.27;
+  const atr14 = liveFxData?.atr14 ?? (tr14.length > 0 ? Number((tr14.reduce((a, b) => a + b, 0) / tr14.length).toFixed(4)) : 0.2601);
+  const atr90 = liveFxData?.atr90 ?? (tr90.length > 0 ? Number((tr90.reduce((a, b) => a + b, 0) / tr90.length).toFixed(4)) : 0.2680);
   const atrCompressionRatio = Number((atr14 / Math.max(0.05, atr90)).toFixed(3));
 
   const latestUsdRow = usdRows[0];
-  const officialUsd = latestUsdRow ? Number(latestUsdRow.close) : liveFxData?.officialUsd ?? 53.40;
+  const officialUsd = liveFxData?.officialUsd ?? (latestUsdRow ? Number(latestUsdRow.close) : 54.50);
 
   // Map historical gold EGP/g and COMI Cairo price by date to build 20-session FX Triangulation series
   const goldMap = new Map<string, number>();
@@ -429,48 +431,60 @@ export async function generateAllDailyTakes(
   const baseGdrSpreadFactor =
     liveFxData && liveFxData.officialUsd > 0
       ? liveFxData.gdrImpliedRate / liveFxData.officialUsd
-      : 1.0309;
+      : 1.0044;
   const baseGoldSpreadFactor =
     liveFxData && liveFxData.officialUsd > 0
       ? liveFxData.goldImpliedRate / liveFxData.officialUsd
-      : 1.0024;
+      : 0.9961;
   const baseUsdtSpreadFactor =
     liveFxData && liveFxData.officialUsd > 0
       ? liveFxData.usdtRate / liveFxData.officialUsd
-      : 1.0098;
+      : 1.0101;
 
   const londonGdrPrice = liveFxData?.londonGdrUsd ?? 2.255;
   const recent20Usd = sortedUsd.slice(-20);
-  const fxHistory20d: FxHistoryPoint[] = recent20Usd.map((uRow) => {
-    const dStr = String(uRow.date).slice(0, 10);
-    const u = Number(uRow.close);
-    const comiEgp = comiMap.get(dStr);
 
-    // Derive date-specific Sagha Gold Implied & London CIB GDR Implied rates from actual historical records (ZERO Math.sin)
-    const gdrImplied = comiEgp && londonGdrPrice > 0
-      ? Number((comiEgp / londonGdrPrice).toFixed(2))
-      : Number((u * baseGdrSpreadFactor).toFixed(2));
-    const saghaImplied = Number((u * baseGoldSpreadFactor).toFixed(2));
-    const usdtImplied = Number((u * baseUsdtSpreadFactor).toFixed(2));
+  // Use audited date-matched multi-proxy series from handleFxFairValueGet() if available
+  const fxHistory20d: FxHistoryPoint[] =
+    liveFxData?.history && liveFxData.history.length >= 2
+      ? liveFxData.history.slice(-20).map((h) => ({
+          date: String(h.date).slice(5, 10),
+          officialUsd: Number(h.officialUsd),
+          compositeFair: Number(h.compositeFair),
+          saghaGoldUsd: Number(h.goldRate),
+          londonGdrUsd: Number(h.gdrRate),
+        }))
+      : recent20Usd.map((uRow) => {
+          const dStr = String(uRow.date).slice(0, 10);
+          const u = Number(uRow.close);
+          const comiEgp = comiMap.get(dStr);
 
-    // 4-way triangulation: 35% USDT + 30% GDR + 25% Gold + 10% CBE Spot
-    const compFair = Number((usdtImplied * 0.35 + gdrImplied * 0.30 + saghaImplied * 0.25 + u * 0.10).toFixed(2));
+          // Derive date-specific Sagha Gold Implied & London CIB GDR Implied rates from actual historical records (ZERO Math.sin)
+          const gdrImplied =
+            comiEgp && londonGdrPrice > 0
+              ? Number((comiEgp / londonGdrPrice).toFixed(2))
+              : Number((u * baseGdrSpreadFactor).toFixed(2));
+          const saghaImplied = Number((u * baseGoldSpreadFactor).toFixed(2));
+          const usdtImplied = Number((u * baseUsdtSpreadFactor).toFixed(2));
 
-    return {
-      date: dStr.slice(5, 10),
-      officialUsd: u,
-      compositeFair: compFair,
-      saghaGoldUsd: saghaImplied,
-      londonGdrUsd: gdrImplied,
-    };
-  });
+          // 4-way triangulation: 35% USDT + 30% GDR + 25% Gold + 10% CBE Spot
+          const compFair = Number((usdtImplied * 0.35 + gdrImplied * 0.30 + saghaImplied * 0.25 + u * 0.10).toFixed(2));
+
+          return {
+            date: dStr.slice(5, 10),
+            officialUsd: u,
+            compositeFair: compFair,
+            saghaGoldUsd: saghaImplied,
+            londonGdrUsd: gdrImplied,
+          };
+        });
 
   const lastFxPt = fxHistory20d[fxHistory20d.length - 1];
-  const saghaGoldUsd = lastFxPt ? lastFxPt.saghaGoldUsd : liveFxData?.goldImpliedRate ?? 53.35;
-  const londonGdrUsd = lastFxPt ? lastFxPt.londonGdrUsd : liveFxData?.gdrImpliedRate ?? 55.42;
-  const usdtRate = liveFxData?.usdtRate ?? 54.45;
-  const compositeFair = lastFxPt ? lastFxPt.compositeFair : liveFxData?.compositeFairValue ?? 54.41;
-  const devaluationRiskScore = liveFxData?.devaluationRisk?.score ?? 16;
+  const saghaGoldUsd = liveFxData?.goldImpliedRate ?? (lastFxPt ? lastFxPt.saghaGoldUsd : 54.29);
+  const londonGdrUsd = liveFxData?.gdrImpliedRate ?? (lastFxPt ? lastFxPt.londonGdrUsd : 54.74);
+  const usdtRate = liveFxData?.usdtRate ?? 55.05;
+  const compositeFair = liveFxData?.compositeFairValue ?? (lastFxPt ? lastFxPt.compositeFair : 54.71);
+  const devaluationRiskScore = liveFxData?.devaluationRisk?.score ?? 15;
   const devaluationRiskLabel = liveFxData?.devaluationRisk?.label ?? 'Low Risk (Organic Float)';
 
   // ==========================================
@@ -485,10 +499,11 @@ export async function generateAllDailyTakes(
   const hotMoneyChart = generateLocalizedTakeBundle(generateHotMoneyChartSvg, {
     date: targetDate,
     totalTurnoverBillion: totalTurnoverB,
+    todayHotMoneyNetMillion: todayHotMoneyNetM,
     todayForeignNetMillion: todayForeignNetM,
     todayArabNetMillion: todayArabNetM,
     todayEgyptianNetMillion: todayEgyptianNetM,
-    rolling30dForeignNetMillion: rolling30dForeignNetM,
+    rolling30dForeignNetMillion: rolling30dHotMoneyNetM,
     inflowDaysCount: inflowDays,
     outflowDaysCount: outflowDays,
     isFlightRisk,
@@ -555,10 +570,10 @@ export async function generateAllDailyTakes(
 
   // 2. Deterministic English + Arabic institutional briefings grounded in exact numbers and approved critical analysis
   const hotMoneyEnFallback = isFlightRisk
-    ? `Foreign institutional capital recorded net selling of ${fmtSignedM(todayForeignNetM)} in the ${targetDate} session (Arab net ${fmtSignedM(todayArabNetM)}) across ${totalTurnoverB.toFixed(2)}B EGP in turnover, extending the 30-session cumulative foreign balance to ${fmtSignedM(rolling30dForeignNetM)} (${outflowDays} outflow vs ${inflowDays} inflow sessions). Domestic institutions absorbed ${fmtSignedM(todayEgyptianNetM)}, counseling disciplined risk sizing until foreign outflows stabilize.`
-    : todayForeignNetM >= 0 && rolling30dForeignNetM < -250
-    ? `Foreign institutions turned net buyers of ${fmtSignedM(todayForeignNetM)} in the ${targetDate} session alongside Arab net inflows of ${fmtSignedM(todayArabNetM)} on ${totalTurnoverB.toFixed(2)}B EGP turnover, offering tactical support even as the 30-session balance stands at ${fmtSignedM(rolling30dForeignNetM)} (${inflowDays} inflow vs ${outflowDays} outflow sessions). Selective accumulation in liquid blue-chip leaders is favored while monitoring follow-through.`
-    : `Institutional positioning remained constructive in the ${targetDate} session with Foreign net flow at ${fmtSignedM(todayForeignNetM)} and Arab net flow at ${fmtSignedM(todayArabNetM)} across ${totalTurnoverB.toFixed(2)}B EGP in turnover, bringing the 30-session foreign balance to ${fmtSignedM(rolling30dForeignNetM)}.`;
+    ? `Non-domestic hot money recorded net outflows of ${fmtSignedM(todayHotMoneyNetM)} in the ${targetDate} session (Foreign institutional net ${fmtSignedM(todayForeignNetM)} offset by Arab net ${fmtSignedM(todayArabNetM)}) across ${totalTurnoverB.toFixed(2)}B EGP in turnover. This brings the 30-session cumulative hot money balance to ${fmtSignedM(rolling30dHotMoneyNetM)} (${outflowDays} outflow vs ${inflowDays} inflow sessions). Domestic institutions absorbed ${fmtSignedM(todayEgyptianNetM)}, counseling disciplined risk sizing until foreign outflows stabilize.`
+    : todayHotMoneyNetM >= 0 && rolling30dHotMoneyNetM < -250
+    ? `Non-domestic hot money recorded net inflows of ${fmtSignedM(todayHotMoneyNetM)} in the ${targetDate} session (Foreign net ${fmtSignedM(todayForeignNetM)}, Arab net ${fmtSignedM(todayArabNetM)}) on ${totalTurnoverB.toFixed(2)}B EGP turnover, offering tactical support even as the 30-session balance stands at ${fmtSignedM(rolling30dHotMoneyNetM)} (${inflowDays} inflow vs ${outflowDays} outflow sessions). Selective accumulation in liquid blue-chip leaders is favored while monitoring follow-through.`
+    : `Institutional positioning recorded non-domestic hot money net flow of ${fmtSignedM(todayHotMoneyNetM)} in the ${targetDate} session with Foreign net flow at ${fmtSignedM(todayForeignNetM)} and Arab net flow at ${fmtSignedM(todayArabNetM)} across ${totalTurnoverB.toFixed(2)}B EGP in turnover, bringing the 30-session hot money balance to ${fmtSignedM(rolling30dHotMoneyNetM)}. Domestic Egyptian capital absorbed ${fmtSignedM(todayEgyptianNetM)}.`;
 
   const foreignDirAr = todayForeignNetM < 0
     ? `اتجه الأجانب للبيع بصافي ${Math.abs(todayForeignNetM).toFixed(1)} مليون جنيه`
@@ -568,13 +583,13 @@ export async function generateAllDailyTakes(
     ? `بينما واصل العرب الشراء بصافي ${todayArabNetM.toFixed(1)} مليون جنيه`
     : `وسجل العرب مبيعات بصافي ${Math.abs(todayArabNetM).toFixed(1)} مليون جنيه`;
 
-  const monthlyTrendAr = rolling30dForeignNetM < 0
-    ? `وعلى المدى الشهري، ما زال غير المصريين في مسار تخارج تدريجي ببيعهم في ${outflowDays} جلسة من آخر ٣٠ جلسة (بإجمالي ${Math.abs(rolling30dForeignNetM).toFixed(1)} مليون جنيه)، مما يعني أن السوق يعتمد حالياً بشكل رئيسي على السيولة المحلية.`
-    : `وعلى المدى الشهري، يُظهر غير المصريين ميلاً لضخ السيولة بتسجيل صافي شراء تراكمي ${rolling30dForeignNetM.toFixed(1)} مليون جنيه عبر ${inflowDays} جلسة شراء، مما يمنح دعماً مستمراً للمؤشر الرئيسي.`;
+  const monthlyTrendAr = rolling30dHotMoneyNetM < 0
+    ? `وعلى المدى الشهري (٣٠ جلسة)، بلغ صافي تخارج الأموال الساخنة التراكمي ${Math.abs(rolling30dHotMoneyNetM).toFixed(1)} مليون جنيه عبر ${outflowDays} جلسة بيع مقابل ${inflowDays} جلسة شراء، في حين وفرت المؤسسات المصرية دعماً بامتصاصها صافي ${todayEgyptianNetM.toFixed(1)} مليون جنيه.`
+    : `وعلى المدى الشهري، تُظهر الأموال الساخنة ميلاً لضخ السيولة بتسجيل صافي شراء تراكمي ${rolling30dHotMoneyNetM.toFixed(1)} مليون جنيه عبر ${inflowDays} جلسة شراء، مما يمنح دعماً مستمراً للمؤشر الرئيسي.`;
 
-  const hotMoneyArSummary = `سجلت تعاملات غير المصريين ${todayForeignNetM + todayArabNetM >= 0 ? 'دخولاً إيجابياً للسيولة' : 'خروجاً طفيفاً للسيولة'} في جلسة اليوم؛ حيث ${foreignDirAr} ${arabDirAr} وسط تداولات بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. ${monthlyTrendAr}`;
+  const hotMoneyArSummary = `سجلت تعاملات الأموال الساخنة (غير المصريين: أجانب وعرب) ${todayHotMoneyNetM >= 0 ? 'دخولاً إيجابياً للسيولة' : 'تخارجاً صافياً'} بقيمة ${Math.abs(todayHotMoneyNetM).toFixed(1)} مليون جنيه في جلسة اليوم؛ حيث ${foreignDirAr} ${arabDirAr} وسط تداولات إجمالية بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. ${monthlyTrendAr}`;
 
-  const tradeSummaryEnFallback = `EGX 30 settled at ${egx30.close.toFixed(1)} (${fmtSignedPct(egx30.changePct)}) in the ${targetDate} session while mid-cap EGX 70 EWI closed at ${egx70.close.toFixed(1)} (${fmtSignedPct(egx70.changePct)}) and broad-market EGX 100 EWI at ${egx100.close.toFixed(1)} (${fmtSignedPct(egx100.changePct)}). Total equity turnover reached ${totalTurnoverB.toFixed(2)}B EGP as institutional and retail liquidity rotated across banking, real estate, and industrial leaders.`;
+  const tradeSummaryEnFallback = `EGX 30 settled at ${egx30.close.toFixed(1)} (${fmtSignedPct(egx30.changePct)}) in the ${targetDate} session while mid-cap EGX 70 EWI closed at ${egx70.close.toFixed(1)} (${fmtSignedPct(egx70.changePct)}) and broad-market EGX 100 EWI at ${egx100.close.toFixed(1)} (${fmtSignedPct(egx100.changePct)}). Total exchange turnover reached ${totalTurnoverB.toFixed(2)}B EGP as institutional and retail liquidity rotated across banking, real estate, and industrial leaders.`;
 
   const tradeSummaryArSummary = egx30.changePct >= 0
     ? egx70.changePct < 0
@@ -647,9 +662,13 @@ CRITICAL ARABIC RULES:
           completeWithKeyPool({
             systemPrompt: systemPromptCommon,
             userPrompt: `Analyze 30-Day Egyptian Hot Money & Institutional Liquidity (${targetDate}):
-- 30D Rolling Foreign Net: ${rolling30dForeignNetM}M EGP (${inflowDays} inflow vs ${outflowDays} outflow sessions)
-- Today Foreign Net: ${todayForeignNetM}M EGP | Arab Net: ${todayArabNetM}M EGP | Egyptian Net: ${todayEgyptianNetM}M EGP | Turnover: ${totalTurnoverB.toFixed(2)}B EGP
-Directly answer the investor core question: Are non-Egyptians (foreigners & Arabs) entering or exiting the market today and on a monthly basis?`,
+- Today Combined Hot Money Net (Foreigners + Arabs): ${todayHotMoneyNetM}M EGP
+  - Foreign Institutional Net: ${todayForeignNetM}M EGP
+  - Arab Net: ${todayArabNetM}M EGP
+  - Egyptian Domestic Net: ${todayEgyptianNetM}M EGP
+- 30D Rolling Hot Money Net: ${rolling30dHotMoneyNetM}M EGP (${inflowDays} inflow vs ${outflowDays} outflow sessions)
+- Total Market Turnover: ${totalTurnoverB.toFixed(2)}B EGP
+Directly evaluate: Are non-domestic funds (foreigners & Arabs) entering or exiting today, how much did domestic capital absorb, and what does the 30-day cumulative trajectory signal?`,
             fallbackText: JSON.stringify({ en: hotMoneyEnFallback, ar: hotMoneyArSummary }),
             maxTokens: 400,
             timeoutMs: 8000,
@@ -705,10 +724,11 @@ Critique liquidity quality: Did real money support the gainers or was it isolate
             completeWithKeyPool({
               systemPrompt: systemPromptCommon,
               userPrompt: `Evaluate Egypt FX Risk & Fair Value (${targetDate}):
-- Official CBE USD/EGP: ${officialUsd.toFixed(2)} | Composite Fair Value: ${compositeFair.toFixed(2)}
+- Official CBE USD/EGP: ${officialUsd.toFixed(2)} | Triangulated Composite Fair Value: ${compositeFair.toFixed(2)}
 - USDT/EGP P2P: ${usdtRate.toFixed(2)} | London CIB GDR Implied: ${londonGdrUsd.toFixed(2)} | Sagha Gold Implied: ${saghaGoldUsd.toFixed(2)}
 - Devaluation Risk Score: ${devaluationRiskScore}/100 (${devaluationRiskLabel})
-Assess whether USDT P2P, London GDR, or gold have a speculative gap/premium over the official rate and interpret the devaluation risk score.`,
+- Volatility: ATR 14D is ${atr14.toFixed(2)} EGP vs 90D ${atr90.toFixed(2)} EGP (${(atrCompressionRatio * 100).toFixed(1)}% compression ratio)
+Assess the tight corridor between the official rate and proxy clearing markets (USDT P2P, London GDR, Sagha gold) and interpret the devaluation risk score.`,
               fallbackText: JSON.stringify({ en: fxEnFallback, ar: fxArSummary }),
               maxTokens: 400,
               timeoutMs: 8000,
@@ -742,7 +762,7 @@ Assess whether USDT P2P, London GDR, or gold have a speculative gap/premium over
       content: 'الأموال الساخنة: هل يشتري أم يبيع الأجانب والعرب اليوم؟',
       summary: combineBilingual(hotMoneyBilingual.en, custom?.hot_money?.ar || hotMoneyBilingual.ar),
       tickers: ['EGX30', 'COMI'],
-      sentiment: (isFlightRisk ? 'bearish' : todayForeignNetM > 0 || rolling30dForeignNetM > 50 ? 'bullish' : 'neutral') as 'bullish' | 'bearish' | 'neutral',
+      sentiment: (isFlightRisk ? 'bearish' : todayHotMoneyNetM > 0 || rolling30dHotMoneyNetM > 50 ? 'bullish' : 'neutral') as 'bullish' | 'bearish' | 'neutral',
       importance: (isFlightRisk ? 'critical' : 'high') as 'critical' | 'high' | 'normal',
       imageUrl: hotMoneyChart,
       publishedAt: new Date(safeBaseMs + 1000),

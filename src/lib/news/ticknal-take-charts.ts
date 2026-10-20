@@ -67,6 +67,7 @@ export type ChartVariant = 'wide' | 'square';
 export interface HotMoneyChartData {
   date: string;
   totalTurnoverBillion: number;
+  todayHotMoneyNetMillion?: number;
   todayForeignNetMillion: number;
   todayArabNetMillion: number;
   todayEgyptianNetMillion: number;
@@ -302,11 +303,14 @@ export function generateHotMoneyChartSvg(
   const W = isSquare ? 1080 : 1200;
   const H = isSquare ? 1080 : 675;
   const ar = locale === 'ar';
+  const hotMoneyNet = typeof data.todayHotMoneyNetMillion === 'number'
+    ? data.todayHotMoneyNetMillion
+    : Number((data.todayForeignNetMillion + data.todayArabNetMillion).toFixed(1));
   const risk = data.isFlightRisk;
-  const isMixedRecovery = data.rolling30dForeignNetMillion < -250 && data.todayForeignNetMillion >= 0;
+  const isMixedRecovery = data.rolling30dForeignNetMillion < -250 && hotMoneyNet >= 0;
   const riskColor = risk ? RED : isMixedRecovery ? AMBER : GREEN;
   const statusBadge = risk
-    ? ar ? 'تحذير: تخارج سيولة أجنبية' : 'CAPITAL FLIGHT WARNING'
+    ? ar ? 'تحذير: ضغوط تخارج الأموال الساخنة' : 'HOT MONEY OUTFLOW PRESSURE'
     : isMixedRecovery
     ? ar ? 'شراء تكتيكي وسط تخارج ٣٠ جلسة' : 'TACTICAL INFLOW / 30D OUTFLOW'
     : ar ? 'تجميع مؤسسي إيجابي' : 'INSTITUTIONAL ACCUMULATION';
@@ -420,7 +424,7 @@ export function generateHotMoneyChartSvg(
     const sqBody = `
       ${headerBlock(
         W,
-        ar ? 'الأموال الساخنة: هل يشتري أم يبيع الأجانب والعرب اليوم؟' : 'Foreign & Arab Institutional Flows',
+        ar ? 'الأموال الساخنة: صافي تعاملات غير المصريين (أجانب وعرب)' : 'Hot Money Pulse: Foreign & Arab Flows',
         ar ? 'من يضخ السيولة ومن يسحبها: تعاملات الأجانب والعرب والمصريين اليوم' : 'Session net positioning & 30-session cumulative trajectory',
         data.date,
         ar ? 'الأموال الساخنة' : 'Hot Money Status',
@@ -448,7 +452,7 @@ export function generateHotMoneyChartSvg(
         <rect width="996" height="162" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
         ${
           ar
-            ? `<text x="970" y="34" fill="${SOFT}" font-size="14" font-weight="700" text-anchor="end">صافي الأجانب التراكمي (٣٠ جلسة)</text>
+            ? `<text x="970" y="34" fill="${SOFT}" font-size="14" font-weight="700" text-anchor="end">صافي الأموال الساخنة التراكمي (أجانب + عرب · ٣٠ جلسة)</text>
                <text x="970" y="82" fill="${cumColor}" font-size="34" font-weight="700" text-anchor="end">${sign(cum)}${fmt1(cum)}M EGP</text>
                <text x="26" y="34" fill="${SOFT}" font-size="14" font-weight="700" text-anchor="start">جلسات الشراء مقابل البيع</text>
                <text x="26" y="82" fill="#ffffff" font-size="32" font-weight="700" text-anchor="start">
@@ -456,7 +460,7 @@ export function generateHotMoneyChartSvg(
                  <tspan fill="${MUTED}" font-size="22"> / </tspan>
                  <tspan fill="${RED}">${data.outflowDaysCount}D</tspan>
                </text>`
-            : `<text x="26" y="34" fill="${SOFT}" font-size="14" font-weight="600">30-Session Rolling Foreign Net</text>
+            : `<text x="26" y="34" fill="${SOFT}" font-size="14" font-weight="600">30-Session Rolling Hot Money Net (Foreign + Arab)</text>
                <text x="26" y="82" fill="${cumColor}" font-size="34" font-weight="700">${sign(cum)}${fmt1(cum)}M EGP</text>
                <text x="440" y="34" fill="${SOFT}" font-size="14" font-weight="600">Inflow vs. Outflow Days</text>
                <text x="440" y="82" fill="#ffffff" font-size="32" font-weight="700">
@@ -480,14 +484,14 @@ export function generateHotMoneyChartSvg(
         <rect width="996" height="440" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
         ${
           ar
-            ? `<text x="970" y="38" fill="#ffffff" font-size="16.5" font-weight="700" text-anchor="end">مسار السيولة الأجنبية اليومي والتراكمي (آخر ٣٠ جلسة)</text>
+            ? `<text x="970" y="38" fill="#ffffff" font-size="16.5" font-weight="700" text-anchor="end">مسار الأموال الساخنة اليومي والتراكمي (أجانب + عرب · آخر ٣٠ جلسة)</text>
                <rect x="26" y="24" width="13" height="13" rx="3" fill="${GREEN}" />
                <text x="44" y="35" fill="${SOFT}" font-size="12.5" font-weight="700">شراء</text>
                <rect x="108" y="24" width="13" height="13" rx="3" fill="${RED}" />
                <text x="126" y="35" fill="${SOFT}" font-size="12.5" font-weight="700">بيع</text>
                <line x1="186" y1="30" x2="213" y2="30" stroke="${CYAN}" stroke-width="3" />
                <text x="221" y="35" fill="${CYAN}" font-size="12.5" font-weight="700">المسار التراكمي</text>`
-            : `<text x="26" y="38" fill="#ffffff" font-size="16.5" font-weight="700">30-Session Daily Foreign Net Bars &amp; Cumulative Curve</text>
+            : `<text x="26" y="38" fill="#ffffff" font-size="16.5" font-weight="700">30-Session Daily Hot Money Net Bars &amp; Cumulative Curve</text>
                <rect x="610" y="24" width="13" height="13" rx="3" fill="${GREEN}" />
                <text x="628" y="35" fill="${SOFT}" font-size="12.5" font-weight="600">Inflow</text>
                <rect x="695" y="24" width="13" height="13" rx="3" fill="${RED}" />
@@ -616,8 +620,8 @@ export function generateHotMoneyChartSvg(
   const body = `
     ${headerBlock(
       W,
-      ar ? 'الأموال الساخنة: هل يشتري أم يبيع الأجانب والعرب اليوم؟' : 'Foreign & Arab Institutional Flow Pulse',
-      ar ? 'من يضخ السيولة ومن يسحبها: تعاملات الأجانب والعرب والمصريين اليوم' : 'Session net institutional positioning & 30-session cumulative trajectory',
+      ar ? 'الأموال الساخنة: صافي تعاملات غير المصريين (أجانب وعرب)' : 'Hot Money Pulse: Foreign & Arab Flows',
+      ar ? 'من يضخ السيولة ومن يسحبها: تعاملات الأجانب والعرب والمصريين اليوم' : 'Session net positioning & 30-session cumulative trajectory',
       data.date,
       ar ? 'الأموال الساخنة' : 'Hot Money Status',
       statusBadge,
@@ -642,7 +646,7 @@ export function generateHotMoneyChartSvg(
       <rect width="546" height="178" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
       ${
         ar
-          ? `<text x="522" y="28" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="end">صافي الأجانب التراكمي (٣٠ جلسة)</text>
+          ? `<text x="522" y="28" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="end">صافي الأموال الساخنة التراكمي (أجانب + عرب · ٣٠ جلسة)</text>
              <text x="522" y="68" fill="${cumColor}" font-size="28" font-weight="700" text-anchor="end">${sign(cum)}${fmt1(cum)}M EGP</text>
              <text x="24" y="28" fill="${SOFT}" font-size="12.5" font-weight="700" text-anchor="start">جلسات الشراء مقابل البيع</text>
              <text x="24" y="68" fill="#ffffff" font-size="28" font-weight="700" text-anchor="start">
@@ -651,7 +655,7 @@ export function generateHotMoneyChartSvg(
                <tspan fill="${RED}">${data.outflowDaysCount}D</tspan>
              </text>
              <text x="522" y="104" fill="${MUTED}" font-size="11.5" font-weight="600" text-anchor="end">توزيع جلسات الشراء والبيع خلال ٣٠ جلسة</text>`
-          : `<text x="24" y="28" fill="${SOFT}" font-size="12.5" font-weight="600">30-Session Rolling Foreign Net</text>
+          : `<text x="24" y="28" fill="${SOFT}" font-size="12.5" font-weight="600">30-Session Rolling Hot Money Net (Foreign + Arab)</text>
              <text x="24" y="68" fill="${cumColor}" font-size="28" font-weight="700">${sign(cum)}${fmt1(cum)}M EGP</text>
              <text x="330" y="28" fill="${SOFT}" font-size="12.5" font-weight="600">Inflow vs. Outflow Days</text>
              <text x="330" y="68" fill="#ffffff" font-size="28" font-weight="700">
@@ -674,7 +678,7 @@ export function generateHotMoneyChartSvg(
       <rect width="1116" height="254" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
       ${
         ar
-          ? `<text x="1092" y="28" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">مسار السيولة الأجنبية اليومي والتراكمي (آخر ٣٠ جلسة)</text>
+          ? `<text x="1092" y="28" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">مسار الأموال الساخنة اليومي والتراكمي (أجانب + عرب · آخر ٣٠ جلسة)</text>
              <rect x="24" y="17" width="11" height="11" rx="2.5" fill="${GREEN}" />
              <text x="40" y="27" fill="${SOFT}" font-size="11.5" font-weight="700">شراء يومي</text>
              <rect x="122" y="17" width="11" height="11" rx="2.5" fill="${RED}" />
@@ -682,7 +686,7 @@ export function generateHotMoneyChartSvg(
              <line x1="216" y1="22" x2="240" y2="22" stroke="${CYAN}" stroke-width="2.5" />
              <circle cx="228" cy="22" r="3" fill="${CYAN}" />
              <text x="248" y="27" fill="${CYAN}" font-size="11.5" font-weight="700">المسار التراكمي</text>`
-          : `<text x="24" y="28" fill="#ffffff" font-size="14" font-weight="700">30-Session Daily Foreign Net Bars &amp; Cumulative Flow Trajectory</text>
+          : `<text x="24" y="28" fill="#ffffff" font-size="14" font-weight="700">30-Session Daily Hot Money Net Bars &amp; Cumulative Flow Trajectory</text>
              <rect x="700" y="17" width="11" height="11" rx="2.5" fill="${GREEN}" />
              <text x="716" y="27" fill="${SOFT}" font-size="11" font-weight="600">Daily Inflow</text>
              <rect x="805" y="17" width="11" height="11" rx="2.5" fill="${RED}" />
@@ -1945,7 +1949,7 @@ export function generateUsdEgpUpdateChartSvg(
         <rect x="690" y="120" width="${Math.min(280, Math.max(16, (data.atr90 / Math.max(0.4, data.atr90 * 1.3)) * 280)).toFixed(1)}" height="16" rx="6" fill="#71717a" />
       </g>
 
-      ${footerBlock(W, H, ar ? 'نموذج تكنال لتسعير العملة · (٤٥٪ شهادات لندن + ٣٥٪ الصاغة + ٢٠٪ الرسمي)' : 'Ticknal Currency Triangulation Model · Weighted (45% GDR + 35% Sagha Gold + 20% CBE)', ar)}
+      ${footerBlock(W, H, ar ? 'نموذج تكنال الرباعي لتسعير العملة · (٣٥٪ تيذر + ٣٠٪ شهادات لندن + ٢٥٪ الذهب + ١٠٪ الرسمي)' : 'Ticknal 4-Way Currency Triangulation · (35% USDT + 30% London GDR + 25% Sagha Gold + 10% CBE Spot)', ar)}
     `;
     return toBase64Svg(svgShell(W, H, defs, sqBody, ar));
   }
@@ -2101,7 +2105,7 @@ export function generateUsdEgpUpdateChartSvg(
       <rect x="740" y="86" width="${Math.min(350, Math.max(16, (data.atr90 / Math.max(0.4, data.atr90 * 1.3)) * 350)).toFixed(1)}" height="14" rx="5" fill="#71717a" />
     </g>
 
-    ${footerBlock(W, H, ar ? 'نموذج تكنال لتسعير العملة · (٤٥٪ شهادات لندن + ٣٥٪ دولار الصاغة + ٢٠٪ الرسمي)' : 'Ticknal Currency Triangulation Model · Weighted (45% GDR + 35% Sagha Gold + 20% CBE)', ar)}
+    ${footerBlock(W, H, ar ? 'نموذج تكنال الرباعي لتسعير العملة · (٣٥٪ تيذر + ٣٠٪ شهادات لندن + ٢٥٪ دولار الصاغة + ١٠٪ الرسمي)' : 'Ticknal 4-Way Currency Triangulation · (35% USDT + 30% London GDR + 25% Sagha Gold + 10% CBE Spot)', ar)}
   `;
 
   return toBase64Svg(svgShell(W, H, defs, body, ar));
