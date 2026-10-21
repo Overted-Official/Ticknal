@@ -11,7 +11,7 @@ export async function GET(): Promise<Response> {
   try {
     const access = await getCurrentProprietaryAccess();
     if (!access.authenticated) return Response.json({ error: 'Unauthorized' }, { status: 401, headers });
-    return Response.json({ canView: access.canView, notificationsEnabled: access.canReceiveAlerts }, { headers });
+    return Response.json({ canView: access.canView, canManageAlerts: access.canManageAlerts, notificationsEnabled: access.canReceiveAlerts }, { headers });
   } catch (error) {
     console.error('[proprietary-access] Read failed.', error);
     return Response.json({ error: 'Access service unavailable.' }, { status: 503, headers });
@@ -22,7 +22,7 @@ export async function PATCH(request: Request): Promise<Response> {
   try {
     const access = await getCurrentProprietaryAccess();
     if (!access.authenticated || !access.userId) return Response.json({ error: 'Unauthorized' }, { status: 401, headers });
-    if (!access.canView && !access.canReceiveAlerts) return Response.json({ error: 'Forbidden' }, { status: 403, headers });
+    if (!access.canManageAlerts) return Response.json({ error: 'Forbidden' }, { status: 403, headers });
     const body: unknown = await request.json();
     if (!body || typeof body !== 'object' || !('notificationsEnabled' in body)
       || typeof body.notificationsEnabled !== 'boolean') return Response.json({ error: 'Invalid setting.' }, { status: 400, headers });

@@ -35,9 +35,9 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: payload.body || 'A trade signal is available on Ticknal.',
-    icon: payload.logoUrl || '/ticknal-notification-icon.png?v=7',
+    icon: payload.icon || payload.logoUrl || '/ticknal-notification-icon.png?v=7',
     badge: '/badge.png?v=7',
-    ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
+    ...((payload.image || payload.imageUrl) ? { image: payload.image || payload.imageUrl } : payload.logoUrl ? { image: payload.logoUrl } : {}),
     tag: payload.tag || `ticknal-signal-${Date.now()}`,
     renotify: true,
     requireInteraction: true,
@@ -52,12 +52,19 @@ self.addEventListener('push', (event) => {
       adverseExcursion: payload.adverseExcursion,
       returnToMae: payload.returnToMae,
     },
-    actions: [
-      {
-        action: 'open_chart',
-        title: '📈 View Chart',
-      },
-    ],
+    actions: (payload.url?.startsWith('/news') || payload.type === 'news')
+      ? [
+          {
+            action: 'open_news',
+            title: '📰 Read Briefing',
+          },
+        ]
+      : [
+          {
+            action: 'open_chart',
+            title: '📈 View Chart',
+          },
+        ],
   };
 
   event.waitUntil(self.registration.showNotification(title, options));

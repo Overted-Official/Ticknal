@@ -864,7 +864,7 @@ Reply with the 4 labeled lines (EN_TITLE, AR_TITLE, EN_SUMMARY, AR_SUMMARY) OR r
         categoryLabel: wire.categoryLabel,
         tickers: tickersList,
         sentiment: finalSentiment,
-        source: wire.source,
+        source: wire.assetKey || wire.source,
         sourceUrl: wire.sourceUrl,
         importance: wire.assetKey === 'USDEGP' || wire.assetKey === 'GOLD' || wire.assetKey === 'EGX30' ? 'high' : 'normal',
         readTime: '1 min read',

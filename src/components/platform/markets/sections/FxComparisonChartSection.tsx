@@ -290,7 +290,7 @@ export default function FxComparisonChartSection({
         </div>
 
         {/* 3. Pure Pitch Black Surface Chart Canvas (Border-0, Rounded-None) */}
-        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black border-0 rounded-none overflow-hidden pt-2">
+        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-black border-0 rounded-none overflow-hidden pt-2" dir="ltr">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-between p-6 select-none">
               <div className="flex items-center justify-between">
@@ -357,7 +357,10 @@ export default function FxComparisonChartSection({
                       const d = payload[0].payload as FxHistoryItem;
 
                       return (
-                        <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[270px]">
+                        <div
+                          className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[270px]"
+                          dir={isAr ? 'rtl' : 'ltr'}
+                        >
                           {/* Header: Date + Title */}
                           <div className="text-neutral-400 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
                             <span className="tabular-nums">{d.date}</span>
@@ -521,7 +524,10 @@ export default function FxComparisonChartSection({
                       const spreadVsOfficial = Number((((activeVal - d.officialUsd) / d.officialUsd) * 100).toFixed(1));
 
                       return (
-                        <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[260px]">
+                        <div
+                          className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[260px]"
+                          dir={isAr ? 'rtl' : 'ltr'}
+                        >
                           <div className="text-neutral-400 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
                             <span className="tabular-nums">{d.date}</span>
                             <span className="font-semibold text-neutral-200">{activeTabConfig.name}</span>

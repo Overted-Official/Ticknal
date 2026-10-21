@@ -1,11 +1,11 @@
 import webPush from 'web-push';
-import { and, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, proprietaryStrategyAccess, tickers, userStrategies, profiles } from '@/db/schema';
+import { positions, pushSubscriptions, signalNotifications, tickerAlerts, devicePushTokens, proprietaryStrategyAccess, tickers, userStrategies } from '@/db/schema';
 import { customStrategyPushPayload } from '@/lib/strategies/server/custom-strategy-alerts';
 import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { sendFCMMessage } from '@/lib/fcm-v1';
-import { OWNER_EMAIL } from '@/lib/strategies/proprietary-access-policy';
+import { proprietaryAlertRecipientIds, resolveProprietaryAccess } from '@/lib/strategies/proprietary-access-policy';
 import {
   analyzeTickerChampion,
   type SignalEvent,
@@ -157,16 +157,14 @@ export async function dispatchSignalNotifications(options: {
   
   // Access and alert opt-in are independent. Only explicit recipients receive
   // the champion model's in-app or push signals; owner access alone is not opt-in.
-  const grants = await db.select({ userId: proprietaryStrategyAccess.userId })
+  const grants = await db.select({
+    userId: proprietaryStrategyAccess.userId,
+    enabled: proprietaryStrategyAccess.enabled,
+    notificationsEnabled: proprietaryStrategyAccess.notificationsEnabled,
+  })
     .from(proprietaryStrategyAccess)
-    .where(or(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)));
-  const userIds = new Set(grants.map((grant) => grant.userId));
-  try {
-    const [ownerProfile] = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.email, OWNER_EMAIL)).limit(1);
-    if (ownerProfile) userIds.add(ownerProfile.id);
-  } catch (err) {
-    console.warn('[pushNotifications] Failed to lookup owner profile:', err);
-  }
+    .where(and(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)));
+  const userIds = new Set(proprietaryAlertRecipientIds(grants));
 
   if (userIds.size === 0) {
     result.messages.push('No users have opted in to proprietary strategy alerts.');
@@ -236,10 +234,14 @@ export async function dispatchSignalNotifications(options: {
   const championCache = new Map<string, TickerChampionAnalysis | null>();
 
   for (const userId of userIds) {
-    const [stillOptedIn] = await db.select({ userId: proprietaryStrategyAccess.userId })
+    const [grant] = await db.select({
+      enabled: proprietaryStrategyAccess.enabled,
+      notificationsEnabled: proprietaryStrategyAccess.notificationsEnabled,
+    })
       .from(proprietaryStrategyAccess)
-      .where(and(eq(proprietaryStrategyAccess.userId, userId), eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)))
+      .where(eq(proprietaryStrategyAccess.userId, userId))
       .limit(1);
+    const stillOptedIn = resolveProprietaryAccess(null, null, grant ?? null).canReceiveAlerts;
     if (!stillOptedIn) continue;
     const [userOpenRows, userAlertRows, existingNotifs] = await Promise.all([
       db.select({ tickerSymbol: positions.tickerSymbol }).from(positions).where(and(eq(positions.userId, userId), eq(positions.status, 'OPEN'))),
@@ -456,18 +458,14 @@ export async function dispatchSignalNotifications(options: {
   }
 
   // Recheck after analysis, because access or opt-in may change during a run.
-  const activeGrants = await db.select({ userId: proprietaryStrategyAccess.userId })
+  const activeGrants = await db.select({
+    userId: proprietaryStrategyAccess.userId,
+    enabled: proprietaryStrategyAccess.enabled,
+    notificationsEnabled: proprietaryStrategyAccess.notificationsEnabled,
+  })
     .from(proprietaryStrategyAccess)
-    .where(and(or(eq(proprietaryStrategyAccess.enabled, true), eq(proprietaryStrategyAccess.notificationsEnabled, true)), inArray(proprietaryStrategyAccess.userId, recipientIds)));
-  const activeRecipientIds = new Set(activeGrants.map((grant) => grant.userId));
-  try {
-    const [ownerProfile] = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.email, OWNER_EMAIL)).limit(1);
-    if (ownerProfile && recipientIds.includes(ownerProfile.id)) {
-      activeRecipientIds.add(ownerProfile.id);
-    }
-  } catch {
-    /* Ignore lookup errors on owner recheck */
-  }
+    .where(inArray(proprietaryStrategyAccess.userId, recipientIds));
+  const activeRecipientIds = new Set(proprietaryAlertRecipientIds(activeGrants));
   const permittedNotifications = newNotificationsToInsert.filter((row) => activeRecipientIds.has(row.userId));
   const permittedSnapshots = signalSnapshotsToUpsert.filter((row) => activeRecipientIds.has(row.userId));
 
@@ -521,6 +519,128 @@ export async function dispatchSignalNotifications(options: {
     }
   }
 
+  return result;
+}
+
+export type NewsPushPayload = {
+  id: string;
+  title: string;
+  summary: string;
+  urgencyScore: number;
+  imageUrl?: string | null;
+  category?: string;
+  tickers?: string[];
+  publishedAt?: Date | string;
+};
+
+export type NewsPushDispatchResult = {
+  configured: boolean;
+  sent: number;
+  failed: number;
+  expiredSubscriptions: number;
+  invalidDeviceTokens: number;
+  recipientCount: number;
+  messages: string[];
+};
+
+export async function dispatchNewsPushNotification(
+  article: NewsPushPayload
+): Promise<NewsPushDispatchResult> {
+  const result: NewsPushDispatchResult = {
+    configured: isPushConfigured(),
+    sent: 0,
+    failed: 0,
+    expiredSubscriptions: 0,
+    invalidDeviceTokens: 0,
+    recipientCount: 0,
+    messages: [],
+  };
+
+  // Only dispatch push notifications when urgency is 10/10
+  if ((article.urgencyScore ?? 0) < 10) {
+    result.messages.push(`Skipped push dispatch: article urgency is ${article.urgencyScore}/10 (requires 10/10).`);
+    return result;
+  }
+
+  if (result.configured) {
+    configureWebPush();
+  } else {
+    result.messages.push('Web Push not configured, proceeding with FCM native device dispatches.');
+  }
+
+  // Extract clean summary snippet (max 180 chars)
+  const rawSummary = (article.summary || '').trim();
+  const firstParagraph = rawSummary.split(/\n\s*\n/)[0] || rawSummary;
+  const cleanBody = firstParagraph.replace(/^[#*\s]+/, '').slice(0, 180) + (firstParagraph.length > 180 ? '...' : '');
+
+  const pushTitle = `Ticknal Take: ${article.title}`;
+  const targetUrl = `/news?item=${encodeURIComponent(article.id)}`;
+
+  // Construct image banner URL for push notifications
+  const appOrigin = process.env.APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://ticknal.com');
+  const ogImageUrl = `${appOrigin}/api/news/og?item=${encodeURIComponent(article.id)}&format=png`;
+
+  const webPushPayload = JSON.stringify({
+    title: pushTitle,
+    body: cleanBody,
+    url: targetUrl,
+    tag: `ticknal-news-${article.id}`,
+    icon: '/ticknal-notification-icon.png?v=7',
+    badge: '/badge.png?v=7',
+    imageUrl: ogImageUrl,
+    type: 'news',
+    id: article.id,
+    urgencyScore: article.urgencyScore,
+  });
+
+  // Query all active web push subscriptions and active device push tokens
+  const [subscriptionRows, deviceTokenRows] = await Promise.all([
+    result.configured ? db.select().from(pushSubscriptions) : Promise.resolve([]),
+    db.select().from(devicePushTokens).where(eq(devicePushTokens.isActive, true)),
+  ]);
+
+  result.recipientCount = subscriptionRows.length + deviceTokenRows.length;
+
+  // 1. Deliver to Web Push Subscriptions
+  for (const subscription of subscriptionRows) {
+    const outcome = await sendToSubscription(subscription, webPushPayload);
+    if (outcome === 'sent') {
+      result.sent += 1;
+    } else if (outcome === 'expired') {
+      result.expiredSubscriptions += 1;
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, subscription.endpoint));
+    } else {
+      result.failed += 1;
+    }
+  }
+
+  // 2. Deliver to FCM Device Tokens (Android/iOS)
+  for (const device of deviceTokenRows) {
+    try {
+      const outcome = await sendFCMMessage(device.token, {
+        title: pushTitle,
+        body: cleanBody,
+        url: targetUrl,
+        ticker: article.tickers?.[0] || 'EGX30',
+        imageUrl: ogImageUrl,
+        color: '#00BCE6',
+      });
+
+      if (outcome.sent) {
+        result.sent += 1;
+      } else if (outcome.invalidToken) {
+        result.invalidDeviceTokens += 1;
+        await db.update(devicePushTokens).set({ isActive: false, updatedAt: new Date() }).where(eq(devicePushTokens.id, device.id));
+      } else {
+        result.failed += 1;
+      }
+    } catch (err) {
+      result.failed += 1;
+      console.error('[news-push] FCM delivery failed for device token:', err);
+    }
+  }
+
+  result.messages.push(`Dispatched 10/10 news push notification for article ${article.id}: ${result.sent} sent, ${result.failed} failed.`);
   return result;
 }
 

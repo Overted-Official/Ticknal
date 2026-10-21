@@ -280,7 +280,7 @@ export async function syncExternalTradingViewNews(): Promise<NewsSyncResult> {
           categoryLabel,
           tickers: [assetKey],
           sentiment,
-          source,
+          source: assetKey || source,
           sourceUrl,
           importance,
           impactMetric: `${assetKey} Market Wire`,

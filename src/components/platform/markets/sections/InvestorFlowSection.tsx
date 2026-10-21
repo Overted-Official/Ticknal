@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import useSWR from 'swr';
 import {
   ResponsiveContainer,
@@ -12,7 +12,7 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts';
-import { ChevronRight } from '@/components/ui/icon-library';
+import { ChevronRight, ChevronDown, Check } from '@/components/ui/icon-library';
 import Skeleton from '@/components/ui/Skeleton';
 import type { InvestorFlowsResponse } from '@/lib/handlers/investor-flow-handler';
 import { useTranslation } from '@/lib/i18n';
@@ -61,6 +61,100 @@ function formatEgpVal(val: number, locale: string, showSign = true): string {
     return `${sign}${(val / 1e3).toFixed(0)}${locale === 'ar' ? ' ألف' : 'K'}`;
   }
   return `${sign}${val.toFixed(0)}`;
+}
+
+interface FlowDropdownOption<T extends string> {
+  value: T;
+  label: string;
+  shortLabel?: string;
+  title?: string;
+}
+
+interface FlowDropdownProps<T extends string> {
+  label: string;
+  value: T;
+  options: readonly FlowDropdownOption<T>[] | FlowDropdownOption<T>[];
+  onChange: (value: T) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  align?: 'start' | 'end';
+}
+
+function FlowDropdown<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+  isOpen,
+  onToggle,
+  onClose,
+  align = 'start',
+}: FlowDropdownProps<T>) {
+  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+  const displayLabel = selectedOption?.shortLabel || selectedOption?.label || value;
+
+  return (
+    <div className="relative inline-block text-start">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        className={`flex h-7.5 cursor-pointer items-center justify-between gap-1.5 rounded-lg border px-2.5 font-sans text-[11px] outline-none transition-all select-none ${
+          isOpen
+            ? 'border-brand-blue/50 bg-white/10 text-white'
+            : 'border-white/10 bg-black text-white/90 hover:border-white/20 hover:text-white active:bg-white/[0.06]'
+        }`}
+      >
+        <div className="flex items-center gap-1 min-w-0">
+          <span className="text-white/45 text-[10px] font-normal shrink-0">{label}:</span>
+          <span className="font-semibold text-white truncate max-w-[120px]">{displayLabel}</span>
+        </div>
+        <ChevronDown
+          size={11}
+          className={`shrink-0 text-white/40 transition-transform duration-150 ${
+            isOpen ? 'rotate-180 text-white' : ''
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          role="listbox"
+          aria-label={label}
+          className={`hover-card absolute top-full mt-1.5 z-50 min-w-[150px] max-w-[240px] rounded-xl border border-white/15 bg-[#3D3D3D] p-1 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-100 ${
+            align === 'end' ? 'end-0' : 'start-0'
+          }`}
+        >
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                role="option"
+                type="button"
+                aria-selected={isSelected}
+                title={opt.title}
+                onClick={() => {
+                  onChange(opt.value);
+                  onClose();
+                }}
+                className={`flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-start font-sans text-xs transition-colors ${
+                  isSelected
+                    ? 'bg-white/15 font-semibold text-white'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <span className="truncate">{opt.label}</span>
+                {isSelected && <Check size={12} className="shrink-0 text-brand-blue" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function InvestorFlowSection({
@@ -189,6 +283,133 @@ export default function InvestorFlowSection({
     return finalMoneyTicks.map((m) => toSymLog(m));
   }, [scaleMode, normalizedHistory, netFilter]);
 
+  // Mobile Dropdown state & outside click handler (Space-saving phone controls)
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
+  const mobileControlsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openMobileDropdown) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (mobileControlsRef.current && !mobileControlsRef.current.contains(e.target as Node)) {
+        setOpenMobileDropdown(null);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenMobileDropdown(null);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [openMobileDropdown]);
+
+  // Dropdown options configurations
+  const segmentOptions = useMemo(() => [
+    {
+      value: 'TOTAL' as FlowSegment,
+      label: locale === 'ar' ? 'الكل (أموال ساخنة)' : 'All (Hot Money)',
+      shortLabel: locale === 'ar' ? 'الكل' : 'All',
+      title: locale === 'ar' ? 'الأسهم والسندات والأذون (مقياس الأموال الساخنة الكلي)' : 'All Securities, Bonds & Bills (Total Macro Hot Money)',
+    },
+    {
+      value: 'STOCKS' as FlowSegment,
+      label: locale === 'ar' ? 'الأسهم فقط' : 'Stocks Only',
+      shortLabel: locale === 'ar' ? 'الأسهم' : 'Stocks',
+      title: locale === 'ar' ? 'تداولات الأسهم المقيدة داخل المقصورة فقط' : 'Listed Equities Only',
+    },
+    {
+      value: 'BONDS' as FlowSegment,
+      label: locale === 'ar' ? 'السندات' : 'Bonds',
+      shortLabel: locale === 'ar' ? 'السندات' : 'Bonds',
+      title: locale === 'ar' ? 'السندات الحكومية وسندات الشركات' : 'Bonds Only',
+    },
+    {
+      value: 'BILLS' as FlowSegment,
+      label: locale === 'ar' ? 'أذون الخزانة' : 'T-Bills',
+      shortLabel: locale === 'ar' ? 'الأذون' : 'T-Bills',
+      title: locale === 'ar' ? 'أذون الخزانة الحكومية' : 'Treasury Bills Only',
+    },
+  ], [locale]);
+
+  const categoryOptions = useMemo(() => [
+    {
+      value: 'TOTAL' as FlowCategory,
+      label: locale === 'ar' ? 'الإجمالي' : 'Total',
+      shortLabel: locale === 'ar' ? 'الإجمالي' : 'Total',
+    },
+    {
+      value: 'INSTITUTIONS' as FlowCategory,
+      label: locale === 'ar' ? 'المؤسسات' : 'Institutions',
+      shortLabel: locale === 'ar' ? 'المؤسسات' : 'Inst.',
+    },
+    {
+      value: 'RETAIL' as FlowCategory,
+      label: locale === 'ar' ? 'الأفراد' : 'Individuals',
+      shortLabel: locale === 'ar' ? 'الأفراد' : 'Retail',
+    },
+  ], [locale]);
+
+  const chartModeOptions = useMemo(() => [
+    {
+      value: 'net_flow' as FlowChartMode,
+      label: locale === 'ar' ? 'صافي التدفقات' : 'Net Flow',
+      shortLabel: locale === 'ar' ? 'صافي التدفق' : 'Net Flow',
+    },
+    {
+      value: 'stacked_share' as FlowChartMode,
+      label: locale === 'ar' ? 'حصة السيولة 100%' : '100% Share',
+      shortLabel: locale === 'ar' ? 'حصة السيولة' : 'Share',
+    },
+  ], [locale]);
+
+  const netFilterOptions = useMemo(() => [
+    {
+      value: 'all_hot_money' as NetFlowFilter,
+      label: locale === 'ar' ? 'الساخنة (أجانب + عرب)' : 'Hot Money (Foreign + Arab)',
+      shortLabel: locale === 'ar' ? 'الساخنة' : 'Hot Money',
+      title: locale === 'ar' ? 'إجمالي صافي غير المصريين (أجانب + عرب)' : 'Total Non-Domestic Net (Foreigners + Arabs)',
+    },
+    {
+      value: 'foreign' as NetFlowFilter,
+      label: locale === 'ar' ? 'الأجانب فقط' : 'Foreigners',
+      shortLabel: locale === 'ar' ? 'الأجانب' : 'Foreign',
+      title: locale === 'ar' ? 'صافي تدفق المستثمرين الأجانب الدوليين' : 'International Foreign Investors Net',
+    },
+    {
+      value: 'arab' as NetFlowFilter,
+      label: locale === 'ar' ? 'العرب فقط' : 'Arabs',
+      shortLabel: locale === 'ar' ? 'العرب' : 'Arabs',
+      title: locale === 'ar' ? 'صافي تدفق المستثمرين العرب الإقليميين' : 'Regional Arab Investors Net',
+    },
+  ], [locale]);
+
+  const scaleModeOptions = useMemo(() => [
+    {
+      value: 'balanced' as FlowScaleMode,
+      label: locale === 'ar' ? 'متوازن (SymLog)' : 'Balanced (SymLog)',
+      shortLabel: locale === 'ar' ? 'متوازن' : 'Balanced',
+      title: locale === 'ar' ? 'مقياس متوازن (SymLog): يُظهر تفاصيل الأيام العادية بوضوح ويبرز القمم الكبيرة' : 'Balanced (SymLog) Scale: Keeps normal days visible while highlighting major outliers',
+    },
+    {
+      value: 'linear' as FlowScaleMode,
+      label: locale === 'ar' ? 'خطي (رياضي)' : 'Linear',
+      shortLabel: locale === 'ar' ? 'خطي' : 'Linear',
+      title: locale === 'ar' ? 'المقياس الخطي الرياضي المباشر' : 'Direct Mathematical Linear Scale',
+    },
+  ], [locale]);
+
+  const horizonOptions = useMemo(() => [
+    { value: '1M' as FlowHorizon, label: '1M', shortLabel: '1M' },
+    { value: '3M' as FlowHorizon, label: '3M', shortLabel: '3M' },
+    { value: '6M' as FlowHorizon, label: '6M', shortLabel: '6M' },
+    { value: 'YTD' as FlowHorizon, label: 'YTD', shortLabel: 'YTD' },
+    { value: '1Y' as FlowHorizon, label: '1Y', shortLabel: '1Y' },
+  ], []);
+
   return (
     <div id={id} className="w-full pt-3 select-none font-sans">
       <div className="w-full bg-transparent p-0 border-0">
@@ -206,8 +427,8 @@ export default function InvestorFlowSection({
             />
           </div>
 
-          {/* Instrument / Market Segment Switches (All 4 EGX Filter Options) */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Instrument / Market Segment Switches (All 4 EGX Filter Options) - DESKTOP ONLY */}
+          <div className="hidden sm:flex items-center gap-2 flex-wrap">
             <span className="text-[11px] text-plt-muted hidden sm:inline">
               {locale === 'ar' ? 'السوق:' : 'Market:'}
             </span>
@@ -256,8 +477,83 @@ export default function InvestorFlowSection({
           </div>
         </div>
 
-        {/* 2. Secondary Control Bar: Investor Category (Total / Institutions / Retail) & Chart Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+        {/* Mobile Dropdown Toolbar (Phone Only - Clean Popovers matching Strategies Studio) */}
+        <div ref={mobileControlsRef} className="sm:hidden flex flex-col gap-2 mb-2.5 pt-0.5">
+          {/* Row 1: Market Segment, Investor Category & Time Horizon */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <FlowDropdown
+              label={locale === 'ar' ? 'السوق' : 'Market'}
+              value={segment}
+              options={segmentOptions}
+              onChange={setSegment}
+              isOpen={openMobileDropdown === 'segment'}
+              onToggle={() => setOpenMobileDropdown((prev) => (prev === 'segment' ? null : 'segment'))}
+              onClose={() => setOpenMobileDropdown(null)}
+              align="start"
+            />
+            <FlowDropdown
+              label={locale === 'ar' ? 'الفئة' : 'Category'}
+              value={category}
+              options={categoryOptions}
+              onChange={setCategory}
+              isOpen={openMobileDropdown === 'category'}
+              onToggle={() => setOpenMobileDropdown((prev) => (prev === 'category' ? null : 'category'))}
+              onClose={() => setOpenMobileDropdown(null)}
+              align="start"
+            />
+            <FlowDropdown
+              label={locale === 'ar' ? 'المدة' : 'Period'}
+              value={horizon}
+              options={horizonOptions}
+              onChange={setHorizon}
+              isOpen={openMobileDropdown === 'horizon'}
+              onToggle={() => setOpenMobileDropdown((prev) => (prev === 'horizon' ? null : 'horizon'))}
+              onClose={() => setOpenMobileDropdown(null)}
+              align="end"
+            />
+          </div>
+
+          {/* Row 2: Chart Mode, Flow Filter & Scale Mode */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <FlowDropdown
+              label={locale === 'ar' ? 'العرض' : 'View'}
+              value={chartMode}
+              options={chartModeOptions}
+              onChange={setChartMode}
+              isOpen={openMobileDropdown === 'chartMode'}
+              onToggle={() => setOpenMobileDropdown((prev) => (prev === 'chartMode' ? null : 'chartMode'))}
+              onClose={() => setOpenMobileDropdown(null)}
+              align="start"
+            />
+            {chartMode === 'net_flow' && (
+              <FlowDropdown
+                label={locale === 'ar' ? 'التدفق' : 'Flow'}
+                value={netFilter}
+                options={netFilterOptions}
+                onChange={setNetFilter}
+                isOpen={openMobileDropdown === 'netFilter'}
+                onToggle={() => setOpenMobileDropdown((prev) => (prev === 'netFilter' ? null : 'netFilter'))}
+                onClose={() => setOpenMobileDropdown(null)}
+                align="start"
+              />
+            )}
+            {chartMode === 'net_flow' && (
+              <FlowDropdown
+                label={locale === 'ar' ? 'المقياس' : 'Scale'}
+                value={scaleMode}
+                options={scaleModeOptions}
+                onChange={setScaleMode}
+                isOpen={openMobileDropdown === 'scaleMode'}
+                onToggle={() => setOpenMobileDropdown((prev) => (prev === 'scaleMode' ? null : 'scaleMode'))}
+                onClose={() => setOpenMobileDropdown(null)}
+                align="end"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* 2. Secondary Control Bar: Investor Category (Total / Institutions / Retail) & Chart Controls - DESKTOP ONLY */}
+        <div className="hidden sm:flex sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
           {/* Category Switcher: Total vs Institutions vs Retail */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[11px] text-plt-muted hidden sm:inline">
@@ -502,7 +798,7 @@ export default function InvestorFlowSection({
         )}
 
         {/* 4. Pitch Black Surface Canvas (No borders) */}
-        <div className="relative mt-2 w-full min-w-0 h-[360px] sm:h-[400px] bg-black border-0 rounded-none overflow-hidden pt-2">
+        <div className="relative mt-2 w-full min-w-0 h-[360px] sm:h-[400px] bg-black border-0 rounded-none overflow-hidden pt-2" dir="ltr">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-end p-4 pb-8 space-y-4">
               <div className="flex items-end justify-between gap-1 sm:gap-2 h-full w-full pt-8">
@@ -567,7 +863,10 @@ export default function InvestorFlowSection({
                     if (!active || !payload || payload.length === 0) return null;
                     const d = payload[0].payload;
                     return (
-                      <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[250px]">
+                      <div
+                        className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[250px]"
+                        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                      >
                         <div className="text-neutral-400 font-medium pb-1 border-b border-white/10 flex items-center justify-between gap-4">
                           <span className="tabular-nums">{d.date}</span>
                           <span className="font-semibold text-neutral-200">
@@ -684,7 +983,10 @@ export default function InvestorFlowSection({
                     const isHmPos = hmTotal >= 0;
 
                     return (
-                      <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[260px]">
+                      <div
+                        className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[260px]"
+                        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                      >
                         {/* Header: Date + Inflow/Outflow Status */}
                         <div className="text-neutral-400 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
                           <span className="tabular-nums">{d.date}</span>

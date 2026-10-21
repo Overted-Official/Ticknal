@@ -91,6 +91,8 @@ export default function ChartWidget({
   bulkUpdateStrategyParams,
   showSignals = true,
   canViewProprietary = false,
+  isStaff = false,
+  hasProprietaryAccess = false,
   onMetricsChange,
   metrics,
   companyName,
@@ -1201,7 +1203,7 @@ export default function ChartWidget({
         activeIndicatorsCount={activeIndicators.length + activeCanonicalIndicators.length}
         isIndicatorsPopoverOpen={indicatorsPopoverOpen}
         onToggleIndicators={() => setIndicatorsPopoverOpen((prev) => !prev)}
-        onOpenStrategyReport={canViewProprietary ? () => {
+        onOpenStrategyReport={(canViewProprietary || hasProprietaryAccess) ? () => {
           setStrategyReportTab('performance');
           setIsStrategyReportOpen(true);
         } : undefined}
@@ -1578,7 +1580,7 @@ export default function ChartWidget({
       )}
 
       {/* Strategy Report Slide-Over Drawer (75% desktop width, full screen mobile, pure black) */}
-      {canViewProprietary && <StrategyReportDrawer
+      {(canViewProprietary || hasProprietaryAccess) && <StrategyReportDrawer
         isOpen={isStrategyReportOpen}
         onClose={() => setIsStrategyReportOpen(false)}
         symbol={symbol}
@@ -1598,6 +1600,8 @@ export default function ChartWidget({
         logoUrl={logoUrl || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.logoUrl}
         currency={instrumentCurrency}
         initialTab={strategyReportTab}
+        isStaff={isStaff}
+        hasProprietaryAccess={hasProprietaryAccess}
       />}
     </div>
   );

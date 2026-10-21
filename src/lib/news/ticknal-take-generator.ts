@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { dailyPrices, egxInvestorFlows, marketNews, systemLogs, tickers } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
+import { dispatchNewsPushNotification } from '@/lib/notifications/pushNotifications';
 import {
   generateHotMoneyChartSvg,
   generateTradeSummaryChartSvg,
@@ -861,6 +862,20 @@ Assess the tight corridor between the official rate and proxy clearing markets (
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+
+        if (urgencyScore >= 10) {
+          dispatchNewsPushNotification({
+            id: take.id,
+            title: take.title,
+            summary: take.summary,
+            urgencyScore,
+            imageUrl: take.imageUrl,
+            category: 'ticknal_take',
+            tickers: take.tickers,
+            publishedAt: take.publishedAt,
+          }).catch((err) => console.error('[ticknal-take-generator] Failed to dispatch 10/10 news push notification:', err));
+        }
+
         break;
       } catch (err) {
         if (attempt === 3) throw err;

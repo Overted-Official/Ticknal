@@ -140,16 +140,16 @@ const DEFAULT_REAL_CARDS: LandingCoverageCard[] = [
         points: [78.5, 79.1, 79.0, 80.2, 80.8, 80.5, 81.2, 81.8, 81.5, 82.1, 82.4, 82.0, 82.6, 83.0, 82.8, 83.4, 83.8, 83.5, 83.9, 84.2],
       },
       {
-        symbol: 'EGX30',
-        name: 'EGX 30 Benchmark',
-        sector: 'Sovereign Index',
-        price: '31,240.50',
-        unit: 'PTS',
-        change: 1.45,
-        badge: 'EGX30',
-        type: 'stock',
-        logoUrl: '',
-        points: [30100, 30250, 30180, 30420, 30580, 30510, 30720, 30890, 30800, 30950, 31020, 30980, 31100, 31180, 31120, 31200, 31250, 31210, 31230, 31240.5],
+        symbol: 'GOLD21K',
+        name: 'Gold 21K (Sagha)',
+        sector: 'Precious Metals',
+        price: '6,134.37',
+        unit: 'EGP / g',
+        change: 5.80,
+        badge: 'GOLD21K',
+        type: 'metal',
+        logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
+        points: [5796, 5810, 5845, 5871, 5858, 5906, 5941, 5923, 5976, 6015, 5993, 6046, 6072, 6055, 6098, 6120, 6107, 6125, 6129, 6134.37],
       },
     ],
   },
@@ -291,6 +291,13 @@ function CategoryCard({
       ? 'أعلى الأصول حسب العائد'
       : 'Top Assets by Return';
 
+  const formatAssetDisplayName = (it: LandingCoverageAsset) => {
+    if (it.symbol === 'GOLD21K') return locale === 'ar' ? 'ذهب عيار 21 (الصاغة)' : 'Gold 21K (Sagha)';
+    if (it.symbol === 'GC1!') return locale === 'ar' ? 'ذهب عيار 24 (سبائك)' : (it.name || 'Gold');
+    if (it.symbol === 'SI1!') return locale === 'ar' ? 'فضة نقية' : (it.name || 'Silver');
+    return it.name;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -298,9 +305,9 @@ function CategoryCard({
       viewport={{ once: true, amount: 0.2 }}
       onViewportEnter={() => setHasEntered(true)}
       transition={{ duration: 0.55, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-      className="group relative flex flex-col justify-between rounded-[24px] bg-black border border-white/[0.08] hover:border-white/20 transition-all duration-300 p-5 sm:p-6 shadow-xl w-full"
+      className="group relative flex flex-col justify-between rounded-[24px] bg-black border border-white/[0.08] hover:border-white/20 transition-all duration-300 p-5 sm:p-6 shadow-xl w-full h-full"
     >
-      <div>
+      <div className="flex-1 flex flex-col justify-between">
         {/* Card Header: Category + Subtitle */}
         <div className="mb-4">
           <div className="flex items-center justify-between">
@@ -331,7 +338,7 @@ function CategoryCard({
               <ItemAvatar item={selectedItem} size="md" />
               <div className="min-w-0">
                 <div className="text-sm font-bold text-white truncate">
-                  {selectedItem.name}
+                  {formatAssetDisplayName(selectedItem)}
                 </div>
                 <div className="text-[11px] text-zinc-400 font-medium">
                   {selectedItem.symbol}
@@ -436,7 +443,7 @@ function CategoryCard({
         </motion.div>
 
         {/* Market Signals-style Row Items */}
-        <div className="mt-3 pt-2 border-t border-white/[0.06]">
+        <div className="mt-3 pt-2 border-t border-white/[0.06] flex-1 flex flex-col justify-between">
           <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-2 pb-1.5">
             {listHeader}
           </div>
@@ -470,7 +477,7 @@ function CategoryCard({
                             : 'text-zinc-200 group-hover/row:text-blue-400'
                         }`}
                       >
-                        {item.name}
+                        {formatAssetDisplayName(item)}
                       </span>
                       <span className="shrink-0 text-xs font-semibold tabular-nums text-white">
                         {item.price}
@@ -505,7 +512,7 @@ function CategoryCard({
       </div>
 
       {/* Call to action footer link */}
-      <div className="mt-4 pt-3 border-t border-white/[0.06]">
+      <div className="mt-auto pt-3 border-t border-white/[0.06]">
         <Link
           href={card.ctaHref}
           className="text-xs sm:text-[13px] font-medium text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1 group/link cursor-pointer"
@@ -523,8 +530,22 @@ export default function LandingAssetCoverage({
 }: LandingAssetCoverageProps) {
   const { locale } = useTranslation();
   const [activeSlide, setActiveSlide] = useState(0);
+  const carouselRef = React.useRef<HTMLDivElement>(null);
 
   const cards = initialCards && initialCards.length > 0 ? initialCards : DEFAULT_REAL_CARDS;
+
+  const scrollToSlide = (idx: number) => {
+    if (!carouselRef.current) return;
+    const items = carouselRef.current.children;
+    if (items[idx]) {
+      (items[idx] as HTMLElement).scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+      setActiveSlide(idx);
+    }
+  };
 
   return (
     <section id="products" className="relative w-full bg-transparent py-16 sm:py-24 select-none font-sans overflow-hidden">
@@ -567,10 +588,11 @@ export default function LandingAssetCoverage({
 
         {/* Responsive Layout: Desktop 3-Card Grid with compact gap | Mobile Swipable Carousel */}
         <div
-          className="flex md:grid md:grid-cols-3 gap-2.5 lg:gap-3 w-full overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-4 pt-1 px-4 sm:px-6 md:px-0 -mx-4 sm:-mx-6 md:mx-0 scrollbar-none"
+          ref={carouselRef}
+          className="flex md:grid md:grid-cols-3 gap-2.5 lg:gap-3 w-full overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-4 pt-1 px-4 sm:px-6 md:px-0 -mx-4 sm:-mx-6 md:mx-0 scrollbar-none items-stretch"
           onScroll={(e) => {
             const container = e.currentTarget;
-            const scrollLeft = container.scrollLeft;
+            const scrollLeft = Math.abs(container.scrollLeft);
             const itemWidth = container.offsetWidth * 0.84;
             const slide = Math.round(scrollLeft / itemWidth);
             setActiveSlide(Math.min(Math.max(slide, 0), 2));
@@ -579,7 +601,7 @@ export default function LandingAssetCoverage({
           {cards.map((card, index) => (
             <div
               key={card.id}
-              className="w-[84vw] max-w-[340px] sm:w-[350px] md:w-full md:max-w-none shrink-0 snap-center"
+              className="w-[84vw] max-w-[340px] sm:w-[350px] md:w-full md:max-w-none shrink-0 snap-center flex flex-col h-full"
             >
               <CategoryCard card={card} index={index} />
             </div>
@@ -590,11 +612,14 @@ export default function LandingAssetCoverage({
         <div className="flex md:hidden flex-col items-center gap-2 mt-2">
           <div className="flex items-center gap-1.5">
             {[0, 1, 2].map((idx) => (
-              <span
+              <button
                 key={idx}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  activeSlide === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/20'
+                type="button"
+                onClick={() => scrollToSlide(idx)}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  activeSlide === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/20 hover:bg-white/40'
                 }`}
+                aria-label={`Go to slide ${idx + 1}`}
               />
             ))}
           </div>

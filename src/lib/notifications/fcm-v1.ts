@@ -119,6 +119,7 @@ export async function sendFCMMessage(
     signal?: string;
     companyName?: string;
     logoUrl?: string;
+    imageUrl?: string;
     alpha?: string;
     adverseExcursion?: string;
     returnToMae?: string;
@@ -146,7 +147,7 @@ export async function sendFCMMessage(
                 notification: {
                   title: payload.title,
                   body: payload.body,
-                  ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
+                  ...((payload.imageUrl || payload.logoUrl) ? { image: payload.imageUrl || payload.logoUrl } : {}),
                 },
                 data: {
                   url: payload.url || '/charts',
@@ -155,6 +156,7 @@ export async function sendFCMMessage(
                   signal: payload.signal || '',
                   companyName: payload.companyName || '',
                   logoUrl: payload.logoUrl || '',
+                  imageUrl: payload.imageUrl || '',
                   alpha: payload.alpha || '',
                   adverseExcursion: payload.adverseExcursion || '',
                   returnToMae: payload.returnToMae || '',
@@ -162,9 +164,9 @@ export async function sendFCMMessage(
                 android: {
                   priority: 'high',
                   notification: {
-                    channel_id: 'trading_signals',
+                    channel_id: payload.url?.startsWith('/news') ? 'market_news' : 'trading_signals',
                     icon: 'ic_stat_ticknal',
-                    ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
+                    ...((payload.imageUrl || payload.logoUrl) ? { image: payload.imageUrl || payload.logoUrl } : {}),
                     sound: 'default',
                     default_vibrate_timings: true,
                     notification_priority: 'PRIORITY_HIGH',
@@ -205,8 +207,8 @@ export async function sendFCMMessage(
             title: payload.title,
             body: payload.body,
             sound: 'default',
-            android_channel_id: 'trading_signals',
-            ...(payload.logoUrl ? { image: payload.logoUrl } : {}),
+            android_channel_id: payload.url?.startsWith('/news') ? 'market_news' : 'trading_signals',
+            ...((payload.imageUrl || payload.logoUrl) ? { image: payload.imageUrl || payload.logoUrl } : {}),
           },
           data: {
             url: payload.url || '/charts',

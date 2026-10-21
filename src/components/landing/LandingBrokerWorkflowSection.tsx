@@ -126,7 +126,7 @@ export default function LandingBrokerWorkflowSection() {
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollLeft, clientWidth } = e.currentTarget;
-    const index = Math.round(scrollLeft / (clientWidth * 0.85));
+    const index = Math.round(Math.abs(scrollLeft) / (clientWidth * 0.85));
     const clamped = Math.min(Math.max(index, 0), workflowSteps.length - 1);
     if (clamped !== activeBrokerCard) {
       setActiveBrokerCard(clamped);
@@ -193,7 +193,7 @@ export default function LandingBrokerWorkflowSection() {
                 className="group relative flex flex-col justify-between w-[86vw] max-w-[340px] sm:w-[370px] lg:w-full shrink-0 snap-center rounded-[28px] sm:rounded-[32px] bg-black border border-white/[0.08] hover:border-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.03)] transition-all duration-500 overflow-hidden shadow-2xl pt-7 sm:pt-9 px-6 sm:px-8 cursor-default"
               >
                 {/* Top Text Content: Clean left-aligned Title + Subtitle */}
-                <div className="flex flex-col">
+                <div className="flex flex-col text-left rtl:text-right">
                   {/* Step Phase Badge */}
                   <div className="flex items-center justify-between mb-3 sm:mb-3.5">
                     <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400 group-hover:text-zinc-200 group-hover:border-white/20 transition-colors">

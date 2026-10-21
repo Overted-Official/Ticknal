@@ -24,6 +24,8 @@ export interface StrategyReportDrawerProps {
   logoUrl?: string | null;
   currency?: string;
   initialTab?: StrategyReportTab;
+  isStaff?: boolean;
+  hasProprietaryAccess?: boolean;
 }
 
 export interface ComputedReportMetrics {

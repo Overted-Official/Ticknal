@@ -208,7 +208,7 @@ export default function MajorIndicesSection({
         </div>
 
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
-        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-plt-base overflow-hidden pt-2">
+        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-plt-base overflow-hidden pt-2" dir="ltr">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-between p-6 select-none" role="status" aria-label={locale === 'ar' ? 'جاري تحميل بيانات المؤشرات…' : 'Loading market index data…'}>
               <div className="flex items-center justify-between">
@@ -308,7 +308,10 @@ export default function MajorIndicesSection({
                     const isPtPos = (data.changePercent ?? 0) >= 0;
 
                     return (
-                      <div className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1 z-50">
+                      <div
+                        className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1 z-50"
+                        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                      >
                         <div className="text-neutral-400 font-medium pb-1 border-b border-white/10 flex items-center justify-between gap-4">
                           <span>{data.date}</span>
                           <span className="font-semibold text-neutral-200">{activeIndex?.name}</span>

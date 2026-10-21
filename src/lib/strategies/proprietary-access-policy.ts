@@ -11,17 +11,25 @@ export function isProprietaryOwner(email: string | null | undefined, _role?: str
   return email?.trim().toLowerCase() === OWNER_EMAIL;
 }
 
+type AlertGrant = { enabled: boolean; notificationsEnabled: boolean };
+
+export function proprietaryAlertRecipientIds<T extends AlertGrant & { userId: string }>(grants: readonly T[]): string[] {
+  return grants.filter((grant) => grant.enabled && grant.notificationsEnabled).map((grant) => grant.userId);
+}
+
 export function resolveProprietaryAccess(
   email: string | null | undefined,
   role: string | null | undefined,
-  grant: { enabled: boolean; notificationsEnabled: boolean } | null,
-): { canView: boolean; canReceiveAlerts: boolean } {
+  grant: AlertGrant | null,
+): { canView: boolean; canReceiveAlerts: boolean; canManageAlerts: boolean } {
   const isOwner = isProprietaryOwner(email, role);
   // STRICT RULE: Only the platform owner (abdelrahman.m.abualola@gmail.com) can view the proprietary strategies in the studio / builder
   const canView = isOwner;
-  // Users receive notifications if owner, or if toggled on for them in the console
-  const canReceiveAlerts = isOwner || grant?.enabled === true || grant?.notificationsEnabled === true;
-  return { canView, canReceiveAlerts };
+  // Viewing permission alone never opts anyone into alerts, including the owner.
+  const canReceiveAlerts = grant?.enabled === true && grant.notificationsEnabled === true;
+  // Keep the preference available after opt-out, but never after revocation.
+  const canManageAlerts = isOwner || grant?.enabled === true;
+  return { canView, canReceiveAlerts, canManageAlerts };
 }
 
 export function filterAccessibleSignals<T extends { strategy: string }>(rows: T[], canReceiveAlerts: boolean): T[] {

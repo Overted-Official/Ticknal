@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/popover';
 import { useTranslation } from '@/lib/i18n';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
+import { resolveSourceMeta } from '@/lib/news/source-meta';
 
 interface SocialSharePopoverProps {
   item: MarketNewsItemDTO;
@@ -41,7 +42,8 @@ export default function SocialShareModal({
   const [isDownloading, setIsDownloading] = useState(false);
 
   const isTake = item.category === 'ticknal_take' || item.source.toLowerCase().includes('ticknal');
-  const branding = isTake ? (isAr ? 'نبض تكنال' : 'Ticknal take') : item.source;
+  const meta = resolveSourceMeta(item);
+  const branding = isTake ? (isAr ? 'نبض تكنال' : 'Ticknal take') : (item.companyName || meta.name);
 
   const langParam = isAr ? 'ar' : 'en';
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ticknal.com';

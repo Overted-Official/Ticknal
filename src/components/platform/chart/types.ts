@@ -109,6 +109,8 @@ export interface ChartWidgetProps {
   watchlist?: WatchlistItem[];
   showSignals?: boolean;
   canViewProprietary?: boolean;
+  isStaff?: boolean;
+  hasProprietaryAccess?: boolean;
   onMetricsChange?: (metrics: Record<string, string> | null) => void;
   metrics?: Record<string, string> | null;
   companyName?: string;

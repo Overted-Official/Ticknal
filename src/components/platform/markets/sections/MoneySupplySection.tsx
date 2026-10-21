@@ -254,7 +254,7 @@ export default function MoneySupplySection({
         </div>
 
         {/* 3. TradingView-Style Clean Area Chart Canvas */}
-        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-plt-base overflow-hidden pt-2">
+        <div className="relative mt-2 w-full min-w-0 h-[380px] sm:h-[420px] bg-plt-base overflow-hidden pt-2" dir="ltr">
           {isLoading ? (
             <div className="w-full h-full flex flex-col justify-between p-4 pb-8 space-y-4">
               <div className="flex justify-between items-center">
@@ -373,7 +373,10 @@ export default function MoneySupplySection({
                     });
 
                     return (
-                      <div className="bg-plt-hovercard border border-plt-border rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50">
+                      <div
+                        className="bg-plt-hovercard border border-plt-border rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50"
+                        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                      >
                         <div className="text-plt-muted font-medium pb-1 border-b border-plt-border flex items-center justify-between gap-4">
                           <span>{data.date}</span>
                           <span className="font-semibold text-plt-subtle">{getSupplyName(activeItem)}</span>

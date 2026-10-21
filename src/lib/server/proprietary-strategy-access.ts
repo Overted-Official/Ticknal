@@ -21,7 +21,7 @@ export async function getProprietaryAccessForUser(userId: string, email: string 
 export async function getCurrentProprietaryAccess() {
   try {
     const current = await getCurrentUserAndProfile();
-    if (!current) return { authenticated: false, userId: null, isOwner: false, canView: false, canReceiveAlerts: false } as const;
+    if (!current) return { authenticated: false, userId: null, isOwner: false, canView: false, canReceiveAlerts: false, canManageAlerts: false } as const;
     const access = await getProprietaryAccessForUser(current.user.id, current.user.email ?? null, current.profile?.role ?? null);
     return {
       authenticated: true,
@@ -31,7 +31,7 @@ export async function getCurrentProprietaryAccess() {
     };
   } catch (error) {
     console.warn('[proprietary-strategy-access] Failed to resolve current access:', error);
-    return { authenticated: false, userId: null, isOwner: false, canView: false, canReceiveAlerts: false } as const;
+    return { authenticated: false, userId: null, isOwner: false, canView: false, canReceiveAlerts: false, canManageAlerts: false } as const;
   }
 }
 

@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Calendar,
+  ChevronDown,
+  Check,
+  Lock,
 } from '@/components/ui/icon-library';
 import type { ComputedReportMetrics, BacktestPreset } from './types';
 import { useTranslation } from '@/lib/i18n';
@@ -25,13 +28,16 @@ interface StrategyReportHeaderProps {
   hasTrades?: boolean;
   onExportCSV?: () => void;
   onClose: () => void;
+  isStaff?: boolean;
+  hasProprietaryAccess?: boolean;
+  savedStrategies?: Array<{ id: string; name: string }>;
 }
 
-const STRATEGY_SWITCHERS = [
-  { id: 'typhon', name: 'Typhon' },
-  { id: 'cerberus', name: 'Cerberus' },
-  { id: 'hydra', name: 'Hydra' },
-];
+const PROPRIETARY_SWITCHERS = [
+  { id: 'cerberus', name: 'Cerberus', nameAr: 'سيربيروس', champion: true },
+  { id: 'typhon', name: 'Typhon', nameAr: 'تايفون', champion: false },
+  { id: 'hydra', name: 'Hydra', nameAr: 'هيدرا', champion: false },
+] as const;
 
 const TIMEFRAME_PRESETS: { id: BacktestPreset; label: string }[] = [
   { id: '3m', label: '3M' },
@@ -54,13 +60,43 @@ export default function StrategyReportHeader({
   onSetCustomEndDate,
   activePreset,
   onClose,
+  isStaff = false,
+  hasProprietaryAccess = false,
+  savedStrategies = [],
 }: StrategyReportHeaderProps) {
   const { locale, isRTL } = useTranslation();
+  const isAr = locale === 'ar';
   const [imgError, setImgError] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setImgError(false);
   }, [logoUrl]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [dropdownOpen]);
+
+  // Close dropdown on Escape
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setDropdownOpen(false);
+    }
+    if (dropdownOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [dropdownOpen]);
 
   const isPresetActive = (id: BacktestPreset) => {
     if (activePreset === id) return true;
@@ -68,13 +104,32 @@ export default function StrategyReportHeader({
     return false;
   };
 
+  // Resolve current active label
+  const isCustomStrategy = selectedStrategy.startsWith('custom-');
+  const matchedCustom = isCustomStrategy ? savedStrategies.find((s) => s.id === selectedStrategy) : null;
+  const normalizedProp = normalizeStrategyId(selectedStrategy);
+
+  let currentLabel = '';
+  if (matchedCustom) {
+    currentLabel = matchedCustom.name;
+  } else if (isStaff) {
+    const matchedProp = PROPRIETARY_SWITCHERS.find((s) => s.id === normalizedProp);
+    currentLabel = matchedProp
+      ? (isAr ? matchedProp.nameAr : matchedProp.name)
+      : (isAr ? 'سيربيروس' : 'Cerberus');
+  } else if (hasProprietaryAccess) {
+    currentLabel = isAr ? 'الاستراتيجية المعتمدة' : 'Champion Strategy';
+  } else {
+    currentLabel = savedStrategies[0]?.name || (isAr ? 'اختر استراتيجية' : 'Select strategy');
+  }
+
   const closeButton = (
     <button
       type="button"
       onClick={onClose}
       className="w-8 h-8 rounded-full bg-plt-hover hover:bg-plt-active active:bg-plt-active text-plt-subtle hover:text-plt-text transition-colors cursor-pointer flex items-center justify-center shrink-0"
-      title={locale === 'ar' ? 'إغلاق التقرير (Esc)' : 'Close Report (Esc)'}
-      aria-label={locale === 'ar' ? 'إغلاق تقرير الاستراتيجية' : 'Close Strategy Report Drawer'}
+      title={isAr ? 'إغلاق التقرير (Esc)' : 'Close Report (Esc)'}
+      aria-label={isAr ? 'إغلاق تقرير الاستراتيجية' : 'Close Strategy Report Drawer'}
     >
       <X size={16} />
     </button>
@@ -118,31 +173,136 @@ export default function StrategyReportHeader({
         </div>
       </div>
 
-      {/* Bottom row on smaller screens / Right-aligned control cluster on desktop: Switchers + Divider + Close Button */}
+      {/* Bottom row on smaller screens / Right-aligned control cluster on desktop: Strategy Dropdown + Presets + Divider + Close Button */}
       <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar w-full xl:w-auto shrink-0 pb-0.5 xl:pb-0">
-        {/* Algo Switch Buttons */}
+        {/* Strategy Selector Dropdown - Same design token as Strategies page (/strategies) */}
         {setSelectedStrategy && (
-          <div className="seg-control shrink-0">
-            {STRATEGY_SWITCHERS.map((strat) => {
-              const isSelected = normalizeStrategyId(selectedStrategy) === strat.id;
-              const name =
-                strat.id === 'typhon'
-                  ? locale === 'ar' ? 'تايفون' : 'Typhon'
-                  : strat.id === 'cerberus'
-                  ? locale === 'ar' ? 'سيربيروس' : 'Cerberus'
-                  : locale === 'ar' ? 'هيدرا' : 'Hydra';
+          <div ref={dropdownRef} className="relative min-w-36 sm:min-w-44 select-none shrink-0 font-sans">
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              aria-haspopup="listbox"
+              aria-expanded={dropdownOpen}
+              aria-label={isAr ? 'اختر استراتيجية' : 'Select strategy'}
+              className="flex h-8 sm:h-8.5 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-white/10 bg-black px-3 font-sans text-xs font-semibold text-white/90 outline-none transition-all hover:border-white/20 hover:text-white focus:border-white/30"
+            >
+              <span className="truncate">{currentLabel}</span>
+              <ChevronDown
+                size={13}
+                className={`shrink-0 text-white/40 transition-transform duration-150 ${dropdownOpen ? 'rotate-180 text-white' : ''}`}
+              />
+            </button>
 
-              return (
-                <button
-                  key={strat.id}
-                  type="button"
-                  onClick={() => setSelectedStrategy(strat.id)}
-                  className={`seg-control-btn ${isSelected ? 'seg-control-btn-active' : ''}`}
-                >
-                  {name}
-                </button>
-              );
-            })}
+            {dropdownOpen && (
+              <div
+                role="listbox"
+                aria-label={isAr ? 'قائمة الاستراتيجيات' : 'Strategies list'}
+                className="absolute start-0 z-50 min-w-[210px] w-max max-w-[280px] rounded-xl border border-white/15 bg-[#3D3D3D] p-1 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-100 top-full mt-1.5 font-sans"
+              >
+                {/* 1. STAFF ONLY: The 3 proprietary strategy models */}
+                {isStaff && (
+                  <>
+                    <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/40 select-none">
+                      {isAr ? 'الاستراتيجيات المعتمدة' : 'Proprietary Models'}
+                    </div>
+                    {PROPRIETARY_SWITCHERS.map((strat) => {
+                      const isSelected = normalizedProp === strat.id && !isCustomStrategy;
+                      const name = isAr ? strat.nameAr : strat.name;
+                      return (
+                        <button
+                          key={strat.id}
+                          role="option"
+                          type="button"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            setSelectedStrategy(strat.id);
+                            setDropdownOpen(false);
+                          }}
+                          className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-sans text-xs font-medium transition-colors ${
+                            isSelected
+                              ? 'bg-white/10 font-semibold text-white'
+                              : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="truncate">{name}</span>
+                            <Lock size={10} className="shrink-0 text-white/30" aria-label={isAr ? 'محمي' : 'Protected'} />
+                          </div>
+                          {isSelected && <Check size={12} className="shrink-0 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+
+                {/* 2. NON-STAFF WITH PROPRIETARY ACCESS: Single Champion Strategy option */}
+                {!isStaff && hasProprietaryAccess && (
+                  <button
+                    key="champion-model"
+                    role="option"
+                    type="button"
+                    aria-selected={!isCustomStrategy}
+                    onClick={() => {
+                      setSelectedStrategy('cerberus');
+                      setDropdownOpen(false);
+                    }}
+                    className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-sans text-xs font-medium transition-colors ${
+                      !isCustomStrategy
+                        ? 'bg-white/10 font-semibold text-white'
+                        : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="truncate">{isAr ? 'الاستراتيجية المعتمدة' : 'Champion Strategy'}</span>
+                      <Lock size={10} className="shrink-0 text-white/30" aria-label={isAr ? 'محمي' : 'Protected'} />
+                    </div>
+                    {!isCustomStrategy && <Check size={12} className="shrink-0 text-white" />}
+                  </button>
+                )}
+
+                {/* 3. USER'S CUSTOM CREATED STRATEGIES */}
+                {savedStrategies.length > 0 && (
+                  <>
+                    {(isStaff || hasProprietaryAccess) && (
+                      <div className="my-1 border-t border-white/[0.08]" />
+                    )}
+                    <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/40 select-none">
+                      {isAr ? 'استراتيجياتي المخصصة' : 'My Custom Strategies'}
+                    </div>
+                    {savedStrategies.map((strat) => {
+                      const isSelected = selectedStrategy === strat.id;
+                      return (
+                        <button
+                          key={strat.id}
+                          role="option"
+                          type="button"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            setSelectedStrategy(strat.id);
+                            setDropdownOpen(false);
+                          }}
+                          className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-sans text-xs font-medium transition-colors ${
+                            isSelected
+                              ? 'bg-white/10 font-semibold text-white'
+                              : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
+                          }`}
+                        >
+                          <span className="truncate">{strat.name}</span>
+                          {isSelected && <Check size={12} className="shrink-0 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+
+                {/* Empty State when non-staff has no custom strategies */}
+                {savedStrategies.length === 0 && !isStaff && !hasProprietaryAccess && (
+                  <div className="px-2.5 py-2 text-xs text-white/60 text-start">
+                    {isAr ? 'لا توجد استراتيجيات مخصصة' : 'No custom strategies created yet'}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -153,14 +313,14 @@ export default function StrategyReportHeader({
           {TIMEFRAME_PRESETS.map((tf) => {
             const label =
               tf.id === '3m'
-                ? locale === 'ar' ? '3 أشهر' : '3M'
+                ? isAr ? '3 أشهر' : '3M'
                 : tf.id === '6m'
-                ? locale === 'ar' ? '6 أشهر' : '6M'
+                ? isAr ? '6 أشهر' : '6M'
                 : tf.id === 'ytd'
-                ? locale === 'ar' ? 'بداية العام' : 'YTD'
+                ? isAr ? 'بداية العام' : 'YTD'
                 : tf.id === '1y'
-                ? locale === 'ar' ? '1 سنة' : '1Y'
-                : locale === 'ar' ? 'الكل' : 'ALL';
+                ? isAr ? '1 سنة' : '1Y'
+                : isAr ? 'الكل' : 'ALL';
 
             return (
               <button
@@ -179,10 +339,10 @@ export default function StrategyReportHeader({
             className={`seg-control-btn flex items-center gap-1 ${
               activePreset === 'custom' ? 'seg-control-btn-active' : ''
             }`}
-            title={locale === 'ar' ? 'نطاق زمني مخصص' : 'Custom Date Range'}
+            title={isAr ? 'نطاق زمني مخصص' : 'Custom Date Range'}
           >
             <Calendar size={11} />
-            <span>{locale === 'ar' ? 'مخصص' : 'Custom'}</span>
+            <span>{isAr ? 'مخصص' : 'Custom'}</span>
           </button>
         </div>
 

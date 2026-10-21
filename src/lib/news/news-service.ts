@@ -1,6 +1,8 @@
 import { db, schema } from '@/db';
 import { marketNews, tickers } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
+import { dispatchNewsPushNotification } from '@/lib/notifications/pushNotifications';
+import { EGX_CANONICAL_NAMES } from './source-meta';
 
 export type NewsCategory =
   | 'ticknal_take'
@@ -345,6 +347,9 @@ export async function getMarketNewsItems(filters: NewsQueryFilters = {}) {
     } else if (symbolToLookup && MACRO_ASSET_LOGOS[symbolToLookup]) {
       resolvedLogoUrl = MACRO_ASSET_LOGOS[symbolToLookup].logoUrl;
       resolvedCompanyName = MACRO_ASSET_LOGOS[symbolToLookup].companyName;
+    } else if (symbolToLookup && EGX_CANONICAL_NAMES[symbolToLookup]) {
+      resolvedCompanyName = EGX_CANONICAL_NAMES[symbolToLookup];
+      resolvedLogoUrl = tickerMap.get(symbolToLookup)?.logoUrl || null;
     } else if (symbolToLookup && tickerMap.has(symbolToLookup)) {
       const meta = tickerMap.get(symbolToLookup)!;
       resolvedLogoUrl = meta.logoUrl;
@@ -415,6 +420,19 @@ export async function createMarketNewsItem(item: Omit<typeof marketNews.$inferIn
       updatedAt: new Date(),
     })
     .returning();
+
+  if (inserted && (inserted.urgencyScore ?? 0) >= 10) {
+    dispatchNewsPushNotification({
+      id: inserted.id,
+      title: inserted.title,
+      summary: inserted.summary || '',
+      urgencyScore: inserted.urgencyScore ?? 10,
+      imageUrl: inserted.imageUrl,
+      category: inserted.category,
+      tickers: (Array.isArray(inserted.tickers) ? inserted.tickers : []) as string[],
+      publishedAt: inserted.publishedAt,
+    }).catch((err) => console.error('[createMarketNewsItem] Failed to dispatch 10/10 news push notification:', err));
+  }
 
   return inserted;
 }

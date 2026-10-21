@@ -298,14 +298,15 @@ export default function BottomNav() {
   }, [t, isRTL, isConsole, isMoreDrawerOpen, isHeroScene]);
   const { isNavVisible, setIsNavVisible } = useMobileNavScroll();
   const isChartRoute = pathname === '/charts' || pathname.startsWith('/charts/');
-  // The chart workspace has no reliable vertical page scroll to restore hidden navigation.
-  const isBottomNavVisible = isHeroScene || isChartRoute || isNavVisible;
+  const isStrategiesRoute = pathname === '/strategies' || pathname.startsWith('/strategies');
+  // The chart and strategies workspaces have no reliable vertical page scroll to restore hidden navigation.
+  const isBottomNavVisible = isHeroScene || isChartRoute || isStrategiesRoute || isNavVisible;
 
   useEffect(() => {
-    if (isChartRoute) {
+    if (isChartRoute || isStrategiesRoute) {
       setIsNavVisible(true);
     }
-  }, [isChartRoute, setIsNavVisible]);
+  }, [isChartRoute, isStrategiesRoute, setIsNavVisible]);
 
   const [optimisticNavId, setOptimisticNavId] = useState<NavItemId | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -349,41 +350,45 @@ export default function BottomNav() {
       {!isChartRoute && !isConsole && (
         <div
           className={`fixed ${
-            isGuest
+            isStrategiesRoute
+              ? 'bottom-[calc(138px+var(--ticknal-safe-area-bottom))]'
+              : isGuest
               ? 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+56px+12px)]'
               : 'bottom-[calc(56px+var(--ticknal-safe-area-bottom)+16px)]'
           } right-3.5 z-40 md:hidden flex flex-col items-center gap-2.5 transition-all duration-300 ease-out will-change-transform ${
-            isNavVisible
+            isNavVisible || isStrategiesRoute
               ? 'translate-y-0 opacity-100 pointer-events-auto'
               : 'translate-y-16 opacity-0 pointer-events-none'
           }`}
           aria-label="Mobile Quick Actions"
         >
-          {/* 1. Alerts & Notifications Button (44x44) */}
-          <motion.button
-            type="button"
-            data-hero-action="alerts"
-            data-tour="home-mobile-notifications-btn"
-            data-hero-scene-ready={isHeroScene ? 'true' : undefined}
-            onClick={(e) => {
-              if (isGuest && !isHeroScene) {
-                requireAuth(e, 'Live Market Notifications', 'Unlock Live Market Alerts');
-                return;
-              }
-              setIsNotificationsOpen(true);
-            }}
-            whileHover={controlHover}
-            whileTap={controlTap}
-            className="w-11 h-11 rounded-full bg-plt-base/90 backdrop-blur-xl border border-plt-border text-plt-text shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
-            title="Trade Notifications & Alerts"
-          >
-            <Bell size={20} strokeWidth={1.8} className="text-plt-text" />
-            {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base">
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </span>
-            )}
-          </motion.button>
+          {/* 1. Alerts & Notifications Button (44x44) — Hidden on the strategies page per user request */}
+          {!isStrategiesRoute && (
+            <motion.button
+              type="button"
+              data-hero-action="alerts"
+              data-tour="home-mobile-notifications-btn"
+              data-hero-scene-ready={isHeroScene ? 'true' : undefined}
+              onClick={(e) => {
+                if (isGuest && !isHeroScene) {
+                  requireAuth(e, 'Live Market Notifications', 'Unlock Live Market Alerts');
+                  return;
+                }
+                setIsNotificationsOpen(true);
+              }}
+              whileHover={controlHover}
+              whileTap={controlTap}
+              className="w-11 h-11 rounded-full bg-plt-base/90 backdrop-blur-xl border border-plt-border text-plt-text shadow-2xl flex items-center justify-center relative cursor-pointer active:scale-95 transition-all"
+              title="Trade Notifications & Alerts"
+            >
+              <Bell size={20} strokeWidth={1.8} className="text-plt-text" />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base">
+                  {notificationCount > 9 ? '9+' : notificationCount}
+                </span>
+              )}
+            </motion.button>
+          )}
 
           {/* 2. Quick Add Position / Transaction Button (44x44) */}
           <motion.button

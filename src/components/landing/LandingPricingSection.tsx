@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -273,11 +273,335 @@ const AR_PRICING_FEATURES: Record<string, { label: string; freeText: string; plu
   },
 };
 
+interface PlanCardContentProps {
+  planId: 'free' | 'plus' | 'elite';
+  locale: string;
+  isRTL: boolean;
+  isAnnual: boolean;
+  plusValues: {
+    monthly: number;
+    annualMonthly: number;
+    annualTotal: number;
+    savedYear: number;
+  };
+  eliteValues: {
+    monthly: number;
+    annualMonthly: number;
+    annualTotal: number;
+    savedYear: number;
+  };
+}
+
+function PlanCardContent({
+  planId,
+  locale,
+  isRTL,
+  isAnnual,
+  plusValues,
+  eliteValues,
+}: PlanCardContentProps) {
+  const isFree = planId === 'free';
+  const isPlus = planId === 'plus';
+  const isElite = planId === 'elite';
+
+  const title = isFree
+    ? locale === 'ar' ? 'مجاني' : 'Free'
+    : isPlus
+    ? 'Plus'
+    : 'Elite';
+
+  const badge = isFree ? (
+    <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 px-2 py-0.5 rounded bg-white/[0.05] border border-white/10">
+      {locale === 'ar' ? 'البداية' : 'Starter'}
+    </span>
+  ) : isPlus ? (
+    <span className="text-[10px] font-semibold uppercase tracking-wider text-black bg-white px-2 py-0.5 rounded shadow-sm">
+      {locale === 'ar' ? 'الأكتر طلباً' : 'Most Popular'}
+    </span>
+  ) : (
+    <span className="text-[10px] font-semibold uppercase tracking-wider text-pink-300 px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/20">
+      {locale === 'ar' ? 'التفوق المؤسسي' : 'State-of-the-Art'}
+    </span>
+  );
+
+  const priceNode = isFree ? (
+    <div className="flex items-baseline gap-1">
+      <span className="text-3xl sm:text-4xl font-bold text-white tabular-nums tracking-tight">
+        0
+      </span>
+      <span className="text-sm font-medium text-zinc-400">
+        {locale === 'ar' ? 'ج.م' : 'EGP'}
+      </span>
+      <span className="text-xs text-zinc-500 font-normal ms-1">
+        {locale === 'ar' ? '/ شهر' : '/ mo'}
+      </span>
+    </div>
+  ) : isPlus ? (
+    <div className="flex items-baseline gap-1">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={isAnnual ? 'plus-annual' : 'plus-monthly'}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 4 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="text-3xl sm:text-4xl font-bold text-white tabular-nums tracking-tight inline-block"
+        >
+          {isAnnual ? plusValues.annualMonthly : plusValues.monthly}
+        </motion.span>
+      </AnimatePresence>
+      <span className="text-sm font-medium text-zinc-400">
+        {locale === 'ar' ? 'ج.م' : 'EGP'}
+      </span>
+      <span className="text-xs text-zinc-500 font-normal ms-1">
+        {locale === 'ar' ? '/ شهر' : '/ mo'}
+      </span>
+    </div>
+  ) : (
+    <div className="flex items-baseline gap-1">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={isAnnual ? 'elite-annual' : 'elite-monthly'}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 4 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="text-3xl sm:text-4xl font-bold text-white tabular-nums tracking-tight inline-block"
+        >
+          {isAnnual ? eliteValues.annualMonthly : eliteValues.monthly}
+        </motion.span>
+      </AnimatePresence>
+      <span className="text-sm font-medium text-zinc-400">
+        {locale === 'ar' ? 'ج.م' : 'EGP'}
+      </span>
+      <span className="text-xs text-zinc-500 font-normal ms-1">
+        {locale === 'ar' ? '/ شهر' : '/ mo'}
+      </span>
+    </div>
+  );
+
+  const billingSubtitle = isFree ? (
+    <>
+      <div className="text-xs text-zinc-400 mt-1">
+        {locale === 'ar' ? 'مجاني على طول' : 'free forever'}
+      </div>
+      <div className="text-xs text-zinc-500 mt-1">
+        {locale === 'ar' ? 'مش محتاج كارت بنكي' : 'No credit card required'}
+      </div>
+    </>
+  ) : isPlus ? (
+    <>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={isAnnual ? 'plus-billing-annual' : 'plus-billing-monthly'}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="text-xs text-zinc-400 mt-1"
+        >
+          {isAnnual
+            ? locale === 'ar'
+              ? `تدفع سنوياً (${plusValues.annualTotal} ج.م)`
+              : `billed annually (${plusValues.annualTotal} EGP)`
+            : locale === 'ar'
+            ? 'تدفع شهرياً'
+            : 'billed monthly'}
+        </motion.div>
+      </AnimatePresence>
+      <div className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
+        {isAnnual ? (
+          <>
+            <span>
+              {locale === 'ar'
+                ? `وفر ${plusValues.savedYear} ج.م في السنة`
+                : `Save ${plusValues.savedYear} EGP a year`}
+            </span>
+            <span
+              title={
+                locale === 'ar'
+                  ? `مقارنة بالدفع الشهري. السعر السنوي الكامل ${plusValues.annualTotal} ج.م بدلاً من ${plusValues.monthly * 12} ج.م.`
+                  : `Compared to paying monthly. Full annual price is ${plusValues.annualTotal} EGP instead of ${plusValues.monthly * 12} EGP.`
+              }
+              className="inline-flex cursor-help text-zinc-500 hover:text-white"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </span>
+          </>
+        ) : (
+          <span>{locale === 'ar' ? 'تنبيهات فورية ومؤشرات متقدمة' : 'Real-time alerts & indicators'}</span>
+        )}
+      </div>
+    </>
+  ) : (
+    <>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={isAnnual ? 'elite-billing-annual' : 'elite-billing-monthly'}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="text-xs text-zinc-400 mt-1"
+        >
+          {isAnnual
+            ? locale === 'ar'
+              ? `تدفع سنوياً (${eliteValues.annualTotal} ج.م)`
+              : `billed annually (${eliteValues.annualTotal} EGP)`
+            : locale === 'ar'
+            ? 'تدفع شهرياً'
+            : 'billed monthly'}
+        </motion.div>
+      </AnimatePresence>
+      <div className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
+        {isAnnual ? (
+          <>
+            <span>
+              {locale === 'ar'
+                ? `وفر ${eliteValues.savedYear} ج.م في السنة`
+                : `Save ${eliteValues.savedYear} EGP a year`}
+            </span>
+            <span
+              title={
+                locale === 'ar'
+                  ? `مقارنة بالدفع الشهري. السعر السنوي الكامل ${eliteValues.annualTotal} ج.م بدلاً من ${eliteValues.monthly * 12} ج.م.`
+                  : `Compared to paying monthly. Full annual price is ${eliteValues.annualTotal} EGP instead of ${eliteValues.monthly * 12} EGP.`
+              }
+              className="inline-flex cursor-help text-zinc-500 hover:text-white"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </span>
+          </>
+        ) : (
+          <span>{locale === 'ar' ? 'تفوق كمي مؤسسي متكامل' : 'Institutional quantitative edge'}</span>
+        )}
+      </div>
+    </>
+  );
+
+  const actionButton = (
+    <Link
+      href="/login?mode=signup"
+      className={`w-full py-2.5 px-4 rounded-md text-sm font-semibold transition-all duration-200 text-center block shadow-sm cursor-pointer active:scale-[0.98] ${
+        isPlus
+          ? 'text-white bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_24px_rgba(37,99,235,0.4)]'
+          : 'text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)]'
+      }`}
+    >
+      {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
+    </Link>
+  );
+
+  return (
+    <div className="flex flex-col justify-between h-full text-left rtl:text-right">
+      <div>
+        {/* Plan Title & Badge */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
+            {title}
+          </h3>
+          {badge}
+        </div>
+
+        {/* Price */}
+        <div className="mt-3">
+          {priceNode}
+          {billingSubtitle}
+        </div>
+
+        {/* Top Button */}
+        <div className="mt-5">
+          {actionButton}
+        </div>
+
+        {/* Condensed Feature Matrix */}
+        <div className="mt-6">
+          <ul className="space-y-3.5">
+            {PRICING_FEATURES.map((feat) => {
+              const status = feat[planId];
+              const isCustomIndicator =
+                isElite &&
+                (feat.key === 'HYDRA_INDICATOR' ||
+                  feat.key === 'TYPHOON_INDICATOR' ||
+                  feat.key === 'CERBERUS_INDICATOR');
+              const customText =
+                locale === 'ar'
+                  ? AR_PRICING_FEATURES[feat.key]?.[
+                      isFree ? 'freeText' : isPlus ? 'plusText' : 'eliteText'
+                    ] ||
+                    AR_PRICING_FEATURES[feat.key]?.label ||
+                    feat.label
+                  : status.customText || feat.label;
+
+              return (
+                <li
+                  key={feat.key}
+                  className="flex items-start gap-2.5 min-h-[40px]"
+                >
+                  <span className="shrink-0 mt-0.5">
+                    {status.included ? (
+                      <Check className="w-3.5 h-3.5 text-white/80" />
+                    ) : (
+                      <X className="w-3.5 h-3.5 text-zinc-600" />
+                    )}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={`text-xs sm:text-[13px] leading-tight ${
+                        isCustomIndicator
+                          ? 'text-white font-medium'
+                          : status.included
+                          ? 'text-zinc-200 font-normal'
+                          : 'text-zinc-600 line-through decoration-zinc-700 font-normal'
+                      }`}
+                    >
+                      {customText}
+                    </p>
+                    {feat.hasProgressBar && (
+                      <div
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                        className="w-full h-[2.5px] bg-white/[0.08] rounded-full overflow-hidden mt-1.5"
+                      >
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{
+                            width: status.included ? `${status.progress}%` : '0%',
+                          }}
+                          viewport={{ once: true, amount: 0.2 }}
+                          transition={{
+                            duration: 0.75,
+                            delay: isFree ? 0.2 : isPlus ? 0.25 : 0.3,
+                            ease: [0.16, 1, 0.3, 1],
+                          }}
+                          className={`h-full rounded-full ${
+                            status.included ? 'bg-white' : 'bg-transparent'
+                          }`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+
+      {/* Bottom Action Button Mirror */}
+      <div className="mt-6">
+        {actionButton}
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPricingSection({
   initialPlans = [],
 }: LandingPricingSectionProps) {
   const { locale, isRTL } = useTranslation();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const [activeMobileSlide, setActiveMobileSlide] = useState(0);
+  const mobileCarouselRef = useRef<HTMLDivElement>(null);
 
   const plusPlan = initialPlans.find((p) => p.id === 'plus');
   const elitePlan = initialPlans.find((p) => p.id === 'elite');
@@ -300,8 +624,45 @@ export default function LandingPricingSection({
     (eliteMonthly > 0 ? Math.round((eliteSavedYear / (eliteMonthly * 12)) * 100) : 17);
 
   const maxDiscountPct = Math.max(plusDiscountPct, eliteDiscountPct, 17);
-
   const isAnnual = billingCycle === 'annual';
+
+  const plusValues = {
+    monthly: plusMonthly,
+    annualMonthly: plusAnnualMonthly,
+    annualTotal: plusAnnualTotal,
+    savedYear: plusSavedYear,
+  };
+
+  const eliteValues = {
+    monthly: eliteMonthly,
+    annualMonthly: eliteAnnualMonthly,
+    annualTotal: eliteAnnualTotal,
+    savedYear: eliteSavedYear,
+  };
+
+  const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const scrollLeft = Math.abs(container.scrollLeft);
+    const itemWidth = container.offsetWidth * 0.86;
+    const slide = Math.round(scrollLeft / itemWidth);
+    const clamped = Math.min(Math.max(slide, 0), 2);
+    if (clamped !== activeMobileSlide) {
+      setActiveMobileSlide(clamped);
+    }
+  };
+
+  const scrollToSlide = (index: number) => {
+    if (!mobileCarouselRef.current) return;
+    const cards = mobileCarouselRef.current.children;
+    if (cards[index]) {
+      (cards[index] as HTMLElement).scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+      setActiveMobileSlide(index);
+    }
+  };
 
   return (
     <section
@@ -397,25 +758,19 @@ export default function LandingPricingSection({
           </div>
         </motion.div>
 
-        {/* 2. THE UNIFIED TABLE WITH MOVING 2PX GRADIENT BORDER */}
+        {/* 2A. DESKTOP VIEW: THE UNIFIED TABLE WITH MOVING 2PX GRADIENT BORDER */}
         <motion.div
           initial={{ opacity: 0, y: 26 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={{ duration: 0.75, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-5xl"
+          className="hidden md:block relative w-full max-w-5xl"
         >
-          {/* Subtle colorful ambient aura behind the table */}
-          <div className="absolute -inset-1 rounded-[26px] overflow-hidden pointer-events-none opacity-20 blur-xl">
+          {/* Subtle colorful ambient aura behind the table (forced LTR flex-centered to prevent RTL skew) */}
+          <div className="absolute -inset-1 rounded-[26px] overflow-hidden pointer-events-none opacity-20 blur-xl flex items-center justify-center" dir="ltr">
             <motion.div
+              className="w-[3200px] h-[3200px] shrink-0 pointer-events-none select-none"
               style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                width: '3200px',
-                height: '3200px',
-                marginLeft: '-1600px',
-                marginTop: '-1600px',
                 background:
                   'conic-gradient(from 0deg, #00c6ff 0%, #2962ff 25%, #8a2be2 50%, #ff007a 75%, #00c6ff 100%)',
               }}
@@ -426,452 +781,144 @@ export default function LandingPricingSection({
 
           {/* Table Container with Moving 2px Hairline Gradient Border */}
           <div className="relative w-full rounded-[24px] p-[2px] overflow-hidden shadow-2xl">
-            <motion.div
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                width: '3200px',
-                height: '3200px',
-                marginLeft: '-1600px',
-                marginTop: '-1600px',
-                background:
-                  'conic-gradient(from 0deg, #00c6ff 0%, #2962ff 25%, #8a2be2 50%, #ff007a 75%, #00c6ff 100%)',
-              }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-              className="pointer-events-none select-none"
-            />
+            <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none" dir="ltr">
+              <motion.div
+                className="w-[3200px] h-[3200px] shrink-0 pointer-events-none select-none"
+                style={{
+                  background:
+                    'conic-gradient(from 0deg, #00c6ff 0%, #2962ff 25%, #8a2be2 50%, #ff007a 75%, #00c6ff 100%)',
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+              />
+            </div>
 
             {/* Inner Pure Pitch-Black Content Container */}
             <div className="relative w-full h-full bg-black rounded-[22px] overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
-                {/* COLUMN 1: FREE (Starter) */}
-                <div className="flex flex-col justify-between p-5 sm:p-6 lg:p-7">
-                  <div>
-                    {/* Plan Title */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
-                        {locale === 'ar' ? 'مجاني' : 'Free'}
-                      </h3>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 px-2 py-0.5 rounded bg-white/[0.05] border border-white/10">
-                        {locale === 'ar' ? 'البداية' : 'Starter'}
-                      </span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="mt-3">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl sm:text-4xl font-bold text-white tabular-nums tracking-tight">
-                          0
-                        </span>
-                        <span className="text-sm font-medium text-zinc-400">
-                          {locale === 'ar' ? 'ج.م' : 'EGP'}
-                        </span>
-                        <span className="text-xs text-zinc-500 font-normal ml-1">
-                          {locale === 'ar' ? '/ شهر' : '/ mo'}
-                        </span>
-                      </div>
-                      <div className="text-xs text-zinc-400 mt-1">
-                        {locale === 'ar' ? 'مجاني على طول' : 'free forever'}
-                      </div>
-                      <div className="text-xs text-zinc-500 mt-1">
-                        {locale === 'ar' ? 'مش محتاج كارت بنكي' : 'No credit card required'}
-                      </div>
-                    </div>
-
-                    {/* Button */}
-                    <div className="mt-5">
-                      <Link
-                        href="/login?mode=signup"
-                        className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
-                      >
-                        {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
-                      </Link>
-                    </div>
-
-                    {/* Condensed Feature Matrix */}
-                    <div className="mt-6">
-                      <ul className="space-y-3.5">
-                        {PRICING_FEATURES.map((feat) => {
-                          const status = feat.free;
-                          const customText = locale === 'ar'
-                            ? AR_PRICING_FEATURES[feat.key]?.freeText || AR_PRICING_FEATURES[feat.key]?.label || feat.label
-                            : status.customText || feat.label;
-
-                          return (
-                            <li
-                              key={feat.key}
-                              className="flex items-start gap-2.5 min-h-[40px]"
-                            >
-                              <span className="shrink-0 mt-0.5">
-                                {status.included ? (
-                                  <Check className="w-3.5 h-3.5 text-white/80" />
-                                ) : (
-                                  <X className="w-3.5 h-3.5 text-zinc-600" />
-                                )}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p
-                                  className={`text-xs sm:text-[13px] leading-tight ${
-                                    status.included
-                                      ? 'text-zinc-200 font-normal'
-                                      : 'text-zinc-600 line-through decoration-zinc-700 font-normal'
-                                  }`}
-                                >
-                                  {customText}
-                                </p>
-                                {feat.hasProgressBar && (
-                                  <div className="w-full h-[2.5px] bg-white/[0.08] rounded-full overflow-hidden mt-1.5">
-                                    <motion.div
-                                      initial={{ width: 0 }}
-                                      whileInView={{
-                                        width: status.included ? `${status.progress}%` : '0%',
-                                      }}
-                                      viewport={{ once: true, amount: 0.2 }}
-                                      transition={{
-                                        duration: 0.75,
-                                        delay: 0.2,
-                                        ease: [0.16, 1, 0.3, 1],
-                                      }}
-                                      className={`h-full rounded-full ${
-                                        status.included ? 'bg-white' : 'bg-transparent'
-                                      }`}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Bottom Action Button Mirror */}
-                  <div className="mt-6">
-                    <Link
-                      href="/login?mode=signup"
-                      className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
-                    >
-                      {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
-                    </Link>
-                  </div>
+              <div className="grid grid-cols-3 divide-x rtl:divide-x-reverse divide-white/[0.08]">
+                {/* COLUMN 1: FREE */}
+                <div className="p-5 sm:p-6 lg:p-7 flex flex-col justify-between">
+                  <PlanCardContent
+                    planId="free"
+                    locale={locale}
+                    isRTL={isRTL}
+                    isAnnual={isAnnual}
+                    plusValues={plusValues}
+                    eliteValues={eliteValues}
+                  />
                 </div>
 
                 {/* COLUMN 2: PLUS (Most Popular) */}
-                <div className="flex flex-col justify-between p-5 sm:p-6 lg:p-7 bg-white/[0.01]">
-                  <div>
-                    {/* Plan Title */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
-                        Plus
-                      </h3>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-black bg-white px-2 py-0.5 rounded shadow-sm">
-                        {locale === 'ar' ? 'الأكتر طلباً' : 'Most Popular'}
-                      </span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="mt-3">
-                      <div className="flex items-baseline gap-1">
-                        <AnimatePresence mode="wait" initial={false}>
-                          <motion.span
-                            key={isAnnual ? 'plus-annual' : 'plus-monthly'}
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 4 }}
-                            transition={{ duration: 0.18, ease: 'easeOut' }}
-                            className="text-3xl sm:text-4xl font-bold text-white tabular-nums tracking-tight inline-block"
-                          >
-                            {isAnnual ? plusAnnualMonthly : plusMonthly}
-                          </motion.span>
-                        </AnimatePresence>
-                        <span className="text-sm font-medium text-zinc-400">
-                          {locale === 'ar' ? 'ج.م' : 'EGP'}
-                        </span>
-                        <span className="text-xs text-zinc-500 font-normal ml-1">
-                          {locale === 'ar' ? '/ شهر' : '/ mo'}
-                        </span>
-                      </div>
-                      <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                          key={isAnnual ? 'plus-billing-annual' : 'plus-billing-monthly'}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className="text-xs text-zinc-400 mt-1"
-                        >
-                          {isAnnual
-                            ? locale === 'ar'
-                              ? `تدفع سنوياً (${plusAnnualTotal} ج.م)`
-                              : `billed annually (${plusAnnualTotal} EGP)`
-                            : locale === 'ar'
-                            ? 'تدفع شهرياً'
-                            : 'billed monthly'}
-                        </motion.div>
-                      </AnimatePresence>
-                      <div className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
-                        {isAnnual ? (
-                          <>
-                            <span>
-                              {locale === 'ar'
-                                ? `وفر ${plusSavedYear} ج.م في السنة`
-                                : `Save ${plusSavedYear} EGP a year`}
-                            </span>
-                            <span
-                              title={locale === 'ar' ? `مقارنة بالدفع الشهري. السعر السنوي الكامل ${plusAnnualTotal} ج.م بدلاً من ${plusMonthly * 12} ج.م.` : `Compared to paying monthly. Full annual price is ${plusAnnualTotal} EGP instead of ${plusMonthly * 12} EGP.`}
-                              className="inline-flex cursor-help text-zinc-500 hover:text-white"
-                            >
-                              <Info className="w-3.5 h-3.5" />
-                            </span>
-                          </>
-                        ) : (
-                          <span>{locale === 'ar' ? 'تنبيهات فورية ومؤشرات متقدمة' : 'Real-time alerts & indicators'}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Button */}
-                    <div className="mt-5">
-                      <Link
-                        href="/login?mode=signup"
-                        className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_24px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
-                      >
-                        {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
-                      </Link>
-                    </div>
-
-                    {/* Condensed Feature Matrix */}
-                    <div className="mt-6">
-                      <ul className="space-y-3.5">
-                        {PRICING_FEATURES.map((feat) => {
-                          const status = feat.plus;
-                          const customText = locale === 'ar'
-                            ? AR_PRICING_FEATURES[feat.key]?.plusText || AR_PRICING_FEATURES[feat.key]?.label || feat.label
-                            : status.customText || feat.label;
-
-                          return (
-                            <li
-                              key={feat.key}
-                              className="flex items-start gap-2.5 min-h-[40px]"
-                            >
-                              <span className="shrink-0 mt-0.5">
-                                {status.included ? (
-                                  <Check className="w-3.5 h-3.5 text-white/80" />
-                                ) : (
-                                  <X className="w-3.5 h-3.5 text-zinc-600" />
-                                )}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p
-                                  className={`text-xs sm:text-[13px] leading-tight ${
-                                    status.included
-                                      ? 'text-zinc-200 font-normal'
-                                      : 'text-zinc-600 line-through decoration-zinc-700 font-normal'
-                                  }`}
-                                >
-                                  {customText}
-                                </p>
-                                {feat.hasProgressBar && (
-                                  <div className="w-full h-[2.5px] bg-white/[0.08] rounded-full overflow-hidden mt-1.5">
-                                    <motion.div
-                                      initial={{ width: 0 }}
-                                      whileInView={{
-                                        width: status.included ? `${status.progress}%` : '0%',
-                                      }}
-                                      viewport={{ once: true, amount: 0.2 }}
-                                      transition={{
-                                        duration: 0.75,
-                                        delay: 0.25,
-                                        ease: [0.16, 1, 0.3, 1],
-                                      }}
-                                      className={`h-full rounded-full ${
-                                        status.included ? 'bg-white' : 'bg-transparent'
-                                      }`}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Bottom Action Button Mirror */}
-                  <div className="mt-6">
-                    <Link
-                      href="/login?mode=signup"
-                      className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_24px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
-                    >
-                      {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
-                    </Link>
-                  </div>
+                <div className="p-5 sm:p-6 lg:p-7 bg-white/[0.01] flex flex-col justify-between">
+                  <PlanCardContent
+                    planId="plus"
+                    locale={locale}
+                    isRTL={isRTL}
+                    isAnnual={isAnnual}
+                    plusValues={plusValues}
+                    eliteValues={eliteValues}
+                  />
                 </div>
 
-                {/* COLUMN 3: ELITE (Institutional Indicators) */}
-                <div className="flex flex-col justify-between p-5 sm:p-6 lg:p-7">
-                  <div>
-                    {/* Plan Title */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
-                        Elite
-                      </h3>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-pink-300 px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/20">
-                        {locale === 'ar' ? 'التفوق المؤسسي' : 'State-of-the-Art'}
-                      </span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="mt-3">
-                      <div className="flex items-baseline gap-1">
-                        <AnimatePresence mode="wait" initial={false}>
-                          <motion.span
-                            key={isAnnual ? 'elite-annual' : 'elite-monthly'}
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 4 }}
-                            transition={{ duration: 0.18, ease: 'easeOut' }}
-                            className="text-3xl sm:text-4xl font-bold text-white tabular-nums tracking-tight inline-block"
-                          >
-                            {isAnnual ? eliteAnnualMonthly : eliteMonthly}
-                          </motion.span>
-                        </AnimatePresence>
-                        <span className="text-sm font-medium text-zinc-400">
-                          {locale === 'ar' ? 'ج.م' : 'EGP'}
-                        </span>
-                        <span className="text-xs text-zinc-500 font-normal ml-1">
-                          {locale === 'ar' ? '/ شهر' : '/ mo'}
-                        </span>
-                      </div>
-                      <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                          key={isAnnual ? 'elite-billing-annual' : 'elite-billing-monthly'}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className="text-xs text-zinc-400 mt-1"
-                        >
-                          {isAnnual
-                            ? locale === 'ar'
-                              ? `تدفع سنوياً (${eliteAnnualTotal} ج.م)`
-                              : `billed annually (${eliteAnnualTotal} EGP)`
-                            : locale === 'ar'
-                            ? 'تدفع شهرياً'
-                            : 'billed monthly'}
-                        </motion.div>
-                      </AnimatePresence>
-                      <div className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
-                        {isAnnual ? (
-                          <>
-                            <span>
-                              {locale === 'ar'
-                                ? `وفر ${eliteSavedYear} ج.م في السنة`
-                                : `Save ${eliteSavedYear} EGP a year`}
-                            </span>
-                            <span
-                              title={locale === 'ar' ? `مقارنة بالدفع الشهري. السعر السنوي الكامل ${eliteAnnualTotal} ج.م بدلاً من ${eliteMonthly * 12} ج.م.` : `Compared to paying monthly. Full annual price is ${eliteAnnualTotal} EGP instead of ${eliteMonthly * 12} EGP.`}
-                              className="inline-flex cursor-help text-zinc-500 hover:text-white"
-                            >
-                              <Info className="w-3.5 h-3.5" />
-                            </span>
-                          </>
-                        ) : (
-                          <span>{locale === 'ar' ? 'تفوق كمي مؤسسي متكامل' : 'Institutional quantitative edge'}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Button */}
-                    <div className="mt-5">
-                      <Link
-                        href="/login?mode=signup"
-                        className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
-                      >
-                        {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
-                      </Link>
-                    </div>
-
-                    {/* Condensed Feature Matrix */}
-                    <div className="mt-6">
-                      <ul className="space-y-3.5">
-                        {PRICING_FEATURES.map((feat) => {
-                          const status = feat.elite;
-                          const isCustomIndicator =
-                            feat.key === 'HYDRA_INDICATOR' ||
-                            feat.key === 'TYPHOON_INDICATOR' ||
-                            feat.key === 'CERBERUS_INDICATOR';
-                          const customText = locale === 'ar'
-                            ? AR_PRICING_FEATURES[feat.key]?.eliteText || AR_PRICING_FEATURES[feat.key]?.label || feat.label
-                            : status.customText || feat.label;
-
-                          return (
-                            <li
-                              key={feat.key}
-                              className="flex items-start gap-2.5 min-h-[40px]"
-                            >
-                              <span className="shrink-0 mt-0.5">
-                                {status.included ? (
-                                  <Check className="w-3.5 h-3.5 text-white/80" />
-                                ) : (
-                                  <X className="w-3.5 h-3.5 text-zinc-600" />
-                                )}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p
-                                  className={`text-xs sm:text-[13px] leading-tight ${
-                                    isCustomIndicator
-                                      ? 'text-white font-medium'
-                                      : status.included
-                                      ? 'text-zinc-200 font-normal'
-                                      : 'text-zinc-600 line-through decoration-zinc-700 font-normal'
-                                  }`}
-                                >
-                                  {customText}
-                                </p>
-                                {feat.hasProgressBar && (
-                                  <div className="w-full h-[2.5px] bg-white/[0.08] rounded-full overflow-hidden mt-1.5">
-                                    <motion.div
-                                      initial={{ width: 0 }}
-                                      whileInView={{
-                                        width: status.included ? `${status.progress}%` : '0%',
-                                      }}
-                                      viewport={{ once: true, amount: 0.2 }}
-                                      transition={{
-                                        duration: 0.75,
-                                        delay: 0.3,
-                                        ease: [0.16, 1, 0.3, 1],
-                                      }}
-                                      className={`h-full rounded-full ${
-                                        status.included ? 'bg-white' : 'bg-transparent'
-                                      }`}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Bottom Action Button Mirror */}
-                  <div className="mt-6">
-                    <Link
-                      href="/login?mode=signup"
-                      className="w-full py-2.5 px-4 rounded-md text-sm font-semibold text-black bg-white hover:bg-neutral-200 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 text-center block shadow-sm"
-                    >
-                      {locale === 'ar' ? 'ابدأ دلوقتي' : 'Start now'}
-                    </Link>
-                  </div>
+                {/* COLUMN 3: ELITE */}
+                <div className="p-5 sm:p-6 lg:p-7 flex flex-col justify-between">
+                  <PlanCardContent
+                    planId="elite"
+                    locale={locale}
+                    isRTL={isRTL}
+                    isAnnual={isAnnual}
+                    plusValues={plusValues}
+                    eliteValues={eliteValues}
+                  />
                 </div>
               </div>
             </div>
+          </div>
+        </motion.div>
+
+        {/* 2B. MOBILE VIEW: SWIPABLE HORIZONTAL CAROUSEL */}
+        <motion.div
+          initial={{ opacity: 0, y: 26 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.75, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="block md:hidden w-full"
+        >
+          <div
+            ref={mobileCarouselRef}
+            onScroll={handleMobileScroll}
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-4 pt-1 px-4 -mx-4 items-stretch"
+          >
+            {/* Slide 1: Free */}
+            <div className="w-[86vw] max-w-[340px] shrink-0 snap-center rounded-[24px] bg-black border border-white/[0.08] shadow-xl p-5 sm:p-6 flex flex-col justify-between h-full">
+              <PlanCardContent
+                planId="free"
+                locale={locale}
+                isRTL={isRTL}
+                isAnnual={isAnnual}
+                plusValues={plusValues}
+                eliteValues={eliteValues}
+              />
+            </div>
+
+            {/* Slide 2: Plus (Featured with moving border!) */}
+            <div className="w-[86vw] max-w-[340px] shrink-0 snap-center rounded-[24px] p-[2px] relative overflow-hidden shadow-2xl flex flex-col h-full">
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none" dir="ltr">
+                <motion.div
+                  className="w-[1200px] h-[1200px] shrink-0 pointer-events-none select-none"
+                  style={{
+                    background:
+                      'conic-gradient(from 0deg, #00c6ff 0%, #2962ff 25%, #8a2be2 50%, #ff007a 75%, #00c6ff 100%)',
+                  }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                />
+              </div>
+              <div className="relative w-full h-full bg-black rounded-[22px] p-5 sm:p-6 flex flex-col justify-between">
+                <PlanCardContent
+                  planId="plus"
+                  locale={locale}
+                  isRTL={isRTL}
+                  isAnnual={isAnnual}
+                  plusValues={plusValues}
+                  eliteValues={eliteValues}
+                />
+              </div>
+            </div>
+
+            {/* Slide 3: Elite */}
+            <div className="w-[86vw] max-w-[340px] shrink-0 snap-center rounded-[24px] bg-black border border-pink-500/20 shadow-xl p-5 sm:p-6 flex flex-col justify-between h-full">
+              <PlanCardContent
+                planId="elite"
+                locale={locale}
+                isRTL={isRTL}
+                isAnnual={isAnnual}
+                plusValues={plusValues}
+                eliteValues={eliteValues}
+              />
+            </div>
+          </div>
+
+          {/* Carousel Pagination Dots on Mobile */}
+          <div className="flex flex-col items-center gap-2 mt-3 select-none">
+            <div className="flex items-center gap-1.5">
+              {[0, 1, 2].map((idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => scrollToSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    activeMobileSlide === idx
+                      ? 'w-6 bg-white'
+                      : 'w-1.5 bg-white/20 hover:bg-white/40'
+                  }`}
+                  aria-label={`Go to pricing plan ${idx + 1}`}
+                />
+              ))}
+            </div>
+            <span className="text-[11px] text-zinc-500 font-medium">
+              {locale === 'ar' ? 'اسحب لمقارنة باقي الباقات' : 'Swipe sideways to compare plans'}
+            </span>
           </div>
         </motion.div>
 

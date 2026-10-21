@@ -40,9 +40,41 @@ export default function StrategyReportDrawer({
   logoUrl,
   currency = 'EGP',
   initialTab = 'performance',
+  isStaff = false,
+  hasProprietaryAccess = false,
 }: StrategyReportDrawerProps) {
   const [activeTab, setActiveTab] = useState<StrategyReportTab>(initialTab);
   const [mounted, setMounted] = useState(false);
+  const [savedStrategies, setSavedStrategies] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    fetch('/api/strategies/saved', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.strategies) return;
+        setSavedStrategies(
+          data.strategies.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+          }))
+        );
+      })
+      .catch((err) => console.warn('Failed to load user saved strategies in report drawer:', err));
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!isStaff && hasProprietaryAccess) {
+      if (selectedStrategy !== 'cerberus' && !selectedStrategy.startsWith('custom-')) {
+        setSelectedStrategy?.('cerberus');
+      }
+    }
+  }, [isOpen, isStaff, hasProprietaryAccess, selectedStrategy, setSelectedStrategy]);
 
   // Strategy Report / Backtest State
   const [initialCapital] = useState<number>(1000);
@@ -451,6 +483,9 @@ export default function StrategyReportDrawer({
               hasTrades={trades.length > 0}
               onExportCSV={handleExportCSV}
               onClose={onClose}
+              isStaff={isStaff}
+              hasProprietaryAccess={hasProprietaryAccess}
+              savedStrategies={savedStrategies}
             />
 
             {/* 2. Flat Tab Bar */}

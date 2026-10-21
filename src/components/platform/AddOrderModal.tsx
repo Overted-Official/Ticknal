@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Search,
+  Check,
   ChevronDown,
   Building2,
   Wallet,
@@ -144,6 +145,8 @@ export default function AddOrderModal({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef<HTMLDivElement>(null);
+  const [isBrokerDropdownOpen, setIsBrokerDropdownOpen] = useState(false);
+  const brokerDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -268,16 +271,33 @@ export default function AddOrderModal({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [newOrderForm.symbol]);
 
-  // Handle ESC key to close drawer
+  // Close broker dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (brokerDropdownRef.current && !brokerDropdownRef.current.contains(event.target as Node)) {
+        setIsBrokerDropdownOpen(false);
+      }
+    }
+    if (isBrokerDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isBrokerDropdownOpen]);
+
+  // Handle ESC key to close broker dropdown or drawer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
+        if (isBrokerDropdownOpen) {
+          setIsBrokerDropdownOpen(false);
+          return;
+        }
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, isBrokerDropdownOpen, onClose]);
 
   const cleanSymbol = (newOrderForm.symbol || initialData?.symbol || '').replace('.CA', '').toUpperCase();
 
@@ -884,43 +904,102 @@ export default function AddOrderModal({
                           <InlineSpinner className="me-2 h-3.5 w-3.5" label="Loading accounts" /> {locale === 'ar' ? 'جاري تحميل الحسابات...' : 'Loading accounts...'}
                         </div>
                       ) : eligibleAccounts.length > 0 ? (
-                        <>
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-xs font-medium text-plt-muted font-sans shrink-0">{locale === 'ar' ? 'الوسيط:' : 'Broker:'}</span>
-                            {selectedAccount && (
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-xs font-medium text-plt-muted font-sans shrink-0">{locale === 'ar' ? 'الوسيط:' : 'Broker:'}</span>
+
+                          <div className="relative flex-1 min-w-0" ref={brokerDropdownRef}>
+                            {/* Custom Trigger Button */}
+                            <button
+                              type="button"
+                              onClick={() => setIsBrokerDropdownOpen((prev) => !prev)}
+                              aria-haspopup="listbox"
+                              aria-expanded={isBrokerDropdownOpen}
+                              className="flex h-9 w-full min-w-0 cursor-pointer items-center justify-between gap-2 rounded-xl border border-plt-border bg-plt-base px-2.5 font-sans text-xs font-semibold text-plt-text outline-none transition-all hover:border-plt-border-strong focus:border-plt-border-active"
+                            >
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                {selectedAccount && (
+                                  <div
+                                    className={`w-5 h-5 rounded-full ${
+                                      isVirtualAccount(selectedAccount)
+                                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                        : 'bg-plt-active text-plt-text border-plt-border'
+                                    } border flex items-center justify-center text-[9px] font-bold shrink-0 font-sans`}
+                                  >
+                                    {getBrokerInitials(selectedAccount)}
+                                  </div>
+                                )}
+                                <span className="truncate">
+                                  {selectedAccount
+                                    ? `${accountLabel(selectedAccount)} · ${Number(selectedAccount.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${selectedAccount.currency === 'EGP' && locale === 'ar' ? 'ج.م' : selectedAccount.currency || 'EGP'} ${isVirtualAccount(selectedAccount) ? (locale === 'ar' ? 'رصيد تجريبي' : 'paper cash') : (locale === 'ar' ? 'متاح' : 'available')}`
+                                    : (locale === 'ar' ? 'اختر وسيط...' : 'Select broker...')}
+                                </span>
+                              </div>
+
+                              <ChevronDown
+                                size={13}
+                                className={`shrink-0 text-plt-muted transition-transform duration-150 ${
+                                  isBrokerDropdownOpen ? 'rotate-180 text-plt-text' : ''
+                                }`}
+                              />
+                            </button>
+
+                            {/* Sleek Custom Menu Popover (Surface #3D3D3D matching Strategies page) */}
+                            {isBrokerDropdownOpen && (
                               <div
-                                className={`w-6 h-6 rounded-full ${
-                                  isVirtualAccount(selectedAccount)
-                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                    : 'bg-plt-active text-plt-text border-plt-border'
-                                } border flex items-center justify-center text-[10px] font-bold shrink-0 font-sans`}
+                                role="listbox"
+                                className="absolute start-0 top-full mt-1.5 z-50 w-full max-w-full rounded-xl border border-white/15 bg-[#3D3D3D] p-1 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-100 max-h-60 overflow-y-auto custom-scrollbar"
                               >
-                                {getBrokerInitials(selectedAccount)}
+                                {eligibleAccounts.map((account) => {
+                                  const isSelected = String(account.id) === String(newOrderForm.accountId);
+                                  const isVirtual = isVirtualAccount(account);
+                                  return (
+                                    <button
+                                      key={account.id}
+                                      type="button"
+                                      role="option"
+                                      aria-selected={isSelected}
+                                      onClick={() => {
+                                        setNewOrderForm((prev) => ({ ...prev, accountId: String(account.id) }));
+                                        setIsBrokerDropdownOpen(false);
+                                      }}
+                                      className={`flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 font-sans text-xs transition-colors ${
+                                        isSelected
+                                          ? 'bg-white/15 font-semibold text-white'
+                                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                                        <div
+                                          className={`w-5 h-5 rounded-full ${
+                                            isVirtual
+                                              ? 'bg-amber-500/25 text-amber-300 border-amber-500/40'
+                                              : 'bg-white/10 text-white border-white/20'
+                                          } border flex items-center justify-center text-[9px] font-bold shrink-0 font-sans`}
+                                        >
+                                          {getBrokerInitials(account)}
+                                        </div>
+                                        <div className="flex flex-col text-start min-w-0 flex-1">
+                                          <span className="truncate leading-tight font-medium">
+                                            {accountLabel(account)}
+                                          </span>
+                                          <span className="text-[10px] text-white/60 tabular-nums mt-0.5 truncate">
+                                            {Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                                            {account.currency === 'EGP' && locale === 'ar' ? 'ج.م' : account.currency || 'EGP'}{' '}
+                                            {isVirtual ? (locale === 'ar' ? 'رصيد تجريبي' : 'paper cash') : (locale === 'ar' ? 'متاح' : 'available')}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {isSelected && (
+                                        <Check size={13} className="shrink-0 text-white" aria-hidden="true" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
                               </div>
                             )}
-                            <div className="relative flex-1">
-                              <select
-                                required
-                                value={newOrderForm.accountId}
-                                onChange={(e) => setNewOrderForm((prev) => ({ ...prev, accountId: e.target.value }))}
-                                className="select-token h-9 bg-plt-base text-plt-text text-xs border-plt-border focus:border-plt-border-active pe-8"
-                              >
-                                {eligibleAccounts.map((account) => (
-                                  <option key={account.id} value={account.id} className="bg-plt-base text-plt-text font-sans">
-                                    {accountLabel(account)} · {Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {account.currency === 'EGP' && locale === 'ar' ? 'ج.م' : account.currency || 'EGP'} {isVirtualAccount(account) ? (locale === 'ar' ? 'رصيد تجريبي' : 'paper cash') : (locale === 'ar' ? 'متاح' : 'available')}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
                           </div>
-
-                          {selectedAccount && isVirtualAccount(selectedAccount) && (
-                            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-plt-hover border border-plt-border text-[11px] text-plt-muted font-sans leading-relaxed">
-                              <span className="text-amber-400 font-bold shrink-0">{locale === 'ar' ? '💡 حساب افتراضي:' : '💡 Virtual Account:'}</span>
-                              <span>{locale === 'ar' ? 'لا يتطلب أي بيانات بنكية. يتتبع الصفقة على الرسم البياني مع الأرباح والخسائر اللحظية وتنبيهات الخروج الآلية.' : 'Zero personal bank credentials required. Tracks on charts with live P&L and automated strategy sell notifications.'}</span>
-                            </div>
-                          )}
-                        </>
+                        </div>
                       ) : previewOnly ? (
                         <div data-landing-broker-handoff="true" className="border border-plt-border bg-plt-base px-3 py-2 text-xs text-plt-muted font-sans leading-relaxed">
                           {locale === 'ar'

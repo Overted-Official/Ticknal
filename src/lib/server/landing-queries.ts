@@ -206,7 +206,7 @@ export async function getLandingCoverageCardsData(): Promise<LandingCoverageCard
           },
         ],
       },
-      // 3. Metals (Strictly Gold and Silver)
+      // 3. Metals (Gold 24K, Silver, and Gold 21K Sagha Benchmark)
       {
         id: 'metals',
         category: 'Precious Metals & Bullion',
@@ -229,6 +229,14 @@ export async function getLandingCoverageCardsData(): Promise<LandingCoverageCard
             sector: 'Precious Metals',
             unit: 'EGP / g',
             logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg',
+            type: 'metal',
+          },
+          {
+            symbol: 'GOLD21K',
+            name: 'Gold 21K (Sagha)',
+            sector: 'Precious Metals',
+            unit: 'EGP / g',
+            logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg',
             type: 'metal',
           },
         ],
@@ -254,18 +262,33 @@ export async function getLandingCoverageCardsData(): Promise<LandingCoverageCard
 
     const cards: LandingCoverageCard[] = targetConfigs.map((cfg) => {
       const items: LandingCoverageAsset[] = cfg.assets.map((asset) => {
-        const historyRows = historyMap.get(asset.symbol) || [];
+        const rawHistory = historyMap.get(asset.symbol) || [];
+        const historyRows =
+          rawHistory.length > 0
+            ? rawHistory
+            : asset.symbol === 'GOLD21K'
+            ? (historyMap.get('GC1!') || []).map((r) => ({
+                ...r,
+                close: Number(r.close) * (21 / 24),
+              }))
+            : [];
+
         const closes = historyRows
           .map((r) => Number(r.close))
           .filter((v) => !isNaN(v) && v > 0);
 
         const priceInfo = priceMap.get(asset.symbol);
         const ticker = tickerMap.get(asset.symbol);
+        const gcPriceInfo = asset.symbol === 'GOLD21K' ? priceMap.get('GC1!') : null;
+        const gcTicker = asset.symbol === 'GOLD21K' ? tickerMap.get('GC1!') : null;
 
         const latestPriceNum =
           closes.length > 0
             ? closes[closes.length - 1]
-            : priceInfo?.latest || (ticker?.price ? Number(ticker.price) : 0);
+            : priceInfo?.latest ||
+              (gcPriceInfo?.latest ? gcPriceInfo.latest * (21 / 24) : 0) ||
+              (ticker?.price ? Number(ticker.price) : 0) ||
+              (gcTicker?.price ? Number(gcTicker.price) * (21 / 24) : 0);
 
         const oldestPriceNum = closes.length > 1 ? closes[0] : latestPriceNum;
         const changePct =

@@ -5,6 +5,7 @@ import {
   isProprietaryStrategy,
   OWNER_EMAIL,
   PROPRIETARY_STRATEGY_IDS,
+  proprietaryAlertRecipientIds,
   resolveProprietaryAccess,
 } from './proprietary-access-policy';
 
@@ -32,12 +33,14 @@ describe('proprietary-access-policy', () => {
     // Owner always has canView: true
     const ownerAccess = resolveProprietaryAccess('abdelrahman.m.abualola@gmail.com', 'admin', null);
     expect(ownerAccess.canView).toBe(true);
-    expect(ownerAccess.canReceiveAlerts).toBe(true);
+    expect(ownerAccess.canReceiveAlerts).toBe(false);
+    expect(ownerAccess.canManageAlerts).toBe(true);
 
     // Regular user without grant
     const standardUser = resolveProprietaryAccess('user@example.com', 'user', null);
     expect(standardUser.canView).toBe(false);
     expect(standardUser.canReceiveAlerts).toBe(false);
+    expect(standardUser.canManageAlerts).toBe(false);
 
     // Admin user who is not the owner
     const otherAdmin = resolveProprietaryAccess('admin2@ticknal.com', 'admin', null);
@@ -51,6 +54,7 @@ describe('proprietary-access-policy', () => {
     });
     expect(grantedUser.canView).toBe(false);
     expect(grantedUser.canReceiveAlerts).toBe(true);
+    expect(grantedUser.canManageAlerts).toBe(true);
 
     // User with grant.enabled = true, notificationsEnabled = false
     const legacyGrant = resolveProprietaryAccess('member2@domain.com', 'user', {
@@ -58,7 +62,15 @@ describe('proprietary-access-policy', () => {
       notificationsEnabled: false,
     });
     expect(legacyGrant.canView).toBe(false);
-    expect(legacyGrant.canReceiveAlerts).toBe(true);
+    expect(legacyGrant.canReceiveAlerts).toBe(false);
+    expect(legacyGrant.canManageAlerts).toBe(true);
+
+    const revokedGrant = resolveProprietaryAccess('member3@domain.com', 'user', {
+      enabled: false,
+      notificationsEnabled: true,
+    });
+    expect(revokedGrant.canReceiveAlerts).toBe(false);
+    expect(revokedGrant.canManageAlerts).toBe(false);
   });
 
   it('filters proprietary signals based on canReceiveAlerts', () => {
@@ -77,5 +89,13 @@ describe('proprietary-access-policy', () => {
     const withoutAlerts = filterAccessibleSignals(signals, false);
     expect(withoutAlerts).toHaveLength(1);
     expect(withoutAlerts[0].strategy).toBe('custom-strategy-1');
+  });
+
+  it('excludes opted-out and revoked accounts from the daily alert recipient list', () => {
+    expect(proprietaryAlertRecipientIds([
+      { userId: 'owner', enabled: true, notificationsEnabled: false },
+      { userId: 'recipient', enabled: true, notificationsEnabled: true },
+      { userId: 'revoked', enabled: false, notificationsEnabled: true },
+    ])).toEqual(['recipient']);
   });
 });

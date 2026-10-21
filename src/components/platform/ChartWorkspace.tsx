@@ -24,6 +24,8 @@ import { stableChartWidgetKey } from '@/components/platform/chart/canonical/char
 
 interface ChartWorkspaceProps {
   canViewProprietary?: boolean;
+  isStaff?: boolean;
+  hasProprietaryAccess?: boolean;
   data: ChartData[];
   symbol: string;
   watchlist?: WatchlistItem[];
@@ -38,6 +40,8 @@ interface ChartWorkspaceProps {
 
 export default function ChartWorkspace({
   canViewProprietary = false,
+  isStaff = false,
+  hasProprietaryAccess = false,
   data,
   symbol,
   watchlist = [],
@@ -126,9 +130,9 @@ export default function ChartWorkspace({
 
   const requestedStrategy = searchParams?.get('strategy');
   const hasExplicitStrategy = isKnownStrategyParam(requestedStrategy);
-  const initialStrategy = hasExplicitStrategy
-    ? normalizeStrategyId(requestedStrategy)
-    : 'typhon';
+  const initialStrategy = !isStaff && hasProprietaryAccess
+    ? 'cerberus'
+    : (hasExplicitStrategy ? normalizeStrategyId(requestedStrategy) : 'cerberus');
   const [selectedStrategy, setSelectedStrategy] = useState<string>(initialStrategy);
 
   // Rewrite legacy URL params (e.g. strategy=psi, strategy=psi_v2, strategy=typhoon) to canonical IDs
@@ -382,6 +386,8 @@ export default function ChartWorkspace({
         bulkUpdateStrategyParams={bulkUpdateStrategyParams}
         showSignals={canViewProprietary}
         canViewProprietary={canViewProprietary}
+        isStaff={isStaff}
+        hasProprietaryAccess={hasProprietaryAccess}
         onMetricsChange={setMetrics}
         metrics={metrics}
         companyName={companyName}

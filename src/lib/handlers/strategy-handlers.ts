@@ -12,7 +12,12 @@ import { derivePositionLevels, getDailyPriceBars } from '@/lib/strategyOrders';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeStrategy, analyzeTickerChampion, type StrategyId } from '@/lib/strategy-analysis';
 import { normalizeStrategyId } from '@/strategies/registry';
-import { requireProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
+import { requireProprietaryAccess, getCurrentProprietaryAccess } from '@/lib/server/proprietary-strategy-access';
+import { db } from '@/db';
+import { userStrategies } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { compileSavedStrategy } from '@/lib/strategies/server/compile-saved-strategy';
+import { runSimpleBacktestForSymbol } from '@/lib/strategies/server/run-simple-backtest-for-symbol';
 
 const STRATEGY_CACHE_HEADERS = {
   'Cache-Control': 'private, no-store',
@@ -22,21 +27,61 @@ let predictorInstance: any = null;
 
 export async function handleSignalsGet(request: Request) {
   try {
-    const denied = await requireProprietaryAccess();
-    if (denied) return denied;
     const { searchParams } = new URL(request.url);
-    const symbol = searchParams.get('symbol');
-    const strategy: StrategyId = normalizeStrategyId(searchParams.get('strategy'));
-    const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
-    const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
+    const rawStrategy = searchParams.get('strategy') || '';
+    const isCustom = rawStrategy.startsWith('custom-');
 
+    if (!isCustom) {
+      const denied = await requireProprietaryAccess();
+      if (denied) return denied;
+    }
+
+    const symbol = searchParams.get('symbol');
     if (!symbol) {
       return NextResponse.json({ error: 'Missing symbol parameter' }, { status: 400 });
     }
 
     const ticker = normalizeTickerSymbol(symbol);
+    const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
+    const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
     const startDate = searchParams.get('start') ?? searchParams.get('startDate') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? searchParams.get('endDate') ?? undefined;
+
+    if (isCustom) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const [savedRow] = await db.select()
+        .from(userStrategies)
+        .where(and(eq(userStrategies.userId, user.id), eq(userStrategies.id, rawStrategy)))
+        .limit(1);
+      if (!savedRow) return NextResponse.json({ error: 'Custom strategy not found' }, { status: 404 });
+      const compiled = compileSavedStrategy(savedRow.definition as any);
+      if (compiled.status !== 'ready') return NextResponse.json({ error: compiled.message }, { status: 400 });
+      const backtest = await runSimpleBacktestForSymbol(
+        ticker,
+        compiled.program,
+        { initialCapital: 1000, feeBps: 10 },
+        { startDate: startDate || '2025-01-01', endDate: endDate || '2099-12-31' }
+      );
+      if (backtest.status !== 'ok') return NextResponse.json({ error: 'Backtest failed' }, { status: 400 });
+      const sig = backtest.latestSignal;
+      return NextResponse.json({
+        signal: sig?.signal ?? 'NEUTRAL',
+        price: sig?.price ?? null,
+        entryReason: sig?.reason ?? 'Custom strategy signal',
+        exitReason: sig?.signal === 'SELL' ? sig.reason : null,
+        stopLoss: null,
+        targetPrice: null,
+        masterIndex: null,
+        medianDailyMove: null,
+      }, { headers: STRATEGY_CACHE_HEADERS });
+    }
+
+    // Proprietary strategy signal
+    const access = await getCurrentProprietaryAccess();
+    // Non-staff with proprietary access (e.g. Alia / Abdelaziz) always gets Champion Strategy (cerberus)
+    const strategy: StrategyId = !access.isOwner ? 'cerberus' : normalizeStrategyId(rawStrategy);
 
     const rows = is1H
       ? await getCachedHourlyPrices(ticker)
@@ -330,15 +375,18 @@ function addCanonicalReportContext(report: any, analysis: Awaited<ReturnType<typ
 
 export async function handleReportGet(request: Request) {
   try {
-    const denied = await requireProprietaryAccess();
-    if (denied) return denied;
     const { searchParams } = new URL(request.url);
+    const rawStrategy = searchParams.get('strategy') || '';
+    const isCustom = rawStrategy.startsWith('custom-');
+
+    if (!isCustom) {
+      const denied = await requireProprietaryAccess();
+      if (denied) return denied;
+    }
+
     const symbol = searchParams.get('symbol');
-    const strategy = normalizeStrategyId(searchParams.get('strategy'));
     const timeframe = searchParams.get('timeframe') || searchParams.get('tf') || 'D';
     const is1H = timeframe === '1H' || timeframe === '60' || timeframe === '1h';
-    const requestedModel = searchParams.get('model');
-    const model = requestedModel || (strategy === 'hydra' ? 'hydra' : strategy === 'cerberus' ? 'cerberus' : 'canonical');
     const startDate = searchParams.get('start') ?? (is1H ? undefined : '2025-01-01');
     const endDate = searchParams.get('end') ?? undefined;
     const initialCapital = searchParams.get('initialCapital') ? Number(searchParams.get('initialCapital')) : 1000;
@@ -368,6 +416,116 @@ export async function handleReportGet(request: Request) {
     if (bars.length < 30) {
       return NextResponse.json({ error: 'Insufficient price history' }, { status: 404 });
     }
+
+    if (isCustom) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const [savedRow] = await db.select()
+        .from(userStrategies)
+        .where(and(eq(userStrategies.userId, user.id), eq(userStrategies.id, rawStrategy)))
+        .limit(1);
+      if (!savedRow) return NextResponse.json({ error: 'Custom strategy not found' }, { status: 404 });
+      const compiled = compileSavedStrategy(savedRow.definition as any);
+      if (compiled.status !== 'ready') return NextResponse.json({ error: compiled.message }, { status: 400 });
+      const backtestResult = await runSimpleBacktestForSymbol(
+        ticker,
+        compiled.program,
+        { initialCapital, feeBps: 10 },
+        { startDate: startDate || '2025-01-01', endDate: endDate || '2099-12-31' }
+      );
+      if (backtestResult.status !== 'ok') {
+        return NextResponse.json({ error: 'Failed to run backtest for custom strategy' }, { status: 400 });
+      }
+
+      const trades = backtestResult.trades.map((t, idx) => {
+        const pnlPct = t.returnPct;
+        const pnl = initialCapital * (pnlPct / 100);
+        return {
+          id: idx + 1,
+          date: String(t.exitTime ?? t.entryTime),
+          entryDate: String(t.entryTime),
+          exitDate: t.exitTime ? String(t.exitTime) : undefined,
+          type: 'BUY' as const,
+          price: t.entryPrice,
+          entryPrice: t.entryPrice,
+          exitPrice: t.exitPrice ?? undefined,
+          size: 1,
+          pnl,
+          pnlPct,
+          returnPct: t.returnPct,
+          exitReason: 'Rule Signal',
+          durationBars: 0,
+          mae: t.maePct,
+          mfe: t.mfePct,
+        };
+      });
+
+      const equityCurve = backtestResult.equity.map((pt) => ({
+        time: String(pt.time),
+        value: pt.value,
+      }));
+
+      const firstBar = bars[0];
+      const lastBar = bars[bars.length - 1];
+      const buyHoldReturnPct = firstBar && lastBar ? ((lastBar.close - firstBar.close) / firstBar.close) * 100 : 0;
+      const netProfitPct = backtestResult.metrics.totalReturnPct;
+      const finalEquity = equityCurve[equityCurve.length - 1]?.value ?? initialCapital;
+      const netProfit = finalEquity - initialCapital;
+      const alphaMargin = netProfitPct - buyHoldReturnPct;
+      const winningTrades = trades.filter((t) => t.pnl > 0).length;
+      const losingTrades = trades.filter((t) => t.pnl < 0).length;
+      const grossProfit = trades.filter((t) => t.pnl > 0).reduce((acc, t) => acc + t.pnl, 0);
+      const grossLoss = Math.abs(trades.filter((t) => t.pnl < 0).reduce((acc, t) => acc + t.pnl, 0));
+      const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? 999 : 0);
+      const winRate = backtestResult.metrics.winRatePct ?? (trades.length > 0 ? (winningTrades / trades.length) * 100 : 0);
+      const avgTradePnl = trades.length > 0 ? netProfit / trades.length : 0;
+      const avgTradeReturnPct = trades.length > 0 ? trades.reduce((acc, t) => acc + t.returnPct, 0) / trades.length : 0;
+      const avgWin = winningTrades > 0 ? grossProfit / winningTrades : 0;
+      const avgLoss = losingTrades > 0 ? grossLoss / losingTrades : 0;
+      const winLossRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
+
+      const report = {
+        trades,
+        equityCurve,
+        signals: backtestResult.latestSignal ? [backtestResult.latestSignal] : [],
+        stats: {
+          initialCapital,
+          finalEquity,
+          netProfit,
+          netProfitPct,
+          buyHoldReturn: initialCapital * (buyHoldReturnPct / 100),
+          buyHoldReturnPct,
+          alphaMargin,
+          maxDrawdown: backtestResult.metrics.maxDrawdownPct,
+          maxDrawdownAmount: initialCapital * (backtestResult.metrics.maxDrawdownPct / 100),
+          totalTrades: backtestResult.metrics.closedTrades,
+          winningTrades,
+          losingTrades,
+          winRate,
+          profitFactor,
+          grossProfit,
+          grossLoss,
+          avgTradePnl,
+          avgTradeReturnPct,
+          avgWin,
+          avgLoss,
+          winLossRatio,
+          maxConsecutiveWins: 0,
+          maxConsecutiveLosses: 0,
+          avgBarsHeld: trades.length > 0 ? trades.reduce((acc, t) => acc + t.durationBars, 0) / trades.length : 0,
+        },
+      };
+
+      return NextResponse.json(report, { headers: STRATEGY_CACHE_HEADERS });
+    }
+
+    // Proprietary strategy report
+    const access = await getCurrentProprietaryAccess();
+    // Non-staff with proprietary access (e.g. Alia / Abdelaziz) always gets Champion Strategy (cerberus)
+    const strategy: StrategyId = !access.isOwner ? 'cerberus' : normalizeStrategyId(rawStrategy);
+    const requestedModel = searchParams.get('model');
+    const model = !access.isOwner ? 'cerberus' : (requestedModel || (strategy === 'hydra' ? 'hydra' : strategy === 'cerberus' ? 'cerberus' : 'canonical'));
 
     let report: any;
     let strategyId: StrategyId = 'typhon';

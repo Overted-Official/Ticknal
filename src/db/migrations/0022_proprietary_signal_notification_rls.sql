@@ -8,7 +8,7 @@ CREATE POLICY signal_notifications_user_select_entitled ON public.signal_notific
   USING (
     user_id = (SELECT auth.uid())
     AND (
-      strategy NOT IN ('psi', 'psi_v2', 'hydra')
+      strategy NOT IN ('psi', 'psi_v2', 'hydra', 'typhon', 'cerberus')
       OR EXISTS (
         SELECT 1 FROM public.proprietary_strategy_access AS grant_row
         WHERE grant_row.user_id = (SELECT auth.uid()) AND grant_row.enabled = true
@@ -17,6 +17,6 @@ CREATE POLICY signal_notifications_user_select_entitled ON public.signal_notific
   );
 
 INSERT INTO public.proprietary_strategy_access (user_id, enabled, notifications_enabled)
-SELECT id, true, false FROM public.profiles
+SELECT id, true, true FROM public.profiles
 WHERE lower(email) = 'abdelrahman.m.abualola@gmail.com' AND role IN ('admin', 'superadmin')
-ON CONFLICT (user_id) DO UPDATE SET enabled = true, updated_at = now();
+ON CONFLICT (user_id) DO UPDATE SET enabled = true, notifications_enabled = true, updated_at = now();

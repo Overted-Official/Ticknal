@@ -2556,6 +2556,54 @@ body[dir="rtl"] {
 }
 
 /* ==========================================================================
+   Recharts RTL Cartesian Isolation
+   Financial time-series and area/bar charts rely strictly on a standard LTR
+   Cartesian coordinate system (x=0 at left, Y-axis on the right).
+   In RTL contexts ([dir="rtl"], [lang="ar"]):
+   1. SVG text-anchor="start" on right-oriented Y-axes is flipped to right-aligned
+      by browsers, causing labels to render leftwards directly over the plotted
+      bars and lines while leaving the 56-64px right gutter completely empty.
+   2. Container and wrapper origins can shift, creating right-side voids on mobile.
+   Forcing direction: ltr on all Recharts containers and child SVG layers maintains
+   unbroken Cartesian coordinate geometry across all languages and viewports.
+   ========================================================================== */
+.recharts-responsive-container,
+.recharts-wrapper,
+.recharts-surface,
+.recharts-surface text,
+.recharts-cartesian-axis,
+.recharts-cartesian-axis-tick,
+.recharts-cartesian-axis-tick text,
+.recharts-cartesian-grid,
+.recharts-legend-wrapper {
+  direction: ltr !important;
+  unicode-bidi: isolate;
+}
+
+[dir="rtl"] .recharts-responsive-container,
+[dir="rtl"] .recharts-wrapper,
+[dir="rtl"] .recharts-surface,
+[dir="rtl"] .recharts-surface text,
+[dir="rtl"] .recharts-cartesian-axis,
+[dir="rtl"] .recharts-cartesian-axis-tick,
+[dir="rtl"] .recharts-cartesian-axis-tick text,
+[dir="rtl"] .recharts-cartesian-grid,
+[dir="rtl"] .recharts-legend-wrapper,
+[lang="ar"] .recharts-responsive-container,
+[lang="ar"] .recharts-wrapper,
+[lang="ar"] .recharts-surface,
+[lang="ar"] .recharts-surface text,
+[lang="ar"] .recharts-cartesian-axis,
+[lang="ar"] .recharts-cartesian-axis-tick,
+[lang="ar"] .recharts-cartesian-axis-tick text,
+[lang="ar"] .recharts-cartesian-grid,
+[lang="ar"] .recharts-legend-wrapper {
+  direction: ltr !important;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* ==========================================================================
    Universal Recharts Subtle & Sleek Tooltip Cursor (Dark Theme)
    Overrides Recharts' jarring default solid white/gray (#ccc / #f5f5f5)
    column highlight blocks with a subtle, sleek dark surface highlight.

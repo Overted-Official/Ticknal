@@ -15,6 +15,8 @@ import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneM
 
 export interface ChartsWorkspaceViewProps {
   canViewProprietary?: boolean;
+  isStaff?: boolean;
+  hasProprietaryAccess?: boolean;
   symbol: string;
   timeframe: string;
   chartData: Array<{ time: string; open: number; high: number; low: number; close: number; volume: number }>;
@@ -31,6 +33,8 @@ export interface ChartsWorkspaceViewProps {
 
 export default function ChartsWorkspaceView({
   canViewProprietary = false,
+  isStaff = false,
+  hasProprietaryAccess = false,
   symbol,
   timeframe,
   chartData,
@@ -60,6 +64,8 @@ export default function ChartsWorkspaceView({
       <div className="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
         <ChartWorkspace
           canViewProprietary={canViewProprietary}
+          isStaff={isStaff}
+          hasProprietaryAccess={hasProprietaryAccess}
           key={`${symbol}-${timeframe}`}
           data={chartData}
           symbol={symbol}
