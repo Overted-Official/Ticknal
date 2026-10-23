@@ -11,7 +11,8 @@ export interface TransactionNavSection {
 
 export const TRANSACTION_SECTIONS: TransactionNavSection[] = [
   { id: 'section-transactions-overview', label: 'Cashflow Overview', shortLabel: 'Overview' },
-  { id: 'section-cashflow-analytics', label: 'Cashflow Analytics', shortLabel: 'Analytics' },
+  { id: 'section-accounts-rail', label: 'Accounts & Liquidity', shortLabel: 'Accounts' },
+  { id: 'section-closeout-archive', label: 'Monthly Closeouts', shortLabel: 'Closeouts' },
   { id: 'section-activity-ledger', label: 'Activity Ledger', shortLabel: 'Ledger' },
 ];
 
@@ -34,9 +35,14 @@ export default function TransactionsFloatingNav({
       shortLabel: locale === 'ar' ? 'نظرة عامة' : 'Overview',
     },
     {
-      id: 'section-cashflow-analytics',
-      label: locale === 'ar' ? 'تحليلات التدفقات' : 'Cashflow Analytics',
-      shortLabel: locale === 'ar' ? 'التحليلات' : 'Analytics',
+      id: 'section-accounts-rail',
+      label: locale === 'ar' ? 'الحسابات والسيولة' : 'Accounts & Liquidity',
+      shortLabel: locale === 'ar' ? 'الحسابات' : 'Accounts',
+    },
+    {
+      id: 'section-closeout-archive',
+      label: locale === 'ar' ? 'المراجعات الشهرية' : 'Monthly Closeouts',
+      shortLabel: locale === 'ar' ? 'المراجعات' : 'Closeouts',
     },
     {
       id: 'section-activity-ledger',

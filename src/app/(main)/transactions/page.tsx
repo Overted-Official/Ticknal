@@ -4,14 +4,14 @@ import { getServerLocale } from '@/lib/i18n/server';
 import Link from 'next/link';
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions } from '@/db/schema';
+import { positions, monthlyCashflowSummaries } from '@/db/schema';
 import { getCachedTickers } from '@/lib/data-cache';
 import {
   getUserBankAccounts,
   getUserBankTransactions,
   getUsdRate,
 } from '@/lib/server/portfolio-queries';
-import { type BankAccount, type BankTransaction } from '@/types/bank';
+import { type BankAccount, type BankTransaction, type MonthlyCashflowSummary } from '@/types/bank';
 import { type ClosedTradeItem } from '@/components/platform/transactions/types';
 import TransactionsPageView from '@/components/platform/transactions/TransactionsPageView';
 
@@ -48,9 +48,10 @@ export default async function TransactionsPage() {
   let transactions: BankTransaction[] = [];
   let usdRate = 50.2;
   let closedTrades: ClosedTradeItem[] = [];
+  let summaries: MonthlyCashflowSummary[] = [];
 
   try {
-    const [accRes, txRes, usdRes, closedRes, tickersRes] = await Promise.allSettled([
+    const [accRes, txRes, usdRes, closedRes, tickersRes, summariesRes] = await Promise.allSettled([
       getUserBankAccounts(user.id),
       getUserBankTransactions(user.id),
       getUsdRate(),
@@ -60,6 +61,11 @@ export default async function TransactionsPage() {
         .where(and(eq(positions.status, 'CLOSED'), eq(positions.userId, user.id)))
         .orderBy(desc(positions.exitDate), desc(positions.createdAt)),
       getCachedTickers(),
+      db
+        .select()
+        .from(monthlyCashflowSummaries)
+        .where(eq(monthlyCashflowSummaries.userId, user.id))
+        .orderBy(desc(monthlyCashflowSummaries.yearMonth)),
     ]);
 
     if (accRes.status === 'fulfilled') {
@@ -72,6 +78,23 @@ export default async function TransactionsPage() {
       transactions = txRes.value;
     } else {
       console.error('Error fetching transactions for TransactionsPage:', txRes.reason);
+    }
+
+    if (summariesRes.status === 'fulfilled' && Array.isArray(summariesRes.value)) {
+      summaries = summariesRes.value.map((row) => ({
+        id: row.id,
+        userId: row.userId,
+        yearMonth: row.yearMonth,
+        totalIncome: Number(row.totalIncome) || 0,
+        startingCashEgp: Number(row.startingCashEgp) || 0,
+        endingCashEgp: Number(row.endingCashEgp) || 0,
+        calculatedSpendEgp: Number(row.calculatedSpendEgp) || 0,
+        savingsRatePct: Number(row.savingsRatePct) || 0,
+        expenseBreakdown: (row.expenseBreakdown as any) ?? null,
+        notes: row.notes,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }));
     }
 
     if (usdRes.status === 'fulfilled' && usdRes.value > 0) {
@@ -145,6 +168,7 @@ export default async function TransactionsPage() {
     <TransactionsPageView
       initialAccounts={accounts}
       initialTransactions={transactions}
+      initialSummaries={summaries}
       closedTrades={closedTrades}
       usdRate={usdRate}
     />

@@ -6,20 +6,25 @@ import {
   ArrowUpRight,
   Scale,
   TrendingUp,
+  Landmark,
+  Wallet,
 } from '@/components/ui/icon-library';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import { type BankTransaction } from '@/types/bank';
+import { type BankTransaction, type MonthlyCashflowSummary } from '@/types/bank';
 import { toEgp } from '@/lib/portfolio-finance';
 import { useTranslation } from '@/lib/i18n';
 import KPICard, { type KPICardProps } from '@/components/platform/home/investments/performance/kpi-rails/KPICard';
 import { type ClosedTradeItem, type LedgerPeriod, type TransactionsTimeframe } from './types';
 
 interface TransactionsKPIRailProps {
-  transactions: BankTransaction[];
+  transactions?: BankTransaction[];
   closedTrades?: ClosedTradeItem[];
   usdRate?: number;
   timeframe?: TransactionsTimeframe | LedgerPeriod;
   overviewView?: 'all' | 'banking' | 'investments';
+  totalLiquidEgp?: number;
+  latestSummary?: MonthlyCashflowSummary | null;
+  accountsCount?: number;
 }
 
 export default function TransactionsKPIRail({
@@ -27,6 +32,9 @@ export default function TransactionsKPIRail({
   closedTrades = [],
   usdRate = 50.20,
   overviewView = 'all',
+  totalLiquidEgp,
+  latestSummary,
+  accountsCount,
 }: TransactionsKPIRailProps) {
   const { isPrivacy } = usePrivacyMode();
   const { locale } = useTranslation();
@@ -240,27 +248,204 @@ export default function TransactionsKPIRail({
         : 'net surplus',
   };
 
-  const cards: KPICardProps[] = [
-    {
-      id: 'kpi-total-inflows',
-      targetId: 'section-activity-ledger',
-      title: inflowsConfig.title,
-      shortTitle: inflowsConfig.shortTitle,
-      icon: ArrowDownLeft,
-      iconBgClass: 'bg-profit-num text-white',
-      iconColorClass: 'text-white',
-      value: formatNumber(metrics.totalInflows),
-      unit: currencySymbol,
-      badgeText: inflowsConfig.badgeText,
-      badgeClass: 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded',
-      changeText: isAr ? `+${metrics.inflowCount} حركة` : `+${metrics.inflowCount} in`,
-      changeColorClass: 'text-profit-num',
-      metaText: inflowsConfig.metaText,
-      sparklinePoints: metrics.inflowSpark,
-      sparklineTrend: 'up',
-    },
-    {
-      id: 'kpi-total-outflows',
+  const hasLiquidCashKpi = typeof totalLiquidEgp === 'number';
+
+  const cards: KPICardProps[] = hasLiquidCashKpi
+    ? [
+        {
+          id: 'kpi-total-liquid',
+          targetId: 'section-accounts-rail',
+          title: isAr ? 'إجمالي السيولة النقدية' : 'Total Liquid Cash',
+          shortTitle: isAr ? 'السيولة' : 'Liquid Cash',
+          icon: Landmark,
+          iconBgClass: 'bg-brand-blue text-white',
+          iconColorClass: 'text-white',
+          value: formatNumber(totalLiquidEgp),
+          unit: currencySymbol,
+          badgeText: accountsCount
+            ? isAr
+              ? `${accountsCount} حسابات`
+              : `${accountsCount} accounts`
+            : isAr
+            ? 'سيولة نشطة'
+            : 'Active cash',
+          badgeClass: 'text-brand-blue font-medium text-[9px] bg-brand-blue/10 px-1.5 py-0.5 rounded',
+          changeText: isAr ? 'أرصدة مجمعة' : 'Consolidated',
+          changeColorClass: 'text-text-muted',
+          metaText: isAr ? 'بنوك ومحافظ' : 'banks & wallets',
+          sparklinePoints: metrics.inflowSpark,
+          sparklineTrend: 'up',
+        },
+        {
+          id: 'kpi-monthly-burn',
+          targetId: 'section-closeout-archive',
+          title: isAr ? 'المصروف الشهري المحسوب' : 'Monthly Calculated Burn',
+          shortTitle: isAr ? 'المصروف' : 'Burn',
+          icon: ArrowUpRight,
+          iconBgClass: 'bg-loss-chart text-white',
+          iconColorClass: 'text-white',
+          value: formatNumber(
+            latestSummary?.calculatedSpendEgp
+              ? Number(latestSummary.calculatedSpendEgp)
+              : metrics.totalOutflows
+          ),
+          unit: currencySymbol,
+          badgeText: latestSummary?.yearMonth
+            ? isAr
+              ? `شهر ${latestSummary.yearMonth}`
+              : latestSummary.yearMonth
+            : outflowsConfig.badgeText,
+          badgeClass: 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
+          changeText: latestSummary
+            ? isAr
+              ? 'مراجعة شهرية'
+              : 'Monthly check-in'
+            : isAr
+            ? `-${metrics.outflowCount} حركة`
+            : `-${metrics.outflowCount} out`,
+          changeColorClass: 'text-loss-num',
+          metaText: isAr ? 'صافي الحرق' : 'net burn',
+          sparklinePoints: metrics.outflowSpark,
+          sparklineTrend: 'down',
+        },
+        {
+          id: 'kpi-savings-rate-burn',
+          targetId: 'section-closeout-archive',
+          title: isAr ? 'معدل الادخار' : 'Savings Rate',
+          shortTitle: isAr ? 'معدل الادخار' : 'Savings Rate',
+          icon: Scale,
+          iconBgClass:
+            (latestSummary?.savingsRatePct
+              ? Number(latestSummary.savingsRatePct)
+              : metrics.savingsRate) >= 0
+              ? 'bg-profit-num text-white'
+              : 'bg-loss-chart text-white',
+          iconColorClass: 'text-white',
+          value: isPrivacy
+            ? '••••••'
+            : latestSummary?.savingsRatePct
+            ? `${Number(latestSummary.savingsRatePct).toFixed(1)}`
+            : `${metrics.savingsRate.toFixed(1)}`,
+          unit: '%',
+          badgeText: latestSummary?.totalIncome
+            ? isAr
+              ? `دخل ${formatNumber(Number(latestSummary.totalIncome))} ${currencySymbol}`
+              : `inflow ${formatNumber(Number(latestSummary.totalIncome))} ${currencySymbol}`
+            : metrics.savingsRate > 0
+            ? isAr
+              ? `ادخار ${metrics.savingsRate.toFixed(1)}%`
+              : `${metrics.savingsRate.toFixed(1)}% saved`
+            : isAr
+            ? 'عجز'
+            : 'Deficit',
+          badgeClass:
+            (latestSummary?.savingsRatePct
+              ? Number(latestSummary.savingsRatePct)
+              : metrics.savingsRate) >= 0
+              ? 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded'
+              : 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
+          changeText: `${
+            (latestSummary?.savingsRatePct
+              ? Number(latestSummary.savingsRatePct)
+              : metrics.savingsRate) >= 0
+              ? '+'
+              : ''
+          }${(latestSummary?.savingsRatePct
+            ? Number(latestSummary.savingsRatePct)
+            : metrics.savingsRate
+          ).toFixed(1)}%`,
+          changeColorClass:
+            (latestSummary?.savingsRatePct
+              ? Number(latestSummary.savingsRatePct)
+              : metrics.savingsRate) >= 0
+              ? 'text-profit-num'
+              : 'text-loss-num',
+          metaText: isAr ? 'محتجز من الدخل' : 'retained from inflow',
+          sparklinePoints: metrics.netFlowSpark,
+          sparklineTrend:
+            (latestSummary?.savingsRatePct
+              ? Number(latestSummary.savingsRatePct)
+              : metrics.savingsRate) >= 0
+              ? 'up'
+              : 'down',
+        },
+        overviewView === 'investments'
+          ? {
+              id: 'kpi-capital-traded',
+              targetId: 'section-activity-ledger',
+              title: isAr ? 'أرباح/خسائر التداول المحققة' : 'Trading Realized P/L',
+              shortTitle: isAr ? 'أرباح التداول' : 'Trading P/L',
+              icon: TrendingUp,
+              iconBgClass:
+                metrics.totalRealizedPnl >= 0 ? 'bg-brand-blue text-white' : 'bg-loss-chart text-white',
+              iconColorClass: 'text-white',
+              value: formatNumber(metrics.totalRealizedPnl, true),
+              unit: currencySymbol,
+              badgeText:
+                metrics.tradeWinRate !== null
+                  ? isAr
+                    ? `${metrics.tradeWinRate.toFixed(0)}% صفقات رابحة`
+                    : `${metrics.tradeWinRate.toFixed(0)}% win`
+                  : isAr
+                  ? `${metrics.closedTradeCount} صفقة`
+                  : `${metrics.closedTradeCount} trades`,
+              badgeClass: 'text-plt-muted font-medium text-[9px] bg-plt-hover px-1.5 py-0.5 rounded',
+              changeText: isAr ? `${metrics.closedTradeCount} مغلقة` : `${metrics.closedTradeCount} closed`,
+              changeColorClass: 'text-plt-muted',
+              metaText: isAr ? 'محقق' : 'realized',
+              sparklinePoints: metrics.tradeSpark,
+              sparklineTrend: metrics.totalRealizedPnl >= 0 ? 'up' : 'down',
+            }
+          : {
+              id: 'kpi-net-cashflow',
+              targetId: 'section-activity-ledger',
+              title: netFlowConfig.title,
+              shortTitle: netFlowConfig.shortTitle,
+              icon: Scale,
+              iconBgClass: metrics.netCashflow >= 0 ? 'bg-profit-num text-white' : 'bg-loss-chart text-white',
+              iconColorClass: 'text-white',
+              value: formatNumber(metrics.netCashflow, true),
+              unit: currencySymbol,
+              badgeText:
+                metrics.savingsRate > 0
+                  ? isAr
+                    ? `ادخار ${metrics.savingsRate.toFixed(1)}%`
+                    : `${metrics.savingsRate.toFixed(1)}% saved`
+                  : isAr
+                  ? 'عجز'
+                  : 'Deficit',
+              badgeClass:
+                metrics.netCashflow >= 0
+                  ? 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded'
+                  : 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
+              changeText: `${metrics.savingsRate >= 0 ? '+' : ''}${metrics.savingsRate.toFixed(1)}%`,
+              changeColorClass: metrics.netCashflow >= 0 ? 'text-profit-num' : 'text-loss-num',
+              metaText: netFlowConfig.metaText,
+              sparklinePoints: metrics.netFlowSpark,
+              sparklineTrend: metrics.netCashflow >= 0 ? 'up' : 'down',
+            },
+      ]
+    : [
+        {
+          id: 'kpi-total-inflows',
+          targetId: 'section-activity-ledger',
+          title: inflowsConfig.title,
+          shortTitle: inflowsConfig.shortTitle,
+          icon: ArrowDownLeft,
+          iconBgClass: 'bg-profit-num text-white',
+          iconColorClass: 'text-white',
+          value: formatNumber(metrics.totalInflows),
+          unit: currencySymbol,
+          badgeText: inflowsConfig.badgeText,
+          badgeClass: 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded',
+          changeText: isAr ? `+${metrics.inflowCount} حركة` : `+${metrics.inflowCount} in`,
+          changeColorClass: 'text-profit-num',
+          metaText: inflowsConfig.metaText,
+          sparklinePoints: metrics.inflowSpark,
+          sparklineTrend: 'up',
+        },
+        {
+          id: 'kpi-total-outflows',
       targetId: 'section-activity-ledger',
       title: outflowsConfig.title,
       shortTitle: outflowsConfig.shortTitle,

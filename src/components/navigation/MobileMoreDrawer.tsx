@@ -21,6 +21,8 @@ import {
   LogIn,
   User,
   ChevronRight,
+  Bell,
+  BellOff,
 } from '@/components/ui/icon-library';
 import TicknalBrand from '@/components/ui/TicknalBrand';
 import UserProfileWidget, { type SettingsUserProfile } from '@/components/platform/settings/UserProfileWidget';
@@ -29,6 +31,9 @@ import { useTranslation } from '@/lib/i18n';
 import { toast } from '@/components/ui/sonner';
 import { useGuestGuard } from '@/context/GuestGuardContext';
 import { createClient } from '@/lib/supabase/client';
+import { useAlerts } from '@/components/platform/AlertProvider';
+import { isNativePlatform } from '@/lib/native/capacitor-bridge';
+import InlineSpinner from '@/components/ui/InlineSpinner';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -44,14 +49,62 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
   const { locale, setLocale, isRTL, t } = useTranslation();
   const { isGuest, isLoading: isGuestLoading, requireAuth, openGuestModal } = useGuestGuard();
   const { isPrivacy, togglePrivacy } = usePrivacyMode();
+  const { ensurePushSubscription, permission } = useAlerts();
 
   const [mounted, setMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isUpdatingPush, setIsUpdatingPush] = useState(false);
+  const [probeComplete, setProbeComplete] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Probe browser/native push notification subscription state
+  useEffect(() => {
+    let active = true;
+
+    async function probePush() {
+      try {
+        if (isNativePlatform()) {
+          const { checkNativePushStatus } = await import('@/lib/native/capacitor-bridge');
+          const granted = await checkNativePushStatus();
+          if (active) setIsSubscribed(granted);
+          return;
+        }
+
+        if (
+          typeof window !== 'undefined' &&
+          'serviceWorker' in navigator &&
+          'PushManager' in window
+        ) {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (active) {
+            setIsSubscribed(Boolean(sub && Notification.permission === 'granted'));
+          }
+        }
+      } catch {
+        // Silently retain current state
+      } finally {
+        if (active) setProbeComplete(true);
+      }
+    }
+
+    probePush();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Sync if AlertProvider permission changes to granted
+  useEffect(() => {
+    if (permission === 'granted') {
+      setIsSubscribed(true);
+    }
+  }, [permission]);
 
   // Sync Supabase user on mount / auth change
   useEffect(() => {
@@ -124,8 +177,8 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
       },
       {
         id: 'transactions',
-        title: locale === 'ar' ? 'المعاملات' : 'Transactions',
-        subtitle: locale === 'ar' ? 'دفتر الأستاذ وحركات السيولة' : 'Portfolio ledger & cashflow records',
+        title: locale === 'ar' ? 'الأرصدة والسيولة' : 'Cash & Balances',
+        subtitle: locale === 'ar' ? 'أرصدة الحسابات والمراجعة الشهرية' : 'Account balances & monthly check-in',
         href: '/transactions',
         icon: ArrowRightLeft,
         isProtected: true,
@@ -192,6 +245,64 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
         locale === 'ar' ? 'تم تفعيل الوضع الداكن' : 'Dark Mode Activated',
         locale === 'ar' ? 'تمت استعادة واجهة Ticknal السوداء بالكامل' : 'Pure black institutional terminal restored'
       );
+    }
+  };
+
+  // Push notification toggle handler
+  const handleTogglePush = async (checked: boolean) => {
+    setIsUpdatingPush(true);
+    try {
+      if (checked) {
+        const res = await ensurePushSubscription({ forceResubscribe: true });
+        if (res.success) {
+          setIsSubscribed(true);
+          toast.success(
+            locale === 'ar' ? 'تم تفعيل الإشعارات الفورية' : 'Push Notifications Enabled',
+            locale === 'ar'
+              ? 'ستصلك إشارات التداول وأهم الأخبار العاجلة على هذا الجهاز'
+              : 'Real-time trade signals & urgent takes will now alert this device'
+          );
+        } else {
+          toast.error(
+            locale === 'ar' ? 'تعذر تفعيل الإشعارات' : 'Could not enable notifications',
+            res.error ||
+              (locale === 'ar'
+                ? 'يرجى مراجعة إذن الإشعارات في متصفحك أو هاتفك'
+                : 'Check notification permissions in your browser or phone settings')
+          );
+        }
+      } else {
+        if (
+          typeof window !== 'undefined' &&
+          'serviceWorker' in navigator &&
+          'PushManager' in window
+        ) {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(sub.endpoint)}`, {
+              method: 'DELETE',
+            }).catch(() => {});
+            await sub.unsubscribe();
+          }
+        }
+        setIsSubscribed(false);
+        toast.info(
+          locale === 'ar' ? 'تم إيقاف الإشعارات الفورية' : 'Push Notifications Disabled',
+          locale === 'ar'
+            ? 'تم إيقاف استلام التنبيهات على هذا الجهاز'
+            : 'Push alerts silenced on this device'
+        );
+      }
+    } catch {
+      toast.error(
+        locale === 'ar' ? 'حدث خطأ غير متوقع' : 'Unexpected error',
+        locale === 'ar'
+          ? 'تعذر تحديث إعدادات الإشعارات'
+          : 'Could not update notification preferences'
+      );
+    } finally {
+      setIsUpdatingPush(false);
     }
   };
 
@@ -419,6 +530,75 @@ export default function MobileMoreDrawer({ isOpen, onClose }: MobileMoreDrawerPr
                       : (locale === 'ar' ? 'الوضع الداكن' : 'Dark Mode')}
                   </span>
                 </button>
+
+                {/* Push Notifications Quick Switch */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => !isUpdatingPush && handleTogglePush(!isSubscribed)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      if (!isUpdatingPush) handleTogglePush(!isSubscribed);
+                    }
+                  }}
+                  className={`w-full py-2.5 px-3 rounded-lg bg-plt-hover/50 hover:bg-plt-hover border border-plt-border text-plt-text flex items-center justify-between transition-colors cursor-pointer group select-none ${
+                    isUpdatingPush ? 'opacity-70 cursor-wait' : ''
+                  }`}
+                  aria-label={locale === 'ar' ? 'تفعيل أو تعطيل الإشعارات الفورية' : 'Toggle push notifications'}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                      {isSubscribed ? (
+                        <Bell size={16} className="text-profit-num" />
+                      ) : (
+                        <BellOff size={16} className="text-plt-muted group-hover:text-plt-text transition-colors" />
+                      )}
+                    </div>
+                    <div className="flex flex-col text-left rtl:text-right min-w-0">
+                      <span className="text-xs font-medium text-plt-text truncate">
+                        {locale === 'ar' ? 'الإشعارات الفورية' : 'Push Notifications'}
+                      </span>
+                      <span className="text-[10px] text-plt-muted truncate">
+                        {isSubscribed
+                          ? (locale === 'ar' ? 'مفعّل على هذا الجهاز' : 'Active on this device')
+                          : (locale === 'ar' ? 'إشارات التداول والتنبيهات' : 'Signals & market takes')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {probeComplete && (
+                      <span
+                        className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                          isSubscribed ? 'text-profit-num bg-profit-num/10' : 'text-plt-muted bg-plt-active'
+                        }`}
+                      >
+                        {isSubscribed ? (locale === 'ar' ? 'مفعّل' : 'ON') : (locale === 'ar' ? 'معطل' : 'OFF')}
+                      </span>
+                    )}
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
+                        isSubscribed ? 'bg-profit-num' : 'bg-plt-active'
+                      }`}
+                    >
+                      {isUpdatingPush ? (
+                        <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-xs">
+                          <InlineSpinner className="h-3 w-3 text-zinc-800" label="Updating notifications" />
+                        </div>
+                      ) : (
+                        <div
+                          className={`w-5 h-5 rounded-full bg-white shadow-xs transition-transform duration-200 ease-out ${
+                            isSubscribed ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider before Sign Out / Sign In to prevent accidental clicks */}
+                <div className="my-1.5 h-px w-full bg-plt-border-soft" />
 
                 {/* Sign Out / Sign In Action Button */}
                 {userProfile ? (

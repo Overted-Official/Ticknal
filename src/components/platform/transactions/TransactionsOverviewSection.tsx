@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from '@/lib/i18n';
-import { type BankAccount, type BankTransaction } from '@/types/bank';
+import { type BankAccount, type BankTransaction, type MonthlyCashflowSummary } from '@/types/bank';
 import { isBrokerageAccount } from '@/lib/portfolio-finance';
 import { type ClosedTradeItem, type TransactionsTimeframe } from './types';
 import TransactionsKPIRail from './TransactionsKPIRail';
@@ -18,6 +18,8 @@ interface TransactionsOverviewSectionProps {
   usdRate?: number;
   timeframe: TransactionsTimeframe;
   onTimeframeChange: (tf: TransactionsTimeframe) => void;
+  totalLiquidEgp?: number;
+  latestSummary?: MonthlyCashflowSummary | null;
 }
 
 const TIMEFRAMES: TransactionsTimeframe[] = ['3M', '6M', '1Y', 'All'];
@@ -30,6 +32,8 @@ export default function TransactionsOverviewSection({
   usdRate = 50.20,
   timeframe,
   onTimeframeChange,
+  totalLiquidEgp,
+  latestSummary,
 }: TransactionsOverviewSectionProps) {
   const { locale } = useTranslation();
   const [overviewView, setOverviewView] = useState<TransactionsOverviewView>('all');
@@ -150,6 +154,9 @@ export default function TransactionsOverviewSection({
           usdRate={usdRate}
           timeframe={timeframe}
           overviewView={overviewView}
+          totalLiquidEgp={totalLiquidEgp}
+          latestSummary={latestSummary}
+          accountsCount={accounts.length}
         />
       </div>
 
