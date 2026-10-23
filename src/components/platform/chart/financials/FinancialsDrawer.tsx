@@ -10,6 +10,8 @@ import { useCompanyFundamentals } from './useCompanyFundamentals';
 import FinancialsHeader from './FinancialsHeader';
 import FinancialsTabBar from './FinancialsTabBar';
 import OverviewValuationTab from './tabs/OverviewValuationTab';
+import FinancialStatementsTab from './tabs/FinancialStatementsTab';
+import FinancialRatiosTab from './tabs/FinancialRatiosTab';
 import { exportStatementsToCSV } from './export-csv';
 
 export default function FinancialsDrawer({
@@ -204,7 +206,13 @@ export default function FinancialsDrawer({
                       data-testid="financials-tab-statements"
                       className="flex-1 p-4 sm:p-6 md:p-8 space-y-6"
                     >
-                      {/* Statements Table Slot for Task 5 */}
+                      <FinancialStatementsTab
+                        statements={data?.statements}
+                        currency={data?.currency || currency}
+                        symbol={symbol}
+                        frequency={frequency}
+                        onFrequencyChange={setFrequency}
+                      />
                     </div>
                   )}
 
@@ -213,7 +221,12 @@ export default function FinancialsDrawer({
                       data-testid="financials-tab-ratios"
                       className="flex-1 p-4 sm:p-6 md:p-8 space-y-6"
                     >
-                      {/* Ratios & DuPont Analysis Slot for Task 5 */}
+                      <FinancialRatiosTab
+                        statements={data?.statements?.annual}
+                        valuation={data?.valuation}
+                        currency={data?.currency || currency}
+                        symbol={symbol}
+                      />
                     </div>
                   )}
                 </div>
