@@ -20,6 +20,7 @@ interface TransactionsOverviewSectionProps {
   onTimeframeChange: (tf: TransactionsTimeframe) => void;
   totalLiquidEgp?: number;
   latestSummary?: MonthlyCashflowSummary | null;
+  summaries?: MonthlyCashflowSummary[];
 }
 
 const TIMEFRAMES: TransactionsTimeframe[] = ['3M', '6M', '1Y', 'All'];
@@ -34,6 +35,7 @@ export default function TransactionsOverviewSection({
   onTimeframeChange,
   totalLiquidEgp,
   latestSummary,
+  summaries = [],
 }: TransactionsOverviewSectionProps) {
   const { locale } = useTranslation();
   const [overviewView, setOverviewView] = useState<TransactionsOverviewView>('all');
@@ -168,6 +170,8 @@ export default function TransactionsOverviewSection({
           accounts={accounts}
           usdRate={usdRate}
           timeframe={timeframe}
+          summaries={summaries}
+          latestSummary={latestSummary}
         />
       </div>
     </section>

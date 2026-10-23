@@ -26,13 +26,19 @@ export function isVirtualAccount(account: {
   customBankName?: string | null;
   bankName?: string | null;
   accountNumber?: string | null;
+  accountType?: string | null;
 } | null | undefined): boolean {
   if (!account) return false;
+  const name = (account.accountName || '').toLowerCase();
+  const custom = (account.customBankName || '').toLowerCase();
+  const bank = (account.bankName || '').toLowerCase();
+  const num = (account.accountNumber || '').toUpperCase();
   return (
-    account.accountName === VIRTUAL_ACCOUNT_NAME ||
-    account.customBankName === VIRTUAL_BROKER_NAME ||
-    account.bankName === VIRTUAL_BROKER_NAME ||
-    account.accountNumber === VIRTUAL_ACCOUNT_NUMBER ||
-    Boolean(account.accountName?.toLowerCase().includes('virtual account'))
+    name.includes('virtual') ||
+    custom.includes('virtual') ||
+    bank.includes('virtual') ||
+    name.includes('paper') ||
+    custom.includes('paper') ||
+    num.includes('VIRTUAL')
   );
 }

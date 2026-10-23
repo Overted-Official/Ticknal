@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { useTranslation } from '@/lib/i18n';
-import { type BankTransaction } from '@/types/bank';
+import { type BankTransaction, type MonthlyCashflowSummary } from '@/types/bank';
 import { getDashboardCashFlowKind } from '@/lib/portfolio-finance';
 
 export interface CategoryItem {
@@ -19,6 +19,7 @@ export interface CategoryItem {
 interface TransactionsBreakdownChartProps {
   transactions?: BankTransaction[];
   usdRate?: number;
+  latestSummary?: MonthlyCashflowSummary | null;
 }
 
 import { TRANSACTION_CATEGORY_COLORS as CATEGORY_COLORS, getCategoryColor } from '@/lib/category-colors';
@@ -60,6 +61,7 @@ const FALLBACK_PALETTE = [
 export default function TransactionsBreakdownChart({
   transactions = [],
   usdRate = 50.20,
+  latestSummary = null,
 }: TransactionsBreakdownChartProps) {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
@@ -69,8 +71,33 @@ export default function TransactionsBreakdownChart({
 
   const getCategoryName = (name: string) => (isArabic ? CATEGORY_NAMES_AR[name] || name : name);
 
-  // Aggregate Transactions by Category for the selected flow type
+  // Aggregate Transactions or use Monthly Closeout Breakdown for the selected flow type
   const { categories, totalValue } = useMemo(() => {
+    if (
+      flowType === 'expenses' &&
+      latestSummary?.expenseBreakdown &&
+      latestSummary.expenseBreakdown.length > 0
+    ) {
+      let paletteIdx = 0;
+      const spend = Number(latestSummary.calculatedSpendEgp) || 0;
+      const safeSpend = spend > 0 ? spend : 1;
+      const items: CategoryItem[] = latestSummary.expenseBreakdown.map((item) => {
+        const color =
+          CATEGORY_COLORS[item.category] ??
+          FALLBACK_PALETTE[paletteIdx % FALLBACK_PALETTE.length];
+        paletteIdx++;
+        return {
+          id: `cat-${item.category}`,
+          name: item.category,
+          value: Number(item.amount) || 0,
+          percentage: Number(item.percentage) || ((Number(item.amount) || 0) / safeSpend) * 100,
+          count: 1,
+          color,
+        };
+      });
+      return { categories: items, totalValue: spend };
+    }
+
     const targetKind = flowType === 'expenses' ? 'OUTFLOW' : 'INFLOW';
     const catMap = new Map<string, { value: number; count: number }>();
 

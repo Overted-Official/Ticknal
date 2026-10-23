@@ -284,27 +284,35 @@ export default function TransactionsKPIRail({
           icon: ArrowUpRight,
           iconBgClass: 'bg-loss-chart text-white',
           iconColorClass: 'text-white',
-          value: formatNumber(
-            latestSummary?.calculatedSpendEgp
-              ? Number(latestSummary.calculatedSpendEgp)
-              : metrics.totalOutflows
-          ),
-          unit: currencySymbol,
+          value: latestSummary?.calculatedSpendEgp != null
+            ? formatNumber(Number(latestSummary.calculatedSpendEgp))
+            : '—',
+          unit: latestSummary?.calculatedSpendEgp != null ? currencySymbol : '',
           badgeText: latestSummary?.yearMonth
             ? isAr
               ? `شهر ${latestSummary.yearMonth}`
               : latestSummary.yearMonth
-            : outflowsConfig.badgeText,
-          badgeClass: 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
+            : isAr
+            ? 'في انتظار المراجعة'
+            : 'Check-In Ready',
+          badgeClass: latestSummary
+            ? 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded'
+            : 'text-brand-blue font-medium text-[9px] bg-brand-blue/10 px-1.5 py-0.5 rounded',
           changeText: latestSummary
             ? isAr
               ? 'مراجعة شهرية'
               : 'Monthly check-in'
             : isAr
-            ? `-${metrics.outflowCount} حركة`
-            : `-${metrics.outflowCount} out`,
-          changeColorClass: 'text-loss-num',
-          metaText: isAr ? 'صافي الحرق' : 'net burn',
+            ? 'ابدأ الآن'
+            : 'Start Check-In',
+          changeColorClass: latestSummary ? 'text-loss-num' : 'text-brand-blue',
+          metaText: latestSummary
+            ? isAr
+              ? 'صافي الحرق'
+              : 'net burn'
+            : isAr
+            ? '90 ثانية لحساب المصروف'
+            : '90s to derive spend',
           sparklinePoints: metrics.outflowSpark,
           sparklineTrend: 'down',
         },
@@ -315,57 +323,46 @@ export default function TransactionsKPIRail({
           shortTitle: isAr ? 'معدل الادخار' : 'Savings Rate',
           icon: Scale,
           iconBgClass:
-            (latestSummary?.savingsRatePct
-              ? Number(latestSummary.savingsRatePct)
-              : metrics.savingsRate) >= 0
+            (Number(latestSummary?.savingsRatePct) || 0) >= 0
               ? 'bg-profit-num text-white'
               : 'bg-loss-chart text-white',
           iconColorClass: 'text-white',
           value: isPrivacy
             ? '••••••'
-            : latestSummary?.savingsRatePct
+            : latestSummary?.savingsRatePct != null
             ? `${Number(latestSummary.savingsRatePct).toFixed(1)}`
-            : `${metrics.savingsRate.toFixed(1)}`,
-          unit: '%',
-          badgeText: latestSummary?.totalIncome
+            : '—',
+          unit: latestSummary?.savingsRatePct != null ? '%' : '',
+          badgeText: latestSummary?.totalIncome != null
             ? isAr
               ? `دخل ${formatNumber(Number(latestSummary.totalIncome))} ${currencySymbol}`
               : `inflow ${formatNumber(Number(latestSummary.totalIncome))} ${currencySymbol}`
-            : metrics.savingsRate > 0
-            ? isAr
-              ? `ادخار ${metrics.savingsRate.toFixed(1)}%`
-              : `${metrics.savingsRate.toFixed(1)}% saved`
             : isAr
-            ? 'عجز'
-            : 'Deficit',
+            ? 'غير محسوب بعد'
+            : 'Pending Check-In',
           badgeClass:
-            (latestSummary?.savingsRatePct
-              ? Number(latestSummary.savingsRatePct)
-              : metrics.savingsRate) >= 0
-              ? 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded'
-              : 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded',
-          changeText: `${
-            (latestSummary?.savingsRatePct
-              ? Number(latestSummary.savingsRatePct)
-              : metrics.savingsRate) >= 0
-              ? '+'
-              : ''
-          }${(latestSummary?.savingsRatePct
-            ? Number(latestSummary.savingsRatePct)
-            : metrics.savingsRate
-          ).toFixed(1)}%`,
+            latestSummary != null
+              ? (Number(latestSummary.savingsRatePct) || 0) >= 0
+                ? 'text-profit-num font-medium text-[9px] bg-profit-num/10 px-1.5 py-0.5 rounded'
+                : 'text-loss-num font-medium text-[9px] bg-loss-chart/10 px-1.5 py-0.5 rounded'
+              : 'text-text-muted font-medium text-[9px] bg-white/5 px-1.5 py-0.5 rounded',
+          changeText: latestSummary?.savingsRatePct != null
+            ? `${Number(latestSummary.savingsRatePct) >= 0 ? '+' : ''}${Number(latestSummary.savingsRatePct).toFixed(1)}%`
+            : '—',
           changeColorClass:
-            (latestSummary?.savingsRatePct
-              ? Number(latestSummary.savingsRatePct)
-              : metrics.savingsRate) >= 0
+            (Number(latestSummary?.savingsRatePct) || 0) >= 0
               ? 'text-profit-num'
               : 'text-loss-num',
-          metaText: isAr ? 'محتجز من الدخل' : 'retained from inflow',
+          metaText: latestSummary
+            ? isAr
+              ? 'محتجز من الدخل'
+              : 'retained from inflow'
+            : isAr
+            ? 'يُحسب بعد إدخال الدخل'
+            : 'computed from income',
           sparklinePoints: metrics.netFlowSpark,
           sparklineTrend:
-            (latestSummary?.savingsRatePct
-              ? Number(latestSummary.savingsRatePct)
-              : metrics.savingsRate) >= 0
+            (Number(latestSummary?.savingsRatePct) || 0) >= 0
               ? 'up'
               : 'down',
         },

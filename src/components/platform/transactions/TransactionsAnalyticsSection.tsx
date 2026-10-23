@@ -3,7 +3,7 @@
 import React from 'react';
 import CashFlowProgressionChart, { type CashFlowTimeframe } from '@/components/platform/home/investments/performance/charts/CashFlowProgressionChart';
 import TransactionsBreakdownChart from '@/components/platform/home/investments/performance/charts/TransactionsBreakdownChart';
-import { type BankAccount, type BankTransaction } from '@/types/bank';
+import { type BankAccount, type BankTransaction, type MonthlyCashflowSummary } from '@/types/bank';
 
 interface TransactionsAnalyticsSectionProps {
   transactions: BankTransaction[];
@@ -11,6 +11,8 @@ interface TransactionsAnalyticsSectionProps {
   accounts: BankAccount[];
   usdRate?: number;
   timeframe?: CashFlowTimeframe;
+  summaries?: MonthlyCashflowSummary[];
+  latestSummary?: MonthlyCashflowSummary | null;
 }
 
 export default function TransactionsAnalyticsSection({
@@ -19,6 +21,8 @@ export default function TransactionsAnalyticsSection({
   accounts = [],
   usdRate = 50.20,
   timeframe = 'All',
+  summaries = [],
+  latestSummary = null,
 }: TransactionsAnalyticsSectionProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 w-full">
@@ -30,6 +34,7 @@ export default function TransactionsAnalyticsSection({
           usdRate={usdRate}
           timeframe={timeframe}
           hideTimeframeSwitcher={true}
+          summaries={summaries}
         />
       </div>
 
@@ -38,6 +43,7 @@ export default function TransactionsAnalyticsSection({
         <TransactionsBreakdownChart
           transactions={filteredTransactions}
           usdRate={usdRate}
+          latestSummary={latestSummary}
         />
       </div>
     </div>

@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from '@/components/ui/icon-library';
 import { type BankAccount, type MonthlyCashflowSummary } from '@/types/bank';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import {
   calculateMonthlySpendAndSavingsRate,
   type ExpenseAllocationResultItem,
@@ -74,11 +75,16 @@ export default function MonthlyCheckInDrawer({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Real liquid accounts only (exclude virtual paper trading)
+  const realAccounts = useMemo(() => {
+    return accounts.filter((a) => !a.isArchived && !isVirtualAccount(a));
+  }, [accounts]);
+
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1);
       const initialMap: Record<number, string> = {};
-      accounts.forEach((acc) => {
+      realAccounts.forEach((acc) => {
         initialMap[acc.id] = String(acc.balance ?? '0');
       });
       setAccountBalances(initialMap);
@@ -92,7 +98,7 @@ export default function MonthlyCheckInDrawer({
       setExpenseCategories([]);
       setNotes('');
     }
-  }, [isOpen, accounts, previousSummary]);
+  }, [isOpen, realAccounts, previousSummary]);
 
   // Close on Escape key
   useEffect(() => {
@@ -110,25 +116,23 @@ export default function MonthlyCheckInDrawer({
     if (previousSummary?.endingCashEgp) {
       return Number(previousSummary.endingCashEgp);
     }
-    // Fallback: sum of current active accounts before edits
-    return accounts.reduce((acc, a) => {
-      if (a.isArchived) return acc;
+    // Fallback: sum of current active real accounts before edits
+    return realAccounts.reduce((acc, a) => {
       const b = Number(a.balance) || 0;
       const egp = a.currency === 'USD' ? b * usdRate : b;
       return acc + egp;
     }, 0);
-  }, [previousSummary, accounts, usdRate]);
+  }, [previousSummary, realAccounts, usdRate]);
 
   // Compute Ending Cash in EGP based on user input
   const endingCashEgp = useMemo(() => {
-    return accounts.reduce((acc, a) => {
-      if (a.isArchived) return acc;
+    return realAccounts.reduce((acc, a) => {
       const enteredStr = accountBalances[a.id] ?? String(a.balance ?? '0');
       const b = Number(enteredStr) || 0;
       const egp = a.currency === 'USD' ? b * usdRate : b;
       return acc + egp;
     }, 0);
-  }, [accounts, accountBalances, usdRate]);
+  }, [realAccounts, accountBalances, usdRate]);
 
   // Monthly Cashflow Math
   const cashflowMath = useMemo(() => {
@@ -357,7 +361,7 @@ export default function MonthlyCheckInDrawer({
                       {isArabic ? 'أدخل الرصيد الفعلي لكل حساب في نهاية الشهر:' : 'Confirm or update each balance:'}
                     </p>
 
-                    {accounts.map((acc) => {
+                    {realAccounts.map((acc) => {
                       const { bankShort, subName } = formatCleanAccountTitle(acc);
                       const isUsd = acc.currency === 'USD';
                       const val = accountBalances[acc.id] ?? String(acc.balance ?? '0');

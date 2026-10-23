@@ -24,9 +24,25 @@ export function isBrokerageAccount(account: Pick<BankAccount, 'accountType'> | {
   return accountType === 'BROKERAGE' || accountType === 'BROKER_CASH';
 }
 
-export function isVirtualAccount(account: { accountName?: string | null; customBankName?: string | null } | null | undefined): boolean {
+export function isVirtualAccount(account: {
+  accountName?: string | null;
+  customBankName?: string | null;
+  bankName?: string | null;
+  accountNumber?: string | null;
+} | null | undefined): boolean {
   if (!account) return false;
-  return account.accountName === 'Virtual Account' || account.customBankName === 'Virtual Brokerage';
+  const name = (account.accountName || '').toLowerCase();
+  const custom = (account.customBankName || '').toLowerCase();
+  const bank = ('bankName' in account && (account as any).bankName ? String((account as any).bankName).toLowerCase() : '');
+  const num = ('accountNumber' in account && (account as any).accountNumber ? String((account as any).accountNumber).toUpperCase() : '');
+  return (
+    name.includes('virtual') ||
+    custom.includes('virtual') ||
+    bank.includes('virtual') ||
+    name.includes('paper') ||
+    custom.includes('paper') ||
+    num.includes('VIRTUAL')
+  );
 }
 
 export function toEgp(amount: number, currency: string, fxRates: FxRates | number): number {

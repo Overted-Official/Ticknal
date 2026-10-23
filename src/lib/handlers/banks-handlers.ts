@@ -845,7 +845,7 @@ export async function handleMonthlyCloseoutPost(req: Request) {
     for (const item of accountBalances) {
       const accId = Number(item.accountId);
       const acc = accountMap.get(accId);
-      if (!acc) continue;
+      if (!acc || isVirtualAccount(acc)) continue;
 
       const balance = Number(item.balance);
       await db
@@ -888,6 +888,7 @@ export async function handleMonthlyCloseoutPost(req: Request) {
     if (prevSnapshots.length > 0) {
       for (const snap of prevSnapshots) {
         const acc = accountMap.get(snap.accountId);
+        if (!acc || isVirtualAccount(acc)) continue;
         const rate = acc?.currency === 'USD' ? usdRate : 1;
         startingCashEgp += Number(snap.closingBalance) * rate;
       }

@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { type BankAccount, type BankTransaction, type MonthlyCashflowSummary, type BankItem } from '@/types/bank';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import { type ClosedTradeItem, type TransactionsTimeframe } from './types';
 import TransactionsHeader from './TransactionsHeader';
 import TransactionsFloatingNav from './TransactionsFloatingNav';
@@ -101,11 +102,15 @@ export default function TransactionsPageView({
       ]);
       if (accRes.ok) {
         const accData = await accRes.json();
-        if (accData?.accounts) setAccounts(accData.accounts);
+        if (accData?.accounts) {
+          setAccounts(accData.accounts.filter((a: any) => !isVirtualAccount(a)));
+        }
       }
       if (txRes.ok) {
         const txData = await txRes.json();
-        if (txData?.transactions) setTransactions(txData.transactions);
+        if (txData?.transactions) {
+          setTransactions(txData.transactions);
+        }
       }
       if (historyRes.ok) {
         const historyData = await historyRes.json();
@@ -119,15 +124,19 @@ export default function TransactionsPageView({
     router.refresh();
   }, [router]);
 
-  // Calculate real-time Total Liquid Cash in EGP
+  // Real non-virtual accounts
+  const realAccounts = useMemo(() => {
+    return accounts.filter((a) => !a.isArchived && !isVirtualAccount(a));
+  }, [accounts]);
+
+  // Calculate real-time Total Liquid Cash in EGP across real accounts
   const totalLiquidEgp = useMemo(() => {
-    return accounts.reduce((acc, a) => {
-      if (a.isArchived) return acc;
+    return realAccounts.reduce((acc, a) => {
       const b = Number(a.balance) || 0;
       const egp = a.currency === 'USD' ? b * usdRate : b;
       return acc + egp;
     }, 0);
-  }, [accounts, usdRate]);
+  }, [realAccounts, usdRate]);
 
   // Most recent closeout summary
   const latestSummary = useMemo(() => {
@@ -192,18 +201,19 @@ export default function TransactionsPageView({
           transactions={transactions}
           filteredTransactions={filteredTransactions}
           closedTrades={filteredClosedTrades}
-          accounts={accounts}
+          accounts={realAccounts}
           usdRate={usdRate}
           timeframe={timeframe}
           onTimeframeChange={setTimeframe}
           totalLiquidEgp={totalLiquidEgp}
           latestSummary={latestSummary}
+          summaries={summaries}
         />
 
         {/* Section 2: Surface 1 - Accounts & Liquidity Grid with fast inline updating */}
         <section id="section-accounts-rail" className="section-container">
           <AccountsRail
-            accounts={accounts}
+            accounts={realAccounts}
             usdRate={usdRate}
             isArabic={isRTL}
             onBalanceUpdated={handleBalanceUpdated}
@@ -224,7 +234,7 @@ export default function TransactionsPageView({
         <section id="section-activity-ledger" className="section-container">
           <TransactionsLedgerSection
             transactions={transactions}
-            accounts={accounts}
+            accounts={realAccounts}
             closedTrades={closedTrades}
             categories={DEFAULT_CATEGORIES}
             onTransactionsChanged={refreshData}
@@ -236,7 +246,7 @@ export default function TransactionsPageView({
       <MonthlyCheckInDrawer
         isOpen={isCheckInOpen}
         onClose={() => setIsCheckInOpen(false)}
-        accounts={accounts}
+        accounts={realAccounts}
         usdRate={usdRate}
         isArabic={isRTL}
         previousSummary={latestSummary}

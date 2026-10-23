@@ -12,6 +12,7 @@ import {
   getUsdRate,
 } from '@/lib/server/portfolio-queries';
 import { type BankAccount, type BankTransaction, type MonthlyCashflowSummary } from '@/types/bank';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import { type ClosedTradeItem } from '@/components/platform/transactions/types';
 import TransactionsPageView from '@/components/platform/transactions/TransactionsPageView';
 
@@ -69,13 +70,15 @@ export default async function TransactionsPage() {
     ]);
 
     if (accRes.status === 'fulfilled') {
-      accounts = accRes.value;
+      accounts = accRes.value.filter((a) => !isVirtualAccount(a));
     } else {
       console.error('Error fetching accounts for TransactionsPage:', accRes.reason);
     }
 
+    const realAccountIds = new Set(accounts.map((a) => a.id));
+
     if (txRes.status === 'fulfilled') {
-      transactions = txRes.value;
+      transactions = txRes.value.filter((t) => !t.accountId || realAccountIds.has(t.accountId));
     } else {
       console.error('Error fetching transactions for TransactionsPage:', txRes.reason);
     }
@@ -117,7 +120,9 @@ export default async function TransactionsPage() {
     }
 
     if (closedRes.status === 'fulfilled' && Array.isArray(closedRes.value)) {
-      closedTrades = closedRes.value.map((row) => {
+      closedTrades = closedRes.value
+        .filter((row) => !row.accountId || realAccountIds.has(row.accountId))
+        .map((row) => {
         const entryPrice = Number(row.entryPrice);
         const exitPrice = Number(row.exitPrice ?? row.entryPrice);
         const quantity = Number(row.quantity);

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Wallet, Landmark, DollarSign, CreditCard } from '@/components/ui/icon-library';
 import { type BankAccount } from '@/types/bank';
+import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import AccountBalanceCard from './AccountBalanceCard';
 
 interface AccountsRailProps {
@@ -26,7 +27,7 @@ export default function AccountsRail({
 
   const filteredAccounts = useMemo(() => {
     return accounts.filter((acc) => {
-      if (acc.isArchived) return false;
+      if (acc.isArchived || isVirtualAccount(acc)) return false;
       const type = (acc.accountType || '').toUpperCase();
       const isUsd = acc.currency === 'USD';
 

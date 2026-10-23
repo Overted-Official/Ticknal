@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { useTranslation } from '@/lib/i18n';
-import { type BankTransaction, type BankAccount } from '@/types/bank';
+import { type BankTransaction, type BankAccount, type MonthlyCashflowSummary } from '@/types/bank';
 import { getDashboardCashFlowKind } from '@/lib/portfolio-finance';
 
 export type CashFlowTimeframe = '3M' | '6M' | '1Y' | 'All';
@@ -27,6 +27,7 @@ interface CashFlowProgressionChartProps {
   timeframe?: CashFlowTimeframe;
   onTimeframeChange?: (tf: CashFlowTimeframe) => void;
   hideTimeframeSwitcher?: boolean;
+  summaries?: MonthlyCashflowSummary[];
 }
 
 const TIMEFRAMES: CashFlowTimeframe[] = ['3M', '6M', '1Y', 'All'];
@@ -38,6 +39,7 @@ export default function CashFlowProgressionChart({
   timeframe: propTimeframe,
   onTimeframeChange,
   hideTimeframeSwitcher = false,
+  summaries = [],
 }: CashFlowProgressionChartProps) {
   const [internalTimeframe, setInternalTimeframe] = useState<CashFlowTimeframe>('All');
   const [chartMode, setChartMode] = useState<CashFlowChartMode>('stacked');
@@ -89,6 +91,19 @@ export default function CashFlowProgressionChart({
         } else if (flowKind === 'OUTFLOW') {
           row.outflows += egpVal;
         }
+      }
+    }
+
+    if (summaries && summaries.length > 0) {
+      for (const s of summaries) {
+        const ym = s.yearMonth;
+        if (!ym) continue;
+        if (!latestYm || ym > latestYm) latestYm = ym;
+        if (!earliestYm || ym < earliestYm) earliestYm = ym;
+
+        const inc = Math.max(0, Number(s.totalIncome) || 0);
+        const sp = Math.max(0, Number(s.calculatedSpendEgp) || 0);
+        monthlyMap.set(ym, { inflows: inc, outflows: sp });
       }
     }
 
