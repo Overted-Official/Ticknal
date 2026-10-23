@@ -1,4 +1,4 @@
-import { boolean, date, index, integer, jsonb, numeric, pgTable, primaryKey, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, doublePrecision, index, integer, jsonb, numeric, pgTable, primaryKey, serial, text, timestamp, unique, varchar, uuid } from 'drizzle-orm/pg-core';
 
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey(),
@@ -735,3 +735,80 @@ export const userTelemetryEvents = pgTable('user_telemetry_events', {
     createdIdx: index('user_telemetry_created_at_idx').on(table.createdAt),
   };
 });
+
+export const companyFinancialStatements = pgTable('company_financial_statements', {
+  id: serial('id').primaryKey(),
+  symbol: varchar('symbol', { length: 20 })
+    .references(() => tickers.symbol, { onDelete: 'cascade' })
+    .notNull(),
+  periodType: varchar('period_type', { length: 10 }).notNull(), // 'ANNUAL' or 'QUARTERLY'
+  fiscalYear: integer('fiscal_year').notNull(),
+  fiscalPeriod: varchar('fiscal_period', { length: 10 }).notNull(), // 'Q1', 'Q2', 'Q3', 'FY'
+  reportDate: date('report_date').notNull(),
+  filingDate: date('filing_date'),
+  currency: varchar('currency', { length: 10 }).default('EGP').notNull(),
+  totalRevenue: doublePrecision('total_revenue'),
+  grossProfit: doublePrecision('gross_profit'),
+  operatingIncome: doublePrecision('operating_income'),
+  netIncome: doublePrecision('net_income'),
+  ebitda: doublePrecision('ebitda'),
+  epsBasic: doublePrecision('eps_basic'),
+  epsDiluted: doublePrecision('eps_diluted'),
+  totalAssets: doublePrecision('total_assets'),
+  totalLiabilities: doublePrecision('total_liabilities'),
+  totalDebt: doublePrecision('total_debt'),
+  cashAndEquivalents: doublePrecision('cash_and_equivalents'),
+  totalEquity: doublePrecision('total_equity'),
+  operatingCashFlow: doublePrecision('operating_cash_flow'),
+  capitalExpenditures: doublePrecision('capital_expenditures'),
+  freeCashFlow: doublePrecision('free_cash_flow'),
+  incomeStatementRaw: jsonb('income_statement_raw'),
+  balanceSheetRaw: jsonb('balance_sheet_raw'),
+  cashFlowRaw: jsonb('cash_flow_raw'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    uniqueStatementPeriod: unique('unique_statement_period').on(table.symbol, table.periodType, table.fiscalYear, table.fiscalPeriod),
+    idxStatementSymbolReport: index('idx_statement_symbol_report').on(table.symbol, table.reportDate),
+    idxStatementSymbolYear: index('idx_statement_symbol_year').on(table.symbol, table.periodType, table.fiscalYear),
+  };
+});
+
+export const companyValuationMetrics = pgTable('company_valuation_metrics', {
+  id: serial('id').primaryKey(),
+  symbol: varchar('symbol', { length: 20 })
+    .references(() => tickers.symbol, { onDelete: 'cascade' })
+    .notNull(),
+  date: date('date').notNull(),
+  marketCap: doublePrecision('market_cap'),
+  enterpriseValue: doublePrecision('enterprise_value'),
+  peRatioTtm: doublePrecision('pe_ratio_ttm'),
+  forwardPe: doublePrecision('forward_pe'),
+  pbRatio: doublePrecision('pb_ratio'),
+  psRatioTtm: doublePrecision('ps_ratio_ttm'),
+  evToEbitda: doublePrecision('ev_to_ebitda'),
+  dividendYield: doublePrecision('dividend_yield'),
+  roe: doublePrecision('roe'),
+  roa: doublePrecision('roa'),
+  grossMargin: doublePrecision('gross_margin'),
+  operatingMargin: doublePrecision('operating_margin'),
+  netMargin: doublePrecision('net_margin'),
+  debtToEquity: doublePrecision('debt_to_equity'),
+  currentRatio: doublePrecision('current_ratio'),
+  quickRatio: doublePrecision('quick_ratio'),
+  freeCashFlowYield: doublePrecision('free_cash_flow_yield'),
+  piotroskiFScore: integer('piotroski_f_score'),
+  altmanZScore: doublePrecision('altman_z_score'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    uniqueValuationSymbolDate: unique('unique_valuation_symbol_date').on(table.symbol, table.date),
+    idxValuationSymbolDate: index('idx_valuation_symbol_date').on(table.symbol, table.date),
+  };
+});
+
+export type CompanyFinancialStatement = typeof companyFinancialStatements.$inferSelect;
+export type NewCompanyFinancialStatement = typeof companyFinancialStatements.$inferInsert;
+export type CompanyValuationMetric = typeof companyValuationMetrics.$inferSelect;
+export type NewCompanyValuationMetric = typeof companyValuationMetrics.$inferInsert;
