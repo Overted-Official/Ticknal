@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '@/db';
-import { banks, userBankAccounts, bankMonthlySnapshots, bankTransactions } from '@/db/schema';
+import { banks, userBankAccounts, bankMonthlySnapshots, bankTransactions, monthlyCashflowSummaries } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { maskAccountNumber } from '@/lib/masking';
 import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';
@@ -767,5 +767,197 @@ export async function handleTransactionsDelete(req: Request) {
   } catch (error) {
     console.error('Error deleting transaction:', error);
     return NextResponse.json({ error: 'Failed to delete transaction' }, { status: 500 });
+  }
+}
+
+export async function handleAccountBalancePatch(req: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id, balance } = body;
+
+    const accountId = Number(id);
+    if (!Number.isInteger(accountId) || accountId <= 0) {
+      return NextResponse.json({ error: 'Valid Account ID required' }, { status: 400 });
+    }
+
+    const numBalance = Number(balance);
+    if (!Number.isFinite(numBalance)) {
+      return NextResponse.json({ error: 'Valid balance required' }, { status: 400 });
+    }
+
+    const [updatedAccount] = await db
+      .update(userBankAccounts)
+      .set({
+        balance: String(numBalance),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(userBankAccounts.id, accountId), eq(userBankAccounts.userId, user.id)))
+      .returning();
+
+    if (!updatedAccount) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ account: updatedAccount });
+  } catch (error) {
+    console.error('Error in handleAccountBalancePatch:', error);
+    return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 });
+  }
+}
+
+export async function handleMonthlyCloseoutPost(req: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { validateCloseoutPayload } = await import('./bank-handlers-helpers');
+    const validation = validateCloseoutPayload(body);
+    if (!validation.isValid || !validation.yearMonth) {
+      return NextResponse.json({ error: validation.error || 'Invalid payload' }, { status: 400 });
+    }
+
+    const { yearMonth, accountBalances, totalIncome, expenseBreakdown, notes } = body;
+    const income = Math.max(0, Number(totalIncome) || 0);
+
+    const userAccounts = await db
+      .select()
+      .from(userBankAccounts)
+      .where(and(eq(userBankAccounts.userId, user.id), eq(userBankAccounts.isArchived, false)));
+
+    const accountMap = new Map<number, typeof userAccounts[0]>(userAccounts.map((a) => [a.id, a]));
+
+    const { getUsdRate } = await import('@/lib/server/portfolio-queries');
+    const usdRate = await getUsdRate();
+
+    let endingCashEgp = 0;
+    for (const item of accountBalances) {
+      const accId = Number(item.accountId);
+      const acc = accountMap.get(accId);
+      if (!acc) continue;
+
+      const balance = Number(item.balance);
+      await db
+        .update(userBankAccounts)
+        .set({ balance: String(balance), updatedAt: new Date() })
+        .where(and(eq(userBankAccounts.id, accId), eq(userBankAccounts.userId, user.id)));
+
+      await db
+        .insert(bankMonthlySnapshots)
+        .values({
+          userId: user.id,
+          accountId: accId,
+          yearMonth,
+          closingBalance: String(balance),
+        })
+        .onConflictDoUpdate({
+          target: [bankMonthlySnapshots.accountId, bankMonthlySnapshots.yearMonth],
+          set: { closingBalance: String(balance) },
+        });
+
+      const rate = acc.currency === 'USD' ? usdRate : 1;
+      endingCashEgp += balance * rate;
+    }
+
+    const [yearStr, monthStr] = yearMonth.split('-');
+    let prevYear = Number(yearStr);
+    let prevMonth = Number(monthStr) - 1;
+    if (prevMonth === 0) {
+      prevMonth = 12;
+      prevYear -= 1;
+    }
+    const prevYearMonth = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+
+    const prevSnapshots = await db
+      .select()
+      .from(bankMonthlySnapshots)
+      .where(and(eq(bankMonthlySnapshots.userId, user.id), eq(bankMonthlySnapshots.yearMonth, prevYearMonth)));
+
+    let startingCashEgp = 0;
+    if (prevSnapshots.length > 0) {
+      for (const snap of prevSnapshots) {
+        const acc = accountMap.get(snap.accountId);
+        const rate = acc?.currency === 'USD' ? usdRate : 1;
+        startingCashEgp += Number(snap.closingBalance) * rate;
+      }
+    } else {
+      startingCashEgp = endingCashEgp;
+    }
+
+    const { calculateMonthlySpendAndSavingsRate, computeCategoryAllocation } = await import('@/lib/banks/cashflow-math');
+    const { spend, savingsRatePct } = calculateMonthlySpendAndSavingsRate(startingCashEgp, endingCashEgp, income);
+
+    let finalExpenseBreakdown = expenseBreakdown;
+    if (Array.isArray(expenseBreakdown) && expenseBreakdown.length > 0) {
+      const allocation = computeCategoryAllocation(spend, expenseBreakdown);
+      finalExpenseBreakdown = allocation.items;
+    }
+
+    const [summary] = await db
+      .insert(monthlyCashflowSummaries)
+      .values({
+        userId: user.id,
+        yearMonth,
+        totalIncome: String(income.toFixed(2)),
+        startingCashEgp: String(startingCashEgp.toFixed(2)),
+        endingCashEgp: String(endingCashEgp.toFixed(2)),
+        calculatedSpendEgp: String(spend.toFixed(2)),
+        savingsRatePct: String(savingsRatePct.toFixed(2)),
+        expenseBreakdown: finalExpenseBreakdown,
+        notes: notes || null,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [monthlyCashflowSummaries.userId, monthlyCashflowSummaries.yearMonth],
+        set: {
+          totalIncome: String(income.toFixed(2)),
+          startingCashEgp: String(startingCashEgp.toFixed(2)),
+          endingCashEgp: String(endingCashEgp.toFixed(2)),
+          calculatedSpendEgp: String(spend.toFixed(2)),
+          savingsRatePct: String(savingsRatePct.toFixed(2)),
+          expenseBreakdown: finalExpenseBreakdown,
+          notes: notes || null,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return NextResponse.json({ success: true, summary });
+  } catch (error) {
+    console.error('Error in handleMonthlyCloseoutPost:', error);
+    return NextResponse.json({ error: 'Failed to record monthly closeout' }, { status: 500 });
+  }
+}
+
+export async function handleMonthlyCloseoutsGet() {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const summaries = await db
+      .select()
+      .from(monthlyCashflowSummaries)
+      .where(eq(monthlyCashflowSummaries.userId, user.id))
+      .orderBy(desc(monthlyCashflowSummaries.yearMonth));
+
+    return NextResponse.json({ summaries: summaries || [] });
+  } catch (error) {
+    console.error('Error in handleMonthlyCloseoutsGet:', error);
+    return NextResponse.json({ summaries: [], error: 'Failed to fetch summaries' }, { status: 500 });
   }
 }

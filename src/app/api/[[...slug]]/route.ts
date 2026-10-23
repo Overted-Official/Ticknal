@@ -14,9 +14,12 @@ import {
   handleAccountsPost,
   handleAccountsPut,
   handleAccountsDelete,
+  handleAccountBalancePatch,
   handleListGet,
   handleSnapshotsGet,
   handleSnapshotsPost,
+  handleMonthlyCloseoutPost,
+  handleMonthlyCloseoutsGet,
   handleTransactionsGet,
   handleTransactionsPost,
   handleTransactionsPut,
@@ -72,6 +75,7 @@ import {
 } from '@/lib/strategy-handlers';
 import {
   handlePositionsGet,
+  handleHoldingsSignalsGet,
   handlePositionsPost,
   handlePositionsPatch,
   handlePositionsClosePost,
@@ -184,6 +188,9 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
       case 'list':
         return handleListGet();
       case 'snapshots':
+        if (segments[2] === 'history' || segments[2] === 'closeout') {
+          return handleMonthlyCloseoutsGet();
+        }
         return handleSnapshotsGet(req);
       case 'transactions':
         return handleTransactionsGet(req);
@@ -287,6 +294,9 @@ export async function GET(req: Request, context: { params: Promise<{ slug?: stri
     return handleProfileGet();
   }
   if (root === 'positions' || (root === 'user' && sub === 'positions')) {
+    if (sub === 'signals' || (root === 'user' && sub === 'positions' && slug?.[2] === 'signals')) {
+      return handleHoldingsSignalsGet(req);
+    }
     return handlePositionsGet(req);
   }
   if (root === 'system-logs' || (root === 'user' && sub === 'system-logs')) {
@@ -347,6 +357,9 @@ export async function POST(req: Request, context: { params: Promise<{ slug?: str
       case 'accounts':
         return handleAccountsPost(req);
       case 'snapshots':
+        if (segments[2] === 'closeout') {
+          return handleMonthlyCloseoutPost(req);
+        }
         return handleSnapshotsPost(req);
       case 'transactions':
         return handleTransactionsPost(req);
@@ -417,7 +430,12 @@ export async function PUT(req: Request, context: { params: Promise<{ slug?: stri
   const sub = segments[1] || '';
 
   if (root === 'banks') {
-    if (sub === 'accounts') return handleAccountsPut(req);
+    if (sub === 'accounts') {
+      if (segments[2] === 'balance' || segments[3] === 'balance') {
+        return handleAccountBalancePatch(req);
+      }
+      return handleAccountsPut(req);
+    }
     if (sub === 'transactions') return handleTransactionsPut(req);
   }
 
@@ -434,7 +452,12 @@ export async function PATCH(req: Request, context: { params: Promise<{ slug?: st
   const sub = segments[1] || '';
 
   if (root === 'banks') {
-    if (sub === 'accounts') return handleAccountsPut(req);
+    if (sub === 'accounts') {
+      if (segments[2] === 'balance' || segments[3] === 'balance') {
+        return handleAccountBalancePatch(req);
+      }
+      return handleAccountsPut(req);
+    }
     if (sub === 'transactions') return handleTransactionsPut(req);
   }
 
