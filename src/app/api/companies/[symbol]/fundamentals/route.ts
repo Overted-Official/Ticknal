@@ -29,10 +29,10 @@ export async function GET(
     const resolvedParams = await context.params;
     const rawSymbol = resolvedParams?.symbol || '';
     const cleanSymbol = decodeURIComponent(rawSymbol)
+      .trim()
       .toUpperCase()
       .replace(/\.CA$/, '')
-      .replace(/^EGX:/, '')
-      .trim();
+      .replace(/^EGX:/, '');
 
     if (!cleanSymbol) {
       return NextResponse.json(

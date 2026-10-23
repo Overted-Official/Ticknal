@@ -1808,6 +1808,7 @@ export default function ChartWidget({
         onClose={() => setIsFinancialsOpen(false)}
         symbol={symbol}
         companyName={companyName || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.companyName}
+        sector={watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.sector}
         logoUrl={logoUrl || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.logoUrl}
         currency={instrumentCurrency}
       />

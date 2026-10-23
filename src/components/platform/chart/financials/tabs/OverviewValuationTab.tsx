@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSafeLocale } from '../useSafeLocale';
 import type { CompanyValuationMetric, CompanyFinancialStatement } from '../types';
 import ValuationMultiplesGrid from '../components/ValuationMultiplesGrid';
@@ -26,7 +26,11 @@ export default function OverviewValuationTab({
 }: OverviewValuationTabProps) {
   const locale = useSafeLocale();
 
-  const annualStatements = statements?.annual ?? [];
+  const annualStatements = useMemo(() => {
+    return [...(statements?.annual ?? [])].sort(
+      (a, b) => (b.fiscalYear ?? 0) - (a.fiscalYear ?? 0)
+    );
+  }, [statements?.annual]);
   const latestAnnual = annualStatements[0];
 
   const hasAnyData =
