@@ -201,10 +201,11 @@ export function buildCashTrend(
   transactions: BankTransaction[],
   fxRates: FxRates | number,
   months = 12,
+  snapshots?: Array<{ accountId: number; yearMonth: string; closingBalance: number | string }>
 ): CashTrendPoint[] {
   const monthKeys = recentMonthKeys(months);
 
-  return buildCashTrendForMonthKeys(accounts, transactions, fxRates, monthKeys);
+  return buildCashTrendForMonthKeysWithSnapshots(accounts, transactions, fxRates, monthKeys, snapshots);
 }
 
 export function buildYtdCashTrend(
@@ -212,8 +213,9 @@ export function buildYtdCashTrend(
   transactions: BankTransaction[],
   fxRates: FxRates | number,
   referenceDate = new Date(),
+  snapshots?: Array<{ accountId: number; yearMonth: string; closingBalance: number | string }>
 ): CashTrendPoint[] {
-  return buildCashTrendForMonthKeys(accounts, transactions, fxRates, ytdMonthKeys(referenceDate));
+  return buildCashTrendForMonthKeysWithSnapshots(accounts, transactions, fxRates, ytdMonthKeys(referenceDate), snapshots);
 }
 
 function buildCashTrendForMonthKeys(
@@ -222,6 +224,22 @@ function buildCashTrendForMonthKeys(
   fxRates: FxRates | number,
   monthKeys: string[],
 ): CashTrendPoint[] {
+  return buildCashTrendForMonthKeysWithSnapshots(accounts, transactions, fxRates, monthKeys);
+}
+
+export function buildCashTrendForMonthKeysWithSnapshots(
+  accounts: BankAccount[],
+  transactions: BankTransaction[],
+  fxRates: FxRates | number,
+  monthKeys: string[],
+  snapshots?: Array<{ accountId: number; yearMonth: string; closingBalance: number | string }>
+): CashTrendPoint[] {
+  const snapshotsMap = new Map<string, number>();
+  if (snapshots && snapshots.length > 0) {
+    for (const s of snapshots) {
+      snapshotsMap.set(`${s.accountId}:${s.yearMonth}`, Number(s.closingBalance) || 0);
+    }
+  }
 
   return monthKeys.map((yearMonth) => {
     const asOf = monthEnd(yearMonth);
@@ -237,20 +255,25 @@ function buildCashTrendForMonthKeys(
       if (account.createdAt && String(account.createdAt).slice(0, 10) > asOf) continue;
 
       let balance = Number(account.balance) || 0;
-      for (const transaction of transactions) {
-        const transactionDate = String(transaction.transactionDate || '').slice(0, 10);
-        if (transactionDate <= asOf) continue;
+      const snapshotKey = `${account.id}:${yearMonth}`;
+      if (snapshotsMap.has(snapshotKey)) {
+        balance = snapshotsMap.get(snapshotKey)!;
+      } else {
+        for (const transaction of transactions) {
+          const transactionDate = String(transaction.transactionDate || '').slice(0, 10);
+          if (transactionDate <= asOf) continue;
 
-        const amount = Number(transaction.amount) || 0;
-        if (transaction.type === 'TRANSFER') {
-          if (transaction.accountId === account.id) balance += amount;
-          if (transaction.toAccountId === account.id) balance -= amount;
-          continue;
-        }
+          const amount = Number(transaction.amount) || 0;
+          if (transaction.type === 'TRANSFER') {
+            if (transaction.accountId === account.id) balance += amount;
+            if (transaction.toAccountId === account.id) balance -= amount;
+            continue;
+          }
 
-        if (transaction.accountId === account.id) {
-          // Prior balance = current balance - later ledger impact.
-          balance -= getAccountCashImpact(transaction.type, amount);
+          if (transaction.accountId === account.id) {
+            // Prior balance = current balance - later ledger impact.
+            balance -= getAccountCashImpact(transaction.type, amount);
+          }
         }
       }
 

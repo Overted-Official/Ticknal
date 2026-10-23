@@ -6,6 +6,7 @@ import {
   tickerAlerts,
   userBankAccounts,
   bankTransactions,
+  bankMonthlySnapshots,
   dailyPrices,
 } from '@/db/schema';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
@@ -609,20 +610,31 @@ export async function getNetWorthHistory(
   }
 
   const monthKeys = recentMonthKeys(12);
-  const cashTrend = buildCashTrend(accounts, transactions, fxRates, 12);
 
   try {
-    const positionRows = await db
-      .select({
-        tickerSymbol: positions.tickerSymbol,
-        status: positions.status,
-        entryDate: positions.entryDate,
-        entryPrice: positions.entryPrice,
-        quantity: positions.quantity,
-        exitDate: positions.exitDate,
-      })
-      .from(positions)
-      .where(eq(positions.userId, userId));
+    const [positionRows, snapshotRows] = await Promise.all([
+      db
+        .select({
+          tickerSymbol: positions.tickerSymbol,
+          status: positions.status,
+          entryDate: positions.entryDate,
+          entryPrice: positions.entryPrice,
+          quantity: positions.quantity,
+          exitDate: positions.exitDate,
+        })
+        .from(positions)
+        .where(eq(positions.userId, userId)),
+      db
+        .select({
+          accountId: bankMonthlySnapshots.accountId,
+          yearMonth: bankMonthlySnapshots.yearMonth,
+          closingBalance: bankMonthlySnapshots.closingBalance,
+        })
+        .from(bankMonthlySnapshots)
+        .where(eq(bankMonthlySnapshots.userId, userId)),
+    ]);
+
+    const cashTrend = buildCashTrend(accounts, transactions, fxRates, 12, snapshotRows);
 
     if (positionRows.length === 0) {
       const res = monthKeys.map((yearMonth, index) => {
