@@ -26,7 +26,7 @@ export default function RatioSparkline({
     return (
       <div
         data-testid="ratio-sparkline-empty"
-        className={`w-[${width}px] h-[${height}px] flex items-center justify-center text-plt-muted text-[10px] select-none ${className}`}
+        className={`flex items-center justify-center text-plt-muted text-[10px] select-none ${className}`}
         style={{ width, height }}
       >
         —
@@ -58,7 +58,7 @@ export default function RatioSparkline({
   const lastVal = validPoints[validPoints.length - 1];
   const delta = lastVal - firstVal;
 
-  let strokeColor = '#9ca3af'; // neutral gray
+  let strokeColor = 'var(--plt-muted, #71717a)';
   if (Math.abs(delta) > 0.001) {
     const isImproving = isInverseTrend ? delta < 0 : delta > 0;
     strokeColor = isImproving ? 'var(--plt-profit, #10b981)' : 'var(--plt-risk, #ef4444)';

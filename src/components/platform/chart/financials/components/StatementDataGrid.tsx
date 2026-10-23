@@ -165,7 +165,10 @@ export default function StatementDataGrid({
       )}
 
       {/* Table Scroll Container */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[580px] custom-scrollbar">
+      <div
+        onScroll={() => setTooltip(null)}
+        className="overflow-x-auto overflow-y-auto max-h-[580px] custom-scrollbar"
+      >
         <table className="w-full border-collapse text-left font-sans text-xs">
           <thead>
             <tr className="border-b border-plt-border-soft">
@@ -213,7 +216,7 @@ export default function StatementDataGrid({
                   <td
                     className={`w-[200px] sm:w-[240px] min-w-[200px] sm:min-w-[240px] sticky left-0 z-10 bg-plt-base group-hover:bg-plt-hover transition-colors border-r border-plt-border-soft px-3 py-2.5 font-sans text-xs ${
                       row.isTotal
-                        ? 'font-bold text-plt-text bg-plt-base/95'
+                        ? 'font-bold text-plt-text bg-plt-base'
                         : row.indent
                         ? 'pl-6 text-plt-muted'
                         : 'font-medium text-plt-text'

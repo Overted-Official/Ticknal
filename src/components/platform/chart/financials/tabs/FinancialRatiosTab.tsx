@@ -20,7 +20,7 @@ export interface FinancialRatiosTabProps {
 interface RatioDefinition {
   id: string;
   benchmarkKey: string;
-  category: 'profitability' | 'solvency' | 'efficiency';
+  category: 'profitability' | 'liquidity' | 'leverage' | 'efficiency';
   labelEn: string;
   labelAr: string;
   descEn: string;
@@ -107,11 +107,11 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
         : null,
   },
 
-  // 2. Liquidity & Solvency
+  // 2. Liquidity & Working Capital
   {
     id: 'current-ratio',
     benchmarkKey: 'currentRatio',
-    category: 'solvency',
+    category: 'liquidity',
     labelEn: 'Current Ratio',
     labelAr: 'نسبة التداول (السيولة الجارية)',
     descEn: 'Current Assets / Current Liabilities',
@@ -124,10 +124,12 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
       return null;
     },
   },
+
+  // 3. Leverage & Solvency
   {
     id: 'debt-to-equity',
     benchmarkKey: 'debtToEquity',
-    category: 'solvency',
+    category: 'leverage',
     labelEn: 'Debt-to-Equity',
     labelAr: 'نسبة الدين إلى حقوق المساهمين',
     descEn: "Total Debt / Shareholders' Equity",
@@ -136,14 +138,14 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
     isInverseTrend: true,
     calculator: (s) => {
       if (s.totalDebt == null || s.totalEquity == null) return null;
-      if (s.totalEquity <= 0) return -1;
+      if (s.totalEquity <= 0) return null;
       return s.totalDebt / s.totalEquity;
     },
   },
   {
     id: 'debt-to-assets',
     benchmarkKey: 'debtToAssets',
-    category: 'solvency',
+    category: 'leverage',
     labelEn: 'Debt-to-Assets',
     labelAr: 'نسبة الدين إلى إجمالي الأصول',
     descEn: 'Total Debt / Total Assets',
@@ -158,7 +160,7 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
   {
     id: 'financial-leverage',
     benchmarkKey: 'financialLeverage',
-    category: 'solvency',
+    category: 'leverage',
     labelEn: 'Financial Leverage Multiple',
     labelAr: 'مضاعف الرفع المالي',
     descEn: "Total Assets / Shareholders' Equity",
@@ -171,7 +173,7 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
         : null,
   },
 
-  // 3. Cash Flow & Operating Efficiency
+  // 4. Cash Flow & Operating Efficiency
   {
     id: 'fcf-margin',
     benchmarkKey: 'fcfMargin',
@@ -229,14 +231,19 @@ const CATEGORIES = [
     labelAr: 'الربحية وهوامش التشغيل',
   },
   {
-    id: 'solvency',
-    labelEn: 'Liquidity & Solvency',
-    labelAr: 'السيولة والملاءة المالية',
+    id: 'liquidity',
+    labelEn: 'Liquidity & Working Capital',
+    labelAr: 'السيولة ورأس المال العامل',
+  },
+  {
+    id: 'leverage',
+    labelEn: 'Leverage & Solvency',
+    labelAr: 'الرافعة والملاءة المالية',
   },
   {
     id: 'efficiency',
-    labelEn: 'Cash Flow & Operating Efficiency',
-    labelAr: 'التدفقات النقدية وكفاءة التشغيل',
+    labelEn: 'Operating Efficiency & Cash Conversion',
+    labelAr: 'كفاءة التشغيل والتدفق النقدي',
   },
 ] as const;
 
