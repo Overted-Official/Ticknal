@@ -41,7 +41,7 @@
   - `computeCategoryAllocation(totalSpend: number, categories: Array<{ category: string; amount: number }>)`
   - Types `MonthlyCashflowSummary`, `ExpenseAllocationItem`
 
-- [ ] **Step 1: Write the failing unit tests for cashflow math and allocation**
+- [x] **Step 1: Write the failing unit tests for cashflow math and allocation**
 
 ```ts
 // src/lib/banks/cashflow-math.test.ts
@@ -94,12 +94,12 @@ describe('computeCategoryAllocation', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cmd /c "npm test src/lib/banks/cashflow-math.test.ts"`  
 Expected: FAIL with "Cannot find module './cashflow-math'"
 
-- [ ] **Step 3: Implement `cashflow-math.ts`, update `src/types/bank.ts`, and add `monthlyCashflowSummaries` in `src/db/schema.ts`**
+- [x] **Step 3: Implement `cashflow-math.ts`, update `src/types/bank.ts`, and add `monthlyCashflowSummaries` in `src/db/schema.ts`**
 
 Add `monthlyCashflowSummaries` to `src/db/schema.ts`:
 ```ts
@@ -124,12 +124,12 @@ export const monthlyCashflowSummaries = pgTable('monthly_cashflow_summaries', {
 
 Implement pure math functions in `src/lib/banks/cashflow-math.ts`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cmd /c "npm test src/lib/banks/cashflow-math.test.ts"`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/db/schema.ts src/types/bank.ts src/lib/banks/cashflow-math.ts src/lib/banks/cashflow-math.test.ts
@@ -148,7 +148,7 @@ git commit -m "feat(banks): add monthly cashflow schema and delta math engine"
 - Consumes: `bankMonthlySnapshots`, `monthlyCashflowSummaries`, `userBankAccounts`
 - Produces: Updated `getNetWorthHistory(userId, accounts, transactions, fxRates)` that incorporates authentic closing snapshots from `bank_monthly_snapshots` instead of transaction back-reconstruction.
 
-- [ ] **Step 1: Write unit test verifying snapshot-aware net worth cash resolution**
+- [x] **Step 1: Write unit test verifying snapshot-aware net worth cash resolution**
 
 ```ts
 // src/lib/server/portfolio-queries-snapshots.test.ts
@@ -181,21 +181,21 @@ describe('resolveMonthlyCashBalances', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cmd /c "npm test src/lib/server/portfolio-queries-snapshots.test.ts"`  
 Expected: FAIL
 
-- [ ] **Step 3: Implement `resolveMonthlyCashBalances` and update `getNetWorthHistory` in `src/lib/server/portfolio-queries.ts`**
+- [x] **Step 3: Implement `resolveMonthlyCashBalances` and update `getNetWorthHistory` in `src/lib/server/portfolio-queries.ts`**
 
 Update `portfolio-queries.ts` to query `bankMonthlySnapshots` for `userId` across the requested 12 months and resolve cash totals accurately.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cmd /c "npm test src/lib/server/portfolio-queries-snapshots.test.ts"`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/server/portfolio-queries.ts src/lib/server/portfolio-queries-snapshots.test.ts
@@ -217,7 +217,7 @@ git commit -m "feat(portfolio): integrate bank monthly snapshots into net worth 
   - `POST /api/banks/snapshots/closeout`: Monthly closeout submission `{ yearMonth, accountBalances, totalIncome, expenseBreakdown, notes }`
   - `GET /api/banks/snapshots/history`: Returns closed months summaries and snapshots archive
 
-- [ ] **Step 1: Write integration tests for closeout handler and balance update**
+- [x] **Step 1: Write integration tests for closeout handler and balance update**
 
 ```ts
 // src/lib/handlers/bank-handlers.test.ts
@@ -245,24 +245,24 @@ describe('validateCloseoutPayload', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cmd /c "npm test src/lib/handlers/bank-handlers.test.ts"`  
 Expected: FAIL
 
-- [ ] **Step 3: Implement handlers in `src/lib/handlers/bank-handlers.ts` and wire routes in `src/app/api/[[...slug]]/route.ts`**
+- [x] **Step 3: Implement handlers in `src/lib/handlers/bank-handlers.ts` and wire routes in `src/app/api/[[...slug]]/route.ts`**
 
 Wire endpoints under `root === 'banks'` in `route.ts`:
 - `/api/banks/accounts/:id/balance`
 - `/api/banks/snapshots/closeout`
 - `/api/banks/snapshots/history`
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cmd /c "npm test src/lib/handlers/bank-handlers.test.ts"`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/handlers/bank-handlers.ts src/app/api/[[...slug]]/route.ts src/lib/handlers/bank-handlers.test.ts
@@ -282,7 +282,7 @@ git commit -m "feat(api): add endpoints for inline balance patch and monthly clo
 - Consumes: `BankAccount[]`, `usdRate`, `onBalanceUpdated(accountId, newBalance)`
 - Produces: Visual account cards with authentic bank styling, current balance, last updated relative badge, and inline click-to-edit.
 
-- [ ] **Step 1: Build `AccountBalanceCard.tsx` with inline editing mode**
+- [x] **Step 1: Build `AccountBalanceCard.tsx` with inline editing mode**
 
 Features:
 - Bank icon and color pill.
@@ -290,19 +290,19 @@ Features:
 - Inline "Quick Update": clicking triggers a lightweight number input with save/cancel buttons.
 - On save, performs `PATCH /api/banks/accounts/[id]/balance` optimistically, updating state immediately.
 
-- [ ] **Step 2: Build `AccountsRail.tsx`**
+- [x] **Step 2: Build `AccountsRail.tsx`**
 
 Features:
 - Grid layout (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3`).
 - Accounts grouped by type: Banks, Wallets/Cash, Brokerage Cash, Foreign Currencies.
 - "+ Add Account" quick card to trigger account creation drawer.
 
-- [ ] **Step 3: Verify TypeScript compilation**
+- [x] **Step 3: Verify TypeScript compilation**
 
 Run: `cmd /c "npx tsc --noEmit"`  
 Expected: 0 errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/platform/transactions/AccountsRail.tsx src/components/platform/transactions/AccountBalanceCard.tsx
@@ -324,7 +324,7 @@ git commit -m "feat(ui): implement accounts rail and inline balance quick update
   2. Income input & instant delta spend display
   3. Optional category allocation with auto-balancing General remainder chip.
 
-- [ ] **Step 1: Build `ExpenseAllocationSlider.tsx`**
+- [x] **Step 1: Build `ExpenseAllocationSlider.tsx`**
 
 Features:
 - Categories list (Housing, Groceries/Food, Cigarettes/Personal, Leisure, Transport, Custom).
@@ -333,7 +333,7 @@ Features:
   $$\text{Remainder} = \text{Total Spend} - \sum \text{Categories}$$
 - Clamps to zero with alert if user exceeds total spend.
 
-- [ ] **Step 2: Build `MonthlyCheckInDrawer.tsx`**
+- [x] **Step 2: Build `MonthlyCheckInDrawer.tsx`**
 
 Features:
 - Pure pitch black (`bg-black`), sharp corners (`rounded-none`).
@@ -343,12 +343,12 @@ Features:
 - Step 3: Optional toggle for expense distribution.
 - Primary CTA: "Save & Close Month" submitting to `/api/banks/snapshots/closeout`.
 
-- [ ] **Step 3: Verify TypeScript compilation**
+- [x] **Step 3: Verify TypeScript compilation**
 
 Run: `cmd /c "npx tsc --noEmit"`  
 Expected: 0 errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/platform/transactions/MonthlyCheckInDrawer.tsx src/components/platform/transactions/ExpenseAllocationSlider.tsx
@@ -373,7 +373,7 @@ git commit -m "feat(ui): add 90-second monthly check-in drawer with expense allo
   3. Net Worth & Cash Trend Area Chart.
   4. Monthly Closeouts Archive with category breakdown bars.
 
-- [ ] **Step 1: Update `TransactionsKPIRail.tsx`**
+- [x] **Step 1: Update `TransactionsKPIRail.tsx`**
 
 Shows:
 - **Total Liquid Cash**: Real-time aggregated balance across accounts in EGP.
@@ -381,23 +381,23 @@ Shows:
 - **Savings Rate**: Percentage of income retained.
 - **Status Badge**: Days since last check-in.
 
-- [ ] **Step 2: Build `MonthlyCloseoutArchive.tsx`**
+- [x] **Step 2: Build `MonthlyCloseoutArchive.tsx`**
 
 Features:
 - Cards for past months (Oct 2026, Sep 2026, etc.).
 - Displays Starting Cash $\rightarrow$ Income $\rightarrow$ Ending Cash $\rightarrow$ Spend.
 - Stacked category colored bar showing breakdown with hover tooltips.
 
-- [ ] **Step 3: Refactor `TransactionsPageView.tsx` & `page.tsx`**
+- [x] **Step 3: Refactor `TransactionsPageView.tsx` & `page.tsx`**
 
 Assemble all surfaces into the page layout, removing the heavy accounting ledger while maintaining tour and mobile responsiveness.
 
-- [ ] **Step 4: Verify TypeScript compilation**
+- [x] **Step 4: Verify TypeScript compilation**
 
 Run: `cmd /c "npx tsc --noEmit"`  
 Expected: 0 errors
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/platform/transactions/TransactionsKPIRail.tsx src/components/platform/transactions/MonthlyCloseoutArchive.tsx src/components/platform/transactions/TransactionsPageView.tsx src/app/(main)/transactions/page.tsx
@@ -411,22 +411,22 @@ git commit -m "feat(pages): assemble cash and balances hub and monthly closeout 
 **Files:**
 - Entire codebase
 
-- [ ] **Step 1: Run complete test suite**
+- [x] **Step 1: Run complete test suite**
 
 Run: `cmd /c "npm test"`  
 Expected: All tests pass (exit code 0).
 
-- [ ] **Step 2: Run complete TypeScript typecheck**
+- [x] **Step 2: Run complete TypeScript typecheck**
 
 Run: `cmd /c "npx tsc --noEmit"`  
 Expected: Exit code 0, zero type errors.
 
-- [ ] **Step 3: Run production Next.js build**
+- [x] **Step 3: Run production Next.js build**
 
 Run: `cmd /c "npm run build"`  
 Expected: Next.js build finishes successfully with exit code 0.
 
-- [ ] **Step 4: Final Git Commit**
+- [x] **Step 4: Final Git Commit**
 
 ```bash
 git commit --allow-empty -m "chore: verify cash balances and monthly closeout build health"
