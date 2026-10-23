@@ -234,6 +234,10 @@ describe('Historical Statements Normalization', () => {
     const fcf1 = calculateFreeCashFlow(50000000, 20000000);
     assert.strictEqual(fcf1, 30000000);
 
+    // Negative CapEx input (cash outflow) should also be subtracted cleanly
+    const fcfNegativeCapex = calculateFreeCashFlow(50000000, -20000000);
+    assert.strictEqual(fcfNegativeCapex, 30000000, 'Negative CapEx must not add to cash flow');
+
     const fcf2 = calculateFreeCashFlow(10000000, null, 10000000);
     assert.strictEqual(fcf2, 10000000);
 
@@ -242,6 +246,24 @@ describe('Historical Statements Normalization', () => {
 
     const fcf4 = calculateFreeCashFlow(null, null, null);
     assert.strictEqual(fcf4, null);
+  });
+
+  it('handles timestamp in milliseconds vs seconds in quarterly series', () => {
+    const mockWithMs = {
+      s: 'EGX:TEST',
+      d: [
+        'TEST',
+        'EGP',
+        1782777600000, // in milliseconds
+        [2025],
+        [100000000],
+        [30000000],
+      ],
+    };
+    const { quarterly } = normalizeHistoricalStatements(mockWithMs, 'TEST');
+    assert.strictEqual(quarterly.length, 1);
+    assert.strictEqual(quarterly[0].reportDate, '2026-06-30');
+    assert.strictEqual(quarterly[0].fiscalPeriod, 'Q2');
   });
 
   it('handles bank statements with null gross profit and ebitda without failing', () => {
@@ -425,6 +447,74 @@ describe('Piotroski F-Score Math', () => {
     const score = calculatePiotroskiFScore(current);
     assert.strictEqual(score, 3, 'Single year with ROA>0, CFO>0, CFO>NI should score 3');
   });
+
+  it('does not award Piotroski leverage point when debt data is null/missing', () => {
+    const current: NewCompanyFinancialStatement = {
+      symbol: 'NODEBTDATA',
+      periodType: 'ANNUAL',
+      fiscalYear: 2025,
+      fiscalPeriod: 'FY',
+      reportDate: '2025-12-31',
+      currency: 'EGP',
+      totalRevenue: 1000,
+      netIncome: 100,
+      totalAssets: 1000,
+      totalDebt: null, // missing debt
+      operatingCashFlow: 150,
+    };
+    const prior: NewCompanyFinancialStatement = {
+      symbol: 'NODEBTDATA',
+      periodType: 'ANNUAL',
+      fiscalYear: 2024,
+      fiscalPeriod: 'FY',
+      reportDate: '2024-12-31',
+      currency: 'EGP',
+      totalRevenue: 1000,
+      netIncome: 100,
+      totalAssets: 1000,
+      totalDebt: null, // missing debt
+      operatingCashFlow: 150,
+    };
+
+    // All profitability points hold: ROA>0 (1), CFO>0 (1), CFO>NI (1) = 3
+    // Since debt is null on both, leverage point must NOT be awarded
+    const score = calculatePiotroskiFScore(current, prior);
+    // Leverage point = 0
+    assert.strictEqual(score, 3, 'Missing debt data must not award a leverage point');
+  });
+
+  it('awards Piotroski leverage point when both periods are confirmed debt-free (0 and 0)', () => {
+    const current: NewCompanyFinancialStatement = {
+      symbol: 'CONFIRMEDNODEBT',
+      periodType: 'ANNUAL',
+      fiscalYear: 2025,
+      fiscalPeriod: 'FY',
+      reportDate: '2025-12-31',
+      currency: 'EGP',
+      totalRevenue: 1000,
+      netIncome: 100,
+      totalAssets: 1000,
+      totalDebt: 0, // confirmed zero debt
+      operatingCashFlow: 150,
+    };
+    const prior: NewCompanyFinancialStatement = {
+      symbol: 'CONFIRMEDNODEBT',
+      periodType: 'ANNUAL',
+      fiscalYear: 2024,
+      fiscalPeriod: 'FY',
+      reportDate: '2024-12-31',
+      currency: 'EGP',
+      totalRevenue: 1000,
+      netIncome: 100,
+      totalAssets: 1000,
+      totalDebt: 0, // confirmed zero debt
+      operatingCashFlow: 150,
+    };
+
+    const score = calculatePiotroskiFScore(current, prior);
+    // 3 profitability + 1 leverage point = 4
+    assert.strictEqual(score, 4, 'Confirmed 0-debt across both periods should award leverage point');
+  });
 });
 
 // =========================================================================
@@ -529,6 +619,36 @@ describe('Altman Z-Score Math', () => {
 
     assert.strictEqual(calculateAltmanZScore(statementNoAssets, 100), null);
     assert.strictEqual(calculateAltmanZScore({ ...statementNoAssets, totalAssets: -500 }, 100), null);
+  });
+
+  it('does not inflate NWC when working capital, current assets, and cash are missing', () => {
+    // Statement with no workingCapital, no currentAssets, no cashAndEquivalents
+    // Assets = 1000, Debt = 200, Net Income = 50, EBITDA = 100, Equity = 800
+    // NWC should be 0, NOT (Assets - Debt = 800) which would inflate X1 by 6.56 * 0.8 = 5.248!
+    // X1 = 0
+    // X2 = 50 / 1000 = 0.05 -> 3.26 * 0.05 = 0.163
+    // X3 = 100 / 1000 = 0.10 -> 6.72 * 0.10 = 0.672
+    // X4 = 800 / 200 = 4.0 -> 1.05 * 4.0 = 4.2
+    // Total Z = 0 + 0.163 + 0.672 + 4.2 = 5.035 -> 5.04
+    const statement: NewCompanyFinancialStatement = {
+      symbol: 'NONWC',
+      periodType: 'ANNUAL',
+      fiscalYear: 2025,
+      fiscalPeriod: 'FY',
+      reportDate: '2025-12-31',
+      currency: 'EGP',
+      totalRevenue: 1000,
+      netIncome: 50,
+      ebitda: 100,
+      totalAssets: 1000,
+      totalDebt: 200,
+      cashAndEquivalents: null,
+      totalEquity: 800,
+    };
+
+    const z = calculateAltmanZScore(statement, 800);
+    assert.ok(z !== null);
+    assert.strictEqual(z, 5.04, 'Z score must reflect NWC = 0, not inflated by equity');
   });
 });
 

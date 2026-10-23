@@ -150,7 +150,7 @@ export function calculateFreeCashFlow(
   fallbackFcf?: number | null | undefined
 ): number | null {
   if (operatingCashFlow != null && capitalExpenditures != null) {
-    return operatingCashFlow - capitalExpenditures;
+    return operatingCashFlow - Math.abs(capitalExpenditures);
   }
   if (operatingCashFlow != null && fallbackFcf != null) {
     return fallbackFcf;
@@ -217,7 +217,10 @@ export function normalizeHistoricalStatements(
   const fqRevenues: any[] = Array.isArray(d[5]) ? d[5] : [];
   if (fqRevenues.length > 0) {
     const rawEndFq = toNullableNumber(d[2]);
-    const baseTimeSec = rawEndFq && rawEndFq > 0 ? rawEndFq : Math.floor(Date.now() / 1000);
+    let baseTimeSec = Math.floor(Date.now() / 1000);
+    if (rawEndFq && rawEndFq > 0) {
+      baseTimeSec = rawEndFq > 1e11 ? Math.floor(rawEndFq / 1000) : rawEndFq;
+    }
     const baseDate = new Date(baseTimeSec * 1000);
     const baseYear = baseDate.getUTCFullYear();
     const baseMonth = baseDate.getUTCMonth() + 1; // 1..12
@@ -362,15 +365,17 @@ export function calculatePiotroskiFScore(
 
   // --- Category 2: Leverage, Liquidity, Source of Funds (3 points) ---
   if (prior) {
-    // 5. ΔLeverage < 0 (lower debt/assets ratio than prior year, or remained zero-debt)
+    // 5. ΔLeverage < 0 (lower debt/assets ratio than prior year, or remained confirmed debt-free)
     if (
       current.totalAssets != null &&
       prior.totalAssets != null &&
       current.totalAssets > 0 &&
-      prior.totalAssets > 0
+      prior.totalAssets > 0 &&
+      current.totalDebt != null &&
+      prior.totalDebt != null
     ) {
-      const curLev = (current.totalDebt ?? 0) / current.totalAssets;
-      const priLev = (prior.totalDebt ?? 0) / prior.totalAssets;
+      const curLev = current.totalDebt / current.totalAssets;
+      const priLev = prior.totalDebt / prior.totalAssets;
       if (curLev < priLev || (curLev === 0 && priLev === 0)) {
         score++;
       }
@@ -386,9 +391,6 @@ export function calculatePiotroskiFScore(
       }
       if (s.cashAndEquivalents != null && s.totalAssets && s.totalAssets > 0) {
         return s.cashAndEquivalents / s.totalAssets;
-      }
-      if (s.totalAssets != null && s.totalDebt != null && s.totalAssets > 0) {
-        return (s.totalAssets - s.totalDebt) / s.totalAssets;
       }
       return null;
     };
@@ -482,8 +484,6 @@ export function calculateAltmanZScore(
     nwc = (statement as any).currentAssets - (statement as any).currentLiabilities;
   } else if (statement.cashAndEquivalents != null) {
     nwc = statement.cashAndEquivalents;
-  } else if (statement.totalDebt != null) {
-    nwc = assets - statement.totalDebt;
   }
   const x1 = nwc / assets;
 
