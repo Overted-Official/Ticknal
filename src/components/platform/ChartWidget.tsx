@@ -11,6 +11,7 @@ import {
   AreaSeries,
   HistogramSeries,
   LineSeries,
+  LineStyle,
   createSeriesMarkers,
   type IChartApi,
   type IPriceLine,
@@ -63,6 +64,7 @@ import ChartLoadingSkeleton from './chart/ChartLoadingSkeleton';
 import HydraIndexPanel from './chart/HydraIndexPanel';
 import SmartMoneyPanel from './chart/SmartMoneyPanel';
 import StrategyReportDrawer, { type StrategyReportTab } from './chart/StrategyReportDrawer';
+import FinancialsDrawer from './chart/financials/FinancialsDrawer';
 
 // Re-export shared types for backward compatibility across the app
 export type { ChartData };
@@ -132,6 +134,7 @@ export default function ChartWidget({
   const [positionsImgError, setPositionsImgError] = useState(false);
   const [isStrategyReportOpen, setIsStrategyReportOpen] = useState(false);
   const [strategyReportTab, setStrategyReportTab] = useState<StrategyReportTab>('performance');
+  const [isFinancialsOpen, setIsFinancialsOpen] = useState(false);
 
   const [orders, setOrders] = useState<any[]>(tickerPositions);
 
@@ -187,6 +190,9 @@ export default function ChartWidget({
 
   const [isPredicting, setIsPredicting] = useState(false);
   const predictionSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const predVolumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const predCorridorUpperRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const predCorridorLowerRef = useRef<ISeriesApi<'Line'> | null>(null);
   const [isChartLoading, setIsChartLoading] = useState(true);
 
   const [predictPopoverOpen, setPredictPopoverOpen] = useState(false);
@@ -231,20 +237,144 @@ export default function ChartWidget({
     return () => window.removeEventListener('ticknal:open-strategy-report', handleOpen);
   }, [canViewProprietary]);
 
+  // Global keyboard shortcut: 'F' / 'f' toggles Financials & Valuation Drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.repeat) return;
+      if (e.key === 'f' || e.key === 'F') {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+        const tagName = target.tagName?.toLowerCase();
+        if (
+          tagName === 'input' ||
+          tagName === 'textarea' ||
+          tagName === 'select' ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+        e.preventDefault();
+        setIsFinancialsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const displaySymbol = symbol.replace('.CA', '');
   const instrumentCurrency = currency.toUpperCase();
 
-  // Clear previous predictions and show a chart-shaped loading state until the new series is written.
-  useEffect(() => {
-    if (predictionSeriesRef.current && chartRef.current) {
+  const clearPredictionOverlays = useCallback(() => {
+    if (!chartRef.current) return;
+    if (predictionSeriesRef.current) {
       try {
         chartRef.current.removeSeries(predictionSeriesRef.current);
       } catch {}
       predictionSeriesRef.current = null;
     }
+    if (predVolumeSeriesRef.current) {
+      try {
+        chartRef.current.removeSeries(predVolumeSeriesRef.current);
+      } catch {}
+      predVolumeSeriesRef.current = null;
+    }
+    if (predCorridorUpperRef.current) {
+      try {
+        chartRef.current.removeSeries(predCorridorUpperRef.current);
+      } catch {}
+      predCorridorUpperRef.current = null;
+    }
+    if (predCorridorLowerRef.current) {
+      try {
+        chartRef.current.removeSeries(predCorridorLowerRef.current);
+      } catch {}
+      predCorridorLowerRef.current = null;
+    }
+  }, []);
 
+  // Clear previous predictions and show a chart-shaped loading state until the new series is written.
+  useEffect(() => {
+    clearPredictionOverlays();
     setIsChartLoading(true);
-  }, [symbol, data]);
+  }, [symbol, data, clearPredictionOverlays]);
+
+  // Listen for AI Forecast overlay requests from the Strategy Report Drawer
+  useEffect(() => {
+    const handleOverlayAiForecast = (e: Event) => {
+      const customEvent = e as CustomEvent<{ predictions: any[] }>;
+      const predictions = customEvent.detail?.predictions;
+      if (!predictions || !Array.isArray(predictions) || !chartRef.current) return;
+
+      clearPredictionOverlays();
+
+      const predSeries = chartRef.current.addSeries(CandlestickSeries, {
+        upColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 0.7)'),
+        downColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 0.7)'),
+        borderUpColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 1)'),
+        borderDownColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 1)'),
+        wickUpColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 1)'),
+        wickDownColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 1)'),
+      });
+
+      const formattedPredictions = predictions
+        .map((p: any) => ({
+          time: parseChartTime(p.time || p.date),
+          open: Number(p.open),
+          high: Number(p.high),
+          low: Number(p.low),
+          close: Number(p.close),
+          volume: typeof p.volume === 'number' ? Number(p.volume) : undefined,
+          upper80: typeof p.upper80 === 'number' ? Number(p.upper80) : undefined,
+          lower80: typeof p.lower80 === 'number' ? Number(p.lower80) : undefined,
+        }))
+        .filter((p: any) => Boolean(p.time) && !isNaN(p.open) && !isNaN(p.close))
+        .sort((a: any, b: any) => (a.time > b.time ? 1 : -1));
+
+      predSeries.setData(formattedPredictions);
+      predictionSeriesRef.current = predSeries;
+
+      const upperData = formattedPredictions
+        .filter((p: any) => typeof p.upper80 === 'number')
+        .map((p: any) => ({ time: p.time, value: p.upper80 }));
+      const lowerData = formattedPredictions
+        .filter((p: any) => typeof p.lower80 === 'number')
+        .map((p: any) => ({ time: p.time, value: p.lower80 }));
+
+      if (upperData.length > 0) {
+        const upperSeries = chartRef.current.addSeries(LineSeries, {
+          color: 'rgba(59, 130, 246, 0.45)',
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        upperSeries.setData(upperData);
+        predCorridorUpperRef.current = upperSeries;
+      }
+
+      if (lowerData.length > 0) {
+        const lowerSeries = chartRef.current.addSeries(LineSeries, {
+          color: 'rgba(168, 85, 247, 0.45)',
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        lowerSeries.setData(lowerData);
+        predCorridorLowerRef.current = lowerSeries;
+      }
+
+      toast.success(
+        locale === 'ar'
+          ? 'تم رسم مسار الذكاء الاصطناعي على الرسم البياني'
+          : 'AI forecast trajectory overlaid on chart'
+      );
+    };
+
+    window.addEventListener('ticknal:overlay-ai-forecast', handleOverlayAiForecast);
+    return () => window.removeEventListener('ticknal:overlay-ai-forecast', handleOverlayAiForecast);
+  }, [clearPredictionOverlays, locale]);
 
   const toggleIndicatorExpanded = useCallback((id: string) => {
     setExpandedIndicators((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -632,6 +762,9 @@ export default function ChartWidget({
       volumeSeriesRef.current = null;
       markerApiRef.current = null;
       predictionSeriesRef.current = null;
+      predVolumeSeriesRef.current = null;
+      predCorridorUpperRef.current = null;
+      predCorridorLowerRef.current = null;
       indicatorLineSeriesRef.current.clear();
     };
   }, [data, isFund]);
@@ -1091,12 +1224,16 @@ export default function ChartWidget({
     if (isPredicting || !symbol || !data || data.length === 0) return;
     setIsPredicting(true);
     try {
+      // Provide Kronos with its optimal lookback context window (250 bars, ~1 trading year)
+      const historyContext = (data && data.length >= 250 ? data : visibleData).slice(-250);
       const res = await fetch('/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          history: visibleData.slice(-60),
+          symbol: symbol.replace('.CA', ''),
+          history: historyContext,
           predictDays: days,
+          sampleCount: 3,
         }),
       });
       if (!res.ok) throw new Error('Prediction request failed');
@@ -1106,12 +1243,8 @@ export default function ChartWidget({
         return;
       }
       if (!chartRef.current) return;
-      if (predictionSeriesRef.current) {
-        try {
-          chartRef.current.removeSeries(predictionSeriesRef.current);
-        } catch {}
-        predictionSeriesRef.current = null;
-      }
+      clearPredictionOverlays();
+
       const predSeries = chartRef.current.addSeries(CandlestickSeries, {
         upColor: cssTokenColor('--plt-info', 'rgba(59, 130, 246, 0.7)'),
         downColor: cssTokenColor('--plt-purple', 'rgba(168, 85, 247, 0.7)'),
@@ -1127,16 +1260,80 @@ export default function ChartWidget({
           high: Number(p.high),
           low: Number(p.low),
           close: Number(p.close),
+          volume: typeof p.volume === 'number' ? Number(p.volume) : undefined,
+          upper80: typeof p.upper80 === 'number' ? Number(p.upper80) : undefined,
+          lower80: typeof p.lower80 === 'number' ? Number(p.lower80) : undefined,
         }))
         .filter((p: any) => Boolean(p.time) && !isNaN(p.open) && !isNaN(p.close))
         .sort((a: any, b: any) => (a.time > b.time ? 1 : -1));
 
       predSeries.setData(formattedPredictions);
       predictionSeriesRef.current = predSeries;
+
+      // 1. Render Confidence Corridor (Upper & Lower 80% bounds)
+      const upperData = formattedPredictions
+        .filter((p: any) => typeof p.upper80 === 'number')
+        .map((p: any) => ({ time: p.time, value: p.upper80 }));
+      const lowerData = formattedPredictions
+        .filter((p: any) => typeof p.lower80 === 'number')
+        .map((p: any) => ({ time: p.time, value: p.lower80 }));
+
+      if (upperData.length > 0) {
+        const upperSeries = chartRef.current.addSeries(LineSeries, {
+          color: 'rgba(59, 130, 246, 0.45)',
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        upperSeries.setData(upperData);
+        predCorridorUpperRef.current = upperSeries;
+      }
+
+      if (lowerData.length > 0) {
+        const lowerSeries = chartRef.current.addSeries(LineSeries, {
+          color: 'rgba(168, 85, 247, 0.45)',
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        lowerSeries.setData(lowerData);
+        predCorridorLowerRef.current = lowerSeries;
+      }
+
+      // 2. Render Predicted Volume in Volume sub-pane
+      const predictedVolumes = formattedPredictions
+        .filter((p: any) => typeof p.volume === 'number' && p.volume > 0)
+        .map((p: any) => ({
+          time: p.time,
+          value: p.volume,
+          color: p.close >= p.open
+            ? 'rgba(59, 130, 246, 0.35)'
+            : 'rgba(168, 85, 247, 0.35)',
+        }));
+
+      if (predictedVolumes.length > 0) {
+        const predVolSeries = chartRef.current.addSeries(HistogramSeries, {
+          priceFormat: { type: 'volume' },
+          priceScaleId: '',
+        });
+        predVolSeries.priceScale().applyOptions({
+          scaleMargins: { top: 0.82, bottom: 0 },
+        });
+        predVolSeries.setData(predictedVolumes);
+        predVolumeSeriesRef.current = predVolSeries;
+      }
+
+      const expRet = json.corridor?.expectedReturnPercent;
+      const retText = typeof expRet === 'number'
+        ? ` (${expRet > 0 ? '+' : ''}${expRet}% expected)`
+        : '';
+
       toast.success(
         locale === 'ar'
-          ? `تم توقع الأسعار للأيام الـ ${formattedPredictions.length} التالية للتداول`
-          : `Forecasted next ${formattedPredictions.length} trading days`
+          ? `تم توقع مسار السعر لـ ${formattedPredictions.length} جلسة تداول${retText}`
+          : `Forecasted trajectory for next ${formattedPredictions.length} sessions${retText}`
       );
     } catch (e: any) {
       toast.error(e.message || (locale === 'ar' ? 'فشل إنشاء توقع السعر' : 'Failed to generate prediction'));
@@ -1207,6 +1404,7 @@ export default function ChartWidget({
           setStrategyReportTab('performance');
           setIsStrategyReportOpen(true);
         } : undefined}
+        onOpenFinancials={() => setIsFinancialsOpen(true)}
         openPositionsCount={openPositionsCount}
         onOpenPositionsDrawer={() => setPositionsDrawerOpen(true)}
         onOpenAddOrder={() => {
@@ -1603,6 +1801,16 @@ export default function ChartWidget({
         isStaff={isStaff}
         hasProprietaryAccess={hasProprietaryAccess}
       />}
+
+      {/* Financials & Valuation Slide-Over Drawer */}
+      <FinancialsDrawer
+        isOpen={isFinancialsOpen}
+        onClose={() => setIsFinancialsOpen(false)}
+        symbol={symbol}
+        companyName={companyName || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.companyName}
+        logoUrl={logoUrl || watchlist.find((w) => w.symbol.toUpperCase() === symbol.toUpperCase())?.logoUrl}
+        currency={instrumentCurrency}
+      />
     </div>
   );
 }

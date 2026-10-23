@@ -12,6 +12,7 @@ import {
   Briefcase,
   Plus,
   X,
+  Landmark,
 } from '@/components/ui/icon-library';
 import type { WatchlistItem } from '@/components/platform/RightSidebar';
 import InlineSpinner from '@/components/ui/InlineSpinner';
@@ -33,6 +34,7 @@ export interface ChartTopBarProps {
   isIndicatorsPopoverOpen?: boolean;
   onToggleIndicators?: () => void;
   onOpenStrategyReport?: () => void;
+  onOpenFinancials?: () => void;
   // Portfolio actions
   openPositionsCount?: number;
   onOpenPositionsDrawer?: () => void;
@@ -52,6 +54,7 @@ export default function ChartTopBar({
   isIndicatorsPopoverOpen = false,
   onToggleIndicators,
   onOpenStrategyReport,
+  onOpenFinancials,
   openPositionsCount = 0,
   onOpenPositionsDrawer,
   onOpenAddOrder,
@@ -289,9 +292,9 @@ export default function ChartTopBar({
           </div>
         </div>
 
-        {/* Bar 2: Predict + Indicators + Report taking full width correctly */}
+        {/* Bar 2: Predict + Indicators + Report + Financials taking full width correctly */}
         <div className="h-9 px-2 flex items-center w-full">
-          <div className="grid grid-cols-3 gap-1.5 w-full">
+          <div className="grid grid-flow-col auto-cols-fr gap-1.5 w-full">
             {/* Predict Price */}
             {onTogglePredict && (
               <button
@@ -352,6 +355,21 @@ export default function ChartTopBar({
               >
                 <FileText size={12} className="shrink-0" />
                 <span className="truncate">{locale === 'ar' ? 'التقرير' : 'Report'}</span>
+              </button>
+            )}
+
+            {/* Financials */}
+            {onOpenFinancials && (
+              <button
+                type="button"
+                data-tour="chart-financials-btn"
+                title={locale === 'ar' ? 'البيانات المالية والتقييم (F)' : 'Financials & Valuation (F)'}
+                aria-label={locale === 'ar' ? 'البيانات المالية' : 'Financials'}
+                onClick={onOpenFinancials}
+                className="h-7 px-1 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text bg-plt-hover border border-plt-border-soft active:bg-plt-active transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full"
+              >
+                <Landmark size={12} className="shrink-0" />
+                <span className="truncate">{locale === 'ar' ? 'المالية' : 'Financials'}</span>
               </button>
             )}
           </div>
@@ -449,6 +467,21 @@ export default function ChartTopBar({
             >
               <FileText size={13} />
               <span>{locale === 'ar' ? 'تقرير الاستراتيجية' : 'Strategy Report'}</span>
+            </button>
+          )}
+
+          {/* Financials & Valuation */}
+          {onOpenFinancials && (
+            <button
+              type="button"
+              data-tour="chart-financials-btn"
+              title={locale === 'ar' ? 'البيانات المالية والتقييم (F)' : 'Financials & Valuation (F)'}
+              aria-label={locale === 'ar' ? 'البيانات المالية' : 'Financials'}
+              onClick={onOpenFinancials}
+              className="h-7 px-2.5 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Landmark size={13} />
+              <span>{locale === 'ar' ? 'البيانات المالية' : 'Financials'}</span>
             </button>
           )}
         </div>
