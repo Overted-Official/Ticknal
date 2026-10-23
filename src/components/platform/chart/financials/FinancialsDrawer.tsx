@@ -9,6 +9,7 @@ import type { FinancialsDrawerProps, FinancialsTab, PeriodFrequency } from './ty
 import { useCompanyFundamentals } from './useCompanyFundamentals';
 import FinancialsHeader from './FinancialsHeader';
 import FinancialsTabBar from './FinancialsTabBar';
+import OverviewValuationTab from './tabs/OverviewValuationTab';
 import { exportStatementsToCSV } from './export-csv';
 
 export default function FinancialsDrawer({
@@ -187,9 +188,14 @@ export default function FinancialsDrawer({
                   {activeTab === 'overview' && (
                     <div
                       data-testid="financials-tab-overview"
-                      className="flex-1 p-4 sm:p-6 md:p-8 space-y-6"
+                      className="flex-1 p-4 sm:p-6 md:p-8"
                     >
-                      {/* Overview & Valuation Slot for Task 4 */}
+                      <OverviewValuationTab
+                        valuation={data?.valuation}
+                        statements={data?.statements}
+                        currency={data?.currency || currency}
+                        symbol={symbol}
+                      />
                     </div>
                   )}
 
