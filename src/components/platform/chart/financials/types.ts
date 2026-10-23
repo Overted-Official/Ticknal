@@ -17,6 +17,7 @@ export interface FinancialsDrawerProps {
   onClose: () => void;
   symbol: string;
   companyName?: string;
+  sector?: string;
   logoUrl?: string | null;
   currency?: string;
 }

@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n';
 export interface FinancialsHeaderProps {
   symbol: string;
   companyName?: string;
+  sector?: string;
   logoUrl?: string | null;
   currency?: string;
   onExportCSV?: () => void;
@@ -17,6 +18,7 @@ export interface FinancialsHeaderProps {
 export default function FinancialsHeader({
   symbol,
   companyName,
+  sector,
   logoUrl,
   currency = 'EGP',
   onExportCSV,
@@ -75,6 +77,13 @@ export default function FinancialsHeader({
         <span className="bg-plt-card border border-plt-border-soft text-plt-subtle text-[10px] px-1.5 py-0.5 rounded-none font-sans tabular-nums shrink-0 uppercase">
           {currency}
         </span>
+
+        {/* Sector Pill */}
+        {sector && (
+          <span className="hidden md:inline-flex bg-plt-hover border border-plt-border-soft text-plt-subtle text-[10px] px-2 py-0.5 rounded-none font-sans shrink-0">
+            {sector}
+          </span>
+        )}
       </div>
 
       {/* Right Actions: Export CSV + Close Button */}

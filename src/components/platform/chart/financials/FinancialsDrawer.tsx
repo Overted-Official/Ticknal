@@ -16,13 +16,14 @@ export default function FinancialsDrawer({
   onClose,
   symbol,
   companyName,
+  sector,
   logoUrl,
   currency = 'EGP',
 }: FinancialsDrawerProps) {
   const { locale } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<FinancialsTab>('overview');
-  const [frequency] = useState<PeriodFrequency>('annual');
+  const [frequency, setFrequency] = useState<PeriodFrequency>('annual');
 
   const { data, isLoading, error, mutate } = useCompanyFundamentals(isOpen ? symbol : null);
 
@@ -93,6 +94,7 @@ export default function FinancialsDrawer({
             <FinancialsHeader
               symbol={symbol}
               companyName={companyName}
+              sector={sector}
               logoUrl={logoUrl}
               currency={currency}
               onExportCSV={data?.statements ? handleExportCSV : undefined}
