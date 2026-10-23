@@ -14,6 +14,8 @@ export interface RawEgxScannerFundamental {
   totalDebt: number | null;
   freeCashFlowTtm: number | null;
   dividendYield: number | null;
+  fiscalPeriodEndFq?: number | null;
+  fiscalPeriodEndFy?: number | null;
 }
 
 const TV_SCANNER_URL = 'https://scanner.tradingview.com/egypt/scan';
@@ -66,6 +68,8 @@ export function parseEgxScannerRow(item: any): RawEgxScannerFundamental | null {
   const totalDebt = toNullableNumber(d[10]);
   const freeCashFlowTtm = toNullableNumber(d[11]);
   const dividendYield = toNullableNumber(d[12]);
+  const fiscalPeriodEndFq = toNullableNumber(d[14]);
+  const fiscalPeriodEndFy = toNullableNumber(d[15]);
 
   // Normalization Rule: If net income is negative or PE is negative, set peTtm: null
   if ((netIncomeTtm !== null && netIncomeTtm < 0) || (peTtm !== null && peTtm < 0)) {
@@ -86,6 +90,8 @@ export function parseEgxScannerRow(item: any): RawEgxScannerFundamental | null {
     totalDebt,
     freeCashFlowTtm,
     dividendYield,
+    fiscalPeriodEndFq,
+    fiscalPeriodEndFy,
   };
 }
 
@@ -112,6 +118,8 @@ export async function fetchEgxMarketFundamentals(): Promise<RawEgxScannerFundame
       'free_cash_flow_ttm',
       'dividend_yield_recent',
       'currency',
+      'fiscal_period_end_fq',
+      'fiscal_period_end_fy',
     ],
     sort: { sortBy: 'market_cap_basic', sortOrder: 'desc' },
     range: [0, 350],
