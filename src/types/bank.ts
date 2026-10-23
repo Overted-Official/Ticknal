@@ -70,6 +70,27 @@ export type BankMonthlySnapshot = {
   createdAt?: string;
 };
 
+export type ExpenseAllocationItem = {
+  category: string;
+  amount: number;
+  percentage: number;
+};
+
+export type MonthlyCashflowSummary = {
+  id?: number;
+  userId: string;
+  yearMonth: string; // 'YYYY-MM'
+  totalIncome: number;
+  startingCashEgp: number;
+  endingCashEgp: number;
+  calculatedSpendEgp: number;
+  savingsRatePct: number;
+  expenseBreakdown?: ExpenseAllocationItem[] | null;
+  notes?: string | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+};
+
 export type IndustryGroupStake = {
   industryGroup: string;
   value: number;

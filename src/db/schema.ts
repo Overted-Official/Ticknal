@@ -308,6 +308,26 @@ export const bankMonthlySnapshots = pgTable('bank_monthly_snapshots', {
   };
 });
 
+export const monthlyCashflowSummaries = pgTable('monthly_cashflow_summaries', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  yearMonth: varchar('year_month', { length: 7 }).notNull(), // YYYY-MM
+  totalIncome: numeric('total_income', { precision: 16, scale: 2 }).default('0').notNull(),
+  startingCashEgp: numeric('starting_cash_egp', { precision: 16, scale: 2 }).notNull(),
+  endingCashEgp: numeric('ending_cash_egp', { precision: 16, scale: 2 }).notNull(),
+  calculatedSpendEgp: numeric('calculated_spend_egp', { precision: 16, scale: 2 }).notNull(),
+  savingsRatePct: numeric('savings_rate_pct', { precision: 5, scale: 2 }), // e.g. 36.50
+  expenseBreakdown: jsonb('expense_breakdown').$type<Array<{ category: string; amount: number; percentage: number }>>(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    userMonthUnique: unique('monthly_cashflow_user_month_unique').on(table.userId, table.yearMonth),
+    userIdIdx: index('monthly_cashflow_user_id_idx').on(table.userId),
+  };
+});
+
 export const macroInflationRates = pgTable('macro_inflation_rates', {
   id: serial('id').primaryKey(),
   yearMonth: varchar('year_month', { length: 7 }).notNull(), // YYYY-MM
