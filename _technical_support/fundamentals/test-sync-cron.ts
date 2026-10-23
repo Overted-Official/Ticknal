@@ -123,6 +123,10 @@ async function runCronSyncTests() {
   if (!comiEarningsNews) {
     throw new Error('Test 2 Failed: No earnings event found in marketNews for COMI.');
   }
+  if (!comiEarningsNews.id.startsWith('earnings-comi-')) {
+    throw new Error(`Test 2 Failed: Expected deterministic newsId starting with earnings-comi-, got: ${comiEarningsNews.id}`);
+  }
+  console.log(`  ✓ Deterministic news ID verified: "${comiEarningsNews.id}"`);
   console.log(`  ✓ Earnings event generated in marketNews: "${comiEarningsNews.title}" [${comiEarningsNews.sentiment.toUpperCase()}]`);
   console.log(`    Summary: "${comiEarningsNews.summary}"`);
   console.log(`  ✓ Alerts generated count: ${targetJson.alertsGenerated}`);

@@ -261,10 +261,28 @@ export async function dispatchSignalNotifications(options: {
     const subscriptions = subscriptionsByUser[userId] ?? [];
     const nativeTokens = deviceTokensByUser[userId] ?? [];
 
+    const userBuySignals: Array<{
+      ticker: string;
+      companyName?: string | null;
+      strategyId: DispatchStrategyId;
+      signal: NotificationSignal;
+      metrics: StrategyMetrics;
+      alpha: number;
+    }> = [];
+
+    const userHeldSellSignals: Array<{
+      ticker: string;
+      companyName?: string | null;
+      strategyId: DispatchStrategyId;
+      signal: NotificationSignal;
+      metrics: StrategyMetrics;
+      alpha: number;
+    }> = [];
+
     for (const [ticker, bars] of barsByTicker.entries()) {
       if (symbolFilter.size > 0 && !symbolFilter.has(ticker)) continue;
       if (!isSignalEligibleEquity(ticker, cache.tickerMap.get(ticker))) continue;
-      if (!bars || bars.length < 80) continue;
+      if (!bars || bars.length < 3) continue;
       if (getLatestBarDate(bars) !== latestEquitySession) {
         result.skipped += 1;
         continue;
@@ -398,61 +416,172 @@ export async function dispatchSignalNotifications(options: {
           signal: signal.signal,
         });
 
-        const presentation = buildSignalNotificationPresentation({
-          ticker,
-          signal,
-          companyName: cache.tickerMap.get(ticker)?.companyName,
-          logoUrl: cache.tickerMap.get(ticker)?.logoUrl,
-          alpha: champion.alpha,
-          metrics,
-        });
+        const companyName = cache.tickerMap.get(ticker)?.companyName;
 
-        // Queue push deliveries
-        if (subscriptions.length > 0) {
-          const payload = JSON.stringify({
-            ...presentation,
-            url: `/charts?ticker=${ticker}&strategy=${strategyId}`,
-            tag: `${strategyId}-${ticker}-${signal.date}-${signal.signal}`,
-            symbol: ticker,
-            strategy: strategyId,
-            signal: signal.signal,
-            price: signal.price,
+        if (signal.signal === 'BUY') {
+          userBuySignals.push({
+            ticker,
+            companyName,
+            strategyId,
+            signal,
+            metrics,
+            alpha: champion.alpha,
           });
-
-          for (const sub of subscriptions) {
-            pushTasks.push({ userId, run: async () => {
-              const sent = await sendToSubscription(sub, payload);
-              if (sent === 'expired') {
-                result.expiredSubscriptions += 1;
-                await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint)).catch(() => {});
-              } else if (sent === 'sent') {
-                result.sent += 1;
-              }
-            } });
-          }
+        } else if (signal.signal === 'SELL' && isPositionOpen) {
+          userHeldSellSignals.push({
+            ticker,
+            companyName,
+            strategyId,
+            signal,
+            metrics,
+            alpha: champion.alpha,
+          });
         }
+      }
+    }
 
-        if (nativeTokens.length > 0) {
-          for (const device of nativeTokens) {
-            pushTasks.push({ userId, run: async () => {
-              const fcmResult = await sendFCMMessage(device.token, {
-                ...presentation,
-                url: `/charts?ticker=${ticker}&strategy=${strategyId}`,
-                ticker,
-                strategy: strategyId,
-                signal: signal.signal,
-              });
-              if (fcmResult.sent) {
-                result.sent += 1;
-              } else if (fcmResult.invalidToken) {
-                await db
-                  .update(devicePushTokens)
-                  .set({ isActive: false, updatedAt: new Date() })
-                  .where(eq(devicePushTokens.id, device.id));
-              }
-            } });
-          }
-        }
+    // =========================================================================
+    // CONDENSED PUSH DISPATCHING PER USER
+    // 1. Buy Signals Digest (Max 1 push per session) -> opens Notifications Drawer
+    // 2. Direct Sell Alerts -> 1 per held position with exit signal
+    // 3. Unheld stocks with SELL signals trigger ZERO push spam
+    // =========================================================================
+
+    // 1. Buy Signals Digest
+    if (userBuySignals.length > 0) {
+      const count = userBuySignals.length;
+      let buyTitle: string;
+      let buyBody: string;
+
+      if (count === 1) {
+        const item = userBuySignals[0];
+        const sym = item.ticker.replace('.CA', '').toUpperCase();
+        buyTitle = `(BUY) ${item.companyName || sym}`;
+        buyBody = `${sym} triggered a buy signal under ${item.strategyId.toUpperCase()}. Tap to open notifications drawer.`;
+      } else {
+        const symbols = userBuySignals.map((s) => s.ticker.replace('.CA', '').toUpperCase());
+        const preview = symbols.slice(0, 3).join(', ') + (symbols.length > 3 ? ` +${symbols.length - 3} more` : '');
+        buyTitle = `Buy Signals: ${count} Tickers Available`;
+        buyBody = `Buy signals showed up for ${count} tickers (${preview}). Tap to open notifications drawer.`;
+      }
+
+      const buyUrl = '/?drawer=notifications';
+      const buyTag = `ticknal-buy-signals-${latestEquitySession}`;
+      const buyPayload = JSON.stringify({
+        title: buyTitle,
+        body: buyBody,
+        url: buyUrl,
+        tag: buyTag,
+        type: 'buy_digest',
+        color: '#00C896',
+        badge: '/badge.png?v=7',
+        icon: '/ticknal-notification-icon.png?v=7',
+        count,
+      });
+
+      for (const sub of subscriptions) {
+        pushTasks.push({
+          userId,
+          run: async () => {
+            const sent = await sendToSubscription(sub, buyPayload);
+            if (sent === 'expired') {
+              result.expiredSubscriptions += 1;
+              await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint)).catch(() => {});
+            } else if (sent === 'sent') {
+              result.sent += 1;
+            }
+          },
+        });
+      }
+
+      for (const device of nativeTokens) {
+        pushTasks.push({
+          userId,
+          run: async () => {
+            const fcmResult = await sendFCMMessage(device.token, {
+              title: buyTitle,
+              body: buyBody,
+              url: buyUrl,
+              signal: 'BUY',
+              color: '#00C896',
+            });
+            if (fcmResult.sent) {
+              result.sent += 1;
+            } else if (fcmResult.invalidToken) {
+              await db
+                .update(devicePushTokens)
+                .set({ isActive: false, updatedAt: new Date() })
+                .where(eq(devicePushTokens.id, device.id));
+            }
+          },
+        });
+      }
+    }
+
+    // 2. Direct Held Sell Alerts (1 direct alert per held position)
+    for (const item of userHeldSellSignals) {
+      const sym = item.ticker.replace('.CA', '').toUpperCase();
+      const priceStr = item.signal.price ? `${Number(item.signal.price).toFixed(2)} EGP` : 'market price';
+      const sellTitle = `⚠️ Sell Alert: ${item.companyName || sym} (${sym})`;
+      const sellBody = `Exit signal triggered for your position in ${sym} at ${priceStr} under ${item.strategyId.toUpperCase()}. Tap to review chart.`;
+      const sellUrl = `/charts?ticker=${item.ticker}&strategy=${item.strategyId}`;
+      const sellTag = `ticknal-sell-${sym}-${item.signal.date}`;
+
+      const sellPayload = JSON.stringify({
+        title: sellTitle,
+        body: sellBody,
+        url: sellUrl,
+        tag: sellTag,
+        type: 'sell_alert',
+        color: '#FF4055',
+        symbol: sym,
+        strategy: item.strategyId,
+        signal: 'SELL',
+        price: item.signal.price,
+        companyName: item.companyName,
+        badge: '/badge.png?v=7',
+        icon: '/ticknal-notification-icon.png?v=7',
+      });
+
+      for (const sub of subscriptions) {
+        pushTasks.push({
+          userId,
+          run: async () => {
+            const sent = await sendToSubscription(sub, sellPayload);
+            if (sent === 'expired') {
+              result.expiredSubscriptions += 1;
+              await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint)).catch(() => {});
+            } else if (sent === 'sent') {
+              result.sent += 1;
+            }
+          },
+        });
+      }
+
+      for (const device of nativeTokens) {
+        pushTasks.push({
+          userId,
+          run: async () => {
+            const fcmResult = await sendFCMMessage(device.token, {
+              title: sellTitle,
+              body: sellBody,
+              url: sellUrl,
+              ticker: sym,
+              strategy: item.strategyId,
+              signal: 'SELL',
+              companyName: item.companyName || sym,
+              color: '#FF4055',
+            });
+            if (fcmResult.sent) {
+              result.sent += 1;
+            } else if (fcmResult.invalidToken) {
+              await db
+                .update(devicePushTokens)
+                .set({ isActive: false, updatedAt: new Date() })
+                .where(eq(devicePushTokens.id, device.id));
+            }
+          },
+        });
       }
     }
   }
@@ -573,7 +702,8 @@ export async function dispatchNewsPushNotification(
   const firstParagraph = rawSummary.split(/\n\s*\n/)[0] || rawSummary;
   const cleanBody = firstParagraph.replace(/^[#*\s]+/, '').slice(0, 180) + (firstParagraph.length > 180 ? '...' : '');
 
-  const pushTitle = `Ticknal Take: ${article.title}`;
+  const cleanTitle = article.title.replace(/^(Ticknal Take:\s*|Daily Market Snapshot:\s*)/i, '').trim();
+  const pushTitle = `Major News Alert: ${cleanTitle}`;
   const targetUrl = `/news?item=${encodeURIComponent(article.id)}`;
 
   // Construct image banner URL for push notifications
@@ -641,6 +771,99 @@ export async function dispatchNewsPushNotification(
   }
 
   result.messages.push(`Dispatched 10/10 news push notification for article ${article.id}: ${result.sent} sent, ${result.failed} failed.`);
+  return result;
+}
+
+export interface PushNotificationPayload {
+  userIds: string[];
+  title: string;
+  body: string;
+  url?: string;
+  tag?: string;
+  data?: Record<string, any>;
+}
+
+export async function dispatchPushNotification(payload: PushNotificationPayload): Promise<{
+  sent: number;
+  failed: number;
+}> {
+  const result = { sent: 0, failed: 0 };
+  if (!payload.userIds || payload.userIds.length === 0) {
+    return result;
+  }
+
+  const configured = isPushConfigured();
+  if (configured) {
+    configureWebPush();
+  }
+
+  const notificationPayload = JSON.stringify({
+    title: payload.title,
+    body: payload.body,
+    url: payload.url || '/news',
+    tag: payload.tag || 'ticknal-alert',
+    icon: '/ticknal-notification-icon.png?v=7',
+    badge: '/badge.png?v=7',
+    ...payload.data,
+  });
+
+  try {
+    const [subscriptionRows, deviceTokenRows] = await Promise.all([
+      configured
+        ? db
+            .select()
+            .from(pushSubscriptions)
+            .where(inArray(pushSubscriptions.userId, payload.userIds))
+        : Promise.resolve([]),
+      db
+        .select()
+        .from(devicePushTokens)
+        .where(
+          and(
+            eq(devicePushTokens.isActive, true),
+            inArray(devicePushTokens.userId, payload.userIds)
+          )
+        ),
+    ]);
+
+    // 1. Web Push Subscriptions
+    for (const sub of subscriptionRows) {
+      const outcome = await sendToSubscription(sub, notificationPayload);
+      if (outcome === 'sent') {
+        result.sent += 1;
+      } else {
+        result.failed += 1;
+      }
+    }
+
+    // 2. FCM Native Devices
+    for (const device of deviceTokenRows) {
+      try {
+        const outcome = await sendFCMMessage(device.token, {
+          title: payload.title,
+          body: payload.body,
+          url: payload.url || '/news',
+          ...(payload.data || {}),
+        });
+        if (outcome.sent) {
+          result.sent += 1;
+        } else {
+          result.failed += 1;
+          if (outcome.invalidToken) {
+            await db
+              .update(devicePushTokens)
+              .set({ isActive: false, updatedAt: new Date() })
+              .where(eq(devicePushTokens.id, device.id));
+          }
+        }
+      } catch {
+        result.failed += 1;
+      }
+    }
+  } catch (err: any) {
+    console.warn('[Push] Error dispatching push notification:', err?.message);
+  }
+
   return result;
 }
 

@@ -16,6 +16,7 @@ import {
   calculateQualityScores,
   RawEgxScannerFundamental,
 } from '@/lib/server/fundamentals-scraper';
+import { dispatchPushNotification } from '@/lib/notifications/pushNotifications';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -130,9 +131,9 @@ export async function GET(request: Request): Promise<NextResponse> {
         const fyMonthOffset = scannerFyDate && new Date(scannerFyDate).getUTCMonth() < 6 ? 1 : 0;
 
         const hasNewQuarter =
-          Boolean(scannerFqDate && existing.maxQuarterlyReportDate && scannerFqDate > existing.maxQuarterlyReportDate);
+          Boolean(scannerFqDate && (!existing.maxQuarterlyReportDate || scannerFqDate > existing.maxQuarterlyReportDate));
         const hasNewAnnual =
-          Boolean(scannerFyYear && existing.maxAnnualFiscalYear && scannerFyYear > (existing.maxAnnualFiscalYear + fyMonthOffset));
+          Boolean(scannerFyYear && (!existing.maxAnnualFiscalYear || scannerFyYear > (existing.maxAnnualFiscalYear + fyMonthOffset)));
 
         if (hasNewQuarter || hasNewAnnual) {
           tickersToProcess.push({ symbol, scannerFund: item, isForced: false });
@@ -333,7 +334,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         if (latestStatement) {
           const period = `${latestStatement.fiscalPeriod} ${latestStatement.fiscalYear}`;
           const cleanPeriodTag = `${latestStatement.fiscalPeriod.toLowerCase()}-${latestStatement.fiscalYear}`;
-          const newsId = `earnings-${symbol.toLowerCase()}-${cleanPeriodTag}-${Date.now()}`.slice(0, 64);
+          const newsId = `earnings-${symbol.toLowerCase()}-${cleanPeriodTag}`.slice(0, 64);
           const revStr = formatEgpAmount(latestStatement.totalRevenue);
           const niStr = formatEgpAmount(latestStatement.netIncome);
 
@@ -366,6 +367,29 @@ export async function GET(request: Request): Promise<NextResponse> {
             console.log(
               `[SyncFundamentals] Generated ${followers.length} alert(s) for ${symbol} earnings disclosure.`
             );
+
+            // Physical Push Notification Dispatch for tickerAlerts followers
+            try {
+              const userIds = followers.map((f) => f.userId);
+              await dispatchPushNotification({
+                userIds,
+                title: `${symbol} Earnings Disclosure`,
+                body: `${symbol} reported ${period} results. Revenue: EGP ${revStr}, Net Income: EGP ${niStr}`,
+                url: `/news?item=${encodeURIComponent(newsId)}`,
+                tag: `ticknal-earnings-${symbol.toLowerCase()}-${cleanPeriodTag}`,
+                data: {
+                  type: 'earnings',
+                  symbol,
+                  period,
+                  newsId,
+                },
+              });
+            } catch (pushErr: any) {
+              console.warn(
+                `[SyncFundamentals] Non-fatal push dispatch error for ${symbol}:`,
+                pushErr?.message
+              );
+            }
           }
         }
 
