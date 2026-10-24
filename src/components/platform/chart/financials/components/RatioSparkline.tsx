@@ -58,10 +58,10 @@ export default function RatioSparkline({
   const lastVal = validPoints[validPoints.length - 1];
   const delta = lastVal - firstVal;
 
-  let strokeColor = 'var(--plt-muted, #71717a)';
+  let strokeColor = 'var(--color-plt-muted)';
   if (Math.abs(delta) > 0.001) {
     const isImproving = isInverseTrend ? delta < 0 : delta > 0;
-    strokeColor = isImproving ? 'var(--plt-profit, #10b981)' : 'var(--plt-risk, #ef4444)';
+    strokeColor = isImproving ? 'var(--color-plt-profit)' : 'var(--color-plt-risk)';
   }
 
   const lastCoord = coordinates[coordinates.length - 1];

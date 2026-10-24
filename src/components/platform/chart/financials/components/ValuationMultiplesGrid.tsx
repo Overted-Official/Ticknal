@@ -200,7 +200,7 @@ export default function ValuationMultiplesGrid({
               {item.value}
             </div>
           </div>
-          <div className="text-[10px] text-plt-muted/70 truncate mt-2 hidden sm:block">
+          <div className="text-[10px] text-plt-faint truncate mt-2 hidden sm:block">
             {locale === 'ar' ? item.sublabelAr : item.sublabelEn}
           </div>
         </div>

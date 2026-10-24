@@ -94,7 +94,7 @@ export default function FinancialsHeader({
             onClick={onExportCSV}
             disabled={isExporting}
             title={locale === 'ar' ? 'تصدير البيانات المالية كملف CSV' : 'Export financials as CSV'}
-            className="h-7 px-2 sm:px-2.5 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover border border-plt-border-soft transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-7 px-2 sm:px-2.5 rounded-none text-xs font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover border border-plt-border-soft transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Download size={13} className="shrink-0" />
             <span className="hidden xs:inline sm:inline">
@@ -109,10 +109,10 @@ export default function FinancialsHeader({
           onClick={onClose}
           title={locale === 'ar' ? 'إغلاق (Esc)' : 'Close (Esc)'}
           aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
-          className="h-7 px-2 rounded-md text-[11px] font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover border border-plt-border-soft transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+          className="h-7 px-2 rounded-none text-xs font-medium text-plt-muted hover:text-plt-text hover:bg-plt-hover border border-plt-border-soft transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
         >
           <X size={15} className="shrink-0" />
-          <kbd className="hidden sm:inline px-1 py-0.2 rounded text-[9px] text-plt-subtle uppercase font-sans">
+          <kbd className="hidden sm:inline px-1 py-0.5 rounded-none text-[10px] text-plt-subtle uppercase font-sans">
             ESC
           </kbd>
         </button>

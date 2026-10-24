@@ -315,7 +315,7 @@ export default function FinancialRatiosTab({
 
         {/* Search Input */}
         <div className="relative flex items-center w-full sm:w-56">
-          <div className="absolute left-2.5 pointer-events-none text-plt-muted flex items-center">
+          <div className="absolute start-2.5 pointer-events-none text-plt-muted flex items-center">
             <Search size={12} />
           </div>
           <input
@@ -323,14 +323,14 @@ export default function FinancialRatiosTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={locale === 'ar' ? 'تصفية النسب...' : 'Filter ratios...'}
-            className="w-full h-7 pl-7 pr-6 text-xs bg-plt-card border border-plt-border-soft rounded-none text-plt-text placeholder:text-plt-muted focus:outline-none focus:border-plt-border-strong transition-colors font-sans"
+            className="w-full h-7 ps-7 pe-6 text-xs bg-plt-card border border-plt-border-soft rounded-none text-plt-text placeholder:text-plt-muted focus:outline-none focus:border-plt-border-strong transition-colors font-sans"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
               aria-label="Clear filter"
-              className="absolute right-2 text-plt-muted hover:text-plt-text cursor-pointer p-0.5"
+              className="absolute end-2 text-plt-muted hover:text-plt-text cursor-pointer p-0.5"
             >
               <X size={11} />
             </button>
@@ -384,10 +384,10 @@ export default function FinancialRatiosTab({
               return (
                 <React.Fragment key={category.id}>
                   {/* Category Section Header Row */}
-                  <tr className="border-b border-plt-border-soft bg-plt-card/60">
+                  <tr className="border-b border-plt-border-soft bg-plt-card">
                     <td
                       colSpan={sortedStatements.length + 1}
-                      className="px-3 py-2 font-semibold text-[11px] text-plt-text tracking-wider uppercase bg-plt-card/60 border-b border-plt-border-soft"
+                      className="px-3 py-2 font-semibold text-[11px] text-plt-text tracking-wider uppercase bg-plt-card border-b border-plt-border-soft"
                     >
                       {categoryTitle}
                     </td>
@@ -418,7 +418,7 @@ export default function FinancialRatiosTab({
                     return (
                       <tr
                         key={ratio.id}
-                        className="group border-b border-plt-border-soft/60 hover:bg-plt-hover transition-colors"
+                        className="group border-b border-plt-border-soft hover:bg-plt-hover transition-colors"
                       >
                         {/* Sticky First Column: Title, Benchmark Badge & Mini Sparkline */}
                         <td className="w-[260px] sm:w-[320px] min-w-[260px] sm:min-w-[320px] sticky left-0 z-10 bg-plt-base group-hover:bg-plt-hover transition-colors border-r border-plt-border-soft px-3 py-2.5 font-sans">
@@ -465,7 +465,7 @@ export default function FinancialRatiosTab({
                           return (
                             <td
                               key={`${ratio.id}-${sortedStatements[colIdx].fiscalYear}`}
-                              className="w-[110px] sm:w-[130px] min-w-[110px] sm:min-w-[130px] text-right px-3 py-2 font-sans tabular-nums border-b border-plt-border-soft/60 group-hover:bg-plt-hover transition-colors text-xs text-plt-text/90 cursor-default"
+                              className="w-[110px] sm:w-[130px] min-w-[110px] sm:min-w-[130px] text-right px-3 py-2 font-sans tabular-nums border-b border-plt-border-soft group-hover:bg-plt-hover transition-colors text-xs text-plt-text cursor-default"
                             >
                               <span
                                 className={

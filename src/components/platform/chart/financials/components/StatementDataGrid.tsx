@@ -142,7 +142,7 @@ export default function StatementDataGrid({
       data-testid="statement-data-grid"
       className="relative w-full border border-plt-border-soft bg-plt-base rounded-none font-sans select-none"
     >
-      {/* Floating Tooltip with #3D3D3D surface */}
+      {/* Floating Tooltip with hover-card surface */}
       {tooltip && (
         <div
           data-testid="statement-cell-tooltip"
@@ -152,13 +152,13 @@ export default function StatementDataGrid({
             top: tooltip.y,
             transform: 'translate(-50%, -100%)',
           }}
-          className="z-50 pointer-events-none bg-[#3D3D3D] text-white text-[11px] px-2.5 py-1.5 rounded-none shadow-2xl border border-white/10 whitespace-nowrap font-sans flex flex-col gap-0.5 leading-tight"
+          className="hover-card z-50 pointer-events-none bg-plt-hovercard text-plt-text text-[11px] px-2.5 py-1.5 rounded-none shadow-2xl border border-plt-border-strong whitespace-nowrap font-sans flex flex-col gap-0.5 leading-tight"
         >
           <div className="text-[10px] text-plt-muted font-medium flex items-center justify-between gap-4">
             <span>{tooltip.title}</span>
             <span>{tooltip.periodLabel}</span>
           </div>
-          <div className="text-white font-semibold tabular-nums text-xs">
+          <div className="text-plt-text font-semibold tabular-nums text-xs">
             {tooltip.rawText}
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function StatementDataGrid({
               return (
                 <tr
                   key={row.id}
-                  className="group border-b border-plt-border-soft/60 hover:bg-plt-hover transition-colors"
+                  className="group border-b border-plt-border-soft hover:bg-plt-hover transition-colors"
                 >
                   {/* Sticky First Column for Metric Title */}
                   <td
@@ -267,7 +267,7 @@ export default function StatementDataGrid({
                           });
                         }}
                         onMouseLeave={() => setTooltip(null)}
-                        className={`w-[130px] sm:w-[150px] min-w-[130px] sm:min-w-[150px] text-right px-3 py-2 font-sans tabular-nums border-b border-plt-border-soft/60 group-hover:bg-plt-hover transition-colors cursor-default ${
+                        className={`w-[130px] sm:w-[150px] min-w-[130px] sm:min-w-[150px] text-right px-3 py-2 font-sans tabular-nums border-b border-plt-border-soft group-hover:bg-plt-hover transition-colors cursor-default ${
                           row.isTotal ? 'font-bold' : 'font-normal'
                         }`}
                       >
@@ -277,7 +277,7 @@ export default function StatementDataGrid({
                               ? customColor
                               : row.isTotal
                               ? 'text-plt-text font-bold'
-                              : 'text-plt-text/90'
+                              : 'text-plt-text'
                           }`}
                         >
                           {formattedDisplay}

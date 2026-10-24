@@ -74,7 +74,7 @@ export default function FiveYearTrendBars({
         {/* Legend */}
         <div className="flex items-center gap-4 text-xs font-sans">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-white/30 border border-white/40 rounded-none inline-block" />
+            <span className="w-3 h-3 bg-cold-gray-500 border border-plt-border-soft rounded-none inline-block" />
             <span className="text-plt-muted">
               {locale === 'ar' ? 'إجمالي الإيرادات' : 'Total Revenue'}
             </span>
@@ -90,7 +90,7 @@ export default function FiveYearTrendBars({
 
       {/* Chart Canvas */}
       <div className="mt-6 pt-2 pb-2">
-        <div className="grid grid-cols-5 gap-2 sm:gap-6 h-48 sm:h-56 items-end border-b border-plt-border-soft/80 pb-2">
+        <div className="grid grid-cols-5 gap-2 sm:gap-6 h-48 sm:h-56 items-end border-b border-plt-border-soft pb-2">
           {last5.map((item, index) => {
             const rev = item.totalRevenue ?? 0;
             const ni = item.netIncome ?? 0;
@@ -116,8 +116,8 @@ export default function FiveYearTrendBars({
               >
                 {/* Hover Tooltip Card */}
                 {isHovered && (
-                  <div className="absolute -top-24 sm:-top-28 left-1/2 -translate-x-1/2 z-30 bg-[#3d3d3d] text-white border border-plt-border-strong p-2 sm:p-2.5 rounded-none shadow-xl min-w-[160px] sm:min-w-[190px] text-left pointer-events-none font-sans">
-                    <div className="text-[11px] font-bold text-white/90 border-b border-white/10 pb-1 mb-1.5 flex justify-between items-center">
+                  <div className="hover-card absolute -top-24 sm:-top-28 left-1/2 -translate-x-1/2 z-30 bg-plt-hovercard text-plt-text border border-plt-border-strong p-2 sm:p-2.5 rounded-none shadow-xl min-w-[160px] sm:min-w-[190px] text-left pointer-events-none font-sans">
+                    <div className="text-[11px] font-bold text-plt-text border-b border-plt-border-soft pb-1 mb-1.5 flex justify-between items-center">
                       <span>FY {item.fiscalYear}</span>
                       {revYoY && (
                         <span
@@ -131,15 +131,15 @@ export default function FiveYearTrendBars({
                     </div>
                     <div className="space-y-1 text-[11px] font-sans tabular-nums">
                       <div className="flex justify-between">
-                        <span className="text-white/70">
+                        <span className="text-plt-muted">
                           {locale === 'ar' ? 'الإيرادات:' : 'Revenue:'}
                         </span>
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-plt-text">
                           {formatSmartCompact(rev, currency)}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-white/70">
+                        <span className="text-plt-muted">
                           {locale === 'ar' ? 'صافي الربح:' : 'Net Income:'}
                         </span>
                         <span
@@ -151,11 +151,11 @@ export default function FiveYearTrendBars({
                         </span>
                       </div>
                       {margin !== null && (
-                        <div className="flex justify-between border-t border-white/10 pt-1 text-[10px]">
-                          <span className="text-white/60">
+                        <div className="flex justify-between border-t border-plt-border-soft pt-1 text-[10px]">
+                          <span className="text-plt-muted">
                             {locale === 'ar' ? 'هامش الربح:' : 'Margin:'}
                           </span>
-                          <span className="font-semibold text-white/90">
+                          <span className="font-semibold text-plt-text">
                             {formatPercent(margin)}
                           </span>
                         </div>
@@ -168,7 +168,7 @@ export default function FiveYearTrendBars({
                 <div className="flex items-end justify-center gap-1 sm:gap-2 w-full h-full pb-1">
                   {/* Revenue Bar */}
                   <div
-                    className="w-1/2 max-w-[28px] bg-white/20 hover:bg-white/35 transition-all duration-200 rounded-none relative"
+                    className="w-1/2 max-w-[28px] bg-cold-gray-500 hover:bg-cold-gray-400 transition-all duration-200 rounded-none relative"
                     style={{ height: `${revHeightPct}%` }}
                     title={`Revenue: ${formatSmartCompact(rev, currency)}`}
                   />
@@ -177,8 +177,8 @@ export default function FiveYearTrendBars({
                   <div
                     className={`w-1/2 max-w-[28px] transition-all duration-200 rounded-none relative ${
                       isNegativeNi
-                        ? 'bg-plt-risk hover:bg-plt-risk/80'
-                        : 'bg-plt-profit hover:bg-plt-profit/80'
+                        ? 'bg-plt-risk hover:brightness-110'
+                        : 'bg-plt-profit hover:brightness-110'
                     }`}
                     style={{ height: `${niHeightPct}%` }}
                     title={`Net Income: ${formatSmartCompact(ni, currency)}`}

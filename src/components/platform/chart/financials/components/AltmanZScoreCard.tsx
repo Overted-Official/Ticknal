@@ -107,7 +107,7 @@ export default function AltmanZScoreCard({
         </div>
 
         {/* Score Display Banner */}
-        <div className="flex items-center justify-between bg-plt-hover/40 border border-plt-border-soft p-3 mb-4 rounded-none">
+        <div className="flex items-center justify-between bg-plt-hover border border-plt-border-soft p-3 mb-4 rounded-none">
           <div className="flex items-baseline gap-2 font-sans">
             <span
               data-testid="altman-score-value"
@@ -159,13 +159,13 @@ export default function AltmanZScoreCard({
           <div className="relative w-full h-3 bg-plt-base border border-plt-border-soft rounded-none overflow-hidden flex">
             {/* Distress Zone (< 1.1) */}
             <div
-              className="h-full bg-plt-risk-soft border-r border-plt-risk/30"
+              className="h-full bg-plt-risk-soft border-r border-plt-risk-border"
               style={{ width: '28%' }}
               title="Distress Zone (Z < 1.1)"
             />
             {/* Grey Zone (1.1 - 2.6) */}
             <div
-              className="h-full bg-plt-warning-soft border-r border-plt-warning/30"
+              className="h-full bg-plt-warning-soft border-r border-plt-warning-border"
               style={{ width: '32%' }}
               title="Grey Zone (1.1 <= Z <= 2.6)"
             />
@@ -179,7 +179,7 @@ export default function AltmanZScoreCard({
             {/* Score Needle Pointer */}
             {needlePositionPct !== null && (
               <div
-                className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)] transition-all duration-300"
+                className="absolute top-0 bottom-0 w-1 bg-plt-accent shadow-sm transition-all duration-300"
                 style={{ left: `${needlePositionPct}%` }}
                 title={`Z-Score: ${score?.toFixed(2)}`}
               />
@@ -201,12 +201,12 @@ export default function AltmanZScoreCard({
         </div>
 
         {/* Micro-Metrics Breakdown */}
-        <div className="border-t border-plt-border-soft/60 pt-3">
+        <div className="border-t border-plt-border-soft pt-3">
           <div className="text-[11px] font-semibold text-plt-text uppercase tracking-wider mb-2">
             {locale === 'ar' ? 'العوامل المحددة لمؤشر ألتمان' : 'Component Variables'}
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2 bg-plt-hover/30 border border-plt-border-soft/60 rounded-none">
+            <div className="p-2 bg-plt-card border border-plt-border-soft rounded-none">
               <div className="text-[10px] text-plt-muted truncate">
                 X₁: {locale === 'ar' ? 'رأس المال العامل / الأصول' : 'Working Capital / Assets'}
               </div>
@@ -215,7 +215,7 @@ export default function AltmanZScoreCard({
               </div>
             </div>
 
-            <div className="p-2 bg-plt-hover/30 border border-plt-border-soft/60 rounded-none">
+            <div className="p-2 bg-plt-card border border-plt-border-soft rounded-none">
               <div className="text-[10px] text-plt-muted truncate">
                 X₂: {locale === 'ar' ? 'الأرباح المحتجزة / الأصول' : 'Retained Earnings / Assets'}
               </div>
@@ -224,7 +224,7 @@ export default function AltmanZScoreCard({
               </div>
             </div>
 
-            <div className="p-2 bg-plt-hover/30 border border-plt-border-soft/60 rounded-none">
+            <div className="p-2 bg-plt-card border border-plt-border-soft rounded-none">
               <div className="text-[10px] text-plt-muted truncate">
                 X₃: {locale === 'ar' ? 'الأرباح التشغيلية / الأصول' : 'Operating Profit / Assets'}
               </div>
@@ -233,7 +233,7 @@ export default function AltmanZScoreCard({
               </div>
             </div>
 
-            <div className="p-2 bg-plt-hover/30 border border-plt-border-soft/60 rounded-none">
+            <div className="p-2 bg-plt-card border border-plt-border-soft rounded-none">
               <div className="text-[10px] text-plt-muted truncate">
                 X₄: {locale === 'ar' ? 'حقوق الملكية / الديون' : 'Equity / Total Debt'}
               </div>

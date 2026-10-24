@@ -350,7 +350,7 @@ export default function FinancialStatementsTab({
 
           {/* Search Line Items */}
           <div className="relative flex items-center min-w-[160px] sm:w-48">
-            <div className="absolute left-2.5 pointer-events-none text-plt-muted flex items-center">
+            <div className="absolute start-2.5 pointer-events-none text-plt-muted flex items-center">
               <Search size={12} />
             </div>
             <input
@@ -360,14 +360,14 @@ export default function FinancialStatementsTab({
               placeholder={
                 locale === 'ar' ? 'بحث في البنود...' : 'Search line items...'
               }
-              className="w-full h-7 pl-7 pr-6 text-xs bg-plt-card border border-plt-border-soft rounded-none text-plt-text placeholder:text-plt-muted focus:outline-none focus:border-plt-border-strong transition-colors font-sans"
+              className="w-full h-7 ps-7 pe-6 text-xs bg-plt-card border border-plt-border-soft rounded-none text-plt-text placeholder:text-plt-muted focus:outline-none focus:border-plt-border-strong transition-colors font-sans"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search"
-                className="absolute right-2 text-plt-muted hover:text-plt-text cursor-pointer p-0.5"
+                className="absolute end-2 text-plt-muted hover:text-plt-text cursor-pointer p-0.5"
               >
                 <X size={11} />
               </button>

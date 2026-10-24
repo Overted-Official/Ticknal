@@ -261,7 +261,7 @@ export default function PiotroskiScoreCard({
         </div>
 
         {/* Score Display Banner */}
-        <div className="flex items-center justify-between bg-plt-hover/40 border border-plt-border-soft p-3 mb-4 rounded-none">
+        <div className="flex items-center justify-between bg-plt-hover border border-plt-border-soft p-3 mb-4 rounded-none">
           <div className="flex items-baseline gap-1.5 font-sans">
             <span
               data-testid="piotroski-score-value"
@@ -311,7 +311,7 @@ export default function PiotroskiScoreCard({
             const pillarPassed = pillar.items.filter((i) => i.passed).length;
             return (
               <div key={pillar.id} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-semibold text-plt-text border-b border-plt-border-soft/60 pb-1">
+                <div className="flex items-center justify-between text-xs font-semibold text-plt-text border-b border-plt-border-soft pb-1">
                   <span>{locale === 'ar' ? pillar.titleAr : pillar.titleEn}</span>
                   <span className="text-[11px] text-plt-muted tabular-nums">
                     {pillarPassed} / {pillar.maxPoints} {locale === 'ar' ? 'نقاط' : 'pts'}
@@ -321,19 +321,19 @@ export default function PiotroskiScoreCard({
                   {pillar.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between text-[11px] py-0.5 px-1 rounded-none hover:bg-plt-hover/40 transition-colors"
+                      className="flex items-center justify-between text-[11px] py-0.5 px-1 rounded-none hover:bg-plt-hover transition-colors"
                     >
                       <span className="text-plt-muted truncate max-w-[240px] sm:max-w-[280px]">
                         {locale === 'ar' ? item.titleAr : item.titleEn}
                       </span>
                       {item.passed ? (
                         <span className="flex items-center gap-1 text-plt-profit font-medium shrink-0 tabular-nums">
-                          <Check size={11} className="stroke-[3]" />
+                          <Check size={11} strokeWidth={2.5} />
                           <span>{locale === 'ar' ? 'مستوفى (1)' : 'Passed (1)'}</span>
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-plt-muted/70 font-normal shrink-0 tabular-nums">
-                          <X size={11} className="stroke-[2]" />
+                        <span className="flex items-center gap-1 text-plt-faint font-normal shrink-0 tabular-nums">
+                          <X size={11} strokeWidth={2} />
                           <span>{locale === 'ar' ? 'غير مستوفى (0)' : 'Missed (0)'}</span>
                         </span>
                       )}

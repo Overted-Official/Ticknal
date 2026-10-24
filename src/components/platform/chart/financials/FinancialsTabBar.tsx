@@ -50,7 +50,7 @@ export default function FinancialsTabBar({
             data-testid={`financials-tab-${tab.id}-btn`}
             className={`flex items-center gap-2 py-3 px-1 border-b-2 -mb-px transition-colors cursor-pointer shrink-0 text-xs font-sans ${
               isActive
-                ? 'text-plt-text border-white font-medium'
+                ? 'text-plt-text border-plt-accent font-medium'
                 : 'text-plt-muted hover:text-plt-text border-transparent hover:border-plt-border-soft'
             }`}
           >
