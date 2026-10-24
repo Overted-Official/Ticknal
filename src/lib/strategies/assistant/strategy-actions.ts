@@ -1,6 +1,6 @@
 import { ADVANCED_BLOCK_TEMPLATES, type AdvancedStrategyNode } from '../../../components/platform/strategies/builder/advanced-strategy-model';
 import { createAdvancedIndicatorNode, createAdvancedNodeFromTemplate, createMarketInputBundle, getAvailableUpstreamNodes, type MarketInputField } from '../../../components/platform/strategies/builder/advanced-builder-state';
-import { addRuleToDraft, removeRuleFromDraft, updateStrategyRule, type StrategyBuilderIndicatorOption, type StrategyDraft, type StrategyRule, type StrategyRuleSide } from '../../../components/platform/strategies/builder/strategy-builder-model';
+import { addRuleToDraft, isSimpleRuleIndicatorSupported, removeRuleFromDraft, updateStrategyRule, type StrategyBuilderIndicatorOption, type StrategyDraft, type StrategyRule, type StrategyRuleSide } from '../../../components/platform/strategies/builder/strategy-builder-model';
 import type { OptionalStrategyStageId } from '../../../components/platform/strategies/builder/strategy-flow-model';
 import { parseSavedStrategy } from '../server/parse-saved-strategy';
 import { MAX_ADVANCED_WORKFLOW_NODES } from '../strategy-program';
@@ -15,7 +15,7 @@ export interface StrategyWorkspaceSnapshot {
 
 export type StrategyAction =
   | { readonly type: 'rename_strategy'; readonly name: string }
-  | { readonly type: 'add_simple_rule'; readonly side: StrategyRuleSide; readonly indicatorId: string }
+  | { readonly type: 'add_simple_rule'; readonly side: StrategyRuleSide; readonly indicatorId: string; readonly changes?: RuleChanges }
   | { readonly type: 'update_simple_rule'; readonly side: StrategyRuleSide; readonly ruleId: string; readonly changes: Partial<Pick<StrategyRule, 'outputKey' | 'period' | 'operator' | 'value' | 'connector'>> }
   | { readonly type: 'remove_simple_rule'; readonly side: StrategyRuleSide; readonly ruleId: string }
   | { readonly type: 'set_mode'; readonly mode: 'advanced' }
@@ -23,6 +23,7 @@ export type StrategyAction =
   | { readonly type: 'add_node'; readonly id: string; readonly templateId: string }
   | { readonly type: 'add_market_bundle'; readonly id: string; readonly fields: readonly MarketInputField[] }
   | { readonly type: 'connect'; readonly sourceId: string; readonly targetId: string }
+  | { readonly type: 'disconnect'; readonly sourceId: string; readonly targetId: string }
   | { readonly type: 'set_parameter'; readonly nodeId: string; readonly key: string; readonly value: string }
   | { readonly type: 'rename_node'; readonly nodeId: string; readonly name: string }
   | { readonly type: 'set_output_name'; readonly nodeId: string; readonly name: string }
@@ -35,6 +36,7 @@ export type StrategyActionResult =
 
 const NODE_ID = /^[A-Za-z0-9_-]{1,80}$/;
 const PARAMETER_KEY = /^[A-Za-z][A-Za-z0-9]{0,79}$/;
+const WEIGHT_KEY = /^weight:([A-Za-z0-9_-]{1,80})$/;
 const MARKET_FIELDS = new Set(['open', 'high', 'low', 'close', 'volume']);
 const JSON_PARAMETERS = new Set(['registers', 'model', 'conditions', 'symbolOverrides', 'alternateSymbols', 'aliases']);
 const COMMON_PARAMETERS = new Set(['outputKey', 'period']);
@@ -42,7 +44,7 @@ const GATE_PARAMETERS = ['gateMode', 'gateInputId', 'gateOperator', 'gateThresho
 const TEMPLATE_PARAMETERS: Readonly<Record<string, readonly string[]>> = {
   'market-input': ['series', 'field'], parameter: ['value', 'symbolOverrides'],
   'execution-policy': ['fillPolicy', 'shareSizing', 'feeBps', 'slippageBps', 'valuation'],
-  'weighted-composite': ['normalization', 'weights'], 'condition-score': ['conditions'],
+  'weighted-composite': ['normalization'], 'condition-score': ['conditions'],
   'ticker-select': ['defaultSourceId', 'alternateSourceId', 'alternateSymbols'],
   formula: ['aliases', 'registers', 'outputKey'], 'formula-output': ['outputKey'],
   'rbf-model': ['model'], transform: ['method', 'period', 'seedMode', 'lowerBound', 'upperBound'],
@@ -55,11 +57,27 @@ const TEMPLATE_PARAMETERS: Readonly<Record<string, readonly string[]>> = {
   'trailing-exit': ['distance', 'distanceMode', 'volatilityPeriod', 'volatilitySourceId', 'requireProfit', ...GATE_PARAMETERS],
 };
 
+export function getAssistantEditableParameterKeys(templateId: string): readonly string[] {
+  return TEMPLATE_PARAMETERS[templateId] ?? [];
+}
+
 const invalid = (error: string): StrategyActionResult => ({ status: 'invalid', error });
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 const safeId = (id: unknown): id is string => typeof id === 'string' && NODE_ID.test(id);
 const safeName = (name: unknown): name is string => typeof name === 'string' && name.trim().length > 0 && name.length <= 100;
 const safeSide = (side: unknown): side is StrategyRuleSide => side === 'buy' || side === 'sell';
+type RuleChanges = Partial<Pick<StrategyRule, 'outputKey' | 'period' | 'operator' | 'value' | 'connector'>>;
+
+function validRuleChanges(value: unknown): value is RuleChanges {
+  if (!record(value)) return false;
+  const allowed = new Set(['outputKey', 'period', 'operator', 'value', 'connector']);
+  return Object.keys(value).length > 0 && Object.entries(value).every(([key, item]) => allowed.has(key)
+    && (key !== 'outputKey' || safeId(item))
+    && (key !== 'period' || Number.isSafeInteger(item) && Number(item) >= 1 && Number(item) <= 1000)
+    && (key !== 'operator' || ['crossesAbove', 'crossesBelow', 'isAbove', 'isBelow'].includes(String(item)))
+    && (key !== 'value' || typeof item === 'number' && Number.isFinite(item))
+    && (key !== 'connector' || ['and', 'or'].includes(String(item))));
+}
 
 export function parseStrategyActions(value: unknown): readonly StrategyAction[] | null {
   if (!Array.isArray(value) || value.length < 1 || value.length > 128) return null;
@@ -67,24 +85,18 @@ export function parseStrategyActions(value: unknown): readonly StrategyAction[] 
     if (!record(action)) return null;
     switch (action.type) {
       case 'rename_strategy': if (!safeName(action.name)) return null; break;
-      case 'add_simple_rule': if (!safeSide(action.side) || !safeId(action.indicatorId)) return null; break;
+      case 'add_simple_rule': if (!safeSide(action.side) || !safeId(action.indicatorId) || action.changes !== undefined && !validRuleChanges(action.changes)) return null; break;
       case 'update_simple_rule': {
-        if (!safeSide(action.side) || !safeId(action.ruleId) || !record(action.changes)) return null;
-        const allowed = new Set(['outputKey', 'period', 'operator', 'value', 'connector']);
-        if (Object.keys(action.changes).length < 1 || Object.entries(action.changes).some(([key, item]) => !allowed.has(key)
-          || key === 'outputKey' && !safeId(item) || key === 'period' && (!Number.isSafeInteger(item) || Number(item) < 1 || Number(item) > 1000)
-          || key === 'operator' && !['crossesAbove', 'crossesBelow', 'isAbove', 'isBelow'].includes(String(item))
-          || key === 'value' && (typeof item !== 'number' || !Number.isFinite(item))
-          || key === 'connector' && !['and', 'or'].includes(String(item)))) return null;
+        if (!safeSide(action.side) || !safeId(action.ruleId) || !validRuleChanges(action.changes)) return null;
         break;
       }
       case 'remove_simple_rule': if (!safeSide(action.side) || !safeId(action.ruleId)) return null; break;
       case 'set_mode': if (action.mode !== 'advanced') return null; break;
       case 'add_indicator': if (!safeId(action.id) || !safeId(action.indicatorId)) return null; break;
       case 'add_node': if (!safeId(action.id) || !safeId(action.templateId)) return null; break;
-      case 'add_market_bundle': if (!safeId(action.id) || !Array.isArray(action.fields) || action.fields.length < 2 || action.fields.length > 5 || action.fields.some((field: unknown) => typeof field !== 'string' || !MARKET_FIELDS.has(field))) return null; break;
-      case 'connect': if (!safeId(action.sourceId) || !safeId(action.targetId)) return null; break;
-      case 'set_parameter': if (!safeId(action.nodeId) || typeof action.key !== 'string' || !PARAMETER_KEY.test(action.key) || typeof action.value !== 'string' || action.value.length > 52_000) return null; break;
+      case 'add_market_bundle': if (!safeId(action.id) || !Array.isArray(action.fields) || action.fields.length < 2 || action.fields.length > 5 || new Set(action.fields).size !== action.fields.length || action.fields.some((field: unknown) => typeof field !== 'string' || !MARKET_FIELDS.has(field))) return null; break;
+      case 'connect': case 'disconnect': if (!safeId(action.sourceId) || !safeId(action.targetId)) return null; break;
+      case 'set_parameter': if (!safeId(action.nodeId) || typeof action.key !== 'string' || !(PARAMETER_KEY.test(action.key) || WEIGHT_KEY.test(action.key)) || typeof action.value !== 'string' || action.value.length > 52_000) return null; break;
       case 'rename_node': case 'set_output_name': if (!safeId(action.nodeId) || !safeName(action.name)) return null; break;
       case 'group_nodes': if (!safeId(action.moduleId) || !safeName(action.name) || !Array.isArray(action.nodeIds) || action.nodeIds.length < 2 || action.nodeIds.length > MAX_ADVANCED_WORKFLOW_NODES || action.nodeIds.some((id: unknown) => !safeId(id))) return null; break;
       case 'remove_node': if (!safeId(action.nodeId)) return null; break;
@@ -103,6 +115,8 @@ export function canEditStrategySnapshot(snapshot: StrategyWorkspaceSnapshot): bo
 }
 
 function maySetParameter(node: AdvancedStrategyNode, key: string, catalog: readonly StrategyBuilderIndicatorOption[]): boolean {
+  const weightSource = WEIGHT_KEY.exec(key)?.[1];
+  if (weightSource) return node.templateId === 'weighted-composite' && Boolean(node.connections?.includes(weightSource));
   if (!PARAMETER_KEY.test(key) || key === 'sourceRuleId') return false;
   if (node.templateId === 'indicator') {
     const definition = catalog.find((item) => item.id === node.parameters?.indicatorId);
@@ -129,13 +143,18 @@ export function applyStrategyActions(
       draft = { ...draft, name: action.name.trim() };
     } else if (action.type === 'add_simple_rule') {
       if (mode !== 'simple' || !['buy', 'sell'].includes(action.side)) return invalid('Simple rules require simple mode.');
-      const indicator = catalog.find((item) => item.id === action.indicatorId && item.available);
+      const indicator = catalog.find((item) => item.id === action.indicatorId && isSimpleRuleIndicatorSupported(item));
       if (!indicator) return invalid('The indicator is not in the executable catalog.');
       const changed = addRuleToDraft(draft, action.side, indicator);
       if (changed === draft) return invalid('The indicator is already in this rule stage.');
-      draft = changed;
+      const rule = changed[action.side === 'buy' ? 'buyRules' : 'sellRules'].at(-1)!;
+      if (action.changes?.outputKey && !indicator.outputs.some((output) => output.kind === 'number' && output.key === action.changes?.outputKey)) return invalid('Choose a numeric output from this indicator.');
+      draft = action.changes ? updateStrategyRule(changed, action.side, rule.id, action.changes) : changed;
     } else if (action.type === 'update_simple_rule') {
       if (mode !== 'simple' || !['buy', 'sell'].includes(action.side) || !draft[action.side === 'buy' ? 'buyRules' : 'sellRules'].some((rule) => rule.id === action.ruleId)) return invalid('Rule not found.');
+      const rule = draft[action.side === 'buy' ? 'buyRules' : 'sellRules'].find((item) => item.id === action.ruleId)!;
+      const indicator = catalog.find((item) => item.id === rule.indicatorId && isSimpleRuleIndicatorSupported(item));
+      if (!indicator || action.changes.outputKey && !indicator.outputs.some((output) => output.kind === 'number' && output.key === action.changes.outputKey)) return invalid('Choose a numeric output from this indicator.');
       draft = updateStrategyRule(draft, action.side, action.ruleId, action.changes);
     } else if (action.type === 'remove_simple_rule') {
       if (mode !== 'simple' || !['buy', 'sell'].includes(action.side) || !draft[action.side === 'buy' ? 'buyRules' : 'sellRules'].some((rule) => rule.id === action.ruleId)) return invalid('Rule not found.');
@@ -151,7 +170,7 @@ export function applyStrategyActions(
         if (!indicator) return invalid('The indicator is not in the executable catalog.');
         nodes.push(createAdvancedIndicatorNode(indicator, action.id));
       } else if (action.type === 'add_market_bundle') {
-        if (!Array.isArray(action.fields) || action.fields.length < 2 || action.fields.some((field: MarketInputField) => !MARKET_FIELDS.has(field))) return invalid('Choose at least two OHLCV fields.');
+        if (!Array.isArray(action.fields) || action.fields.length < 2 || new Set(action.fields).size !== action.fields.length || action.fields.some((field: MarketInputField) => !MARKET_FIELDS.has(field))) return invalid('Choose at least two unique OHLCV fields.');
         nodes.push(...createMarketInputBundle(action.fields, action.id));
       } else {
         const template = ADVANCED_BLOCK_TEMPLATES.find((item) => item.id === action.templateId && item.id !== 'indicator');
@@ -166,9 +185,18 @@ export function applyStrategyActions(
       if (!target || !byId(action.sourceId) || target.protected || !getAvailableUpstreamNodes(nodes, target.id).some((node) => node.id === action.sourceId)) return invalid('Cards can only connect to available upstream inputs.');
       if ((target.connections ?? []).includes(action.sourceId)) return invalid('The cards are already connected.');
       nodes = nodes.map((node) => node.id === target.id ? { ...node, connections: [...(node.connections ?? []), action.sourceId] } : node);
+    } else if (action.type === 'disconnect') {
+      const target = byId(action.targetId);
+      if (!target || target.protected || !target.connections?.includes(action.sourceId)) return invalid('The connection does not exist.');
+      nodes = nodes.map((node) => node.id === target.id ? {
+        ...node,
+        connections: node.connections?.filter((id) => id !== action.sourceId),
+        ...(node.templateId === 'weighted-composite' ? { parameters: Object.fromEntries(Object.entries(node.parameters ?? {}).filter(([key]) => key !== `weight:${action.sourceId}`)) } : {}),
+      } : node);
     } else if (action.type === 'set_parameter') {
       const node = byId(action.nodeId);
       if (!node || node.protected || !maySetParameter(node, action.key, catalog) || typeof action.value !== 'string' || action.value.length > (JSON_PARAMETERS.has(action.key) ? 52_000 : 200)) return invalid('This card setting is not editable.');
+      if (WEIGHT_KEY.test(action.key) && (!Number.isFinite(Number(action.value)) || action.value.trim() === '' || Math.abs(Number(action.value)) > 1_000_000)) return invalid('Use a finite weight for a connected input.');
       nodes = nodes.map((item) => item.id === node.id ? { ...item, parameters: { ...item.parameters, [action.key]: action.value } } : item);
     } else if (action.type === 'rename_node' || action.type === 'set_output_name') {
       const node = byId(action.nodeId);

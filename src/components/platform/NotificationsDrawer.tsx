@@ -25,6 +25,8 @@ import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 import { resolveSourceMeta, TRADINGVIEW_LOGOS } from '@/lib/news/source-meta';
+import TurboStar from '@/components/ui/TurboStar';
+import { isTurboQualified } from '@/lib/finance/turbo-client';
 
 function getLocalizedNewsText(item: MarketNewsItemDTO, isAr: boolean): { title: string; summary: string } {
   const title = (isAr && item.content ? item.content : item.title) || item.title;
@@ -648,8 +650,9 @@ export default function NotificationsDrawer({
 
                                     {/* Sub-line: Ticker pill + sector · regime */}
                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap leading-none">
-                                      <span className="inline-flex items-center px-1 py-0.2 rounded text-[9.5px] font-semibold bg-plt-hover text-plt-text border border-plt-border uppercase tracking-wider font-sans">
-                                        {cleanSymbol}
+                                      <span className="inline-flex items-center gap-1 px-1 py-0.2 rounded text-[9.5px] font-semibold bg-plt-hover text-plt-text border border-plt-border uppercase tracking-wider font-sans">
+                                        <span>{cleanSymbol}</span>
+                                        <TurboStar symbol={cleanSymbol} signalDate={item.signalDate} size="xs" />
                                       </span>
                                       {item.industryGroup && (
                                         <span className="text-[10px] text-plt-muted truncate max-w-[110px]">

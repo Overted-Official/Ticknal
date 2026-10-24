@@ -20,6 +20,7 @@ import StrategyReportHeader from './StrategyReportHeader';
 import StrategyReportTabBar from './StrategyReportTabBar';
 import PerformanceOverviewTab from './tabs/PerformanceOverviewTab';
 import ListOfTradesTab from './tabs/ListOfTradesTab';
+import TurboTab from './tabs/TurboTab';
 import { reportYearToDateStart } from './report-period';
 
 export default function StrategyReportDrawer({
@@ -78,6 +79,7 @@ export default function StrategyReportDrawer({
   }, [isOpen, isStaff, hasProprietaryAccess, selectedStrategy, setSelectedStrategy]);
 
   // Strategy Report / Backtest State
+  const strategyParamsKey = useMemo(() => JSON.stringify(strategyParams || {}), [strategyParams]);
   const [initialCapital] = useState<number>(1000);
   const [activePreset, setActivePreset] = useState<BacktestPreset>('custom');
   const [reportLoading, setReportLoading] = useState(false);
@@ -198,7 +200,7 @@ export default function StrategyReportDrawer({
     };
 
     fetchSignals();
-  }, [isOpen, symbol, strategyStartDate, strategyEndDate, selectedStrategy, strategyParams, timeframe]);
+  }, [isOpen, symbol, strategyStartDate, strategyEndDate, selectedStrategy, strategyParamsKey, timeframe]);
 
   // Fetch Strategy Report from /api/strategy-report
   useEffect(() => {
@@ -236,7 +238,7 @@ export default function StrategyReportDrawer({
 
     fetchReport();
     return () => controller.abort();
-  }, [isOpen, symbol, selectedStrategy, timeframe, strategyStartDate, strategyEndDate, initialCapital, strategyParams]);
+  }, [isOpen, symbol, selectedStrategy, timeframe, strategyStartDate, strategyEndDate, initialCapital, strategyParamsKey]);
 
   // Computed signal values
   const visibleSignalData = signalData;
@@ -495,6 +497,8 @@ export default function StrategyReportDrawer({
               onSelectTab={setActiveTab}
               tradesCount={trades.length}
               reportLoading={reportLoading}
+              hasProprietaryAccess={hasProprietaryAccess}
+              isStaff={isStaff}
             />
 
             {/* 3. Tab Body Container */}
@@ -527,6 +531,10 @@ export default function StrategyReportDrawer({
                   currencySymbol={currencySymbol}
                   onExportCSV={handleExportCSV}
                 />
+              )}
+
+              {activeTab === 'turbo' && (
+                <TurboTab symbol={symbol} companyName={companyName} />
               )}
             </div>
           </motion.div>

@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
+import TurboStar from '@/components/ui/TurboStar';
+import { isTurboQualified } from '@/lib/finance/turbo-client';
 
 export interface GroupedMarketSignal {
   symbol: string;
@@ -139,7 +141,10 @@ export default function MarketSignalRowItem({
 
         <div className="mt-0.5 flex min-w-0 items-baseline justify-between gap-3 text-[11px]">
           <span className="min-w-0 truncate text-plt-muted">
-            <span className="font-semibold text-plt-text">{cleanSymbol}</span>
+            <span className="font-semibold text-plt-text inline-flex items-center gap-1">
+              <span>{cleanSymbol}</span>
+              <TurboStar symbol={cleanSymbol} signalDate={rawSignalDate} size="xs" />
+            </span>
             <span className="px-1">•</span>
             <span>{displaySector}</span>
             {rotationRegime && (

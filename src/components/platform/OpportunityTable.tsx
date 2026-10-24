@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import AddOrderModal, { InitialOrderData } from '@/components/platform/AddOrderModal';
 import { normalizeStrategyId } from '@/strategies/registry';
+import TurboStar from '@/components/ui/TurboStar';
+import { isTurboQualified } from '@/lib/finance/turbo-client';
 
 export type Opportunity = {
   symbol: string;
@@ -247,6 +249,7 @@ export default function OpportunityTable({
                       <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-medium text-plt-text hover:text-white text-xs">
                         {item.symbol.replace('.CA', '')}
                       </Link>
+                      <TurboStar symbol={item.symbol} signalDate={item.signal?.date} size="xs" />
                       {item.strategyShortName && (
                         <span className={`text-micro tabular-nums font-medium px-2 leading-none min-h-6 inline-flex items-center rounded-xl border ${item.strategyBadgeClassName || 'bg-plt-hover text-plt-subtle border-plt-border'}`}>
                           {item.strategyShortName}
@@ -330,9 +333,12 @@ export default function OpportunityTable({
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-semibold text-xs text-plt-text group-hover:text-white transition-colors">
-                          {item.symbol.replace('.CA', '')}
-                        </Link>
+                        <div className="flex items-center gap-1.5">
+                          <Link href={`/charts?ticker=${item.symbol}&timeframe=D`} className="font-semibold text-xs text-plt-text group-hover:text-white transition-colors">
+                            {item.symbol.replace('.CA', '')}
+                          </Link>
+                          <TurboStar symbol={item.symbol} signalDate={item.signal?.date} size="xs" />
+                        </div>
                         {!compact && <span className="text-[10px] text-plt-muted truncate max-w-32">{item.companyName}</span>}
                       </div>
                     </div>

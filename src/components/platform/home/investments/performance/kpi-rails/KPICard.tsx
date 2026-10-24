@@ -31,6 +31,7 @@ export interface KPICardProps {
   className?: string;
   iconSize?: number;
   isLoading?: boolean;
+  compact?: boolean;
 }
 
 export default function KPICard({
@@ -60,6 +61,7 @@ export default function KPICard({
   hideBadgeOnMobile = false,
   className = '',
   isLoading = false,
+  compact = false,
 }: KPICardProps) {
   const router = useRouter();
 
@@ -129,7 +131,13 @@ export default function KPICard({
     <div
       id={`kpi-${id}`}
       onClick={handleClick}
-      className={`kpi-card-root ${!showSparkline && !customBottomContent ? '!h-auto min-h-[108px] sm:min-h-[114px] justify-between pb-3.5' : ''} ${className}`}
+      className={`kpi-card-root ${
+        compact
+          ? '!h-auto !min-h-0 !justify-start gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-3 sm:px-3.5'
+          : !showSparkline && !customBottomContent
+          ? '!h-auto min-h-[108px] sm:min-h-[114px] justify-between pb-3.5'
+          : ''
+      } ${className}`}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -174,7 +182,7 @@ export default function KPICard({
       </div>
 
       {/* 2. Middle row: Value (bold large) + Unit (e.g. £, %, BARS) */}
-      <div className="flex flex-col mt-1.5 sm:mt-2.5 z-10">
+      <div className={`flex flex-col ${compact ? 'mt-0.5 sm:mt-1' : 'mt-1.5 sm:mt-2.5'} z-10`}>
         {isLoading ? (
           <div className="space-y-1.5 py-0.5">
             <div className="h-4 sm:h-5 w-16 sm:w-20 bg-plt-active rounded-xs animate-pulse" />

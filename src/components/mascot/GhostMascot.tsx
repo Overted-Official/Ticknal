@@ -300,6 +300,8 @@ export default function GhostMascot({
 
         {/* 2. Interactive Eyes with spring tracking & autonomous blinking */}
         <motion.ellipse
+          cx={80}
+          cy={120}
           rx="19"
           ry="29"
           fill="#ffffff"
@@ -308,6 +310,8 @@ export default function GhostMascot({
           transition={{ type: 'spring', stiffness: 180, damping: 16 }}
         />
         <motion.ellipse
+          cx={151}
+          cy={120}
           rx="19"
           ry="29"
           fill="#ffffff"

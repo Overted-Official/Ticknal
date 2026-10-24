@@ -4,6 +4,7 @@ import { localizeIndicatorCatalog } from '../../../../components/platform/strate
 import { canEditStrategySnapshot, type StrategyWorkspaceSnapshot } from '../../../../lib/strategies/assistant/strategy-actions';
 import { runStrategyAssistantTurn } from '../../../../lib/strategies/assistant/assistant-turn';
 import { generateStrategyProposal } from '../../../../lib/strategies/assistant/strategy-model';
+import { isValidOpenRouterApiKey } from '../../../../lib/strategies/assistant/assistant-provider-key';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,9 @@ export async function POST(request: Request): Promise<Response> {
     if (typeof input.message !== 'string' || input.message.length > 2000 || !canEditStrategySnapshot(input.snapshot as StrategyWorkspaceSnapshot)) {
       return Response.json({ status: 'invalid', error: 'Provide a valid user-owned draft and request.' }, { status: 400, headers: HEADERS });
     }
+    if (input.providerKey !== undefined && !isValidOpenRouterApiKey(input.providerKey)) {
+      return Response.json({ status: 'invalid', error: 'Provide a valid OpenRouter API key.' }, { status: 400, headers: HEADERS });
+    }
     const budget = await supabase.rpc('consume_strategy_assistant_quota');
     if (budget.error) {
       console.error('[strategies/assistant] Quota check failed.', budget.error);
@@ -53,7 +57,11 @@ export async function POST(request: Request): Promise<Response> {
     }
     if (budget.data !== true) return Response.json({ status: 'limited', error: 'Assistant request limit reached. Try again later.' }, { status: 429, headers: HEADERS });
     const catalog = localizeIndicatorCatalog(getStrategyIndicatorCatalog(), 'en');
-    const result = await runStrategyAssistantTurn({ snapshot: input.snapshot as StrategyWorkspaceSnapshot, message: input.message, catalog }, generateStrategyProposal);
+    const providerKey = input.providerKey as string | undefined;
+    const result = await runStrategyAssistantTurn(
+      { snapshot: input.snapshot as StrategyWorkspaceSnapshot, message: input.message, catalog },
+      (turnInput) => generateStrategyProposal(turnInput, providerKey ? { apiKey: providerKey } : undefined),
+    );
     return Response.json(result, { status: result.status === 'ok' ? 200 : result.status === 'invalid' ? 422 : 503, headers: HEADERS });
   } catch (error) {
     console.error('[strategies/assistant] Request failed.', error);

@@ -1,0 +1,2479 @@
+{
+  "updatedAt": "2026-10-24T23:24:56.646Z",
+  "simulationWindow": {
+    "startDate": "2025-01-01",
+    "endDate": "2026-10-22",
+    "totalMonths": 22,
+    "warmUpPeriod": "2023-01-01 to 2024-12-31 (2 Years)"
+  },
+  "benchmark": {
+    "name": "EGX Broad Market Buy & Hold",
+    "roiPct": 96.6,
+    "maxDrawdownPct": 18.5
+  },
+  "defaultSlots": 10,
+  "qualifiedTickers": [
+    "AALR",
+    "ABUK",
+    "ACTF",
+    "ADCI",
+    "ADRI",
+    "AFMC",
+    "AMES",
+    "AMIA",
+    "AMII",
+    "AXPH",
+    "BIOC",
+    "CANA",
+    "CERA",
+    "CPCI",
+    "CPME",
+    "EALR",
+    "GBCO",
+    "GGRN",
+    "GOUR",
+    "GRCA",
+    "GTWL",
+    "HBCO",
+    "ISMQ",
+    "MENA",
+    "MIPH",
+    "NINH",
+    "OBRI",
+    "OCPH",
+    "PHTV",
+    "RMDA",
+    "SMFR",
+    "TALM",
+    "TWSA",
+    "TYCN",
+    "WKOL"
+  ],
+  "tickerLogos": {
+    "CIEB": "https://s3-symbol-logo.tradingview.com/credit-agricole-egypt.svg",
+    "BTFH": "https://s3-symbol-logo.tradingview.com/belton-financial.svg",
+    "ACTF": "https://s3-symbol-logo.tradingview.com/act-financial.svg",
+    "BINV": "https://s3-symbol-logo.tradingview.com/b-investments.svg",
+    "CCAP": "https://s3-symbol-logo.tradingview.com/citadel-capital-common-shares.svg",
+    "AIH": "https://s3-symbol-logo.tradingview.com/arabia-investments.svg",
+    "AIDC": "https://s3-symbol-logo.tradingview.com/arabia-for-investment-and-development.svg",
+    "CNFN": "https://s3-symbol-logo.tradingview.com/contact-financial.svg",
+    "DEIN": "https://s3-symbol-logo.tradingview.com/delta-insurance.svg",
+    "ADRI": "https://s3-symbol-logo.tradingview.com/arab-development-and-real-estate-investment.svg",
+    "DAPH": "https://s3-symbol-logo.tradingview.com/development-and-engineering-consultants.svg",
+    "DCRC": "https://s3-symbol-logo.tradingview.com/delta-construction-and-rebuilding.svg",
+    "ATQA": "https://s3-symbol-logo.tradingview.com/misr-national-steel-ataqa.svg",
+    "ASCM": "https://s3-symbol-logo.tradingview.com/asek-company-for-mining-ascom.svg",
+    "ARCC": "https://s3-symbol-logo.tradingview.com/arabian-cement-company.svg",
+    "ANCC": "https://s3-symbol-logo.tradingview.com/alnahda-industrial-co.svg",
+    "DTPP": "https://s3-symbol-logo.tradingview.com/delta-for-printing-and-packaging.svg",
+    "CSAG": "https://s3-symbol-logo.tradingview.com/canal-shipping-agencies.svg",
+    "EAST": "https://s3-symbol-logo.tradingview.com/eastern-company.svg",
+    "DOMT": "https://s3-symbol-logo.tradingview.com/arabian-food-industries-domty.svg",
+    "CEFM": "https://s3-symbol-logo.tradingview.com/middle-egypt-flour-mills.svg",
+    "COSG": "https://s3-symbol-logo.tradingview.com/cairo-oils-and-soap.svg",
+    "APSW": "https://s3-symbol-logo.tradingview.com/arab-polvara-spinning-and-weaving-co.svg",
+    "TALM": "https://s3-symbol-logo.tradingview.com/taaleem-management-services.svg",
+    "CAED": "https://s3-symbol-logo.tradingview.com/cairo-educational-services.svg",
+    "CLHO": "https://s3-symbol-logo.tradingview.com/cleopatra-hospital-company.svg",
+    "ADCI": "https://s3-symbol-logo.tradingview.com/arab-pharmaceuticals.svg",
+    "BIOC": "https://s3-symbol-logo.tradingview.com/glaxosmithkline.svg",
+    "AMPI": "https://s3-symbol-logo.tradingview.com/al-moasher-for-programming-and-information-dissemination.svg",
+    "EXPA": "https://s3-symbol-logo.tradingview.com/export-development-bank-of-egypt-edbe.svg",
+    "HRHO": "https://s3-symbol-logo.tradingview.com/egyptian-financial-hermes-company.svg",
+    "AMER": "https://s3-symbol-logo.tradingview.com/amer.svg",
+    "AMII": "https://s3-symbol-logo.tradingview.com/arab-valves-company.svg",
+    "HDST": "https://s3-symbol-logo.tradingview.com/hedgestone-investment.svg",
+    "ICLE": "https://s3-symbol-logo.tradingview.com/international-company-for-leasing-incolease.svg",
+    "TMGH": "https://s3-symbol-logo.tradingview.com/t-m-g.svg",
+    "ELKA": "https://s3-symbol-logo.tradingview.com/el-kahera-housing.svg",
+    "GIHD": "https://s3-symbol-logo.tradingview.com/gharbia-islamic-housing-development.svg",
+    "GPPL": "https://s3-symbol-logo.tradingview.com/golden-pyramids-plaza.svg",
+    "EGS65621C012": "https://s3-symbol-logo.tradingview.com/el-nasr-housing-and-egp5.svg",
+    "ELAB": "https://static.tradingview.com/static/images/logo-preview.png",
+    "EGS30AJ1C016-EGP": "https://s3-symbol-logo.tradingview.com/international-dry-ice-co.svg",
+    "EFAC": "https://s3-symbol-logo.tradingview.com/egyptian-ferro-all-egp10.svg",
+    "EGAL": "https://s3-symbol-logo.tradingview.com/egypt-aluminum.svg",
+    "EGS370O1C013": "https://s3-symbol-logo.tradingview.com/national-printing.svg",
+    "GEOS": "https://s3-symbol-logo.tradingview.com/geos-for-trading-and-contracting.svg",
+    "EGS3E071C013-EGP": "https://s3-symbol-logo.tradingview.com/acrow-misr.svg",
+    "EGWA": "https://s3-symbol-logo.tradingview.com/general-warehouses-of-egypt.svg",
+    "EFID": "https://s3-symbol-logo.tradingview.com/edita-food-industries-sae.svg",
+    "EPCO": "https://s3-symbol-logo.tradingview.com/egypt-for-poultry.svg",
+    "EDFM": "https://s3-symbol-logo.tradingview.com/east-delta-flour-mills.svg",
+    "GBCO": "https://s3-symbol-logo.tradingview.com/gb-auto.svg",
+    "GTWL": "https://s3-symbol-logo.tradingview.com/golden-textiles-and-clothes-wool.svg",
+    "EGOTH": "https://static.tradingview.com/static/images/logo-preview.png",
+    "EITP": "https://s3-symbol-logo.tradingview.com/egyptian-international-tourism-projects.svg",
+    "FTNS": "https://s3-symbol-logo.tradingview.com/fitness-prime.svg",
+    "ETEL": "https://s3-symbol-logo.tradingview.com/telecom-egypt.svg",
+    "EGSA": "https://s3-symbol-logo.tradingview.com/egyptian-satellites-nilesat.svg",
+    "EGAS": "https://s3-symbol-logo.tradingview.com/natural-gas-and-mining-project-egypt-gas.svg",
+    "ENPI": "https://static.tradingview.com/static/images/logo-preview.png",
+    "ODIN": "https://s3-symbol-logo.tradingview.com/odin-investments.svg",
+    "OCAP": "https://static.tradingview.com/static/images/logo-preview.png",
+    "MOIN": "https://s3-symbol-logo.tradingview.com/mohandes-insurance.svg",
+    "GGCC": "https://s3-symbol-logo.tradingview.com/giza-general-contracting.svg",
+    "ORHD": "https://s3-symbol-logo.tradingview.com/orascom-development-egypt.svg",
+    "MMHC": "https://static.tradingview.com/static/images/logo-preview.png",
+    "MFPC": "https://s3-symbol-logo.tradingview.com/misr-fretilizers-production-company-mopco.svg",
+    "KZPC": "https://s3-symbol-logo.tradingview.com/kafr-el-zayat-pesticides.svg",
+    "NFCI": "https://static.tradingview.com/static/images/logo-preview.png",
+    "IRON": "https://s3-symbol-logo.tradingview.com/egyptian-iron-and-steel.svg",
+    "IRAX": "https://s3-symbol-logo.tradingview.com/ezz-steel.svg",
+    "ISMQ": "https://s3-symbol-logo.tradingview.com/iron-and-steel-for-mines-and-quarries.svg",
+    "NMIN": "https://s3-symbol-logo.tradingview.com/el-nasr-mining-co-egp10.svg",
+    "MCQE": "https://s3-symbol-logo.tradingview.com/misr-cement-qena.svg",
+    "KNGC": "https://s3-symbol-logo.tradingview.com/el-nasr-glass-and-crystal.svg",
+    "MEGM": "https://s3-symbol-logo.tradingview.com/middle-east-glass-manufacturing.svg",
+    "INEG": "https://s3-symbol-logo.tradingview.com/integrated-engineering-sae.svg",
+    "MBEG": "https://s3-symbol-logo.tradingview.com/mb-engineering.svg",
+    "KORA": "https://s3-symbol-logo.tradingview.com/korra.svg",
+    "JUFO": "https://s3-symbol-logo.tradingview.com/juhayna-food-industries.svg",
+    "IFAP": "https://s3-symbol-logo.tradingview.com/international-agricultural-products.svg",
+    "LUTS": "https://s3-symbol-logo.tradingview.com/lotus-for-agricultural-investments-and-development.svg",
+    "MOSC": "https://s3-symbol-logo.tradingview.com/misr-oils-and-soap.svg",
+    "MHOT": "https://s3-symbol-logo.tradingview.com/misr-hotels.svg",
+    "MITR": "https://static.tradingview.com/static/images/logo-preview.png",
+    "MTIE": "https://s3-symbol-logo.tradingview.com/mm-for-industry-and-international-trade.svg",
+    "PHAR": "https://s3-symbol-logo.tradingview.com/egyptian-international-pharmaceuticals-eipico.svg",
+    "MIPH": "https://s3-symbol-logo.tradingview.com/minapharm-pharmaceuticals.svg",
+    "OCPH": "https://s3-symbol-logo.tradingview.com/october-pharma.svg",
+    "NDRL": "https://s3-symbol-logo.tradingview.com/national-drilling.svg",
+    "UNIT": "https://s3-symbol-logo.tradingview.com/united-housing-and-development.svg",
+    "PMSC": "https://static.tradingview.com/static/images/logo-preview.png",
+    "UNIP": "https://s3-symbol-logo.tradingview.com/universal-for-paper-and-packaging-materials-unipack.svg",
+    "PRMH": "https://s3-symbol-logo.tradingview.com/prime.svg",
+    "WCDF": "https://s3-symbol-logo.tradingview.com/middle-and-west-delta-flour-mills.svg",
+    "RAKT": "https://s3-symbol-logo.tradingview.com/rakta-paper-manufacturing.svg",
+    "UTOP": "https://s3-symbol-logo.tradingview.com/utopia.svg",
+    "ABUK": "https://s3-symbol-logo.tradingview.com/abou-kir-fertilizers.svg",
+    "SKPC": "https://s3-symbol-logo.tradingview.com/sidi-kerir-petrochemicals-sidpec.svg",
+    "VLMRA": "https://s3-symbol-logo.tradingview.com/egyptian-kuwaiti.svg",
+    "TWSA": "https://s3-symbol-logo.tradingview.com/tawasoa-for-factoring.svg",
+    "SMFR": "https://s3-symbol-logo.tradingview.com/samad-misr-egyfert.svg",
+    "POUL": "https://s3-symbol-logo.tradingview.com/cairo-poultry.svg",
+    "SINA": "https://s3-symbol-logo.tradingview.com/sinai-manganese-company.svg",
+    "SWDY": "https://s3-symbol-logo.tradingview.com/elswedy-electric.svg",
+    "SVCE": "https://s3-symbol-logo.tradingview.com/south-valley-cement.svg",
+    "SNFC": "https://s3-symbol-logo.tradingview.com/sharkia-national-food.svg",
+    "SCEM": "https://s3-symbol-logo.tradingview.com/sinai-cement.svg",
+    "SEIG": "https://s3-symbol-logo.tradingview.com/saudi-egyptian-investment-and-finance.svg",
+    "SAIB": "https://s3-symbol-logo.tradingview.com/societe-arabe-internationale-de-banque-saib.svg",
+    "YAYT": "https://s3-symbol-logo.tradingview.com/spring-and-transportation-needs-manufacturing-co.svg",
+    "VLMR": "https://s3-symbol-logo.tradingview.com/egyptian-kuwaiti.svg",
+    "ROTO": "https://s3-symbol-logo.tradingview.com/rowad-tourism-al-rowad.svg",
+    "SPHT": "https://s3-symbol-logo.tradingview.com/el-shams-pyramids-for-hotelsand-touristic-projects.svg",
+    "TAQA": "https://s3-symbol-logo.tradingview.com/taqa-arabia.svg",
+    "SAUD": "https://s3-symbol-logo.tradingview.com/al-baraka-bank-egypt.svg",
+    "UBEE": "https://s3-symbol-logo.tradingview.com/the-united-bank.svg",
+    "SUCE": "https://s3-symbol-logo.tradingview.com/suez-cement-co.svg",
+    "RMTV": "https://s3-symbol-logo.tradingview.com/rowad-tourism-al-rowad.svg",
+    "TORA": "https://s3-symbol-logo.tradingview.com/tourah-cement-co.svg",
+    "ACGC": "https://s3-symbol-logo.tradingview.com/arab-cotton-ginning.svg",
+    "SPIN": "https://s3-symbol-logo.tradingview.com/alexandria-spinning-and-weaving-spinalex.svg",
+    "CANA": "https://s3-symbol-logo.tradingview.com/suez-canal-bank-sae.svg",
+    "AFDI": "https://s3-symbol-logo.tradingview.com/el-ahli-investment-and-development.svg",
+    "ASPI": "https://s3-symbol-logo.tradingview.com/aspire-capital-for-financial-investments.svg",
+    "EASB": "https://s3-symbol-logo.tradingview.com/egyptian-arabian-themar-comp-for-securitiesandbonds-brok-eac.svg",
+    "EBSC": "https://s3-symbol-logo.tradingview.com/osool-esb-securities-brokerage.svg",
+    "BIGP": "https://s3-symbol-logo.tradingview.com/barbary-investment-big.svg",
+    "GROV": "https://s3-symbol-logo.tradingview.com/hassan-allam-investment-and-venture-capital.svg",
+    "ARAB": "https://s3-symbol-logo.tradingview.com/arab-developers.svg",
+    "AREH": "https://s3-symbol-logo.tradingview.com/egyptian-real-estate.svg",
+    "FERC": "https://s3-symbol-logo.tradingview.com/ferchem-misr-co-for-fertillizers-and-chemicals.svg",
+    "EGS659O1C015": "https://s3-symbol-logo.tradingview.com/misr-kuwait-investment-and-trading-co.svg",
+    "EGREF": "https://s3-symbol-logo.tradingview.com/egyptians-real-estate-fund-certificates.svg",
+    "EGCH": "https://s3-symbol-logo.tradingview.com/egyptian-chemical-industries-kima.svg",
+    "EFIC": "https://s3-symbol-logo.tradingview.com/egyptian-financial-and-industrial.svg",
+    "ALUM": "https://s3-symbol-logo.tradingview.com/arab-aluminum.svg",
+    "APPC": "https://s3-symbol-logo.tradingview.com/advanced-pharmaceutical-packaging-co.svg",
+    "EGS65101C015": "https://s3-symbol-logo.tradingview.com/national-investment-and-reconstruction.svg",
+    "ELEC": "https://s3-symbol-logo.tradingview.com/electro-cable-egypt.svg",
+    "EEII": "https://s3-symbol-logo.tradingview.com/el-arabia-engineering-industries.svg",
+    "DCCC": "https://s3-symbol-logo.tradingview.com/damietta-container-and-cargo-handling.svg",
+    "AIFI": "https://s3-symbol-logo.tradingview.com/atlas-for-investment-and-food-industries.svg",
+    "ELNA": "https://s3-symbol-logo.tradingview.com/el-nasr-for-manufacturing-agricultural-crops.svg",
+    "DSCW": "https://s3-symbol-logo.tradingview.com/dice-sport-and-casual-wear.svg",
+    "EGTS": "https://s3-symbol-logo.tradingview.com/egyptian-for-tourism-resorts.svg",
+    "AMES": "https://s3-symbol-logo.tradingview.com/alexandria-new-medical-center.svg",
+    "AXPH": "https://s3-symbol-logo.tradingview.com/alexandria-pharmaceuticals.svg",
+    "EFIH": "https://s3-symbol-logo.tradingview.com/e-finance-for-digital-and-financial-investments.svg",
+    "DGTZ": "https://s3-symbol-logo.tradingview.com/digitize-for-investment-and-technology.svg",
+    "EGS72L31C011": "https://s3-symbol-logo.tradingview.com/solarsol-for-energy.svg",
+    "FAITA": "https://s3-symbol-logo.tradingview.com/faisal-islamic-bank-of-egypt-in-egp.svg",
+    "GRCA": "https://s3-symbol-logo.tradingview.com/grand-investment-capital.svg",
+    "EOSB": "https://s3-symbol-logo.tradingview.com/el-orouba-securities-brokerage.svg",
+    "GMCI": "https://s3-symbol-logo.tradingview.com/gmc-for-industrial-commercial-and-financial-investments.svg",
+    "ICID": "https://s3-symbol-logo.tradingview.com/international-co-for-investment-and-development.svg",
+    "MLIC": "https://s3-symbol-logo.tradingview.com/misr-life-insurance.svg",
+    "EMFD": "https://s3-symbol-logo.tradingview.com/emaar-misr-for-development.svg",
+    "IDRE": "https://s3-symbol-logo.tradingview.com/ismailia-development-and-real-estate-co.svg",
+    "GDWA": "https://s3-symbol-logo.tradingview.com/gadwa-for-industrial-development.svg",
+    "EGS3I0S1C019": "https://s3-symbol-logo.tradingview.com/international-company-for-medical-industries-icmi.svg",
+    "MAAL": "https://s3-symbol-logo.tradingview.com/marseille-almasreia-alkhalegeya-for-investment.svg",
+    "NARE": "https://s3-symbol-logo.tradingview.com/reacap-financial-investments.svg",
+    "MBSC": "https://s3-symbol-logo.tradingview.com/misr-beni-suef-cement.svg",
+    "MISR": "https://s3-symbol-logo.tradingview.com/misr-intercontinental-for-granite-and-marble-egy-ston.svg",
+    "MEPA": "https://s3-symbol-logo.tradingview.com/medical-packaging-company.svg",
+    "GGRN": "https://s3-symbol-logo.tradingview.com/gogreen-for-agricultural-investment.svg",
+    "IEEC": "https://s3-symbol-logo.tradingview.com/industrial-and-engineering-enterprises-co.svg",
+    "INFI": "https://s3-symbol-logo.tradingview.com/ismailia-national-food-industries.svg",
+    "KRDI": "https://s3-symbol-logo.tradingview.com/al-khair-river-for-development-agricultural-investmentandenvir.svg",
+    "MILS": "https://s3-symbol-logo.tradingview.com/north-cairo-mills.svg",
+    "KABO": "https://s3-symbol-logo.tradingview.com/el-nasr-clothes-and-textiles-kabo.svg",
+    "GTEX": "https://s3-symbol-logo.tradingview.com/gtex-for-commercial-and-industrial.svg",
+    "MMAT": "https://s3-symbol-logo.tradingview.com/marsa-marsa-alam-for-tourism-development.svg",
+    "MFSC": "https://s3-symbol-logo.tradingview.com/misr-duty-free-shops.svg",
+    "NINH": "https://s3-symbol-logo.tradingview.com/nozha-international-hospital.svg",
+    "LKGP": "https://s3-symbol-logo.tradingview.com/the-company-for-financial-investment-the-lakah.svg",
+    "ISPH": "https://s3-symbol-logo.tradingview.com/ibnsina-pharma.svg",
+    "MPCI": "https://s3-symbol-logo.tradingview.com/memphis-pharmaceuticals.svg",
+    "FWRY": "https://s3-symbol-logo.tradingview.com/fawry-for-banking-technology-and-electronic-payment.svg",
+    "MPRC": "https://s3-symbol-logo.tradingview.com/egyptian-media-production-city.svg",
+    "ADIB": "https://s3-symbol-logo.tradingview.com/abu-dhabi-islamic-bank-egypt.svg",
+    "COMI": "https://s3-symbol-logo.tradingview.com/commercial-international-bank-egypt.svg",
+    "HDBK": "https://s3-symbol-logo.tradingview.com/housing-and-development-bank.svg",
+    "EGBE": "https://s3-symbol-logo.tradingview.com/egyptian-gulf-bank.svg",
+    "QNBE": "https://s3-symbol-logo.tradingview.com/qatar-national-bank-alahly.svg",
+    "FAIT": "https://s3-symbol-logo.tradingview.com/faisal-islamic-bank-of-egypt-in-egp.svg",
+    "TYCN": "https://s3-symbol-logo.tradingview.com/alexandria-national-company-for-financial-investment.svg",
+    "PHDC": "https://s3-symbol-logo.tradingview.com/palm-hills-development-company.svg",
+    "RREI": "https://s3-symbol-logo.tradingview.com/arab-real-estate-investment-co-alico.svg",
+    "MOIL": "https://s3-symbol-logo.tradingview.com/maridive-and-oil-services.svg",
+    "PACH": "https://s3-symbol-logo.tradingview.com/paints-and-chemical-industries-company-sae-gdr-repr-1-3-shr-144a.svg",
+    "RUBX": "https://s3-symbol-logo.tradingview.com/rubex-international-for-plastic-and-acrylic-manufacturing.svg",
+    "WATP": "https://s3-symbol-logo.tradingview.com/modern-co-for-water-proofing.svg",
+    "SMPP": "https://s3-symbol-logo.tradingview.com/modern-shorouk-printing-and-packaging.svg",
+    "WKOL": "https://s3-symbol-logo.tradingview.com/wadi-kom-ombo-land-reclamation.svg",
+    "POCO": "https://s3-symbol-logo.tradingview.com/port-said-containers-and-cargo-handling-co.svg",
+    "NAMI": "https://s3-symbol-logo.tradingview.com/national-asset-management-and-investment.svg",
+    "RACC": "https://s3-symbol-logo.tradingview.com/raya-contact-center.svg",
+    "OLFI": "https://s3-symbol-logo.tradingview.com/obour-land-for-food-industries.svg",
+    "SNFI": "https://s3-symbol-logo.tradingview.com/souhag-national-food-industries.svg",
+    "SCFM": "https://s3-symbol-logo.tradingview.com/south-cairo-and-giza-mills-and-bakeries.svg",
+    "SUGR": "https://s3-symbol-logo.tradingview.com/delta-sugar.svg",
+    "ORWE": "https://s3-symbol-logo.tradingview.com/oriental-weavers.svg",
+    "PHTV": "https://s3-symbol-logo.tradingview.com/pyramisa-hotels.svg",
+    "SPMD": "https://s3-symbol-logo.tradingview.com/speed-medical.svg",
+    "RMDA": "https://s3-symbol-logo.tradingview.com/tenth-of-ramadan-pharmaceutical-industriesanddiagnostic-rameda.svg",
+    "SIPC": "https://s3-symbol-logo.tradingview.com/sabaa-international-company-for-pharmaceutical-and-chemical.svg",
+    "RAYA": "https://s3-symbol-logo.tradingview.com/raya-for-financial-investments.svg",
+    "NBKE": "https://s3-symbol-logo.tradingview.com/national-bank-of-kuwait.svg",
+    "OFH": "https://s3-symbol-logo.tradingview.com/orascom-financial.svg",
+    "CICH": "https://s3-symbol-logo.tradingview.com/ci-capital-for-financial-investments.svg",
+    "CPME": "https://s3-symbol-logo.tradingview.com/catalyst-parteners-middle-east-cpme.svg",
+    "KWIN": "https://s3-symbol-logo.tradingview.com/el-kahera-el-watania-investment.svg",
+    "RKAZ": "https://s3-symbol-logo.tradingview.com/port-saied-for-agricultural-development-and-construction.svg",
+    "SEIGA": "https://s3-symbol-logo.tradingview.com/saudi-egyptian-investment-and-finance.svg",
+    "ACAP": "https://s3-symbol-logo.tradingview.com/a-capital.svg",
+    "ATLC": "https://s3-symbol-logo.tradingview.com/rights-issue-of-al-tawfeek-leasing-company-atlease-1.svg",
+    "VALU": "https://s3-symbol-logo.tradingview.com/u-consumer-finance.svg",
+    "VERT": "https://s3-symbol-logo.tradingview.com/vertika-for-industry-and-trade.svg",
+    "OCDI": "https://s3-symbol-logo.tradingview.com/six-of-october-development-and-investment-sodic.svg",
+    "HELI": "https://s3-symbol-logo.tradingview.com/heliopolis-housing.svg",
+    "MASR": "https://s3-symbol-logo.tradingview.com/medinet-nasr-housing.svg",
+    "ACAMD": "https://s3-symbol-logo.tradingview.com/arab-co-for-asset-management-and-development.svg",
+    "CCRS": "https://s3-symbol-logo.tradingview.com/gulf-canadian-real-estate-investment-co.svg",
+    "COPR": "https://s3-symbol-logo.tradingview.com/national-real-estate-bank-for-development.svg",
+    "ELSH": "https://s3-symbol-logo.tradingview.com/el-shams-housing-and-urbanization.svg",
+    "FIRE": "https://s3-symbol-logo.tradingview.com/first-investment-company-and-real-estate-development.svg",
+    "GPIM": "https://s3-symbol-logo.tradingview.com/egyptians-for-investment-and-urban-development.svg",
+    "MENA": "https://s3-symbol-logo.tradingview.com/mena-touristic-and-real-estate-investment.svg",
+    "NHPS": "https://s3-symbol-logo.tradingview.com/national-housing-for-professional-syndicates.svg",
+    "TANM": "https://s3-symbol-logo.tradingview.com/tanmiya-for-real-estate-investment.svg",
+    "ZMID": "https://s3-symbol-logo.tradingview.com/zahraa-maadi-investment-and-development.svg",
+    "ICFC": "https://s3-symbol-logo.tradingview.com/international-company-for-fertilizers-and-chemicals.svg",
+    "MICH": "https://s3-symbol-logo.tradingview.com/misr-chemical-industries.svg",
+    "ACFR": "https://s3-symbol-logo.tradingview.com/alexandria-company-for-refractories.svg",
+    "SIEG": "https://s3-symbol-logo.tradingview.com/egyptian-company-for-pipes-and-cement-products-siegwart.svg",
+    "BIDI": "https://s3-symbol-logo.tradingview.com/el-badr-investment-and-development-bid.svg",
+    "EPPK": "https://s3-symbol-logo.tradingview.com/el-ahram-co-for-printing-and-packing.svg",
+    "ORAS": "https://s3-symbol-logo.tradingview.com/orascom-construction-plc.svg",
+    "CRST": "https://s3-symbol-logo.tradingview.com/the-egyptian-company-for-construction-development-lift-slab.svg",
+    "EGS65861C014": "https://s3-symbol-logo.tradingview.com/egyptian-contracting-co-al-abd.svg",
+    "UEGC": "https://s3-symbol-logo.tradingview.com/elsaeed-contractingand-real-estate-investment-company-sccd.svg",
+    "AALR": "https://s3-symbol-logo.tradingview.com/general-company-for-land-reclamationdevelopment-and-reconstru.svg",
+    "ENGC": "https://s3-symbol-logo.tradingview.com/engineering-industries-icon.svg",
+    "ISMA": "https://s3-symbol-logo.tradingview.com/ismailia-misr-poultry.svg",
+    "MPCO": "https://s3-symbol-logo.tradingview.com/mansourah-poultry.svg",
+    "ADPC": "https://s3-symbol-logo.tradingview.com/the-arab-dairy-products-co-arab-dairy-panda.svg",
+    "LCSW": "https://s3-symbol-logo.tradingview.com/lecico-egypt.svg",
+    "AJWA": "https://s3-symbol-logo.tradingview.com/ajwa-for-food-industries-company-egypt.svg",
+    "NCGC": "https://s3-symbol-logo.tradingview.com/nile-cotton-ginning.svg",
+    "NEDA": "https://s3-symbol-logo.tradingview.com/northern-upper-egypt-development-and-agricultural-production.svg",
+    "UEFM": "https://s3-symbol-logo.tradingview.com/upper-egypt-flour-mills.svg",
+    "ZEOT": "https://s3-symbol-logo.tradingview.com/extracted-oils.svg",
+    "GOUR": "https://s3-symbol-logo.tradingview.com/gourmet-egyptcom-foods.svg",
+    "CFGH": "https://s3-symbol-logo.tradingview.com/al-arafa-for-investment-and-consultancies.svg",
+    "CIRA": "https://s3-symbol-logo.tradingview.com/cairo-for-investment-and-real-estate-development.svg",
+    "EEP": "https://s3-symbol-logo.tradingview.com/egypt-education-platform-eep.svg",
+    "SCTS": "https://s3-symbol-logo.tradingview.com/sues-canal-company-for-technology-settling.svg",
+    "ELWA": "https://s3-symbol-logo.tradingview.com/el-wadi-for-international-and-investement-development.svg",
+    "SDTI": "https://s3-symbol-logo.tradingview.com/sharm-dreams-co-for-tourism-investment.svg",
+    "TRTO": "https://s3-symbol-logo.tradingview.com/transoceans-tours.svg",
+    "IBCT": "https://s3-symbol-logo.tradingview.com/international-business-for-trading-and-agencies.svg",
+    "PHGC": "https://s3-symbol-logo.tradingview.com/rights-issue-of-premium-healthcare-1.svg",
+    "NIPH": "https://s3-symbol-logo.tradingview.com/el-nile-co-for-pharmaceuticals-and-chemical-industries.svg",
+    "UPMS": "https://s3-symbol-logo.tradingview.com/union-pharmacist-company-for-medical-services-and-investment.svg",
+    "CID": "https://static.tradingview.com/static/images/logo-preview.png",
+    "CPCI": "https://s3-symbol-logo.tradingview.com/cairo-pharmaceuticals.svg",
+    "MCRO": "https://s3-symbol-logo.tradingview.com/macro-pharmaceuticals-macro-capital.svg",
+    "EGS48271C018-EGP": "https://s3-symbol-logo.tradingview.com/egypt-south-africa-for-communication.svg",
+    "AMOC": "https://s3-symbol-logo.tradingview.com/alexandria-mineral-oils-company.svg",
+    "AFMC": "https://s3-symbol-logo.tradingview.com/alexandria-flour-mills.svg",
+    "ALCN": "https://s3-symbol-logo.tradingview.com/alexandria-containers-and-goods.svg",
+    "ALEX": "https://s3-symbol-logo.tradingview.com/alexandria-cement-co.svg",
+    "AMIA": "https://s3-symbol-logo.tradingview.com/arab-moltaka-investments-co.svg",
+    "BONY": "https://s3-symbol-logo.tradingview.com/bonyan-for-development-and-trade.svg",
+    "CERA": "https://s3-symbol-logo.tradingview.com/the-arab-ceramic-co-ceramica-remas.svg",
+    "EALR": "https://s3-symbol-logo.tradingview.com/el-arabia-for-land-reclamation.svg",
+    "ECAP": "https://s3-symbol-logo.tradingview.com/el-ezz-porcelain-gemma.svg",
+    "ETRS": "https://s3-symbol-logo.tradingview.com/egyptian-transport-egytrans.svg",
+    "FNAR": "https://s3-symbol-logo.tradingview.com/al-fanar-contracting-construction-trade-import-and-export-co.svg",
+    "GTHE": "https://s3-symbol-logo.tradingview.com/global-telecom-sae.svg",
+    "MOED": "https://s3-symbol-logo.tradingview.com/the-egyptian-modern-education-systems.svg",
+    "NAHO": "https://s3-symbol-logo.tradingview.com/naeem.svg",
+    "NCCW": "https://s3-symbol-logo.tradingview.com/nasr-company-for-civil-works.svg",
+    "OBRI": "https://s3-symbol-logo.tradingview.com/el-obour-real-estate-investment.svg",
+    "OIH": "https://s3-symbol-logo.tradingview.com/orascom-investment.svg",
+    "PRCL": "https://s3-symbol-logo.tradingview.com/ceramic-and-porcelain.svg",
+    "PRDC": "https://s3-symbol-logo.tradingview.com/pioneers-properties-for-urban-development-predco.svg",
+    "RTVC": "https://s3-symbol-logo.tradingview.com/remco-for-touristic-villages-construction.svg",
+    "GSSC": "https://s3-symbol-logo.tradingview.com/general-silos-and-storage.svg",
+    "HBCO": "https://s3-symbol-logo.tradingview.com/heibco-for-commercial-investments-and-real-estate-development.svg",
+    "HALN": "https://ltcqzrwosdnqlosvgtve.supabase.co/storage/v1/object/public/QuantEGX%20Public/logos/haln.svg",
+    "EHDR": "https://s3-symbol-logo.tradingview.com/egyptians-housing-development-and-reconstruction.svg"
+  },
+  "tickerNames": {
+    "CIEB": "Credit Agricole Egypt",
+    "BTFH": "Beltone Holding",
+    "ACTF": "Act Financial",
+    "BINV": "B Investments Holding SAE",
+    "CCAP": "QALA For Financial Investments",
+    "AIH": "Arabia Investments Holding SAE",
+    "AIDC": "Arabia for Investment and Development",
+    "CNFN": "Contact Financial Holding SAE",
+    "DEIN": "Delta Insurance",
+    "ADRI": "Arab Development & Real Estate Investment",
+    "DAPH": "Development & Engineering Consultants",
+    "DCRC": "Delta Construction & Rebuilding Co.",
+    "ATQA": "Misr National Steel",
+    "ASCM": "ASEC Co. for Mining",
+    "ARCC": "Arabian Cement Company",
+    "ANCC": "ALNAHDA Industrial Co.",
+    "DTPP": "Delta for Printing & Packaging",
+    "CSAG": "Canal Shipping Agencies Co.",
+    "EAST": "Eastern Company",
+    "DOMT": "Arabian Food Industries Co.",
+    "CEFM": "Middle Egypt Flour Mills",
+    "COSG": "Cairo Oils & Soap",
+    "APSW": "Arab Polvara Spinning & Weaving Co.",
+    "TALM": "Taaleem Management Services S.A.E",
+    "CAED": "Cairo Educational Services",
+    "CLHO": "Cleopatra Hospital Company",
+    "ADCI": "Arab Pharmaceuticals",
+    "BIOC": "GlaxoSmithKline S.A.E.",
+    "AMPI": "AL Moasher Pay for Electronic Payment and Collection (S.A.E)",
+    "EXPA": "Export Development Bank of Egypt",
+    "HRHO": "EFG Holding S.A.E.",
+    "AMER": "Amer Group Holding",
+    "AMII": "Arabian Metal Industries and Industrial Investments",
+    "HDST": "HEDGESTONE INVESTMENT",
+    "ICLE": "International Co. for Leasing SAE",
+    "TMGH": "Talaat Moustafa Group Holding",
+    "ELKA": "El Kahera Housing",
+    "GIHD": "Gharbia Islamic Housing Development",
+    "GPPL": "Golden Pyramids Plaza",
+    "EGS65621C012": "El Nasr Housing & Egp5",
+    "ELAB": "Egyptian Linear Alkyl Benzene Company",
+    "EGS30AJ1C016-EGP": "International Dry Ice Co.",
+    "EFAC": "Egyptian Ferro All Egp10",
+    "EGAL": "Egypt Aluminum",
+    "EGS370O1C013": "National Printing",
+    "GEOS": "Geos for trading and contracting",
+    "EGS3E071C013-EGP": "Acrow Misr",
+    "EGWA": "General Warehouses of Egypt",
+    "EFID": "Edita Food Industries SAE",
+    "EPCO": "Egypt for Poultry Co.",
+    "EDFM": "East Delta Flour Mills Co.",
+    "GBCO": "GB Corp",
+    "GTWL": "Golden Textiles & Clothes Wool",
+    "EGOTH": "El Masreyah Touris Egp100",
+    "EITP": "Egyptian International Tourism Projects",
+    "FTNS": "Fitness Prime",
+    "ETEL": "Telecom Egypt",
+    "EGSA": "Egyptian Satellite Co.",
+    "EGAS": "Egypt Gas Co.",
+    "ENPI": "Engineering for the Petroleum and Process Industries",
+    "ODIN": "ODIN Investments",
+    "OCAP": "OG Capital For Investments SPAC",
+    "MOIN": "Mohandes Insurance Co.",
+    "GGCC": "Giza General Contracting & Real Estate Investment",
+    "ORHD": "Orascom Development Egypt (S.A.E)",
+    "MMHC": "El Mamoura Company For Construction & Tourism Development",
+    "MFPC": "Misr Fertilizers Production Company MOPCO",
+    "KZPC": "Kafr El Zayat Pesticides & Chemical Co.",
+    "NFCI": "ELNASR Co For Fertilizers And Chemical Industries",
+    "IRON": "Egyptian Iron & Steel",
+    "IRAX": "El Ezz Aldekhela Steel-Alexandria",
+    "ISMQ": "Iron & Steel for Mines & Quarries",
+    "NMIN": "El Nasr Mining Co Egp10",
+    "MCQE": "Misr Cement Co. (Qena)",
+    "KNGC": "EL- Nasr Glass And Crystal",
+    "MEGM": "Middle East Glass Manufacturing SAE",
+    "INEG": "Integrated Engineering Group S.A.E",
+    "MBEG": "MB for Engineering & Contracting",
+    "KORA": "KORRA",
+    "JUFO": "Juhayna Food Industries",
+    "IFAP": "International Agricultural Products",
+    "LUTS": "Lotus For Agricultural Investments And Development",
+    "MOSC": "Misr Oils & Soap Co.",
+    "MHOT": "Misr Hotels Co.",
+    "MITR": "Misr Travel&Touris Egp6",
+    "MTIE": "MM Group for Industry & International Trade",
+    "PHAR": "Egyptian International Pharmaceutical Industries Co.",
+    "MIPH": "Minapharm Pharmaceuticals",
+    "OCPH": "October Pharma Co.",
+    "NDRL": "National Drilling Co.",
+    "UNIT": "United Housing Construction SA",
+    "PMSC": "Petroleum Marine Services Company",
+    "UNIP": "Universal Co. for Paper & Packaging Materials-Unipack",
+    "PRMH": "Prime Holding",
+    "WCDF": "Middle & West Delta Flour Mills Co.",
+    "RAKT": "Rakta Paper Manufacturing",
+    "UTOP": "Utopia Real Estate Investment & Tourism SAE",
+    "ABUK": "Abou Kir Fertilizers & Chemical Industries Co.",
+    "SKPC": "Sidi Kerir Petrochemicals",
+    "VLMRA": "Valmore Holding",
+    "TWSA": "TAWASOA FOR FACTORING",
+    "SMFR": "Samad Misr-EGYFERT",
+    "POUL": "Cairo Poultry Co.",
+    "SINA": "Sinai Manganese Company",
+    "SWDY": "El Sewedy Electric Company",
+    "SVCE": "South Valley Cement Co.",
+    "SNFC": "Sharkia National Food",
+    "SCEM": "Sinai Cement Co.",
+    "SEIG": "Saudi Egyptian Investment & Finance Co. SAE",
+    "SAIB": "Societe Arabe Internationale de Banque",
+    "YAYT": "Spring & Transportation Needs Manufacturing Co.",
+    "VLMR": "Valmore Holding",
+    "ROTO": "Rowad Tourism (Al Rowad) Co",
+    "SPHT": "El Shams Pyramids Co. for Hotels & Touristic Projects SAE",
+    "TAQA": "TAQA Arabia",
+    "SAUD": "Al Baraka Bank Egypt",
+    "UBEE": "United Bank SAE",
+    "SUCE": "Suez Cement Co.",
+    "RMTV": "Rowad Misr Tourism Investment",
+    "TORA": "Tourah Cement Co",
+    "ACGC": "Arab Cotton Ginning Co.",
+    "SPIN": "Alexandria Spinning & Weaving",
+    "CANA": "Suez Canal Bank SAE",
+    "AFDI": "Alahly For Development & Investment",
+    "ASPI": "Aspire Capital Holding for Financial Investments",
+    "EASB": "Egyptian Arabian Company for Securities Brokerage EAC",
+    "EBSC": "Osool ESB Securities Brokerage",
+    "BIGP": "ElBarbary Investment Group",
+    "GROV": "Grova Special Purpose Acquisition Company",
+    "ARAB": "Arab Developers Holding",
+    "AREH": "Egyptian Real Estate Group",
+    "FERC": "Ferchem Misr Co. for Fertilizers & Chemicals",
+    "EGS659O1C015": "Misr Kuwait Investment & Trading Co.",
+    "EGREF": "Egyptians Real Estate Fund",
+    "EGCH": "Egyptian Chemical Industries",
+    "EFIC": "Egyptian Financial & Industrial Co.",
+    "ALUM": "Arab Aluminum Co. SAE",
+    "APPC": "Advanced Pharmaceutical Packaging Co.",
+    "EGS65101C015": "National Investment & Reconstruction",
+    "ELEC": "Electro Cable Egypt",
+    "EEII": "El Arabia Engineering Industries",
+    "DCCC": "Damietta Container and Cargo Handling",
+    "AIFI": "Atlas for Investment & Food Industries SAE",
+    "ELNA": "El Nasr for Manufacturing Agricultural Crops",
+    "DSCW": "Dice Sports & Casual Wear Manufacturers SAE",
+    "EGTS": "Egyptian for Tourism Resorts",
+    "ALXD": "Alexandria For Investment and Urban Development",
+    "AMES": "Alexandria New Medical Center Co.",
+    "AXPH": "Alexandria Company for Pharmaceuticals and Chemical Industries",
+    "EFIH": "e-finance for Digital and Financial Investments S.A.E.",
+    "DGTZ": "Digitize for Investment And Technology",
+    "EGS72L31C011": "SOLARSOL For Energy",
+    "FAITA": "Faisal Islamic Bank of Egypt",
+    "GRCA": "Grand Investment Capital",
+    "EOSB": "El Orouba Securities Brokerage",
+    "GMCI": "GMC Group for Industrial Commercial & Financial Investments",
+    "ICID": "International Company for Investment & Development",
+    "MLIC": "Misr Life Insurance",
+    "EMFD": "Emaar Misr for Development SAE",
+    "IDRE": "Ismailia Development & Real Estate Co.",
+    "GDWA": "Gadwa For Industrial Development",
+    "EGS3I0S1C019": "Future Care For Medical Industries",
+    "MAAL": "Marseilla Al Masreia Al Khalegeya for Holding Investment",
+    "NARE": "Naeem Real Estate Holding Group",
+    "MBSC": "Misr Beni Suef Cement Co. SAE",
+    "MISR": "MISR Intercontinental for Granite & Marble",
+    "MEPA": "Medical Packaging Company",
+    "GGRN": "Gogreen for Agricultural Investment and Development Company",
+    "IEEC": "Industrial & Engineering Enterprises Co.",
+    "INFI": "Ismailia National Food Industries",
+    "KRDI": "Al Khair River for Development Agriculture Investment and Environmental Services",
+    "MILS": "North Cairo Mills Co.",
+    "KABO": "El Nasr Clothing & Textiles Co.",
+    "GTEX": "G-TEX for Commercial and Industrial Investments S.A.E",
+    "MMAT": "Marsa Marsa Alam for Tourism Development",
+    "MFSC": "Misr Duty Free Shops Co.",
+    "NINH": "Nozha International Hospital",
+    "LKGP": "The Holding Company for Financial Investment - The Lakah Group",
+    "ISPH": "Ibnsina Pharma",
+    "MPCI": "Memphis Pharmaceutical & Chemical Industries",
+    "FWRY": "Fawry For Banking Technology And Electronic Payment",
+    "MPRC": "Egyptian Media Production City",
+    "NBCC": "ALNASR For Building And Construction Company",
+    "TOUR": "Tourism Urbanization",
+    "ADIB": "Abu Dhabi Islamic Bank-Egypt",
+    "COMI": "Commercial International Bank - Egypt (CIB) S.A.E.",
+    "HDBK": "Housing & Development Bank",
+    "EGBE": "Egyptian Gulf Bank",
+    "QNBE": "Qatar National Bank",
+    "FAIT": "Faisal Islamic Bank of Egypt",
+    "TYCN": "Tycoon Holding Company For Financial Investments",
+    "PHDC": "Palm Hills Development Co.",
+    "RREI": "Arab Real Estate Investment Co.",
+    "MOIL": "Maridive & Oil Services SAE",
+    "PACH": "Paints & Chemical Industries Co.",
+    "RUBX": "Rubex International for Plastic & Acrylic Manufacturing",
+    "WATP": "Modern Co. for Water Proofing",
+    "SMPP": "Modern Shorouk Printing & Packaging",
+    "WKOL": "Wadi Kom Ombo Land Reclamation",
+    "POCO": "Port Said Container And Cargo Handling",
+    "NAMI": "National Asset Management And Investment",
+    "RACC": "Raya Contact Center",
+    "OLFI": "Obour Land for Food Industries",
+    "SNFI": "Souhag National Food Industries",
+    "SCFM": "South Cairo & Giza Mills & Bakeries",
+    "SUGR": "Delta Sugar",
+    "ORWE": "Oriental Weavers Carpet",
+    "PHTV": "Pyramisa Hotels",
+    "SPMD": "Speed Medical SAE",
+    "RMDA": "Tenth of Ramadan Pharmaceutical Industries & Diagnostic-Rameda",
+    "SIPC": "Sabaa International Company for Pharmaceutial and Chemical Industry",
+    "RAYA": "Raya Holding for Financial Investments SAE",
+    "NBKE": "National Bank of Kuwait - Egypt",
+    "OFH": "O B Financial Holding",
+    "CICH": "CI Capital Holding for Financial Investments",
+    "CPME": "Catalyst Partners Middle East",
+    "KWIN": "El Kahera El Watania Investment",
+    "RKAZ": "REKAZ Financial Holding",
+    "SEIGA": "Saudi Egyptian Investment & Finance Co. SAE",
+    "ACAP": "A Capital Holding",
+    "ATLC": "Al Tawfeek Leasing Company-A.T.LEASE",
+    "VALU": "U Consumer Finance S.A.E",
+    "VERT": "Vertika for Industry & Trade",
+    "OCDI": "Six of October Development & Investment (SODIC)",
+    "HELI": "Heliopolis Housing",
+    "MASR": "Madinet Masr for Housing & Development",
+    "ACAMD": "Arab Co. for Asset Management & Development",
+    "CCRS": "Gulf Canadian Real Estate Investment Co.",
+    "COPR": "Cooper for Commercial Investment & Real Estate Development",
+    "ELSH": "El-Shams Housing & Development SA",
+    "FIRE": "First Investment & Real Estate Development",
+    "GPIM": "GPI For Urban Growth",
+    "MENA": "Mena Touristic & Real Estate Investment",
+    "NHPS": "National Housing for Professional Syndicates",
+    "TANM": "Tanmiya for Real Estate Investment",
+    "ZMID": "Zahraa Maadi Investment & Development",
+    "ICFC": "International Co. for Fertilizers & Chemicals",
+    "MICH": "Misr Chemical Industries Ltd.",
+    "ACFR": "Alexandria Company For Refractories",
+    "SIEG": "Egyptian Company for Pipes and Cement Products -Siegwart",
+    "BIDI": "El Badr Investment and Development - BID",
+    "EPPK": "El Ahram Co. for Printing & Packing",
+    "ORAS": "Orascom Construction Plc",
+    "CRST": "Creast Mark For Contracting And Real Estate Development",
+    "EGS65861C014": "Egyptian Contracting Co.-AL- ABD",
+    "UEGC": "El-Saeed Contracting & Real Estate Investment Co. SCCD",
+    "AALR": "General Co. for Land Reclamation Development & Reconstruction",
+    "ENGC": "Industrial Engineering Co. for Construction & Development",
+    "ISMA": "Ismailia Misr Poultry",
+    "MPCO": "Mansourah Poultry Co.",
+    "ADPC": "Arab Dairy Products Co. Arab Dairy - Panda",
+    "LCSW": "Lecico Egypt SAE",
+    "AJWA": "Ajwa for Food Industries Co. Egypt",
+    "NCGC": "Nile Cotton Ginning",
+    "NEDA": "Northern Upper Egypt Development & Agricultural Production",
+    "UEFM": "Upper Egypt Flour Mills Co.",
+    "ZEOT": "Extracted Oils & Derivatives Co.",
+    "GOUR": "Gourmet Egypt.Com Foods",
+    "CFGH": "Concrete Fashion Group for Commercial and Industrial Investments S.A.E",
+    "CIRA": "Cairo For Investment And Real Estate Developments -CIRA Education",
+    "EEP": "Egypt Education Platform - EEP",
+    "SCTS": "Sues Canal Co. for Technology Settling",
+    "ELWA": "Elwadi for International Investment & Development",
+    "SDTI": "Sharm Dreams Co. for Tourism Investment",
+    "TRTO": "TransOceans Tours",
+    "IBCT": "International Business Corp. for Trading & Agencies",
+    "PHGC": "Premium Healthcare Group",
+    "NIPH": "El-Nile Co. for Pharmaceuticals & Chemical Industries",
+    "UPMS": "Union Pharmacist Company For Medical Services And Investment",
+    "CID": "Chemical Development Industries (CID)",
+    "CPCI": "Kahira Pharmaceuticals & Chemical Industries Co.",
+    "MCRO": "Macro Group Pharmaceutical S.A.E.",
+    "EGS48271C018-EGP": "Egypt - South Africa for Communication",
+    "AMOC": "Alexandria Mineral Oils Co.",
+    "AFMC": "Alexandria Flour Mills Co.",
+    "ALCN": "Alexandria Containers & Goods",
+    "ALEX": "Alexandria Cement Co.",
+    "AMIA": "Arab Moltaqa Investments Company",
+    "BONY": "Bonyan for Development and Trade",
+    "CERA": "Arab Ceramic Co. - Ceramica Remas",
+    "EALR": "El Arabia for Land Reclamation",
+    "ECAP": "El Ezz Ceramics & Porcelain Co. (Gemma)",
+    "ETRS": "Egyptian Transport And Commercial Services Co. (Egytrans Nosco)",
+    "FNAR": "Al Fanar Contracting Construction Trade Import & Export Co.",
+    "GTHE": "Global Telecom Holding S.A.E.",
+    "MOED": "Egyptian Modern Education Systems",
+    "NAHO": "Naeem Holding Co.",
+    "NCCW": "Nasr Co. for Civil Works",
+    "OBRI": "El Obour Real Estate Investment",
+    "OIH": "Orascom Investment Holding SAE",
+    "PRCL": "General Co. for Ceramic & Porcelain Products",
+    "PRDC": "Pioneers Properties for Urban Development",
+    "RTVC": "Remco for Touristic Villages Construction",
+    "GSSC": "General Silos & Storage Co.",
+    "HBCO": "Heibco Npv",
+    "HALN": "MNT-Halan",
+    "EHDR": "Egyptians Housing Development & Reconstruction"
+  },
+  "portfolios": {
+    "slots10": {
+      "slots": 10,
+      "startingCapital": 33135,
+      "finalNav": 100000,
+      "roiPct": 201.8,
+      "maxDrawdownPct": 24.9,
+      "winRatePct": 96.2,
+      "closedTradesCount": 52,
+      "totalTradesCount": 62,
+      "maxAdverseExcursionPct": 26.8,
+      "averageAdverseExcursionPct": 7,
+      "totalSlots": 10,
+      "activeSlots": 10,
+      "cash": 65,
+      "openPositions": [
+        {
+          "symbol": "AALR",
+          "companyName": "General Co. for Land Reclamation Development & Reconstruction",
+          "sector": "Industrials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/general-company-for-land-reclamationdevelopment-and-reconstru.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-08-06",
+          "entryPrice": 303.07,
+          "lastPrice": 224,
+          "shares": 34,
+          "cost": 10330,
+          "currentValue": 7597,
+          "unrealizedPnlPct": -26.5
+        },
+        {
+          "symbol": "CPCI",
+          "companyName": "Kahira Pharmaceuticals & Chemical Industries Co.",
+          "sector": "Health Care",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/cairo-pharmaceuticals.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-08-17",
+          "entryPrice": 534.68,
+          "lastPrice": 590.26,
+          "shares": 26,
+          "cost": 13936,
+          "currentValue": 15308,
+          "unrealizedPnlPct": 9.8
+        },
+        {
+          "symbol": "GTWL",
+          "companyName": "Golden Textiles & Clothes Wool",
+          "sector": "Consumer Discretionary",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/golden-textiles-and-clothes-wool.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-08-26",
+          "entryPrice": 211,
+          "lastPrice": 106.01,
+          "shares": 67,
+          "cost": 14172,
+          "currentValue": 7085,
+          "unrealizedPnlPct": -50
+        },
+        {
+          "symbol": "OBRI",
+          "companyName": "El Obour Real Estate Investment",
+          "sector": "Real Estate",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/el-obour-real-estate-investment.svg",
+          "champion": "typhon",
+          "entryDate": "2026-08-30",
+          "entryPrice": 32.2,
+          "lastPrice": 24.57,
+          "shares": 438,
+          "cost": 14139,
+          "currentValue": 10735,
+          "unrealizedPnlPct": -24.1
+        },
+        {
+          "symbol": "SVCE",
+          "companyName": "South Valley Cement Co.",
+          "sector": "Materials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/south-valley-cement.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-01",
+          "entryPrice": 10.91,
+          "lastPrice": 8.72,
+          "shares": 1294,
+          "cost": 14153,
+          "currentValue": 11255,
+          "unrealizedPnlPct": -20.5
+        },
+        {
+          "symbol": "GRCA",
+          "companyName": "Grand Investment Capital",
+          "sector": "Financials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/grand-investment-capital.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-09-02",
+          "entryPrice": 60.38,
+          "lastPrice": 28,
+          "shares": 234,
+          "cost": 14164,
+          "currentValue": 6536,
+          "unrealizedPnlPct": -53.9
+        },
+        {
+          "symbol": "AFMC",
+          "companyName": "Alexandria Flour Mills Co.",
+          "sector": "Consumer Staples",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/alexandria-flour-mills.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-08",
+          "entryPrice": 184.99,
+          "lastPrice": 117.38,
+          "shares": 62,
+          "cost": 11498,
+          "currentValue": 7259,
+          "unrealizedPnlPct": -36.9
+        },
+        {
+          "symbol": "ISMQ",
+          "companyName": "Iron & Steel for Mines & Quarries",
+          "sector": "Materials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/iron-and-steel-for-mines-and-quarries.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-16",
+          "entryPrice": 8.75,
+          "lastPrice": 7.17,
+          "shares": 2355,
+          "cost": 20658,
+          "currentValue": 16843,
+          "unrealizedPnlPct": -18.5
+        },
+        {
+          "symbol": "SMFR",
+          "companyName": "Samad Misr-EGYFERT",
+          "sector": "Consumer Discretionary",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/samad-misr-egyfert.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-17",
+          "entryPrice": 238.65,
+          "lastPrice": 196.17,
+          "shares": 54,
+          "cost": 12919,
+          "currentValue": 10567,
+          "unrealizedPnlPct": -18.2
+        },
+        {
+          "symbol": "NINH",
+          "companyName": "Nozha International Hospital",
+          "sector": "Health Care",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/nozha-international-hospital.svg",
+          "champion": "typhon",
+          "entryDate": "2026-10-04",
+          "entryPrice": 19.25,
+          "lastPrice": 14.49,
+          "shares": 467,
+          "cost": 9012,
+          "currentValue": 6750,
+          "unrealizedPnlPct": -25.1
+        }
+      ],
+      "closedTrades": [
+        {
+          "sym": "SVCE",
+          "name": "South Valley Cement Co.",
+          "entryDate": "2025-11-30",
+          "exitDate": "2026-02-01",
+          "entryPrice": 5.4,
+          "exitPrice": 6.79,
+          "cost": 5861,
+          "proceeds": 7333,
+          "retPct": 25.12,
+          "champion": "typhon"
+        },
+        {
+          "sym": "EBSC",
+          "name": "Osool ESB Securities Brokerage",
+          "entryDate": "2025-12-03",
+          "exitDate": "2026-02-12",
+          "entryPrice": 1.68,
+          "exitPrice": 1.87,
+          "cost": 5151,
+          "proceeds": 5705,
+          "retPct": 10.75,
+          "champion": "typhon"
+        },
+        {
+          "sym": "IFAP",
+          "name": "International Agricultural Products",
+          "entryDate": "2025-11-23",
+          "exitDate": "2026-02-24",
+          "entryPrice": 18.68,
+          "exitPrice": 18.71,
+          "cost": 4802,
+          "proceeds": 4786,
+          "retPct": -0.34,
+          "champion": "typhon"
+        },
+        {
+          "sym": "RMDA",
+          "name": "Tenth of Ramadan Pharmaceutical Industries & Diagnostic-Rameda",
+          "entryDate": "2025-08-26",
+          "exitDate": "2026-03-04",
+          "entryPrice": 3.26,
+          "exitPrice": 4.71,
+          "cost": 3877,
+          "proceeds": 5580,
+          "retPct": 43.93,
+          "champion": "typhon"
+        },
+        {
+          "sym": "ISMQ",
+          "name": "Iron & Steel for Mines & Quarries",
+          "entryDate": "2025-11-27",
+          "exitDate": "2026-04-08",
+          "entryPrice": 6.11,
+          "exitPrice": 7,
+          "cost": 5859,
+          "proceeds": 6679,
+          "retPct": 13.99,
+          "champion": "typhon"
+        },
+        {
+          "sym": "CANA",
+          "name": "Suez Canal Bank SAE",
+          "entryDate": "2025-12-10",
+          "exitDate": "2026-04-19",
+          "entryPrice": 24.71,
+          "exitPrice": 36.9,
+          "cost": 6261,
+          "proceeds": 9304,
+          "retPct": 48.61,
+          "champion": "typhon"
+        },
+        {
+          "sym": "GGRN",
+          "name": "Gogreen for Agricultural Investment and Development Company",
+          "entryDate": "2025-12-04",
+          "exitDate": "2026-04-23",
+          "entryPrice": 2.46,
+          "exitPrice": 2.53,
+          "cost": 5151,
+          "proceeds": 5271,
+          "retPct": 2.33,
+          "champion": "typhon"
+        },
+        {
+          "sym": "OCPH",
+          "name": "October Pharma Co.",
+          "entryDate": "2026-01-25",
+          "exitDate": "2026-05-06",
+          "entryPrice": 95.94,
+          "exitPrice": 192.4,
+          "cost": 4684,
+          "proceeds": 9346,
+          "retPct": 99.55,
+          "champion": "typhon"
+        },
+        {
+          "sym": "INFI",
+          "name": "Ismailia National Food Industries",
+          "entryDate": "2025-12-23",
+          "exitDate": "2026-05-17",
+          "entryPrice": 94.43,
+          "exitPrice": 106,
+          "cost": 7213,
+          "proceeds": 8057,
+          "retPct": 11.69,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "GRCA",
+          "name": "Grand Investment Capital",
+          "entryDate": "2026-03-08",
+          "exitDate": "2026-05-17",
+          "entryPrice": 34.13,
+          "exitPrice": 44.98,
+          "cost": 5770,
+          "proceeds": 7566,
+          "retPct": 31.12,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "EGTS",
+          "name": "Egyptian for Tourism Resorts",
+          "entryDate": "2026-04-26",
+          "exitDate": "2026-05-20",
+          "entryPrice": 14.25,
+          "exitPrice": 20.5,
+          "cost": 7284,
+          "proceeds": 10426,
+          "retPct": 43.14,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "MENA",
+          "name": "Mena Touristic & Real Estate Investment",
+          "entryDate": "2026-03-09",
+          "exitDate": "2026-06-03",
+          "entryPrice": 4.6,
+          "exitPrice": 7.29,
+          "cost": 5774,
+          "proceeds": 9104,
+          "retPct": 57.69,
+          "champion": "typhon"
+        },
+        {
+          "sym": "UBEE",
+          "name": "United Bank SAE",
+          "entryDate": "2026-06-02",
+          "exitDate": "2026-06-10",
+          "entryPrice": 13.7,
+          "exitPrice": 14.15,
+          "cost": 8805,
+          "proceeds": 9049,
+          "retPct": 2.77,
+          "champion": "typhon"
+        },
+        {
+          "sym": "AFMC",
+          "name": "Alexandria Flour Mills Co.",
+          "entryDate": "2026-02-26",
+          "exitDate": "2026-06-29",
+          "entryPrice": 56.23,
+          "exitPrice": 67.34,
+          "cost": 5939,
+          "proceeds": 7077,
+          "retPct": 19.16,
+          "champion": "typhon"
+        },
+        {
+          "sym": "GTWL",
+          "name": "Golden Textiles & Clothes Wool",
+          "entryDate": "2026-05-18",
+          "exitDate": "2026-07-01",
+          "entryPrice": 55.99,
+          "exitPrice": 88.2,
+          "cost": 7978,
+          "proceeds": 12504,
+          "retPct": 56.74,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "ISMQ",
+          "name": "Iron & Steel for Mines & Quarries",
+          "entryDate": "2026-04-09",
+          "exitDate": "2026-07-07",
+          "entryPrice": 7.15,
+          "exitPrice": 9.81,
+          "cost": 6678,
+          "proceeds": 9116,
+          "retPct": 36.52,
+          "champion": "typhon"
+        },
+        {
+          "sym": "GTWL",
+          "name": "Golden Textiles & Clothes Wool",
+          "entryDate": "2026-07-07",
+          "exitDate": "2026-07-13",
+          "entryPrice": 85.5,
+          "exitPrice": 112,
+          "cost": 10791,
+          "proceeds": 14065,
+          "retPct": 30.34,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "ADRI",
+          "name": "Arab Development & Real Estate Investment",
+          "entryDate": "2026-06-03",
+          "exitDate": "2026-07-20",
+          "entryPrice": 7.34,
+          "exitPrice": 8.14,
+          "cost": 8957,
+          "proceeds": 9883,
+          "retPct": 10.35,
+          "champion": "typhon"
+        },
+        {
+          "sym": "AALR",
+          "name": "General Co. for Land Reclamation Development & Reconstruction",
+          "entryDate": "2026-05-10",
+          "exitDate": "2026-08-04",
+          "entryPrice": 219,
+          "exitPrice": 279.14,
+          "cost": 8292,
+          "proceeds": 10516,
+          "retPct": 26.83,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "ADCI",
+          "name": "Arab Pharmaceuticals",
+          "entryDate": "2026-06-07",
+          "exitDate": "2026-08-12",
+          "entryPrice": 216,
+          "exitPrice": 318.41,
+          "cost": 8896,
+          "proceeds": 13048,
+          "retPct": 46.68,
+          "champion": "typhon"
+        },
+        {
+          "sym": "CPCI",
+          "name": "Kahira Pharmaceuticals & Chemical Industries Co.",
+          "entryDate": "2026-07-07",
+          "exitDate": "2026-08-12",
+          "entryPrice": 396.33,
+          "exitPrice": 552.62,
+          "cost": 10794,
+          "proceeds": 14976,
+          "retPct": 38.74,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "OBRI",
+          "name": "El Obour Real Estate Investment",
+          "entryDate": "2026-02-24",
+          "exitDate": "2026-08-18",
+          "entryPrice": 33.5,
+          "exitPrice": 33.88,
+          "cost": 5942,
+          "proceeds": 5979,
+          "retPct": 0.63,
+          "champion": "typhon"
+        },
+        {
+          "sym": "EALR",
+          "name": "El Arabia for Land Reclamation",
+          "entryDate": "2026-01-08",
+          "exitDate": "2026-08-19",
+          "entryPrice": 363,
+          "exitPrice": 417.1,
+          "cost": 10971,
+          "proceeds": 12543,
+          "retPct": 14.33,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "GTWL",
+          "name": "Golden Textiles & Clothes Wool",
+          "entryDate": "2026-07-26",
+          "exitDate": "2026-08-23",
+          "entryPrice": 102.77,
+          "exitPrice": 191.21,
+          "cost": 11981,
+          "proceeds": 22180,
+          "retPct": 85.13,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "ADRI",
+          "name": "Arab Development & Real Estate Investment",
+          "entryDate": "2026-07-21",
+          "exitDate": "2026-08-25",
+          "entryPrice": 8.11,
+          "exitPrice": 9.36,
+          "cost": 11994,
+          "proceeds": 13774,
+          "retPct": 14.84,
+          "champion": "typhon"
+        },
+        {
+          "sym": "GRCA",
+          "name": "Grand Investment Capital",
+          "entryDate": "2026-06-17",
+          "exitDate": "2026-08-26",
+          "entryPrice": 40.01,
+          "exitPrice": 57.54,
+          "cost": 9103,
+          "proceeds": 13025,
+          "retPct": 43.09,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "NINH",
+          "name": "Nozha International Hospital",
+          "entryDate": "2026-08-20",
+          "exitDate": "2026-09-08",
+          "entryPrice": 21.91,
+          "exitPrice": 23.15,
+          "cost": 10857,
+          "proceeds": 11415,
+          "retPct": 5.13,
+          "champion": "typhon"
+        },
+        {
+          "sym": "NCCW",
+          "name": "Nasr Co. for Civil Works",
+          "entryDate": "2026-08-26",
+          "exitDate": "2026-09-16",
+          "entryPrice": 5.83,
+          "exitPrice": 8.55,
+          "cost": 14155,
+          "proceeds": 20655,
+          "retPct": 45.92,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "TALM",
+          "name": "Taaleem Management Services S.A.E",
+          "entryDate": "2026-05-25",
+          "exitDate": "2026-09-17",
+          "entryPrice": 15.31,
+          "exitPrice": 22.52,
+          "cost": 8802,
+          "proceeds": 12883,
+          "retPct": 46.36,
+          "champion": "typhon"
+        },
+        {
+          "sym": "CANA",
+          "name": "Suez Canal Bank SAE",
+          "entryDate": "2026-06-30",
+          "exitDate": "2026-09-29",
+          "entryPrice": 35.28,
+          "exitPrice": 45.01,
+          "cost": 7077,
+          "proceeds": 8984,
+          "retPct": 26.94,
+          "champion": "typhon"
+        }
+      ],
+      "navSeries": [
+        {
+          "date": "2025-01-02",
+          "nav": 33130
+        },
+        {
+          "date": "2025-01-12",
+          "nav": 33130
+        },
+        {
+          "date": "2025-01-19",
+          "nav": 33130
+        },
+        {
+          "date": "2025-01-26",
+          "nav": 33130
+        },
+        {
+          "date": "2025-02-02",
+          "nav": 33130
+        },
+        {
+          "date": "2025-02-09",
+          "nav": 33130
+        },
+        {
+          "date": "2025-02-16",
+          "nav": 33140
+        },
+        {
+          "date": "2025-02-23",
+          "nav": 33180
+        },
+        {
+          "date": "2025-03-02",
+          "nav": 33140
+        },
+        {
+          "date": "2025-03-09",
+          "nav": 33229
+        },
+        {
+          "date": "2025-03-16",
+          "nav": 33163
+        },
+        {
+          "date": "2025-03-23",
+          "nav": 33267
+        },
+        {
+          "date": "2025-04-03",
+          "nav": 33240
+        },
+        {
+          "date": "2025-04-10",
+          "nav": 33133
+        },
+        {
+          "date": "2025-04-17",
+          "nav": 33421
+        },
+        {
+          "date": "2025-04-29",
+          "nav": 33315
+        },
+        {
+          "date": "2025-05-07",
+          "nav": 33339
+        },
+        {
+          "date": "2025-05-14",
+          "nav": 33839
+        },
+        {
+          "date": "2025-05-21",
+          "nav": 33607
+        },
+        {
+          "date": "2025-05-28",
+          "nav": 33598
+        },
+        {
+          "date": "2025-06-04",
+          "nav": 34172
+        },
+        {
+          "date": "2025-06-16",
+          "nav": 33170
+        },
+        {
+          "date": "2025-06-23",
+          "nav": 33219
+        },
+        {
+          "date": "2025-07-01",
+          "nav": 34424
+        },
+        {
+          "date": "2025-07-10",
+          "nav": 35163
+        },
+        {
+          "date": "2025-07-17",
+          "nav": 35328
+        },
+        {
+          "date": "2025-07-27",
+          "nav": 36238
+        },
+        {
+          "date": "2025-08-03",
+          "nav": 36081
+        },
+        {
+          "date": "2025-08-10",
+          "nav": 38099
+        },
+        {
+          "date": "2025-08-17",
+          "nav": 39835
+        },
+        {
+          "date": "2025-08-24",
+          "nav": 41698
+        },
+        {
+          "date": "2025-08-31",
+          "nav": 44179
+        },
+        {
+          "date": "2025-09-08",
+          "nav": 46922
+        },
+        {
+          "date": "2025-09-15",
+          "nav": 47161
+        },
+        {
+          "date": "2025-09-22",
+          "nav": 46118
+        },
+        {
+          "date": "2025-09-29",
+          "nav": 46983
+        },
+        {
+          "date": "2025-10-06",
+          "nav": 46902
+        },
+        {
+          "date": "2025-10-14",
+          "nav": 48750
+        },
+        {
+          "date": "2025-10-21",
+          "nav": 52392
+        },
+        {
+          "date": "2025-10-28",
+          "nav": 50989
+        },
+        {
+          "date": "2025-11-04",
+          "nav": 51423
+        },
+        {
+          "date": "2025-11-11",
+          "nav": 50972
+        },
+        {
+          "date": "2025-11-18",
+          "nav": 52206
+        },
+        {
+          "date": "2025-11-25",
+          "nav": 53862
+        },
+        {
+          "date": "2025-12-02",
+          "nav": 54438
+        },
+        {
+          "date": "2025-12-09",
+          "nav": 59318
+        },
+        {
+          "date": "2025-12-16",
+          "nav": 62313
+        },
+        {
+          "date": "2025-12-23",
+          "nav": 64220
+        },
+        {
+          "date": "2025-12-30",
+          "nav": 64417
+        },
+        {
+          "date": "2026-01-08",
+          "nav": 64802
+        },
+        {
+          "date": "2026-01-15",
+          "nav": 60254
+        },
+        {
+          "date": "2026-01-22",
+          "nav": 63022
+        },
+        {
+          "date": "2026-02-01",
+          "nav": 61411
+        },
+        {
+          "date": "2026-02-08",
+          "nav": 63705
+        },
+        {
+          "date": "2026-02-15",
+          "nav": 63604
+        },
+        {
+          "date": "2026-02-22",
+          "nav": 61606
+        },
+        {
+          "date": "2026-03-01",
+          "nav": 59657
+        },
+        {
+          "date": "2026-03-08",
+          "nav": 61727
+        },
+        {
+          "date": "2026-03-15",
+          "nav": 66020
+        },
+        {
+          "date": "2026-03-25",
+          "nav": 65336
+        },
+        {
+          "date": "2026-04-01",
+          "nav": 65967
+        },
+        {
+          "date": "2026-04-08",
+          "nav": 69360
+        },
+        {
+          "date": "2026-04-19",
+          "nav": 72579
+        },
+        {
+          "date": "2026-04-26",
+          "nav": 73025
+        },
+        {
+          "date": "2026-05-03",
+          "nav": 77550
+        },
+        {
+          "date": "2026-05-11",
+          "nav": 78293
+        },
+        {
+          "date": "2026-05-18",
+          "nav": 80259
+        },
+        {
+          "date": "2026-05-25",
+          "nav": 80107
+        },
+        {
+          "date": "2026-06-07",
+          "nav": 82389
+        },
+        {
+          "date": "2026-06-14",
+          "nav": 83376
+        },
+        {
+          "date": "2026-06-22",
+          "nav": 83618
+        },
+        {
+          "date": "2026-06-29",
+          "nav": 86085
+        },
+        {
+          "date": "2026-07-07",
+          "nav": 93342
+        },
+        {
+          "date": "2026-07-14",
+          "nav": 94904
+        },
+        {
+          "date": "2026-07-21",
+          "nav": 100415
+        },
+        {
+          "date": "2026-07-29",
+          "nav": 100955
+        },
+        {
+          "date": "2026-08-05",
+          "nav": 103957
+        },
+        {
+          "date": "2026-08-12",
+          "nav": 113379
+        },
+        {
+          "date": "2026-08-19",
+          "nav": 125582
+        },
+        {
+          "date": "2026-08-26",
+          "nav": 126568
+        },
+        {
+          "date": "2026-09-03",
+          "nav": 130775
+        },
+        {
+          "date": "2026-09-10",
+          "nav": 130884
+        },
+        {
+          "date": "2026-09-17",
+          "nav": 132831
+        },
+        {
+          "date": "2026-09-24",
+          "nav": 126026
+        },
+        {
+          "date": "2026-10-01",
+          "nav": 118766
+        },
+        {
+          "date": "2026-10-11",
+          "nav": 117426
+        },
+        {
+          "date": "2026-10-18",
+          "nav": 101695
+        },
+        {
+          "date": "2026-10-22",
+          "nav": 100000
+        }
+      ]
+    },
+    "slots16": {
+      "slots": 16,
+      "startingCapital": 40161,
+      "finalNav": 100000,
+      "roiPct": 149,
+      "maxDrawdownPct": 19.5,
+      "winRatePct": 95.5,
+      "closedTradesCount": 66,
+      "totalTradesCount": 82,
+      "maxAdverseExcursionPct": 31.4,
+      "averageAdverseExcursionPct": 7.9,
+      "totalSlots": 16,
+      "activeSlots": 16,
+      "cash": 0,
+      "openPositions": [
+        {
+          "symbol": "GBCO",
+          "companyName": "GB Corp",
+          "sector": "Consumer Discretionary",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/gb-auto.svg",
+          "champion": "typhon",
+          "entryDate": "2026-08-04",
+          "entryPrice": 31.47,
+          "lastPrice": 24.6,
+          "shares": 230,
+          "cost": 7256,
+          "currentValue": 5644,
+          "unrealizedPnlPct": -22.2
+        },
+        {
+          "symbol": "AALR",
+          "companyName": "General Co. for Land Reclamation Development & Reconstruction",
+          "sector": "Industrials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/general-company-for-land-reclamationdevelopment-and-reconstru.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-08-06",
+          "entryPrice": 303.07,
+          "lastPrice": 224,
+          "shares": 24,
+          "cost": 7292,
+          "currentValue": 5363,
+          "unrealizedPnlPct": -26.5
+        },
+        {
+          "symbol": "CPCI",
+          "companyName": "Kahira Pharmaceuticals & Chemical Industries Co.",
+          "sector": "Health Care",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/cairo-pharmaceuticals.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-08-17",
+          "entryPrice": 534.68,
+          "lastPrice": 590.26,
+          "shares": 14,
+          "cost": 7504,
+          "currentValue": 8243,
+          "unrealizedPnlPct": 9.8
+        },
+        {
+          "symbol": "ADCI",
+          "companyName": "Arab Pharmaceuticals",
+          "sector": "Health Care",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/arab-pharmaceuticals.svg",
+          "champion": "typhon",
+          "entryDate": "2026-08-24",
+          "entryPrice": 301.25,
+          "lastPrice": 254.67,
+          "shares": 24,
+          "cost": 7248,
+          "currentValue": 6097,
+          "unrealizedPnlPct": -15.9
+        },
+        {
+          "symbol": "GTWL",
+          "companyName": "Golden Textiles & Clothes Wool",
+          "sector": "Consumer Discretionary",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/golden-textiles-and-clothes-wool.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-08-26",
+          "entryPrice": 211,
+          "lastPrice": 106.01,
+          "shares": 36,
+          "cost": 7615,
+          "currentValue": 3807,
+          "unrealizedPnlPct": -50
+        },
+        {
+          "symbol": "OBRI",
+          "companyName": "El Obour Real Estate Investment",
+          "sector": "Real Estate",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/el-obour-real-estate-investment.svg",
+          "champion": "typhon",
+          "entryDate": "2026-08-30",
+          "entryPrice": 32.2,
+          "lastPrice": 24.57,
+          "shares": 235,
+          "cost": 7586,
+          "currentValue": 5760,
+          "unrealizedPnlPct": -24.1
+        },
+        {
+          "symbol": "SVCE",
+          "companyName": "South Valley Cement Co.",
+          "sector": "Materials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/south-valley-cement.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-01",
+          "entryPrice": 10.91,
+          "lastPrice": 8.72,
+          "shares": 789,
+          "cost": 8630,
+          "currentValue": 6863,
+          "unrealizedPnlPct": -20.5
+        },
+        {
+          "symbol": "GRCA",
+          "companyName": "Grand Investment Capital",
+          "sector": "Financials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/grand-investment-capital.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-09-02",
+          "entryPrice": 60.38,
+          "lastPrice": 28,
+          "shares": 142,
+          "cost": 8595,
+          "currentValue": 3966,
+          "unrealizedPnlPct": -53.9
+        },
+        {
+          "symbol": "TWSA",
+          "companyName": "TAWASOA FOR FACTORING",
+          "sector": "Financials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/tawasoa-for-factoring.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-09-03",
+          "entryPrice": 7.6,
+          "lastPrice": 6.1,
+          "shares": 1133,
+          "cost": 8632,
+          "currentValue": 6894,
+          "unrealizedPnlPct": -20.1
+        },
+        {
+          "symbol": "EALR",
+          "companyName": "El Arabia for Land Reclamation",
+          "sector": "Industrials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/el-arabia-for-land-reclamation.svg",
+          "champion": "cerberus",
+          "entryDate": "2026-09-08",
+          "entryPrice": 385.12,
+          "lastPrice": 282.28,
+          "shares": 21,
+          "cost": 8108,
+          "currentValue": 5913,
+          "unrealizedPnlPct": -27.1
+        },
+        {
+          "symbol": "AFMC",
+          "companyName": "Alexandria Flour Mills Co.",
+          "sector": "Consumer Staples",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/alexandria-flour-mills.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-08",
+          "entryPrice": 184.99,
+          "lastPrice": 117.38,
+          "shares": 44,
+          "cost": 8160,
+          "currentValue": 5152,
+          "unrealizedPnlPct": -36.9
+        },
+        {
+          "symbol": "ADRI",
+          "companyName": "Arab Development & Real Estate Investment",
+          "sector": "Real Estate",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/arab-development-and-real-estate-investment.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-08",
+          "entryPrice": 10.31,
+          "lastPrice": 13.51,
+          "shares": 788,
+          "cost": 8145,
+          "currentValue": 10619,
+          "unrealizedPnlPct": 30.4
+        },
+        {
+          "symbol": "BIOC",
+          "companyName": "GlaxoSmithKline S.A.E.",
+          "sector": "Health Care",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/glaxosmithkline.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-14",
+          "entryPrice": 291,
+          "lastPrice": 260.03,
+          "shares": 20,
+          "cost": 5835,
+          "currentValue": 5188,
+          "unrealizedPnlPct": -11.1
+        },
+        {
+          "symbol": "ISMQ",
+          "companyName": "Iron & Steel for Mines & Quarries",
+          "sector": "Materials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/iron-and-steel-for-mines-and-quarries.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-16",
+          "entryPrice": 8.75,
+          "lastPrice": 7.17,
+          "shares": 982,
+          "cost": 8614,
+          "currentValue": 7023,
+          "unrealizedPnlPct": -18.5
+        },
+        {
+          "symbol": "SMFR",
+          "companyName": "Samad Misr-EGYFERT",
+          "sector": "Consumer Discretionary",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/samad-misr-egyfert.svg",
+          "champion": "typhon",
+          "entryDate": "2026-09-17",
+          "entryPrice": 238.65,
+          "lastPrice": 196.17,
+          "shares": 35,
+          "cost": 8374,
+          "currentValue": 6849,
+          "unrealizedPnlPct": -18.2
+        },
+        {
+          "symbol": "CERA",
+          "companyName": "Arab Ceramic Co. - Ceramica Remas",
+          "sector": "Materials",
+          "logoUrl": "https://s3-symbol-logo.tradingview.com/the-arab-ceramic-co-ceramica-remas.svg",
+          "champion": "typhon",
+          "entryDate": "2026-10-04",
+          "entryPrice": 1.41,
+          "lastPrice": 1.14,
+          "shares": 6019,
+          "cost": 8508,
+          "currentValue": 6845,
+          "unrealizedPnlPct": -19.5
+        }
+      ],
+      "closedTrades": [
+        {
+          "sym": "INFI",
+          "name": "Ismailia National Food Industries",
+          "entryDate": "2025-12-23",
+          "exitDate": "2026-05-17",
+          "entryPrice": 94.43,
+          "exitPrice": 106,
+          "cost": 3878,
+          "proceeds": 4331,
+          "retPct": 11.69,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "GRCA",
+          "name": "Grand Investment Capital",
+          "entryDate": "2026-03-08",
+          "exitDate": "2026-05-17",
+          "entryPrice": 34.13,
+          "exitPrice": 44.98,
+          "cost": 4136,
+          "proceeds": 5423,
+          "retPct": 31.12,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "EGTS",
+          "name": "Egyptian for Tourism Resorts",
+          "entryDate": "2026-04-26",
+          "exitDate": "2026-05-20",
+          "entryPrice": 14.25,
+          "exitPrice": 20.5,
+          "cost": 4406,
+          "proceeds": 6307,
+          "retPct": 43.14,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "MENA",
+          "name": "Mena Touristic & Real Estate Investment",
+          "entryDate": "2026-03-09",
+          "exitDate": "2026-06-03",
+          "entryPrice": 4.6,
+          "exitPrice": 7.29,
+          "cost": 4150,
+          "proceeds": 6544,
+          "retPct": 57.69,
+          "champion": "typhon"
+        },
+        {
+          "sym": "RMDA",
+          "name": "Tenth of Ramadan Pharmaceutical Industries & Diagnostic-Rameda",
+          "entryDate": "2026-04-02",
+          "exitDate": "2026-06-10",
+          "entryPrice": 4.1,
+          "exitPrice": 5.29,
+          "cost": 4151,
+          "proceeds": 5329,
+          "retPct": 28.38,
+          "champion": "typhon"
+        },
+        {
+          "sym": "AFMC",
+          "name": "Alexandria Flour Mills Co.",
+          "entryDate": "2026-02-26",
+          "exitDate": "2026-06-29",
+          "entryPrice": 56.23,
+          "exitPrice": 67.34,
+          "cost": 4188,
+          "proceeds": 4990,
+          "retPct": 19.16,
+          "champion": "typhon"
+        },
+        {
+          "sym": "GTWL",
+          "name": "Golden Textiles & Clothes Wool",
+          "entryDate": "2026-05-18",
+          "exitDate": "2026-07-01",
+          "entryPrice": 55.99,
+          "exitPrice": 88.2,
+          "cost": 5410,
+          "proceeds": 8479,
+          "retPct": 56.74,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "ISMQ",
+          "name": "Iron & Steel for Mines & Quarries",
+          "entryDate": "2026-04-09",
+          "exitDate": "2026-07-07",
+          "entryPrice": 7.15,
+          "exitPrice": 9.81,
+          "cost": 4185,
+          "proceeds": 5714,
+          "retPct": 36.52,
+          "champion": "typhon"
+        },
+        {
+          "sym": "TWSA",
+          "name": "TAWASOA FOR FACTORING",
+          "entryDate": "2026-06-21",
+          "exitDate": "2026-07-07",
+          "entryPrice": 5.44,
+          "exitPrice": 6.86,
+          "cost": 5703,
+          "proceeds": 7156,
+          "retPct": 25.47,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "GTWL",
+          "name": "Golden Textiles & Clothes Wool",
+          "entryDate": "2026-07-07",
+          "exitDate": "2026-07-13",
+          "entryPrice": 85.5,
+          "exitPrice": 112,
+          "cost": 7091,
+          "proceeds": 9242,
+          "retPct": 30.34,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "GBCO",
+          "name": "GB Corp",
+          "entryDate": "2026-04-09",
+          "exitDate": "2026-07-14",
+          "entryPrice": 26.05,
+          "exitPrice": 31.81,
+          "cost": 4184,
+          "proceeds": 5084,
+          "retPct": 21.5,
+          "champion": "typhon"
+        },
+        {
+          "sym": "ADRI",
+          "name": "Arab Development & Real Estate Investment",
+          "entryDate": "2026-06-03",
+          "exitDate": "2026-07-20",
+          "entryPrice": 7.34,
+          "exitPrice": 8.14,
+          "cost": 5863,
+          "proceeds": 6469,
+          "retPct": 10.35,
+          "champion": "typhon"
+        },
+        {
+          "sym": "AALR",
+          "name": "General Co. for Land Reclamation Development & Reconstruction",
+          "entryDate": "2026-05-10",
+          "exitDate": "2026-08-04",
+          "entryPrice": 219,
+          "exitPrice": 279.14,
+          "cost": 5907,
+          "proceeds": 7492,
+          "retPct": 26.83,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "NCCW",
+          "name": "Nasr Co. for Civil Works",
+          "entryDate": "2025-12-09",
+          "exitDate": "2026-08-10",
+          "entryPrice": 5.08,
+          "exitPrice": 6.08,
+          "cost": 3620,
+          "proceeds": 4308,
+          "retPct": 19.01,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "ADCI",
+          "name": "Arab Pharmaceuticals",
+          "entryDate": "2026-06-07",
+          "exitDate": "2026-08-12",
+          "entryPrice": 216,
+          "exitPrice": 318.41,
+          "cost": 5826,
+          "proceeds": 8545,
+          "retPct": 46.68,
+          "champion": "typhon"
+        },
+        {
+          "sym": "NINH",
+          "name": "Nozha International Hospital",
+          "entryDate": "2026-06-21",
+          "exitDate": "2026-08-12",
+          "entryPrice": 17.62,
+          "exitPrice": 22.69,
+          "cost": 5703,
+          "proceeds": 7307,
+          "retPct": 28.13,
+          "champion": "typhon"
+        },
+        {
+          "sym": "CPCI",
+          "name": "Kahira Pharmaceuticals & Chemical Industries Co.",
+          "entryDate": "2026-07-07",
+          "exitDate": "2026-08-12",
+          "entryPrice": 396.33,
+          "exitPrice": 552.62,
+          "cost": 7020,
+          "proceeds": 9740,
+          "retPct": 38.74,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "MENA",
+          "name": "Mena Touristic & Real Estate Investment",
+          "entryDate": "2026-08-10",
+          "exitDate": "2026-08-17",
+          "entryPrice": 7.05,
+          "exitPrice": 7.06,
+          "cost": 4371,
+          "proceeds": 4355,
+          "retPct": -0.36,
+          "champion": "typhon"
+        },
+        {
+          "sym": "OBRI",
+          "name": "El Obour Real Estate Investment",
+          "entryDate": "2026-02-24",
+          "exitDate": "2026-08-18",
+          "entryPrice": 33.5,
+          "exitPrice": 33.88,
+          "cost": 4208,
+          "proceeds": 4234,
+          "retPct": 0.63,
+          "champion": "typhon"
+        },
+        {
+          "sym": "MOSC",
+          "name": "Misr Oils & Soap Co.",
+          "entryDate": "2026-05-04",
+          "exitDate": "2026-08-18",
+          "entryPrice": 293.43,
+          "exitPrice": 336.63,
+          "cost": 4371,
+          "proceeds": 4989,
+          "retPct": 14.15,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "EALR",
+          "name": "El Arabia for Land Reclamation",
+          "entryDate": "2026-01-08",
+          "exitDate": "2026-08-19",
+          "entryPrice": 363,
+          "exitPrice": 417.1,
+          "cost": 4969,
+          "proceeds": 5681,
+          "retPct": 14.33,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "GTWL",
+          "name": "Golden Textiles & Clothes Wool",
+          "entryDate": "2026-07-26",
+          "exitDate": "2026-08-23",
+          "entryPrice": 102.77,
+          "exitPrice": 191.21,
+          "cost": 6992,
+          "proceeds": 12944,
+          "retPct": 85.13,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "ADRI",
+          "name": "Arab Development & Real Estate Investment",
+          "entryDate": "2026-07-21",
+          "exitDate": "2026-08-25",
+          "entryPrice": 8.11,
+          "exitPrice": 9.36,
+          "cost": 7007,
+          "proceeds": 8046,
+          "retPct": 14.84,
+          "champion": "typhon"
+        },
+        {
+          "sym": "GRCA",
+          "name": "Grand Investment Capital",
+          "entryDate": "2026-06-17",
+          "exitDate": "2026-08-26",
+          "entryPrice": 40.01,
+          "exitPrice": 57.54,
+          "cost": 5686,
+          "proceeds": 8136,
+          "retPct": 43.09,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "TWSA",
+          "name": "TAWASOA FOR FACTORING",
+          "entryDate": "2026-08-03",
+          "exitDate": "2026-08-31",
+          "entryPrice": 6.51,
+          "exitPrice": 7.89,
+          "cost": 7016,
+          "proceeds": 8461,
+          "retPct": 20.59,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "AFMC",
+          "name": "Alexandria Flour Mills Co.",
+          "entryDate": "2026-06-30",
+          "exitDate": "2026-09-01",
+          "entryPrice": 67.39,
+          "exitPrice": 175.2,
+          "cost": 4992,
+          "proceeds": 12913,
+          "retPct": 158.68,
+          "champion": "typhon"
+        },
+        {
+          "sym": "NINH",
+          "name": "Nozha International Hospital",
+          "entryDate": "2026-08-20",
+          "exitDate": "2026-09-08",
+          "entryPrice": 21.91,
+          "exitPrice": 23.15,
+          "cost": 6254,
+          "proceeds": 6575,
+          "retPct": 5.13,
+          "champion": "typhon"
+        },
+        {
+          "sym": "UBEE",
+          "name": "United Bank SAE",
+          "entryDate": "2025-12-29",
+          "exitDate": "2026-09-13",
+          "entryPrice": 14.92,
+          "exitPrice": 16.18,
+          "cost": 3688,
+          "proceeds": 3980,
+          "retPct": 7.9,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "NCCW",
+          "name": "Nasr Co. for Civil Works",
+          "entryDate": "2026-08-26",
+          "exitDate": "2026-09-16",
+          "entryPrice": 5.83,
+          "exitPrice": 8.55,
+          "cost": 7595,
+          "proceeds": 11083,
+          "retPct": 45.92,
+          "champion": "cerberus"
+        },
+        {
+          "sym": "TALM",
+          "name": "Taaleem Management Services S.A.E",
+          "entryDate": "2026-05-25",
+          "exitDate": "2026-09-17",
+          "entryPrice": 15.31,
+          "exitPrice": 22.52,
+          "cost": 5633,
+          "proceeds": 8245,
+          "retPct": 46.36,
+          "champion": "typhon"
+        }
+      ],
+      "navSeries": [
+        {
+          "date": "2025-01-02",
+          "nav": 40157
+        },
+        {
+          "date": "2025-01-12",
+          "nav": 40157
+        },
+        {
+          "date": "2025-01-19",
+          "nav": 40157
+        },
+        {
+          "date": "2025-01-26",
+          "nav": 40157
+        },
+        {
+          "date": "2025-02-02",
+          "nav": 40157
+        },
+        {
+          "date": "2025-02-09",
+          "nav": 40157
+        },
+        {
+          "date": "2025-02-16",
+          "nav": 40165
+        },
+        {
+          "date": "2025-02-23",
+          "nav": 40195
+        },
+        {
+          "date": "2025-03-02",
+          "nav": 40165
+        },
+        {
+          "date": "2025-03-09",
+          "nav": 40233
+        },
+        {
+          "date": "2025-03-16",
+          "nav": 40182
+        },
+        {
+          "date": "2025-03-23",
+          "nav": 40261
+        },
+        {
+          "date": "2025-04-03",
+          "nav": 40241
+        },
+        {
+          "date": "2025-04-10",
+          "nav": 40159
+        },
+        {
+          "date": "2025-04-17",
+          "nav": 40377
+        },
+        {
+          "date": "2025-04-29",
+          "nav": 40297
+        },
+        {
+          "date": "2025-05-07",
+          "nav": 40316
+        },
+        {
+          "date": "2025-05-14",
+          "nav": 40695
+        },
+        {
+          "date": "2025-05-21",
+          "nav": 40519
+        },
+        {
+          "date": "2025-05-28",
+          "nav": 40512
+        },
+        {
+          "date": "2025-06-04",
+          "nav": 40947
+        },
+        {
+          "date": "2025-06-16",
+          "nav": 40188
+        },
+        {
+          "date": "2025-06-23",
+          "nav": 40225
+        },
+        {
+          "date": "2025-07-01",
+          "nav": 41138
+        },
+        {
+          "date": "2025-07-10",
+          "nav": 41698
+        },
+        {
+          "date": "2025-07-17",
+          "nav": 41822
+        },
+        {
+          "date": "2025-07-27",
+          "nav": 42512
+        },
+        {
+          "date": "2025-08-03",
+          "nav": 42395
+        },
+        {
+          "date": "2025-08-10",
+          "nav": 43875
+        },
+        {
+          "date": "2025-08-17",
+          "nav": 45149
+        },
+        {
+          "date": "2025-08-24",
+          "nav": 46554
+        },
+        {
+          "date": "2025-08-31",
+          "nav": 48438
+        },
+        {
+          "date": "2025-09-08",
+          "nav": 50706
+        },
+        {
+          "date": "2025-09-15",
+          "nav": 51004
+        },
+        {
+          "date": "2025-09-22",
+          "nav": 50176
+        },
+        {
+          "date": "2025-09-29",
+          "nav": 50466
+        },
+        {
+          "date": "2025-10-06",
+          "nav": 50284
+        },
+        {
+          "date": "2025-10-14",
+          "nav": 51661
+        },
+        {
+          "date": "2025-10-21",
+          "nav": 54363
+        },
+        {
+          "date": "2025-10-28",
+          "nav": 53104
+        },
+        {
+          "date": "2025-11-04",
+          "nav": 53782
+        },
+        {
+          "date": "2025-11-11",
+          "nav": 53190
+        },
+        {
+          "date": "2025-11-18",
+          "nav": 54611
+        },
+        {
+          "date": "2025-11-25",
+          "nav": 56008
+        },
+        {
+          "date": "2025-12-02",
+          "nav": 56369
+        },
+        {
+          "date": "2025-12-09",
+          "nav": 59535
+        },
+        {
+          "date": "2025-12-16",
+          "nav": 62426
+        },
+        {
+          "date": "2025-12-23",
+          "nav": 64235
+        },
+        {
+          "date": "2025-12-30",
+          "nav": 64438
+        },
+        {
+          "date": "2026-01-08",
+          "nav": 64558
+        },
+        {
+          "date": "2026-01-15",
+          "nav": 61107
+        },
+        {
+          "date": "2026-01-22",
+          "nav": 63401
+        },
+        {
+          "date": "2026-02-01",
+          "nav": 62101
+        },
+        {
+          "date": "2026-02-08",
+          "nav": 63621
+        },
+        {
+          "date": "2026-02-15",
+          "nav": 63760
+        },
+        {
+          "date": "2026-02-22",
+          "nav": 62285
+        },
+        {
+          "date": "2026-03-01",
+          "nav": 60528
+        },
+        {
+          "date": "2026-03-08",
+          "nav": 62497
+        },
+        {
+          "date": "2026-03-15",
+          "nav": 64785
+        },
+        {
+          "date": "2026-03-25",
+          "nav": 64431
+        },
+        {
+          "date": "2026-04-01",
+          "nav": 65138
+        },
+        {
+          "date": "2026-04-08",
+          "nav": 69125
+        },
+        {
+          "date": "2026-04-19",
+          "nav": 71687
+        },
+        {
+          "date": "2026-04-26",
+          "nav": 72010
+        },
+        {
+          "date": "2026-05-03",
+          "nav": 75443
+        },
+        {
+          "date": "2026-05-11",
+          "nav": 77113
+        },
+        {
+          "date": "2026-05-18",
+          "nav": 77344
+        },
+        {
+          "date": "2026-05-25",
+          "nav": 77137
+        },
+        {
+          "date": "2026-06-07",
+          "nav": 79022
+        },
+        {
+          "date": "2026-06-14",
+          "nav": 80809
+        },
+        {
+          "date": "2026-06-22",
+          "nav": 80704
+        },
+        {
+          "date": "2026-06-29",
+          "nav": 82913
+        },
+        {
+          "date": "2026-07-07",
+          "nav": 88864
+        },
+        {
+          "date": "2026-07-14",
+          "nav": 90500
+        },
+        {
+          "date": "2026-07-21",
+          "nav": 97338
+        },
+        {
+          "date": "2026-07-29",
+          "nav": 101811
+        },
+        {
+          "date": "2026-08-05",
+          "nav": 110228
+        },
+        {
+          "date": "2026-08-12",
+          "nav": 117264
+        },
+        {
+          "date": "2026-08-19",
+          "nav": 122349
+        },
+        {
+          "date": "2026-08-26",
+          "nav": 122919
+        },
+        {
+          "date": "2026-09-03",
+          "nav": 122413
+        },
+        {
+          "date": "2026-09-10",
+          "nav": 122129
+        },
+        {
+          "date": "2026-09-17",
+          "nav": 123940
+        },
+        {
+          "date": "2026-09-24",
+          "nav": 119084
+        },
+        {
+          "date": "2026-10-01",
+          "nav": 116423
+        },
+        {
+          "date": "2026-10-11",
+          "nav": 115988
+        },
+        {
+          "date": "2026-10-18",
+          "nav": 103001
+        },
+        {
+          "date": "2026-10-22",
+          "nav": 100000
+        }
+      ]
+    }
+  }
+}

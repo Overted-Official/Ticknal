@@ -1,7 +1,7 @@
 import type { ChartData } from '../types';
 import type { FullBacktestReport, EquityPoint } from '@/strategies/registry';
 
-export type StrategyReportTab = 'performance' | 'trades';
+export type StrategyReportTab = 'performance' | 'trades' | 'turbo';
 export type BacktestPreset = '3m' | '6m' | 'ytd' | '1y' | 'all' | 'custom' | '2025';
 
 export interface StrategyReportDrawerProps {
